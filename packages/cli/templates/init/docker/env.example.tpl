@@ -33,6 +33,25 @@ DATABASE_URL=file:./data/app.sqlite
 {{#if events.outbox}}
 OUTBOX_RELAY_INTERVAL_MS=500
 {{/if}}
+{{#if broker.rabbitmq}}
+
+RABBITMQ_USER=app
+RABBITMQ_PASSWORD=app
+RABBITMQ_PORT=5672
+RABBITMQ_MANAGEMENT_PORT=15672
+AMQP_URL=amqp://app:app@localhost:5672
+{{/if}}
+{{#if authn.jwt}}
+
+# Authentication: the issuer of the tokens, the audience this service answers to, the keys of the issuer.
+AUTH_ISSUER=https://id.example.com/realms/app
+AUTH_AUDIENCE={{project.name}}
+AUTH_JWKS_URI=https://id.example.com/realms/app/protocol/openid-connect/certs
+{{/if}}
+{{#if authn.none}}
+
+# Authentication is the development header (x-development-actor: <id>;roles=<a>,<b>): the application refuses to start with NODE_ENV=production.
+{{/if}}
 
 # Traces: start Jaeger with `docker compose --profile observability up -d`, then open http://localhost:16686
 # OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318

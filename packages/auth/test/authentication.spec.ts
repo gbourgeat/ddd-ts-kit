@@ -1,0 +1,123 @@
+import { describe, expect, it } from 'vitest';
+import { AsyncLocalStorageActorContext, InMemoryQueryBus, anonymousActor } from '@ddd-ts-kit/kernel';
+import { defineRoute, executeRoute, type RawRequest } from '@ddd-ts-kit/http';
+import {
+  AuthorizationMap,
+  InvalidCredentialError,
+  RoleBasedAuthorizer,
+  actorOf,
+  authorizationMiddleware,
+  bearerCredential,
+  inActorContext,
+  principalResolver,
+  requires,
+} from '../src/index.js';
+import { FakeAuthenticator } from '../src/testing.js';
+import { ListInvoices, ada, billingPermissions, bob } from './support/billing.js';
+
+describe('bearerCredential', () => {
+  it('extracts the token of the Authorization header, whatever its case', () => {
+    expect(bearerCredential({ authorization: 'Bearer abc.def-123' })).toBe('abc.def-123');
+    expect(bearerCredential({ Authorization: 'bearer abc.def==' })).toBe('abc.def==');
+  });
+
+  it('gives nothing without the header', () => {
+    expect(bearerCredential({})).toBeUndefined();
+    expect(bearerCredential({ authorization: undefined, accept: '*/*' })).toBeUndefined();
+  });
+
+  it.each([['Basic YWRhOnNlY3JldA=='], ['Bearer'], ['Bearer a b'], ['abc'], ['']])(
+    'refuses %j instead of treating the caller as anonymous',
+    (value) => {
+      expect(() => bearerCredential({ authorization: value })).toThrow(InvalidCredentialError);
+    },
+  );
+
+  it('refuses a header sent several times', () => {
+    expect(() => bearerCredential({ authorization: ['Bearer a', 'Bearer b'] })).toThrow(InvalidCredentialError);
+  });
+});
+
+describe('principalResolver', () => {
+  const resolve = principalResolver(new FakeAuthenticator({ 'token-of-ada': ada }));
+
+  it('turns the request of the framework into an actor', async () => {
+    expect(await resolve({ headers: { authorization: 'Bearer token-of-ada' } })).toBe(ada);
+  });
+
+  it('answers the anonymous actor without credential, whatever the request looks like', async () => {
+    expect(await resolve({ headers: {} })).toEqual(anonymousActor());
+    expect(await resolve({ headers: { 'x-count': 3 } })).toEqual(anonymousActor());
+    expect(await resolve({})).toEqual(anonymousActor());
+    expect(await resolve(undefined)).toEqual(anonymousActor());
+  });
+
+  it('refuses a credential nobody knows', async () => {
+    const refusal = await resolve({ headers: { authorization: 'Bearer stolen' } }).catch((error: unknown) => error);
+
+    expect(refusal).toBeInstanceOf(InvalidCredentialError);
+    expect(refusal).toMatchObject({ code: 'UNAUTHORIZED', reason: 'UNKNOWN_CREDENTIAL' });
+  });
+});
+
+describe('actorOf', () => {
+  it('reads the actor a boundary received, anonymous for anything else', () => {
+    expect(actorOf(ada)).toBe(ada);
+    expect(actorOf(undefined)).toEqual(anonymousActor());
+    expect(actorOf({ sub: 'ada' })).toEqual(anonymousActor());
+  });
+});
+
+describe('a route of @ddd-ts-kit/http', () => {
+  const actorContext = new AsyncLocalStorageActorContext();
+  const seenByInfrastructure: (string | undefined)[] = [];
+  const queries = new InMemoryQueryBus()
+    .use(
+      authorizationMiddleware({
+        authorizer: new RoleBasedAuthorizer({ roles: { accountant: [billingPermissions['invoice.read']] } }),
+        map: AuthorizationMap.of(requires(ListInvoices, billingPermissions['invoice.read'])),
+      }),
+    )
+    .register(ListInvoices, {
+      execute: async () => {
+        seenByInfrastructure.push(actorContext.current()?.id);
+        return ['inv-1'];
+      },
+    });
+  const listInvoices = defineRoute(
+    {
+      method: 'GET',
+      path: '/invoices',
+      operationId: 'listInvoices',
+      summary: 'List invoices',
+      responses: { 200: { description: 'The invoices' } },
+      errors: ['UNAUTHORIZED', 'FORBIDDEN'],
+      security: ['bearer'],
+    },
+    inActorContext(actorContext, async ({ context }) => {
+      await queries.execute(new ListInvoices(actorOf(context.principal)));
+      return { status: 200 as const };
+    }),
+  );
+  const resolvePrincipal = principalResolver(new FakeAuthenticator({ 'token-of-ada': ada, 'token-of-bob': bob }));
+  const call = (authorization?: string) => {
+    const headers = authorization === undefined ? {} : { authorization };
+    const request: RawRequest = { params: {}, query: {}, headers, body: undefined, raw: { headers } };
+    return executeRoute(listInvoices, request, { resolvePrincipal });
+  };
+
+  it('answers 200 to an actor holding the permission, seen by infrastructure through the actor context', async () => {
+    expect((await call('Bearer token-of-ada')).status).toBe(200);
+    expect(seenByInfrastructure).toEqual(['ada']);
+    expect(actorContext.current()).toBeUndefined();
+  });
+
+  it('answers 401 without credential and with a refused one, with no extra wiring', async () => {
+    expect(await call()).toMatchObject({ status: 401, body: { code: 'UNAUTHORIZED' } });
+    expect(await call('Bearer stolen')).toMatchObject({ status: 401, body: { code: 'UNAUTHORIZED' } });
+  });
+
+  it('answers 403 to an actor without the permission', async () => {
+    expect(await call('Bearer token-of-bob')).toMatchObject({ status: 403, body: { code: 'FORBIDDEN' } });
+  });
+});

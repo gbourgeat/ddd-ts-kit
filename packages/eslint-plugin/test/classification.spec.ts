@@ -65,8 +65,8 @@ const SPECIFIERS = [
 
 describe('the plugin classifies files exactly like the CLI checker', () => {
   it.each(RAW_CONFIGS)('reads the config %j the same way', (raw) => {
-    const { stack: _stack, guard: _guard, ...shared } = cliParseConfig(raw);
-    expect(parseConfig(raw)).toEqual(shared);
+    const read = parseConfig(raw);
+    expect(read).toEqual(keysReadByThePlugin(cliParseConfig(raw), read));
   });
 
   it.each(RAW_CONFIGS)('locates every sample path the same way under %j', (raw) => {
@@ -84,3 +84,17 @@ describe('the plugin classifies files exactly like the CLI checker', () => {
     }
   });
 });
+
+/**
+ * The CLI config narrowed to what the plugin reads: the generator and the checker know keys
+ * (stack choices, deployment, deviations) that a linter has no use for, at any depth.
+ */
+function keysReadByThePlugin(cli: unknown, plugin: unknown): unknown {
+  if (Array.isArray(cli) && Array.isArray(plugin)) return cli.map((item: unknown, index) => keysReadByThePlugin(item, plugin[index]));
+  if (!isPlainObject(cli) || !isPlainObject(plugin)) return cli;
+  return Object.fromEntries(Object.keys(plugin).map((key) => [key, keysReadByThePlugin(cli[key], plugin[key])]));
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}

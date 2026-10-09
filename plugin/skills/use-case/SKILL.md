@@ -27,6 +27,9 @@ published, what can go wrong (each failure gets a business name). Check every no
 against the context's `CONTEXT.md` glossary. If the slice writes in two contexts, stop: one
 context decides, the other reacts to an integration event (`ddd-ts-kit:integration-event`).
 
+Who may do it? Name the permission (skill `ddd-ts-kit:access-control`); a use case is
+protected or explicitly public, never undecided.
+
 Command or query? It changes state: command. It only reads: query, which may read a
 projection through a port without loading aggregates.
 

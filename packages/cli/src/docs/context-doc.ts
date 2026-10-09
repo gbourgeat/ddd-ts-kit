@@ -27,6 +27,7 @@ function generatedLists(facts: ContextFacts): Record<string, string[]> {
     aggregates: facts.aggregates.map((name) => `- \`${name}\``),
     events: facts.publishedEvents.map((event) => `- \`${event.type}\` (version ${event.version})`),
     relationships: relationshipLines(facts),
+    permissions: facts.permissions.length > 0 ? facts.permissions.map((name) => `- \`${facts.name}:${name}\``) : ['No permission declared.'],
   };
 }
 

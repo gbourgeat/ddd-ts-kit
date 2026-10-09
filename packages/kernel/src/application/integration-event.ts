@@ -36,6 +36,12 @@ export interface IntegrationEventSubscriber {
 export interface ProcessedEventStore {
   /** Returns true the first time `(consumer, eventId)` is seen, false afterwards. */
   markProcessed(consumer: string, eventId: string): Promise<boolean>;
+  /**
+   * Forgets a mark taken by a delivery whose handler then failed, so the redelivery is
+   * handled. Stores whose mark shares the handler's transaction do not need it: the
+   * rollback already removes the mark.
+   */
+  release?(consumer: string, eventId: string): Promise<void>;
 }
 
 /** Any provider is an EventBus: in-memory, outbox and broker, queue service. */

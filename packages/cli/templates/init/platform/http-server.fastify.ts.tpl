@@ -1,6 +1,7 @@
 import Fastify from 'fastify';
 import type { ErrorContext, Route } from '@ddd-ts-kit/http';
 import { mountFastify } from '@ddd-ts-kit/http/fastify';
+import type { HttpBoundary } from './auth/http-boundary.js';
 import type { AppConfig } from './config.js';
 {{#if docs.any}}
 import { withDocumentation } from './http-docs.js';
@@ -12,13 +13,13 @@ export interface HttpServer {
   close(): Promise<void>;
 }
 
-export async function startHttpServer(routes: readonly Route[], config: AppConfig): Promise<HttpServer> {
+export async function startHttpServer(routes: readonly Route[], config: AppConfig, boundary: HttpBoundary): Promise<HttpServer> {
   const app = Fastify();
 {{#if docs.any}}
-  mountFastify(app, withDocumentation(routes, config), { onError: logServerFault });
+  mountFastify(app, withDocumentation(routes, config), { onError: logServerFault, ...boundary });
 {{/if}}
 {{#unless docs.any}}
-  mountFastify(app, routes, { onError: logServerFault });
+  mountFastify(app, routes, { onError: logServerFault, ...boundary });
 {{/unless}}
   await app.listen({ port: config.port, host: '0.0.0.0' });
   const [address] = app.addresses();

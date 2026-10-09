@@ -29,6 +29,26 @@ const GENERATORS = [
   [/\.builder\.ts$/, 'builder <context> <Aggregate>'],
 ];
 
+// Changing these is a decision about the rules themselves: the project owner confirms it.
+const GOVERNED_FILES = [
+  /^ddd-ts-kit\.config\.json$/,
+  /^eslint\.config\.[cm]?js$/,
+  /^\.dependency-cruiser\.c?js$/,
+  /^knip\.json$/,
+  /^lefthook\.yml$/,
+  /^\.gitlab-ci\.yml$/,
+  /^\.github\/workflows\//,
+  /^\.claude\/settings\.json$/,
+];
+
+const ESCAPES = [
+  [/ddd-ts-kit-disable/g, 'an architecture rule suppression'],
+  [/eslint-disable/g, 'a lint suppression'],
+  [/@ts-(ignore|nocheck|expect-error)/g, 'a compiler diagnostic suppression'],
+  [/\b(it|test|describe)\.(skip|only)\b/g, 'a skipped or focused test'],
+  [/\bas any\b/g, 'an `any` assertion'],
+];
+
 const MODES = { session, 'pre-write': preWrite, 'post-write': postWrite, stop };
 
 main();
@@ -60,11 +80,13 @@ function preWrite(input) {
   if (typeof file !== 'string') return;
   const project = findProject(dirname(file));
   if (!project || project.mode === 'off') return;
-  const reason =
+  const refusal =
     generatedFileReason(project, file) ??
     testWriterScopeReason(project, file, input) ??
     handWrittenRoleReason(project, file);
-  if (reason) decide(project, reason);
+  if (refusal) return decide(project.mode === 'advise' ? 'ask' : 'deny', refusal);
+  const deviation = governedFileReason(project, file) ?? escapeReason(input.tool_input);
+  if (deviation) decide('ask', deviation);
 }
 
 function postWrite(input) {
@@ -163,15 +185,43 @@ function handWrittenRoleReason(project, file) {
     : undefined;
 }
 
+function governedFileReason(project, file) {
+  const path = projectPath(project, file);
+  return GOVERNED_FILES.some((pattern) => pattern.test(path))
+    ? `${path} holds the rules or the pipeline. Changing it is a decision of the project owner: confirm it, and record the reason in docs/adr/ when it relaxes a rule.`
+    : undefined;
+}
+
+function escapeReason(toolInput) {
+  const added = ESCAPES.find(([pattern]) => count(writtenText(toolInput), pattern) > count(replacedText(toolInput), pattern));
+  return added
+    ? `This change adds ${added[1]}. Fix the cause instead; if the deviation is deliberate, the project owner confirms it and it carries a reason pointing to a decision record in docs/adr/.`
+    : undefined;
+}
+
+function writtenText(toolInput) {
+  const edits = Array.isArray(toolInput.edits) ? toolInput.edits.map((edit) => edit.new_string ?? '') : [];
+  return [toolInput.content ?? '', toolInput.new_string ?? '', ...edits].join('\n');
+}
+
+function replacedText(toolInput) {
+  const edits = Array.isArray(toolInput.edits) ? toolInput.edits.map((edit) => edit.old_string ?? '') : [];
+  return [toolInput.old_string ?? '', ...edits].join('\n');
+}
+
+function count(text, pattern) {
+  return (text.match(pattern) ?? []).length;
+}
+
 function projectPath(project, file) {
   return relative(project.root, resolve(file)).split(sep).join('/');
 }
 
-function decide(project, reason) {
+function decide(permissionDecision, reason) {
   emit({
     hookSpecificOutput: {
       hookEventName: 'PreToolUse',
-      permissionDecision: project.mode === 'advise' ? 'ask' : 'deny',
+      permissionDecision,
       permissionDecisionReason: `ddd-ts-kit: ${reason}`,
     },
   });

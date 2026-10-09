@@ -63,6 +63,10 @@ export interface StackFlags {
   readonly tests: string;
   readonly orm: string;
   readonly events: string;
+  readonly authn?: string;
+  readonly authz?: string;
+  readonly broker?: string;
+  readonly ci?: string;
 }
 
 export const DEFAULT_STACK: StackFlags = { http: 'express', validation: 'zod', di: 'tsyringe', tests: 'vitest', orm: 'drizzle', events: 'outbox' };
@@ -74,7 +78,9 @@ export function scaffoldEverything(root: string, stack: StackFlags = DEFAULT_STA
     results.push(must(cli(root, ...args, '--json'), args.join(' ')));
   };
   const withHttp = stack.http !== 'none';
-  step('init', ...Object.entries(stack).flatMap(([key, value]) => [`--${key}`, value]));
+  // Leaving the outbox out with a database is a deviation: it has to be given its reason.
+  const noOutbox = stack.orm !== 'none' && stack.events !== 'outbox' ? ['--allow-no-outbox', 'A single process with no consumer that has to survive a crash'] : [];
+  step('init', ...Object.entries(stack).flatMap(([key, value]) => [`--${key}`, String(value)]), ...noOutbox);
   scaffoldBilling(step, withHttp);
   scaffoldShipping(step);
   scaffoldOrderFulfilment(step, withHttp);
@@ -96,10 +102,11 @@ function scaffoldBilling(step: Step, withHttp: boolean): void {
   step('generate', 'domain-error', 'billing', 'InvoiceAlreadyIssued', '--code', 'INVOICE_ALREADY_ISSUED');
   step('generate', 'domain-service', 'billing', 'Pricing', ...term('Price=What a customer pays for one item'));
   step('generate', 'repository', 'billing', 'Invoice');
-  step('generate', 'command', 'billing', 'IssueInvoice', '--aggregate', 'Invoice');
-  step('generate', 'command', 'billing', 'CancelInvoice');
-  step('generate', 'query', 'billing', 'ListInvoices', ...term('List=To show invoices to their customer'));
+  step('generate', 'command', 'billing', 'IssueInvoice', '--aggregate', 'Invoice', '--permission', 'invoice.issue');
+  step('generate', 'command', 'billing', 'CancelInvoice', '--permission', 'invoice.cancel');
+  step('generate', 'query', 'billing', 'ListInvoices', '--permission', 'invoice.list', ...term('List=To show invoices to their customer'));
   step('generate', 'port', 'billing', 'PaymentGateway');
+  step('generate', 'policy', 'billing', 'OnlyIssuerCancels', '--permission', 'invoice.cancel');
   if (withHttp) scaffoldBillingRoutes(step);
   step('generate', 'integration-event', 'billing', 'Invoice', 'Issued');
   step('generate', 'integration-event', 'billing', 'Invoice', 'Issued', '--version', '2');
@@ -121,6 +128,9 @@ function scaffoldShipping(step: Step): void {
   step('generate', 'context', 'shipping', '--classification', 'supporting', '--upstream', 'billing:customer-supplier', ...term('Parcel=A package handed to a carrier'));
   step('generate', 'consumer', 'shipping', 'billing', 'billing.invoice.issued');
   step('generate', 'consumer', 'shipping', 'billing', 'billing.invoice.cancelled');
+  step('generate', 'gateway', 'shipping', 'billing', 'InvoiceStatus');
+  step('generate', 'service', 'shipping');
+  step('generate', 'adr', 'Keep shipping in the same repository as billing');
 }
 
 /** A context name in several words, a repository created by its command, a query behind a parameterised route. */
@@ -129,8 +139,9 @@ function scaffoldOrderFulfilment(step: Step, withHttp: boolean): void {
   step('generate', 'context', 'order-fulfilment', '--classification', 'generic', ...terms.flatMap(term));
   step('generate', 'aggregate', 'order-fulfilment', 'PurchaseOrder');
   step('generate', 'builder', 'order-fulfilment', 'PurchaseOrder', '--force');
-  step('generate', 'command', 'order-fulfilment', 'PlacePurchaseOrder', '--aggregate', 'PurchaseOrder');
-  step('generate', 'query', 'order-fulfilment', 'TrackPurchaseOrder');
+  step('generate', 'repository', 'order-fulfilment', 'PurchaseOrder', '--tenant-scoped');
+  step('generate', 'command', 'order-fulfilment', 'PlacePurchaseOrder', '--aggregate', 'PurchaseOrder', '--permission', 'purchase-order.place');
+  step('generate', 'query', 'order-fulfilment', 'TrackPurchaseOrder', '--public');
   if (!withHttp) return;
   step('generate', 'route', 'order-fulfilment', 'PlacePurchaseOrder', '--method', 'PUT', '--path', '/purchase-orders/:purchaseOrderId');
   step('generate', 'route', 'order-fulfilment', 'TrackPurchaseOrder', '--method', 'GET', '--path', '/purchase-orders/:purchaseOrderId/tracking');

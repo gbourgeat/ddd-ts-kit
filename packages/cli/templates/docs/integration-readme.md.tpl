@@ -10,7 +10,9 @@ TODO(domain): at-least-once, ordering (none across aggregates unless stated here
 
 ## Provider
 
-TODO(domain): which event bus adapter runs in each environment, outbox or not, retry and dead-letter policy, how to replay.
+{{integration.strategy}}
+
+TODO(domain): which event bus adapter runs in each environment, retry and dead-letter policy, how to replay.
 
 ## Versioning policy
 

@@ -1,4 +1,7 @@
 import type { Rule } from '../types.js';
+import { authzActorExplicit } from './authz-actor-explicit.js';
+import { authzDeclared } from './authz-declared.js';
+import { authzInApplication } from './authz-in-application.js';
 import { cleanFunctionSize } from './clean-function-size.js';
 import { cleanNoCommentedOutCode } from './clean-no-commented-out-code.js';
 import { cleanNoEscapeHatch } from './clean-no-escape-hatch.js';
@@ -8,11 +11,15 @@ import { cleanStepdown } from './clean-stepdown.js';
 import { compositionOnlyInModule } from './composition-only-in-module.js';
 import { createConfigValid } from './config-valid.js';
 import { contextDeclaredRelationship } from './context-declared-relationship.js';
+import { contextExtractable } from './context-extractable.js';
 import { contextNoCycle } from './context-no-cycle.js';
 import { contextPublishedLanguageIsAContract } from './context-published-language-is-a-contract.js';
 import { contextPublishedLanguageOnly } from './context-published-language-only.js';
+import { eventsConsumerIdempotent } from './events-consumer-idempotent.js';
 import { eventsDefinedInPublishedLanguage } from './events-defined-in-published-language.js';
 import { eventsNameFormat } from './events-name-format.js';
+import { eventsOutboxRequired } from './events-outbox-required.js';
+import { governanceRecordedDeviation } from './governance-recorded-deviation.js';
 import { languageGlossaryTerm } from './language-glossary-term.js';
 import { languageNoTechnicalName } from './language-no-technical-name.js';
 import { layerApplicationInward } from './layer-application-inward.js';
@@ -60,10 +67,20 @@ const architectureRules: readonly Rule[] = [
   cleanNoNoiseComment,
   cleanNoEscapeHatch,
   cleanNoFlagArgument,
+  eventsOutboxRequired,
+  eventsConsumerIdempotent,
+  contextExtractable,
+  authzDeclared,
+  authzInApplication,
+  authzActorExplicit,
+  governanceRecordedDeviation,
   compositionOnlyInModule,
 ];
 
-/** The suppression check is run by the engine (it needs every directive), but is listed like a rule. */
+/**
+ * The suppression check is run by the engine (it needs every directive), but is listed like a rule.
+ * It holds the form of a directive; governance/recorded-deviation holds the decision record behind its reason.
+ */
 export const SUPPRESSION_RULE = {
   id: SUPPRESSION_RULE_ID,
   description: 'An inline suppression names its rule and gives a reason after `--`.',

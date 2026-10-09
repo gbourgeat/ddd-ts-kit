@@ -1,0 +1,31 @@
+{
+  "name": "@ddd-ts-kit/aspects",
+  "version": "0.1.0",
+  "description": "Cross-cutting behaviour applied from outside: logging, metrics, retry, timeout, circuit breaker and caching as composable wrappers at the composition root, as bus middlewares, or as standard decorators on adapters. The domain stays clean.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./decorators": {
+      "types": "./dist/decorators.d.ts",
+      "default": "./dist/decorators.js"
+    },
+    "./testing": {
+      "types": "./dist/testing.d.ts",
+      "default": "./dist/testing.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@ddd-ts-kit/kernel": "0.1.0"
+  },
+  "devDependencies": {
+    "@ddd-ts-kit/di": "0.1.0"
+  }
+}

@@ -41,6 +41,12 @@ npx ddd-ts-kit generate integration-event <ctx> <Aggregate> <Fact> --json
   (`OutboxPublisher`, `OutboxRelay`, a store from the ORM package): the event is written in
   the transaction of the command and relayed afterwards. Publishing straight to a broker inside a handler loses events.
 
+The outbox is not optional once there is a database (`events/outbox-required`). What depends
+on the transport is the relay and the consumer side: polling or database notification in one
+process, publisher confirms and dead-letter exchange on a queue broker, keyed partitions or
+change data capture on a log. The table is in `docs/ARCHITECTURE.md` ("Outbox, by transport")
+and each provider package documents its strategy.
+
 ## Consume
 
 Declare the relationship first (skill `ddd-ts-kit:model-context`), then:

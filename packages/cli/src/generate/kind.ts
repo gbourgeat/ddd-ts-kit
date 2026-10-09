@@ -15,6 +15,14 @@ export interface KindFlags {
   readonly query: boolean;
   readonly version?: string;
   readonly allowName: boolean;
+  /** The permission a use case requires, as `<aggregate>.<action>`. */
+  readonly permission?: string;
+  /** The use case is reachable by anybody, on purpose. */
+  readonly public: boolean;
+  readonly tenantScoped: boolean;
+  /** What an ADR deviates from, as a config key such as `rules.clean/stepdown`. */
+  readonly deviation?: string;
+  readonly reason?: string;
 }
 
 export interface KindRequest {

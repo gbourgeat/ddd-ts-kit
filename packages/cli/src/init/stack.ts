@@ -1,6 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {
+  AUTHN_STACKS,
+  AUTHZ_STACKS,
+  BROKER_STACKS,
   CI_PLATFORMS,
   CONFIG_FILE,
   DATABASE_STACKS,
@@ -29,6 +32,11 @@ export interface StackOptions {
   readonly events?: string;
   readonly docsUi?: string;
   readonly ci?: string;
+  readonly authn?: string;
+  readonly authz?: string;
+  readonly broker?: string;
+  /** The reason given for running an ORM without the transactional outbox. */
+  readonly allowNoOutbox?: string;
   readonly force: boolean;
 }
 
@@ -40,8 +48,23 @@ export function resolveStack(root: string, options: StackOptions): Config {
   const http = choose(HTTP_STACKS, options.http, 'http') ?? 'express';
   const di = choose(DI_STACKS, options.di, 'di') ?? (http === 'nest' ? 'nest' : 'tsyringe');
   assertNestGoesWithNest(http, di);
-  const stack = { http, di, ...resolveTooling(options), ...resolvePersistence(options), docsUi: http === 'none' ? 'none' : (choose(DOCS_UIS, options.docsUi, 'docs-ui') ?? 'swagger') };
+  const docsUi = http === 'none' ? 'none' : (choose(DOCS_UIS, options.docsUi, 'docs-ui') ?? 'swagger');
+  const persistence = resolvePersistence(options);
+  const stack = { http, di, ...resolveTooling(options), ...persistence, docsUi, ...resolveSecurity(options), broker: resolveBroker(options, persistence.orm) };
   return parseConfig({ stack, contexts: {}, rules: {} });
+}
+
+function resolveSecurity(options: StackOptions): { authn: string; authz: string } {
+  return { authn: choose(AUTHN_STACKS, options.authn, 'authn') ?? 'jwt', authz: choose(AUTHZ_STACKS, options.authz, 'authz') ?? 'rbac' };
+}
+
+function resolveBroker(options: StackOptions, orm: string): string {
+  const broker = choose(BROKER_STACKS, options.broker, 'broker') ?? 'none';
+  if (broker === 'none' || orm !== 'none') return broker;
+  throw new CliError(
+    `--broker ${broker} cannot be combined with --orm none.`,
+    'A broker is reached through the transactional outbox, which needs a database: pick an ORM, or keep --broker none.',
+  );
 }
 
 function resolveTooling(options: StackOptions): { validation: string; tests: string; ci: string } {
@@ -81,5 +104,15 @@ function resolvePersistence(options: StackOptions): { orm: string; database: str
     );
   }
   const events = choose(EVENT_CHOICES, options.events, 'events') ?? (orm === 'none' ? 'in-memory' : 'outbox');
+  assertOutboxWithDatabase({ orm, events }, options.allowNoOutbox);
   return { orm, database, events };
+}
+
+/** docs/ARCHITECTURE.md, `events/outbox-required`: leaving the outbox out with a database is a recorded deviation, never a default. */
+function assertOutboxWithDatabase(stack: { orm: string; events: string }, reason: string | undefined): void {
+  if (stack.orm === 'none' || stack.events === 'outbox' || (reason !== undefined && reason.trim() !== '')) return;
+  throw new CliError(
+    `--events ${stack.events} cannot be combined with --orm ${stack.orm}.`,
+    'With a database, integration events leave through the transactional outbox, or a state change and its event can part ways. Drop --events, or record the decision with --allow-no-outbox "<reason>": it writes a deviation entry and an ADR stub.',
+  );
 }

@@ -176,6 +176,7 @@ function testFiles(config: Config): string[] {
 function orphanExceptions(config: Config): string[] {
   return [
     `^${escape(config.sourceRoot)}/main\\.ts$`,
+    `^${escape(config.sourceRoot)}/apps/[^/]+/main\\.ts$`,
     `^${escape(config.platformDir)}/tracing\\.ts$`,
     `^${escape(config.contextsDir)}/[^/]+/published-language/`,
     `^${escape(config.contextsDir)}/[^/]+/test/fakes/`,

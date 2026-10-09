@@ -2,7 +2,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { checkOpenApiDrift, generateOpenApi, stringifyOpenApi } from '@ddd-ts-kit/http/openapi';
 import { composeApplication } from '{{paths.scriptsToSource}}/platform/application.js';
+import { offlineAuthenticator, SECURITY_SCHEMES } from '{{paths.scriptsToSource}}/platform/auth/authenticator.js';
 import { inertPersistence } from '{{paths.scriptsToSource}}/platform/database/persistence.js';
+import { inProcessEvents } from '{{paths.scriptsToSource}}/platform/events.js';
 
 // Generates openapi/openapi.json from the route definitions; with --check, fails when the
 // committed file differs. The file is a build product: never edit it by hand.
@@ -10,7 +12,8 @@ const target = path.resolve('openapi/openapi.json');
 
 const document = generateOpenApi({
   info: { title: manifestField('name', '{{project.name}}'), version: manifestField('version', '0.0.0') },
-  routes: composeApplication(inertPersistence()).routes,
+  routes: composeApplication(inertPersistence(), { events: inProcessEvents(), authenticator: offlineAuthenticator }).routes,
+  securitySchemes: SECURITY_SCHEMES,
 });
 
 if (process.argv.includes('--check')) {

@@ -1,4 +1,5 @@
 import type { Name } from '../../naming.js';
+import { accessVars, specVars } from '../access.js';
 import { emit, wire } from '../emit.js';
 import type { Kind } from '../kind.js';
 import { concept, label, learnTerms } from '../language.js';
@@ -9,7 +10,7 @@ import { generateRepository } from './repository.js';
 export const commandKind: Kind = {
   name: 'command',
   aliases: [],
-  usage: 'command <context> <UseCaseName> [--aggregate <Name>] [--term "<Term>=<meaning>"]...',
+  usage: 'command <context> <UseCaseName> (--permission <aggregate>.<action> | --public) [--aggregate <Name>] [--term "<Term>=<meaning>"]...',
   summary: 'A command, its handler with injected ports, its spec and its registration on the command bus.',
   positionals: ['context', 'UseCaseName'],
   run: (request) => {
@@ -17,10 +18,12 @@ export const commandKind: Kind = {
     learnTerms(scope);
     const name = concept(scope, request.args[1] ?? '', { what: 'use case', strip: ['command', 'handler'] });
     const aggregate = request.flags.aggregate === undefined ? undefined : existingAggregate(scope, request.flags.aggregate);
+    const access = accessVars(scope, { name, kind: 'Command' });
     if (aggregate !== undefined && !scope.ws.exists(`${scope.dir}/domain/repositories/${aggregate.kebab}.repository.ts`)) {
       generateRepository(scope, aggregate);
     }
-    const context = vars(scope, { name: named(name), ...commandVars(aggregate) });
+    const spec = specVars(scope, access, aggregate === undefined ? [] : [`${aggregate.constant}_REPOSITORY`]);
+    const context = vars(scope, { name: named(name), access, spec, ...commandVars(aggregate) });
     const folder = `application/commands/${name.kebab}`;
     emit(scope, context, [
       ['command/command.ts.tpl', `${folder}/${name.kebab}.command.ts`],
@@ -41,14 +44,15 @@ function commandVars(aggregate: Name | undefined) {
 export const queryKind: Kind = {
   name: 'query',
   aliases: [],
-  usage: 'query <context> <UseCaseName> [--term "<Term>=<meaning>"]...',
+  usage: 'query <context> <UseCaseName> (--permission <aggregate>.<action> | --public) [--term "<Term>=<meaning>"]...',
   summary: 'A query, its handler, its read port with an in-memory adapter and a fake, its spec and its registration on the query bus.',
   positionals: ['context', 'UseCaseName'],
   run: (request) => {
     const scope = openScope(request);
     learnTerms(scope);
     const name = concept(scope, request.args[1] ?? '', { what: 'use case', strip: ['query', 'handler'] });
-    const context = vars(scope, { name: named(name) });
+    const access = accessVars(scope, { name, kind: 'Query' });
+    const context = vars(scope, { name: named(name), access, spec: specVars(scope, access, [`${name.constant}_READER`]) });
     const folder = `application/queries/${name.kebab}`;
     emit(scope, context, [
       ['query/query.ts.tpl', `${folder}/${name.kebab}.query.ts`],

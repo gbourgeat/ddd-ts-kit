@@ -31,7 +31,8 @@ A system is a set of **bounded contexts**. Each one owns a model, a vocabulary a
 src/
   main.ts                        composition root: tracing first, then wiring
   shared-kernel/                 optional: value objects used by two contexts or more
-  platform/                      technical capabilities: config, database, tracing, http server
+  platform/                      technical capabilities: config, database, events, auth, tracing, http server
+  apps/<context>/main.ts         optional: one context run alone as a service
   contexts/<context>/
     CONTEXT.md
     <context>.module.ts          the context's composition: binds ports to adapters
@@ -48,6 +49,7 @@ src/
       commands/<use-case>/       *.command.ts, *.handler.ts
       queries/<use-case>/        *.query.ts, *.handler.ts
       ports/                     *.port.ts         (interfaces to the outside world)
+      authorization/             <context>.permissions.ts, *.policy.ts (who may do what, here)
       event-handlers/            *.event-handler.ts (reactions to this context's domain events)
       integration/
         publishers/              *.publisher.ts    (domain event to integration event)
@@ -80,7 +82,7 @@ presentation ──▶ application ──▶ domain ◀── infrastructure
 | Id | Rule |
 |---|---|
 | `layer/domain-purity` | `domain/` imports only its own `domain/`, the shared kernel and `@ddd-ts-kit/kernel`. No framework, no ORM, no validation library, no Node built-in doing I/O. |
-| `layer/application-inward` | `application/` imports `domain/`, `application/`, published languages and the kernel. Never `infrastructure/` or `presentation/`, never a framework or a driver. |
+| `layer/application-inward` | `application/` imports `domain/`, `application/`, published languages, the kernel and `@ddd-ts-kit/auth` (permissions and policies). Never `infrastructure/` or `presentation/`, never a framework or a driver. |
 | `layer/presentation-no-infrastructure` | `presentation/` imports `application/` (and domain types for mapping), never `infrastructure/`. |
 | `layer/infrastructure-no-presentation` | `infrastructure/` implements ports of `application/` and `domain/`, never imports `presentation/`. |
 | `context/published-language-only` | A file imports from another context only through that context's `published-language/`. |
@@ -112,6 +114,13 @@ presentation ──▶ application ──▶ domain ◀── infrastructure
 | `domain/no-generic-error` | `domain/` and `application/` never `throw new Error(...)`: a business failure is a `DomainError` subclass. |
 | `application/handler-shape` | A `*.handler.ts` file exports one class with a single public method, `execute`. |
 | `application/command-query-separation` | A query handler never saves, deletes or publishes. Default severity `warn`. |
+| `events/outbox-required` | With a database, integration events are published through the transactional outbox, never straight to a broker or a bus from a handler. `stack.events` is `outbox` whenever `stack.orm` is set. |
+| `events/consumer-idempotent` | Every consumer is registered with a stable, unique consumer name and deduplicates through a processed-event store (bound once for the application, or given to the subscription). |
+| `context/extractable` | A context can run alone: its module wires with the kernel and the platform only, it reads no table of another context, shares no transaction with one, and calls another context only through a port whose adapter could be remote. |
+| `authz/declared` | Every command, query and route declares the permission it requires, or declares itself public. Nothing is reachable by default. |
+| `authz/in-application` | The permission is decided in the application layer through the `Authorizer` port. No role or ownership test in `presentation/`, no authorization in `infrastructure/`, no knowledge of the acting user's rights in `domain/` (a context whose model is access itself may hold roles as its own state). |
+| `authz/actor-explicit` | Use cases receive the actor in the command or query. `domain/` and handlers never read an ambient actor; only infrastructure may, for audit columns and tenant scoping. |
+| `governance/recorded-deviation` | A suppression, a lowered severity, an extra directory or an extra allowed package carries a reason and points to a decision record in `docs/adr/`. |
 | `composition/only-in-module` | Adapters are instantiated or registered only in `<context>.module.ts` and `main.ts`. |
 
 Only the module file and `main.ts` are allowed to know every layer.
@@ -122,8 +131,8 @@ Three analyzers hold the rules, each where it is exact:
 
 | Analyzer | Holds | When |
 |---|---|---|
-| `ddd-ts-kit check` (zero dependency, text level) | structure: `tree/*`, `naming/*`, `language/*`, `config/*`, `context/no-cycle`, `test/spec-required`, `test/builder-required`, and a fast approximation of the code rules | at every file write (editor hook), in CI |
-| `@ddd-ts-kit/eslint-plugin` (syntax tree, type-aware) | code: `layer/*`, `context/*` imports, `purity/*`, `clean/*`, `domain/*`, `application/*`, `test/no-mocks`, `events/name-format`. Authoritative when the two disagree | on staged files, in CI |
+| `ddd-ts-kit check` (zero dependency, text level) | structure and project-wide facts: `tree/*`, `naming/*`, `language/*`, `config/*`, `context/no-cycle`, `test/spec-required`, `test/builder-required`, the config side of `events/outbox-required` and `governance/recorded-deviation` (decision records exist), unique consumer names, and a fast approximation of the code rules | at every file write (editor hook), in CI |
+| `@ddd-ts-kit/eslint-plugin` (syntax tree, type-aware) | code: `layer/*`, `context/*` imports and `context/extractable`, `purity/*`, `clean/*`, `domain/*`, `application/*`, `authz/*`, `events/*`, `test/no-mocks`, and the comment side of `governance/recorded-deviation`. Authoritative when the two disagree | on staged files, in CI |
 | dependency-cruiser (resolved import graph) | the same boundaries through barrels and re-exports, cycles between files, orphans, undeclared dependencies | in CI |
 
 knip (dead code and unused dependencies) and the TypeScript compiler in `strict` mode complete the gate.
@@ -169,6 +178,81 @@ provider is technology-agnostic: any `EventBus` (`IntegrationEventPublisher` and
 adapter that passes the provider contract suite, chosen in the composition root. With a
 database, events leave through a transactional outbox: stored in the transaction of the
 command, relayed afterwards.
+
+**Outbox, by transport.** Publishing an integration event and committing the state change it
+describes must succeed or fail together. The rule is one: the handler writes the event to the
+outbox in the transaction of the command, a relay publishes it afterwards, the consumer
+deduplicates. What varies with the tools is the relay and the consumer side:
+
+| Transport | Relay | Consumer side |
+|---|---|---|
+| same process, no broker | polling relay to the in-memory bus (or woken by the database: PostgreSQL `LISTEN/NOTIFY`) | processed-event store in the consumer's transaction |
+| RabbitMQ and other queue brokers | polling relay publishing with publisher confirms, mark published on confirm | durable queue per consumer, manual ack after commit, dead-letter exchange after bounded retries |
+| Kafka and other logs | polling relay, or change data capture reading the outbox table (Debezium outbox router); key = aggregate id for per-aggregate order | consumer group per consumer, offset committed after the handler's transaction, processed-event store for redelivery |
+| cloud queues and topics (SQS/SNS, Pub/Sub) | polling relay, batch publish | visibility timeout above the handler's worst case, redrive policy to a dead-letter queue |
+
+Without a database there is nothing to be atomic with, and the in-memory bus alone is enough.
+Change data capture is a relay strategy, not a way around the outbox table.
+
+**Extractable contexts.** A bounded context is a deployable unit in waiting. Moving one to its
+own service must be a change of composition root and adapters, never of domain or application
+code. Hence: one database schema per context and no cross-context foreign key, join or
+transaction; collaboration through integration events, and for a synchronous need a port in
+the caller (`kind: gateway`) whose adapter is in-process today and an HTTP or RPC client
+tomorrow; configuration read through the platform, namespaced by context; no shared mutable
+state. `src/apps/<context>/main.ts` composes one context with the kernel and the platform, and
+a generated architecture test boots every context alone to prove it stays true.
+
+**Authentication and authorization.** Three separate responsibilities, three places:
+
+- *Authentication* (who is calling) is a platform concern at the boundary: an adapter of the
+  `Authenticator` port verifies the credential and produces an `Actor` (subject, tenant,
+  roles or attributes, never the raw token). Routes and consumers put the actor in the
+  command or query.
+- *Authorization* (may this actor do this, on this) is an application concern: each context
+  declares its permissions in `application/authorization/<context>.permissions.ts`, each
+  command and query names the permission it requires, and a bus middleware asks the
+  `Authorizer` port before the handler runs. Deny by default. Rules that need the state of the
+  aggregate (only the author may edit, not after closing) are policies in
+  `application/authorization/*.policy.ts`, evaluated by the handler through the same port.
+- *Invariants* stay in the domain: "an invoice cannot be paid twice" is not a permission.
+
+The authorization model is the project's choice, behind the one port: roles (RBAC), policies
+over attributes (ABAC), or relationships in the manner of Google Zanzibar (ReBAC: tuples
+`object#relation@subject`, permissions derived by rewriting, check and list operations), in
+process or delegated to a dedicated service. Changing model changes an adapter and the
+permission definitions, not the handlers.
+
+*The current actor.* Use cases get it explicitly, as data of the command or query. Lists are
+filtered by passing an access scope computed by the authorizer to the read port, never by
+filtering in memory after loading. Infrastructure that needs the actor without being handed it
+(audit columns, tenant scoping of every query) reads the `ActorContext` port, set once per
+request or consumed message at the boundary. The domain never sees either.
+
+**Standard interfaces.** The kernel defines the shapes every project shares, so adapters and
+tooling interoperate: `Actor`, `Session`, `ExecutionContext`, `Logger`, `Metrics`, `Cache`,
+`Page` and `PageRequest`, `AuditStamp`, `TenantScoped`, next to `Clock`, `IdGenerator` and
+`UnitOfWork`. A project extends them without forking, by augmenting the extension interfaces
+the kernel leaves open (`SessionExtensions`, `ExecutionContextExtensions`, ...). A project
+that needs a concept of this kind uses the standard one; a parallel home-made `UserContext`
+or `ILogger` is a defect.
+
+**Cross-cutting behaviour.** Logging, metrics, tracing, retry, timeout, circuit breaking and
+caching are never written inside domain or application code. They are applied from outside,
+in this order of preference: wrappers bound at the composition root
+(`.with(retry(...), timeout(...))`, or globally through the `decorate` hook, as tracing is);
+bus middlewares for what concerns every use case; and, for an adapter whose policy is part of
+its definition, a standard decorator on the adapter class in `infrastructure/` or `platform/`.
+None of the three is allowed in `domain/` or `application/`. What an aspect records follows
+the tracing rule: class, method, context, duration, error code; never arguments, results or
+error messages.
+
+**Deviations.** The architecture is not negotiable case by case, but it can be changed
+deliberately. Choosing among supported options (ORM, broker, authorization model, framework)
+is the project owner's call. Bypassing a rule is different: it is either refused, or recorded
+as a decision (`docs/adr/`), with the reason, the scope and the condition for removing it,
+and referenced from the suppression or the config entry. A shortcut that is not written down
+is a defect, whoever asked for it.
 
 **Persistence.** Repositories are interfaces of the domain. Drizzle on PostgreSQL is the
 default adapter family, one database schema per context; Knex, Prisma and TypeORM have

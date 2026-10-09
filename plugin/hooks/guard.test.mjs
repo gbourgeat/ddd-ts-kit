@@ -106,6 +106,28 @@ test('stop is blocked while errors remain, and never twice in a row', () => {
   assert.equal(run('stop', { cwd: root, stop_hook_active: true }).output, undefined);
 });
 
+test('a new suppression is put to the project owner, an untouched one is not', () => {
+  const root = project();
+  const file = join(root, 'src/contexts/ordering/ordering.module.ts');
+  const adding = run('pre-write', { tool_name: 'Edit', tool_input: { file_path: file, old_string: 'const a = 1;', new_string: '// eslint-disable-next-line no-console\nconst a = 1;' } });
+  assert.equal(adding.output.hookSpecificOutput.permissionDecision, 'ask');
+  assert.match(adding.output.hookSpecificOutput.permissionDecisionReason, /docs\/adr/);
+  const keeping = run('pre-write', { tool_name: 'Edit', tool_input: { file_path: file, old_string: '// eslint-disable-next-line x -- y\nconst a = 1;', new_string: '// eslint-disable-next-line x -- y\nconst a = 2;' } });
+  assert.equal(keeping.output, undefined);
+});
+
+test('skipping a test and relaxing the rules both need the owner', () => {
+  const root = project();
+  const spec = run('pre-write', write(join(root, 'src/contexts/ordering/test/unit/order.spec.ts'), {}));
+  assert.equal(spec.output, undefined);
+  const skipped = run('pre-write', { tool_name: 'Write', tool_input: { file_path: join(root, 'src/contexts/ordering/test/unit/order.spec.ts'), content: "it.skip('pays', () => {});" } });
+  assert.equal(skipped.output.hookSpecificOutput.permissionDecision, 'ask');
+  const config = run('pre-write', write(join(root, 'ddd-ts-kit.config.json')));
+  assert.equal(config.output.hookSpecificOutput.permissionDecision, 'ask');
+  const pipeline = run('pre-write', write(join(root, '.github/workflows/ci.yml')));
+  assert.equal(pipeline.output.hookSpecificOutput.permissionDecision, 'ask');
+});
+
 test('malformed input never blocks', () => {
   const result = spawnSync('node', [guard, 'pre-write'], { input: 'not json', encoding: 'utf8' });
   assert.equal(result.status, 0);

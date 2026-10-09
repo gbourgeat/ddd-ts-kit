@@ -1,23 +1,35 @@
 import {
+  FixedActorContext,
   FixedClock,
+  FixedExecutionScope,
+  InMemoryCache,
   InMemoryEventBus,
+  InMemoryLogger,
+  InMemoryMetrics,
   InMemoryProcessedEventStore,
-  InMemoryQueryBus,
   InMemoryUnitOfWork,
   SequentialIdGenerator,
+  executionContext,
+  type Actor,
   type InMemoryCommandBus,
+  type InMemoryQueryBus,
 } from '@ddd-ts-kit/kernel';
+import { ACTOR_CONTEXT, USE_CASE_GUARD, passEveryMessage, type AuthorizationMode } from './authorization.js';
 import { assemble, override, type Application, type Override } from './application.js';
 import { WiringError } from './errors.js';
-import { transactionalCommandBus } from './kernel-module.js';
+import { guardedQueryBus, transactionalCommandBus } from './kernel-module.js';
 import {
+  CACHE,
   CLOCK,
   COMMAND_BUS,
   EVENT_BUS,
   EVENT_PUBLISHER,
   EVENT_SUBSCRIBER,
+  EXECUTION_SCOPE,
   ID_GENERATOR,
   KERNEL_TOKENS,
+  LOGGER,
+  METRICS,
   PROCESSED_EVENTS,
   QUERY_BUS,
   UNIT_OF_WORK,
@@ -34,6 +46,13 @@ export interface TestApplicationOptions {
   readonly now?: Date;
   /** Prefix of the generated identifiers. Default `id`, giving `id-1`, `id-2`... */
   readonly idPrefix?: string;
+  /**
+   * Who infrastructure sees as the current actor. Default: the user `test-user`, without role.
+   * Use cases never read it: a test passes the actor in the command or query.
+   */
+  readonly actor?: Actor;
+  /** See `ApplicationOptions.authorization`. */
+  readonly authorization?: AuthorizationMode;
 }
 
 export interface TestKernel {
@@ -43,6 +62,19 @@ export interface TestKernel {
   readonly eventBus: InMemoryEventBus;
   readonly clock: FixedClock;
   readonly ids: SequentialIdGenerator;
+  /** Change the current actor with `actorContext.actAs(actor)` or `actorContext.run(actor, work)`. */
+  readonly actorContext: FixedActorContext;
+  /**
+   * The execution context infrastructure sees: correlation `test-correlation`, origin `test`.
+   * It follows `actorContext`; replace it with `executionScope.enter(context)`.
+   */
+  readonly executionScope: FixedExecutionScope;
+  /** `logger.entries` lists what was logged. */
+  readonly logger: InMemoryLogger;
+  /** `metrics.samples` lists what was measured. */
+  readonly metrics: InMemoryMetrics;
+  /** Expires by `clock`. */
+  readonly cache: InMemoryCache;
 }
 
 export interface TestApplication extends Application, TestKernel {
@@ -58,7 +90,8 @@ export function fake<T>(target: Token<T>, value: T): Override {
 /**
  * The modules on a deterministic, in-memory kernel (frozen clock, sequential identifiers,
  * in-process buses, idempotent consumers), with the fakes in place of the adapters. Consumers
- * declared with `builder.on(...)` receive events once `start()` was awaited.
+ * declared with `builder.on(...)` receive events once `start()` was awaited. Every use case is
+ * allowed unless a listed module binds the use case guard, as an authorization module does.
  */
 export function createTestApplication(options: TestApplicationOptions): TestApplication {
   const wiring = collectWiring(options.modules);
@@ -67,7 +100,8 @@ export function createTestApplication(options: TestApplicationOptions): TestAppl
   const kernel = createTestKernel(options, (target) => application.resolve(target));
   const application: Application = assemble(wiring, {
     modules: options.modules,
-    overrides: [...kernelOverrides(kernel), ...fakes],
+    overrides: [...kernelOverrides(kernel), ...guardOverride(wiring), ...fakes],
+    ...(options.authorization === undefined ? {} : { authorization: options.authorization }),
   });
   return Object.assign(application, kernel, { get: application.resolve });
 }
@@ -87,15 +121,29 @@ function assertFakesAreUsed(wiring: Wiring, fakes: readonly Override[]): void {
   }
 }
 
+function guardOverride(wiring: Wiring): Override[] {
+  return wiring.bindings.has(USE_CASE_GUARD) ? [] : [override(USE_CASE_GUARD, passEveryMessage)];
+}
+
 const DEFAULT_NOW = new Date('2026-01-01T00:00:00.000Z');
+const DEFAULT_ACTOR: Actor = { id: 'test-user', type: 'user', roles: [], attributes: {} };
 
 function createTestKernel(options: TestApplicationOptions, resolve: Resolve): TestKernel {
+  const clock = new FixedClock(options.now ?? DEFAULT_NOW);
+  const actor = options.actor ?? DEFAULT_ACTOR;
+  const actorContext = new FixedActorContext(actor);
+  const context = executionContext({ correlationId: 'test-correlation', actor, origin: 'test' });
   return {
     commandBus: transactionalCommandBus(resolve),
-    queryBus: new InMemoryQueryBus(),
+    queryBus: guardedQueryBus(resolve),
     eventBus: new InMemoryEventBus(),
-    clock: new FixedClock(options.now ?? DEFAULT_NOW),
+    clock,
     ids: new SequentialIdGenerator(options.idPrefix),
+    actorContext,
+    executionScope: new FixedExecutionScope(context, actorContext),
+    logger: new InMemoryLogger(),
+    metrics: new InMemoryMetrics(),
+    cache: new InMemoryCache(clock),
   };
 }
 
@@ -110,5 +158,10 @@ function kernelOverrides(kernel: TestKernel): Override[] {
     override(EVENT_PUBLISHER, kernel.eventBus),
     override(EVENT_SUBSCRIBER, kernel.eventBus),
     override(PROCESSED_EVENTS, new InMemoryProcessedEventStore()),
+    override(ACTOR_CONTEXT, kernel.actorContext),
+    override(EXECUTION_SCOPE, kernel.executionScope),
+    override(LOGGER, kernel.logger),
+    override(METRICS, kernel.metrics),
+    override(CACHE, kernel.cache),
   ];
 }

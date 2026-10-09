@@ -37,7 +37,7 @@ Static imports, type-only imports, `export ... from`, dynamic `import()`, `requi
 
 ## Options
 
-None. `applicationAllowedPackages` in `ddd-ts-kit.config.json` extends the allow-list.
+None. `applicationAllowedPackages` in `ddd-ts-kit.config.json` replaces the allow-list, which defaults to `@ddd-ts-kit/kernel` and `@ddd-ts-kit/auth` (permissions and policies are declared in `application/authorization/`).
 
 `rules."layer/application-inward"` in `ddd-ts-kit.config.json` set to `off` silences the rule, and `// ddd-ts-kit-disable-next-line layer/application-inward -- <reason>` silences one line, exactly as for `ddd-ts-kit check`.
 

@@ -66,23 +66,38 @@ export class InMemoryProcessedEventStore implements ProcessedEventStore {
   readonly #seen = new Set<string>();
 
   async markProcessed(consumer: string, eventId: string): Promise<boolean> {
-    // JSON keeps the pair unambiguous: 'a:b' + 'c' must not equal 'a' + 'b:c'.
-    const key = JSON.stringify([consumer, eventId]);
+    const key = keyOf(consumer, eventId);
     if (this.#seen.has(key)) return false;
     this.#seen.add(key);
     return true;
   }
+
+  async release(consumer: string, eventId: string): Promise<void> {
+    this.#seen.delete(keyOf(consumer, eventId));
+  }
 }
 
-/** Wraps a handler so a redelivered event is processed once per consumer. */
+// JSON keeps the pair unambiguous: 'a:b' + 'c' must not equal 'a' + 'b:c'.
+function keyOf(consumer: string, eventId: string): string {
+  return JSON.stringify([consumer, eventId]);
+}
+
+/**
+ * Wraps a handler so a redelivered event is processed once per consumer. A failed handler
+ * gives its mark back, otherwise the redelivery would be skipped and the event lost.
+ */
 export function idempotent(
   consumer: string,
   store: ProcessedEventStore,
   handler: IntegrationEventHandler,
 ): IntegrationEventHandler {
   return async (event) => {
-    if (await store.markProcessed(consumer, event.id)) {
+    if (!(await store.markProcessed(consumer, event.id))) return;
+    try {
       await handler(event);
+    } catch (error) {
+      await store.release?.(consumer, event.id);
+      throw error;
     }
   };
 }

@@ -75,7 +75,7 @@ slash by a dash. `strict` sets every rule to `error`.
 | [`clean/no-flag-argument`](docs/rules/clean-no-flag-argument.md) | `ddd-ts-kit/clean-no-flag-argument` | no boolean parameter on a public method of the domain or on `execute` | `warn` | custom |
 | [`clean/no-commented-out-code`](docs/rules/clean-no-commented-out-code.md) | `ddd-ts-kit/clean-no-commented-out-code` | no comment that parses as code | `error` | custom |
 | [`clean/no-noise-comment`](docs/rules/clean-no-noise-comment.md) | `ddd-ts-kit/clean-no-noise-comment` | no banner, journal, closing-brace label, empty tag, ownerless TODO, comment repeating a name | `warn` | custom |
-| [`clean/no-escape-hatch`](docs/rules/clean-no-escape-hatch.md) | `ddd-ts-kit/clean-no-escape-hatch` | no type assertion outside mappers and infrastructure, no `eslint-disable` without reason | `error` | custom, plus 3 standard rules (below) |
+| [`clean/no-escape-hatch`](docs/rules/clean-no-escape-hatch.md) | `ddd-ts-kit/clean-no-escape-hatch` | no type assertion outside mappers, infrastructure and the declared `adapterGlobs`, no `eslint-disable` without reason | `error` | custom, plus 3 standard rules (below) |
 | [`domain/aggregate-encapsulation`](docs/rules/domain-aggregate-encapsulation.md) | `ddd-ts-kit/domain-aggregate-encapsulation` | aggregates and entities: no public constructor, no public mutable property, no setter | `error` | custom |
 | [`domain/value-object-immutability`](docs/rules/domain-value-object-immutability.md) | `ddd-ts-kit/domain-value-object-immutability` | value objects: every property `readonly`, no setter, no write to `this` | `error` | custom |
 | [`domain/no-generic-error`](docs/rules/domain-no-generic-error.md) | `ddd-ts-kit/domain-no-generic-error` | no `throw new Error(...)` in `domain/` and `application/` | `error` | custom |
@@ -83,6 +83,13 @@ slash by a dash. `strict` sets every rule to `error`.
 | [`application/command-query-separation`](docs/rules/application-command-query-separation.md) | `ddd-ts-kit/application-command-query-separation` | nothing under `application/queries` calls `save`, `delete`, `publish` on a dependency | `warn` | custom |
 | [`test/no-mocks`](docs/rules/test-no-mocks.md) | `ddd-ts-kit/test-no-mocks` | no `vi.mock`, `vi.fn`, `vi.spyOn`, their `jest` twins or a mocking library in a context's tests | `warn` | custom |
 | [`events/name-format`](docs/rules/events-name-format.md) | `ddd-ts-kit/events-name-format` | event names follow `<context>.<aggregate>.<fact>` in kebab-case | `error` | custom |
+| [`events/outbox-required`](docs/rules/events-outbox-required.md) | `ddd-ts-kit/events-outbox-required` | no broker client and no concrete bus in `domain/` and `application/`; a publisher depends on the `IntegrationEventPublisher` port | `error` | custom |
+| [`events/consumer-idempotent`](docs/rules/events-consumer-idempotent.md) | `ddd-ts-kit/events-consumer-idempotent` | a consumer is declared with a `consumer` name and a processed-event store, never by a bare `subscribe` | `error` | custom |
+| [`context/extractable`](docs/rules/context-extractable.md) | `ddd-ts-kit/context-extractable` | no schema or table of another context, no exported mutable state, no token of another context wired in the module | `error` | custom |
+| [`authz/declared`](docs/rules/authz-declared.md) | `ddd-ts-kit/authz-declared` | a registered command or query says `.requires(...)` or `.public()`, a route declares `security`, an authorized message forwards its actor | `error` | custom |
+| [`authz/in-application`](docs/rules/authz-in-application.md) | `ddd-ts-kit/authz-in-application` | no role test in `presentation/`, no authorization in `infrastructure/`, no actor or rights in `domain/` | `error` | custom |
+| [`authz/actor-explicit`](docs/rules/authz-actor-explicit.md) | `ddd-ts-kit/authz-actor-explicit` | no `ActorContext` or `AsyncLocalStorage` in `domain/` and `application/` | `error` | custom |
+| [`governance/recorded-deviation`](docs/rules/governance-recorded-deviation.md) | `ddd-ts-kit/governance-recorded-deviation` | every suppression names its rules and points to `ADR-<number>` after `--` | `error` | custom |
 
 `domain/*` and `application/*` ids are added by this plugin: the shape of a class needs a syntax
 tree, so the CLI checker has no equivalent.
@@ -153,7 +160,8 @@ editor after changing `ddd-ts-kit.config.json`.
 
 Two things work as with the CLI checker: `rules.<id>: "off"` in the config silences the rule
 even when the ESLint config enables it, and `// ddd-ts-kit-disable-next-line <id> -- <reason>`
-silences one line for both tools. A suppression without a reason silences nothing.
+silences one line for both tools. A suppression without a reason silences nothing, and
+`governance/recorded-deviation` asks that the reason point to a decision record (`ADR-<number>`).
 
 ## With `ddd-ts-kit check`
 
@@ -161,8 +169,8 @@ Two tools, one set of ids, no overlap of authority.
 
 | Concern | Authority | Why |
 |---|---|---|
-| imports and boundaries (`layer/*`, `context/published-language-only`, `context/declared-relationship`, `context/published-language-is-a-contract`), `purity/*`, `clean/*`, `test/no-mocks`, `events/name-format`, `domain/*`, `application/*` | this plugin | it reads the syntax tree: no false positive from a string or a comment, shadowing and arrow functions are understood |
-| the tree (`tree/closed`, `tree/context-doc`), names and files (`naming/*`, `test/spec-required`, `test/builder-required`), the language (`language/*`), the config (`config/*`, `context/no-cycle`), `events/defined-in-published-language`, `composition/only-in-module` | `ddd-ts-kit check` | they judge the project, the glossary and files that are not sources; ESLint judges one source at a time |
+| imports and boundaries (`layer/*`, `context/published-language-only`, `context/declared-relationship`, `context/published-language-is-a-contract`), `purity/*`, `clean/*`, `test/no-mocks`, `events/name-format`, `domain/*`, `application/*`, the code side of `events/outbox-required`, `events/consumer-idempotent`, `context/extractable`, `authz/*` and `governance/recorded-deviation` | this plugin | it reads the syntax tree: no false positive from a string or a comment, shadowing and arrow functions are understood |
+| the tree (`tree/closed`, `tree/context-doc`), names and files (`naming/*`, `test/spec-required`, `test/builder-required`), the language (`language/*`), the config (`config/*`, `context/no-cycle`), `events/defined-in-published-language`, `composition/only-in-module`, the config side of the ids above (`stack.events`, lowered severities, that a decision record exists) | `ddd-ts-kit check` | they judge the project, the glossary and files that are not sources; ESLint judges one source at a time |
 | the real dependency graph (barrels, cycles, orphans, dev dependencies in production code) | dependency-cruiser, configured by `pipeline/depcruise-config.mjs` | it resolves modules instead of classifying paths |
 
 The CLI keeps approximating the code-level rules with regular expressions, without dependency:

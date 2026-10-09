@@ -35,6 +35,8 @@ export interface Config {
 const DEFAULT_LIMITS: Limits = { maxParameters: 3, maxFunctionLines: 30 };
 
 const KERNEL = ['@ddd-ts-kit/kernel'];
+/** The application layer declares its permissions and policies with `@ddd-ts-kit/auth`, which imports the kernel only. */
+const APPLICATION = [...KERNEL, '@ddd-ts-kit/auth'];
 
 const SCHEMA_LIBRARIES: Readonly<Record<string, readonly string[]>> = {
   zod: ['zod'],
@@ -60,7 +62,7 @@ export function parseConfig(raw: unknown): Config {
     contexts: mapEntries(source['contexts'], parseContext),
     rules: mapEntries(source['rules'], String),
     domainAllowedPackages: strings(source['domainAllowedPackages'], KERNEL),
-    applicationAllowedPackages: strings(source['applicationAllowedPackages'], KERNEL),
+    applicationAllowedPackages: strings(source['applicationAllowedPackages'], APPLICATION),
     publishedLanguageAllowedPackages: strings(source['publishedLanguageAllowedPackages'], contractPackages(source['stack'])),
     limits: parseLimits(source['limits']),
   };

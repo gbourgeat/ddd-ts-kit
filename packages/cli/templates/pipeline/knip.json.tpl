@@ -13,6 +13,6 @@
   "ignoreExportsUsedInFile": true,
   "vitest": {
     "config": ["vitest.config.ts"{{knip.e2eConfig}}],
-    "entry": ["{{config.sourceRoot}}/**/*.spec.ts"{{knip.e2eSpecs}}]
+    "entry": ["{{config.sourceRoot}}/**/*.spec.ts", "test/architecture/**/*.spec.ts"{{knip.e2eSpecs}}]
   }
 }

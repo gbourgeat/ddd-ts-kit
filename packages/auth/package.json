@@ -1,0 +1,58 @@
+{
+  "name": "@ddd-ts-kit/auth",
+  "version": "0.1.0",
+  "description": "Authentication and authorization behind ports: actors, permissions declared per use case, role, attribute and relationship (Zanzibar-style) based authorizers, deny by default.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./jwt": {
+      "types": "./dist/jwt.d.ts",
+      "default": "./dist/jwt.js"
+    },
+    "./rebac": {
+      "types": "./dist/rebac.d.ts",
+      "default": "./dist/rebac.js"
+    },
+    "./testing": {
+      "types": "./dist/testing.d.ts",
+      "default": "./dist/testing.js"
+    },
+    "./di": {
+      "types": "./dist/di.d.ts",
+      "default": "./dist/di.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@ddd-ts-kit/kernel": "0.1.0"
+  },
+  "peerDependencies": {
+    "@ddd-ts-kit/di": "0.1.0",
+    "@ddd-ts-kit/testing": "0.1.0",
+    "jose": "^6.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@ddd-ts-kit/di": {
+      "optional": true
+    },
+    "@ddd-ts-kit/testing": {
+      "optional": true
+    },
+    "jose": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@ddd-ts-kit/di": "0.1.0",
+    "@ddd-ts-kit/http": "0.1.0",
+    "@ddd-ts-kit/testing": "0.1.0",
+    "jose": "^6.0.0"
+  }
+}

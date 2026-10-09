@@ -195,6 +195,71 @@ const issueInvoiceHandler = new IssueInvoiceHandler(invoiceRepository);`,
   'config/suppression-needs-reason': {
     why: 'An exception to an architecture rule is a decision someone will question later. The reason written next to it is what makes it reviewable; a bare suppression is indistinguishable from a shortcut.',
     bad: `// ddd-ts-kit-disable-next-line layer/domain-purity`,
-    good: `// ddd-ts-kit-disable-next-line layer/domain-purity -- decimal.js is our money arithmetic, approved in ADR 12`,
+    good: `// ddd-ts-kit-disable-next-line layer/domain-purity -- ADR-0012: decimal.js is our money arithmetic`,
+  },
+  'events/outbox-required': {
+    why: 'Publishing an event and committing the state change it describes must succeed or fail together. A handler that talks to a broker or a bus publishes events of transactions that roll back, and loses events when the broker is down. Written to the outbox in the transaction of the command, the event is relayed afterwards, whatever the transport.',
+    bad: `// application/commands/issue-invoice/issue-invoice.handler.ts
+import { connect } from 'amqplib';
+// ddd-ts-kit.config.json
+"stack": { "orm": "drizzle", "events": "in-memory" }`,
+    good: `// application/commands/issue-invoice/issue-invoice.handler.ts
+constructor(private readonly publisher: IntegrationEventPublisher) {}
+// platform/platform.module.ts
+eventPublisher: new OutboxPublisher(persistence.outbox),`,
+  },
+  'events/consumer-idempotent': {
+    why: 'Delivery is at least once: a consumer sees the same event again after a retry, a restart or a replay. The processed-event store recognises a redelivery by the pair consumer name and event id, in the transaction of the handler. A consumer without a name, or sharing the name of another, either handles events twice or skips events it never handled.',
+    bad: `// billing.module.ts
+subscriber.subscribe('catalog.product.listed', (event) => productListedConsumer.handle(event));`,
+    good: `// billing.module.ts
+builder.on(productListedV1, { consumer: 'billing.product-listed' }).handledBy(ProductListedConsumer, [COMMAND_BUS]);
+// or, wired by hand
+consume(productListedV1, { consumer: 'billing.product-listed', processed, unitOfWork }, (event) => productListedConsumer.handle(event));`,
+  },
+  'context/extractable': {
+    why: 'A bounded context is a deployable unit in waiting. Moving one to its own service must change a composition root and adapters, never domain or application code. A module that wires another context, a repository that reads its tables, a handler that loads its aggregates or a map shared through an export all hold only while both live in one process and one database.',
+    bad: `// contexts/shipping/infrastructure/persistence/drizzle-parcel.repository.ts
+import { invoices } from '../../../billing/infrastructure/persistence/invoice.schema.js';
+export const cache = new Map<string, Parcel>();`,
+    good: `// contexts/shipping/application/ports/invoice-status.gateway.port.ts
+export interface InvoiceStatusGateway { isPaid(invoiceId: string): Promise<boolean> }
+// contexts/shipping/infrastructure/external/in-process-invoice-status.gateway.ts
+import type { InvoiceStatus } from '../../../billing/published-language/index.js';`,
+  },
+  'authz/declared': {
+    why: 'A use case nobody thought about is reachable by everybody. Declaring the permission next to the registration, or declaring the use case public, makes the decision visible in review and lets the bus middleware refuse everything else. The same holds for a route: its security is part of the contract, not a default.',
+    bad: `builder.command(VoidInvoiceCommand).handledBy(VoidInvoiceHandler, [INVOICE_REPOSITORY]);
+defineRoute({ method: 'POST', path: '/invoices/:id/void' }, handler);`,
+    good: `builder.command(VoidInvoiceCommand).requires(billingPermissions['invoice.void']).handledBy(VoidInvoiceHandler, [INVOICE_REPOSITORY]);
+builder.query(GetCatalogQuery).public().handledBy(GetCatalogHandler, [CATALOG]);
+defineRoute({ method: 'POST', path: '/invoices/:id/void', security: ['bearer'] }, handler);`,
+  },
+  'authz/in-application': {
+    why: 'A right decided in a route is skipped by every other entry point: a consumer, a job, another route. Decided in an adapter or in an aggregate, it is invisible and tied to one authorization model. In the application layer, behind the Authorizer port, every right is declared once, tested once, and changing from roles to policies or relationships changes an adapter only.',
+    bad: `// presentation/http/void-invoice.route.ts
+if (!context.principal.roles.includes('admin')) return { status: 403 };`,
+    good: `// presentation/http/void-invoice.route.ts
+await commandBus.execute(new VoidInvoiceCommand(actorOf(context.principal), params.invoiceId));
+// application/commands/void-invoice/void-invoice.handler.ts
+await this.access.authorize(command.actor, billingPermissions['invoice.void'], invoice);`,
+  },
+  'authz/actor-explicit': {
+    why: 'A handler that reads "the current user" from an ambient context depends on something no signature shows: a consumer or a job that forgot to set it fails at run time, and a test has to set a global. With the actor as data of the command, the use case says who acts, and any caller can send it. Infrastructure alone reads the ambient actor, for audit columns and tenant scoping.',
+    bad: `// application/commands/void-invoice/void-invoice.handler.ts
+const actor = this.actors.require();`,
+    good: `// application/commands/void-invoice/void-invoice.command.ts
+export class VoidInvoiceCommand extends AuthorizedCommand {}
+// application/commands/void-invoice/void-invoice.handler.ts
+const { actor } = command;`,
+  },
+  'governance/recorded-deviation': {
+    why: 'The architecture can be changed deliberately, not case by case. A suppression, a lowered severity or a widened list that points to no decision is indistinguishable from a shortcut, and gets copied. The decision record says why, for what scope and until when, so the exception can be reviewed today and removed later.',
+    bad: `// eslint-disable-next-line no-console -- needed for the demo
+"rules": { "test/spec-required": "off" }`,
+    good: `// eslint-disable-next-line no-console -- ADR-0004: startup banner read by operations
+"rules": { "test/spec-required": "off" },
+"deviations": [{ "what": "rules.test/spec-required", "adr": "0009", "reason": "Generated adapters are covered by the contract suite." }]
+// docs/adr/0004-startup-banner.md, docs/adr/0009-no-spec-for-generated-adapters.md`,
   },
 };

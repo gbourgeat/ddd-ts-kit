@@ -8,7 +8,7 @@ export default defineConfig(({ mode }) => ({
   resolve: { alias: { '{{alias.bare}}': fileURLToPath(new URL('./{{config.sourceRoot}}', import.meta.url)) } },
   test: {
     projects: [
-      { extends: true, test: { name: 'unit', include: ['{{config.sourceRoot}}/**/*.spec.ts'], exclude: [INTEGRATION_SPECS] } },
+      { extends: true, test: { name: 'unit', include: ['{{config.sourceRoot}}/**/*.spec.ts', 'test/architecture/**/*.spec.ts'], exclude: [INTEGRATION_SPECS] } },
       { extends: true, test: { name: INTEGRATION_MODE, include: [INTEGRATION_SPECS] } },
     ],
     coverage: {

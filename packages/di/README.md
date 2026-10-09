@@ -118,6 +118,11 @@ survive the renaming of a class.
 | `EVENT_PUBLISHER` | `IntegrationEventPublisher` | the event bus | `eventPublisher` |
 | `EVENT_SUBSCRIBER` | `IntegrationEventSubscriber` | the event bus | `eventSubscriber` |
 | `PROCESSED_EVENTS` | `ProcessedEventStore` | `InMemoryProcessedEventStore` | `processedEvents` |
+| `EXECUTION_SCOPE` | `ExecutionScope` | `AsyncLocalStorageExecutionScope` | `executionScope` |
+| `ACTOR_CONTEXT` | `ActorContext` | `ScopedActorContext`: the actor of the execution scope | `actorContext` |
+| `LOGGER` | `Logger` | `NoopLogger` | `logger` |
+| `METRICS` | `Metrics` | `NoopMetrics` | `metrics` |
+| `CACHE` | `Cache` | `InMemoryCache` on `CLOCK` | `cache` |
 
 An option is an instance or a `(resolve) => instance` factory. An adapter with dependencies of
 its own reads better in the module that owns them:
@@ -150,6 +155,10 @@ spec touches:
 | `eventBus` | `InMemoryEventBus`; `eventBus.published` lists what the use cases announced |
 | `clock` | `FixedClock` at `now` (default `2026-01-01T00:00:00.000Z`); `clock.advance(ms)` |
 | `ids` | `SequentialIdGenerator`: `id-1`, `id-2`... |
+| `actorContext` | `FixedActorContext`; `actAs(actor)` changes who infrastructure sees |
+| `executionScope` | `FixedExecutionScope` (correlation `test-correlation`, origin `test`), following `actorContext` |
+| `logger`, `metrics` | `InMemoryLogger` and `InMemoryMetrics`: assert `logger.entries`, `metrics.samples` |
+| `cache` | `InMemoryCache` on `clock` |
 | `get(token)` | `resolve`, typed by the token |
 
 A fake must stand for a token that a module binds or that a class depends on, otherwise
@@ -205,3 +214,31 @@ factory is reported when it is resolved (`DEPENDENCY_CYCLE`, `UNBOUND_TOKEN`).
 consumers included, with `{ token, context, kind? }`, and returns the instance to hand out. It
 is the place for cross-cutting wrappers such as tracing; see the README of
 `@ddd-ts-kit/tracing`. This package depends on no tracing library.
+
+One binding takes its own wrappers with `.with(...)`, the first outermost:
+
+```ts
+builder.bind(PAYMENTS).toClass(HttpPaymentGateway, [HTTP]).as('external').with(retry({ attempts: 3 }), timeout(2000));
+```
+
+A `BindingAspect` is `(instance, { kind?, className, context, token }) => instance`; the aspects
+of `@ddd-ts-kit/aspects` fit as they are, and its `aspects(...)` builds a `decorate` hook. The
+`decorate` hook comes around the aspects of a binding.
+
+## Access control
+
+A use case says what it requires where it is registered, or says it is public:
+
+```ts
+builder.command(IssueInvoice).requires(permissions['invoice.issue']).handledBy(IssueInvoiceHandler, [INVOICES, CLOCK]);
+builder.query(GetCatalog).public().handledBy(GetCatalogHandler, [CATALOG]);
+```
+
+`.requires` exists only for messages that carry an actor (`AuthorizedCommand`,
+`AuthorizedQuery` of the kernel). With `createApplication({ modules, authorization: 'required' })`
+an application whose command or query declares neither does not start
+(`UNDECLARED_AUTHORIZATION`), and one that declares them without a module enforcing them does
+not either (`AUTHORIZATION_NOT_ENFORCED`). The enforcement itself, the authorizers and the
+tokens typed by them live in `@ddd-ts-kit/auth` (`authorizationModule` from
+`@ddd-ts-kit/auth/di`). `ACTOR_CONTEXT` is bound by `kernelModule()`; the test application
+takes an `actor` option.

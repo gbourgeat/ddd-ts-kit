@@ -11,6 +11,7 @@ export function initFiles(config: Config): InitFile[] {
   return [
     ...projectFiles(config),
     ...platformFiles(config),
+    ...authFiles(config),
     ...persistenceFiles(config),
     ...scriptFiles(config),
     ...endToEndFiles(config),
@@ -33,7 +34,7 @@ function projectFiles(config: Config): InitFile[] {
 }
 
 function platformFiles(config: Config): InitFile[] {
-  const { http, di, events, docsUi } = config.stack;
+  const { http, di, events, docsUi, broker } = config.stack;
   const platform = config.platformDir;
   const family = di === 'tsyringe' ? 'tsyringe' : 'manual';
   return [
@@ -42,6 +43,11 @@ function platformFiles(config: Config): InitFile[] {
     [`${platform}/config.ts`, 'init/platform/config.ts.tpl'],
     [`${platform}/platform.module.ts`, `init/platform/platform.module.${family}.ts.tpl`],
     [`${platform}/application.ts`, `init/platform/application.${family}.ts.tpl`],
+    [`${platform}/events.ts`, `init/platform/events.${broker}.ts.tpl`],
+    ...when(broker === 'custom', [
+      [`${platform}/custom-event-bus.ts`, 'init/platform/custom-event-bus.ts.tpl'],
+      [`${platform}/custom-event-bus.contract.spec.ts`, 'init/platform/custom-event-bus.contract.spec.ts.tpl'],
+    ]),
     ...when(events === 'outbox', [[`${platform}/outbox-relay.ts`, 'init/platform/outbox-relay.ts.tpl']]),
     ...when(http !== 'none', [[`${platform}/http-server.ts`, `init/platform/http-server.${http}.ts.tpl`]]),
     ...when(docsUi !== 'none', [[`${platform}/http-docs.ts`, 'init/platform/http-docs.ts.tpl']]),
@@ -50,6 +56,28 @@ function platformFiles(config: Config): InitFile[] {
 
 function when(condition: boolean, files: readonly InitFile[]): readonly InitFile[] {
   return condition ? files : [];
+}
+
+/** What each authorization model needs next to its adapter of the `Authorizer` port. */
+const AUTHORIZATION_MODEL: Readonly<Record<string, readonly string[]>> = {
+  rbac: ['roles.ts'],
+  abac: ['attribute-policies.ts'],
+  rebac: ['relationships.ts', 'relationships.contract.spec.ts', 'permissions.ts'],
+  custom: ['custom-authorizer.ts', 'custom-authorizer.contract.spec.ts', 'permissions.ts'],
+};
+
+/** Who is calling (at the HTTP boundary only) and what they may do (behind one port, whatever the model). */
+function authFiles(config: Config): InitFile[] {
+  const { http, di, authn, authz } = config.stack;
+  const file = (name: string, template = name): InitFile => [`${config.platformDir}/auth/${name}`, `init/platform/auth/${template}.tpl`];
+  return [
+    file('authorization.ts', `authorization.${di === 'tsyringe' ? 'tsyringe' : 'manual'}.ts`),
+    file('authorizer.ts', `authorizer.${authz}.ts`),
+    file('access-policies.ts'),
+    file('audit.ts'),
+    ...(AUTHORIZATION_MODEL[authz] ?? []).map((name) => file(name)),
+    ...when(http !== 'none', [file('authenticator.ts', `authenticator.${authn}.ts`), file('http-boundary.ts')]),
+  ];
 }
 
 /** Storage adapters of the platform, by ORM. Each exports the same `Persistence` from persistence.ts. */
@@ -111,9 +139,10 @@ const WITH_TEST_DATABASE = ['drizzle', 'knex', 'prisma', 'typeorm'];
 
 /** End-to-end tests drive the application through HTTP: without an HTTP stack there is nothing to set up. */
 function endToEndFiles(config: Config): InitFile[] {
-  const { http, tests, orm } = config.stack;
+  const { http, tests, orm, authn } = config.stack;
   if (http === 'none') return [];
   return [
+    ['test/e2e/support/credentials.ts', `init/e2e/credentials.${authn}.ts.tpl`],
     tests === 'jest' ? ['jest.e2e.config.js', 'init/e2e/jest.e2e.config.js.tpl'] : ['vitest.e2e.config.ts', 'init/e2e/vitest.e2e.config.ts.tpl'],
     ['test/e2e/support/application.ts', `init/e2e/application.${WITH_TEST_DATABASE.includes(orm) ? 'database' : 'memory'}.ts.tpl`],
   ];

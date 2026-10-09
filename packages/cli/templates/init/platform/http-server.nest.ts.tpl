@@ -3,6 +3,7 @@ import { Server } from 'node:http';
 import { NestFactory } from '@nestjs/core';
 import type { Route } from '@ddd-ts-kit/http';
 import { createAppModule } from './application.js';
+import type { HttpBoundary } from './auth/http-boundary.js';
 import type { AppConfig } from './config.js';
 {{#if docs.any}}
 import { withDocumentation } from './http-docs.js';
@@ -14,12 +15,12 @@ export interface HttpServer {
   close(): Promise<void>;
 }
 
-export async function startHttpServer(routes: readonly Route[], config: AppConfig): Promise<HttpServer> {
+export async function startHttpServer(routes: readonly Route[], config: AppConfig, boundary: HttpBoundary): Promise<HttpServer> {
 {{#if docs.any}}
-  const app = await NestFactory.create(createAppModule(withDocumentation(routes, config)), { logger: ['error', 'warn'] });
+  const app = await NestFactory.create(createAppModule(withDocumentation(routes, config), boundary), { logger: ['error', 'warn'] });
 {{/if}}
 {{#unless docs.any}}
-  const app = await NestFactory.create(createAppModule(routes), { logger: ['error', 'warn'] });
+  const app = await NestFactory.create(createAppModule(routes, boundary), { logger: ['error', 'warn'] });
 {{/unless}}
   await app.listen(config.port);
   return { port: boundPort(app.getHttpServer()), close: () => app.close() };

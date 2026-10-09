@@ -10,7 +10,7 @@ import { existingAggregate } from './domain.js';
 export const repositoryKind: Kind = {
   name: 'repository',
   aliases: [],
-  usage: 'repository <context> <Aggregate>',
+  usage: 'repository <context> <Aggregate> [--tenant-scoped]',
   summary: "A repository interface, its in-memory fake, the adapter of the project's ORM with its mapper, the contract suite both pass, and its registration.",
   positionals: ['context', 'Aggregate'],
   run: (request) => {
@@ -61,7 +61,7 @@ export function generateRepository(scope: Scope, aggregate: Name): void {
   const { orm } = scope.config.stack;
   const adapter = ADAPTERS[orm];
   const prefix = { pascal: adapter.prefix, kebab: adapter.prefix.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase(), needsDatabase: adapter.prefix !== 'InMemory' };
-  const context = vars(scope, { aggregate: named(aggregate), adapter: prefix });
+  const context = vars(scope, { aggregate: named(aggregate), adapter: prefix, tenant: tenantVars(scope) });
   emit(scope, context, [
     ['repository/repository.ts.tpl', `domain/repositories/${aggregate.kebab}.repository.ts`],
     ...adapter.files(aggregate, scope.context),
@@ -73,6 +73,21 @@ export function generateRepository(scope: Scope, aggregate: Name): void {
   scope.ws.note(
     `Fake${aggregate.pascal}Repository (test/fakes) and ${adapter.prefix}${aggregate.pascal}Repository pass the same repositoryContract (test/integration): handlers are tested with the fake.`,
   );
+}
+
+const TENANT_AWARE: readonly OrmStack[] = ['drizzle', 'knex'];
+
+/**
+ * `--tenant-scoped`: the adapter reads the tenant of the current actor from `ActorContext` and
+ * confines every statement to it. Defence in depth: the permission is still decided in the application layer.
+ */
+function tenantVars(scope: Scope) {
+  const asked = scope.flags.tenantScoped;
+  const scoped = asked && TENANT_AWARE.includes(scope.config.stack.orm);
+  if (asked && !scoped) {
+    scope.ws.note(`--tenant-scoped is generated for drizzle and knex only: with ${scope.config.stack.orm}, add a tenant column to the storage, inject ActorContext in the adapter and filter every statement on \`actors.require().tenantId\`.`);
+  }
+  return { scoped, omitted: scoped ? "'version' | 'tenantId'" : "'version'", omittedSnake: scoped ? "'version' | 'tenant_id'" : "'version'" };
 }
 
 /** The table or model of the aggregate, declared where the migration tooling of the ORM reads it. */

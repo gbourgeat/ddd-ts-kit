@@ -2,8 +2,10 @@ import { addContextToConfigText, CLASSIFICATIONS, CONFIG_FILE, isOneOf, RELATION
 import { refreshContextDoc } from '../../docs/context-doc.js';
 import { CliError } from '../../errors.js';
 import { parseContextName, type Name } from '../../naming.js';
+import type { RenderContext } from '../../render.js';
 import { renderTemplate } from '../../templates.js';
 import type { Workspace } from '../../workspace.js';
+import { permissionsFile } from '../access.js';
 import { applyWiring } from '../emit.js';
 import type { Kind } from '../kind.js';
 import { parseTerms, type GlossaryRow } from '../language.js';
@@ -41,7 +43,7 @@ export function generateContext(ws: Workspace, config: Config, request: ContextR
   assertUpstreamsExist(config, context, request.upstreams);
 
   const existing = config.contexts[context.kebab];
-  const entry = existing ?? { classification, upstreams: request.upstreams, extraDirectories: [] };
+  const entry = existing ?? { classification, upstreams: request.upstreams, extraDirectories: [], deployable: false };
   const next: Config = { ...config, contexts: { ...config.contexts, [context.kebab]: entry } };
   if (existing === undefined) declareInConfig(ws, context, entry);
 
@@ -110,5 +112,16 @@ function writeContextFiles(ws: Workspace, plan: { config: Config; context: Name;
   const family = config.stack.di === 'tsyringe' ? 'tsyringe' : 'manual';
   ws.create(`${dir}/${context.kebab}.module.ts`, renderTemplate(`context/module.${family}.ts.tpl`, vars));
   ws.create(`${dir}/published-language/index.ts`, renderTemplate('context/published-language-index.ts.tpl', vars));
+  ws.create(`${dir}/${permissionsFile(context)}`, renderTemplate('context/permissions.ts.tpl', vars));
+  registerPermissions(ws, config, vars);
+  const proof = 'test/architecture/extractable.spec.ts';
+  if (!ws.exists(proof)) ws.create(proof, renderTemplate(`architecture/extractable.${family}.spec.ts.tpl`, vars));
+  applyWiring(ws, proof, renderTemplate(`architecture/wiring.${family}.tpl`, vars));
   applyWiring(ws, `${config.platformDir}/application.ts`, renderTemplate(`context/wiring.${family}.tpl`, vars));
+}
+
+/** The models laid out over every permission (relationships, a custom adapter) read them from the registry of the platform. */
+function registerPermissions(ws: Workspace, config: Config, vars: RenderContext): void {
+  const registry = `${config.platformDir}/auth/permissions.ts`;
+  if (ws.exists(registry)) applyWiring(ws, registry, renderTemplate('context/permission-set.tpl', vars));
 }

@@ -1,6 +1,6 @@
 export default {
   testEnvironment: 'node',
-  testMatch: ['<rootDir>/{{config.sourceRoot}}/**/*.spec.ts'],
+  testMatch: ['<rootDir>/{{config.sourceRoot}}/**/*.spec.ts', '<rootDir>/test/architecture/**/*.spec.ts'],
   extensionsToTreatAsEsm: ['.ts'],
   transform: {
     '^.+\\.ts$': ['@swc/jest', { jsc: { parser: { syntax: 'typescript', decorators: true }, transform: { legacyDecorator: true, decoratorMetadata: true }, target: 'es2022' } }],

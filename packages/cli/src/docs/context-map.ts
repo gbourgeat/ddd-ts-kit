@@ -32,7 +32,8 @@ function table(contexts: readonly ContextFacts[]): string[] {
       names(context.upstreams.map((upstream) => upstream.context)),
       names(context.downstreams.map((downstream) => downstream.context)),
       names([...new Set(context.publishedEvents.map((event) => event.type))]),
+      context.deployable ? 'yes' : 'no',
     ].join(' | '),
   );
-  return ['| Context | Classification | Purpose | Upstreams | Downstreams | Published events |', '|---|---|---|---|---|---|', ...rows.map((row) => `| ${row} |`)];
+  return ['| Context | Classification | Purpose | Upstreams | Downstreams | Published events | Deployable alone |', '|---|---|---|---|---|---|---|', ...rows.map((row) => `| ${row} |`)];
 }

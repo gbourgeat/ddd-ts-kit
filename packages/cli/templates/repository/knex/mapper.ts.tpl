@@ -9,7 +9,7 @@ export const {{aggregate.pascal}}Mapper = {
     return loaded;
   },
 
-  toRow(saved: {{aggregate.pascal}}): Omit<{{aggregate.pascal}}Row, 'version'> {
+  toRow(saved: {{aggregate.pascal}}): Omit<{{aggregate.pascal}}Row, {{tenant.omittedSnake}}> {
     // TODO(domain): flatten each value object of {{aggregate.pascal}}State into its columns; nothing of the row type leaves this file.
     return { id: saved.id, created_at: saved.toState().createdAt };
   },

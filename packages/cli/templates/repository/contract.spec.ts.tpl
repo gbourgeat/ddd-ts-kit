@@ -4,6 +4,9 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from
 {{#unless adapter.needsDatabase}}
 import { afterEach, beforeEach, describe, expect, it } from '{{tests.module}}';
 {{/unless}}
+{{#if tenant.scoped}}
+import { FixedActorContext, type Actor } from '@ddd-ts-kit/kernel';
+{{/if}}
 import { repositoryContract } from '@ddd-ts-kit/testing/contracts';
 import type { {{aggregate.pascal}} } from '../../domain/aggregates/{{aggregate.kebab}}.aggregate.js';
 import { {{adapter.pascal}}{{aggregate.pascal}}Repository } from '../../infrastructure/persistence/{{adapter.kebab}}-{{aggregate.kebab}}.repository.js';
@@ -46,9 +49,29 @@ repositoryContract<{{aggregate.pascal}}>(runner, {
   name: '{{adapter.pascal}}{{aggregate.pascal}}Repository',
   createRepository: async () => {
     await database.reset();
-    return new {{adapter.pascal}}{{aggregate.pascal}}Repository(database.persistence.database);
+    return new {{adapter.pascal}}{{aggregate.pascal}}Repository(database.persistence.database{{#if tenant.scoped}}, new FixedActorContext(memberOf('acme')){{/if}});
   },
 });
+{{#if tenant.scoped}}
+
+describe('{{adapter.pascal}}{{aggregate.pascal}}Repository, tenant by tenant', () => {
+  it('hides from a tenant what another tenant saved', async () => {
+    await database.reset();
+    const actors = new FixedActorContext(memberOf('acme'));
+    const repository = new {{adapter.pascal}}{{aggregate.pascal}}Repository(database.persistence.database, actors);
+    const saved = {{aggregate.article}}{{aggregate.pascal}}().build();
+    await repository.save(saved);
+
+    actors.actAs(memberOf('globex'));
+
+    expect(await repository.findById(saved.id)).toBeUndefined();
+  });
+});
+
+function memberOf(tenantId: string): Actor {
+  return { id: 'member-of-' + tenantId, type: 'user', tenantId, roles: [], attributes: {} };
+}
+{{/if}}
 {{/if}}
 {{#unless adapter.needsDatabase}}
 repositoryContract<{{aggregate.pascal}}>(runner, {

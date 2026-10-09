@@ -23,6 +23,7 @@ const ROLES: readonly Role[] = [
   { directory: 'application/commands/*', suffixes: ['.command.ts', '.handler.ts'], oneConcept: true, specFor: ['.handler.ts'] },
   { directory: 'application/queries/*', suffixes: ['.query.ts', '.handler.ts'], oneConcept: true, specFor: ['.handler.ts'] },
   { directory: 'application/ports', suffixes: ['.port.ts'] },
+  { directory: 'application/authorization', suffixes: ['.permissions.ts', '.policy.ts'] },
   { directory: 'application/event-handlers', suffixes: ['.event-handler.ts'], oneConcept: true, specFor: ['.event-handler.ts'] },
   { directory: 'application/integration/publishers', suffixes: ['.publisher.ts'] },
   { directory: 'application/integration/consumers', suffixes: ['.consumer.ts'], oneConcept: true, specFor: ['.consumer.ts'] },

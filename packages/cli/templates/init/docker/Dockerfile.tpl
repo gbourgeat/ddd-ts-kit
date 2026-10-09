@@ -13,11 +13,14 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 
 FROM node:24-slim
+# The entry point: the whole application, or one context run alone (--build-arg ENTRY=dist/{{config.sourceRoot}}/apps/<context>/main.js).
+ARG ENTRY=dist/{{config.sourceRoot}}/main.js
 ENV NODE_ENV=production
+ENV ENTRY=${ENTRY}
 WORKDIR /app
 COPY --from=dependencies /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY package.json ./
 USER node
 EXPOSE 3000
-CMD ["node", "dist/{{config.sourceRoot}}/main.js"]
+CMD ["sh", "-c", "exec node $ENTRY"]

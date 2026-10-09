@@ -325,6 +325,11 @@ export interface ExecuteOptions {
   readonly errorMapper?: ErrorMapper;
   /** Authenticates the request; throw `UnauthorizedError` to refuse it. */
   readonly resolvePrincipal?: (raw: unknown) => unknown;
+  /**
+   * Runs every handler inside a scope that knows the principal, typically an ambient actor
+   * context, so that no route can forget to open it.
+   */
+  readonly withPrincipal?: <T>(principal: unknown, work: () => Promise<T>) => Promise<T>;
   /** Called for every error answered as a problem, expected or not. Meant for logging. */
   readonly onError?: (error: unknown, context: ErrorContext) => void;
   /** Checks each response against the route declaration. Meant for tests. */
@@ -365,10 +370,9 @@ export async function executeRoute(
   try {
     const principal = await options.resolvePrincipal?.(request.raw);
     const input = validateRequest(route, request);
-    const result = await route.handle({
-      ...input,
-      context: { requestId, raw: request.raw, ...(principal === undefined ? {} : { principal }) },
-    });
+    const context = { requestId, raw: request.raw, ...(principal === undefined ? {} : { principal }) };
+    const handle = async (): Promise<RouteOutput> => route.handle({ ...input, context });
+    const result = await (options.withPrincipal?.(principal, handle) ?? handle());
     if (options.validateResponses === true) {
       assertDeclaredResponse(route, result.status, result.body);
     }

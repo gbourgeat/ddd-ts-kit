@@ -1,3 +1,6 @@
+{{#if route.protected}}
+import { actorOf } from '@ddd-ts-kit/auth';
+{{/if}}
 import { defineRoute, type Route } from '@ddd-ts-kit/http';
 {{#if route.usesSchema}}
 import { err, ok, type {{route.busType}} } from '@ddd-ts-kit/kernel';
@@ -59,22 +62,23 @@ export function {{name.camel}}Route({{route.bus}}: {{route.busType}}): Route {
       responses: { {{route.status}}: { description: 'The answer.', body: answer } },
 {{/if}}
       // TODO(domain): list the codes of the DomainErrors "{{name.words}}" can raise, so that they appear in the contract with their status.
-      errors: [],
+      errors: [{{route.errorCodes}}],
+      security: {{route.security}},
     },
     async (input) => {
 {{#if route.isQuery}}
-      // TODO(domain): build the query from `input` (params, query string, the authenticated principal) and map its answer to the public fields.
-      await {{route.bus}}.execute(new {{route.input}}());
+      // TODO(domain): build the query from `input` (params, query string); the actor is already there and map its answer to the public fields.
+      await {{route.bus}}.execute(new {{route.input}}({{route.actor}}));
       return { status: {{route.status}}, body: {} };
 {{/if}}
 {{#if route.returnsId}}
-      // TODO(domain): build the command from `input` (body, params, the authenticated principal).
-      const id = await {{route.bus}}.execute(new {{route.input}}());
+      // TODO(domain): build the command from `input` (body, params); the actor is already there.
+      const id = await {{route.bus}}.execute(new {{route.input}}({{route.actor}}));
       return { status: {{route.status}}, body: { id } };
 {{/if}}
 {{#if route.returnsNothing}}
-      // TODO(domain): build the command from `input` (body, params, the authenticated principal).
-      await {{route.bus}}.execute(new {{route.input}}());
+      // TODO(domain): build the command from `input` (body, params); the actor is already there.
+      await {{route.bus}}.execute(new {{route.input}}({{route.actor}}));
       return { status: {{route.status}} };
 {{/if}}
     },

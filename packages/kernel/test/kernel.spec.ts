@@ -85,4 +85,19 @@ describe('InMemoryEventBus', () => {
     await bus.publish([event('e1'), event('e1')]);
     expect(count).toBe(1);
   });
+
+  it('handles a redelivered event again when the first handling failed', async () => {
+    const store = new InMemoryProcessedEventStore();
+    let attempts = 0;
+    const handler = idempotent('mailer', store, async () => {
+      attempts += 1;
+      if (attempts === 1) throw new Error('smtp down');
+    });
+
+    await expect(handler(event('e1'))).rejects.toThrow('smtp down');
+    await handler(event('e1'));
+    await handler(event('e1'));
+
+    expect(attempts).toBe(2);
+  });
 });

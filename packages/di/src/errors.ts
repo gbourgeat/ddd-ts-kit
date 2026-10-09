@@ -8,7 +8,9 @@ export type WiringErrorCode =
   | 'DUPLICATE_HANDLER'
   | 'DUPLICATE_CONSUMER'
   | 'BUS_WITHOUT_REGISTER'
-  | 'UNKNOWN_FAKE';
+  | 'UNKNOWN_FAKE'
+  | 'UNDECLARED_AUTHORIZATION'
+  | 'AUTHORIZATION_NOT_ENFORCED';
 
 /** A mistake in the composition root. Never a business failure, hence not a DomainError. */
 export class WiringError extends Error {

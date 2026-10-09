@@ -13,6 +13,9 @@ export const DATABASE_STACKS = ['postgres', 'mysql', 'sqlite', 'mongodb', 'none'
 export const TEST_STACKS = ['vitest', 'jest'] as const;
 export const DOCS_UIS = ['swagger', 'scalar', 'redoc', 'none'] as const;
 export const CI_PLATFORMS = ['github', 'gitlab', 'both', 'none'] as const;
+export const AUTHN_STACKS = ['jwt', 'none'] as const;
+export const AUTHZ_STACKS = ['rbac', 'abac', 'rebac', 'custom'] as const;
+export const BROKER_STACKS = ['none', 'rabbitmq', 'custom'] as const;
 export const GUARD_MODES = ['enforce', 'advise', 'off'] as const;
 export const CLASSIFICATIONS = ['core', 'supporting', 'generic'] as const;
 export const RELATIONSHIPS = [
@@ -34,6 +37,9 @@ type DatabaseStack = (typeof DATABASE_STACKS)[number];
 type TestStack = (typeof TEST_STACKS)[number];
 type DocsUi = (typeof DOCS_UIS)[number];
 type CiPlatform = (typeof CI_PLATFORMS)[number];
+type AuthnStack = (typeof AUTHN_STACKS)[number];
+type AuthzStack = (typeof AUTHZ_STACKS)[number];
+type BrokerStack = (typeof BROKER_STACKS)[number];
 export type Severity = (typeof SEVERITIES)[number];
 
 export interface Stack {
@@ -48,6 +54,12 @@ export interface Stack {
   readonly docsUi: DocsUi;
   /** The platform whose pipeline files `init` installed. */
   readonly ci: CiPlatform;
+  /** How the caller is identified at the boundary. */
+  readonly authn: AuthnStack;
+  /** The authorization model behind the `Authorizer` port. */
+  readonly authz: AuthzStack;
+  /** Where the outbox relay publishes: `none` is the in-memory bus of the same process. */
+  readonly broker: BrokerStack;
 }
 
 export interface Upstream {
@@ -59,6 +71,15 @@ export interface ContextConfig {
   readonly classification: string;
   readonly upstreams: readonly Upstream[];
   readonly extraDirectories: readonly string[];
+  /** True once the context has its own entry point under `apps/<context>/main.ts`. */
+  readonly deployable: boolean;
+}
+
+/** A recorded departure from the defaults: what it relaxes, the decision record that allows it, and why. */
+export interface Deviation {
+  readonly what: string;
+  readonly adr: string;
+  readonly reason: string;
 }
 
 export interface Config {
@@ -76,6 +97,7 @@ export interface Config {
   readonly limits: Limits;
   /** How the editor hook of the plugin reacts to a violation: `enforce`, `advise` or `off`. Kept as written, `check` reports a wrong value. */
   readonly guard: string;
+  readonly deviations: readonly Deviation[];
 }
 
 interface Limits {
@@ -100,6 +122,23 @@ const SCHEMA_LIBRARIES: Readonly<Record<ValidationStack, readonly string[]>> = {
   none: [],
 };
 
+type AllowedPackages = Pick<Config, 'domainAllowedPackages' | 'applicationAllowedPackages' | 'publishedLanguageAllowedPackages'>;
+
+/**
+ * What the inner layers may import when the config says nothing; anything a config adds to
+ * these is a deviation. The application layer declares its permissions and policies with
+ * `@ddd-ts-kit/auth`, which imports the kernel only.
+ */
+export function defaultAllowedPackages(validation: string): AllowedPackages {
+  const kernel = '@ddd-ts-kit/kernel';
+  const schemaLibraries = isOneOf(VALIDATION_STACKS, validation) ? SCHEMA_LIBRARIES[validation] : [];
+  return {
+    domainAllowedPackages: [kernel],
+    applicationAllowedPackages: [kernel, '@ddd-ts-kit/auth'],
+    publishedLanguageAllowedPackages: [kernel, '@ddd-ts-kit/events', '@ddd-ts-kit/validation', ...schemaLibraries],
+  };
+}
+
 /**
  * Tolerant on purpose: a wrong classification or an unknown upstream is reported by
  * `check` as `config/valid`, with a line number, instead of stopping every command.
@@ -110,7 +149,7 @@ export function parseConfig(raw: unknown): Config {
   }
   const sourceRoot = posix(text(raw['sourceRoot'], 'src'));
   const stack = parseStack(isRecord(raw['stack']) ? raw['stack'] : {});
-  const kernel = ['@ddd-ts-kit/kernel'];
+  const defaults = defaultAllowedPackages(stack.validation);
   return {
     sourceRoot,
     contextsDir: posix(text(raw['contextsDir'], `${sourceRoot}/contexts`)),
@@ -120,16 +159,12 @@ export function parseConfig(raw: unknown): Config {
     stack,
     contexts: mapEntries(raw['contexts'], parseContext),
     rules: mapEntries(raw['rules'], String),
-    domainAllowedPackages: strings(raw['domainAllowedPackages'], kernel),
-    applicationAllowedPackages: strings(raw['applicationAllowedPackages'], kernel),
-    publishedLanguageAllowedPackages: strings(raw['publishedLanguageAllowedPackages'], [
-      ...kernel,
-      '@ddd-ts-kit/events',
-      '@ddd-ts-kit/validation',
-      ...SCHEMA_LIBRARIES[stack.validation],
-    ]),
+    domainAllowedPackages: strings(raw['domainAllowedPackages'], defaults.domainAllowedPackages),
+    applicationAllowedPackages: strings(raw['applicationAllowedPackages'], defaults.applicationAllowedPackages),
+    publishedLanguageAllowedPackages: strings(raw['publishedLanguageAllowedPackages'], defaults.publishedLanguageAllowedPackages),
     limits: parseLimits(raw['limits']),
     guard: text(raw['guard'], 'enforce'),
+    deviations: parseDeviations(raw['deviations']),
   };
 }
 
@@ -147,11 +182,19 @@ function parseStack(stack: Record<string, unknown>): Stack {
     tests: choose('tests', TEST_STACKS, 'vitest'),
     docsUi: choose('docsUi', DOCS_UIS, http === 'none' ? 'none' : 'swagger'),
     ci: choose('ci', CI_PLATFORMS, 'github'),
+    authn: choose('authn', AUTHN_STACKS, 'jwt'),
+    authz: choose('authz', AUTHZ_STACKS, 'rbac'),
+    broker: choose('broker', BROKER_STACKS, 'none'),
   };
 }
 
 function mapEntries<T>(value: unknown, parse: (entry: unknown) => T): Record<string, T> {
   return isRecord(value) ? Object.fromEntries(Object.entries(value).map(([key, entry]) => [key, parse(entry)])) : {};
+}
+
+function parseDeviations(value: unknown): Deviation[] {
+  const entries: unknown[] = Array.isArray(value) ? value : [];
+  return entries.filter(isRecord).map((entry) => ({ what: text(entry['what'], ''), adr: text(entry['adr'], ''), reason: text(entry['reason'], '') }));
 }
 
 function parseLimits(value: unknown): Limits {
@@ -198,10 +241,19 @@ export function serializeConfig(config: Config): string {
       classification: context.classification,
       upstreams: context.upstreams,
       ...(context.extraDirectories.length > 0 ? { extraDirectories: context.extraDirectories } : {}),
+      ...(context.deployable ? { deployable: true } : {}),
     };
   }
-  const { publishedLanguageAllowedPackages: _derived, limits: _limits, guard: _guard, ...written } = config;
-  return `${JSON.stringify({ ...written, contexts }, null, 2)}\n`;
+  const { publishedLanguageAllowedPackages: _derived, limits: _limits, guard: _guard, deviations, ...written } = config;
+  return `${JSON.stringify({ ...written, contexts, ...(deviations.length > 0 ? { deviations } : {}) }, null, 2)}\n`;
+}
+
+/** Changes the config text through its JSON value, so that what the user wrote elsewhere keeps its shape. */
+export function editConfigText(content: string, edit: (raw: Record<string, unknown>) => void): string {
+  const raw: unknown = JSON.parse(content);
+  if (!isRecord(raw)) return content;
+  edit(raw);
+  return `${JSON.stringify(raw, null, 2)}\n`;
 }
 
 /**
@@ -239,6 +291,7 @@ function parseContext(value: unknown): ContextConfig {
     classification: text(raw['classification'], ''),
     upstreams: upstreams.map(parseUpstream).filter((upstream) => upstream !== undefined),
     extraDirectories: extra.map(parseExtraDirectory).filter((directory) => directory !== undefined),
+    deployable: raw['deployable'] === true,
   };
 }
 

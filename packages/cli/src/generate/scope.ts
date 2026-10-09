@@ -53,12 +53,16 @@ export function contextVars(config: Config, context: Name): RenderContext {
       persistenceToGenerated: relative(`${dir}/infrastructure/persistence`, 'generated'),
       scriptsToSource: relative('scripts', config.sourceRoot),
       e2eToSource: relative('test/e2e', config.sourceRoot),
+      authorizationToPlatform: relative(`${dir}/application/authorization`, config.platformDir),
+      authToContexts: relative(`${config.platformDir}/auth`, config.contextsDir),
+      architectureToSource: relative('test/architecture', config.sourceRoot),
+      appToSource: relative(`${config.sourceRoot}/apps/${context.kebab}`, config.sourceRoot),
     },
   };
 }
 
 export function stackVars(config: Config): RenderContext {
-  const { http, validation, di, tests, orm, events } = config.stack;
+  const { http, validation, di, tests, orm, events, authn, authz, broker } = config.stack;
   const one = <T extends string>(value: T, options: readonly T[]): Record<string, boolean> =>
     Object.fromEntries(options.map((option) => [toName(option).camel, option === value]));
   return {
@@ -66,7 +70,11 @@ export function stackVars(config: Config): RenderContext {
     validation: one(validation, ['zod', 'class-validator', 'standard-schema', 'none']),
     di: one(di, ['tsyringe', 'nest', 'manual']),
     orm: { ...one(orm, ['drizzle', 'knex', 'prisma', 'typeorm', 'custom', 'none']), any: orm !== 'none' },
-    events: { outbox: events === 'outbox', inMemory: events !== 'outbox' },
+    events: { outbox: events === 'outbox', inMemory: events !== 'outbox', ...providerVars(broker) },
+    // Authentication happens at the HTTP boundary: without one there is nobody to identify.
+    authn: one(http === 'none' ? 'off' : authn, ['jwt', 'none']),
+    authz: one(authz, ['rbac', 'abac', 'rebac', 'custom']),
+    broker: { ...one(broker, ['none', 'rabbitmq', 'custom']), external: broker !== 'none', name: broker },
     tests: { ...one(tests, ['vitest', 'jest']), module: tests === 'jest' ? '@jest/globals' : 'vitest' },
     config: {
       sourceRoot: config.sourceRoot,
@@ -76,7 +84,30 @@ export function stackVars(config: Config): RenderContext {
       importAlias: config.importAlias,
     },
     alias: { bare: config.importAlias.replace(/\/$/, '') },
+    persistence: persistenceVars(config),
   };
+}
+
+const WITH_URL = ['drizzle', 'knex', 'prisma', 'typeorm'];
+
+/** How the composition roots open the storage of the stack, and what the storage offers them. */
+function persistenceVars(config: Config) {
+  const { orm, http, di, events } = config.stack;
+  const hasDatabase = WITH_URL.includes(orm);
+  return {
+    needsUrl: hasDatabase,
+    hasDatabase,
+    await: orm === 'typeorm' || orm === 'prisma' ? 'await ' : '',
+    // The scripts that list routes and the hand-wired architecture test compose without connecting.
+    inert: http !== 'none' || di !== 'tsyringe',
+    signals: !hasDatabase && events === 'outbox',
+  };
+}
+
+/** What `main.ts` calls to get the event provider of the chosen broker. */
+function providerVars(broker: string) {
+  if (broker === 'none') return { providerName: 'inProcessEvents', provider: 'inProcessEvents()' };
+  return { providerName: 'createEventProvider', provider: broker === 'rabbitmq' ? 'createEventProvider(config)' : 'createEventProvider()' };
 }
 
 function relative(from: string, to: string): string {

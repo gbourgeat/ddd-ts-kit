@@ -20,6 +20,10 @@ export interface Finding {
   readonly fix: string;
 }
 
+export function toViolations(report: Report, file: string, findings: readonly Finding[]): Violation[] {
+  return findings.map(({ line, message, fix }) => report({ file, line }, message, fix));
+}
+
 export type ContextLocation = Extract<Location, { area: 'context' }>;
 
 export function inContext(location: Location): location is ContextLocation {
@@ -41,6 +45,22 @@ export function describeTarget(target: ImportTarget): string {
 export function lineOf(text: string, needle: string): number {
   const at = text.indexOf(needle);
   return at === -1 ? 1 : text.slice(0, at).split('\n').length;
+}
+
+/** 1-based line where the last of `needles` is found, each searched after the previous one; 1 when the first is absent. */
+export function lineOfSequence(text: string, needles: readonly string[]): number {
+  let at = 0;
+  for (const needle of needles) {
+    const found = text.indexOf(needle, at);
+    if (found === -1) break;
+    at = found;
+  }
+  return text.slice(0, at).split('\n').length;
+}
+
+/** A source of the production code of a context, in one of the given layers. */
+export function inLayers(file: SourceFile, layers: readonly Layer[]): ContextLocation | undefined {
+  return layers.map((layer) => inLayer(file, layer)).find((location) => location !== undefined);
 }
 
 export const KEBAB_SEGMENT = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;

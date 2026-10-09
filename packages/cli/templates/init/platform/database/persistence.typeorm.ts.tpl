@@ -20,7 +20,7 @@ export async function openPersistence(config: { readonly databaseUrl: string }):
   return persistenceOver(dataSource);
 }
 
-{{#if http.any}}
+{{#if persistence.inert}}
 /**
  * For the script that only lists routes: the data source is never initialised,
  * and no query is ever sent, so no database has to be reachable to generate the contracts.

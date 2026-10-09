@@ -5,6 +5,8 @@ import type { Route } from '@ddd-ts-kit/http';
 // ddd-ts-kit:imports
 // /ddd-ts-kit:imports
 
+export { {{context.camel}}Permissions } from './application/authorization/{{context.kebab}}.permissions.js';
+
 {{#if http.any}}
 export const {{context.constant}}_ROUTES = token<readonly Route[]>('{{context.kebab}}.routes');
 {{/if}}

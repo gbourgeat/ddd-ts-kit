@@ -17,6 +17,10 @@ const VERSIONS: Readonly<Record<string, string>> = {
   '@ddd-ts-kit/knex': '^0.1.0',
   '@ddd-ts-kit/prisma': '^0.1.0',
   '@ddd-ts-kit/typeorm': '^0.1.0',
+  '@ddd-ts-kit/auth': '^0.1.0',
+  '@ddd-ts-kit/rabbitmq': '^0.1.0',
+  jose: '^6.0.0',
+  amqplib: '^2.2.0',
   'ddd-ts-kit': '^0.1.0',
   tsx: '^4.23.15',
   vitest: '^5.0.3',
@@ -192,7 +196,7 @@ interface Packages {
   readonly devDependencies: Record<string, string>;
 }
 
-const BASE = ['@ddd-ts-kit/kernel', '@ddd-ts-kit/events', '@ddd-ts-kit/validation', '@ddd-ts-kit/tracing', '@opentelemetry/api', '@opentelemetry/sdk-node', '@opentelemetry/auto-instrumentations-node', '@opentelemetry/exporter-trace-otlp-http'];
+const BASE = ['@ddd-ts-kit/kernel', '@ddd-ts-kit/auth', '@ddd-ts-kit/events', '@ddd-ts-kit/validation', '@ddd-ts-kit/tracing', '@opentelemetry/api', '@opentelemetry/sdk-node', '@opentelemetry/auto-instrumentations-node', '@opentelemetry/exporter-trace-otlp-http'];
 const BASE_DEV = ['ddd-ts-kit', 'tsx', '@types/node', '@ddd-ts-kit/testing', '@faker-js/faker'];
 
 /** What each choice of the stack adds: [runtime dependencies, development dependencies]. */
@@ -207,12 +211,16 @@ const BY_CHOICE: Readonly<Record<string, readonly [readonly string[], readonly s
   'orm:knex': [['@ddd-ts-kit/knex', 'knex', 'pg'], ['@types/pg', '@electric-sql/pglite', '@electric-sql/pglite-socket']],
   'orm:prisma': [['@ddd-ts-kit/prisma', '@prisma/client', '@prisma/adapter-pg', 'pg'], ['prisma', '@types/pg', '@electric-sql/pglite', '@electric-sql/pglite-socket']],
   'orm:typeorm': [['@ddd-ts-kit/typeorm', 'typeorm', 'pg'], ['@types/pg', '@electric-sql/pglite', '@electric-sql/pglite-socket']],
+  'authn:jwt': [['jose'], []],
+  'broker:rabbitmq': [['@ddd-ts-kit/rabbitmq', 'amqplib'], []],
   'tests:vitest': [[], ['vitest']],
   'tests:jest': [[], ['jest', '@jest/globals', '@swc/core', '@swc/jest']],
 };
 
 function dependenciesFor(config: Config): Packages {
-  const choices = Object.entries(config.stack).map(([key, value]) => BY_CHOICE[`${key}:${value}`] ?? [[], []]);
+  // Without an HTTP boundary nothing verifies a credential: the token library would be dead weight.
+  const made = Object.entries(config.stack).filter(([key]) => key !== 'authn' || config.stack.http !== 'none');
+  const choices = made.map(([key, value]) => BY_CHOICE[`${key}:${value}`] ?? [[], []]);
   const ranges = (names: readonly string[]): Record<string, string> => Object.fromEntries(names.map((name) => [name, VERSIONS[name] ?? 'latest']));
   const development = { ...ranges([...BASE_DEV, ...choices.flatMap(([, names]) => names)]), ...analyzers(config) };
   return {

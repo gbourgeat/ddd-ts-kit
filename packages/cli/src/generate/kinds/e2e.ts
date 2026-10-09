@@ -26,21 +26,24 @@ export const e2eKind: Kind = {
 /** What the route of the use case declares: an end-to-end spec drives the application through it. */
 function endpointOf(scope: Scope, name: Name) {
   const file = `${scope.dir}/presentation/http/${name.kebab}.route.ts`;
-  const route = scope.ws.read(file);
-  const [, method, path] = /method: '([A-Z]+)',\s*path: '([^']+)'/.exec(route ?? '') ?? [];
-  const status = /responses: \{ (\d{3}):/.exec(route ?? '')?.[1];
-  if (method === undefined || path === undefined || status === undefined) {
-    throw new CliError(
-      `The use case ${name.pascal} has no route in "${scope.context.kebab}" (${file}).`,
-      `An end-to-end spec drives the application through HTTP: create the route first with \`ddd-ts-kit generate route ${scope.context.kebab} ${name.pascal} --method <M> --path <path>\`.`,
-    );
-  }
+  const route = scope.ws.read(file) ?? '';
+  const [, method, path] = /method: '([A-Z]+)',\s*path: '([^']+)'/.exec(route) ?? [];
+  const status = /responses: \{ (\d{3}):/.exec(route)?.[1];
+  if (method === undefined || path === undefined || status === undefined) throw noRoute(scope, name, file);
   return {
     method,
     path,
     status: Number(status),
     call: method.toLowerCase(),
-    hasBody: method === 'POST' || method === 'PUT' || method === 'PATCH',
+    body: ['POST', 'PUT', 'PATCH'].includes(method) ? ', {}' : '',
+    protected: !/security:\s*false/.test(route),
     samplePath: path.replace(/:([A-Za-z_][A-Za-z0-9_]*)/g, (_match, parameter: string) => `${toName(parameter).kebab}-1`),
   };
+}
+
+function noRoute(scope: Scope, name: Name, file: string): CliError {
+  return new CliError(
+    `The use case ${name.pascal} has no route in "${scope.context.kebab}" (${file}).`,
+    `An end-to-end spec drives the application through HTTP: create the route first with \`ddd-ts-kit generate route ${scope.context.kebab} ${name.pascal} --method <M> --path <path>\`.`,
+  );
 }

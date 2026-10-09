@@ -65,7 +65,8 @@ Usage
                   [--di tsyringe|nest|manual] [--tests vitest|jest]
                   [--orm drizzle|knex|prisma|typeorm|custom|none] [--database postgres|mysql|sqlite|none]
                   [--events in-memory|outbox] [--docs-ui swagger|scalar|redoc|none]
-                  [--ci github|gitlab|both|none]
+                  [--ci github|gitlab|both|none] [--authn jwt|none] [--authz rbac|abac|rebac|custom]
+                  [--broker none|rabbitmq|custom] [--allow-no-outbox "<reason>"]
                   [--context <name>:<core|supporting|generic>]... [--dry-run] [--force]
   ddd-ts-kit generate <kind> ... [--term "<Term>=<meaning>"]... [--allow-name] [--dry-run] [--force]     (alias: g)
   ddd-ts-kit list

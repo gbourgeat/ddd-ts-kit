@@ -20,6 +20,10 @@ export interface HandlerDescription {
   readonly message: string;
   readonly handler: string;
   readonly module: string;
+  /** Absent when the module declared no access for the use case. */
+  readonly access?: 'public' | 'protected';
+  /** The id of the required permission, for a protected use case. */
+  readonly permission?: string;
 }
 
 export interface SubscriptionDescription {
@@ -80,9 +84,11 @@ function describeBinding(
 function describeHandlers(wiring: Wiring, kind: MessageInfo['kind']): HandlerDescription[] {
   return wiring.handlings
     .filter((handling) => handling.kind === kind)
-    .map(({ message, handler, module }) => ({
+    .map(({ message, handler, module, requirement }) => ({
       message: message.name,
       handler: describeToken(handler),
       module,
+      ...(requirement.access === undefined ? {} : { access: requirement.access }),
+      ...(requirement.permission === undefined ? {} : { permission: requirement.permission.id }),
     }));
 }

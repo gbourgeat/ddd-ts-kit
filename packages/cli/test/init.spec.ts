@@ -14,27 +14,6 @@ const manifest = (root: string): Manifest => JSON.parse(read(root, 'package.json
 const RULE_FILES = ['domain', 'application', 'infrastructure', 'presentation', 'tests'];
 const RULE_STACKS = ['', '--http nest', '--http none --orm none', '--di manual --orm knex --ci gitlab', '--validation class-validator --tests jest --ci both', '--orm prisma --ci none'];
 
-/** A minimal reading of YAML frontmatter: top-level keys, each holding a list of quoted strings. */
-function parseFrontmatter(text: string): Record<string, string[]> {
-  const [, block] = /^---\n([\s\S]*?)\n---\n/.exec(text) ?? [];
-  if (block === undefined) throw new Error('The file does not start with a frontmatter block.');
-  const keys: Record<string, string[]> = {};
-  let current: string[] | undefined;
-  for (const line of block.split('\n')) {
-    const key = /^([A-Za-z][\w-]*):\s*$/.exec(line)?.[1];
-    const item = /^ {2}- "((?:[^"\\]|\\.)*)"$/.exec(line)?.[1];
-    if (key !== undefined) {
-      current = [];
-      keys[key] = current;
-    } else if (item !== undefined && current !== undefined) {
-      current.push(item);
-    } else {
-      throw new Error(`Unreadable frontmatter line: ${line}`);
-    }
-  }
-  return keys;
-}
-
 describe('init', () => {
   it('bootstraps an empty directory with the default stack', () => {
     const root = tempDir('init');
@@ -72,13 +51,53 @@ describe('init', () => {
     expect(walk(root)).toEqual([...report.created].sort());
   });
 
+  it('refuses to leave the outbox out with a database unless the decision is recorded', () => {
+    const refused = cli(tempDir('init'), 'init', '--events', 'in-memory');
+    const root = tempDir('init');
+    const allowed = cli(root, 'init', '--events', 'in-memory', '--allow-no-outbox', 'One process, nothing to lose');
+    const config = JSON.parse(read(root, 'ddd-ts-kit.config.json')) as { deviations: unknown[] };
+
+    expect(refused.code).toBe(2);
+    expect(refused.stderr).toContain('--allow-no-outbox');
+    expect(allowed.code).toBe(0);
+    expect(config.deviations).toEqual([{ what: 'stack.events', adr: '0001', reason: 'One process, nothing to lose' }]);
+    expect(read(root, 'docs/adr/0001-publish-integration-events-without-the-transactional-outbox.md')).toContain('Deviates from: `stack.events`');
+    expect(cli(root, 'check', '--rule', 'governance/recorded-deviation', '--rule', 'events/outbox-required').code).toBe(0);
+  });
+
+  it.each([
+    ['rbac', 'roles.ts'],
+    ['abac', 'attribute-policies.ts'],
+    ['rebac', 'relationships.ts'],
+    ['custom', 'custom-authorizer.contract.spec.ts'],
+  ])('writes the authorizer of the model %s behind the one port', (authz, file) => {
+    const root = tempDir('init');
+    cli(root, 'init', '--authz', authz);
+
+    expect(exists(root, `src/platform/auth/${file}`)).toBe(true);
+    expect(read(root, 'src/platform/application.ts')).toContain("authorization: 'required'");
+    expect(read(root, 'src/platform/http-server.ts')).toContain('...boundary }');
+  });
+
+  it('wires the broker that was chosen, and a development authenticator that refuses production', () => {
+    const root = tempDir('init');
+    cli(root, 'init', '--broker', 'rabbitmq', '--authn', 'none');
+
+    expect(read(root, 'src/platform/events.ts')).toContain('bus.forConsumer(context)');
+    expect(read(root, 'docker-compose.yml')).toContain('image: rabbitmq:4-management-alpine');
+    expect(read(root, 'src/platform/config.ts')).toContain("readUrl(env, 'AMQP_URL', problems)");
+    expect(read(root, 'src/platform/auth/authenticator.ts')).toContain('must never run in production');
+    expect(JSON.parse(read(root, 'package.json'))).toMatchObject({ dependencies: { '@ddd-ts-kit/rabbitmq': '^0.1.0', amqplib: '^2.2.0' } });
+    expect(cli(tempDir('init'), 'init', '--broker', 'rabbitmq', '--orm', 'none').code).toBe(2);
+  });
+
   it('writes the config with the chosen stack and the contexts', () => {
     const root = tempDir('init');
     cli(root, 'init', '--http', 'fastify', '--validation', 'class-validator', '--di', 'manual', '--tests', 'jest', '--context', 'billing:core', '--context', 'catalog:generic');
 
     const config = JSON.parse(read(root, 'ddd-ts-kit.config.json')) as { stack: Record<string, string>; contexts: Record<string, { classification: string }> };
 
-    expect(config.stack).toEqual({ http: 'fastify', validation: 'class-validator', di: 'manual', events: 'outbox', orm: 'drizzle', database: 'postgres', tests: 'jest', docsUi: 'swagger', ci: 'github' });
+    expect(config.stack).toEqual({ http: 'fastify', validation: 'class-validator', di: 'manual', events: 'outbox', orm: 'drizzle', database: 'postgres', tests: 'jest', docsUi: 'swagger', ci: 'github', authn: 'jwt', authz: 'rbac', broker: 'none' });
     expect(Object.keys(config.contexts)).toEqual(['billing', 'catalog']);
     expect(config.contexts['catalog']?.classification).toBe('generic');
   });
@@ -368,3 +387,24 @@ describe('init', () => {
     expect(steps.every((position, index) => position > (steps[index - 1] ?? -1))).toBe(true);
   });
 });
+
+/** A minimal reading of YAML frontmatter: top-level keys, each holding a list of quoted strings. */
+function parseFrontmatter(text: string): Record<string, string[]> {
+  const [, block] = /^---\n([\s\S]*?)\n---\n/.exec(text) ?? [];
+  if (block === undefined) throw new Error('The file does not start with a frontmatter block.');
+  const keys: Record<string, string[]> = {};
+  let current: string[] | undefined;
+  for (const line of block.split('\n')) {
+    const key = /^([A-Za-z][\w-]*):\s*$/.exec(line)?.[1];
+    const item = /^ {2}- "((?:[^"\\]|\\.)*)"$/.exec(line)?.[1];
+    if (key !== undefined) {
+      current = [];
+      keys[key] = current;
+    } else if (item !== undefined && current !== undefined) {
+      current.push(item);
+    } else {
+      throw new Error(`Unreadable frontmatter line: ${line}`);
+    }
+  }
+  return keys;
+}

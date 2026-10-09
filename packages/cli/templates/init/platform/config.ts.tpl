@@ -12,7 +12,22 @@ export interface AppConfig {
 {{#if docs.any}}
   readonly docsEnabled: boolean;
 {{/if}}
+{{#if authn.jwt}}
+  readonly auth: AuthConfig;
+{{/if}}
+{{#if broker.rabbitmq}}
+  readonly amqpUrl: string;
+{{/if}}
 }
+{{#if authn.jwt}}
+
+/** Where tokens come from and whom they are for: the issuer, the audience this service answers to, the keys of the issuer. */
+interface AuthConfig {
+  readonly issuer: string;
+  readonly audience: string;
+  readonly jwksUri: string;
+}
+{{/if}}
 
 const ENVIRONMENTS = ['development', 'test', 'production'] as const;
 type Environment = (typeof ENVIRONMENTS)[number];
@@ -47,6 +62,16 @@ export function loadConfig(env: Variables): AppConfig {
 {{#if docs.any}}
     docsEnabled: readFlag(env['API_DOCS'], environment !== 'production'),
 {{/if}}
+{{#if broker.rabbitmq}}
+    amqpUrl: readUrl(env, 'AMQP_URL', problems),
+{{/if}}
+{{#if authn.jwt}}
+    auth: {
+      issuer: readUrl(env, 'AUTH_ISSUER', problems),
+      audience: readText(env, 'AUTH_AUDIENCE', problems),
+      jwksUri: readUrl(env, 'AUTH_JWKS_URI', problems),
+    },
+{{/if}}
   };
   if (problems.length > 0) {
     throw new ConfigError(problems);
@@ -78,12 +103,22 @@ function readInteger(env: Variables, variable: IntegerVariable, problems: string
   }
   return value;
 }
-{{#if persistence.needsUrl}}
+{{#if needs.url}}
 
 function readUrl(env: Variables, name: string, problems: string[]): string {
   const raw = env[name] ?? '';
   if (!URL.canParse(raw)) {
-    problems.push(name + ' must be a connection URL');
+    problems.push(name + ' must be a URL');
+  }
+  return raw;
+}
+{{/if}}
+{{#if authn.jwt}}
+
+function readText(env: Variables, name: string, problems: string[]): string {
+  const raw = env[name] ?? '';
+  if (raw.trim() === '') {
+    problems.push(name + ' must be set');
   }
   return raw;
 }

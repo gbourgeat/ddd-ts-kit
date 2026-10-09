@@ -20,6 +20,12 @@ export interface ContextFacts {
   readonly domainEvents: readonly string[];
   readonly publishedEvents: readonly PublishedEvent[];
   readonly builders: readonly string[];
+  /** Permission names declared in `application/authorization/<context>.permissions.ts`. */
+  readonly permissions: readonly string[];
+  readonly policies: readonly string[];
+  readonly gateways: readonly string[];
+  /** The context has its own entry point under `apps/`. */
+  readonly deployable: boolean;
 }
 
 interface PublishedEvent {
@@ -52,7 +58,15 @@ export function readContext(ws: Workspace, config: Config, name: string): Contex
     domainEvents: namesBySuffix(ws, `${directory}/domain/events`, '.event.ts'),
     publishedEvents: publishedEventsOf(ws, `${directory}/published-language`),
     builders: namesBySuffix(ws, `${directory}/test/builders`, '.builder.ts'),
+    permissions: permissionsOf(ws.read(`${directory}/application/authorization/${name}.permissions.ts`) ?? ''),
+    policies: namesBySuffix(ws, `${directory}/application/authorization`, '.policy.ts'),
+    gateways: namesBySuffix(ws, `${directory}/application/ports`, '-gateway.port.ts'),
+    deployable: declared?.deployable === true,
   };
+}
+
+function permissionsOf(source: string): string[] {
+  return [...source.matchAll(/^\s*'([a-z0-9.-]+)':\s*\{/gm)].map((match) => match[1] ?? '');
 }
 
 function sectionOf(doc: string, heading: string): string {

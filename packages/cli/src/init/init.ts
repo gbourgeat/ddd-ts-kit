@@ -5,6 +5,7 @@ import { DEPCRUISE_FILE, renderCruiseFile } from '../depcruise/configuration.js'
 import { writeDocs } from '../docs/docs.js';
 import { CliError } from '../errors.js';
 import { generateContext } from '../generate/kinds/context.js';
+import { writeAdr } from '../generate/kinds/governance.js';
 import { stackVars } from '../generate/scope.js';
 import { toName } from '../naming.js';
 import type { RenderContext } from '../render.js';
@@ -22,8 +23,8 @@ export interface InitOptions extends StackOptions {
 }
 
 export function runInit(root: string, options: InitOptions): WorkspaceReport {
-  const config = resolveStack(root, options);
   const ws = new Workspace(root, options.force);
+  const config = recordingNoOutbox(ws, resolveStack(root, options), options);
   const projectName = existingName(root) ?? (toName(path.basename(path.resolve(root))).kebab || 'app');
 
   ws.create(CONFIG_FILE, serializeConfig(config));
@@ -43,6 +44,15 @@ export function runInit(root: string, options: InitOptions): WorkspaceReport {
   const report = ws.commit(options.dryRun);
   if (!options.dryRun && report.created.includes('package.json')) report.notes.push('Run `npm install`, then `npm run verify`.');
   return report;
+}
+
+/** `--allow-no-outbox`: the choice is kept, with the decision record and the config entry that make it a recorded deviation. */
+function recordingNoOutbox(ws: Workspace, config: Config, options: InitOptions): Config {
+  const reason = options.allowNoOutbox?.trim() ?? '';
+  const { orm, events } = config.stack;
+  if (reason === '' || orm === 'none' || events === 'outbox' || config.deviations.some((deviation) => deviation.what === 'stack.events')) return config;
+  const adr = writeAdr(ws, { title: 'Publish integration events without the transactional outbox', deviation: { what: 'stack.events', reason } });
+  return { ...config, deviations: [...config.deviations, { what: 'stack.events', adr, reason }] };
 }
 
 function existingName(root: string): string | undefined {
@@ -66,14 +76,15 @@ function addContext(ws: Workspace, config: Config, entry: string): Config {
 const WITH_URL = ['drizzle', 'knex', 'prisma', 'typeorm'];
 
 function templateVars(config: Config, projectName: string): RenderContext {
-  const { orm, database, docsUi, ci } = config.stack;
+  const { orm, database, docsUi, ci, authn, http, broker } = config.stack;
+  const verifiesTokens = authn === 'jwt' && http !== 'none';
   return {
     ...stackVars(config),
     project: { name: projectName },
     docs: { any: docsUi !== 'none', ui: docsUi },
     knip: knipVars(config.stack.http !== 'none'),
     ci: { github: ci === 'github' || ci === 'both', gitlab: ci === 'gitlab' || ci === 'both', any: ci !== 'none' },
-    persistence: { needsUrl: WITH_URL.includes(orm), hasDatabase: WITH_URL.includes(orm), await: orm === 'typeorm' || orm === 'prisma' ? 'await ' : '' },
+    needs: { url: WITH_URL.includes(orm) || verifiesTokens || broker === 'rabbitmq' },
     database: { postgres: database === 'postgres', mysql: database === 'mysql', sqlite: database === 'sqlite', server: database === 'postgres' || database === 'mysql' },
     paths: { databaseToGenerated: path.posix.relative(`${config.platformDir}/database`, 'generated'), scriptsToSource: `../${config.sourceRoot}`, e2eToPlatform: `../../../${config.platformDir}` },
   };

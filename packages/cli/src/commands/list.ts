@@ -54,5 +54,9 @@ function formatContext(context: ContextSummary): string {
     list('domain events', context.domainEvents),
     list('published events', context.publishedEvents),
     list('builders', context.builders),
+    list('permissions', context.permissions),
+    list('policies', context.policies),
+    list('gateways', context.gateways),
+    `  deployable alone: ${context.deployable ? 'yes' : 'no'}`,
   ].join('\n');
 }

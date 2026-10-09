@@ -19,7 +19,7 @@ export function openPersistence(config: { readonly databaseUrl: string }): Persi
   return persistenceOver(connection.db, () => connection.close());
 }
 
-{{#if http.any}}
+{{#if persistence.inert}}
 /**
  * For the script that only lists routes: the pool connects on the first query,
  * and none is ever sent, so no database has to be reachable to generate the contracts.

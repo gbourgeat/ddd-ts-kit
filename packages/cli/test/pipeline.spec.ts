@@ -43,8 +43,9 @@ describe('pipeline templates', () => {
     expect(template('gitlab/gitlab-ci.yml')).toBe(expected);
   });
 
-  it('the vitest config differs only by the placeholders of the source root, the contexts directory and the alias', () => {
-    const rendered = template('vitest.config.ts.tpl').replaceAll('{{config.contextsDir}}', 'src/contexts').replaceAll('{{config.sourceRoot}}', 'src').replaceAll('{{alias.bare}}', '@');
+  it('the vitest config differs by the placeholders of the source root, the contexts directory and the alias, and by the architecture specs it runs', () => {
+    // The proof that each context wires alone lives in test/architecture, outside the source root.
+    const rendered = template('vitest.config.ts.tpl').replace(", 'test/architecture/**/*.spec.ts'", '').replaceAll('{{config.contextsDir}}', 'src/contexts').replaceAll('{{config.sourceRoot}}', 'src').replaceAll('{{alias.bare}}', '@');
 
     expect(rendered).toBe(source('vitest.config.ts'));
   });
@@ -65,8 +66,11 @@ describe('pipeline templates', () => {
     const expected: { entry: string[] } = JSON.parse(source('knip.json')) as { entry: string[] };
     // A fake is test support kept ready for the specs to come: with it, the port it implements is in use.
     expected.entry.splice(2, 0, 'src/contexts/*/test/fakes/*.ts');
+    const generated = JSON.parse(read(root, 'knip.json')) as { vitest: { entry: string[] } };
+    // The proof that each context wires alone is a spec outside the source root.
+    expect(generated.vitest.entry.splice(1, 1)).toEqual(['test/architecture/**/*.spec.ts']);
 
-    expect(JSON.parse(read(root, 'knip.json'))).toEqual(expected);
+    expect(generated).toEqual(expected);
   });
 
   it('carries every script and every analyzer of the pipeline into package.json', () => {
@@ -148,7 +152,18 @@ describe('agent settings', () => {
       'Edit(./docs/integration/asyncapi.json)',
       'Edit(./docs/integration/event-catalog.md)',
     ]);
-    expect(permissions.ask).toEqual(['Bash(git push *)', 'Bash(npm publish *)']);
+    expect(permissions.ask).toEqual([
+      'Bash(git push *)',
+      'Bash(npm publish *)',
+      'Edit(./ddd-ts-kit.config.json)',
+      'Edit(./eslint.config.mjs)',
+      'Edit(./.dependency-cruiser.cjs)',
+      'Edit(./knip.json)',
+      'Edit(./lefthook.yml)',
+      'Edit(./.gitlab-ci.yml)',
+      'Edit(./.github/workflows/**)',
+      'Edit(./.claude/settings.json)',
+    ]);
   });
 
   it('keeps the settings a project already has, adds what is missing and says what', () => {
@@ -164,7 +179,7 @@ describe('agent settings', () => {
     expect(merged.permissions.allow.filter((rule) => rule === 'Bash(npm run verify)')).toHaveLength(1);
     expect(merged.permissions.deny[0]).toBe('Read(./secrets/**)');
     expect(merged.permissions.deny).toContain('Edit(./openapi/openapi.json)');
-    expect(report.notes.join('\n')).toMatch(/\.claude\/settings\.json gained 24 permission\(s\): allow Bash\(npx ddd-ts-kit check \*\)/);
+    expect(report.notes.join('\n')).toMatch(/\.claude\/settings\.json gained 32 permission\(s\): allow Bash\(npx ddd-ts-kit check \*\)/);
 
     const again = cli(root, 'init', '--json').json() as { updated: string[] };
     expect(again.updated).not.toContain('.claude/settings.json');
@@ -222,6 +237,8 @@ describe('depcruise-config', () => {
       stack: { validation: 'class-validator' },
       contexts: { billing: { classification: 'core', upstreams: [] }, 'order-fulfilment': { classification: 'generic', upstreams: [{ context: 'billing' }, 'catalog'] }, catalog: { classification: 'generic' } },
       domainAllowedPackages: ['@ddd-ts-kit/kernel', 'decimal.js'],
+      // Written out, as `init` does: the shipped script does not know that the application layer may import the auth package by default.
+      applicationAllowedPackages: ['@ddd-ts-kit/kernel', '@ddd-ts-kit/auth'],
     };
 
     beforeAll(() => {
@@ -234,13 +251,14 @@ describe('depcruise-config', () => {
       fs.rmSync(sandbox, { recursive: true, force: true });
     });
 
-    it('builds the same rules and options, plus the fakes among the files that may have no importer', async () => {
+    it('builds the same rules and options, plus the fakes and the entry points of single contexts among the files that may have no importer', async () => {
       const shipped = ((await import(pathToFileURL(path.join(sandbox, 'depcruise-config.mjs')).href)) as { default: unknown }).default;
       const ported = JSON.parse(JSON.stringify(cruiseConfiguration(parseConfig(projectConfig)))) as { forbidden: { name: string; from: { pathNot: string[] } }[] };
       const orphans = ported.forbidden.find((rule) => rule.name === 'no-orphans');
-      const added = orphans?.from.pathNot.splice(3, 1);
+      // An entry point of a context run alone has no importer either.
+      const added = [...(orphans?.from.pathNot.splice(1, 1) ?? []), ...(orphans?.from.pathNot.splice(3, 1) ?? [])];
 
-      expect(added).toEqual(['^app/contexts/[^/]+/test/fakes/']);
+      expect(added).toEqual(['^app/apps/[^/]+/main\\.ts$', '^app/contexts/[^/]+/test/fakes/']);
       // The shipped script anchors tracing.ts under the source root; the port follows `platformDir`, the same place by default.
       expect(ported).toEqual(JSON.parse(JSON.stringify(shipped)));
     });

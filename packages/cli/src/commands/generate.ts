@@ -22,6 +22,11 @@ export const generateCommand: Command = (argv, io) => {
     query: { type: 'boolean', default: false },
     version: { type: 'string' },
     'allow-name': { type: 'boolean', default: false },
+    permission: { type: 'string' },
+    public: { type: 'boolean', default: false },
+    'tenant-scoped': { type: 'boolean', default: false },
+    deviation: { type: 'string' },
+    reason: { type: 'string' },
     'dry-run': { type: 'boolean', default: false },
     force: { type: 'boolean', default: false },
   });
@@ -58,11 +63,13 @@ function requestedKind(name: string | undefined, rest: readonly string[]): Kind 
 
 function flagsOf(args: Arguments): KindFlags {
   return {
-    ...args.texts(['classification', 'purpose', 'code', 'aggregate', 'method', 'path', 'version']),
+    ...args.texts(['classification', 'purpose', 'code', 'aggregate', 'method', 'path', 'version', 'permission', 'deviation', 'reason']),
     upstream: args.many('upstream'),
     term: args.many('term'),
     command: args.flag('command'),
     query: args.flag('query'),
     allowName: args.flag('allow-name'),
+    public: args.flag('public'),
+    tenantScoped: args.flag('tenant-scoped'),
   };
 }

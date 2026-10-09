@@ -1,8 +1,13 @@
-import { defineContextModule, kernelModule, token, type ContextModule } from '@ddd-ts-kit/di';
+import { defineContextModule, {{#if broker.external}}EVENT_SUBSCRIBER, {{/if}}kernelModule, token, type ContextModule } from '@ddd-ts-kit/di';
 {{#if events.outbox}}
 import { OutboxPublisher } from '@ddd-ts-kit/events';
 {{/if}}
-import { InMemoryDomainEventDispatcher, InMemoryEventBus, type DomainEventDispatcher } from '@ddd-ts-kit/kernel';
+{{#if broker.external}}
+import { InMemoryDomainEventDispatcher, type DomainEventDispatcher, type IntegrationEventSubscriber } from '@ddd-ts-kit/kernel';
+{{/if}}
+{{#unless broker.external}}
+import { InMemoryDomainEventDispatcher, type DomainEventDispatcher } from '@ddd-ts-kit/kernel';
+{{/unless}}
 {{#if events.outbox}}
 import { tracedSubscriber } from '@ddd-ts-kit/tracing';
 {{/if}}
@@ -13,8 +18,13 @@ import { tracedPublisher, tracedSubscriber } from '@ddd-ts-kit/tracing';
 import type { DatabaseContext } from './database/database.js';
 {{/if}}
 import type { Persistence } from './database/persistence.js';
+import type { EventProvider } from './events.js';
 
 export const DOMAIN_EVENTS = token<DomainEventDispatcher>('platform.DomainEventDispatcher');
+{{#if broker.external}}
+/** The subscriber of one consuming context: a broker gives each context queues of its own. */
+export const CONTEXT_EVENTS = token<(context: string) => IntegrationEventSubscriber>('platform.ContextEvents');
+{{/if}}
 {{#if persistence.hasDatabase}}
 export const DATABASE = token<DatabaseContext>('platform.Database');
 {{/if}}
@@ -23,8 +33,8 @@ export const DATABASE = token<DatabaseContext>('platform.Database');
  * The kernel tokens (clock, identifiers, buses, unit of work, event bus) on the persistence
  * of the project, then what this platform adds. Replacing a provider happens here and nowhere else.
  */
-export function platformModules(persistence: Persistence): readonly ContextModule[] {
-  const bus = new InMemoryEventBus();
+export function platformModules(persistence: Persistence, events: EventProvider): readonly ContextModule[] {
+  const { bus } = events;
   const kernel = kernelModule({
     unitOfWork: persistence.unitOfWork,
     processedEvents: persistence.processedEvents,
@@ -41,6 +51,9 @@ export function platformModules(persistence: Persistence): readonly ContextModul
     name: 'platform',
     register(builder) {
       builder.bind(DOMAIN_EVENTS).toClass(InMemoryDomainEventDispatcher);
+{{#if broker.external}}
+      builder.bind(CONTEXT_EVENTS).toValue((context) => tracedSubscriber(events.subscriberFor(context)));
+{{/if}}
 {{#if persistence.hasDatabase}}
       builder.bind(DATABASE).toValue(persistence.database);
 {{/if}}
@@ -54,6 +67,9 @@ export const platformTestModule = defineContextModule({
   name: 'platform',
   register(builder) {
     builder.bind(DOMAIN_EVENTS).toClass(InMemoryDomainEventDispatcher);
+{{#if broker.external}}
+    builder.bind(CONTEXT_EVENTS).toFactory((resolve) => () => resolve(EVENT_SUBSCRIBER));
+{{/if}}
 {{#if persistence.hasDatabase}}
     builder.bind(DATABASE).toFactory(() => {
       throw new Error('A handler spec has no database: give a fake for the repository it uses.');

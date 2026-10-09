@@ -63,6 +63,8 @@ interface UseCase {
   readonly message: string;
   readonly messageFile: string;
   readonly returnsId: boolean;
+  /** The message carries its actor: the route hands over who is calling and names the security scheme. */
+  readonly isProtected: boolean;
 }
 
 function findUseCase(scope: Scope, name: Name, flags: KindFlags): UseCase {
@@ -78,12 +80,14 @@ function findUseCase(scope: Scope, name: Name, flags: KindFlags): UseCase {
     what: `The ${kind} ${name.pascal}`,
     createdBy: `ddd-ts-kit generate ${kind} ${scope.context.kebab} ${name.pascal}`,
   });
+  const source = scope.ws.read(`${scope.dir}/${file(kind)}.ts`) ?? '';
   return {
     isQuery,
     message: `${name.pascal}${isQuery ? 'Query' : 'Command'}`,
     messageFile: file(kind),
-    // A command that answers an identifier is declared `extends Command<string>`.
-    returnsId: !isQuery && /extends\s+Command<\s*string\s*>/.test(scope.ws.read(`${scope.dir}/${file(kind)}.ts`) ?? ''),
+    // A command that answers an identifier is declared `extends Command<string>` or `extends AuthorizedCommand<string>`.
+    returnsId: !isQuery && /extends\s+(?:Authorized)?Command<\s*string\s*>/.test(source),
+    isProtected: /extends\s+Authorized(?:Command|Query)\b/.test(source),
   };
 }
 
@@ -101,6 +105,7 @@ function routeVars(scope: Scope, endpoint: Endpoint, useCase: UseCase): RenderCo
     usesSchema: hasBody || useCase.isQuery || useCase.returnsId,
     ...requestVars(scope, endpoint, hasBody),
     ...busVars(useCase),
+    ...securityVars(scope, useCase),
     ...parameterVars(endpoint.parameters),
     ...dtoVars(endpoint, useCase, hasBody),
   };
@@ -132,6 +137,17 @@ function busVars(useCase: UseCase) {
     busClass: useCase.isQuery ? 'InMemoryQueryBus' : 'InMemoryCommandBus',
     useCaseImport: `import { ${useCase.message} } from '../../${useCase.messageFile}.js';`,
     messageImport: `import { ${useCase.message} } from '../../${useCase.messageFile}.js';`,
+  };
+}
+
+/** A protected use case is reached with a credential; the bus decides, the route only says who is calling. */
+function securityVars(scope: Scope, useCase: UseCase) {
+  const scheme = scope.config.stack.authn === 'jwt' ? 'bearer' : 'developmentActor';
+  return {
+    protected: useCase.isProtected,
+    security: useCase.isProtected ? `['${scheme}']` : 'false',
+    actor: useCase.isProtected ? 'actorOf(input.context.principal)' : '',
+    errorCodes: useCase.isProtected ? "'UNAUTHORIZED', 'FORBIDDEN'" : '',
   };
 }
 

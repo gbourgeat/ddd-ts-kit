@@ -98,7 +98,7 @@ describe('generate', () => {
   it('accepts inflected forms of a term: plural, past participle, -ing', () => {
     expect(cli(root, 'generate', 'domain-event', 'billing', 'Invoice', 'Issued', '--dry-run').code).toBe(0);
     expect(cli(root, 'generate', 'domain-service', 'billing', 'InvoiceIssuing', '--dry-run').code).toBe(0);
-    expect(cli(root, 'generate', 'query', 'billing', 'IssuedInvoices', '--dry-run').code).toBe(0);
+    expect(cli(root, 'generate', 'query', 'billing', 'IssuedInvoices', '--public', '--dry-run').code).toBe(0);
   });
 
   it('adds the terms given with --term to the glossary, then accepts the name', () => {
@@ -229,7 +229,7 @@ describe('generated code', () => {
     results = scaffoldEverything(root);
   });
 
-  it('carries no comment but the TODO(domain) ones and the marker regions', () => {
+  it('carries no comment but the TODO(domain) and TODO(platform) ones and the marker regions', () => {
     const sources = walk(root, 'src/contexts').filter((file) => file.endsWith('.ts'));
     expect(sources.length).toBeGreaterThan(40);
 
@@ -237,7 +237,7 @@ describe('generated code', () => {
       const scanned = scan(read(root, file));
       expect(scanned.blockComments, file).toEqual([]);
       for (const comment of scanned.comments) {
-        expect(comment.text, `${file}:${comment.line}`).toMatch(/^(TODO\(domain\): |\/?ddd-ts-kit:[\w-]+$)/);
+        expect(comment.text, `${file}:${comment.line}`).toMatch(/^(TODO\((?:domain|platform)\): |\/?ddd-ts-kit:[\w-]+$)/);
       }
     }
   });
@@ -249,10 +249,12 @@ describe('generated code', () => {
     for (const todo of todos) expect(todo.text.length, `${todo.file}:${todo.line}`).toBeGreaterThan(40);
   });
 
-  it('gives every handler spec one real test through the bus and it.todo entries naming behaviours', () => {
+  it('gives every handler spec one real test through the bus, the refusal of an actor without the permission, and it.todo entries naming behaviours', () => {
     for (const spec of ['issue-invoice.handler.spec.ts', 'cancel-invoice.handler.spec.ts', 'list-invoices.handler.spec.ts']) {
       const text = read(root, `src/contexts/billing/test/unit/${spec}`);
-      expect(text.match(/^\s*it\('/gm)?.length, spec).toBe(1);
+      expect(text.match(/^\s*it\('/gm)?.length, spec).toBe(2);
+      expect(text, spec).toContain("rejects.toMatchObject({ code: 'FORBIDDEN' })");
+      expect(text, spec).toContain('new RoleBasedAuthorizer({ roles: { holder: [billingPermissions[');
       expect(text.match(/^\s*it\.todo\('/gm)?.length, spec).toBeGreaterThanOrEqual(2);
       expect(text, spec).toContain('createTestApplication({');
       expect(text, spec).toMatch(/application\.(commandBus|queryBus)\.execute\(/);
@@ -263,9 +265,9 @@ describe('generated code', () => {
     const module = read(root, 'src/contexts/billing/billing.module.ts');
 
     expect(module).toContain("builder.bind(INVOICE_REPOSITORY).toClass(DrizzleInvoiceRepository, [DATABASE]).as('repository');");
-    expect(module).toContain('builder.command(IssueInvoiceCommand).handledBy(IssueInvoiceHandler, [INVOICE_REPOSITORY, DOMAIN_EVENTS, ID_GENERATOR, CLOCK]);');
-    expect(module).toContain('builder.command(CancelInvoiceCommand).handledBy(CancelInvoiceHandler);');
-    expect(module).toContain('builder.query(ListInvoicesQuery).handledBy(ListInvoicesHandler, [LIST_INVOICES_READER]);');
+    expect(module).toContain("builder.command(IssueInvoiceCommand).requires(billingPermissions['invoice.issue']).handledBy(IssueInvoiceHandler, [INVOICE_REPOSITORY, DOMAIN_EVENTS, ID_GENERATOR, CLOCK]);");
+    expect(module).toContain("builder.command(CancelInvoiceCommand).requires(billingPermissions['invoice.cancel']).handledBy(CancelInvoiceHandler);");
+    expect(module).toContain("builder.query(ListInvoicesQuery).requires(billingPermissions['invoice.list']).handledBy(ListInvoicesHandler, [LIST_INVOICES_READER]);");
     expect(module).toContain('issueInvoiceRoute(resolve(COMMAND_BUS)),');
     expect(module).toContain('listInvoicesRoute(resolve(QUERY_BUS)),');
     expect(module).toContain('await resolve(INVOICE_ISSUED_PUBLISHER).publish(event);');
@@ -289,7 +291,7 @@ describe('generated code', () => {
 
   it('declares integration events in the published language and lists them', () => {
     expect(read(root, 'src/contexts/billing/published-language/index.ts')).toBe(
-      "export * from './invoice-issued.v1.integration-event.js';\nexport * from './invoice-issued.v2.integration-event.js';\n",
+      "export * from './invoice-issued.v1.integration-event.js';\nexport * from './invoice-issued.v2.integration-event.js';\nexport * from './invoice-status.contract.js';\n",
     );
     expect(read(root, 'src/contexts/billing/published-language/invoice-issued.v2.integration-event.ts')).toContain(
       "export const invoiceIssuedV2 = defineIntegrationEvent({\n  type: 'billing.invoice.issued',\n  version: 2,",
@@ -353,5 +355,83 @@ describe('generated code', () => {
     expect(text).toContain('billing [core]\n  glossary: 9 terms\n  upstreams: none\n  aggregates: Invoice');
     expect(text).toContain('  builders: Invoice');
     expect(text).toContain('end-to-end specs: issue-invoice, track-purchase-order');
+  });
+});
+
+describe('authorization, extraction and governance kinds', () => {
+  let root: string;
+
+  beforeAll(() => {
+    root = tempDir('wave4');
+    scaffoldEverything(root);
+  });
+
+  it('refuses a use case that declares neither a permission nor that it is public, and explains deny by default', () => {
+    const refused = cli(root, 'generate', 'command', 'billing', 'IssueInvoice');
+
+    expect(refused.code).toBe(2);
+    expect(refused.stderr).toContain('declares neither a permission nor that it is public');
+    expect(refused.stderr).toContain('Nothing is reachable by default');
+    expect(cli(root, 'generate', 'command', 'billing', 'IssueInvoice', '--permission', 'invoice.issue', '--public').code).toBe(2);
+    expect(cli(root, 'generate', 'command', 'billing', 'IssueInvoice', '--permission', 'refund.issue').stderr).toContain('"refund"');
+  });
+
+  it('declares each permission once, carries the actor in the message and lets the route name its security scheme', () => {
+    const billing = 'src/contexts/billing';
+
+    expect(read(root, `${billing}/application/authorization/billing.permissions.ts`).match(/'invoice\.(issue|cancel|list)':/g)).toHaveLength(3);
+    expect(read(root, `${billing}/application/commands/issue-invoice/issue-invoice.command.ts`)).toContain('extends AuthorizedCommand<string>');
+    expect(read(root, `${billing}/presentation/http/issue-invoice.route.ts`)).toContain("security: ['bearer'],");
+    expect(read(root, `${billing}/presentation/http/issue-invoice.route.ts`)).toContain('new IssueInvoiceCommand(actorOf(input.context.principal))');
+    expect(read(root, 'src/contexts/order-fulfilment/presentation/http/track-purchase-order.route.ts')).toContain('security: false,');
+    expect(read(root, 'src/contexts/shipping/application/integration/consumers/billing-invoice-issued.consumer.ts')).toContain("systemActor('shipping.billing-invoice-issued')");
+  });
+
+  it('writes a policy with its spec and registers it with the policies Access asks', () => {
+    expect(read(root, 'src/contexts/billing/application/authorization/only-issuer-cancels.policy.ts')).toContain("permission: billingPermissions['invoice.cancel'],");
+    expect(read(root, 'src/platform/auth/access-policies.ts')).toContain('onlyIssuerCancels,');
+    expect(walk(root, 'src/contexts/billing/test/unit')).toContain('src/contexts/billing/test/unit/only-issuer-cancels.policy.spec.ts');
+  });
+
+  it('gives a gateway its port, its in-process adapter over the published contract of the upstream, a fake and one contract suite', () => {
+    const adapter = read(root, 'src/contexts/shipping/infrastructure/external/in-process-invoice-status.gateway.ts');
+
+    expect(adapter).toContain("from '../../../billing/published-language/index.js'");
+    expect(adapter).toContain('TODO(platform): when billing runs as its own service');
+    expect(read(root, 'src/contexts/shipping/shipping.module.ts')).toContain(".toClass(InProcessInvoiceStatusGateway, [INVOICE_STATUS_UPSTREAM]).as('gateway');");
+    expect(cli(root, 'generate', 'gateway', 'billing', 'shipping', 'Parcels').stderr).toContain('does not declare "shipping" as an upstream');
+  });
+
+  it('makes a context a service: entry point, start script, compose service, deployable in the config, and a test booting each context alone', () => {
+    const config = JSON.parse(read(root, 'ddd-ts-kit.config.json')) as { contexts: Record<string, { deployable?: boolean }> };
+
+    expect(read(root, 'src/apps/shipping/main.ts')).toContain('{ modules: [shippingModule], routes: [SHIPPING_ROUTES] }');
+    expect(read(root, 'package.json')).toContain('"start:shipping": "node dist/src/apps/shipping/main.js"');
+    expect(read(root, 'docker-compose.yml')).toContain('ENTRY: dist/src/apps/shipping/main.js');
+    expect(config.contexts['shipping']?.deployable).toBe(true);
+    expect(config.contexts['billing']?.deployable).toBeUndefined();
+    expect(read(root, 'test/architecture/extractable.spec.ts').match(/^ {2}\['[a-z-]+', \w+Module\],$/gm)).toHaveLength(3);
+  });
+
+  it('numbers decision records and records a deviation with the entry of the config that points to it', () => {
+    const report = cli(root, 'generate', 'adr', 'Allow a longer handler', '--deviation', 'rules.clean/function-size', '--reason', 'One import script', '--json').json() as { created: string[] };
+    const config = JSON.parse(read(root, 'ddd-ts-kit.config.json')) as { deviations: unknown[] };
+
+    expect(walk(root, 'docs/adr')).toEqual(['docs/adr/0001-keep-shipping-in-the-same-repository-as-billing.md', 'docs/adr/0002-allow-a-longer-handler.md']);
+    expect(report.created).toEqual(['docs/adr/0002-allow-a-longer-handler.md']);
+    expect(read(root, 'docs/adr/0002-allow-a-longer-handler.md')).toContain('## Removal condition');
+    expect(config.deviations).toEqual([{ what: 'rules.clean/function-size', adr: '0002', reason: 'One import script' }]);
+  });
+
+  it('lists permissions, policies, gateways and what is deployable, and documents them', () => {
+    const listed = cli(root, 'list').stdout;
+
+    expect(listed).toContain('permissions: invoice.issue, invoice.cancel, invoice.list');
+    expect(listed).toContain('policies: OnlyIssuerCancels');
+    expect(listed).toContain('gateways: InvoiceStatus');
+    expect(listed).toContain('deployable alone: yes');
+    expect(read(root, 'src/contexts/billing/CONTEXT.md')).toContain('- `billing:invoice.cancel`');
+    expect(read(root, 'docs/context-map.md')).toMatch(/\| `shipping` \|.*\| yes \|/);
+    expect(read(root, 'docs/integration/README.md')).toContain('Same process, no broker');
   });
 });

@@ -6,7 +6,7 @@ export class {{name.pascal}}Handler implements QueryHandler<{{name.pascal}}Query
   constructor(private readonly reader: {{name.pascal}}Reader) {}
 
   async execute(query: {{name.pascal}}Query): Promise<{{name.pascal}}Result> {
-    // TODO(domain): enforce here what the asker is allowed to see (for example narrow `query` to their own data) before reading; a query never changes state.
+    // TODO(domain): narrow what is read to what the asker may see: ask `Access.scope(query.actor, permission, '<type>')` for the scope and hand it to the reader, never filter in memory after loading; a query never changes state.
     return this.reader.read(query);
   }
 }

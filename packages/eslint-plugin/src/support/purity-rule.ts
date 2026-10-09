@@ -1,8 +1,7 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import type { LintedFile } from '../project/linted-file.js';
 import { defineRule } from './define-rule.js';
 import { ambientName, propertyName } from './globals.js';
-import { importListener } from './imports.js';
+import { importListener, innerLayer } from './imports.js';
 
 export interface Purity {
   readonly id: string;
@@ -50,12 +49,6 @@ export function purityRule(rule: Purity) {
       };
     },
   });
-}
-
-function innerLayer(file: LintedFile): 'domain' | 'application' | undefined {
-  if (file.location.area !== 'context' || file.isTest) return undefined;
-  const { layer } = file.location;
-  return layer === 'domain' || layer === 'application' ? layer : undefined;
 }
 
 function moduleName(target: { readonly kind: 'package' | 'builtin'; readonly name: string }): string {

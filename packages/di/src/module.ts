@@ -1,4 +1,5 @@
 import type {
+  Actored,
   Command,
   IntegrationEventHandler,
   Message,
@@ -11,6 +12,13 @@ import type {
 import { receive, type ConsumerOptions, type EventConsumer, type EventContract } from './consumer.js';
 import { WiringError } from './errors.js';
 import { describeToken, token, type Token } from './token.js';
+import {
+  PUBLIC_REQUIREMENT,
+  protectedRequirement,
+  type PermissionRef,
+  type Requirement,
+  type RequirementOptions,
+} from './use-case-access.js';
 
 export type DependencyKind =
   | 'repository'
@@ -34,9 +42,33 @@ export type DependencyList<Args extends readonly unknown[]> = Args extends reado
   ? [dependencies?: readonly []]
   : [dependencies: DependencyTokens<Args>];
 
+/** What a binding aspect is told about the instance it wraps. */
+export interface BindingAspectInfo {
+  readonly kind?: DependencyKind;
+  /** The bound class, or the constructor name of what a factory or a value gave. */
+  readonly className: string;
+  /** Name of the module that declared the binding. */
+  readonly context: string;
+  /** Description of the bound token. */
+  readonly token: string;
+}
+
+/**
+ * Cross-cutting behaviour put around one binding: it answers the instance or a stand-in of the
+ * same type. An `Aspect` of `@ddd-ts-kit/aspects` fits as it is; this package does not depend
+ * on it.
+ */
+export type BindingAspect = <T extends object>(instance: T, info: BindingAspectInfo) => T;
+
 export interface ValueBindingOptions {
   /** Role passed to the `decorate` hook of the application. */
   as(kind: DependencyKind): this;
+  /**
+   * Wraps every instance of this binding, the first aspect outermost:
+   * `.with(retry(...), timeout(2000))` bounds each attempt. The `decorate` hook of the
+   * application comes around them. A value that is not an object is left alone.
+   */
+  with(...aspects: readonly BindingAspect[]): this;
 }
 
 export interface BindingOptions extends ValueBindingOptions {
@@ -73,6 +105,20 @@ export interface HandlerTarget<Handler> {
   handledByFactory(factory: (resolve: Resolve) => Handler): void;
 }
 
+export interface UseCaseTarget<M extends Message> extends HandlerTarget<MessageHandler<M>> {
+  /** Anybody reaches the handler, the anonymous caller included. Said, never implied. */
+  public(): HandlerTarget<MessageHandler<M>>;
+}
+
+/**
+ * Offered only for a message that carries its actor (`AuthorizedCommand`, `AuthorizedQuery`,
+ * or any message declaring `readonly actor: Actor`): a right is always somebody's.
+ */
+export interface ProtectedUseCaseTarget<M extends Message> extends UseCaseTarget<M> {
+  /** Only an actor holding the permission reaches the handler. */
+  requires(permission: PermissionRef, options?: RequirementOptions<M>): HandlerTarget<MessageHandler<M>>;
+}
+
 export interface ModuleBuilder {
   bind<T>(token: Token<T>): BindingTarget<T>;
   /**
@@ -81,9 +127,11 @@ export interface ModuleBuilder {
    */
   rebind<T>(token: Token<T>): BindingTarget<T>;
   /** Declares the one handler of a command: bound as a use case and registered on `COMMAND_BUS`. */
-  command<C extends Command<unknown>>(type: MessageType<C>): HandlerTarget<MessageHandler<C>>;
+  command<C extends Command<unknown> & Actored>(type: MessageType<C>): ProtectedUseCaseTarget<C>;
+  command<C extends Command<unknown>>(type: MessageType<C>): UseCaseTarget<C>;
   /** Declares the one handler of a query: bound as a use case and registered on `QUERY_BUS`. */
-  query<Q extends Query<unknown>>(type: MessageType<Q>): HandlerTarget<MessageHandler<Q>>;
+  query<Q extends Query<unknown> & Actored>(type: MessageType<Q>): ProtectedUseCaseTarget<Q>;
+  query<Q extends Query<unknown>>(type: MessageType<Q>): UseCaseTarget<Q>;
   /**
    * Declares a consumer of an integration event: subscribed to `EVENT_SUBSCRIBER` when the
    * application starts, unsubscribed when it stops.
@@ -123,6 +171,8 @@ export interface Binding {
   readonly create: (resolve: Resolve) => unknown;
   lifetime: Lifetime;
   kind?: DependencyKind;
+  /** Outermost first. */
+  aspects: readonly BindingAspect[];
 }
 
 export type AnyMessageHandler = MessageHandler<never>;
@@ -132,6 +182,8 @@ export interface MessageHandling {
   readonly message: MessageType<Message>;
   readonly handler: Token<AnyMessageHandler>;
   readonly module: string;
+  /** Empty when the module declared no access for the use case. */
+  readonly requirement: Requirement;
 }
 
 interface EventConsumption {
@@ -192,13 +244,11 @@ class ModuleRecorder implements ModuleBuilder {
 
   readonly rebind = <T>(target: Token<T>): BindingTarget<T> => this.#bindingTarget('rebind', target);
 
-  readonly command = <C extends Command<unknown>>(
-    type: MessageType<C>,
-  ): HandlerTarget<MessageHandler<C>> => this.#handling('command', type);
+  readonly command = <C extends Command<unknown>>(type: MessageType<C>): ProtectedUseCaseTarget<C> =>
+    this.#useCase('command', type);
 
-  readonly query = <Q extends Query<unknown>>(
-    type: MessageType<Q>,
-  ): HandlerTarget<MessageHandler<Q>> => this.#handling('query', type);
+  readonly query = <Q extends Query<unknown>>(type: MessageType<Q>): ProtectedUseCaseTarget<Q> =>
+    this.#useCase('query', type);
 
   readonly on = <Payload>(
     contract: EventContract<Payload>,
@@ -264,7 +314,7 @@ class ModuleRecorder implements ModuleBuilder {
   }
 
   #bindingOf(target: Token<unknown>, recipe: Recipe): Binding {
-    return { token: target, module: this.module, lifetime: 'singleton', ...recipe };
+    return { token: target, module: this.module, lifetime: 'singleton', aspects: [], ...recipe };
   }
 
   #declare(binding: Binding): void {
@@ -288,15 +338,22 @@ class ModuleRecorder implements ModuleBuilder {
     this.draft.bindings.set(binding.token, binding);
   }
 
-  #handling<M extends Message>(
-    kind: MessageInfo['kind'],
-    message: MessageType<M>,
-  ): HandlerTarget<MessageHandler<M>> {
-    return this.#handlerTarget<MessageHandler<M>>({
+  #useCase<M extends Message>(kind: MessageInfo['kind'], message: MessageType<M>): ProtectedUseCaseTarget<M> {
+    let requirement: Requirement = {};
+    const target = this.#handlerTarget<MessageHandler<M>>({
       statement: `${kind}(${message.name})`,
       kind: 'use-case',
-      record: (handler) => this.#recordHandling({ kind, message, handler, module: this.module }),
+      record: (handler) => this.#recordHandling({ kind, message, handler, module: this.module, requirement }),
     });
+    const declaring = (declared: Requirement): HandlerTarget<MessageHandler<M>> => {
+      requirement = declared;
+      return target;
+    };
+    return {
+      ...target,
+      requires: (permission, options) => declaring(protectedRequirement(message, permission, options)),
+      public: () => declaring(PUBLIC_REQUIREMENT),
+    };
   }
 
   #handlerTarget<Handler>(declaration: HandlerDeclaration<Handler>): HandlerTarget<Handler> {
@@ -359,6 +416,10 @@ function optionsOf(binding: Binding): BindingOptions {
     },
     transient() {
       binding.lifetime = 'transient';
+      return options;
+    },
+    with(...aspects) {
+      binding.aspects = [...binding.aspects, ...aspects];
       return options;
     },
   };

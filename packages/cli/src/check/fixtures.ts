@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { CONFIG_FILE } from '../config.js';
+import { CONFIG_FILE, parseConfig } from '../config.js';
 import { runCheck } from './engine.js';
 import { loadProject } from './project.js';
 import { CONTEXT_DOC_HEADINGS } from './rules/tree-context-doc.js';
@@ -41,6 +41,17 @@ const PUBLISHED = `${BILLING}/published-language/invoice-issued.v1.integration-e
 const SPEC = "import { it } from 'vitest';\nit.todo('behaves');\n";
 
 const BUILDER = `${BILLING}/test/builders/invoice.builder.ts`;
+const MODULE = `${BILLING}/billing.module.ts`;
+const COMMAND = `${BILLING}/application/commands/issue-invoice/issue-invoice.command.ts`;
+const QUERY = `${BILLING}/application/queries/list-issued-invoices/list-issued-invoices.query.ts`;
+const PUBLISHER = `${BILLING}/application/integration/publishers/invoice-issued.publisher.ts`;
+const CONSUMER = `${BILLING}/application/integration/consumers/product-listed.consumer.ts`;
+const CONSUMER_SPEC = `${BILLING}/test/unit/product-listed.consumer.spec.ts`;
+const PLATFORM_MODULE = 'src/platform/platform.module.ts';
+/** The decision record behind what the fixtures relax on purpose, so that only the rule under test speaks. */
+const FIXTURE_ADR = 'docs/adr/0001-fixture-decisions.md';
+const DECIMAL_ADR = 'docs/adr/0012-decimal-arithmetic.md';
+const RECORD = '# Decision\n\nContext, deviation, reason, scope, condition for removal.\n';
 const DECLARE = "import { z } from 'zod';\nimport { defineIntegrationEvent } from '@ddd-ts-kit/events';\nimport { zodSchema } from '@ddd-ts-kit/validation/zod';\n";
 const PAYLOAD = 'payload: zodSchema(z.object({ invoiceId: z.string() }))';
 const declaration = (type: string, version = 1, payload = PAYLOAD): string =>
@@ -784,7 +795,7 @@ export const FIXTURES: readonly Fixture[] = [
         '  if (head === undefined || !many) throw new Error("empty");',
         '  // @ts-expect-error the vendor typings miss this overload, see #77',
         '  const company = head !== "" ? head : "any";',
-        '  // eslint-disable-next-line no-console -- startup banner requested by operations',
+        '  // eslint-disable-next-line no-console -- ADR-0001: startup banner requested by operations',
         '  return company;',
         '}',
         '',
@@ -911,9 +922,10 @@ export const FIXTURES: readonly Fixture[] = [
     ruleId: 'config/suppression-needs-reason',
     name: 'a suppression with a reason silences the violation',
     expect: 'pass',
-    files: project(
-      aggregate("// ddd-ts-kit-disable-next-line layer/domain-purity -- decimal arithmetic approved in ADR 12\nimport Decimal from 'decimal.js';\nexport class Invoice { total = new Decimal(0); }\n"),
-    ),
+    files: project({
+      ...aggregate("// ddd-ts-kit-disable-next-line layer/domain-purity -- decimal arithmetic approved in ADR 12\nimport Decimal from 'decimal.js';\nexport class Invoice { total = new Decimal(0); }\n"),
+      [DECIMAL_ADR]: RECORD,
+    }),
   },
   {
     ruleId: 'config/suppression-needs-reason',
@@ -921,6 +933,395 @@ export const FIXTURES: readonly Fixture[] = [
     expect: { file: AGGREGATE },
     also: ['layer/domain-purity'],
     files: project(aggregate("// ddd-ts-kit-disable-next-line layer/domain-purity\nimport Decimal from 'decimal.js';\nexport class Invoice { total = new Decimal(0); }\n")),
+  },
+  {
+    ruleId: 'events/outbox-required',
+    name: 'a publisher on the port, a platform that hands the OutboxPublisher and keeps the bus for the relay',
+    expect: 'pass',
+    files: project({
+      [PUBLISHER]: "import type { IntegrationEventPublisher } from '@ddd-ts-kit/kernel';\nexport class InvoiceIssuedPublisher {\n  constructor(private readonly publisher: IntegrationEventPublisher) {}\n}\n",
+      [PLATFORM_MODULE]:
+        "import { OutboxPublisher } from '@ddd-ts-kit/events';\nimport { InMemoryEventBus } from '@ddd-ts-kit/kernel';\nexport const bus = new InMemoryEventBus();\nexport const platform = { eventPublisher: new OutboxPublisher(store), relayTarget: bus };\n",
+      'src/platform/events/outbox-relay.ts': 'export const relay = new OutboxRelay({ store, publisher: bus });\n',
+    }),
+  },
+  {
+    ruleId: 'events/outbox-required',
+    name: 'no database: the in-memory bus alone is enough',
+    expect: 'pass',
+    files: project({ [PLATFORM_MODULE]: 'export const platform = { eventPublisher: bus };\n' }, { [CONFIG_FILE]: config({ stack: { database: 'none', orm: 'none', events: 'in-memory' } }) }),
+  },
+  {
+    ruleId: 'events/outbox-required',
+    name: 'a database without the outbox, recorded as a deviation',
+    expect: 'pass',
+    files: project(
+      {},
+      { [CONFIG_FILE]: config({ stack: { events: 'in-memory' }, deviations: [{ what: 'stack.events', adr: 'ADR-0001', reason: 'Events are advisory in this prototype.' }] }) },
+    ),
+  },
+  {
+    ruleId: 'events/outbox-required',
+    name: 'a handler importing a broker client',
+    expect: { file: HANDLER },
+    also: ['layer/application-inward'],
+    files: project(handler("import { connect } from 'amqplib';\nexport class IssueInvoiceHandler {\n  readonly open = connect;\n}\n")),
+  },
+  {
+    ruleId: 'events/outbox-required',
+    name: 'a handler publishing on the in-memory bus',
+    expect: { file: HANDLER },
+    files: project(handler("import type { InMemoryEventBus } from '@ddd-ts-kit/kernel';\nexport class IssueInvoiceHandler {\n  constructor(private readonly bus: InMemoryEventBus) {}\n}\n")),
+  },
+  {
+    ruleId: 'events/outbox-required',
+    name: 'a publisher that depends on the whole bus',
+    expect: { file: PUBLISHER },
+    files: project({ [PUBLISHER]: "import type { EventBus } from '@ddd-ts-kit/kernel';\nexport class InvoiceIssuedPublisher {\n  constructor(private readonly bus: EventBus) {}\n}\n" }),
+  },
+  {
+    ruleId: 'events/outbox-required',
+    name: 'a platform that hands the bus to use cases',
+    expect: { file: PLATFORM_MODULE },
+    files: project({ [PLATFORM_MODULE]: "import { InMemoryEventBus } from '@ddd-ts-kit/kernel';\nexport const bus = new InMemoryEventBus();\nexport const platform = { eventPublisher: bus };\n" }),
+  },
+  {
+    ruleId: 'events/outbox-required',
+    name: 'a database with in-memory events',
+    expect: { file: CONFIG_FILE },
+    also: ['governance/recorded-deviation'],
+    files: project({}, { [CONFIG_FILE]: config({ stack: { orm: 'drizzle', events: 'in-memory' } }) }),
+  },
+  {
+    ruleId: 'events/consumer-idempotent',
+    name: 'consumers registered under their own name, by the builder and by hand',
+    expect: 'pass',
+    files: project({
+      [CONSUMER]: 'export class ProductListedConsumer {}\n',
+      [CONSUMER_SPEC]: SPEC,
+      [`${BILLING}/application/integration/consumers/product-withdrawn.consumer.ts`]: 'export class ProductWithdrawnConsumer {}\n',
+      [`${BILLING}/test/unit/product-withdrawn.consumer.spec.ts`]: SPEC,
+      [MODULE]: [
+        'export function register(builder: Builder): void {',
+        '  builder',
+        "    .on(productListedV1, { consumer: 'billing.product-listed' })",
+        '    .handledBy(ProductListedConsumer, [COMMAND_BUS]);',
+        "  process.on('SIGTERM', stop);",
+        '}',
+        'const productWithdrawnConsumer = create(commandBus);',
+        'export const subscriptions = [',
+        "  consume(productWithdrawnV1, { consumer: 'billing.product-withdrawn', processed, unitOfWork }, (event) => productWithdrawnConsumer.handle(event)),",
+        "  on(productRenamedV1, rename, { consumer: 'billing.product-renamed', processed: store }),",
+        "  subscribe(idempotent('billing.product-archived', store, archive)),",
+        '];',
+        '',
+      ].join('\n'),
+    }),
+  },
+  {
+    ruleId: 'events/consumer-idempotent',
+    name: 'a consumer subscribed without a consumer name',
+    expect: { file: CONSUMER },
+    files: project({
+      [CONSUMER]: 'export class ProductListedConsumer {}\n',
+      [CONSUMER_SPEC]: SPEC,
+      [MODULE]: "export const subscription = subscriber.subscribe('catalog.product.listed', (event) => productListedConsumer.handle(event));\n",
+    }),
+  },
+  {
+    ruleId: 'events/consumer-idempotent',
+    name: 'one consumer name used twice in a module',
+    expect: { file: MODULE },
+    files: project({
+      [MODULE]:
+        "export const subscriptions = [\n  consume(productListedV1, { consumer: 'billing', processed, unitOfWork }, list),\n  consume(productWithdrawnV1, { consumer: 'billing', processed, unitOfWork }, withdraw),\n];\n",
+    }),
+  },
+  {
+    ruleId: 'events/consumer-idempotent',
+    name: 'one consumer name used by two contexts',
+    expect: { file: `${CATALOG}/catalog.module.ts` },
+    files: project({
+      [MODULE]: "export const subscriptions = [consume(productListedV1, { consumer: 'product-listed', processed, unitOfWork }, list)];\n",
+      [`${CATALOG}/catalog.module.ts`]: "export const subscriptions = [consume(productListedV1, { consumer: 'product-listed', processed, unitOfWork }, index)];\n",
+    }),
+  },
+  {
+    ruleId: 'events/consumer-idempotent',
+    name: 'a subscription by hand without a processed-event store',
+    expect: { file: MODULE },
+    files: project({ [MODULE]: "export const subscriptions = [on(productListedV1, list, { consumer: 'billing.product-listed' })];\n" }),
+  },
+  {
+    ruleId: 'context/extractable',
+    name: 'a context wired alone, its own schema, a gateway on the published language, an entry point',
+    expect: 'pass',
+    files: project(
+      {
+        [MODULE]: "import type { ProductListedV1 } from '../catalog/published-language/index.js';\nimport { InMemoryInvoiceRepository } from './infrastructure/persistence/in-memory-invoice.repository.js';\nexport const invoiceRepository = new InMemoryInvoiceRepository();\nexport type Listed = ProductListedV1;\n",
+        [ADAPTER]: "export const billing = pgSchema('billing');\nexport class InMemoryInvoiceRepository {\n  readonly #rows = new Map<string, string>();\n\n  get size(): number {\n    return this.#rows.size;\n  }\n}\n",
+        [`${BILLING}/infrastructure/external/in-process-product.gateway.ts`]: "import type { ProductListedV1 } from '../../../catalog/published-language/index.js';\nexport type Listed = ProductListedV1;\n",
+        'src/apps/billing/main.ts': "import { invoiceRepository } from '../../contexts/billing/billing.module.js';\nexport const composed = [invoiceRepository];\n",
+      },
+      {
+        [CONFIG_FILE]: config({
+          contexts: {
+            billing: { classification: 'core', upstreams: [{ context: 'catalog', relationship: 'published-language' }], deployable: true },
+            catalog: { classification: 'supporting', upstreams: [] },
+          },
+        }),
+      },
+    ),
+  },
+  {
+    ruleId: 'context/extractable',
+    name: 'a module that wires another context',
+    expect: { file: MODULE },
+    also: ['context/published-language-only'],
+    files: project({ [MODULE]: "import { catalogModule } from '../catalog/catalog.module.js';\nexport const modules = [catalogModule];\n" }),
+  },
+  {
+    ruleId: 'context/extractable',
+    name: 'a repository importing the tables of another context',
+    expect: { file: ADAPTER },
+    also: ['context/published-language-only'],
+    files: project({ [ADAPTER]: "import { products } from '../../../catalog/infrastructure/persistence/product.schema.js';\nexport const joined = products;\n" }),
+  },
+  {
+    ruleId: 'context/extractable',
+    name: 'a repository naming the schema of another context',
+    expect: { file: ADAPTER },
+    files: project({ [ADAPTER]: "export const products = pgSchema('catalog').table('products', {});\n" }),
+  },
+  {
+    ruleId: 'context/extractable',
+    name: 'a handler loading through the repository of another context',
+    expect: { file: HANDLER },
+    also: ['context/published-language-only'],
+    files: project(handler("import type { ProductRepository } from '../../../../catalog/domain/repositories/product.repository.js';\nexport class IssueInvoiceHandler {\n  constructor(private readonly products: ProductRepository) {}\n}\n")),
+  },
+  {
+    ruleId: 'context/extractable',
+    name: 'mutable state exported by a module',
+    expect: { file: ADAPTER },
+    files: project({ [ADAPTER]: 'export const cache = new Map<string, string>();\nexport let lastInvoiceNumber = 0;\n' }),
+  },
+  {
+    ruleId: 'context/extractable',
+    name: 'a deployable context without its entry point',
+    expect: { file: CONFIG_FILE },
+    files: project(
+      {},
+      {
+        [CONFIG_FILE]: config({
+          contexts: {
+            billing: { classification: 'core', upstreams: ['catalog'], deployable: true },
+            catalog: { classification: 'supporting', upstreams: [] },
+          },
+        }),
+      },
+    ),
+  },
+  {
+    ruleId: 'authz/declared',
+    name: 'a permission or a public mark on every registration, a security on every route',
+    expect: 'pass',
+    files: project({
+      [COMMAND]: 'export class IssueInvoiceCommand {}\n',
+      [MODULE]: [
+        'export function register(builder: Builder): void {',
+        '  builder',
+        '    .command(IssueInvoiceCommand)',
+        "    .requires(billingPermissions['invoice.issue'])",
+        '    .handledBy(IssueInvoiceHandler, [CLOCK]);',
+        '  builder.query(InvoicesIssuedQuery).public().handledBy(InvoicesIssuedHandler, []);',
+        '}',
+        '',
+      ].join('\n'),
+      [ROUTE]: "export const issueInvoiceRoute = defineRoute({ method: 'POST', path: '/invoices', security: ['bearer'] }, issue);\nexport const statusRoute = defineRoute({ method: 'GET', path: '/status', security: false }, status);\n",
+    }),
+  },
+  {
+    ruleId: 'authz/declared',
+    name: 'wired by hand: every command and query is in the authorization map',
+    expect: 'pass',
+    files: project(
+      {
+        [COMMAND]: 'export class IssueInvoiceCommand {}\n',
+        [QUERY]: 'export class InvoicesIssuedQuery {}\n',
+        [MODULE]: "export const authorization = [\n  requires(IssueInvoiceCommand, billingPermissions['invoice.issue']),\n  publicUseCase(InvoicesIssuedQuery),\n];\n",
+      },
+      { [CONFIG_FILE]: config({ stack: { di: 'manual' } }) },
+    ),
+  },
+  {
+    ruleId: 'authz/declared',
+    name: 'a command registered without a permission, next to a declared query',
+    expect: { file: MODULE },
+    files: project({
+      [MODULE]:
+        'export function register(builder: Builder): void {\n  builder.command(IssueInvoiceCommand).handledBy(IssueInvoiceHandler, [CLOCK]);\n  builder.query(InvoicesIssuedQuery).public().handledBy(InvoicesIssuedHandler, []);\n}\n',
+    }),
+  },
+  {
+    ruleId: 'authz/declared',
+    name: 'wired by hand: a command missing from the authorization map',
+    expect: { file: COMMAND },
+    files: project(
+      {
+        [COMMAND]: 'export class IssueInvoiceCommand {}\n',
+        [QUERY]: 'export class InvoicesIssuedQuery {}\n',
+        [MODULE]: 'export const authorization = [publicUseCase(InvoicesIssuedQuery)];\n',
+      },
+      { [CONFIG_FILE]: config({ stack: { di: 'manual' } }) },
+    ),
+  },
+  {
+    ruleId: 'authz/declared',
+    name: 'a route that does not declare its security',
+    expect: { file: ROUTE },
+    files: project({ [ROUTE]: "export const issueInvoiceRoute = defineRoute({ method: 'POST', path: '/invoices' }, issue);\n" }),
+  },
+  {
+    ruleId: 'authz/in-application',
+    name: 'a route that builds the actor, a handler asking the access port, an adapter scoped by tenant',
+    expect: 'pass',
+    files: project({
+      [ROUTE]: "import { actorOf } from '@ddd-ts-kit/auth';\nimport type { Actor } from '@ddd-ts-kit/kernel';\nexport const toActor = (principal: unknown): Actor => actorOf(principal);\n",
+      ...handler('export class IssueInvoiceHandler {\n  async execute(command: IssueInvoiceCommand): Promise<void> {\n    await this.access.authorize(command.actor, permission, command);\n  }\n}\n'),
+      [ADAPTER]: 'export class InMemoryInvoiceRepository {\n  tenant(): string | undefined {\n    return this.actors.require().tenantId;\n  }\n}\n',
+    }),
+  },
+  {
+    ruleId: 'authz/in-application',
+    name: 'a role test in a route',
+    expect: { file: ROUTE },
+    files: project({ [ROUTE]: "export const refuse = (context: Context): boolean => !context.principal.roles.includes('admin');\n" }),
+  },
+  {
+    ruleId: 'authz/in-application',
+    name: 'an authorizer imported by a route',
+    expect: { file: ROUTE },
+    files: project({ [ROUTE]: "import type { Authorizer } from '@ddd-ts-kit/auth';\nexport type Decide = Authorizer;\n" }),
+  },
+  {
+    ruleId: 'authz/in-application',
+    name: 'an adapter that decides and refuses',
+    expect: { file: ADAPTER },
+    files: project({
+      [ADAPTER]:
+        'export class InMemoryInvoiceRepository {\n  async find(request: Request): Promise<void> {\n    const decision = await this.authorizer.check(request);\n    if (!decision.allowed) throw new ForbiddenError(decision.reason);\n  }\n}\n',
+    }),
+  },
+  {
+    ruleId: 'authz/in-application',
+    name: 'an aggregate that tests the roles of the actor',
+    expect: { file: AGGREGATE },
+    files: project(aggregate("import type { Actor } from '@ddd-ts-kit/kernel';\nexport class Invoice {\n  issue(actor: Actor): boolean {\n    return actor.roles.includes('accountant');\n  }\n}\n")),
+  },
+  {
+    ruleId: 'authz/actor-explicit',
+    name: 'the actor carried by the command, the ambient actor read by an adapter only',
+    expect: 'pass',
+    files: project({
+      [COMMAND]: "import { AuthorizedCommand, type Actor } from '@ddd-ts-kit/kernel';\nexport class IssueInvoiceCommand extends AuthorizedCommand {\n  constructor(actor: Actor) {\n    super(actor);\n  }\n}\n",
+      ...handler('export class IssueInvoiceHandler {\n  async execute(command: IssueInvoiceCommand): Promise<string> {\n    return command.actor.id;\n  }\n}\n'),
+      [ADAPTER]:
+        "import type { ActorContext } from '@ddd-ts-kit/kernel';\nexport class InMemoryInvoiceRepository {\n  constructor(private readonly actors: ActorContext) {}\n\n  tenant(): string | undefined {\n    return this.actors.require().tenantId;\n  }\n}\n",
+    }),
+  },
+  {
+    ruleId: 'authz/actor-explicit',
+    name: 'a handler reading the current actor',
+    expect: { file: HANDLER },
+    files: project(
+      handler(
+        "import type { ActorContext } from '@ddd-ts-kit/kernel';\nexport class IssueInvoiceHandler {\n  constructor(private readonly actors: ActorContext) {}\n\n  async execute(): Promise<string> {\n    return this.actors.require().id;\n  }\n}\n",
+      ),
+    ),
+  },
+  {
+    ruleId: 'authz/actor-explicit',
+    name: 'an aggregate handed the actor context',
+    expect: { file: AGGREGATE },
+    also: ['authz/in-application'],
+    files: project(aggregate("import type { ActorContext } from '@ddd-ts-kit/kernel';\nexport class Invoice {\n  issue(actors: ActorContext): string | undefined {\n    return actors.current()?.id;\n  }\n}\n")),
+  },
+  {
+    ruleId: 'governance/recorded-deviation',
+    name: 'suppressions and relaxed settings that point to an existing decision record',
+    expect: 'pass',
+    files: project(
+      {
+        ...aggregate(
+          "import Decimal from 'decimal.js';\nexport class Invoice {\n  readonly total = new Decimal(0);\n  // ddd-ts-kit-disable-next-line purity/no-system-clock -- ADR-0007: the legacy import stamps invoices itself\n  readonly importedAt = new Date();\n}\n",
+        ),
+        [ADAPTER]: '/* eslint-disable no-console -- see docs/adr/0007-legacy-import.md */\nexport class InMemoryInvoiceRepository {}\n',
+        'docs/adr/0007-legacy-import.md': RECORD,
+      },
+      {
+        [CONFIG_FILE]: config({
+          rules: { 'test/builder-required': 'off', 'naming/suffix': 'warn', 'test/no-mocks': 'error' },
+          guard: 'advise',
+          domainAllowedPackages: ['@ddd-ts-kit/kernel', 'decimal.js'],
+          deviations: [
+            { what: 'rules.test/builder-required', adr: 'ADR-0007', reason: 'Aggregates of the legacy import are built by the import itself.' },
+            { what: 'rules.naming/suffix', adr: '7', reason: 'Legacy files keep their names until the import is retired.' },
+            { what: 'guard', adr: '0007', reason: 'The import is written by a tool the hook cannot stop.' },
+            { what: 'domainAllowedPackages.decimal.js', adr: 'docs/adr/0007-legacy-import.md', reason: 'Money arithmetic of the legacy import.' },
+          ],
+        }),
+      },
+    ),
+  },
+  {
+    ruleId: 'governance/recorded-deviation',
+    name: 'a suppression with a reason and no decision record still silences its rule',
+    expect: { file: AGGREGATE },
+    files: project(aggregate("// ddd-ts-kit-disable-next-line layer/domain-purity -- decimal.js is our money arithmetic\nimport Decimal from 'decimal.js';\nexport class Invoice { total = new Decimal(0); }\n")),
+  },
+  {
+    ruleId: 'governance/recorded-deviation',
+    name: 'a suppression pointing to a record that does not exist',
+    expect: { file: AGGREGATE },
+    files: project(aggregate("// ddd-ts-kit-disable-next-line layer/domain-purity -- ADR-0099: decimal.js is our money arithmetic\nimport Decimal from 'decimal.js';\nexport class Invoice { total = new Decimal(0); }\n")),
+  },
+  {
+    ruleId: 'governance/recorded-deviation',
+    name: 'a lint suppression with a reason and no decision record',
+    expect: { file: ADAPTER },
+    files: project({ [ADAPTER]: '// eslint-disable-next-line no-console -- startup banner requested by operations\nexport class InMemoryInvoiceRepository {}\n' }),
+  },
+  {
+    ruleId: 'governance/recorded-deviation',
+    name: 'a rule switched off without a deviation',
+    expect: { file: CONFIG_FILE },
+    files: project({}, { [CONFIG_FILE]: config({ rules: { 'test/spec-required': 'off' }, deviations: [] }) }),
+  },
+  {
+    ruleId: 'governance/recorded-deviation',
+    name: 'a package, a directory and a guard mode added without a deviation',
+    expect: { file: CONFIG_FILE },
+    files: project(
+      {},
+      {
+        [CONFIG_FILE]: config({
+          guard: 'advise',
+          applicationAllowedPackages: ['@ddd-ts-kit/kernel', 'lodash'],
+          contexts: {
+            billing: { classification: 'core', upstreams: ['catalog'], extraDirectories: ['infrastructure/messaging'] },
+            catalog: { classification: 'supporting', upstreams: [] },
+          },
+          deviations: [],
+        }),
+      },
+    ),
+  },
+  {
+    ruleId: 'governance/recorded-deviation',
+    name: 'a deviation without a reason, pointing to a missing record',
+    expect: { file: CONFIG_FILE },
+    files: project({}, { [CONFIG_FILE]: config({ guard: 'advise', deviations: [{ what: 'guard', adr: 'ADR-0042', reason: '' }] }) }),
   },
 ];
 
@@ -951,23 +1352,32 @@ function contextDoc(classification: string, headings: readonly string[] = CONTEX
 }
 
 function config(overrides: Record<string, unknown> = {}): string {
-  return JSON.stringify(
-    {
-      contexts: {
-        billing: { classification: 'core', upstreams: [{ context: 'catalog', relationship: 'published-language' }] },
-        catalog: { classification: 'supporting', upstreams: [] },
-      },
-      ...overrides,
+  const written = {
+    contexts: {
+      billing: { classification: 'core', upstreams: [{ context: 'catalog', relationship: 'published-language' }] },
+      catalog: { classification: 'supporting', upstreams: [] },
     },
-    null,
-    2,
-  );
+    ...overrides,
+  };
+  return JSON.stringify({ deviations: recordedRelaxations(written), ...written }, null, 2);
+}
+
+/** Unless a fixture writes its own `deviations`, the severities, guard mode and directories it changes are recorded. */
+function recordedRelaxations(written: Record<string, unknown>): { what: string; adr: string; reason: string }[] {
+  const { rules, guard, contexts } = parseConfig(written);
+  const relaxed = [
+    ...Object.keys(rules).map((id) => `rules.${id}`),
+    ...(guard === 'enforce' ? [] : ['guard']),
+    ...Object.entries(contexts).flatMap(([name, context]) => context.extraDirectories.map((directory) => `contexts.${name}.extraDirectories.${directory}`)),
+  ];
+  return relaxed.map((what) => ({ what, adr: '0001', reason: 'Needed by the fixture.' }));
 }
 
 /** Two declared contexts, billing downstream of catalog, each with a valid CONTEXT.md. */
 function project(files: Files, overrides: Files = {}): Files {
   return {
     [CONFIG_FILE]: config(),
+    [FIXTURE_ADR]: RECORD,
     [`${BILLING}/CONTEXT.md`]: contextDoc('core'),
     [`${CATALOG}/CONTEXT.md`]: contextDoc('supporting'),
     ...files,

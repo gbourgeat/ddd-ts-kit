@@ -1,3 +1,4 @@
+import { callEnd } from './text-shapes.js';
 import type { SourceFile } from './types.js';
 
 /** `defineIntegrationEvent({ ... })` calls found in a source, shared by the events/* rules. */
@@ -25,7 +26,7 @@ export function eventDeclarations(file: SourceFile): EventDeclaration[] {
   return [...code.matchAll(DECLARATION)].map((match) => {
     const start = match.index;
     const argumentsStart = start + match[0].length;
-    const end = closingOffset(code, argumentsStart);
+    const end = callEnd(code, argumentsStart);
     const body = code.slice(start, end);
     const type = strings.find((literal) => {
       if (literal.start <= start || literal.start >= end || !isTypeLiteral(file, literal.start)) return false;
@@ -45,17 +46,6 @@ export function eventDeclarations(file: SourceFile): EventDeclaration[] {
 
 export function inDeclaration(declarations: readonly EventDeclaration[], offset: number): boolean {
   return declarations.some((declaration) => offset > declaration.start && offset < declaration.end);
-}
-
-/** Offset just after the parenthesis closing the call whose arguments start at `open`. */
-function closingOffset(code: string, open: number): number {
-  let depth = 1;
-  for (let i = open; i < code.length; i += 1) {
-    if (code[i] === '(') depth += 1;
-    if (code[i] === ')') depth -= 1;
-    if (depth === 0) return i + 1;
-  }
-  return code.length;
 }
 
 function count(text: string, char: string): number {

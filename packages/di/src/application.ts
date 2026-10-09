@@ -1,5 +1,13 @@
 import type { Message, MessageInfo, MessageType, Subscription } from '@ddd-ts-kit/kernel';
 import { container as rootContainer, instanceCachingFactory, type DependencyContainer } from 'tsyringe';
+import {
+  USE_CASE_DECLARATIONS,
+  USE_CASE_GUARD,
+  assertAuthorizationDeclared,
+  declarationsOf,
+  passEveryMessage,
+  type AuthorizationMode,
+} from './authorization.js';
 import { assertSound, cycleError } from './checks.js';
 import { describeWiring, type WiringDescription } from './description.js';
 import { WiringError } from './errors.js';
@@ -8,6 +16,7 @@ import {
   collectWiring,
   type AnyMessageHandler,
   type Binding,
+  type BindingAspectInfo,
   type ContextModule,
   type DependencyKind,
   type MessageHandling,
@@ -43,6 +52,11 @@ export interface ApplicationOptions {
   readonly decorate?: Decorate;
   /** Values that replace bindings, typically fakes in tests. They are not decorated. */
   readonly overrides?: readonly Override[];
+  /**
+   * `required` refuses to create an application in which a command or a query declares neither
+   * `.requires(permission)` nor `.public()`, or in which nothing checks them. Default `optional`.
+   */
+  readonly authorization?: AuthorizationMode;
 }
 
 export interface Application {
@@ -70,7 +84,9 @@ export function createApplication(options: ApplicationOptions): Application {
 /** `createApplication` for callers that already collected the wiring to inspect it. */
 export function assemble(wiring: Wiring, options: ApplicationOptions): Application {
   const overrides = options.overrides ?? [];
-  assertSound(wiring, new Set(overrides.map(([target]) => target)));
+  const overridden = new Set(overrides.map(([target]) => target));
+  assertSound(wiring, overridden);
+  if (options.authorization === 'required') assertAuthorizationDeclared(wiring, overridden);
   return new ContainerApplication(wiring, options);
 }
 
@@ -103,6 +119,9 @@ class ContainerApplication implements Application {
     private readonly wiring: Wiring,
     private readonly options: ApplicationOptions,
   ) {
+    // Registered first: a module binding or an override of the guard comes later and wins.
+    this.container.register(USE_CASE_GUARD, { useValue: passEveryMessage });
+    this.container.register(USE_CASE_DECLARATIONS, { useValue: declarationsOf(wiring) });
     for (const binding of wiring.bindings.values()) this.#register(binding);
     for (const [target, value] of options.overrides ?? []) this.#registerValue(target, value);
     this.#registerHandlers('command');
@@ -155,7 +174,7 @@ class ContainerApplication implements Application {
     };
     const { decorate } = this.options;
     const create = (): unknown => {
-      const instance = binding.create(this.resolve);
+      const instance = withBindingAspects(binding.create(this.resolve), binding);
       return decorate === undefined ? instance : decorate(instance, info);
     };
     // tsyringe refuses Lifecycle.Singleton on factory providers; its caching factory
@@ -225,6 +244,26 @@ class ContainerApplication implements Application {
     }
     return failures;
   }
+}
+
+function withBindingAspects(instance: unknown, binding: Binding): unknown {
+  if (binding.aspects.length === 0 || typeof instance !== 'object' || instance === null) return instance;
+  const info: BindingAspectInfo = {
+    className: binding.implementation ?? constructorNameOf(instance),
+    context: binding.module,
+    token: describeToken(binding.token),
+    ...(binding.kind === undefined ? {} : { kind: binding.kind }),
+  };
+  return binding.aspects.reduceRight((wrapped, aspect) => aspect(wrapped, info), instance);
+}
+
+function constructorNameOf(instance: object): string {
+  const prototype: unknown = Object.getPrototypeOf(instance);
+  const constructor: unknown =
+    typeof prototype === 'object' && prototype !== null && 'constructor' in prototype
+      ? prototype.constructor
+      : undefined;
+  return typeof constructor === 'function' ? constructor.name : 'Object';
 }
 
 interface HandlerRegistry {

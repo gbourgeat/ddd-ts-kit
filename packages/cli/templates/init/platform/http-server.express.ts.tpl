@@ -3,6 +3,7 @@ import type { AddressInfo } from 'node:net';
 import express from 'express';
 import type { ErrorContext, Route } from '@ddd-ts-kit/http';
 import { mountExpress } from '@ddd-ts-kit/http/express';
+import type { HttpBoundary } from './auth/http-boundary.js';
 import type { AppConfig } from './config.js';
 {{#if docs.any}}
 import { withDocumentation } from './http-docs.js';
@@ -14,15 +15,15 @@ export interface HttpServer {
   close(): Promise<void>;
 }
 
-export async function startHttpServer(routes: readonly Route[], config: AppConfig): Promise<HttpServer> {
+export async function startHttpServer(routes: readonly Route[], config: AppConfig, boundary: HttpBoundary): Promise<HttpServer> {
   const app = express();
   app.disable('x-powered-by');
   app.use(express.json());
 {{#if docs.any}}
-  mountExpress(app, withDocumentation(routes, config), { onError: logServerFault });
+  mountExpress(app, withDocumentation(routes, config), { onError: logServerFault, ...boundary });
 {{/if}}
 {{#unless docs.any}}
-  mountExpress(app, routes, { onError: logServerFault });
+  mountExpress(app, routes, { onError: logServerFault, ...boundary });
 {{/unless}}
   const server = await listen(app, config.port);
   return { port: boundPort(server), close: () => close(server) };

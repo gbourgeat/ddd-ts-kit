@@ -19,7 +19,7 @@ export async function openPersistence(config: { readonly databaseUrl: string }):
   return persistenceOver(client);
 }
 
-{{#if http.any}}
+{{#if persistence.inert}}
 /**
  * For the script that only lists routes: the client connects on the first query,
  * and none is ever sent, so no database has to be reachable to generate the contracts.

@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
-import { cli, read, REPO_ROOT, scaffoldEverything, tempDir, walk, write, type StackFlags } from './helpers.js';
+import { cli, DEFAULT_STACK, read, REPO_ROOT, scaffoldEverything, tempDir, walk, write, type StackFlags } from './helpers.js';
 
 interface CheckJson {
   ok: boolean;
@@ -11,6 +11,9 @@ interface CheckJson {
   files: number;
   violations: unknown[];
 }
+
+const REBAC_ON_RABBITMQ: StackFlags = { ...DEFAULT_STACK, authz: 'rebac', broker: 'rabbitmq', ci: 'gitlab' };
+const ABAC_ON_KNEX_BY_HAND: StackFlags = { ...DEFAULT_STACK, orm: 'knex', di: 'manual', authz: 'abac' };
 
 const STACKS: readonly StackFlags[] = [
   { http: 'express', validation: 'zod', di: 'tsyringe', tests: 'vitest', orm: 'drizzle', events: 'outbox' },
@@ -25,6 +28,10 @@ const STACKS: readonly StackFlags[] = [
   { http: 'express', validation: 'zod', di: 'tsyringe', tests: 'vitest', orm: 'typeorm', events: 'outbox' },
   { http: 'none', validation: 'zod', di: 'tsyringe', tests: 'vitest', orm: 'drizzle', events: 'outbox' },
   { http: 'none', validation: 'none', di: 'manual', tests: 'vitest', orm: 'none', events: 'in-memory' },
+  REBAC_ON_RABBITMQ,
+  ABAC_ON_KNEX_BY_HAND,
+  { http: 'fastify', validation: 'zod', di: 'tsyringe', tests: 'vitest', orm: 'drizzle', events: 'outbox', authn: 'none', authz: 'custom', broker: 'custom' },
+  { http: 'express', validation: 'zod', di: 'manual', tests: 'vitest', orm: 'custom', events: 'outbox', authn: 'none', authz: 'rebac', broker: 'rabbitmq' },
 ];
 
 const label = (stack: StackFlags): string => Object.entries(stack).map(([key, value]) => `${key} ${value}`).join(', ');
@@ -138,6 +145,9 @@ describe.runIf(process.env['DDD_TS_KIT_E2E'] === '1')('a freshly generated proje
             '@ddd-ts-kit/testing/*': [workspace('testing', '*')],
             '@ddd-ts-kit/drizzle/*': [workspace('drizzle', '*')],
             '@ddd-ts-kit/knex': [workspace('knex')],
+            '@ddd-ts-kit/auth': [workspace('auth')],
+            '@ddd-ts-kit/auth/*': [workspace('auth', '*')],
+            '@ddd-ts-kit/rabbitmq': [workspace('rabbitmq')],
           },
         },
         include: ['src', 'scripts', 'test', path.join(REPO_ROOT, 'packages/validation/src/*.d.ts')],
@@ -164,25 +174,33 @@ describe.runIf(process.env['DDD_TS_KIT_E2E'] === '1')('a freshly generated proje
 
   function runIn(root: string, command: string, args: readonly string[]): string {
     try {
-      return execFileSync(command, [...args], { cwd: root, encoding: 'utf8', stdio: 'pipe', env: { ...process.env, DATABASE_URL: '', OTEL_SDK_DISABLED: 'true', NO_COLOR: '1', FORCE_COLOR: '0' } });
+      return execFileSync(command, [...args], { cwd: root, encoding: 'utf8', stdio: 'pipe', env: { ...process.env, DATABASE_URL: '', AMQP_URL: process.env['DDD_TS_KIT_TEST_AMQP_URL'] ?? '', OTEL_SDK_DISABLED: 'true', NO_COLOR: '1', FORCE_COLOR: '0' } });
     } catch (error) {
       const output = error instanceof Error && 'stdout' in error ? `${String(error.stdout)}\n${String(Reflect.get(error, 'stderr'))}` : String(error);
       throw new Error(`${command} ${args.join(' ')} failed:\n${output}`, { cause: error });
     }
   }
 
-  it('passes its own specs (PGlite adapter contract included), its end-to-end specs, its build and its documentation checks', () => {
+  const PROOF = [
+    ['the default stack: jwt, rbac, no broker', DEFAULT_STACK],
+    ['relationships and RabbitMQ, GitLab pipeline', REBAC_ON_RABBITMQ],
+    ['attribute policies on knex, wired by hand', ABAC_ON_KNEX_BY_HAND],
+  ] as const;
+
+  it.each(PROOF)('passes its own specs, its end-to-end specs (401, 403, 2xx with tokens signed in the test), its build and its documentation checks (%s)', (_label, stack) => {
     const root = tempDir('run');
-    scaffoldEverything(root);
+    scaffoldEverything(root, stack);
     fs.symlinkSync(path.join(REPO_ROOT, 'node_modules'), path.join(root, 'node_modules'), 'dir');
 
     const specs = runIn(root, bin('vitest'), ['run']);
     expect(specs).toMatch(/Test Files\s+\d+ passed/);
     expect(specs).not.toContain('failed');
     expect(fs.existsSync(path.join(root, 'src/contexts/billing/test/integration/invoice.repository.contract.spec.ts'))).toBe(true);
+    expect(fs.existsSync(path.join(root, 'test/architecture/extractable.spec.ts'))).toBe(true);
 
     const endToEnd = runIn(root, bin('vitest'), ['run', '--config', 'vitest.e2e.config.ts']);
-    expect(endToEnd).toMatch(/Tests\s+2 passed/);
+    expect(endToEnd).toMatch(/Tests\s+4 passed/);
+    expect(read(root, 'test/e2e/issue-invoice.e2e.spec.ts')).toMatch(/expectStatus\(response, 401\)[\s\S]*expectStatus\(response, 403\)[\s\S]*expectStatus\(response, 201\)/);
 
     runIn(root, process.execPath, [NATIVE_COMPILER, '-p', 'tsconfig.build.json']);
     runIn(root, process.execPath, ['dist/scripts/openapi.js']);
@@ -191,9 +209,11 @@ describe.runIf(process.env['DDD_TS_KIT_E2E'] === '1')('a freshly generated proje
     runIn(root, process.execPath, ['dist/scripts/events.js', '--check']);
     expect(walk(root, 'docs/integration')).toEqual(['docs/integration/README.md', 'docs/integration/asyncapi.json', 'docs/integration/event-catalog.md']);
     expect(fs.readFileSync(path.join(root, 'docs/integration/event-catalog.md'), 'utf8')).toContain('Consumers: `shipping`');
+    expect(read(root, 'openapi/openapi.json')).toContain('"securitySchemes"');
+    expect(fs.existsSync(path.join(root, 'dist/src/apps/shipping/main.js'))).toBe(true);
     expect(cli(root, 'check').code).toBe(0);
     expect(cli(root, 'docs', '--check').code).toBe(0);
-  }, 180_000);
+  }, 240_000);
 
   /**
    * A node_modules as `npm install` leaves it: the packages of the kit are real directories (a link
@@ -257,6 +277,20 @@ describe.runIf(process.env['DDD_TS_KIT_E2E'] === '1')('a freshly generated proje
       expect(findingsOf(root, DEPCRUISE)).toBe('');
       expect(findingsOf(root, KNIP)).toBe('');
     }, 240_000);
+
+    it.each([
+      ['relationships and RabbitMQ, GitLab pipeline', REBAC_ON_RABBITMQ],
+      ['attribute policies on knex, wired by hand', ABAC_ON_KNEX_BY_HAND],
+    ] as const)('has no finding either with %s', (_label, stack) => {
+      const other = tempDir('analyzers');
+      scaffoldEverything(other, stack);
+      installAsPublished(other);
+
+      expect(cli(other, 'depcruise-config', '--check').code).toBe(0);
+      expect(findingsOf(other, ESLINT)).toBe('');
+      expect(findingsOf(other, DEPCRUISE)).toBe('');
+      expect(findingsOf(other, KNIP)).toBe('');
+    }, 480_000);
 
     it('ESLint catches a generic error thrown by the domain', () => {
       write(root, SERVICE, `${service}\nexport function refuse(): never {\n  throw new Error('refused');\n}\n`);

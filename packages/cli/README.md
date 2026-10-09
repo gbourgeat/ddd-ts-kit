@@ -16,7 +16,7 @@ No runtime dependency. Node 22.12 or later.
 npx ddd-ts-kit init
 npx ddd-ts-kit generate context billing --classification core --term "Invoice=A request for payment"
 npx ddd-ts-kit generate aggregate billing Invoice
-npx ddd-ts-kit generate command billing IssueInvoice --aggregate Invoice --term "Issue=To make an invoice final"
+npx ddd-ts-kit generate command billing IssueInvoice --aggregate Invoice --permission invoice.issue --term "Issue=To make an invoice final"
 npx ddd-ts-kit generate route billing IssueInvoice --method POST --path /invoices
 npx ddd-ts-kit check
 ```
@@ -36,6 +36,8 @@ ddd-ts-kit init [--http express|fastify|nest|none]
                 [--database postgres|mysql|sqlite|none]
                 [--events in-memory|outbox] [--docs-ui swagger|scalar|redoc|none]
                 [--ci github|gitlab|both|none]
+                [--authn jwt|none] [--authz rbac|abac|rebac|custom]
+                [--broker none|rabbitmq|custom] [--allow-no-outbox "<reason>"]
                 [--context <name>:<core|supporting|generic>]...
                 [--dry-run] [--force]
 ```
@@ -46,7 +48,9 @@ dependencies are added, yours are kept and mentioned in the notes. Run again lat
 the stack recorded in the config.
 
 Defaults: `express`, `zod`, `tsyringe` (`nest` with `--http nest`, and only then), `vitest`,
-`drizzle` on `postgres`, `outbox` when there is an ORM, `swagger`, `github`. The generated
+`drizzle` on `postgres`, `outbox` when there is an ORM, `swagger`, `github`, `jwt`, `rbac`, no broker.
+`--events in-memory` together with an ORM is refused unless `--allow-no-outbox "<reason>"` is given:
+it records a `deviations` entry (`stack.events`) and writes the decision record it points to. The generated
 persistence of the four ORMs is written for PostgreSQL; `custom` starts on in-memory adapters
 held to the contract suites, for you to replace. The choices are recorded under `stack` in the
 config, `docsUi` and `ci` included.
@@ -58,12 +62,15 @@ config, `docsUi` and `ci` included.
 | `tsconfig.json`, `tsconfig.build.json` | strict, NodeNext, alias `@/*` to `src/*`; decorator flags only for nest or class-validator |
 | `src/main.ts` | composition root: tracing first, config, persistence, application, outbox relay, HTTP server |
 | `src/platform/` | `tracing.ts`, `config.ts` (fail-fast, `DATABASE_URL` included), `platform.module.ts`, `application.ts` (wires the contexts), `http-server.ts`, `http-docs.ts` (`/docs` and `/openapi.json`, off in production unless `API_DOCS=true`), `outbox-relay.ts` |
+| `src/platform/auth/` | `authenticator.ts` (`--authn jwt`: `JwtAuthenticator` on `AUTH_ISSUER`, `AUTH_AUDIENCE`, `AUTH_JWKS_URI`; `--authn none`: `DevelopmentHeaderAuthenticator`, which reads `x-development-actor` and throws in production), `http-boundary.ts` (`resolvePrincipal` and `withPrincipal`: every request runs inside the actor context), `authorizer.ts` and the files of the model (`roles.ts`; `attribute-policies.ts`; `relationships.ts`, its store contract spec and `permissions.ts`; `custom-authorizer.ts`, its `authorizerContract` spec and `permissions.ts`), `authorization.ts` (`authorizationModule` with tsyringe, a guard for the hand-wired buses otherwise), `access-policies.ts`, `audit.ts` (one structured line per decision, ids and codes only). Without an HTTP stack there is no authenticator and no boundary |
+| `src/platform/events.ts` | the event provider of `--broker`: the in-memory bus; `RabbitMqEventBus` with one subscriber per consuming context (`forConsumer`), `AMQP_URL` validated, a `rabbitmq` compose service; or `custom-event-bus.ts` with its `eventBusContract` spec |
 | `src/platform/database/` | `persistence.ts` (unit of work, outbox and processed-event stores of the ORM package), connection, schema, `testing.ts` (PostgreSQL in process, or the server named by a URL) |
 | migration tooling | `drizzle.config.ts`, `knexfile.js` and `migrations/0001_initial.js`, `prisma/schema.prisma` and `prisma.config.ts`, or `data-source.ts` |
 | `scripts/openapi.ts`, `scripts/events.ts` | write `openapi/openapi.json`, `docs/integration/asyncapi.json` and `docs/integration/event-catalog.md`; `--check` fails on a difference |
 | `docker-compose.yml`, `.env.example`, `Dockerfile`, `.dockerignore` | the database with a healthcheck and a named volume, Jaeger behind the `observability` profile, ports from `.env`; a multi-stage, non-root image with production dependencies only |
 | `vitest.e2e.config.ts`, `test/e2e/support/application.ts` | the whole application on a free port, on an in-process database unless `DATABASE_URL` is set |
 | `docs/context-map.md`, `docs/integration/README.md` | see `docs` |
+| `test/architecture/extractable.spec.ts` | written with the first context: boots each context alone on the kernel and the platform |
 | `eslint.config.mjs` | the `dddTsKit` preset of `@ddd-ts-kit/eslint-plugin`, typed linting on the project's tsconfig |
 | `.dependency-cruiser.cjs` | the import graph rules, generated from the config (see `depcruise-config`) |
 | `knip.json` | dead code: entry points are `main.ts`, the scripts, the specs and the fakes |
@@ -72,7 +79,7 @@ config, `docsUi` and `ci` included.
 | `--ci github` | `.github/workflows/ci.yml`, `codeql.yml`, `pr-title.yml`, `.github/dependabot.yml`, `.github/branch-protection.md`, `renovate.json` |
 | `--ci gitlab` | `.gitlab-ci.yml` (architecture findings as a Code Quality report through `check --format gitlab`), `.gitlab/merge-request-settings.md`, `renovate.json` |
 | `README.md`, `CLAUDE.md`, `.claude/rules/*.md` | how to run it; a short guide (commands, map of the rules, generated files, compiler note) and the invariants by layer, each rules file scoped by a `paths` frontmatter |
-| `.claude/settings.json` | permissions only: the checks and generators run without asking, `.env` files are unreadable (`.env.example` stays readable), the three generated documents are not edited by hand, `git push` and `npm publish` ask first |
+| `.claude/settings.json` | permissions only: the checks and generators run without asking, `.env` files are unreadable (`.env.example` stays readable), the three generated documents are not edited by hand, `git push`, `npm publish` and any edit of the files that hold the rules and the pipeline (`ddd-ts-kit.config.json`, `eslint.config.mjs`, `.dependency-cruiser.cjs`, `knip.json`, `lefthook.yml`, `.gitlab-ci.yml`, `.github/workflows/**`, `.claude/settings.json`) ask first |
 
 `--ci both` writes the two pipelines, `--ci none` neither (and no `renovate.json`). The pipeline
 files are copies of the assets of the repository's `pipeline/` directory, shipped in
@@ -107,7 +114,7 @@ ddd-ts-kit generate <kind> ... [--term "<Term>=<meaning>"]... [--allow-name] [--
 
 | Kind | Arguments | Writes |
 |---|---|---|
-| `context` | `<name> --classification <c> [--purpose "<two sentences>"] [--term ...]... [--upstream <ctx>[:relationship]]...` | `CONTEXT.md` with its glossary, `<name>.module.ts`, `published-language/index.ts`, config entry, registration in `platform/application.ts` |
+| `context` | `<name> --classification <c> [--purpose "<two sentences>"] [--term ...]... [--upstream <ctx>[:relationship]]...` | `CONTEXT.md` with its glossary, `<name>.module.ts`, `published-language/index.ts`, `application/authorization/<name>.permissions.ts`, config entry, registration in `platform/application.ts` and in `test/architecture/extractable.spec.ts` |
 | `aggregate` | `<context> <Name>` | aggregate, builder, spec in given / when / then |
 | `builder` | `<context> <Aggregate>` | `test/builders/<name>.builder.ts`, a class extending `Builder` |
 | `entity` | `<context> <Name>` | entity, spec |
@@ -115,17 +122,32 @@ ddd-ts-kit generate <kind> ... [--term "<Term>=<meaning>"]... [--allow-name] [--
 | `domain-event` | `<context> <Aggregate> <Fact>` | event named `<context>.<aggregate>.<fact>`, spec |
 | `domain-error` | `<context> <Name> [--code CODE]` | error with a stable code, spec |
 | `domain-service` | `<context> <Name>` | service, spec |
-| `repository` | `<context> <Aggregate>` | domain interface, adapter of the project's ORM with its mapper and table (or model), fake extending `InMemoryRepository`, one `repositoryContract` spec run on both, registration |
-| `command` | `<context> <UseCaseName> [--aggregate <Name>]` | command, handler, spec through the bus, registration on the command bus (and the repository when missing) |
-| `query` | `<context> <UseCaseName>` | query, handler, read port, in-memory reader, fake, spec, registration on the query bus |
+| `repository` | `<context> <Aggregate> [--tenant-scoped]` | domain interface, adapter of the project's ORM with its mapper and table (or model), fake extending `InMemoryRepository`, one `repositoryContract` spec run on both, registration |
+| `command` | `<context> <UseCaseName> (--permission <aggregate>.<action> \| --public) [--aggregate <Name>]` | command on `AuthorizedCommand` (plain `Command` when public), handler, spec through the bus with the refusal of an actor who lacks the permission, registration with `.requires(...)` or `.public()` (and the repository when missing) |
+| `query` | `<context> <UseCaseName> (--permission <aggregate>.<action> \| --public)` | query on `AuthorizedQuery` (plain `Query` when public), handler, read port, in-memory reader, fake, spec, registration on the query bus |
 | `port` | `<context> <Name>` | port, fake |
 | `route` | `<context> <UseCaseName> --method <GET\|POST\|PUT\|PATCH\|DELETE> --path <p> [--command\|--query]` | route depending on `CommandBus` or `QueryBus` (and DTOs with class-validator), spec, registration |
 | `integration-event` | `<context> <Aggregate> <Fact> [--version n]` | `defineIntegrationEvent` declaration in the published language, index export, publisher, spec, registration |
 | `consumer` | `<context> <upstreamContext> <eventType>` | consumer depending on `CommandBus`, spec, idempotent subscription; refused unless the upstream is declared |
 | `event-handler` | `<context> <Aggregate> <Fact>` | reaction to a domain event of the context, spec, subscription |
 | `acl` | `<context> <upstreamOrSystemName>` | translator in `infrastructure/anti-corruption/`, spec |
-| `e2e` | `<context> <UseCaseName>` | `test/e2e/<use-case>.e2e.spec.ts` driving the route of the use case; needs the route |
+| `e2e` | `<context> <UseCaseName>` | `test/e2e/<use-case>.e2e.spec.ts` driving the route of the use case: 401 without a credential, 403 without the permission, the documented status with it; needs the route |
+| `policy` | `<context> <Name> --permission <aggregate>.<action>` | `application/authorization/<name>.policy.ts`, spec, registration in `platform/auth/access-policies.ts` |
+| `gateway` | `<context> <upstreamContext> <Name>` | the read contract in the upstream's published language, a port of the caller, an in-process adapter in `infrastructure/external/` bound `.as('gateway')`, a fake, one contract suite; refused unless the upstream is declared |
+| `service` | `<context>` | `src/apps/<context>/main.ts` (kernel, platform, that context only), script `start:<context>`, a compose service behind the `services` profile, the knip entry, `deployable: true` in the config. The Dockerfile takes the entry as build argument `ENTRY` |
+| `adr` | `"<title>" [--deviation <what>] [--reason "<why>"]` | `docs/adr/NNNN-<slug>.md`; with `--deviation`, the `deviations` entry of the config that points to it |
 
+- **Deny by default.** `command` and `query` are refused without `--permission` or `--public`. A new
+  permission joins `<context>.permissions.ts`; its words are checked against the glossary like any
+  other name. With `--authz rebac` the requirement names the context as its resource, a starting
+  point to replace by the element the right bears on.
+- `route` hands `actorOf(context.principal)` to a protected use case and sets `security` (the scheme
+  of `--authn`, or `false` for a public one). `consumer` carries `systemActor('<context>.<consumer>')`
+  for the command it builds; behind a broker it subscribes with `consume(...)` on the subscriber of
+  its context.
+- `repository --tenant-scoped` (drizzle and knex) adds the tenant column and an adapter that reads the
+  tenant of `ActorContext` on every statement, with a spec that one tenant does not see another's
+  rows. With another ORM the regular adapter is written and a note says what to add.
 - **The language first.** The name of an aggregate, entity, value object, domain service, domain
   event, command or query is refused when one of its words is not covered by a term of the
   `## Ubiquitous language` table of the context (plural, past participle and -ing forms are
@@ -135,7 +157,8 @@ ddd-ts-kit generate <kind> ... [--term "<Term>=<meaning>"]... [--allow-name] [--
   will still report what the glossary does not define.
 - Generated code compiles as is and passes `check` at the default severities. Every place that
   needs business knowledge carries a `// TODO(domain): ...` comment saying which decision is
-  expected; these are the only comments.
+  expected, and a place where an adapter is to be replaced a `// TODO(platform): ...` one; these
+  are the only comments.
 - Specs hold one real passing test where it can be written generically, and `it.todo` entries
   naming the behaviours to cover. No mock: fakes, builders, `createTestApplication` (tsyringe)
   or `createTestBuses`.
@@ -167,10 +190,11 @@ Regenerates what is derived from the config and the code, and nothing else:
 - `docs/context-map.md`, between `<!-- ddd-ts-kit:context-map -->` markers: a Mermaid diagram
   (one node per context styled by classification, one arrow per relationship from upstream to
   downstream labelled with the pattern) and the table of contexts with the first sentence of
-  their purpose, upstreams, downstreams and published events. The text outside the markers is
+  their purpose, upstreams, downstreams, published events and whether they are deployable alone. The text outside the markers is
   kept; on first creation the four written sections are laid out with hints.
-- the generated lists of every `CONTEXT.md` (aggregates, published events, relationships);
-- `docs/integration/README.md`, created once and never rewritten.
+- the generated lists of every `CONTEXT.md` (aggregates, published events, permissions, relationships);
+- `docs/integration/README.md`, created once and never rewritten; its Provider section starts with
+  the strategy of the chosen broker.
 
 `--check` writes nothing, names each stale file and exits 1. The event catalog and the
 AsyncAPI document need the code of the project to run, so they are produced by
@@ -194,7 +218,8 @@ ddd-ts-kit list
 ```
 
 Contexts with their classification, glossary size, upstreams, aggregates, commands, queries,
-domain events, published events and builders, then the end-to-end specs.
+domain events, published events, builders, permissions, policies, gateways and whether the context
+is deployable alone, then the end-to-end specs.
 
 ## check
 
@@ -219,8 +244,8 @@ saying what to do instead. Exit code 1 when there is at least one error.
   `clean/function-size`.
 - `domainAllowedPackages`, `applicationAllowedPackages` and `publishedLanguageAllowedPackages`
   extend what the inner layers may import.
-- Suppress one line with `// ddd-ts-kit-disable-next-line <rule-id> -- <reason>`. Without a
-  reason the comment is itself a violation. On the first line of a file it also covers
+- Suppress one line with `// ddd-ts-kit-disable-next-line <rule-id> -- ADR-0007: <reason>`. Without a
+  reason the comment is itself a violation, and so is a reason that names no existing decision record. On the first line of a file it also covers
   file-level violations.
 - `--clean-only` runs the rules that judge a file on its own (`clean/stepdown`,
   `clean/function-size`, `clean/no-commented-out-code`, `clean/no-noise-comment`,
@@ -259,7 +284,14 @@ saying what to do instead. Exit code 1 when there is at least one error.
 | `clean/no-flag-argument` | a `boolean` parameter on a public method of a domain class or on `execute` |
 | `composition/only-in-module` | `new X` or `useClass: X` of a class imported from `infrastructure/`, outside the module file, `main.ts`, the platform and tests |
 | `config/valid` | unknown upstream, classification, relationship, rule id or `guard` mode; a context missing on disk or in the config |
-| `config/suppression-needs-reason` | a suppression without a rule id or a reason |
+| `config/suppression-needs-reason` | a suppression without a rule id or a reason (kept as an alias next to `governance/recorded-deviation`, which judges the reason) |
+| `authz/declared` | in a module file, `builder.command(X)` or `builder.query(X)` without `.requires(` or `.public(` in its chain; with manual or nest wiring, a command or query class absent from every `requires(X, ...)` and `publicUseCase(X)` of the module file and of `application/authorization/`; a `defineRoute` without `security` |
+| `authz/in-application` | `presentation/`: a test on roles, `isAdmin`, the import of an authorizer or of `Access`; `infrastructure/`: `authorize(` or `check(` on an authorizer or access, `ForbiddenError`; `domain/`: any import of `@ddd-ts-kit/auth`, of the actor types of the kernel, a read of `.roles` or `.permissions` on an actor |
+| `authz/actor-explicit` | in `domain/` and `application/`: `ActorContext`, `ACTOR_CONTEXT`, `AsyncLocalStorage`, `.current()` or `.require()` on an actor context |
+| `events/outbox-required` | `stack.events` other than `outbox` with an ORM and no `stack.events` deviation; in `domain/` and `application/`, the import of a broker client or of a bus or relay implementation; a publisher depending on more than `IntegrationEventPublisher`; a platform module that hands out a publisher and never names `OutboxPublisher` |
+| `events/consumer-idempotent` | a consumer class registered nowhere in its module file under a consumer name; a free `on(` or `consume(` without `processed`; a consumer name used twice |
+| `context/extractable` | a module file importing another context outside its published language; persistence importing another context's infrastructure or naming its schema; a handler importing another context's repository; `export let` or an exported `new Map`, `Set`, `WeakMap` at module level; `deployable: true` without `apps/<context>/main.ts` |
+| `governance/recorded-deviation` | a `ddd-ts-kit-disable` or `eslint-disable` comment whose reason names no `ADR-<number>` with a file `docs/adr/<number>-*.md`; a rule set to `off` (or to `warn` below its default), an extra directory, an extra allowed package, a `guard` other than `enforce` or `stack.events` off the outbox, without a `deviations` entry `{ what, adr, reason }` pointing to an existing record |
 
 Five more ids belong to `@ddd-ts-kit/eslint-plugin`, which reads the syntax tree where this
 checker reads text: `domain/aggregate-encapsulation`, `domain/value-object-immutability`,
@@ -299,6 +331,12 @@ classifies files by their path.
   or a re-exported adapter escapes it.
 - `events/name-format` checks the shape and the context prefix, not the grammar of the fact.
 - `test/spec-required` and `test/builder-required` check that the file exists, not its content.
+- `authz/*`, `events/*` and `context/extractable` match names and shapes: an aliased import, a
+  route definition built from a variable or a spread, an ownership test (`invoice.ownerId ===
+  actor.id`), a schema name in raw SQL, a cross-context transaction and a mutable exported array
+  or object go unseen; the content of `apps/<context>/main.ts` is not judged.
+- `governance/recorded-deviation` checks that the decision record exists, not what it says; a
+  deviation entry that justifies nothing any more is not reported, and `limits` are not governed.
 - Nothing constrains what `shared-kernel/`, `platform/` and `main.ts` import.
 
 ## check-file
@@ -331,6 +369,10 @@ node packages/cli/dist/bin.js check --self
 npm run clean:self --workspace ddd-ts-kit       # the clean/* rules on this package
 ```
 
-With `DDD_TS_KIT_E2E=1`, a project of the default stack is generated in full, then held to
-ESLint with the preset, dependency-cruiser with the generated configuration and knip, with zero
-finding; one violation is then injected for each analyzer and has to be caught.
+With `DDD_TS_KIT_E2E=1`, three projects are generated in full (the default stack; `--authz rebac
+--broker rabbitmq --ci gitlab`; `--authz abac --orm knex --di manual`), each runs its specs, its
+end-to-end specs (401 without a token, 403 without the permission, 2xx with it, with tokens signed
+in the test), its build and its documentation checks, and is held to ESLint with the preset,
+dependency-cruiser with the generated configuration and knip, with zero finding; one violation is
+then injected for each analyzer in the default project and has to be caught. The RabbitMQ project
+keeps its events in the process unless `DDD_TS_KIT_TEST_AMQP_URL` names a broker.

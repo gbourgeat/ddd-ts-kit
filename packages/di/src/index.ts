@@ -7,6 +7,8 @@ export { token, describeToken, type Token } from './token.js';
 export { WiringError, type WiringErrorCode } from './errors.js';
 export {
   defineContextModule,
+  type BindingAspect,
+  type BindingAspectInfo,
   type BindingOptions,
   type BindingSource,
   type BindingTarget,
@@ -19,7 +21,9 @@ export {
   type MessageHandler,
   type ModuleBuilder,
   type ModuleContext,
+  type ProtectedUseCaseTarget,
   type Resolve,
+  type UseCaseTarget,
   type ValueBindingOptions,
 } from './module.js';
 export {
@@ -45,16 +49,33 @@ export type {
   WiringDescription,
 } from './description.js';
 export {
+  CACHE,
   CLOCK,
   COMMAND_BUS,
   EVENT_BUS,
   EVENT_PUBLISHER,
   EVENT_SUBSCRIBER,
+  EXECUTION_SCOPE,
   ID_GENERATOR,
+  LOGGER,
+  METRICS,
   PROCESSED_EVENTS,
   QUERY_BUS,
   UNIT_OF_WORK,
 } from './kernel-tokens.js';
+export {
+  ACTOR_CONTEXT,
+  USE_CASE_DECLARATIONS,
+  USE_CASE_GUARD,
+  type AuthorizationMode,
+} from './authorization.js';
+export type {
+  PermissionRef,
+  RequirementOptions,
+  ResourcePointer,
+  UseCaseAccess,
+  UseCaseDeclaration,
+} from './use-case-access.js';
 export { kernelModule, type KernelModuleOptions, type Provided } from './kernel-module.js';
 export {
   createTestApplication,

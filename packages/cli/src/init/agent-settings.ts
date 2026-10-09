@@ -39,7 +39,20 @@ const PERMISSIONS: Permissions = {
     'Edit(./docs/integration/asyncapi.json)',
     'Edit(./docs/integration/event-catalog.md)',
   ],
-  ask: ['Bash(git push *)', 'Bash(npm publish *)'],
+  // Then the files that hold the rules and the pipeline: changing one is a decision of the
+  // project owner, the same list as the editor hook of the plugin asks about.
+  ask: [
+    'Bash(git push *)',
+    'Bash(npm publish *)',
+    'Edit(./ddd-ts-kit.config.json)',
+    'Edit(./eslint.config.mjs)',
+    'Edit(./.dependency-cruiser.cjs)',
+    'Edit(./knip.json)',
+    'Edit(./lefthook.yml)',
+    'Edit(./.gitlab-ci.yml)',
+    'Edit(./.github/workflows/**)',
+    'Edit(./.claude/settings.json)',
+  ],
 };
 
 /** Creates the settings, or adds the missing permissions to the ones the project already has, and says which. */

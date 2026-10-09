@@ -74,10 +74,12 @@ describe('check', () => {
     scaffoldEverything(copy);
     write(copy, AGGREGATE, `import { z } from 'zod';\n${read(copy, AGGREGATE)}\nexport const shape = z;\n`);
     const setRule = (severity: string): void => {
-      const config = JSON.parse(read(copy, 'ddd-ts-kit.config.json')) as { rules: Record<string, string> };
+      const config = JSON.parse(read(copy, 'ddd-ts-kit.config.json')) as { rules: Record<string, string>; deviations?: unknown };
       config.rules = { 'layer/domain-purity': severity };
+      config.deviations = [{ what: 'rules.layer/domain-purity', adr: '0002', reason: 'The amount schema is shared with the route until it moves.' }];
       write(copy, 'ddd-ts-kit.config.json', JSON.stringify(config, null, 2));
     };
+    write(copy, 'docs/adr/0002-shared-amount-schema.md', '# The amount schema is shared with the route until it moves\n');
 
     setRule('warn');
     const warned = cli(copy, 'check', '--json');
@@ -89,23 +91,28 @@ describe('check', () => {
     expect(cli(copy, 'check', '--json').json()).toMatchObject({ errors: 0, warnings: 0 });
   });
 
-  it('counts suppressions, honours them with a reason and reports them without', () => {
+  it('counts suppressions, honours them with a recorded reason and reports them without', () => {
     const copy = tempDir('check-suppress');
     scaffoldEverything(copy);
     const original = read(copy, AGGREGATE);
+    const suppressed = (comment: string): string => `// ddd-ts-kit-disable-next-line ${comment}\nimport { z } from 'zod';\n${original}\nexport const shape = z;\n`;
+    const ruleIds = (): string[] => (cli(copy, 'check', '--json').json() as CheckJson).violations.map((violation) => violation.ruleId);
+    write(copy, 'docs/adr/0003-shared-amount-schema.md', '# The amount schema is shared with the route until it moves\n');
 
-    write(copy, AGGREGATE, `// ddd-ts-kit-disable-next-line layer/domain-purity -- the amount schema is shared with the route until it moves\nimport { z } from 'zod';\n${original}\nexport const shape = z;\n`);
+    write(copy, AGGREGATE, suppressed('layer/domain-purity -- ADR-0003: the amount schema is shared with the route until it moves'));
     const justified = cli(copy, 'check');
     expect(justified.code).toBe(0);
     expect(justified.stdout).toContain('0 errors, 0 warnings, 1 suppression in');
     expect(cli(copy, 'check', '--json').json()).toMatchObject({ suppressions: 1, suppressed: 1 });
 
-    write(copy, AGGREGATE, `// ddd-ts-kit-disable-next-line layer/domain-purity\nimport { z } from 'zod';\n${original}\nexport const shape = z;\n`);
-    const bare = cli(copy, 'check', '--json').json() as CheckJson;
-    expect(bare.violations.map((violation) => violation.ruleId)).toEqual(['config/suppression-needs-reason', 'layer/domain-purity']);
+    write(copy, AGGREGATE, suppressed('layer/domain-purity'));
+    expect(ruleIds()).toEqual(['config/suppression-needs-reason', 'layer/domain-purity']);
 
-    write(copy, AGGREGATE, `// ddd-ts-kit-disable-next-line layer/application-inward -- wrong rule\nimport { z } from 'zod';\n${original}\nexport const shape = z;\n`);
-    expect((cli(copy, 'check', '--json').json() as CheckJson).violations.map((violation) => violation.ruleId)).toEqual(['layer/domain-purity']);
+    write(copy, AGGREGATE, suppressed('layer/domain-purity -- the amount schema is shared with the route until it moves'));
+    expect(ruleIds()).toEqual(['governance/recorded-deviation']);
+
+    write(copy, AGGREGATE, suppressed('layer/application-inward -- ADR-0003: wrong rule'));
+    expect(ruleIds()).toEqual(['layer/domain-purity']);
   });
 
   it('finds the project root from a sub-directory', () => {

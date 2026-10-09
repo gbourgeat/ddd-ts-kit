@@ -70,7 +70,7 @@ export const consumerKind: Kind = {
     const eventType = eventTypeOf(upstream, request.args[2] ?? '');
     const name = toName(eventType.split('.').join(' '));
     const declaration = findDeclaration(scope, upstream.kebab, eventType);
-    const context = vars(scope, { name: named(name), upstream: upstreamVars(upstream, eventType, declaration) });
+    const context = vars(scope, { name: named(name), upstream: upstreamVars(upstream, eventType, declaration), consumer: subscriptionVars(scope, declaration !== undefined) });
     emit(scope, context, [
       ['consumer/consumer.ts.tpl', `application/integration/consumers/${name.kebab}.consumer.ts`],
       ['consumer/consumer.spec.ts.tpl', `test/unit/${name.kebab}.consumer.spec.ts`],
@@ -81,6 +81,18 @@ export const consumerKind: Kind = {
     }
   },
 };
+
+/**
+ * How the consumer subscribes. In the process, the wiring of the stack deduplicates; behind a
+ * broker, each context listens under its own name and the mark commits with the handler's work.
+ */
+function subscriptionVars(scope: Scope, isTyped: boolean) {
+  const external = scope.config.stack.broker !== 'none';
+  const manual = scope.config.stack.di !== 'tsyringe';
+  const shared = manual ? 'platform.subscriber' : 'resolve(EVENT_SUBSCRIBER)';
+  const own = manual ? `platform.subscriberFor('${scope.context.kebab}')` : `resolve(CONTEXT_EVENTS)('${scope.context.kebab}')`;
+  return { declarative: isTyped && !external, transactional: isTyped && external, untyped: !isTyped, subscriber: external ? own : shared };
+}
 
 function declaredUpstream(scope: Scope, input: string): Name {
   const upstream = parseContextName(input);

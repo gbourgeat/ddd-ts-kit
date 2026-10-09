@@ -36,7 +36,7 @@ export function suppressionViolations(project: Project, suppressions: readonly S
         suppression.ruleId === ''
           ? 'A suppression names no rule.'
           : `The suppression of "${suppression.ruleId}" gives no reason.`,
-      fix: 'Write `// ddd-ts-kit-disable-next-line <rule-id> -- <why this exception is acceptable>`, or remove the comment and fix the violation.',
+      fix: 'Remove the comment and fix the violation; a deliberate exception is written `// ddd-ts-kit-disable-next-line <rule-id> -- ADR-NNNN: <why>` and recorded in docs/adr/.',
     }));
 }
 

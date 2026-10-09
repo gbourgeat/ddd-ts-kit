@@ -1,26 +1,45 @@
 @@imports
-{{#if upstream.known}}
+{{#if consumer.declarative}}
 import { COMMAND_BUS } from '@ddd-ts-kit/di';
 import { {{upstream.definition}} as {{name.camel}}Definition } from '{{upstream.moduleImport}}';
 {{/if}}
-{{#unless upstream.known}}
+{{#if consumer.transactional}}
+import { COMMAND_BUS, PROCESSED_EVENTS, UNIT_OF_WORK } from '@ddd-ts-kit/di';
+import { consume, subscribeAll } from '@ddd-ts-kit/events';
+import { CONTEXT_EVENTS } from '{{paths.contextToPlatform}}/platform.module.js';
+import { {{upstream.definition}} as {{name.camel}}Definition } from '{{upstream.moduleImport}}';
+{{/if}}
+{{#if consumer.untyped}}
+{{#if broker.external}}
+import { COMMAND_BUS, PROCESSED_EVENTS } from '@ddd-ts-kit/di';
+import { CONTEXT_EVENTS } from '{{paths.contextToPlatform}}/platform.module.js';
+{{/if}}
+{{#unless broker.external}}
 import { COMMAND_BUS, EVENT_SUBSCRIBER, PROCESSED_EVENTS } from '@ddd-ts-kit/di';
-import { idempotent } from '@ddd-ts-kit/kernel';
 {{/unless}}
+import { idempotent } from '@ddd-ts-kit/kernel';
+{{/if}}
 import { {{name.pascal}}Consumer } from './application/integration/consumers/{{name.kebab}}.consumer.js';
-{{#unless upstream.known}}
+{{#unless consumer.declarative}}
 @@tokens
 export const {{name.constant}}_CONSUMER = token<{{name.pascal}}Consumer>('{{context.kebab}}.{{name.pascal}}Consumer');
 {{/unless}}
 @@registrations
-{{#if upstream.known}}
+{{#if consumer.declarative}}
 builder.on({{name.camel}}Definition, { consumer: '{{context.kebab}}.{{name.kebab}}' }).handledBy({{name.pascal}}Consumer, [COMMAND_BUS]);
 {{/if}}
-{{#unless upstream.known}}
+{{#unless consumer.declarative}}
 builder.bind({{name.constant}}_CONSUMER).toClass({{name.pascal}}Consumer, [COMMAND_BUS]).as('consumer');
 @@start
-resolve(EVENT_SUBSCRIBER).subscribe(
+{{/unless}}
+{{#if consumer.transactional}}
+subscribeAll(resolve(CONTEXT_EVENTS)('{{context.kebab}}'), [
+  consume({{name.camel}}Definition, { consumer: '{{context.kebab}}.{{name.kebab}}', processed: resolve(PROCESSED_EVENTS), unitOfWork: resolve(UNIT_OF_WORK) }, (event) => resolve({{name.constant}}_CONSUMER).handle(event)),
+]);
+{{/if}}
+{{#if consumer.untyped}}
+{{consumer.subscriber}}.subscribe(
   {{name.pascal}}Consumer.eventType,
   idempotent('{{context.kebab}}.{{name.kebab}}', resolve(PROCESSED_EVENTS), (event) => resolve({{name.constant}}_CONSUMER).handle(event)),
 );
-{{/unless}}
+{{/if}}

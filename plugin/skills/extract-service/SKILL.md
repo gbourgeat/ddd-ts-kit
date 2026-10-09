@@ -1,0 +1,73 @@
+---
+name: extract-service
+description: >-
+  Keeps every bounded context ready to run as an independent service, and performs the
+  extraction when asked. Checks the isolation rules (own data, no shared transaction,
+  collaboration by integration events through the outbox, synchronous needs behind a port),
+  the standalone entry point and the per-context boot test. Use when the user mentions
+  microservices, splitting the monolith, deploying or scaling one context alone, when a
+  context needs data or a synchronous answer from another, or when context/extractable is
+  reported.
+argument-hint: "<context>"
+allowed-tools:
+  - Bash(npx ddd-ts-kit check *)
+  - Bash(npx ddd-ts-kit list *)
+  - Bash(npx ddd-ts-kit generate *)
+  - Bash(npm test *)
+---
+
+# Extractable contexts
+
+Context: `$ARGUMENTS`
+
+A modular monolith is the default deployment; a context that must leave does so by changing
+composition and adapters only. If extraction would require editing `domain/` or
+`application/`, the boundary was already broken.
+
+## The rules that keep it true
+
+| Rule | Check |
+|---|---|
+| The context owns its data: its own database schema, no foreign key, join or query on another context's tables | `context/extractable`, `context/published-language-only` |
+| No transaction spans two contexts. One decides, the other reacts | handlers save one aggregate of one context |
+| Collaboration by integration events, published through the outbox, consumed idempotently | `events/outbox-required`, `events/consumer-idempotent` |
+| A synchronous need (a price, a credit check) goes through a port of the caller, bound as `gateway`. In process today, HTTP or RPC tomorrow: same port, timeouts and failure handled from day one | `layer/application-inward` |
+| Data needed often from another context is a local projection fed by its events, not a call | review |
+| The module wires with the kernel and the platform only | per-context boot test |
+| Configuration is read through the platform and namespaced by context | review |
+| No shared mutable state, no singleton shared across contexts | `composition/only-in-module` |
+| Authorization travels as an actor in the message, never as a session | `authz/actor-explicit` |
+
+`npx ddd-ts-kit check --rule context/extractable` and the generated
+`test/architecture/extractable.spec.ts` wire each context alone, with the kernel and the
+platform only: a hidden dependency on another context makes it fail.
+
+## When one context needs another
+
+1. Does it need to *react* to something that happened there? Integration event.
+2. Does it need *data* to decide, repeatedly? Local projection updated by events; accept
+   that it is eventually consistent, and say so in `CONTEXT.md`.
+3. Does it need an *answer now* and cannot decide without it? A port and a gateway adapter
+   (`npx ddd-ts-kit generate gateway <ctx> <upstream> <Name>`), with a timeout and a stated
+   behaviour when the other side is down.
+4. Does it need to *change* the other's state in the same transaction? Then either the two
+   are one context, or the requirement must become a process: one step, an event, the next
+   step, with compensation. Go back to `ddd-ts-kit:model-context`.
+
+## Extracting
+
+1. `npx ddd-ts-kit generate service <context>`: `src/apps/<context>/main.ts` composing that
+   context, the kernel and the platform, with its own image target.
+2. Replace each in-process `gateway` adapter that points to it, in the remaining contexts,
+   by a remote adapter of the same port. Same contract suite.
+3. Switch the event provider from in-memory to a broker for both sides (outbox relay on the
+   producer, durable subscription on the consumer). Nothing changes in handlers.
+4. Move the context's schema and migrations with it; the others never read it, so nothing
+   else moves.
+5. The published language becomes a versioned package or stays a shared source folder: it
+   is a contract either way.
+6. Document in `docs/context-map.md` and an ADR: what is deployed where, and the new failure
+   modes (the other side can now be down).
+
+Do not extract for its own sake: a separate deployment buys independent scaling and release
+at the price of distributed failure. The point of these rules is that the option stays cheap.

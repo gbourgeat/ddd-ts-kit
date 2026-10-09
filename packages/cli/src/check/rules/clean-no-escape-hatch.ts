@@ -31,7 +31,7 @@ export const cleanNoEscapeHatch: Rule = {
           report(
             { file: file.path, line: comment.line },
             `${problem}.`,
-            'Fix the diagnostic; if it cannot be fixed, use @ts-expect-error or eslint-disable-next-line <rule> followed by the reason (`-- why`).',
+            'Fix the diagnostic; if it cannot be fixed, use @ts-expect-error or eslint-disable-next-line <rule> followed by the reason and its decision record (`-- ADR-NNNN: why`).',
           ),
         );
       }
