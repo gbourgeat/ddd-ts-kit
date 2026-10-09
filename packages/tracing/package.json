@@ -1,0 +1,49 @@
+{
+  "name": "@ddd-ts-kit/tracing",
+  "version": "0.1.0",
+  "description": "Non-invasive OpenTelemetry tracing: adapters are wrapped at the composition root, the domain never knows.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./node": {
+      "types": "./dist/node.d.ts",
+      "default": "./dist/node.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@ddd-ts-kit/kernel": "0.1.0"
+  },
+  "peerDependencies": {
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/auto-instrumentations-node": ">=0.60.0",
+    "@opentelemetry/sdk-node": ">=0.200.0",
+    "@opentelemetry/exporter-trace-otlp-http": ">=0.200.0"
+  },
+  "peerDependenciesMeta": {
+    "@opentelemetry/sdk-node": {
+      "optional": true
+    },
+    "@opentelemetry/auto-instrumentations-node": {
+      "optional": true
+    },
+    "@opentelemetry/exporter-trace-otlp-http": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@opentelemetry/api": "^1.9.1",
+    "@opentelemetry/auto-instrumentations-node": "latest",
+    "@opentelemetry/context-async-hooks": "^2.0.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.223.0",
+    "@opentelemetry/sdk-node": "^0.223.0",
+    "@opentelemetry/sdk-trace-base": "^2.0.0"
+  }
+}

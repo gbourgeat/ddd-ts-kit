@@ -1,0 +1,53 @@
+{
+  "name": "ddd-ts-kit-workspace",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "build": "node node_modules/@typescript/native/bin/tsc -b packages/kernel packages/validation packages/http packages/tracing packages/di packages/events packages/testing packages/drizzle packages/knex packages/prisma packages/typeorm packages/cli packages/eslint-plugin",
+    "build:tsc6": "node node_modules/typescript/bin/tsc -b packages/kernel packages/validation packages/http packages/tracing packages/di packages/events packages/testing packages/drizzle packages/knex packages/prisma packages/typeorm packages/cli packages/eslint-plugin",
+    "test": "vitest run",
+    "check:self": "node packages/cli/dist/bin.js check --self",
+    "verify": "npm run build && npm run test && npm run check:self",
+    "lint": "eslint --config eslint.config.mjs .",
+    "knip": "knip",
+    "depcruise": "depcruise packages --config .dependency-cruiser.cjs",
+    "package:check": "node pipeline/monorepo/package-check.mjs",
+    "check:dashes": "node pipeline/monorepo/no-dashes.mjs",
+    "quality": "npm run lint && npm run knip && npm run depcruise && npm run package:check",
+    "ci:typecheck": "npm run build",
+    "ci:lint": "eslint --config eslint.config.mjs .",
+    "ci:arch": "npm run check:self && npm run depcruise && node --test plugin/hooks/guard.test.mjs",
+    "ci:deadcode": "knip",
+    "ci:test:unit": "vitest run --coverage --coverage.provider=v8 --coverage.include='packages/*/src/**' --coverage.reporter=text --coverage.reporter=cobertura --coverage.reporter=lcov",
+    "ci:test:integration": "vitest run packages/drizzle packages/knex packages/prisma packages/typeorm",
+    "ci:test:e2e": "DDD_TS_KIT_E2E=1 vitest run packages/cli/test/e2e.spec.ts",
+    "ci:docs": "npm run check:dashes",
+    "ci:audit": "npm audit --omit=dev --audit-level=high",
+    "ci:build": "npm run package:check"
+  },
+  "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.5",
+    "@commitlint/cli": "^21.2.3",
+    "@commitlint/config-conventional": "^21.2.3",
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^24.0.0",
+    "@typescript/native": "npm:typescript@~7.0.2",
+    "@vitest/coverage-v8": "^5.0.3",
+    "dependency-cruiser": "^18.5.0",
+    "eslint": "^10.12.0",
+    "eslint-formatter-gitlab": "^7.2.0",
+    "globals": "^17.13.0",
+    "knip": "^6.41.0",
+    "lefthook": "^2.2.1",
+    "publint": "^0.3.25",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.71.1",
+    "vitest": "^5.0.3"
+  }
+}

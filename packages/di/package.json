@@ -1,0 +1,13 @@
+{
+  "name": "@ddd-ts-kit/di",
+  "version": "0.1.0",
+  "description": "Typed tokens and context modules on top of tsyringe, for projects without a heavy framework.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "exports": { ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" } },
+  "files": ["dist"],
+  "dependencies": { "@ddd-ts-kit/kernel": "0.1.0" },
+  "peerDependencies": { "tsyringe": "^4.10.0", "reflect-metadata": ">=0.2.0" },
+  "devDependencies": { "tsyringe": "^4.10.0", "reflect-metadata": "^0.2.2" }
+}

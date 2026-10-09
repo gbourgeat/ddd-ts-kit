@@ -1,0 +1,288 @@
+# @ddd-ts-kit/prisma
+
+Prisma adapters of the kernel and events ports: a unit of work that repositories never see,
+the transactional outbox store, the processed-event store, and the models of their tables as
+a schema fragment to copy. Same pieces as `@ddd-ts-kit/drizzle`, for projects on Prisma.
+
+```
+npm i @ddd-ts-kit/prisma @prisma/client @prisma/adapter-pg
+npm i -D prisma
+```
+
+The package imports no Prisma code: it is typed structurally against the few methods it calls,
+so it works with your generated client, wherever you generate it, and with an extended client
+(`$extends`). PostgreSQL first; see [Dialect coverage](#dialect-coverage) for MySQL and SQLite.
+
+## Schema
+
+Prisma has one schema, yours. The package ships the models to copy into it, one file per
+provider:
+
+```
+node_modules/@ddd-ts-kit/prisma/prisma/outbox.postgresql.prisma
+node_modules/@ddd-ts-kit/prisma/prisma/outbox.mysql.prisma
+node_modules/@ddd-ts-kit/prisma/prisma/outbox.sqlite.prisma
+```
+
+```prisma
+// prisma/schema.prisma (PostgreSQL fragment)
+model OutboxRecord {
+  id            String    @id
+  sequence      BigInt    @unique @default(autoincrement())
+  type          String
+  version       Int
+  occurredAt    String    @map("occurred_at")
+  payload       Json?
+  traceparent   String?
+  correlationId String?   @map("correlation_id")
+  status        String    @default("pending")
+  attempts      Int       @default(0)
+  nextAttemptAt DateTime  @map("next_attempt_at") @db.Timestamptz(3)
+  lastErrorCode String?   @map("last_error_code")
+  publishedAt   DateTime? @map("published_at") @db.Timestamptz(3)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([status, nextAttemptAt, sequence])
+  @@map("outbox")
+}
+
+model ProcessedEvent {
+  consumer    String
+  eventId     String   @map("event_id")
+  processedAt DateTime @default(now()) @map("processed_at") @db.Timestamptz(3)
+
+  @@id([consumer, eventId])
+  @@map("processed_events")
+}
+```
+
+`prisma migrate dev` then creates the tables in a migration of your project. Keep the field
+names, the stores are typed against them; model names, table names and column names are yours.
+
+One schema per bounded context: list the schemas in the datasource, put each model in its own
+with `@@schema`, and give a context that keeps its own outbox a model name of its own.
+`schemaNameOf('billing-core')` gives the name to write, `billing_core`.
+
+```prisma
+datasource db {
+  provider = "postgresql"
+  schemas  = ["messaging", "billing_core"]
+}
+
+model MessagingOutboxRecord {
+  // ...the fields above
+  @@map("outbox")
+  @@schema("messaging")
+}
+
+model Invoice {
+  id      String @id
+  amount  Int
+  status  String
+  version Int
+
+  @@map("invoices")
+  @@schema("billing_core")
+}
+```
+
+Contexts never relate to each other's models: no `@relation` across schemas.
+
+## Composition root
+
+```ts
+// main.ts
+import { PrismaPg } from '@prisma/adapter-pg';
+import { InMemoryCommandBus, SystemClock, unitOfWorkMiddleware } from '@ddd-ts-kit/kernel';
+import { OutboxPublisher, OutboxRelay } from '@ddd-ts-kit/events';
+import {
+  createPrismaUnitOfWork,
+  PrismaOutboxStore,
+  PrismaProcessedEventStore,
+} from '@ddd-ts-kit/prisma';
+import { PrismaClient } from './generated/prisma/client.js';
+
+const prisma = new PrismaClient({
+  adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
+});
+const unitOfWork = createPrismaUnitOfWork(prisma);
+
+// Every command runs in one transaction; handlers do not know it.
+const commandBus = new InMemoryCommandBus().use(unitOfWorkMiddleware(unitOfWork));
+
+const outboxStore = new PrismaOutboxStore(unitOfWork, {
+  delegate: (client) => client.messagingOutboxRecord,
+  claim: { strategy: 'skip-locked', dialect: 'postgresql', schema: 'messaging', raw: (client) => client },
+});
+const publisher = new OutboxPublisher(outboxStore); // what handlers publish to
+const processed = new PrismaProcessedEventStore(unitOfWork, {
+  delegate: (client) => client.messagingProcessedEvent,
+});
+const invoices = new PrismaInvoiceRepository(unitOfWork);
+
+const relay = new OutboxRelay({ store: outboxStore, publisher: broker, clock: new SystemClock() });
+relay.start({ intervalMs: 500 });
+```
+
+`unitOfWork.run(work)` opens the interactive `prisma.$transaction` and keeps the transaction
+client in an `AsyncLocalStorage`; a nested `run` joins the outer transaction. `delegate` is a
+function of the client because the model must be read on the transaction client inside a unit
+of work and on the root client outside. Because `append` uses the current client, an event
+published by a handler that then fails is rolled back with the business write: that is the
+whole point of the outbox.
+
+`createPrismaUnitOfWork(prisma, { timeout: 15_000, isolationLevel: 'RepeatableRead' })`
+forwards the options of `$transaction`.
+
+## Repository
+
+A repository receives the context, never a transaction. `client()` is the transaction client
+of the unit of work when there is one and the root client otherwise.
+
+```ts
+// contexts/billing-core/infrastructure/persistence/prisma-invoice.repository.ts
+import type { Repository } from '@ddd-ts-kit/kernel';
+import { optimisticUpdate, type PrismaContext } from '@ddd-ts-kit/prisma';
+import type { Prisma } from '../../../../generated/prisma/client.js';
+
+export class PrismaInvoiceRepository implements Repository<Invoice> {
+  constructor(private readonly context: PrismaContext<Prisma.TransactionClient>) {}
+
+  async findById(id: string): Promise<Invoice | undefined> {
+    const row = await this.context.client().invoice.findUnique({ where: { id } });
+    if (row === null) {
+      return undefined;
+    }
+    const invoice = InvoiceMapper.toDomain(row);
+    invoice.version = row.version;
+    return invoice;
+  }
+
+  async save(invoice: Invoice): Promise<void> {
+    const invoices = this.context.client().invoice;
+    await optimisticUpdate(invoice, async ({ expected, next }) => {
+      const row = { ...invoice.state, version: next };
+      const written =
+        expected === 0
+          ? await invoices.createMany({ data: [row], skipDuplicates: true })
+          : await invoices.updateMany({ where: { id: invoice.id, version: expected }, data: row });
+      return written.count;
+    });
+  }
+}
+```
+
+`Prisma.TransactionClient` is the type of `client()` for a plain client. An extended client
+(`prisma.$extends(...)`) has a transaction client type of its own, which Prisma does not make
+assignable to it: write `PrismaContext<PrismaTransactionClient<typeof prisma>>` instead.
+
+`optimisticUpdate` gives the version to expect and the version to write, raises a
+`ConcurrencyError` (a `DomainError` with code `CONCURRENCY_CONFLICT`) when the guarded
+statement wrote no row, and moves `invoice.version` on otherwise. Use `createMany` and
+`updateMany` for the guarded write: they return a count, where `create` and `update` throw,
+and a thrown unique violation aborts the surrounding PostgreSQL transaction. `upsert` cannot
+carry the version guard.
+
+## Outbox and idempotency
+
+`claim` is required, because a Prisma client does not tell which database it talks to:
+
+- `{ strategy: 'skip-locked', dialect, raw, schema?, table? }` selects the due rows
+  `FOR UPDATE SKIP LOCKED` and leases them in the same short transaction by pushing
+  `nextAttemptAt` forward (`leaseMs`, default 30 s), so several relays share the work without
+  waiting for each other, and the records of a relay that died come back when the lease
+  expires. Needs PostgreSQL or MySQL 8. Prisma Client has no row-locking API, so this one
+  select is raw SQL sent with `$queryRawUnsafe` (`raw: (client) => client` hands the store
+  that method); `schema` and `table` are the real names of the table and must be plain
+  identifiers. Everything else, the update included, is Prisma Client.
+- `'compare-and-set'` reads the due rows and takes each one with an `updateMany` guarded by the
+  attempt count it read: same guarantee, no raw SQL, any database, one statement per record.
+
+`PrismaProcessedEventStore.markProcessed` is `createMany({ skipDuplicates: true })`. Run the
+consumer inside the unit of work: the mark then commits with the effects of the handler, and
+disappears with them if it fails.
+
+Delivery is at least once, unordered.
+
+## Dialect coverage
+
+| Database | Status |
+|---|---|
+| PostgreSQL | Covered by the automated suite, through `@prisma/adapter-pg`: contract suites of `@ddd-ts-kit/testing`, repository contract, rollback, nested unit of work, concurrent claims, both claim strategies. It runs on PGlite served over the PostgreSQL wire protocol by default, and on a real server when `DDD_TS_KIT_TEST_DATABASE_URL` is set (last run: PostgreSQL 18). |
+| MySQL 8 | Not in the automated suite. The fragment is validated by `prisma validate`; the outbox and processed-event contract suites and the rollback of `append` were run once by hand against MySQL 8.4 through `@prisma/adapter-mariadb`, with `skip-locked` and `compare-and-set`. |
+| SQLite | Not in the automated suite. The fragment is validated by `prisma validate`; the outbox contract suite was run once by hand through `@prisma/adapter-better-sqlite3` with `compare-and-set`, the only claim available there. The processed-event store needs the delegate shown under Limits. |
+| CockroachDB, SQL Server, MongoDB | Never run. |
+
+## Limits
+
+What Prisma does not allow, and what the package does about it:
+
+- **No row locking in Prisma Client.** `FOR UPDATE SKIP LOCKED` exists only as raw SQL, hence
+  the `skip-locked` option that names the dialect and the table, and the `compare-and-set`
+  alternative that stays inside Prisma Client.
+- **Nesting is not portable.** A Prisma 7 transaction client can open a nested `$transaction`
+  (a savepoint), a Prisma 6 one cannot. The package uses neither: a nested `run` joins the
+  outer transaction, and `claimBatch` called inside a unit of work claims in that unit of
+  work.
+- **Interactive transactions are bounded in time**: 5 seconds by default, then Prisma rolls
+  back. Pass `timeout` to `createPrismaUnitOfWork` for long commands. They also hold a
+  connection for their whole duration.
+- **A bare `null` is refused in a `Json` field**, and the sentinels that express it live in the
+  generated client. The stores leave a `null` payload out, so it is stored as SQL `NULL` and
+  read back as `null`; the field is therefore `Json?`.
+- **No partial index in the schema language.** The fragment declares a plain index on
+  `(status, nextAttemptAt, sequence)`. On PostgreSQL you may replace it by hand in the
+  migration with `(next_attempt_at, sequence) WHERE status = 'pending'`.
+- **No `createMany({ skipDuplicates })` on SQLite, SQL Server and MongoDB.** There the model
+  does not fit `PrismaProcessedEventDelegate`; give the store a delegate that maps the unique
+  violation, which SQLite tolerates inside a transaction:
+
+  ```ts
+  new PrismaProcessedEventStore(unitOfWork, {
+    delegate: (client) => ({
+      createMany: async ({ data }) => {
+        let count = 0;
+        for (const row of data) {
+          try {
+            await client.processedEvent.create({ data: row });
+            count += 1;
+          } catch (error) {
+            if (!(error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002')) {
+              throw error;
+            }
+          }
+        }
+        return { count };
+      },
+    }),
+  });
+  ```
+
+- **The store cannot see the database provider**, so nothing is chosen for you: `claim` is
+  required.
+- Tested with Prisma 7.10 and its driver adapters. The peer range also admits Prisma 6, on
+  which nothing was run.
+- `stats()` is three `count` queries, not one statement: the numbers of a busy outbox may not
+  add up to the same instant.
+
+## Testing an adapter
+
+The stores of this package pass `outboxStoreContract` and `processedEventStoreContract` of
+`@ddd-ts-kit/testing/contracts`. Hold your repositories to `repositoryContract` the same way,
+next to their in-memory fake. The tests of this package need no container and no manual step:
+
+```
+npx vitest run packages/prisma
+DDD_TS_KIT_TEST_DATABASE_URL=postgresql://user:password@localhost:5432/postgres npx vitest run packages/prisma
+```
+
+The tests need a generated client. Each spec file first awaits
+`test/support/generate.ts`, which builds a schema from the shipped PostgreSQL fragment (the
+models as they are, plus a renamed copy in a `messaging` schema and the example `Invoice`),
+runs `prisma generate` and `prisma migrate diff` into `test/generated/` (git-ignored), and
+skips all of it when that directory is up to date. The suites themselves live in
+`test/suites/` and import the generated client like application code would.
+
+With the variable set, each spec file creates a database of its own on that server and drops
+it afterwards, and the tests that need two real connections (a relay passing over rows locked
+by another one) run instead of being skipped.

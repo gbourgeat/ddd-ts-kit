@@ -1,0 +1,205 @@
+# @ddd-ts-kit/eslint-plugin
+
+AST-accurate ESLint rules for the architecture of [docs/ARCHITECTURE.md](../../docs/ARCHITECTURE.md):
+layer and context boundaries, purity of the domain and the application, clean code ordering,
+tactical DDD shapes. Flat config only, ESLint 9 and 10.
+
+Every rule reads `ddd-ts-kit.config.json` ([docs/CONFIG.md](../../docs/CONFIG.md)), found by
+walking up from the linted file, and classifies the file into context and layer exactly like
+`ddd-ts-kit check` does.
+
+## Install
+
+```
+npm i -D @ddd-ts-kit/eslint-plugin eslint @eslint/js typescript-eslint
+```
+
+## Use
+
+```js
+import { dddTsKit } from '@ddd-ts-kit/eslint-plugin';
+
+export default dddTsKit({ tsconfigRootDir: import.meta.dirname });
+```
+
+`dddTsKit(options)` returns a complete flat config array:
+
+| Layer of the config | Content |
+|---|---|
+| `@eslint/js` recommended | the baseline of ESLint |
+| typescript-eslint `strictTypeChecked` and `stylisticTypeChecked` | with `projectService`; `strict` and `stylistic` when `typeChecked` is `false` |
+| `ddd-ts-kit/clean-code` | the standard rules backing section 6 of the architecture reference (below) |
+| `ddd-ts-kit/architecture` | every rule of this plugin, at the severity of `rules.<id>` in `ddd-ts-kit.config.json`, else at its default |
+| `ddd-ts-kit/inner-layers` | `no-param-reassign` with `props` in `domain/` and `application/`: no output argument |
+| `ddd-ts-kit/aggregates` | `prefer-readonly` off in aggregates and entities, whose state is replaced by intention methods |
+| `ddd-ts-kit/tests` | a lighter set for specs, fakes and builders |
+
+| Option | Default | Meaning |
+|---|---|---|
+| `tsconfigRootDir` | the working directory | directory of the tsconfig and of `ddd-ts-kit.config.json` |
+| `typeChecked` | `true` | add the rules that read types; `false` is faster and needs no tsconfig |
+| `allowDefaultProject` | `['*.config.ts', '*.config.mts']` | files outside the tsconfig still linted with types |
+| `ignores` | none | added to `dist`, `coverage`, `node_modules`, `reports`, `*.d.ts` |
+
+To compose a config by hand, the plugin is the default export, with two presets that hold only
+its own rules and the three typescript-eslint rules they delegate to, without type information:
+
+```js
+import dddTsKit from '@ddd-ts-kit/eslint-plugin';
+
+export default [...dddTsKit.configs.recommended]; // or configs.strict: every rule at error
+```
+
+The standard rule sets of the helper are exported as `standardRules` (`escapeHatch`, `cleanCode`,
+`typedCleanCode`, `kitConventions`).
+
+## Rules
+
+Ids are those of [docs/ARCHITECTURE.md](../../docs/ARCHITECTURE.md); the ESLint name replaces the
+slash by a dash. `strict` sets every rule to `error`.
+
+| Id | ESLint name | Holds | Default | Implementation |
+|---|---|---|---|---|
+| [`layer/domain-purity`](docs/rules/layer-domain-purity.md) | `ddd-ts-kit/layer-domain-purity` | `domain/` imports only its own domain, the shared kernel and the allowed packages | `error` | custom |
+| [`layer/application-inward`](docs/rules/layer-application-inward.md) | `ddd-ts-kit/layer-application-inward` | `application/` never imports `infrastructure/`, `presentation/`, a framework or a driver | `error` | custom |
+| [`layer/presentation-no-infrastructure`](docs/rules/layer-presentation-no-infrastructure.md) | `ddd-ts-kit/layer-presentation-no-infrastructure` | `presentation/` never imports `infrastructure/` | `error` | custom |
+| [`layer/infrastructure-no-presentation`](docs/rules/layer-infrastructure-no-presentation.md) | `ddd-ts-kit/layer-infrastructure-no-presentation` | `infrastructure/` never imports `presentation/` | `error` | custom |
+| [`context/published-language-only`](docs/rules/context-published-language-only.md) | `ddd-ts-kit/context-published-language-only` | another context is imported only through its `published-language/` | `error` | custom |
+| [`context/declared-relationship`](docs/rules/context-declared-relationship.md) | `ddd-ts-kit/context-declared-relationship` | such an import needs the upstream declared in the config | `error` | custom |
+| [`context/published-language-is-a-contract`](docs/rules/context-published-language-is-a-contract.md) | `ddd-ts-kit/context-published-language-is-a-contract` | `published-language/` imports only its allow-list and other published languages | `error` | custom |
+| [`purity/no-system-clock`](docs/rules/purity-no-system-clock.md) | `ddd-ts-kit/purity-no-system-clock` | no `new Date()`, `Date.now()`, `Date()`, `performance.now()` in `domain/` and `application/` | `error` | custom |
+| [`purity/no-ambient-randomness`](docs/rules/purity-no-ambient-randomness.md) | `ddd-ts-kit/purity-no-ambient-randomness` | no `Math.random`, `crypto.randomUUID`, id library in `domain/` and `application/` | `error` | custom |
+| [`purity/no-environment`](docs/rules/purity-no-environment.md) | `ddd-ts-kit/purity-no-environment` | no `process.env`, `console`, `fetch`, file system or network module in `domain/` and `application/` | `error` | custom |
+| [`clean/stepdown`](docs/rules/clean-stepdown.md) | `ddd-ts-kit/clean-stepdown` | static factories, public members, then private ones; a function above the functions it calls | `error` | custom |
+| [`clean/function-size`](docs/rules/clean-function-size.md) | `ddd-ts-kit/clean-function-size` | at most 3 parameters (constructors exempt) and 30 lines of code | `warn` | custom |
+| [`clean/no-flag-argument`](docs/rules/clean-no-flag-argument.md) | `ddd-ts-kit/clean-no-flag-argument` | no boolean parameter on a public method of the domain or on `execute` | `warn` | custom |
+| [`clean/no-commented-out-code`](docs/rules/clean-no-commented-out-code.md) | `ddd-ts-kit/clean-no-commented-out-code` | no comment that parses as code | `error` | custom |
+| [`clean/no-noise-comment`](docs/rules/clean-no-noise-comment.md) | `ddd-ts-kit/clean-no-noise-comment` | no banner, journal, closing-brace label, empty tag, ownerless TODO, comment repeating a name | `warn` | custom |
+| [`clean/no-escape-hatch`](docs/rules/clean-no-escape-hatch.md) | `ddd-ts-kit/clean-no-escape-hatch` | no type assertion outside mappers and infrastructure, no `eslint-disable` without reason | `error` | custom, plus 3 standard rules (below) |
+| [`domain/aggregate-encapsulation`](docs/rules/domain-aggregate-encapsulation.md) | `ddd-ts-kit/domain-aggregate-encapsulation` | aggregates and entities: no public constructor, no public mutable property, no setter | `error` | custom |
+| [`domain/value-object-immutability`](docs/rules/domain-value-object-immutability.md) | `ddd-ts-kit/domain-value-object-immutability` | value objects: every property `readonly`, no setter, no write to `this` | `error` | custom |
+| [`domain/no-generic-error`](docs/rules/domain-no-generic-error.md) | `ddd-ts-kit/domain-no-generic-error` | no `throw new Error(...)` in `domain/` and `application/` | `error` | custom |
+| [`application/handler-shape`](docs/rules/application-handler-shape.md) | `ddd-ts-kit/application-handler-shape` | a `*.handler.ts` exports one class whose single public method is `execute` | `error` | custom |
+| [`application/command-query-separation`](docs/rules/application-command-query-separation.md) | `ddd-ts-kit/application-command-query-separation` | nothing under `application/queries` calls `save`, `delete`, `publish` on a dependency | `warn` | custom |
+| [`test/no-mocks`](docs/rules/test-no-mocks.md) | `ddd-ts-kit/test-no-mocks` | no `vi.mock`, `vi.fn`, `vi.spyOn`, their `jest` twins or a mocking library in a context's tests | `warn` | custom |
+| [`events/name-format`](docs/rules/events-name-format.md) | `ddd-ts-kit/events-name-format` | event names follow `<context>.<aggregate>.<fact>` in kebab-case | `error` | custom |
+
+`domain/*` and `application/*` ids are added by this plugin: the shape of a class needs a syntax
+tree, so the CLI checker has no equivalent.
+
+### Standard rules instead of custom ones
+
+Where a standard rule fully covers a part of the architecture reference, the presets enable it
+and this plugin does not reimplement it.
+
+| Architecture reference | Standard rule | Enabled by |
+|---|---|---|
+| `clean/no-escape-hatch`: explicit `any` | `@typescript-eslint/no-explicit-any` | `recommended`, `strict`, `dddTsKit()` |
+| `clean/no-escape-hatch`: non-null assertion | `@typescript-eslint/no-non-null-assertion` | `recommended`, `strict`, `dddTsKit()` |
+| `clean/no-escape-hatch`: `@ts-ignore`, `@ts-nocheck`, undescribed `@ts-expect-error` | `@typescript-eslint/ban-ts-comment` | `recommended`, `strict`, `dddTsKit()` |
+| section 6, command or query and promises | `@typescript-eslint/no-floating-promises`, `no-misused-promises` | `dddTsKit()` with types |
+| section 6, specific errors, exhaustive decisions | `@typescript-eslint/switch-exhaustiveness-check`, `no-unnecessary-condition` | `dddTsKit()` with types |
+| section 6, immutability | `@typescript-eslint/prefer-readonly` | `dddTsKit()` with types |
+| section 6, types | `@typescript-eslint/consistent-type-imports` | `dddTsKit()` |
+| section 6, small functions | `complexity` (10, warn), `max-depth` (3, warn), `no-else-return` | `dddTsKit()` |
+| section 6, no output argument | `no-param-reassign` (`props` in `domain/` and `application/`) | `dddTsKit()` |
+| section 6, no surprise | `eqeqeq` | `dddTsKit()` |
+
+`max-params` and `max-lines-per-function` are deliberately not enabled: `clean-function-size`
+exempts constructors and module files and reads `limits` from the config, which the standard
+rules cannot do, and both would report the same function twice.
+
+### Where the kit and typescript-eslint strict disagree
+
+`dddTsKit()` changes ten strict rules, each for a stated reason, so that freshly generated code
+is not reported for following the conventions of the kit:
+
+| Rule | Setting | Reason |
+|---|---|---|
+| `require-await` | off | a port is asynchronous by contract; an in-memory adapter has nothing to await |
+| `no-unnecessary-type-arguments` | off | the id type of an aggregate is part of its declaration |
+| `consistent-type-definitions` | off | props are type aliases, states and ports are interfaces |
+| `no-empty-object-type` | interfaces allowed | `interface InvoiceRepository extends Repository<Invoice> {}` names a port |
+| `no-extraneous-class` | empty classes allowed | a domain service or a fake starts empty |
+| `no-unused-vars` | `args: 'none'` | an adapter implements the whole signature of its port |
+| `dot-notation` | index signatures allowed | `process.env['PORT']` |
+| `no-confusing-void-expression`, `restrict-template-expressions`, `restrict-plus-operands` | arrow shorthand, numbers and booleans allowed | not coercion bugs |
+
+## Settings
+
+`settings['ddd-ts-kit']` replaces what is read from disk, for tests and editors:
+
+| Key | Meaning |
+|---|---|
+| `config` | the content of `ddd-ts-kit.config.json`, as an object |
+| `rootDir` | the project root, when `config` is given (default: the working directory) |
+| `filename` | posix path relative to the root, used instead of the real file name |
+
+```ts
+ruleTester.run('layer-domain-purity', rule, {
+  valid: [],
+  invalid: [
+    {
+      code: "import { z } from 'zod';",
+      settings: { 'ddd-ts-kit': { config: {}, filename: 'src/contexts/billing/domain/aggregates/invoice.aggregate.ts' } },
+      errors: [{ messageId: 'package' }],
+    },
+  ],
+});
+```
+
+The config file is read once per directory and per process: restart the ESLint server of the
+editor after changing `ddd-ts-kit.config.json`.
+
+Two things work as with the CLI checker: `rules.<id>: "off"` in the config silences the rule
+even when the ESLint config enables it, and `// ddd-ts-kit-disable-next-line <id> -- <reason>`
+silences one line for both tools. A suppression without a reason silences nothing.
+
+## With `ddd-ts-kit check`
+
+Two tools, one set of ids, no overlap of authority.
+
+| Concern | Authority | Why |
+|---|---|---|
+| imports and boundaries (`layer/*`, `context/published-language-only`, `context/declared-relationship`, `context/published-language-is-a-contract`), `purity/*`, `clean/*`, `test/no-mocks`, `events/name-format`, `domain/*`, `application/*` | this plugin | it reads the syntax tree: no false positive from a string or a comment, shadowing and arrow functions are understood |
+| the tree (`tree/closed`, `tree/context-doc`), names and files (`naming/*`, `test/spec-required`, `test/builder-required`), the language (`language/*`), the config (`config/*`, `context/no-cycle`), `events/defined-in-published-language`, `composition/only-in-module` | `ddd-ts-kit check` | they judge the project, the glossary and files that are not sources; ESLint judges one source at a time |
+| the real dependency graph (barrels, cycles, orphans, dev dependencies in production code) | dependency-cruiser, configured by `pipeline/depcruise-config.mjs` | it resolves modules instead of classifying paths |
+
+The CLI keeps approximating the code-level rules with regular expressions, without dependency:
+it is the guard that runs in an editor hook after each write. When both report the same id, fix
+the code once; when they disagree, this plugin is right and the checker is to be fixed. A test
+of this package pins the classification of files and imports against the CLI on the same sample
+paths.
+
+## TypeScript 7
+
+typescript-eslint needs the JavaScript API of the compiler, which the native TypeScript 7 does
+not ship (`typescript-eslint` 8.71 requires `typescript <6.1`). Keep both:
+
+```json
+{
+  "devDependencies": {
+    "typescript": "~6.0.3",
+    "@typescript/native": "npm:typescript@~7.0.2"
+  },
+  "scripts": {
+    "typecheck": "node node_modules/@typescript/native/bin/tsc -p tsconfig.json --noEmit",
+    "lint": "eslint ."
+  }
+}
+```
+
+`typescript` 6 serves the tools that read sources through the compiler API (ESLint,
+dependency-cruiser); the native 7 compiles and type-checks. Call the native compiler by its
+path: both packages declare a `tsc` binary and `npx tsc` picks one of them.
+
+## Development
+
+```
+node node_modules/@typescript/native/bin/tsc -b packages/eslint-plugin
+npx vitest run packages/eslint-plugin
+```
+
+Rules are tested with `@typescript-eslint/rule-tester` wired to Vitest
+(`test/support/rule-tester.ts`). A rule comes with valid and invalid cases, a message that says
+what to do instead, and a page in `docs/rules/`.

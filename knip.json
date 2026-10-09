@@ -1,0 +1,36 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "ignoreDependencies": [
+    "@arethetypeswrong/cli",
+    "publint",
+    "eslint-formatter-gitlab"
+  ],
+  "workspaces": {
+    ".": {
+      "entry": [
+        "pipeline/monorepo/*.mjs",
+        "plugin/hooks/*.mjs"
+      ],
+      "project": [
+        "pipeline/monorepo/**/*.mjs",
+        "plugin/**/*.mjs",
+        "*.{js,cjs,mjs,ts}"
+      ]
+    },
+    "packages/*": {
+      "project": [
+        "src/**/*.ts",
+        "test/**/*.ts"
+      ]
+    },
+    "packages/prisma": {
+      "project": [
+        "src/**/*.ts",
+        "test/**/*.ts"
+      ],
+      "ignoreDependencies": [
+        "@prisma/client"
+      ]
+    }
+  }
+}

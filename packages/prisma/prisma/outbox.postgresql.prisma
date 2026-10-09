@@ -1,0 +1,43 @@
+// Models of @ddd-ts-kit/prisma for PostgreSQL. Copy them into your schema.prisma; your own
+// `prisma migrate dev` then creates the tables in a migration of your project.
+//
+// One schema per bounded context: list the schemas in the datasource (`schemas = [...]`), add
+// `@@schema("<context>")` to each model, and give each copy a model name of its own
+// (`BillingOutboxRecord`, ...) when several contexts keep their own outbox.
+//
+// Keep the field names: the stores of the package are typed against them. Table and column
+// names (`@@map`, `@map`) are yours to change, as long as the `skipLocked` option of the outbox
+// store is told the table name.
+
+model OutboxRecord {
+  id            String    @id
+  /// Insertion order, the tie-breaker of the claim.
+  sequence      BigInt    @unique @default(autoincrement())
+  type          String
+  version       Int
+  /// Text, not a timestamp: the envelope must come back exactly as published, offset included.
+  occurredAt    String    @map("occurred_at")
+  /// Optional because JSON `null` is a legal payload and is stored as SQL NULL.
+  payload       Json?
+  traceparent   String?
+  correlationId String?   @map("correlation_id")
+  status        String    @default("pending")
+  attempts      Int       @default(0)
+  nextAttemptAt DateTime  @map("next_attempt_at") @db.Timestamptz(3)
+  lastErrorCode String?   @map("last_error_code")
+  publishedAt   DateTime? @map("published_at") @db.Timestamptz(3)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([status, nextAttemptAt, sequence])
+  @@map("outbox")
+}
+
+model ProcessedEvent {
+  consumer    String
+  eventId     String   @map("event_id")
+  processedAt DateTime @default(now()) @map("processed_at") @db.Timestamptz(3)
+
+  /// The unique (consumer, event_id) the store relies on.
+  @@id([consumer, eventId])
+  @@map("processed_events")
+}

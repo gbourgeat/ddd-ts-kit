@@ -1,0 +1,22 @@
+min_version: 2.0.0
+
+pre-commit:
+  parallel: true
+  jobs:
+    - name: eslint
+      glob: "*.{ts,mts,cts,js,mjs,cjs}"
+      run: npx --no -- eslint --config eslint.config.mjs --no-warn-ignored {staged_files}
+    - name: no em dash or en dash
+      run: npm run ci:docs
+
+pre-push:
+  jobs:
+    - name: typecheck
+      run: npm run ci:typecheck
+    - name: unit tests
+      run: npm test
+
+commit-msg:
+  jobs:
+    - name: conventional commit
+      run: npx --no -- commitlint --edit {1}

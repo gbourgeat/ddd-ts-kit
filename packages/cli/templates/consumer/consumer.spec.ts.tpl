@@ -1,0 +1,16 @@
+import { describe, expect, it } from '{{tests.module}}';
+import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';
+import { {{name.pascal}}Consumer } from '../../application/integration/consumers/{{name.kebab}}.consumer.js';
+
+describe('When {{upstream.kebab}} publishes {{upstream.eventName}}', () => {
+  it('listens to the type {{upstream.kebab}} publishes', () => {
+    const consumer = new {{name.pascal}}Consumer(new InMemoryCommandBus());
+
+    expect(consumer).toBeInstanceOf({{name.pascal}}Consumer);
+    expect({{name.pascal}}Consumer.eventType).toBe('{{upstream.eventName}}');
+  });
+
+  // TODO(domain): replace each entry below by a test that hands the consumer an event built from the upstream declaration and asserts what {{context.kebab}} did, through a real command bus with the handler and its fakes.
+  it.todo('executes the command that follows the upstream fact');
+  it.todo('has the same outcome when the same event is delivered twice');
+});

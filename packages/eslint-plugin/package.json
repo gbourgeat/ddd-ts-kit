@@ -1,0 +1,46 @@
+{
+  "name": "@ddd-ts-kit/eslint-plugin",
+  "version": "0.1.0",
+  "description": "AST-accurate ESLint rules for DDD and Clean Architecture in TypeScript: layer and context isolation, domain purity, clean code ordering.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "keywords": [
+    "eslint",
+    "eslintplugin",
+    "eslint-plugin",
+    "ddd",
+    "clean-architecture",
+    "typescript"
+  ],
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "docs"
+  ],
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "peerDependencies": {
+    "@eslint/js": "^9.0.0 || ^10.0.0",
+    "eslint": "^9.0.0 || ^10.0.0",
+    "typescript-eslint": "^8.71.0"
+  },
+  "dependencies": {
+    "@typescript-eslint/utils": "^8.71.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@typescript-eslint/rule-tester": "^8.71.1",
+    "eslint": "^10.12.0",
+    "typescript-eslint": "^8.71.1"
+  }
+}

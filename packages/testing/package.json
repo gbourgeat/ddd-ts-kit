@@ -1,0 +1,44 @@
+{
+  "name": "@ddd-ts-kit/testing",
+  "version": "0.1.0",
+  "description": "Readable tests without mocks: test data builders, given/when/then scenarios and contract suites shared by fakes and real adapters.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./contracts": {
+      "types": "./dist/contracts.d.ts",
+      "default": "./dist/contracts.js"
+    },
+    "./faker": {
+      "types": "./dist/faker.d.ts",
+      "default": "./dist/faker.js"
+    },
+    "./e2e": {
+      "types": "./dist/e2e.d.ts",
+      "default": "./dist/e2e.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@ddd-ts-kit/kernel": "0.1.0"
+  },
+  "devDependencies": {
+    "@ddd-ts-kit/events": "0.1.0",
+    "@faker-js/faker": "^10.6.0"
+  },
+  "peerDependencies": {
+    "@faker-js/faker": ">=9.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@faker-js/faker": {
+      "optional": true
+    }
+  }
+}

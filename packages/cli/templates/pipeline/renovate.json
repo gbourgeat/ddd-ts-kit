@@ -1,0 +1,104 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":semanticCommits",
+    ":semanticCommitTypeAll(chore)"
+  ],
+  "timezone": "Etc/UTC",
+  "schedule": [
+    "before 6am on monday"
+  ],
+  "prConcurrentLimit": 5,
+  "prHourlyLimit": 0,
+  "minimumReleaseAge": "7 days",
+  "rangeStrategy": "bump",
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": [
+      "before 6am on the first day of the month"
+    ]
+  },
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "schedule": [
+      "at any time"
+    ],
+    "minimumReleaseAge": null
+  },
+  "packageRules": [
+    {
+      "groupName": "production dependencies (minor and patch)",
+      "matchDepTypes": [
+        "dependencies"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ]
+    },
+    {
+      "groupName": "development dependencies (minor and patch)",
+      "matchDepTypes": [
+        "devDependencies"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ]
+    },
+    {
+      "groupName": "container images",
+      "matchManagers": [
+        "dockerfile",
+        "docker-compose"
+      ]
+    },
+    {
+      "groupName": "CI",
+      "matchManagers": [
+        "github-actions",
+        "gitlabci",
+        "gitlabci-include"
+      ],
+      "semanticCommitType": "ci"
+    },
+    {
+      "groupName": "tests",
+      "matchPackageNames": [
+        "vitest",
+        "@vitest/**",
+        "@faker-js/faker"
+      ]
+    },
+    {
+      "groupName": "git hooks",
+      "matchPackageNames": [
+        "lefthook",
+        "@commitlint/**"
+      ]
+    },
+    {
+      "description": "Static analysis: typescript-eslint pins the TypeScript range it supports.",
+      "groupName": "static analysis",
+      "matchPackageNames": [
+        "eslint",
+        "eslint-*",
+        "@eslint/**",
+        "typescript-eslint",
+        "@typescript-eslint/**",
+        "typescript",
+        "knip",
+        "dependency-cruiser"
+      ]
+    },
+    {
+      "description": "The kit moves as one: runtime packages, checker and lint plugin share a release.",
+      "groupName": "ddd-ts-kit",
+      "matchPackageNames": [
+        "ddd-ts-kit",
+        "@ddd-ts-kit/**"
+      ]
+    }
+  ]
+}

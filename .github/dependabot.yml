@@ -1,0 +1,45 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      lint:
+        patterns:
+          - "eslint*"
+          - "@eslint/*"
+          - "typescript-eslint"
+          - "@typescript-eslint/*"
+          - "knip"
+          - "dependency-cruiser"
+      test:
+        patterns:
+          - "vitest"
+          - "@vitest/*"
+          - "@faker-js/faker"
+      typescript:
+        patterns:
+          - "typescript"
+          - "@typescript/native"
+      production-minor:
+        dependency-type: production
+        update-types: [minor, patch]
+      development-minor:
+        dependency-type: development
+        update-types: [minor, patch]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: ci
+    groups:
+      actions:
+        patterns: ["*"]

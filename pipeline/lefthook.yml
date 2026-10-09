@@ -1,0 +1,23 @@
+min_version: 2.0.0
+
+pre-commit:
+  parallel: true
+  jobs:
+    - name: eslint
+      glob: "*.{ts,mts,cts,js,mjs,cjs}"
+      run: npx --no -- eslint --no-warn-ignored {staged_files}
+    - name: architecture
+      glob: "src/**/*.{ts,mts,cts}"
+      run: npx --no -- ddd-ts-kit check {staged_files}
+
+pre-push:
+  jobs:
+    - name: typecheck
+      run: npm run ci:typecheck
+    - name: unit tests
+      run: npm run ci:test:unit
+
+commit-msg:
+  jobs:
+    - name: conventional commit
+      run: npx --no -- commitlint --edit {1}

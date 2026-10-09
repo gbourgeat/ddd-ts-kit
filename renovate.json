@@ -1,0 +1,103 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":semanticCommits",
+    ":semanticCommitTypeAll(chore)"
+  ],
+  "timezone": "Etc/UTC",
+  "schedule": [
+    "before 6am on monday"
+  ],
+  "prConcurrentLimit": 5,
+  "prHourlyLimit": 0,
+  "minimumReleaseAge": "7 days",
+  "rangeStrategy": "bump",
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": [
+      "before 6am on the first day of the month"
+    ]
+  },
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "schedule": [
+      "at any time"
+    ],
+    "minimumReleaseAge": null
+  },
+  "packageRules": [
+    {
+      "groupName": "production dependencies (minor and patch)",
+      "matchDepTypes": [
+        "dependencies"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ]
+    },
+    {
+      "groupName": "development dependencies (minor and patch)",
+      "matchDepTypes": [
+        "devDependencies"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ]
+    },
+    {
+      "groupName": "CI",
+      "matchManagers": [
+        "github-actions",
+        "gitlabci",
+        "gitlabci-include"
+      ],
+      "semanticCommitType": "ci"
+    },
+    {
+      "groupName": "tests",
+      "matchPackageNames": [
+        "vitest",
+        "@vitest/**",
+        "@faker-js/faker"
+      ]
+    },
+    {
+      "groupName": "git hooks",
+      "matchPackageNames": [
+        "lefthook",
+        "@commitlint/**"
+      ]
+    },
+    {
+      "description": "Static analysis: typescript-eslint pins the TypeScript range it supports.",
+      "groupName": "static analysis",
+      "matchPackageNames": [
+        "eslint",
+        "eslint-*",
+        "@eslint/**",
+        "typescript-eslint",
+        "@typescript-eslint/**",
+        "knip",
+        "dependency-cruiser",
+        "publint",
+        "@arethetypeswrong/cli"
+      ]
+    },
+    {
+      "description": "typescript-eslint supports typescript below 6.1; the native compiler is installed under the alias @typescript/native. Both move by hand.",
+      "groupName": "typescript",
+      "matchPackageNames": [
+        "typescript",
+        "@typescript/native"
+      ],
+      "matchUpdateTypes": [
+        "major",
+        "minor"
+      ],
+      "dependencyDashboardApproval": true
+    }
+  ]
+}

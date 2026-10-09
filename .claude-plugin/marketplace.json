@@ -1,0 +1,20 @@
+{
+  "name": "ddd-ts-kit",
+  "description": "DDD, Clean Architecture and Clean Code tooling for TypeScript backends.",
+  "owner": {
+    "name": "Gary Bourgeat"
+  },
+  "plugins": [
+    {
+      "name": "ddd-ts-kit",
+      "source": "./plugin",
+      "description": "DDD, Clean Architecture and Clean Code for TypeScript backends: bootstrap, scaffolding, strategic design discipline and architecture checks.",
+      "category": "development",
+      "tags": [
+        "ddd",
+        "clean-architecture",
+        "typescript"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "name": "@ddd-ts-kit/typeorm",
+  "version": "0.1.0",
+  "description": "TypeORM adapters for the kernel ports: unit of work, transactional outbox store, processed-event store.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "exports": { ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" } },
+  "files": ["dist"],
+  "dependencies": { "@ddd-ts-kit/kernel": "0.1.0", "@ddd-ts-kit/events": "0.1.0" },
+  "peerDependencies": { "typeorm": "^1.0.0" },
+  "devDependencies": { "typeorm": "^1.1.2", "@ddd-ts-kit/testing": "0.1.0", "pg": "^8.23.1", "@types/pg": "^8.11.0", "@electric-sql/pglite": "^0.5.8", "@electric-sql/pglite-socket": "^0.2.11" }
+}

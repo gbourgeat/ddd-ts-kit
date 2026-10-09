@@ -1,0 +1,354 @@
+# @ddd-ts-kit/testing
+
+Readable tests without mocks: test data builders, given / when / then scenarios for
+aggregates, an in-memory harness for handlers, an end-to-end harness over HTTP and the event
+bus, and contract suites that hold fakes and real adapters to the same behaviour. Business
+logic is tested with no infrastructure at all, and the same builders carry to the tests that
+run the whole application.
+
+```
+npm i -D @ddd-ts-kit/testing
+```
+
+| Entry | Holds | Imports |
+|---|---|---|
+| `@ddd-ts-kit/testing` | builders, scenarios, `createTestBuses`, `InMemoryRepository` | no runner, no library |
+| `@ddd-ts-kit/testing/faker` | generated data for builders | `@faker-js/faker` (optional peer) |
+| `@ddd-ts-kit/testing/e2e` | HTTP client, `eventually`, `collectEvents` | Node only: no HTTP framework, no container |
+| `@ddd-ts-kit/testing/contracts` | contract suites | the runner you pass |
+
+## Builders
+
+A builder declares valid defaults once; a test states only what matters to the rule it checks.
+Every step returns a new, immutable builder, so a base builder can be shared between tests.
+
+For an aggregate, write a class: its methods are named in the ubiquitous language, and
+`construct` goes through the public API, so a test can never start from an invalid state.
+
+```ts
+// contexts/ordering/test/builders/order.builder.ts
+import { Builder, sequence, type Buildable, type Defaults } from '@ddd-ts-kit/testing';
+
+interface OrderProps {
+  id: string;
+  customer: Customer;
+  lines: readonly Line[];
+  paid: boolean;
+}
+
+class OrderBuilder extends Builder<OrderProps, Order> {
+  protected defaults(): Defaults<OrderProps> {
+    return { id: sequence('order'), customer: aCustomer(), lines: [aLine()], paid: false };
+  }
+
+  protected construct(props: OrderProps): Order {
+    const order = Order.place(props.id, props.customer, props.lines);
+    if (props.paid) order.pay();
+    return order;
+  }
+
+  placedBy(customer: Buildable<Customer>): this {
+    return this.with('customer', customer);
+  }
+
+  withLine(line: Buildable<Line>): this {
+    return this.adding('lines', line);
+  }
+
+  paid(): this {
+    return this.with('paid', true);
+  }
+}
+
+export const anOrder = (): OrderBuilder => new OrderBuilder();
+```
+
+```ts
+const order = anOrder().paid().withLine(aLine().with('sku', 'sku-1')).build();
+const orders = anOrder().placedBy(aCustomer().named('Ada')).buildMany(3);
+```
+
+For plain data (payloads, DTOs, simple value objects) the functional form is enough. It gives
+the generic `with(key, value)` and `withMany(partial)`, both checked against the properties:
+
+```ts
+import { defineBuilder, lazy, sequence } from '@ddd-ts-kit/testing';
+
+export const aLine = defineBuilder<Line>({
+  defaults: { sku: sequence('sku'), quantity: 1 },
+});
+
+export const anEmail = defineBuilder<{ value: string }, Email>({
+  defaults: { value: sequence('email', (n) => `user${n}@example.com`) },
+  build: ({ value }) => Email.create(value),
+});
+
+aLine().with('quantity', 3).build(); // { sku: 'sku-1', quantity: 3 }
+```
+
+- A builder is accepted wherever a value is: `.with('customer', aCustomer().named('Ada'))`,
+  and inside arrays: `.with('lines', [aLine(), { sku: 'pen', quantity: 2 }])`.
+- `sequence('order')` yields `order-1`, `order-2`... at each build; `lazy(() => new Date())`
+  computes a default at each build. A value given with `with` consumes nothing.
+- Call `resetSequences()` in `beforeEach`, so a test does not depend on the ones before it.
+- The class form keeps `with`, `withMany` and `adding` protected on purpose: the public
+  surface of an aggregate builder is the language of the domain, not its property names.
+
+## Generated data
+
+```
+npm i -D @faker-js/faker
+```
+
+```ts
+import { generated } from '@ddd-ts-kit/testing/faker';
+
+export const aCustomer = defineBuilder<CustomerProps, Customer>({
+  defaults: {
+    id: sequence('customer'),
+    name: generated((faker) => faker.person.fullName()),
+    email: generated((faker) => faker.internet.email().toLowerCase()),
+    birthDate: generated((faker) => faker.date.birthdate({ mode: 'age', min: 18, max: 90 })),
+  },
+  build: (props) => Customer.register(props),
+});
+
+aCustomer().build();                              // a different, valid customer at each build
+aCustomer().with('email', 'ada@example.com');     // stated: the rule under test depends on it
+```
+
+The defaults are generated yet valid: each generator is constrained to what the domain accepts
+(an adult, a lower-case address), and `build` still goes through `Customer.register`.
+
+**The rule: generated data for the fields a test does not care about, explicit values for
+what the rule under test depends on.** A test never asserts a generated value it did not
+state, and never relies on a generated value falling on the right side of a rule.
+
+Every `generated` value is drawn from one generator per test file, `dataGenerator()`. Its seed
+comes from `TEST_SEED`, else it is random, and it is always known (`dataGenerator().seed`):
+
+```ts
+// vitest setup file
+import { beforeEach, onTestFailed } from 'vitest';
+import { reportSeedOnFailure } from '@ddd-ts-kit/testing/faker';
+
+reportSeedOnFailure({ beforeEach, onTestFailed });
+// under a failed test: Generated data seed: 1837264. Replay this file with TEST_SEED=1837264.
+```
+
+| Call | Does |
+|---|---|
+| `generated((faker) => value)` | a default or a `with` value drawn at each build |
+| `dataGenerator()` | the current generator: `seed`, `faker`, `restart()` |
+| `createDataGenerator({ seed?, locales?, referenceDate? })` | a generator of its own; relative dates are computed from a fixed `referenceDate`, so a seed replays them too |
+| `useDataGenerator(generator)` | makes `generated` draw from it, for instance a fixed seed in one suite |
+| `reportSeedOnFailure(runner, log?)` | prints the seed under each failed test |
+
+## Scenarios
+
+```ts
+import { given, scenario } from '@ddd-ts-kit/testing';
+
+it('records the payment of a placed order', () => {
+  given(anOrder().withLine(aLine().with('quantity', 2)))
+    .when((order) => order.pay())
+    .thenEvents([{ name: 'ordering.order.paid', amount: 30 }]);
+});
+
+it('refuses to pay an order twice', () => {
+  given(anOrder().paid())
+    .when((order) => order.pay())
+    .thenError(OrderAlreadyPaid, 'ORDER_ALREADY_PAID')
+    .thenState((order) => expect(order.status).toBe('paid'));
+});
+```
+
+`given` takes an aggregate or its builder and discards the events of the arrangement
+(`pullEvents()`), so only the events of `when` are asserted. `scenario(() => aggregate)` is
+the same with the arrangement as a function, replayed from a fresh aggregate at each `when`.
+
+| Assertion | Passes when |
+|---|---|
+| `thenEvents([...])` | exactly these events, in order; each described by its name, its class, or the properties that matter |
+| `thenEventNames([...])` | exactly these names, in order |
+| `thenNoEvent()` | nothing was recorded |
+| `thenError(ErrorClass, code?)`, `thenError(code)` | the action threw that error |
+| `thenState((aggregate) => ...)` | your own assertions on the aggregate pass |
+
+Failures are `AssertionError`s of `node:assert` with the expected and recorded events side by
+side, so they read well under any runner. An error raised by `when` is never swallowed: every
+assertion but `thenError` fails on it. When `when` (or the arrangement) is asynchronous, the
+chain is a promise: `await given(order).when(async (o) => ...).thenEventNames([...])`.
+
+## Handlers
+
+```ts
+import { createTestBuses, InMemoryRepository, snapshots } from '@ddd-ts-kit/testing';
+
+class InMemoryOrderRepository extends InMemoryRepository<Order> implements OrderRepository {
+  constructor() {
+    super(snapshots({ toSnapshot: (order) => order.toSnapshot(), fromSnapshot: Order.rehydrate }));
+  }
+}
+
+it('places an order and announces it', async () => {
+  const { commandBus, eventBus, clock, ids, publishedEvents } = createTestBuses();
+  const orders = new InMemoryOrderRepository();
+  commandBus.register(PlaceOrder, new PlaceOrderHandler(orders, eventBus, ids, clock));
+
+  const id = await commandBus.execute(new PlaceOrder('sku-1'));
+
+  expect(orders.count()).toBe(1);
+  expect(publishedEvents('ordering.order.placed')).toMatchObject([{ payload: { orderId: id } }]);
+});
+```
+
+`InMemoryRepository` is a fake, not a mock: a working repository over a Map that keeps its own
+copy of what is saved (through `snapshots({ toSnapshot, fromSnapshot })` or `{ clone }`) and
+enforces optimistic concurrency on `version`, raising `ConcurrencyError` (code
+`CONCURRENCY_CONFLICT`). Assert its state with `all()` and `count()`.
+
+## End to end
+
+The whole application, real adapters included, driven from the outside: requests in, responses
+and integration events out. Nothing here knows the HTTP framework or how the application is
+composed; `start` says it.
+
+```ts
+import { createServer } from 'node:http';
+import { collectEvents, expectProblem, expectStatus, listenOnRandomPort, startTestServer } from '@ddd-ts-kit/testing/e2e';
+
+const app = composeApplication();                   // the composition root of main.ts
+const server = await startTestServer({
+  start: () => listenOnRandomPort(createServer(expressApp(app))),
+  // Fastify: async () => ({ url: await fastify.listen({ port: 0 }), close: () => fastify.close() })
+  headers: { authorization: `Bearer ${testToken}` },
+});
+afterAll(() => server.close());
+```
+
+| Call | Does |
+|---|---|
+| `client.get / post / put / patch / delete` | JSON in, `{ status, headers, body }` out; `body` is parsed when the content type is JSON, text otherwise; a 4xx or 5xx is a response, not an exception |
+| `client.post(path, body, { headers })`, `client.withHeaders(headers)` | headers for one call, or a client for another caller |
+| `expectStatus(response, 201)` | hands the response back, or fails showing the body, where the API says why |
+| `expectProblem(response, { status, code })` | asserts an RFC 9457 `application/problem+json` answer and returns the document |
+| `eventually(assertion, { timeoutMs = 2000, intervalMs = 20 })` | retries until the assertion passes; when the time is up, fails quoting the last error |
+| `collectEvents(subscriber, types)` | records published integration events: `received(type?)`, `waitFor(type, predicate?, options?)`, `stop()` |
+
+The assertions are those of `node:assert`: they read the same under any runner.
+
+**Arrange through the API.** An end-to-end test creates its state the way a client would,
+never by writing rows. The builder that gives the aggregate to unit tests gives the request
+payload here, from the same properties and the same vocabulary:
+
+```ts
+class OrderBuilder extends Builder<OrderProps, Order> {
+  // defaults(), construct() and the methods of the ubiquitous language, as above
+
+  buildRequest(): PlaceOrderRequest {
+    const { customer, lines } = this.props();   // the defaults and what the test stated, resolved
+    return { customerId: customer.id, lines };
+  }
+}
+
+const { body: order } = expectStatus(await client.post<OrderView>('/orders', anOrder().withLine(aLine()).buildRequest()), 201);
+```
+
+**Reset between tests.** The harness names the contract and leaves the implementation to the
+project and its driver:
+
+```ts
+import type { DatabaseReset } from '@ddd-ts-kit/testing/e2e';
+
+// PostgreSQL, with any client exposing `query`: every table of the application schemas.
+export function truncateAllTables(db: { query(sql: string): Promise<{ rows: { name: string }[] }> }, schemas: string[]): DatabaseReset {
+  return {
+    async reset() {
+      const { rows } = await db.query(
+        `select quote_ident(schemaname) || '.' || quote_ident(tablename) as name
+           from pg_tables where schemaname in (${schemas.map((schema) => `'${schema}'`).join(', ')})`,
+      );
+      if (rows.length > 0) await db.query(`truncate ${rows.map((row) => row.name).join(', ')} restart identity cascade`);
+    },
+  };
+}
+
+beforeEach(() => database.reset());
+```
+
+## Three levels with the same vocabulary
+
+One rule, "an order that is already paid cannot be paid again", at the three levels of
+`docs/ARCHITECTURE.md`. The builder is the same; only what runs underneath changes.
+
+```ts
+// 1. Domain: the aggregate alone. Milliseconds, no double.
+it('refuses to pay an order twice', () => {
+  given(anOrder().paid())
+    .when((order) => order.pay(at))
+    .thenError(OrderAlreadyPaid, 'ORDER_ALREADY_PAID');
+});
+
+// 2. Application: the real handler through the bus, fakes for the ports.
+it('refuses to pay an order twice', async () => {
+  const orders = new InMemoryOrderRepository();
+  const app = createTestApplication({ modules: [orderingModule], fakes: [fake(ORDER_REPOSITORY, orders)] });
+  const order = anOrder().paid().build();
+  await orders.save(order);
+
+  await expect(app.commandBus.execute(new PayOrder(order.id))).rejects.toMatchObject({ code: 'ORDER_ALREADY_PAID' });
+  expect(app.eventBus.published).toEqual([]);
+});
+
+// 3. End to end: HTTP, the real database and broker, generated data, state made through the API.
+it('refuses to pay an order twice', async () => {
+  const events = collectEvents(broker, [OrderPaid]);
+  const { body: order } = expectStatus(await client.post<OrderView>('/orders', anOrder().buildRequest()), 201);
+  expectStatus(await client.post(`/orders/${order.id}/payment`), 204);
+
+  expectProblem(await client.post(`/orders/${order.id}/payment`), { status: 409, code: 'ORDER_ALREADY_PAID' });
+
+  await events.waitFor(OrderPaid, (event) => event.payload.orderId === order.id);
+  await eventually(async () => expect((await client.get<OrderView>(`/orders/${order.id}`)).body.status).toBe('paid'));
+  expect(events.received(OrderPaid)).toHaveLength(1);
+});
+```
+
+Level 2 uses `createTestApplication` of `@ddd-ts-kit/di`; with another container,
+`createTestBuses()` above gives the same buses to register the handler on. At level 3 the
+customer of `anOrder()` is generated, the order line is whatever the default says, and the
+only values the test states are the ones the rule depends on: the order is paid, then paid
+again.
+
+## Contract suites
+
+A fake is only worth trusting if it behaves like the adapter it stands for. Each suite takes
+the runner's functions and a factory, and is run against both.
+
+```ts
+// contexts/ordering/test/integration/order-repository.contract.spec.ts
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { repositoryContract } from '@ddd-ts-kit/testing/contracts';
+
+const runner = { describe, it, expect, beforeEach, afterEach };
+const options = {
+  createAggregate: () => anOrder().build(),
+  mutate: (order: Order) => order.addLine(aLine().build()),
+  idOf: (order: Order) => order.id,
+  stateOf: (order: Order) => order.toSnapshot(),
+};
+
+repositoryContract(runner, { ...options, name: 'InMemoryOrderRepository', createRepository: () => new InMemoryOrderRepository() });
+repositoryContract(runner, { ...options, name: 'DrizzleOrderRepository', createRepository: () => freshDrizzleRepository() });
+```
+
+| Suite | Holds |
+|---|---|
+| `repositoryContract` | save then find, unknown id, update, isolation of the stored copy, optimistic concurrency (any error with code `CONCURRENCY_CONFLICT`) |
+| `eventBusContract` | any `EventBus` provider: routing by type, several subscribers, unsubscribe, exact envelope round trip (`traceparent`, `correlationId`), handler failure surfaces. Redeliveries are accepted; return `settle()` from `createBus` for providers that deliver asynchronously |
+| `outboxStoreContract` | any outbox store: order, limit, lease, concurrent claims, published, failed, dead, `retryDead`, purge |
+| `processedEventStoreContract` | any `ProcessedEventStore`: once per consumer and event, also under concurrent deliveries |
+
+The suites use only `describe`, `it`, `beforeEach`, `expect(...).toBe` and `toEqual`
+(`afterEach` is optional), which the globals of vitest and jest both provide.

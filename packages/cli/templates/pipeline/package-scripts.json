@@ -1,0 +1,34 @@
+{
+  "scripts": {
+    "typecheck": "node node_modules/@typescript/native/bin/tsc -p tsconfig.json --noEmit",
+    "build": "node node_modules/@typescript/native/bin/tsc -p tsconfig.build.json",
+    "lint": "eslint .",
+    "ci:typecheck": "npm run typecheck",
+    "ci:lint": "eslint .",
+    "ci:arch": "npm run ci:arch:check && npm run ci:arch:graph",
+    "ci:arch:check": "ddd-ts-kit check",
+    "ci:arch:graph": "depcruise src --config depcruise-config.mjs",
+    "ci:deadcode": "knip",
+    "ci:test:unit": "vitest run --project unit --coverage",
+    "ci:test:integration": "vitest run --project integration --coverage --mode integration",
+    "ci:test:e2e": "vitest run --config vitest.e2e.config.ts --passWithNoTests",
+    "ci:docs": "npm run docs:check",
+    "ci:audit": "npm audit --omit=dev --audit-level=high",
+    "ci:build": "npm run build"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^21.2.3",
+    "@commitlint/config-conventional": "^21.2.3",
+    "@ddd-ts-kit/eslint-plugin": "^0.1.0",
+    "@eslint/js": "^10.0.1",
+    "@typescript/native": "npm:typescript@~7.0.2",
+    "@vitest/coverage-v8": "5.0.3",
+    "dependency-cruiser": "^18.5.0",
+    "eslint": "^10.12.0",
+    "eslint-formatter-gitlab": "^7.2.0",
+    "knip": "^6.41.0",
+    "lefthook": "^2.2.1",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.71.1"
+  }
+}
