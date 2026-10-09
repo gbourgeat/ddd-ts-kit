@@ -117,7 +117,7 @@ jobs:
       DATABASE_URL: postgres://app:app@localhost:5432/app
     services:
       postgres:
-        image: postgres:18
+        image: public.ecr.aws/docker/library/postgres:18
         env:
           POSTGRES_USER: app
           POSTGRES_PASSWORD: app
@@ -148,7 +148,7 @@ jobs:
       DATABASE_URL: postgres://app:app@localhost:5432/app
     services:
       postgres:
-        image: postgres:18
+        image: public.ecr.aws/docker/library/postgres:18
         env:
           POSTGRES_USER: app
           POSTGRES_PASSWORD: app
