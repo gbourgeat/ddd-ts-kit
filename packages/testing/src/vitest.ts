@@ -138,7 +138,7 @@ class DecoratorCompiler {
 
   #run(args: readonly string[], subject: string): string {
     try {
-      return execFileSync(process.execPath, [this.setup.script, ...args], { encoding: 'utf8', stdio: 'pipe' });
+      return execFileSync(process.execPath, [this.setup.script, '--pretty', 'false', ...args], { encoding: 'utf8', stdio: 'pipe' });
     } catch (error) {
       throw new Error(`The TypeScript compiler refused ${subject}:\n${saidBy(error)}`, { cause: error });
     }

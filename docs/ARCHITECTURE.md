@@ -35,7 +35,8 @@ src/
   apps/<context>/main.ts         optional: one context run alone as a service
   contexts/<context>/
     CONTEXT.md
-    <context>.module.ts          the context's composition: binds ports to adapters
+    <context>.declarations.ts    generated barrel of the context's declared classes
+    <context>.module.ts          explicit style only: binds ports to adapters by hand
     published-language/          contracts designed for other contexts
     domain/
       aggregates/                *.aggregate.ts
@@ -48,7 +49,7 @@ src/
     application/
       commands/<use-case>/       *.command.ts, *.handler.ts
       queries/<use-case>/        *.query.ts, *.handler.ts
-      ports/                     *.port.ts         (interfaces to the outside world)
+      ports/                     *.port.ts         (interfaces to the outside world), <context>.ports.ts (their tokens)
       authorization/             <context>.permissions.ts, *.policy.ts (who may do what, here)
       event-handlers/            *.event-handler.ts (reactions to this context's domain events)
       integration/
@@ -162,6 +163,20 @@ implementations; another transport is an adapter chosen in the composition root.
 behaviour (unit of work, authorization, logging) is a bus middleware, not code repeated in
 handlers. A command is a class extending `Command<Result>`, a query a class extending
 `Query<Result>`; handlers are registered in `<context>.module.ts`.
+
+**Declarations.** A class says what it is where it is written, and that is its
+registration: a command or a query carries `@Requires(permission)` or `@Public()`, its
+handler `@CommandHandler(Message, [tokens])` or `@QueryHandler`, a consumer
+`@EventListener(definition, { consumer })`, an adapter `@Repository`, `@Gateway` or
+`@Adapter` with the port token it implements, a policy `@Policy`. The token list names the
+constructor dependencies in order and the compiler checks it. Declarations are metadata of
+the kernel: they instantiate nothing and import no container. The composition root turns a
+context's declarations into its module, from the generated barrel or by discovery, so a
+context has no hand-maintained registration file. The domain declares nothing: aggregates,
+entities, value objects and domain events carry no decorator. Decorators work in both
+decorator modes of TypeScript, so a project bound to the legacy mode by class-validator or
+NestJS uses the same ones. The explicit style (`<context>.module.ts` listing the bindings)
+remains available and can be mixed in.
 
 **Ports and adapters.** A port is named for what the application needs
 (`PaymentGateway`), not for the technology (`StripeClient`). Each port has a fake in `test/fakes/`.

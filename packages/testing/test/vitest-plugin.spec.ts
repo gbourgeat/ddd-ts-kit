@@ -135,7 +135,7 @@ describe('a project with standard decorators, run by the installed Vitest', () =
   const run = (environment: Record<string, string>) =>
     spawnSync(process.execPath, [VITEST, 'run', '--root', PROJECT, '--config', path.join(PROJECT, 'vitest.config.ts')], {
       encoding: 'utf8',
-      env: { ...process.env, DECORATORS_CACHE: mkdtempSync(path.join(workspace, 'vite-')), ...environment },
+      env: { ...process.env, NO_COLOR: '1', FORCE_COLOR: '0', DECORATORS_CACHE: mkdtempSync(path.join(workspace, 'vite-')), ...environment },
     });
 
   it.each(Object.entries(COMPILERS))('passes with the plugin, compiling with %s', (_label, compiler) => {
