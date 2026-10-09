@@ -6,6 +6,11 @@ updates:
       interval: weekly
       day: monday
     open-pull-requests-limit: 5
+    ignore:
+      # typescript-eslint and dependency-cruiser need the TypeScript 6 API; the native
+      # compiler is the separate `@typescript/native` alias.
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
     commit-message:
       prefix: chore
       include: scope
