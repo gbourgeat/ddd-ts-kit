@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, symlinkSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { test } from 'node:test';
@@ -16,13 +16,14 @@ function project(config = {}) {
   assert.equal(init.status, 0, init.stderr);
   if (Object.keys(config).length > 0) patchConfig(root, config);
   mkdirSync(join(root, 'node_modules', '.bin'), { recursive: true });
-  symlinkSync(cli, join(root, 'node_modules', '.bin', 'ddd-ts-kit'));
+  // A launcher like the one npm writes: the compiled entry file itself is not executable.
+  writeFileSync(join(root, 'node_modules', '.bin', 'ddd-ts-kit'), `#!/bin/sh\nexec node "${cli}" "$@"\n`, { mode: 0o755 });
   return root;
 }
 
 function patchConfig(root, patch) {
   const path = join(root, 'ddd-ts-kit.config.json');
-  const current = JSON.parse(spawnSync('cat', [path], { encoding: 'utf8' }).stdout);
+  const current = JSON.parse(readFileSync(path, 'utf8'));
   writeFileSync(path, JSON.stringify({ ...current, ...patch }));
 }
 
