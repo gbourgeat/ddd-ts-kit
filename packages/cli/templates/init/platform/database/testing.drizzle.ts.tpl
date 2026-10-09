@@ -4,11 +4,14 @@ import { getTableConfig, PgDialect, PgTable } from 'drizzle-orm/pg-core';
 import { drizzle } from 'drizzle-orm/pglite';
 import { connectToDatabase } from './database.js';
 import { persistenceOver, type Persistence } from './persistence.js';
+{{#if audit.on}}
+import { auditGuardStatements } from '@ddd-ts-kit/audit/drizzle';
+{{/if}}
 import * as schema from './schema.js';
 
 export interface TestDatabase {
   readonly persistence: Persistence;
-  /** Empties every table: call it before each test. */
+  /** Empties every table{{#if audit.on}} but the audit trail, which is append-only whoever asks{{/if}}: call it before each test. */
   reset(): Promise<void>;
   close(): Promise<void>;
 }
@@ -25,9 +28,16 @@ export function openTestDatabase(url?: string): Promise<TestDatabase> {
 
 async function openInProcess(): Promise<TestDatabase> {
   const client = new PGlite();
+{{#if audit.on}}
+  for (const statement of [...tables().flatMap(createStatements), ...auditGuardStatements(schema.AUDIT_SCHEMA)]) {
+    await client.exec(statement);
+  }
+{{/if}}
+{{#unless audit.on}}
   for (const statement of tables().flatMap(createStatements)) {
     await client.exec(statement);
   }
+{{/unless}}
   return {
     persistence: persistenceOver(drizzle(client), () => client.close()),
     reset: async () => {
@@ -53,9 +63,17 @@ function tables(): PgTable[] {
   return exported.filter((value): value is PgTable => is(value, PgTable));
 }
 
+{{#if audit.on}}
+function truncateStatement(): string {
+  const emptied = tables().filter((table) => getTableConfig(table).schema !== schema.AUDIT_SCHEMA);
+  return 'truncate table ' + emptied.map(qualifiedName).join(', ') + ' restart identity';
+}
+{{/if}}
+{{#unless audit.on}}
 function truncateStatement(): string {
   return 'truncate table ' + tables().map(qualifiedName).join(', ') + ' restart identity';
 }
+{{/unless}}
 
 function qualifiedName(table: PgTable): string {
   const { schema: owner, name } = getTableConfig(table);
@@ -94,7 +112,8 @@ function defaultClause(column: Column): string {
   if (is(value, SQL)) {
     return ' default ' + dialect.sqlToQuery(value.inlineParams()).sql;
   }
-  return ' default ' + (typeof value === 'string' ? "'" + value + "'" : JSON.stringify(value));
+  // A text or a JSON document is a quoted literal; a number or a boolean is written as it is.
+  return ' default ' + (typeof value === 'string' ? "'" + value + "'" : typeof value === 'object' ? "'" + JSON.stringify(value) + "'" : JSON.stringify(value));
 }
 
 function quote(name: string): string {

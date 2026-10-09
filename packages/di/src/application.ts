@@ -1,6 +1,7 @@
 import type { Message, MessageInfo, MessageType, Subscription } from '@ddd-ts-kit/kernel';
 import { container as rootContainer, instanceCachingFactory, type DependencyContainer } from 'tsyringe';
 import {
+  DECLARED_POLICIES,
   USE_CASE_DECLARATIONS,
   USE_CASE_GUARD,
   assertAuthorizationDeclared,
@@ -11,7 +12,15 @@ import {
 import { assertSound, cycleError } from './checks.js';
 import { describeWiring, type WiringDescription } from './description.js';
 import { WiringError } from './errors.js';
-import { COMMAND_BUS, EVENT_SUBSCRIBER, PROCESSED_EVENTS, QUERY_BUS } from './kernel-tokens.js';
+import type { ConsumerRuntime } from './consumer.js';
+import {
+  COMMAND_BUS,
+  DOMAIN_EVENTS,
+  EVENT_SUBSCRIBER,
+  EXECUTION_SCOPE,
+  PROCESSED_EVENTS,
+  QUERY_BUS,
+} from './kernel-tokens.js';
 import {
   collectWiring,
   type AnyMessageHandler,
@@ -122,10 +131,12 @@ class ContainerApplication implements Application {
     // Registered first: a module binding or an override of the guard comes later and wins.
     this.container.register(USE_CASE_GUARD, { useValue: passEveryMessage });
     this.container.register(USE_CASE_DECLARATIONS, { useValue: declarationsOf(wiring) });
+    this.container.register(DECLARED_POLICIES, { useValue: wiring.policies });
     for (const binding of wiring.bindings.values()) this.#register(binding);
     for (const [target, value] of options.overrides ?? []) this.#registerValue(target, value);
     this.#registerHandlers('command');
     this.#registerHandlers('query');
+    this.#attachReactions();
   }
 
   // Arrow properties, here and below: callers destructure them and pass them around.
@@ -164,6 +175,7 @@ class ContainerApplication implements Application {
     this.#registerValue(target, value);
     if (target === COMMAND_BUS) this.#registerHandlers('command');
     if (target === QUERY_BUS) this.#registerHandlers('query');
+    if (target === DOMAIN_EVENTS) this.#attachReactions();
   }
 
   #register(binding: Binding): void {
@@ -203,6 +215,13 @@ class ContainerApplication implements Application {
     for (const handling of handlings) bus.register(handling.message, this.#lazily(handling));
   }
 
+  #attachReactions(): void {
+    const { reactions } = this.wiring;
+    if (reactions.length === 0) return;
+    const dispatcher = this.resolve(DOMAIN_EVENTS);
+    for (const reaction of reactions) reaction.attach(this.resolve, dispatcher);
+  }
+
   // Async so that a handler failing to be built rejects the execution instead of throwing
   // through the bus middlewares synchronously.
   #lazily(handling: MessageHandling): AnyMessageHandler {
@@ -219,12 +238,23 @@ class ContainerApplication implements Application {
     const { consumptions } = this.wiring;
     if (consumptions.length === 0) return [];
     const subscriber = this.resolve(EVENT_SUBSCRIBER);
-    const processed = this.container.isRegistered(PROCESSED_EVENTS)
-      ? this.resolve(PROCESSED_EVENTS)
-      : undefined;
+    const runtime = this.#consumerRuntime();
     return consumptions.map((consumption) =>
-      subscriber.subscribe(consumption.type, consumption.subscribe(this.resolve, processed)),
+      subscriber.subscribe(consumption.type, consumption.subscribe(this.resolve, runtime)),
     );
+  }
+
+  #consumerRuntime(): ConsumerRuntime {
+    const processed = this.#resolveIfBound(PROCESSED_EVENTS);
+    const scope = this.#resolveIfBound(EXECUTION_SCOPE);
+    return {
+      ...(processed === undefined ? {} : { processed }),
+      ...(scope === undefined ? {} : { scope }),
+    };
+  }
+
+  #resolveIfBound<T>(target: Token<T>): T | undefined {
+    return this.container.isRegistered(target) ? this.resolve(target) : undefined;
   }
 
   #unsubscribeConsumers(): unknown[] {

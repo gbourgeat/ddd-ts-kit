@@ -11,6 +11,7 @@ The domain is the part of the system that must survive a change of framework, OR
 ## Reported
 
 - a package outside `domainAllowedPackages` (default: `@ddd-ts-kit/kernel`)
+- `@ddd-ts-kit/aspects`, `@ddd-ts-kit/audit`, `@ddd-ts-kit/redis` and `@ddd-ts-kit/tracing`, by any entry (`.`, `/decorators`, `/testing`, `/node`, ...), with a message of their own: they apply or record a concern from outside the model
 - any Node built-in
 - another layer of the same context, the platform, `main.ts`
 - the published language of another context (translate it in a consumer or an anti-corruption layer)
@@ -21,6 +22,7 @@ Incorrect:
 // src/contexts/billing/domain/aggregates/invoice.aggregate.ts
 import { z } from 'zod';
 import { randomUUID } from 'node:crypto';
+import { Logged } from '@ddd-ts-kit/aspects/decorators';
 import type { InvoiceRow } from '../../infrastructure/persistence/billing.schema.js';
 ```
 
@@ -39,7 +41,7 @@ Static imports, type-only imports, `export ... from`, dynamic `import()`, `requi
 
 ## Options
 
-None. `domainAllowedPackages` in `ddd-ts-kit.config.json` extends the allow-list.
+None. `domainAllowedPackages` in `ddd-ts-kit.config.json` extends the allow-list. The four packages above stay refused even when the list names them: logging, metrics, retry, timeout, circuit breaking, caching and tracing reach the model from the composition root (`.with(...)` on a binding, the `decorate` hook), a bus middleware or an adapter in `infrastructure/`; Redis sits behind a port; the audit trail is fed by the bus middleware, the authorization hook and an event subscription. The only way around is a recorded suppression of the line.
 
 `rules."layer/domain-purity"` in `ddd-ts-kit.config.json` set to `off` silences the rule, and `// ddd-ts-kit-disable-next-line layer/domain-purity -- <reason>` silences one line, exactly as for `ddd-ts-kit check`.
 

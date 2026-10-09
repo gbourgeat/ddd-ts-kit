@@ -3,19 +3,23 @@ import type { RuleDoc } from './types.js';
 /** Shown by `ddd-ts-kit explain <rule-id>`: the reason behind the rule and one example each way. */
 export const RULE_DOCS: Readonly<Record<string, RuleDoc>> = {
   'layer/domain-purity': {
-    why: 'The domain is the part of the system that has to survive a change of framework, database or transport. Every outside import ties a business rule to a technical choice and makes it impossible to test without that choice. Values that come from the outside world (ids, time, randomness) enter as parameters.',
+    why: 'The domain is the part of the system that has to survive a change of framework, database or transport. Every outside import ties a business rule to a technical choice and makes it impossible to test without that choice. Values that come from the outside world (ids, time, randomness) enter as parameters. The packages that apply a concern from outside (@ddd-ts-kit/aspects, audit, redis, tracing) are refused whatever `domainAllowedPackages` says.',
     bad: `// domain/aggregates/invoice.aggregate.ts
 import { randomUUID } from 'node:crypto';
-import { IsEmail } from 'class-validator';`,
+import { IsEmail } from 'class-validator';
+import { Logged } from '@ddd-ts-kit/aspects/decorators';`,
     good: `// domain/aggregates/invoice.aggregate.ts
 import { AggregateRoot } from '@ddd-ts-kit/kernel';
 import { Money } from '../value-objects/money.vo.js';`,
   },
   'layer/application-inward': {
-    why: 'A use case orchestrates the domain and talks to the outside through ports. If it imports an adapter, a framework or a driver, the technical choice can no longer be replaced or faked, and the handler cannot be unit tested with plain fakes.',
+    why: 'A use case orchestrates the domain and talks to the outside through ports. If it imports an adapter, a framework or a driver, the technical choice can no longer be replaced or faked, and the handler cannot be unit tested with plain fakes. Cross-cutting behaviour reaches a use case from outside: @ddd-ts-kit/aspects, audit, redis and tracing are refused whatever `applicationAllowedPackages` says, their place is the composition root, a bus middleware or an adapter.',
     bad: `// application/commands/issue-invoice/issue-invoice.handler.ts
-import { PgInvoiceRepository } from '../../../infrastructure/persistence/pg-invoice.repository.js';`,
+import { PgInvoiceRepository } from '../../../infrastructure/persistence/pg-invoice.repository.js';
+import { RedisCache } from '@ddd-ts-kit/redis';
+import { retry } from '@ddd-ts-kit/aspects';`,
     good: `// application/commands/issue-invoice/issue-invoice.handler.ts
+import type { Cache } from '@ddd-ts-kit/kernel';
 import type { InvoiceRepository } from '../../../domain/repositories/invoice.repository.js';`,
   },
   'layer/presentation-no-infrastructure': {
@@ -228,7 +232,7 @@ export interface InvoiceStatusGateway { isPaid(invoiceId: string): Promise<boole
 import type { InvoiceStatus } from '../../../billing/published-language/index.js';`,
   },
   'authz/declared': {
-    why: 'A use case nobody thought about is reachable by everybody. Declaring the permission next to the registration, or declaring the use case public, makes the decision visible in review and lets the bus middleware refuse everything else. The same holds for a route: its security is part of the contract, not a default.',
+    why: 'A use case nobody thought about is reachable by everybody. Declaring the permission next to the registration, or declaring the use case public, makes the decision visible in review and lets the bus middleware refuse everything else. The same holds for a route: its security is part of the contract, not a default. The route type enforces it already (`defineRoute` does not compile without `security` and refuses an empty list); this rule stays as the net for a definition built loosely, from an untyped object or a cast.',
     bad: `builder.command(VoidInvoiceCommand).handledBy(VoidInvoiceHandler, [INVOICE_REPOSITORY]);
 defineRoute({ method: 'POST', path: '/invoices/:id/void' }, handler);`,
     good: `builder.command(VoidInvoiceCommand).requires(billingPermissions['invoice.void']).handledBy(VoidInvoiceHandler, [INVOICE_REPOSITORY]);
@@ -236,7 +240,7 @@ builder.query(GetCatalogQuery).public().handledBy(GetCatalogHandler, [CATALOG]);
 defineRoute({ method: 'POST', path: '/invoices/:id/void', security: ['bearer'] }, handler);`,
   },
   'authz/in-application': {
-    why: 'A right decided in a route is skipped by every other entry point: a consumer, a job, another route. Decided in an adapter or in an aggregate, it is invisible and tied to one authorization model. In the application layer, behind the Authorizer port, every right is declared once, tested once, and changing from roles to policies or relationships changes an adapter only.',
+    why: 'A right decided in a route is skipped by every other entry point: a consumer, a job, another route. Decided in an adapter or in an aggregate, it is invisible and tied to one authorization model. In the application layer, behind the Authorizer port, every right is declared once, tested once, and changing from roles to policies or relationships changes an adapter only. A route keeps the request glue of @ddd-ts-kit/auth (actorOf, sessionOf, resolveSession, a SessionAuthenticator); the domain sees neither the Actor, the Session nor the ExecutionContext.',
     bad: `// presentation/http/void-invoice.route.ts
 if (!context.principal.roles.includes('admin')) return { status: 403 };`,
     good: `// presentation/http/void-invoice.route.ts
@@ -245,13 +249,40 @@ await commandBus.execute(new VoidInvoiceCommand(actorOf(context.principal), para
 await this.access.authorize(command.actor, billingPermissions['invoice.void'], invoice);`,
   },
   'authz/actor-explicit': {
-    why: 'A handler that reads "the current user" from an ambient context depends on something no signature shows: a consumer or a job that forgot to set it fails at run time, and a test has to set a global. With the actor as data of the command, the use case says who acts, and any caller can send it. Infrastructure alone reads the ambient actor, for audit columns and tenant scoping.',
+    why: 'A handler that reads "the current user" from an ambient context depends on something no signature shows: a consumer or a job that forgot to set it fails at run time, and a test has to set a global. With the actor as data of the command, the use case says who acts, and any caller can send it. The ExecutionScope (and ActorContext, a view of it) is read by infrastructure and the platform alone, for audit columns, tenant scoping and correlation: stampCreation, stampUpdate and tenantScopeOf belong in a repository adapter.',
     bad: `// application/commands/void-invoice/void-invoice.handler.ts
-const actor = this.actors.require();`,
+const actor = this.actors.require();
+const { tenantId } = this.scope.require();
+const stamp = stampCreation(this.scope, this.clock);`,
     good: `// application/commands/void-invoice/void-invoice.command.ts
 export class VoidInvoiceCommand extends AuthorizedCommand {}
 // application/commands/void-invoice/void-invoice.handler.ts
-const { actor } = command;`,
+const { actor } = command;
+// infrastructure/persistence/drizzle-invoice.repository.ts
+const row = { ...toRow(invoice), ...stampCreation(this.scope, this.clock), ...tenantScopeOf(this.scope) };`,
+  },
+  'aspects/outside-in': {
+    why: 'Logging, metrics, retry, timeout, circuit breaking and caching are applied from outside the code they wrap, so the policy of an application is read in one place and changes without touching a class. The decorator form is the exception: it is kept for an adapter whose policy is part of what the adapter is, in infrastructure/ or in the platform. On a route, a module file, a published language or the shared kernel it hides a policy where nobody looks for one.',
+    bad: `// presentation/http/issue-invoice.route.ts
+import { Retry } from '@ddd-ts-kit/aspects/decorators';`,
+    good: `// billing.module.ts
+builder.bind(PAYMENT_GATEWAY).toClass(StripePaymentGateway, [CONFIG]).with(retry({ attempts: 3 }), timeout(2000));
+// infrastructure/external/stripe-payment.gateway.ts
+import { Retry } from '@ddd-ts-kit/aspects/decorators';`,
+  },
+  'standard/no-parallel-interface': {
+    why: 'The kernel defines the shapes every project shares (Actor, Session, ExecutionContext, Logger, Metrics, Cache, Page and PageRequest, AuditStamp, Clock, IdGenerator, UnitOfWork) so that adapters, middlewares and tooling written once fit them all. A home-made ILogger or UserContext next to them forks the shape: every adapter then needs a translation, and the fields of the project never reach the standard logs, spans and audit entries. A project adds its fields by declaration merging of the extension interfaces the kernel leaves open.',
+    bad: `// application/ports/logger.port.ts
+export interface ILogger { info(message: string): void }
+// shared-kernel/user-context.ts
+export interface UserContext { userId: string; tenantId: string; plan: string }`,
+    good: `import type { Logger, ExecutionContext } from '@ddd-ts-kit/kernel';
+// platform/kernel-extensions.ts
+declare module '@ddd-ts-kit/kernel' {
+  interface ExecutionContextExtensions { plan: string }
+}
+// infrastructure/external/pino.logger.ts
+export class PinoLogger implements Logger {}`,
   },
   'governance/recorded-deviation': {
     why: 'The architecture can be changed deliberately, not case by case. A suppression, a lowered severity or a widened list that points to no decision is indistinguishable from a shortcut, and gets copied. The decision record says why, for what scope and until when, so the exception can be reviewed today and removed later.',

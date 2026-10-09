@@ -219,6 +219,15 @@ describe('audit stamps and tenant scoping', () => {
     });
   });
 
+  it('give the two columns an update statement sets when the stored stamp was not read', () => {
+    const later = new FixedClock(new Date('2026-03-02T08:00:00.000Z'));
+
+    expect(stampUpdate(new FixedExecutionScope(job), later)).toEqual({
+      updatedAt: new Date('2026-03-02T08:00:00.000Z'),
+      updatedBy: 'bob',
+    });
+  });
+
   it('refuse to stamp outside of any unit of work', () => {
     expect(() => stampCreation(new FixedExecutionScope(), clock)).toThrow(NoExecutionContextError);
   });

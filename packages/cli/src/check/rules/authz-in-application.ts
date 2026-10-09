@@ -19,7 +19,7 @@ interface LayerDuty {
 
 const AUTH_PACKAGE = '@ddd-ts-kit/auth';
 const AUTHORIZERS = ['RoleBasedAuthorizer', 'PolicyBasedAuthorizer', 'RelationBasedAuthorizer', 'Authorizer', 'Access'];
-const ACTOR_NAMES = ['Actor', 'ActorContext', 'AuthorizedCommand', 'AuthorizedQuery', 'anonymousActor', 'systemActor'];
+const ACTOR_NAMES = ['Actor', 'ActorContext', 'Session', 'ExecutionContext', 'AuthorizedCommand', 'AuthorizedQuery', 'anonymousActor', 'systemActor'];
 const IS_ADMIN: Shortcut = { pattern: /(?<![\w$])isAdmin(?![\w$])/, what: 'isAdmin' };
 
 const DUTIES: readonly LayerDuty[] = [
@@ -34,7 +34,7 @@ const DUTIES: readonly LayerDuty[] = [
       const authorizer = target.kind === 'package' && target.name === AUTH_PACKAGE ? names.find((name) => AUTHORIZERS.includes(name)) : undefined;
       return authorizer === undefined ? undefined : `${authorizer} is imported`;
     },
-    fix: 'Let the route only build the command or query with actorOf(context.principal): the permission is declared on the use case (.requires(...)) and decided by the bus middleware, and a rule on the loaded element is a policy in application/authorization/.',
+    fix: 'Let the route only build the command or query with actorOf(context.principal) (sessionOf, resolveSession and a SessionAuthenticator are request glue too): the permission is declared on the use case (.requires(...)) and decided by the bus middleware, and a rule on the loaded element is a policy in application/authorization/.',
   },
   {
     layer: 'infrastructure',

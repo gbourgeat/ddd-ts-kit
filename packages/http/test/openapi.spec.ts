@@ -44,6 +44,7 @@ describe('generateOpenApi', () => {
       operationId: 'placeOrder',
       summary: 'Place an order',
       tags: ['orders'],
+      security: [{ bearer: [] }],
       requestBody: {
         required: true,
         content: {
@@ -132,9 +133,9 @@ describe('generateOpenApi', () => {
     expect(operation('/orders/{orderId}', 'delete')?.['responses']).toHaveProperty('422');
   });
 
-  it('documents security per route and the schemes in components', () => {
+  it('documents security on every route, a public one included, and the schemes in components', () => {
     expect(operation('/me', 'get')?.['security']).toEqual([{ bearer: [] }]);
-    expect(operation('/orders', 'post')).not.toHaveProperty('security');
+    expect(operation('/orders/{orderId}', 'get')?.['security']).toEqual([]);
     expect(Object.keys(document.components.securitySchemes ?? {})).toEqual(['apiKey', 'bearer']);
   });
 
@@ -195,6 +196,7 @@ describe('generateOpenApi', () => {
           summary: 'Move',
           request: { body: zodSchema(body) },
           responses: { 204: { description: 'Done.' } },
+          security: ['bearer'],
         },
         () => ({ status: 204 }),
       );

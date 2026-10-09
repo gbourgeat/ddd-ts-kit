@@ -1,3 +1,4 @@
+import { outsideConcern } from '../outside-concerns.js';
 import type { ImportTarget, Rule, SourceFile } from '../types.js';
 import { describeTarget, inLayer, reporter, type Finding } from './helpers.js';
 
@@ -22,6 +23,8 @@ export const layerDomainPurity: Rule = {
 
 function impure({ target, line, specifier }: ImportedModule, context: string, allowed: readonly string[]): Finding[] {
   if (target.kind === 'package') {
+    const concern = outsideConcern('The domain', target.name, specifier);
+    if (concern !== undefined) return [{ line, ...concern }];
     if (allowed.includes(target.name)) return [];
     const fix = `Remove the import: express the need as plain TypeScript or as a port in application/ports, and keep decorators and schemas of "${target.name}" in infrastructure or presentation.`;
     return [{ line, message: `The domain imports the package "${target.name}".`, fix }];

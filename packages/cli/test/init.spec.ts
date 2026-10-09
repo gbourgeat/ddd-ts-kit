@@ -76,7 +76,8 @@ describe('init', () => {
 
     expect(exists(root, `src/platform/auth/${file}`)).toBe(true);
     expect(read(root, 'src/platform/application.ts')).toContain("authorization: 'required'");
-    expect(read(root, 'src/platform/http-server.ts')).toContain('...boundary }');
+    expect(read(root, 'src/platform/http-server.ts')).toContain('served.boundary);');
+    expect(read(root, 'src/platform/auth/http-boundary.ts')).toContain('resolvePrincipal: principalOf(authenticator),\n    executionScope,');
   });
 
   it('wires the broker that was chosen, and a development authenticator that refuses production', () => {
@@ -97,7 +98,7 @@ describe('init', () => {
 
     const config = JSON.parse(read(root, 'ddd-ts-kit.config.json')) as { stack: Record<string, string>; contexts: Record<string, { classification: string }> };
 
-    expect(config.stack).toEqual({ http: 'fastify', validation: 'class-validator', di: 'manual', events: 'outbox', orm: 'drizzle', database: 'postgres', tests: 'jest', docsUi: 'swagger', ci: 'github', authn: 'jwt', authz: 'rbac', broker: 'none' });
+    expect(config.stack).toEqual({ http: 'fastify', validation: 'class-validator', di: 'manual', events: 'outbox', orm: 'drizzle', database: 'postgres', tests: 'jest', docsUi: 'swagger', ci: 'github', authn: 'jwt', authz: 'rbac', broker: 'none', cache: 'none', audit: 'on' });
     expect(Object.keys(config.contexts)).toEqual(['billing', 'catalog']);
     expect(config.contexts['catalog']?.classification).toBe('generic');
   });
@@ -335,10 +336,10 @@ describe('init', () => {
     cli(root, 'init', '--docs-ui', 'scalar');
 
     expect(read(root, 'src/platform/config.ts')).toContain("databaseUrl: readUrl(env, 'DATABASE_URL', problems),");
-    expect(read(root, 'src/main.ts')).toContain('const relay = startOutboxRelay({ store: persistence.outbox, publisher: application.eventBus, intervalMs: config.outboxRelayIntervalMs });');
+    expect(read(root, 'src/main.ts')).toContain('const relay = startOutboxRelay({ store: persistence.outbox, publisher: application.eventBus, intervalMs: config.outboxRelayIntervalMs, logger: application.logger });');
     expect(read(root, 'src/platform/http-docs.ts')).toContain("openApiDocsRoutes(document, { ui: 'scalar' })");
-    expect(read(root, 'src/platform/http-server.ts')).toContain('withDocumentation(routes, config)');
-    expect(read(root, 'src/platform/platform.module.ts')).toContain('eventPublisher: new OutboxPublisher(persistence.outbox),');
+    expect(read(root, 'src/platform/http-server.ts')).toContain('withDocumentation(served.routes, config)');
+    expect(read(root, 'src/platform/platform.module.ts')).toContain('eventPublisher: scopedPublisher(new OutboxPublisher(persistence.outbox), scope),');
   });
 
   it('leaves out what the stack does not have', () => {

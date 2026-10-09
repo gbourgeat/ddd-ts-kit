@@ -6,7 +6,8 @@
     "composite": false,
     "declaration": false,
     "declarationMap": false,
-    "sourceMap": false
+    "sourceMap": false,
+    "experimentalDecorators": true
   },
-  "include": ["decorated-gateway.ts", "../../src/testing.ts"]
+  "include": ["*.ts", "../../src/testing.ts"]
 }

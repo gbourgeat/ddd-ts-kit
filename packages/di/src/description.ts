@@ -1,8 +1,19 @@
-import type { MessageInfo } from '@ddd-ts-kit/kernel';
-import type { Binding, BindingSource, DependencyKind, Lifetime, Wiring } from './module.js';
+import type { DependencyKind, MessageInfo } from '@ddd-ts-kit/kernel';
+import type { Binding, BindingSource, Declarer, Lifetime, Wiring } from './wiring.js';
 import { describeToken, type Token } from './token.js';
 
-export interface BindingDescription {
+/**
+ * Where a binding comes from. A binding written in a module is `explicit` and carries none of
+ * these fields; one made by a declaration decorator carries `origin: 'declared'`, the class
+ * that declared it and, when discovery loaded it, the file.
+ */
+export interface OriginDescription {
+  readonly origin?: 'declared';
+  readonly declaredBy?: string;
+  readonly file?: string;
+}
+
+export interface BindingDescription extends OriginDescription {
   readonly token: string;
   readonly module: string;
   readonly kind?: DependencyKind;
@@ -16,7 +27,7 @@ export interface BindingDescription {
   readonly overridden: boolean;
 }
 
-export interface HandlerDescription {
+export interface HandlerDescription extends OriginDescription {
   readonly message: string;
   readonly handler: string;
   readonly module: string;
@@ -26,11 +37,26 @@ export interface HandlerDescription {
   readonly permission?: string;
 }
 
-export interface SubscriptionDescription {
+export interface SubscriptionDescription extends OriginDescription {
   readonly event: string;
   readonly version: number;
   readonly consumer: string;
   readonly handler: string;
+  readonly module: string;
+}
+
+/** A listener of a domain event of its own context. */
+export interface ReactionDescription extends OriginDescription {
+  readonly event: string;
+  readonly name: string;
+  readonly handler: string;
+  readonly module: string;
+}
+
+export interface PolicyDescription extends OriginDescription {
+  readonly name: string;
+  readonly permission: string;
+  readonly policy: string;
   readonly module: string;
 }
 
@@ -41,6 +67,10 @@ export interface WiringDescription {
   readonly commands: readonly HandlerDescription[];
   readonly queries: readonly HandlerDescription[];
   readonly subscriptions: readonly SubscriptionDescription[];
+  /** The declared listeners of domain events. */
+  readonly reactions: readonly ReactionDescription[];
+  /** The declared policy classes. */
+  readonly policies: readonly PolicyDescription[];
   /** Every overridden token, including those no module binds. */
   readonly overrides: readonly string[];
 }
@@ -54,12 +84,27 @@ export function describeWiring(
     bindings: [...wiring.bindings.values()].map((binding) => describeBinding(binding, overridden)),
     commands: describeHandlers(wiring, 'command'),
     queries: describeHandlers(wiring, 'query'),
-    subscriptions: wiring.consumptions.map(({ type, version, consumer, handler, module }) => ({
+    subscriptions: wiring.consumptions.map(({ type, version, consumer, handler, module, declaredBy }) => ({
       event: type,
       version,
       consumer,
       handler: describeToken(handler),
       module,
+      ...originOf(declaredBy),
+    })),
+    reactions: wiring.reactions.map(({ event, name, handler, module, declaredBy }) => ({
+      event,
+      name,
+      handler: describeToken(handler),
+      module,
+      ...originOf(declaredBy),
+    })),
+    policies: wiring.policies.map(({ name, permission, policy, module, declaredBy }) => ({
+      name,
+      permission: permission.id,
+      policy: describeToken(policy),
+      module,
+      ...originOf(declaredBy),
     })),
     overrides: [...overridden].map(describeToken),
   };
@@ -78,17 +123,25 @@ function describeBinding(
     ...(binding.implementation === undefined ? {} : { implementation: binding.implementation }),
     dependencies: binding.dependencies.map(describeToken),
     overridden: overridden.has(binding.token),
+    ...originOf(binding.declaredBy),
   };
+}
+
+function originOf(declaredBy: Declarer | undefined): OriginDescription {
+  if (declaredBy === undefined) return {};
+  const { className, file } = declaredBy;
+  return { origin: 'declared', declaredBy: className, ...(file === undefined ? {} : { file }) };
 }
 
 function describeHandlers(wiring: Wiring, kind: MessageInfo['kind']): HandlerDescription[] {
   return wiring.handlings
     .filter((handling) => handling.kind === kind)
-    .map(({ message, handler, module, requirement }) => ({
+    .map(({ message, handler, module, requirement, declaredBy }) => ({
       message: message.name,
       handler: describeToken(handler),
       module,
       ...(requirement.access === undefined ? {} : { access: requirement.access }),
       ...(requirement.permission === undefined ? {} : { permission: requirement.permission.id }),
+      ...originOf(declaredBy),
     }));
 }

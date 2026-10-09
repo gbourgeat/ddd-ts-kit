@@ -3,35 +3,46 @@ import {
   FixedClock,
   FixedExecutionScope,
   InMemoryCache,
+  InMemoryDomainEventDispatcher,
   InMemoryEventBus,
+  InMemoryLock,
   InMemoryLogger,
   InMemoryMetrics,
   InMemoryProcessedEventStore,
+  InMemoryRateLimiter,
   InMemoryUnitOfWork,
   SequentialIdGenerator,
   executionContext,
+  isSession,
+  withActor,
   type Actor,
+  type ExecutionContext,
   type InMemoryCommandBus,
   type InMemoryQueryBus,
+  type Session,
 } from '@ddd-ts-kit/kernel';
-import { ACTOR_CONTEXT, USE_CASE_GUARD, passEveryMessage, type AuthorizationMode } from './authorization.js';
+import { USE_CASE_GUARD, passEveryMessage, type AuthorizationMode } from './authorization.js';
 import { assemble, override, type Application, type Override } from './application.js';
 import { WiringError } from './errors.js';
 import { guardedQueryBus, transactionalCommandBus } from './kernel-module.js';
 import {
+  ACTOR_CONTEXT,
   CACHE,
   CLOCK,
   COMMAND_BUS,
+  DOMAIN_EVENTS,
   EVENT_BUS,
   EVENT_PUBLISHER,
   EVENT_SUBSCRIBER,
   EXECUTION_SCOPE,
   ID_GENERATOR,
   KERNEL_TOKENS,
+  LOCK,
   LOGGER,
   METRICS,
   PROCESSED_EVENTS,
   QUERY_BUS,
+  RATE_LIMITER,
   UNIT_OF_WORK,
 } from './kernel-tokens.js';
 import { collectWiring, type ContextModule, type Resolve, type Wiring } from './module.js';
@@ -51,6 +62,16 @@ export interface TestApplicationOptions {
    * Use cases never read it: a test passes the actor in the command or query.
    */
   readonly actor?: Actor;
+  /**
+   * The session infrastructure sees in the execution context. Its actor is the current actor:
+   * give `session` or `actor`, the session wins.
+   */
+  readonly session?: Session;
+  /**
+   * The whole execution context infrastructure sees, for a spec about a tenant, a correlation,
+   * a deadline or an origin. Its actor and session win over `actor` and `session`.
+   */
+  readonly executionContext?: ExecutionContext;
   /** See `ApplicationOptions.authorization`. */
   readonly authorization?: AuthorizationMode;
 }
@@ -60,6 +81,8 @@ export interface TestKernel {
   readonly queryBus: InMemoryQueryBus;
   /** Publisher and subscriber at once; `published` lists what the use cases announced. */
   readonly eventBus: InMemoryEventBus;
+  /** Where a spec dispatches a domain event to see the declared listeners of the context react. */
+  readonly domainEvents: InMemoryDomainEventDispatcher;
   readonly clock: FixedClock;
   readonly ids: SequentialIdGenerator;
   /** Change the current actor with `actorContext.actAs(actor)` or `actorContext.run(actor, work)`. */
@@ -75,11 +98,21 @@ export interface TestKernel {
   readonly metrics: InMemoryMetrics;
   /** Expires by `clock`. */
   readonly cache: InMemoryCache;
+  /** Frees a key by `clock`; a wait for a held key really waits. */
+  readonly lock: InMemoryLock;
+  /** Counts by `clock`. */
+  readonly rateLimiter: InMemoryRateLimiter;
 }
 
 export interface TestApplication extends Application, TestKernel {
   /** `resolve` under the name a test reads better with: `app.get(ORDER_REPOSITORY)`. */
   readonly get: Resolve;
+  /**
+   * Runs a block as someone else: infrastructure sees that actor (and that session, when one
+   * is given) until the block is over, and the block receives the actor to put in its commands.
+   * `await app.as(bob, (actor) => app.commandBus.execute(new VoidInvoice(actor, id)))`.
+   */
+  as<T>(who: Actor | Session, work: (actor: Actor) => T): T;
 }
 
 /** A type-checked fake for `createTestApplication({ fakes })`. */
@@ -103,7 +136,16 @@ export function createTestApplication(options: TestApplicationOptions): TestAppl
     overrides: [...kernelOverrides(kernel), ...guardOverride(wiring), ...fakes],
     ...(options.authorization === undefined ? {} : { authorization: options.authorization }),
   });
-  return Object.assign(application, kernel, { get: application.resolve });
+  return Object.assign(application, kernel, { get: application.resolve, as: runningAs(kernel.executionScope) });
+}
+
+function runningAs(scope: FixedExecutionScope): TestApplication['as'] {
+  return (who, work) => {
+    const actor = isSession(who) ? who.actor : who;
+    const seenAsActor = withActor(scope.require(), actor);
+    const context = isSession(who) ? executionContext({ ...seenAsActor, session: who }) : seenAsActor;
+    return scope.run(context, () => work(actor));
+  };
 }
 
 function assertFakesAreUsed(wiring: Wiring, fakes: readonly Override[]): void {
@@ -130,13 +172,13 @@ const DEFAULT_ACTOR: Actor = { id: 'test-user', type: 'user', roles: [], attribu
 
 function createTestKernel(options: TestApplicationOptions, resolve: Resolve): TestKernel {
   const clock = new FixedClock(options.now ?? DEFAULT_NOW);
-  const actor = options.actor ?? DEFAULT_ACTOR;
-  const actorContext = new FixedActorContext(actor);
-  const context = executionContext({ correlationId: 'test-correlation', actor, origin: 'test' });
+  const context = options.executionContext ?? defaultExecutionContext(options);
+  const actorContext = new FixedActorContext(context.actor);
   return {
     commandBus: transactionalCommandBus(resolve),
     queryBus: guardedQueryBus(resolve),
     eventBus: new InMemoryEventBus(),
+    domainEvents: new InMemoryDomainEventDispatcher(),
     clock,
     ids: new SequentialIdGenerator(options.idPrefix),
     actorContext,
@@ -144,7 +186,18 @@ function createTestKernel(options: TestApplicationOptions, resolve: Resolve): Te
     logger: new InMemoryLogger(),
     metrics: new InMemoryMetrics(),
     cache: new InMemoryCache(clock),
+    lock: new InMemoryLock(clock),
+    rateLimiter: new InMemoryRateLimiter(clock),
   };
+}
+
+function defaultExecutionContext({ session, actor }: TestApplicationOptions): ExecutionContext {
+  return executionContext({
+    correlationId: 'test-correlation',
+    actor: session?.actor ?? actor ?? DEFAULT_ACTOR,
+    origin: 'test',
+    ...(session === undefined ? {} : { session }),
+  });
 }
 
 function kernelOverrides(kernel: TestKernel): Override[] {
@@ -158,10 +211,13 @@ function kernelOverrides(kernel: TestKernel): Override[] {
     override(EVENT_PUBLISHER, kernel.eventBus),
     override(EVENT_SUBSCRIBER, kernel.eventBus),
     override(PROCESSED_EVENTS, new InMemoryProcessedEventStore()),
+    override(DOMAIN_EVENTS, kernel.domainEvents),
     override(ACTOR_CONTEXT, kernel.actorContext),
     override(EXECUTION_SCOPE, kernel.executionScope),
     override(LOGGER, kernel.logger),
     override(METRICS, kernel.metrics),
     override(CACHE, kernel.cache),
+    override(LOCK, kernel.lock),
+    override(RATE_LIMITER, kernel.rateLimiter),
   ];
 }

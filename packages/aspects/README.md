@@ -59,7 +59,7 @@ const tracing: Aspect = (instance, info) =>
   info?.kind === undefined ? instance : traceDependency(instance, { kind: info.kind, ...(info.context === undefined ? {} : { context: info.context }) });
 ```
 
-### 3. As a standard decorator, on an adapter
+### 3. As a decorator, on an adapter
 
 ```ts
 // contexts/billing/infrastructure/external/http-payment.gateway.ts
@@ -242,18 +242,33 @@ expect(fakes.logger.entries).toEqual([...]);
 see each other's runtime. With `createTestApplication` of the di package the application is the
 runtime: `withAspectRuntime(app, () => ...)`, then assert `app.logger.entries` and `app.metrics`.
 
-## Toolchain for the decorator form
+## Decorator modes
 
-The decorators are standard (TC39 stage 3) decorators, not `experimentalDecorators`.
+The decorators of `./decorators` work under both decorator modes of TypeScript, with the same
+source line.
 
-- TypeScript 5.0 and later, TypeScript 6 and the native TypeScript 7 compiler compile them with
-  no flag: `experimentalDecorators` must stay unset.
-- Node does not run decorator syntax, so the code must be compiled. The TypeScript compiler
-  lowers it for any `target` below `ESNext`.
-- Vitest 5 (Vite 8, Oxc) does not transform standard decorators: a spec importing a `.ts` file
-  that uses `@Retry` fails with a syntax error. Test decorated adapters against the compiler
-  output, or add a transform that supports the `2023-11` decorators to the Vitest config. Files
-  wrapped at the composition root need nothing.
+| Stack | `tsconfig.json` |
+|---|---|
+| class-validator, NestJS, TypeORM entities, any library with legacy decorators | `"experimentalDecorators": true` |
+| anything else | leave `experimentalDecorators` unset: standard (TC39) decorators need no flag |
+
+- **How the mode is detected.** By the call: the standard one is `(method, context)` with a
+  context object, the legacy one `(prototype, name, descriptor)`. `decoratorOf` reads which it
+  received, so one function serves both and an aspect has one implementation.
+- **What differs.** In the standard mode the method of each instance is wrapped when the
+  instance is constructed. The legacy mode has no initializer, so the method is replaced on
+  the prototype and the advice of each instance is built at its first call. State (a circuit,
+  a compartment, a single flight) is per instance and per method in both, several decorators
+  nest as they read in both, and neither needs `emitDecoratorMetadata`.
+- **Compilers.** TypeScript 5, 6 and the native TypeScript 7 compile both modes. Node does not
+  run decorator syntax, so the code is compiled either way.
+- **Vitest.** It lowers legacy decorators by itself: a project with `experimentalDecorators`
+  needs nothing. It does not lower standard ones (a spec importing a `.ts` file that uses
+  `@Retry` fails with a syntax error): add `decorators()` of `@ddd-ts-kit/testing/vitest` to
+  the Vitest config. Files wrapped at the composition root need nothing in either mode.
+- **With a declaration.** `@Adapter(...)` on the class and `@Retry(...)` on its methods
+  compose, with the `aspects` of the declaration around the decorators of the methods. A
+  static method, a `#private` method and a method named by a symbol are refused.
 
 The `./decorators` entry is separate: nothing else in the package imports it.
 

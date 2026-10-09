@@ -1,5 +1,22 @@
-import { DomainError } from '@ddd-ts-kit/kernel';
+import { DomainError, type Clock, type ExecutionContext, type ExecutionScope } from '@ddd-ts-kit/kernel';
 import { ValidationError, type Schema, type ValidationIssue } from '@ddd-ts-kit/validation';
+import {
+  CORRELATION_HEADER,
+  correlationIdOf,
+  executionOfRequest,
+  wellFormedIdentifier,
+} from './execution.js';
+
+export { CORRELATION_HEADER } from './execution.js';
+export {
+  pageQuerySchema,
+  pageRequestFrom,
+  pageRequestParameters,
+  pageResponse,
+  pageSchemaOf,
+  type PageBody,
+  type PageQueryOptions,
+} from './pagination.js';
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD' | 'OPTIONS';
 
@@ -34,13 +51,21 @@ export interface RouteSpec<
   readonly responses: Responses;
   /** Domain error codes this route may answer; they are documented in the contract. */
   readonly errors?: readonly string[];
-  /** Names of the security schemes that apply, or `false` for a public route. */
-  readonly security?: readonly string[] | false;
+  /**
+   * Names of the security schemes that apply, or `false` for a route anybody may call. Required:
+   * a route is never public by omission. An empty list is refused, it would say the same as `false`.
+   */
+  readonly security: readonly string[] | false;
   readonly deprecated?: boolean;
 }
 
 export interface RequestContext {
   readonly requestId: string;
+  /**
+   * What this request carries for everything it causes: correlation id, actor, session, locale,
+   * deadline, origin `http`. The same object the execution scope runs the handler in.
+   */
+  readonly execution: ExecutionContext;
   readonly principal?: unknown;
   /** The framework's own request object, for the rare case the neutral input is not enough. */
   readonly raw: unknown;
@@ -129,7 +154,17 @@ export function defineRoute<
       `Route "${spec.operationId}": the path "${spec.path}" must be made of literal segments and ":name" parameters.`,
     );
   }
+  assertSecurityDeclared(spec);
   return { ...spec, handle: handler };
+}
+
+// Checked at run time too: a JavaScript caller, or a spec built dynamically, gets no compile error.
+function assertSecurityDeclared(spec: Pick<RouteSpec, 'operationId'> & { readonly security?: unknown }): void {
+  const { security } = spec;
+  if (security === false || (Array.isArray(security) && security.length > 0)) return;
+  throw new Error(
+    `Route "${spec.operationId}": declare "security" with the names of its security schemes, or false for a public route.`,
+  );
 }
 
 export class DuplicateRouteError extends Error {
@@ -314,6 +349,7 @@ export interface RawRequest {
 
 export interface ErrorContext {
   readonly requestId: string;
+  readonly correlationId: string;
   readonly operationId: string;
   readonly method: HttpMethod;
   readonly path: string;
@@ -336,6 +372,18 @@ export interface ExecuteOptions {
   readonly validateResponses?: boolean;
   /** Defaults to the incoming `x-request-id` header when it is well formed, else a UUID. */
   readonly requestId?: (request: RawRequest) => string;
+  /**
+   * Runs every handler inside `scope.run(execution, ...)`, so loggers, audit columns and tenant
+   * scoping read the execution context of the request. Opened outside of `withPrincipal`.
+   */
+  readonly executionScope?: ExecutionScope;
+  /**
+   * Gives every request a `deadline` in its execution context, this many milliseconds after it
+   * arrived. The pipeline does not interrupt a handler: what honours the deadline reads it.
+   */
+  readonly requestTimeoutMs?: number;
+  /** The instant a request arrived at, for `requestTimeoutMs`. Defaults to the system clock. */
+  readonly clock?: Clock;
 }
 
 export interface RouteResponse {
@@ -357,9 +405,16 @@ export class ResponseContractError extends Error {
 }
 
 const defaultErrorMapper = createErrorMapper();
-const REQUEST_ID_PATTERN = /^[A-Za-z0-9._:-]{1,128}$/;
 const JSON_CONTENT_TYPE = 'application/json; charset=utf-8';
 const PROBLEM_CONTENT_TYPE = 'application/problem+json; charset=utf-8';
+
+interface Call {
+  readonly route: Route;
+  readonly request: RawRequest;
+  readonly options: ExecuteOptions;
+  readonly requestId: string;
+  readonly correlationId: string;
+}
 
 export async function executeRoute(
   route: Route,
@@ -367,47 +422,53 @@ export async function executeRoute(
   options: ExecuteOptions = {},
 ): Promise<RouteResponse> {
   const requestId = (options.requestId ?? defaultRequestId)(request);
+  const correlationId = correlationIdOf(request.headers, requestId);
+  const call: Call = { route, request, options, requestId, correlationId };
   try {
-    const principal = await options.resolvePrincipal?.(request.raw);
-    const input = validateRequest(route, request);
-    const context = { requestId, raw: request.raw, ...(principal === undefined ? {} : { principal }) };
-    const handle = async (): Promise<RouteOutput> => route.handle({ ...input, context });
-    const result = await (options.withPrincipal?.(principal, handle) ?? handle());
-    if (options.validateResponses === true) {
-      assertDeclaredResponse(route, result.status, result.body);
-    }
-    return answer(result, requestId);
+    return answer(await handled(call), call);
   } catch (error) {
-    const problem = toProblem(error, options.errorMapper ?? defaultErrorMapper, requestId);
-    notify(options, error, {
-      requestId,
-      operationId: route.operationId,
-      method: route.method,
-      path: route.path,
-      problem,
-    });
-    return {
-      status: problem.status,
-      headers: { 'content-type': PROBLEM_CONTENT_TYPE, 'x-request-id': requestId },
-      body: problem,
-    };
+    return refusal(error, call);
   }
 }
 
 function defaultRequestId(request: RawRequest): string {
-  const incoming = request.headers['x-request-id'];
-  return typeof incoming === 'string' && REQUEST_ID_PATTERN.test(incoming)
-    ? incoming
-    : globalThis.crypto.randomUUID();
+  return wellFormedIdentifier(request.headers['x-request-id']) ?? globalThis.crypto.randomUUID();
 }
 
-function answer(result: RouteOutput, requestId: string): RouteResponse {
+async function handled(call: Call): Promise<RouteOutput> {
+  const { route, request, options, requestId, correlationId } = call;
+  const principal = await options.resolvePrincipal?.(request.raw);
+  const input = validateRequest(route, request);
+  const { headers } = request;
+  const execution = executionOfRequest({ correlationId, headers, principal, deadline: deadlineOf(options) });
+  const context: RequestContext = {
+    requestId,
+    execution,
+    raw: request.raw,
+    ...(principal === undefined ? {} : { principal }),
+  };
+  const handle = async (): Promise<RouteOutput> => route.handle({ ...input, context });
+  const asPrincipal = (): Promise<RouteOutput> => options.withPrincipal?.(principal, handle) ?? handle();
+  const result = await (options.executionScope?.run(execution, asPrincipal) ?? asPrincipal());
+  if (options.validateResponses === true) {
+    assertDeclaredResponse(route, result.status, result.body);
+  }
+  return result;
+}
+
+function deadlineOf(options: ExecuteOptions): Date | undefined {
+  if (options.requestTimeoutMs === undefined) return undefined;
+  const arrivedAt = options.clock?.now() ?? new Date();
+  return new Date(arrivedAt.getTime() + options.requestTimeoutMs);
+}
+
+function answer(result: RouteOutput, call: Call): RouteResponse {
   return {
     status: result.status,
     headers: {
       ...defaultContentType(result.body),
       ...lowerCaseKeys(result.headers ?? {}),
-      'x-request-id': requestId,
+      ...identifierHeaders(call),
     },
     ...(result.body === undefined ? {} : { body: result.body }),
   };
@@ -418,6 +479,28 @@ function defaultContentType(body: unknown): Record<string, string> {
     return {};
   }
   return { 'content-type': body instanceof Uint8Array ? 'application/octet-stream' : JSON_CONTENT_TYPE };
+}
+
+function identifierHeaders({ requestId, correlationId }: Call): Record<string, string> {
+  return { 'x-request-id': requestId, [CORRELATION_HEADER]: correlationId };
+}
+
+function refusal(error: unknown, call: Call): RouteResponse {
+  const { route, options, requestId, correlationId } = call;
+  const problem = toProblem(error, options.errorMapper ?? defaultErrorMapper, requestId);
+  notify(options, error, {
+    requestId,
+    correlationId,
+    operationId: route.operationId,
+    method: route.method,
+    path: route.path,
+    problem,
+  });
+  return {
+    status: problem.status,
+    headers: { 'content-type': PROBLEM_CONTENT_TYPE, ...identifierHeaders(call) },
+    body: problem,
+  };
 }
 
 function validateRequest(

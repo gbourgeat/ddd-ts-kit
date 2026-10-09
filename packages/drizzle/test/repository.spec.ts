@@ -1,6 +1,7 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { getTableConfig } from 'drizzle-orm/pg-core';
-import { DomainError } from '@ddd-ts-kit/kernel';
+import { DomainError, FixedClock } from '@ddd-ts-kit/kernel';
+import { ada, scopeOf } from './support/scopes.js';
 import { repositoryContract } from '@ddd-ts-kit/testing/contracts';
 import {
   CONCURRENCY_CONFLICT,
@@ -21,6 +22,13 @@ afterAll(async () => {
   await database.client.close();
 });
 
+const repository = () =>
+  new DrizzleInvoiceRepository(
+    createDrizzleUnitOfWork(database.db),
+    scopeOf(ada),
+    new FixedClock(new Date('2026-03-01T10:00:00.000Z')),
+  );
+
 let next = 0;
 repositoryContract<Invoice>(
   { describe, it, expect, beforeEach, afterEach },
@@ -28,7 +36,7 @@ repositoryContract<Invoice>(
     name: 'A Drizzle repository built on executor() and optimisticUpdate',
     createRepository: async () => {
       await database.truncate();
-      return new DrizzleInvoiceRepository(createDrizzleUnitOfWork(database.db));
+      return repository();
     },
     createAggregate: () => Invoice.draft(`inv-${(next += 1)}`, 100),
     mutate: (invoice) => invoice.addCharge(50),
@@ -73,11 +81,11 @@ describe('optimisticUpdate', () => {
 
   it('refuses to create an aggregate that already exists', async () => {
     await database.truncate();
-    const repository = new DrizzleInvoiceRepository(createDrizzleUnitOfWork(database.db));
-    await repository.save(Invoice.draft('inv-1', 100));
+    const subject = repository();
+    await subject.save(Invoice.draft('inv-1', 100));
 
-    await expect(repository.save(Invoice.draft('inv-1', 999))).rejects.toBeInstanceOf(ConcurrencyError);
-    expect((await repository.findById('inv-1'))?.state.amount).toBe(100);
+    await expect(subject.save(Invoice.draft('inv-1', 999))).rejects.toBeInstanceOf(ConcurrencyError);
+    expect((await subject.findById('inv-1'))?.state.amount).toBe(100);
   });
 });
 

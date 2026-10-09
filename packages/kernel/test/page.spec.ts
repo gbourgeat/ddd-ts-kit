@@ -4,6 +4,8 @@ import {
   INVALID_PAGE_REQUEST,
   InvalidPageRequestError,
   cursorPage,
+  decodeCursor,
+  encodeCursor,
   mapPage,
   offsetPage,
   pageOf,
@@ -72,5 +74,26 @@ describe('Page', () => {
       total: 9,
       nextCursor: 'n',
     });
+  });
+});
+
+describe('a cursor', () => {
+  it('comes back as the position it was made from, opaque in between', () => {
+    const position = { placedAt: '2026-03-01T10:00:00.000Z', total: 30, paid: true, note: null, id: 'ordre-é' };
+
+    const cursor = encodeCursor(position);
+
+    expect(cursor).toMatch(/^[A-Za-z0-9_-]+$/);
+    expect(decodeCursor(cursor)).toEqual(position);
+  });
+
+  it.each([
+    ['not base64 json', 'abc'],
+    ['a list', encodeCursor({ id: 'x' }).slice(0, 4)],
+    ['a json list', Buffer.from('["id"]').toString('base64url')],
+    ['a nested value', Buffer.from('{"id":{"$gt":""}}').toString('base64url')],
+    ['json null', Buffer.from('null').toString('base64url')],
+  ])('is refused when it is %s', (_case, cursor) => {
+    expect(() => decodeCursor(cursor)).toThrow(InvalidPageRequestError);
   });
 });

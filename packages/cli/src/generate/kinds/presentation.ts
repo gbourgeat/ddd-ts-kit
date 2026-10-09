@@ -19,7 +19,8 @@ export const routeKind: Kind = {
     const name = label(scope, request.args[1] ?? '', { what: 'use case', strip: ['route', 'handler'] });
     const endpoint = parseEndpoint(request.flags);
     const useCase = findUseCase(scope, name, request.flags);
-    const context = vars(scope, { name: named(name), route: routeVars(scope, endpoint, useCase) });
+    const { validation } = scope.config.stack;
+    const context = vars(scope, { name: named(name), route: routeVars(scope, endpoint, useCase), list: { customSchema: validation !== 'zod' && validation !== 'class-validator' } });
     emit(scope, context, routeOutputs(scope, name, context));
     wire(scope, 'route', context);
   },
@@ -65,6 +66,8 @@ interface UseCase {
   readonly returnsId: boolean;
   /** The message carries its actor: the route hands over who is calling and names the security scheme. */
   readonly isProtected: boolean;
+  /** The query answers one page of a list: the route reads the page from the query string. */
+  readonly isList: boolean;
 }
 
 function findUseCase(scope: Scope, name: Name, flags: KindFlags): UseCase {
@@ -80,14 +83,16 @@ function findUseCase(scope: Scope, name: Name, flags: KindFlags): UseCase {
     what: `The ${kind} ${name.pascal}`,
     createdBy: `ddd-ts-kit generate ${kind} ${scope.context.kebab} ${name.pascal}`,
   });
-  const source = scope.ws.read(`${scope.dir}/${file(kind)}.ts`) ?? '';
+  return { isQuery, message: `${name.pascal}${isQuery ? 'Query' : 'Command'}`, messageFile: file(kind), ...shapeOf(scope.ws.read(`${scope.dir}/${file(kind)}.ts`) ?? '', isQuery) };
+}
+
+/** What the source of the message says about it, read from its declaration. */
+function shapeOf(source: string, isQuery: boolean): Pick<UseCase, 'returnsId' | 'isProtected' | 'isList'> {
   return {
-    isQuery,
-    message: `${name.pascal}${isQuery ? 'Query' : 'Command'}`,
-    messageFile: file(kind),
     // A command that answers an identifier is declared `extends Command<string>` or `extends AuthorizedCommand<string>`.
     returnsId: !isQuery && /extends\s+(?:Authorized)?Command<\s*string\s*>/.test(source),
     isProtected: /extends\s+Authorized(?:Command|Query)\b/.test(source),
+    isList: isQuery && /\breadonly page: PageRequest</.test(source),
   };
 }
 
@@ -98,6 +103,8 @@ function routeVars(scope: Scope, endpoint: Endpoint, useCase: UseCase): RenderCo
     path: endpoint.path,
     status: successStatus(endpoint, useCase),
     isQuery: useCase.isQuery,
+    isPlainQuery: useCase.isQuery && !useCase.isList,
+    isList: useCase.isList,
     returnsId: useCase.returnsId,
     returnsNothing: !useCase.isQuery && !useCase.returnsId,
     hasBody,
@@ -142,7 +149,7 @@ function busVars(useCase: UseCase) {
 
 /** A protected use case is reached with a credential; the bus decides, the route only says who is calling. */
 function securityVars(scope: Scope, useCase: UseCase) {
-  const scheme = scope.config.stack.authn === 'jwt' ? 'bearer' : 'developmentActor';
+  const scheme = scope.config.stack.authn === 'none' ? 'developmentActor' : 'bearer';
   return {
     protected: useCase.isProtected,
     security: useCase.isProtected ? `['${scheme}']` : 'false',
@@ -174,10 +181,15 @@ function dtoVars(endpoint: Endpoint, useCase: UseCase, hasBody: boolean) {
 function routeOutputs(scope: Scope, name: Name, context: RenderContext): Output[] {
   const { validation } = scope.config.stack;
   const route = context['route'];
-  const hasDto = typeof route === 'object' && route['hasDto'] === true;
+  const flag = (key: string): boolean => typeof route === 'object' && route[key] === true;
+  const spec: Output = ['route/route.spec.ts.tpl', `test/unit/${name.kebab}.route.spec.ts`];
+  const dto = `presentation/http/${name.kebab}.dto.ts`;
+  if (flag('isList')) {
+    return [['route/route.list.ts.tpl', `presentation/http/${name.kebab}.route.ts`], ...(validation === 'class-validator' ? ([['route/dto.list.class-validator.ts.tpl', dto]] as const) : []), spec];
+  }
   return [
     [`route/route.${validation}.ts.tpl`, `presentation/http/${name.kebab}.route.ts`],
-    ...(validation === 'class-validator' && hasDto ? ([['route/dto.class-validator.ts.tpl', `presentation/http/${name.kebab}.dto.ts`]] as const) : []),
-    ['route/route.spec.ts.tpl', `test/unit/${name.kebab}.route.spec.ts`],
+    ...(validation === 'class-validator' && flag('hasDto') ? ([['route/dto.class-validator.ts.tpl', dto]] as const) : []),
+    spec,
   ];
 }

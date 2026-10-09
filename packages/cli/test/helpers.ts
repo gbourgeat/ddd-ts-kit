@@ -67,6 +67,8 @@ export interface StackFlags {
   readonly authz?: string;
   readonly broker?: string;
   readonly ci?: string;
+  readonly cache?: string;
+  readonly audit?: string;
 }
 
 export const DEFAULT_STACK: StackFlags = { http: 'express', validation: 'zod', di: 'tsyringe', tests: 'vitest', orm: 'drizzle', events: 'outbox' };
@@ -82,12 +84,23 @@ export function scaffoldEverything(root: string, stack: StackFlags = DEFAULT_STA
   const noOutbox = stack.orm !== 'none' && stack.events !== 'outbox' ? ['--allow-no-outbox', 'A single process with no consumer that has to survive a crash'] : [];
   step('init', ...Object.entries(stack).flatMap(([key, value]) => [`--${key}`, String(value)]), ...noOutbox);
   scaffoldBilling(step, withHttp);
+  if (takesStandardDecorators(stack)) scaffoldDecoratedAdapter(step);
   scaffoldShipping(step);
   scaffoldOrderFulfilment(step, withHttp);
   return results;
 }
 
 type Step = (...args: string[]) => void;
+
+/** `generate adapter --decorators` is refused where decorator syntax has its legacy meaning (class-validator, NestJS) and under jest. */
+export function takesStandardDecorators(stack: StackFlags): boolean {
+  return stack.validation !== 'class-validator' && stack.http !== 'nest' && stack.tests !== 'jest';
+}
+
+function scaffoldDecoratedAdapter(step: Step): void {
+  step('generate', 'port', 'billing', 'TaxRates');
+  step('generate', 'adapter', 'billing', 'TaxRates', '--decorators');
+}
 
 const term = (row: string): string[] => ['--term', row];
 
@@ -104,8 +117,9 @@ function scaffoldBilling(step: Step, withHttp: boolean): void {
   step('generate', 'repository', 'billing', 'Invoice');
   step('generate', 'command', 'billing', 'IssueInvoice', '--aggregate', 'Invoice', '--permission', 'invoice.issue');
   step('generate', 'command', 'billing', 'CancelInvoice', '--permission', 'invoice.cancel');
-  step('generate', 'query', 'billing', 'ListInvoices', '--permission', 'invoice.list', ...term('List=To show invoices to their customer'));
+  step('generate', 'query', 'billing', 'ListInvoices', '--permission', 'invoice.list', '--list', ...term('List=To show invoices to their customer'));
   step('generate', 'port', 'billing', 'PaymentGateway');
+  step('generate', 'adapter', 'billing', 'PaymentGateway');
   step('generate', 'policy', 'billing', 'OnlyIssuerCancels', '--permission', 'invoice.cancel');
   if (withHttp) scaffoldBillingRoutes(step);
   step('generate', 'integration-event', 'billing', 'Invoice', 'Issued');
@@ -129,6 +143,7 @@ function scaffoldShipping(step: Step): void {
   step('generate', 'consumer', 'shipping', 'billing', 'billing.invoice.issued');
   step('generate', 'consumer', 'shipping', 'billing', 'billing.invoice.cancelled');
   step('generate', 'gateway', 'shipping', 'billing', 'InvoiceStatus');
+  step('generate', 'adapter', 'shipping', 'InvoiceStatusGateway', '--kind', 'gateway');
   step('generate', 'service', 'shipping');
   step('generate', 'adr', 'Keep shipping in the same repository as billing');
 }

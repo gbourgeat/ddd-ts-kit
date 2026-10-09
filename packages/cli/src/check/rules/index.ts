@@ -1,4 +1,5 @@
 import type { Rule } from '../types.js';
+import { aspectsOutsideIn } from './aspects-outside-in.js';
 import { authzActorExplicit } from './authz-actor-explicit.js';
 import { authzDeclared } from './authz-declared.js';
 import { authzInApplication } from './authz-in-application.js';
@@ -31,6 +32,7 @@ import { namingSuffix } from './naming-suffix.js';
 import { purityNoAmbientRandomness } from './purity-no-ambient-randomness.js';
 import { purityNoEnvironment } from './purity-no-environment.js';
 import { purityNoSystemClock } from './purity-no-system-clock.js';
+import { standardNoParallelInterface } from './standard-no-parallel-interface.js';
 import { testBuilderRequired } from './test-builder-required.js';
 import { testNoMocks } from './test-no-mocks.js';
 import { testSpecRequired } from './test-spec-required.js';
@@ -73,6 +75,8 @@ const architectureRules: readonly Rule[] = [
   authzDeclared,
   authzInApplication,
   authzActorExplicit,
+  aspectsOutsideIn,
+  standardNoParallelInterface,
   governanceRecordedDeviation,
   compositionOnlyInModule,
 ];

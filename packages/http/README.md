@@ -41,7 +41,12 @@ export const orderRoutes = (orders: OrderQueries) =>
   `@ddd-ts-kit/validation` works (zod, class-validator, Standard Schema).
 - Paths are literal segments and `:name` parameters, the form Express and Fastify share.
 - Frameworks hand query values over as strings: coerce in the schema (`z.coerce.number()`).
-- `context` is `{ requestId, principal?, raw }`. `raw` is the framework's request object.
+- `context` is `{ requestId, execution, principal?, raw }`. `execution` is the kernel
+  `ExecutionContext` of the request (see "The execution context of a request"); `raw` is the
+  framework's request object.
+- `security` is required: the names of the security schemes that apply, or `false` for a route
+  anybody may call. A route is never public by omission: leaving it out does not compile, and
+  `defineRoute` refuses an empty list, which would say the same as `false` without saying it.
 - `defineRoutes` and every mount refuse a duplicate `operationId` or method and path.
 - `prefixRoutes('/api', routes)` moves routes under a prefix, for the server and the contract.
 
@@ -74,8 +79,8 @@ message of an unexpected error never leaves the process. Log it from the `onErro
 const options = {
   errorMapper,
   resolvePrincipal: (raw) => authenticate(raw), // throw UnauthorizedError to refuse
-  onError: (error, { requestId, operationId, problem }) => {
-    if (problem.status >= 500) logger.error({ requestId, operationId, error });
+  onError: (error, { requestId, correlationId, operationId, problem }) => {
+    if (problem.status >= 500) logger.error({ requestId, correlationId, operationId, error });
   },
   validateResponses: process.env.NODE_ENV === 'test', // checks answers against the declaration
 };
@@ -83,6 +88,79 @@ const options = {
 
 The request id is the incoming `x-request-id` when well formed, else a UUID; it is echoed in
 the `x-request-id` response header and in every problem.
+
+## The execution context of a request
+
+`executeRoute` builds a kernel `ExecutionContext` for every request and hands it to the handler
+as `context.execution`:
+
+| Field | Value |
+|---|---|
+| `correlationId` | the incoming `x-correlation-id` when well formed (letters, digits, `._:-`, at most 128), else the request id; echoed in the `x-correlation-id` response header, on problems too, and given to `onError` |
+| `origin` | `http` |
+| `actor`, `session` | from what `resolvePrincipal` answered, read structurally: a `Session` gives both, an `Actor` gives the actor, anything else is the anonymous actor |
+| `tenantId` | the tenant of the actor |
+| `locale` | the locale of the session, else the preferred language of `Accept-Language` |
+| `deadline` | arrival plus `requestTimeoutMs`, when the option is set |
+
+```ts
+const options = {
+  resolvePrincipal: principalResolver(authenticator), // of @ddd-ts-kit/auth: answers a Session
+  executionScope,          // the ExecutionScope of the application: app.resolve(EXECUTION_SCOPE)
+  requestTimeoutMs: 10_000,
+};
+```
+
+With `executionScope`, every handler runs inside `scope.run(context.execution, ...)`: loggers,
+audit columns, tenant scoping and outgoing headers read the context of the request with no
+wrapper around the handler, and no route can forget it. `withPrincipal` stays, for a scope of
+your own; it runs inside the execution scope. The pipeline does not interrupt a handler at its
+deadline: a timeout wrapper or an outgoing call reads `deadline` and honours it. `clock` is the
+option that says when a request arrived, the system clock by default.
+
+Use cases still receive the actor explicitly: `new PlaceOrder(context.execution.actor, body)`,
+or `actorOf(context.principal)` of `@ddd-ts-kit/auth`, which reads the same actor.
+
+## Pagination
+
+One query vocabulary and one answer for every list, on top of the kernel `PageRequest` and
+`Page`: `limit`, `offset` or `cursor`, and `sort` (`placedAt,-total`: comma-separated fields, a
+leading `-` for descending).
+
+```ts
+import { defineRoute, pageQuerySchema, pageResponse, pageSchemaOf } from '@ddd-ts-kit/http';
+
+const listOrders = defineRoute(
+  {
+    method: 'GET',
+    path: '/orders',
+    operationId: 'listOrders',
+    summary: 'List orders',
+    request: { query: pageQuerySchema({ sortable: ['placedAt', 'total'], maxSize: 50 }) },
+    responses: { 200: { description: 'A page of orders.', body: pageSchemaOf(order) } },
+    security: ['bearer'],
+  },
+  async ({ query }) => ({
+    status: 200, // query is a PageRequest<'placedAt' | 'total'>
+    body: pageResponse(await orders.list(query), toOrderDto),
+  }),
+);
+```
+
+| Helper | Does |
+|---|---|
+| `pageRequestFrom(query, options?)` | reads the four parameters, as strings or already coerced, into a `PageRequest`; throws the `ValidationError` of the pipeline, so a wrong parameter answers 422 with one issue per parameter (`query.limit`, `query.sort`...). For a route whose query schema also has filters: declare the four parameters in that schema and call it in the handler |
+| `pageQuerySchema(options?)` | the same reading as a `Schema`, for a route whose whole query is the page |
+| `pageResponse(page, map)` | the JSON body `{ items, total?, nextCursor? }`, each item through `map` |
+| `pageRequestParameters(options?)` | the JSON Schema of the query (one OpenAPI parameter per property); `properties` merges into a wider schema |
+| `pageSchemaOf(itemSchema)` | the `Schema` of a page of items: validates the envelope and each item, describes both in the contract |
+
+`options` are the `PageLimits` of the kernel (`defaultSize` 20, `maxSize` 100) plus `sortable`,
+the closed list of fields a client may sort by, and `kind`, the variant of a query that names
+neither `offset` nor `cursor` (`offset` by default). Without `sortable`, a `sort` parameter is
+refused: a client never chooses a column the read port did not offer. `offset` and `cursor`
+together are refused. These helpers depend on no validation library; `pageQuerySchema` and
+`pageSchemaOf` are plain `Schema`s and sit next to zod or class-validator schemas.
 
 ## Express 5
 
@@ -152,7 +230,8 @@ if (checkOpenApiDrift(document, readFileSync('openapi.json', 'utf8')).drift) pro
 ```
 
 What is generated: `{param}` paths, one parameter per property of the params, query and headers
-schemas, the request body, the declared responses, one `application/problem+json` response per
+schemas, the request body, the declared responses, the `security` of every operation (an empty
+list for a public route), one `application/problem+json` response per
 status of the declared `errors` (codes listed in the description and in `x-error-codes`), 422
 whenever the route validates input, a shared `Problem` schema. Local `$defs` of the schemas are
 moved to `components.schemas`. Paths, statuses and component keys are sorted: the output does

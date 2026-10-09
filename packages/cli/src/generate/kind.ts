@@ -20,6 +20,12 @@ export interface KindFlags {
   /** The use case is reachable by anybody, on purpose. */
   readonly public: boolean;
   readonly tenantScoped: boolean;
+  /** The query answers one page of a list, filtered by the access scope of its actor. */
+  readonly list: boolean;
+  /** The role an adapter is bound under: `external` or `gateway`. */
+  readonly kind?: string;
+  /** The adapter carries its resilience policy as standard decorators on its class. */
+  readonly decorators: boolean;
   /** What an ADR deviates from, as a config key such as `rules.clean/stepdown`. */
   readonly deviation?: string;
   readonly reason?: string;

@@ -1,5 +1,5 @@
-import { InvalidCredentialError, type Authenticator } from '@ddd-ts-kit/auth';
-import { anonymousActor, type Actor } from '@ddd-ts-kit/kernel';
+import { InvalidCredentialError, resolveSession, type Authenticator } from '@ddd-ts-kit/auth';
+import { anonymousActor, type Actor, type Session } from '@ddd-ts-kit/kernel';
 import type { AppConfig } from '../config.js';
 
 export const DEVELOPMENT_ACTOR_HEADER = 'x-development-actor';
@@ -37,8 +37,9 @@ export function createAuthenticator(config: AppConfig): Authenticator {
   return new DevelopmentHeaderAuthenticator(config.environment);
 }
 
-export function principalOf(authenticator: Authenticator): (raw: unknown) => Promise<Actor> {
-  return (raw) => authenticator.authenticate(developmentActorOf(raw));
+/** Reads the development header of a request and answers its session, derived from the actor it names. */
+export function principalOf(authenticator: Authenticator): (raw: unknown) => Promise<Session> {
+  return (raw) => resolveSession(authenticator, developmentActorOf(raw));
 }
 
 function developmentActorOf(raw: unknown): string | undefined {

@@ -2,9 +2,12 @@ import {
   AsyncLocalStorageExecutionScope,
   InMemoryCache,
   InMemoryCommandBus,
+  InMemoryDomainEventDispatcher,
   InMemoryEventBus,
+  InMemoryLock,
   InMemoryProcessedEventStore,
   InMemoryQueryBus,
+  InMemoryRateLimiter,
   InMemoryUnitOfWork,
   NoopLogger,
   NoopMetrics,
@@ -16,31 +19,38 @@ import {
   type Cache,
   type Clock,
   type CommandBus,
+  type DomainEventDispatcher,
   type EventBus,
   type ExecutionScope,
   type IdGenerator,
   type IntegrationEventPublisher,
   type IntegrationEventSubscriber,
+  type Lock,
   type Logger,
   type Metrics,
   type ProcessedEventStore,
   type QueryBus,
+  type RateLimiter,
   type UnitOfWork,
 } from '@ddd-ts-kit/kernel';
-import { ACTOR_CONTEXT, useCaseGuard } from './authorization.js';
+import { useCaseGuard } from './authorization.js';
 import {
+  ACTOR_CONTEXT,
   CACHE,
   CLOCK,
   COMMAND_BUS,
+  DOMAIN_EVENTS,
   EVENT_BUS,
   EVENT_PUBLISHER,
   EVENT_SUBSCRIBER,
   EXECUTION_SCOPE,
   ID_GENERATOR,
+  LOCK,
   LOGGER,
   METRICS,
   PROCESSED_EVENTS,
   QUERY_BUS,
+  RATE_LIMITER,
   UNIT_OF_WORK,
 } from './kernel-tokens.js';
 import { defineContextModule, type ContextModule, type ModuleBuilder, type Resolve } from './module.js';
@@ -61,6 +71,8 @@ export interface KernelModuleOptions {
   /** Defaults to the event bus. A broker adapter goes here. */
   readonly eventSubscriber?: Provided<IntegrationEventSubscriber>;
   readonly processedEvents?: Provided<ProcessedEventStore>;
+  /** Defaults to a dispatcher inside this process, which the declared domain event listeners are attached to. */
+  readonly domainEvents?: Provided<DomainEventDispatcher>;
   /** Defaults to the actor of the execution scope, so the two cannot disagree. */
   readonly actorContext?: Provided<ActorContext>;
   /** Defaults to one following the asynchronous call chain of each unit of work. */
@@ -71,6 +83,10 @@ export interface KernelModuleOptions {
   readonly metrics?: Provided<Metrics>;
   /** Defaults to a bounded cache in the memory of the process, expiring by `CLOCK`. */
   readonly cache?: Provided<Cache>;
+  /** Defaults to a lock inside this process, expiring by `CLOCK`: several instances exclude nothing between them. */
+  readonly lock?: Provided<Lock>;
+  /** Defaults to a limiter inside this process, counting by `CLOCK`: several instances each allow the limit. */
+  readonly rateLimiter?: Provided<RateLimiter>;
 }
 
 /**
@@ -104,9 +120,16 @@ function bindCrossCuttingPorts(builder: ModuleBuilder, options: KernelModuleOpti
     .bind(EXECUTION_SCOPE)
     .toFactory(either(options.executionScope, () => new AsyncLocalStorageExecutionScope()));
   builder.bind(ACTOR_CONTEXT).toFactory(either(options.actorContext, scopedActorContext));
+  builder
+    .bind(DOMAIN_EVENTS)
+    .toFactory(either(options.domainEvents, () => new InMemoryDomainEventDispatcher()));
   builder.bind(LOGGER).toFactory(either(options.logger, () => new NoopLogger()));
   builder.bind(METRICS).toFactory(either(options.metrics, () => new NoopMetrics()));
   builder.bind(CACHE).toFactory(either(options.cache, (resolve) => new InMemoryCache(resolve(CLOCK))));
+  builder.bind(LOCK).toFactory(either(options.lock, (resolve) => new InMemoryLock(resolve(CLOCK))));
+  builder
+    .bind(RATE_LIMITER)
+    .toFactory(either(options.rateLimiter, (resolve) => new InMemoryRateLimiter(resolve(CLOCK))));
 }
 
 function scopedActorContext(resolve: Resolve): ActorContext {

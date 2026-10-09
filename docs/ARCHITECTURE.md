@@ -119,8 +119,10 @@ presentation ──▶ application ──▶ domain ◀── infrastructure
 | `context/extractable` | A context can run alone: its module wires with the kernel and the platform only, it reads no table of another context, shares no transaction with one, and calls another context only through a port whose adapter could be remote. |
 | `authz/declared` | Every command, query and route declares the permission it requires, or declares itself public. Nothing is reachable by default. |
 | `authz/in-application` | The permission is decided in the application layer through the `Authorizer` port. No role or ownership test in `presentation/`, no authorization in `infrastructure/`, no knowledge of the acting user's rights in `domain/` (a context whose model is access itself may hold roles as its own state). |
-| `authz/actor-explicit` | Use cases receive the actor in the command or query. `domain/` and handlers never read an ambient actor; only infrastructure may, for audit columns and tenant scoping. |
+| `authz/actor-explicit` | Use cases receive the actor in the command or query. `domain/` and `application/` never read the ambient `ExecutionScope` or `ActorContext`; only infrastructure and the platform may, for audit columns, tenant scoping and correlation. |
 | `governance/recorded-deviation` | A suppression, a lowered severity, an extra directory or an extra allowed package carries a reason and points to a decision record in `docs/adr/`. |
+| `aspects/outside-in` | Aspects are applied from outside. The decorators of `@ddd-ts-kit/aspects/decorators` are imported only by an adapter in `infrastructure/` or by the platform; everywhere else an aspect is a wrapper bound at the composition root (`.with(...)`, the `decorate` hook) or a bus middleware. |
+| `standard/no-parallel-interface` | No home-made copy of a standard interface of the kernel: no declared `ILogger`, `AppLogger`, `UserContext`, `CurrentUser`, `UserSession`, `PaginatedResult`, `AuditLog` and the like. Use the kernel interface and extend it by declaration merging; the list is `standardInterfaces` in the config. Default severity `warn`. |
 | `composition/only-in-module` | Adapters are instantiated or registered only in `<context>.module.ts` and `main.ts`. |
 
 Only the module file and `main.ts` are allowed to know every layer.
@@ -132,7 +134,7 @@ Three analyzers hold the rules, each where it is exact:
 | Analyzer | Holds | When |
 |---|---|---|
 | `ddd-ts-kit check` (zero dependency, text level) | structure and project-wide facts: `tree/*`, `naming/*`, `language/*`, `config/*`, `context/no-cycle`, `test/spec-required`, `test/builder-required`, the config side of `events/outbox-required` and `governance/recorded-deviation` (decision records exist), unique consumer names, and a fast approximation of the code rules | at every file write (editor hook), in CI |
-| `@ddd-ts-kit/eslint-plugin` (syntax tree, type-aware) | code: `layer/*`, `context/*` imports and `context/extractable`, `purity/*`, `clean/*`, `domain/*`, `application/*`, `authz/*`, `events/*`, `test/no-mocks`, and the comment side of `governance/recorded-deviation`. Authoritative when the two disagree | on staged files, in CI |
+| `@ddd-ts-kit/eslint-plugin` (syntax tree) | code: `layer/*`, `context/*` imports and `context/extractable`, `purity/*`, `clean/*`, `domain/*`, `application/*`, `authz/*`, `events/*`, `aspects/*`, `standard/*`, `test/no-mocks`, and the comment side of `governance/recorded-deviation`. Authoritative when the two disagree | on staged files, in CI |
 | dependency-cruiser (resolved import graph) | the same boundaries through barrels and re-exports, cycles between files, orphans, undeclared dependencies | in CI |
 
 knip (dead code and unused dependencies) and the TypeScript compiler in `strict` mode complete the gate.
@@ -206,9 +208,10 @@ a generated architecture test boots every context alone to prove it stays true.
 **Authentication and authorization.** Three separate responsibilities, three places:
 
 - *Authentication* (who is calling) is a platform concern at the boundary: an adapter of the
-  `Authenticator` port verifies the credential and produces an `Actor` (subject, tenant,
-  roles or attributes, never the raw token). Routes and consumers put the actor in the
-  command or query.
+  `Authenticator` port verifies the credential and produces a `Session` holding the `Actor`
+  (subject, tenant, roles or attributes, never the raw token) and how it authenticated.
+  Routes and consumers put the actor in the command or query. Every route declares its
+  `security`; the type refuses a route that does not.
 - *Authorization* (may this actor do this, on this) is an application concern: each context
   declares its permissions in `application/authorization/<context>.permissions.ts`, each
   command and query names the permission it requires, and a bus middleware asks the
@@ -225,14 +228,18 @@ permission definitions, not the handlers.
 
 *The current actor.* Use cases get it explicitly, as data of the command or query. Lists are
 filtered by passing an access scope computed by the authorizer to the read port, never by
-filtering in memory after loading. Infrastructure that needs the actor without being handed it
-(audit columns, tenant scoping of every query) reads the `ActorContext` port, set once per
-request or consumed message at the boundary. The domain never sees either.
+filtering in memory after loading. Every unit of work (a request, a consumed event, a
+scheduled job) runs inside an `ExecutionScope` opened at the boundary, holding the
+`ExecutionContext`: correlation and causation ids, actor, session, tenant, origin.
+Infrastructure that needs any of it without being handed it (audit columns, tenant scoping of
+every query, log fields, the correlation id stamped on published events) reads the scope;
+`ActorContext` is a view of it. Domain and application code never read it.
 
 **Standard interfaces.** The kernel defines the shapes every project shares, so adapters and
 tooling interoperate: `Actor`, `Session`, `ExecutionContext`, `Logger`, `Metrics`, `Cache`,
-`Page` and `PageRequest`, `AuditStamp`, `TenantScoped`, next to `Clock`, `IdGenerator` and
-`UnitOfWork`. A project extends them without forking, by augmenting the extension interfaces
+`Lock`, `RateLimiter`, `Page` and `PageRequest`, `AuditStamp`, `TenantScoped`, the audit
+ports `AuditTrail` and `AuditReader` with their `AuditEntry`, next to `Clock`, `IdGenerator`
+and `UnitOfWork`. A project extends them without forking, by augmenting the extension interfaces
 the kernel leaves open (`SessionExtensions`, `ExecutionContextExtensions`, ...). A project
 that needs a concept of this kind uses the standard one; a parallel home-made `UserContext`
 or `ILogger` is a defect.
@@ -254,6 +261,12 @@ as a decision (`docs/adr/`), with the reason, the scope and the condition for re
 and referenced from the suppression or the config entry. A shortcut that is not written down
 is a defect, whoever asked for it.
 
+**Standard persistence shapes.** Audit columns are named `created_at`, `created_by`,
+`updated_at`, `updated_by` and the tenant column `tenant_id` in every project, written from
+the execution scope by the repository adapter through the kernel helpers. Lists use the
+kernel `Page` and `PageRequest`; a cursor always ends on a unique tie-breaker so paging is
+stable.
+
 **Persistence.** Repositories are interfaces of the domain. Drizzle on PostgreSQL is the
 default adapter family, one database schema per context; Knex, Prisma and TypeORM have
 adapter packages too, and any other mature ORM or database is an adapter of the same interfaces and passes the same repository contract suite. Rows never
@@ -268,7 +281,8 @@ regenerates it and fails on a diff. It is never edited by hand.
 
 **Tracing.** Non-invasive: no tracing import in `domain/` or `application/`. Adapters are
 wrapped at registration in the composition root; a span carries class, method, context and an
-error code, never arguments, results or error messages.
+error code, the root span also the correlation id and the origin, never arguments, results,
+error messages or anything about the actor.
 
 ## 5. Tests
 

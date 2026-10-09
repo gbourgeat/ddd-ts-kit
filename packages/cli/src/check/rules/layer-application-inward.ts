@@ -1,3 +1,4 @@
+import { outsideConcern } from '../outside-concerns.js';
 import type { Layer, Location, Rule, SourceFile } from '../types.js';
 import { describeTarget, inLayer, reporter, type Finding } from './helpers.js';
 
@@ -23,6 +24,8 @@ export const layerApplicationInward: Rule = {
 
 function outward({ target, line, specifier }: ImportedModule, context: string, allowed: readonly string[]): Finding[] {
   if (target.kind === 'package') {
+    const concern = outsideConcern('The application layer', target.name, specifier);
+    if (concern !== undefined) return [{ line, ...concern }];
     if (allowed.includes(target.name)) return [];
     const fix = `Declare a port in application/ports named after the need, implement it with "${target.name}" in infrastructure/, and bind it in ${context}.module.ts.`;
     return [{ line, message: `The application layer imports the package "${target.name}".`, fix }];

@@ -36,8 +36,9 @@ ddd-ts-kit init [--http express|fastify|nest|none]
                 [--database postgres|mysql|sqlite|none]
                 [--events in-memory|outbox] [--docs-ui swagger|scalar|redoc|none]
                 [--ci github|gitlab|both|none]
-                [--authn jwt|none] [--authz rbac|abac|rebac|custom]
-                [--broker none|rabbitmq|custom] [--allow-no-outbox "<reason>"]
+                [--authn jwt|keycloak|none] [--authz rbac|abac|rebac|custom]
+                [--broker none|rabbitmq|custom] [--cache none|redis] [--audit on|off]
+                [--allow-no-outbox "<reason>"]
                 [--context <name>:<core|supporting|generic>]...
                 [--dry-run] [--force]
 ```
@@ -48,7 +49,8 @@ dependencies are added, yours are kept and mentioned in the notes. Run again lat
 the stack recorded in the config.
 
 Defaults: `express`, `zod`, `tsyringe` (`nest` with `--http nest`, and only then), `vitest`,
-`drizzle` on `postgres`, `outbox` when there is an ORM, `swagger`, `github`, `jwt`, `rbac`, no broker.
+`drizzle` on `postgres`, `outbox` when there is an ORM, `swagger`, `github`, `jwt`, `rbac`, no broker,
+the cache in the process, the audit trail `on` when there is an ORM.
 `--events in-memory` together with an ORM is refused unless `--allow-no-outbox "<reason>"` is given:
 it records a `deviations` entry (`stack.events`) and writes the decision record it points to. The generated
 persistence of the four ORMs is written for PostgreSQL; `custom` starts on in-memory adapters
@@ -61,8 +63,11 @@ config, `docsUi` and `ci` included.
 | `package.json` | scripts and dependencies of the stack (below) |
 | `tsconfig.json`, `tsconfig.build.json` | strict, NodeNext, alias `@/*` to `src/*`; decorator flags only for nest or class-validator |
 | `src/main.ts` | composition root: tracing first, config, persistence, application, outbox relay, HTTP server |
-| `src/platform/` | `tracing.ts`, `config.ts` (fail-fast, `DATABASE_URL` included), `platform.module.ts`, `application.ts` (wires the contexts), `http-server.ts`, `http-docs.ts` (`/docs` and `/openapi.json`, off in production unless `API_DOCS=true`), `outbox-relay.ts` |
-| `src/platform/auth/` | `authenticator.ts` (`--authn jwt`: `JwtAuthenticator` on `AUTH_ISSUER`, `AUTH_AUDIENCE`, `AUTH_JWKS_URI`; `--authn none`: `DevelopmentHeaderAuthenticator`, which reads `x-development-actor` and throws in production), `http-boundary.ts` (`resolvePrincipal` and `withPrincipal`: every request runs inside the actor context), `authorizer.ts` and the files of the model (`roles.ts`; `attribute-policies.ts`; `relationships.ts`, its store contract spec and `permissions.ts`; `custom-authorizer.ts`, its `authorizerContract` spec and `permissions.ts`), `authorization.ts` (`authorizationModule` with tsyringe, a guard for the hand-wired buses otherwise), `access-policies.ts`, `audit.ts` (one structured line per decision, ids and codes only). Without an HTTP stack there is no authenticator and no boundary |
+| `src/platform/` | `tracing.ts`, `config.ts` (fail-fast: `DATABASE_URL`, `LOG_LEVEL`, the `OUTBOUND_*` policy), `platform.module.ts` (one `AsyncLocalStorageExecutionScope`, clock and id generator for the application; buses with `loggingMiddleware`, `metricsMiddleware`, the permission, then the unit of work; `scopedPublisher` over the outbox), `application.ts` (wires the contexts, installs the aspect runtime), `observability.ts` (`StdoutLogger` with `traceLogFields(scope)`; a `NoopMetrics` behind a `TODO(platform)`), `resilience.ts` (the `decorate` hook: a span for every kind, retry with backoff and a timeout for `external` and `gateway`, and `ownPolicy` for a binding that states its own), `http-server.ts`, `http-docs.ts` (`/docs` and `/openapi.json`, off in production unless `API_DOCS=true`), `outbox-relay.ts` |
+| `src/platform/auth/` | `authenticator.ts` (`--authn jwt`: `JwtAuthenticator` on `AUTH_ISSUER`, `AUTH_AUDIENCE`, `AUTH_JWKS_URI`; `--authn keycloak`: `keycloakAuthenticator` on `KEYCLOAK_URL`, `KEYCLOAK_REALM`, `KEYCLOAK_AUDIENCE` and the optional `KEYCLOAK_CLIENT_ID`; `--authn none`: `DevelopmentHeaderAuthenticator`, which reads `x-development-actor` and throws in production), `http-boundary.ts` (`resolvePrincipal` answering a `Session`, `executionScope` and `onError`, spread into the mount options: every request runs inside the execution scope, with its correlation id), `authorizer.ts` and the files of the model (`roles.ts`; `attribute-policies.ts`; `relationships.ts`, its store contract spec and `permissions.ts`; `custom-authorizer.ts`, its `authorizerContract` spec and `permissions.ts`), `authorization.ts` (`authorizationModule` with tsyringe, a guard for the hand-wired buses otherwise), `access-policies.ts`, and with `--audit off` `decision-log.ts` (one log entry per decision, ids and codes only). Without an HTTP stack there is no authenticator and no boundary |
+| `--audit on` | `src/platform/audit/`: `audit.ts` (the trail, `auditDecisions` as the `onDecision` of the authorization, `auditMiddleware` before the unit of work, `auditIntegrationEvents` subscribed under the consumer name `audit`), `audited-events.ts` (the registry `generate integration-event` adds to), and with an HTTP stack the read side: `audit.permissions.ts` (`audit:trail.read`), `list-audit-entries.query.ts`, its handler, `GET /audit/entries` (cursor pages, filters `actorId`, `action`, `outcome`, `correlationId`) and `audit.module.ts`. It is a capability of the platform, not a bounded context: no model, one protected query over the `AuditReader` port, bounded by the tenant of the actor. With knex the two tables and their append-only triggers are created by the first migration; with drizzle the tables are in `schema.ts` and `npm run db:audit-guard` prints the trigger statements for a custom migration; with prisma, typeorm, `custom` or no ORM the trail is an `InMemoryAuditTrail` behind a `TODO(platform)`. The test databases leave the audit schema out of `reset()` |
+| `--cache redis` | `src/platform/cache.ts` (`RedisCache` on the kernel `CACHE` token, `RedisRateLimiter` on `RATE_LIMITER`, `RedisRelaySignal` as the `wakeOn` of the outbox relay with `relayWakeUpMiddleware` on the command bus), `http-rate-limit.ts` (one sliding window per caller address, 429 `application/problem+json` with `retry-after`; `RATE_LIMIT_MAX`, `RATE_LIMIT_WINDOW_MS`), `GET /health/ready` on the HTTP server, `REDIS_URL` validated, a compose service `cache` running Dragonfly with a healthcheck. Without a server (tools, tests without `REDIS_URL`) the same ports stay in the memory of the process |
+| `--authn keycloak` | a compose service `keycloak` (Keycloak 26.8.0, `start-dev --import-realm`, profile `identity`) and `docker/keycloak/<project>-realm.json`: the API client, a public client `<project>-local` with the direct grant, its audience and `tenant_id` mappers, the realm role `admin`, and the demo users `demo-admin` and `demo-user`, for local development only |
 | `src/platform/events.ts` | the event provider of `--broker`: the in-memory bus; `RabbitMqEventBus` with one subscriber per consuming context (`forConsumer`), `AMQP_URL` validated, a `rabbitmq` compose service; or `custom-event-bus.ts` with its `eventBusContract` spec |
 | `src/platform/database/` | `persistence.ts` (unit of work, outbox and processed-event stores of the ORM package), connection, schema, `testing.ts` (PostgreSQL in process, or the server named by a URL) |
 | migration tooling | `drizzle.config.ts`, `knexfile.js` and `migrations/0001_initial.js`, `prisma/schema.prisma` and `prisma.config.ts`, or `data-source.ts` |
@@ -74,7 +79,7 @@ config, `docsUi` and `ci` included.
 | `eslint.config.mjs` | the `dddTsKit` preset of `@ddd-ts-kit/eslint-plugin`, typed linting on the project's tsconfig |
 | `.dependency-cruiser.cjs` | the import graph rules, generated from the config (see `depcruise-config`) |
 | `knip.json` | dead code: entry points are `main.ts`, the scripts, the specs and the fakes |
-| `vitest.config.ts` | unit and integration projects, coverage thresholds per layer |
+| `vitest.config.ts` | unit and integration projects, coverage thresholds per layer, and a plugin that compiles the files holding a standard decorator with TypeScript (Vitest does not transform them) |
 | `lefthook.yml`, `commitlint.config.mjs` | pre-commit and commit-msg hooks (`npm run hooks:install`), conventional commits |
 | `--ci github` | `.github/workflows/ci.yml`, `codeql.yml`, `pr-title.yml`, `.github/dependabot.yml`, `.github/branch-protection.md`, `renovate.json` |
 | `--ci gitlab` | `.gitlab-ci.yml` (architecture findings as a Code Quality report through `check --format gitlab`), `.gitlab/merge-request-settings.md`, `renovate.json` |
@@ -124,7 +129,7 @@ ddd-ts-kit generate <kind> ... [--term "<Term>=<meaning>"]... [--allow-name] [--
 | `domain-service` | `<context> <Name>` | service, spec |
 | `repository` | `<context> <Aggregate> [--tenant-scoped]` | domain interface, adapter of the project's ORM with its mapper and table (or model), fake extending `InMemoryRepository`, one `repositoryContract` spec run on both, registration |
 | `command` | `<context> <UseCaseName> (--permission <aggregate>.<action> \| --public) [--aggregate <Name>]` | command on `AuthorizedCommand` (plain `Command` when public), handler, spec through the bus with the refusal of an actor who lacks the permission, registration with `.requires(...)` or `.public()` (and the repository when missing) |
-| `query` | `<context> <UseCaseName> (--permission <aggregate>.<action> \| --public)` | query on `AuthorizedQuery` (plain `Query` when public), handler, read port, in-memory reader, fake, spec, registration on the query bus |
+| `query` | `<context> <UseCaseName> (--permission <aggregate>.<action> \| --public) [--list]` | query on `AuthorizedQuery` (plain `Query` when public), handler, read port, in-memory reader, fake, spec, registration on the query bus. With `--list` (needs `--permission`): a kernel `PageRequest` in the query, a `Page` as result, a handler that asks `Access.scope` and hands the scope to the read port, an in-memory reader paging by offset or cursor |
 | `port` | `<context> <Name>` | port, fake |
 | `route` | `<context> <UseCaseName> --method <GET\|POST\|PUT\|PATCH\|DELETE> --path <p> [--command\|--query]` | route depending on `CommandBus` or `QueryBus` (and DTOs with class-validator), spec, registration |
 | `integration-event` | `<context> <Aggregate> <Fact> [--version n]` | `defineIntegrationEvent` declaration in the published language, index export, publisher, spec, registration |
@@ -134,6 +139,7 @@ ddd-ts-kit generate <kind> ... [--term "<Term>=<meaning>"]... [--allow-name] [--
 | `e2e` | `<context> <UseCaseName>` | `test/e2e/<use-case>.e2e.spec.ts` driving the route of the use case: 401 without a credential, 403 without the permission, the documented status with it; needs the route |
 | `policy` | `<context> <Name> --permission <aggregate>.<action>` | `application/authorization/<name>.policy.ts`, spec, registration in `platform/auth/access-policies.ts` |
 | `gateway` | `<context> <upstreamContext> <Name>` | the read contract in the upstream's published language, a port of the caller, an in-process adapter in `infrastructure/external/` bound `.as('gateway')`, a fake, one contract suite; refused unless the upstream is declared |
+| `adapter` | `<context> <Port> [--kind external\|gateway] [--decorators]` | `infrastructure/external/remote-<port>.adapter.ts` for an existing port, its spec, and with tsyringe its token and binding `.as(<kind>).with(ownPolicy(retry(...), timeout(...)))`; with `--decorators` the class carries `@Retry` and `@Timeout` of `@ddd-ts-kit/aspects/decorators` on its one outbound method and is bound `.with(ownPolicy())`. A port that is already bound, or hand wiring, gets a note instead of a binding |
 | `service` | `<context>` | `src/apps/<context>/main.ts` (kernel, platform, that context only), script `start:<context>`, a compose service behind the `services` profile, the knip entry, `deployable: true` in the config. The Dockerfile takes the entry as build argument `ENTRY` |
 | `adr` | `"<title>" [--deviation <what>] [--reason "<why>"]` | `docs/adr/NNNN-<slug>.md`; with `--deviation`, the `deviations` entry of the config that points to it |
 
@@ -145,9 +151,19 @@ ddd-ts-kit generate <kind> ... [--term "<Term>=<meaning>"]... [--allow-name] [--
   of `--authn`, or `false` for a public one). `consumer` carries `systemActor('<context>.<consumer>')`
   for the command it builds; behind a broker it subscribes with `consume(...)` on the subscriber of
   its context.
-- `repository --tenant-scoped` (drizzle and knex) adds the tenant column and an adapter that reads the
-  tenant of `ActorContext` on every statement, with a spec that one tenant does not see another's
-  rows. With another ORM the regular adapter is written and a note says what to add.
+- A generated repository adapter takes `EXECUTION_SCOPE` and `CLOCK`, never `ACTOR_CONTEXT`, and
+  stamps `created_at`, `created_by`, `updated_at`, `updated_by` with `stampCreation` and `stampUpdate`;
+  the table uses `auditColumns` of the ORM package (the five fields are written out for Prisma).
+  The sample fact of an aggregate is `registeredAt`, since `created_at` is the audit column.
+  `repository --tenant-scoped` (drizzle and knex) adds `tenantColumn` and puts `tenantScopeOf(scope)`
+  on the insert and in the condition of every read and update, with a spec that one tenant does
+  not see another's rows. With another ORM the regular adapter is written and a note says what to add.
+- `adapter --decorators` is refused in a project whose `tsconfig.json` sets `experimentalDecorators`
+  (`--validation class-validator`, `--http nest`), where decorator syntax has its legacy meaning in
+  every file, and under jest: the registration form is generated instead.
+- `route` of a `--list` query reads the page with `pageQuerySchema` and answers `pageSchemaOf` and
+  `pageResponse`. `consumer` subscriptions that are not `builder.on` pass the execution scope
+  (`consume(..., { scope })`, `inEventScope`).
 - **The language first.** The name of an aggregate, entity, value object, domain service, domain
   event, command or query is refused when one of its words is not covered by a term of the
   `## Ubiquitous language` table of the context (plural, past participle and -ing forms are
@@ -238,12 +254,18 @@ saying what to do instead. Exit code 1 when there is at least one error.
 - `--format gitlab` prints a GitLab Code Quality report: one issue per violation, `major` for
   an error and `minor` for a warning, with a fingerprint that does not depend on the line.
 - Severities come from `rules` in the config (`error`, `warn`, `off`). Default `error`, except
-  `test/no-mocks`, `test/builder-required`, `clean/function-size`, `clean/no-noise-comment` and
-  `clean/no-flag-argument` (`warn`). `any` in a test file is always a warning.
+  `test/no-mocks`, `test/builder-required`, `clean/function-size`, `clean/no-noise-comment`,
+  `clean/no-flag-argument` and `standard/no-parallel-interface` (`warn`). `any` in a test file is
+  always a warning.
 - `limits: { "maxParameters": 3, "maxFunctionLines": 30 }` in the config sets
   `clean/function-size`.
 - `domainAllowedPackages`, `applicationAllowedPackages` and `publishedLanguageAllowedPackages`
-  extend what the inner layers may import.
+  extend what the inner layers may import. `@ddd-ts-kit/aspects`, `@ddd-ts-kit/audit`,
+  `@ddd-ts-kit/redis` and `@ddd-ts-kit/tracing` stay refused in `domain/` and `application/`
+  even when a list names them.
+- `standardInterfaces: { "<DeclaredName>": "<kernel interface to use instead>" }` in the config
+  adds names to `standard/no-parallel-interface` over its defaults; the value `false` drops a
+  default name.
 - Suppress one line with `// ddd-ts-kit-disable-next-line <rule-id> -- ADR-0007: <reason>`. Without a
   reason the comment is itself a violation, and so is a reason that names no existing decision record. On the first line of a file it also covers
   file-level violations.
@@ -255,8 +277,8 @@ saying what to do instead. Exit code 1 when there is at least one error.
 
 | Rule | Detects |
 |---|---|
-| `layer/domain-purity` | in `domain/`: a package outside `domainAllowedPackages`, any Node built-in, another layer, another context |
-| `layer/application-inward` | in `application/`: `infrastructure/`, `presentation/`, the platform, a package outside the allow-list, a Node built-in |
+| `layer/domain-purity` | in `domain/`: a package outside `domainAllowedPackages`, any Node built-in, another layer, another context; any entry of `@ddd-ts-kit/aspects`, `@ddd-ts-kit/audit`, `@ddd-ts-kit/redis` or `@ddd-ts-kit/tracing`, allowed or not |
+| `layer/application-inward` | in `application/`: `infrastructure/`, `presentation/`, the platform, a package outside the allow-list, a Node built-in; any entry of `@ddd-ts-kit/aspects`, `@ddd-ts-kit/audit`, `@ddd-ts-kit/redis` or `@ddd-ts-kit/tracing`, allowed or not, with where the concern belongs (the composition root, a bus middleware, an adapter, a port) |
 | `layer/presentation-no-infrastructure`, `layer/infrastructure-no-presentation` | the forbidden import, inside one context |
 | `context/published-language-only` | an import of another context outside its `published-language/` |
 | `context/declared-relationship` | an import of a published language whose context is not a declared upstream |
@@ -285,9 +307,11 @@ saying what to do instead. Exit code 1 when there is at least one error.
 | `composition/only-in-module` | `new X` or `useClass: X` of a class imported from `infrastructure/`, outside the module file, `main.ts`, the platform and tests |
 | `config/valid` | unknown upstream, classification, relationship, rule id or `guard` mode; a context missing on disk or in the config |
 | `config/suppression-needs-reason` | a suppression without a rule id or a reason (kept as an alias next to `governance/recorded-deviation`, which judges the reason) |
-| `authz/declared` | in a module file, `builder.command(X)` or `builder.query(X)` without `.requires(` or `.public(` in its chain; with manual or nest wiring, a command or query class absent from every `requires(X, ...)` and `publicUseCase(X)` of the module file and of `application/authorization/`; a `defineRoute` without `security` |
-| `authz/in-application` | `presentation/`: a test on roles, `isAdmin`, the import of an authorizer or of `Access`; `infrastructure/`: `authorize(` or `check(` on an authorizer or access, `ForbiddenError`; `domain/`: any import of `@ddd-ts-kit/auth`, of the actor types of the kernel, a read of `.roles` or `.permissions` on an actor |
-| `authz/actor-explicit` | in `domain/` and `application/`: `ActorContext`, `ACTOR_CONTEXT`, `AsyncLocalStorage`, `.current()` or `.require()` on an actor context |
+| `authz/declared` | in a module file, `builder.command(X)` or `builder.query(X)` without `.requires(` or `.public(` in its chain; with manual or nest wiring, a command or query class absent from every `requires(X, ...)` and `publicUseCase(X)` of the module file and of `application/authorization/`; a `defineRoute` without `security` (the route type refuses it already, and an empty list too: this is the text-level net for a definition built loosely) |
+| `authz/in-application` | `presentation/`: a test on roles, `isAdmin`, the import of an authorizer or of `Access`; `infrastructure/`: `authorize(` or `check(` on an authorizer or access, `ForbiddenError`; `domain/`: any import of `@ddd-ts-kit/auth`, of the actor types of the kernel (`Actor`, `ActorContext`, `Session`, `ExecutionContext`, the authorized messages), a read of `.roles` or `.permissions` on an actor. The request glue of `@ddd-ts-kit/auth` (`actorOf`, `sessionOf`, `resolveSession`, `SessionAuthenticator`) is free in `presentation/` |
+| `authz/actor-explicit` | in `domain/` and `application/`: `ActorContext`, `ACTOR_CONTEXT`, `ExecutionScope`, `EXECUTION_SCOPE`, `AsyncLocalStorageExecutionScope`, `ScopedActorContext`, `AsyncLocalStorage`; `.current()` or `.require()` on an actor context or on something named `scope`, `scopes` or `...executionScope`; an import of `stampCreation`, `stampUpdate` or `tenantScopeOf` |
+| `aspects/outside-in` | an import of `@ddd-ts-kit/aspects/decorators` outside `infrastructure/` of a context and the platform directory: `presentation/`, the module file, `published-language/`, the shared kernel, `main.ts`, any other source (`domain/` and `application/` are reported by the two `layer/*` rules instead) |
+| `standard/no-parallel-interface` | a class, interface or type alias declared as `ILogger`, `AppLogger`, `LoggerService`, `LoggerInterface`, `IMetrics`, `MetricsService`, `ICache`, `CacheService`, `UserContext`, `CurrentUser`, `AuthContext`, `RequestContext` (outside `presentation/` and the platform), `UserSession`, `AuthSession`, `SessionData`, `PaginatedResult`, `PageResult`, `PaginatedResponse`, `Paginated`, `PaginationParams`, `PageParams`, `AuditLog`, `AuditLogEntry`, `AuditRecord`, `I` followed by a standard name (`IClock`, `IIdGenerator`, `IUnitOfWork`, `ISession`, ...) or a name of `standardInterfaces`; a class that implements or extends the standard interface is an adapter and is not reported |
 | `events/outbox-required` | `stack.events` other than `outbox` with an ORM and no `stack.events` deviation; in `domain/` and `application/`, the import of a broker client or of a bus or relay implementation; a publisher depending on more than `IntegrationEventPublisher`; a platform module that hands out a publisher and never names `OutboxPublisher` |
 | `events/consumer-idempotent` | a consumer class registered nowhere in its module file under a consumer name; a free `on(` or `consume(` without `processed`; a consumer name used twice |
 | `context/extractable` | a module file importing another context outside its published language; persistence importing another context's infrastructure or naming its schema; a handler importing another context's repository; `export let` or an exported `new Map`, `Set`, `WeakMap` at module level; `deployable: true` without `apps/<context>/main.ts` |
@@ -336,7 +360,19 @@ classifies files by their path.
   actor.id`), a schema name in raw SQL, a cross-context transaction and a mutable exported array
   or object go unseen; the content of `apps/<context>/main.ts` is not judged.
 - `governance/recorded-deviation` checks that the decision record exists, not what it says; a
-  deviation entry that justifies nothing any more is not reported, and `limits` are not governed.
+  deviation entry that justifies nothing any more is not reported, and `limits` and
+  `standardInterfaces` are not governed.
+- `authz/actor-explicit` knows no type: `.current()` or `.require()` without argument on a
+  concept of the domain named `scope` is reported, an execution scope held under another name
+  is not, and `stampCreation`, `stampUpdate` and `tenantScopeOf` are seen only when imported
+  under their own name.
+- `aspects/outside-in` and the outside packages of the `layer/*` rules are matched on the
+  import specifier: a decorator or a client re-exported by a file of an allowed place goes unseen.
+- `standard/no-parallel-interface` compares whole declared names with a table and does not read
+  the glossary: a domain concept legitimately called `AuditLog` or `CurrentUser` is reported
+  (drop the name in `standardInterfaces` or record a suppression), a copy under any other name
+  is not, and the exemption of a class reads the names after `implements` and `extends`, not
+  what they resolve to.
 - Nothing constrains what `shared-kernel/`, `platform/` and `main.ts` import.
 
 ## check-file
@@ -369,10 +405,16 @@ node packages/cli/dist/bin.js check --self
 npm run clean:self --workspace ddd-ts-kit       # the clean/* rules on this package
 ```
 
-With `DDD_TS_KIT_E2E=1`, three projects are generated in full (the default stack; `--authz rebac
---broker rabbitmq --ci gitlab`; `--authz abac --orm knex --di manual`), each runs its specs, its
-end-to-end specs (401 without a token, 403 without the permission, 2xx with it, with tokens signed
-in the test), its build and its documentation checks, and is held to ESLint with the preset,
-dependency-cruiser with the generated configuration and knip, with zero finding; one violation is
-then injected for each analyzer in the default project and has to be caught. The RabbitMQ project
-keeps its events in the process unless `DDD_TS_KIT_TEST_AMQP_URL` names a broker.
+With `DDD_TS_KIT_E2E=1`, five projects are generated in full (the default stack; `--authz rebac
+--broker rabbitmq --ci gitlab`; `--authz abac --orm knex --di manual`; and the first-class stack
+`--validation class-validator --orm knex --authn keycloak --authz rebac --cache redis --audit on`
+with `--broker rabbitmq` and without a broker), each runs its specs (a decorated adapter under
+test where the stack takes standard decorators), its end-to-end specs (401 without a token, 403
+without the permission, 2xx with it, with tokens signed in the test), its build and its
+documentation checks, and is held to ESLint with the preset, dependency-cruiser with the generated
+configuration and knip, with zero finding; one violation is then injected for each analyzer in the
+default project and has to be caught. The first-class projects also prove a list narrowed by the
+access scope, the audit trail read through its route for an allowed and a denied decision, and the
+correlation id of a request on the published event and on its audit entry. Events, cache and
+database stay in the process unless `DDD_TS_KIT_TEST_AMQP_URL`, `DDD_TS_KIT_TEST_REDIS_URL` and
+`DDD_TS_KIT_TEST_DATABASE_URL` (first-class stack only, migrated by the test) name real services.

@@ -1,9 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {
+  AUDIT_MODES,
   AUTHN_STACKS,
   AUTHZ_STACKS,
   BROKER_STACKS,
+  CACHE_STACKS,
   CI_PLATFORMS,
   CONFIG_FILE,
   DATABASE_STACKS,
@@ -35,6 +37,8 @@ export interface StackOptions {
   readonly authn?: string;
   readonly authz?: string;
   readonly broker?: string;
+  readonly cache?: string;
+  readonly audit?: string;
   /** The reason given for running an ORM without the transactional outbox. */
   readonly allowNoOutbox?: string;
   readonly force: boolean;
@@ -50,8 +54,16 @@ export function resolveStack(root: string, options: StackOptions): Config {
   assertNestGoesWithNest(http, di);
   const docsUi = http === 'none' ? 'none' : (choose(DOCS_UIS, options.docsUi, 'docs-ui') ?? 'swagger');
   const persistence = resolvePersistence(options);
-  const stack = { http, di, ...resolveTooling(options), ...persistence, docsUi, ...resolveSecurity(options), broker: resolveBroker(options, persistence.orm) };
+  const stack = { http, di, ...resolveTooling(options), ...persistence, docsUi, ...resolveSecurity(options), broker: resolveBroker(options, persistence.orm), ...resolveOperations(options, persistence.orm) };
   return parseConfig({ stack, contexts: {}, rules: {} });
+}
+
+/** The cache stays in the process unless asked otherwise; the audit trail is on as soon as there is a database to keep it in. */
+function resolveOperations(options: StackOptions, orm: string): { cache: string; audit: string } {
+  return {
+    cache: choose(CACHE_STACKS, options.cache, 'cache') ?? 'none',
+    audit: choose(AUDIT_MODES, options.audit, 'audit') ?? (orm === 'none' ? 'off' : 'on'),
+  };
 }
 
 function resolveSecurity(options: StackOptions): { authn: string; authz: string } {

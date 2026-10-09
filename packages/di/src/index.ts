@@ -26,9 +26,13 @@ export {
   type UseCaseTarget,
   type ValueBindingOptions,
 } from './module.js';
+export { contextModule } from './context-module.js';
+export type { DeclaredSource } from './declared.js';
+export type { Declarer, PolicyBinding } from './wiring.js';
 export {
   UnreadableEventError,
   type ConsumerOptions,
+  type ConsumerRuntime,
   type EventConsumer,
   type EventContract,
 } from './consumer.js';
@@ -45,26 +49,33 @@ export {
 export type {
   BindingDescription,
   HandlerDescription,
+  OriginDescription,
+  PolicyDescription,
+  ReactionDescription,
   SubscriptionDescription,
   WiringDescription,
 } from './description.js';
 export {
+  ACTOR_CONTEXT,
   CACHE,
   CLOCK,
   COMMAND_BUS,
+  DOMAIN_EVENTS,
   EVENT_BUS,
   EVENT_PUBLISHER,
   EVENT_SUBSCRIBER,
   EXECUTION_SCOPE,
   ID_GENERATOR,
+  LOCK,
   LOGGER,
   METRICS,
   PROCESSED_EVENTS,
   QUERY_BUS,
+  RATE_LIMITER,
   UNIT_OF_WORK,
 } from './kernel-tokens.js';
 export {
-  ACTOR_CONTEXT,
+  DECLARED_POLICIES,
   USE_CASE_DECLARATIONS,
   USE_CASE_GUARD,
   type AuthorizationMode,

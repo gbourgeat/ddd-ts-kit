@@ -1,0 +1,129 @@
+import { read, write } from './helpers.js';
+
+/**
+ * What a team writes after `init` and `generate` in the project of the first-class stack, kept
+ * to the minimum the proof needs: the aggregate records its birth fact, the list reads three
+ * lines, and the relationship schema knows the listed element. Nothing here repairs generated
+ * code: each edit answers a `TODO(domain)` or a `TODO(platform)` the generator left.
+ */
+export function writeBusinessDecisions(root: string): void {
+  edit(root, 'src/contexts/billing/domain/aggregates/invoice.aggregate.ts', [
+    ["import { AggregateRoot } from '@ddd-ts-kit/kernel';", "import { AggregateRoot } from '@ddd-ts-kit/kernel';\nimport { InvoiceIssued } from '../events/invoice-issued.event.js';"],
+    ['    const created = new Invoice(id, { registeredAt: now });', '    const created = new Invoice(id, { registeredAt: now });\n    created.record(new InvoiceIssued(id, now));'],
+  ]);
+  edit(root, 'src/contexts/billing/billing.module.ts', [['new InMemoryListInvoicesReader([])', "new InMemoryListInvoicesReader([{ id: 'invoice-1' }, { id: 'invoice-2' }, { id: 'invoice-3' }])"]]);
+  edit(root, 'src/platform/auth/relationships.ts', [
+    ["    permissions: { operate: union('operator') },\n  },", "    permissions: { operate: union('operator') },\n  },\n  invoice: {\n    relations: { viewer: ['user'] },\n    permissions: { view: union('viewer') },\n  },"],
+    [
+      "  return { context: Object.fromEntries(permissionRegistry.all().map((permission) => [permission.id, 'operate'])) };",
+      "  return { context: Object.fromEntries(permissionRegistry.all().map((permission) => [permission.id, 'operate'])), invoice: { 'billing:invoice.list': 'view' } };",
+    ],
+  ]);
+  write(root, 'test/e2e/first-class.e2e.spec.ts', PROOF_SPEC);
+}
+
+function edit(root: string, file: string, replacements: readonly (readonly [string, string])[]): void {
+  let content = read(root, file);
+  for (const [from, to] of replacements) {
+    if (!content.includes(from)) throw new Error(`${file} no longer holds what the proof edits: ${from}`);
+    content = content.replace(from, to);
+  }
+  write(root, file, content);
+}
+
+/** The proof itself, run by the generated project: what a client and another context observe, never the database. */
+const PROOF_SPEC = `import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { collectEvents, eventually, expectStatus, type HttpClient } from '@ddd-ts-kit/testing/e2e';
+import { startApplication, type RunningApplication } from './support/application.js';
+
+interface Page<Line> {
+  readonly items: readonly Line[];
+  readonly total?: number;
+  readonly nextCursor?: string;
+}
+
+interface Entry {
+  readonly category: string;
+  readonly action: string;
+  readonly outcome: string;
+  readonly actorId: string;
+  readonly correlationId: string;
+  readonly origin: string;
+}
+
+describe('The first-class stack, end to end', () => {
+  let application: RunningApplication;
+
+  beforeAll(async () => {
+    application = await startApplication();
+  });
+
+  afterAll(async () => {
+    await application.close();
+  });
+
+  beforeEach(async () => {
+    await application.reset();
+  });
+
+  async function operatorOf(context: string, id: string): Promise<HttpClient> {
+    await application.relate({ object: 'context:' + context, relation: 'operator', subject: 'user:' + id });
+    return application.as({ id });
+  }
+
+  async function entriesOf(correlationId: string): Promise<readonly Entry[]> {
+    const auditor = await operatorOf('audit', 'auditor');
+    const response = expectStatus(await auditor.get<Page<Entry>>('/audit/entries?limit=100&correlationId=' + correlationId), 200);
+    return response.body.items;
+  }
+
+  it('lists one page of what the access scope of the actor covers, and nothing else', async () => {
+    const ada = await operatorOf('billing', 'ada');
+    await application.relate({ object: 'invoice:invoice-1', relation: 'viewer', subject: 'user:ada' });
+    await application.relate({ object: 'invoice:invoice-3', relation: 'viewer', subject: 'user:ada' });
+
+    const first = expectStatus(await ada.get<Page<{ id: string }>>('/invoices?limit=1'), 200);
+    const second = expectStatus(await ada.get<Page<{ id: string }>>('/invoices?limit=1&offset=1'), 200);
+    expectStatus(await ada.get('/invoices?limit=0'), 422);
+
+    expect(first.body).toEqual({ items: [{ id: 'invoice-1' }], total: 2 });
+    expect(second.body).toEqual({ items: [{ id: 'invoice-3' }], total: 2 });
+  });
+
+  it('records an allowed and a denied decision, each readable through the audit route under the correlation id of its request', async () => {
+    const ada = await operatorOf('billing', 'ada');
+    const stranger = await application.as({ id: 'stranger' });
+    const allowed = 'proof-allowed-' + Date.now();
+    const denied = 'proof-denied-' + Date.now();
+
+    expectStatus(await ada.withHeaders({ 'x-correlation-id': allowed }).post('/invoices', {}), 201);
+    expectStatus(await stranger.withHeaders({ 'x-correlation-id': denied }).post('/invoices', {}), 403);
+
+    expect(await entriesOf(allowed)).toEqual(expect.arrayContaining([
+      expect.objectContaining({ category: 'authorization', action: 'billing:invoice.issue', outcome: 'allowed', actorId: 'ada', origin: 'http' }),
+      expect.objectContaining({ category: 'command', action: 'IssueInvoiceCommand', outcome: 'succeeded', actorId: 'ada' }),
+    ]));
+    expect(await entriesOf(denied)).toEqual([expect.objectContaining({ category: 'authorization', action: 'billing:invoice.issue', outcome: 'denied', actorId: 'stranger' })]);
+  });
+
+  it('carries the correlation id of the request to the published integration event and to its audit entry', async () => {
+    const ada = await operatorOf('billing', 'ada');
+    const published = collectEvents(application.events, ['billing.invoice.issued']);
+    const correlationId = 'proof-event-' + Date.now();
+
+    expectStatus(await ada.withHeaders({ 'x-correlation-id': correlationId }).post('/invoices', {}), 201);
+
+    await eventually(async () => {
+      expect(published.received().filter((event) => event.correlationId === correlationId).map((event) => event.version).sort()).toEqual([1, 2]);
+      expect(await entriesOf(correlationId)).toEqual(expect.arrayContaining([expect.objectContaining({ category: 'integration-event', action: 'billing.invoice.issued', outcome: 'succeeded', origin: 'event' })]));
+    }, { timeoutMs: 10_000 });
+  });
+
+  it('refuses the audit trail to an actor who does not hold audit:trail.read', async () => {
+    const ada = await operatorOf('billing', 'ada');
+
+    expectStatus(await application.client.get('/audit/entries'), 401);
+    expectStatus(await ada.get('/audit/entries'), 403);
+  });
+});
+`;

@@ -66,6 +66,12 @@ process.on('SIGTERM', async () => {
   that is a single context).
 - The tracing wrappers work as with any provider: the bus carries `traceparent` and
   `correlationId` untouched, in the envelope and in the message headers.
+- The correlation makes the round trip. Publish through `scopedPublisher(publisher, scope)` of
+  the kernel and consume with `consume(definition, { ..., scope }, handler)`: the consumer runs
+  in an execution context whose `correlationId` is the one of the request that published,
+  whose `causationId` is the event, and a redelivery after a failure runs in the same one. An
+  operator reads it on the message without opening the body, in the `correlation_id` property
+  and the `x-correlation-id` header.
 - A context extracted to its own service keeps its consumer name and so its queues: nothing
   changes on the broker.
 

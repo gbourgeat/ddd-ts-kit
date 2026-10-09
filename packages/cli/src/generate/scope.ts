@@ -55,6 +55,7 @@ export function contextVars(config: Config, context: Name): RenderContext {
       e2eToSource: relative('test/e2e', config.sourceRoot),
       authorizationToPlatform: relative(`${dir}/application/authorization`, config.platformDir),
       authToContexts: relative(`${config.platformDir}/auth`, config.contextsDir),
+      auditToContexts: relative(`${config.platformDir}/audit`, config.contextsDir),
       architectureToSource: relative('test/architecture', config.sourceRoot),
       appToSource: relative(`${config.sourceRoot}/apps/${context.kebab}`, config.sourceRoot),
     },
@@ -62,19 +63,18 @@ export function contextVars(config: Config, context: Name): RenderContext {
 }
 
 export function stackVars(config: Config): RenderContext {
-  const { http, validation, di, tests, orm, events, authn, authz, broker } = config.stack;
-  const one = <T extends string>(value: T, options: readonly T[]): Record<string, boolean> =>
-    Object.fromEntries(options.map((option) => [toName(option).camel, option === value]));
+  const { http, validation, di, tests, orm, events, authz, broker } = config.stack;
   return {
     http: { ...one(http, ['express', 'fastify', 'nest', 'none']), any: http !== 'none', plain: http === 'express' || http === 'fastify' },
     validation: one(validation, ['zod', 'class-validator', 'standard-schema', 'none']),
     di: one(di, ['tsyringe', 'nest', 'manual']),
     orm: { ...one(orm, ['drizzle', 'knex', 'prisma', 'typeorm', 'custom', 'none']), any: orm !== 'none' },
-    events: { outbox: events === 'outbox', inMemory: events !== 'outbox', ...providerVars(broker) },
-    // Authentication happens at the HTTP boundary: without one there is nobody to identify.
-    authn: one(http === 'none' ? 'off' : authn, ['jwt', 'none']),
+    events: { outbox: events === 'outbox', inMemory: events !== 'outbox', wakeable: wakesTheRelay(config), ...providerVars(broker) },
+    authn: authenticationVars(config),
     authz: one(authz, ['rbac', 'abac', 'rebac', 'custom']),
     broker: { ...one(broker, ['none', 'rabbitmq', 'custom']), external: broker !== 'none', name: broker },
+    cache: cacheVars(config),
+    audit: auditVars(config),
     tests: { ...one(tests, ['vitest', 'jest']), module: tests === 'jest' ? '@jest/globals' : 'vitest' },
     config: {
       sourceRoot: config.sourceRoot,
@@ -86,6 +86,35 @@ export function stackVars(config: Config): RenderContext {
     alias: { bare: config.importAlias.replace(/\/$/, '') },
     persistence: persistenceVars(config),
   };
+}
+
+/** One boolean per option, true for the chosen one: what a template tests with `{{#if stack.option}}`. */
+function one<T extends string>(value: T, options: readonly T[]): Record<string, boolean> {
+  return Object.fromEntries(options.map((option) => [toName(option).camel, option === value]));
+}
+
+/** Authentication happens at the HTTP boundary: without one there is nobody to identify. */
+function authenticationVars(config: Config) {
+  const authn = config.stack.http === 'none' ? 'off' : config.stack.authn;
+  const tokens = authn === 'jwt' || authn === 'keycloak';
+  return { ...one(authn, ['jwt', 'keycloak', 'none']), tokens, scheme: tokens ? 'bearer' : 'developmentActor' };
+}
+
+/** What a Redis protocol server brings: the cache, the limiter in front of HTTP, and the wake-up of the outbox relay. */
+function cacheVars(config: Config) {
+  const redis = config.stack.cache === 'redis';
+  const { http, events } = config.stack;
+  return { redis, none: !redis, rateLimit: redis && http !== 'none', relaySignal: redis && events === 'outbox' };
+}
+
+const WITH_AUDIT_STORE = ['knex', 'drizzle'];
+
+/** Where the audit trail is kept: its SQL store with knex and drizzle, the memory of the process with anything else. */
+function auditVars(config: Config) {
+  const { audit, orm, http } = config.stack;
+  const on = audit === 'on';
+  const sql = on && WITH_AUDIT_STORE.includes(orm);
+  return { on, off: !on, sql, memory: on && !sql, knex: on && orm === 'knex', drizzle: on && orm === 'drizzle', route: on && http !== 'none' };
 }
 
 const WITH_URL = ['drizzle', 'knex', 'prisma', 'typeorm'];
@@ -102,6 +131,12 @@ function persistenceVars(config: Config) {
     inert: http !== 'none' || di !== 'tsyringe',
     signals: !hasDatabase && events === 'outbox',
   };
+}
+
+/** Whether something can wake the outbox relay before its next poll: the in-memory store, or a Redis protocol server. */
+function wakesTheRelay(config: Config): boolean {
+  const { orm, events, cache } = config.stack;
+  return events === 'outbox' && (!WITH_URL.includes(orm) || cache === 'redis');
 }
 
 /** What `main.ts` calls to get the event provider of the chosen broker. */

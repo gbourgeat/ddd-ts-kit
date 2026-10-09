@@ -71,6 +71,10 @@ export {
   bearerCredential,
   inActorContext,
   principalResolver,
+  resolveSession,
+  sessionOf,
   type Authenticator,
   type HeaderValues,
+  type SessionAuthenticator,
 } from './authentication.js';
+export { ACCESS, AUTHENTICATOR, AUTHORIZATION_MAP, AUTHORIZER } from './tokens.js';

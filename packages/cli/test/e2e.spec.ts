@@ -2,6 +2,7 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { writeBusinessDecisions } from './first-class-proof.js';
 import { cli, DEFAULT_STACK, read, REPO_ROOT, scaffoldEverything, tempDir, walk, write, type StackFlags } from './helpers.js';
 
 interface CheckJson {
@@ -14,6 +15,10 @@ interface CheckJson {
 
 const REBAC_ON_RABBITMQ: StackFlags = { ...DEFAULT_STACK, authz: 'rebac', broker: 'rabbitmq', ci: 'gitlab' };
 const ABAC_ON_KNEX_BY_HAND: StackFlags = { ...DEFAULT_STACK, orm: 'knex', di: 'manual', authz: 'abac' };
+
+/** The stack of the example application: Keycloak, relationships, knex, Redis protocol cache, audit trail, with RabbitMQ or without a broker. */
+const FIRST_CLASS: StackFlags = { http: 'express', validation: 'class-validator', di: 'tsyringe', tests: 'vitest', orm: 'knex', events: 'outbox', authn: 'keycloak', authz: 'rebac', broker: 'rabbitmq', cache: 'redis', audit: 'on' };
+const FIRST_CLASS_WITHOUT_BROKER: StackFlags = { ...FIRST_CLASS, broker: 'none' };
 
 const STACKS: readonly StackFlags[] = [
   { http: 'express', validation: 'zod', di: 'tsyringe', tests: 'vitest', orm: 'drizzle', events: 'outbox' },
@@ -32,6 +37,13 @@ const STACKS: readonly StackFlags[] = [
   ABAC_ON_KNEX_BY_HAND,
   { http: 'fastify', validation: 'zod', di: 'tsyringe', tests: 'vitest', orm: 'drizzle', events: 'outbox', authn: 'none', authz: 'custom', broker: 'custom' },
   { http: 'express', validation: 'zod', di: 'manual', tests: 'vitest', orm: 'custom', events: 'outbox', authn: 'none', authz: 'rebac', broker: 'rabbitmq' },
+  FIRST_CLASS,
+  FIRST_CLASS_WITHOUT_BROKER,
+  { http: 'fastify', validation: 'zod', di: 'manual', tests: 'vitest', orm: 'drizzle', events: 'outbox', authn: 'keycloak', cache: 'redis' },
+  { http: 'nest', validation: 'standard-schema', di: 'nest', tests: 'vitest', orm: 'knex', events: 'outbox', cache: 'redis', broker: 'rabbitmq' },
+  { http: 'express', validation: 'zod', di: 'tsyringe', tests: 'vitest', orm: 'drizzle', events: 'outbox', audit: 'off' },
+  { http: 'none', validation: 'zod', di: 'tsyringe', tests: 'vitest', orm: 'knex', events: 'outbox', cache: 'redis' },
+  { http: 'fastify', validation: 'zod', di: 'tsyringe', tests: 'vitest', orm: 'none', events: 'in-memory', audit: 'on', cache: 'redis' },
 ];
 
 const label = (stack: StackFlags): string => Object.entries(stack).map(([key, value]) => `${key} ${value}`).join(', ');
@@ -132,6 +144,7 @@ describe.runIf(process.env['DDD_TS_KIT_E2E'] === '1')('a freshly generated proje
           paths: {
             '@/*': ['./src/*'],
             '@ddd-ts-kit/kernel': [workspace('kernel')],
+            '@ddd-ts-kit/kernel/*': [workspace('kernel', '*')],
             '@ddd-ts-kit/validation': [workspace('validation')],
             '@ddd-ts-kit/validation/*': [workspace('validation', '*')],
             '@ddd-ts-kit/http': [workspace('http')],
@@ -139,6 +152,7 @@ describe.runIf(process.env['DDD_TS_KIT_E2E'] === '1')('a freshly generated proje
             '@ddd-ts-kit/tracing': [workspace('tracing')],
             '@ddd-ts-kit/tracing/*': [workspace('tracing', '*')],
             '@ddd-ts-kit/di': [workspace('di')],
+            '@ddd-ts-kit/di/*': [workspace('di', '*')],
             '@ddd-ts-kit/events': [workspace('events')],
             '@ddd-ts-kit/events/*': [workspace('events', '*')],
             '@ddd-ts-kit/testing': [workspace('testing')],
@@ -148,6 +162,12 @@ describe.runIf(process.env['DDD_TS_KIT_E2E'] === '1')('a freshly generated proje
             '@ddd-ts-kit/auth': [workspace('auth')],
             '@ddd-ts-kit/auth/*': [workspace('auth', '*')],
             '@ddd-ts-kit/rabbitmq': [workspace('rabbitmq')],
+            '@ddd-ts-kit/aspects': [workspace('aspects')],
+            '@ddd-ts-kit/aspects/*': [workspace('aspects', '*')],
+            '@ddd-ts-kit/audit': [workspace('audit')],
+            '@ddd-ts-kit/audit/*': [workspace('audit', '*')],
+            '@ddd-ts-kit/redis': [workspace('redis')],
+            '@ddd-ts-kit/redis/*': [workspace('redis', '*')],
           },
         },
         include: ['src', 'scripts', 'test', path.join(REPO_ROOT, 'packages/validation/src/*.d.ts')],
@@ -172,9 +192,15 @@ describe.runIf(process.env['DDD_TS_KIT_E2E'] === '1')('a freshly generated proje
 describe.runIf(process.env['DDD_TS_KIT_E2E'] === '1')('a freshly generated project of the default stack really runs', () => {
   const bin = (name: string): string => path.join(REPO_ROOT, 'node_modules/.bin', name);
 
-  function runIn(root: string, command: string, args: readonly string[]): string {
+  /** Real services are named by the environment of this run; without them the generated projects stay in the process. */
+  const SERVICES = {
+    AMQP_URL: process.env['DDD_TS_KIT_TEST_AMQP_URL'] ?? '',
+    REDIS_URL: process.env['DDD_TS_KIT_TEST_REDIS_URL'] ?? '',
+  };
+
+  function runIn(root: string, command: string, args: readonly string[], extra: Readonly<Record<string, string>> = {}): string {
     try {
-      return execFileSync(command, [...args], { cwd: root, encoding: 'utf8', stdio: 'pipe', env: { ...process.env, DATABASE_URL: '', AMQP_URL: process.env['DDD_TS_KIT_TEST_AMQP_URL'] ?? '', OTEL_SDK_DISABLED: 'true', NO_COLOR: '1', FORCE_COLOR: '0' } });
+      return execFileSync(command, [...args], { cwd: root, encoding: 'utf8', stdio: 'pipe', env: { ...process.env, DATABASE_URL: '', ...SERVICES, OTEL_SDK_DISABLED: 'true', NO_COLOR: '1', FORCE_COLOR: '0', ...extra } });
     } catch (error) {
       const output = error instanceof Error && 'stdout' in error ? `${String(error.stdout)}\n${String(Reflect.get(error, 'stderr'))}` : String(error);
       throw new Error(`${command} ${args.join(' ')} failed:\n${output}`, { cause: error });
@@ -197,11 +223,18 @@ describe.runIf(process.env['DDD_TS_KIT_E2E'] === '1')('a freshly generated proje
     expect(specs).not.toContain('failed');
     expect(fs.existsSync(path.join(root, 'src/contexts/billing/test/integration/invoice.repository.contract.spec.ts'))).toBe(true);
     expect(fs.existsSync(path.join(root, 'test/architecture/extractable.spec.ts'))).toBe(true);
+    // A decorated adapter under test: the runner does not transform standard decorators, the plugin of vitest.config.ts does.
+    expect(read(root, 'src/contexts/billing/infrastructure/external/remote-tax-rates.adapter.ts')).toContain('@Retry({ attempts: 3');
+    expect(runIn(root, bin('vitest'), ['run', 'src/contexts/billing/test/integration/remote-tax-rates.adapter.spec.ts'])).toMatch(/Tests\s+1 passed/);
 
     const endToEnd = runIn(root, bin('vitest'), ['run', '--config', 'vitest.e2e.config.ts']);
     expect(endToEnd).toMatch(/Tests\s+4 passed/);
     expect(read(root, 'test/e2e/issue-invoice.e2e.spec.ts')).toMatch(/expectStatus\(response, 401\)[\s\S]*expectStatus\(response, 403\)[\s\S]*expectStatus\(response, 201\)/);
 
+    buildAndCheckDocuments(root);
+  }, 240_000);
+
+  function buildAndCheckDocuments(root: string): void {
     runIn(root, process.execPath, [NATIVE_COMPILER, '-p', 'tsconfig.build.json']);
     runIn(root, process.execPath, ['dist/scripts/openapi.js']);
     runIn(root, process.execPath, ['dist/scripts/events.js']);
@@ -213,7 +246,38 @@ describe.runIf(process.env['DDD_TS_KIT_E2E'] === '1')('a freshly generated proje
     expect(fs.existsSync(path.join(root, 'dist/src/apps/shipping/main.js'))).toBe(true);
     expect(cli(root, 'check').code).toBe(0);
     expect(cli(root, 'docs', '--check').code).toBe(0);
-  }, 240_000);
+  }
+
+  /**
+   * The stack of the example application, with the business decisions of ./first-class-proof.ts:
+   * tokens shaped like those of a Keycloak realm and signed in the test, a list narrowed by
+   * relationships, the audit trail read through its route, and the correlation id of a request
+   * followed to the published event. With DDD_TS_KIT_TEST_DATABASE_URL, _AMQP_URL and _REDIS_URL
+   * it runs on those servers (the database is migrated first); without them, in the process.
+   */
+  it.each([
+    ['with RabbitMQ', FIRST_CLASS],
+    ['without a broker', FIRST_CLASS_WITHOUT_BROKER],
+  ] as const)('the first-class stack %s passes its specs, its end-to-end proof, its build and its documentation checks', (_label, stack) => {
+    const root = tempDir('first-class');
+    scaffoldEverything(root, stack);
+    writeBusinessDecisions(root);
+    fs.symlinkSync(path.join(REPO_ROOT, 'node_modules'), path.join(root, 'node_modules'), 'dir');
+    const database = process.env['DDD_TS_KIT_TEST_DATABASE_URL'] ?? '';
+
+    const specs = runIn(root, bin('vitest'), ['run']);
+    expect(specs).toMatch(/Test Files\s+\d+ passed/);
+    expect(specs).not.toContain('failed');
+    expect(cli(root, 'generate', 'adapter', 'billing', 'PaymentGateway', '--decorators', '--force').stderr).toContain('experimentalDecorators');
+
+    buildAndCheckDocuments(root);
+    expect(read(root, 'openapi/openapi.json')).toContain('"/audit/entries"');
+    if (database !== '') runIn(root, bin('knex'), ['migrate:latest'], { DATABASE_URL: database });
+
+    const endToEnd = runIn(root, bin('vitest'), ['run', '--config', 'vitest.e2e.config.ts'], { DATABASE_URL: database });
+    expect(endToEnd).toMatch(/Tests\s+8 passed/);
+    expect(endToEnd).not.toContain('failed');
+  }, 480_000);
 
   /**
    * A node_modules as `npm install` leaves it: the packages of the kit are real directories (a link
@@ -227,6 +291,7 @@ describe.runIf(process.env['DDD_TS_KIT_E2E'] === '1')('a freshly generated proje
     }
     for (const directory of fs.readdirSync(path.join(REPO_ROOT, 'packages'))) {
       const source = path.join(REPO_ROOT, 'packages', directory);
+      linkOwnDependencies(source, installed);
       const { name } = JSON.parse(fs.readFileSync(path.join(source, 'package.json'), 'utf8')) as { name: string };
       for (const part of ['package.json', 'dist', 'templates', 'prisma']) {
         if (fs.existsSync(path.join(source, part))) fs.cpSync(path.join(source, part), path.join(installed, name, part), { recursive: true });
@@ -237,6 +302,15 @@ describe.runIf(process.env['DDD_TS_KIT_E2E'] === '1')('a freshly generated proje
       if (fs.existsSync(path.join(installed, runner))) continue;
       write(installed, `${runner}/package.json`, JSON.stringify({ name: runner, version: '0.0.0', bin: { [runner]: 'bin.js' } }));
       write(installed, `${runner}/bin.js`, '');
+    }
+  }
+
+  /** What npm kept inside one workspace package instead of hoisting (the Redis client): a project that installs the kit gets it at the top. */
+  function linkOwnDependencies(source: string, installed: string): void {
+    const own = path.join(source, 'node_modules');
+    for (const entry of fs.existsSync(own) ? fs.readdirSync(own) : []) {
+      if (entry.startsWith('.') || fs.existsSync(path.join(installed, entry))) continue;
+      fs.symlinkSync(path.join(own, entry), path.join(installed, entry));
     }
   }
 
@@ -281,6 +355,8 @@ describe.runIf(process.env['DDD_TS_KIT_E2E'] === '1')('a freshly generated proje
     it.each([
       ['relationships and RabbitMQ, GitLab pipeline', REBAC_ON_RABBITMQ],
       ['attribute policies on knex, wired by hand', ABAC_ON_KNEX_BY_HAND],
+      ['the first-class stack with RabbitMQ', FIRST_CLASS],
+      ['the first-class stack without a broker', FIRST_CLASS_WITHOUT_BROKER],
     ] as const)('has no finding either with %s', (_label, stack) => {
       const other = tempDir('analyzers');
       scaffoldEverything(other, stack);

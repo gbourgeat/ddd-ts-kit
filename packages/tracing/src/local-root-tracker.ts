@@ -2,12 +2,16 @@ import { context, trace, type Context, type Span } from '@opentelemetry/api';
 import { tracingConfiguration } from './config.js';
 
 export const DROPPED_SPANS_ATTRIBUTE = 'app.dependency_spans.dropped';
+export const CORRELATION_ID_ATTRIBUTE = 'app.correlation_id';
+export const ORIGIN_ATTRIBUTE = 'app.origin';
 
 interface LocalRoot {
   readonly span: Span;
   readonly perName: Map<string, number>;
   total: number;
   dropped: number;
+  /** Whether the span already names the execution context it belongs to. */
+  correlated: boolean;
 }
 
 // Keyed by span object: the SDK hands the same object to the processor and to the
@@ -19,12 +23,18 @@ const roots = new WeakMap<Span, LocalRoot>();
  * first span of the trace in this process: no parent, or a remote one). Add it to the
  * tracer provider to enable the per-root cap of dependency spans; without it the cap is
  * not applied. Structurally compatible with the SDK `SpanProcessor`.
+ *
+ * With `configureTracing({ executionScope })`, it also names the correlation id and the origin
+ * of the work on the local root, as soon as a span starts inside the execution scope: the root
+ * itself usually starts before the boundary opened the scope.
  */
 export class LocalRootTracker {
   onStart(span: Span, parentContext: Context): void {
     const parent = trace.getSpan(parentContext);
     const inherited = parent === undefined ? undefined : roots.get(parent);
-    roots.set(span, inherited ?? { span, perName: new Map(), total: 0, dropped: 0 });
+    const root = inherited ?? { span, perName: new Map(), total: 0, dropped: 0, correlated: false };
+    roots.set(span, root);
+    correlate(root);
   }
 
   onEnd(): void {}
@@ -42,6 +52,7 @@ export function admitDependencySpan(name: string): boolean {
   const active = trace.getSpan(context.active());
   const root = active === undefined ? undefined : roots.get(active);
   if (root === undefined) return true;
+  correlate(root);
 
   const { maxSpansPerName, maxSpansPerRoot } = tracingConfiguration();
   const sameName = root.perName.get(name) ?? 0;
@@ -53,4 +64,15 @@ export function admitDependencySpan(name: string): boolean {
   root.perName.set(name, sameName + 1);
   root.total += 1;
   return true;
+}
+
+// Identifiers of the work only: who acts and for which tenant never become span attributes.
+function correlate(root: LocalRoot): void {
+  if (root.correlated) return;
+  const execution = tracingConfiguration().executionScope?.current();
+  if (execution === undefined) return;
+  root.correlated = true;
+  if (!root.span.isRecording()) return;
+  root.span.setAttribute(CORRELATION_ID_ATTRIBUTE, execution.correlationId);
+  root.span.setAttribute(ORIGIN_ATTRIBUTE, execution.origin);
 }

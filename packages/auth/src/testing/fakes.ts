@@ -1,5 +1,5 @@
-import { anonymousActor, type Actor } from '@ddd-ts-kit/kernel';
-import type { Authenticator } from '../authentication.js';
+import type { Actor, Session } from '@ddd-ts-kit/kernel';
+import { sessionOf, type SessionAuthenticator } from '../authentication.js';
 import {
   ALLOWED,
   deny,
@@ -52,14 +52,21 @@ export class RecordingAuthorizer implements Authorizer {
   }
 }
 
-/** Knows a few credentials by heart: `new FakeAuthenticator({ 'token-of-ada': ada })`. */
-export class FakeAuthenticator implements Authenticator {
-  constructor(private readonly actors: Readonly<Record<string, Actor>>) {}
+/**
+ * Knows a few credentials by heart, each standing for an actor or for a whole session:
+ * `new FakeAuthenticator({ 'token-of-ada': ada, 'token-of-support': aSession().of(bob).build() })`.
+ */
+export class FakeAuthenticator implements SessionAuthenticator {
+  constructor(private readonly principals: Readonly<Record<string, Actor | Session>>) {}
 
   async authenticate(credential: string | undefined): Promise<Actor> {
-    if (credential === undefined) return anonymousActor();
-    const actor = this.actors[credential];
-    if (actor === undefined) throw new InvalidCredentialError('UNKNOWN_CREDENTIAL');
-    return actor;
+    return (await this.authenticateSession(credential)).actor;
+  }
+
+  async authenticateSession(credential: string | undefined): Promise<Session> {
+    if (credential === undefined) return sessionOf(undefined);
+    const principal = this.principals[credential];
+    if (principal === undefined) throw new InvalidCredentialError('UNKNOWN_CREDENTIAL');
+    return sessionOf(principal);
   }
 }

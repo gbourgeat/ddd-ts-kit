@@ -5,6 +5,9 @@ import { composeApplication } from '{{paths.appToSource}}/platform/application.j
 {{#if http.any}}
 import { createAuthenticator } from '{{paths.appToSource}}/platform/auth/authenticator.js';
 {{/if}}
+{{#if cache.redis}}
+import { openRedis } from '{{paths.appToSource}}/platform/cache.js';
+{{/if}}
 import { loadConfig } from '{{paths.appToSource}}/platform/config.js';
 import { openPersistence } from '{{paths.appToSource}}/platform/database/persistence.js';
 import { {{events.providerName}} } from '{{paths.appToSource}}/platform/events.js';
@@ -23,17 +26,39 @@ const persistence = {{persistence.await}}openPersistence(config);
 {{#unless persistence.needsUrl}}
 const persistence = openPersistence();
 {{/unless}}
-const application = composeApplication(persistence, { events: {{events.provider}}{{#if http.any}}, authenticator: createAuthenticator(config){{/if}} }, {{service.selection}});
+{{#if cache.redis}}
+const redis = openRedis(config);
+{{/if}}
+const application = composeApplication(
+  persistence,
+  {
+    events: {{events.provider}},
+{{#if http.any}}
+    authenticator: createAuthenticator(config),
+{{/if}}
+    log: { level: config.logLevel, service: config.serviceName },
+    resilience: config.resilience,
+{{#if cache.redis}}
+    redis,
+{{/if}}
+  },
+  {{service.selection}},
+);
 await application.start();
 {{#if events.outbox}}
-const relay = startOutboxRelay({ store: persistence.outbox, publisher: application.eventBus, intervalMs: config.outboxRelayIntervalMs });
+{{#if cache.relaySignal}}
+const relay = startOutboxRelay({ store: persistence.outbox, publisher: application.eventBus, intervalMs: config.outboxRelayIntervalMs, logger: application.logger, wakeOn: redis.relaySignal });
+{{/if}}
+{{#unless cache.relaySignal}}
+const relay = startOutboxRelay({ store: persistence.outbox, publisher: application.eventBus, intervalMs: config.outboxRelayIntervalMs, logger: application.logger });
+{{/unless}}
 {{/if}}
 {{#if http.any}}
-const server = await startHttpServer(application.routes, config, application.boundary);
-console.log(JSON.stringify({ level: 'info', message: 'listening', service: config.serviceName, context: '{{context.kebab}}', port: server.port }));
+const server = await startHttpServer(application, config);
+application.logger.info('listening', { context: '{{context.kebab}}', port: server.port });
 {{/if}}
 {{#unless http.any}}
-console.log(JSON.stringify({ level: 'info', message: 'started', service: config.serviceName, context: '{{context.kebab}}' }));
+application.logger.info('started', { context: '{{context.kebab}}' });
 {{/unless}}
 
 process.once('SIGTERM', () => void shutdown());
@@ -47,6 +72,9 @@ async function shutdown(): Promise<void> {
   await relay.stop();
 {{/if}}
   await application.stop();
+{{#if cache.redis}}
+  await redis.close();
+{{/if}}
   await persistence.close();
   await tracing.shutdown();
 }

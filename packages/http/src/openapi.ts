@@ -25,7 +25,10 @@ export interface GenerateOpenApiOptions {
   readonly servers?: readonly OpenApiServer[];
   readonly routes: readonly Route[];
   readonly securitySchemes?: Readonly<Record<string, JsonSchema>>;
-  /** Security schemes applied to every route that does not declare its own `security`. */
+  /**
+   * The document-wide default requirement. Every route declares its own `security`, which
+   * overrides it in each operation: it only speaks to readers of the document as a whole.
+   */
   readonly security?: readonly string[];
   /** Must be the mapper the server runs with, or the documented statuses lie. */
   readonly errorMapper?: ErrorMapper;
@@ -151,9 +154,7 @@ function operation(route: Route, mapper: ErrorMapper, definitions: Definitions):
     ...(route.description === undefined ? {} : { description: route.description }),
     ...(route.tags === undefined ? {} : { tags: [...route.tags] }),
     ...(route.deprecated === true ? { deprecated: true } : {}),
-    ...(route.security === undefined
-      ? {}
-      : { security: route.security === false ? [] : requirement(route.security) }),
+    security: route.security === false ? [] : requirement(route.security),
     ...(parameters.length === 0 ? {} : { parameters }),
     ...(request.body === undefined
       ? {}

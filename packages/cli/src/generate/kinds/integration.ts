@@ -2,7 +2,9 @@ import { CONFIG_FILE } from '../../config.js';
 import { refreshContextDoc } from '../../docs/context-doc.js';
 import { CliError } from '../../errors.js';
 import { parseContextName, toName, type Name } from '../../naming.js';
-import { emit, wire } from '../emit.js';
+import type { RenderContext } from '../../render.js';
+import { renderTemplate } from '../../templates.js';
+import { applyWiring, emit, wire } from '../emit.js';
 import type { Kind } from '../kind.js';
 import { label, learnTerms } from '../language.js';
 import { named, openScope, vars, type Scope } from '../scope.js';
@@ -34,8 +36,15 @@ export const integrationEventKind: Kind = {
     exportFromPublishedLanguage(scope, declaration);
     refreshContextDoc(scope.ws, scope.config, scope.context.kebab);
     wire(scope, 'integration-event', context);
+    auditOccurrences(scope, context);
   },
 };
+
+/** With the audit trail on, the new event joins the registry the trail subscribes to: that it occurred is recorded, never its payload. */
+function auditOccurrences(scope: Scope, context: RenderContext): void {
+  const registry = `${scope.config.platformDir}/audit/audited-events.ts`;
+  if (scope.ws.exists(registry)) applyWiring(scope.ws, registry, renderTemplate('integration-event/audited.tpl', context));
+}
 
 function parseVersion(input: string | undefined): number {
   const version = Number(input ?? '1');

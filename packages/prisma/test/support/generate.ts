@@ -28,13 +28,21 @@ datasource db {
 `;
 
 const INVOICE = `
-/// The aggregate table of the example repository: one schema per bounded context.
+/// The aggregate table of the example repository: one schema per bounded context, the tenant
+/// and the four audit fields named after the kernel \`TenantScoped\` and \`AuditStamp\`.
 model Invoice {
-  id      String @id
-  amount  Int
-  status  String
-  version Int
+  id        String   @id
+  amount    Int
+  status    String
+  version   Int
+  tenantId  String   @map("tenant_id")
+  createdAt DateTime @map("created_at") @db.Timestamptz(3)
+  createdBy String   @map("created_by")
+  updatedAt DateTime @map("updated_at") @db.Timestamptz(3)
+  updatedBy String   @map("updated_by")
 
+  /// The order of the list query, tie-breaker included, so a page is read from the index.
+  @@index([tenantId, amount, id], map: "invoices_tenant_amount_idx")
   @@map("invoices")
   @@schema("billing_core")
 }

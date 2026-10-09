@@ -31,7 +31,7 @@ export function runInit(root: string, options: InitOptions): WorkspaceReport {
   writeManifest(ws, { config, projectName, force: options.force });
   writeTypeScriptConfigs(ws, config);
   const context = templateVars(config, projectName);
-  for (const [target, template] of initFiles(config)) {
+  for (const [target, template] of initFiles(config, projectName)) {
     ws.create(target, template.endsWith('.tpl') ? renderTemplate(template, context) : readTemplate(template));
   }
   ws.create(DEPCRUISE_FILE, renderCruiseFile(config));
@@ -75,19 +75,30 @@ function addContext(ws: Workspace, config: Config, entry: string): Config {
 
 const WITH_URL = ['drizzle', 'knex', 'prisma', 'typeorm'];
 
+/** The Keycloak release the compose service runs and the realm file was written and imported for. */
+const KEYCLOAK_VERSION = '26.8.0';
+
 function templateVars(config: Config, projectName: string): RenderContext {
-  const { orm, database, docsUi, ci, authn, http, broker } = config.stack;
-  const verifiesTokens = authn === 'jwt' && http !== 'none';
+  const { database, docsUi, ci } = config.stack;
   return {
     ...stackVars(config),
     project: { name: projectName },
     docs: { any: docsUi !== 'none', ui: docsUi },
-    knip: knipVars(config.stack.http !== 'none'),
+    knip: knipVars(config),
     ci: { github: ci === 'github' || ci === 'both', gitlab: ci === 'gitlab' || ci === 'both', any: ci !== 'none' },
-    needs: { url: WITH_URL.includes(orm) || verifiesTokens || broker === 'rabbitmq' },
+    needs: { url: readsUrl(config) },
+    keycloak: { version: KEYCLOAK_VERSION },
+    compose: { volumes: database === 'postgres' || database === 'mysql' || config.stack.cache === 'redis' },
     database: { postgres: database === 'postgres', mysql: database === 'mysql', sqlite: database === 'sqlite', server: database === 'postgres' || database === 'mysql' },
     paths: { databaseToGenerated: path.posix.relative(`${config.platformDir}/database`, 'generated'), scriptsToSource: `../${config.sourceRoot}`, e2eToPlatform: `../../../${config.platformDir}` },
   };
+}
+
+/** Whether the validated configuration holds at least one URL: the reader of URLs is written only then. */
+function readsUrl(config: Config): boolean {
+  const { orm, authn, http, broker, cache } = config.stack;
+  const verifiesTokens = (authn === 'jwt' || authn === 'keycloak') && http !== 'none';
+  return WITH_URL.includes(orm) || verifiesTokens || broker === 'rabbitmq' || cache === 'redis';
 }
 
 function writeTypeScriptConfigs(ws: Workspace, config: Config): void {
@@ -116,8 +127,8 @@ function writeTypeScriptConfigs(ws: Workspace, config: Config): void {
 }
 
 /** The end-to-end tree exists only with an HTTP stack: knip is told about it only then, so that no pattern matches nothing. */
-function knipVars(hasEndToEnd: boolean): RenderContext {
-  const when = (text: string): string => (hasEndToEnd ? text : '');
+function knipVars(config: Config): RenderContext {
+  const when = (text: string): string => (config.stack.http === 'none' ? '' : text);
   return {
     e2eEntry: when(',\n    "test/e2e/**/*.ts"'),
     e2eProject: when(', "test/**/*.ts"'),

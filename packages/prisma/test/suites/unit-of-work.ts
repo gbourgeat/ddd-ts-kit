@@ -1,5 +1,11 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { FixedClock, InMemoryEventBus, type IntegrationEvent } from '@ddd-ts-kit/kernel';
+import {
+  FixedClock,
+  InMemoryEventBus,
+  stampCreation,
+  tenantScopeOf,
+  type IntegrationEvent,
+} from '@ddd-ts-kit/kernel';
 import { OutboxPublisher, OutboxRelay } from '@ddd-ts-kit/events';
 import {
   PrismaOutboxStore,
@@ -11,6 +17,7 @@ import {
 import type { Prisma } from '../generated/client/client.js';
 import { createDatabase, type TestDatabase } from '../support/database.js';
 import { Invoice, PrismaInvoiceRepository } from '../support/invoices.js';
+import { ada, scopeOf } from '../support/scopes.js';
 
 const now = new Date('2026-03-01T10:00:00.000Z');
 
@@ -43,7 +50,7 @@ const wire = () => {
   return {
     unitOfWork,
     store,
-    repository: new PrismaInvoiceRepository(unitOfWork),
+    repository: new PrismaInvoiceRepository(unitOfWork, scopeOf(ada), new FixedClock(now)),
     publisher: new OutboxPublisher(store),
     processed: new PrismaProcessedEventStore(unitOfWork, { delegate: (client) => client.processedEvent }),
   };
@@ -155,7 +162,16 @@ describe('createPrismaUnitOfWork', () => {
     const context: PrismaContext<PrismaTransactionClient<typeof extended>> = unitOfWork;
 
     const failing = unitOfWork.run(async () => {
-      await context.client().invoice.create({ data: { id: 'inv-1', amount: 100, status: 'draft', version: 1 } });
+      await context.client().invoice.create({
+        data: {
+          id: 'inv-1',
+          amount: 100,
+          status: 'draft',
+          version: 1,
+          ...tenantScopeOf(scopeOf(ada)),
+          ...stampCreation(scopeOf(ada), new FixedClock(now)),
+        },
+      });
       expect(await context.client().invoice.count()).toBe(1);
       throw new PaymentProviderDown();
     });

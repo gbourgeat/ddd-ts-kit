@@ -1,5 +1,7 @@
-/** The roles a binding declares with `.as(kind)`: the same list as the di and tracing packages. */
-export type AspectKind = 'repository' | 'gateway' | 'external' | 'use-case' | 'publisher' | 'consumer';
+import type { DependencyKind } from '@ddd-ts-kit/kernel';
+
+/** The roles a binding declares with `.as(kind)`: the one list of the kernel. */
+export type AspectKind = DependencyKind;
 
 /** What the composition root knows about the instance it wraps. Everything is optional. */
 export interface AspectInfo {

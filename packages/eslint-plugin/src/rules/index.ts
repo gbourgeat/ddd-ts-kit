@@ -1,6 +1,7 @@
 import { docsOf, eslintName, type DddRule } from '../support/define-rule.js';
 import { applicationCommandQuerySeparation } from './application-command-query-separation.js';
 import { applicationHandlerShape } from './application-handler-shape.js';
+import { aspectsOutsideIn } from './aspects-outside-in.js';
 import { authzActorExplicit } from './authz-actor-explicit.js';
 import { authzDeclared } from './authz-declared.js';
 import { authzInApplication } from './authz-in-application.js';
@@ -23,6 +24,7 @@ import { layerApplicationInward } from './layer-application-inward.js';
 import { layerDomainPurity } from './layer-domain-purity.js';
 import { layerInfrastructureNoPresentation, layerPresentationNoInfrastructure } from './layer-sideways.js';
 import { purityNoAmbientRandomness, purityNoEnvironment, purityNoSystemClock } from './purity.js';
+import { standardNoParallelInterface } from './standard-no-parallel-interface.js';
 import { testNoMocks } from './test-no-mocks.js';
 
 const ALL = [
@@ -55,6 +57,8 @@ const ALL = [
   authzDeclared,
   authzInApplication,
   authzActorExplicit,
+  aspectsOutsideIn,
+  standardNoParallelInterface,
   governanceRecordedDeviation,
 ];
 

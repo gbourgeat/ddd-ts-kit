@@ -1,33 +1,33 @@
 import {
+  executionContextOfEvent,
   idempotent,
+  type Actor,
+  type ExecutionScope,
   type IntegrationEvent,
   type IntegrationEventHandler,
   type ProcessedEventStore,
-  type Result,
 } from '@ddd-ts-kit/kernel';
+import type { EventConsumer, EventContract } from '@ddd-ts-kit/kernel/declarations';
 
-/**
- * What `builder.on(...)` needs from an event declaration. A definition made by
- * `defineIntegrationEvent` of `@ddd-ts-kit/events` fits as it is; this package does not
- * depend on it.
- */
-export interface EventContract<Payload> {
-  readonly type: string;
-  readonly version: number;
-  parse(event: IntegrationEvent): Result<IntegrationEvent<Payload>, { readonly reason: string }>;
-}
-
-/**
- * A class of `application/integration/consumers/`. `handle` is declared as a property so that
- * the compiler compares its parameter strictly: a consumer of another event is rejected.
- */
-export interface EventConsumer<Payload> {
-  readonly handle: (event: IntegrationEvent<Payload>) => Promise<void>;
-}
+export type { EventConsumer, EventContract };
 
 export interface ConsumerOptions {
-  /** Stable name of the consumer, `<context>.<reaction>`: the idempotency scope. */
+  /**
+   * Stable name of the consumer, `<context>.<reaction>`: the idempotency scope, and the system
+   * actor the consumer runs as in `EXECUTION_SCOPE`.
+   */
   readonly consumer: string;
+  /**
+   * The actor an event names, for a project whose envelopes carry a reference to one. The
+   * consumer then runs as that actor instead of `systemActor(consumer)`.
+   */
+  readonly actorOf?: (event: IntegrationEvent) => Actor | undefined;
+}
+
+/** What the application gives every consumer when it starts: both are left out when not bound. */
+export interface ConsumerRuntime {
+  readonly processed?: ProcessedEventStore;
+  readonly scope?: ExecutionScope;
 }
 
 /** An event of the subscribed type and version that its contract refuses. */
@@ -46,18 +46,21 @@ export class UnreadableEventError extends Error {
 
 export interface Reception<Payload> {
   readonly contract: EventContract<Payload>;
-  readonly consumer: string;
-  readonly processed: ProcessedEventStore | undefined;
+  readonly options: ConsumerOptions;
+  readonly runtime: ConsumerRuntime;
   readonly handle: (event: IntegrationEvent<Payload>) => Promise<void>;
 }
 
 /**
  * The handler to subscribe for one consumer. Another version of the same type is skipped
  * (it has its own contract); an unreadable event throws so that the provider retries or
- * dead-letters it instead of losing it silently.
+ * dead-letters it instead of losing it silently. With a scope, the idempotency mark and the
+ * consumer run in the execution context of the event: origin `event`, its correlation, the
+ * event as cause.
  */
 export function receive<Payload>(reception: Reception<Payload>): IntegrationEventHandler {
-  const { contract, consumer, processed, handle } = reception;
+  const { contract, options, runtime, handle } = reception;
+  const { processed, scope } = runtime;
   return async (event) => {
     const parsed = contract.parse(event);
     if (!parsed.ok) {
@@ -67,7 +70,9 @@ export function receive<Payload>(reception: Reception<Payload>): IntegrationEven
     const deliver = (): Promise<void> => handle(parsed.value);
     // Marked only once the event is known to be valid, so a skipped or rejected delivery
     // never consumes the idempotency key.
-    await (processed === undefined ? deliver() : idempotent(consumer, processed, deliver)(event));
+    const once = (): Promise<void> =>
+      processed === undefined ? deliver() : idempotent(options.consumer, processed, deliver)(event);
+    await (scope === undefined ? once() : scope.run(executionContextOfEvent(event, options), once));
   };
 }
 

@@ -4,6 +4,7 @@ import path from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { runCheck } from '../src/check/engine.js';
 import { loadProject } from '../src/check/project.js';
+import { parseConfig, serializeConfig } from '../src/config.js';
 
 const BILLING = 'src/contexts/billing';
 const SHIPPING = 'src/contexts/shipping';
@@ -156,6 +157,55 @@ describe('events/outbox-required and context/extractable on the config', () => {
 
     expect(reported(without, 'context/extractable')[0]?.message).toBe('The context "billing" is declared deployable but src/apps/billing/main.ts does not exist.');
     expect(reported(withEntryPoint, 'context/extractable')).toEqual([]);
+  });
+});
+
+describe('aspects, outside packages and standard interfaces', () => {
+  const AGGREGATE = `${BILLING}/domain/aggregates/invoice.aggregate.ts`;
+  const HANDLER = `${BILLING}/application/commands/issue-invoice/issue-invoice.handler.ts`;
+  const ROUTE = `${BILLING}/presentation/http/issue-invoice.route.ts`;
+  const DECORATORS = "import { Retry } from '@ddd-ts-kit/aspects/decorators';\nexport { Retry };\n";
+
+  it('reports an aspect decorator once: the layer rule inside the model and the use cases, aspects/outside-in around them', () => {
+    const root = projectWith({ [AGGREGATE]: DECORATORS, [HANDLER]: DECORATORS, [ROUTE]: DECORATORS, [ADAPTER]: DECORATORS, 'src/platform/client.ts': DECORATORS, 'src/main.ts': DECORATORS });
+
+    expect(reported(root, 'aspects/outside-in').map(({ file }) => file)).toEqual([ROUTE, 'src/main.ts']);
+    expect(reported(root, 'layer/domain-purity').map(({ file }) => file)).toEqual([AGGREGATE]);
+    expect(reported(root, 'layer/application-inward').map(({ file }) => file)).toEqual([HANDLER]);
+  });
+
+  it('says where each outside concern belongs, whatever the allow-list holds', () => {
+    const imports = ["import { retry } from '@ddd-ts-kit/aspects';", "import { record } from '@ddd-ts-kit/audit/drizzle';", "import { RedisCache } from '@ddd-ts-kit/redis';", "import { withSpan } from '@ddd-ts-kit/tracing/node';"];
+    const allowed = ['@ddd-ts-kit/kernel', '@ddd-ts-kit/aspects', '@ddd-ts-kit/audit', '@ddd-ts-kit/redis', '@ddd-ts-kit/tracing'];
+    const root = projectWith({ [HANDLER]: `${imports.join('\n')}\n` }, { applicationAllowedPackages: allowed });
+
+    const found = runCheck(loadProject(root), { rules: ['layer/application-inward'] }).violations;
+
+    expect(found.map(({ line }) => line)).toEqual([1, 2, 3, 4]);
+    expect(found.map(({ message }) => message.split(':')[0])).toEqual(imports.map((line) => `The application layer imports "${/'(.+)'/.exec(line)?.[1] ?? ''}"`));
+    expect(found.map(({ fix }) => fix)).toEqual([expect.stringContaining('`.with(...)`'), expect.stringContaining('bus middleware'), expect.stringContaining('`Cache` of @ddd-ts-kit/kernel'), expect.stringContaining('`decorate` hook')]);
+  });
+
+  it('reads the names of standard/no-parallel-interface from the config over the defaults', () => {
+    const source = 'export interface ILogger {}\nexport type CurrentUser = { id: string };\nexport class TenantInfo {}\nexport class CacheService implements Cache {}\nimport { type IClock } from "./clock.js";\n';
+    const defaults = projectWith({ 'src/platform/shapes.ts': source });
+    const configured = projectWith({ 'src/platform/shapes.ts': source }, { standardInterfaces: { CurrentUser: false, TenantInfo: 'TenantScoped', ILogger: 'Logger (see ADR-0003)' } });
+
+    expect(reported(defaults, 'standard/no-parallel-interface').map(({ line, message }) => `${line}: ${message}`)).toEqual([
+      '1: ILogger is a home-made copy of a standard interface: use Logger.',
+      '2: CurrentUser is a home-made copy of a standard interface: use ExecutionContext or Actor.',
+    ]);
+    expect(reported(configured, 'standard/no-parallel-interface').map(({ line, message }) => `${line}: ${message}`)).toEqual([
+      '1: ILogger is a home-made copy of a standard interface: use Logger (see ADR-0003).',
+      '3: TenantInfo is a home-made copy of a standard interface: use TenantScoped.',
+    ]);
+  });
+
+  it('writes standardInterfaces back only when the config holds some', () => {
+    const configured = parseConfig({ standardInterfaces: { CurrentUser: false, TenantInfo: 'TenantScoped', Wrong: 3 } });
+
+    expect(JSON.parse(serializeConfig(configured))).toMatchObject({ standardInterfaces: { CurrentUser: false, TenantInfo: 'TenantScoped' } });
+    expect(JSON.parse(serializeConfig(parseConfig({})))).not.toHaveProperty('standardInterfaces');
   });
 });
 

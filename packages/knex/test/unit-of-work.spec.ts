@@ -9,6 +9,7 @@ import {
 } from '../src/index.js';
 import { createDatabase, type TestDatabase } from './support/database.js';
 import { BILLING, createInvoicesTable, Invoice, KnexInvoiceRepository } from './support/invoices.js';
+import { ada, scopeOf } from './support/scopes.js';
 
 const now = new Date('2026-03-01T10:00:00.000Z');
 
@@ -44,7 +45,7 @@ const wire = () => {
   return {
     unitOfWork,
     store,
-    repository: new KnexInvoiceRepository(unitOfWork),
+    repository: new KnexInvoiceRepository(unitOfWork, scopeOf(ada), new FixedClock(now)),
     publisher: new OutboxPublisher(store),
     processed: new KnexProcessedEventStore(unitOfWork),
   };

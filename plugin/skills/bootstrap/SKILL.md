@@ -31,6 +31,12 @@ Stack hints given: `$ARGUMENTS`
    | Database | `postgres`, `mysql`, `sqlite`, `none` | `postgres` |
    | Events | `outbox`, `in-memory` | `outbox` with a database |
    | API docs UI | `swagger`, `scalar`, `redoc`, `none` | `swagger` |
+   | Authentication | `jwt`, `keycloak`, `none` | `jwt` |
+   | Authorization | `rbac`, `abac`, `rebac`, `custom` | `rbac` |
+   | Broker | `none`, `rabbitmq`, `custom` | `none` |
+   | Cache | `none`, `redis` (Redis, Dragonfly, Valkey) | `none` |
+   | Audit trail | `on`, `off` | `on` with an ORM |
+   | CI | `github`, `gitlab`, `both`, `none` | `github` |
    | Tests | `vitest`, `jest` | `vitest` |
 
 3. Settle the first bounded contexts and their ubiquitous language with the skill
@@ -40,6 +46,7 @@ Stack hints given: `$ARGUMENTS`
    ```bash
    npx ddd-ts-kit@latest init --http <http> --validation <validation> --di <di> \
      --orm <orm> --database <database> --events <events> --docs-ui <ui> \
+     --authn <authn> --authz <authz> --broker <broker> --cache <cache> --audit <audit> --ci <ci> \
      --context <name>:<core|supporting|generic> --dry-run
    npx ddd-ts-kit@latest init ...same flags
    npm install

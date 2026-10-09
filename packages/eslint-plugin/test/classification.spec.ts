@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { isTestFile as cliIsTestFile, locate as cliLocate, resolveImport as cliResolveImport } from '../../cli/src/check/project.js';
+import { parallelNames as cliParallelNames } from '../../cli/src/check/standard-interfaces.js';
 import { parseConfig as cliParseConfig } from '../../cli/src/config.js';
 import { isTestFile, locate, resolveImport } from '../src/project/classify.js';
 import { parseConfig } from '../src/project/config.js';
+import { parallelNames } from '../src/support/standard-interfaces.js';
 
 const RAW_CONFIGS: readonly Record<string, unknown>[] = [
   {},
@@ -10,6 +12,8 @@ const RAW_CONFIGS: readonly Record<string, unknown>[] = [
   { contextsDir: './modules/', sharedKernelDir: 'libs\\shared', platformDir: 'src/infra-platform', importAlias: '' },
   { stack: { validation: 'class-validator' }, domainAllowedPackages: ['@ddd-ts-kit/kernel', 'decimal.js'], limits: { maxParameters: 4, maxFunctionLines: 0 } },
   { stack: { validation: 'none' }, publishedLanguageAllowedPackages: ['valibot'], rules: { 'clean/stepdown': 'warn' } },
+  { standardInterfaces: { TenantInfo: 'TenantScoped', CurrentUser: false, Empty: '', Wrong: true, Count: 3 } },
+  { standardInterfaces: ['ILogger'] },
   { contexts: { billing: { classification: 'core', upstreams: ['catalog', { context: 'identity', relationship: 'conformist' }, 42], extraDirectories: ['jobs', { path: './sagas/', reason: 'long flows' }] } } },
 ];
 
@@ -67,6 +71,12 @@ describe('the plugin classifies files exactly like the CLI checker', () => {
   it.each(RAW_CONFIGS)('reads the config %j the same way', (raw) => {
     const read = parseConfig(raw);
     expect(read).toEqual(keysReadByThePlugin(cliParseConfig(raw), read));
+  });
+
+  it.each(RAW_CONFIGS)('names the same home-made copies of standard interfaces under %j', (raw) => {
+    const names = parallelNames(parseConfig(raw).standardInterfaces);
+    expect([...names]).toEqual([...cliParallelNames(cliParseConfig(raw).standardInterfaces)]);
+    expect(names.get('ILogger')).toBe('Logger');
   });
 
   it.each(RAW_CONFIGS)('locates every sample path the same way under %j', (raw) => {

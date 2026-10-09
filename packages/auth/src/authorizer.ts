@@ -1,4 +1,4 @@
-import type { Actor } from '@ddd-ts-kit/kernel';
+import type { Actor, MessageInfo } from '@ddd-ts-kit/kernel';
 import type { Permission } from './permissions.js';
 
 /** One element a right may bear on: `{ type: 'invoice', id: 'inv-1' }`. */
@@ -74,16 +74,19 @@ export interface DecisionRecord {
   readonly decision: Decision;
   /** The command or query, when the decision was taken by the bus middleware. */
   readonly useCase?: string;
+  /** Whether that use case changes state or answers; absent with `useCase`, for a decision taken outside a bus. */
+  readonly kind?: MessageInfo['kind'];
 }
 
 export type OnDecision = (record: DecisionRecord) => void | Promise<void>;
 
-export function decisionRecord(request: CheckRequest, decision: Decision, useCase?: string): DecisionRecord {
+/** `info` is the message the bus is handling, for a decision taken by the bus middleware. */
+export function decisionRecord(request: CheckRequest, decision: Decision, info?: MessageInfo): DecisionRecord {
   return {
     actorId: request.actor.id,
     permissionId: request.permission.id,
     ...(request.resource === undefined ? {} : { resource: request.resource }),
     decision,
-    ...(useCase === undefined ? {} : { useCase }),
+    ...(info === undefined ? {} : { useCase: info.name, kind: info.kind }),
   };
 }

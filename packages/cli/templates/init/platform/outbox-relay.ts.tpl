@@ -1,12 +1,13 @@
-import { OutboxRelay, type OutboxStore{{#if persistence.signals}}, type RelaySignal{{/if}} } from '@ddd-ts-kit/events';
-import { SystemClock, type IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
+import { OutboxRelay, type OutboxStore{{#if events.wakeable}}, type RelaySignal{{/if}} } from '@ddd-ts-kit/events';
+import { SystemClock, type IntegrationEventPublisher, type Logger } from '@ddd-ts-kit/kernel';
 
 export interface OutboxRelayOptions {
   readonly store: OutboxStore;
   /** The provider events are delivered to once their command has committed. */
   readonly publisher: IntegrationEventPublisher;
   readonly intervalMs: number;
-{{#if persistence.signals}}
+  readonly logger: Logger;
+{{#if events.wakeable}}
   /** Wakes the relay as soon as an event is stored; the interval stays as the safety net. */
   readonly wakeOn?: RelaySignal;
 {{/if}}
@@ -21,11 +22,11 @@ export function startOutboxRelay(options: OutboxRelayOptions): RunningRelay {
     store: options.store,
     publisher: options.publisher,
     clock: new SystemClock(),
-{{#if persistence.signals}}
+{{#if events.wakeable}}
     ...(options.wakeOn === undefined ? {} : { wakeOn: options.wakeOn }),
 {{/if}}
     // Codes only reach this hook, never messages: it is safe to log as is.
-    onFailure: (failure) => console.error(JSON.stringify({ level: 'error', message: 'outbox relay failure', ...failure })),
+    onFailure: (failure) => options.logger.error('outbox relay failure', { ...failure }),
   });
   relay.start({ intervalMs: options.intervalMs });
   return { stop: async () => relay.stop() };

@@ -1,5 +1,7 @@
+// ddd-ts-kit:imports
 import type { Knex } from 'knex';
 import { schemaNameOf } from '@ddd-ts-kit/knex';
+// /ddd-ts-kit:imports
 
 export const {{context.constant}}_SCHEMA = schemaNameOf('{{context.kebab}}');
 

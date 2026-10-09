@@ -1,14 +1,7 @@
 import type { Message, MessageInfo, MessageType } from '@ddd-ts-kit/kernel';
+import { declarationOf, type PermissionRef, type ResourcePointer } from '@ddd-ts-kit/kernel/declarations';
 
-/** The part of a permission this package reads. The authorization package owns the full type. */
-export interface PermissionRef {
-  readonly id: string;
-}
-
-export interface ResourcePointer {
-  readonly type: string;
-  readonly id: string;
-}
+export type { PermissionRef, ResourcePointer };
 
 export interface RequirementOptions<M> {
   /** The element the message is about, when the right depends on it. */
@@ -23,7 +16,7 @@ export interface UseCaseDeclaration {
   readonly kind: MessageInfo['kind'];
   readonly message: MessageType<Message>;
   readonly module: string;
-  /** Absent when the module wrote neither `.requires(...)` nor `.public()`. */
+  /** Absent when neither the module (`.requires(...)`, `.public()`) nor the message (`@Requires`, `@Public`) said it. */
   readonly access?: UseCaseAccess;
   readonly permission?: PermissionRef;
   readonly resourceOf?: (message: Message) => ResourcePointer | undefined;
@@ -46,3 +39,16 @@ export function protectedRequirement<M extends Message>(
 }
 
 export const PUBLIC_REQUIREMENT: Requirement = { access: 'public' };
+
+/** What the message says of itself with `@Requires` or `@Public`; nothing for an undecorated one. */
+export function declaredRequirement(type: MessageType<Message>): Requirement {
+  const declaration = declarationOf(type);
+  if (declaration?.role !== 'message') return {};
+  const { access, permission, resourceOf, contextOf } = declaration;
+  return {
+    access,
+    ...(permission === undefined ? {} : { permission }),
+    ...(resourceOf === undefined ? {} : { resourceOf }),
+    ...(contextOf === undefined ? {} : { contextOf }),
+  };
+}

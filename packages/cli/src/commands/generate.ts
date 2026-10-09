@@ -9,27 +9,7 @@ import { Arguments, type Command } from './args.js';
 import { printReport } from './report.js';
 
 export const generateCommand: Command = (argv, io) => {
-  const args = Arguments.parse(argv, {
-    classification: { type: 'string' },
-    purpose: { type: 'string' },
-    upstream: { type: 'string', multiple: true },
-    term: { type: 'string', multiple: true },
-    code: { type: 'string' },
-    aggregate: { type: 'string' },
-    method: { type: 'string' },
-    path: { type: 'string' },
-    command: { type: 'boolean', default: false },
-    query: { type: 'boolean', default: false },
-    version: { type: 'string' },
-    'allow-name': { type: 'boolean', default: false },
-    permission: { type: 'string' },
-    public: { type: 'boolean', default: false },
-    'tenant-scoped': { type: 'boolean', default: false },
-    deviation: { type: 'string' },
-    reason: { type: 'string' },
-    'dry-run': { type: 'boolean', default: false },
-    force: { type: 'boolean', default: false },
-  });
+  const args = Arguments.parse(argv, OPTIONS);
   const [kindName, ...rest] = args.positionals;
   const kind = requestedKind(kindName, rest);
   const root = args.projectRoot;
@@ -39,6 +19,32 @@ export const generateCommand: Command = (argv, io) => {
   printReport(io, args, ws.commit(args.flag('dry-run')));
   return 0;
 };
+
+/** Every flag a kind may take; each kind reads the ones it knows. */
+const OPTIONS = {
+  classification: { type: 'string' },
+  purpose: { type: 'string' },
+  upstream: { type: 'string', multiple: true },
+  term: { type: 'string', multiple: true },
+  code: { type: 'string' },
+  aggregate: { type: 'string' },
+  method: { type: 'string' },
+  path: { type: 'string' },
+  command: { type: 'boolean', default: false },
+  query: { type: 'boolean', default: false },
+  version: { type: 'string' },
+  'allow-name': { type: 'boolean', default: false },
+  permission: { type: 'string' },
+  public: { type: 'boolean', default: false },
+  'tenant-scoped': { type: 'boolean', default: false },
+  list: { type: 'boolean', default: false },
+  kind: { type: 'string' },
+  decorators: { type: 'boolean', default: false },
+  deviation: { type: 'string' },
+  reason: { type: 'string' },
+  'dry-run': { type: 'boolean', default: false },
+  force: { type: 'boolean', default: false },
+} as const;
 
 /** Keeps what is derived from the config and the tree in step with what was just scaffolded, once the project has it. */
 function refreshDocs(ws: Workspace): void {
@@ -63,7 +69,7 @@ function requestedKind(name: string | undefined, rest: readonly string[]): Kind 
 
 function flagsOf(args: Arguments): KindFlags {
   return {
-    ...args.texts(['classification', 'purpose', 'code', 'aggregate', 'method', 'path', 'version', 'permission', 'deviation', 'reason']),
+    ...args.texts(['classification', 'purpose', 'code', 'aggregate', 'method', 'path', 'version', 'permission', 'deviation', 'reason', 'kind']),
     upstream: args.many('upstream'),
     term: args.many('term'),
     command: args.flag('command'),
@@ -71,5 +77,7 @@ function flagsOf(args: Arguments): KindFlags {
     allowName: args.flag('allow-name'),
     public: args.flag('public'),
     tenantScoped: args.flag('tenant-scoped'),
+    list: args.flag('list'),
+    decorators: args.flag('decorators'),
   };
 }

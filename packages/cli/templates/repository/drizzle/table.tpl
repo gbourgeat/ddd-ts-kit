@@ -1,10 +1,32 @@
+@@imports
+{{#if tenant.scoped}}
+import { index } from 'drizzle-orm/pg-core';
+import { auditColumns, tenantColumn } from '@ddd-ts-kit/drizzle/postgres';
+{{/if}}
+{{#unless tenant.scoped}}
+import { auditColumns } from '@ddd-ts-kit/drizzle/postgres';
+{{/unless}}
 @@tables
+{{#if tenant.scoped}}
+export const {{aggregate.tableCamel}} = {{context.camel}}Schema.table(
+  '{{aggregate.table}}',
+  {
+    id: text('id').primaryKey(),
+    registeredAt: timestamp('registered_at', { withTimezone: true, mode: 'date' }).notNull(),
+    // TODO(domain): add one column per field of {{aggregate.pascal}}State, with the type and the constraints the storage must enforce; then run `npm run db:generate`.
+    version: integer('version').notNull(),
+    ...tenantColumn(),
+    ...auditColumns(),
+  },
+  (table) => [index('{{aggregate.table}}_tenant_idx').on(table.tenantId, table.id)],
+);
+{{/if}}
+{{#unless tenant.scoped}}
 export const {{aggregate.tableCamel}} = {{context.camel}}Schema.table('{{aggregate.table}}', {
   id: text('id').primaryKey(),
-{{#if tenant.scoped}}
-  tenantId: text('tenant_id').notNull(),
-{{/if}}
-  createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull(),
+  registeredAt: timestamp('registered_at', { withTimezone: true, mode: 'date' }).notNull(),
   // TODO(domain): add one column per field of {{aggregate.pascal}}State, with the type and the constraints the storage must enforce; then run `npm run db:generate`.
   version: integer('version').notNull(),
+  ...auditColumns(),
 });
+{{/unless}}

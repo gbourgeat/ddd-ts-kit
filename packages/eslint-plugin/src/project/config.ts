@@ -30,6 +30,8 @@ export interface Config {
   readonly applicationAllowedPackages: readonly string[];
   readonly publishedLanguageAllowedPackages: readonly string[];
   readonly limits: Limits;
+  /** Names reported by `standard/no-parallel-interface`, over its defaults: the kernel interface to use instead, or `false` to drop a default. */
+  readonly standardInterfaces: Readonly<Record<string, string | false>>;
 }
 
 const DEFAULT_LIMITS: Limits = { maxParameters: 3, maxFunctionLines: 30 };
@@ -65,6 +67,7 @@ export function parseConfig(raw: unknown): Config {
     applicationAllowedPackages: strings(source['applicationAllowedPackages'], APPLICATION),
     publishedLanguageAllowedPackages: strings(source['publishedLanguageAllowedPackages'], contractPackages(source['stack'])),
     limits: parseLimits(source['limits']),
+    standardInterfaces: parseStandardInterfaces(source['standardInterfaces']),
   };
 }
 
@@ -99,6 +102,11 @@ function parseExtraDirectory(value: unknown): string | undefined {
   if (typeof value === 'string') return posix(value);
   if (isRecord(value) && typeof value['path'] === 'string') return posix(value['path']);
   return undefined;
+}
+
+function parseStandardInterfaces(value: unknown): Record<string, string | false> {
+  const entries = Object.entries(isRecord(value) ? value : {}).flatMap(([name, instead]): [string, string | false][] => (instead === false || (typeof instead === 'string' && instead !== '') ? [[name, instead]] : []));
+  return Object.fromEntries(entries);
 }
 
 function parseLimits(value: unknown): Limits {

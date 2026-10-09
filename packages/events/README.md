@@ -177,6 +177,41 @@ that can take its mark back, a `ReleasableProcessedEventStore` such as
 `InMemoryReleasableProcessedEventStore`: `on` and `consume` release the mark of a handler that
 failed. The `InMemoryProcessedEventStore` of the kernel cannot.
 
+### The execution context of a consumed event
+
+`consume` and `on` take the `ExecutionScope` of the kernel and run everything, the unit of
+work and the idempotency mark included, inside it:
+
+```ts
+consume(orderPlaced, { consumer: 'billing.ordering.order.placed', processed, unitOfWork, scope }, handler);
+```
+
+| Field of the context | Value |
+|---|---|
+| `origin` | `event` |
+| `correlationId` | the `correlationId` of the event, or its `id` when it names none |
+| `causationId` | the `id` of the event |
+| `actor` | `systemActor(consumer)`, unless `actorOf(event)` answers one |
+
+So the repositories of the consuming context stamp audit columns with
+`system:billing.ordering.order.placed`, and a log line of the consumer carries the correlation
+of the request that started it all. The envelope carries no actor by default, on purpose: an
+actor is personal data, and a broker keeps messages. A project that decides to put a reference
+in its own payload or envelope maps it with `actorOf: (event) => Actor | undefined`.
+
+On the publishing side, `scopedPublisher` of the kernel fills the correlation in, so use cases
+never pass it by hand:
+
+```ts
+import { scopedPublisher } from '@ddd-ts-kit/kernel';
+
+const publisher = scopedPublisher(new OutboxPublisher(outboxStore), scope); // what handlers publish to
+```
+
+An event created with a `correlationId` keeps it; one published outside of any execution
+context is left as it is. It is a decorator, not an option of `OutboxPublisher` or of
+`defineIntegrationEvent(...).create`: both stay pure, and the stamp applies to every provider.
+
 ## Generate the AsyncAPI document and the catalog
 
 ```ts

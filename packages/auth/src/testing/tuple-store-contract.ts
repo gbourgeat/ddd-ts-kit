@@ -1,7 +1,6 @@
-import type { ContractRunner } from '@ddd-ts-kit/testing/contracts';
+import { ContractSuite, type Awaitable, type ContractRunner } from '@ddd-ts-kit/testing/contracts';
 import type { RelationTupleStore } from '../rebac/store.js';
 import { tupleKey, type RelationTuple } from '../rebac/tuples.js';
-import { ContractSuite, type Awaitable } from './suite.js';
 
 export interface RelationTupleStoreContractOptions {
   readonly name: string;

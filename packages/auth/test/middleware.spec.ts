@@ -155,6 +155,7 @@ describe('authorizationMiddleware', () => {
     expect(allowing.audit).toEqual([
       {
         useCase: 'VoidInvoice',
+        kind: 'command',
         actorId: 'ada',
         permissionId: 'billing:invoice.void',
         resource: { type: 'invoice', id: 'inv-7' },

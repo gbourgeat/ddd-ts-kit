@@ -13,9 +13,11 @@ export const DATABASE_STACKS = ['postgres', 'mysql', 'sqlite', 'mongodb', 'none'
 export const TEST_STACKS = ['vitest', 'jest'] as const;
 export const DOCS_UIS = ['swagger', 'scalar', 'redoc', 'none'] as const;
 export const CI_PLATFORMS = ['github', 'gitlab', 'both', 'none'] as const;
-export const AUTHN_STACKS = ['jwt', 'none'] as const;
+export const AUTHN_STACKS = ['jwt', 'keycloak', 'none'] as const;
 export const AUTHZ_STACKS = ['rbac', 'abac', 'rebac', 'custom'] as const;
 export const BROKER_STACKS = ['none', 'rabbitmq', 'custom'] as const;
+export const CACHE_STACKS = ['none', 'redis'] as const;
+export const AUDIT_MODES = ['on', 'off'] as const;
 export const GUARD_MODES = ['enforce', 'advise', 'off'] as const;
 export const CLASSIFICATIONS = ['core', 'supporting', 'generic'] as const;
 export const RELATIONSHIPS = [
@@ -40,6 +42,8 @@ type CiPlatform = (typeof CI_PLATFORMS)[number];
 type AuthnStack = (typeof AUTHN_STACKS)[number];
 type AuthzStack = (typeof AUTHZ_STACKS)[number];
 type BrokerStack = (typeof BROKER_STACKS)[number];
+type CacheStack = (typeof CACHE_STACKS)[number];
+type AuditMode = (typeof AUDIT_MODES)[number];
 export type Severity = (typeof SEVERITIES)[number];
 
 export interface Stack {
@@ -60,6 +64,10 @@ export interface Stack {
   readonly authz: AuthzStack;
   /** Where the outbox relay publishes: `none` is the in-memory bus of the same process. */
   readonly broker: BrokerStack;
+  /** What backs the kernel `Cache` port, the relay signal and the rate limiter: the process itself, or a Redis protocol server. */
+  readonly cache: CacheStack;
+  /** Whether the audit trail is wired: decisions, commands and integration events, recorded from outside the use cases. */
+  readonly audit: AuditMode;
 }
 
 export interface Upstream {
@@ -98,6 +106,8 @@ export interface Config {
   /** How the editor hook of the plugin reacts to a violation: `enforce`, `advise` or `off`. Kept as written, `check` reports a wrong value. */
   readonly guard: string;
   readonly deviations: readonly Deviation[];
+  /** Names reported by `standard/no-parallel-interface`, over its defaults: the kernel interface to use instead, or `false` to drop a default. */
+  readonly standardInterfaces: Readonly<Record<string, string | false>>;
 }
 
 interface Limits {
@@ -165,6 +175,7 @@ export function parseConfig(raw: unknown): Config {
     limits: parseLimits(raw['limits']),
     guard: text(raw['guard'], 'enforce'),
     deviations: parseDeviations(raw['deviations']),
+    standardInterfaces: parseStandardInterfaces(raw['standardInterfaces']),
   };
 }
 
@@ -172,12 +183,13 @@ function parseStack(stack: Record<string, unknown>): Stack {
   const choose = <T extends string>(key: string, values: readonly T[], fallback: T): T => pick(values, stack[key], { fallback, key: `stack.${key}` });
   const http = choose('http', HTTP_STACKS, 'express');
   const database = choose('database', DATABASE_STACKS, 'postgres');
+  const orm = choose('orm', ORM_STACKS, 'drizzle');
   return {
     http,
     validation: choose('validation', VALIDATION_STACKS, 'zod'),
     di: choose('di', DI_STACKS, http === 'nest' ? 'nest' : 'tsyringe'),
     events: choose('events', EVENT_STACKS, database === 'none' ? 'in-memory' : 'outbox'),
-    orm: choose('orm', ORM_STACKS, 'drizzle'),
+    orm,
     database,
     tests: choose('tests', TEST_STACKS, 'vitest'),
     docsUi: choose('docsUi', DOCS_UIS, http === 'none' ? 'none' : 'swagger'),
@@ -185,6 +197,8 @@ function parseStack(stack: Record<string, unknown>): Stack {
     authn: choose('authn', AUTHN_STACKS, 'jwt'),
     authz: choose('authz', AUTHZ_STACKS, 'rbac'),
     broker: choose('broker', BROKER_STACKS, 'none'),
+    cache: choose('cache', CACHE_STACKS, 'none'),
+    audit: choose('audit', AUDIT_MODES, orm === 'none' ? 'off' : 'on'),
   };
 }
 
@@ -195,6 +209,11 @@ function mapEntries<T>(value: unknown, parse: (entry: unknown) => T): Record<str
 function parseDeviations(value: unknown): Deviation[] {
   const entries: unknown[] = Array.isArray(value) ? value : [];
   return entries.filter(isRecord).map((entry) => ({ what: text(entry['what'], ''), adr: text(entry['adr'], ''), reason: text(entry['reason'], '') }));
+}
+
+function parseStandardInterfaces(value: unknown): Record<string, string | false> {
+  const entries = Object.entries(isRecord(value) ? value : {}).flatMap(([name, instead]): [string, string | false][] => (instead === false || (typeof instead === 'string' && instead !== '') ? [[name, instead]] : []));
+  return Object.fromEntries(entries);
 }
 
 function parseLimits(value: unknown): Limits {
@@ -244,8 +263,9 @@ export function serializeConfig(config: Config): string {
       ...(context.deployable ? { deployable: true } : {}),
     };
   }
-  const { publishedLanguageAllowedPackages: _derived, limits: _limits, guard: _guard, deviations, ...written } = config;
-  return `${JSON.stringify({ ...written, contexts, ...(deviations.length > 0 ? { deviations } : {}) }, null, 2)}\n`;
+  const { publishedLanguageAllowedPackages: _derived, limits: _limits, guard: _guard, deviations, standardInterfaces, ...written } = config;
+  const optional = { ...(deviations.length > 0 ? { deviations } : {}), ...(Object.keys(standardInterfaces).length > 0 ? { standardInterfaces } : {}) };
+  return `${JSON.stringify({ ...written, contexts, ...optional }, null, 2)}\n`;
 }
 
 /** Changes the config text through its JSON value, so that what the user wrote elsewhere keeps its shape. */

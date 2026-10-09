@@ -10,6 +10,7 @@ import {
 } from '../src/index.js';
 import { createDatabase, type TestDatabase } from './support/database.js';
 import { Invoice, TypeOrmInvoiceRepository, invoices } from './support/invoices.js';
+import { ada, scopeOf } from './support/scopes.js';
 
 const outbox = outboxEntity();
 const processed = processedEventEntity();
@@ -41,7 +42,7 @@ const wire = () => {
   return {
     unitOfWork,
     store,
-    repository: new TypeOrmInvoiceRepository(unitOfWork),
+    repository: new TypeOrmInvoiceRepository(unitOfWork, scopeOf(ada), new FixedClock(now)),
     publisher: new OutboxPublisher(store),
     processed: new TypeOrmProcessedEventStore(unitOfWork, { entity: processed }),
   };

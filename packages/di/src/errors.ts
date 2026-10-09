@@ -10,15 +10,20 @@ export type WiringErrorCode =
   | 'BUS_WITHOUT_REGISTER'
   | 'UNKNOWN_FAKE'
   | 'UNDECLARED_AUTHORIZATION'
-  | 'AUTHORIZATION_NOT_ENFORCED';
+  | 'AUTHORIZATION_NOT_ENFORCED'
+  | 'UNDECLARED_CLASS'
+  | 'DISCOVERY_FAILED'
+  | 'NOTHING_DECLARED'
+  | 'MISPLACED_DECLARATION';
 
 /** A mistake in the composition root. Never a business failure, hence not a DomainError. */
 export class WiringError extends Error {
   constructor(
     readonly code: WiringErrorCode,
     message: string,
+    options?: ErrorOptions,
   ) {
-    super(message);
+    super(message, options);
     this.name = 'WiringError';
   }
 }

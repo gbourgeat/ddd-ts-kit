@@ -1,4 +1,5 @@
 import { EntitySchema, type EntitySchemaColumnOptions } from 'typeorm';
+import type { AuditStamp, TenantScoped } from '@ddd-ts-kit/kernel';
 import type { OutboxStatus } from '@ddd-ts-kit/events';
 
 export { schemaNameOf } from '@ddd-ts-kit/kernel';
@@ -69,6 +70,29 @@ const JSON_DOCUMENT: Record<TypeOrmDialect, EntitySchemaColumnOptions> = {
   mysql: { type: 'json' },
   sqlite: { type: 'simple-json' },
 };
+
+/**
+ * The four audit columns, to spread into the `columns` of an `EntitySchema`. Their properties
+ * are those of the kernel `AuditStamp`, so `stampCreation(scope, clock)` spreads into an insert
+ * as it is, and their names (`created_at`, `created_by`, `updated_at`, `updated_by`) are the
+ * same in every project.
+ */
+export function auditColumns(
+  dialect: TypeOrmDialect = 'postgres',
+): Record<keyof AuditStamp, EntitySchemaColumnOptions> {
+  const instant = INSTANT[dialect];
+  return {
+    createdAt: { ...instant, name: 'created_at' },
+    createdBy: { name: 'created_by', type: 'varchar', length: KEY_LENGTH },
+    updatedAt: { ...instant, name: 'updated_at' },
+    updatedBy: { name: 'updated_by', type: 'varchar', length: KEY_LENGTH },
+  };
+}
+
+/** The tenant column, `tenant_id`, under the property of the kernel `TenantScoped`. */
+export function tenantColumn(): Record<keyof TenantScoped, EntitySchemaColumnOptions> {
+  return { tenantId: { name: 'tenant_id', type: 'varchar', length: KEY_LENGTH } };
+}
 
 /**
  * The outbox table as an `EntitySchema`: add it to the `entities` of the data source and

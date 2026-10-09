@@ -21,6 +21,10 @@
     "./e2e": {
       "types": "./dist/e2e.d.ts",
       "default": "./dist/e2e.js"
+    },
+    "./vitest": {
+      "types": "./dist/vitest.d.ts",
+      "default": "./dist/vitest.js"
     }
   },
   "files": [

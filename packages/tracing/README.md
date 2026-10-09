@@ -103,7 +103,7 @@ For a provider you build yourself, add them before the exporting processor:
 
 | Processor | Effect |
 |---|---|
-| `LocalRootTracker` | enables the per-root cap |
+| `LocalRootTracker` | enables the per-root cap, and names the correlation on the local root (see below) |
 | `UrlSecretSpanProcessor` | `url.full`, `http.url`, `url.query`: query values and userinfo become `REDACTED`, parameter names stay |
 | `ErrorMessageScrubber` | drops `exception.message`, `exception.stacktrace` and the status message recorded by instrumentations; keeps `exception.type` |
 
@@ -113,6 +113,27 @@ For a provider you build yourself, add them before the exporting processor:
 const logger = pino({ mixin: () => traceLogFields() });   // { trace_id, span_id } or {}
 response.setHeader('x-correlation-id', correlationIdFromActiveSpan() ?? '');
 ```
+
+With an `ExecutionScope` of the kernel, a trace and the execution context name each other:
+
+```ts
+configureTracing({ executionScope }); // the scope the boundaries run in: app.resolve(EXECUTION_SCOPE)
+
+const logger = pino({ mixin: () => traceLogFields() });
+// inside a request: { correlationId, origin, actorId, tenantId?, causationId?, trace_id, span_id }
+```
+
+- The local root span of each unit of work (the HTTP server span, the `process <type>` span of
+  a consumed event) gets two attributes, `app.correlation_id` and `app.origin`, as soon as a
+  span starts inside the scope: the root itself usually starts before the boundary opened the
+  scope. A unit of work that starts no span at all under its root is not named.
+- **Nothing personal becomes a span attribute**: no actor, no tenant, no session. Those stay in
+  the log fields, where `logFieldsOf` of the kernel puts them and where retention is yours.
+- `traceLogFields(scope)` takes the scope as an argument instead, for a logger built before
+  tracing is configured. `correlationIdFromActiveSpan()` is unchanged: the trace id remains the
+  support reference when the project has no execution scope.
+- `DependencyKind`, the role given to `traceDependency`, is now the type of the kernel,
+  re-exported here under the same name.
 
 `withSpan(name, fn, attributes?)` exists for platform code (a migration, a scheduled job). Domain
 and application code never call it.

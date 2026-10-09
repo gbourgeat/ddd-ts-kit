@@ -16,10 +16,11 @@ export function emit(scope: Scope, context: RenderContext, outputs: readonly Out
   }
 }
 
-/** Registers a new element in the module file of the context. */
+/** Registers a new element in the module file of the context. A kind written `<kind>/<variant>` has its wiring in `<variant>.wiring.<family>.tpl`. */
 export function wire(scope: Scope, kind: string, context: RenderContext): void {
   const file = `${scope.dir}/${scope.context.kebab}.module.ts`;
-  applyWiring(scope.ws, file, renderTemplate(`${kind}/wiring.${wiringFamily(scope.config)}.tpl`, context));
+  const template = kind.includes('/') ? `${kind}.wiring` : `${kind}/wiring`;
+  applyWiring(scope.ws, file, renderTemplate(`${template}.${wiringFamily(scope.config)}.tpl`, context));
 }
 
 /** The nest module wires by hand inside a Nest provider, so it shares the manual family. */

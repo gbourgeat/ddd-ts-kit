@@ -1,4 +1,5 @@
 import type { Kind } from './kind.js';
+import { adapterKind } from './kinds/adapter.js';
 import { commandKind, eventHandlerKind, portKind, queryKind } from './kinds/application.js';
 import { gatewayKind, policyKind } from './kinds/authorization.js';
 import { contextKind } from './kinds/context.js';
@@ -31,6 +32,7 @@ export const KINDS: readonly Kind[] = [
   e2eKind,
   policyKind,
   gatewayKind,
+  adapterKind,
   serviceKind,
   adrKind,
 ];

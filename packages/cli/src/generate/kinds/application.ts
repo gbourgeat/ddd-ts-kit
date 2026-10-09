@@ -1,9 +1,11 @@
+import { CliError } from '../../errors.js';
 import type { Name } from '../../naming.js';
+import type { RenderContext } from '../../render.js';
 import { accessVars, specVars } from '../access.js';
 import { emit, wire } from '../emit.js';
 import type { Kind } from '../kind.js';
 import { concept, label, learnTerms } from '../language.js';
-import { named, openScope, vars } from '../scope.js';
+import { named, openScope, vars, type Scope } from '../scope.js';
 import { ensureDomainEvent, eventVars, existingAggregate } from './domain.js';
 import { generateRepository } from './repository.js';
 
@@ -44,27 +46,44 @@ function commandVars(aggregate: Name | undefined) {
 export const queryKind: Kind = {
   name: 'query',
   aliases: [],
-  usage: 'query <context> <UseCaseName> (--permission <aggregate>.<action> | --public) [--term "<Term>=<meaning>"]...',
-  summary: 'A query, its handler, its read port with an in-memory adapter and a fake, its spec and its registration on the query bus.',
+  usage: 'query <context> <UseCaseName> (--permission <aggregate>.<action> | --public) [--list] [--term "<Term>=<meaning>"]...',
+  summary: 'A query, its handler, its read port with an in-memory adapter and a fake, its spec and its registration on the query bus; with --list, one page of a list filtered by the access scope of the actor.',
   positionals: ['context', 'UseCaseName'],
   run: (request) => {
     const scope = openScope(request);
     learnTerms(scope);
     const name = concept(scope, request.args[1] ?? '', { what: 'use case', strip: ['query', 'handler'] });
     const access = accessVars(scope, { name, kind: 'Query' });
-    const context = vars(scope, { name: named(name), access, spec: specVars(scope, access, [`${name.constant}_READER`]) });
+    const variant = queryVariant(scope, access);
+    const context = vars(scope, { name: named(name), access, spec: specVars(scope, access, [`${name.constant}_READER`]), list: { resource: listedResource(access) } });
     const folder = `application/queries/${name.kebab}`;
     emit(scope, context, [
-      ['query/query.ts.tpl', `${folder}/${name.kebab}.query.ts`],
-      ['query/handler.ts.tpl', `${folder}/${name.kebab}.handler.ts`],
-      ['query/reader.port.ts.tpl', `application/ports/${name.kebab}-reader.port.ts`],
-      ['query/reader.in-memory.ts.tpl', `infrastructure/persistence/in-memory-${name.kebab}.reader.ts`],
+      [`query/${variant}query.ts.tpl`, `${folder}/${name.kebab}.query.ts`],
+      [`query/${variant}handler.ts.tpl`, `${folder}/${name.kebab}.handler.ts`],
+      [`query/${variant}reader.port.ts.tpl`, `application/ports/${name.kebab}-reader.port.ts`],
+      [`query/${variant}reader.in-memory.ts.tpl`, `infrastructure/persistence/in-memory-${name.kebab}.reader.ts`],
       ['query/reader.fake.ts.tpl', `test/fakes/${name.kebab}-reader.fake.ts`],
-      [`query/handler.spec.${scope.config.stack.di === 'tsyringe' ? 'tsyringe' : 'buses'}.ts.tpl`, `test/unit/${name.kebab}.handler.spec.ts`],
+      [`query/${variant}handler.spec.${scope.config.stack.di === 'tsyringe' ? 'tsyringe' : 'buses'}.ts.tpl`, `test/unit/${name.kebab}.handler.spec.ts`],
     ]);
-    wire(scope, 'query', context);
+    wire(scope, variant === '' ? 'query' : 'query/list', context);
   },
 };
+
+/** `--list`: the templates of a paginated list. A list is narrowed by what its actor may see, so it names a permission. */
+function queryVariant(scope: Scope, access: RenderContext): '' | 'list.' {
+  if (!scope.flags.list) return '';
+  if (access['protected'] === true) return 'list.';
+  throw new CliError(
+    '--list cannot be combined with --public.',
+    'A generated list is filtered by the access scope the authorizer computes for its actor: give it --permission <aggregate>.<action>, or generate a plain public query and page it yourself.',
+  );
+}
+
+/** The element a list shows, as the authorization model names it: the aggregate of its permission, to start with. */
+function listedResource(access: RenderContext): string {
+  const permission = access['permission'];
+  return typeof permission === 'string' ? (permission.split('.')[0] ?? '') : '';
+}
 
 export const portKind: Kind = {
   name: 'port',

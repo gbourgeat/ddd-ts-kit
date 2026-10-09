@@ -14,7 +14,7 @@ npm i jose            # only for @ddd-ts-kit/auth/jwt
 |---|---|---|
 | `@ddd-ts-kit/auth` | permissions, `requires`, `AuthorizationMap`, `authorizationMiddleware`, `Authorizer`, policies and `Access`, `RoleBasedAuthorizer`, `PolicyBasedAuthorizer`, `Authenticator`, HTTP glue | the kernel only |
 | `@ddd-ts-kit/auth/rebac` | schema DSL, relation tuples, `RelationTupleStore`, `RelationBasedAuthorizer` | the kernel only |
-| `@ddd-ts-kit/auth/jwt` | `JwtAuthenticator` | `jose` (optional peer), the only file that does |
+| `@ddd-ts-kit/auth/jwt` | `JwtAuthenticator`, `keycloakAuthenticator` | `jose` (optional peer), the only file that does |
 | `@ddd-ts-kit/auth/di` | `authorizationModule`, the tokens `AUTHORIZER`, `AUTHENTICATOR`, `AUTHORIZATION_MAP`, `ACCESS` | `@ddd-ts-kit/di` (optional peer) |
 | `@ddd-ts-kit/auth/testing` | `anActor()`, `AllowAll`, `DenyAll`, `RecordingAuthorizer`, `FakeAuthenticator`, the two contract suites | `@ddd-ts-kit/testing` (optional peer), the runner you pass |
 
@@ -25,7 +25,7 @@ The actor model lives in `@ddd-ts-kit/kernel`: `Actor`, `anonymousActor()`, `sys
 
 | Responsibility | Question | Where it lives | With what |
 |---|---|---|---|
-| Authentication | who is calling? | the platform, at the boundary (`src/platform/auth`, routes, consumers) | an adapter of `Authenticator` verifies the credential and produces an `Actor`: plain data, never the token |
+| Authentication | who is calling? | the platform, at the boundary (`src/platform/auth`, routes, consumers) | an adapter of `Authenticator` verifies the credential and produces an `Actor`, and a `SessionAuthenticator` the whole `Session`: plain data, never the token |
 | Authorization | may this actor do this, on this? | the application layer of each context (`application/authorization/`) | permissions declared as data, one requirement per use case checked by a bus middleware, policies for rules that need loaded state, all through the `Authorizer` port |
 | Invariants | is this a valid state of the business? | the domain | aggregates and `DomainError`s. "An invoice cannot be paid twice" is not a permission |
 
@@ -96,8 +96,34 @@ export const billingModule = defineContextModule({
 });
 ```
 
-No decorator, and the handler is not touched. `resource` names the element the right bears on,
-`context` passes facts of the message the authorizer may need (the tenant it targets).
+The handler is not touched. `resource` names the element the right bears on, `context` passes
+facts of the message the authorizer may need (the tenant it targets).
+
+The same requirement can be said on the message itself, with the declarations of the kernel,
+for a context that has no module file:
+
+```ts
+// contexts/billing/application/commands/void-invoice/void-invoice.command.ts
+import { Requires } from '@ddd-ts-kit/kernel/declarations';
+
+@Requires(billingPermissions['invoice.void'], {
+  resource: (command: VoidInvoice) => ({ type: 'invoice', id: command.invoiceId }),
+})
+export class VoidInvoice extends AuthorizedCommand { /* ... */ }
+
+// void-invoice.handler.ts: ACCESS comes from '@ddd-ts-kit/auth', which the application layer may import
+@CommandHandler(VoidInvoice, [INVOICE_REPOSITORY, ACCESS, CLOCK])
+export class VoidInvoiceHandler implements CommandHandler<VoidInvoice> { /* ... */ }
+```
+
+`@Public()` is the counterpart of `.public()`. Both forms feed the same authorization map and
+the same `authorization: 'required'` check; written on the builder, a requirement wins over
+the one of the message. A policy class declared with
+`@Policy(permission, { name: 'invoice.only-issuer-voids' })` (an `allows(actor, subject, { now })`
+method, and `appliesTo(subject)` when it must tell its subjects apart) is evaluated by
+`ACCESS` next to the policies given to `authorizationModule`. The tokens `ACCESS`,
+`AUTHORIZER`, `AUTHENTICATOR` and `AUTHORIZATION_MAP` are exported by `@ddd-ts-kit/auth` and,
+as before, by `@ddd-ts-kit/auth/di`.
 
 ### 4. A policy, for a rule that needs the loaded element
 
@@ -188,7 +214,7 @@ case is still refused when it is sent, with `UndeclaredUseCaseError`, as soon as
 `authorizationModule` is listed.
 
 `onDecision` is the audit hook. It receives `{ actorId, permissionId, resource?, decision,
-useCase? }` for every decision, allowed or refused, and a hook that throws refuses the request:
+useCase?, kind? }` (`kind` is `command` or `query`, as the bus says) for every decision, allowed or refused, and a hook that throws refuses the request:
 no decision goes unrecorded.
 
 Without `@ddd-ts-kit/di`, the same pieces are assembled by hand:
@@ -210,9 +236,9 @@ const queryBus = new InMemoryQueryBus().use(guard);
 
 ```ts
 // contexts/billing/presentation/http/void-invoice.route.ts
-import { actorOf, inActorContext } from '@ddd-ts-kit/auth';
+import { actorOf } from '@ddd-ts-kit/auth';
 
-export const voidInvoiceRoute = (commandBus: CommandBus, actorContext: ActorContext) =>
+export const voidInvoiceRoute = (commandBus: CommandBus) =>
   defineRoute(
     {
       method: 'POST',
@@ -223,10 +249,10 @@ export const voidInvoiceRoute = (commandBus: CommandBus, actorContext: ActorCont
       errors: ['UNAUTHORIZED', 'FORBIDDEN', 'NOT_FOUND'],
       security: ['bearer'],
     },
-    inActorContext(actorContext, async ({ params, context }) => {
+    async ({ params, context }) => {
       await commandBus.execute(new VoidInvoice(actorOf(context.principal), params.invoiceId));
       return { status: 204 };
-    }),
+    },
   );
 ```
 
@@ -234,8 +260,11 @@ export const voidInvoiceRoute = (commandBus: CommandBus, actorContext: ActorCont
 // platform/http/server.ts
 import { principalResolver } from '@ddd-ts-kit/auth';
 
-const resolvePrincipal = principalResolver(app.resolve(AUTHENTICATOR));
-// passed to the adapter of @ddd-ts-kit/http: executeRoute(route, request, { resolvePrincipal })
+const options = {
+  resolvePrincipal: principalResolver(app.resolve(AUTHENTICATOR)), // answers a Session
+  executionScope: app.resolve(EXECUTION_SCOPE),
+};
+// passed to the adapter of @ddd-ts-kit/http: mountExpress(server, routes, options)
 ```
 
 The route maps a request to a command and nothing else. It contains no role, no ownership
@@ -245,9 +274,121 @@ error mapping of `@ddd-ts-kit/http` answers with 401 and 403.
 
 `principalResolver` reads `Authorization: Bearer <token>` from the framework request; a header
 that is present and is not a well-formed bearer credential is refused, never treated as an
-anonymous call. `inActorContext` runs the handler inside `ActorContext.run`, so infrastructure
-sees the actor (see "The current actor"). A consumer or a scheduled job does the same with
-`actorContext.run(systemActor('invoice-reminder'), () => commandBus.execute(...))`.
+anonymous call. It answers a kernel `Session` (the anonymous session without credential), which
+the pipeline puts, with its actor, in the execution context of the request, and which the
+`executionScope` option makes ambient for infrastructure: `ACTOR_CONTEXT` of `kernelModule()`
+reads its actor from that scope (see "The current actor"). A consumer or a scheduled job does
+the same with `actorContext.run(systemActor('invoice-reminder'), () => commandBus.execute(...))`.
+
+| Reading | Gives |
+|---|---|
+| `actorOf(context.principal)` | the actor, anonymous when there is none; also accepts the context itself |
+| `sessionOf(context)` | the session: who, since when, until when, how it was authenticated, `impersonatedBy` |
+| `context.execution` | the whole execution context: correlation id, tenant, locale, deadline |
+
+`inActorContext(actorContext, handler)` keeps working for a project that has an `ActorContext`
+and no execution scope: it runs the handler inside `ActorContext.run`.
+
+## Authentication
+
+### Actors and sessions
+
+`Authenticator` answers an `Actor`. `SessionAuthenticator` extends it with
+`authenticateSession(credential): Promise<Session>`, for an adapter whose credential knows more
+than who: the session id, when it was issued and when it expires, the method and strength of
+the authentication, who is impersonating. A separate port rather than a required method, so an
+adapter that only knows actors (an API key table, a development header) stays three lines; the
+boundary does not care which one it gets:
+
+```ts
+import { resolveSession } from '@ddd-ts-kit/auth';
+
+const session = await resolveSession(authenticator, credential);
+// a SessionAuthenticator answers its own session; for a plain Authenticator the session is
+// derived from the actor and says only what is known: id of the actor as session id, no
+// issue instant (the epoch), no expiry, method `token`
+```
+
+### JSON Web Tokens
+
+`JwtAuthenticator` verifies the signature, the issuer, the audience, the expiry and the
+algorithm (asymmetric families only unless told otherwise; `alg: none` is always refused), and
+is a `SessionAuthenticator`. Nothing of the token is kept in the actor or in the session.
+
+| Field of the session | Claim |
+|---|---|
+| `id` | `sid`, else `jti`, else the subject and the issue instant |
+| `issuedAt`, `expiresAt` | `iat`, `exp` |
+| `authenticationMethod` | `password` when `amr` lists `pwd`, else `token`; or the `authenticationMethod` option, a value or a function of the claims |
+| `authenticationStrength` | `mfa` when `amr` lists `mfa` (RFC 8176), `assuranceLevel` from `acr` |
+| `impersonatedBy` | the `sub` of the `act` claim (RFC 8693), or the claim named by `impersonatorClaim`: the id itself, or an object holding it under `sub` or `id` |
+| `locale`, `timeZone` | `locale`, `zoneinfo` |
+| `extensions` | what `toSessionExtensions(claims)` answers |
+
+The actor is the default mapping (subject, `tenantClaim`, roles from `realm_access.roles`, else
+`roles`, else `scope`, never merged) or what `toActor(claims)` answers.
+
+### Keycloak
+
+```ts
+import { keycloakAuthenticator } from '@ddd-ts-kit/auth/jwt';
+
+const authenticator = keycloakAuthenticator({
+  baseUrl: 'https://id.example.com', // without the realm
+  realm: 'shop',
+  audience: 'shop-api',              // what the `aud` claim must name
+  clientId: 'shop-api',              // optional: its client roles join the realm roles
+  tenantClaim: 'organization',       // optional, default `tenant_id`
+});
+```
+
+It derives the issuer (`<baseUrl>/realms/<realm>`) and the key set
+(`<issuer>/protocol/openid-connect/certs`, fetched and cached, rotated keys followed), and maps
+an access token as follows:
+
+| Field | Claim |
+|---|---|
+| `actor.id` | `sub` |
+| `actor.type` | `service` when `preferred_username` starts with `service-account-` (a client using the client credentials grant), else `user` |
+| `actor.roles` | `realm_access.roles`, plus `resource_access.<clientId>.roles` when `clientId` is given, each once |
+| `actor.attributes` | `username` from `preferred_username`, `email`, `groups` from the `groups` claim (or `groupsClaim`) |
+| `actor.tenantId` | the claim named by `tenantClaim`: a text claim, or the `organization` claim (a list of aliases, or an object keyed by alias) when it names exactly one organization |
+| `session.id` | `sid`, the session of the realm; `jti` for a service account, which has none |
+| `session.authenticationMethod` | `sso` for a person, `service` for a service account |
+| `session.authenticationStrength` | `assuranceLevel` from `acr` |
+| `session.impersonatedBy` | the claim named by `impersonatorClaim` (default `act`) |
+
+What to configure in the realm, for these claims to be in the access token:
+
+1. **A client for the API** (`shop-api`): client authentication on, no flow enabled (it only
+   receives tokens: what used to be called bearer-only). It holds the client roles, if you use
+   them.
+2. **An audience mapper.** By default the `aud` of an access token does not name your API (it
+   is `account`, or absent), and the token is refused with `CLAIM_MISMATCH`. On the client the
+   users sign in with (the front end), or in a client scope it has by default: add a mapper of
+   type *Audience*, *Included Client Audience* `shop-api`, *Add to access token* on.
+3. **The roles mappers.** The built-in client scope `roles`, a default scope of every client,
+   already writes `realm_access.roles` (mapper *realm roles*) and
+   `resource_access.<client>.roles` (mapper *client roles*). Check that the front-end client
+   kept it, and that *Full scope allowed* is on, or that the roles you expect are in its scope
+   mappings: Keycloak only writes the roles in the scope of the client that asked for the token.
+4. **Groups**, if you authorize on them: a mapper of type *Group Membership*, *Token Claim Name*
+   `groups`, *Add to access token* on. *Full group path* decides between `/finance/europe`
+   and `europe`; the attribute holds what the mapper writes.
+5. **The tenant**, one of: a mapper of type *User Attribute* writing `tenant_id` from an
+   attribute of the user; or, with Organizations enabled in the realm, the client scope
+   `organization` requested by the front end, and `tenantClaim: 'organization'`. A user who
+   belongs to several organizations gets no tenant from that claim: choosing one is a decision
+   of your project, to take in `toSessionExtensions` or in a mapper.
+6. **Impersonation**, if support staff impersonate users from the admin console: Keycloak
+   keeps the administrator in the session notes of the impersonated session. A mapper of type
+   *User Session Note*, *User Session Note* `IMPERSONATOR_ID`, *Token Claim Name*
+   `impersonator_id`, with `impersonatorClaim: 'impersonator_id'`, puts it in
+   `session.impersonatedBy`, which `logFieldsOf` carries to every log line.
+
+`preferred_username` and `email` come from the built-in `profile` and `email` scopes. The
+preset never calls Keycloak beyond the key set: a revoked session is refused when its access
+token expires, so keep the access token lifespan short.
 
 ## Choosing a model
 
@@ -484,47 +625,45 @@ there by the route or the consumer. Handlers and the domain never read an ambien
 case then says who acts in its signature, a test passes whoever it wants, and a consumer or a
 job is not at the mercy of a context nobody set.
 
-**Infrastructure reads `ActorContext`.** Audit columns and tenant scoping apply to every
-statement and should not be threaded through every method of every repository. The context is
-set once per request or consumed message at the boundary (`inActorContext`, or
-`actorContext.run(actor, work)`), and read by adapters only:
+**Infrastructure reads the execution scope.** Audit columns and tenant scoping apply to every
+statement and should not be threaded through every method of every repository. The
+`ExecutionScope` of the kernel is opened once per request or consumed message at the boundary
+(the `executionScope` option of `@ddd-ts-kit/http`, the consumers of `builder.on`), and read by
+adapters only, through the three helpers of the kernel:
 
 ```ts
 // contexts/billing/infrastructure/persistence/drizzle-invoice.repository.ts
+import { stampCreation, stampUpdate, tenantScopeOf } from '@ddd-ts-kit/kernel';
+
 export class DrizzleInvoiceRepository implements InvoiceRepository {
   constructor(
-    private readonly db: Database,
-    private readonly actors: ActorContext,
+    private readonly context: DrizzleContext<NodePgQueryResultHKT>,
+    private readonly scope: ExecutionScope,
     private readonly clock: Clock,
   ) {}
 
   async findById(id: string): Promise<Invoice | undefined> {
-    const [row] = await this.db
+    const [row] = await this.context
+      .executor()
       .select()
       .from(invoices)
-      .where(and(eq(invoices.id, id), eq(invoices.tenantId, this.#tenantId())));
+      .where(and(eq(invoices.id, id), eq(invoices.tenantId, tenantScopeOf(this.scope).tenantId)));
     return row === undefined ? undefined : toInvoice(row);
   }
 
-  async save(invoice: Invoice): Promise<void> {
-    const stamp = { updatedBy: this.actors.require().id, updatedAt: this.clock.now() };
-    await this.db
-      .insert(invoices)
-      .values({ ...toRow(invoice), tenantId: this.#tenantId(), createdBy: stamp.updatedBy, ...stamp })
-      .onConflictDoUpdate({ target: invoices.id, set: { ...toRow(invoice), ...stamp } });
-  }
-
-  #tenantId(): string {
-    const { tenantId } = this.actors.require();
-    if (tenantId === undefined) throw new Error('Tenant-scoped storage was reached by an actor without tenant');
-    return tenantId;
-  }
+  // save: { ...toRow(invoice), ...tenantScopeOf(this.scope), ...stampCreation(this.scope, this.clock) }
+  // on insert, { ...toRow(invoice), ...stampUpdate(this.scope, this.clock) } on update
 }
 ```
 
-`kernelModule()` binds `ACTOR_CONTEXT` to `AsyncLocalStorageActorContext`, which follows the
-asynchronous call chain so concurrent requests never mix. `require()` throws
-`NoCurrentActorError` when a boundary forgot `run`: a wiring mistake, found by the first test.
+The whole repository, tested, is in the README of each adapter package (`@ddd-ts-kit/drizzle`,
+`knex`, `prisma`, `typeorm`). `kernelModule()` binds `EXECUTION_SCOPE` to an
+`AsyncLocalStorageExecutionScope`, which follows the asynchronous call chain so concurrent
+requests never mix, and `ACTOR_CONTEXT` to a `ScopedActorContext` over it: the current actor is
+the actor of the current execution context, so the two cannot disagree, and an adapter written
+against `ActorContext` keeps working. `require()` throws `NoExecutionContextError` (or
+`NoCurrentActorError`) when a boundary opened nothing, and `tenantScopeOf` throws
+`NoCurrentTenantError` for work that names no tenant: wiring mistakes, found by the first test.
 This is defence in depth, not authorization: the tenant filter of a repository stops a bug from
 leaking rows, the permission is still decided in the application layer.
 
@@ -613,7 +752,7 @@ const accountant = anActor().named('ada').ofTenant('acme').withRole('accountant'
   the authorizer of a composed application with `fake(AUTHORIZER, new AllowAll())`. Add
   `authorization: 'required'` so that a use case without declaration fails the spec at wiring.
 - **Policies.** Plain objects: call `policy.allows(actor, subject, { now })`.
-- **Boundaries.** `FakeAuthenticator({ 'token-of-ada': ada })` behind `principalResolver`.
+- **Boundaries.** `FakeAuthenticator({ 'token-of-ada': ada })` behind `principalResolver`; a credential may stand for a whole session, `{ 'token-of-support': aSession().of(ada).impersonatedBy('support-7').build() }`.
 - **Your own adapters.** Hold an `Authorizer` (an OpenFGA adapter, a custom model) to
   `authorizerContract(runner, { name, create })` and a tuple store to
   `relationTupleStoreContract(runner, { name, create })`, with `{ describe, it, expect,

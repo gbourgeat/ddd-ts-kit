@@ -264,10 +264,10 @@ describe('generated code', () => {
   it('registers each element in the module file between its markers', () => {
     const module = read(root, 'src/contexts/billing/billing.module.ts');
 
-    expect(module).toContain("builder.bind(INVOICE_REPOSITORY).toClass(DrizzleInvoiceRepository, [DATABASE]).as('repository');");
+    expect(module).toContain("builder.bind(INVOICE_REPOSITORY).toClass(DrizzleInvoiceRepository, [DATABASE, EXECUTION_SCOPE, CLOCK]).as('repository');");
     expect(module).toContain("builder.command(IssueInvoiceCommand).requires(billingPermissions['invoice.issue']).handledBy(IssueInvoiceHandler, [INVOICE_REPOSITORY, DOMAIN_EVENTS, ID_GENERATOR, CLOCK]);");
     expect(module).toContain("builder.command(CancelInvoiceCommand).requires(billingPermissions['invoice.cancel']).handledBy(CancelInvoiceHandler);");
-    expect(module).toContain("builder.query(ListInvoicesQuery).requires(billingPermissions['invoice.list']).handledBy(ListInvoicesHandler, [LIST_INVOICES_READER]);");
+    expect(module).toContain("builder.query(ListInvoicesQuery).requires(billingPermissions['invoice.list']).handledBy(ListInvoicesHandler, [LIST_INVOICES_READER, ACCESS]);");
     expect(module).toContain('issueInvoiceRoute(resolve(COMMAND_BUS)),');
     expect(module).toContain('listInvoicesRoute(resolve(QUERY_BUS)),');
     expect(module).toContain('await resolve(INVOICE_ISSUED_PUBLISHER).publish(event);');

@@ -14,7 +14,7 @@ In `presentation/`:
 
 - a read of `.roles`, `.permissions` or `.isAdmin` on anything
 - a comparison of a member named `role` with a string (`===`, `!==`, `==`, `!=`), and a `switch` on it
-- an import from `@ddd-ts-kit/auth` (any entry) of anything but the request glue (`actorOf`, `bearerCredential`, `inActorContext`, `principalResolver`, `HeaderValues`), the codes `FORBIDDEN` and `UNAUTHORIZED` and the error classes
+- an import from `@ddd-ts-kit/auth` (any entry) of anything but the request glue (`actorOf`, `sessionOf`, `resolveSession`, `SessionAuthenticator`, `bearerCredential`, `inActorContext`, `principalResolver`, `HeaderValues`), the codes `FORBIDDEN` and `UNAUTHORIZED` and the error classes
 
 In `infrastructure/`:
 
@@ -24,7 +24,7 @@ In `infrastructure/`:
 In `domain/`:
 
 - any import from `@ddd-ts-kit/auth`
-- an import of `Actor`, `Actored` or `ActorContext` from `@ddd-ts-kit/kernel`
+- an import of `Actor`, `Actored`, `ActorContext`, `Session` or `ExecutionContext` from `@ddd-ts-kit/kernel`
 - a read of `.roles` or `.permissions` on anything but `this`
 
 Incorrect:
@@ -71,7 +71,8 @@ None.
 - A role test written without a member named `role` or `roles` (`isAdmin(user)`, `['admin'].includes(kind)`) is not seen.
 - `.check(...)` on an authorizer held under another name and typed in another file is not seen.
 - An ownership test (`row.ownerId !== actor.id`) is not recognised as such in any layer; in `infrastructure/` only the refusal that follows (`new ForbiddenError`) is.
-- `Authenticator` is not on the allow-list of `presentation/`: the principal is resolved once by the server (`principalResolver`), not by each route.
+- `Authenticator` is not on the allow-list of `presentation/`: the principal is resolved once by the server (`principalResolver`), not by each route. `SessionAuthenticator` is, for the boundary that resolves a whole session with `resolveSession`.
+- A `Session` or an `ExecutionContext` declared by the project itself, or imported from another module than the kernel, is not reported in `domain/`.
 
 ## With the CLI checker
 

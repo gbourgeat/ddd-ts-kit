@@ -1,12 +1,14 @@
 import type { Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import express from 'express';
-import type { ErrorContext, Route } from '@ddd-ts-kit/http';
 import { mountExpress } from '@ddd-ts-kit/http/express';
-import type { HttpBoundary } from './auth/http-boundary.js';
+import type { Application } from './application.js';
 import type { AppConfig } from './config.js';
 {{#if docs.any}}
 import { withDocumentation } from './http-docs.js';
+{{/if}}
+{{#if cache.rateLimit}}
+import { refusalFor } from './http-rate-limit.js';
 {{/if}}
 
 export interface HttpServer {
@@ -15,25 +17,30 @@ export interface HttpServer {
   close(): Promise<void>;
 }
 
-export async function startHttpServer(routes: readonly Route[], config: AppConfig, boundary: HttpBoundary): Promise<HttpServer> {
+/** What the server needs of the application: its routes and what stands at its edge. */
+type Served = Pick<Application, 'routes' | 'boundary'{{#if cache.rateLimit}} | 'rateLimiter' | 'ready'{{/if}}>;
+
+export async function startHttpServer(served: Served, config: AppConfig): Promise<HttpServer> {
   const app = express();
   app.disable('x-powered-by');
+{{#if cache.rateLimit}}
+  app.get('/health/ready', (_request, response) => void served.ready().then((ready) => response.status(ready ? 200 : 503).json({ status: ready ? 'up' : 'down' })));
+  app.use((request, response, next) => {
+    void refusalFor(served.rateLimiter, config.rateLimit, request.ip).then((refusal) => {
+      if (refusal === undefined) next();
+      else response.status(refusal.problem.status).set(refusal.headers).send(JSON.stringify(refusal.problem));
+    }, next);
+  });
+{{/if}}
   app.use(express.json());
 {{#if docs.any}}
-  mountExpress(app, withDocumentation(routes, config), { onError: logServerFault, ...boundary });
+  mountExpress(app, withDocumentation(served.routes, config), served.boundary);
 {{/if}}
 {{#unless docs.any}}
-  mountExpress(app, routes, { onError: logServerFault, ...boundary });
+  mountExpress(app, served.routes, served.boundary);
 {{/unless}}
   const server = await listen(app, config.port);
   return { port: boundPort(server), close: () => close(server) };
-}
-
-// The error message may quote data: only the code and the route are logged.
-function logServerFault(_error: unknown, context: ErrorContext): void {
-  if (context.problem.status >= 500) {
-    console.error(JSON.stringify({ level: 'error', requestId: context.requestId, operationId: context.operationId, code: context.problem.code }));
-  }
 }
 
 function listen(app: express.Express, port: number): Promise<Server> {

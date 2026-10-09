@@ -46,7 +46,10 @@ Read by the CLI, the hook and the skills. It lives at the root of the consuming 
 | `stack.orm` | `drizzle`, `knex`, `prisma`, `typeorm`, `custom`, `none` | `drizzle` |
 | `stack.database` | `postgres`, `mysql`, `sqlite`, `mongodb`, `none` | `postgres` |
 | `stack.tests` | `vitest`, `jest` | `vitest` |
-| `stack.authn` | `jwt`, `none` | `jwt` |
+| `stack.authn` | `jwt`, `keycloak`, `none` | `jwt` |
+| `stack.cache` | `none`, `redis`: what backs the kernel `Cache` port, the HTTP rate limiter and the wake-up of the outbox relay (Redis, Dragonfly or Valkey) | `none` |
+| `stack.audit` | `on`, `off`: whether the audit trail and its three sources are wired | `on` when an ORM is set, `off` otherwise |
+| `standardInterfaces` | `{ "<DeclaredName>": "<kernel interface to use instead>" }` merged over the default names of `standard/no-parallel-interface`; `false` drops a default name | `{}` |
 | `stack.authz` | `rbac`, `abac`, `rebac`, `custom` | `rbac` |
 | `stack.broker` | `none`, `rabbitmq`, `custom` | `none` |
 | `stack.ci` | `github`, `gitlab`, `both`, `none` | `github` |
@@ -65,3 +68,6 @@ Rule ids are those of [ARCHITECTURE.md](ARCHITECTURE.md) section 3.
 A relaxed rule, an extra directory, an extra allowed package, a guard that is not `enforce`
 or events off the outbox are deviations: each needs an entry in `deviations` pointing to a
 decision record (`npx ddd-ts-kit generate adr "<title>" --deviation <what>` writes both).
+
+`@ddd-ts-kit/aspects`, `@ddd-ts-kit/audit`, `@ddd-ts-kit/redis` and `@ddd-ts-kit/tracing` stay
+refused in `domain/` and `application/` even when listed in an allow-list.

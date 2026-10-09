@@ -11,6 +11,7 @@ Use cases orchestrate the domain through ports. An import of an adapter, a drive
 ## Reported
 
 - a package outside `applicationAllowedPackages`
+- `@ddd-ts-kit/aspects`, `@ddd-ts-kit/audit`, `@ddd-ts-kit/redis` and `@ddd-ts-kit/tracing`, by any entry (`.`, `/decorators`, `/testing`, `/node`, ...), with a message of their own: they apply or record a concern from outside the use cases
 - any Node built-in
 - `infrastructure/`, `presentation/` or the module file of the same context
 - the platform or `main.ts`
@@ -20,13 +21,15 @@ Incorrect:
 ```ts
 // src/contexts/billing/application/commands/issue-invoice/issue-invoice.handler.ts
 import { eq } from 'drizzle-orm';
+import { retry } from '@ddd-ts-kit/aspects';
+import { RedisCache } from '@ddd-ts-kit/redis';
 import { DrizzleInvoiceRepository } from '../../../infrastructure/persistence/drizzle-invoice.repository.js';
 ```
 
 Correct:
 
 ```ts
-import type { Clock } from '@ddd-ts-kit/kernel';
+import type { Cache, Clock } from '@ddd-ts-kit/kernel';
 import type { InvoiceRepository } from '../../../domain/repositories/invoice.repository.js';
 import type { PaymentGateway } from '../../ports/payment-gateway.port.js';
 ```
@@ -37,7 +40,7 @@ Static imports, type-only imports, `export ... from`, dynamic `import()`, `requi
 
 ## Options
 
-None. `applicationAllowedPackages` in `ddd-ts-kit.config.json` replaces the allow-list, which defaults to `@ddd-ts-kit/kernel` and `@ddd-ts-kit/auth` (permissions and policies are declared in `application/authorization/`).
+None. `applicationAllowedPackages` in `ddd-ts-kit.config.json` replaces the allow-list, which defaults to `@ddd-ts-kit/kernel` and `@ddd-ts-kit/auth` (permissions and policies are declared in `application/authorization/`). `@ddd-ts-kit/aspects`, `@ddd-ts-kit/audit`, `@ddd-ts-kit/redis` and `@ddd-ts-kit/tracing` stay refused even when the list names them: an aspect is applied at the composition root (`.with(...)` on a binding, the `decorate` hook), in a bus middleware or on an adapter in `infrastructure/`; a use case depends on the port (`Cache` of the kernel, a port in `application/ports/`) and the platform binds the Redis adapter; the audit trail is fed by the bus middleware, the authorization hook and an event subscription, never by a use case. The only way around is a recorded suppression of the line.
 
 `rules."layer/application-inward"` in `ddd-ts-kit.config.json` set to `off` silences the rule, and `// ddd-ts-kit-disable-next-line layer/application-inward -- <reason>` silences one line, exactly as for `ddd-ts-kit check`.
 

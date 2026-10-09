@@ -7,6 +7,9 @@ import { composeApplication } from '{{paths.e2eToPlatform}}/application.js';
 {{#if authz.rebac}}
 import { relationTuples } from '{{paths.e2eToPlatform}}/auth/relationships.js';
 {{/if}}
+{{#if cache.redis}}
+import { openRedis } from '{{paths.e2eToPlatform}}/cache.js';
+{{/if}}
 import { loadConfig } from '{{paths.e2eToPlatform}}/config.js';
 import { openPersistence } from '{{paths.e2eToPlatform}}/database/persistence.js';
 {{#if broker.rabbitmq}}
@@ -24,6 +27,12 @@ import { AUTH_ENVIRONMENT, createCredentials, type Credentials, type TestActor }
 
 /** Without AMQP_URL (`npm run infra:up` gives one) the events stay in the process: the same ports, no broker. */
 const NO_BROKER = 'amqp://in-process/tests';
+{{/if}}
+
+{{#if cache.redis}}
+
+/** Without REDIS_URL (`npm run infra:up` gives one) the cache and the limiter stay in the memory of the process: the same ports, no server. */
+const NO_REDIS = 'redis://in-process/tests';
 {{/if}}
 
 /** The whole application as a client and another context see it. */
@@ -74,13 +83,16 @@ interface Started {
 
 async function start(credentials: Credentials): Promise<Started> {
   const persistence = openPersistence();
-  const config = loadConfig({ ...process.env, ...AUTH_ENVIRONMENT, NODE_ENV: 'test', PORT: '0'{{#if broker.rabbitmq}}, AMQP_URL: brokerUrl(){{/if}} });
-  const application = composeApplication(persistence, { events: {{#if broker.rabbitmq}}config.amqpUrl === NO_BROKER ? inProcessEvents() : createEventProvider(config){{/if}}{{#unless broker.rabbitmq}}inProcessEvents(){{/unless}}, authenticator: credentials.authenticator });
+  const config = loadConfig({ ...process.env, ...AUTH_ENVIRONMENT, NODE_ENV: 'test', PORT: '0'{{#if broker.rabbitmq}}, AMQP_URL: brokerUrl(){{/if}}{{#if cache.redis}}, REDIS_URL: redisUrl(){{/if}}{{#if cache.rateLimit}}, RATE_LIMIT_MAX: process.env['RATE_LIMIT_MAX'] ?? '1000000'{{/if}} });
+{{#if cache.redis}}
+  const redis = config.redisUrl === NO_REDIS ? undefined : openRedis(config);
+{{/if}}
+  const application = composeApplication(persistence, { events: {{#if broker.rabbitmq}}config.amqpUrl === NO_BROKER ? inProcessEvents() : createEventProvider(config){{/if}}{{#unless broker.rabbitmq}}inProcessEvents(){{/unless}}, authenticator: credentials.authenticator{{#if cache.redis}}, ...(redis === undefined ? {} : { redis }){{/if}} });
   await application.start();
 {{#if events.outbox}}
-  const relay = startOutboxRelay({ store: persistence.outbox, publisher: application.eventBus, intervalMs: 20 });
+  const relay = startOutboxRelay({ store: persistence.outbox, publisher: application.eventBus, intervalMs: 20, logger: application.logger });
 {{/if}}
-  const server = await startHttpServer(application.routes, config, application.boundary);
+  const server = await startHttpServer(application, config);
   return {
     client: createHttpClient('http://127.0.0.1:' + server.port),
     events: application.eventSubscriber,
@@ -90,6 +102,9 @@ async function start(credentials: Credentials): Promise<Started> {
       await relay.stop();
 {{/if}}
       await application.stop();
+{{#if cache.redis}}
+      await redis?.close();
+{{/if}}
       await persistence.close();
     },
   };
@@ -98,5 +113,11 @@ async function start(credentials: Credentials): Promise<Started> {
 
 function brokerUrl(): string {
   return (process.env['AMQP_URL'] ?? '') || NO_BROKER;
+}
+{{/if}}
+{{#if cache.redis}}
+
+function redisUrl(): string {
+  return (process.env['REDIS_URL'] ?? '') || NO_REDIS;
 }
 {{/if}}

@@ -15,7 +15,8 @@ npm i -D @ddd-ts-kit/testing
 | `@ddd-ts-kit/testing` | builders, scenarios, `createTestBuses`, `InMemoryRepository` | no runner, no library |
 | `@ddd-ts-kit/testing/faker` | generated data for builders | `@faker-js/faker` (optional peer) |
 | `@ddd-ts-kit/testing/e2e` | HTTP client, `eventually`, `collectEvents` | Node only: no HTTP framework, no container |
-| `@ddd-ts-kit/testing/contracts` | contract suites | the runner you pass |
+| `@ddd-ts-kit/testing/contracts` | contract suites of the kernel ports, `ContractSuite` to write another | the runner you pass |
+| `@ddd-ts-kit/testing/vitest` | `decorators()`, the Vite plugin that lets Vitest run standard decorators | Node only; runs the `tsc` of the project |
 
 ## Builders
 
@@ -208,6 +209,32 @@ copy of what is saved (through `snapshots({ toSnapshot, fromSnapshot })` or `{ c
 enforces optimistic concurrency on `version`, raising `ConcurrencyError` (code
 `CONCURRENCY_CONFLICT`). Assert its state with `all()` and `count()`.
 
+### Who is acting
+
+`createTestBuses()` also gives `executionScope` and `actorContext`, the two doubles of the
+kernel kept together, for the fakes and adapters that stamp audit columns or scope by tenant.
+The default is the user `test-user`, correlation `test-correlation`, origin `test`.
+
+```ts
+import { aSession, anExecutionContext, createTestBuses, scoped } from '@ddd-ts-kit/testing';
+
+const { executionScope } = createTestBuses({ executionContext: anExecutionContext().as(ada).build() });
+const orders = new DrizzleOrderRepository(unitOfWork, executionScope, clock);
+
+await orders.save(order); // stamped by ada, in her tenant
+await scoped(executionScope, anExecutionContext().as(bob).ofTenant('globex'), () => orders.findById(order.id));
+```
+
+| Builder | Default | Says |
+|---|---|---|
+| `aSession()` | a user of its own, opened with a password at the test epoch, never expiring | `of(actor)`, `identifiedBy`, `issuedAt`, `expiringAt`, `authenticatedBy`, `withSecondFactor`, `impersonatedBy`, `inLocale`, `inTimeZone`, `withExtensions` |
+| `anExecutionContext()` | the work of a user of its own, origin `test`, correlation of its own | `as(actor)`, `inSession(session)`, `ofTenant`, `correlatedBy`, `causedBy`, `from(origin)`, `dueBy`, `inLocale`, `withExtensions` |
+
+Both are classes on `Builder`, immutable like every builder, and accept a builder wherever an
+actor or a session is expected (`aSession().of(anActor().withRole('accountant'))` with the
+actor builder of `@ddd-ts-kit/auth/testing`). `scoped(scope, context, work)` runs a block in a
+context given as a value or as a builder, with any `ExecutionScope`.
+
 ## End to end
 
 The whole application, real adapters included, driven from the outside: requests in, responses
@@ -349,6 +376,73 @@ repositoryContract(runner, { ...options, name: 'DrizzleOrderRepository', createR
 | `eventBusContract` | any `EventBus` provider: routing by type, several subscribers, unsubscribe, exact envelope round trip (`traceparent`, `correlationId`), handler failure surfaces. Redeliveries are accepted; return `settle()` from `createBus` for providers that deliver asynchronously |
 | `outboxStoreContract` | any outbox store: order, limit, lease, concurrent claims, published, failed, dead, `retryDead`, purge |
 | `processedEventStoreContract` | any `ProcessedEventStore`: once per consumer and event, also under concurrent deliveries |
+| `cacheContract` | any `Cache`: round trip of every shape of value, isolation of entries, deletion, time to live |
+| `lockContract` | any `Lock`: one holder at a time also under concurrent requests, release, expiry, a late release ignored, growing fencing token, `waitMs` |
+| `rateLimiterContract` | any `RateLimiter`: limit, `remaining` and `retryAfterMs`, refused calls not counted, sliding window, isolation of keys, concurrent calls |
+
+The cache, lock and rate limiter suites also take `elapse(ms)`, which makes time pass for the
+subject: advance the clock it reads, or really wait when the time is a server's.
 
 The suites use only `describe`, `it`, `beforeEach`, `expect(...).toBe` and `toEqual`
-(`afterEach` is optional), which the globals of vitest and jest both provide.
+(`afterEach` is optional), which the globals of vitest and jest both provide: that part of a
+runner is the `ContractRunner` type.
+
+A package that holds a port of its own publishes its contract on the same base, `ContractSuite`:
+a subject created anew before each test, and `it`, `expect`, `afterEach` bound to the runner.
+
+```ts
+import { ContractSuite, type Awaitable, type ContractRunner } from '@ddd-ts-kit/testing/contracts';
+
+export function geocoderContract(runner: ContractRunner, options: { name: string; create(): Awaitable<Geocoder> }): void {
+  new GeocoderSuite(runner, () => options.create()).describe(`${options.name} (geocoder contract)`);
+}
+
+class GeocoderSuite extends ContractSuite<Geocoder> {
+  protected tests(): void {
+    this.it('answers undefined for an address it does not know', async () => {
+      this.expect(await this.subject.locate('nowhere')).toBe(undefined);
+    });
+  }
+}
+```
+
+## Standard decorators under Vitest
+
+Vitest 5 (Vite 8, Oxc) lowers legacy decorators and does not lower standard (TC39) ones: a
+spec that imports a `.ts` file holding `@CommandHandler(...)` or `@Retry(...)` stops on a
+syntax error. `decorators()` closes that gap, and only that one.
+
+```ts
+// vitest.config.ts
+import { defineConfig } from 'vitest/config';
+import { decorators } from '@ddd-ts-kit/testing/vitest';
+
+export default defineConfig({ plugins: [decorators()] });
+```
+
+- **What it does.** A `.ts`, `.mts` or `.cts` file with a line that starts with a decorator is
+  compiled by the TypeScript compiler of the project before the runner reads it; every other
+  file is left to the runner. Imports are kept as written, for the runner to resolve.
+- **Which options it follows.** `target`, `useDefineForClassFields`, `verbatimModuleSyntax`
+  and `experimentalDecorators`, read from the `tsconfig.json` nearest to each file (the one
+  the runner follows too), or from the `tsconfig` option. A target of `ESNext` would leave
+  the decorators in place, so `ES2024` stands in for it.
+- **It steps aside in the legacy mode.** Under `experimentalDecorators: true` it answers
+  nothing and the runner lowers the decorators itself. A project on class-validator or NestJS
+  may keep the plugin in its config or drop it: the result is the same.
+- **Source maps.** The map names the real file and holds its text: stack traces, breakpoints
+  and coverage point at the source.
+- **Cache.** One entry per file content, compiler and options, under the cache directory of
+  Vite (`cacheDir` option to move it). A file is compiled once, then read back: about 60 ms
+  with the native TypeScript 7 and 220 ms with TypeScript 6 the first time, nothing after.
+- **Which compiler.** The `tsc` of the `typescript` package the project installs, from 5.6,
+  the native TypeScript 7 included: it runs the compiler binary, not its JavaScript API,
+  which the native compiler does not have. `compiler` names another package or a path.
+
+| Option | Default |
+|---|---|
+| `tsconfig` | the nearest `tsconfig.json` above each file |
+| `compiler` | `typescript` |
+| `cacheDir` | `ddd-ts-kit-decorators` in the cache directory of Vite |
+
+It does not type-check (the build does), and it does not touch `.tsx`.

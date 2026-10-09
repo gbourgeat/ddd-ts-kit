@@ -1,13 +1,21 @@
 import { describe, expect, it } from 'vitest';
 import {
+  AsyncLocalStorageExecutionScope,
   InMemoryEventBus,
   InMemoryUnitOfWork,
+  executionContext,
+  scopedPublisher,
+  systemActor,
+  type Actor,
+  type ExecutionContext,
   type IntegrationEvent,
   type ProcessedEventStore,
 } from '@ddd-ts-kit/kernel';
 import {
+  InMemoryOutboxStore,
   InMemoryReleasableProcessedEventStore,
   InvalidEventPayloadError,
+  OutboxPublisher,
   consume,
   on,
   subscribeAll,
@@ -186,3 +194,75 @@ class MarkOnlyStore implements ProcessedEventStore {
     return true;
   }
 }
+
+describe('a consumer given an execution scope', () => {
+  const ada: Actor = { id: 'ada', type: 'user', tenantId: 'acme', roles: [], attributes: {} };
+
+  it('handles each event in a context of origin event, correlated and caused by it, as the consumer', async () => {
+    const scope = new AsyncLocalStorageExecutionScope();
+    const seen: (ExecutionContext | undefined)[] = [];
+    const { handler } = on(orderPlacedV1, async () => void seen.push(scope.current()), { consumer: 'billing', scope });
+
+    await handler({ ...placed('evt-1'), correlationId: 'corr-1' });
+    await handler(placed('evt-2'));
+
+    expect(seen).toEqual([
+      { correlationId: 'corr-1', causationId: 'evt-1', actor: systemActor('billing'), origin: 'event', extensions: {} },
+      { correlationId: 'evt-2', causationId: 'evt-2', actor: systemActor('billing'), origin: 'event', extensions: {} },
+    ]);
+    expect(scope.current()).toBeUndefined();
+  });
+
+  it('opens the scope around the unit of work, so the mark and the writes see it', async () => {
+    const scope = new AsyncLocalStorageExecutionScope();
+    const memory = new TransactionalMemory();
+    const seenByStore: (string | undefined)[] = [];
+    const processed: ProcessedEventStore = {
+      markProcessed: async () => {
+        seenByStore.push(scope.current()?.correlationId);
+        return memory.inTransaction();
+      },
+    };
+    const { handler } = consume(orderPlacedV1, { consumer: 'billing', processed, unitOfWork: memory, scope }, async () => {
+      seenByStore.push(scope.current()?.causationId);
+    });
+
+    await handler({ ...placed('evt-1'), correlationId: 'corr-1' });
+
+    expect(seenByStore).toEqual(['corr-1', 'evt-1']);
+  });
+
+  it('acts as the actor the project reads from its own envelope', async () => {
+    const scope = new AsyncLocalStorageExecutionScope();
+    const actors: (string | undefined)[] = [];
+    const { handler } = on(orderPlacedV1, async () => void actors.push(scope.current()?.tenantId), {
+      consumer: 'billing',
+      scope,
+      actorOf: () => ada,
+    });
+
+    await handler(placed('evt-1'));
+
+    expect(actors).toEqual(['acme']);
+  });
+});
+
+describe('the correlation of one stimulus, from a command to the consumers of its events', () => {
+  it('is stamped by scopedPublisher on the outbox and found again by the consumer', async () => {
+    const scope = new AsyncLocalStorageExecutionScope();
+    const store = new InMemoryOutboxStore();
+    const publisher = scopedPublisher(new OutboxPublisher(store), scope);
+    const request = executionContext({ correlationId: 'corr-7', actor: systemActor('test'), origin: 'http' });
+    const seen: (string | undefined)[] = [];
+    const { handler } = on(orderPlacedV1, async () => void seen.push(scope.current()?.correlationId), {
+      consumer: 'billing',
+      scope,
+    });
+
+    await scope.run(request, () => publisher.publish([placed('evt-1')]));
+    for (const { event } of store.records()) await handler(event);
+
+    expect(store.records().map(({ event }) => event.correlationId)).toEqual(['corr-7']);
+    expect(seen).toEqual(['corr-7']);
+  });
+});

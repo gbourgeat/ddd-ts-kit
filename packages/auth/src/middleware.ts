@@ -45,7 +45,7 @@ async function assertAllowed(
   const request = requestOf(declaration, message, info);
   const anonymous = isAnonymous(request.actor);
   const decision: Decision = anonymous ? deny(DenialReason.anonymous) : await authorizer.check(request);
-  await onDecision?.(decisionRecord(request, decision, info.name));
+  await onDecision?.(decisionRecord(request, decision, info));
   if (decision.allowed) return;
   throw anonymous ? new UnauthenticatedError() : new ForbiddenError(request.permission.id, decision.reason);
 }

@@ -1,6 +1,12 @@
 # Copy to .env: `npm run dev` and docker compose both read it. Never commit .env.
 NODE_ENV=development
 PORT=3000
+# debug, info, warn or error: one JSON line per entry on the standard output.
+LOG_LEVEL=info
+# Around every adapter that leaves the process (kinds external and gateway): attempts, first delay, time limit of one attempt.
+# OUTBOUND_RETRY_ATTEMPTS=3
+# OUTBOUND_RETRY_BASE_DELAY_MS=100
+# OUTBOUND_TIMEOUT_MS=2000
 {{#if docs.any}}
 # Interactive API documentation at /docs. On by default outside production.
 # API_DOCS=true
@@ -47,6 +53,31 @@ AMQP_URL=amqp://app:app@localhost:5672
 AUTH_ISSUER=https://id.example.com/realms/app
 AUTH_AUDIENCE={{project.name}}
 AUTH_JWKS_URI=https://id.example.com/realms/app/protocol/openid-connect/certs
+{{/if}}
+{{#if cache.redis}}
+
+# The Redis protocol server (Dragonfly in docker-compose.yml): cache, rate limiter, wake-up of the outbox relay.
+REDIS_PORT=6379
+REDIS_URL=redis://localhost:6379
+{{/if}}
+{{#if cache.rateLimit}}
+# Requests one caller address may send per window before the HTTP layer answers 429.
+# RATE_LIMIT_MAX=120
+# RATE_LIMIT_WINDOW_MS=60000
+{{/if}}
+{{#if authn.keycloak}}
+
+# Authentication: the Keycloak realm tokens come from, and the audience this service answers to.
+# `docker compose --profile identity up -d --wait` starts a local Keycloak with the realm of docker/keycloak.
+# Its demo users (demo-admin / demo-admin, demo-user / demo-user) and its admin account are for local development ONLY.
+KEYCLOAK_PORT=8080
+KEYCLOAK_ADMIN=admin
+KEYCLOAK_ADMIN_PASSWORD=admin
+KEYCLOAK_URL=http://localhost:8080
+KEYCLOAK_REALM={{project.name}}
+KEYCLOAK_AUDIENCE={{project.name}}-api
+# The client whose client roles join the realm roles of the actor (optional).
+# KEYCLOAK_CLIENT_ID={{project.name}}-api
 {{/if}}
 {{#if authn.none}}
 

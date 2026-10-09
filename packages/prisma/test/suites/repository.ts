@@ -1,5 +1,5 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { DomainError } from '@ddd-ts-kit/kernel';
+import { DomainError, FixedClock } from '@ddd-ts-kit/kernel';
 import { repositoryContract } from '@ddd-ts-kit/testing/contracts';
 import {
   CONCURRENCY_CONFLICT,
@@ -10,6 +10,7 @@ import {
 } from '../../src/index.js';
 import { createDatabase, type TestDatabase } from '../support/database.js';
 import { Invoice, PrismaInvoiceRepository } from '../support/invoices.js';
+import { ada, scopeOf } from '../support/scopes.js';
 
 let database: TestDatabase;
 beforeAll(async () => {
@@ -19,6 +20,13 @@ afterAll(async () => {
   await database.close();
 });
 
+const repository = () =>
+  new PrismaInvoiceRepository(
+    createPrismaUnitOfWork(database.prisma),
+    scopeOf(ada),
+    new FixedClock(new Date('2026-03-01T10:00:00.000Z')),
+  );
+
 let next = 0;
 repositoryContract<Invoice>(
   { describe, it, expect, beforeEach, afterEach },
@@ -26,7 +34,7 @@ repositoryContract<Invoice>(
     name: 'A Prisma repository built on client() and optimisticUpdate',
     createRepository: async () => {
       await database.truncate();
-      return new PrismaInvoiceRepository(createPrismaUnitOfWork(database.prisma));
+      return repository();
     },
     createAggregate: () => Invoice.draft(`inv-${(next += 1)}`, 100),
     mutate: (invoice) => invoice.addCharge(50),
@@ -71,11 +79,11 @@ describe('optimisticUpdate', () => {
 
   it('refuses to create an aggregate that already exists', async () => {
     await database.truncate();
-    const repository = new PrismaInvoiceRepository(createPrismaUnitOfWork(database.prisma));
-    await repository.save(Invoice.draft('inv-1', 100));
+    const subject = repository();
+    await subject.save(Invoice.draft('inv-1', 100));
 
-    await expect(repository.save(Invoice.draft('inv-1', 999))).rejects.toBeInstanceOf(ConcurrencyError);
-    expect((await repository.findById('inv-1'))?.state.amount).toBe(100);
+    await expect(subject.save(Invoice.draft('inv-1', 999))).rejects.toBeInstanceOf(ConcurrencyError);
+    expect((await subject.findById('inv-1'))?.state.amount).toBe(100);
   });
 });
 

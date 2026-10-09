@@ -1,34 +1,31 @@
 import {
   CLOCK,
+  DECLARED_POLICIES,
   USE_CASE_DECLARATIONS,
   USE_CASE_GUARD,
   defineContextModule,
-  token,
   type ContextModule,
+  type PolicyBinding,
   type Provided,
   type Resolve,
   type UseCaseDeclaration as DeclaredUseCase,
 } from '@ddd-ts-kit/di';
 import type { Authenticator } from './authentication.js';
+import { ACCESS, AUTHENTICATOR, AUTHORIZATION_MAP, AUTHORIZER } from './tokens.js';
 import { AuthorizationMap, publicUseCase, type UseCaseDeclaration } from './authorization-map.js';
 import type { Authorizer, OnDecision } from './authorizer.js';
 import { AuthorizationSetupError } from './errors.js';
 import { authorizationMiddleware } from './middleware.js';
 import { isPermission } from './permissions.js';
-import { Access, type AccessOptions, type Policy } from './policy.js';
+import { Access, definePolicy, type AccessOptions, type Policy } from './policy.js';
 
-export const AUTHORIZER = token<Authorizer>('auth.Authorizer');
-export const AUTHENTICATOR = token<Authenticator>('auth.Authenticator');
-/** Built from what the modules declared with `.requires(...)` and `.public()`. */
-export const AUTHORIZATION_MAP = token<AuthorizationMap>('auth.AuthorizationMap');
-/** What handlers depend on for the rules that need the loaded element. */
-export const ACCESS = token<Access>('auth.Access');
+export { ACCESS, AUTHENTICATOR, AUTHORIZATION_MAP, AUTHORIZER };
 
 export interface AuthorizationModuleOptions {
   /** The model: role based, policy based, relation based, or an adapter of a dedicated service. */
   readonly authorizer: Provided<Authorizer>;
   readonly authenticator?: Provided<Authenticator>;
-  /** The instance-level policies of every context, evaluated by `ACCESS`. */
+  /** The instance-level policies of every context, evaluated by `ACCESS` next to the classes declared with `@Policy`. */
   readonly policies?: readonly Policy<unknown>[];
   readonly resourceOf?: AccessOptions['resourceOf'];
   /** The audit hook, called for every decision of the buses and of `ACCESS`. */
@@ -98,12 +95,28 @@ function declarationOf(declared: DeclaredUseCase): UseCaseDeclaration[] {
 }
 
 function accessOf(options: AuthorizationModuleOptions, resolve: Resolve): Access {
-  const { policies, resourceOf, onDecision } = options;
+  const { resourceOf, onDecision } = options;
   return new Access({
     authorizer: resolve(AUTHORIZER),
     clock: resolve(CLOCK),
-    ...(policies === undefined ? {} : { policies }),
+    policies: [...(options.policies ?? []), ...resolve(DECLARED_POLICIES).map((declared) => policyOf(declared, resolve))],
     ...(resourceOf === undefined ? {} : { resourceOf }),
     ...(onDecision === undefined ? {} : { onDecision }),
+  });
+}
+
+/** A class a context declared with `@Policy`, built by its binding the first time it is asked. */
+function policyOf(declared: PolicyBinding, resolve: Resolve): Policy<unknown> {
+  const { name, permission, module, policy } = declared;
+  if (!isPermission(permission)) {
+    throw new AuthorizationSetupError(
+      `Module "${module}" declares the policy "${name}" for something that is not a permission made by definePermissions.`,
+    );
+  }
+  return definePolicy({
+    name,
+    permission,
+    appliesTo: (subject): subject is unknown => resolve(policy).appliesTo?.(subject) ?? true,
+    allows: (actor, subject, context) => resolve(policy).allows(actor, subject, context),
   });
 }

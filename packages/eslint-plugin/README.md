@@ -60,8 +60,8 @@ slash by a dash. `strict` sets every rule to `error`.
 
 | Id | ESLint name | Holds | Default | Implementation |
 |---|---|---|---|---|
-| [`layer/domain-purity`](docs/rules/layer-domain-purity.md) | `ddd-ts-kit/layer-domain-purity` | `domain/` imports only its own domain, the shared kernel and the allowed packages | `error` | custom |
-| [`layer/application-inward`](docs/rules/layer-application-inward.md) | `ddd-ts-kit/layer-application-inward` | `application/` never imports `infrastructure/`, `presentation/`, a framework or a driver | `error` | custom |
+| [`layer/domain-purity`](docs/rules/layer-domain-purity.md) | `ddd-ts-kit/layer-domain-purity` | `domain/` imports only its own domain, the shared kernel and the allowed packages; never `@ddd-ts-kit/aspects`, `audit`, `redis` or `tracing`, even allowed | `error` | custom |
+| [`layer/application-inward`](docs/rules/layer-application-inward.md) | `ddd-ts-kit/layer-application-inward` | `application/` never imports `infrastructure/`, `presentation/`, a framework, a driver or a package applying a concern from outside (`@ddd-ts-kit/aspects`, `audit`, `redis`, `tracing`) | `error` | custom |
 | [`layer/presentation-no-infrastructure`](docs/rules/layer-presentation-no-infrastructure.md) | `ddd-ts-kit/layer-presentation-no-infrastructure` | `presentation/` never imports `infrastructure/` | `error` | custom |
 | [`layer/infrastructure-no-presentation`](docs/rules/layer-infrastructure-no-presentation.md) | `ddd-ts-kit/layer-infrastructure-no-presentation` | `infrastructure/` never imports `presentation/` | `error` | custom |
 | [`context/published-language-only`](docs/rules/context-published-language-only.md) | `ddd-ts-kit/context-published-language-only` | another context is imported only through its `published-language/` | `error` | custom |
@@ -87,8 +87,10 @@ slash by a dash. `strict` sets every rule to `error`.
 | [`events/consumer-idempotent`](docs/rules/events-consumer-idempotent.md) | `ddd-ts-kit/events-consumer-idempotent` | a consumer is declared with a `consumer` name and a processed-event store, never by a bare `subscribe` | `error` | custom |
 | [`context/extractable`](docs/rules/context-extractable.md) | `ddd-ts-kit/context-extractable` | no schema or table of another context, no exported mutable state, no token of another context wired in the module | `error` | custom |
 | [`authz/declared`](docs/rules/authz-declared.md) | `ddd-ts-kit/authz-declared` | a registered command or query says `.requires(...)` or `.public()`, a route declares `security`, an authorized message forwards its actor | `error` | custom |
-| [`authz/in-application`](docs/rules/authz-in-application.md) | `ddd-ts-kit/authz-in-application` | no role test in `presentation/`, no authorization in `infrastructure/`, no actor or rights in `domain/` | `error` | custom |
-| [`authz/actor-explicit`](docs/rules/authz-actor-explicit.md) | `ddd-ts-kit/authz-actor-explicit` | no `ActorContext` or `AsyncLocalStorage` in `domain/` and `application/` | `error` | custom |
+| [`authz/in-application`](docs/rules/authz-in-application.md) | `ddd-ts-kit/authz-in-application` | no role test in `presentation/`, no authorization in `infrastructure/`, no actor, session, execution context or rights in `domain/` | `error` | custom |
+| [`authz/actor-explicit`](docs/rules/authz-actor-explicit.md) | `ddd-ts-kit/authz-actor-explicit` | no `ExecutionScope`, `ActorContext` or `AsyncLocalStorage`, no read of the ambient context, no `stampCreation`, `stampUpdate` or `tenantScopeOf` in `domain/` and `application/` | `error` | custom |
+| [`aspects/outside-in`](docs/rules/aspects-outside-in.md) | `ddd-ts-kit/aspects-outside-in` | `@ddd-ts-kit/aspects/decorators` is imported only in `infrastructure/` and in the platform | `error` | custom |
+| [`standard/no-parallel-interface`](docs/rules/standard-no-parallel-interface.md) | `ddd-ts-kit/standard-no-parallel-interface` | no declared `ILogger`, `UserContext`, `PaginatedResult` and the like next to the standard interfaces of the kernel (`standardInterfaces` in the config) | `warn` | custom |
 | [`governance/recorded-deviation`](docs/rules/governance-recorded-deviation.md) | `ddd-ts-kit/governance-recorded-deviation` | every suppression names its rules and points to `ADR-<number>` after `--` | `error` | custom |
 
 `domain/*` and `application/*` ids are added by this plugin: the shape of a class needs a syntax
@@ -169,7 +171,7 @@ Two tools, one set of ids, no overlap of authority.
 
 | Concern | Authority | Why |
 |---|---|---|
-| imports and boundaries (`layer/*`, `context/published-language-only`, `context/declared-relationship`, `context/published-language-is-a-contract`), `purity/*`, `clean/*`, `test/no-mocks`, `events/name-format`, `domain/*`, `application/*`, the code side of `events/outbox-required`, `events/consumer-idempotent`, `context/extractable`, `authz/*` and `governance/recorded-deviation` | this plugin | it reads the syntax tree: no false positive from a string or a comment, shadowing and arrow functions are understood |
+| imports and boundaries (`layer/*`, `context/published-language-only`, `context/declared-relationship`, `context/published-language-is-a-contract`), `purity/*`, `clean/*`, `test/no-mocks`, `events/name-format`, `domain/*`, `application/*`, the code side of `events/outbox-required`, `events/consumer-idempotent`, `context/extractable`, `authz/*`, `aspects/outside-in`, `standard/no-parallel-interface` and `governance/recorded-deviation` | this plugin | it reads the syntax tree: no false positive from a string or a comment, shadowing and arrow functions are understood |
 | the tree (`tree/closed`, `tree/context-doc`), names and files (`naming/*`, `test/spec-required`, `test/builder-required`), the language (`language/*`), the config (`config/*`, `context/no-cycle`), `events/defined-in-published-language`, `composition/only-in-module`, the config side of the ids above (`stack.events`, lowered severities, that a decision record exists) | `ddd-ts-kit check` | they judge the project, the glossary and files that are not sources; ESLint judges one source at a time |
 | the real dependency graph (barrels, cycles, orphans, dev dependencies in production code) | dependency-cruiser, configured by `pipeline/depcruise-config.mjs` | it resolves modules instead of classifying paths |
 

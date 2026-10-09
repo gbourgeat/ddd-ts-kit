@@ -12,7 +12,7 @@ const CONTEXTS: readonly (readonly [string, (platform: Platform) => { readonly n
 
 describe('A bounded context is a deployable unit in waiting', () => {
   it.each(CONTEXTS)('%s wires alone, on the platform, with no other context', (name, wire) => {
-    const platform = createPlatform(inertPersistence(), inProcessEvents());
+    const platform = createPlatform(inertPersistence(), { events: inProcessEvents() });
 
     expect(wire(platform).name).toBe(name);
   });

@@ -12,7 +12,12 @@ export {
   type TraceUseCaseOptions,
 } from './trace-dependency.js';
 export { withSpan } from './with-span.js';
-export { LocalRootTracker, DROPPED_SPANS_ATTRIBUTE } from './local-root-tracker.js';
+export {
+  LocalRootTracker,
+  CORRELATION_ID_ATTRIBUTE,
+  DROPPED_SPANS_ATTRIBUTE,
+  ORIGIN_ATTRIBUTE,
+} from './local-root-tracker.js';
 export {
   captureTraceparent,
   traceparentFromContext,

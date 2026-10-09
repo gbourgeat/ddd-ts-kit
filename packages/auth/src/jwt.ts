@@ -1,7 +1,19 @@
-import { anonymousActor, type Actor } from '@ddd-ts-kit/kernel';
+import {
+  anonymousSession,
+  type Actor,
+  type AuthenticationMethod,
+  type Session,
+  type SessionExtensionValues,
+} from '@ddd-ts-kit/kernel';
 import { createRemoteJWKSet, errors, jwtVerify, type JWTPayload, type JWTVerifyGetKey, type KeyInput } from 'jose';
-import type { Authenticator } from './authentication.js';
+import type { SessionAuthenticator } from './authentication.js';
 import { InvalidCredentialError } from './errors.js';
+import {
+  keycloakActorOf,
+  keycloakAuthenticationMethod,
+  type KeycloakClaimOptions,
+} from './jwt/keycloak-claims.js';
+import { sessionOfClaims } from './jwt/session-claims.js';
 
 interface CommonOptions {
   readonly issuer: string;
@@ -14,6 +26,15 @@ interface CommonOptions {
   readonly tenantClaim?: string;
   /** Replaces the default mapping. Must not keep the token: an actor is plain, loggable data. */
   readonly toActor?: (claims: JWTPayload) => Actor;
+  /**
+   * The claim naming who acts as the subject: the id itself, or an object holding it under
+   * `sub` or `id`. Default `act`, the actor claim of RFC 8693.
+   */
+  readonly impersonatorClaim?: string;
+  /** Default: `password` when `amr` lists `pwd`, `token` otherwise. */
+  readonly authenticationMethod?: AuthenticationMethod | ((claims: JWTPayload) => AuthenticationMethod);
+  /** The fields of the project under `session.extensions`. Must not keep the token either. */
+  readonly toSessionExtensions?: (claims: JWTPayload) => SessionExtensionValues;
 }
 
 export type JwtAuthenticatorOptions = CommonOptions &
@@ -39,9 +60,13 @@ const REASONS: Readonly<Record<string, string>> = {
 
 /**
  * Verifies a signed JWT (signature, issuer, audience, expiry, algorithm allow-list) and maps
- * its claims to an actor. An unsigned token (`alg: none`) is always refused.
+ * its claims to an actor and to its session. An unsigned token (`alg: none`) is always refused.
+ *
+ * The session reads registered claims: id from `sid`, else `jti`, else the subject and issue
+ * instant; `issuedAt` and `expiresAt` from `iat` and `exp`; the method and strength from `amr`
+ * and `acr`; `impersonatedBy` from `act`; `locale` and `timeZone` from `locale` and `zoneinfo`.
  */
-export class JwtAuthenticator implements Authenticator {
+export class JwtAuthenticator implements SessionAuthenticator {
   readonly #key: KeyInput | JWTVerifyGetKey;
 
   constructor(private readonly options: JwtAuthenticatorOptions) {
@@ -49,9 +74,14 @@ export class JwtAuthenticator implements Authenticator {
   }
 
   async authenticate(credential: string | undefined): Promise<Actor> {
-    if (credential === undefined) return anonymousActor();
+    return (await this.authenticateSession(credential)).actor;
+  }
+
+  async authenticateSession(credential: string | undefined): Promise<Session> {
+    if (credential === undefined) return anonymousSession();
     const claims = await this.#verify(credential);
-    return (this.options.toActor ?? ((payload) => this.#actorOf(payload)))(claims);
+    const actor = (this.options.toActor ?? ((payload) => this.#actorOf(payload)))(claims);
+    return sessionOfClaims(claims, actor, this.options);
   }
 
   async #verify(token: string): Promise<JWTPayload> {
@@ -80,6 +110,40 @@ export class JwtAuthenticator implements Authenticator {
       attributes: {},
     };
   }
+}
+
+export interface KeycloakAuthenticatorOptions extends KeycloakClaimOptions {
+  /** Where Keycloak is served, without the realm: `https://id.example.com`. */
+  readonly baseUrl: string;
+  readonly realm: string;
+  /** What the `aud` claim must name: this API, as the audience mapper of the realm writes it. */
+  readonly audience: string | readonly string[];
+  readonly algorithms?: readonly string[];
+  readonly clockTolerance?: number;
+  /** Default `act`. See the README for the session note of an administrator impersonating a user. */
+  readonly impersonatorClaim?: string;
+  readonly toSessionExtensions?: (claims: JWTPayload) => SessionExtensionValues;
+}
+
+/**
+ * A `JwtAuthenticator` for the access tokens of a Keycloak realm: issuer and key set derived
+ * from the realm, realm roles and the roles of `clientId` as `roles`, `preferred_username`,
+ * `email` and `groups` as attributes, `sid` as session id.
+ */
+export function keycloakAuthenticator(options: KeycloakAuthenticatorOptions): JwtAuthenticator {
+  const { baseUrl, realm, audience, algorithms, clockTolerance, impersonatorClaim, toSessionExtensions } = options;
+  const issuer = `${baseUrl.replace(/\/+$/, '')}/realms/${encodeURIComponent(realm)}`;
+  return new JwtAuthenticator({
+    issuer,
+    audience,
+    jwksUri: `${issuer}/protocol/openid-connect/certs`,
+    toActor: (claims) => keycloakActorOf(claims, options),
+    authenticationMethod: keycloakAuthenticationMethod,
+    ...(algorithms === undefined ? {} : { algorithms }),
+    ...(clockTolerance === undefined ? {} : { clockTolerance }),
+    ...(impersonatorClaim === undefined ? {} : { impersonatorClaim }),
+    ...(toSessionExtensions === undefined ? {} : { toSessionExtensions }),
+  });
 }
 
 /**

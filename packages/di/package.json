@@ -5,7 +5,10 @@
   "license": "MIT",
   "type": "module",
   "sideEffects": false,
-  "exports": { ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" } },
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" },
+    "./discovery": { "types": "./dist/discovery.d.ts", "default": "./dist/discovery.js" }
+  },
   "files": ["dist"],
   "dependencies": { "@ddd-ts-kit/kernel": "0.1.0" },
   "peerDependencies": { "tsyringe": "^4.10.0", "reflect-metadata": ">=0.2.0" },

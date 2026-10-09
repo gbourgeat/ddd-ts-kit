@@ -165,6 +165,152 @@ inserts unless the key exists and says whether it did; unlike a caught unique vi
 leaves the surrounding PostgreSQL transaction usable, and it hides the one place where the
 dialects differ (`RETURNING` on PostgreSQL and SQLite, the affected-row count on MySQL).
 
+## Audit columns, tenant scoping and pages
+
+The standard persistence shapes of the kernel, on knex. Four small helpers, so that the columns
+have the same names in every project (`created_at`, `created_by`, `updated_at`, `updated_by`,
+`tenant_id`), which is what lets a dashboard, an export or the audit package be written once:
+`auditColumns(table)` and `tenantColumn(table)` for the migration, `auditRow(stamp)` and
+`tenantRow(scoped)` to turn the kernel `AuditStamp` and `TenantScoped` into those column names,
+since a knex row is keyed by column.
+
+```ts
+import { auditColumns, tenantColumn } from '@ddd-ts-kit/knex';
+
+export async function up(knex: Knex): Promise<void> {
+  await knex.schema.withSchema(BILLING).createTable('invoices', (table) => {
+    table.text('id').primary();
+    table.integer('amount').notNullable();
+    table.text('status').notNullable();
+    table.integer('version').notNullable();
+    tenantColumn(table);
+    auditColumns(table);
+    table.index(['tenant_id', 'amount', 'id'], 'invoices_tenant_amount_idx');
+  });
+}
+```
+
+```ts
+import { stampCreation, stampUpdate, tenantScopeOf } from '@ddd-ts-kit/kernel';
+import { auditRow, tenantRow, type AuditRow, type TenantRow } from '@ddd-ts-kit/knex';
+
+interface InvoiceRow extends VersionedInvoice, TenantRow, AuditRow {}
+
+export class KnexInvoiceRepository implements Repository<Invoice> {
+  constructor(
+    private readonly context: KnexContext,
+    private readonly scope: ExecutionScope, // EXECUTION_SCOPE
+    private readonly clock: Clock,
+  ) {}
+
+  async findById(id: string): Promise<Invoice | undefined> {
+    const row = await this.#invoices().where({ id, ...this.#ownTenant() }).first();
+    return row === undefined ? undefined : InvoiceMapper.toDomain(row);
+  }
+
+  async save(invoice: Invoice): Promise<void> {
+    await optimisticUpdate(invoice, async ({ expected, next }) => {
+      const state = { ...InvoiceMapper.toRow(invoice), version: next };
+      return expected === 0 ? this.#insert(state) : this.#update(state, expected);
+    });
+  }
+
+  async #insert(state: VersionedInvoice): Promise<number> {
+    const row = { ...state, ...this.#ownTenant(), ...auditRow(stampCreation(this.scope, this.clock)) };
+    const inserted = await insertIgnoringConflict(this.context.executor(), this.#invoices(), { row, conflict: 'id' });
+    return inserted ? 1 : 0;
+  }
+
+  #update(state: VersionedInvoice, expected: number): Promise<number> {
+    return this.#invoices()
+      .where({ id: state.id, version: expected, ...this.#ownTenant() })
+      .update({ ...state, ...auditRow(stampUpdate(this.scope, this.clock)) });
+  }
+
+  #ownTenant(): TenantRow {
+    return tenantRow(tenantScopeOf(this.scope));
+  }
+}
+```
+
+A list query takes the kernel `PageRequest` and answers a `Page`, in both variants:
+
+```ts
+import { decodeCursor, encodeCursor, pageOf } from '@ddd-ts-kit/kernel';
+
+export class KnexInvoiceQueries {
+  async list(request: PageRequest<'amount'>): Promise<Page<InvoiceSummary>> {
+    return request.kind === 'offset' ? this.#byOffset(request) : this.#byCursor(request);
+  }
+
+  async #byOffset(request: OffsetPageRequest<'amount'>): Promise<Page<InvoiceSummary>> {
+    const rows = await this.#ownInvoices()
+      .orderBy(totalOrder(directionOf(request)))
+      .limit(request.limit)
+      .offset(request.offset);
+    const counted = await this.#ownInvoices().count<{ total: string | number }[]>({ total: '*' }).first();
+    return pageOf(rows.map(toSummary), { total: Number(counted?.total ?? 0) });
+  }
+
+  async #byCursor(request: CursorPageRequest<'amount'>): Promise<Page<InvoiceSummary>> {
+    const direction = directionOf(request);
+    const query = this.#ownInvoices().orderBy(totalOrder(direction)).limit(request.limit + 1);
+    const rows = await (request.cursor === undefined ? query : beyond(query, positionOf(request.cursor), direction));
+    const items = rows.slice(0, request.limit);
+    const last = items.at(-1);
+    const more = rows.length > request.limit && last !== undefined;
+    return pageOf(items.map(toSummary), more ? { nextCursor: encodeCursor({ amount: last.amount, id: last.id }) } : {});
+  }
+
+  #ownInvoices() {
+    return invoicesOf(this.context).where(tenantRow(tenantScopeOf(this.scope)));
+  }
+}
+
+const directionOf = (request: PageRequest<'amount'>) => request.sort[0]?.direction ?? 'asc';
+
+// The primary key follows the sort field, in the same direction: the order is total.
+const totalOrder = (direction: SortDirection) => [
+  { column: 'amount', order: direction },
+  { column: 'id', order: direction },
+];
+
+// The rows after a position, as a tuple comparison: the tie-breaker decides among equals.
+function beyond(query: Knex.QueryBuilder, { amount, id }: { amount: number; id: string }, direction: SortDirection) {
+  const past = direction === 'asc' ? '>' : '<';
+  return query.where((after) => {
+    void after.where('amount', past, amount).orWhere((tied) => {
+      void tied.where('amount', amount).where('id', past, id);
+    });
+  });
+}
+```
+
+`positionOf(cursor)` decodes with `decodeCursor` and checks that `amount` is a number and `id`
+a string, raising `InvalidPageRequestError` otherwise.
+
+The rules these examples hold, and that the tests of this package check on a real database:
+
+- **Audit columns** are filled by the adapter, never by the aggregate: `stampCreation(scope,
+  clock)` on insert, `stampUpdate(scope, clock)` on update, which leaves `created_at` and
+  `created_by` alone. The actor is the one of the execution scope: the user of the request, or
+  `system:<consumer>` for a consumed event.
+- **The tenant is part of every statement**: written on insert, and in the condition of every
+  read and every update, the version guard included. A row of another tenant is not found, and
+  an update aimed at it writes nothing, which `optimisticUpdate` reports as a
+  `ConcurrencyError`. Work that names no tenant raises `NoCurrentTenantError` before any SQL.
+- **A list has a total order.** The primary key follows the sort field, in the same direction,
+  as a tie-breaker: rows equal on the sort field otherwise have no defined order, and a page
+  could repeat or skip one of them. The index covers `(tenant_id, <sort field>, id)`.
+- **A cursor is a position, not a page number**: the sort value and the id of the last row,
+  written by `encodeCursor`, compared as a tuple (`amount > :amount OR (amount = :amount AND id
+  > :id)`). One row more than `limit` is fetched to know whether a page follows, so no count is
+  needed, and a row inserted before the cursor does not shift the next page as it does with an
+  offset. A cursor comes back from a client: `decodeCursor` refuses what it did not write, and
+  the adapter checks the types of the position before they reach a statement.
+- **An offset page answers `total`**, a cursor page `nextCursor`. Offer the offset form for
+  small, browsable lists and the cursor form for anything that grows.
+
 ## Outbox and idempotency
 
 - `KnexOutboxStore.claimBatch` selects the due rows `FOR UPDATE SKIP LOCKED` and leases them in

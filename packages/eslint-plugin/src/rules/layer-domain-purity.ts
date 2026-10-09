@@ -1,8 +1,9 @@
 import type { ContextLocation, ImportTarget } from '../project/classify.js';
 import { defineRule } from '../support/define-rule.js';
 import { describeTarget, importListener, inLayer } from '../support/imports.js';
+import { OUTSIDE_CONCERN_MESSAGE, outsideConcern } from '../support/outside-concerns.js';
 
-type MessageId = 'package' | 'builtin' | 'upstreamContract' | 'outerLayer';
+type MessageId = 'package' | 'outsideConcern' | 'builtin' | 'upstreamContract' | 'outerLayer';
 
 export const layerDomainPurity = defineRule<MessageId>({
   id: 'layer/domain-purity',
@@ -10,6 +11,7 @@ export const layerDomainPurity = defineRule<MessageId>({
   recommended: 'error',
   description: 'domain/ imports only its own domain/, the shared kernel and the allowed kernel packages: no framework, ORM, validation library or Node built-in.',
   messages: {
+    outsideConcern: OUTSIDE_CONCERN_MESSAGE,
     package:
       'The domain imports the package "{{name}}". Remove the import: express the need as plain TypeScript or as a port in application/ports, and keep decorators and schemas of "{{name}}" in infrastructure or presentation.',
     builtin:
@@ -25,7 +27,9 @@ export const layerDomainPurity = defineRule<MessageId>({
     const allowed = file.config.domainAllowedPackages;
     return importListener(file, ({ node, target, specifier }) => {
       if (target.kind === 'package') {
-        if (!allowed.includes(target.name)) report({ node, messageId: 'package', data: { name: target.name } });
+        const concern = outsideConcern(target.name);
+        if (concern !== undefined) report({ node, messageId: 'outsideConcern', data: { importer: 'The domain', specifier, ...concern } });
+        else if (!allowed.includes(target.name)) report({ node, messageId: 'package', data: { name: target.name } });
       } else if (target.kind === 'builtin') {
         report({ node, messageId: 'builtin', data: { name: specifier } });
       } else {

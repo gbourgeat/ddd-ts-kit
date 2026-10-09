@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
+  FixedClock,
   FixedExecutionScope,
   InMemoryCache,
+  InMemoryLock,
   InMemoryLogger,
   InMemoryMetrics,
+  InMemoryRateLimiter,
   NoopLogger,
   NoopMetrics,
   ScopedActorContext,
@@ -15,8 +18,10 @@ import {
   ACTOR_CONTEXT,
   CACHE,
   EXECUTION_SCOPE,
+  LOCK,
   LOGGER,
   METRICS,
+  RATE_LIMITER,
   createApplication,
   createTestApplication,
   defineContextModule,
@@ -38,6 +43,17 @@ describe('kernelModule', () => {
     expect(app.resolve(CACHE)).toBeInstanceOf(InMemoryCache);
     await app.resolve(CACHE).set(cacheKey<number>('answer'), 42, { ttlMs: 60_000 });
     expect(await app.resolve(CACHE).get(cacheKey<number>('answer'))).toBe(42);
+  });
+
+  it('binds the lock and the rate limiter to their in-memory implementations, replaced through its options', async () => {
+    const app = createApplication({ modules: [kernelModule()] });
+    const lock = new InMemoryLock(new FixedClock(new Date(0)));
+
+    expect(app.resolve(LOCK)).toBeInstanceOf(InMemoryLock);
+    expect(app.resolve(RATE_LIMITER)).toBeInstanceOf(InMemoryRateLimiter);
+    expect((await app.resolve(LOCK).acquire('report', { ttlMs: 1_000 }))?.fencingToken).toBe(1);
+    expect(await app.resolve(RATE_LIMITER).consume('client-a', { limit: 1, windowMs: 1_000 })).toMatchObject({ allowed: true });
+    expect(createApplication({ modules: [kernelModule({ lock })] }).resolve(LOCK)).toBe(lock);
   });
 
   it('takes the adapters of the platform through its options', () => {
@@ -78,6 +94,20 @@ describe('createTestApplication', () => {
     expect(app.logger.entries).toEqual([{ level: 'info', message: 'order shipped', fields: { context: 'shipping' } }]);
     expect(app.metrics.counterValue('orders_total')).toBe(1);
     expect(await app.cache.get(cacheKey<string>('greeting'))).toBeUndefined();
+  });
+
+  it('exposes the lock and the rate limiter, which read the clock of the test', async () => {
+    const app = createTestApplication({ modules: [] });
+    const once = { limit: 1, windowMs: 1_000 };
+
+    await app.get(LOCK).acquire('report', { ttlMs: 1_000 });
+    await app.get(RATE_LIMITER).consume('client-a', once);
+    expect(await app.lock.acquire('report', { ttlMs: 1_000 })).toBeUndefined();
+    expect((await app.rateLimiter.consume('client-a', once)).allowed).toBe(false);
+    app.clock.advance(1_000);
+
+    expect((await app.lock.acquire('report', { ttlMs: 1_000 }))?.fencingToken).toBe(2);
+    expect((await app.rateLimiter.consume('client-a', once)).allowed).toBe(true);
   });
 
   it('gives infrastructure an execution context that follows the current actor', () => {

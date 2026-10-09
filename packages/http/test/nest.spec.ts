@@ -63,6 +63,7 @@ describe('a Nest routes module built from injected dependencies', () => {
               summary: 'Greet someone',
               request: { params: zodSchema(z.object({ name: z.string() })) },
               responses: { 200: { description: 'The greeting.', body: zodSchema(z.object({ text: z.string() })) } },
+              security: false,
             },
             ({ params }) => ({ status: 200, body: { text: greeter.greet(params.name) } }),
           ),

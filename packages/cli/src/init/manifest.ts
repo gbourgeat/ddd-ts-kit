@@ -19,6 +19,10 @@ const VERSIONS: Readonly<Record<string, string>> = {
   '@ddd-ts-kit/typeorm': '^0.1.0',
   '@ddd-ts-kit/auth': '^0.1.0',
   '@ddd-ts-kit/rabbitmq': '^0.1.0',
+  '@ddd-ts-kit/aspects': '^0.1.0',
+  '@ddd-ts-kit/audit': '^0.1.0',
+  '@ddd-ts-kit/redis': '^0.1.0',
+  ioredis: '^6.0.0',
   jose: '^6.0.0',
   amqplib: '^2.2.0',
   'ddd-ts-kit': '^0.1.0',
@@ -133,7 +137,7 @@ function scriptsFor(config: Config): Record<string, string> {
     quality: 'npm run lint && npm run check:arch && npm run depcruise && npm run deadcode',
     ...testScripts(config),
     ...documentationScripts(config),
-    ...databaseScripts(config.stack.orm),
+    ...databaseScripts(config),
     'infra:up': 'docker compose up -d --wait',
     'infra:down': 'docker compose down',
   };
@@ -187,8 +191,12 @@ const DATABASE_SCRIPTS: Readonly<Record<string, Record<string, string>>> = {
   },
 };
 
-function databaseScripts(orm: string): Record<string, string> {
-  return DATABASE_SCRIPTS[orm] ?? {};
+/** drizzle-kit generates no trigger: the statements that make the audit entries append-only are printed, to paste in a custom migration. */
+const AUDIT_GUARD = `node --input-type=module -e "import { auditGuardStatements } from '@ddd-ts-kit/audit/drizzle'; console.log(auditGuardStatements('audit').join(';\\n') + ';')"`;
+
+function databaseScripts(config: Config): Record<string, string> {
+  const { orm, audit } = config.stack;
+  return { ...DATABASE_SCRIPTS[orm], ...(orm === 'drizzle' && audit === 'on' ? { 'db:audit-guard': AUDIT_GUARD } : {}) };
 }
 
 interface Packages {
@@ -196,7 +204,7 @@ interface Packages {
   readonly devDependencies: Record<string, string>;
 }
 
-const BASE = ['@ddd-ts-kit/kernel', '@ddd-ts-kit/auth', '@ddd-ts-kit/events', '@ddd-ts-kit/validation', '@ddd-ts-kit/tracing', '@opentelemetry/api', '@opentelemetry/sdk-node', '@opentelemetry/auto-instrumentations-node', '@opentelemetry/exporter-trace-otlp-http'];
+const BASE = ['@ddd-ts-kit/kernel', '@ddd-ts-kit/auth', '@ddd-ts-kit/events', '@ddd-ts-kit/validation', '@ddd-ts-kit/tracing', '@ddd-ts-kit/aspects', '@opentelemetry/api', '@opentelemetry/sdk-node', '@opentelemetry/auto-instrumentations-node', '@opentelemetry/exporter-trace-otlp-http'];
 const BASE_DEV = ['ddd-ts-kit', 'tsx', '@types/node', '@ddd-ts-kit/testing', '@faker-js/faker'];
 
 /** What each choice of the stack adds: [runtime dependencies, development dependencies]. */
@@ -212,6 +220,9 @@ const BY_CHOICE: Readonly<Record<string, readonly [readonly string[], readonly s
   'orm:prisma': [['@ddd-ts-kit/prisma', '@prisma/client', '@prisma/adapter-pg', 'pg'], ['prisma', '@types/pg', '@electric-sql/pglite', '@electric-sql/pglite-socket']],
   'orm:typeorm': [['@ddd-ts-kit/typeorm', 'typeorm', 'pg'], ['@types/pg', '@electric-sql/pglite', '@electric-sql/pglite-socket']],
   'authn:jwt': [['jose'], []],
+  'authn:keycloak': [['jose'], []],
+  'cache:redis': [['@ddd-ts-kit/redis', 'ioredis'], []],
+  'audit:on': [['@ddd-ts-kit/audit'], []],
   'broker:rabbitmq': [['@ddd-ts-kit/rabbitmq', 'amqplib'], []],
   'tests:vitest': [[], ['vitest']],
   'tests:jest': [[], ['jest', '@jest/globals', '@swc/core', '@swc/jest']],

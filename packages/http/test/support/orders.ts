@@ -37,6 +37,7 @@ export const placeOrder = defineRoute(
     request: { body: orderBody },
     responses: { 201: { description: 'The order was placed.', body: order } },
     errors: ['CONFLICT'],
+    security: ['bearer'],
   },
   ({ body, context }) => ({
     status: 201,
@@ -58,6 +59,7 @@ export const getOrder = defineRoute(
     },
     responses: { 200: { description: 'The order.', body: order } },
     errors: ['NOT_FOUND', 'ORDER_ALREADY_SHIPPED', 'CONFLICT'],
+    security: false,
   },
   ({ params, query }) => {
     if (params.orderId === SHIPPED_ORDER) {

@@ -55,6 +55,11 @@ export function innerLayer(file: LintedFile): 'domain' | 'application' | undefin
   return layer === 'domain' || layer === 'application' ? layer : undefined;
 }
 
+/** A production or test source of the project itself, as opposed to a script or a config file next to it. */
+export function inSourceRoot(file: LintedFile): boolean {
+  return file.path.startsWith(`${file.config.sourceRoot}/`);
+}
+
 export function inContext(file: LintedFile): ContextLocation | undefined {
   return file.location.area === 'context' ? file.location : undefined;
 }

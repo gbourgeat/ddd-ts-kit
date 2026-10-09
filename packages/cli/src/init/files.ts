@@ -7,11 +7,12 @@ import type { Config } from '../config.js';
  */
 export type InitFile = readonly [target: string, template: string];
 
-export function initFiles(config: Config): InitFile[] {
+export function initFiles(config: Config, projectName: string): InitFile[] {
   return [
     ...projectFiles(config),
     ...platformFiles(config),
     ...authFiles(config),
+    ...identityFiles(config, projectName),
     ...persistenceFiles(config),
     ...scriptFiles(config),
     ...endToEndFiles(config),
@@ -34,13 +35,15 @@ function projectFiles(config: Config): InitFile[] {
 }
 
 function platformFiles(config: Config): InitFile[] {
-  const { http, di, events, docsUi, broker } = config.stack;
+  const { http, events, docsUi, broker, cache } = config.stack;
   const platform = config.platformDir;
-  const family = di === 'tsyringe' ? 'tsyringe' : 'manual';
+  const family = familyOf(config);
   return [
     [`${config.sourceRoot}/main.ts`, 'init/main.ts.tpl'],
     [`${platform}/tracing.ts`, 'init/platform/tracing.ts.tpl'],
     [`${platform}/config.ts`, 'init/platform/config.ts.tpl'],
+    [`${platform}/observability.ts`, 'init/platform/observability.ts.tpl'],
+    [`${platform}/resilience.ts`, 'init/platform/resilience.ts.tpl'],
     [`${platform}/platform.module.ts`, `init/platform/platform.module.${family}.ts.tpl`],
     [`${platform}/application.ts`, `init/platform/application.${family}.ts.tpl`],
     [`${platform}/events.ts`, `init/platform/events.${broker}.ts.tpl`],
@@ -51,7 +54,27 @@ function platformFiles(config: Config): InitFile[] {
     ...when(events === 'outbox', [[`${platform}/outbox-relay.ts`, 'init/platform/outbox-relay.ts.tpl']]),
     ...when(http !== 'none', [[`${platform}/http-server.ts`, `init/platform/http-server.${http}.ts.tpl`]]),
     ...when(docsUi !== 'none', [[`${platform}/http-docs.ts`, 'init/platform/http-docs.ts.tpl']]),
+    ...when(cache === 'redis', [[`${platform}/cache.ts`, 'init/platform/cache.ts.tpl']]),
+    ...when(cache === 'redis' && http !== 'none', [[`${platform}/http-rate-limit.ts`, 'init/platform/http-rate-limit.ts.tpl']]),
+    ...auditFiles(config),
   ];
+}
+
+/** The nest module wires by hand inside a Nest provider, so it shares the manual family. */
+function familyOf(config: Config): 'tsyringe' | 'manual' {
+  return config.stack.di === 'tsyringe' ? 'tsyringe' : 'manual';
+}
+
+/**
+ * The audit trail and its three sources, then its read side: a protected, paginated route. It
+ * lives in the platform, as a capability every context gets, and not in a bounded context.
+ */
+function auditFiles(config: Config): InitFile[] {
+  const { audit, http } = config.stack;
+  if (audit !== 'on') return [];
+  const file = (name: string, template = name): InitFile => [`${config.platformDir}/audit/${name}`, `init/platform/audit/${template}.tpl`];
+  const readSide = [file('audit.permissions.ts'), file('audit.module.ts', `audit.module.${familyOf(config)}.ts`), file('list-audit-entries.query.ts'), file('list-audit-entries.handler.ts'), file('list-audit-entries.route.ts')];
+  return [file('audit.ts'), file('audited-events.ts'), ...when(http !== 'none', readSide)];
 }
 
 function when(condition: boolean, files: readonly InitFile[]): readonly InitFile[] {
@@ -68,16 +91,22 @@ const AUTHORIZATION_MODEL: Readonly<Record<string, readonly string[]>> = {
 
 /** Who is calling (at the HTTP boundary only) and what they may do (behind one port, whatever the model). */
 function authFiles(config: Config): InitFile[] {
-  const { http, di, authn, authz } = config.stack;
+  const { http, authn, authz, audit } = config.stack;
   const file = (name: string, template = name): InitFile => [`${config.platformDir}/auth/${name}`, `init/platform/auth/${template}.tpl`];
   return [
-    file('authorization.ts', `authorization.${di === 'tsyringe' ? 'tsyringe' : 'manual'}.ts`),
+    file('authorization.ts', `authorization.${familyOf(config)}.ts`),
     file('authorizer.ts', `authorizer.${authz}.ts`),
     file('access-policies.ts'),
-    file('audit.ts'),
+    ...when(audit !== 'on', [file('decision-log.ts')]),
     ...(AUTHORIZATION_MODEL[authz] ?? []).map((name) => file(name)),
     ...when(http !== 'none', [file('authenticator.ts', `authenticator.${authn}.ts`), file('http-boundary.ts')]),
   ];
+}
+
+/** The realm a local Keycloak imports at its first start: the API client, its audience mapper, a client for the direct grant, demo users. */
+function identityFiles(config: Config, projectName: string): InitFile[] {
+  const { http, authn } = config.stack;
+  return [...when(http !== 'none' && authn === 'keycloak', [[`docker/keycloak/${projectName}-realm.json`, 'init/docker/keycloak-realm.json.tpl']])];
 }
 
 /** Storage adapters of the platform, by ORM. Each exports the same `Persistence` from persistence.ts. */

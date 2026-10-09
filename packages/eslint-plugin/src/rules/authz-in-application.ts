@@ -1,13 +1,12 @@
-import { ASTUtils, AST_NODE_TYPES, type TSESLint, type TSESTree } from '@typescript-eslint/utils';
+import { AST_NODE_TYPES, type TSESLint, type TSESTree } from '@typescript-eslint/utils';
 import { ancestors } from '../support/ancestors.js';
 import { accessedName } from '../support/calls.js';
-import { constructorOf, enclosingMember, memberName } from '../support/classes.js';
 import { defineRule, type Report } from '../support/define-rule.js';
 import { propertyName } from '../support/globals.js';
 import { importListener, inContext, type ImportedName } from '../support/imports.js';
 import type { LintedFile } from '../project/linted-file.js';
-import { parameterName, parameterProperties, startsAtThis } from '../support/members.js';
-import { typeReferenceName } from '../support/types.js';
+import { declaredTypeName } from '../support/declared-type.js';
+import { startsAtThis } from '../support/members.js';
 
 type MessageId = 'rights' | 'roleTest' | 'authorizerImport' | 'decision' | 'refusal' | 'authInDomain' | 'actorInDomain' | 'rightsInDomain';
 type Tell = Report<MessageId>;
@@ -18,12 +17,12 @@ const KERNEL = '@ddd-ts-kit/kernel';
 const RIGHTS = new Set(['roles', 'permissions']);
 const RIGHTS_AT_THE_BOUNDARY = new Set([...RIGHTS, 'isAdmin']);
 const EQUALITY = new Set(['===', '!==', '==', '!=']);
-/** What a route needs of the auth package: the actor of the request and the errors it may map. */
-const REQUEST_GLUE = new Set(['actorOf', 'bearerCredential', 'inActorContext', 'principalResolver', 'HeaderValues', 'FORBIDDEN', 'UNAUTHORIZED']);
+/** What a route needs of the auth package: the actor and the session of the request, and the errors it may map. */
+const REQUEST_GLUE = new Set(['actorOf', 'sessionOf', 'resolveSession', 'SessionAuthenticator', 'bearerCredential', 'inActorContext', 'principalResolver', 'HeaderValues', 'FORBIDDEN', 'UNAUTHORIZED']);
 const DECISIONS = new Set(['authorize', 'decide', 'check']);
 const AUTHORIZER_NAME = /^#?access$|authorizer/i;
 const AUTHORIZER_TYPE = /^Access$|Authorizer$/;
-const ACTOR_MODEL = new Set(['Actor', 'Actored', 'ActorContext']);
+const ACTOR_MODEL = new Set(['Actor', 'Actored', 'ActorContext', 'Session', 'ExecutionContext']);
 
 const IN_APPLICATION =
   'Declare the permission on the use case (`.requires(...)` in the module) and, for a rule that needs loaded state, write a policy in application/authorization evaluated by the handler through `Access`.';
@@ -36,11 +35,11 @@ export const authzInApplication = defineRule<MessageId>({
   messages: {
     rights: `presentation/ reads {{access}}: a route maps a request to a command and decides nothing. Put the actor in the command or query and remove the test. ${IN_APPLICATION}`,
     roleTest: `presentation/ compares {{access}} with a role name. Put the actor in the command or query and remove the test. ${IN_APPLICATION}`,
-    authorizerImport: `presentation/ imports {{name}} from "${AUTH}", which decides access. Keep only the request glue here (actorOf, inActorContext, the error classes). ${IN_APPLICATION}`,
+    authorizerImport: `presentation/ imports {{name}} from "${AUTH}", which decides access. Keep only the request glue here (actorOf, sessionOf, resolveSession, a SessionAuthenticator, inActorContext, the error classes). ${IN_APPLICATION}`,
     decision: `infrastructure/ asks {{call}}() for a decision: an adapter does what it is told. Receive an access scope computed by the handler as a parameter of the port instead. ${IN_APPLICATION}`,
     refusal: `infrastructure/ raises ForbiddenError: refusing is a decision of the application layer. Return what was found (or nothing) and let the handler refuse. ${IN_APPLICATION}`,
     authInDomain: `domain/ imports "${AUTH}": the domain knows nothing of who may do what. Keep invariants here ("an invoice cannot be paid twice") and move the rule about the actor to a policy in application/authorization.`,
-    actorInDomain: `domain/ imports {{name}} from "${KERNEL}": the domain never sees the actor. Pass the fact the model needs as its own value (an author id, a tenant id) and keep the actor in the handler.`,
+    actorInDomain: `domain/ imports {{name}} from "${KERNEL}": the domain never sees the actor, its session or the execution context. Pass the fact the model needs as its own value (an author id, a tenant id) and keep the actor in the handler.`,
     rightsInDomain: 'domain/ reads {{access}}: rights are not part of the model. Let a policy of application/authorization decide and call the aggregate only once the decision is taken.',
   },
   create({ file, sourceCode, report }) {
@@ -102,26 +101,6 @@ function infrastructure(sourceCode: Source, tell: Tell): TSESLint.RuleListener {
 
 function isAuthorizer(sourceCode: Source, node: TSESTree.Node): boolean {
   return AUTHORIZER_NAME.test(accessedName(node) ?? '') || AUTHORIZER_TYPE.test(declaredTypeName(sourceCode, node) ?? '');
-}
-
-/** Read from the declaration, without type information: a parameter, a variable, a property or a parameter property. */
-function declaredTypeName(sourceCode: Source, node: TSESTree.Node): string | undefined {
-  if (node.type === AST_NODE_TYPES.Identifier) return variableTypeName(sourceCode, node);
-  const name = startsAtThis(node) ? accessedName(node) : undefined;
-  const body = enclosingMember(node)?.body;
-  return name === undefined || body === undefined ? undefined : propertyTypeName(body, name);
-}
-
-function variableTypeName(sourceCode: Source, node: TSESTree.Identifier): string | undefined {
-  const declared = ASTUtils.findVariable(sourceCode.getScope(node), node.name)?.defs[0]?.name;
-  return declared?.type === AST_NODE_TYPES.Identifier ? typeReferenceName(declared.typeAnnotation) : undefined;
-}
-
-function propertyTypeName(body: TSESTree.ClassBody, name: string): string | undefined {
-  const property = body.body.find((member) => member.type === AST_NODE_TYPES.PropertyDefinition && memberName(member) === name);
-  if (property?.type === AST_NODE_TYPES.PropertyDefinition) return typeReferenceName(property.typeAnnotation);
-  const parameter = parameterProperties(constructorOf(body)).find((candidate) => parameterName(candidate) === name);
-  return parameter?.parameter.type === AST_NODE_TYPES.Identifier ? typeReferenceName(parameter.parameter.typeAnnotation) : undefined;
 }
 
 /** An adapter of the Authorizer port (a cache, a remote service) decides by definition: it may delegate to another one. */

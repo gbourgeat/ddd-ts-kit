@@ -2,11 +2,16 @@ import { PGlite } from '@electric-sql/pglite';
 import { PGLiteSocketServer } from '@electric-sql/pglite-socket';
 import { connectToDatabase, type Database } from './database.js';
 import { persistenceOver, type Persistence } from './persistence.js';
+{{#if audit.on}}
+import { AUDIT_SCHEMA, createTables } from './schema.js';
+{{/if}}
+{{#unless audit.on}}
 import { createTables } from './schema.js';
+{{/unless}}
 
 export interface TestDatabase {
   readonly persistence: Persistence;
-  /** Empties every table: call it before each test. */
+  /** Empties every table{{#if audit.on}} but the audit trail, which is append-only whoever asks{{/if}}: call it before each test. */
   reset(): Promise<void>;
   close(): Promise<void>;
 }
@@ -49,7 +54,7 @@ async function truncateAll(db: Database): Promise<void> {
   const tables = await db<TableName>('information_schema.tables')
     .select('table_schema', 'table_name')
     .where('table_type', 'BASE TABLE')
-    .whereNotIn('table_schema', ['pg_catalog', 'information_schema'])
+    .whereNotIn('table_schema', ['pg_catalog', 'information_schema'{{#if audit.on}}, AUDIT_SCHEMA{{/if}}])
     .whereNot('table_name', 'like', 'knex_migrations%');
   if (tables.length > 0) {
     const names = tables.map((table) => '"' + table.table_schema + '"."' + table.table_name + '"').join(', ');

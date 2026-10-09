@@ -47,6 +47,8 @@ export class VoidInvoice extends AuthorizedCommand {
 
 ## Details
 
+The route type of `@ddd-ts-kit/http` enforces `security` already: `defineRoute` does not compile without it and refuses an empty list. This rule stays as the lint-level net for a route definition built loosely: a spec typed `any` or cast, a JavaScript file, a wrapper that widens the type.
+
 The registration is recognised by its shape, whatever the builder is called. `super(input.actor)` is accepted when `input` is a constructor parameter. A class without a constructor inherits the one of `AuthorizedCommand`, which takes the actor.
 
 ## Options

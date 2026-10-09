@@ -104,3 +104,38 @@ export function mapPage<T, U>(page: Page<T>, map: (item: T) => U): Page<U> {
   const { items, ...more } = page;
   return { items: items.map(map), ...more };
 }
+
+/** Where a cursor page ended: the sort values of its last item, tie-breaker included. */
+export type CursorPosition = Readonly<Record<string, string | number | boolean | null>>;
+
+/**
+ * The opaque `nextCursor` of a position. Opaque means that a client sends it back untouched;
+ * it is not a secret and not signed, so the reader validates what `decodeCursor` gives.
+ */
+export function encodeCursor(position: CursorPosition): string {
+  return Buffer.from(JSON.stringify(position), 'utf8').toString('base64url');
+}
+
+/** The position a cursor stands for. A cursor this function did not write is refused. */
+export function decodeCursor(cursor: string): CursorPosition {
+  const position = parsedPosition(cursor);
+  if (!isCursorPosition(position)) {
+    throw new InvalidPageRequestError('The cursor of a page is the nextCursor of a previous page');
+  }
+  return position;
+}
+
+function parsedPosition(cursor: string): unknown {
+  try {
+    return JSON.parse(Buffer.from(cursor, 'base64url').toString('utf8'));
+  } catch {
+    return undefined;
+  }
+}
+
+function isCursorPosition(value: unknown): value is CursorPosition {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
+  return Object.values(value).every(
+    (part) => part === null || ['string', 'number', 'boolean'].includes(typeof part),
+  );
+}

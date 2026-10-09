@@ -10,6 +10,7 @@ import {
 } from '../src/postgres.js';
 import { createDatabase } from './support/database.js';
 import { DrizzleInvoiceRepository, Invoice, invoices } from './support/invoices.js';
+import { ada, scopeOf } from './support/scopes.js';
 
 const outbox = outboxTable();
 const processed = processedEventsTable();
@@ -41,7 +42,7 @@ const wire = () => {
   return {
     unitOfWork,
     store,
-    repository: new DrizzleInvoiceRepository(unitOfWork),
+    repository: new DrizzleInvoiceRepository(unitOfWork, scopeOf(ada), new FixedClock(now)),
     publisher: new OutboxPublisher(store),
     processed: new DrizzleProcessedEventStore(unitOfWork, { table: processed }),
   };

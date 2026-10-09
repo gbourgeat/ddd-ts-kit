@@ -1,6 +1,6 @@
 import { WiringError } from './errors.js';
-import { COMMAND_BUS, EVENT_SUBSCRIBER, QUERY_BUS } from './kernel-tokens.js';
-import type { Wiring } from './module.js';
+import { COMMAND_BUS, DOMAIN_EVENTS, EVENT_SUBSCRIBER, QUERY_BUS } from './kernel-tokens.js';
+import { whereOf, type Wiring } from './wiring.js';
 import { describeToken, type Token } from './token.js';
 
 type Tokens = ReadonlySet<Token<unknown>>;
@@ -18,7 +18,7 @@ function assertDependenciesBound({ bindings }: Wiring, overridden: Tokens): void
       if (bindings.has(dependency) || overridden.has(dependency)) continue;
       throw new WiringError(
         'UNBOUND_DEPENDENCY',
-        `"${describeToken(binding.token)}" in module "${binding.module}" depends on "${describeToken(dependency)}", which no module binds.`,
+        `"${describeToken(binding.token)}" in ${whereOf(binding)} depends on "${describeToken(dependency)}", which no module binds.`,
       );
     }
   }
@@ -34,6 +34,11 @@ function assertBusesBound(wiring: Wiring, overridden: Tokens): void {
     ...wiring.consumptions.map(({ consumer, module }) => ({
       bus: EVENT_SUBSCRIBER,
       user: `the consumer "${consumer}"`,
+      module,
+    })),
+    ...wiring.reactions.map(({ name, module }) => ({
+      bus: DOMAIN_EVENTS,
+      user: `a listener of the domain event "${name}"`,
       module,
     })),
   ];

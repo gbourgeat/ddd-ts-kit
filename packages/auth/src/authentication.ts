@@ -1,4 +1,12 @@
-import { anonymousActor, isActor, type Actor, type ActorContext } from '@ddd-ts-kit/kernel';
+import {
+  anonymousSession,
+  isActor,
+  isAnonymous,
+  isSession,
+  type Actor,
+  type ActorContext,
+  type Session,
+} from '@ddd-ts-kit/kernel';
 import { InvalidCredentialError } from './errors.js';
 
 /**
@@ -8,6 +16,28 @@ import { InvalidCredentialError } from './errors.js';
  */
 export interface Authenticator {
   authenticate(credential: string | undefined): Promise<Actor>;
+}
+
+/**
+ * An authenticator that also knows the session the credential stands for: since when, until
+ * when, how it was authenticated, on whose behalf. Answers the anonymous session without
+ * credential. `resolveSession` works with either port, so an adapter implements this one only
+ * when its credential carries that knowledge.
+ */
+export interface SessionAuthenticator extends Authenticator {
+  authenticateSession(credential: string | undefined): Promise<Session>;
+}
+
+/**
+ * The session of a credential, whatever the authenticator: its own when it is a
+ * `SessionAuthenticator`, otherwise one derived from the actor (see `sessionOf`).
+ */
+export async function resolveSession(
+  authenticator: Authenticator | SessionAuthenticator,
+  credential: string | undefined,
+): Promise<Session> {
+  if ('authenticateSession' in authenticator) return authenticator.authenticateSession(credential);
+  return sessionOf(await authenticator.authenticate(credential));
 }
 
 export type HeaderValues = Readonly<Record<string, string | readonly string[] | undefined>>;
@@ -29,10 +59,13 @@ export function bearerCredential(headers: HeaderValues): string | undefined {
 
 /**
  * The `resolvePrincipal` option of @ddd-ts-kit/http: takes the framework request, answers the
- * actor, which routes then read with `actorOf(context.principal)`.
+ * session. The pipeline puts it, with its actor, in the execution context of the request;
+ * routes read `actorOf(context.principal)` and `sessionOf(context)`.
  */
-export function principalResolver(authenticator: Authenticator): (raw: unknown) => Promise<Actor> {
-  return (raw) => authenticator.authenticate(bearerCredential(headersOf(raw)));
+export function principalResolver(
+  authenticator: Authenticator | SessionAuthenticator,
+): (raw: unknown) => Promise<Session> {
+  return (raw) => resolveSession(authenticator, bearerCredential(headersOf(raw)));
 }
 
 function headersOf(raw: unknown): HeaderValues {
@@ -47,9 +80,35 @@ function isHeader(entry: [string, unknown]): entry is [string, string | readonly
   return typeof value === 'string' || (Array.isArray(value) && value.every((item) => typeof item === 'string'));
 }
 
-/** The actor a boundary received as `principal`, anonymous when there is none. */
-export function actorOf(principal: unknown): Actor {
-  return isActor(principal) ? principal : anonymousActor();
+/**
+ * The actor a boundary received, anonymous when there is none. Takes the principal (a session
+ * or an actor) or the request context that holds it.
+ */
+export function actorOf(source: unknown): Actor {
+  return sessionOf(source).actor;
+}
+
+const NEVER_ISSUED = new Date(0);
+
+/**
+ * The session a boundary received, anonymous when there is none. Takes the request context
+ * (`sessionOf(context)`), or a principal: a session is answered as it is, and an actor alone
+ * gets a session that says only what is known, its id as session id, no issue instant, no
+ * expiry, authenticated by `token`.
+ */
+export function sessionOf(source: unknown): Session {
+  if (isSession(source)) return source;
+  if (isActor(source)) return sessionOfActor(source);
+  return hasPrincipal(source) ? sessionOf(source.principal) : anonymousSession();
+}
+
+function sessionOfActor(actor: Actor): Session {
+  if (isAnonymous(actor)) return anonymousSession();
+  return { id: actor.id, actor, issuedAt: NEVER_ISSUED, authenticationMethod: 'token', extensions: {} };
+}
+
+function hasPrincipal(source: unknown): source is { readonly principal: unknown } {
+  return typeof source === 'object' && source !== null && 'principal' in source;
 }
 
 interface WithPrincipal {
@@ -59,6 +118,8 @@ interface WithPrincipal {
 /**
  * Wraps a route handler so that everything it calls sees the actor through `ActorContext`:
  * repositories stamping audit columns, tenant scoping. Use cases still get it in the message.
+ * Not needed when the adapter of @ddd-ts-kit/http is given an `executionScope` and the actor
+ * context is a `ScopedActorContext` over it, as `kernelModule()` binds them.
  */
 export function inActorContext<Input extends WithPrincipal, Output>(
   actorContext: ActorContext,

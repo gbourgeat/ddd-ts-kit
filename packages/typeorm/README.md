@@ -147,6 +147,156 @@ aggregate: it reads before writing and decides by itself between insert and upda
 defeats the version guard. TypeORM's own `@VersionColumn` is not used for the same reason: the
 version belongs to the aggregate.
 
+## Audit columns, tenant scoping and pages
+
+The standard persistence shapes of the kernel, on TypeORM. `auditColumns(dialect?)` and
+`tenantColumn()` are column options to spread into the `columns` of an `EntitySchema`: their
+properties are those of the kernel `AuditStamp` and `TenantScoped`, so a stamp spreads into an
+insert as it is, and the columns have the same names in every project (`created_at`,
+`created_by`, `updated_at`, `updated_by`, `tenant_id`), which is what lets a dashboard, an
+export or the audit package be written once.
+
+```ts
+import type { AuditStamp, TenantScoped } from '@ddd-ts-kit/kernel';
+import { auditColumns, schemaNameOf, tenantColumn } from '@ddd-ts-kit/typeorm';
+
+interface InvoiceRow extends VersionedInvoice, TenantScoped, AuditStamp {}
+
+export const invoices = new EntitySchema<InvoiceRow>({
+  name: 'Invoice',
+  tableName: 'invoices',
+  schema: schemaNameOf('billing-core'),
+  columns: {
+    id: { type: 'text', primary: true },
+    amount: { type: 'int' },
+    status: { type: 'text' },
+    version: { type: 'int' },
+    ...tenantColumn(),
+    ...auditColumns(),
+  },
+  indices: [{ name: 'invoices_tenant_amount_idx', columns: ['tenantId', 'amount', 'id'] }],
+});
+```
+
+```ts
+import { stampCreation, stampUpdate, tenantScopeOf } from '@ddd-ts-kit/kernel';
+
+export class TypeOrmInvoiceRepository implements Repository<Invoice> {
+  constructor(
+    private readonly context: TypeOrmContext,
+    private readonly scope: ExecutionScope, // EXECUTION_SCOPE
+    private readonly clock: Clock,
+  ) {}
+
+  async findById(id: string): Promise<Invoice | undefined> {
+    const row = await this.context.manager().findOneBy(invoices, { id, ...tenantScopeOf(this.scope) });
+    return row === null ? undefined : InvoiceMapper.toDomain(row);
+  }
+
+  async save(invoice: Invoice): Promise<void> {
+    await optimisticUpdate(invoice, async ({ expected, next }) => {
+      const state = { ...InvoiceMapper.toRow(invoice), version: next };
+      return expected === 0 ? this.#insert(state) : this.#update(state, expected);
+    });
+  }
+
+  async #insert(state: VersionedInvoice): Promise<number> {
+    const row = { ...state, ...tenantScopeOf(this.scope), ...stampCreation(this.scope, this.clock) };
+    return (await insertIgnoringConflict(this.context.manager(), invoices, row)) ? 1 : 0;
+  }
+
+  async #update(state: VersionedInvoice, expected: number): Promise<number> {
+    const guarded = { id: state.id, version: expected, ...tenantScopeOf(this.scope) };
+    const row = { ...state, ...stampUpdate(this.scope, this.clock) };
+    return (await this.context.manager().update(invoices, guarded, row)).affected ?? 0;
+  }
+}
+```
+
+TypeORM's `@CreateDateColumn` and `@UpdateDateColumn` are not used: they take the time of the
+database server, not of the `Clock`, and know nothing of who acts.
+
+A list query takes the kernel `PageRequest` and answers a `Page`, in both variants:
+
+```ts
+import { LessThan, MoreThan, type FindOptionsWhere } from 'typeorm';
+import { decodeCursor, encodeCursor, pageOf } from '@ddd-ts-kit/kernel';
+
+export class TypeOrmInvoiceQueries {
+  async list(request: PageRequest<'amount'>): Promise<Page<InvoiceSummary>> {
+    return request.kind === 'offset' ? this.#byOffset(request) : this.#byCursor(request);
+  }
+
+  async #byOffset(request: OffsetPageRequest<'amount'>): Promise<Page<InvoiceSummary>> {
+    const [rows, total] = await this.context.manager().findAndCount(invoices, {
+      where: tenantScopeOf(this.scope),
+      order: totalOrder(directionOf(request)),
+      take: request.limit,
+      skip: request.offset,
+    });
+    return pageOf(rows.map(toSummary), { total });
+  }
+
+  async #byCursor(request: CursorPageRequest<'amount'>): Promise<Page<InvoiceSummary>> {
+    const direction = directionOf(request);
+    const tenant = tenantScopeOf(this.scope);
+    const rows = await this.context.manager().find(invoices, {
+      where: request.cursor === undefined ? tenant : beyond(positionOf(request.cursor), direction, tenant),
+      order: totalOrder(direction),
+      take: request.limit + 1,
+    });
+    const items = rows.slice(0, request.limit);
+    const last = items.at(-1);
+    const more = rows.length > request.limit && last !== undefined;
+    return pageOf(items.map(toSummary), more ? { nextCursor: encodeCursor({ amount: last.amount, id: last.id }) } : {});
+  }
+}
+
+const directionOf = (request: PageRequest<'amount'>) => request.sort[0]?.direction ?? 'asc';
+
+// The primary key follows the sort field, in the same direction: the order is total.
+const totalOrder = (direction: SortDirection) => ({ amount: direction, id: direction });
+
+// The rows after a position, as a tuple comparison. A list of conditions is an OR in TypeORM,
+// so each alternative restates the tenant.
+function beyond(
+  { amount, id }: { amount: number; id: string },
+  direction: SortDirection,
+  tenant: TenantScoped,
+): FindOptionsWhere<InvoiceRow>[] {
+  const past = direction === 'asc' ? MoreThan : LessThan;
+  return [
+    { ...tenant, amount: past(amount) },
+    { ...tenant, amount, id: past(id) },
+  ];
+}
+```
+
+`positionOf(cursor)` decodes with `decodeCursor` and checks that `amount` is a number and `id`
+a string, raising `InvalidPageRequestError` otherwise.
+
+The rules these examples hold, and that the tests of this package check on a real database:
+
+- **Audit columns** are filled by the adapter, never by the aggregate: `stampCreation(scope,
+  clock)` on insert, `stampUpdate(scope, clock)` on update, which leaves `created_at` and
+  `created_by` alone. The actor is the one of the execution scope: the user of the request, or
+  `system:<consumer>` for a consumed event.
+- **The tenant is part of every statement**: written on insert, and in the condition of every
+  read and every update, the version guard included. A row of another tenant is not found, and
+  an update aimed at it writes nothing, which `optimisticUpdate` reports as a
+  `ConcurrencyError`. Work that names no tenant raises `NoCurrentTenantError` before any SQL.
+- **A list has a total order.** The primary key follows the sort field, in the same direction,
+  as a tie-breaker: rows equal on the sort field otherwise have no defined order, and a page
+  could repeat or skip one of them. The index covers `(tenant_id, <sort field>, id)`.
+- **A cursor is a position, not a page number**: the sort value and the id of the last row,
+  written by `encodeCursor`, compared as a tuple (`amount > :amount OR (amount = :amount AND id
+  > :id)`). One row more than `limit` is fetched to know whether a page follows, so no count is
+  needed, and a row inserted before the cursor does not shift the next page as it does with an
+  offset. A cursor comes back from a client: `decodeCursor` refuses what it did not write, and
+  the adapter checks the types of the position before they reach a statement.
+- **An offset page answers `total`**, a cursor page `nextCursor`. Offer the offset form for
+  small, browsable lists and the cursor form for anything that grows.
+
 ## Outbox and idempotency
 
 - `TypeOrmOutboxStore.claimBatch` selects the due rows `FOR UPDATE SKIP LOCKED`

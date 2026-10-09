@@ -1,11 +1,21 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { InMemoryEventBus, InMemoryProcessedEventStore } from '@ddd-ts-kit/kernel';
+import {
+  FixedClock,
+  InMemoryCache,
+  InMemoryEventBus,
+  InMemoryLock,
+  InMemoryProcessedEventStore,
+  InMemoryRateLimiter,
+} from '@ddd-ts-kit/kernel';
 import { InMemoryOutboxStore } from '@ddd-ts-kit/events';
 import { InMemoryRepository, resetSequences, snapshots } from '../src/index.js';
 import {
+  cacheContract,
   eventBusContract,
+  lockContract,
   outboxStoreContract,
   processedEventStoreContract,
+  rateLimiterContract,
   repositoryContract,
 } from '../src/contracts.js';
 import { anOrder } from './support/builders.js';
@@ -67,3 +77,17 @@ processedEventStoreContract(runner, {
   name: 'InMemoryProcessedEventStore',
   createStore: () => new InMemoryProcessedEventStore(),
 });
+
+const NOW = new Date('2026-03-01T10:00:00.000Z');
+let clock: FixedClock;
+const aClock = () => {
+  clock = new FixedClock(NOW);
+  return clock;
+};
+const elapse = (ms: number) => clock.advance(ms);
+
+cacheContract(runner, { name: 'InMemoryCache', createCache: () => new InMemoryCache(aClock()), elapse });
+
+lockContract(runner, { name: 'InMemoryLock', createLock: () => new InMemoryLock(aClock()), elapse });
+
+rateLimiterContract(runner, { name: 'InMemoryRateLimiter', createLimiter: () => new InMemoryRateLimiter(aClock()), elapse });

@@ -1,20 +1,22 @@
 {{#if http.any}}
-import type { Authenticator } from '@ddd-ts-kit/auth';
+import type { Authenticator, OnDecision } from '@ddd-ts-kit/auth';
 {{/if}}
+{{#unless http.any}}
+import type { OnDecision } from '@ddd-ts-kit/auth';
+{{/unless}}
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import type { ContextModule } from '@ddd-ts-kit/di';
 import { accessPolicies } from './access-policies.js';
-import { auditDecision } from './audit.js';
 import { createAuthorizer } from './authorizer.js';
 
-/** Binds the guard both buses ask before any handler, the `Access` of the policies and the audit trail. */
+/** Binds the guard both buses ask before any handler and the `Access` of the policies; `onDecision` is told every decision, allowed or refused. */
 {{#if http.any}}
-export function authorization(authenticator: Authenticator): ContextModule {
-  return authorizationModule({ authorizer: createAuthorizer(), authenticator, policies: accessPolicies, onDecision: auditDecision });
+export function authorization(authenticator: Authenticator, onDecision: OnDecision): ContextModule {
+  return authorizationModule({ authorizer: createAuthorizer(), authenticator, policies: accessPolicies, onDecision });
 }
 {{/if}}
 {{#unless http.any}}
-export function authorization(): ContextModule {
-  return authorizationModule({ authorizer: createAuthorizer(), policies: accessPolicies, onDecision: auditDecision });
+export function authorization(onDecision: OnDecision): ContextModule {
+  return authorizationModule({ authorizer: createAuthorizer(), policies: accessPolicies, onDecision });
 }
 {{/unless}}

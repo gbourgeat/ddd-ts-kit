@@ -57,6 +57,8 @@ const PAYLOAD = 'payload: zodSchema(z.object({ invoiceId: z.string() }))';
 const declaration = (type: string, version = 1, payload = PAYLOAD): string =>
   `export const invoiceIssuedV${version} = defineIntegrationEvent({ type: '${type}', version: ${version}, ${payload} });\n`;
 
+const OUTSIDE_PACKAGE_DEVIATION = (list: string, name: string): Record<string, string> => ({ what: `${list}.${name}`, adr: '0001', reason: 'Needed by the fixture.' });
+
 const aggregate = (body: string): Files => ({ [AGGREGATE]: body, [AGGREGATE_SPEC]: SPEC, [BUILDER]: 'export const anInvoice = 1;\n' });
 const handler = (body: string): Files => ({ [HANDLER]: body, [HANDLER_SPEC]: SPEC });
 
@@ -116,6 +118,20 @@ export const FIXTURES: readonly Fixture[] = [
     files: project(aggregate("import type { Mailer } from '../../application/ports/mailer.port.js';\nexport class Invoice {}\nexport type M = Mailer;\n")),
   },
   {
+    ruleId: 'layer/domain-purity',
+    name: 'an aspect decorator on an aggregate',
+    expect: { file: AGGREGATE },
+    files: project(aggregate("import { Logged } from '@ddd-ts-kit/aspects/decorators';\nexport class Invoice {\n  @Logged()\n  async issue(): Promise<void> {}\n}\n")),
+  },
+  {
+    ruleId: 'layer/domain-purity',
+    name: 'tracing in the domain, even listed in domainAllowedPackages',
+    expect: { file: AGGREGATE },
+    files: project(aggregate("import { withSpan } from '@ddd-ts-kit/tracing';\nexport class Invoice {}\nexport { withSpan };\n"), {
+      [CONFIG_FILE]: config({ domainAllowedPackages: ['@ddd-ts-kit/kernel', '@ddd-ts-kit/tracing'], deviations: [OUTSIDE_PACKAGE_DEVIATION('domainAllowedPackages', '@ddd-ts-kit/tracing')] }),
+    }),
+  },
+  {
     ruleId: 'layer/application-inward',
     name: 'domain, kernel and a declared published language are allowed',
     expect: 'pass',
@@ -130,6 +146,29 @@ export const FIXTURES: readonly Fixture[] = [
         ].join('\n'),
       ),
     ),
+  },
+  {
+    ruleId: 'layer/application-inward',
+    name: 'a handler wrapping its own call in an aspect',
+    expect: { file: HANDLER },
+    files: project(handler("import { retry } from '@ddd-ts-kit/aspects';\nexport class IssueInvoiceHandler {}\nexport { retry };\n")),
+  },
+  {
+    ruleId: 'layer/application-inward',
+    name: 'a handler writing to the audit trail',
+    expect: { file: HANDLER },
+    files: project(handler("import type { AuditTrail } from '@ddd-ts-kit/audit';\nexport class IssueInvoiceHandler {}\nexport type T = AuditTrail;\n")),
+  },
+  {
+    ruleId: 'layer/application-inward',
+    name: 'the Redis adapter in a handler, even listed in applicationAllowedPackages',
+    expect: { file: HANDLER },
+    files: project(handler("import { RedisCache } from '@ddd-ts-kit/redis';\nexport class IssueInvoiceHandler {}\nexport { RedisCache };\n"), {
+      [CONFIG_FILE]: config({
+        applicationAllowedPackages: ['@ddd-ts-kit/kernel', '@ddd-ts-kit/auth', '@ddd-ts-kit/redis'],
+        deviations: [OUTSIDE_PACKAGE_DEVIATION('applicationAllowedPackages', '@ddd-ts-kit/redis')],
+      }),
+    }),
   },
   {
     ruleId: 'layer/application-inward',
@@ -1220,6 +1259,27 @@ export const FIXTURES: readonly Fixture[] = [
     files: project(aggregate("import type { Actor } from '@ddd-ts-kit/kernel';\nexport class Invoice {\n  issue(actor: Actor): boolean {\n    return actor.roles.includes('accountant');\n  }\n}\n")),
   },
   {
+    ruleId: 'authz/in-application',
+    name: 'a route resolving the session of the request',
+    expect: 'pass',
+    files: project({
+      [ROUTE]:
+        "import { resolveSession, sessionOf, type SessionAuthenticator } from '@ddd-ts-kit/auth';\nimport type { Session } from '@ddd-ts-kit/kernel';\nexport const toSession = (authenticator: SessionAuthenticator, credential: string): Promise<Session> => resolveSession(authenticator, credential);\nexport { sessionOf };\n",
+    }),
+  },
+  {
+    ruleId: 'authz/in-application',
+    name: 'an aggregate handed the session',
+    expect: { file: AGGREGATE },
+    files: project(aggregate("import type { Session } from '@ddd-ts-kit/kernel';\nexport class Invoice {\n  issue(session: Session): string {\n    return session.id;\n  }\n}\n")),
+  },
+  {
+    ruleId: 'authz/in-application',
+    name: 'an aggregate handed the execution context',
+    expect: { file: AGGREGATE },
+    files: project(aggregate("import type { ExecutionContext } from '@ddd-ts-kit/kernel';\nexport class Invoice {\n  issue(context: ExecutionContext): string {\n    return context.correlationId;\n  }\n}\n")),
+  },
+  {
     ruleId: 'authz/actor-explicit',
     name: 'the actor carried by the command, the ambient actor read by an adapter only',
     expect: 'pass',
@@ -1246,6 +1306,105 @@ export const FIXTURES: readonly Fixture[] = [
     expect: { file: AGGREGATE },
     also: ['authz/in-application'],
     files: project(aggregate("import type { ActorContext } from '@ddd-ts-kit/kernel';\nexport class Invoice {\n  issue(actors: ActorContext): string | undefined {\n    return actors.current()?.id;\n  }\n}\n")),
+  },
+  {
+    ruleId: 'authz/actor-explicit',
+    name: 'the execution scope read by an adapter for audit columns and the tenant, an access scope in a handler',
+    expect: 'pass',
+    files: project({
+      ...handler(
+        'export class IssueInvoiceHandler {\n  async execute(query: InvoicesIssuedQuery): Promise<readonly string[]> {\n    const scope = await this.access.scopeOf(query.actor, permission);\n    return this.invoices.issuedWithin(scope);\n  }\n}\n',
+      ),
+      [ADAPTER]:
+        "import { stampCreation, tenantScopeOf, type Clock, type ExecutionScope } from '@ddd-ts-kit/kernel';\nexport class InMemoryInvoiceRepository {\n  constructor(\n    private readonly scope: ExecutionScope,\n    private readonly clock: Clock,\n  ) {}\n\n  columns(): object {\n    return { ...stampCreation(this.scope, this.clock), ...tenantScopeOf(this.scope), correlationId: this.scope.require().correlationId };\n  }\n}\n",
+    }),
+  },
+  {
+    ruleId: 'authz/actor-explicit',
+    name: 'a handler handed the execution scope',
+    expect: { file: HANDLER },
+    files: project(
+      handler(
+        "import type { ExecutionScope } from '@ddd-ts-kit/kernel';\nexport class IssueInvoiceHandler {\n  constructor(private readonly scope: ExecutionScope) {}\n\n  async execute(): Promise<string | undefined> {\n    return this.scope.require().tenantId;\n  }\n}\n",
+      ),
+    ),
+  },
+  {
+    ruleId: 'authz/actor-explicit',
+    name: 'a handler reading a scope whose type is declared elsewhere',
+    expect: { file: HANDLER },
+    files: project(handler('export class IssueInvoiceHandler {\n  async execute(): Promise<string | undefined> {\n    return this.dependencies.scope.current()?.correlationId;\n  }\n}\n')),
+  },
+  {
+    ruleId: 'authz/actor-explicit',
+    name: 'a handler stamping the audit columns itself',
+    expect: { file: HANDLER },
+    files: project(
+      handler("import { stampCreation } from '@ddd-ts-kit/kernel';\nexport class IssueInvoiceHandler {\n  async execute(command: IssueInvoiceCommand): Promise<object> {\n    return stampCreation(command.context, this.clock);\n  }\n}\n"),
+    ),
+  },
+  {
+    ruleId: 'aspects/outside-in',
+    name: 'decorators on an adapter and in the platform, wrappers bound in the module file',
+    expect: 'pass',
+    files: project({
+      [ADAPTER]: "import { Retry } from '@ddd-ts-kit/aspects/decorators';\nexport class InMemoryInvoiceRepository {\n  @Retry({ attempts: 3 })\n  async find(): Promise<void> {}\n}\n",
+      'src/platform/payments/payment-client.ts': "import { Timeout } from '@ddd-ts-kit/aspects/decorators';\nexport class PaymentClient {\n  @Timeout(2000)\n  async charge(): Promise<void> {}\n}\n",
+      [MODULE]: "import { retry, timeout } from '@ddd-ts-kit/aspects';\nexport function register(builder: Builder): void {\n  builder.bind(GATEWAY).toClass(Gateway, []).with(retry({ attempts: 3 }), timeout(2000));\n}\n",
+    }),
+  },
+  {
+    ruleId: 'aspects/outside-in',
+    name: 'an aspect decorator in a route',
+    expect: { file: ROUTE },
+    files: project({ [ROUTE]: "import { Logged } from '@ddd-ts-kit/aspects/decorators';\nexport class IssueInvoiceRoute {\n  @Logged()\n  async handle(): Promise<void> {}\n}\n" }),
+  },
+  {
+    ruleId: 'aspects/outside-in',
+    name: 'an aspect decorator in the module file',
+    expect: { file: MODULE },
+    files: project({ [MODULE]: "import { decoratorOf } from '@ddd-ts-kit/aspects/decorators';\nexport const Audited = decoratorOf(audited);\n" }),
+  },
+  {
+    ruleId: 'aspects/outside-in',
+    name: 'an aspect decorator in the shared kernel',
+    expect: { file: 'src/shared-kernel/money.vo.ts' },
+    files: project({ 'src/shared-kernel/money.vo.ts': "import { Cached } from '@ddd-ts-kit/aspects/decorators';\nexport class Money {}\nexport { Cached };\n" }),
+  },
+  {
+    ruleId: 'standard/no-parallel-interface',
+    name: 'the kernel interfaces used and implemented under adapter names, the request context of a route, a dropped default',
+    expect: 'pass',
+    files: project(
+      {
+        [ADAPTER]: "import type { Logger, Page } from '@ddd-ts-kit/kernel';\nexport class InMemoryInvoiceRepository {\n  constructor(private readonly logger: Logger) {}\n\n  async list(): Promise<Page<string>> {\n    return { items: [] };\n  }\n}\n",
+        [`${BILLING}/infrastructure/external/pino.logger.ts`]: "import type { Cache, Logger } from '@ddd-ts-kit/kernel';\nexport class PinoLogger implements Logger {}\nexport class CacheService implements Cache {}\n",
+        [ROUTE]: "import { type ILogger } from './legacy.js';\nexport interface RequestContext {\n  readonly logger: ILogger;\n}\n",
+        'src/platform/current-user.ts': 'export interface CurrentUser {\n  readonly id: string;\n}\n',
+      },
+      { [CONFIG_FILE]: config({ standardInterfaces: { CurrentUser: false } }) },
+    ),
+  },
+  {
+    ruleId: 'standard/no-parallel-interface',
+    name: 'a home-made logger port',
+    expect: { file: `${BILLING}/application/ports/logger.port.ts` },
+    files: project({ [`${BILLING}/application/ports/logger.port.ts`]: 'export interface ILogger {\n  info(message: string): void;\n}\n' }),
+  },
+  {
+    ruleId: 'standard/no-parallel-interface',
+    name: 'a user context next to the execution context',
+    expect: { file: 'src/shared-kernel/user-context.ts' },
+    files: project({ 'src/shared-kernel/user-context.ts': 'export type UserContext = Readonly<{ userId: string; tenantId: string }>;\n' }),
+  },
+  {
+    ruleId: 'standard/no-parallel-interface',
+    name: 'a paginated result class, and a name added by the config',
+    expect: { file: 'src/platform/listing.ts' },
+    files: project(
+      { 'src/platform/listing.ts': 'export class PaginatedResult<T> {\n  readonly items: readonly T[] = [];\n}\nexport interface TenantInfo {\n  readonly tenantId: string;\n}\n' },
+      { [CONFIG_FILE]: config({ standardInterfaces: { TenantInfo: 'TenantScoped' } }) },
+    ),
   },
   {
     ruleId: 'governance/recorded-deviation',

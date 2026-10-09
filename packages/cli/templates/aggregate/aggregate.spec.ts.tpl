@@ -10,7 +10,7 @@ describe('{{name.pascal}}', () => {
     const born = {{name.article}}{{name.pascal}}().identifiedBy('{{name.kebab}}-7').bornAt(bornAt).build();
 
     expect(born.id).toBe('{{name.kebab}}-7');
-    expect(born.createdAt).toEqual(bornAt);
+    expect(born.registeredAt).toEqual(bornAt);
   });
 
   it('is rehydrated in its stored state without recording a new fact', () => {

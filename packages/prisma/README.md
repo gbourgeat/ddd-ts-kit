@@ -183,6 +183,157 @@ statement wrote no row, and moves `invoice.version` on otherwise. Use `createMan
 and a thrown unique violation aborts the surrounding PostgreSQL transaction. `upsert` cannot
 carry the version guard.
 
+## Audit columns, tenant scoping and pages
+
+The standard persistence shapes of the kernel, on Prisma. A Prisma schema has no way to share
+fields between models, so there is no helper to import here: copy the five fields. Keep their
+names, which are those of the kernel `AuditStamp` and `TenantScoped`, so a stamp spreads into
+`data` as it is; and keep the mapped column names (`created_at`, `created_by`, `updated_at`,
+`updated_by`, `tenant_id`), the same in every project, which is what lets a dashboard, an
+export or the audit package be written once.
+
+```prisma
+model Invoice {
+  id        String   @id
+  amount    Int
+  status    String
+  version   Int
+  tenantId  String   @map("tenant_id")
+  createdAt DateTime @map("created_at") @db.Timestamptz(3)
+  createdBy String   @map("created_by")
+  updatedAt DateTime @map("updated_at") @db.Timestamptz(3)
+  updatedBy String   @map("updated_by")
+
+  @@index([tenantId, amount, id], map: "invoices_tenant_amount_idx")
+  @@map("invoices")
+  @@schema("billing_core")
+}
+```
+
+No `@default(now())` and no `@updatedAt` on them: the instant is the one of the `Clock`, and
+Prisma's own attributes know nothing of who acts.
+
+```ts
+import { stampCreation, stampUpdate, tenantScopeOf } from '@ddd-ts-kit/kernel';
+
+export class PrismaInvoiceRepository implements Repository<Invoice> {
+  constructor(
+    private readonly context: PrismaContext<Prisma.TransactionClient>,
+    private readonly scope: ExecutionScope, // EXECUTION_SCOPE
+    private readonly clock: Clock,
+  ) {}
+
+  async findById(id: string): Promise<Invoice | undefined> {
+    // findFirst, not findUnique: the tenant is part of every condition, and it is not part of the key.
+    const row = await this.context.client().invoice.findFirst({ where: { id, ...tenantScopeOf(this.scope) } });
+    return row === null ? undefined : InvoiceMapper.toDomain(row);
+  }
+
+  async save(invoice: Invoice): Promise<void> {
+    await optimisticUpdate(invoice, async ({ expected, next }) => {
+      const state = { ...InvoiceMapper.toRow(invoice), version: next };
+      const written = expected === 0 ? await this.#insert(state) : await this.#update(state, expected);
+      return written.count;
+    });
+  }
+
+  #insert(state: VersionedInvoice): Promise<Prisma.BatchPayload> {
+    const row = { ...state, ...tenantScopeOf(this.scope), ...stampCreation(this.scope, this.clock) };
+    return this.context.client().invoice.createMany({ data: [row], skipDuplicates: true });
+  }
+
+  #update(state: VersionedInvoice, expected: number): Promise<Prisma.BatchPayload> {
+    return this.context.client().invoice.updateMany({
+      where: { id: state.id, version: expected, ...tenantScopeOf(this.scope) },
+      data: { ...state, ...stampUpdate(this.scope, this.clock) },
+    });
+  }
+}
+```
+
+A list query takes the kernel `PageRequest` and answers a `Page`, in both variants:
+
+```ts
+import { decodeCursor, encodeCursor, pageOf } from '@ddd-ts-kit/kernel';
+
+export class PrismaInvoiceQueries {
+  async list(request: PageRequest<'amount'>): Promise<Page<InvoiceSummary>> {
+    return request.kind === 'offset' ? this.#byOffset(request) : this.#byCursor(request);
+  }
+
+  async #byOffset(request: OffsetPageRequest<'amount'>): Promise<Page<InvoiceSummary>> {
+    const { invoice } = this.context.client();
+    const where = tenantScopeOf(this.scope);
+    const rows = await invoice.findMany({
+      where,
+      orderBy: totalOrder(directionOf(request)),
+      take: request.limit,
+      skip: request.offset,
+    });
+    return pageOf(rows.map(toSummary), { total: await invoice.count({ where }) });
+  }
+
+  async #byCursor(request: CursorPageRequest<'amount'>): Promise<Page<InvoiceSummary>> {
+    const direction = directionOf(request);
+    const tenant = tenantScopeOf(this.scope);
+    const rows = await this.context.client().invoice.findMany({
+      where: request.cursor === undefined ? tenant : beyond(positionOf(request.cursor), direction, tenant),
+      orderBy: totalOrder(direction),
+      take: request.limit + 1,
+    });
+    const items = rows.slice(0, request.limit);
+    const last = items.at(-1);
+    const more = rows.length > request.limit && last !== undefined;
+    return pageOf(items.map(toSummary), more ? { nextCursor: encodeCursor({ amount: last.amount, id: last.id }) } : {});
+  }
+}
+
+const directionOf = (request: PageRequest<'amount'>) => request.sort[0]?.direction ?? 'asc';
+
+// The primary key follows the sort field, in the same direction: the order is total.
+const totalOrder = (direction: SortDirection): Prisma.InvoiceOrderByWithRelationInput[] => [
+  { amount: direction },
+  { id: direction },
+];
+
+// The rows after a position, as a tuple comparison: the tie-breaker decides among equals.
+function beyond(
+  { amount, id }: { amount: number; id: string },
+  direction: SortDirection,
+  tenant: TenantScoped,
+): Prisma.InvoiceWhereInput {
+  const past = direction === 'asc' ? 'gt' : 'lt';
+  return { ...tenant, OR: [{ amount: { [past]: amount } }, { amount, id: { [past]: id } }] };
+}
+```
+
+`positionOf(cursor)` decodes with `decodeCursor` and checks that `amount` is a number and `id`
+a string, raising `InvalidPageRequestError` otherwise. Prisma's own `cursor` option is not used:
+it names a row by a unique field, where a position compares values and needs no row to still
+exist.
+
+The rules these examples hold, and that the tests of this package check on a real database:
+
+- **Audit columns** are filled by the adapter, never by the aggregate: `stampCreation(scope,
+  clock)` on insert, `stampUpdate(scope, clock)` on update, which leaves `created_at` and
+  `created_by` alone. The actor is the one of the execution scope: the user of the request, or
+  `system:<consumer>` for a consumed event.
+- **The tenant is part of every statement**: written on insert, and in the condition of every
+  read and every update, the version guard included. A row of another tenant is not found, and
+  an update aimed at it writes nothing, which `optimisticUpdate` reports as a
+  `ConcurrencyError`. Work that names no tenant raises `NoCurrentTenantError` before any SQL.
+- **A list has a total order.** The primary key follows the sort field, in the same direction,
+  as a tie-breaker: rows equal on the sort field otherwise have no defined order, and a page
+  could repeat or skip one of them. The index covers `(tenant_id, <sort field>, id)`.
+- **A cursor is a position, not a page number**: the sort value and the id of the last row,
+  written by `encodeCursor`, compared as a tuple (`amount > :amount OR (amount = :amount AND id
+  > :id)`). One row more than `limit` is fetched to know whether a page follows, so no count is
+  needed, and a row inserted before the cursor does not shift the next page as it does with an
+  offset. A cursor comes back from a client: `decodeCursor` refuses what it did not write, and
+  the adapter checks the types of the position before they reach a statement.
+- **An offset page answers `total`**, a cursor page `nextCursor`. Offer the offset form for
+  small, browsable lists and the cursor form for anything that grows.
+
 ## Outbox and idempotency
 
 `claim` is required, because a Prisma client does not tell which database it talks to:

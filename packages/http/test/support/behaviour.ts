@@ -1,8 +1,12 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { z } from 'zod';
+import { AsyncLocalStorageExecutionScope } from '@ddd-ts-kit/kernel';
+import { zodSchema } from '@ddd-ts-kit/validation/zod';
 import {
   DuplicateRouteError,
   UnauthorizedError,
   createErrorMapper,
+  defineRoute,
   type ErrorContext,
   type ExecuteOptions,
   type Route,
@@ -23,6 +27,38 @@ interface ProblemBody {
 
 const issuePaths = async (response: Response): Promise<string[]> =>
   ((await response.json()) as ProblemBody).issues.map((issue) => issue.path).sort();
+
+const executionScope = new AsyncLocalStorageExecutionScope();
+
+/** Answers what infrastructure would read from the execution scope while the handler runs. */
+const readExecution = defineRoute(
+  {
+    method: 'GET',
+    path: '/execution',
+    operationId: 'readExecution',
+    summary: 'Read the execution context of the request',
+    responses: {
+      200: {
+        description: 'The execution context.',
+        body: zodSchema(z.object({ correlationId: z.string(), origin: z.string(), sameAsHanded: z.boolean() })),
+      },
+    },
+    security: false,
+  },
+  async ({ context }) => {
+    // After an asynchronous hop, as a repository would be: the scope must have followed.
+    await new Promise((resolve) => setImmediate(resolve));
+    const ambient = executionScope.require();
+    return {
+      status: 200,
+      body: {
+        correlationId: ambient.correlationId,
+        origin: ambient.origin,
+        sameAsHanded: ambient === context.execution,
+      },
+    };
+  },
+);
 
 export interface RunningServer {
   readonly url: string;
@@ -48,9 +84,10 @@ export function describeAdapter(
     const reported: { error: unknown; context: ErrorContext }[] = [];
 
     beforeAll(async () => {
-      server = await start(orderRoutes, {
+      server = await start([...orderRoutes, readExecution], {
         errorMapper: createErrorMapper({ ORDER_ALREADY_SHIPPED: 410 }),
         validateResponses: true,
+        executionScope,
         onError: (error, context) => reported.push({ error, context }),
         resolvePrincipal: (raw) => {
           const authorization = readAuthorization(raw);
@@ -99,6 +136,32 @@ export function describeAdapter(
       const generated = await post({ customerId: 'c-1', items: [{ sku: 'A-1', quantity: 1 }] });
       expect(generated.headers.get('x-request-id')).toMatch(/^[0-9a-f-]{36}$/);
       expect(generated.headers.get('x-seen-request')).toBe(generated.headers.get('x-request-id'));
+    });
+
+    it('continues a well-formed incoming correlation id, starts one at the request otherwise, and echoes it', async () => {
+      const continued = await call(`/orders/${KNOWN_ORDER}`, {
+        headers: { 'x-correlation-id': 'corr-7', 'x-request-id': 'req-42' },
+      });
+      expect(continued.headers.get('x-correlation-id')).toBe('corr-7');
+      const started = await call(`/orders/${KNOWN_ORDER}`, { headers: { 'x-request-id': 'req-43' } });
+      expect(started.headers.get('x-correlation-id')).toBe('req-43');
+      const refused = await call('/orders/not-a-uuid', { headers: { 'x-correlation-id': 'corr-8' } });
+      expect(refused.headers.get('x-correlation-id')).toBe('corr-8');
+    });
+
+    it('runs the handler inside the execution scope of its own request, concurrent requests apart', async () => {
+      const answers = await Promise.all(
+        ['corr-a', 'corr-b', 'corr-c'].map(async (correlationId) =>
+          (await call('/execution', { headers: { 'x-correlation-id': correlationId } })).json(),
+        ),
+      );
+
+      expect(answers).toEqual([
+        { correlationId: 'corr-a', origin: 'http', sameAsHanded: true },
+        { correlationId: 'corr-b', origin: 'http', sameAsHanded: true },
+        { correlationId: 'corr-c', origin: 'http', sameAsHanded: true },
+      ]);
+      expect(executionScope.current()).toBeUndefined();
     });
 
     it('answers 422 with the issues when the body is not valid', async () => {

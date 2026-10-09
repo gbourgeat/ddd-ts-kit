@@ -30,7 +30,8 @@ context decides, the other reacts to an integration event (`ddd-ts-kit:integrati
 Who may do it? Name the permission (skill `ddd-ts-kit:access-control`); a use case is
 protected or explicitly public, never undecided.
 
-Command or query? It changes state: command. It only reads: query, which may read a
+Command or query? It changes state: command. A query that answers a list is generated with
+`--list`: paginated, and narrowed in the query itself by the caller's access scope. It only reads: query, which may read a
 projection through a port without loading aggregates.
 
 ## 2. Scaffold the slice

@@ -42,6 +42,7 @@ const report = defineRoute(
       200: { description: 'The report.', body: zodSchema(z.object({ year: z.number(), tenant: z.string() })) },
       204: { description: 'Nothing was recorded that year.' },
     },
+    security: false,
   },
   ({ params, headers }) => {
     // Type-level checks: the handler input and output follow the schemas.
@@ -55,7 +56,7 @@ const report = defineRoute(
 );
 
 defineRoute(
-  { method: 'GET', path: '/typed', operationId: 'typed', summary: 'Typing', responses: { 200: { description: 'ok' } } },
+  { method: 'GET', path: '/typed', operationId: 'typed', summary: 'Typing', responses: { 200: { description: 'ok' } }, security: false },
   // @ts-expect-error a status the route does not declare is refused at compile time
   () => ({ status: 404 }),
 );
@@ -67,6 +68,7 @@ defineRoute(
     operationId: 'typed',
     summary: 'Typing',
     responses: { 200: { description: 'ok', body: zodSchema(z.object({ id: z.string() })) } },
+    security: false,
   },
   // @ts-expect-error the body must match the declared schema
   () => ({ status: 200, body: { id: 1 } }),
@@ -76,7 +78,7 @@ describe('defineRoute', () => {
   it('refuses a path that is not portable across frameworks', () => {
     const declare = (path: string) => () =>
       defineRoute(
-        { method: 'GET', path, operationId: 'x', summary: 'x', responses: { 200: { description: 'ok' } } },
+        { method: 'GET', path, operationId: 'x', summary: 'x', responses: { 200: { description: 'ok' } }, security: false },
         () => ({ status: 200 }),
       );
     expect(declare('orders')).toThrow(/literal segments/);
@@ -308,7 +310,7 @@ describe('withPrincipal', () => {
     const scope = new AsyncLocalStorage<unknown>();
     const request = { params: {}, query: {}, headers: {}, body: undefined, raw: undefined };
     const route = defineRoute(
-      { method: 'GET', path: '/me', operationId: 'whoAmI', summary: 'Who am I', responses: { 200: { description: 'The caller.', body: zodSchema(z.object({ id: z.string() }), { io: 'output' }) } } },
+      { method: 'GET', path: '/me', operationId: 'whoAmI', summary: 'Who am I', security: ['bearer'], responses: { 200: { description: 'The caller.', body: zodSchema(z.object({ id: z.string() }), { io: 'output' }) } } },
       async () => ({ status: 200, body: { id: String(scope.getStore()) } }),
     );
 

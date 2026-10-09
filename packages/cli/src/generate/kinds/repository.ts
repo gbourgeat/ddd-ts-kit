@@ -78,16 +78,17 @@ export function generateRepository(scope: Scope, aggregate: Name): void {
 const TENANT_AWARE: readonly OrmStack[] = ['drizzle', 'knex'];
 
 /**
- * `--tenant-scoped`: the adapter reads the tenant of the current actor from `ActorContext` and
- * confines every statement to it. Defence in depth: the permission is still decided in the application layer.
+ * `--tenant-scoped`: the adapter takes the tenant of the work in progress from the execution scope
+ * (`tenantScopeOf`) and confines every statement to it. Defence in depth: the permission is still
+ * decided in the application layer.
  */
 function tenantVars(scope: Scope) {
   const asked = scope.flags.tenantScoped;
   const scoped = asked && TENANT_AWARE.includes(scope.config.stack.orm);
   if (asked && !scoped) {
-    scope.ws.note(`--tenant-scoped is generated for drizzle and knex only: with ${scope.config.stack.orm}, add a tenant column to the storage, inject ActorContext in the adapter and filter every statement on \`actors.require().tenantId\`.`);
+    scope.ws.note(`--tenant-scoped is generated for drizzle and knex only: with ${scope.config.stack.orm}, add the tenant column to the storage (\`tenant_id\`), write \`tenantScopeOf(this.scope)\` on insert and put it in the condition of every read and every update.`);
   }
-  return { scoped, omitted: scoped ? "'version' | 'tenantId'" : "'version'", omittedSnake: scoped ? "'version' | 'tenant_id'" : "'version'" };
+  return { scoped };
 }
 
 /** The table or model of the aggregate, declared where the migration tooling of the ORM reads it. */
