@@ -164,7 +164,7 @@ describe.runIf(process.env['DDD_TS_KIT_E2E'] === '1')('a freshly generated proje
 
   function runIn(root: string, command: string, args: readonly string[]): string {
     try {
-      return execFileSync(command, [...args], { cwd: root, encoding: 'utf8', stdio: 'pipe', env: { ...process.env, DATABASE_URL: '', OTEL_SDK_DISABLED: 'true' } });
+      return execFileSync(command, [...args], { cwd: root, encoding: 'utf8', stdio: 'pipe', env: { ...process.env, DATABASE_URL: '', OTEL_SDK_DISABLED: 'true', NO_COLOR: '1', FORCE_COLOR: '0' } });
     } catch (error) {
       const output = error instanceof Error && 'stdout' in error ? `${String(error.stdout)}\n${String(Reflect.get(error, 'stderr'))}` : String(error);
       throw new Error(`${command} ${args.join(' ')} failed:\n${output}`, { cause: error });
