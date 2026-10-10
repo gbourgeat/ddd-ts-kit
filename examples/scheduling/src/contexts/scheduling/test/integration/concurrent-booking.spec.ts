@@ -72,7 +72,8 @@ describe('Two bookings of one slot at once', () => {
 
   it('refuses a booking that starts in the buffer of one made at the same instant, and takes one that does not touch them', async () => {
     const inTheBuffer = new Date(startsAt.getTime() + 30 * 60_000);
-    const apart = new Date(startsAt.getTime() + 60 * 60_000);
+    // Clear of both contenders, whichever wins: the one in the buffer, had it won, would hold its own buffer after it.
+    const apart = new Date(startsAt.getTime() + 120 * 60_000);
 
     const [first, second, third] = await Promise.all([book('ada', startsAt), book('bob', inTheBuffer), book('bob', apart)]);
 
