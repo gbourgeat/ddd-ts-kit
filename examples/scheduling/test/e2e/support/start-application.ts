@@ -10,7 +10,7 @@ import { openTestDatabase } from '../../../src/platform/database/open-test-datab
 import { createEventProvider } from '../../../src/platform/events/create-event-provider.js';
 import type { EventProvider } from '../../../src/platform/events/event-provider.js';
 import { inProcessEvents } from '../../../src/platform/events/in-process-events.js';
-import { startOutboxRelay } from '../../../src/platform/events/start-outbox-relay.js';
+import { startOutboxRelay, type RunningRelay } from '../../../src/platform/events/start-outbox-relay.js';
 import type { LogSettings } from '../../../src/platform/observability/create-logger.js';
 import { startHttpServer } from '../../../src/platform/http/start-http-server.js';
 import { openRedis } from '../../../src/platform/redis/open-redis.js';
@@ -62,7 +62,7 @@ export async function startApplication(options: StartOptions = {}): Promise<Runn
 
   await application.start();
 
-  const relay = startOutboxRelay({ store: persistence.outbox, publisher: application.eventBus, intervalMs: 20, logger: application.logger });
+  const relay = pausableRelay(() => startOutboxRelay({ store: persistence.outbox, publisher: application.eventBus, intervalMs: 20, logger: application.logger }));
   const server = await startHttpServer(application, config);
   const client = createHttpClient('http://127.0.0.1:' + server.port);
   // The store of the running application: what a test relates is what its authorizer reads.
@@ -73,8 +73,29 @@ export async function startApplication(options: StartOptions = {}): Promise<Runn
     events: application.eventSubscriber,
     as: async (actor) => client.withHeaders(await credentials.headersOf(actor)),
     relate: (tuple) => tuples.write([tuple]),
-    reset: () => database.reset().then(() => relateSystemActors(tuples)),
+    reset: () => relay.whileStopped(() => database.reset().then(() => relateSystemActors(tuples))),
     close: () => inOrder([() => server.close(), () => relay.stop(), () => application.stop(), () => redis?.close(), () => database.close()]),
+  };
+}
+
+interface PausableRelay extends RunningRelay {
+  whileStopped(work: () => Promise<void>): Promise<void>;
+}
+
+/**
+ * A relay that has read the events of one test must have delivered them before the next test
+ * starts listening: stopping waits for the delivery in flight, which emptying the database does not.
+ */
+function pausableRelay(start: () => RunningRelay): PausableRelay {
+  let running = start();
+
+  return {
+    stop: () => running.stop(),
+    whileStopped: async (work) => {
+      await running.stop();
+      await work();
+      running = start();
+    },
   };
 }
 
