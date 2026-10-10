@@ -1,0 +1,18 @@
+import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
+import { DelegationRepository } from '../../../domain/repositories/delegation.repository.js';
+import { ExpireDelegationsCommand } from './expire-delegations.command.js';
+
+@CommandHandler(ExpireDelegationsCommand, [DelegationRepository])
+export class ExpireDelegationsHandler implements CommandHandler<ExpireDelegationsCommand> {
+  constructor(private readonly delegationRepository: DelegationRepository) {}
+
+  async execute(command: ExpireDelegationsCommand): Promise<void> {
+    const due = await this.delegationRepository.findDueAt(command.at);
+
+    for (const target of due) {
+      target.expire(command.at);
+
+      await this.delegationRepository.save(target);
+    }
+  }
+}
