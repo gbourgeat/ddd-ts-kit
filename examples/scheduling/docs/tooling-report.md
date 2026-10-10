@@ -1,0 +1,307 @@
+# Tooling report
+
+How the kit behaved while this example was built, on 2026-10-10, by one conductor and seven
+workers following the plugin's skills. Written for the owner of the kit: nothing here is rounded
+in the kit's favour. Raw data: `docs/tooling/generator-log.jsonl` (one line per generator run),
+`node scripts/measure-tooling.mjs` (generated against hand-written lines).
+
+## Headline numbers
+
+| | |
+|---|---|
+| Wall clock, from the statement of needs to a green gate and a recorded real run | about 1 h 25 min (06:33 to 07:58) |
+| Generator runs that succeeded | 213 (one `init`, 212 `generate`), 77 s of generator time in all |
+| Generator runs refused | 27, almost all by the glossary gate |
+| Files in the example | 831 |
+| Files a generator wrote and nobody touched | 133 (16 %) |
+| Files a generator wrote and a worker then filled or changed | 584 (70 %) |
+| Files written by hand | 106 (13 %), plus 8 derived documents |
+| Lines kept from generators / lines written by hand | 19 577 / 21 937 (2 917 generated lines were removed or replaced) |
+| `TODO(domain)` markers written by generators | 656, all filled |
+| `it.todo` entries written by generators | 317, all replaced by tests |
+| `TODO(platform)` markers | 9 written, 4 left (listed under "Not built") |
+| Tests | 1 288 unit and adapter tests in 226 files, 57 end-to-end tests in 10 files; the 267 adapter tests also pass on PostgreSQL 18 |
+| Built | 32 commands and queries, 25 routes, 2 policies, 4 scheduled jobs, 5 projections, 14 integration events, 5 integration event handlers, 2 gateways |
+| Sub-agents | 7 (platform, identity, two for scheduling, notification, analytics, end-to-end), about 2.0 million tokens between them |
+| Generated files that needed a hand fix for a defect or a gap of the kit | about 40 (listed below) |
+| Defects found in the kit's packages | 2 confirmed, with reproductions |
+
+How to read the line counts: "generated lines kept" includes what `init` writes (configuration,
+both pipelines, the Keycloak realm: 6 500 lines of project files) and the skeletons of generated
+specs; "by hand" includes about 12 000 lines of tests and 3 000 lines of documents (this report, the commit plan, the transcript). In the four layers and the published
+language of the contexts the split is 4 600 generated lines kept against 5 300 by hand: the
+generators wrote the shape of every file and close to half of the text. Files that a generator
+wrote and a worker deleted (the readers of `query --list`, friction 3) are counted nowhere.
+
+## Wall clock per phase
+
+| Phase | Clock | Who | Notes |
+|---|---|---|---|
+| Reading the architecture reference, the skills, four package READMEs | 06:33 to 06:35 | conductor | about 4 000 lines read before anything was written |
+| Needs, discovery, contexts, glossary, context map | 06:35 to 06:38 | conductor | five artefacts |
+| `init`, `npm install`, four contexts with their 86 glossary terms | 06:38 to 06:41 | conductor | the bare project needed five hand fixes to be green inside this workspace (frictions 7, 13) |
+| Skeleton and contracts: 8 aggregates and repositories, 14 integration events, 2 gateways, 2 policies, 4 commands with their jobs | 06:41 to 06:46 | conductor | 50 generator runs, payloads written by hand |
+| Slices, plan, briefings | 06:46 to 06:49 | conductor | |
+| Platform: persistent tuples, schema, combined authorizer, read-only impersonation | 06:46 to 06:55 | 1 worker | 157 k tokens |
+| Contexts, in parallel | 06:49 to 07:23 | 5 workers | analytics 12 min (215 k tokens), notification 17 min (288 k), identity 19 min (284 k), scheduling calendars 26 min (352 k), scheduling appointments 32 min (455 k) |
+| Integration on the trunk: bindings, projections, statuses, decision record | 07:18 to 07:26 | conductor | |
+| Cross-context journeys, and the workaround of the read-model defect | 07:26 to 07:39 | 2 workers | 244 k and 20 k tokens |
+| Real run: compose stack, Keycloak tokens, demo script, three passes | 07:27 to 07:46 | conductor | |
+| Documents, measurements, commit plan | 07:46 to 07:58 | conductor | |
+
+## Generator runs, per kind
+
+| Kind | Runs | Output compiled and passed the analyzers untouched |
+|---|---|---|
+| `init` | 1 | no: one unused import fails the lint until the first context exists; `knip` flags `resilience/own-policy.ts` until an adapter uses it |
+| `context` | 4 | yes |
+| `aggregate`, `repository` | 8, 8 | yes; the generated fake of every repository had to be changed later (friction 6) |
+| `integration-event` | 14 | yes, until the payload is written: the publisher then stops compiling until it is mapped (expected, but a contract cannot be committed green alone) |
+| `gateway` | 2 | yes, until the contract gets its first method: the `{}` placeholder bound in both platform modules stops compiling (friction 5) |
+| `policy` | 2 | yes |
+| `command` | 26 | yes |
+| `query` | 6 | plain queries yes; all four `--list` runs had their reader port, in-memory reader and fake deleted (friction 3) |
+| `route` | 24 | yes; path parameters got no DTO in two cases, empty body DTOs were generated in three |
+| `job` | 4 | yes |
+| `value-object`, `domain-error`, `domain-event`, `domain-service` | 20, 46, 8, 2 | yes |
+| `event-handler` | 12 | yes |
+| `integration-handler` | 5 | yes |
+| `port` | 8 | yes |
+| `adapter` | 3 | compiled; two of three were emptied of their generated transport (friction 10) |
+| `e2e` | 7 | compiled; all seven were rewritten: the generated baseline assumes a role named `admin` and the tuple `context:<name>#operator` (friction 4) |
+| `worker` | 1 | yes |
+| `adr` | 2 | yes; `--deviation` writes the `deviations` entry but not the configuration entry it justifies |
+
+## Hand fixes of generated code
+
+| Files | What | Why |
+|---|---|---|
+| `package.json`, `scripts/tsc.mjs` | the scripts call the compiler through a resolver | the generated scripts name `node_modules/@typescript/native/bin/tsc`; in a workspace the package is hoisted, and it exports no path to its executable |
+| `package.json`, `scripts/kit.mjs` | the scripts call the CLI with `node` | defect 2 below |
+| `.dependency-cruiser.workspace.mjs`, `package.json` | a wrapper configuration with `preserveSymlinks` | linked packages resolve to `../../packages/*`, so every rule about allowed packages misfires (8 violations on an empty project) |
+| `knip.json` | two entries | consequences of the two lines above |
+| `docker-compose.yml`, `.env.example` | project name, loopback bindings, unusual ports, local image tags | the generated file binds PostgreSQL, the cache and Keycloak on every interface at their default ports, and names the project after the directory |
+| 12 files of `src/platform/auth`, both platform modules, `compose-application.ts`, `test/e2e/support/start-application.ts` | the tuple store is created from the persistence and bound under its port | the generated store is an in-memory module singleton behind a `TODO(platform)`; making it persistent means rewiring every file that imported it (friction 4) |
+| `platform.module.ts`, `platform-test.module.ts` | the two read contracts bound to implementations | friction 5 |
+| `compose-application.ts` | five projections named in the generated `contextModule(...)` lines | friction 2 |
+| `database/schema.ts` | `createAnalyticsTables` added | no repository generator ran in a context that only has read models, so nothing registered its tables |
+| `audit/list-audit-entries.route.ts` | `impersonatedBy` added to the view | the generated view of an audit entry omits who impersonates, which the trail records |
+| `observability/create-logger.ts` | an optional destination | no way to read log lines in a test |
+| 6 repository fakes | `snapshots` replaced by a clone through `rehydrate` | friction 6 |
+| 7 end-to-end specs, 3 generated spec files | rewritten, or split to respect `clean-stepdown` and the 100-line ceiling | friction 4; a generated `describe` grows past the ceiling once its `it.todo` entries are filled |
+| 2 adapters | generated transport, retry and timeout removed | friction 10 |
+
+## Written by hand where a generator would be plausible
+
+- Five projections, their five `KnexReadModelStore` adapters, tables, fakes and specs (friction 2).
+- The list queries around `Criteria`, `scoped` and `criteriaQuerySchema` (friction 3).
+- The implementations of the two read contracts on the upstream side (friction 5).
+- The table of error statuses (`src/platform/http/error-statuses.ts`): `domain-error` takes a
+  `--code` and nothing says which status it answers; everything is 422 until someone notices.
+- The relationship schema, the permission mapping and the resource of every `@Requires`.
+- Path parameter DTOs of two routes; nested DTOs.
+
+## Frictions, ranked by what they cost
+
+1. **A read model written by the Knex adapter fails on its second write with a real clock**
+   (defect 1 below). Every handler spec passed; the first request through the composed
+   application answered `422 CONCURRENCY_CONFLICT`. Cost: the only red state of the build that
+   needed diagnosis, two agents, a workaround in the shared kernel used by five projections.
+   Proposal: read the column as the `Date` the driver gives; add a millisecond case to
+   `readModelStoreContract`; give the clocks of generated specs milliseconds.
+2. **The CLI does not know projections.** The kernel and three READMEs present `@Projection`
+   in `application/projections/` as the way to keep a read model; `check` refuses the directory
+   (`tree/closed`), `docs` leaves the classes out of the barrel, so a projection is silently not
+   subscribed, and there is no generator. Cost: a deviation with its decision record for a
+   documented feature, three configuration entries by hand, five registrations by hand in
+   generated lines, and four workers each discovering it. The README of `@ddd-ts-kit/di` admits
+   it in one sentence; the architecture reference does not list the directory. Proposal:
+   `generate projection <context> <Name> --on <event>...` (class, port, store adapter, table,
+   fake, spec), the directory in the canonical tree, the role in the barrel.
+3. **`generate query --list` writes another list than the one the READMEs teach.** It gives a
+   reader port taking `(scope, page)`, an in-memory reader named `*.repository.ts` and a fake;
+   the kernel, http and knex READMEs teach `Criteria`, `ReadModelStore`, `scoped` and
+   `criteriaQuerySchema`. All four runs ended with the generated port, reader and fake deleted
+   (15 files) and the query, handler and route rewritten. Proposal: `--list --criteria` that
+   writes the criteria definition, the read-model port and the route with `criteriaQuerySchema`,
+   or make it the default.
+4. **The `rebac` bootstrap is a placeholder, and the generators keep writing for it.** The
+   store is in memory and a singleton; every `@Requires` names `context:<name>`; the generated
+   end-to-end baseline relates `context:<name>#operator` and expects 403 from a stranger, which
+   is false as soon as the model is real; integration event handlers need a system grant written
+   by hand; `Access.authorize(actor, permission, aggregate)` needs a `resourceOf` that no skill
+   mentions and that handler specs on roles cannot detect. Cost: one worker for the platform
+   (157 k tokens), 12 files rewired, 7 end-to-end specs rewritten. Proposal: ship a Knex
+   `RelationTupleStore` in `@ddd-ts-kit/knex` (the contract suite exists) and have `init` bind it
+   through the persistence; `--resource <type>:<field>` on `command` and `query`; a rule that
+   lets a system actor operate its own context; `resourceOf` in the access-control skill.
+5. **The upstream side of a gateway is nobody's.** `generate gateway` binds the contract to
+   `{}` in both platform modules: it stops compiling at the first method of the contract, and a
+   declared implementation in the upstream context is then "bound twice". Two workers found two
+   different ways out (an undeclared class bound by the platform; `replaces: true`). Proposal:
+   generate the implementation in the upstream's `infrastructure/` with a declaration, and bind
+   an inert, typed stand-in only in the test module.
+6. **The generated repository fake loses value objects.** `snapshots()` goes through
+   `structuredClone`, which turns the value objects the aggregate `TODO` asks for into plain
+   objects. Six fakes fixed the same way by four workers. Proposal: generate the fake with
+   `{ clone: rehydrate }` from the start.
+7. **A generated project does not survive a workspace.** Three fixes before the first green
+   gate: the compiler path, the CLI binary (defect 2), dependency-cruiser following links.
+   Proposal: scripts that resolve their tools (`ddd-ts-kit tsc`), `preserveSymlinks` in the
+   generated configuration, an executable bit set by the build of the CLI.
+8. **A refusal loses its reason twice.** `ForbiddenError.reason` (the policy's name) is not in
+   the HTTP problem, and the denied decision of a policy asked inside a handler is written in
+   the unit of work that the refusal rolls back: the trail keeps `command failed FORBIDDEN`
+   only. The "403 with the policy's code" asked of this example could not be delivered.
+   Proposal: an optional `reason` member in the problem; record decisions outside the unit of
+   work, as the command middleware does for failures.
+9. **The glossary gate costs a run per word.** 27 refused runs: `List`, `Read`, `Get`, the
+   action word of a permission, the word `Practice` in scheduling. The message is clear, but it
+   names one missing word at a time, lists the `--term` of the refused run as existing, and
+   `LastManager` was refused by `language/no-technical-name` although `Manager` is a glossary
+   term of that context. Proposal: report every missing word at once; let the glossary overrule
+   the technical-name list; treat `List`, `Get`, `Read` as verbs of queries without a term.
+10. **`generate adapter` knows one adapter: a remote client.** A port whose adapter writes
+    relation tuples, or logs a mail, gets a transport with retry and timeout to delete, and the
+    name `remote-...` stays. The `event-handler` marker says "execute a command" where the
+    documented way to keep relationships in step is to call a port. Proposal: `--kind local`.
+11. **One consumer per event and context.** `integration-handler` names its handler after the
+    event and takes no name: a second reaction of the same context to the same event cannot be
+    generated. Reminders are therefore planned by a reaction to "notification sent", and a
+    notification that is dead-lettered takes its reminder with it. Proposal: `--name`.
+12. **Generators and `docs` rewrite other contexts.** A `generate port` in `identity`
+    rewrote the barrel and `CONTEXT.md` of `analytics` and `scheduling`; with workers sharing a
+    tree this turned a neighbour's specs red twice for a few seconds. With worktrees it would
+    have been a merge conflict in generated files. `--local-only` exists, but the help says
+    these kinds write nothing shared.
+13. Smaller ones, each a few minutes: `tree/context-doc` read the word "generic" in the
+    sentence under `## Classification` as a second classification; a policy generated before
+    its command gives the permission the policy's name as description; class-validator payloads
+    cannot describe a field (`class-validator-jsonschema` is not allowed in a published
+    language, the skill asks for descriptions); the ESLint preset declares no Node globals for
+    `.mjs` scripts (`fetch`, `URL`, `Buffer`); `vitest.config.ts` runs adapter specs in parallel
+    on a shared `DATABASE_URL`, where they truncate each other (the end-to-end configuration
+    guards against it); `generate e2e` names its file after the use case without the context;
+    `generate route` says "create it with `generate command`" for a missing query; a log line of
+    the bus middleware carries the key `message` twice; the failure lines of the event bus carry
+    no correlation id; the bootstrap skill deletes the glossary and the draft map, so the path
+    cannot be replayed (kept here in `docs/architecture/before-bootstrap/`).
+
+## Contradictions between a skill, a README and the tool
+
+| Says | Against |
+|---|---|
+| README of `@ddd-ts-kit/auth`: "domain events are dispatched after the commit", so a tuple written by an event handler is a second step | architecture reference and the kernel: events leave with the save, inside the unit of work. The tool does the second; the example relies on it and proves it |
+| README of the kernel: a row `interface` exported next to a read port | `ports/abstract-class` refuses it (its message says to use a `type`) |
+| README of `@ddd-ts-kit/di`: `contextModule` takes a projection | the generated barrel never lists one |
+| README of `@ddd-ts-kit/knex`, read models | `keyColumn` is required when the key is not `id`; not shown |
+| integration-event skill: describe each field of the payload | impossible with class-validator inside the allowed packages |
+| bootstrap skill: "the empty project is green" | true only after the first `generate context` |
+| parallel-work skill: four workers at most | five context workers and one platform worker ran at once here on a shared tree without trouble; the limit that mattered was the number of hands in one context (two) |
+
+## Rule violations met, and whether the message said what to do
+
+| Rule | Met by | Message |
+|---|---|---|
+| `clean-stepdown`, function size, the 100-line ceiling of a `describe` | every worker, in specs | clear, with the fix; the generated spec skeleton invites the violation |
+| `language/glossary-term` | 27 runs | clear, one word at a time |
+| `language/no-technical-name` | `LastManager`; importing the kernel's own `ReadModelStore` in a handler ("Model") | clear, but wrong in both cases |
+| `tree/closed` | the projections | clear, with the fix (an extra directory) |
+| `declarations/role-declared` | an in-memory reader left next to its Knex twin | clear |
+| `ports/abstract-class` | a row interface in a port file | clear |
+| `clean-no-escape-hatch` | a type guard written with an assertion | clear, with three alternatives |
+| wiring: "bound twice" | the gateway contracts | names the port and the modules |
+
+## What was pleasant
+
+- One `init` command, then a compiling, linted, tested skeleton with both pipelines, a realm,
+  a compose file and agent rules: the stack questions were answered before any code.
+- The `next` list of every generator: workers opened those lines and little else.
+- The contract suites: fakes and adapters held to the same behaviour without writing it.
+- PGlite: adapter specs and the exclusion constraint (`btree_gist`) ran in process on the
+  first try; the same specs then passed on PostgreSQL 18 with real concurrent transactions.
+- `composeApplication` on a real database in a spec, `expectSpanTree`, and one trace from the
+  HTTP request to three consumers without a line of tracing in a context.
+- The messages of the linter and of the wiring errors say what to do instead.
+- The real run passed its first six steps at the first attempt, against real Keycloak tokens.
+
+## Parallel work: what happened
+
+| Worker | Scope | Generator runs | Result |
+|---|---|---|---|
+| platform | `src/platform/auth`, buses, test support | 1 | done in 9 min |
+| identity | the context | 47 | slices 11 to 17, 286 tests, 36 end-to-end tests |
+| scheduling-calendar | Calendar, Waitlist, practitioners, day view | 50 | slices 18 to 21, 28, 29 |
+| scheduling-appointment | Appointment, Scheduler, lists, export | 34 | slices 21 to 27, 30; recalled once for the read-model defect |
+| notification | the context | 22 | slices 31 to 34, 184 tests |
+| analytics | the context | 7 | slices 35 to 37, 94 tests |
+| end-to-end | `test/e2e/journey-*`, integration fixes | 0 | 17 tests, three integration faults fixed |
+
+There is no git in this build, so the workers shared one tree instead of a worktree each, and
+every generator run was serialised behind a lock (`scripts/kit.mjs`). Collisions: none lost
+work. Near-collisions: the port `SchedulingRelationships`, created by one half of scheduling
+and completed by the other, as briefed; two transient red states of a neighbour's specs
+(friction 12, and one broken import for a few seconds). Contracts first paid: no worker waited
+for another and no payload changed after the workers started. What did not pay: asking each
+context for its own end-to-end specs before the composition existed (four of five workers could
+not write them), and briefing the projections without a generator (each worker read the same
+three README sections and wrote the same adapter).
+
+Estimated reading per slice, from the workers' reports: the generated files of the slice (5 to
+12 files, around their `TODO` lines), one or two README sections for anything beyond a plain
+command, and once per worker the rules, the slices and four skills. The slices that cost
+reading were the ones without a generator: projections (kernel, knex and di READMEs), criteria
+lists (kernel, http, knex), the rebuild (kernel source).
+
+## Defects found in the kit's packages
+
+1. **`@ddd-ts-kit/knex`, read models: the stamp is read back without its milliseconds.**
+   `packages/knex/src/read-model/knex-stamped-rows.ts:33` builds
+   `new Date(String(record['last_event_at']))`; the driver answers a `Date`, and
+   `String(date)` has a precision of one second. `replace()` then filters on
+   `last_event_at = <truncated instant>` and matches no row. Reproduction: with a
+   `KnexReadModelStore` on PostgreSQL or PGlite, `upsertIfNewer(key, { eventId: 'a', occurredAt:
+   new Date('2026-01-01T00:00:00.123Z') }, ...)`, then a second `upsertIfNewer` on the same key
+   with a later stamp: five attempts, then `ConcurrencyError`. Any stamp whose milliseconds are
+   zero hides it, which is what fixed clocks give. Worked around in
+   `src/shared-kernel/storable-stamp.ts` (instant floored to the second, order carried by a
+   version), with a regression spec per adapter.
+2. **`ddd-ts-kit` (the CLI): `dist/bin.js` is not executable after the build.** In this
+   repository, `npm ci && npm run build`, then any script of a workspace that calls the
+   `ddd-ts-kit` binary answers `sh: 1: ddd-ts-kit: Permission denied`: the compiler writes the
+   file without the executable bit. A published package is not affected (the package manager
+   sets the bit at install). Worked around by calling the CLI with `node` (`scripts/kit.mjs`).
+
+Suspected, not confirmed as defects: the generated view of audit entries omits
+`impersonatedBy` (template); the bus middleware logs `message` twice in one JSON line.
+
+## Not built, or built smaller than asked
+
+- The policy's reason code in the HTTP answer of a refused cancellation: the answer is `403
+  FORBIDDEN` naming the permission (friction 8). The policy's decision is covered by its own
+  spec and by the journey spec; it is not in the audit trail.
+- A metrics adapter (`TODO(platform)` in `src/platform/observability/create-metrics.ts`), the
+  declaration of audited fields (`src/platform/audit/create-audit.ts`), and the two remote
+  gateway adapters for the day a context is extracted: the four `TODO(platform)` left.
+- The mail port has its development adapter (it writes to the log) and a fake that fails on
+  demand; no SMTP catcher.
+- Occupancy is held minutes and counts per calendar and day, not a rate against opening hours;
+  the nightly verification walks UTC days.
+- Leaving a waitlist, listing members and delegations, an organization above practices.
+- `@Cached` and `@CircuitBreaker` are not used: the decorators shown are `@Retry` and
+  `@Timeout` on the mailer; the binding-level form is the platform's policy around every
+  `external` and `gateway` binding.
+- No entry point runs `ProjectionRebuild` in production: it is exercised by a spec.
+- The fresh-clone sequence `npm ci && npm run build && npm run example:verify` was checked piece
+  by piece (`npm ci --dry-run` against the lockfile, the build, the gate), not from a second
+  clone.
+
+## Open business questions the workers left
+
+Taken as written in the code, to confirm with the product owner: a requested appointment has
+24 hours to be confirmed; an offer from the waitlist ignores the patient's limit; a waiter
+leaves the waitlist once offered a slot; a failing offer fails the cancellation that freed the
+slot; opening a practice also announces its first manager as a member; time zones without an
+area (`UTC`) are refused; a booking made less than 24 hours ahead is reminded at the next run of
+the job; a contact never changes after the first registration; held appointments count held,
+completed and no-show together.
