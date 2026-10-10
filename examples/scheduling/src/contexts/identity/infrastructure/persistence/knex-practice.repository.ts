@@ -1,0 +1,51 @@
+import type { Knex } from 'knex';
+import { Clock, ExecutionScope, stampCreation, stampUpdate } from '@ddd-ts-kit/kernel';
+import { Repository } from '@ddd-ts-kit/kernel/declarations';
+import { KnexContext, auditRow, insertIgnoringConflict, optimisticUpdate } from '@ddd-ts-kit/knex';
+import type { Practice } from '../../domain/aggregates/practice.aggregate.js';
+import { PracticeRepository } from '../../domain/repositories/practice.repository.js';
+import { IDENTITY_SCHEMA } from './identity.schema.js';
+import { PracticeMapper } from './practice.mapper.js';
+import type { PracticeColumns, PracticeRow } from './practice-row.schema.js';
+
+type VersionedPractice = PracticeColumns & { readonly version: number };
+
+@Repository(PracticeRepository, [KnexContext, ExecutionScope, Clock])
+export class KnexPracticeRepository implements PracticeRepository {
+  constructor(
+    private readonly database: KnexContext,
+    private readonly scope: ExecutionScope,
+    private readonly clock: Clock,
+  ) {}
+
+  async findById(id: string): Promise<Practice | undefined> {
+    const row = await tableOf(this.database).where({ id }).first();
+
+    return row === undefined ? undefined : PracticeMapper.toDomain(row);
+  }
+
+  async save(saved: Practice): Promise<void> {
+    await optimisticUpdate(saved, async ({ expected, next }) => {
+      const state = { ...PracticeMapper.toRow(saved), version: next };
+
+      return expected === 0 ? this.insert(state) : this.update(state, expected);
+    });
+  }
+
+  private async insert(state: VersionedPractice): Promise<number> {
+    const row = { ...state, ...auditRow(stampCreation(this.scope, this.clock)) };
+
+    return (await insertIgnoringConflict(this.database.executor(), tableOf(this.database), { row, conflict: 'id' })) ? 1 : 0;
+  }
+
+  private async update(state: VersionedPractice, expected: number): Promise<number> {
+    return tableOf(this.database)
+      .where({ id: state.id, version: expected })
+      .update({ ...state, ...auditRow(stampUpdate(this.scope, this.clock)) });
+  }
+}
+
+/** A function and not a method: a query builder is thenable, and a method that answers one is read as asynchronous by whatever wraps the adapter (tracing), which then answers a promise. */
+function tableOf(database: KnexContext): Knex.QueryBuilder<PracticeRow, PracticeRow[]> {
+  return database.executor()<PracticeRow, PracticeRow[]>('practices').withSchema(IDENTITY_SCHEMA);
+}
