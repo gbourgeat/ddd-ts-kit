@@ -1,0 +1,181 @@
+import { AggregateRoot, unwrap } from '@ddd-ts-kit/kernel';
+import { AppointmentAlreadyConfirmedError } from '../errors/appointment-already-confirmed.error.js';
+import { AppointmentEndedError } from '../errors/appointment-ended.error.js';
+import { AppointmentNotStartedError } from '../errors/appointment-not-started.error.js';
+import { AppointmentBooked } from '../events/appointment-booked.event.js';
+import { AppointmentCancelled } from '../events/appointment-cancelled.event.js';
+import { AppointmentCompleted } from '../events/appointment-completed.event.js';
+import { AppointmentConfirmed } from '../events/appointment-confirmed.event.js';
+import { AppointmentExpired } from '../events/appointment-expired.event.js';
+import { AppointmentMarkedNoShow } from '../events/appointment-marked-no-show.event.js';
+import { AppointmentRescheduled } from '../events/appointment-rescheduled.event.js';
+import type { Booking } from '../value-objects/booking.vo.js';
+import type { Cancellation } from '../value-objects/cancellation.vo.js';
+import type { Slot } from '../value-objects/slot.vo.js';
+
+export interface AppointmentState {
+  readonly registeredAt: Date;
+  /** The instant of the last fact this state reflects. */
+  readonly changedAt: Date;
+  readonly booking: Booking;
+  /** `requested` and `booked` hold their slot; the four others are ends and hold nothing. */
+  readonly status: 'requested' | 'booked' | 'cancelled' | 'expired' | 'completed' | 'no-show';
+  /** Only while requested: the instant after which the appointment expires unless confirmed. */
+  readonly confirmBefore?: Date;
+  readonly cancellation?: Cancellation;
+}
+
+export class Appointment extends AggregateRoot<string> {
+  private constructor(
+    id: string,
+    private state: AppointmentState,
+  ) {
+    super(id);
+  }
+
+  /** Books: the slot is held and nothing is left to confirm. */
+  static create(id: string, booking: Booking, now: Date): Appointment {
+    const created = new Appointment(id, { registeredAt: now, changedAt: now, booking, status: 'booked' });
+
+    created.record(new AppointmentBooked(id, now, { booking }));
+
+    return created;
+  }
+
+  /** Requests: the slot is held until `confirmBefore`, and freed then unless the appointment was confirmed. */
+  static request(id: string, booking: Booking, terms: { readonly now: Date; readonly confirmBefore: Date }): Appointment {
+    const { now, confirmBefore } = terms;
+    const created = new Appointment(id, { registeredAt: now, changedAt: now, booking, status: 'requested', confirmBefore });
+
+    created.record(new AppointmentBooked(id, now, { booking, confirmBefore }));
+
+    return created;
+  }
+
+  static rehydrate(id: string, state: AppointmentState): Appointment {
+    return new Appointment(id, state);
+  }
+
+  confirm(now: Date): void {
+    this.refuseWhenEnded();
+
+    if (this.state.status === 'booked') {
+      throw new AppointmentAlreadyConfirmedError(this.id);
+    }
+
+    this.state = { registeredAt: this.state.registeredAt, changedAt: now, booking: this.state.booking, status: 'booked' };
+    this.record(new AppointmentConfirmed(this.id, now, this.state.booking));
+  }
+
+  cancel(cancellation: Cancellation, now: Date): void {
+    this.refuseWhenEnded();
+
+    this.state = { registeredAt: this.state.registeredAt, changedAt: now, booking: this.state.booking, status: 'cancelled', cancellation };
+    this.record(new AppointmentCancelled(this.id, now, { booking: this.state.booking, cancellation }));
+  }
+
+  /** Moves to another slot of the same calendar in one step: the previous slot is free as soon as this one is held. */
+  reschedule(slot: Slot, day: string, now: Date): void {
+    this.refuseWhenEnded();
+
+    const previous = this.state.booking;
+    const booking = unwrap(previous.movedTo(slot, day));
+
+    this.state = { ...this.state, changedAt: now, booking };
+    this.record(new AppointmentRescheduled(this.id, now, { booking, previous }));
+  }
+
+  complete(now: Date): void {
+    this.refuseWhenEnded();
+    this.refuseBeforeStart(now);
+
+    this.state = { registeredAt: this.state.registeredAt, changedAt: now, booking: this.state.booking, status: 'completed' };
+    this.record(new AppointmentCompleted(this.id, now, this.state.booking));
+  }
+
+  markNoShow(now: Date): void {
+    this.refuseWhenEnded();
+    this.refuseBeforeStart(now);
+
+    this.state = { registeredAt: this.state.registeredAt, changedAt: now, booking: this.state.booking, status: 'no-show' };
+    this.record(new AppointmentMarkedNoShow(this.id, now, this.state.booking));
+  }
+
+  /** Safe to repeat: an appointment that is confirmed, ended, or whose deadline is later than `at` stays as it is. */
+  expire(at: Date): void {
+    const deadline = this.state.confirmBefore;
+
+    if (this.state.status !== 'requested' || deadline === undefined || deadline.getTime() > at.getTime()) {
+      return;
+    }
+
+    this.state = { registeredAt: this.state.registeredAt, changedAt: at, booking: this.state.booking, status: 'expired' };
+    this.record(new AppointmentExpired(this.id, at, this.state.booking));
+  }
+
+  /** Whether this appointment still holds an instant of that slot, its buffer included. */
+  holds(slot: Slot): boolean {
+    return this.isActive && this.state.booking.slot.overlaps(slot);
+  }
+
+  /** Whether this appointment is still to come for its patient at that instant. */
+  isHeldAfter(instant: Date): boolean {
+    return this.isActive && this.state.booking.slot.startsAfter(instant);
+  }
+
+  get isActive(): boolean {
+    return this.state.status === 'requested' || this.state.status === 'booked';
+  }
+
+  get booking(): Booking {
+    return this.state.booking;
+  }
+
+  get patientId(): string {
+    return this.state.booking.patientId;
+  }
+
+  get calendarId(): string {
+    return this.state.booking.calendarId;
+  }
+
+  get slot(): Slot {
+    return this.state.booking.slot;
+  }
+
+  get status(): AppointmentState['status'] {
+    return this.state.status;
+  }
+
+  get confirmBefore(): Date | undefined {
+    return this.state.confirmBefore;
+  }
+
+  get cancellation(): Cancellation | undefined {
+    return this.state.cancellation;
+  }
+
+  get registeredAt(): Date {
+    return this.state.registeredAt;
+  }
+
+  get changedAt(): Date {
+    return this.state.changedAt;
+  }
+
+  toState(): AppointmentState {
+    return { ...this.state };
+  }
+
+  private refuseWhenEnded(): void {
+    if (!this.isActive) {
+      throw new AppointmentEndedError(this.id, this.state.status);
+    }
+  }
+
+  private refuseBeforeStart(now: Date): void {
+    if (this.state.booking.slot.startsAfter(now)) {
+      throw new AppointmentNotStartedError(this.id, this.state.booking.slot.startsAt);
+    }
+  }
+}
