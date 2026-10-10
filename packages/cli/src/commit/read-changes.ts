@@ -39,17 +39,28 @@ function numstatChange(entry: string): Change {
   return { path: file.join('\t'), lines: (Number(added) || 0) + (Number(deleted) || 0) };
 }
 
-/** The lines of an untracked file; none for a file too large to be source. */
+/**
+ * The lines of an untracked file; none for a file too large to be source. Sized and read through
+ * one descriptor: the file measured is the file counted.
+ */
 function lineCount(file: string): number {
+  let descriptor: number | undefined;
+
   try {
-    if (fs.statSync(file).size > COUNTED_FILE_BYTES) {
+    descriptor = fs.openSync(file, 'r');
+
+    if (fs.fstatSync(descriptor).size > COUNTED_FILE_BYTES) {
       return 0;
     }
 
-    const lines = fs.readFileSync(file, 'utf8').split('\n');
+    const lines = fs.readFileSync(descriptor, 'utf8').split('\n');
 
     return lines.at(-1) === '' ? lines.length - 1 : lines.length;
   } catch {
     return 0;
+  } finally {
+    if (descriptor !== undefined) {
+      fs.closeSync(descriptor);
+    }
   }
 }

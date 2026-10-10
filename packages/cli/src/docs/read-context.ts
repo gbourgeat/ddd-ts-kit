@@ -6,6 +6,7 @@ import type { ContextFacts, PublishedEvent } from './context-facts.js';
 import type { DeclaredFacts, DeclaredUseCase } from './declared-facts.js';
 import { readDeclarations } from './read-declarations.js';
 import { readJobs } from './read-jobs.js';
+import { withoutComments } from './without-comments.js';
 
 type RoleNames = Pick<ContextFacts, 'commands' | 'queries' | 'policies' | 'gateways' | 'integrationEventHandlers'>;
 
@@ -99,10 +100,7 @@ function sectionOf(doc: string, heading: string): string {
 
 /** The purpose shown in the context map; empty while the section still holds its placeholder. */
 function firstSentence(section: string): string {
-  const text = section
-    .replace(/<!--[\s\S]*?-->/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
+  const text = withoutComments(section).replace(/\s+/g, ' ').trim();
 
   if (text === '' || text.includes('TODO(domain)')) {
     return '';

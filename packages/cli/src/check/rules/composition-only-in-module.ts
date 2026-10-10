@@ -4,6 +4,7 @@ import type { Rule } from '../model/rule.js';
 import type { SourceFile } from '../model/source-file.js';
 import { bindingPlace } from '../support/binding-place.js';
 import { perFile } from '../support/per-file.js';
+import { escapeRegExp } from '../text/escape-reg-exp.js';
 
 const DI_PACKAGE = '@ddd-ts-kit/di';
 /** The functions of the container package that turn declared classes into a module. */
@@ -37,9 +38,7 @@ function isOutsideComposition({ isTest, location }: SourceFile): boolean {
 /** `new X` and `.toClass(X, ..)` of a class imported from infrastructure/. */
 function usedAdapters(file: SourceFile, project: Project): Finding[] {
   return importedAdapters(file).flatMap(({ name, context }) => {
-    const escaped = name.replace(/\$/g, '\\$');
-
-    const use = new RegExp(`(?:(?<![\\w$.])new\\s+|\\.\\s*toClass\\s*\\(\\s*)${escaped}(?![\\w$])`).exec(
+    const use = new RegExp(`(?:(?<![\\w$.])new\\s+|\\.\\s*toClass\\s*\\(\\s*)${escapeRegExp(name)}(?![\\w$])`).exec(
       file.scan.code,
     );
 

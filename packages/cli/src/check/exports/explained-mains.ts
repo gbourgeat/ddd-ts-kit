@@ -1,3 +1,4 @@
+import { escapeRegExp } from '../text/escape-reg-exp.js';
 import type { Exported } from './exported.js';
 import type { LocalType } from './local-types.js';
 import { typeClosure } from './type-closure.js';
@@ -44,7 +45,5 @@ function isDerivedFrom(candidate: Exported, main: Exported): boolean {
     return false;
   }
 
-  return new RegExp(`(?<![\\w$.])${candidate.name.replace(/\$/g, '\\$')}\\s*\\(`).test(
-    main.text.slice(main.signature.length),
-  );
+  return new RegExp(`(?<![\\w$.])${escapeRegExp(candidate.name)}\\s*\\(`).test(main.text.slice(main.signature.length));
 }

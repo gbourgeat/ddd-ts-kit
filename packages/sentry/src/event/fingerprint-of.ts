@@ -1,6 +1,5 @@
 import { DomainError, type ErrorReport } from '@ddd-ts-kit/kernel';
-
-const FRAME = /^\s*at (?:async )?(?:(.+?) \()?(?:.*[/\\])?([^/\\:()]+):\d+:\d+\)?$/;
+import { frameOrigin } from './frame-origin.js';
 
 /**
  * What makes two events the same problem. Never the message: it quotes identifiers, and one
@@ -25,10 +24,10 @@ function raisedAt(error: unknown): string[] {
   }
 
   for (const line of error.stack.split('\n')) {
-    const frame = FRAME.exec(line);
+    const origin = frameOrigin(line);
 
-    if (frame !== null) {
-      return [[frame[1], frame[2]].filter((part) => part !== undefined).join(' ')];
+    if (origin !== undefined) {
+      return [origin];
     }
   }
 

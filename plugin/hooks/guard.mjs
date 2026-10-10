@@ -2,7 +2,7 @@
 // Fails open by design: a guard that breaks must never block the work it guards.
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { closeSync, existsSync, fstatSync, openSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 
@@ -526,10 +526,9 @@ function commitReminder(project, input, { repeat }) {
   if (changes.length <= project.commit.maxFiles && lines <= project.commit.maxLines) {
     return forget(marker);
   }
-  if (!repeat && existsSync(marker)) {
+  if (alreadyRemembered(marker) && !repeat) {
     return undefined;
   }
-  remember(marker);
 
   return `ddd-ts-kit: ${changes.length} changed files and ${lines} changed lines are uncommitted (advised at most ${project.commit.maxFiles} files and ${project.commit.maxLines} lines a commit, generated files not counted). Commit each finished slice on its own, with the files its generator wrote: ${describeSlices(project, changes)}. See the skill ddd-ts-kit:commit-discipline.`;
 }
@@ -561,15 +560,23 @@ function numstatChange(entry) {
   return { path: path.join('\t'), lines: (Number(added) || 0) + (Number(deleted) || 0) };
 }
 
+// Sized and read through one descriptor: the file measured is the file counted.
 function lineCount(file) {
+  let descriptor;
   try {
-    return statSync(file).size > COUNTED_FILE_BYTES
+    descriptor = openSync(file, 'r');
+
+    return fstatSync(descriptor).size > COUNTED_FILE_BYTES
       ? 0
-      : readFileSync(file, 'utf8')
+      : readFileSync(descriptor, 'utf8')
           .split('\n')
           .filter((line, index, all) => index < all.length - 1 || line !== '').length;
   } catch {
     return 0;
+  } finally {
+    if (descriptor !== undefined) {
+      closeSync(descriptor);
+    }
   }
 }
 
@@ -616,11 +623,16 @@ function reminderMarker(project, input) {
   return join(tmpdir(), `ddd-ts-kit-commit-reminder-${key}`);
 }
 
-function remember(marker) {
+// Leaves the marker and says whether it was there, in one exclusive creation: the temp dir is shared,
+// so the marker is private and never follows nor rewrites a file put under its name.
+function alreadyRemembered(marker) {
   try {
-    writeFileSync(marker, '');
-  } catch {
+    writeFileSync(marker, '', { flag: 'wx', mode: 0o600 });
+
+    return false;
+  } catch (error) {
     // Without a marker the reminder is only said more often.
+    return error?.code === 'EEXIST';
   }
 }
 

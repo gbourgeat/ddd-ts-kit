@@ -146,10 +146,18 @@ function accumulate(file, previous) {
   fs.rmSync(beforeFile, { force: true });
 }
 
-function read(file) {
-  const absolute = path.join(root, file);
+const NOT_A_FILE = ['ENOENT', 'ENOTDIR', 'EISDIR'];
 
-  return fs.existsSync(absolute) && fs.statSync(absolute).isFile() ? fs.readFileSync(absolute, 'utf8') : undefined;
+function read(file) {
+  try {
+    return fs.readFileSync(path.join(root, file), 'utf8');
+  } catch (error) {
+    if (NOT_A_FILE.includes(error?.code)) {
+      return undefined;
+    }
+
+    throw error;
+  }
 }
 
 function parse(text) {

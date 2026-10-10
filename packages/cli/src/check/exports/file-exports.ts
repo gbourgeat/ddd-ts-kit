@@ -1,6 +1,7 @@
 import type { SourceFile } from '../model/source-file.js';
 import { braceDepthAt } from '../text/brace-depth-at.js';
 import { endAtDepthZero } from '../text/end-at-depth-zero.js';
+import { escapeRegExp } from '../text/escape-reg-exp.js';
 import { matchingBracket } from '../text/matching-bracket.js';
 import type { Exported } from './exported.js';
 
@@ -122,7 +123,7 @@ function listedExports(file: SourceFile, match: RegExpExecArray): Placed[] {
     const [local = '', alias] = part.split(/\s+as\s+/);
 
     const declaration = new RegExp(
-      `(?<![\\w$.])(?:abstract\\s+)?(?:async\\s+)?(class|function|interface|type|enum)\\s*\\*?\\s*${local.replace(/\$/g, '\\$')}(?![\\w$])`,
+      `(?<![\\w$.])(?:abstract\\s+)?(?:async\\s+)?(class|function|interface|type|enum)\\s*\\*?\\s*${escapeRegExp(local)}(?![\\w$])`,
     ).exec(code);
 
     if (declaration === null) {

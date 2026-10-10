@@ -1,6 +1,7 @@
 import type { SourceFile } from '../model/source-file.js';
 import type { Scan } from '../scan/scan.js';
 import { callArguments } from '../text/call-arguments.js';
+import { escapeRegExp } from '../text/escape-reg-exp.js';
 import { identifier } from '../text/identifier.js';
 import type { ListPart } from '../text/list-part.js';
 
@@ -31,7 +32,7 @@ export function isRegisteredAfterCommit(module: SourceFile | undefined, classNam
 
 function variablesHolding(code: string, className: string): string[] {
   const held = new RegExp(
-    `(?<![\\w$.])(?:const|let|var)\\s+([A-Za-z_$][\\w$]*)\\s*=[^;=]*?(?<![\\w$])new\\s+${className.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![\\w$])`,
+    `(?<![\\w$.])(?:const|let|var)\\s+([A-Za-z_$][\\w$]*)\\s*=[^;=]*?(?<![\\w$])new\\s+${escapeRegExp(className)}(?![\\w$])`,
     'g',
   );
 

@@ -5,6 +5,7 @@ import type { Finding } from '../model/finding.js';
 import type { Rule } from '../model/rule.js';
 import type { SourceFile } from '../model/source-file.js';
 import { perFile } from '../support/per-file.js';
+import { escapeRegExp } from '../text/escape-reg-exp.js';
 
 const UPPER_SNAKE = /^[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*$/;
 const TOKEN_CALL = /(?<![\w$.])token\s*(?:<[^<>()]*(?:<[^<>()]*>[^<>()]*)*>)?\s*\(/g;
@@ -75,7 +76,7 @@ function literalTokens(file: SourceFile): Finding[] {
 
     const declared = IDENTIFIER.test(code)
       ? new RegExp(
-          `(?<![\\w$.])(?:const|let|var)\\s+${code.replace(/\$/g, '\\$')}\\s*(?::[^=;]+)?=\\s*Symbol\\s*(?:\\.\\s*for\\s*)?\\(`,
+          `(?<![\\w$.])(?:const|let|var)\\s+${escapeRegExp(code)}\\s*(?::[^=;]+)?=\\s*Symbol\\s*(?:\\.\\s*for\\s*)?\\(`,
         ).exec(file.scan.code)
       : null;
 

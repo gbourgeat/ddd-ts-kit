@@ -4,6 +4,7 @@ import { JwtAuthenticator } from './jwt-authenticator.js';
 import { keycloakActorOf } from './keycloak-actor-of.js';
 import { keycloakAuthenticationMethod } from './keycloak-authentication-method.js';
 import type { KeycloakClaimOptions } from './keycloak-claim-options.js';
+import { withoutTrailingSlashes } from './without-trailing-slashes.js';
 
 export interface KeycloakAuthenticatorOptions extends KeycloakClaimOptions {
   /** Where Keycloak is served, without the realm: `https://id.example.com`. */
@@ -25,7 +26,7 @@ export interface KeycloakAuthenticatorOptions extends KeycloakClaimOptions {
  */
 export function keycloakAuthenticator(options: KeycloakAuthenticatorOptions): JwtAuthenticator {
   const { baseUrl, realm, audience, algorithms, clockTolerance, impersonatorClaim, toSessionExtensions } = options;
-  const issuer = `${baseUrl.replace(/\/+$/, '')}/realms/${encodeURIComponent(realm)}`;
+  const issuer = `${withoutTrailingSlashes(baseUrl)}/realms/${encodeURIComponent(realm)}`;
 
   return new JwtAuthenticator({
     issuer,

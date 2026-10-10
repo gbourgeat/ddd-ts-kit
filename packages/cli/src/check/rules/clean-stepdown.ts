@@ -5,6 +5,7 @@ import type { ClassShape } from '../structure/class-shape.js';
 import type { MethodShape } from '../structure/method-shape.js';
 import type { TopLevelFunction } from '../structure/top-level-function.js';
 import { perFile } from '../support/per-file.js';
+import { escapeRegExp } from '../text/escape-reg-exp.js';
 
 /** Not part of a longer name, and not a property access; a spread (`...helper()`) is a plain use. */
 const NOT_A_MEMBER = '(?<![\\w$])(?<!(?:^|[^.])\\.)';
@@ -57,8 +58,8 @@ function privateBeforePublic(shape: ClassShape): Finding[] {
 }
 
 function privateAboveCaller(file: SourceFile, shape: ClassShape, method: MethodShape): Finding[] {
-  const receiver = method.isStatic ? `(?:this|${escape(shape.name)})` : 'this';
-  const pattern = new RegExp(`(?<![\\w$])${receiver}\\s*\\??\\.\\s*${escape(method.name)}(?![\\w$])`, 'g');
+  const receiver = method.isStatic ? `(?:this|${escapeRegExp(shape.name)})` : 'this';
+  const pattern = new RegExp(`(?<![\\w$])${receiver}\\s*\\??\\.\\s*${escapeRegExp(method.name)}(?![\\w$])`, 'g');
   const use = firstUse(file.scan.code.slice(0, shape.end), pattern, method);
 
   if (use === undefined || use < method.start || use < shape.start) {
@@ -75,7 +76,11 @@ function privateAboveCaller(file: SourceFile, shape: ClassShape, method: MethodS
 }
 
 function helperAboveCaller(file: SourceFile, helper: TopLevelFunction): Finding[] {
-  const use = firstUse(file.scan.code, new RegExp(`${NOT_A_MEMBER}${escape(helper.name)}(?![\\w$])`, 'g'), helper);
+  const use = firstUse(
+    file.scan.code,
+    new RegExp(`${NOT_A_MEMBER}${escapeRegExp(helper.name)}(?![\\w$])`, 'g'),
+    helper,
+  );
 
   if (use === undefined || use < helper.start) {
     return [];
@@ -99,8 +104,4 @@ function firstUse(code: string, pattern: RegExp, own: { start: number; end: numb
   }
 
   return undefined;
-}
-
-function escape(name: string): string {
-  return name.replace(/[$]/g, '\\$');
 }
