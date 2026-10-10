@@ -10,7 +10,6 @@ const systemRelationships: readonly RelationTuple[] = [
   { object: 'context:scheduling', relation: 'operator', subject: 'system:system:scheduling.expire-unconfirmed-appointments' },
   { object: 'context:identity', relation: 'operator', subject: 'system:system:identity.expire-delegations' },
   { object: 'context:notification', relation: 'operator', subject: 'system:system:notification.send-due-reminders' },
-  { object: 'context:analytics', relation: 'operator', subject: 'system:system:analytics.verify-occupancy' },
   // /ddd-ts-kit:system-grants
 ];
 

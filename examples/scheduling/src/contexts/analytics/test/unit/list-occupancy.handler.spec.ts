@@ -7,11 +7,12 @@ import * as analyticsDeclarations from '../../analytics.declarations.js';
 import { Criteria, offsetPage } from '@ddd-ts-kit/kernel';
 import { createAuthorizer } from '../../../../platform/auth/create-authorizer.js';
 import { platformTestModule } from '../../../../platform/platform-test.module.js';
-import { OccupancyRegister, type Occupancy } from '../../application/ports/occupancy-register.port.js';
-import { OutcomeRegister } from '../../application/ports/outcome-register.port.js';
+import { OccupancyReader, type Occupancy } from '../../application/ports/occupancy-reader.port.js';
+import { OutcomeRegister, type Outcome } from '../../application/ports/outcome-register.port.js';
 import { ListOccupancyQuery } from '../../application/queries/list-occupancy/list-occupancy.query.js';
 import { anOccupancy } from '../builders/occupancy.builder.js';
-import { FakeOccupancyRegister } from '../fakes/occupancy-register.fake.js';
+import { anOutcome } from '../builders/outcome.builder.js';
+import { FakeOccupancyReader } from '../fakes/occupancy-reader.fake.js';
 import { FakeOutcomeRegister } from '../fakes/outcome-register.fake.js';
 
 /** The relationships of the platform decide, as in the application: practice-1 has two desks, practice-2 one. */
@@ -30,13 +31,18 @@ const TUPLES = [
   { object: 'calendar:calendar-3', relation: 'desk', subject: 'desk:practice-2.practitioner-3' },
 ];
 
-const LINES: readonly Occupancy[] = [
-  anOccupancy({ calendarId: 'calendar-1', day: '2026-10-12', heldMinutes: 30 }),
-  anOccupancy({ calendarId: 'calendar-1', day: '2026-10-13', heldMinutes: 60 }),
-  anOccupancy({ calendarId: 'calendar-2', day: '2026-10-12', heldMinutes: 90 }),
-  anOccupancy({ calendarId: 'calendar-2', day: '2026-10-14', heldMinutes: 120 }),
-  anOccupancy({ calendarId: 'calendar-3', day: '2026-10-12', practiceId: 'practice-2', heldMinutes: 45 }),
+/** One appointment held on each calendar and day: the occupancy is measured from them when it is read. */
+const OUTCOMES: readonly Outcome[] = [
+  anAppointment('appointment-1', { calendarId: 'calendar-1', day: '2026-10-12' }, 30),
+  anAppointment('appointment-2', { calendarId: 'calendar-1', day: '2026-10-13' }, 60),
+  anAppointment('appointment-3', { calendarId: 'calendar-2', day: '2026-10-12' }, 90),
+  anAppointment('appointment-4', { calendarId: 'calendar-2', day: '2026-10-14' }, 120),
+  anAppointment('appointment-5', { calendarId: 'calendar-3', day: '2026-10-12', practiceId: 'practice-2' }, 45),
 ];
+
+const LINES: readonly Occupancy[] = OUTCOMES.map(({ practiceId, calendarId, day, startsAt, endsAt }) =>
+  anOccupancy({ practiceId, calendarId, day, heldMinutes: (endsAt.getTime() - startsAt.getTime()) / 60_000, appointmentsHeld: 1 }),
+);
 
 const manager = anActor().named('manager-1').build();
 const practitioner = anActor().named('practitioner-1').build();
@@ -100,16 +106,22 @@ describe('List occupancy', () => {
 });
 
 async function arrange() {
-  const occupancy = new FakeOccupancyRegister();
+  const outcomes = new FakeOutcomeRegister();
 
   const application = createTestApplication({
     modules: [platformTestModule, contextModule('analytics', analyticsDeclarations), relationships],
-    fakes: [fake(OccupancyRegister, occupancy), fake(OutcomeRegister, new FakeOutcomeRegister())],
+    fakes: [fake(OccupancyReader, new FakeOccupancyReader(outcomes)), fake(OutcomeRegister, outcomes)],
   });
 
   await application.get(RelationTupleStore).write(TUPLES);
 
-  for (const line of LINES) await occupancy.upsertIfNewer(line.id, { eventId: `fact-of-${line.id}`, occurredAt: new Date('2026-10-01T10:00:00.000Z') }, () => line);
+  for (const outcome of OUTCOMES) await outcomes.upsertIfNewer(outcome.id, { eventId: `fact-of-${outcome.id}`, occurredAt: new Date('2026-10-01T10:00:00.000Z') }, () => outcome);
 
   return application;
+}
+
+function anAppointment(id: string, place: Partial<Outcome>, minutes: number): Outcome {
+  const startsAt = new Date('2026-10-12T08:00:00.000Z');
+
+  return anOutcome({ id, ...place, startsAt, endsAt: new Date(startsAt.getTime() + minutes * 60_000) });
 }

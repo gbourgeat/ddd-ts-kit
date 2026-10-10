@@ -26,6 +26,10 @@ authorization combined with roles, the audit trail, pino, OpenTelemetry, the Sen
 | Tests | 1 288 unit and adapter, 57 end to end; adapter tests also on PostgreSQL 18 |
 | Defects found in the kit | 2, with reproductions, and 13 ranked frictions with proposals |
 
+After delivery, `analytics` was changed to compute its figures at read time (one stored read
+model instead of two, no nightly job): the numbers above are those of the build, the change and
+its counts are in the last section of the tooling report.
+
 ## Run it in three commands
 
 From the root of the repository, once (`npm ci && npm run build`), then here:
@@ -83,9 +87,11 @@ of each is its user name.
 | A gateway with hydration (one fresh element) | `scheduling/application/queries/get-appointment/`, `infrastructure/external/in-process-person-directory.gateway.ts` |
 | A projection of the context's own events | `scheduling/application/projections/agenda.projection.ts` |
 | Read models and their rebuild | `analytics/application/projections/`, `analytics/test/integration/outcome-register.rebuild.spec.ts` |
+| One row per fact, computed at read time: figures grouped in one statement when they are read, instead of counters kept by events (nothing to drift, nothing to verify at night) | `analytics/CONTEXT.md` ("How occupancy is measured"), `analytics/infrastructure/persistence/knex-occupancy-reader.repository.ts` |
+| A business definition and its SQL held equal by one contract | `analytics/domain/services/occupancy-measure.service.ts`, `analytics/test/integration/occupancy-reader.contract.spec.ts` |
 | A consumer with an outbound port, retry then dead letter | `notification/application/integration/handlers/`, `infrastructure/external/remote-mailer.adapter.ts`, `test/integration/mailer-outage.spec.ts` |
 | Resilience on the adapter class, and at the binding | the mailer above (`@Retry`, `@Timeout`); `src/platform/platform.module.ts` (`builder.around`) |
-| Scheduled jobs that only send a command, in a worker | `src/contexts/*/application/scheduling/`, `src/apps/worker/main.ts` |
+| Scheduled jobs that only send a command, in a worker | `application/scheduling/` of `scheduling`, `identity` and `notification`, `src/apps/worker/main.ts` |
 | One trace per action, logs, audit, error report | `test/e2e/journey-observability.e2e.spec.ts` |
 | A recorded deviation | [ADR 0002](docs/adr/0002-keep-read-models-with-projections-in-application-projections.md) |
 
@@ -142,9 +148,19 @@ appointment and start, due 24 hours before, sent once (`domain/aggregates/`,
 `application/commands/send-due-reminders/`); a failing mailer is retried, then the event is
 dead-lettered and reported (`test/integration/mailer-outage.spec.ts`).
 
-**analytics**: an outcome per appointment set by each event, so replays and late deliveries end
-on the same row; occupancy per calendar and day recomputed from the outcomes; verified nightly;
-rebuilt from the export of `scheduling` (`application/projections/`, `test/integration/`).
+**analytics**: one row per fact, computed at read time. An outcome per appointment is set whole
+by each event, so replays and late deliveries end on the same row, and it is the only thing
+stored (`application/projections/outcomes.projection.ts`); it is rebuilt from the export of
+`scheduling` (`test/integration/outcome-register.rebuild.spec.ts`). The occupancy of a calendar
+on a day is measured from the outcomes when it is read, in one grouped statement narrowed by the
+practice, the filters and the scope of the actor
+(`infrastructure/persistence/knex-occupancy-reader.repository.ts`): the time held by the
+appointments held, completed or missed, the counts by state, a cancelled or expired appointment
+freeing its time. No counter is kept, so none can drift and no job verifies one. The definition
+is the domain service `OccupancyMeasureService`; the statement is held to it by
+`test/integration/occupancy-reader.contract.spec.ts`. An earlier version stored a line per
+calendar and day, recounted at each event and verified nightly: see
+[docs/tooling-report.md](docs/tooling-report.md), "After delivery: analytics computed at read time".
 
 ## The authorization model, with two worked cases
 
@@ -183,8 +199,8 @@ scope the authorizer computes for the actor.
 A booking is one trace: `POST /appointments`, `command BookAppointmentCommand`, each repository
 call, the domain event and its handlers (the relationships, the agenda projection, the outbox
 append), then, later and in the same trace, `publish scheduling.appointment.booked` by the
-relay and `process notification.scheduling-appointment-booked`, `process analytics.outcomes`
-and `process analytics.occupancy` with the commands they send. No context imports a tracing
+relay and `process notification.scheduling-appointment-booked` and `process analytics.outcomes`
+with the commands they send. No context imports a tracing
 library. The same trace id is on the log lines and on the error report of an unexpected
 failure; audit entries carry the correlation id. `test/e2e/journey-observability.e2e.spec.ts`
 asserts the span tree; the real run reads the trace back from Jaeger.

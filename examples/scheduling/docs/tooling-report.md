@@ -305,3 +305,125 @@ slot; opening a practice also announces its first manager as a member; time zone
 area (`UTC`) are refused; a booking made less than 24 hours ahead is reminded at the next run of
 the job; a contact never changes after the first registration; held appointments count held,
 completed and no-show together.
+
+## After delivery: analytics computed at read time
+
+2026-10-10, after the build above was delivered. Everything above this section is the report of
+the build and is left as it was written; where it speaks of five projections, four scheduled
+jobs, the occupancy register or the nightly verification, it describes the state before this
+change.
+
+**The decision (product owner).** In `analytics`, keep one row per fact and compute at read
+time, instead of maintaining figures that events increment or recount.
+
+**What changed.**
+
+- Removed: the projection `analytics.occupancy`, the port `OccupancyRegister` with its Knex
+  adapter and its fake, the table `analytics.occupancy`, the command `VerifyOccupancy` with its
+  handler, the job `analytics.verify-occupancy`, the permission `analytics:occupancy.verify`,
+  the grant of the job's system actor, the line of the job in `src/platform/job-settings.ts`
+  (and with it the key `JOB_ANALYTICS_VERIFY_OCCUPANCY_ENABLED`, which no file of the example
+  set), their five specs, and the value object `Day` with its error `InvalidDayError`, which
+  only the verification used.
+- Added: the port `OccupancyReader` (`generate port`), its Knex adapter
+  `knex-occupancy-reader.repository.ts` (by hand: one grouped statement over the outcomes), its
+  fake (the domain service over the outcomes of a register) and one contract suite both pass,
+  `test/integration/occupancy-reader.contract.spec.ts`, 17 cases for each.
+- Kept: the projection `analytics.outcomes`, idempotent and safe against order by the stamp of
+  its rows, its contract and its rebuild spec; the domain service `OccupancyMeasureService`,
+  now the definition the statement is held to; the query `ListOccupancy`, its route and its
+  response, unchanged for a client (`openapi/openapi.json` is byte for byte the same).
+- Schema: the creation of the tables was changed, with no migration added, since no database of
+  this example is deployed: `analytics.occupancy` is no longer created, `outcomes.calendar_id`
+  is declared `COLLATE "C"` (the lines are ordered by calendar and by a key made of the calendar
+  and the day), and `outcomes` gains the index `(practice_id, day, calendar_id)`. A database
+  created before this change has to be created again.
+- One behaviour differs: a calendar and day that an appointment left (rescheduled to another
+  day) and that holds no other appointment has no line any more, where the stored model kept a
+  line of zeros. A day whose appointments were all cancelled still has its line.
+
+**Counts, context `analytics`.**
+
+| | Before | After |
+|---|---|---|
+| Files | 47 | 36 |
+| Lines | 2 039 | 1 732 |
+| Source files and lines (outside `test/`) | 26, 789 | 20, 579 |
+| Test files and lines | 20, 1 158 | 15, 1 028 |
+| `CONTEXT.md` | 92 | 125 (the new section "How occupancy is measured") |
+| Read models, tables | 2, 2 | 1, 1 |
+| Scheduled jobs, commands, permissions | 1, 1, 2 | 0, 0, 1 |
+| Consumers of each appointment event | 2 | 1 |
+
+Outside the context: three lines less in `src/platform/` (`compose-application.ts`,
+`auth/relate-system-actors.ts`, `job-settings.ts`), four less in
+`test/e2e/journey-observability.e2e.spec.ts` (the trace of a booking lost a consumer). The gate
+counts 1 282 unit and adapter tests (1 288 before) and the same 57 end to end. The 210 source
+lines the context lost, net, were the part that defended a copy: recounting on every event, choosing between
+the fact and a later outcome already stored, a stale write left to the night, the night job.
+
+**The gate and the real runs.** `npm run verify` is green. The contract of `OccupancyReader`
+passes on PGlite and on PostgreSQL 18 (it reads `DATABASE_URL`; on an empty table the planner already serves the
+grouped statement from the new index). `scripts/demo.mjs` was played again for real on an empty
+database; `docs/demo-transcript.md` keeps the first run and adds the two steps that changed.
+Two things met on the way, neither caused by this change:
+
+- `npm run test:postgres` runs most contract suites on PGlite even with `DATABASE_URL` set:
+  only the specs that pass the variable to `openTestDatabase` reach the server (two of
+  `scheduling`, and now the contract of `OccupancyReader`). The headline "adapter tests also on
+  PostgreSQL 18" above is true of those. Proposal for the example: `openTestDatabase()` reads
+  `DATABASE_URL` itself.
+- On PostgreSQL 18, `scheduling/test/integration/concurrent-booking.spec.ts`, "refuses a booking
+  that starts in the buffer of one made at the same instant, and takes one that does not touch
+  them", fails about one run in two (409 where 201 is expected): when the booking in the buffer
+  wins the race, the third one falls in its buffer. A defect of the spec, left as found.
+
+**What this says for the kit.**
+
+1. **There is no supported way to write an aggregate read.** The README of the kernel says it
+   in one line ("No aggregation") and stops there, `ReadModelStore.list` answers rows, and
+   `generate query --list` (friction 3) writes neither. The pieces are nevertheless almost
+   enough: `planCriteria` validates the read and joins the scope, `predicateToKnex` renders the
+   filters, `criteriaToKnex` the keyset, the order and the window, `evaluateCriteria` gives the
+   fake for free once the lines are computed in memory. What had to be found by reading the
+   source of `@ddd-ts-kit/knex`: the filters and the scope must go inside the grouped
+   sub-query and the keyset, the order and the window outside, which is done by calling
+   `criteriaToKnex(outer, { ...plan, filter: undefined }, columns)`; the total of an offset
+   page is a count of groups, written by hand. Proposal: (a) a section "Aggregate reads" in the
+   READMEs of the kernel and of each adapter with this recipe; (b) in the adapters,
+   `windowToKnex(builder, plan, columns)` (keyset, order, window, no filter) next to
+   `predicateToKnex`, so that nobody edits a plan; (c) in `defineCriteria`, a field declared
+   `computed: true`: never filterable, never the target of a scope mapping, refused when the
+   definition loads instead of when a statement is built (today the adapter refuses it late,
+   because the field has no column among the grouped ones); (d) `generate query <context>
+   <Name> --list --grouped-by <fields>` writing the port, the adapter skeleton, the fake over
+   `evaluateCriteria` and the shared contract spec.
+2. **A definition and its SQL can be held equal by the contract suite, and nothing says so.**
+   The pattern used here (a domain service that measures, a fake that calls it, an adapter that
+   translates it, one suite with hand-computed figures for both) is what makes "computed in the
+   database" safe to maintain. `@ddd-ts-kit/testing/contracts` has `criteriaContract` and
+   `readModelStoreContract`; proposal: document this third use in the testing README, with the
+   cases an aggregate must cover (a group that empties, rounding per row or per group, a row
+   marked deleted by a rebuild, the total past the last page).
+3. **No generator writes a persistence adapter for a port of the application.** `generate
+   adapter` only writes into `infrastructure/external`; the Knex reader was written by hand
+   after the one of `notification`. Proposal: `generate adapter <context> <Port> --kind
+   persistence`, declared with `@Repository(Port, [KnexContext])`, with its contract spec over
+   the fake and the adapter.
+4. **Nothing removes what a generator wrote, and nothing notices what is left.** Removing a
+   command and its job meant deleting files and editing four generated regions by hand
+   (`ddd-ts-kit:permissions`, `ddd-ts-kit:system-grants`, `ddd-ts-kit:jobs`, the projections
+   named in `compose-application.ts`); `docs` then repaired the barrel and the `CONTEXT.md`.
+   Checked on purpose: with the grant of the removed job's system actor and its line of job
+   settings put back, `ddd-ts-kit check`, the compiler and an end-to-end spec all stay green.
+   Proposal: `check` compares the names in those regions with the declared jobs and
+   permissions (a rule `config/no-orphan-registration`), and a `ddd-ts-kit remove <kind>
+   <context> <Name>` that undoes what `generate` listed in `created` and `updated`.
+5. **Collation is easy to get wrong in a computed key.** The lines are ordered by a key built
+   from two text columns; both must be `COLLATE "C"` or PostgreSQL cannot decide the collation
+   of the key. The README of `@ddd-ts-kit/knex` covers sorted columns, not expressions.
+   Proposal: one sentence there.
+
+The two generator runs of this change (`generate port analytics OccupancyReader`, `docs`) are
+in the log kept by `scripts/kit.mjs`; `docs/tooling/generator-log.jsonl` is the copy made at
+the end of the build and was not refreshed.

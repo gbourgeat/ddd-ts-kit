@@ -42,7 +42,8 @@ for it, and its retirement is announced in the changelog one release ahead.
 
 A patient books, then cancels. The patient reads their appointment at once (it is in the
 transaction of the command); the mail, the reminder and the figures follow within the relay
-interval (half a second locally) plus the consumer's work.
+interval (half a second locally) plus the consumer's work. `analytics` stores the outcome of each
+appointment and nothing else: the occupancy is measured from the outcomes when it is read.
 
 ```mermaid
 sequenceDiagram
@@ -55,12 +56,12 @@ sequenceDiagram
   S-)N: scheduling.appointment.booked
   S-)A: scheduling.appointment.booked
   N->>N: send the confirmation, plan the reminder (24 h before)
-  A->>A: outcome "held", occupancy of the day recomputed
+  A->>A: outcome "held"
   Patient->>S: POST /appointments/{id}/cancellation
   S-)N: scheduling.appointment.cancelled
   S-)A: scheduling.appointment.cancelled
   N->>N: send the notice, withdraw the reminder
-  A->>A: outcome "cancelled by the patient", occupancy recomputed
+  A->>A: outcome "cancelled by the patient"
 ```
 
 A manager adds a practitioner, who can then open a calendar. Between the two calls there is a

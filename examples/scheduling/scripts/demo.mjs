@@ -120,10 +120,10 @@ async function lateCancellation(calendar) {
 }
 
 async function consumers(practiceId) {
-  section('7. The other contexts followed: notifications sent, figures updated');
+  section('7. The other contexts followed: notifications sent, figures measured from the outcomes');
 
   const sent = await eventually('notification consumed the bookings', () => quietly('demo-patient', 'GET', '/notifications'), (answer) => answer.body.items.length >= 3);
-  const figures = await eventually('analytics projected the appointments', () => quietly('demo-manager', 'GET', `/practices/${practiceId}/occupancy`), (answer) => answer.body.items.some((line) => line.cancelledByPractice === 1));
+  const figures = await eventually('analytics recorded the outcomes of the appointments', () => quietly('demo-manager', 'GET', `/practices/${practiceId}/occupancy`), (answer) => answer.body.items.some((line) => line.cancelledByPractice === 1));
 
   show('demo-patient', 'GET', '/notifications', sent);
   show('demo-manager', 'GET', `/practices/${practiceId}/occupancy`, figures);

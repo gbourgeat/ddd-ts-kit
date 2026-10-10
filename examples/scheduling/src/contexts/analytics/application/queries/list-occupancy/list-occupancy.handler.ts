@@ -2,14 +2,14 @@ import { Access } from '@ddd-ts-kit/auth';
 import { scoped } from '@ddd-ts-kit/kernel';
 import { QueryHandler } from '@ddd-ts-kit/kernel/declarations';
 import { analyticsPermissions } from '../../authorization/analytics.permissions.js';
-import { OccupancyRegister } from '../../ports/occupancy-register.port.js';
+import { OccupancyReader } from '../../ports/occupancy-reader.port.js';
 import { ListOccupancyQuery } from './list-occupancy.query.js';
 import type { ListOccupancyResult } from './list-occupancy.result.js';
 
-@QueryHandler(ListOccupancyQuery, [OccupancyRegister, Access])
+@QueryHandler(ListOccupancyQuery, [OccupancyReader, Access])
 export class ListOccupancyHandler implements QueryHandler<ListOccupancyQuery> {
   constructor(
-    private readonly occupancy: OccupancyRegister,
+    private readonly occupancy: OccupancyReader,
     private readonly access: Access,
   ) {}
 

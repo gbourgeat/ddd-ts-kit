@@ -1,5 +1,9 @@
 # Briefing: analytics
 
+> Kept as it was given. After delivery (2026-10-10) the owner replaced part of what it asks for:
+> the occupancy read model and `VerifyOccupancy` are gone, the occupancy is measured from the
+> outcomes when it is read. See `../slices.md`, notes of 35 and 37.
+
 You build the bounded context `analytics` of the scheduling example. Worker name: `analytics`.
 
 Scope
