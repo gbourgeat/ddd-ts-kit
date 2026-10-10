@@ -30,3 +30,19 @@ node --test plugin/hooks/guard.test.mjs
 - Conventional commits: `<type>(<scope>): <summary>`.
 - A pull request that changes the plugin (skills, agents, hooks) bumps `version` in
   `plugin/.claude-plugin/plugin.json`, and passes `claude plugin validate . --strict`.
+
+## How a change reaches `main`
+
+`main` is protected: no direct push, no force push, a linear history. A change arrives through
+a pull request whose title is a conventional commit subject, is squashed into one commit, and
+merges once the `gate` job of the CI, the title check and the CodeQL analysis have passed and
+every review conversation is resolved. Enable auto-merge and move on:
+
+```bash
+gh pr create --fill
+gh pr merge --auto --squash
+```
+
+Workflows pin each action to a commit, with its version in a comment; Dependabot proposes the
+updates. A vulnerability is reported privately: see [SECURITY.md](SECURITY.md). Conduct:
+[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
