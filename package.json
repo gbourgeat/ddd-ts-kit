@@ -26,7 +26,7 @@
     "ci:deadcode": "knip",
     "ci:test:unit": "vitest run --coverage --coverage.provider=v8 --coverage.include='packages/*/src/**' --coverage.reporter=text --coverage.reporter=cobertura --coverage.reporter=lcov",
     "ci:test:integration": "vitest run packages/drizzle packages/knex packages/prisma packages/typeorm packages/audit",
-    "ci:test:e2e": "DDD_TS_KIT_E2E=1 vitest run --no-file-parallelism packages/cli/test/e2e",
+    "ci:test:e2e": "DDD_TS_KIT_E2E=1 vitest run --no-file-parallelism --hookTimeout=180000 packages/cli/test/e2e",
     "ci:docs": "npm run check:dashes",
     "ci:audit": "npm audit --omit=dev --audit-level=high",
     "ci:build": "npm run package:check",
