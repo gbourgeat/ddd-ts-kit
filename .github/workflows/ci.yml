@@ -252,7 +252,7 @@ jobs:
   gate:
     name: gate
     if: ${{ always() }}
-    needs: [install, typecheck, lint, architecture, deadcode, docs, unit, integration, e2e, security, package]
+    needs: [install, typecheck, lint, architecture, deadcode, docs, unit, integration, e2e, example, security, package]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
