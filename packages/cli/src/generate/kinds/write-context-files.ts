@@ -69,7 +69,8 @@ function planVars({ config, context, request }: ContextPlan): RenderContext {
 /**
  * What assembles the context: its module file, or, when its classes declare themselves, nothing
  * (the barrel is derived from the tree at the end of the command). On tsyringe, in both styles,
- * the routes of the context are listed in one file of their own.
+ * the routes of the context are listed in one file of their own, with the spec that holds the list:
+ * no route answers the method and path of another.
  */
 function writeAssembly(ws: Workspace, { config, context }: ContextPlan, vars: RenderContext): void {
   const dir = `${config.contextsDir}/${context.kebab}`;
@@ -81,6 +82,7 @@ function writeAssembly(ws: Workspace, { config, context }: ContextPlan, vars: Re
 
   if (family !== 'manual' && config.stack.http !== 'none') {
     ws.create(`${dir}/${routesFile(context.kebab)}`, renderTemplate('context/routes.ts.tpl', vars));
+    ws.create(`${dir}/test/unit/${context.kebab}.routes.spec.ts`, renderTemplate('context/routes.spec.ts.tpl', vars));
   }
 }
 
@@ -99,6 +101,12 @@ function registerPermissions(ws: Workspace, { config, context }: ContextPlan, va
   ws.create(
     `${config.contextsDir}/${context.kebab}/${permissionsFile(context)}`,
     renderTemplate('context/permissions.ts.tpl', vars),
+  );
+
+  // Until a use case names one of them, only the registry loads the file: its spec holds it from the start.
+  ws.create(
+    `${config.contextsDir}/${context.kebab}/test/unit/${context.kebab}.permissions.spec.ts`,
+    renderTemplate('context/permissions.spec.ts.tpl', vars),
   );
 
   applyWiring(ws, registry, renderTemplate('context/permission-set.tpl', vars));

@@ -17,19 +17,48 @@ architecture analyzers is in [Static analysis and the pipeline](static-analysis-
 | dependency-cruiser | does the import graph respect the boundaries, through barrels and re-exports | `npm run depcruise` | moving the import |
 | `ddd-ts-kit check` | is the architecture intact: the tree, the names, the glossary, the rules of the reference | `npm run check:arch` | the `fix` sentence of each finding |
 | the test runner | does it work | `npm test`, `npm run test:e2e` | the code |
+| the coverage of the test runner | is there code no spec has ever run, layer by layer | `npm run test:coverage` | the missing spec |
 
-`npm run verify` chains them all, in that spirit: types, lint, format, tests, architecture,
-graph, dead code, generated documents. The pipeline runs the same scripts under their `ci:*`
-names, on GitHub Actions and on GitLab CI.
+`npm run verify` chains them all, in that order: types, lint, format, every spec with the
+coverage thresholds, end-to-end specs, architecture, graph, dead code, generated documents. The
+pipeline runs the same scripts under their `ci:*` names, on GitHub Actions and on GitLab CI.
+The list is written once, in the CLI (`BASELINE`, `packages/cli/src/init/manifest/baseline.ts`):
+`verify` is built from it and a test of the CLI holds the two pipelines, for several stacks and
+for the example application, to every gate of it, so a gate cannot leave one place silently.
 
-## When each one runs
+## Where each gate runs
 
-| Moment | What runs |
-|---|---|
-| at every file write by a coding agent | `ddd-ts-kit check` on the file (the editor hook of the plugin) |
-| before a commit (lefthook, staged files) | ESLint, the format check, `ddd-ts-kit check`, the commit size |
-| before a push | the type check and the unit tests |
-| in the pipeline | everything, as separate jobs; the format check runs in the lint job |
+Read from the files on 2026-10-10. "kit" is this repository, "example" is
+`examples/scheduling`, "project" is what `init` generates, on every stack.
+
+| Gate | `verify` | GitHub and GitLab pipeline | Hooks |
+|---|---|---|---|
+| type check, sources | kit `ci:typecheck` (the build); example and project `typecheck` | kit, example, project: `ci:typecheck` | before a push |
+| type check, tests | kit `typecheck:tests` (every package, through `ci:typecheck`); example and project: `tsconfig.json` includes `test/` and the specs | same script | before a push |
+| lint | kit `ci:lint`; example and project `lint` | `ci:lint` | staged files, before a commit |
+| format | kit `ci:format`; example and project `format:check` | `ci:format`, in the lint job | staged files, before a commit |
+| dead code | kit `ci:deadcode`; example and project `deadcode` | `ci:deadcode` | no |
+| dependency graph | kit `depcruise` (in `ci:arch`); example and project `depcruise` | kit `ci:arch`; example and project `ci:arch:graph` | no |
+| architecture | kit `check:self`, the fixtures of every rule, and the guard tests (in `ci:arch`); example and project `check:arch` | kit `ci:arch`; example and project `ci:arch:check` | project and example: staged files, before a commit; at every write through the editor hook |
+| every rule proven on the example | kit: `example:verify` runs `example:conformance` after the example's own gate | kit: the `example` job | no |
+| documents drift | kit `ci:docs` (no em dash or en dash); example and project `docs:check` | `ci:docs` | kit: before a commit |
+| unit specs | kit `ci:test:unit`; example and project `test:coverage` | `ci:test:unit` | before a push |
+| integration specs | kit: the pipeline only (they need servers); example and project `test:coverage` (PostgreSQL in process) | `ci:test:integration` | no |
+| end-to-end specs | kit: the pipeline only (`ci:test:e2e`, every stack generated and run); example and project `test:e2e` | `ci:test:e2e` | no |
+| coverage thresholds | kit: a floor per package in `vitest.config.ts`, in `ci:test:unit`; example and project: per context and layer, from `ddd-ts-kit.config.json`, in `test:coverage` | `ci:test:unit` and, for the example and a project, `ci:test:integration` | before a push (the unit run) |
+| packages as published | kit `ci:build` (publint, Are the Types Wrong) | kit `ci:build`; example and project `ci:build` (the production build) | no |
+
+Without an HTTP boundary a project has no end-to-end script and its pipeline job says so; under
+jest the adapter specs run with the unit specs. The hooks never run coverage before a commit.
+
+## Coverage
+
+The thresholds are a setting of the project, not of the test runner: the `coverage` key of
+`ddd-ts-kit.config.json`, per layer, with the reference as default, applied to each context
+([CONFIG.md](../CONFIG.md#coverage-thresholds)). The runner config reads it; lowering a rate is
+a recorded deviation; `test/coverage-governed` refuses an exclusion written beside it. What a
+rate proves and what it does not: [Testing strategy](../concepts/testing-strategy.md#coverage-thresholds).
+The kit holds itself to a floor per package, the level measured when the floor was written.
 
 ## The formatter
 

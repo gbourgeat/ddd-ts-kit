@@ -1,5 +1,9 @@
+import { governedCoverage } from '@ddd-ts-kit/testing/coverage';
 {{#if decorators.standard}}
 import { decorators } from '@ddd-ts-kit/testing/vitest';
+{{/if}}
+{{#if decorators.legacy}}
+import { decoratorCoverage } from '@ddd-ts-kit/testing/vitest';
 {{/if}}
 import { defineConfig } from 'vitest/config';
 
@@ -10,6 +14,10 @@ export default defineConfig(({ mode }) => ({
   {{#if decorators.standard}}
   // Vitest does not lower standard (TC39) decorators, which every class of a declared context carries: the compiler the project builds with does.
   plugins: [decorators({ compiler: '@typescript/native' })],
+  {{/if}}
+  {{#if decorators.legacy}}
+  // Under `emitDecoratorMetadata` the transform guards every type a decorated class names with a branch no test can take: the statements that apply decorators are kept out of the measure.
+  plugins: [decoratorCoverage()],
   {{/if}}
   // Under this condition an import alias answers the source file, not the compiled one (package.json, "imports").
   ssr: { resolve: { conditions: ['{{alias.condition}}'] } },
@@ -33,28 +41,8 @@ export default defineConfig(({ mode }) => ({
       provider: 'v8',
       reporter: ['text', 'cobertura', 'lcov'],
       reportsDirectory: 'coverage',
-      include: measuredLayers(mode),
-      thresholds: {
-        [layer('domain')]: { statements: 90, branches: 85, functions: 90, lines: 90 },
-        [layer('application')]: { statements: 85, branches: 80, functions: 85, lines: 85 },
-        [layer('presentation')]: { statements: 80, branches: 70, functions: 80, lines: 80 },
-        [layer('infrastructure')]: { statements: 70, branches: 60, functions: 70, lines: 70 },
-      },
+      // What is measured and the floor of each layer come from "coverage" in ddd-ts-kit.config.json, the reference when it is absent: a threshold is written nowhere else.
+      ...governedCoverage(mode),
     },
   },
 }));
-
-/**
- * Adapters are exercised by the integration project, the inner layers by the unit project:
- * `--mode integration` measures the first, any other mode the second, so that a run is never
- * failed for a layer it does not execute.
- */
-function measuredLayers(mode: string): string[] {
-  return mode === INTEGRATION_MODE
-    ? [layer('infrastructure')]
-    : [layer('domain'), layer('application'), layer('presentation')];
-}
-
-function layer(name: string): string {
-  return `{{config.contextsDir}}/*/${name}/**/*.ts`;
-}

@@ -6,7 +6,7 @@ import { reporter } from '../support/reporter.js';
 export const configValid: Rule = {
   id: 'config/valid',
   description:
-    'ddd-ts-kit.config.json is consistent: known contexts, classifications, relationships, rule ids and guard mode, the same contexts as on disk, a function limit within the ceiling, complete onePerFile.allow entries and positive commit limits.',
+    'ddd-ts-kit.config.json is consistent: known contexts, classifications, relationships, rule ids and guard mode, the same contexts as on disk, a function limit within the ceiling, complete onePerFile.allow entries, positive commit limits and coverage thresholds that are percentages.',
   scope: 'project',
   run(project) {
     const inspection = new ConfigInspection(project, reporter(project, this.id));
@@ -21,6 +21,7 @@ export const configValid: Rule = {
       ...inspection.functionLinesLimit(),
       ...inspection.onePerFileAllowances(),
       ...inspection.commitLimits(),
+      ...inspection.coverageThresholds(),
     ];
   },
 };

@@ -42,10 +42,10 @@ describe('pipeline templates', () => {
     expect(template('gitlab/gitlab-ci.yml')).toBe(expected);
   });
 
-  it('the vitest config differs by the placeholders of the source root, the contexts directory and the alias, by the architecture specs it runs, by the decorators plugin, which is written for the standard decorator mode only, and by the inlined package under discovery', () => {
+  it('the vitest config differs by the placeholders of the source root, the contexts directory and the alias, by the architecture specs it runs, by the decorators plugin, which is written for the standard decorator mode only, by the coverage plugin of the legacy mode, and by the inlined package under discovery', () => {
     // The proof that each context wires alone lives in test/architecture, outside the source root.
     const rendered = template('vitest.config.ts.tpl')
-      .replace(/^[ \t]*\{\{#if assembly\.discovery\}\}\n[\s\S]*?^[ \t]*\{\{\/if\}\}\n/m, '')
+      .replaceAll(/^[ \t]*\{\{#if (?:assembly\.discovery|decorators\.legacy)\}\}\n[\s\S]*?^[ \t]*\{\{\/if\}\}\n/gm, '')
       .replaceAll(/^[ \t]*\{\{(?:#if decorators\.standard|\/if)\}\}\n/gm, '')
       .replace(", 'test/architecture/**/*.spec.ts'", '')
       .replaceAll('{{config.contextsDir}}', 'src/contexts')
@@ -60,14 +60,16 @@ describe('pipeline templates', () => {
     expect(rendered).toBe(source('vitest.config.ts'));
   });
 
-  it('a project compiled with experimentalDecorators gets a vitest config without the plugin: the runner lowers legacy decorators itself', () => {
+  it('a project compiled with experimentalDecorators gets a vitest config without the compiling plugin: the runner lowers legacy decorators itself, and what it writes to apply them is kept out of the coverage measure', () => {
     const standard = initProject();
     const legacy = initProject('--validation', 'class-validator');
     const plugin = "plugins: [decorators({ compiler: '@typescript/native' })]";
 
     expect(read(standard, 'vitest.config.ts')).toContain(plugin);
     expect(read(standard, 'vitest.e2e.config.ts')).toContain(plugin);
-    expect(read(legacy, 'vitest.config.ts')).not.toContain('decorators');
+    expect(read(legacy, 'vitest.config.ts')).not.toContain('decorators(');
+    expect(read(legacy, 'vitest.config.ts')).toContain('plugins: [decoratorCoverage()]');
+    expect(read(standard, 'vitest.config.ts')).not.toContain('decoratorCoverage');
     expect(read(legacy, 'vitest.e2e.config.ts')).not.toContain('decorators');
     expect(readJson(legacy, 'tsconfig.json')).toMatchObject({ compilerOptions: { experimentalDecorators: true } });
     expect(jsonAt(readJson(standard, 'tsconfig.json'), 'compilerOptions')).not.toHaveProperty('experimentalDecorators');
@@ -183,10 +185,16 @@ describe('init --ci', () => {
     expect(read(root, '.github/workflows/ci.yml')).toContain('npm run ci:arch:check -- --format github');
   });
 
-  it('gives the coverage thresholds of each layer to vitest', () => {
-    const config = read(initProject(), 'vitest.config.ts');
+  it('writes no threshold in the runner config: vitest and jest read them from the config file', () => {
+    const vitest = read(initProject(), 'vitest.config.ts');
+    const jest = read(initProject('--tests', 'jest'), 'jest.config.js');
 
-    expect(config).toContain("[layer('domain')]: { statements: 90, branches: 85, functions: 90, lines: 90 }");
-    expect(config).toContain("[layer('infrastructure')]: { statements: 70, branches: 60, functions: 70, lines: 70 }");
+    expect(vitest).toContain("import { governedCoverage } from '@ddd-ts-kit/testing/coverage';");
+    expect(vitest).toContain('...governedCoverage(mode),');
+    expect(jest).toContain('...governedJestCoverage(),');
+
+    for (const config of [vitest, jest]) {
+      expect(config).not.toMatch(/statements|thresholds|coverageThreshold:|exclude: \['.*(domain|infrastructure)/);
+    }
   });
 });

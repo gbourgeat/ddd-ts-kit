@@ -518,3 +518,33 @@ export default defineConfig({ plugins: [decorators()] });
 | `cacheDir` | `ddd-ts-kit-decorators` in the cache directory of Vite |
 
 It does not type-check (the build does), and it does not touch `.tsx`.
+
+## Coverage thresholds read from the config
+
+`@ddd-ts-kit/testing/coverage` gives the test runner what it measures and the floor it is held
+to, read from the `coverage` key of `ddd-ts-kit.config.json` (the reference when the key is
+absent), so that no threshold is written in a runner config:
+
+```ts
+// vitest.config.ts
+import { governedCoverage } from '@ddd-ts-kit/testing/coverage';
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig(({ mode }) => ({
+  test: { coverage: { provider: 'v8', reporter: ['text', 'lcov'], ...governedCoverage(mode) } },
+}));
+```
+
+- `include`: the layers of every context the run executes, the files no spec loads included.
+  `--mode unit` measures `domain`, `application` and `presentation`, `--mode integration`
+  measures `infrastructure`, any other mode the four.
+- `thresholds`: one entry per context and layer that holds a source file, so a context cannot
+  hide behind another and an empty layer is held to nothing until its first file.
+- `governedJestCoverage()` gives the same as `collectCoverageFrom` and `coverageThreshold`.
+- `REFERENCE_COVERAGE` is the reference: domain 90/85/90/90, application 85/80/85/85,
+  presentation 80/70/80/80, infrastructure 70/60/70/70 (statements, branches, functions, lines).
+
+Under the legacy decorator mode with `emitDecoratorMetadata`, add `decoratorCoverage()` of
+`@ddd-ts-kit/testing/vitest` to `plugins`: the statements the transform writes to apply
+decorators hold, for every type a decorated class names, a branch no test can take; the plugin
+marks them with the hint the `v8` provider reads, as the provider does by itself for SWC.

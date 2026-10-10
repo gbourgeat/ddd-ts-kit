@@ -1,4 +1,5 @@
 import type { CommitLimits } from './commit-limits.js';
+import type { Coverage } from './coverage.js';
 import type { Stack } from './stack.js';
 
 export interface Upstream {
@@ -51,6 +52,8 @@ export interface Config {
   readonly publishedLanguageAllowedPackages: readonly string[];
   readonly limits: Limits;
   readonly onePerFile: OnePerFile;
+  /** The minimum test coverage of each layer, per context: read by the test runner config, lowered only by a recorded deviation. */
+  readonly coverage: Coverage;
   /** The advised size of one commit, generated files not counted. */
   readonly commit: CommitLimits;
   /** How the editor hook of the plugin reacts to a violation: `enforce`, `advise` or `off`. Kept as written, `check` reports a wrong value. */

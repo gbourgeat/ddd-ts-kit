@@ -13,6 +13,7 @@ allowed-tools:
   - Bash(npm run typecheck)
   - Bash(npm run lint *)
   - Bash(npm test *)
+  - Bash(npm run test:coverage)
   - Bash(npm run test:e2e *)
   - Bash(npm run docs:check)
   - Bash(npm run docs:generate)
@@ -38,11 +39,28 @@ allowed-tools:
 | before the commit that closes a slice | the two above, `npm run typecheck`, `npm run lint`, `npm run format:check` (`npm run format` settles it), `npx ddd-ts-kit todo <context>` (nothing left), `npx ddd-ts-kit check --commit-size` | under a minute |
 | before a merge or a pull request | `npm run verify` | everything |
 
-`npm run verify` chains types, lint, format, tests, end-to-end tests, the architecture rules, the
-import graph (dependency-cruiser), dead code (knip) and documentation drift. Use
+`npm run verify` chains types, lint, format, every spec with the coverage thresholds
+(`npm run test:coverage`), end-to-end tests, the architecture rules, the import graph
+(dependency-cruiser), dead code (knip) and documentation drift. Use
 `npm run typecheck`, never `npx tsc`: the project compiles with the native compiler.
 `npx ddd-ts-kit status` counts the `TODO(domain)`, `TODO(platform)` and `it.todo` left in
 each context: a gate is not passed while the slice still has one.
+
+## Coverage
+
+`npm run test:coverage` fails with `Coverage for <rate> (<measured>%) does not meet
+"<contexts>/<context>/<layer>/**/*.ts" threshold (<floor>%)`: that layer of that context holds
+code no spec runs. The thresholds are the `coverage` key of `ddd-ts-kit.config.json` (the
+reference when absent: domain 90/85/90/90, application 85/80/85/85, presentation 80/70/80/80,
+infrastructure 70/60/70/70, as statements/branches/functions/lines).
+
+- Read the uncovered lines in the report, write the spec of the behaviour that reaches them
+  (`/ddd-ts-kit:testing`), or delete the code when nothing can reach it.
+- Never add `exclude`, `include` or `thresholds` to the runner config, a `--coverage.*` flag to a
+  script, or a `v8 ignore` / `istanbul ignore` comment: `test/coverage-governed` reports them.
+- Lowering a threshold is a decision of the team: change the rate in the config and record it
+  with `npx ddd-ts-kit generate adr "<title>" --deviation coverage.<layer>.<rate> --reason "<why>"`.
+  Raising one is free.
 
 ## Read a violation
 

@@ -120,6 +120,7 @@ The contexts of the config and the directories of `contextsDir` must be the same
 | `limits` | `{ "maxParameters": 3, "maxFunctionLines": 30 }`, read by `clean/function-size`; `maxFunctionLines` is at most 100, a larger value is read as 100 and reported | as shown |
 | `onePerFile.allow` | `[{ "file": "<path or glob>", "reason": "<why these exports are one thing>" }]`: exempts a file from the count of `clean/one-export-per-file`, never from its file name check. An entry without `file` or without `reason` allows nothing and is reported | `[]` |
 | `standardInterfaces` | `{ "<DeclaredName>": "<kernel interface to use instead>" }`, merged over the default names of `standard/no-parallel-interface`; `false` drops a default name | `{}` |
+| `coverage` | `{ "<layer>": { "<rate>": <0 to 100> } }` for the layers `domain`, `application`, `presentation`, `infrastructure` and the rates `statements`, `branches`, `functions`, `lines`: the minimum test coverage of each layer, applied to every context. A rate left out is the reference; a rate that is not a percentage, an unknown layer or an unknown rate is reported (`config/valid`). `init` does not write the key: the reference applies until a project changes a rate | domain 90, 85, 90, 90; application 85, 80, 85, 85; presentation 80, 70, 80, 80; infrastructure 70, 60, 70, 70 |
 | `domainAllowedPackages` | packages `domain/` may import | `["@ddd-ts-kit/kernel"]` |
 | `applicationAllowedPackages` | packages `application/` may import | `["@ddd-ts-kit/kernel", "@ddd-ts-kit/auth"]` |
 | `publishedLanguageAllowedPackages` | packages `published-language/` may import | `@ddd-ts-kit/kernel`, `@ddd-ts-kit/events`, `@ddd-ts-kit/validation` and the schema library of `stack.validation` (`zod`; `class-validator` with `class-transformer`; none for `standard-schema` and `none`) |
@@ -147,15 +148,43 @@ has no entry in `deviations`:
 | a rule set to `off`, or to `warn` when its default is `error` | `rules.<id>` |
 | an extra directory in a context | `contexts.<name>.extraDirectories.<path>` |
 | a package added to an allow-list | `domainAllowedPackages.<package>`, `applicationAllowedPackages.<package>`, `publishedLanguageAllowedPackages.<package>` |
+| a coverage threshold under the reference | `coverage.<layer>.<rate>`, for example `coverage.infrastructure.branches` |
 | a guard that is not `enforce` | `guard` |
 | an ORM with events off the outbox | `stack.events` |
 
 `npx ddd-ts-kit generate adr "<title>" --deviation <what> --reason "<why>"` writes the
 decision record and the entry together.
 
+## Coverage thresholds
+
+The test runner config writes no number: it spreads `governedCoverage(mode)` (`governedJestCoverage()`
+under jest) of `@ddd-ts-kit/testing/coverage`, which reads the `coverage` key each time a run
+starts. One place holds a threshold, and `check` holds that place.
+
+```json
+"coverage": { "domain": { "branches": 95 }, "infrastructure": { "branches": 50 } },
+"deviations": [
+  { "what": "coverage.infrastructure.branches", "adr": "0011", "reason": "The failure branches of the driver are held by its contract suite." }
+]
+```
+
+| Layer | Reference (statements, branches, functions, lines) | Why this floor |
+|---|---|---|
+| `domain` | 90, 85, 90, 90 | the highest: pure code that needs no double and holds the rules of the business; nothing but a missing test keeps a line from running |
+| `application` | 85, 80, 85, 85 | handlers orchestrate through ports, each with a fake: every path is reachable, a few are wiring |
+| `presentation` | 80, 70, 80, 80 | mapping and status translation; the error paths of a transport are also held by the end-to-end specs, which are not measured |
+| `infrastructure` | 70, 60, 70, 70 | the lowest: the failure branches of a driver are hard to provoke and are not the adapter's to prove; what an adapter promises is held by the contract suites of the integration specs |
+
+- **Raising a rate is free. Lowering one under the reference is a deviation** (`governance/recorded-deviation`) with its decision record.
+- **Each context is held on its own**: the thresholds of a layer apply to `contexts/<name>/<layer>/` of every context, so a well tested context does not hide another.
+- **An empty layer is held to nothing, and to its threshold from its first source file** (a spec or a document is not one). A project just initialised passes; the first route of a context brings the presentation floor with it.
+- **A run is held to the layers it executes**: `npm run test:coverage`, the run of `verify`, executes every spec and measures the four layers; in the pipeline `ci:test:unit` (`--mode unit`) measures domain, application and presentation, `ci:test:integration` (`--mode integration`) measures infrastructure. Jest runs every spec in one run.
+- **The measure cannot be narrowed quietly** (`test/coverage-governed`): no `include`, `exclude` or `thresholds` by hand in the runner config, no such flag in a script, no `v8 ignore` or `istanbul ignore` comment without `-- ADR-NNNN: <reason>`.
+- Under the legacy decorator mode the generated Vitest config lists `decoratorCoverage()` of `@ddd-ts-kit/testing/vitest`: the statements the transform writes to apply decorators hold a branch per named type that no test can take, and are kept out of the measure.
+
 ## Limits
 
 The parser is tolerant: a key it does not know is ignored without a message, and a wrong
-classification, relationship, rule id or guard mode is reported by `check` as `config/valid`,
+classification, relationship, rule id, guard mode or coverage rate is reported by `check` as `config/valid`,
 not when the file is read. Only a wrong `stack.*` value, or a file that is not a JSON object,
 stops a command.

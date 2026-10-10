@@ -1,6 +1,7 @@
 import {
   CLASSIFICATIONS,
   commitLimitProblems,
+  coverageProblems,
   CONFIG_FILE,
   FUNCTION_LINES_CEILING,
   GUARD_MODES,
@@ -110,6 +111,13 @@ export class ConfigInspection {
   commitLimits(): Violation[] {
     return commitLimitProblems(rawConfig(this.project)['commit']).map(({ key, message, fix }) =>
       this.inConfig(key, message, fix),
+    );
+  }
+
+  /** A threshold that is not a percentage is read as the reference: the config says something no run enforces. */
+  coverageThresholds(): Violation[] {
+    return coverageProblems(rawConfig(this.project)['coverage']).map(({ where, message, fix }) =>
+      this.report({ file: CONFIG_FILE, line: lineOfSequence(this.project.configText, where) }, message, fix),
     );
   }
 

@@ -21,7 +21,8 @@ const BROKER_CLIENTS = [
   'ioredis',
 ];
 
-const BUS_NAMES = ['InMemoryEventBus', 'RabbitMqEventBus', 'OutboxRelay', 'OutboxStore'];
+/** What carries events past the outbox: the bus port itself, every bus of a broker, and the parts of the outbox the platform alone assembles. */
+const TRANSPORT = /^(?:[\w$]*EventBus|OutboxRelay|OutboxPublisher|OutboxStore)$/;
 const OTHER_THAN_THE_PORT = /^(?:OutboxPublisher|IntegrationEventSubscriber|[\w$]*EventBus)$/;
 const PUBLISHER_KEY = /(?<![\w$.])(?:eventPublisher|publisher)\s*:/;
 
@@ -83,10 +84,15 @@ function straightToTheBroker(file: SourceFile): Finding[] {
         ? `the broker client "${target.name}"`
         : undefined;
 
-    const what = client ?? names.find((name) => BUS_NAMES.includes(name));
+    const what = client ?? names.find((name) => TRANSPORT.test(name) && !reportedAsPublisher(here.inside, name));
 
     return what === undefined ? [] : [{ line, message: `The ${here.layer} layer imports ${what}.`, fix: PORT_FIX }];
   });
+}
+
+/** In a publisher the same import is reported once, by the message that names the port to use. */
+function reportedAsPublisher(inside: readonly string[], name: string): boolean {
+  return inside.slice(0, 2).join('/') === 'integration/publishers' && OTHER_THAN_THE_PORT.test(name);
 }
 
 function publisherBesideThePort(file: SourceFile): Finding[] {
@@ -97,7 +103,7 @@ function publisherBesideThePort(file: SourceFile): Finding[] {
   }
 
   return file.imports.flatMap(({ names, line }) => {
-    const other = names.find((name) => OTHER_THAN_THE_PORT.test(name) && !BUS_NAMES.includes(name));
+    const other = names.find((name) => OTHER_THAN_THE_PORT.test(name));
 
     return other === undefined
       ? []

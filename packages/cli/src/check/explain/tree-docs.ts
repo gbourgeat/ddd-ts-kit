@@ -54,6 +54,20 @@ export class InvoiceLine {}`,
     bad: `domain/aggregates/invoice.aggregate.ts with no test/**/invoice.aggregate.spec.ts`,
     good: `test/unit/invoice.aggregate.spec.ts`,
   },
+  'test/coverage-governed': {
+    why: 'A coverage threshold is a floor that says how much of a layer no test has ever run, and it only says so while the measure is honest. One source holds it: the "coverage" key of ddd-ts-kit.config.json gives, per layer, the four rates every context must reach (the reference when the key is absent), and the test runner config reads them through governedCoverage of @ddd-ts-kit/testing/coverage, which also measures the four layers of every context, the files no test loads included. Raising a threshold is free; lowering one is a deviation with its decision record (governance/recorded-deviation). What this rule refuses is the quiet way around: an include, an exclude or thresholds written by hand in the runner config, the same set by a flag in a script, and a coverage ignore comment (v8 ignore, istanbul ignore, c8 ignore) in a production source that names no decision record. A rate proves that code ran under a test, never that the test asserts anything: the floor is not a goal.',
+    bad: `// vitest.config.ts
+coverage: { ...governedCoverage(mode), exclude: ['src/contexts/billing/infrastructure/**'] }
+// domain/aggregates/invoice.aggregate.ts
+/* v8 ignore next 3 */`,
+    good: `// vitest.config.ts
+coverage: { provider: 'v8', reporter: ['text', 'cobertura', 'lcov'], ...governedCoverage(mode) }
+// ddd-ts-kit.config.json
+"coverage": { "infrastructure": { "branches": 50 } },
+"deviations": [{ "what": "coverage.infrastructure.branches", "adr": "0011", "reason": "The driver's failure branches are held by its contract suite." }]
+// domain/aggregates/invoice.aggregate.ts
+/* v8 ignore next 3 -- ADR-0012: reached only by the legacy import, removed with it */`,
+  },
   'test/no-mocks': {
     why: 'A mock asserts that a call was made, not that the outcome is right, so it breaks on every refactoring and passes on wrong behaviour. A fake is a working in-memory implementation held to the same contract suite as the real adapter. Tests assert its state, the published events or the returned value.',
     bad: `const repository = { save: vi.fn() };

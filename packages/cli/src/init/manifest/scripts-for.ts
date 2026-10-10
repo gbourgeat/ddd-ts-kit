@@ -1,22 +1,11 @@
 import { SOURCE_CONDITION } from '../../alias/index.js';
 import type { Config } from '../../config/index.js';
 import { DEPCRUISE_FILE } from '../../depcruise/depcruise-file.js';
+import { BASELINE } from './baseline.js';
 import { databaseScripts } from './database-scripts.js';
 import { documentationScripts } from './documentation-scripts.js';
 import { pipelineManifest } from './pipeline-manifest.js';
 import { testScripts } from './test-scripts.js';
-
-const GATES = [
-  'typecheck',
-  'lint',
-  'format:check',
-  'test',
-  'test:e2e',
-  'check:arch',
-  'depcruise',
-  'deadcode',
-  'docs:check',
-];
 
 /** The scripts of a project: the `ci:*` ones of the pipeline, then what a developer runs, and `verify`, which chains every gate the stack has. */
 export function scriptsFor(config: Config): Record<string, string> {
@@ -37,7 +26,8 @@ export function scriptsFor(config: Config): Record<string, string> {
     'infra:down': 'docker compose down',
   };
 
-  const gates = GATES.filter((gate) => gate in scripts);
+  // Without an HTTP boundary a project has no end-to-end script: every other gate exists on every stack.
+  const gates = BASELINE.map((gate) => gate.verify).filter((gate) => gate in scripts);
 
   return { ...scripts, verify: gates.map((gate) => `npm run ${gate}`).join(' && ') };
 }

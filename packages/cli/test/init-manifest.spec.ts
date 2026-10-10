@@ -13,6 +13,8 @@ const DEFAULT_SCRIPTS = {
   dev: 'tsx watch --conditions=ddd-ts-kit-source --env-file-if-exists=.env --import ./src/platform/tracing.ts src/main.ts',
   typecheck: 'node node_modules/@typescript/native/bin/tsc -p tsconfig.json --noEmit',
   build: 'node node_modules/@typescript/native/bin/tsc -p tsconfig.build.json',
+  test: 'vitest run',
+  'test:coverage': 'vitest run --coverage',
   'test:e2e': 'vitest run --config vitest.e2e.config.ts --passWithNoTests',
   'events:generate': 'npm run build && node dist/scripts/events.js',
   'docs:generate': 'ddd-ts-kit docs && npm run build && node dist/scripts/openapi.js && node dist/scripts/events.js',
@@ -23,7 +25,7 @@ const DEFAULT_SCRIPTS = {
   'infra:up': 'docker compose up -d --wait',
   'infra:down': 'docker compose down',
   verify:
-    'npm run typecheck && npm run lint && npm run format:check && npm run test && npm run test:e2e && npm run check:arch && npm run depcruise && npm run deadcode && npm run docs:check',
+    'npm run typecheck && npm run lint && npm run format:check && npm run test:coverage && npm run test:e2e && npm run check:arch && npm run depcruise && npm run deadcode && npm run docs:check',
   lint: 'eslint .',
   'lint:fix': 'eslint . --fix',
   'check:arch': 'ddd-ts-kit check',

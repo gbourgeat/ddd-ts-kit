@@ -1,17 +1,29 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
-import { test } from 'node:test';
+import { after, test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const guard = join(here, 'guard.mjs');
 const cli = join(here, '..', '..', 'packages', 'cli', 'dist', 'bin.js');
 
+// Everything these tests write lives under one directory, removed when they end, passed or failed:
+// the projects, and the temporary directory the guard is given for its commit reminder markers.
+const workspace = mkdtempSync(join(tmpdir(), 'ddd-ts-kit-guard-'));
+const guardTemp = join(workspace, 'tmp');
+
+mkdirSync(guardTemp);
+after(() => rmSync(workspace, { recursive: true, force: true }));
+
+function directory(label) {
+  return mkdtempSync(join(workspace, `${label}-`));
+}
+
 function project(config = {}) {
-  const root = mkdtempSync(join(tmpdir(), 'ddd-ts-kit-guard-'));
+  const root = directory('project');
   const init = spawnSync('node', [cli, 'init', '--orm', 'none', '--context', 'ordering:core'], {
     cwd: root,
     encoding: 'utf8',
@@ -38,7 +50,7 @@ function run(mode, input, env = {}) {
   const result = spawnSync('node', [guard, mode], {
     input: JSON.stringify(input),
     encoding: 'utf8',
-    env: { ...process.env, ...env },
+    env: { ...process.env, TMPDIR: guardTemp, ...env },
   });
   return {
     status: result.status,
@@ -88,7 +100,7 @@ test('session start hands the workflow and the context map over as additional co
 });
 
 test('outside a ddd-ts-kit project every mode stays silent', () => {
-  const elsewhere = mkdtempSync(join(tmpdir(), 'ddd-ts-kit-none-'));
+  const elsewhere = directory('none');
   for (const mode of ['session', 'pre-write', 'post-write', 'stop']) {
     const result = run(mode, { cwd: elsewhere, ...write(join(elsewhere, 'a.aggregate.ts')) });
     assert.equal(result.status, 0);
@@ -219,7 +231,7 @@ test('session start points to the plan and its next step, so a session resumes c
 });
 
 test('before the bootstrap, a plan alone is enough to resume', () => {
-  const root = mkdtempSync(join(tmpdir(), 'ddd-ts-kit-plan-'));
+  const root = directory('plan');
   put(root, 'docs/architecture/plan.md', 'Next: 2 bounded-contexts\n');
   const { output } = run('session', { cwd: root });
   assert.match(output.hookSpecificOutput.additionalContext, /Next: 2 bounded-contexts/);
@@ -405,7 +417,7 @@ test('a context worker does not change the dependencies', () => {
 test('the worktree of a worker is found in its command, and other agents run anything', () => {
   const root = project();
   const agent = worker(root);
-  const elsewhere = mkdtempSync(join(tmpdir(), 'ddd-ts-kit-session-'));
+  const elsewhere = directory('session');
   const command = 'npx ddd-ts-kit generate repository ordering Order';
   assert.equal(decision(run('pre-bash', bash(elsewhere, `cd ${root} && ${command}`, agent))), 'deny');
   assert.equal(decision(run('pre-bash', bash(elsewhere, `${command} --cwd ${root}`, agent))), 'deny');

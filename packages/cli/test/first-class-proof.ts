@@ -4,6 +4,8 @@ import { cli, exists, read, write } from './helpers.js';
 const SHIPPING_HANDLER =
   'src/contexts/shipping/application/integration/handlers/billing-invoice-issued.integration-handler.ts';
 
+const SHIPPING_HANDLER_SPEC = 'src/contexts/shipping/test/unit/billing-invoice-issued.integration-handler.spec.ts';
+
 const DECLARED_READER =
   'src/contexts/billing/infrastructure/persistence/in-memory-search-invoices-reader.repository.ts';
 
@@ -41,6 +43,18 @@ export function writeBusinessDecisions(root: string): void {
     [
       /(async handle\(event: InvoiceIssuedV2\): Promise<void> \{\n)[^\n]*\n/,
       '$1    await this.commands.execute(new PrepareParcelCommand());\n',
+    ],
+  ]);
+
+  // The generated spec hands the handler an event: now that the handler sends a command, the bus of the spec knows it.
+  edit(root, SHIPPING_HANDLER_SPEC, [
+    [
+      /(import \{ BillingInvoiceIssuedIntegrationHandler \} from '([^']*)contexts\/shipping\/[^\n]*\n)/,
+      "$1import { PrepareParcelCommand } from '$2contexts/shipping/application/commands/prepare-parcel/prepare-parcel.command.js';\n",
+    ],
+    [
+      /const handler = new (\w+)\(new InMemoryCommandBus\(\)\);\n(\s+const meta)/,
+      'const commands = new InMemoryCommandBus().register(PrepareParcelCommand, { execute: async () => undefined });\n    const handler = new $1(commands);\n$2',
     ],
   ]);
 

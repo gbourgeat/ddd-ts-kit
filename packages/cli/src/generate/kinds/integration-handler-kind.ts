@@ -115,9 +115,14 @@ function eventTypeOf(upstream: Name, input: string): string {
 }
 
 function upstreamVars(upstream: Name, eventType: string, declaration: EventDeclaration | undefined): RenderContext {
+  const [, aggregate = ''] = eventType.split('.');
+
   return {
     ...named(upstream),
     eventName: eventType,
+    // The one field a generated declaration starts with: the spec builds its sample event from it.
+    payloadKey: `${toName(aggregate).camel}Id`,
+    payloadSample: `${aggregate}-1`,
     known: declaration !== undefined,
     eventType: declaration?.typeName ?? '',
     definition: declaration?.definition ?? '',

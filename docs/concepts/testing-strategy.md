@@ -177,20 +177,36 @@ no `if`, no loop, arrange, act and assert separated by blank lines.
 
 ## Coverage thresholds
 
-The generated pipeline sets thresholds per layer (statements, branches, functions, lines), as
-[`pipeline/README.md`](../../pipeline/README.md) states:
+A project states the minimum coverage of each layer in one place, the `coverage` key of
+`ddd-ts-kit.config.json` ([CONFIG.md](../CONFIG.md#coverage-thresholds)); the test runner reads
+it, and `npm run verify` and the pipeline fail under it. The reference, as statements,
+branches, functions, lines:
 
-| Layer | Thresholds | Reason given | Measured by |
+| Layer | Reference | Why this floor | Measured by |
 |---|---|---|---|
-| `domain/` | 90, 85, 90, 90 | pure code, nothing prevents testing it | unit tests |
-| `application/` | 85, 80, 85, 85 | handlers run through fakes | unit tests |
-| `presentation/` | 80, 70, 80, 80 | mapping and status translation | unit tests |
-| `infrastructure/` | 70, 60, 70, 70 | driver error paths are hard to provoke | integration tests |
+| `domain/` | 90, 85, 90, 90 | pure code, nothing prevents testing it; it holds the rules | unit specs |
+| `application/` | 85, 80, 85, 85 | handlers run through fakes | unit specs |
+| `presentation/` | 80, 70, 80, 80 | mapping and status translation; its error paths are also held end to end | unit specs |
+| `infrastructure/` | 70, 60, 70, 70 | driver failure paths are hard to provoke; adapters are held by contract suites | integration specs |
 
-A freshly generated project passes them, because the numbers leave room for the `it.todo`
-entries of the scaffolds; raise them once the todos are written. Coverage says which lines
-ran, not whether anything was asserted about them: it is a floor that catches untested code,
-not a measure of test quality.
+Each context is held on its own, layer by layer, from the first source file of the layer. A
+freshly generated project passes: what a generator writes comes with a spec that runs it, and
+the `it.todo` entries name the behaviour still to prove.
+
+**What a rate proves.** That a line, a branch or a function ran while a test was running. A
+layer under its floor holds code no test has ever executed: that is certain, and it is what
+the gate catches.
+
+**What it does not prove.** That anything was asserted about what ran, that the cases that
+matter were tried, or that the test would fail if the behaviour changed. A spec that calls a
+handler and checks nothing covers it fully. The specs named after business rules, the
+contract suites and the end-to-end journeys prove behaviour; coverage only says where nothing
+does.
+
+**A floor, not a goal.** Raise a threshold when a layer has stayed above it; never write a
+test to move a number. A threshold is lowered only by a recorded deviation, and the measure is
+never narrowed around the code that fails it (`test/coverage-governed`): an uncovered branch
+is tested, or deleted when nothing can reach it.
 
 ## Limits and when not to use it
 
