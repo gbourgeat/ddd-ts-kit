@@ -155,10 +155,6 @@ function theConsumers(followed: Readonly<Record<string, string>>): ExpectedSpan[
   return [
     { name: 'process notification.scheduling-appointment-booked', kind: 'CONSUMER', attributes: { ...consumed, 'app.context': 'notification' }, children: [theNotification] },
     { name: 'process analytics.outcomes', kind: 'CONSUMER', attributes: { ...consumed, 'app.context': 'analytics' }, children: [{ name: 'repository OutcomeRegister.written' }] },
-    {
-      name: 'process analytics.occupancy', kind: 'CONSUMER', attributes: { ...consumed, 'app.context': 'analytics' },
-      children: [{ name: 'repository OutcomeRegister.get' }, { name: 'repository OutcomeRegister.list' }, { name: 'repository OccupancyRegister.written' }],
-    },
   ];
 }
 

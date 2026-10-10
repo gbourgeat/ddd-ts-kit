@@ -2,7 +2,7 @@ import { actorOf } from '@ddd-ts-kit/auth';
 import { criteriaQuerySchema, defineRoute, pageResponse, pageSchemaOf, type Route } from '@ddd-ts-kit/http';
 import type { QueryBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
-import { occupancyCriteria, type Occupancy } from '../../application/ports/occupancy-register.port.js';
+import { occupancyCriteria, type Occupancy } from '../../application/ports/occupancy-reader.port.js';
 import { ListOccupancyQuery } from '../../application/queries/list-occupancy/list-occupancy.query.js';
 import { ListOccupancyLine } from './list-occupancy-line.dto.js';
 import { ListOccupancyParams } from './list-occupancy-params.dto.js';

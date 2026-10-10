@@ -15,7 +15,6 @@ export function jobSettings(environment: Environment, context?: string): Readonl
     'scheduling.expire-unconfirmed-appointments': { enabled: environment['JOB_SCHEDULING_EXPIRE_UNCONFIRMED_APPOINTMENTS_ENABLED'] !== 'false' },
     'identity.expire-delegations': { enabled: environment['JOB_IDENTITY_EXPIRE_DELEGATIONS_ENABLED'] !== 'false' },
     'notification.send-due-reminders': { enabled: environment['JOB_NOTIFICATION_SEND_DUE_REMINDERS_ENABLED'] !== 'false' },
-    'analytics.verify-occupancy': { enabled: environment['JOB_ANALYTICS_VERIFY_OCCUPANCY_ENABLED'] !== 'false' },
     // /ddd-ts-kit:jobs
   };
 

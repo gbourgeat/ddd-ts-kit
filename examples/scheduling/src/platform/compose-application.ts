@@ -38,7 +38,6 @@ import type { Persistence } from './database/persistence.js';
 import { layFoundations, type Foundations } from './lay-foundations.js';
 import { platformModule, type PlatformOptions } from './platform.module.js';
 // The barrels do not list projections yet (docs/adr/0002): they are named here, or they are not subscribed.
-import { OccupancyProjection } from '../contexts/analytics/application/projections/occupancy.projection.js';
 import { OutcomesProjection } from '../contexts/analytics/application/projections/outcomes.projection.js';
 import { ContactsProjection } from '../contexts/notification/application/projections/contacts.projection.js';
 import { AgendaProjection } from '../contexts/scheduling/application/projections/agenda.projection.js';
@@ -94,7 +93,7 @@ const everyContext: ContextSelection = {
     contextModule('identity', identityDeclarations),
     contextModule('scheduling', { ...schedulingDeclarations, PractitionersProjection, AgendaProjection }),
     contextModule('notification', { ...notificationDeclarations, ContactsProjection }),
-    contextModule('analytics', { ...analyticsDeclarations, OutcomesProjection, OccupancyProjection }),
+    contextModule('analytics', { ...analyticsDeclarations, OutcomesProjection }),
     // /ddd-ts-kit:contexts
   ],
   routes: [

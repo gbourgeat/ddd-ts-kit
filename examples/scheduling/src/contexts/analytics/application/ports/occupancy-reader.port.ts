@@ -1,4 +1,4 @@
-import { ReadModelStore, defineCriteria } from '@ddd-ts-kit/kernel';
+import { defineCriteria, type Page, type ScopedCriteria } from '@ddd-ts-kit/kernel';
 import type { OccupancyFigures } from '../../domain/services/occupancy-measure.service.js';
 
 /** The occupancy of a calendar over a day, under the key `<calendarId>.<day>`. */
@@ -28,4 +28,10 @@ export const occupancyCriteria = defineCriteria<Occupancy>({
   limits: { maxPageSize: 100 },
 });
 
-export abstract class OccupancyRegister extends ReadModelStore<Occupancy> {}
+export abstract class OccupancyReader {
+  /**
+   * One page of the occupancy the criteria and the scope keep, measured from the outcomes as
+   * they stand when it is read. A calendar and day without any appointment has no line.
+   */
+  abstract list(criteria: ScopedCriteria<Occupancy>): Promise<Page<Occupancy>>;
+}

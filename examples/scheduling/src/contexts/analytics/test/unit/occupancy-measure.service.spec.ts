@@ -18,6 +18,12 @@ describe('OccupancyMeasureService', () => {
     expect(figures).toMatchObject({ heldMinutes: 90, appointmentsHeld: 3, completed: 1, noShows: 1 });
   });
 
+  it('counts the time of each appointment to the nearest minute', () => {
+    const figures = measure.measure([anOutcome('held', 20.5), anOutcome('held', 10.5)]);
+
+    expect(figures).toMatchObject({ heldMinutes: 32, appointmentsHeld: 2 });
+  });
+
   it('frees the time of a cancelled or expired appointment, and counts the cancellations by party', () => {
     const figures = measure.measure([
       anOutcome('held', 30),

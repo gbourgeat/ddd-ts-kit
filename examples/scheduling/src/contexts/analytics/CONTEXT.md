@@ -8,22 +8,59 @@ Measures the occupancy, the cancellations and the no-shows of each calendar, per
 
 supporting
 
-Needed by practice managers, built entirely from what scheduling announces: read models, no decision.
+Needed by practice managers, built entirely from what scheduling announces: one read model, no decision.
 
 ## Ubiquitous language
 
 | Term | Meaning | Not to be confused with |
 |---|---|---|
-| Occupancy | The time held by appointments on a calendar over a day, with their count |  |
+| Occupancy | The time held by appointments on a calendar over a day, with their count; measured from the outcomes when it is read, never stored |  |
 | Outcome | How an appointment stands for measurement: held, completed, no-show, cancelled by the patient, cancelled by the practice, expired | scheduling: the appointment itself |
 | Cancellation | A count of appointments cancelled on a day, by party | scheduling: who and why |
 | No show | A count of appointments whose patient did not come |  |
 | Calendar | A line whose occupancy is measured, in a practice | scheduling: the agenda |
 | Day | A calendar date in the time zone of the practice |  |
-| Verify | To recompute the figures of recent days from the outcomes and repair a difference |  |
 | List | To read the occupancy of the calendars of a practice, day by day |  |
 | Read | To see the occupancy of the calendars one measures |  |
 | Measure | To compute the occupancy of a calendar over a day from the outcomes of its appointments |  |
+
+## How occupancy is measured
+
+One row per fact, computed at read time. The context stores one thing: the **outcome** of each
+appointment (`analytics.outcomes`, one row per appointment, set whole by every event of
+`scheduling`, so a replay or a late delivery ends on the same row). Nothing is counted when an
+event arrives and no figure is stored: there is no counter to drift, so nothing to verify or
+repair at night.
+
+A line of occupancy is the outcomes of one calendar on one day, measured:
+
+| Figure | Counts |
+|---|---|
+| `heldMinutes` | the minutes of the appointments that hold their time (held, completed, no-show), each to the nearest minute |
+| `appointmentsHeld` | the appointments that hold their time |
+| `completed`, `noShows` | the appointments in that state |
+| `cancelledByPatient`, `cancelledByPractice` | the cancellations, by party |
+
+A cancelled or an expired appointment frees its time. A rescheduled appointment has one outcome,
+on its new day: the day it left loses it at once. A calendar and day without any appointment has
+no line; a day whose appointments were all cancelled has one, with nothing held.
+
+**Where it is defined.** `domain/services/occupancy-measure.service.ts` is the definition: which
+outcomes hold their time, and the figures of a set of outcomes.
+
+**Where it is computed.** In the database, when `ListOccupancy` is read:
+`infrastructure/persistence/knex-occupancy-reader.repository.ts`, the adapter of the port
+`OccupancyReader`, runs one statement that keeps the outcomes the filters and the scope of the
+actor allow (the practice, the calendars, the days), groups them by calendar and day, measures
+each group, then orders and pages the lines. The states that hold their time are bound from the
+domain service. The fake of the port measures the same outcomes with the domain service, and
+`test/integration/occupancy-reader.contract.spec.ts` holds the statement and the service to the
+same figures on the same outcomes.
+
+**What a read costs.** The outcomes of the practice over the days asked for, through the index
+`(practice_id, day, calendar_id)`; a read without a range of days goes through every outcome of
+the practice. If that stops being acceptable, the answer is a bound on the range or a stored
+summary of closed days, decided then, not a counter kept by events.
 
 ## Aggregates
 
@@ -38,16 +75,13 @@ Needed by practice managers, built entirely from what scheduling announces: read
 ## Permissions
 
 <!-- ddd-ts-kit:permissions -->
-- `analytics:occupancy.verify`
 - `analytics:occupancy.read`
 <!-- /ddd-ts-kit:permissions -->
 
 ## Scheduled jobs
 
 <!-- ddd-ts-kit:jobs -->
-| Job | Schedule | Command |
-|---|---|---|
-| `analytics.verify-occupancy` | `cron 0 3 * * * (Europe/Paris)` | `VerifyOccupancy` |
+No scheduled job.
 <!-- /ddd-ts-kit:jobs -->
 
 ## Relationships
@@ -68,7 +102,6 @@ Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-ki
 | Use case | Kind | Permission |
 |---|---|---|
 | `ListOccupancy` | query | `occupancy.read` |
-| `VerifyOccupancy` | command | `occupancy.verify` |
 
 ### Routes
 
@@ -81,7 +114,7 @@ Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-ki
 | Port | Kind | Adapters |
 |---|---|---|
 | `AppointmentExportGateway` | gateway | `InProcessAppointmentExportGateway` |
-| `OccupancyRegister` | repository | `KnexOccupancyRegister` |
+| `OccupancyReader` | repository | `KnexOccupancyReader` |
 | `OutcomeRegister` | repository | `KnexOutcomeRegister` |
 
 ### Gateways
