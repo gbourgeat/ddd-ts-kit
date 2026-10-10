@@ -28,7 +28,7 @@
     "@prisma/adapter-pg": "^7.10.0",
     "@ddd-ts-kit/testing": "0.1.0",
     "pg": "^8.23.1",
-    "@types/pg": "^8.11.0",
+    "@types/pg": "^8.23.1",
     "@electric-sql/pglite": "^0.5.8",
     "@electric-sql/pglite-socket": "^0.2.11"
   }
