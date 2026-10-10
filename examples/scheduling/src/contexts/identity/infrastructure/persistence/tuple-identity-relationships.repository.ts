@@ -1,17 +1,17 @@
 import { RelationTupleStore, type RelationTuple } from '@ddd-ts-kit/auth/rebac';
-import { Adapter } from '@ddd-ts-kit/kernel/declarations';
+import { Repository } from '@ddd-ts-kit/kernel/declarations';
 import { IdentityRelationships } from '../../application/ports/identity-relationships.port.js';
-import { ownPolicy } from '../../../../platform/resilience/own-policy.js';
 
 type Membership = Parameters<IdentityRelationships['recordMembership']>[0];
 type Delegation = Parameters<IdentityRelationships['forgetDelegation']>[0];
 
 /**
- * Writes the relationships as tuples of the store the authorizer reads. The store works in the
- * unit of work of the command, so nothing is retried here: the policy of this adapter is empty.
+ * Writes the relationships as tuples of the store the authorizer reads: a table of this database
+ * (ADR-0001), written in the unit of work of the command. A relationship commits or rolls back
+ * with the fact it follows, which is why its domain event handlers run before the commit.
  */
-@Adapter(IdentityRelationships, { kind: 'external', aspects: [ownPolicy()] }, [RelationTupleStore])
-export class RemoteIdentityRelationships implements IdentityRelationships {
+@Repository(IdentityRelationships, [RelationTupleStore])
+export class TupleIdentityRelationships implements IdentityRelationships {
   constructor(private readonly tuples: RelationTupleStore) {}
 
   async recordPerson(personId: string): Promise<void> {

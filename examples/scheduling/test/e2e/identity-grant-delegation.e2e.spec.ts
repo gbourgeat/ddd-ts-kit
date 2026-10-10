@@ -140,8 +140,9 @@ const storyOfTheRequest: Parameters<typeof expectSpanTree>[1] = [
         children: [
           { name: 'repository PracticeRepository.findById' },
           { name: 'repository DelegationRepository.findActiveBetween' },
+          { name: 'repository DelegationRepository.save' },
           {
-            name: 'repository DelegationRepository.save',
+            name: 'unit-of-work before-commit',
             children: [
               {
                 name: 'domain-event identity.delegation.granted',
@@ -149,7 +150,7 @@ const storyOfTheRequest: Parameters<typeof expectSpanTree>[1] = [
                   {
                     name: 'handler DelegationGrantedEventHandler',
                     children: [
-                      { name: 'external IdentityRelationships.recordDelegation' },
+                      { name: 'repository IdentityRelationships.recordDelegation' },
                     ],
                   },
                   {

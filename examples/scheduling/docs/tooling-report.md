@@ -427,3 +427,73 @@ Two things met on the way, neither caused by this change:
 The two generator runs of this change (`generate port analytics OccupancyReader`, `docs`) are
 in the log kept by `scripts/kit.mjs`; `docs/tooling/generator-log.jsonl` is the copy made at
 the end of the build and was not refreshed.
+
+## After delivery: domain events dispatched at the end of the unit of work
+
+2026-10-10. The kit changed when a domain event reaches its handlers: no longer after each
+save, but once the command handler has returned, inside the transaction and before its commit,
+with an `after-commit` phase for what no transaction covers. The guarantee: an effect of a
+domain event exists only if the state change that recorded it is committed. What it took here,
+and what the tools said.
+
+What changed in the example:
+
+1. **No handler was rewritten.** The twenty-six domain event handlers are declared, in the
+   default phase, and their dependencies are the command bus, the outbox publisher, a
+   repository, or a port of relationships. Unit and integration specs passed untouched (1282
+   tests): they call the handlers directly or through the test application, and none relied
+   on a handler running between two saves.
+2. **Two adapters moved, and that is the decision.** `RemoteIdentityRelationships` and
+   `RemoteSchedulingRelationships` were what `generate adapter` writes: under
+   `infrastructure/external/`, kind `external`, behind seven handlers that run before the
+   commit. The new rule `domain-events/transactional-before-commit` refuses that shape, and it
+   is right to: a remote write before the commit survives a rollback. Read closely, the store
+   is not remote: `RelationTupleStore` is bound to `KnexRelationTupleStore`, a table of the same
+   database written in the transaction of the command (ADR-0001). The honest fix was to say so:
+   the adapters are now `TupleIdentityRelationships` and `TupleSchedulingRelationships`, in
+   `infrastructure/persistence/`, declared with `@Repository`, without the empty resilience
+   policy they carried. The handlers stay before the commit, so a relationship commits or rolls
+   back with its fact, which neither the `after-commit` phase (at most once: a right never
+   withdrawn after a crash) nor an integration event consumed by the same context (a right that
+   lags behind its fact) would give. The reasoning, and what to do the day the tuples move to
+   a remote service, is in the `CONTEXT.md` of `identity`. A new integration spec,
+   `relationships-commit-with-the-fact.spec.ts`, proves it on PostgreSQL.
+3. **Seven span trees changed, as designed.** The handlers left the span of the save: under the
+   command come the saves, then `unit-of-work before-commit` with the events and their
+   handlers. `identity-remove-member` shows two such spans, the second for the delegation the
+   first handler ended. The spans of the relationships are named `repository
+   ...Relationships.*` instead of `external ...`.
+4. **One order changed in `journey-observability`.** The consumer of `notification` opens the
+   unit of work (the mark of the event and the state change commit together) and sends
+   `SendNotificationCommand`, which joins it. The fact `notification.notification.sent` is
+   therefore dispatched at the end of the consumer's unit of work, after the command returned:
+   `unit-of-work before-commit` is a sibling of the command span under `process ...`, and the
+   log line of `PlanReminderCommand` now follows the one of `SendNotificationCommand`. Both
+   still commit or roll back together.
+
+What the tools did well: the rule and the checker agree with the code once the adapter says
+what it is, `docs` repaired both barrels and both `CONTEXT.md` after the move, and
+`expectSpanTree` printed the expected and the found tree side by side, which made each of the
+eight expectations a reading exercise.
+
+Frictions:
+
+1. **`generate adapter` names every adapter `Remote...` and files it under
+   `infrastructure/external/`**, so an adapter that writes in the transaction starts its life
+   declared as an outside system. It is friction 3 of the previous section seen from the other
+   side: with `generate adapter <context> <Port> --kind persistence` the two adapters would
+   have been declared right from the start, and the new rule would have had nothing to say.
+2. **Nothing moves a generated file.** The two moves were `mv`, two class renames, two spec
+   renames and a `docs` run; `ddd-ts-kit check` then confirmed the tree.
+3. **`SendNotificationHandler` calls `Mailer.deliver` inside the transaction of its command.**
+   The new rule judges domain event handlers only, so it says nothing, and the handler guards
+   against a second mail with `findByCause`. A mail can still leave for a notification whose
+   commit failed. It is the same question one level up (an effect outside the database before
+   the commit) and no rule holds it for command handlers. Left as it is, on purpose: out of
+   the scope of this change.
+4. **`docs/demo-transcript.md` is a recording** made before this change: its span names
+   (`external SchedulingRelationships.recordAppointment`, no `unit-of-work before-commit`) are
+   those of that run, and were left as recorded.
+
+The generator run of this change (`docs`) is in the log kept by `scripts/kit.mjs`;
+`docs/tooling/generator-log.jsonl` was not refreshed.

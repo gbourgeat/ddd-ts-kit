@@ -82,6 +82,41 @@ Needed and specific (delegations between members of a practice), but not what pr
 - Upstream of `notification` (published-language).
 <!-- /ddd-ts-kit:relationships -->
 
+## Domain events and what follows them
+
+An effect of a domain event exists only if the state change that recorded it is committed. Every
+handler of this context runs in the default phase, at the end of the unit of work of the command
+and before its commit, and has transactional effects only:
+
+- The publishers append to the outbox, in the transaction of the command.
+- The handlers of `application/event-handlers/` write or delete what the platform reads to
+  decide a right, through `IdentityRelationships`. Its adapter, `TupleIdentityRelationships`,
+  writes tuples in `authorization.relation_tuples`, a table of the same database (ADR-0001), in
+  the transaction of the command: a relationship commits or rolls back with the fact it
+  follows, and a check made later in the same unit of work reads it.
+  `PracticeMemberRemovedEventHandler` also ends the delegations of the member through
+  `DelegationRepository`; their events wait behind the one being handled.
+
+The choice for `IdentityRelationships`, made when the dispatch moved to the end of the unit of
+work. The adapter was generated under `infrastructure/external/` as `RemoteIdentityRelationships`
+with the kind `external`, which reads as a call to a remote store before the commit, and the
+rule `domain-events/transactional-before-commit` refuses that. Two answers exist for a store
+that is really remote: the `after-commit` phase, at most once, which would lose a relationship
+on a crash, a right never granted or, worse, never withdrawn; or an integration event consumed
+by this context, at least once, which makes a right lag behind the fact it follows. Neither is
+needed here, and both are weaker than what the code already does: the store is a table of the
+transaction. So the declaration was corrected instead of the timing: the adapter is a
+persistence adapter, in `infrastructure/persistence/`, declared with `@Repository`, and the
+handlers stay before the commit. `test/integration/relationships-commit-with-the-fact.spec.ts`
+proves on PostgreSQL that the tuple is committed with the person, and is not there when the
+unit of work fails, before or after the handler wrote it.
+
+If the tuples ever move to a remote service, the adapter goes back to `infrastructure/external/`,
+the rule refuses the five handlers again, and the answer is then the integration event: each
+fact is already published (`identity.person.registered`, `identity.practice.member-added`,
+`identity.practice.member-removed`, `identity.delegation.granted`, `identity.delegation.revoked`),
+writes and deletions of a tuple are idempotent, and a relationship must not be lost.
+
 ## Reference
 
 <!-- ddd-ts-kit:reference -->
@@ -128,7 +163,7 @@ Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-ki
 | Port | Kind | Adapters |
 |---|---|---|
 | `DelegationRepository` | repository | `KnexDelegationRepository` |
-| `IdentityRelationships` | external | `RemoteIdentityRelationships` |
+| `IdentityRelationships` | repository | `TupleIdentityRelationships` |
 | `PersonRepository` | repository | `KnexPersonRepository` |
 | `PracticeRepository` | repository | `KnexPracticeRepository` |
 <!-- /ddd-ts-kit:reference -->

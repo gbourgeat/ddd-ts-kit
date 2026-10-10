@@ -129,8 +129,9 @@ const storyOfTheRequest: Parameters<typeof expectSpanTree>[1] = [
         name: 'command RemoveMemberCommand',
         children: [
           { name: 'repository PracticeRepository.findById' },
+          { name: 'repository PracticeRepository.save' },
           {
-            name: 'repository PracticeRepository.save',
+            name: 'unit-of-work before-commit',
             children: [
               {
                 name: 'domain-event identity.practice.member-removed',
@@ -139,35 +140,36 @@ const storyOfTheRequest: Parameters<typeof expectSpanTree>[1] = [
                     name: 'handler PracticeMemberRemovedEventHandler',
                     children: [
                       { name: 'repository DelegationRepository.findActiveOfMember' },
-                      { name: 'external IdentityRelationships.forgetMembership' },
-                      {
-                        name: 'repository DelegationRepository.save',
-                        children: [
-                          {
-                            name: 'domain-event identity.delegation.revoked',
-                            children: [
-                              {
-                                name: 'handler DelegationRevokedEventHandler',
-                                children: [
-                                  { name: 'external IdentityRelationships.forgetDelegation' },
-                                ],
-                              },
-                              {
-                                name: 'handler DelegationRevokedPublisher',
-                                children: [
-                                  { name: 'outbox append identity.delegation.revoked' },
-                                ],
-                              },
-                            ],
-                          },
-                        ],
-                      },
+                      { name: 'repository IdentityRelationships.forgetMembership' },
+                      { name: 'repository DelegationRepository.save' },
                     ],
                   },
                   {
                     name: 'handler PracticeMemberRemovedPublisher',
                     children: [
                       { name: 'outbox append identity.practice.member-removed' },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            name: 'unit-of-work before-commit',
+            children: [
+              {
+                name: 'domain-event identity.delegation.revoked',
+                children: [
+                  {
+                    name: 'handler DelegationRevokedEventHandler',
+                    children: [
+                      { name: 'repository IdentityRelationships.forgetDelegation' },
+                    ],
+                  },
+                  {
+                    name: 'handler DelegationRevokedPublisher',
+                    children: [
+                      { name: 'outbox append identity.delegation.revoked' },
                     ],
                   },
                 ],

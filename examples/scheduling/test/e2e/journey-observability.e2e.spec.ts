@@ -66,8 +66,8 @@ describe('One booking, followed from outside: its trace, its log lines, its erro
     expect(lines.map((line) => [line['origin'], line['actorId'], line['message']])).toEqual([
       ['http', 'paul', 'command BookAppointmentCommand succeeded'],
       ['event', 'system:notification.scheduling-appointment-booked', 'mail handed to the development mailer'],
-      ['event', 'system:notification.scheduling-appointment-booked', 'command PlanReminderCommand succeeded'],
       ['event', 'system:notification.scheduling-appointment-booked', 'command SendNotificationCommand succeeded'],
+      ['event', 'system:notification.scheduling-appointment-booked', 'command PlanReminderCommand succeeded'],
     ]);
 
     expect(new Set(lines.map((line) => line['trace_id']))).toEqual(new Set([booking?.traceId]));
@@ -128,7 +128,8 @@ function storyOfTheBooking(correlationId: string): ExpectedSpan[] {
             { name: 'repository CalendarRepository.findById' },
             { name: 'repository AppointmentRepository.heldOn' },
             { name: 'repository AppointmentRepository.heldBy' },
-            { name: 'repository AppointmentRepository.save', children: [{ name: 'domain-event scheduling.appointment.booked', children: whatFollowsTheFact(followed) }] },
+            { name: 'repository AppointmentRepository.save' },
+            { name: 'unit-of-work before-commit', children: [{ name: 'domain-event scheduling.appointment.booked', children: whatFollowsTheFact(followed) }] },
           ],
         },
       ],
@@ -136,10 +137,10 @@ function storyOfTheBooking(correlationId: string): ExpectedSpan[] {
   ];
 }
 
-/** Inside the command: the relationships of the appointment, its publication through the outbox, its entry in the agenda. */
+/** At the end of the unit of work of the command, before its commit: the relationships of the appointment, its publication through the outbox, its entry in the agenda. */
 function whatFollowsTheFact(followed: Readonly<Record<string, string>>): ExpectedSpan[] {
   return [
-    { name: 'handler AppointmentBookedEventHandler', children: [{ name: 'external SchedulingRelationships.recordAppointment' }] },
+    { name: 'handler AppointmentBookedEventHandler', children: [{ name: 'repository SchedulingRelationships.recordAppointment' }] },
     {
       name: 'handler AppointmentBookedPublisher',
       children: [{ name: 'outbox append scheduling.appointment.booked', children: [{ name: 'publish scheduling.appointment.booked', kind: 'PRODUCER', children: theConsumers(followed) }] }],
@@ -153,7 +154,7 @@ function theConsumers(followed: Readonly<Record<string, string>>): ExpectedSpan[
   const consumed = { ...followed, 'app.origin': 'event' };
 
   return [
-    { name: 'process notification.scheduling-appointment-booked', kind: 'CONSUMER', attributes: { ...consumed, 'app.context': 'notification' }, children: [theNotification] },
+    { name: 'process notification.scheduling-appointment-booked', kind: 'CONSUMER', attributes: { ...consumed, 'app.context': 'notification' }, children: [theNotification, whatFollowsTheNotification] },
     { name: 'process analytics.outcomes', kind: 'CONSUMER', attributes: { ...consumed, 'app.context': 'analytics' }, children: [{ name: 'repository OutcomeRegister.written' }] },
   ];
 }
@@ -164,17 +165,20 @@ const theNotification: ExpectedSpan = {
     { name: 'repository NotificationRepository.findByCause' },
     { name: 'repository Contacts.get' },
     { name: 'external Mailer.deliver' },
+    { name: 'repository NotificationRepository.save' },
+  ],
+};
+
+/** The unit of work is the consumer's, which the command joined: the fact is dispatched at its end, before the mark of the event and the notification commit together. */
+const whatFollowsTheNotification: ExpectedSpan = {
+  name: 'unit-of-work before-commit',
+  children: [
     {
-      name: 'repository NotificationRepository.save',
+      name: 'domain-event notification.notification.sent',
       children: [
         {
-          name: 'domain-event notification.notification.sent',
-          children: [
-            {
-              name: 'handler NotificationSentEventHandler',
-              children: [{ name: 'command PlanReminderCommand', children: [{ name: 'repository ReminderRepository.findByAppointment' }, { name: 'repository ReminderRepository.save' }] }],
-            },
-          ],
+          name: 'handler NotificationSentEventHandler',
+          children: [{ name: 'command PlanReminderCommand', children: [{ name: 'repository ReminderRepository.findByAppointment' }, { name: 'repository ReminderRepository.save' }] }],
         },
       ],
     },

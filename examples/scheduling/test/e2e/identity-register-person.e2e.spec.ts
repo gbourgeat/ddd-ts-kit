@@ -77,21 +77,31 @@ describe('Register person, end to end', () => {
 
 const storyOfTheRequest: Parameters<typeof expectSpanTree>[1] = [
   {
-    name: 'PUT /people/me',
-    kind: 'SERVER',
+    name: 'PUT /people/me', kind: 'SERVER',
     children: [
       {
         name: 'command RegisterPersonCommand',
         children: [
           { name: 'repository PersonRepository.findById' },
+          { name: 'repository PersonRepository.save' },
           {
-            name: 'repository PersonRepository.save',
+            name: 'unit-of-work before-commit',
             children: [
               {
                 name: 'domain-event identity.person.registered',
                 children: [
-                  { name: 'handler PersonRegisteredEventHandler', children: [{ name: 'external IdentityRelationships.recordPerson' }] },
-                  { name: 'handler PersonRegisteredPublisher', children: [{ name: 'outbox append identity.person.registered' }] },
+                  {
+                    name: 'handler PersonRegisteredEventHandler',
+                    children: [
+                      { name: 'repository IdentityRelationships.recordPerson' },
+                    ],
+                  },
+                  {
+                    name: 'handler PersonRegisteredPublisher',
+                    children: [
+                      { name: 'outbox append identity.person.registered' },
+                    ],
+                  },
                 ],
               },
             ],

@@ -1,19 +1,19 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { RelationTupleStore } from '@ddd-ts-kit/auth/rebac';
-import { RemoteIdentityRelationships } from '../../infrastructure/external/remote-identity-relationships.adapter.js';
+import { TupleIdentityRelationships } from '../../infrastructure/persistence/tuple-identity-relationships.repository.js';
 import { createTupleStore } from '../../../../platform/auth/create-tuple-store.js';
 import { openTestDatabase, type TestDatabase } from '../../../../platform/database/open-test-database.js';
 
 const delegation = { practiceId: 'practice-1', practitionerId: 'grace', assistantId: 'linus' };
 let database: TestDatabase;
 let tuples: RelationTupleStore;
-let relationships: RemoteIdentityRelationships;
+let relationships: TupleIdentityRelationships;
 
 beforeAll(async () => {
   database = await openTestDatabase();
   // The store of the platform: it refuses a tuple the relationship schema does not know.
   tuples = createTupleStore(database.persistence.database);
-  relationships = new RemoteIdentityRelationships(tuples);
+  relationships = new TupleIdentityRelationships(tuples);
 });
 
 beforeEach(async () => {
@@ -24,7 +24,7 @@ afterAll(async () => {
   await database.close();
 });
 
-describe('RemoteIdentityRelationships', () => {
+describe('TupleIdentityRelationships', () => {
   it('writes that a person is themselves', async () => {
     await relationships.recordPerson('ada');
 

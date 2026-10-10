@@ -24,7 +24,7 @@ export * from './application/integration/publishers/practice-member-added.publis
 export * from './application/integration/publishers/practice-member-removed.publisher.js';
 export * from './application/integration/publishers/practice-opened.publisher.js';
 export * from './application/scheduling/expire-delegations.job.js';
-export * from './infrastructure/external/remote-identity-relationships.adapter.js';
 export * from './infrastructure/persistence/knex-delegation.repository.js';
 export * from './infrastructure/persistence/knex-person.repository.js';
 export * from './infrastructure/persistence/knex-practice.repository.js';
+export * from './infrastructure/persistence/tuple-identity-relationships.repository.js';

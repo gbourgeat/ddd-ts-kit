@@ -108,8 +108,9 @@ const storyOfTheRequest: Parameters<typeof expectSpanTree>[1] = [
         name: 'command OpenPracticeCommand',
         children: [
           { name: 'repository PersonRepository.findById' },
+          { name: 'repository PracticeRepository.save' },
           {
-            name: 'repository PracticeRepository.save',
+            name: 'unit-of-work before-commit',
             children: [
               {
                 name: 'domain-event identity.practice.opened',
@@ -128,7 +129,7 @@ const storyOfTheRequest: Parameters<typeof expectSpanTree>[1] = [
                   {
                     name: 'handler PracticeMemberAddedEventHandler',
                     children: [
-                      { name: 'external IdentityRelationships.recordMembership' },
+                      { name: 'repository IdentityRelationships.recordMembership' },
                     ],
                   },
                   {
