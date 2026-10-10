@@ -13,9 +13,7 @@ import {
 {{#if cache.rateLimit}}
   InMemoryRateLimiter,
 {{/if}}
-{{#if errors.sentry}}
   NoopErrorReporter,
-{{/if}}
   ScopedActorContext,
   SystemClock,
   UuidGenerator,
@@ -24,6 +22,7 @@ import {
 {{/if}}
   scopedPublisher,
   dispatchingOnSave,
+  reportAfterCommitFailures,
   unitOfWorkMiddleware,
   type BusMiddleware,
   type DomainEventDispatcher,
@@ -98,7 +97,14 @@ export function createPlatform(persistence: Persistence, options: PlatformOption
   const traced = traceApplication({ consumers: options.traceConsumers ?? 'continue' });
   const foundations = lay(persistence, options, traced);
   const { clock, logger, metrics, scope } = foundations;
-  const domainEvents = traced.domainEvents(new InMemoryDomainEventDispatcher());
+  // A handler of the after-commit phase that fails is logged{{#if errors.sentry}} and reported{{/if}}: the command it follows is committed, and answers.
+{{#if errors.none}}
+  const afterCommitFailed = reportAfterCommitFailures({ reporter: new NoopErrorReporter(), logger, scope });
+{{/if}}
+{{#if errors.sentry}}
+  const afterCommitFailed = reportAfterCommitFailures({ reporter: foundations.errors, logger, scope });
+{{/if}}
+  const domainEvents = traced.domainEvents(new InMemoryDomainEventDispatcher(afterCommitFailed));
   const authorizer = createAuthorizer();
 {{#if audit.on}}
   const onDecision = foundations.audit.decisions;

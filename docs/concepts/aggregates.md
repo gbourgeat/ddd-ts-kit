@@ -107,8 +107,8 @@ the shape guarantees:
   code (`domain/no-generic-error`), never a generic error.
 - **Time is an argument.** The aggregate holds no clock; the handler passes `clock.now()`.
 - **Facts are recorded.** Each intention records a [domain event](domain-building-blocks.md),
-  which leaves with the save: it is dispatched once the repository has stored the aggregate,
-  inside the unit of work of the command.
+  which the save hands over: it is dispatched at the end of the unit of work of the command,
+  once the command handler has returned and before the commit.
 
 ## One aggregate per transaction
 

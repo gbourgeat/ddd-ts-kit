@@ -1,6 +1,8 @@
 import type { DomainEventDispatcher } from '../../application/ports/domain-event-dispatcher.js';
 import { announceDomainEvents } from './announce-domain-events.js';
 import { recordedAggregates } from './recorded-aggregates.js';
+import { SaveAfterCommitError } from './save-after-commit-error.js';
+import { unitOfWorkScope } from './unit-of-work-scope.js';
 
 type Method = (this: unknown, ...args: unknown[]) => unknown;
 
@@ -11,10 +13,12 @@ const wrapped = new WeakSet<object>();
 /**
  * Makes domain events leave with the save. Every method of the repository that is handed an
  * aggregate (`save(order)`, `saveAll([a, b])`, `remove(order)`) and resolves has the events
- * those aggregates recorded pulled and dispatched, in the order of the arguments then of
- * recording, before the caller gets its answer. A call that fails pulls nothing: the events
- * stay on the aggregate. A method that is handed no aggregate (`findById`, `remove(id)`) is
- * untouched.
+ * those aggregates recorded pulled, in the order of the arguments then of recording, and handed
+ * to `announceDomainEvents`: queued until the end of the unit of work in progress, or dispatched
+ * before the caller gets its answer when there is none. A call that fails pulls nothing: the
+ * events stay on the aggregate and reach no handler. A method that is handed no aggregate
+ * (`findById`, `remove(id)`) is untouched. Called by an `after-commit` handler with an
+ * aggregate, a method is refused before it writes (`SaveAfterCommitError`).
  *
  * The repository is wrapped in place, as tracing and the aspects do, so the same object is
  * answered and wrapping twice is a no-op; a sealed or frozen one is fronted by a proxy. The
@@ -71,9 +75,13 @@ function announcing(original: Method, dispatcher: Dispatching): Method {
   const wrapper: Method =
     original.constructor.name === 'AsyncFunction'
       ? async function (this: unknown, ...args: unknown[]): Promise<unknown> {
+          refuseAfterCommit(original.name, args);
+
           return announced(args, original.apply(this, args));
         }
       : function (this: unknown, ...args: unknown[]): unknown {
+          refuseAfterCommit(original.name, args);
+
           const result = original.apply(this, args);
 
           return isThenable(result) && recordedAggregates(args).length > 0 ? announced(args, result) : result;
@@ -82,6 +90,10 @@ function announcing(original: Method, dispatcher: Dispatching): Method {
   Object.defineProperty(wrapper, 'name', { value: original.name, configurable: true });
 
   return wrapper;
+}
+
+function refuseAfterCommit(method: string, args: readonly unknown[]): void {
+  if (unitOfWorkScope.getStore()?.stage === 'after-commit' && recordedAggregates(args).length > 0) throw new SaveAfterCommitError(method);
 }
 
 function isThenable(value: unknown): value is PromiseLike<unknown> {

@@ -51,10 +51,10 @@ export * from './application/queries/list-practice-agenda/list-practice-agenda.h
 export * from './application/queries/list-practice-agenda/list-practice-agenda.query.js';
 export * from './application/scheduling/expire-unconfirmed-appointments.job.js';
 export * from './infrastructure/external/in-process-person-directory.gateway.js';
-export * from './infrastructure/external/remote-scheduling-relationships.adapter.js';
 export * from './infrastructure/persistence/knex-agenda.repository.js';
 export * from './infrastructure/persistence/knex-appointment-export.repository.js';
 export * from './infrastructure/persistence/knex-appointment.repository.js';
 export * from './infrastructure/persistence/knex-calendar.repository.js';
 export * from './infrastructure/persistence/knex-practitioner-directory.repository.js';
 export * from './infrastructure/persistence/knex-waitlist.repository.js';
+export * from './infrastructure/persistence/tuple-scheduling-relationships.repository.js';

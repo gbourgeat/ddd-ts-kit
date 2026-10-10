@@ -177,8 +177,8 @@ not change. That is the practical meaning of "behind one port".
 Tuples are written through a port named in the words of the application (a `CalendarGrants`
 with `ownerAssigned`), never by the domain. Written in the handler, the tuple and the aggregate
 commit together when the tuple store is SQL-backed. A handler of a domain event of the
-aggregate can call the same port with the same guarantee: domain events leave with the save,
-inside the unit of work of the command. Written by a reaction to an integration event, the
+aggregate can call the same port with the same guarantee: domain events are dispatched at the
+end of the unit of work of the command, before its commit. Written by a reaction to an integration event, the
 write is a second step that must be idempotent and retried, and the aggregate exists for a
 short while without its relationship.
 

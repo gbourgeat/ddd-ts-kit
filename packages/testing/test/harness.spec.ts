@@ -104,6 +104,21 @@ describe('createTestBuses', () => {
     expect(orders.count()).toBe(1);
   });
 
+  it('runs a command in its unit of work: the domain events are heard once the handler has returned, phase after phase', async () => {
+    const { commandBus, dispatching, domainEvents, eventBus, ids, clock } = createTestBuses({ idPrefix: 'order' });
+    const orders = dispatching(new InMemoryOrders());
+    const journal: string[] = [];
+
+    domainEvents.on('ordering.order.placed', async () => void journal.push('after the commit'), { phase: 'after-commit' });
+    domainEvents.on('ordering.order.placed', async () => void journal.push(`before the commit, ${eventBus.published.length} event published by the handler`));
+    commandBus.register(PlaceOrder, new PlaceOrderHandler(orders, eventBus, ids, clock));
+
+    await commandBus.execute(new PlaceOrder('book'));
+
+    expect(journal).toEqual(['before the commit, 1 event published by the handler', 'after the commit']);
+    expect(domainEvents.afterCommitFailures).toEqual([]);
+  });
+
   it('gives a query bus, a frozen clock that can move and a unit of work', async () => {
     const { commandBus, queryBus, clock, unitOfWork } = createTestBuses({ now: at });
     const orders = new InMemoryOrders();

@@ -133,6 +133,18 @@ savepoint). Because `append` uses the current manager, an event published by a h
 then fails is rolled back with the business write: that is the whole point of the outbox.
 `createTypeOrmUnitOfWork(dataSource, 'REPEATABLE READ')` sets the isolation level.
 
+`run` is built on `withinUnitOfWork` of the kernel. The domain events of the aggregates saved
+inside it wait until `work` has returned, then are dispatched inside the transaction, before
+the commit: their handlers see every save, and what they write commits or rolls back with it.
+If `work`, a handler or the commit fails, nothing is left: no row, no outbox record, no handler
+run after the commit. Handlers declared `after-commit` run once the transaction has committed.
+A nested `run` joins the unit of work in progress: one dispatch, at the end of the outermost.
+A `run` called directly (a consumer, a script) has the same timing as a command.
+`unitOfWorkContract` of `@ddd-ts-kit/testing/contracts` proves it, with a deferred constraint
+for the commit that fails; on a real PostgreSQL (`DDD_TS_KIT_TEST_DATABASE_URL`) it also proves
+that the rows of a `before-commit` handler are invisible from another connection and visible
+to the `after-commit` handlers.
+
 `TypeOrmContext` is an abstract class, so it is its own injection token. A project with two
 data sources gives each a class of its own (`export abstract class Ledger extends TypeOrmContext {}`
 in `platform/database/`) and binds each to its unit of work.
@@ -499,8 +511,8 @@ refuses `--database mysql` and `--database sqlite`.
 
 ## Testing an adapter
 
-The stores of this package pass `outboxStoreContract` and `processedEventStoreContract` of
-`@ddd-ts-kit/testing/contracts`. Hold your repositories to `repositoryContract` the same way,
+The unit of work of this package passes `unitOfWorkContract`, and its stores
+`outboxStoreContract` and `processedEventStoreContract`, of `@ddd-ts-kit/testing/contracts`. Hold your repositories to `repositoryContract` the same way,
 next to their in-memory fake. The tests of this package need no container:
 
 ```

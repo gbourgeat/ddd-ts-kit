@@ -20,7 +20,7 @@ const AWAITED_ACTION = `    const trace = await tracing.traceOf(async () => {
 
 const GENERATED_TREE = `      { name: 'POST /invoices', kind: 'SERVER', children: [{ name: 'command IssueInvoiceCommand', children: [{ name: 'repository InvoiceRepository.save' }] }] },`;
 
-/** One action, one trace: the save announces the fact, each publisher appends to the outbox, the relay publishes later and shipping consumes, in the same trace. */
+/** One action, one trace: the save records the fact, at the end of the unit of work each publisher appends to the outbox, the relay publishes later and shipping consumes, in the same trace. */
 const WHOLE_TREE = `      {
         name: 'POST /invoices',
         kind: 'SERVER',
@@ -29,7 +29,7 @@ const WHOLE_TREE = `      {
           {
             name: 'command IssueInvoiceCommand',
             attributes: { 'app.context': 'billing', 'app.outcome': 'succeeded' },
-            children: [{ name: 'repository InvoiceRepository.save', children: [{ name: 'domain-event billing.invoice.issued', children: handlers }] }],
+            children: [{ name: 'repository InvoiceRepository.save' }, { name: 'unit-of-work before-commit', children: [{ name: 'domain-event billing.invoice.issued', children: handlers }] }],
           },
         ],
       },`;

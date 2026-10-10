@@ -146,6 +146,7 @@ presentation ──▶ application ──▶ domain ◀── infrastructure
 | `scheduling/job-triggers-use-case` | A job lives in `application/scheduling/*.job.ts`, implements `ScheduledJob` and only sends commands: no repository among its dependencies, no import of aggregates, entities, domain services or `infrastructure/`. |
 | `scheduling/job-name` | A job is named `<context>.<job-name>` by a string literal in lower-case kebab-case, the context being its own; its `systemActor` carries the same name; the name is unique in the project. |
 | `domain-events/dispatched-on-save` | Domain events leave with the save: no `pullEvents()` call in `application/` or `infrastructure/` of a context, and no `DomainEventDispatcher` imported, named in a dependency list or received by a constructor in `application/commands/`, `application/queries/` or a repository adapter. A handler writes `await repository.save(aggregate)` and nothing else; a removal that announces an event takes the aggregate. |
+| `domain-events/transactional-before-commit` | A domain event handler that runs before the commit has only transactional effects: the commit can still fail after the handlers ran (a deferred constraint, a serialization failure, a lost connection), so a before-commit handler may only have effects the rollback undoes. Judged: every production domain event handler of a context, that is a class of `application/event-handlers/*.event-handler.ts` or `application/integration/publishers/*.publisher.ts`, and any class carrying `@DomainEventHandler`. Its phase is `after-commit` when the options of its `@DomainEventHandler` write `phase: 'after-commit'`, or, for a class without the decorator, when every `.on(` registration of `<context>.module.ts` whose callback mentions it (the class name, or the variable assigned from `new <Class>(`) has a third argument holding `phase: 'after-commit'`; otherwise it is `before-commit`. Its dependencies are the names of the dependency list of its decorator, the types of its constructor parameters and the list of `.toClass(Handler, [..])`, each resolved through the imports of the file that writes it. A before-commit handler may depend on a repository port and anything else of the `domain/` layer of its context; on the ports of `@ddd-ts-kit/kernel` except `Cache`, `Lock`, `RateLimiter`, `JobScheduler` and `EventBus`; on `@ddd-ts-kit/auth`; on the files of its context outside `infrastructure/` and `application/ports/`; and on a port of `application/ports/` of its context only when it is a persistence port: at least one production class of the context implements it under `infrastructure/persistence/` and none anywhere else under `infrastructure/`. Refused before the commit: those five kernel ports, any other port of `application/ports/`, anything imported from `infrastructure/`, from another context, from the platform or from a package other than `@ddd-ts-kit/kernel` and `@ddd-ts-kit/auth`. An after-commit handler is refused `IntegrationEventPublisher` alone (after the commit nothing makes the outbox row atomic with a state change: it sends a command through `CommandBus`). |
 | `tracing/platform-only` | `@ddd-ts-kit/tracing` (every entry) and `@opentelemetry/*` are imported only by the platform directory, `main.ts` and `apps/`. |
 | `composition/only-in-module` | Adapters are instantiated or bound, and declared classes assembled (`contextModule`, `discoverContext`, `include`), only in `<context>.module.ts`, `main.ts`, `apps/` and the platform directory. In the declared style an adapter is bound by its own declaration and nothing instantiates it. |
 | `config/valid` | `ddd-ts-kit.config.json` is consistent: known contexts, classifications, relationships, rule ids and guard mode, the same contexts as on disk, a function limit within the ceiling, complete `onePerFile.allow` entries and positive commit limits. |
@@ -162,7 +163,7 @@ Three analyzers hold the rules, each where it is exact:
 | Analyzer | Holds | When |
 |---|---|---|
 | `ddd-ts-kit check` (zero dependency, text level) | alone, structure and project-wide facts: `tree/*`, `naming/*`, `language/*`, `config/*`, `context/no-cycle`, `test/spec-required`, `test/builder-required`, `events/defined-in-published-language`, `composition/only-in-module`, `declarations/barrel-current`, the config side of `events/outbox-required` and of `governance/recorded-deviation` (decision records exist), and what must be unique in the project (consumer names, job names). It also holds a fast approximation of every code rule below except `domain/*` and `application/*`; of `clean/blank-lines` it holds the `return` and the padded block only | at every file write (editor hook), in CI |
-| `@ddd-ts-kit/eslint-plugin` (syntax tree) | code: `layer/*`, the imports of `context/*` and `context/extractable`, `purity/*`, `clean/*` (`clean/blank-lines` through four rules of `@stylistic/eslint-plugin` its presets enable), `domain/*`, `application/*`, `authz/*`, `events/name-format`, `events/outbox-required`, `events/consumer-idempotent`, `aspects/*`, `tracing/*`, `domain-events/*`, `standard/*`, `ports/*`, `scheduling/*`, `declarations/role-declared`, `test/no-mocks`, and the comment side of `governance/recorded-deviation`. `domain/*` and `application/*` are held by it alone. Authoritative when the two disagree | on staged files, in CI |
+| `@ddd-ts-kit/eslint-plugin` (syntax tree) | code: `layer/*`, the imports of `context/*` and `context/extractable`, `purity/*`, `clean/*` (`clean/blank-lines` through four rules of `@stylistic/eslint-plugin` its presets enable), `domain/*`, `application/*`, `authz/*`, `events/name-format`, `events/outbox-required`, `events/consumer-idempotent`, `aspects/*`, `tracing/*`, `domain-events/*`, `standard/*`, `ports/*`, `scheduling/*`, `declarations/role-declared`, `test/no-mocks`, and the comment side of `governance/recorded-deviation`. `domain/*` and `application/*` are held by it alone. Of `domain-events/transactional-before-commit` it holds what one declared class shows; where the adapters of an `application/ports/` port live and the phase an explicit-style module file registers a handler in are held by `ddd-ts-kit check` alone. Authoritative when the two disagree | on staged files, in CI |
 | dependency-cruiser (resolved import graph) | the same boundaries through barrels and re-exports, cycles between files, orphans, undeclared dependencies; its configuration is generated from the config by `ddd-ts-kit depcruise-config` | in CI |
 
 knip (dead code and unused dependencies) and the TypeScript compiler in `strict` mode complete the gate.
@@ -177,12 +178,56 @@ and a violated one raises a `DomainError` with a stable `code`.
 **Value objects.** Immutable, validated in `create`, compared with `equals`. Primitive obsession
 is a defect: an email, an amount, a period are types.
 
-**Domain events.** Past tense, immutable, recorded by the aggregate. They leave with the
-save: after a repository method handed an aggregate resolves, the events it recorded are
-dispatched in order, inside the unit of work of the command, so their handlers and the
-outbox commit or roll back with the state change. A handler writes
+**Domain events.** Past tense, immutable, recorded by the aggregate. A handler writes
 `await this.orders.save(order)` and nothing else: no `pullEvents()`, no dispatcher. A
 repository adapter only persists.
+
+**An effect of a domain event exists only if the state change that recorded it is committed.**
+A `before-commit` handler commits with it, an `after-commit` handler runs only after it, an
+integration event is published only after it.
+
+- **Timing.** Inside a unit of work a save only queues the events its aggregates recorded, in
+  recording order across all the saves. Once the work (the command handler) has returned, still
+  inside the transaction, the queue is dispatched: every handler sees every save. A handler may
+  save an aggregate, whose events join the queue behind those waiting (same order, no
+  recursion), and may append to the outbox. Then the transaction commits.
+- **`before-commit`, the default phase.** The handler runs in that dispatch. What it writes
+  commits or rolls back with the state change, and its failure fails the command.
+- **`after-commit`.** Declared with `phase: 'after-commit'` (`@DomainEventHandler` options, or
+  `dispatcher.on(name, callback, { phase: 'after-commit' })`). The handler runs once the
+  transaction has committed, never when it rolled back, in the order the events were dispatched,
+  and is awaited before the command answers. Its failure cannot fail the command: it is logged
+  and handed to the `ErrorReporter`, and the other handlers still run. The phase is at most
+  once: a crash between the commit and the run loses it. What must not be lost is an
+  integration event, through the outbox.
+- **Failure.** When the work throws, a save rejects, a `before-commit` handler fails or the
+  commit itself fails, everything rolls back and the events still queued are dropped: no
+  `after-commit` handler runs, nothing is stored, no outbox row remains. A save that rejects
+  pulls nothing: its events stay on the aggregate. Events pulled by a save of a unit of work
+  that rolled back are never put back on the aggregate: a retry runs the command again on
+  reloaded aggregates, and an aggregate instance of a failed command is not reused.
+- **Why `before-commit` is restricted.** The commit can fail after the `before-commit`
+  handlers ran (a deferred constraint, a serialization failure, a lost connection). The
+  guarantee holds only because such a handler has transactional effects alone, which
+  `domain-events/transactional-before-commit` enforces: repository ports and the domain of its
+  context, kernel ports other than `Cache`, `Lock`, `RateLimiter`, `JobScheduler` and
+  `EventBus`, and ports of `application/ports/` whose adapters are all under
+  `infrastructure/persistence/`. A gateway, an external port or an adapter of
+  `infrastructure/external/` requires `phase: 'after-commit'` (the effect may be lost) or an
+  integration event (it must not be). An `after-commit` handler does not depend on
+  `IntegrationEventPublisher`.
+- **After the commit, no save.** An `after-commit` handler that hands an aggregate to a
+  repository (`save`, `saveAll`, `remove(aggregate)`) is refused before the write with
+  `SaveAfterCommitError`: the unit of work is over, nothing would dispatch its events nor roll
+  it back. It sends a command through the `CommandBus`, which opens a unit of work of its own.
+- **One scope per unit of work.** Every `UnitOfWork.run` is built on `withinUnitOfWork` of the
+  kernel, so a `run` called directly (a consumer, a script) has the timing of a command. A
+  nested `run`, or a command sent from inside a unit of work, joins the one in progress: one
+  dispatch, at the end of the outermost. Two concurrent commands never share a scope. A
+  project's own `UnitOfWork` builds `run` on `withinUnitOfWork` and passes `unitOfWorkContract`.
+- **Outside any unit of work** (a domain test, a repository used alone, a script) the save
+  dispatches before it resolves, `before-commit` handlers then `after-commit` ones, and nothing
+  is atomic.
 
 **Use cases.** One command or query per folder, one handler per command. A command returns at
 most an identifier. A query never changes state and may bypass aggregates to read a projection
@@ -362,8 +407,9 @@ regenerates it and fails on a diff. It is never edited by hand.
 
 **Tracing.** Non-invasive: no tracing import in `domain/` or `application/`; the platform
 wires it once. One action is one trace: the request, the use case, each call to a repository,
-a gateway or an outside system, the domain events of a save and their handlers, the outbox
-append, then, later and in the same trace, the publication by the relay and each consuming
+a gateway or an outside system, the domain events dispatched at the end of the unit of work
+and their handlers (before the commit, then after it), the outbox append, then, later and in
+the same trace, the publication by the relay and each consuming
 context with the commands it sends. A scheduled job is a trace of its own. Span names are
 stable and low in cardinality (`command BookAppointment`, `repository
 AppointmentRepository.save`, `process notification.appointment-booked`: `<kind> <Name>` for a

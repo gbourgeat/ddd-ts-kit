@@ -1,31 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { Command, InMemoryCommandBus, unitOfWorkMiddleware, type UnitOfWork } from '../src/index.js';
+import { Command, InMemoryCommandBus, unitOfWorkMiddleware } from '../src/index.js';
 import { aBench } from './support/shop/a-bench.js';
 import { Cart } from './support/shop/cart.js';
+import { RecordingUnitOfWork } from './support/shop/recording-unit-of-work.js';
 
 class OpenCart extends Command<undefined> {
   constructor(readonly id: string) {
     super();
-  }
-}
-
-class RecordingUnitOfWork implements UnitOfWork {
-  constructor(private readonly journal: string[]) {}
-
-  async run<T>(work: () => Promise<T>): Promise<T> {
-    this.journal.push('begin');
-
-    try {
-      const result = await work();
-
-      this.journal.push('commit');
-
-      return result;
-    } catch (error) {
-      this.journal.push('rollback');
-
-      throw error;
-    }
   }
 }
 
@@ -111,14 +92,14 @@ describe('the dispatch and the unit of work', () => {
     return { bus, bench };
   }
 
-  it('runs the handlers inside the unit of work of the command, before it commits', async () => {
+  it('runs the handlers inside the unit of work of the command, once its handler returned and before it commits', async () => {
     const journal: string[] = [];
     const { bus, bench } = aBus(journal);
 
     bench.dispatcher.on('shop.cart.opened', async () => void journal.push('handled'));
     await bus.execute(new OpenCart('c1'));
 
-    expect(journal).toEqual(['begin', 'handled', 'saved c1', 'commit']);
+    expect(journal).toEqual(['begin', 'saved c1', 'handled', 'commit']);
   });
 
   it('fails the command and commits nothing when a handler fails', async () => {
@@ -130,10 +111,10 @@ describe('the dispatch and the unit of work', () => {
     });
 
     await expect(bus.execute(new OpenCart('c1'))).rejects.toThrow('handler failed');
-    expect(journal).toEqual(['begin', 'rollback']);
+    expect(journal).toEqual(['begin', 'saved c1', 'rollback']);
   });
 
-  it('dispatches the events of a command sent by a handler inside the unit of work of that command', async () => {
+  it('queues the events of a command sent by a handler behind the ones waiting: dispatched once, before the outermost commit', async () => {
     const journal: string[] = [];
     const { bus, bench } = aBus(journal);
 
@@ -145,7 +126,7 @@ describe('the dispatch and the unit of work', () => {
 
     await bus.execute(new OpenCart('c1'));
 
-    expect(journal).toEqual(['begin', 'handling c1', 'begin', 'handling c2', 'saved c2', 'commit', 'saved c1', 'commit']);
+    expect(journal).toEqual(['begin', 'saved c1', 'handling c1', 'begin', 'saved c2', 'commit', 'handling c2', 'commit']);
   });
 
   it('still dispatches outside of any unit of work: the state is written, then the handlers run', async () => {

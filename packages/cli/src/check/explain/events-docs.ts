@@ -52,4 +52,23 @@ await this.invoices.save(invoice);
 // a removal that announces an event takes the aggregate
 await this.invoices.remove(invoice);`,
   },
+  'domain-events/transactional-before-commit': {
+    why: "An effect of a domain event exists only if the state change that recorded the event is committed. A handler that runs before the commit runs inside the transaction, and the commit can still fail after it ran (a deferred constraint, a serialization failure, a lost connection): that is safe only when the rollback undoes everything the handler did, so a before-commit handler has transactional effects only. Judged: every production class of application/event-handlers/*.event-handler.ts and application/integration/publishers/*.publisher.ts, and any class carrying @DomainEventHandler. Its phase is after-commit when its decorator says phase: 'after-commit', or, without a decorator, when every .on(..) of <context>.module.ts whose callback mentions it has a third argument holding phase: 'after-commit'; otherwise it is before-commit. Its dependencies are the names of its dependency list, of .toClass(Handler, [..]) and the types of its constructor parameters, resolved through the imports. Before the commit it may depend on the domain/ of its context, on the kernel ports except Cache, Lock, RateLimiter, JobScheduler and EventBus, on @ddd-ts-kit/auth, on application helpers of its context, and on a port of application/ports/ only when it is a persistence port: at least one production class implements it under infrastructure/persistence/ and none anywhere else under infrastructure/. Refused: those five kernel ports, any other port of application/ports/, anything of infrastructure/, of another context, of the platform or of another package. An after-commit handler is refused IntegrationEventPublisher alone: after the commit nothing makes the outbox row atomic with a state change, so it sends a command instead.",
+    bad: `// application/event-handlers/invoice-issued.event-handler.ts
+// Mailer is implemented under infrastructure/external/: the mail leaves even when the commit fails
+@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued' }, [InvoiceRepository, Mailer, Cache])
+// after the commit the outbox row would be written in no transaction
+@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued', phase: 'after-commit' }, [IntegrationEventPublisher])`,
+    good: `// application/event-handlers/invoice-issued.event-handler.ts: repositories, persistence ports, buses
+@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued' }, [InvoiceRepository, CommandBus])
+// an effect that may be lost on a crash runs after the commit, at most once
+@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued', phase: 'after-commit' }, [Cache])
+// explicit style, in billing.module.ts
+platform.domainEvents.on('billing.invoice.issued', async (event) => {
+  if (event instanceof InvoiceIssued) await invoiceIssuedEventHandler.handle(event);
+}, { phase: 'after-commit' });
+// an effect that must not be lost: a publisher writes to the outbox, the handler of that event does the work
+@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued' }, [IntegrationEventPublisher, IdGenerator])
+export class InvoiceIssuedPublisher {}`,
+  },
 };

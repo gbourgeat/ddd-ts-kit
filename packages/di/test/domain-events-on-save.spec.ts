@@ -125,7 +125,7 @@ describe('the dispatch among the wrappers of a repository', () => {
     expect(JournalLoanRepository.saves).toBe(1);
   });
 
-  it('is inside the decorate hook, which sees the save and what the save announced as one call', async () => {
+  it('is inside the decorate hook, which sees the save end before anything is announced: the events wait for the end of the unit of work', async () => {
     const calls: string[] = [];
     const loans = new TransactionalJournal('loans');
     const eventBus = new InMemoryEventBus();
@@ -153,7 +153,8 @@ describe('the dispatch among the wrappers of a repository', () => {
 
     await app.resolve(CommandBus).execute(new OpenLoan('l1'));
 
-    expect(calls).toEqual(['save starts', 'save ends, 1 event(s) published']);
+    expect(calls).toEqual(['save starts', 'save ends, 0 event(s) published']);
+    expect(eventBus.published).toHaveLength(1);
   });
 });
 

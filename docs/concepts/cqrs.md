@@ -53,8 +53,9 @@ flowchart LR
 
 **Command.** `BookAppointment` carries the actor and the requested slot. The handler loads what
 it needs, calls one intention method (`Appointment.book(...)`), saves through the repository
-port and does nothing else: the recorded events leave with the save. It answers the identifier of the new
-appointment and nothing else: the client that wants to display the appointment sends
+port and does nothing else: the save hands the recorded events over, and the unit of work
+dispatches them once the handler has returned, before the commit. It answers the identifier of
+the new appointment and nothing else: the client that wants to display the appointment sends
 `GetAppointment`. Returning the whole aggregate would tie the response to the write model.
 
 **Query.** `ListAppointments` needs twenty rows of five columns, filtered by what the actor may
@@ -103,7 +104,7 @@ found.
 ## What it does not buy, and what the kit does not do
 
 - **No event sourcing.** Aggregates are stored as state. Domain events are recorded to be
-  dispatched with the save, not to rebuild the aggregate. CQRS and event sourcing are
+  dispatched at the end of the unit of work, not to rebuild the aggregate. CQRS and event sourcing are
   independent patterns that are often presented together; the kit provides the first only.
 - **No separate read database, and no generated projection.** A projection is a table of the
   consuming context. The runtime packages carry the read side: `Criteria` (filters, sort and

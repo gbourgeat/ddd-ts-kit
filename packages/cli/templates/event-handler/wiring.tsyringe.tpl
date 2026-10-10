@@ -7,4 +7,4 @@ builder.bind({{event.pascal}}EventHandler).toClass({{event.pascal}}EventHandler)
 @@start
 resolve(DomainEventDispatcher).on('{{event.name}}', async (event) => {
   if (event instanceof {{event.pascal}}) await resolve({{event.pascal}}EventHandler).handle(event);
-});
+}{{#if handler.afterCommit}}, { phase: 'after-commit' }{{/if}});

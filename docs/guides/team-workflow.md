@@ -109,7 +109,7 @@ cannot judge. What to look for differs by layer:
 | Layer | The reviewer asks | Not worth a comment (a check holds it) |
 |---|---|---|
 | `domain/` | Is the rule in the aggregate, and is it the right rule? Can an invalid state be built? Do names say what the business says? Is the aggregate the right size? | constructor visibility, setters, imports, `new Date()` |
-| `application/` | Does the handler only orchestrate (load, one intention, save)? Is the permission the right one? Is each failure a named domain error? | handler shape, missing permission declaration, reading the ambient scope, a manual dispatch of domain events (they leave with the save) |
+| `application/` | Does the handler only orchestrate (load, one intention, save)? Is the permission the right one? Is each failure a named domain error? | handler shape, missing permission declaration, reading the ambient scope, a manual dispatch of domain events (the save hands them over, the unit of work dispatches them), a domain event handler with an effect outside the database left in the `before-commit` phase |
 | `infrastructure/` | Does the mapper cover every field both ways? Is the query scoped by tenant? Does the adapter pass the same contract suite as its fake? What happens when the dependency is down? | importing `presentation/`, an adapter built outside the composition root |
 | `presentation/` | Is the response a DTO and not the aggregate? Are all error codes declared on the route? Is the change breaking for clients? | missing `security`, a role test in the route |
 | `published-language/` | Would a consumer understand this payload without asking? Is anything internal or personal leaking? Is this additive, or a new version? | importing outside the allow-list |

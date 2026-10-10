@@ -85,8 +85,11 @@ configuration, the storage, and `composeApplication` of `{{config.platformDir}}/
   queues when it is extracted (`npx ddd-ts-kit generate service <context>`).
 {{/if}}
 - **Domain events leave with the save.** A handler writes `await repository.save(aggregate)` and
-  returns: the events the aggregate recorded are dispatched once the save resolved, inside the
-  unit of work of the command, so their handlers and the outbox commit or roll back with it.
+  returns: the events the aggregates recorded wait for the end of the unit of work of the command
+  and are dispatched there, before the commit, so their handlers see every save and what they
+  write, the outbox included, commits or rolls back with it. An effect of a domain event exists
+  only if the state change that recorded it is committed: a reaction outside the database is
+  declared in the `after-commit` phase (at most once) or goes through an integration event.
 - **Cross-cutting behaviour stays outside the contexts**: one action is one trace (the request,
   the use case, each repository or outbound call, the domain events and their handlers, the
   outbox append, then the publication and each consumer), put around the application by

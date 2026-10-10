@@ -135,8 +135,9 @@ const storyOfTheRequest: Parameters<typeof expectSpanTree>[1] = [
         name: 'command RevokeDelegationCommand',
         children: [
           { name: 'repository DelegationRepository.findById' },
+          { name: 'repository DelegationRepository.save' },
           {
-            name: 'repository DelegationRepository.save',
+            name: 'unit-of-work before-commit',
             children: [
               {
                 name: 'domain-event identity.delegation.revoked',
@@ -144,7 +145,7 @@ const storyOfTheRequest: Parameters<typeof expectSpanTree>[1] = [
                   {
                     name: 'handler DelegationRevokedEventHandler',
                     children: [
-                      { name: 'external IdentityRelationships.forgetDelegation' },
+                      { name: 'repository IdentityRelationships.forgetDelegation' },
                     ],
                   },
                   {

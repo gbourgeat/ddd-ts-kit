@@ -34,6 +34,7 @@ import {
   UnitOfWork,
   UuidGenerator,
   dispatchingOnSave,
+  reportAfterCommitFailures,
   type DependencyKind,
 } from '@ddd-ts-kit/kernel';
 import { InProcessJobScheduler, reportFailedRuns } from '@ddd-ts-kit/scheduling';
@@ -64,8 +65,10 @@ const EVERY_KIND: readonly DependencyKind[] = [
  * command bus running every command in the unit of work, both buses asking the use case guard
  * first and handing their unexpected failures to the error reporter. Replace one through the options, or from a later module with `builder.rebind(Clock)`.
  *
- * Every binding of kind `repository`, in every module, dispatches the domain events of the
- * aggregates it is handed once the call resolved (`dispatchingOnSave`): handlers only save.
+ * Every binding of kind `repository`, in every module, hands over the domain events of the
+ * aggregates it is given once the call resolved (`dispatchingOnSave`): handlers only save, and
+ * the unit of work of the command dispatches them at its end, before the commit. A failure of
+ * an `after-commit` handler goes to the `Logger` and the `ErrorReporter`.
  */
 export function kernelModule(options: KernelModuleOptions = {}): ContextModule {
   const instrumentation = options.instrumentation ?? {};
@@ -146,7 +149,7 @@ function bindCrossCuttingPorts(builder: ModuleBuilder, options: KernelModuleOpti
 
   builder
     .bind(DomainEventDispatcher)
-    .toFactory(wrapped(either(options.domainEvents, () => new InMemoryDomainEventDispatcher()), instrumentation.domainEvents));
+    .toFactory(wrapped(either(options.domainEvents, inProcessDomainEvents), instrumentation.domainEvents));
 
   builder.bind(Logger).toFactory(either(options.logger, () => new NoopLogger()));
   builder.bind(Metrics).toFactory(either(options.metrics, () => new NoopMetrics()));
@@ -163,6 +166,17 @@ function bindCrossCuttingPorts(builder: ModuleBuilder, options: KernelModuleOpti
     .toFactory(either(options.rateLimiter, (resolve) => new InMemoryRateLimiter(resolve(Clock))));
 
   builder.bind(JobScheduler).toFactory(either(options.jobScheduler, inProcessJobScheduler));
+}
+
+/** The logger, the reporter and the scope are resolved at each failure: a later module or a test may replace them. */
+function inProcessDomainEvents(resolve: Resolve): DomainEventDispatcher {
+  const failed = reportAfterCommitFailures({
+    reporter: lazyErrorReporter(resolve),
+    logger: { error: (message, fields) => resolve(Logger).error(message, fields) },
+    scope: { current: () => resolve(ExecutionScope).current() },
+  });
+
+  return new InMemoryDomainEventDispatcher(failed);
 }
 
 function told({ executionScope }: Instrumentation): ((scope: ExecutionScope) => ExecutionScope) | undefined {

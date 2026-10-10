@@ -8,11 +8,14 @@ const ADAPTER = `${BILLING}/infrastructure/external/remote-payment-gateway.adapt
 const HANDLER = `${BILLING}/application/commands/issue-invoice/issue-invoice.handler.ts`;
 const SERVICE = `${BILLING}/domain/services/pricing.service.ts`;
 const JOB = `${BILLING}/application/scheduling/cancel-stale-invoices.job.ts`;
+const EVENT_HANDLER = `${BILLING}/application/event-handlers/invoice-issued.event-handler.ts`;
 const OTHER_JOB = `${BILLING}/application/scheduling/issue-invoices-monthly.job.ts`;
 const LIST = '[InvoiceRepository, IdGenerator, Clock]';
 const SAVED = '    await this.invoiceRepository.save(target);\n';
 const SENT = "    await this.commands.execute(new CancelInvoiceCommand(systemActor('billing.cancel-stale-invoices')));";
 const ADAPTER_IMPORT = "import { DrizzleInvoiceRepository } from '../../../infrastructure/persistence/drizzle-invoice.repository.js';\n";
+const DECLARED = "import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';\nimport { InvoiceIssued } from '../../domain/events/invoice-issued.event.js';\n\n@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued' })";
+const CACHING = `import { Cache } from '@ddd-ts-kit/kernel';\n${DECLARED.replace(' })', ' }, [Cache])')}`;
 const SPRAWL = `\nexport function sprawl(): number {\n  let total = 0;\n\n${'  total += 1;\n'.repeat(101)}\n  return total;\n}\n`;
 
 interface Injection {
@@ -40,6 +43,7 @@ const INJECTIONS: readonly Injection[] = [
   { rule: 'clean/function-size', eslint: 'ddd-ts-kit/clean-function-ceiling', what: 'a function of more than 100 lines', file: SERVICE, from: '', to: SPRAWL },
   { rule: 'scheduling/job-triggers-use-case', eslint: 'ddd-ts-kit/scheduling-job-triggers-use-case', what: 'a job that sends no command', file: JOB, from: SENT, to: '    await Promise.resolve(execution);' },
   { rule: 'domain-events/dispatched-on-save', eslint: 'ddd-ts-kit/domain-events-dispatched-on-save', what: 'a handler that pulls the events of the aggregate it saved', file: HANDLER, from: SAVED, to: `${SAVED}    target.pullEvents();\n` },
+  { rule: 'domain-events/transactional-before-commit', eslint: 'ddd-ts-kit/domain-events-transactional-before-commit', what: 'a before-commit domain event handler given the cache', file: EVENT_HANDLER, from: DECLARED, to: CACHING },
   { rule: 'tracing/platform-only', eslint: 'ddd-ts-kit/tracing-platform-only', what: 'a tracing import outside the platform', file: ADAPTER, from: '', to: "\nexport { withSpan } from '@ddd-ts-kit/tracing';\n" },
   { rule: 'scheduling/job-name', eslint: 'ddd-ts-kit/scheduling-job-name', what: 'a job name that is not <context>.<job-name>', file: JOB, from: "@Scheduled('billing.cancel-stale-invoices'", to: "@Scheduled('CancelStale'" },
 ];
@@ -57,7 +61,7 @@ describe.runIf(SLOW)('a violation of a rule of this wave, written into a generat
   });
 
   it('is absent from the files these tests edit, as generated', () => {
-    expect(project.linted(PORT, ADAPTER, HANDLER, SERVICE, JOB, OTHER_JOB)).toBe('');
+    expect(project.linted(PORT, ADAPTER, HANDLER, SERVICE, JOB, OTHER_JOB, EVENT_HANDLER)).toBe('');
     expect(project.checkedRules()).toEqual([]);
   }, 120_000);
 

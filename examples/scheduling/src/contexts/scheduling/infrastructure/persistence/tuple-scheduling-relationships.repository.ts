@@ -1,17 +1,17 @@
 import { RelationTupleStore } from '@ddd-ts-kit/auth/rebac';
-import { Adapter } from '@ddd-ts-kit/kernel/declarations';
+import { Repository } from '@ddd-ts-kit/kernel/declarations';
 import { SchedulingRelationships } from '../../application/ports/scheduling-relationships.port.js';
-import { ownPolicy } from '../../../../platform/resilience/own-policy.js';
 
 type RecordedCalendar = Parameters<SchedulingRelationships['recordCalendar']>[0];
 type RecordedAppointment = Parameters<SchedulingRelationships['recordAppointment']>[0];
 
 /**
- * Writes the relationships as tuples of the store the authorizer reads. The store works in the
- * unit of work of the command, so nothing is retried here: the policy of this adapter is empty.
+ * Writes the relationships as tuples of the store the authorizer reads: a table of this database
+ * (ADR-0001), written in the unit of work of the command. A relationship commits or rolls back
+ * with the fact it follows, which is why its domain event handlers run before the commit.
  */
-@Adapter(SchedulingRelationships, { kind: 'external', aspects: [ownPolicy()] }, [RelationTupleStore])
-export class RemoteSchedulingRelationships implements SchedulingRelationships {
+@Repository(SchedulingRelationships, [RelationTupleStore])
+export class TupleSchedulingRelationships implements SchedulingRelationships {
   constructor(private readonly tuples: RelationTupleStore) {}
 
   async recordCalendar({ calendarId, practiceId, practitionerId }: RecordedCalendar): Promise<void> {

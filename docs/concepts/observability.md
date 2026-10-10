@@ -69,7 +69,10 @@ rebound by a later module is not wrapped.
 
 Span names are stable and low in cardinality: `command BookAppointment`,
 `repository AppointmentRepository.save` (`<kind> <Port>.<method>`),
-`process notifications.remind-on-appointment-booked` for a consumer.
+`process notifications.remind-on-appointment-booked` for a consumer. Under the span of a command
+the saves come first, then `unit-of-work before-commit` with the domain events and their
+handlers, then, when an event has a handler of that phase, `unit-of-work after-commit`: the
+trace shows that the handlers ran after every save, and on which side of the commit.
 
 Three consequences are worth understanding:
 

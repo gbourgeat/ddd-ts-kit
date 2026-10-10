@@ -42,9 +42,11 @@ and keep publishing both until the consumers have moved.
 
 A publisher is a handler of a domain event of its own context: it maps the fact to the public
 payload and publishes to an `IntegrationEventPublisher`, knowing nothing else. With a
-database, that publisher is the `OutboxPublisher`: it only stores. Domain events leave with
-the save, inside the unit of work of the command, so the integration event commits or rolls
-back with the business write.
+database, that publisher is the `OutboxPublisher`: it only stores. Domain events are dispatched
+at the end of the unit of work of the command, before its commit (the `before-commit` phase,
+the default), so the integration event commits or rolls back with the business write: the
+relay publishes it after the commit, never for a command that rolled back. A publisher is
+never declared `phase: 'after-commit'`: the transaction that would hold its outbox row is over.
 
 ```ts
 // contexts/ordering/application/integration/publishers/order-placed.publisher.ts

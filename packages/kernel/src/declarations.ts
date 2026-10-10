@@ -59,6 +59,7 @@ export { portDefect } from './declarations/token/port-defect.js';
 export { tokenIdentity } from './declarations/token/token-identity.js';
 export type { Token } from './declarations/token/token.js';
 export type { DurationText } from './application/scheduling/duration-text.js';
+export type { DomainEventPhase } from './application/events/domain-event-phase.js';
 export type { JobExecution } from './application/scheduling/job-execution.js';
 export type { JobOptions } from './application/scheduling/job-options.js';
 export type { IntervalSchedule, CronSchedule, JobSchedule } from './application/scheduling/job-schedule.js';

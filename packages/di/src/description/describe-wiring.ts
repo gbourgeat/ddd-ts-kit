@@ -82,9 +82,9 @@ function describeConsumption(consumption: EventConsumption): IntegrationEventHan
 }
 
 function describeDomainEventHandler(handling: DomainEventHandling): DomainEventHandlerDescription {
-  const { event, name, handler, module, declaredBy } = handling;
+  const { event, name, phase, handler, module, declaredBy } = handling;
 
-  return { event, name, handler: describeToken(handler), module, ...originOf(declaredBy) };
+  return { event, name, phase, handler: describeToken(handler), module, ...originOf(declaredBy) };
 }
 
 function describePolicy({ name, permission, policy, module, declaredBy }: PolicyBinding): PolicyDescription {

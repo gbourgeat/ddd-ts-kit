@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { InMemoryRelationTupleStore, SchemaCheckedTupleStore } from '@ddd-ts-kit/auth/rebac';
-import { RemoteSchedulingRelationships } from '../../infrastructure/external/remote-scheduling-relationships.adapter.js';
+import { TupleSchedulingRelationships } from '../../infrastructure/persistence/tuple-scheduling-relationships.repository.js';
 import { relationshipSchema } from '../../../../platform/auth/relationship-schema.js';
 
 const calendar = { calendarId: 'calendar-1', practiceId: 'practice-1', practitionerId: 'practitioner-1' };
 const appointment = { appointmentId: 'appointment-1', calendarId: 'calendar-1', patientId: 'patient-1' };
 
-describe('RemoteSchedulingRelationships', () => {
+describe('TupleSchedulingRelationships', () => {
   it('relates a calendar to the desk of its practitioner and to its practice, as the relationship schema knows them', async () => {
     const { relationships, tuples } = arrange();
 
@@ -38,5 +38,5 @@ describe('RemoteSchedulingRelationships', () => {
 function arrange() {
   const tuples = new SchemaCheckedTupleStore(relationshipSchema, new InMemoryRelationTupleStore());
 
-  return { relationships: new RemoteSchedulingRelationships(tuples), tuples };
+  return { relationships: new TupleSchedulingRelationships(tuples), tuples };
 }

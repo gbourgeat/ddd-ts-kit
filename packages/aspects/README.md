@@ -184,7 +184,7 @@ when(allOf(forKinds('gateway', 'external'), forMethods('find*')), cached({ key, 
 **the first is outermost**. Around one instance the application nests, outermost first: the
 `decorate` hook, the aspects modules put around a kind with `builder.around(kinds, ...)` in
 the order of the modules (the span of `kernelModule({ instrumentation })` comes first, then
-for a repository the dispatch of its domain events, then the ones of the platform module),
+for a repository the hand-over of its domain events, then the ones of the platform module),
 and last the aspects of the binding itself (`.with(...)`, or `aspects` of a declaration).
 Order changes meaning:
 
@@ -208,11 +208,13 @@ puts it: `logged` and `timed` given to the `decorate` hook are outside the span,
 given to `builder.around` or to a binding are inside it.
 
 A repository has one more wrapper, put by `kernelModule()` between the `decorate` hook and the
-aspects of its binding: the dispatch of the domain events of what it saves. So the aspects of
-a binding (`.with(retry(...))`) are inside the dispatch, where a retried save dispatches once
-and a failing event handler is not retried as a failed save. A `retry` given to the `decorate`
-hook is outside of it and would run the save again after a handler failed, with no event left
-to dispatch: put the retry of a repository on its binding.
+aspects of its binding: the hand-over of the domain events of what it saves, which the unit of
+work dispatches at its end, before the commit. So the aspects of a binding
+(`.with(retry(...))`) are inside it, where a retried save announces its events once. Inside a
+unit of work a handler of those events no longer runs during the save, so no retry of a save
+ever covers it. Outside of any, the save dispatches before it resolves: a `retry` given to the
+`decorate` hook would then run the save again after a handler failed, with no event left to
+dispatch. Put the retry of a repository on its binding.
 
 ## The aspect runtime
 

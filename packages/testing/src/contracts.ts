@@ -44,3 +44,5 @@ export {
 } from './contracts/read-model-store-contract.js';
 export { SourceOfTruth } from './contracts/read-model/source-of-truth.js';
 export { repositoryContract, type RepositoryContractOptions } from './contracts/repository-contract.js';
+export { unitOfWorkContract, type UnitOfWorkContractOptions } from './contracts/unit-of-work-contract.js';
+export type { UnitOfWorkUnderContract } from './contracts/unit-of-work/unit-of-work-under-contract.js';

@@ -22,7 +22,7 @@ shared files each kind writes (`writesShared`, `shared`, `sharedWhen`).
 | `gateway` | `<ctx> <upstream> <Name>` | read contract in the upstream's published language, port, in-process adapter, fake, contract suite |
 | `policy` | `<ctx> <Name> --permission <aggregate>.<action>` | `application/authorization/<name>.policy.ts`, spec |
 | `route` | `<ctx> <UseCase> --method <M> --path <p> [--command\|--query]` | `presentation/http/`, spec |
-| `event-handler` | `<ctx> <Aggregate> <Fact>` | `application/event-handlers/`, spec |
+| `event-handler` | `<ctx> <Aggregate> <Fact> [--phase after-commit]` | `application/event-handlers/`, spec; default phase `before-commit` |
 | `job` | `<ctx> <Name> (--every <duration> \| --cron "<expression>" [--time-zone <zone>]) --command <UseCase>` | `application/scheduling/<name>.job.ts`, spec |
 | `integration-event` | `<ctx> <Aggregate> <Fact> [--version <n>]` | declaration in `published-language/`, publisher, spec |
 | `integration-handler` (`consumer`) | `<ctx> <upstream> <event-type>` | `application/integration/handlers/<name>.integration-handler.ts`, consumer `<ctx>.<name>`, spec |

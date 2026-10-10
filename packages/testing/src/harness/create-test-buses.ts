@@ -9,6 +9,7 @@ import {
   InMemoryUnitOfWork,
   SequentialIdGenerator,
   dispatchingOnSave,
+  unitOfWorkMiddleware,
   executionContext,
   type ExecutionContext,
   type IntegrationEvent,
@@ -27,10 +28,16 @@ export interface TestBusesOptions {
 }
 
 export interface TestBuses {
+  /** Runs every command in `unitOfWork`, as the bus of the application does. */
   readonly commandBus: InMemoryCommandBus;
   readonly queryBus: InMemoryQueryBus;
   readonly eventBus: InMemoryEventBus;
-  /** Where the repositories wrapped by `dispatching` announce the domain events of what they save. */
+  /**
+   * Where the domain events of what the repositories wrapped by `dispatching` saved are
+   * dispatched: at the end of the command, as in the application. `domainEvents.on(name, handler,
+   * { phase: 'after-commit' })` attaches a handler of the other phase, and
+   * `domainEvents.afterCommitFailures` holds what such handlers threw.
+   */
   readonly domainEvents: InMemoryDomainEventDispatcher;
   readonly unitOfWork: InMemoryUnitOfWork;
   readonly clock: FixedClock;
@@ -43,8 +50,9 @@ export interface TestBuses {
   /** Follows `executionScope`; `actorContext.actAs(actor)` changes the actor of both. */
   readonly actorContext: FixedActorContext;
   /**
-   * The repository fake as the application hands it to a handler: its save dispatches the
-   * domain events of the aggregate to `domainEvents`. The handler under test only saves.
+   * The repository fake as the application hands it to a handler: its save hands the domain
+   * events of the aggregate to `domainEvents`, which hears them once the command handler has
+   * returned. The handler under test only saves.
    */
   dispatching<T extends object>(repository: T): T;
   /** The integration events published so far, optionally of one type only. */
@@ -60,14 +68,15 @@ export function createTestBuses(options: TestBusesOptions = {}): TestBuses {
   const context = options.executionContext ?? DEFAULT_EXECUTION_CONTEXT;
   const actorContext = new FixedActorContext(context.actor);
   const domainEvents = new InMemoryDomainEventDispatcher();
+  const unitOfWork = new InMemoryUnitOfWork();
 
   return {
-    commandBus: new InMemoryCommandBus(),
+    commandBus: new InMemoryCommandBus().use(unitOfWorkMiddleware(unitOfWork)),
     queryBus: new InMemoryQueryBus(),
     eventBus,
     domainEvents,
     dispatching: (repository) => dispatchingOnSave(repository, () => domainEvents),
-    unitOfWork: new InMemoryUnitOfWork(),
+    unitOfWork,
     clock: new FixedClock(options.now ?? new Date('2026-01-01T00:00:00.000Z')),
     ids: new SequentialIdGenerator(options.idPrefix),
     executionScope: new FixedExecutionScope(context, actorContext),

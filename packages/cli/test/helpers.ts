@@ -149,8 +149,8 @@ function scaffoldBilling(step: Step, withHttp: boolean): void {
   step('generate', 'integration-event', 'billing', 'Invoice', 'Issued', '--version', '2');
   step('generate', 'event-handler', 'billing', 'Invoice', 'Issued');
   step('generate', 'acl', 'billing', 'LegacyErp');
-  // A prerequisite created on the way: the domain event does not exist yet.
-  step('generate', 'event-handler', 'billing', 'Invoice', 'MarkedAsPaid', ...term('Mark=To record a status on an invoice'), ...term('Pay=To settle an invoice'));
+  // A prerequisite created on the way: the domain event does not exist yet. This one reacts once the command has committed.
+  step('generate', 'event-handler', 'billing', 'Invoice', 'MarkedAsPaid', '--phase', 'after-commit', ...term('Mark=To record a status on an invoice'), ...term('Pay=To settle an invoice'));
   scaffoldBillingJobs(step);
 }
 

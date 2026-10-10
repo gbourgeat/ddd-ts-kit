@@ -22,6 +22,7 @@ import { contextPublishedLanguageOnly } from '../rules/context-published-languag
 import { declarationsBarrelCurrent } from '../rules/declarations-barrel-current.js';
 import { declarationsRoleDeclared } from '../rules/declarations-role-declared.js';
 import { domainEventsDispatchedOnSave } from '../rules/domain-events-dispatched-on-save.js';
+import { domainEventsTransactionalBeforeCommit } from '../rules/domain-events-transactional-before-commit.js';
 import { eventsConsumerIdempotent } from '../rules/events-consumer-idempotent.js';
 import { eventsDefinedInPublishedLanguage } from '../rules/events-defined-in-published-language.js';
 import { eventsNameFormat } from '../rules/events-name-format.js';
@@ -90,6 +91,7 @@ export const ARCHITECTURE_RULES: readonly Rule[] = [
   eventsOutboxRequired,
   eventsConsumerIdempotent,
   domainEventsDispatchedOnSave,
+  domainEventsTransactionalBeforeCommit,
   contextExtractable,
   authzDeclared,
   authzInApplication,

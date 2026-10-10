@@ -16,7 +16,7 @@ npm i @ddd-ts-kit/kernel
 | Ports | `Clock`, `IdGenerator`, `UnitOfWork`, `Repository` (abstract classes: each one is its own injection token), `UseCase`, `DependencyKind` (the roles a binding declares, read by di, tracing and aspects: `repository`, `gateway`, `external`, `use-case`, `publisher`, `consumer`, `domain-event-handler`, `job`) |
 | Buses | `Command`, `Query`, `CommandBus`, `QueryBus`, `BusMiddleware`, the in-process `InMemoryCommandBus` and `InMemoryQueryBus` (`register(type, handler, { context })` names the bounded context in `MessageInfo`), `unitOfWorkMiddleware` |
 | Events | `IntegrationEvent`, `IntegrationEventPublisher`, `IntegrationEventSubscriber`, `EventBus` (both at once), `EventSubscribers` (the subscriber of each bounded context), `ProcessedEventStore`, `idempotent`, `InMemoryEventBus`, `DomainEventDispatcher`, `IntegrationEventCallback` and `DomainEventCallback` (the functions a subscriber and a dispatcher are given), `executionContextOfEvent`, `inEventScope`, `scopedPublisher`, `EventDelivery` (what a provider says of one delivery: attempt, last attempt, transport, source, consumer), `messagingSystemOf` |
-| Domain events with the save | `dispatchingOnSave` (the wrapper that makes a repository dispatch what the aggregates it is handed recorded), `announceDomainEvents`, `apartFromDomainEventFlow` |
+| Domain events and the unit of work | `dispatchingOnSave` (the wrapper that makes a repository hand over what the aggregates it is given recorded), `announceDomainEvents`, `withinUnitOfWork` (what every `UnitOfWork.run` is built on: queue, dispatch before the commit, `after-commit` phase), `unitOfWorkStage` and `UnitOfWorkStage`, `DomainEventPhase`, `DomainEventSubscription`, `SaveAfterCommitError`, `AfterCommitFailure`, `reportAfterCommitFailures`, `InMemoryDomainEventDispatcher` |
 | Actor | `Actor`, `AuthorizedCommand`, `AuthorizedQuery`, `ActorContext` |
 | Standard interfaces | `Session`, `ExecutionContext` and `ExecutionScope`, `Logger`, `Metrics`, `ErrorReporter`, `Cache`, `Lock`, `RateLimiter`, `Page` and `PageRequest`, `AuditStamp`, `TenantScoped`, `AuditTrail`, `AuditReader` and `AuditEntry` |
 | Scheduled jobs | `JobScheduler`, `ScheduledJob`, `JobExecution`, `JobSchedule`, `JobOptions`, `JobDefinition`, `JobRun`, `JobDescription`, `parseJobSchedule`, `describeJobSchedule`, `jobPolicy`, `executionContextOfJob` |
@@ -28,29 +28,94 @@ npm i @ddd-ts-kit/kernel
 
 The rules these blocks serve are in `docs/ARCHITECTURE.md`.
 
-## Domain events leave with the save
+## Domain events and the unit of work
+
+An effect of a domain event exists only if the state change that recorded it is committed.
 
 An aggregate records its events; nothing in a use case hands them over. A repository wrapped
-by `dispatchingOnSave(repository, () => dispatcher)` dispatches them itself, once a method that
-was handed the aggregate has resolved:
+by `dispatchingOnSave(repository, () => dispatcher)` pulls them itself, once a method that was
+handed the aggregate has resolved:
 
 ```ts
 const orders = dispatchingOnSave(new KnexOrderRepository(db), () => dispatcher);
 
-await orders.save(order);            // persisted, then the events `order` recorded are dispatched, in order
-await orders.saveAll([first, second]);
-await orders.remove(order);          // a "deleted" event leaves with the removal
+await unitOfWork.run(async () => {
+  await orders.save(order);            // persisted; the events `order` recorded are queued
+  await orders.saveAll([first, second]);
+  await orders.remove(order);          // a "deleted" event is queued with the removal
+});                                    // dispatched here, in recording order, before the commit
 ```
 
 `kernelModule()` of `@ddd-ts-kit/di` applies it to every binding of kind `repository`, so an
 application never writes this line; the table of what it guarantees (ordering, re-entrancy,
-failures, unit of work, wrapper order) is in the README of that package. In short: the events
-are pulled only when the call succeeded; events recorded by handlers wait their turn and go out
-in recording order, without recursion; the first handler that fails rejects the save;
-`unitOfWorkMiddleware` runs the handler, the save and the dispatch in one unit of work.
+failures, wrapper order) is in the README of that package. In short:
+
+- Inside a unit of work a save only queues, in recording order across all the saves. Once the
+  work has returned, still inside the transaction, the queue is dispatched: every handler sees
+  every save. Events recorded by handlers that save wait behind the others, in the same order,
+  without recursion. Then the transaction commits.
+- The events are pulled only when the call succeeded. The first `before-commit` handler that
+  fails rejects the unit of work; so does the work, a later save or the commit. The queued
+  events are then dropped and never put back on the aggregates: a retry reloads them.
+- Outside any unit of work the save dispatches before it resolves, `before-commit` handlers
+  then `after-commit` ones.
+
 `pullEvents()` stays public for this wrapper and for the specs of an aggregate; a use case and
 a repository adapter never call it. An aggregate is recognised by what it does (it has
 `pullEvents`), so a context compiled against another copy of the kernel is followed too.
+
+### Two phases
+
+| Phase | Declared | Runs | A failure |
+|---|---|---|---|
+| `before-commit` (default) | `dispatcher.on(name, callback)` | at the end of the unit of work, inside its transaction | fails the command; everything rolls back |
+| `after-commit` | `dispatcher.on(name, callback, { phase: 'after-commit' })` | once the transaction has committed, never when it rolled back, in dispatch order, awaited before the command answers | never fails the command: reported, and the other handlers still run |
+
+With declarations the phase is an option of the decorator:
+`@DomainEventHandler(OrderPaid, { name: 'ordering.order.paid', phase: 'after-commit' }, [Cache])`.
+
+The `after-commit` phase is at most once: a crash between the commit and the run loses it. What
+must not be lost goes through the outbox as an integration event. A `before-commit` handler
+may only have effects the transaction covers, because the commit can still fail after it ran
+(`domain-events/transactional-before-commit`).
+
+`DomainEventDispatcher.dispatch(events, phase?)` runs the handlers of one phase,
+`before-commit` by default. `InMemoryDomainEventDispatcher(failed?)` is told each failure of an
+`after-commit` handler and keeps the last hundred in `afterCommitFailures`, for specs.
+`reportAfterCommitFailures({ reporter, logger, scope? })` is the `failed` to give it wherever a
+logger and an error reporter exist: one `Logger.error` entry ("A domain event handler failed
+after the commit", with `domainEvent`, `errorType`, `errorCode`) and the error handed to the
+`ErrorReporter` under the operation `after-commit <event name>`.
+
+An `after-commit` handler that hands an aggregate to a wrapped repository (`save`, `saveAll`,
+`remove(aggregate)`) is refused before the write with `SaveAfterCommitError`: the unit of work
+is over. It sends a command through the `CommandBus`, which opens a unit of work of its own.
+`unitOfWorkStage()` answers `'outside'`, `'open'`, `'before-commit'` or `'after-commit'`.
+
+### A unit of work of your own
+
+The queue lives in an `AsyncLocalStorage` scope opened by `withinUnitOfWork(work, transaction)`.
+`InMemoryUnitOfWork` and the units of work of the ORM packages are built on it, so a `run`
+called directly (a consumer, a script) has the timing of a command. `unitOfWorkMiddleware`
+calls it too: a command is covered even with a `UnitOfWork` that does not. A nested `run`, or a
+command sent from inside a unit of work, joins the scope in progress: one dispatch, at the end
+of the outermost, and the `after-commit` phase after the outermost commit. Two concurrent
+commands never share a scope.
+
+A `UnitOfWork` written in a project builds `run` on it. `transaction` begins, calls what it is
+given, commits when it resolved and rolls back when it rejected:
+
+```ts
+run<T>(work: () => Promise<T>): Promise<T> {
+  return withinUnitOfWork(work, (scoped) => {
+    if (this.current.getStore() !== undefined) return scoped(); // nested: join the transaction
+
+    return this.database.transaction((transaction) => this.current.run(transaction, scoped));
+  });
+}
+```
+
+`unitOfWorkContract` of `@ddd-ts-kit/testing/contracts` fails an adapter that forgot.
 
 ## Declarations
 

@@ -72,11 +72,12 @@ read.
 Common to the four packages ([drizzle](../../packages/drizzle/README.md),
 [knex](../../packages/knex/README.md), [prisma](../../packages/prisma/README.md),
 [typeorm](../../packages/typeorm/README.md)): a unit of work whose transaction repositories
-never see, where a nested `run` joins the outer transaction; an outbox store whose
+never see, where a nested `run` joins the outer transaction and the domain events are
+dispatched at the end of the outermost `run`, before its commit; an outbox store whose
 `claimBatch` leases due rows so several relays share the work and a dead relay's rows come
 back; a processed-event store whose mark commits with the handler's effects; the standard
-audit columns and `tenant_id`; cursor and offset pages. The stores pass `outboxStoreContract`
-and `processedEventStoreContract`; your repositories are held to `repositoryContract` next to
+audit columns and `tenant_id`; cursor and offset pages. The units of work pass
+`unitOfWorkContract`, the stores `outboxStoreContract` and `processedEventStoreContract`; your repositories are held to `repositoryContract` next to
 their in-memory fake. Delivery through the outbox is at least once and unordered.
 
 For the read side, each of the four also ships a translator of the kernel criteria into its
@@ -120,7 +121,7 @@ From [`packages/cli/README.md`](../../packages/cli/README.md) and
 | PostgreSQL | the default and the only one in the automated suites | nothing |
 | MySQL 8 | stores run by hand once (Knex, Prisma, TypeORM) | no generated persistence, no SQL audit trail; `DATETIME` without time zone under Knex; no `SKIP LOCKED` on 5.7; one schema per context becomes one database or a table prefix |
 | SQLite | stores run by hand once | no schemas, compare-and-set claim, single writer: tests and tools, not several instances |
-| MongoDB, others | no adapter | `stack.orm: custom`: your own unit of work, outbox store and processed-event store, each passing the contract suites; without multi-document transactions the outbox guarantee is not available |
+| MongoDB, others | no adapter | `stack.orm: custom`: your own unit of work (its `run` built on `withinUnitOfWork` of the kernel), outbox store and processed-event store, each passing the contract suites; without multi-document transactions the outbox guarantee is not available |
 
 `stack.database` accepts `postgres`, `mysql`, `sqlite`, `mongodb` and `none`
 ([CONFIG.md](../CONFIG.md)). `init` refuses anything but `postgres` with one of the four

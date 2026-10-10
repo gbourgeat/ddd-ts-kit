@@ -56,7 +56,7 @@ line only. `npx ddd-ts-kit explain <rule-id>` gives the reason and a good and a 
 | `tree/*`, `naming/*` | a file made by hand | `ddd-ts-kit generate`, then move the logic |
 | `language/*` | a name outside the glossary | the business word, or the term added first (skill `ddd-ts-kit:glossary`) |
 | `ports/*`, `declarations/*`, `composition/*` | wiring by hand | skill `ddd-ts-kit:wiring`; a stale barrel is `npx ddd-ts-kit docs` |
-| `domain-events/*` | a handler or an adapter dispatching events itself | `await repository.save(aggregate)` and nothing else: events leave with the save |
+| `domain-events/*` | a handler or an adapter dispatching events itself; a `before-commit` handler depending on a gateway, an external port, `Cache`, `Lock`, `RateLimiter`, `JobScheduler` or `EventBus` | `await repository.save(aggregate)` and nothing else: the unit of work dispatches at its end; `phase: 'after-commit'` when the effect may be lost, an integration event when it must not |
 | `authz/*` | a use case without a permission, a right decided in the wrong layer | skill `ddd-ts-kit:access-control` |
 | `events/*`, `scheduling/*` | a contract outside the published language, a consumer without a name, a job doing work | skill `ddd-ts-kit:integration-event`; a job only sends a command |
 | `purity/*`, `clean/*` | a hidden dependency, unclear code | skill `ddd-ts-kit:clean-code` |

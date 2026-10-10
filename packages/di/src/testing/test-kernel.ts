@@ -21,7 +21,12 @@ export interface TestKernel {
   readonly queryBus: InMemoryQueryBus;
   /** Publisher and subscriber at once; `published` lists what the use cases announced. */
   readonly eventBus: InMemoryEventBus;
-  /** Where a spec dispatches a domain event to see the declared handlers of the context react. */
+  /**
+   * Where a spec dispatches a domain event to see the declared handlers of the context react:
+   * `dispatch([event])` for the `before-commit` ones, `dispatch([event], 'after-commit')` for the
+   * others. What an `after-commit` handler threw is in `domainEvents.afterCommitFailures`, in
+   * `errors.reports` and in `logger.entries`.
+   */
   readonly domainEvents: InMemoryDomainEventDispatcher;
   readonly clock: FixedClock;
   readonly ids: SequentialIdGenerator;

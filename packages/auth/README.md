@@ -681,8 +681,8 @@ export class TupleDocumentGrants implements DocumentGrants {
 The command bus runs the handler in the unit of work, and a SQL-backed `RelationTupleStore`
 writes in that transaction: the document and its owner tuple are committed together or not at
 all. An event handler reacting to a domain event of the aggregate (`DocumentShared`) can call
-the same port: domain events leave with the save, inside the unit of work of the command, so
-with a SQL-backed store its tuple commits or rolls back with the aggregate too. Only a store
+the same port: domain events are dispatched at the end of the unit of work of the command,
+before its commit, so with a SQL-backed store its tuple commits or rolls back with the aggregate too. Only a store
 that is not in that transaction (a remote authorization service) makes the write a second
 step, which must then be idempotent (writing a tuple twice changes nothing) and retried,
 through the outbox. `test/relationship-sync.spec.ts` is the tested version of the write from

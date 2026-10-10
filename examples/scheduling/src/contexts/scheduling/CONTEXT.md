@@ -128,6 +128,18 @@ This is why practices come: a time on a calendar is held once, under rules of av
 - Upstream of `analytics` (conformist).
 <!-- /ddd-ts-kit:relationships -->
 
+## Domain events and what follows them
+
+An effect of a domain event exists only if the state change that recorded it is committed. Every
+handler of this context runs at the end of the unit of work of the command, before its commit,
+and has transactional effects only: the publishers append to the outbox, the projections write
+their tables, three handlers send `OfferFreedSlotCommand`, which joins the unit of work, and
+`CalendarCreatedEventHandler` and `AppointmentBookedEventHandler` write the relationships of a
+calendar and of an appointment through `SchedulingRelationships`. Its adapter,
+`TupleSchedulingRelationships`, writes tuples in a table of the same database (ADR-0001): it is
+a persistence adapter, in `infrastructure/persistence/`, for the reasons given in the
+`CONTEXT.md` of `identity`.
+
 ## Reference
 
 <!-- ddd-ts-kit:reference -->
@@ -201,7 +213,7 @@ Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-ki
 | `CalendarRepository` | repository | `KnexCalendarRepository` |
 | `PersonDirectoryGateway` | gateway | `InProcessPersonDirectoryGateway` |
 | `PractitionerDirectory` | repository | `KnexPractitionerDirectory` |
-| `SchedulingRelationships` | external | `RemoteSchedulingRelationships` |
+| `SchedulingRelationships` | repository | `TupleSchedulingRelationships` |
 | `WaitlistRepository` | repository | `KnexWaitlistRepository` |
 
 ### Policies

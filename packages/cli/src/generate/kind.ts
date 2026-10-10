@@ -36,6 +36,8 @@ export interface KindFlags {
   /** What an ADR deviates from, as a config key such as `rules.clean/stepdown`. */
   readonly deviation?: string;
   readonly reason?: string;
+  /** When a domain event handler runs: `before-commit`, the default, or `after-commit`. */
+  readonly phase?: string;
 }
 
 export interface KindRequest {
