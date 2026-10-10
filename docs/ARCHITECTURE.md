@@ -127,8 +127,6 @@ presentation ──▶ application ──▶ domain ◀── infrastructure
 | `standard/no-parallel-interface` | No home-made copy of a standard interface of the kernel: no declared `ILogger`, `AppLogger`, `UserContext`, `CurrentUser`, `UserSession`, `PaginatedResult`, `AuditLog` and the like. Use the kernel interface and extend it by declaration merging; the list is `standardInterfaces` in the config. Default severity `warn`. |
 | `declarations/role-declared` | In the declared style, a role file exports a class carrying the decorator of its role, and a declared class lives in a role file. Consumer, policy and domain event names are non-empty string literals, and no class under `domain/` carries a declaration. |
 | `declarations/barrel-current` | In the declared style with a barrel, `<context>.declarations.ts` holds exactly one `export *` per role file of its context: a role file cannot be silently left unregistered. |
-| `scheduling/job-triggers-use-case` | A class of `application/scheduling/` declares `@Scheduled`, exposes one method `run`, and only sends commands or queries through the buses: no repository, no business branching. |
-| `scheduling/job-name` | A job name is a string literal `<context>.<job-name>`, unique in the project: it is the system actor, the lock key, the metrics label and the settings key of the job. |
 | `composition/only-in-module` | Adapters are instantiated or registered only in `<context>.module.ts` and `main.ts`. |
 
 Only the module file and `main.ts` are allowed to know every layer.
