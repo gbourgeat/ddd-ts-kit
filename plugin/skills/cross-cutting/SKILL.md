@@ -22,16 +22,17 @@ allowed-tools:
 A handler that logs, measures, retries, reports and audits is five concerns hiding one use
 case. Business code states the business; everything else is attached from outside, in
 `src/platform/` and in adapters. `@ddd-ts-kit/aspects`, `audit`, `redis` and `tracing` are
-refused in `domain/` and `application/` even when an allow-list names them.
+refused in `domain/` and `application/` even when an allow-list names them, and tracing is
+imported by the platform, `main.ts` and `apps/` only (`tracing/platform-only`).
 
 ## Where each concern goes
 
 | Need | Put it | With |
 |---|---|---|
 | log and measure every use case | bus middlewares, `src/platform/buses/` | `loggingMiddleware`, `metricsMiddleware` |
-| the logger itself | `src/platform/observability/create-logger.ts` | the kernel `Logger` port: standard output by default, `@ddd-ts-kit/pino` or `@ddd-ts-kit/winston` as adapters |
-| trace I/O | `src/platform/tracing.ts`, first import of `main.ts`, and the `decorate` hook | [tracing.md](tracing.md) |
-| report unexpected failures | the boundaries, never a use case | the kernel `ErrorReporter` port; `@ddd-ts-kit/sentry` for Sentry or GlitchTip |
+| the logger itself | `src/platform/observability/create-logger.ts` | the kernel `Logger` port; `stack.logger` chooses the adapter: `stdout` (default), `pino` or `winston` |
+| trace the application | `src/platform/tracing.ts`, first import of `main.ts`, and the instrumentation given to the kernel module | [tracing.md](tracing.md) |
+| report unexpected failures | the boundaries, never a use case | the kernel `ErrorReporter` port; `stack.errors: sentry` wires `@ddd-ts-kit/sentry` (Sentry or GlitchTip) in `src/platform/errors.ts` |
 | who did what | around the use cases, in `src/platform/audit/` | [audit-trail.md](audit-trail.md) |
 | retry, timeout, circuit breaker on an outside call | the adapter's declaration or binding; defaults in `src/platform/resilience/` | `@Adapter(Port, { kind, aspects })`, or `.with(retry(...), timeout(...))` in an explicit module |
 | the same, when the policy is part of what the adapter is | the adapter class, in `infrastructure/` only | `@Retry`, `@Timeout` of `@ddd-ts-kit/aspects/decorators` (`aspects/outside-in`) |
@@ -39,8 +40,10 @@ refused in `domain/` and `application/` even when an allow-list names them.
 | rate limit | in front of the HTTP layer | the kernel `RateLimiter` port |
 
 `npx ddd-ts-kit generate adapter <ctx> <Port> [--kind external|gateway] [--decorators]`
-writes an adapter with its policy attached. Order when composing: metrics and logging
-outermost, then circuit breaker, then retry, then timeout innermost.
+writes an adapter with its policy attached (`retry` then `timeout`). Order when composing,
+outermost first: logging and metrics, then retry, then circuit breaker, then timeout. Each
+attempt then counts for the breaker and has its own time limit, and an open circuit ends
+the retries at once.
 
 ## What may be recorded
 

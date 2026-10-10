@@ -36,14 +36,14 @@ publishes is reported by `application/command-query-separation`.
 flowchart LR
   subgraph write [Command path]
     R1[POST /appointments] --> CB[CommandBus]
-    CB --> MW[middlewares: logging, permission, unit of work]
+    CB --> MW[middlewares: logging, metrics, permission, span, audit, unit of work]
     MW --> H1[BookAppointmentHandler]
     H1 --> AG[Appointment aggregate]
     H1 --> RP[AppointmentRepository]
   end
   subgraph read [Query path]
     R2[GET /appointments] --> QB[QueryBus]
-    QB --> MW2[middlewares: logging, permission]
+    QB --> MW2[middlewares: logging, metrics, permission, span, audit]
     MW2 --> H2[ListAppointmentsHandler]
     H2 --> RD[read port]
   end
@@ -53,7 +53,7 @@ flowchart LR
 
 **Command.** `BookAppointment` carries the actor and the requested slot. The handler loads what
 it needs, calls one intention method (`Appointment.book(...)`), saves through the repository
-port and lets the recorded events be dispatched. It answers the identifier of the new
+port and does nothing else: the recorded events leave with the save. It answers the identifier of the new
 appointment and nothing else: the client that wants to display the appointment sends
 `GetAppointment`. Returning the whole aggregate would tie the response to the write model.
 
@@ -71,9 +71,11 @@ database.
 
 A route could call a handler directly. The buses exist for three reasons:
 
-1. **One place for what every use case needs.** The generated platform puts logging, metrics,
-   the permission check and the unit of work on the buses as middlewares, in that order (CLI
-   README). A handler contains none of it, so none of it can be forgotten in a new handler.
+1. **One place for what every use case needs.** The generated platform
+   (`src/platform/buses/`) puts logging, metrics, the permission check, the span of the use
+   case, the audit entry and, for commands, the unit of work on the buses as middlewares, in
+   that order, outermost first. A handler contains none of it, so none of it can be forgotten
+   in a new handler.
 2. **One way in for every caller.** A route, an integration event handler and a scheduled job
    all send a command. The use case is authorized, audited and run in a transaction the same
    way whoever started it.
@@ -87,7 +89,7 @@ found.
 ## What it buys
 
 - **Use cases are visible.** The list of commands and queries of a context is its functional
-  surface: `ddd-ts-kit list` prints it, and a permission is declared on each (`authz/declared`).
+  surface: `ddd-ts-kit describe <context>` prints it, and a permission is declared on each (`authz/declared`).
 - **Reads stop bending the model.** An aggregate is sized for its invariants (see
   [Aggregates](aggregates.md)), not for the screens that display it. A new column in a list is a
   change of a read adapter.
@@ -101,12 +103,16 @@ found.
 ## What it does not buy, and what the kit does not do
 
 - **No event sourcing.** Aggregates are stored as state. Domain events are recorded to be
-  dispatched after the commit, not to rebuild the aggregate. CQRS and event sourcing are
+  dispatched with the save, not to rebuild the aggregate. CQRS and event sourcing are
   independent patterns that are often presented together; the kit provides the first only.
-- **No separate read database, no automatic projections.** A projection is a table of the
-  consuming context, updated by an integration event handler that the project writes. The kit
-  gives the event plumbing (outbox, idempotent consumers), not a projection engine or a rebuild
-  tool.
+- **No separate read database, and no generated projection.** A projection is a table of the
+  consuming context. The runtime packages carry the read side: `Criteria` (filters, sort and
+  page of a list, checked against a definition), hydration, the `ReadModelStore` port with a
+  SQL table store, the `@Projection` and `@On` declarations of a projector and a rebuild
+  (kernel README, "Criteria", "Hydration" and "Projections"). The CLI generates none of it
+  yet: `generate query --list` writes a read port with an in-memory adapter and a fake, and
+  the projector and its store are written by hand. The status of each part is in the
+  [read side proposal](../proposals/read-side.md).
 - **No performance by itself.** Two code paths over one database scale like one database.
 - **No asynchronous commands by default.** The in-process buses are awaited. A command answered
   "accepted" and processed later is a design the project builds on events.
@@ -133,8 +139,9 @@ been taken a second ago, and `appointments` is what refuses the double booking (
   send the query after the command and answer its result.
 - **Read-your-own-writes is not automatic** once a read comes from a projection fed by events.
   Either read that screen from the write tables, or design the UI for the delay.
-- **Middleware order matters and is invisible from a handler.** Read the platform module to know
-  what wraps a use case.
+- **Middleware order matters and is invisible from a handler.** Read
+  `src/platform/buses/create-command-bus.ts` and `create-query-bus.ts` to know what wraps a use
+  case.
 - **A query handler that needs a rule of the domain** (a price, an eligibility) should call the
   domain for it, not copy it into SQL. Bypassing aggregates is for shape, not for logic.
 
@@ -157,4 +164,5 @@ been taken a second ago, and `appointments` is what refuses the double booking (
 - [Eventual consistency](eventual-consistency.md)
 - [Domain and integration events](domain-and-integration-events.md)
 - [Authentication and authorization](authentication-and-authorization.md)
+- [Read side proposal](../proposals/read-side.md)
 - [Architecture reference](../ARCHITECTURE.md)

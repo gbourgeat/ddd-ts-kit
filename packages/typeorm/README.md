@@ -19,13 +19,13 @@ The tables are `EntitySchema` objects: add them to the `entities` of the data so
 `typeorm migration:generate` writes their DDL into a migration of your project.
 
 ```ts
-// platform/database/entities.ts
+// platform/database/schema.ts
 import { outboxEntity, processedEventEntity, schemaNameOf } from '@ddd-ts-kit/typeorm';
 
 export const outbox = outboxEntity({ schema: 'messaging' }); // messaging.outbox
 export const processedEvents = processedEventEntity({ schema: 'messaging' });
 
-// contexts/billing-core/infrastructure/persistence/invoice.entity.ts
+// contexts/billing-core/infrastructure/persistence/invoice-row.schema.ts
 import { EntitySchema } from 'typeorm';
 
 export interface InvoiceRow {
@@ -106,7 +106,7 @@ export const persistenceModule = defineContextModule({
 
 ```ts
 // main.ts
-const app = createApplication({ modules: [kernelModule(), persistenceModule, billingModule] });
+const app = createApplication({ modules: [kernelModule(), persistenceModule, contextModule('billing', billingDeclarations)] });
 
 const relay = new OutboxRelay({ store: app.resolve(OutboxStore), publisher: broker, clock: app.resolve(Clock) });
 relay.start({ intervalMs: 500 });
@@ -114,6 +114,12 @@ relay.start({ intervalMs: 500 });
 
 List the module after `kernelModule()`: `rebind` replaces its in-memory defaults. The command
 bus of the kernel module runs every command in the bound `UnitOfWork`; handlers do not know it.
+`contextModule` of `@ddd-ts-kit/di` turns the declared classes of a context into its module.
+
+A project written by the CLI holds the same wiring in two files:
+`platform/database/persistence-over.ts` builds the unit of work and the two stores once, and
+`platform/platform.module.ts` binds them, the outbox publisher being given to
+`kernelModule({ eventPublisher })`.
 
 Pass to a store the very entity the data source registers. Without `entity`, a store uses
 `outboxEntity()` or `processedEventEntity()`, which TypeORM matches by name with the default
@@ -145,7 +151,7 @@ export abstract class InvoiceRepository extends Repository<Invoice> {}
 ```
 
 ```ts
-// contexts/billing-core/infrastructure/persistence/typeorm-invoice.repository.ts
+// contexts/billing-core/infrastructure/persistence/type-orm-invoice.repository.ts
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
 import { insertIgnoringConflict, optimisticUpdate, TypeOrmContext } from '@ddd-ts-kit/typeorm';
 
@@ -184,7 +190,8 @@ export class TypeOrmInvoiceRepository implements InvoiceRepository {
 }
 ```
 
-Without the decorator, the same binding is one line of the module of the context:
+In the explicit style, without the decorator, the same binding is one line of
+`<context>.module.ts`:
 `builder.bind(InvoiceRepository).toClass(TypeOrmInvoiceRepository, [TypeOrmContext])`.
 
 `optimisticUpdate` gives the version to expect and the version to write, raises a
@@ -281,12 +288,12 @@ export abstract class InvoiceQueries {
 ```
 
 ```ts
-// contexts/billing-core/infrastructure/persistence/typeorm-invoice.queries.ts
+// contexts/billing-core/infrastructure/persistence/type-orm-invoice-queries.reader.ts
 import { LessThan, MoreThan, type FindOptionsWhere } from 'typeorm';
 import { ExecutionScope, encodeCursor, pageOf, tenantScopeOf } from '@ddd-ts-kit/kernel';
-import { Adapter } from '@ddd-ts-kit/kernel/declarations';
+import { Repository } from '@ddd-ts-kit/kernel/declarations';
 
-@Adapter(InvoiceQueries, [TypeOrmContext, ExecutionScope])
+@Repository(InvoiceQueries, [TypeOrmContext, ExecutionScope])
 export class TypeOrmInvoiceQueries implements InvoiceQueries {
   constructor(
     private readonly context: TypeOrmContext,
@@ -348,6 +355,11 @@ function beyond(
 `positionOf(cursor)` decodes with `decodeCursor` and checks that `amount` is a number and `id`
 a string, raising `InvalidPageRequestError` otherwise.
 
+A read adapter over the database is declared with `@Repository`, as the ones the CLI
+generates: its kind is `repository`. Declared with `@Adapter` it would be `external`, and a
+generated platform puts a retry and a time limit around every `external` and `gateway`
+adapter, which a statement of the unit of work must not get.
+
 The rules these examples hold, and that the tests of this package check on a real database:
 
 - **Audit columns** are filled by the adapter, never by the aggregate: `stampCreation(scope,
@@ -382,7 +394,7 @@ operator of a closed list, both from the adapter. A text search is `LIKE :p ESCA
 `%`, `_` and `\` escaped.
 
 ```ts
-// infrastructure/persistence/typeorm-appointment.queries.ts
+// infrastructure/persistence/type-orm-appointment-queries.reader.ts
 async list(criteria: ScopedCriteria<AppointmentRow>): Promise<Page<AppointmentRow>> {
   const plan = planCriteria(appointmentCriteria, criteria);
 
@@ -409,7 +421,7 @@ An integer is `integer`: a `bigint` comes back as a string from the driver.
 ## Read models
 
 ```ts
-// infrastructure/persistence/appointment-list.ts
+// infrastructure/persistence/appointment-list.schema.ts
 export const appointmentList = new EntitySchema<AppointmentRow & ReadModelStamps>({
   name: 'AppointmentRow',
   tableName: 'appointment_list',
@@ -422,8 +434,8 @@ export const appointmentList = new EntitySchema<AppointmentRow & ReadModelStamps
   },
 });
 
-// infrastructure/persistence/typeorm-appointment-list.adapter.ts
-@Adapter(AppointmentList, [TypeOrmContext])
+// infrastructure/persistence/type-orm-appointment-list.repository.ts
+@Repository(AppointmentList, [TypeOrmContext])
 export class TypeOrmAppointmentList extends TypeOrmReadModelStore<AppointmentRow> implements AppointmentList {
   constructor(context: TypeOrmContext) {
     super(context, { entity: appointmentList, definition: appointmentCriteria });
@@ -463,6 +475,9 @@ column through the same query builder.
   the effects of the handler, and disappears with them if it fails.
 
 ## Dialect coverage
+
+What follows is about this package. The CLI generates for PostgreSQL only: `init --orm typeorm`
+refuses `--database mysql` and `--database sqlite`.
 
 | Database | Status |
 |---|---|

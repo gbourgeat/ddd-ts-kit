@@ -133,7 +133,7 @@ Rules that look ambiguous usually separate cleanly with the discriminator above:
 |---|---|---|
 | free cancellation ends 24 hours before the start | invariant | true for anyone |
 | a practitioner may cancel inside the 24 hours, a client may not | policy | depends on who asks; the aggregate then offers two intentions, or the handler chooses the method the actor is allowed to call |
-| not after the appointment has started | invariant | "if the rule would hold whoever asks, it is an invariant" (access-control skill) |
+| not after the appointment has started | invariant | it holds whoever asks |
 | a tenant sees only its own appointments | neither: tenant scoping, applied by infrastructure from the execution scope | [Actor and execution scope](actor-and-execution-scope.md) |
 
 ## Errors, three shapes

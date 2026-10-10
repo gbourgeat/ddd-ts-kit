@@ -15,13 +15,15 @@ losing correctness; the generators and the checker do the rest.
 
 ## Read less
 
-4. **The map, not the tree.** `npx ddd-ts-kit list --json` gives every context with its
-   aggregates, use cases, events, permissions, handlers and adapters. Do not `ls`, `find` or
-   glob `src/` to learn what exists.
+4. **The map, not the tree.** `npx ddd-ts-kit describe <context> --json` gives one context
+   as facts: use cases, routes, events, ports with their adapters, policies, gateways,
+   dependencies; `npx ddd-ts-kit list --json` gives every context in less detail. Do not
+   `ls`, `find` or glob `src/` to learn what exists.
 5. **One `CONTEXT.md`.** It holds the purpose, the glossary and the generated lists of one
    context. Read the one you work in, and of a neighbour only its `published-language/`.
-6. **Open only named files.** The `next` list of a generator (`file:line`), the file of a
-   violation, the file of a failing test. Read a range around the line, not the file.
+6. **Open only named files.** The `next` list of a generator (`file:line`), the lines of
+   `npx ddd-ts-kit todo <context>`, the file of a violation, the file of a failing test.
+   Read a range around the line, not the file.
 7. **The rule, not the reference.** `npx ddd-ts-kit explain <rule-id>` instead of the whole
    architecture reference; the rule files of `.claude/rules/` load by themselves with the
    files of their layer.
@@ -38,7 +40,8 @@ losing correctness; the generators and the checker do the rest.
 9. **One bounded context per conversation or per agent.** Its language, its files, its tests.
    Crossing a boundary means switching context: finish, commit, start again there.
 10. **State lives in files.** `docs/architecture/plan.md` says what is next,
-    `docs/architecture/slices.md` what is done. Resume from them, not from history.
+    `docs/architecture/slices.md` what is done; `npx ddd-ts-kit status` reads both. Resume
+    from them, not from history.
 11. **Explore through a read-only sub-agent** when the answer needs more than three files or
     another context: the agent `domain-explorer` answers "where is X", "what does context Y
     expose", "who consumes event Z" in a few lines, and its reading stays out of your context.

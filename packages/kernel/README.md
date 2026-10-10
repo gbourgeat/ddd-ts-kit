@@ -871,6 +871,14 @@ compiler, a projection without any `@On` and an `@On` on a class without `@Proje
 when the file loads. A method answers what its store answered, which is how the application
 counts what was applied and what was stale.
 
+**Not known to the CLI yet.** The runtime packages hold projections; `ddd-ts-kit` has no
+generator for them and its canonical tree does not list `application/projections/`. In a
+project held by `ddd-ts-kit check`, the directory is refused by `tree/closed` until it is
+declared in `contexts.<name>.extraDirectories` with its decision record, and the generated
+barrel `<context>.declarations.ts` refuses a line for a `*.projection.ts` file
+(`declarations/barrel-current`): the projection is then registered by discovery or with
+`builder.include(...)`, see the README of `@ddd-ts-kit/di`.
+
 ### Idempotent and ordered by construction
 
 `ReadModelStore<Row>` is the port of a read model: `get`, `upsertIfNewer`, `delete` and

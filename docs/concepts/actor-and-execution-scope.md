@@ -96,9 +96,12 @@ flowchart TB
 | Loggers, tracing, error reporting | yes | the scope: correlation, actor id, tenant |
 | Event publisher decorator | yes | the scope: the correlation stamped on outgoing events |
 | Audit trail sources | yes | the scope: actor, session, impersonation, origin |
-| Routes and consumers | they open it | the credential or the envelope |
+| The boundaries (HTTP, event subscription, scheduler) | they open it | the credential, the envelope or the schedule |
 | Command and query handlers | no | the command or the query |
 | Aggregates, value objects, domain services | no | arguments of their methods |
+
+Infrastructure reads the `ExecutionScope` port. `ActorContext` is a view of the same scope that
+answers the actor only; it holds no state of its own.
 
 Why handlers may not, even though it would save a parameter:
 

@@ -16,7 +16,7 @@ the second. Keeping them apart is what lets a model change without breaking its 
 | Shape | whatever the model finds convenient; may hold value objects | plain JSON in a versioned envelope, validated by a schema |
 | Stability | changes freely with the model | a contract: additive inside a version, otherwise a new version |
 | Raised by | the aggregate, when its state changes | a publisher reacting to a domain event |
-| Delivery | in process, after the unit of work commits | at least once, through the outbox when there is a database |
+| Delivery | in process, with the save, inside the unit of work of the command | at least once, through the outbox when there is a database |
 | Handled by | `application/event-handlers/` | `application/integration/handlers/` of the consuming context |
 | Consumers must be | ordinary handlers | idempotent, registered under a stable consumer name |
 | Documented in | the code | the generated event catalog and AsyncAPI document |
@@ -36,8 +36,8 @@ sequenceDiagram
   participant N as notifications handler
   H->>A: Appointment.book(...)
   A-->>A: records AppointmentBooked (domain event)
-  H->>H: save(appointment), then dispatch the recorded events
-  H->>P: AppointmentBooked
+  H->>H: save(appointment)
+  H-->>P: AppointmentBooked, dispatched as the save resolves
   P->>O: publish integration event appointments.appointment.booked v1
   Note over H,O: the appointment and the outbox record belong to the transaction of the command
   O-->>N: relayed afterwards, at least once
@@ -46,9 +46,11 @@ sequenceDiagram
 
 1. **The aggregate records.** `Appointment.book(...)` checks the invariants and records the
    domain event. An aggregate never publishes anything itself and knows no bus.
-2. **The application dispatches.** The recorded events are pulled by the application layer and
-   dispatched to the handlers of the same context
-   ([ARCHITECTURE.md](../ARCHITECTURE.md) section 4, "Domain events").
+2. **The events leave with the save.** Once `save` resolved, the recorded events are
+   dispatched to the handlers of the same context, inside the unit of work of the command. The
+   command handler writes `await this.appointments.save(appointment)` and nothing else: no
+   `pullEvents()`, no dispatcher (`domain-events/dispatched-on-save`,
+   [ARCHITECTURE.md](../ARCHITECTURE.md) section 4, "Domain events").
 3. **A publisher translates.** One of those handlers is the publisher: it builds the
    integration event from the domain event and hands it to the `IntegrationEventPublisher`
    port. With a database that port is the outbox, so the event is stored in the transaction of
@@ -57,13 +59,10 @@ sequenceDiagram
    event into a command of its own context and sends it on the command bus. It contains no
    business logic and imports only the upstream's published language.
 
-A note on timing. The architecture reference says both that domain events are dispatched "after
-the unit of work commits" and that an integration event is stored "in the transaction of the
-command". The second is the property that matters and the one the outbox rule enforces: the
-outbox record must commit or roll back with the state change. Read the generated platform
-module of your project to see where exactly the dispatch sits relative to the commit; a domain
-event handler doing anything else than writing to the outbox must tolerate that the state
-change is already committed, or not yet visible to others.
+A note on timing. A domain event handler runs before the commit, in the transaction of the
+command: what it writes through a repository or the outbox commits or rolls back with the state
+change, and its failure fails the command. An effect it has outside the database (a call to
+another system) is not rolled back: such work belongs behind an integration event.
 
 The publisher is the anti-leak valve: the domain event can gain a field, be split or be renamed,
 and the integration event stays what it was until the team decides to version it.
@@ -76,9 +75,9 @@ It is tempting to hand `AppointmentBooked` to every interested context. Three th
   `analytics`. The upstream can no longer refactor.
 - **Internal facts leak.** `appointments` may record fine-grained events useful to itself
   (a slot was held, a hold expired). Consumers do not need them and should not build on them.
-- **The delivery contract differs.** A domain event is handled in process after a commit. An
-  integration event may cross a broker, arrive twice, arrive late. Mixing the two hides which
-  guarantees a handler can count on.
+- **The delivery contract differs.** A domain event is handled in process, in the transaction
+  of the command. An integration event may cross a broker, arrive twice, arrive late. Mixing
+  the two hides which guarantees a handler can count on.
 
 Not every domain event becomes an integration event. Publish what another context has a reason
 to react to, when one asks for it.
@@ -89,8 +88,8 @@ The payload is what consumers need in order to act without calling back, and not
 (the `integration-event` skill gives the same rule).
 
 ```ts
-// contexts/appointments/published-language/appointment-booked.event.ts
-export const appointmentBooked = defineIntegrationEvent({
+// contexts/appointments/published-language/appointment-booked.v1.integration-event.ts
+export const appointmentBookedV1 = defineIntegrationEvent({
   type: 'appointments.appointment.booked',
   version: 1,
   description: 'A client booked an appointment with a practitioner.',
@@ -142,9 +141,9 @@ calling back defeats the autonomy the event was meant to give.
 - **Events are the wrong tool inside one aggregate's transaction.** Two things that must change
   together belong to one aggregate; an event makes them eventually consistent
   (see [Eventual consistency](eventual-consistency.md)).
-- **A domain event handler runs after the commit.** If it fails, the state change stays. Work
-  that must not be lost goes through the outbox as an integration event, or is made part of the
-  command.
+- **A domain event handler runs inside the transaction of the command.** If it fails, the
+  command fails and the state change is rolled back. A reaction that must not block the
+  command goes through the outbox as an integration event.
 - **The kit does not store domain events.** This is not event sourcing: see
   [CQRS as used here](cqrs.md).
 - **Event-driven designs are harder to follow.** No single place shows the whole flow. The

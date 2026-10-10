@@ -342,7 +342,11 @@ What it costs, to weigh against one generated barrel:
 - the files it loads are imported by nothing, so knip and dependency-cruiser must be told that
   they are entries (see "Limits");
 - it runs what runs the process: compiled `.js` in production, `.ts` only under a loader or a
-  test runner that transforms them.
+  test runner that transforms them;
+- under Vitest this package must be inlined, so that the `import()` of discovery goes through
+  the runner, which compiles the `.ts` role files and lowers their decorators:
+  `test: { server: { deps: { inline: ['@ddd-ts-kit/di'] } } }`. A project initialised with
+  `--assembly discovery` has that line in its `vitest.config.ts`.
 
 Prefer `contextModule` with a barrel for anything bundled, for a serverless cold start, and
 whenever the tooling should see the classes; prefer discovery when adding a file must be all
@@ -548,6 +552,11 @@ with `@Projection('<context>.<name>', [ports])`; the README of `@ddd-ts-kit/kern
 wired: `contextModule` and `discoverContext` find it like any declared class, and an explicit
 module takes it with `builder.include(AppointmentListProjection)`.
 
+The CLI does not know projections yet: `ddd-ts-kit check` refuses `application/projections/`
+(`tree/closed`) unless the directory is declared in `extraDirectories`, and refuses a line for
+a projection in the generated barrel (`declarations/barrel-current`). Until it does, a
+project held by the CLI registers a projection by discovery or with `builder.include(...)`.
+
 ```ts
 const app = createTestApplication({ modules: [contextModule('reporting', reporting)] });
 
@@ -661,7 +670,7 @@ export const persistenceModule = defineContextModule({
   register(builder) {
     builder.bind(Database).toFactory(() => ({ client: connect(config.databaseUrl) }));
     builder.rebind(UnitOfWork).toClass(DrizzleUnitOfWork, [Database]);
-    builder.rebind(IntegrationEventPublisher).toClass(OutboxPublisher, [Database, Clock]).as('publisher');
+    builder.rebind(IntegrationEventPublisher).toClass(OutboxPublisher, [OutboxStore]).as('publisher');
   },
 });
 ```
@@ -828,6 +837,7 @@ never share instances.
 - `INCOMPLETE_BINDING`: a `bind`, `command`, `query`, `on` or `job` left without its target;
 - `DUPLICATE_HANDLER`: a command or a query with two handlers, both modules named;
 - `DUPLICATE_CONSUMER`: two consumers of the same event sharing a name;
+- `DUPLICATE_PROJECTION`: two projections sharing a name;
 - `BUS_WITHOUT_REGISTER`: handlers declared for a bus that cannot receive them;
 - `UNKNOWN_FAKE`: see above;
 - `UNDECLARED_CLASS`: a class listed in `contextModule` or `include` without a declaration;
@@ -913,7 +923,7 @@ adapter contains no dispatch code.
 | The same aggregate saved twice | The second save dispatches what was recorded since the first, which may be nothing |
 | A save outside of any unit of work | Still dispatches. Nothing is atomic then: the state is written, the handlers run, and a handler that fails rejects the save without undoing it |
 | An adapter that pulls the events itself | Leaves nothing to dispatch: no double dispatch, and no dispatch at all unless the adapter does it. An adapter never calls `pullEvents()` |
-| Order of the wrappers | Outermost first: the `decorate` hook and the instrumentation (the span of the save), the dispatch, the aspects of the binding (`.with(retry(...))`). A retried save dispatches once; a handler that fails is not retried as a failed save; the span of the save contains what the save announced |
+| Order of the wrappers | Outermost first: the `decorate` hook, the instrumentation (the span of the save), the dispatch, the aspects other modules put around the kind (`builder.around`), the aspects of the binding (`.with(retry(...))`). A retried save dispatches once; a handler that fails is not retried as a failed save; the span of the save contains what the save announced |
 
 In a test application, the adapter of a module and the fake given for a repository port both
 dispatch to `app.domainEvents`, whether `kernelModule()` is listed or not. Without a container,
@@ -1026,12 +1036,12 @@ takes an `actor` option, and lets every message through unless a listed module b
 
   ```jsonc
   // knip.json
-  { "entry": ["src/main.ts", "src/contexts/*/{application,infrastructure}/**/*.{command,query,handler,integration-handler,publisher,event-handler,policy,job,repository,gateway,adapter}.ts"] }
+  { "entry": ["src/main.ts", "src/contexts/*/{application,infrastructure}/**/*.{command,query,handler,integration-handler,publisher,event-handler,policy,job,projection,repository,gateway,adapter}.ts"] }
   ```
 
   ```js
   // .dependency-cruiser.cjs, in the pathNot of the no-orphans rule
-  '\\.(command|query|handler|integration-handler|publisher|event-handler|policy|job|repository|gateway|adapter)\\.ts$'
+  '\\.(command|query|handler|integration-handler|publisher|event-handler|policy|job|projection|repository|gateway|adapter)\\.ts$'
   ```
 
   With a barrel and `contextModule` neither setting is needed.

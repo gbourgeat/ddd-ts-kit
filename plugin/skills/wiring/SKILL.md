@@ -56,7 +56,8 @@ A class says what it is on its own file, and that is its registration. There is 
   same position. Nothing else.
 - The barrel `<context>.declarations.ts` holds one `export *` per role file. It is generated:
   after adding, moving or deleting a role file by hand, run `npx ddd-ts-kit docs`
-  (`declarations/barrel-current`). Never edit it.
+  (`declarations/barrel-current`). Never edit it. With `stack.assembly: discovery` the
+  composition root reads the role files itself (`discoverContext`) instead of the barrel.
 - A value or a factory, which no decorator can say, is bound in
   `src/platform/platform.module.ts` (and its test twin): that file belongs to the platform,
   not to a context.
@@ -75,8 +76,9 @@ keep `@Injectable()` out of `domain/` and `application/`.
 
 `src/main.ts` starts tracing first, loads the configuration, opens persistence, then calls
 `composeApplication` of `src/platform/compose-application.ts`, where each context is one line
-(`contextModule('<context>', declarations)`) added by `generate context`. Adapters are
-instantiated nowhere else. `createApplication` refuses duplicate bindings, missing
+(`contextModule('<context>', declarations)`, or the module of an explicit context) added by
+`generate context`. Adapters are instantiated, and declarations assembled, nowhere else
+(`composition/only-in-module`). `createApplication` refuses duplicate bindings, missing
 dependencies and cycles before anything is instantiated: a `WiringError` names the port and
 the module.
 

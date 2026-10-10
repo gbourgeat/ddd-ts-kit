@@ -41,7 +41,7 @@ tests (`test/no-mocks`): they assert calls, not outcomes, and break on refactori
 | a repository | its fake in `test/fakes/` (extends `InMemoryRepository`); assert `findById` or `all()` |
 | another port | its fake, a working in-memory class recording what it received; an object literal fits too, a port being a shape |
 | time, identifiers | `application.clock` (`advance`), sequential ids (`idPrefix`) |
-| published events | `application.eventBus.published` |
+| published events | `application.eventBus.published`; domain events announced with a save: `application.domainEvents.on('<name>', ...)` before executing |
 | logs, metrics, unexpected failures | `application.logger.entries`, `metrics.samples`, `errors.reports` |
 | a failing dependency | a method on the fake: `payments.failNextWith(new PaymentDeclined())` |
 | a scheduled job | `application.jobs.runNow('<context>.<job>')` |

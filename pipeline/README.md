@@ -1,8 +1,9 @@
 # Pipeline
 
 Reusable quality gates for a project built with ddd-ts-kit: the analyzers, their configuration,
-the git hooks and the CI definition for GitHub and for GitLab. Every file here is real and has
-been run; `ddd-ts-kit init` will template them.
+the git hooks and the CI definition for GitHub and for GitLab. `ddd-ts-kit init` installs
+them in a project (`--ci github|gitlab|both|none` chooses the platform files), adapted to its
+stack. Three files of this directory are not what a project receives: the table says which.
 
 The rule of the whole directory: **CI logic lives in npm scripts**. The two platform files only
 orchestrate (order, caches, services, reports). They call the same `ci:*` scripts, so they stay
@@ -13,32 +14,34 @@ equivalent and cannot drift, and every gate runs on a laptop with the same comma
 | Here | In the project | Role |
 |---|---|---|
 | `eslint.config.mjs` | `eslint.config.mjs` | ESLint with `@ddd-ts-kit/eslint-plugin` |
-| `depcruise-config.mjs` | `depcruise-config.mjs` | dependency-cruiser rules built from `ddd-ts-kit.config.json` |
+| `depcruise-config.mjs` | not installed | a standalone dependency-cruiser configuration that reads `ddd-ts-kit.config.json` each time it is loaded. A project gets `.dependency-cruiser.cjs` instead, written from the config by `ddd-ts-kit depcruise-config --write` (`init` and `generate context` write it) and held current by `depcruise-config --check` |
 | `knip.json` | `knip.json` | dead code and unused dependencies |
 | `vitest.config.ts` | `vitest.config.ts` | `unit` and `integration` projects, coverage thresholds per layer |
 | `lefthook.yml` | `lefthook.yml` | git hooks |
 | `commitlint.config.mjs` | `commitlint.config.mjs` | conventional commits, shared by the hook and both CI title checks |
 | `renovate.json` | `renovate.json` | dependency updates, on either platform |
-| `package-scripts.json` | merged into `package.json` | the `ci:*` scripts and the dev dependencies they need |
+| `package-scripts.json` | merged into `package.json` | the `ci:*` scripts and the dev dependencies they need. In a project `ci:arch:graph` is `npm run depcruise`, that is `ddd-ts-kit depcruise-config --check && depcruise src --config .dependency-cruiser.cjs`; this file still names `depcruise-config.mjs` |
 | `github/workflows/*.yml` | `.github/workflows/` | `ci.yml`, `codeql.yml`, `pr-title.yml` |
 | `github/dependabot.yml` | `.github/dependabot.yml` | GitHub-native alternative to Renovate |
 | `github/branch-protection.md` | read once | the settings that make the workflow binding |
-| `gitlab/.gitlab-ci.yml` | `.gitlab-ci.yml` | the same pipeline for GitLab |
-| `gitlab/arch-to-codequality.mjs` | `.gitlab/arch-to-codequality.mjs` | `ddd-ts-kit check --format json` to a Code Quality report |
+| `gitlab/.gitlab-ci.yml` | `.gitlab-ci.yml` | the same pipeline for GitLab. The installed file writes the architecture report with `ddd-ts-kit check --format gitlab`; the file here still converts a JSON report in two steps |
+| `gitlab/arch-to-codequality.mjs` | not installed | converts a saved `ddd-ts-kit check --format json` report to a Code Quality report; `check --format gitlab` makes it unnecessary in a pipeline |
 | `gitlab/merge-request-settings.md` | read once | the settings that make the pipeline binding |
 | `monorepo/` | not templated | scripts of this repository's own pipeline |
 
 ## The gates
 
 Costs are wall-clock times of each command on a generated project of three contexts (87
-TypeScript files), on a developer machine. They give the order of magnitude, not a benchmark.
+TypeScript files), on a developer machine, measured when the ESLint plugin held 23 rules; it
+holds more today and the lint time was not measured again. They give the order of magnitude,
+not a benchmark.
 
 | Order | Gate | Script | Catches | Cost |
 |---|---|---|---|---|
 | 1 | typecheck | `ci:typecheck` | everything the compiler knows, with the native TypeScript 7 | 0.4 s |
-| 1 | lint | `ci:lint` | layer and context imports, purity of the inner layers, stepdown order, function size, comments, escape hatches, aggregate and value object shape, handler shape; typescript-eslint strict with types | 4.5 s |
-| 1 | architecture | `ci:arch:check` | the tree, `CONTEXT.md`, the glossary, names, required specs and builders, event declarations, the config | 0.3 s |
-| 1 | architecture | `ci:arch:graph` | the resolved import graph: the same layer and context rules through barrels, cycles, orphans, dev dependencies and test files imported by production code, undeclared packages | 0.8 s |
+| 1 | lint | `ci:lint` | layer and context imports, purity of the inner layers, stepdown order, function and file size, layout, comments, escape hatches, aggregate and value object shape, handler shape, ports and declarations, access control, events, jobs; typescript-eslint strict with types | 4.5 s |
+| 1 | architecture | `ci:arch:check` | the tree, `CONTEXT.md`, the glossary, names, required specs and builders, event declarations, the declarations barrel, where adapters are bound, the config and its deviations | 0.3 s |
+| 1 | architecture | `ci:arch:graph` | a `.dependency-cruiser.cjs` that no longer matches the config, then the resolved import graph: the same layer and context rules through barrels, cycles, orphans, dev dependencies and test files imported by production code, undeclared packages | 0.8 s |
 | 1 | dead code | `ci:deadcode` | unused files, exports, types and dependencies | 0.6 s |
 | 2 | unit tests | `ci:test:unit` | behaviour of the domain, the application and the routes; coverage thresholds of these three layers | seconds |
 | 3 | integration tests | `ci:test:integration` | adapters against a real PostgreSQL; coverage threshold of `infrastructure/` | tens of seconds |
@@ -58,12 +61,15 @@ static gates, beside the tests.
 
 | Tool | Reads | Authority for |
 |---|---|---|
-| `ddd-ts-kit check` | paths, text, `CONTEXT.md`, the config | the structure of the project; also a fast regex guard for code rules in the editor hook |
+| `ddd-ts-kit check` | paths, text, `CONTEXT.md`, the config | the structure of the project and what is true of the project as a whole; also a fast text-level guard for code rules in the editor hook |
 | ESLint with `@ddd-ts-kit/eslint-plugin` | the syntax tree and the types of one file | code-level rules, with a message that says what to do instead |
 | dependency-cruiser | the resolved module graph | what a per-file rule cannot see: barrels, cycles, orphans, package boundaries |
 
 The same violation can be reported by two of them under the same id. That is deliberate: the
-first one is the cheapest to run after each write, the last one is the hardest to fool.
+first one is the cheapest to run after each write, the last one is the hardest to fool. Which
+rule id is held by which analyzer is in
+[docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md#who-checks-what); `npx ddd-ts-kit rules` lists
+the ids.
 
 ### Coverage thresholds
 
@@ -92,10 +98,12 @@ scaffolds. Raise them once the todos are written.
 typescript-eslint and dependency-cruiser read sources through the JavaScript API of the
 compiler, which the native TypeScript 7 does not ship. `package-scripts.json` therefore installs
 both: `typescript` 6 for the tools, `@typescript/native` (an alias of `typescript` 7) to compile
-and type-check, called by its path. With `typescript` 7 alone, ESLint with types does not start,
-and `depcruise-config.mjs` falls back to `@swc/core` when it is installed (it then follows
-type-only imports without telling them apart) and fails loudly otherwise: without a parser
-dependency-cruiser would read no TypeScript file and report zero violation.
+and type-check, called by its path. With `typescript` 7 alone, ESLint with types does not start.
+The generated `.dependency-cruiser.cjs` asks for the `tsc` parser, that is the `typescript` 6
+of the project. The standalone `depcruise-config.mjs` of this directory falls back to
+`@swc/core` when it is installed (it then follows type-only imports without telling them apart)
+and fails loudly otherwise: without a parser dependency-cruiser would read no TypeScript file
+and report zero violation.
 
 ## Git hooks
 
@@ -105,6 +113,7 @@ dependency-cruiser would read no TypeScript file and report zero violation.
 |---|---|---|
 | pre-commit | `eslint` | staged sources |
 | pre-commit | `ddd-ts-kit check` | staged sources under `src/` |
+| pre-commit | `ddd-ts-kit check --commit-size --staged` | the index: advice on the size of the commit, never a refusal |
 | pre-push | `ci:typecheck`, `ci:test:unit` | the project |
 | commit-msg | `commitlint` | the message |
 
@@ -121,7 +130,7 @@ title check (GitLab) run: with squash merges the title becomes the commit on the
 | Fast DAG | `needs:` between jobs | `needs:` between jobs, stages for the gate |
 | Typecheck, dead code, docs, audit, build | `npm run ci:*` | the same scripts |
 | Lint report | annotations from the problem matcher of `setup-node` | `-- --format gitlab` (eslint-formatter-gitlab) into `artifacts:reports:codequality` |
-| Architecture report | `ci:arch:check -- --format github` annotations | `ci:arch:check -- --format json`, then `.gitlab/arch-to-codequality.mjs` into `artifacts:reports:codequality` |
+| Architecture report | `ci:arch:check -- --format github` annotations | `ci:arch:check -- --format gitlab` into `artifacts:reports:codequality`, in one step (the file of this directory still runs `--format json`, then `arch-to-codequality.mjs`) |
 | Test reports | the GitHub Actions reporter of Vitest; coverage as an artifact | `-- --reporter=junit` into `artifacts:reports:junit`; `coverage:` regex; Cobertura into `artifacts:reports:coverage_report` |
 | PostgreSQL | `services: postgres`, reached on `localhost` | `services:` with the alias `postgres` |
 | Secrets | the gitleaks image through `docker run`, full history | the same image as the job image, `GIT_DEPTH: 0` |
@@ -166,11 +175,12 @@ supports Vitest 5.
 
 | Piece | Verification |
 |---|---|
-| ESLint preset and plugin | run on a generated project of three contexts, clean and with one deliberate violation per rule: all 23 rules of the plugin and the delegated typescript-eslint rules reported; also run under ESLint 9 |
-| `depcruise-config.mjs` | run with dependency-cruiser 18 on the same project with the TypeScript 6 parser, and on a second one with `@swc/core`: every rule of the config reported its deliberate violation |
+| ESLint preset and plugin | run on a generated project of three contexts, clean and with one deliberate violation per rule, when the plugin held 23 rules: all of them and the delegated typescript-eslint rules reported; also run under ESLint 9. The plugin holds 46 rules today (45 ids and the ceiling of `clean/function-size`); those added since were not run this way and are held by the plugin's own tests (`packages/eslint-plugin/test/rules`) |
+| `depcruise-config.mjs` | run with dependency-cruiser 18 on the same project with the TypeScript 6 parser, and on a second one with `@swc/core`: every rule of the config reported its deliberate violation. The generated `.dependency-cruiser.cjs` is exercised by the end-to-end test of the CLI |
 | `knip.json` | unused file, export, type and dependency reported |
 | `vitest.config.ts` | both projects run with coverage; a threshold failure reported; JUnit and Cobertura files written |
 | `arch-to-codequality.mjs` | run on real checker output: 34 issues with unique fingerprints, exit code 1 while errors remain |
+| `check --format gitlab` | what the installed `.gitlab-ci.yml` runs; not executed on GitLab |
 | eslint-formatter-gitlab | run under ESLint 10: report written to `ESLINT_CODE_QUALITY_REPORT` |
 | workflows | parsed with a YAML parser, checked with actionlint 1.7 (no finding); not executed on GitHub |
 | `.gitlab-ci.yml` | parsed with a YAML parser; stages, `needs` and `extends` resolved by a script; `glab ci lint` needs a GitLab project and was not run; not executed on GitLab |

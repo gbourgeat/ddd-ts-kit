@@ -18,12 +18,11 @@ Written against `@sentry/node` 11: the options it relies on (`enableOpenTelemetr
 // platform/errors.ts: imported second, right after platform/tracing.ts
 import { reportProcessFailures } from '@ddd-ts-kit/kernel';
 import { initSentry } from '@ddd-ts-kit/sentry';
+import { loadConfig } from './config/load-config.js';
 
-export const errors = initSentry({
-  dsn: process.env.SENTRY_DSN, // absent or empty: nothing starts, nothing is reported
-  environment: process.env.SENTRY_ENVIRONMENT,
-  release: process.env.SENTRY_RELEASE,
-});
+// { dsn?, environment, release?, scrubMessages } of the validated configuration.
+// Without a DSN nothing starts and nothing is reported.
+export const errors = initSentry(loadConfig(process.env).errorReporting);
 
 reportProcessFailures(errors); // uncaughtException and unhandledRejection: reported, then exit 1
 ```
@@ -57,6 +56,14 @@ process.on('SIGTERM', () => void app.stop().then(() => tracing.shutdown()));
 
 Three lines carry it: `initSentry`, `errorReporter: errors`, `onError: reportHttpErrors(errors)`.
 The process handlers and the dead letters are one line each, for who wants them.
+
+`init --errors sentry` writes exactly these pieces, each in its file: `platform/errors.ts` as
+above, with `SENTRY_DSN`, `SENTRY_ENVIRONMENT` (default: `NODE_ENV`), `SENTRY_RELEASE` and
+`SENTRY_SCRUB_MESSAGES` read by `platform/config/load-config.ts`; `errors` handed by `main.ts`
+to `composeApplication`, which gives it to `kernelModule({ errorReporter })`;
+`reportHttpErrors` in `platform/auth/http-boundary.ts`; `DeadLetterReports` in
+`platform/events/create-event-provider.ts` (the broker) and in
+`platform/events/start-outbox-relay.ts` (a publication declared dead).
 
 **Load order.** `platform/tracing.ts` stays the first import: OpenTelemetry patches `http` and
 the drivers when they are loaded, so it must run before them. `initSentry` patches nothing, so

@@ -63,9 +63,10 @@ writes `application/integration/handlers/<name>.integration-handler.ts` and its 
 
 - The handler translates the event into **one command of its own context** and sends it on
   the `CommandBus`, as `systemActor('<context>.<name>')`. No business logic in it.
-- It is registered under a stable, unique `consumer` name, a string literal: the identity of
-  its subscription and of its idempotency mark (`events/consumer-idempotent`). Renaming it
-  replays or loses messages.
+- It is declared with `@IntegrationEventHandler(definition, { consumer })`. The `consumer`
+  name is a string literal, stable and unique in the project (generated as
+  `<context>.<handler-name>`): the identity of its subscription and of its idempotency mark
+  (`events/consumer-idempotent`). Renaming it replays or loses messages.
 - Delivery is at least once and unordered across aggregates: the mark and the work share one
   unit of work, and the command must be safe to replay.
 - Let a failure throw so the provider retries; after bounded retries the message is buried

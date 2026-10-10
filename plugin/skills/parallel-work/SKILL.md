@@ -14,13 +14,15 @@ allowed-tools:
   - Write
   - Edit
   - Agent
-  - Bash(npx ddd-ts-kit list *)
+  - Bash(npx ddd-ts-kit status)
+  - Bash(npx ddd-ts-kit worker-scope *)
   - Bash(npx ddd-ts-kit generate *)
   - Bash(npx ddd-ts-kit docs)
   - Bash(npx ddd-ts-kit depcruise-config --write)
   - Bash(npx ddd-ts-kit check *)
   - Bash(npm run docs:generate)
   - Bash(npm run verify)
+  - Bash(npm ci)
   - Bash(git worktree *)
   - Bash(git status *)
 ---
@@ -53,23 +55,25 @@ sides' lines; otherwise, one context, one worker, slices in sequence.
    contract in the upstream's `published-language/` with the owners of both sides, commit. A
    downstream starts only against a committed contract. Route paths and methods of each
    context are the ones written in the slices table.
-2. **Skeleton next.** Run every `skeleton` row: `generate aggregate`, `generate repository`,
-   `generate job`, `generate policy`, and any new `generate context`. These generators also
-   write shared files; run on the trunk, they never conflict. Leave the `TODO(domain)`
-   markers to the workers.
-3. Add `.ddd-ts-kit/` to `.gitignore`, `npm run verify`, commit (one commit per contract
-   and per aggregate), and tell the owner the trunk is ready.
+2. **Skeleton next.** Run every `skeleton` row: `generate aggregate` with its
+   `generate repository`, `generate job`, `generate policy`, and any new `generate context`.
+   These kinds write shared files (`generate --help --json` says which, under
+   `writesShared`); run on the trunk, they never conflict. Leave the `TODO(domain)` markers
+   to the workers.
+3. `npm run verify`, commit (one commit per contract and per aggregate), tell the owner the
+   trunk is ready. `.ddd-ts-kit/` is in the `.gitignore` that `init` writes: keep it there.
 
 ## 3. One worktree and one scope per worker
 
 ```bash
-git worktree add ../<project>-<context> -b build/<context>
+npx ddd-ts-kit worker-scope <context>    # --dry-run to read it first; --worktree, --branch
 ```
 
-In each worktree: `npm ci`, then write `.ddd-ts-kit/worker.json` with
-`{ "context": "<context>" }`. With that file, the guard refuses any write of a
-`context-builder` agent outside `src/contexts/<context>/` and its end-to-end specs, and any
-generator or dependency change that touches a shared file.
+From the committed trunk, it adds the git worktree `../<project>-<context>` on the branch
+`build/<context>`, writes `.ddd-ts-kit/worker.json` (`{ "context": "<context>" }`) in it,
+and prints the briefing of that worker. Then `npm ci` in the worktree. With that file, the
+guard refuses any write of a `context-builder` agent outside `src/contexts/<context>/` and
+its end-to-end specs, any generator that writes a shared file and any dependency change.
 
 ## 4. Shared files: who touches them, how they stay conflict-free
 
@@ -87,10 +91,12 @@ reported, agreed, and added on the trunk.
 
 ## 5. Brief and launch
 
-Fill [briefing-template.md](briefing-template.md) for each worker: a few hundred tokens, no
-code, no file contents. Launch the `context-builder` agents in one message so they run
-together, each with its briefing, without the isolation option (the worktree already
-exists). A person takes the same briefing and the same branch.
+`worker-scope` printed each briefing, with the `todo` rows of `slices.md` the context owns:
+fill what is left between angle brackets (the rules of each slice), nothing more
+([briefing-template.md](briefing-template.md) is the same text, to write one by hand).
+Launch the `context-builder` agents in one message so they run together, each with its
+briefing, without the isolation option (the worktree already exists). A person takes the
+same briefing and the same branch.
 
 ## 6. Merge, in order
 
@@ -98,7 +104,7 @@ Upstream contexts first, then by the dependency order of the slices. For each br
 
 1. merge it into the trunk; resolve only as the table says (regenerate, never hand-merge);
 2. `npm run verify` on the trunk; a red trunk is fixed before the next merge;
-3. mark its rows `done` in `slices.md`, commit;
+3. mark its rows `done` in `slices.md`, commit (`npx ddd-ts-kit status` shows what is left);
 4. the other workers merge the trunk into their branch before their next slice.
 
 When a worker reports a need on a shared file: do it on the trunk, commit, tell the worker to

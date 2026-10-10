@@ -66,8 +66,9 @@ projection fed by integration events.
   change the day a broker sits in between (see [Transactional outbox](transactional-outbox.md)).
 - **To hold data of another context that is needed often**: a local projection updated by those
   events, eventually consistent.
-- **To get an answer now**: a port of the caller bound as a gateway. Its adapter calls the
-  upstream in process today and could be an HTTP client tomorrow. Timeouts and failure behaviour
+- **To get an answer now**: a port of the caller bound as a gateway
+  (`npx ddd-ts-kit generate gateway <context> <upstream> <Name>`). Its adapter calls the
+  published read contract of the upstream in process today and could be an HTTP client tomorrow. Timeouts and failure behaviour
   are part of the port from the first day.
 - **To change two contexts in one transaction**: not available. Either the two are one context,
   or the requirement is a process in steps (see
@@ -84,11 +85,13 @@ mechanisms keep that true while the application is still one process:
 
 - the rule `context/extractable` (a context wires with the kernel and the platform only, reads
   no table of another context, shares no transaction and no mutable state with one);
-- a generated architecture test that boots every context alone on the kernel and the platform.
+- a generated architecture test (`test/architecture/extractable.spec.ts`) that boots every
+  context alone on the kernel and the platform.
   A hidden dependency on another context makes that boot fail.
 
-A context can also be given its own entry point (`contexts.<name>.deployable` in
-[CONFIG.md](../CONFIG.md)), which composes that context, the kernel and the platform. The same
+A context can also be given its own entry point: `npx ddd-ts-kit generate service <context>`
+writes `src/apps/<context>/main.ts`, which composes that context, the kernel and the platform,
+and sets `contexts.<name>.deployable` in the config ([CONFIG.md](../CONFIG.md)). The same
 code then runs in the monolith and as a service.
 
 The discipline has a price inside the monolith: an in-process call that could have been a join

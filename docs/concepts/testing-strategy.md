@@ -35,8 +35,12 @@ await handler.execute(new CancelAppointment(actor, appointment.id, 'ill'));
 expect(appointments.save).toHaveBeenCalledWith(expect.objectContaining({ status: 'cancelled' }));
 
 // with a fake: asserts what is true afterwards
-const appointments = new InMemoryAppointmentRepository();
-await appointments.save(anAppointment().build());
+const appointments = new FakeAppointmentRepository();
+const app = createTestApplication({
+  modules: [platformTestModule, contextModule('appointments', appointmentsDeclarations), authorization],
+  fakes: [fake(AppointmentRepository, appointments)],
+});
+await appointments.save(appointment);
 await app.commandBus.execute(new CancelAppointment(actor, appointment.id, 'ill'));
 expect((await appointments.findById(appointment.id))?.isCancelled).toBe(true);
 expect(app.eventBus.published).toMatchObject([{ type: 'appointments.appointment.cancelled' }]);
@@ -75,7 +79,7 @@ the fake and against the real adapter.
 ```mermaid
 flowchart TB
   C[Contract suite of the port: save then find, unknown id, update, optimistic concurrency...]
-  C --> F[InMemoryAppointmentRepository]
+  C --> F[FakeAppointmentRepository, in test/fakes]
   C --> R[Real adapter on PostgreSQL]
   F --> H[used by every handler spec]
   R --> P[used in production]
@@ -151,7 +155,7 @@ assert what a client observes (responses, published events), never the database 
 |---|---|---|
 | "A cancelled appointment cannot be rescheduled" | domain | an invariant: no I/O needed, exhaustive cases are cheap |
 | Boundaries of `TimeSlot` (end before start, zero length) | domain, table-driven | value object validation |
-| "Cancelling publishes `appointments.appointment.cancelled` after commit; a failure saves and publishes nothing" | application | orchestration: load, one intention, save, publish |
+| "Cancelling publishes `appointments.appointment.cancelled` with the save; a refusal saves and publishes nothing" | application | orchestration: load, one intention, save |
 | Each declared error code of a use case | application | the contract of the handler |
 | "An actor without `appointment.cancel` is refused" | application, with the authorization module listed | a property of the wiring of the context |
 | "Only the client who booked may cancel" (the policy) | unit, on the policy alone | a pure function |

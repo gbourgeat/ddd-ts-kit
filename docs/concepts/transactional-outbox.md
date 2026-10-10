@@ -75,7 +75,8 @@ sequenceDiagram
   once", and the consumer absorbs the duplicate (see
   [Delivery and idempotency](delivery-and-idempotency.md)).
 
-In the kit, the handler only knows the `IntegrationEventPublisher` port. With a database the
+In the kit, the publisher of the application layer (a handler of the domain event, run with the
+save) only knows the `IntegrationEventPublisher` port. With a database the
 composition root binds that port to the outbox publisher, which only stores; the store is an
 adapter of the ORM package (Drizzle, Knex, Prisma, TypeORM), and the relay publishes to the real
 provider. Nothing in `domain/` or `application/` changes when the provider does.

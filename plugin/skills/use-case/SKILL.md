@@ -13,7 +13,8 @@ allowed-tools:
   - Edit
   - Bash(npx ddd-ts-kit generate *)
   - Bash(npx ddd-ts-kit check *)
-  - Bash(npx ddd-ts-kit list *)
+  - Bash(npx ddd-ts-kit describe *)
+  - Bash(npx ddd-ts-kit todo *)
   - Bash(npx ddd-ts-kit explain *)
   - Bash(npm test *)
   - Bash(npm run docs:generate)
@@ -25,7 +26,7 @@ Context: `$0`. Use case: `$ARGUMENTS`
 
 One use case, one context, one commit. Read `src/contexts/$0/CONTEXT.md` and the row of
 `docs/architecture/slices.md` when there is one; do not browse the tree
-(`npx ddd-ts-kit list --json` says what exists).
+(`npx ddd-ts-kit describe $0 --json` says what exists: use cases, routes, events, ports).
 
 ## 1. State it in the domain's words
 
@@ -63,8 +64,10 @@ to open.
    the wrong layer.
 2. **Application.** In the handler spec: the happy path, each failure by its error code,
    nothing saved or published on failure. The handler loads, calls one intention method,
-   saves; an `if` on business state belongs in the aggregate. Keep the generated event
-   dispatching as it is. Time and identifiers come from `Clock` and `IdGenerator`.
+   saves; an `if` on business state belongs in the aggregate. The events the aggregate
+   recorded leave with the save: no `pullEvents()`, no dispatcher in a handler
+   (`domain-events/dispatched-on-save`). Time and identifiers come from `Clock` and
+   `IdGenerator`.
 3. **Presentation.** The route: input schema (shape only), mapping to the command with
    `actorOf(...)`, response mapping, the `errors` it can answer.
 4. **Infrastructure**, only when the slice added a port: the adapter and the fake pass the
@@ -79,10 +82,12 @@ marker as you resolve it.
 ```bash
 npm test -- <ctx>
 npx ddd-ts-kit check --changed-since HEAD
+npx ddd-ts-kit todo <ctx>    # every TODO(domain) and it.todo left, as file:line
+npx ddd-ts-kit check --commit-size
 npm run docs:generate        # only when a route or an integration event changed
 ```
 
 Then one commit for the slice (skill `ddd-ts-kit:commit-discipline`), and its row marked in
 `slices.md` when you are the conductor. Report in a few lines: the rules encoded and where,
-test results, contract changes. A `TODO(domain)` or an `it.todo` left means not done: list
-it as an open question. No file contents in the report.
+test results, contract changes. A marker `todo` still lists in the slice means not done:
+report it as an open question. No file contents in the report.

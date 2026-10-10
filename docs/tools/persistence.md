@@ -79,6 +79,12 @@ audit columns and `tenant_id`; cursor and offset pages. The stores pass `outboxS
 and `processedEventStoreContract`; your repositories are held to `repositoryContract` next to
 their in-memory fake. Delivery through the outbox is at least once and unordered.
 
+For the read side, each of the four also ships a translator of the kernel criteria into its
+query (`criteriaToDrizzle`, `criteriaToKnex`, `criteriaToPrisma`, `criteriaToTypeOrm`) and a
+read model store for projections, held to `criteriaContract` and `readModelStoreContract` on
+PostgreSQL; neither was run on MySQL or SQLite. The CLI does not generate them yet: see the
+[read side proposal](../proposals/read-side.md) for the status per part.
+
 ### Per database
 
 | | Drizzle | Knex | Prisma | TypeORM |
@@ -116,9 +122,11 @@ From [`packages/cli/README.md`](../../packages/cli/README.md) and
 | SQLite | stores run by hand once | no schemas, compare-and-set claim, single writer: tests and tools, not several instances |
 | MongoDB, others | no adapter | `stack.orm: custom`: your own unit of work, outbox store and processed-event store, each passing the contract suites; without multi-document transactions the outbox guarantee is not available |
 
-A discrepancy to know: [CONFIG.md](../CONFIG.md) lists `mongodb` among the values of
-`stack.database`, while `init --database` in the CLI README accepts only `postgres`, `mysql`,
-`sqlite` and `none`, and no package covers MongoDB.
+`stack.database` accepts `postgres`, `mysql`, `sqlite`, `mongodb` and `none`
+([CONFIG.md](../CONFIG.md)). `init` refuses anything but `postgres` with one of the four
+ORMs: the other values go with `--orm custom`, where they record a choice and select no
+package. `init --database mongodb` is accepted with `--orm custom` although the usage line of
+`--help` does not list it.
 
 ## Limits and when not to use it
 

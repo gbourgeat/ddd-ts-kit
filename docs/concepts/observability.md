@@ -56,11 +56,20 @@ report that names the failing adapter.
 
 ## Tracing, without touching the code
 
-The rule: no file under `domain/` or `application/` imports a tracing library. Spans are added
-where objects are wired. Each binding declares what it is (a repository, a gateway to another
-context, an adapter of an outside system, a use case, a publisher, a consumer, a job), and one
-hook of the composition root wraps every such binding. The repository class knows nothing
-about it.
+The rule: `@ddd-ts-kit/tracing` and `@opentelemetry/*` are imported only by the platform
+directory, `main.ts` and `apps/` (`tracing/platform-only`). Spans are added where objects are
+wired. Each binding declares what it is (a repository, a gateway to another context, an adapter
+of an outside system), and the platform hands one instrumentation to the kernel module,
+`kernelModule({ instrumentation: traceApplication() })`: it puts a span around every use case,
+every call of such a binding, the dispatch of domain events, each publication, each consumer and
+each job. Two more pieces complete it: `around: tracedRoutes()` on the HTTP boundary, and
+`tracedPublisher(bus)` around what the outbox relay delivers with, so that a publication
+continues the trace stored with its event. The repository class knows nothing about it. A kernel port
+rebound by a later module is not wrapped.
+
+Span names are stable and low in cardinality: `command BookAppointment`,
+`repository AppointmentRepository.save` (`<kind> <Port>.<method>`),
+`process notifications.remind-on-appointment-booked` for a consumer.
 
 Three consequences are worth understanding:
 

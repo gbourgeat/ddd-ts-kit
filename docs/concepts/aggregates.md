@@ -107,7 +107,8 @@ the shape guarantees:
   code (`domain/no-generic-error`), never a generic error.
 - **Time is an argument.** The aggregate holds no clock; the handler passes `clock.now()`.
 - **Facts are recorded.** Each intention records a [domain event](domain-building-blocks.md),
-  dispatched after the unit of work commits.
+  which leaves with the save: it is dispatched once the repository has stored the aggregate,
+  inside the unit of work of the command.
 
 ## One aggregate per transaction
 
@@ -122,7 +123,8 @@ reminder, the reminder is created by another transaction, in reaction to
 - **Extraction.** A transaction that spans two contexts cannot survive one of them becoming a
   service (`context/extractable`).
 
-"A handler saving two aggregates" is one of the first smells a design review looks for.
+"A handler saving two aggregates" is one of the smells the `architecture-reviewer` agent of
+the plugin looks for.
 When the business truly needs several steps to succeed or be undone together, that is a
 process with compensation, not a bigger transaction
 ([Sagas and process managers](sagas-and-process-managers.md)).
@@ -154,8 +156,8 @@ this and the root?". If not, it does not belong inside.
 | `Appointment` is its own aggregate, `Calendar` holds only working hours and time off | bookings are independent; the double-booking rule needs another guard (below) |
 
 The second is the right size. The first looks attractive because it makes "no double booking"
-an in-memory check, and it does not scale past a handful of appointments. "Oversized aggregate:
-loads collections it does not need for its invariants" is another smell of the audit skill.
+an in-memory check, and it does not scale past a handful of appointments. An aggregate that
+loads collections it does not need for its invariants is oversized.
 
 ## Optimistic concurrency
 

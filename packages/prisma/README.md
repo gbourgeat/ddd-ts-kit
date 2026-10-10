@@ -145,7 +145,7 @@ export const persistenceModule = defineContextModule({
 
 ```ts
 // main.ts
-const app = createApplication({ modules: [kernelModule(), persistenceModule, billingModule] });
+const app = createApplication({ modules: [kernelModule(), persistenceModule, contextModule('billing', billingDeclarations)] });
 
 const relay = new OutboxRelay({ store: app.resolve(OutboxStore), publisher: broker, clock: app.resolve(Clock) });
 relay.start({ intervalMs: 500 });
@@ -153,9 +153,15 @@ relay.start({ intervalMs: 500 });
 
 List the module after `kernelModule()`: `rebind` replaces its in-memory defaults. The command
 bus of the kernel module runs every command in the bound `UnitOfWork`; handlers do not know it.
+`contextModule` of `@ddd-ts-kit/di` turns the declared classes of a context into its module.
 The stores are built here and not by `toClass`, because both need to be told how to reach
 their model. The outbox store takes the unit of work itself, not only the context: its
 `skip-locked` claim opens a short transaction of its own.
+
+A project written by the CLI holds the same wiring in two files:
+`platform/database/persistence-over.ts` builds the unit of work and the two stores once, and
+`platform/platform.module.ts` binds them, the outbox publisher being given to
+`kernelModule({ eventPublisher })`.
 
 `unitOfWork.run(work)` opens the interactive `prisma.$transaction` and keeps the transaction
 client in an `AsyncLocalStorage`; a nested `run` joins the outer transaction. `delegate` is a
@@ -218,7 +224,8 @@ export class PrismaInvoiceRepository implements InvoiceRepository {
 }
 ```
 
-Without the decorator, the same binding is one line of the module of the context:
+In the explicit style, without the decorator, the same binding is one line of
+`<context>.module.ts`:
 `builder.bind(InvoiceRepository).toClass(PrismaInvoiceRepository, [Database])`.
 
 `Prisma.TransactionClient` is the type of `client()` for a plain client. An extended client
@@ -316,11 +323,11 @@ export abstract class InvoiceQueries {
 ```
 
 ```ts
-// contexts/billing-core/infrastructure/persistence/prisma-invoice.queries.ts
+// contexts/billing-core/infrastructure/persistence/prisma-invoice-queries.reader.ts
 import { ExecutionScope, encodeCursor, pageOf, tenantScopeOf } from '@ddd-ts-kit/kernel';
-import { Adapter } from '@ddd-ts-kit/kernel/declarations';
+import { Repository } from '@ddd-ts-kit/kernel/declarations';
 
-@Adapter(InvoiceQueries, [Database, ExecutionScope])
+@Repository(InvoiceQueries, [Database, ExecutionScope])
 export class PrismaInvoiceQueries implements InvoiceQueries {
   constructor(
     private readonly database: Database,
@@ -385,6 +392,11 @@ a string, raising `InvalidPageRequestError` otherwise. Prisma's own `cursor` opt
 it names a row by a unique field, where a position compares values and needs no row to still
 exist.
 
+A read adapter over the database is declared with `@Repository`, as the ones the CLI
+generates: its kind is `repository`. Declared with `@Adapter` it would be `external`, and a
+generated platform puts a retry and a time limit around every `external` and `gateway`
+adapter, which a statement of the unit of work must not get.
+
 The rules these examples hold, and that the tests of this package check on a real database:
 
 - **Audit columns** are filled by the adapter, never by the aggregate: `stampCreation(scope,
@@ -418,7 +430,7 @@ are the fields of the model; `fields` renames those that differ. The text of `co
 `startsWith` has its `%`, `_` and `\` escaped, which Prisma does not do.
 
 ```ts
-// infrastructure/persistence/prisma-appointment.queries.ts
+// infrastructure/persistence/prisma-appointment-queries.reader.ts
 async list(criteria: ScopedCriteria<AppointmentRow>): Promise<Page<AppointmentRow>> {
   const plan = planCriteria(appointmentCriteria, criteria);
 
@@ -462,8 +474,8 @@ model AppointmentRow {
 ```
 
 ```ts
-// infrastructure/persistence/prisma-appointment-list.adapter.ts
-@Adapter(AppointmentList, [Database])
+// infrastructure/persistence/prisma-appointment-list.repository.ts
+@Repository(AppointmentList, [Database])
 export class PrismaAppointmentList extends PrismaReadModelStore<AppointmentRow, Prisma.TransactionClient> implements AppointmentList {
   constructor(database: Database) {
     super(database, {
@@ -517,6 +529,9 @@ disappears with them if it fails.
 Delivery is at least once, unordered.
 
 ## Dialect coverage
+
+What follows is about this package. The CLI generates for PostgreSQL only: `init --orm prisma`
+refuses `--database mysql` and `--database sqlite`.
 
 | Database | Status |
 |---|---|

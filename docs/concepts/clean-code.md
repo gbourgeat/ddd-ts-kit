@@ -53,9 +53,9 @@ Smaller habits with large effects: one word per concept in a context (not `fetch
 ## Small functions, one thing, one level of abstraction
 
 A function has at most three parameters and stays short (rule `clean/function-size`, limits
-configurable up to a hard ceiling). More parameters are a concept that deserves a type. A
-blank line separating "steps" inside a function marks functions waiting to be extracted, each
-with a name that replaces the comment you were about to write.
+30 lines by default, configurable under `limits`, never more than 100). More parameters are a
+concept that deserves a type. A comment announcing a "step" inside a function marks a function
+waiting to be extracted, with a name that replaces the comment.
 
 Before:
 
@@ -131,12 +131,23 @@ tool or an agent that reads only the top of a file.
 
 One exported class, interface or function per file, named after it, in the directory of its
 role with the suffix of its role: `appointment.aggregate.ts`, `time-slot.vo.ts`,
-`book-appointment.handler.ts`. Rules `naming/suffix` and `naming/one-concept-per-file`. A file
-past 350 lines holds more than one responsibility.
+`book-appointment.handler.ts`. Rules `naming/suffix`, `naming/one-concept-per-file` and
+`clean/one-export-per-file`: the only companions of the exported concept are the types of its
+own signature and small closed families, anything else is listed in `onePerFile.allow` of the
+config with its reason, and an index file only re-exports. A file past 350 lines, tests
+included, holds more than one responsibility (`clean/file-size`).
 
 The reason is navigation. The path of a concept is derivable from its name, so nobody searches
 for it; a diff touches the files of one concept; two people rarely edit the same file. See
 [Token economy](../guides/token-economy.md) for what this is worth with coding agents.
+
+## Layout
+
+A blank line before every `return` that is not alone in its block and between the logical
+blocks of a function; no blank line padding the edges of a block (`clean/blank-lines`; the
+text-level checker holds the `return` and the padded block, ESLint the whole layout, with an
+automatic fix). Class members are `private`, never `#name` (`clean/no-hash-private`): one way to
+hide a member, the one the compiler checks.
 
 ## Comments
 
@@ -245,9 +256,9 @@ Design review exists for that remainder.
   across a file; extract when a name adds information.
 - **Limits are configurable for a reason.** A project may raise them deliberately, with a
   decision record; raising them to get to green is the defect.
-- **Some code is legitimately different.** Mappers need type assertions, module files are
-  long lists, generated files are exempt from the file size rule. The rules already carve
-  these out.
+- **Some code is legitimately different.** Mappers and infrastructure adapters need type
+  assertions, and files under a `generated/` directory are exempt from the file size rule. The
+  rules already carve these out.
 - **Throwaway code.** A spike meant to be deleted does not need this discipline; the trouble
   is only that spikes are rarely deleted. `ddd-ts-kit check --clean-only` runs the file-level
   rules on any directory, without a project, to measure the gap before adopting.

@@ -208,6 +208,7 @@ test('every generated role of the canonical tree names its generator', () => {
     'domain/services/pricing.service.ts': /generate domain-service /,
     'infrastructure/external/order-summary.gateway.ts': /generate gateway /,
     'infrastructure/external/remote-payment-gateway.adapter.ts': /generate adapter /,
+    'infrastructure/anti-corruption/billing.translator.ts': /generate acl /,
   };
   for (const [path, generator] of Object.entries(roles)) {
     const result = run('pre-write', write(join(root, 'src/contexts/ordering', path)));

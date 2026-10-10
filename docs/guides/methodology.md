@@ -34,7 +34,7 @@ flowchart LR
 | 6. Plan | the commands and queries of step 1 | `docs/architecture/slices.md` | skill `plan-slices` | each slice can be built and merged on its own, in this order |
 | 7. Build | one slice | domain, handler, adapter, route, their specs; one commit per slice | skill `use-case` (which uses `scaffold`), or `parallel-work` for several workers | no `TODO(domain)` and no `it.todo` is left in the slice |
 | 8. Verify | the change | a green gate | `npm run verify`, skill `quality-gate` | every check passes without a new suppression |
-| 9. Document | the diff of the generated documents | context map, `CONTEXT.md` lists, OpenAPI, AsyncAPI, catalog, ADRs | `ddd-ts-kit docs`, `npm run docs:generate`, skill `document` | `docs --check` reports nothing stale |
+| 9. Document | the diff of the generated documents | context map, the `## Reference` of each `CONTEXT.md`, OpenAPI, AsyncAPI, catalog, ADRs | `ddd-ts-kit docs`, `npm run docs:generate`, skill `document` | `docs --check` reports nothing stale |
 
 Steps 1 to 7 are the ones the `start` skill of the plugin conducts (`/ddd-ts-kit:start`, run
 by a person). It keeps the state of the project in `docs/architecture/plan.md` (steps done,
@@ -42,10 +42,6 @@ decisions, open questions, and a `Next:` line), so a later session resumes from 
 it closes each step on a yes of the project owner, never on its own judgement. Steps 8 and 9
 happen inside every slice of step 7; they are listed apart because they are also what CI
 replays.
-
-The plugin's skills were being reorganised while this guide was written (2026-10-10): the
-names above are those of the `plugin/skills` directory on that day. If a name differs in your
-version, the list printed by the plugin is right.
 
 ## 1. Discover the domain: a light event storming in writing
 
@@ -191,9 +187,12 @@ one is demonstrable:
 3. the reads (`GetAppointment`, `ListAppointments`);
 4. what crosses a boundary: the integration event, then its handler in the downstream.
 
-`npx ddd-ts-kit list` shows what exists per context, so the plan is a difference between that
+`npx ddd-ts-kit list` shows what exists per context (`describe <context>` gives one context
+in full: use cases, routes, events, ports, policies), so the plan is a difference between that
 output and the lists of step 1. The skill `plan-slices` writes it to
-`docs/architecture/slices.md`.
+`docs/architecture/slices.md`, and `npx ddd-ts-kit status` reads it back: the next step of
+`docs/architecture/plan.md`, the slices by status and by owner, and what is left to write in
+each context.
 
 **Done when** no slice touches two contexts, and every cross-context need is two slices: a
 published event upstream, a handler downstream.
@@ -207,8 +206,9 @@ aggregate spec, then the handler spec with fakes, then the adapter and the route
 
 With several workers, one context per worker: see [Parallel work](parallel-work.md).
 
-**Done when** the slice has no `TODO(domain)` and no `it.todo` left; a marker that cannot be
-resolved is a question for the owner, listed as such.
+**Done when** the slice has no `TODO(domain)` and no `it.todo` left
+(`npx ddd-ts-kit todo <context>` lists them as `file:line`); a marker that cannot be resolved
+is a question for the owner, listed as such.
 
 ## 8. Verify
 
@@ -223,7 +223,7 @@ record (`governance/recorded-deviation`).
 ## 9. Document
 
 Generated documents are regenerated, never edited: `npx ddd-ts-kit docs` for the context map,
-the `CONTEXT.md` lists and the barrels; `npm run docs:generate` for the OpenAPI document, the
+the `## Reference` of each `CONTEXT.md` and the barrels; `npm run docs:generate` for the OpenAPI document, the
 AsyncAPI document and the event catalog. Read their diff: it is the summary of what the change
 did to the architecture. Then update the written parts the diff makes stale, and commit
 documentation with the code that changed it ([Commit discipline](commit-discipline.md)).

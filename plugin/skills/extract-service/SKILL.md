@@ -35,7 +35,7 @@ composition and adapters only. If extraction would require editing `domain/` or
 | Data needed often from another context is a local projection fed by its events, not a call | review |
 | The context assembles with the kernel and the platform only (its declarations or its module) | per-context boot test |
 | Configuration is read through the platform and namespaced by context | review |
-| No shared mutable state, no singleton shared across contexts | `composition/only-in-module` |
+| No shared mutable state, no singleton shared across contexts | `context/extractable`, `composition/only-in-module` |
 | Authorization travels as an actor in the message, never as a session | `authz/actor-explicit` |
 
 `npx ddd-ts-kit check --rule context/extractable` and the generated
@@ -57,14 +57,15 @@ platform only: a hidden dependency on another context makes it fail.
 ## Extracting
 
 1. `npx ddd-ts-kit generate service <context>`: `src/apps/<context>/main.ts` composing that
-   context, the kernel and the platform, with its own start script and image target. Its
+   context, the kernel and the platform, with its own start script and compose service
+   (the same image, another entry point), and `deployable` in the config. Its
    scheduled jobs leave with it (`npx ddd-ts-kit generate worker` gives the jobs of the
    remaining contexts a process of their own).
 2. Replace each in-process `gateway` adapter that points to it, in the remaining contexts,
    by a remote adapter of the same port. Same contract suite.
 3. Switch the event provider from in-memory to a broker for both sides (`stack.broker`:
    outbox relay on the producer, one durable subscription per consumer name). Nothing changes
-   in handlers. The declared style then needs the `barrel` assembly.
+   in handlers.
 4. Move the context's schema and migrations with it; the others never read it, so nothing
    else moves.
 5. The published language becomes a versioned package or stays a shared source folder: it

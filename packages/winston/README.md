@@ -25,6 +25,7 @@ export interface LogSettings {
   readonly format: 'json' | 'pretty'; // LOG_FORMAT
   readonly service: string;
   readonly environment: string;
+  readonly scrubMessages: boolean; // LOG_SCRUB_MESSAGES
 }
 
 export function createLogger(scope: ExecutionScope, settings: LogSettings): WinstonLogger {
@@ -53,6 +54,10 @@ async function shutdown(): Promise<void> {
 }
 ```
 
+`init --logger winston` writes this `create-logger.ts` (it answers a `NoopLogger` when given no
+settings, which is how the tools and the tests stay silent); `platform/lay-foundations.ts`
+calls it once and `composeApplication` hands the logger to `kernelModule({ logger })`.
+
 One line of the application, as it is written:
 
 ```json
@@ -64,7 +69,10 @@ site passes an id. `traceLogFields(scope)` answers the trace and span ids inside
 inside the execution scope the correlation id, the causation id, the origin, the actor and the
 tenant. This package does not depend on the tracing package: any `() => LogFields` fits,
 `() => logFieldsOf(scope.current())` included. A function that throws gives no field, never a
-lost line. The fields of the line win over those of a child, which win over `fields`.
+lost line. The fields of the line win over those of a child, which win over `fields`: the
+format only fills the keys nobody gave. `StdoutLogger` and `@ddd-ts-kit/pino` differ on the
+second step (there `fields` win over a child), so do not bind in a child a key that `fields`
+answers if the logger may be swapped.
 
 **An instance of your own.** The project that already configures winston keeps doing so, and
 takes the formats it wants:
@@ -184,7 +192,8 @@ on purpose: a field named `level` or `message` never replaces the level or the m
 line; the message is never read as a format string (`%s`); and with `createWinstonLogger` a
 field named `time` is overwritten by the instant of the line. One thing is winston's:
 `service`, `environment` and `base` are its `defaultMeta`, which wins over a field of the
-same name on a line or in a child.
+same name on a line or in a child, where the other two loggers of the kit let the line and
+the child win.
 
 ## Flush
 

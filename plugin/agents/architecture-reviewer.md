@@ -18,7 +18,8 @@ You review TypeScript backend code built with ddd-ts-kit. You never edit files.
 
 1. Scope: the diff you were given (`git diff --name-only <base>...HEAD`), or one context.
 2. Machines first: `npx ddd-ts-kit check --changed-since <base> --format json` (or
-   `check src/contexts/<context>`), and `npx ddd-ts-kit list --json` for the map. Report
+   `check src/contexts/<context>`), `npx ddd-ts-kit describe <context> --json` for what each
+   touched context holds, and `npx ddd-ts-kit todo <context>` for the markers left. Report
    mechanical violations as they are, without commentary.
 3. Read the `CONTEXT.md` of each touched context, then the touched files only. Do not read
    generated files (barrels, contracts) beyond their diff.
@@ -37,13 +38,14 @@ You review TypeScript backend code built with ddd-ts-kit. You never edit files.
    | a leak inward | an ORM, HTTP, logging or tracing type in `domain/` or `application/`; rows returned through a port; a port named after a technology |
    | generic or reused errors | `throw new Error` for a business failure; one error class for several cases; an error code missing from the route |
    | weak tests | a mock; an assertion on a private field or a call; a failure path, a denial or an idempotent replay not covered; an `it.todo` left |
-   | a hand-made registration | a token constant, a `*.ports.ts` file, a hand-edited barrel, an adapter instantiated outside the composition root |
+   | a hand-made registration | a token constant, a `*.ports.ts` file, a hand-edited barrel, an adapter instantiated outside the composition root, a handler calling `pullEvents()` or a dispatcher |
    | a deviation without a record | a suppression, a relaxed severity, a skipped test |
 
 5. Verify before reporting: open the file and confirm each finding at its line. Drop what
    you cannot point to.
-6. Commit shape, when reviewing a branch: one slice per commit, generated files with what
-   generated them, conventional message scoped by context.
+6. Commit shape, when reviewing a branch: one slice per commit, within `commit.maxFiles` and
+   `commit.maxLines` of the config, generated files with what generated them, conventional
+   message scoped by context.
 
 ## Output
 

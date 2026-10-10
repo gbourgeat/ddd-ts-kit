@@ -107,11 +107,17 @@ export const persistenceModule = defineContextModule({
 
 ```ts
 // main.ts
-const app = createApplication({ modules: [kernelModule(), persistenceModule, billingModule] });
+const app = createApplication({ modules: [kernelModule(), persistenceModule, contextModule('billing', billingDeclarations)] });
 ```
 
 List the module after `kernelModule()`: `rebind` replaces its in-memory defaults. The command
 bus of the kernel module runs every command in the bound `UnitOfWork`; handlers do not know it.
+`contextModule` of `@ddd-ts-kit/di` turns the declared classes of a context into its module.
+
+A project written by the CLI holds the same wiring in two files:
+`platform/database/persistence-over.ts` builds the unit of work and the two stores once, and
+`platform/platform.module.ts` binds them, the outbox publisher being given to
+`kernelModule({ eventPublisher })`.
 
 `toClass` builds the stores with their default options (tables `outbox` and
 `processed_events` in the default schema of the connection). A store with options is built by
@@ -177,7 +183,7 @@ export class KnexInvoiceRepository implements InvoiceRepository {
   constructor(private readonly context: KnexContext) {}
 
   async findById(id: string): Promise<Invoice | undefined> {
-    const row = await this.invoices().where({ id }).first();
+    const row = await invoicesOf(this.context).where({ id }).first();
 
     if (row === undefined) {
       return undefined;
@@ -194,22 +200,31 @@ export class KnexInvoiceRepository implements InvoiceRepository {
       const row = { ...invoice.state, version: next };
 
       if (expected === 0) {
-        const inserted = await insertIgnoringConflict(this.context.executor(), this.invoices(), { row, conflict: 'id' });
+        const inserted = await insertIgnoringConflict(this.context.executor(), invoicesOf(this.context), { row, conflict: 'id' });
 
         return inserted ? 1 : 0;
       }
 
-      return this.invoices().where({ id: invoice.id, version: expected }).update(row);
+      return invoicesOf(this.context).where({ id: invoice.id, version: expected }).update(row);
     });
   }
+}
 
-  private invoices(): Knex.QueryBuilder<InvoiceRow, InvoiceRow[]> {
-    return this.context.executor()<InvoiceRow, InvoiceRow[]>('invoices').withSchema(BILLING);
-  }
+// A function, not a method: see below.
+function invoicesOf(context: KnexContext): Knex.QueryBuilder<InvoiceRow, InvoiceRow[]> {
+  return context.executor()<InvoiceRow, InvoiceRow[]>('invoices').withSchema(BILLING);
 }
 ```
 
-Without the decorator, the same binding is one line of the module of the context:
+**No method of an adapter answers a query builder.** A knex builder is thenable, and what
+wraps an adapter from outside (the spans of `@ddd-ts-kit/tracing`, an aspect) reads a method
+that answered a thenable as asynchronous: from its second call the method answers a promise
+of the rows, and `.where(...)` on it fails. The table is therefore reached through a function
+of the module, as the repository the CLI generates does, and a private method that runs a
+statement is declared `async`.
+
+In the explicit style, without the decorator, the same binding is one line of
+`<context>.module.ts`:
 `builder.bind(InvoiceRepository).toClass(KnexInvoiceRepository, [KnexContext])`.
 
 `optimisticUpdate` gives the version to expect and the version to write, raises a
@@ -259,7 +274,7 @@ export class KnexInvoiceRepository implements InvoiceRepository {
   ) {}
 
   async findById(id: string): Promise<Invoice | undefined> {
-    const row = await this.invoices().where({ id, ...this.ownTenant() }).first();
+    const row = await invoicesOf(this.context).where({ id, ...this.ownTenant() }).first();
 
     return row === undefined ? undefined : InvoiceMapper.toDomain(row);
   }
@@ -274,13 +289,13 @@ export class KnexInvoiceRepository implements InvoiceRepository {
 
   private async insert(state: VersionedInvoice): Promise<number> {
     const row = { ...state, ...this.ownTenant(), ...auditRow(stampCreation(this.scope, this.clock)) };
-    const inserted = await insertIgnoringConflict(this.context.executor(), this.invoices(), { row, conflict: 'id' });
+    const inserted = await insertIgnoringConflict(this.context.executor(), invoicesOf(this.context), { row, conflict: 'id' });
 
     return inserted ? 1 : 0;
   }
 
-  private update(state: VersionedInvoice, expected: number): Promise<number> {
-    return this.invoices()
+  private async update(state: VersionedInvoice, expected: number): Promise<number> {
+    return invoicesOf(this.context)
       .where({ id: state.id, version: expected, ...this.ownTenant() })
       .update({ ...state, ...auditRow(stampUpdate(this.scope, this.clock)) });
   }
@@ -301,11 +316,11 @@ export abstract class InvoiceQueries {
 ```
 
 ```ts
-// contexts/billing-core/infrastructure/persistence/knex-invoice.queries.ts
+// contexts/billing-core/infrastructure/persistence/knex-invoice-queries.reader.ts
 import { ExecutionScope, encodeCursor, pageOf, tenantScopeOf } from '@ddd-ts-kit/kernel';
-import { Adapter } from '@ddd-ts-kit/kernel/declarations';
+import { Repository } from '@ddd-ts-kit/kernel/declarations';
 
-@Adapter(InvoiceQueries, [KnexContext, ExecutionScope])
+@Repository(InvoiceQueries, [KnexContext, ExecutionScope])
 export class KnexInvoiceQueries implements InvoiceQueries {
   constructor(
     private readonly context: KnexContext,
@@ -317,18 +332,18 @@ export class KnexInvoiceQueries implements InvoiceQueries {
   }
 
   private async byOffset(request: OffsetPageRequest<'amount'>): Promise<Page<InvoiceSummary>> {
-    const rows = await this.ownInvoices()
+    const rows = await ownInvoices(this.context, this.scope)
       .orderBy(totalOrder(directionOf(request)))
       .limit(request.limit)
       .offset(request.offset);
-    const counted = await this.ownInvoices().count<{ total: string | number }[]>({ total: '*' }).first();
+    const counted = await ownInvoices(this.context, this.scope).count<{ total: string | number }[]>({ total: '*' }).first();
 
     return pageOf(rows.map(toSummary), { total: Number(counted?.total ?? 0) });
   }
 
   private async byCursor(request: CursorPageRequest<'amount'>): Promise<Page<InvoiceSummary>> {
     const direction = directionOf(request);
-    const query = this.ownInvoices().orderBy(totalOrder(direction)).limit(request.limit + 1);
+    const query = ownInvoices(this.context, this.scope).orderBy(totalOrder(direction)).limit(request.limit + 1);
     const rows = await (request.cursor === undefined ? query : beyond(query, positionOf(request.cursor), direction));
     const items = rows.slice(0, request.limit);
     const last = items.at(-1);
@@ -336,10 +351,10 @@ export class KnexInvoiceQueries implements InvoiceQueries {
 
     return pageOf(items.map(toSummary), more ? { nextCursor: encodeCursor({ amount: last.amount, id: last.id }) } : {});
   }
+}
 
-  private ownInvoices() {
-    return invoicesOf(this.context).where(tenantRow(tenantScopeOf(this.scope)));
-  }
+function ownInvoices(context: KnexContext, scope: ExecutionScope) {
+  return invoicesOf(context).where(tenantRow(tenantScopeOf(scope)));
 }
 
 const directionOf = (request: PageRequest<'amount'>) => request.sort[0]?.direction ?? 'asc';
@@ -364,6 +379,11 @@ function beyond(query: Knex.QueryBuilder, { amount, id }: { amount: number; id: 
 
 `positionOf(cursor)` decodes with `decodeCursor` and checks that `amount` is a number and `id`
 a string, raising `InvalidPageRequestError` otherwise.
+
+A read adapter over the database is declared with `@Repository`, as the ones the CLI
+generates: its kind is `repository`. Declared with `@Adapter` it would be `external`, and a
+generated platform puts a retry and a time limit around every `external` and `gateway`
+adapter, which a statement of the unit of work must not get.
 
 The rules these examples hold, and that the tests of this package check on a real database:
 
@@ -397,7 +417,7 @@ of identifiers: every value is a binding, a text search is `like ? escape ?` wit
 `\` escaped.
 
 ```ts
-// infrastructure/persistence/knex-appointment.queries.ts
+// infrastructure/persistence/knex-appointment-queries.reader.ts
 async list(criteria: ScopedCriteria<AppointmentRow>): Promise<Page<AppointmentRow>> {
   const plan = planCriteria(appointmentCriteria, criteria);
 
@@ -432,8 +452,8 @@ await knex.schema.withSchema('scheduling').createTable('appointment_list', (tabl
   readModelColumns(table); // last_event_id, last_event_at, last_event_version, deleted
 });
 
-// infrastructure/persistence/knex-appointment-list.adapter.ts
-@Adapter(AppointmentList, [KnexContext])
+// infrastructure/persistence/knex-appointment-list.repository.ts
+@Repository(AppointmentList, [KnexContext])
 export class KnexAppointmentList extends KnexReadModelStore<AppointmentRow> implements AppointmentList {
   constructor(context: KnexContext) {
     super(context, {
@@ -473,6 +493,9 @@ Criteria and read models were never run on MySQL or SQLite.
   the effects of the handler, and disappears with them if it fails.
 
 ## Dialect coverage
+
+What follows is about this package. The CLI generates for PostgreSQL only: `init --orm knex`
+refuses `--database mysql` and `--database sqlite`.
 
 | Database | Status |
 |---|---|

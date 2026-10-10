@@ -15,6 +15,7 @@ allowed-tools:
   - Edit
   - Skill
   - Agent
+  - Bash(npx ddd-ts-kit status)
   - Bash(npx ddd-ts-kit list *)
   - Bash(npx ddd-ts-kit check *)
 ---
@@ -28,7 +29,9 @@ hand work out. You never write code: code comes from a generator and from the bu
 
 ## 1. Find where the project stands
 
-Read `docs/architecture/plan.md`, and nothing else yet.
+Read `docs/architecture/plan.md`, and nothing else yet. In a bootstrapped project
+`npx ddd-ts-kit status` gives the same answer in one call: the `Next:` line of the plan,
+the slices by status and by owner, the `TODO(domain)` and `it.todo` left in each context.
 
 - It exists: its `Next:` line names the step. Go to that step. Do not re-read the artefacts of
   finished steps; each step skill reads the one it needs.

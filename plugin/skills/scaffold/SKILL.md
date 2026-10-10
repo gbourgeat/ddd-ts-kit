@@ -27,12 +27,15 @@ the tree, so a generated file conforms by construction and costs no tokens.
 
 1. **Name from the glossary** of the context's `CONTEXT.md`. A missing term is added in the
    same command with `--term "<Term>=<meaning>"`. Technical words (`Manager`, `Helper`,
-   `Data`, `Info`, `Impl`, `Model`) are refused: find the business word.
+   `Data`, `Info`, `Impl`, `Model`, ...) are refused (`language/no-technical-name`):
+   find the business word; `--allow-name` only when the word really is the business term.
 2. **Run with `--json`** (`--dry-run` first when unsure):
    ```bash
    npx ddd-ts-kit generate <kind> ... --json
    ```
-   Exact arguments of every kind: [kinds.md](kinds.md), or `npx ddd-ts-kit --help`.
+   Exact arguments of every kind: [kinds.md](kinds.md), or `npx ddd-ts-kit --help`. A
+   worker confined to one context adds `--local-only`: the command refuses, and writes
+   nothing, when it would write a shared file.
 3. **Open only the `next` places**, each a `file:line` holding a `TODO(domain)` that states
    the decision expected. Decide, write, delete the marker. A marker you cannot resolve is a
    question for the user, not a guess. `notes` says what the generator could not do.
@@ -50,7 +53,7 @@ the tree, so a generated file conforms by construction and costs no tokens.
 - **Ports.** A port is an abstract class, used as its own injection token: no constant, no
   token file. `port` and `repository` write the fake and the contract suite with it.
 - **Dependencies between kinds.** A missing repository or domain event is created; a
-  missing aggregate, use case or route stops the command with the one to run first.
+  missing aggregate, port, use case or route stops the command with the one to run first.
 - **Documents.** The generated lists of `CONTEXT.md` and the generated documentation are
   refreshed.
 

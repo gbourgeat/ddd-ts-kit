@@ -58,13 +58,13 @@ signal that the glossary conversation was skipped.
 ## Contracts first
 
 Two teams can build in parallel only if what flows between them is agreed before either
-starts. There are two kinds of contract in this kit, and both are files that can be reviewed
+starts. There are three kinds of contract in this kit, and all are files that can be reviewed
 on their own:
 
 | Contract | File | Agreed between |
 |---|---|---|
 | integration event | a `defineIntegrationEvent` declaration in the producer's `published-language/` | producer and every consumer |
-| read contract for a synchronous need | a type in the upstream's `published-language/`, behind a gateway port of the caller | upstream and caller |
+| read contract for a synchronous need | an abstract class in the upstream's `published-language/` (`*.contract.ts`, written by `generate gateway`), behind a gateway port of the caller | upstream and caller |
 | HTTP API | route definitions, from which `openapi/openapi.json` is generated | the backend and its clients |
 
 The practice:
@@ -109,7 +109,7 @@ cannot judge. What to look for differs by layer:
 | Layer | The reviewer asks | Not worth a comment (a check holds it) |
 |---|---|---|
 | `domain/` | Is the rule in the aggregate, and is it the right rule? Can an invalid state be built? Do names say what the business says? Is the aggregate the right size? | constructor visibility, setters, imports, `new Date()` |
-| `application/` | Does the handler only orchestrate (load, one intention, save, publish)? Is the permission the right one? Is each failure a named domain error? | handler shape, missing permission declaration, reading the ambient scope |
+| `application/` | Does the handler only orchestrate (load, one intention, save)? Is the permission the right one? Is each failure a named domain error? | handler shape, missing permission declaration, reading the ambient scope, a manual dispatch of domain events (they leave with the save) |
 | `infrastructure/` | Does the mapper cover every field both ways? Is the query scoped by tenant? Does the adapter pass the same contract suite as its fake? What happens when the dependency is down? | importing `presentation/`, an adapter built outside the composition root |
 | `presentation/` | Is the response a DTO and not the aggregate? Are all error codes declared on the route? Is the change breaking for clients? | missing `security`, a role test in the route |
 | `published-language/` | Would a consumer understand this payload without asking? Is anything internal or personal leaking? Is this additive, or a new version? | importing outside the allow-list |
@@ -204,7 +204,7 @@ moments: at each file write in an agent session (the plugin's hook), on staged f
 
 | When | What | Why |
 |---|---|---|
-| first hour | read `docs/context-map.md`, then the `CONTEXT.md` of the context they join; run `npx ddd-ts-kit list` | the map before the territory |
+| first hour | read `docs/context-map.md`, then the `CONTEXT.md` of the context they join; run `npx ddd-ts-kit list` and `npx ddd-ts-kit describe <context>` | the map before the territory |
 | second hour | `npm install`, `npm run infra:up`, `npm run dev`, open `/docs`; run `npm run verify` | prove the machine works before changing anything |
 | morning | read one existing slice top down: route, command, handler, aggregate, their specs | the tree is the same in every context, so one slice teaches all |
 | after lunch | with the owner, pick a small real use case; restate it in the glossary's words | the first conversation is about language |

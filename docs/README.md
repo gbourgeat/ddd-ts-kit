@@ -82,6 +82,12 @@ limits, and a recommendation by situation.
 | [When to extract microservices](guides/when-to-extract-microservices.md) | the signals, the costs, a readiness checklist, the steps, when to merge back |
 | [Token economy](guides/token-economy.md) | spending fewer tokens with coding agents, and complementary tools |
 
+## Proposals
+
+| Page | Status |
+|---|---|
+| [The read side](proposals/read-side.md) | criteria, representations, read models and projections; the page says, part by part, what is built in the runtime packages, what the CLI does not generate yet and what is not built |
+
 ## Suggested reading order
 
 **New to DDD.** Follow the reading path of [concepts/README.md](concepts/README.md) in order,

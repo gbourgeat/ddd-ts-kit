@@ -27,6 +27,7 @@ export interface LogSettings {
   readonly format: 'json' | 'pretty'; // LOG_FORMAT
   readonly service: string;
   readonly environment: string;
+  readonly scrubMessages: boolean; // LOG_SCRUB_MESSAGES
 }
 
 export function createLogger(scope: ExecutionScope, settings: LogSettings): PinoLogger {
@@ -55,6 +56,10 @@ async function shutdown(): Promise<void> {
 }
 ```
 
+`init --logger pino` writes this `create-logger.ts` (it answers a `NoopLogger` when given no
+settings, which is how the tools and the tests stay silent); `platform/lay-foundations.ts`
+calls it once and `composeApplication` hands the logger to `kernelModule({ logger })`.
+
 One line of the application, as it is written:
 
 ```json
@@ -66,7 +71,11 @@ call site passes an id. `traceLogFields(scope)` answers the trace and span ids i
 and inside the execution scope the correlation id, the causation id, the origin, the actor and
 the tenant. This package does not depend on the tracing package: any `() => LogFields` fits,
 `() => logFieldsOf(scope.current())` included. A function that throws gives no field, never a
-lost line. The fields of the line win over those of a child, which win over `fields`.
+lost line. The fields of the line win over `fields`, which win over those of a child: pino
+writes the bindings of a child first and what the mixin answers after them, so a key given
+by both is written twice and a JSON parser reads the one of `fields`. `StdoutLogger` orders
+them the same way; `@ddd-ts-kit/winston` does not (there a child wins over `fields`). Do not
+bind in a child a key that `fields` answers.
 
 **An instance of your own.** The project that already configures pino keeps doing so, and
 takes the pieces it wants:
@@ -173,9 +182,11 @@ adapter and by its children. `isLevelEnabled(level)` answers that threshold: ask
 building fields that cost.
 
 `child(fields)` is a pino child: the fields are serialized once, when the child is created,
-and cost nothing per line. A key bound twice (by a child and by its parent, or by a child and
-by the line) is written twice on the line, as pino does; a JSON parser reads the last one,
-which is the closest. `level` and `time` are the exception: a field of that name is dropped,
+and cost nothing per line. A key bound twice (by a child and by its parent, by a child and by
+`fields`, or by any of them and by the line) is written twice on the line, as pino does; a
+JSON parser reads the last one, in this order: `service`, `environment` and `base`, the
+children from the oldest to the closest, `fields`, the line. `level` and `time` are the
+exception: a field of that name is dropped,
 so that no field forges the header of a line.
 
 ## Flush

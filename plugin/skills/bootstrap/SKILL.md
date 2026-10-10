@@ -73,13 +73,14 @@ would drift.
 ## 5. Prove it and commit
 
 ```bash
-npm run verify          # types, lint, tests, end to end, architecture, dead code, docs drift
+npm run verify          # types, lint, tests, end to end, architecture, import graph, dead code, docs drift
 npm run hooks:install   # pre-commit checks and conventional commit messages
 ```
 
 Report the real output. Propose the commits (skill `ddd-ts-kit:commit-discipline`): one for
 the bare project (`chore: bootstrap the project`), then one per context
-(`feat(<context>): declare the context and its language`). Then `npm run infra:up` and
+(`feat(<context>): declare the context and its language`). `init` creates no
+repository: in a fresh directory `git init` comes first, by the owner. Then `npm run infra:up` and
 `npm run dev` when the owner wants to see it run; the API documentation is on `/docs`.
 
 ## 6. Hand over

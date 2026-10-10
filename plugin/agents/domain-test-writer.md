@@ -16,8 +16,9 @@ refuses it. If a test reveals a defect or an untestable design, stop and report 
 
 ## Read little
 
-`src/contexts/<context>/CONTEXT.md`, then `npx ddd-ts-kit list --json` for what exists, then
-only the unit under test, its generated spec and the builders and fakes it uses. A missing
+`src/contexts/<context>/CONTEXT.md`, then `npx ddd-ts-kit todo <context>` for every
+`it.todo` left as `file:line` (`describe <context> --json` for what exists), then only the
+unit under test, its generated spec and the builders and fakes it uses. A missing
 spec, builder or fake is generated (`npx ddd-ts-kit generate builder ...`), not typed.
 
 ## Rules
@@ -41,7 +42,7 @@ spec, builder or fake is generated (`npx ddd-ts-kit generate builder ...`), not 
 
 ## Finish
 
-`npm test -- <context>` and
+`npm test -- <context>`, `npx ddd-ts-kit todo <context>` (no `it.todo` left) and
 `npx ddd-ts-kit check --rule test/spec-required --rule test/no-mocks`. Report in a few
 lines: the behaviours now covered, the result, each behaviour you could not cover and why,
 each defect found with `file:line`. No file contents.

@@ -71,7 +71,8 @@ A hosted backend that accepts OTLP is a third option; none was evaluated here.
 | Output | JSON lines on the standard output | JSON lines, optional pretty format in development, pino transports | JSON lines, winston formats and transports |
 | Cost of a line, as measured in the kit's READMEs | not stated | about 3 microseconds | about 7 microseconds, more with each format |
 | Buffering | none | none by default; an asynchronous mode buffers 4 KiB and can lose the last lines of a killed process | none in the adapter |
-| Redaction of credentials | not stated in the README read for this page | compiled by pino | a pass over top-level values |
+| Redaction of credentials | none (the aspects README says so); `scrubMessages` removes the message of errors that are not a `DomainError` | compiled by pino | a pass over top-level values |
+| Chosen by | `init --logger stdout` (the default) | `init --logger pino` | `init --logger winston` |
 | Take it when | JSON on stdout is all you need | volume matters, the framework already speaks pino (Fastify), or you want its transports | the team already runs winston transports and formats (rotating files, syslog, a vendor transport) |
 
 The measurements are those the two READMEs report (Node 24, a child logger, four correlation
@@ -90,13 +91,21 @@ choice is one line of the composition root and can be revisited.
 | What it is | error and performance monitoring, hosted or self-hosted | an error tracker that speaks the Sentry protocol |
 | Licence | the server is under the Functional Source License (FSL-1.1-Apache-2.0), which is not an open-source licence; the SDKs are MIT | MIT |
 | Version seen | server 26.9.0 (2026-09-15); `@sentry/node` 11.6.0 | v6.2.6 (tag of 2026-08-07) |
-| Self-hosting | a multi-service installation | one service next to PostgreSQL and, as its documentation recommends, Valkey |
-| Scope | errors, performance, session replay, profiling and more | errors, uptime checks, basic performance data |
+| Self-hosting | Docker Compose with an install script, single-node services including Kafka; the documentation asks for at least 4 CPU cores and 16 GB of memory plus 16 GB of swap | one service next to PostgreSQL 14 or later; Valkey (or Redis) 7 or later is optional, advised "for faster or larger instances" |
+| Scope, as each documentation lists it | issues, traces and spans, logs, session replay, profiling, application metrics, user feedback, dashboards, releases, monitors and alerts (cron and uptime monitors) | error tracking, performance monitoring, uptime monitoring, logs |
 | Fits | a team that wants the hosted service or the full feature set | a small team that wants errors collected on its own infrastructure with little to operate |
 
-The kit's adapter is the same for both: only the DSN differs. GlitchTip implements a subset of
-what the Sentry SDK can send; which Sentry features it lacks today was not verified for this
-page beyond the kit's README stating that the adapter works with both.
+The self-hosting and scope rows were read on 2026-10-10 from the Sentry self-hosted
+documentation (https://develop.sentry.dev/self-hosted/), the Sentry product index
+(https://docs.sentry.io/product/), the GlitchTip documentation index
+(https://glitchtip.com/documentation) and its installation guide
+(https://glitchtip.com/documentation/install). They list what each project documents, not
+what was tried here. The GlitchTip pages read do not mention session replay or profiling.
+
+The kit's adapter is the same for both: only the DSN differs. **Not verified:** which of the
+fields and envelope types the Sentry SDK sends GlitchTip accepts or ignores. The GlitchTip
+pages read do not say, and nothing beyond the adapter's own suite was run against a GlitchTip
+server for this page.
 
 ## What this kit supports and verified
 
@@ -104,9 +113,11 @@ page beyond the kit's README stating that the adapter works with both.
 
 - an OpenTelemetry bootstrap for Node that exports traces over OTLP/HTTP to the endpoint named
   by the standard `OTEL_EXPORTER_OTLP_ENDPOINT` variable; without it nothing is exported;
-- spans added at the composition root for use cases, adapters, events and jobs, so that no file
-  of `domain/` or `application/` imports a tracing library (`layer/domain-purity`,
-  `layer/application-inward` in the [architecture reference](../ARCHITECTURE.md));
+- spans put around the application from outside, once, by the platform
+  (`kernelModule({ instrumentation: traceApplication() })`, `tracedPublisher(bus)` for the
+  relay): one per use case, repository or adapter call, domain event, publication, consumer
+  and job, so that no file of a context imports a tracing library (`tracing/platform-only`
+  in the [architecture reference](../ARCHITECTURE.md));
 - `traceparent` carried in the event envelope and stored with the outbox record, so a trace
   continues across the relay and the consuming context, and a sampling decision holds for the
   whole trace;
@@ -119,18 +130,21 @@ page beyond the kit's README stating that the adapter works with both.
 Tempo is not named in the package README. It receives OTLP, so the same exporter should reach
 it; this was not run in this repository.
 
-**Logs**: `StdoutLogger` is what a generated project binds, with the trace ids and the
-correlation fields of the execution scope on every line. `@ddd-ts-kit/pino` (written against
-pino 10) and `@ddd-ts-kit/winston` (written against winston 3.19) are bound by hand in the
-composition root; the CLI README names no `init` option for them. For NestJS, each README
-shows a bridge of a few lines for the framework's own messages and ships none.
+**Logs**: `StdoutLogger` is what a generated project binds by default, with the trace ids and
+the correlation fields of the execution scope on every line. `init --logger pino` and
+`init --logger winston` generate `src/platform/observability/create-logger.ts` on
+`@ddd-ts-kit/pino` (written against pino 10) or `@ddd-ts-kit/winston` (written against
+winston 3.19) instead, with the same fields. For NestJS, each README shows a bridge of a few
+lines for the framework's own messages and ships none.
 
 **Error reports** ([`@ddd-ts-kit/sentry`](../../packages/sentry/README.md)): written against
 `@sentry/node` 11, with five capture points attached from outside (buses, HTTP 5xx, jobs,
 dead-lettered events, process failures), one report per failure, a `DomainError` never
 reported as an incident. The Sentry SDK is initialised so that it registers no tracer provider
 and no second instrumentation: the tracing package owns OpenTelemetry, and the report carries
-the trace id of the active span. A compose example runs GlitchTip 6 for development.
+the trace id of the active span. `init --errors sentry` generates the wiring
+(`src/platform/errors.ts`, configured by `SENTRY_DSN`) and a compose service running
+GlitchTip 6.2.6 behind the `errors` profile, for development.
 
 **Metrics**: the kernel defines the `Metrics` port (counters, histograms, gauges, with label
 values from a small closed set) and the aspects package records durations and outcomes through
@@ -154,7 +168,8 @@ turns off runtime and host metrics.
 - **Asynchronous pino can lose its last lines** when the process is killed without a handler.
 - **No Nest logger bridge is shipped.**
 - **Not verified in this repository:** Tempo as a backend, Sentry's hosted service at volume,
-  GlitchTip's handling of every field the adapter sends.
+  GlitchTip's handling of every field the adapter sends. The comparison rows of Sentry and
+  GlitchTip above repeat each project's documentation.
 - **When not to add a tracing backend at all:** a single process with few dependencies is
   often served by correlation ids in structured logs. Start the SDK later; the code does not
   change, since nothing in the inner layers knows about tracing.
@@ -187,8 +202,10 @@ turns off runtime and host metrics.
 - pino: https://getpino.io ; winston: https://github.com/winstonjs/winston
 - Sentry licence: https://github.com/getsentry/sentry/blob/master/LICENSE.md ; Node SDK:
   https://docs.sentry.io/platforms/javascript/guides/node/
-- GlitchTip: https://glitchtip.com/documentation and
-  https://gitlab.com/glitchtip/glitchtip-backend (licence MIT, tags).
+- GlitchTip: https://glitchtip.com/documentation , https://glitchtip.com/documentation/install
+  (read on 2026-10-10) and https://gitlab.com/glitchtip/glitchtip-backend (licence MIT, tags).
+- Sentry self-hosted: https://develop.sentry.dev/self-hosted/ ; product index:
+  https://docs.sentry.io/product/ (read on 2026-10-10).
 - CNCF maturity levels read from the CNCF landscape data (https://github.com/cncf/landscape).
 
 ## See also

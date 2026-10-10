@@ -14,7 +14,7 @@ One declaration per event and version, in the producer's `published-language/`. 
 payload type, validates what is published and consumed, and feeds the generators.
 
 ```ts
-// contexts/ordering/published-language/order-placed.event.ts
+// contexts/ordering/published-language/order-placed.v1.integration-event.ts
 import { z } from 'zod';
 import { zodSchema } from '@ddd-ts-kit/validation/zod';
 import { defineIntegrationEvent, type PayloadOf } from '@ddd-ts-kit/events';
@@ -40,18 +40,37 @@ and keep publishing both until the consumers have moved.
 
 ## Publish through the outbox
 
-The handler publishes to an `IntegrationEventPublisher` and knows nothing else. With a
-database, that publisher is the `OutboxPublisher`: it only stores, inside the transaction of
-the command, so the event commits or rolls back with the business write.
+A publisher is a handler of a domain event of its own context: it maps the fact to the public
+payload and publishes to an `IntegrationEventPublisher`, knowing nothing else. With a
+database, that publisher is the `OutboxPublisher`: it only stores. Domain events leave with
+the save, inside the unit of work of the command, so the integration event commits or rolls
+back with the business write.
 
 ```ts
-// contexts/ordering/application/commands/place-order/place-order.handler.ts
-const event = orderPlaced.create(
-  { orderId: order.id, total: order.total, lines: order.lines },
-  { id: this.ids.next(), occurredAt: this.clock.now(), correlationId: command.correlationId },
-); // throws InvalidEventPayloadError: publishing an invalid event is a bug
-await this.publisher.publish([event]);
+// contexts/ordering/application/integration/publishers/order-placed.publisher.ts
+import { IdGenerator, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
+import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
+
+@DomainEventHandler(OrderPlacedEvent, { name: 'ordering.order.placed' }, [IntegrationEventPublisher, IdGenerator])
+export class OrderPlacedPublisher implements DomainEventHandler<OrderPlacedEvent> {
+  constructor(
+    private readonly publisher: IntegrationEventPublisher,
+    private readonly ids: IdGenerator,
+  ) {}
+
+  async handle(event: OrderPlacedEvent): Promise<void> {
+    const published = orderPlaced.create(
+      { orderId: event.aggregateId, total: event.total, lines: event.lines },
+      { id: this.ids.next(), occurredAt: event.occurredAt },
+    ); // throws InvalidEventPayloadError: publishing an invalid event is a bug
+
+    await this.publisher.publish([published]);
+  }
+}
 ```
+
+The correlation id is not passed by hand: `scopedPublisher` stamps it (see "The execution
+context of a consumed event").
 
 The composition root binds the store under its port, `OutboxStore`, and replaces the
 publisher of the kernel by the outbox. Ports are abstract classes and the class is what a
@@ -194,7 +213,7 @@ handler by hand:
 // contexts/billing/application/integration/handlers/invoice-on-order-placed.integration-handler.ts
 import { CommandBus, type IntegrationEvent } from '@ddd-ts-kit/kernel';
 import { IntegrationEventHandler } from '@ddd-ts-kit/kernel/declarations';
-import { orderPlaced, type OrderPlaced } from '../../../../ordering/published-language/order-placed.event.js';
+import { orderPlaced, type OrderPlaced } from '../../../../ordering/published-language/index.js';
 
 @IntegrationEventHandler(orderPlaced, { consumer: 'billing.invoice-on-order-placed' }, [CommandBus])
 export class InvoiceOnOrderPlaced {
@@ -214,7 +233,7 @@ plain function:
 import { consume, subscribeAll } from '@ddd-ts-kit/events';
 
 export const billingSubscriptions = ({ commandBus, processed, unitOfWork }: BillingDependencies) => [
-  consume(orderPlaced, { consumer: 'billing.ordering.order.placed', processed, unitOfWork }, async (event) => {
+  consume(orderPlaced, { consumer: 'billing.invoice-on-order-placed', processed, unitOfWork }, async (event) => {
     await commandBus.execute(new IssueInvoice(event.payload.orderId, event.payload.total));
   }),
 ];
@@ -251,7 +270,7 @@ a store is bound under `ProcessedEventStore`.
 work and the idempotency mark included, inside it:
 
 ```ts
-consume(orderPlaced, { consumer: 'billing.ordering.order.placed', processed, unitOfWork, scope }, handler);
+consume(orderPlaced, { consumer: 'billing.invoice-on-order-placed', processed, unitOfWork, scope }, handler);
 ```
 
 | Field of the context | Value |
@@ -262,7 +281,7 @@ consume(orderPlaced, { consumer: 'billing.ordering.order.placed', processed, uni
 | `actor` | `systemActor(consumer)`, unless `actorOf(event)` answers one |
 
 So the repositories of the consuming context stamp audit columns with
-`system:billing.ordering.order.placed`, and a log line of the consumer carries the correlation
+`system:billing.invoice-on-order-placed`, and a log line of the consumer carries the correlation
 of the request that started it all. The envelope carries no actor by default, on purpose: an
 actor is personal data, and a broker keeps messages. A project that decides to put a reference
 in its own payload or envelope maps it with `actorOf: (event) => Actor | undefined`.
@@ -294,14 +313,14 @@ const document = generateAsyncApi({
   registry,
   servers: { production: { host: 'broker.example.com:5671', protocol: 'amqps' } },
 });
-await writeFile('asyncapi.json', stringifyAsyncApi(document));
+await writeFile('docs/integration/asyncapi.json', stringifyAsyncApi(document));
 await writeFile(
-  'docs/EVENTS.md',
+  'docs/integration/event-catalog.md',
   generateEventCatalog(registry, { consumers: { 'ordering.order.placed': ['billing', 'shipping'] } }),
 );
 
 // In CI: fail when the committed file is stale.
-if (checkAsyncApiDrift(document, await readFile('asyncapi.json', 'utf8')).drift) process.exit(1);
+if (checkAsyncApiDrift(document, await readFile('docs/integration/asyncapi.json', 'utf8')).drift) process.exit(1);
 ```
 
 The AsyncAPI 3.0.0 document has one channel per event type (its address is the type), one
@@ -310,6 +329,8 @@ message per version whose payload is the envelope (`id`, `type`, `version`, `occ
 is Markdown: one section per producer, a table of versions per event, and the payload fields
 flattened (`customer.email`, `lines[].sku`). Both outputs depend only on the declarations,
 never on their registration order, so they can be committed and diffed.
+A project generated by the CLI has this script as `scripts/events.ts`, with the same two
+paths.
 
 ## Choosing the strategy for your transport
 
@@ -325,6 +346,11 @@ changes with the transport is how the relay runs and what the consumer side must
 | cloud queues and topics (SQS/SNS, Pub/Sub) | polling relay, batch publish | visibility timeout above the handler's worst case, redrive policy to a dead-letter queue |
 
 Without a database there is nothing to be atomic with: publish to the bus directly, no outbox.
+
+The kit has a provider package for RabbitMQ (`@ddd-ts-kit/rabbitmq`), Kafka
+(`@ddd-ts-kit/kafka`), NATS JetStream (`@ddd-ts-kit/nats`) and Redis Streams
+(`@ddd-ts-kit/redis/event-bus`); each README says how it meets the requirements below and what it does
+not guarantee.
 
 ### Same process, no broker
 

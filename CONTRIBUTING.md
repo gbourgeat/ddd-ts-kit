@@ -5,6 +5,8 @@ npm ci
 npm run build
 npm test
 node packages/cli/dist/bin.js check --self
+npm run check:dashes
+node --test plugin/hooks/guard.test.mjs
 ```
 
 ## Ground rules
@@ -21,7 +23,10 @@ node packages/cli/dist/bin.js check --self
   entries. `@ddd-ts-kit/kernel` and the CLI have no runtime dependency.
 - Skills stay short: they tell an agent what to run and what to decide, and point to the
   reference instead of repeating it.
-- English everywhere. No em dash or en dash (CI checks it).
+- A page of documentation says what the code does today: a sample compiles against the
+  current packages, a command runs as written, and what could not be verified is said on the
+  page. [docs/README.md](docs/README.md) is the index.
+- English everywhere. No em dash or en dash (`npm run check:dashes`, run by CI).
 - Conventional commits: `<type>(<scope>): <summary>`.
 - A pull request that changes the plugin (skills, agents, hooks) bumps `version` in
-  `plugin/.claude-plugin/plugin.json`.
+  `plugin/.claude-plugin/plugin.json`, and passes `claude plugin validate . --strict`.

@@ -130,7 +130,8 @@ As the `extract-service` skill drives them:
 
 1. **Generate the entry point.** `npx ddd-ts-kit generate service <context>` writes
    `src/apps/<context>/main.ts` (that context, the kernel and the platform), a start script, a
-   compose service and sets `deployable: true` in the config.
+   compose service, the line of the context map, and sets `deployable: true` in the config.
+   The service takes the scheduled jobs of its context with it, and no job of another one.
 2. **Replace in-process gateways by remote adapters.** In the remaining contexts, each
    `gateway` adapter that pointed at the extracted context becomes a remote adapter of the
    same port, held to the same contract suite.

@@ -86,10 +86,10 @@ practice:
 
 Three further costs follow from choosing Nest in this kit:
 
-- **Wiring is Nest's.** `stack.di` is `nest` when `stack.http` is `nest`, and the CLI README
-  says the declared style is refused with `--di nest`: contexts are written in the explicit
-  style, with providers declared by factory in the context's Nest module, and `@Injectable()`
-  kept out of `domain/` and `application/` (wiring skill).
+- **Wiring is Nest's.** `--http nest` and `--di nest` go together: the CLI refuses one
+  without the other, and refuses the declared style with `--di nest`. Contexts are written in
+  the explicit style, as a `<context>.module.ts` that is a function of the platform, and
+  `@Injectable()` is kept out of `domain/` and `application/`.
 - **Legacy decorators.** The generated `tsconfig.json` sets `experimentalDecorators` (and
   `emitDecoratorMetadata`) for Nest.
 - **Two ways to do everything.** A team that also writes native Nest controllers has two
@@ -115,10 +115,11 @@ From [`packages/http/README.md`](../../packages/http/README.md) and
 - OpenAPI 3.1 generated from the same declarations, deterministic, with a drift check for CI.
 - Every request runs inside the execution scope with its correlation id when the scope is
   given in the options.
-- The CLI's end-to-end proof lists generated projects on the default stack (Express) and
-  several variants; none of the listed combinations names Fastify or NestJS, so for those two
-  the evidence is the adapter suite of the package, not a generated project run end to end.
-  This page could not find a stronger statement in the READMEs.
+- The CLI's end-to-end proof (`proven-stacks.spec.ts`, as its README lists it) installs and
+  runs eight generated projects: seven on Express and one on Fastify (with `--di manual`).
+  None is on NestJS: for Nest the evidence is the adapter suite of the package and the
+  generated stacks that pass `check` and the type check, not a generated project run end to
+  end.
 
 ## Limits and when not to use it
 

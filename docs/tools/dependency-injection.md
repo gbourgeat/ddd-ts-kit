@@ -40,13 +40,13 @@ what NestJS or manual wiring would bind.
 
 | | tsyringe + `@ddd-ts-kit/di` | NestJS container | Manual wiring |
 |---|---|---|---|
-| Who assembles a context | the kit, from declarations (generated barrel or discovery) or from an explicit module | Nest modules, providers by factory | a `wire<Context>(platform)` function you write |
+| Who assembles a context | the kit, from declarations (generated barrel or discovery) or from an explicit module | as generated, the same `<context>Module(platform)` function as manual wiring; Nest providers by factory when you bind in Nest modules yourself | a `<context>Module(platform)` function in `<context>.module.ts`: plain calls to constructors, registrations between markers |
 | Style available (`stack.style`) | `declared` or `explicit`, mixable | `explicit` only | `explicit` only |
 | Injection token | the port class itself | Nest tokens; ports bound in the module | none: plain variables |
 | Decorators in your classes | declarations in `application/` and `infrastructure/`, none in `domain/`; no parameter decorator, no reflection | `@Injectable()` kept out of `domain/` and `application/` by rule; providers declared by factory | none |
 | Decorator mode | standard or legacy | legacy | not concerned |
 | Errors found before start | duplicate binding, unbound dependency, cycle, duplicate handler, consumer or job, undeclared authorization, and more (`WiringError` with a code) | Nest's own resolution errors at bootstrap | the compiler, for constructors; nothing for a forgotten handler |
-| Cross-cutting hook | `decorate` hook and `.with(...)` on a binding: tracing and aspects by kind | call the wrappers in the provider factory | call the wrappers by hand |
+| Cross-cutting hook | `instrumentation` of `kernelModule` (tracing, from outside), `around(kinds, ...)` in a module for every binding of a kind, `.with(...)` or the `aspects` of a declaration for one binding | call the wrappers in the provider factory | call the wrappers by hand |
 | Test application | `createTestApplication` with `fake(Port, instance)` | Nest testing module, or `createTestBuses` | `createTestBuses` |
 | Extra runtime dependencies | `tsyringe`, `reflect-metadata` | the Nest packages | none |
 
@@ -75,7 +75,9 @@ what NestJS or manual wiring would bind.
 
 1. **Do you want the declared style?** One decorator per class, no module file, a generated
    barrel kept current by the generator (`declarations/barrel-current`). Only tsyringe gives
-   it: the CLI refuses `--style declared` with `--di manual` and `--di nest`.
+   it, and it is its default: the CLI refuses `--style declared` with `--di manual` and
+   `--di nest`, which default to `explicit`. `--di nest` goes with `--http nest` and the
+   reverse.
 2. **Is NestJS already the framework?** Then its container is there anyway
    ([HTTP frameworks](http-frameworks.md)).
 3. **How much checking at start do you want?** The checks of `createApplication` (a command
@@ -103,11 +105,14 @@ From [`packages/di/README.md`](../../packages/di/README.md),
 - **`kernelModule()`** binds a working default for every kernel port (in-memory buses, unit of
   work, cache, lock, rate limiter, no-op logger and metrics), each replaceable by option or by
   `rebind`.
-- **Two assemblies**: `barrel` (default) and `discovery`. The CLI refuses discovery behind a
-  broker of the kit.
-- **Proven end to end by the CLI**: generated projects in the declared style (default stack,
-  with ReBAC and RabbitMQ, with discovery) and in the explicit style, including one with
-  `--di manual` (with ABAC and knex). No generated NestJS project appears in that list.
+- **Two assemblies** of a declared context (`stack.assembly`): `barrel` (default) and
+  `discovery`, with or without a broker. `--assembly` is refused with `--style explicit`.
+- **Proven end to end by the CLI** (`proven-stacks.spec.ts`, as its README lists them):
+  generated projects in the declared style (the default stack; with ReBAC and RabbitMQ; with
+  knex and discovery, alone and behind NATS), in the explicit style on tsyringe (the default
+  stack; with ReBAC and RabbitMQ), and with `--di manual` (with ABAC and knex; with Fastify,
+  knex, RabbitMQ and Redis). No generated NestJS project appears in that list: NestJS stacks
+  are generated and held to `check` and to the type check, not installed and run.
 - **Test application** with fixed clock, sequential identifiers, in-memory buses and fakes
   bound under the port class.
 
@@ -139,11 +144,6 @@ Of the alternatives:
   what `ddd-ts-kit check` reads in the text (`authz/declared`,
   `events/consumer-idempotent`); cross-cutting wrappers are applied by hand, so one forgotten
   call is one untraced adapter.
-
-The README files currently disagree on one point that touches this page: the CLI README and
-the `wiring` skill still show token constants (`TOKEN`, `token<...>(...)`) where
-[ARCHITECTURE.md](../ARCHITECTURE.md), the kernel README and the ESLint rule
-`ports/no-token-constant` say the port class is the token. This page follows the reference.
 
 Do not introduce a container at all in a script, a migration or a context of three classes run
 alone: constructing the objects by hand is the composition root.

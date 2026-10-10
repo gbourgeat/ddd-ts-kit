@@ -63,7 +63,7 @@ It is what an agent reads instead of the code of the context. Keep it true and s
 | `## Purpose` | you | two sentences in business terms; the first one feeds the context map |
 | `## Classification` | you | the classification and one sentence of why |
 | `## Ubiquitous language` | you | the table above |
-| `## Aggregates`, `## Published events`, `## Permissions`, `## Scheduled jobs`, `## Relationships` | `npx ddd-ts-kit docs`, between markers | never edit between the markers; add below a list one line per aggregate with the invariant it guards |
+| `## Aggregates`, `## Published events`, `## Permissions`, `## Scheduled jobs`, `## Relationships`, `## Reference` | `npx ddd-ts-kit docs`, between markers | never edit between the markers; add below a list one line per aggregate with the invariant it guards |
 
 A new term enters with the code that needs it:
 `npx ddd-ts-kit generate <kind> ... --term "<Term>=<meaning>"` adds the row in the same

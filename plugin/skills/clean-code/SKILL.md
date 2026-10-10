@@ -26,8 +26,9 @@ without fighting them. Reference: `docs/ARCHITECTURE.md` section 6.
   is not understood yet: add the term with its meaning first, or ask.
 - Class: a noun of the domain. Method: what the business says happens (`order.cancel(reason)`),
   never `setStatus`, `update`, `process`, `handle`, `manage`, `doX`.
-- No `Manager`, `Helper`, `Util`, `Data`, `Info`, `Processor`, `Impl`, `Base`, `Dto` in the
-  domain. A technical suffix is allowed only where it names the architectural role outside the
+- No `Manager`, `Helper`, `Util`, `Data`, `Info`, `Processor`, `Wrapper`, `Impl`, `Base`,
+  `Abstract`, `Dto`, `Entity`, `Model` in a name of the domain or of a use case
+  (`language/no-technical-name`). A technical suffix is allowed only where it names the architectural role outside the
   domain (`OrderRepository`, `PlaceOrderHandler`).
 - One word per concept in a context: not `fetch` here and `retrieve` there.
 - A boolean reads as a predicate (`isOverdue`), a collection as a plural, a function that

@@ -12,6 +12,7 @@ allowed-tools:
   - Bash(npx ddd-ts-kit generate *)
   - Bash(npx ddd-ts-kit check *)
   - Bash(npx ddd-ts-kit list *)
+  - Bash(npx ddd-ts-kit describe *)
 ---
 
 # Access control
@@ -41,8 +42,8 @@ npx ddd-ts-kit generate query <ctx> <UseCase> --public --json
   class. Explicit style: `.requires(...)` or `.public()` where the handler is registered.
 - Nothing else for a plain permission: no check in the route, none in the handler. The
   generated handler spec already proves that an actor without it is refused.
-- `npx ddd-ts-kit list` shows what each use case requires; the permissions of a context are
-  listed in its `CONTEXT.md`.
+- `npx ddd-ts-kit describe <ctx>` shows what each use case and route requires; the
+  permissions of a context are listed in its `CONTEXT.md`.
 
 ## A rule on one element
 
@@ -53,8 +54,8 @@ npx ddd-ts-kit generate policy <ctx> <Name> --permission <aggregate>.<action> --
 ```
 
 A policy is a named, pure, unit-tested class in `application/authorization/*.policy.ts`
-(`@Policy(permission, { name })`); the handler loads the aggregate and asks the authorizer
-with it. A rule that holds whoever asks ("not after publication") is an invariant: it goes in
+(`@Policy(permission, { name: '<context>.<name>' })`); the handler loads the aggregate and
+asks `Access.authorize(command.actor, permission, element)`. A rule that holds whoever asks ("not after publication") is an invariant: it goes in
 the aggregate.
 
 ## Lists
@@ -69,7 +70,8 @@ port; the adapter turns it into the query.
   Integration event handlers and jobs act as `systemActor('<context>.<name>')`.
 - **Infrastructure** that needs it without being handed it (audit columns, tenant scoping,
   log fields): the `ExecutionScope`, opened at the boundary for every request, consumed event
-  and job. Never read in `domain/` or `application/` (`authz/actor-explicit`).
+  and job; `ActorContext` is a view of it. Neither is named nor read in `domain/` or
+  `application/` (`authz/actor-explicit`).
 - **Domain**: never. Pass an identifier named for its role: `approve(approverId)`.
 
 ## Choosing the model

@@ -22,11 +22,12 @@ worktree (`cd <worktree> && ...`).
 - Shared files are not yours: the config, `src/main.ts`, `src/platform/**`, `package.json`,
   the lockfile, migrations, everything under `docs/`, generated documents. Another context
   is not yours either; its `published-language/` is read-only.
-- You run the generators that stay inside your context: `value-object`, `entity`,
-  `domain-event`, `domain-error`, `domain-service`, `command` (on an aggregate whose
-  repository exists), `query`, `route`, `port`, `adapter`, `event-handler`,
-  `integration-handler`, `acl`, `builder`, `e2e`. The conductor runs `context`, `repository`,
-  `integration-event`, `job`, `gateway`, `policy`, and adds dependencies.
+- You run the generators that stay inside your context, always with `--local-only`:
+  `aggregate`, `builder`, `entity`, `value-object`, `domain-event`, `domain-error`,
+  `domain-service`, `command` (on an aggregate whose repository exists), `query`, `port`,
+  `route`, `integration-handler`, `event-handler`, `acl`, `e2e`, `adapter`. The conductor
+  runs `context`, `repository`, `integration-event`, `job`, `gateway`, `policy`, and adds
+  dependencies.
 - When you need something outside your scope (a field in an upstream contract, a new
   aggregate, a dependency, a platform binding): do not work around it and do not retry a
   refused write. Finish the slices that do not depend on it and put the need in your report.
@@ -34,7 +35,8 @@ worktree (`cd <worktree> && ...`).
 ## Read little
 
 1. `src/contexts/<context>/CONTEXT.md`: the purpose, the glossary, what exists.
-2. `npx ddd-ts-kit list --json`, once, for the map. Never browse the tree.
+2. `npx ddd-ts-kit describe <context> --json`, once: use cases, routes, events, ports,
+   dependencies. Never browse the tree.
 3. The contracts named in the briefing, in the upstream's `published-language/`.
 4. After each generator, only the `next` places it prints (`file:line`), a range around the
    line. After a violation or a failing test, only the file it names.
@@ -45,7 +47,7 @@ worktree (`cd <worktree> && ...`).
    rule, fact recorded, failures by name. A term missing from the glossary is added with
    `--term`. A business rule you would have to guess is an open question: skip the slice
    and report it.
-2. Generate with the commands of the briefing, adding `--json`.
+2. Generate with the commands of the briefing, adding `--local-only --json`.
 3. Fill the `TODO(domain)` markers inside out and test first: the aggregate spec then its
    intention method, the handler spec then the handler, then the route. Replace every
    `it.todo`. Fakes and builders, never mocks. Do not change what the generator structured,
@@ -55,8 +57,9 @@ worktree (`cd <worktree> && ...`).
 5. Commit the slice alone, staging its paths one by one (never everything at once):
    `feat(<context>): <the slice in business words>`. The hooks run; never bypass them.
 
-When all slices are committed: `npm run verify` once in the worktree. Do not merge, do not
-push unless the briefing says so, do not edit `docs/architecture/`.
+When all slices are committed: `npx ddd-ts-kit todo <context>` lists nothing, then
+`npm run verify` once in the worktree. Do not merge, do not push unless the briefing says
+so, do not edit `docs/architecture/`.
 
 ## Report (under 200 words, no code, no file contents)
 

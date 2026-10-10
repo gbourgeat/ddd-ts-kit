@@ -37,8 +37,17 @@ Versions and licences were read from npm on 2026-10-10.
 
 Other tools exist for parts of this job (import-boundary ESLint plugins, monorepo boundary
 rules, other dead-code finders). None was evaluated for this page. The kit's configuration for
-dependency-cruiser is generated from `ddd-ts-kit.config.json`, which is what makes it follow
-the context map without hand editing.
+dependency-cruiser, `.dependency-cruiser.cjs`, is generated from `ddd-ts-kit.config.json`,
+which is what makes it follow the context map without hand editing:
+`ddd-ts-kit depcruise-config --write` rewrites it (`generate context` does too), and the
+generated `npm run depcruise` starts with `depcruise-config --check`, which fails on a stale
+file.
+
+`ddd-ts-kit rules` lists every rule id with its default severity. Most code rules exist in
+both the checker (a fast approximation on text) and the ESLint plugin (the exact one). Five
+are held by the ESLint plugin only, and the listing says so: `domain/aggregate-encapsulation`,
+`domain/value-object-immutability`, `domain/no-generic-error`, `application/handler-shape`,
+`application/command-query-separation`.
 
 ## Selection criteria
 
@@ -87,7 +96,7 @@ only orchestrate. Every gate therefore runs on a laptop with the same command.
 | Triggers | pushes to the default branch and pull requests | merge requests and the default branch |
 | Redundant runs | cancelled by concurrency groups | cancelled by interruptible jobs |
 | Gates | the same `ci:*` scripts | the same `ci:*` scripts |
-| Lint and architecture findings | annotations on the pull request | Code Quality reports |
+| Lint and architecture findings | annotations on the pull request (`check --format github`) | Code Quality reports (`check --format gitlab` writes the report directly; ESLint through its GitLab formatter) |
 | Test reports | the Vitest reporter for Actions, coverage as an artifact | JUnit and Cobertura reports in the merge request |
 | Secrets scan | gitleaks | gitleaks |
 | Image build without push | the Docker build action | BuildKit rootless |
@@ -125,11 +134,13 @@ From [`pipeline/README.md`](../../pipeline/README.md), the
   with the TypeScript 6 parser and with `@swc/core`, every rule reporting its deliberate
   violation.
 - **knip.** Unused file, export, type and dependency reported on the sample project.
-- **Hooks.** lefthook: ESLint and the checker on staged files before a commit, type check and
-  unit tests before a push, commitlint on the message.
+- **Hooks.** lefthook: ESLint and the checker on staged files before a commit, with the
+  advisory `check --commit-size --staged`; type check and unit tests before a push; commitlint
+  on the message.
 - **Coverage thresholds per layer**, highest for `domain/`, lowest for `infrastructure/`.
-- **Drift gates.** The context map, the generated lists of each `CONTEXT.md`, the OpenAPI
-  document, the AsyncAPI document and the event catalog are regenerated and compared.
+- **Drift gates.** The context map, the generated parts of each `CONTEXT.md`, the barrels
+  (`declarations/barrel-current`), `.dependency-cruiser.cjs`, the OpenAPI document, the
+  AsyncAPI document and the event catalog are regenerated and compared.
 
 **Not executed, by the pipeline README's own account:** the GitHub workflows were parsed and
 checked with actionlint, not run on GitHub; the GitLab file was parsed and its stages resolved

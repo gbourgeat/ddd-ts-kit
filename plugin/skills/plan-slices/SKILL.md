@@ -13,6 +13,7 @@ allowed-tools:
   - Write
   - Edit
   - Bash(npx ddd-ts-kit list *)
+  - Bash(npx ddd-ts-kit status)
 ---
 
 # Plan the slices
@@ -35,7 +36,7 @@ Three kinds of rows, because they do not have the same owner:
 | Kind | What | Owner |
 |---|---|---|
 | `contract` | an integration event or a read contract that another context will consume | conductor, before the consumers start |
-| `skeleton` | an aggregate and its repository, a scheduled job, a policy: generators that also write shared files | conductor |
+| `skeleton` | an aggregate with its repository, a scheduled job, a policy, a gateway: the generators that write shared files (`npx ddd-ts-kit generate --help --json`, `writesShared`) | conductor |
 | `slice` | a use case, a reaction (`integration-handler`, `event-handler`), a query | the worker of the context |
 
 ## 2. Order
@@ -69,6 +70,8 @@ missing. Rows with no path between them can be built in parallel.
 - `Owner` is `conductor`, the name of a context (one worker per context) or a person.
 - `Status` is `todo`, `in progress`, `done`. Only the conductor edits this file: a worker
   reports, the conductor marks the row at the merge.
+- Keep the eight column names as they are: `npx ddd-ts-kit status` reads this table (slices
+  by status and by owner) and `worker-scope` puts the `todo` rows of an owner in its briefing.
 - Keep rule details out: one line under the table per slice that needs it, with the
   invariants and the failures by name ("refuses an order without lines").
 

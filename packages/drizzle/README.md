@@ -25,7 +25,7 @@ import { contextSchema, outboxTable, processedEventsTable } from '@ddd-ts-kit/dr
 export const outbox = outboxTable('messaging'); // messaging.outbox; no argument: public.outbox
 export const processedEvents = processedEventsTable('messaging');
 
-// contexts/order-management/infrastructure/persistence/schema.ts
+// contexts/order-management/infrastructure/persistence/order-management.schema.ts
 export const orderManagement = contextSchema('order-management'); // schema order_management
 export const orders = orderManagement.table('orders', {
   id: text('id').primaryKey(),
@@ -45,11 +45,16 @@ the injection token:
 
 ```ts
 // platform/database/database.ts
-import type { NodePgQueryResultHKT } from 'drizzle-orm/node-postgres';
+import type { PgQueryResultHKT } from 'drizzle-orm/pg-core';
 import { DrizzleContext } from '@ddd-ts-kit/drizzle/postgres';
 
-export abstract class Database extends DrizzleContext<NodePgQueryResultHKT> {}
+export abstract class Database extends DrizzleContext<PgQueryResultHKT> {}
 ```
+
+This is the class the CLI writes: typed on the driver-neutral base, so the same repositories
+run on node-postgres in production and on PGlite in the tests, the connection being typed
+`PgDatabase<PgQueryResultHKT>`. A project bound to one driver may name its kind instead
+(`DrizzleContext<NodePgQueryResultHKT>`), which types the raw result of `execute` exactly.
 
 `createDrizzleUnitOfWork(db)` gives one object that is both the kernel `UnitOfWork` and that
 `Database`. Bind it to both:
@@ -57,6 +62,7 @@ export abstract class Database extends DrizzleContext<NodePgQueryResultHKT> {}
 ```ts
 // platform/database/persistence.module.ts
 import { drizzle } from 'drizzle-orm/node-postgres';
+import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
 import { defineContextModule } from '@ddd-ts-kit/di';
 import { IntegrationEventPublisher, ProcessedEventStore, UnitOfWork } from '@ddd-ts-kit/kernel';
 import { OutboxPublisher, OutboxStore } from '@ddd-ts-kit/events';
@@ -68,7 +74,7 @@ import {
 import { Database } from './database.js';
 import { outbox, processedEvents } from './schema.js';
 
-const db = drizzle(process.env.DATABASE_URL);
+const db: PgDatabase<PgQueryResultHKT> = drizzle(process.env.DATABASE_URL);
 const unitOfWork = createDrizzleUnitOfWork(db);
 
 export const persistenceModule = defineContextModule({
@@ -89,11 +95,17 @@ export const persistenceModule = defineContextModule({
 
 ```ts
 // main.ts
-const app = createApplication({ modules: [kernelModule(), persistenceModule, orderManagementModule] });
+const app = createApplication({ modules: [kernelModule(), persistenceModule, contextModule('order-management', orderManagementDeclarations)] });
 ```
 
 List the module after `kernelModule()`: `rebind` replaces its in-memory defaults. The command
 bus of the kernel module runs every command in the bound `UnitOfWork`; handlers do not know it.
+`contextModule` of `@ddd-ts-kit/di` turns the declared classes of a context into its module.
+
+A project written by the CLI holds the same wiring in two files:
+`platform/database/persistence-over.ts` builds the unit of work and the two stores once, and
+`platform/platform.module.ts` binds them, the outbox publisher being given to
+`kernelModule({ eventPublisher })`.
 
 The factories pass the tables of the `messaging` schema. With the tables in `public`, the
 stores need no option and the class is bound directly:
@@ -161,14 +173,15 @@ export class DrizzleOrderRepository implements OrderRepository {
 }
 ```
 
-Without the decorator, the same binding is one line of the module of the context:
+In the explicit style, without the decorator, the same binding is one line of
+`<context>.module.ts`:
 `builder.bind(OrderRepository).toClass(DrizzleOrderRepository, [Database])`.
 
 `optimisticUpdate` gives the version to expect and the version to write, raises a
 `ConcurrencyError` (a `DomainError` with code `CONCURRENCY_CONFLICT`) when the guarded
 statement wrote no row, and moves `order.version` on otherwise. If your database was created
 with a relational schema (`drizzle(url, { schema })`), declare `Database` as
-`DrizzleContext<NodePgQueryResultHKT, typeof schema>` to keep `executor().query`.
+`DrizzleContext<PgQueryResultHKT, typeof schema>` to keep `executor().query`.
 
 ## Audit columns, tenant scoping and pages
 
@@ -255,11 +268,11 @@ export abstract class InvoiceQueries {
 ```
 
 ```ts
-// contexts/billing-core/infrastructure/persistence/drizzle-invoice.queries.ts
+// contexts/billing-core/infrastructure/persistence/drizzle-invoice-queries.reader.ts
 import { ExecutionScope, decodeCursor, encodeCursor, pageOf } from '@ddd-ts-kit/kernel';
-import { Adapter } from '@ddd-ts-kit/kernel/declarations';
+import { Repository } from '@ddd-ts-kit/kernel/declarations';
 
-@Adapter(InvoiceQueries, [Database, ExecutionScope])
+@Repository(InvoiceQueries, [Database, ExecutionScope])
 export class DrizzleInvoiceQueries implements InvoiceQueries {
   constructor(
     private readonly database: Database,
@@ -328,6 +341,11 @@ function positionOf(cursor: string): { amount: number; id: string } {
 }
 ```
 
+A read adapter over the database is declared with `@Repository`, as the ones the CLI
+generates: its kind is `repository`. Declared with `@Adapter` it would be `external`, and a
+generated platform puts a retry and a time limit around every `external` and `gateway`
+adapter, which a statement of the unit of work must not get.
+
 The rules these examples hold, and that the tests of this package check on a real database:
 
 - **Audit columns** are filled by the adapter, never by the aggregate: `stampCreation(scope,
@@ -361,7 +379,7 @@ of identifiers: every value is a parameter encoded by its column, a text search 
 `like $1 escape $2` with `%`, `_` and `\` escaped.
 
 ```ts
-// infrastructure/persistence/drizzle-appointment.queries.ts
+// infrastructure/persistence/drizzle-appointment-queries.reader.ts
 async list(criteria: ScopedCriteria<AppointmentRow>): Promise<Page<AppointmentRow>> {
   const plan = planCriteria(appointmentCriteria, criteria);
 
@@ -388,7 +406,7 @@ An integer is `integer`: a `bigint` comes back as a string from the driver.
 ## Read models
 
 ```ts
-// infrastructure/persistence/appointment-list.ts
+// infrastructure/persistence/appointment-list.schema.ts
 export const appointmentList = contextSchema('scheduling').table('appointment_list', {
   id: text('id').primaryKey(),
   status: text('status').notNull(),
@@ -396,9 +414,9 @@ export const appointmentList = contextSchema('scheduling').table('appointment_li
   ...readModelColumns(), // last_event_id, last_event_at, last_event_version, deleted
 });
 
-// infrastructure/persistence/drizzle-appointment-list.adapter.ts
-@Adapter(AppointmentList, [Database])
-export class DrizzleAppointmentList extends DrizzleReadModelStore<AppointmentRow, NodePgQueryResultHKT> implements AppointmentList {
+// infrastructure/persistence/drizzle-appointment-list.repository.ts
+@Repository(AppointmentList, [Database])
+export class DrizzleAppointmentList extends DrizzleReadModelStore<AppointmentRow, PgQueryResultHKT> implements AppointmentList {
   constructor(database: Database) {
     super(database, {
       table: appointmentList,

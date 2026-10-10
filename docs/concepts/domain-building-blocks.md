@@ -42,16 +42,18 @@ sequenceDiagram
   H->>A: cancel(reason, at)
   A->>A: check invariants, change state, record AppointmentCancelled
   H->>R: save(appointment)
-  Note over H,R: the unit of work commits
-  R-->>D: recorded events dispatched after the commit
+  R-->>D: once the save resolved, the recorded events are dispatched, in order
   D->>D: reactions inside the same context
+  Note over H,D: all inside the unit of work of the command, which then commits or rolls back
 ```
 
 - The **aggregate records** the event in the method that made the change. It does not publish
   anything: it has no bus and no dependency.
-- Events are **pulled and dispatched after the unit of work commits**
-  ([ARCHITECTURE.md](../ARCHITECTURE.md), section 4, "Domain events"). A reaction never sees a
-  fact that was rolled back.
+- Events **leave with the save**: once a repository method handed the aggregate resolves, the
+  events it recorded are dispatched in order, inside the unit of work of the command
+  ([ARCHITECTURE.md](../ARCHITECTURE.md), section 4, "Domain events"). The handlers and the
+  outbox commit or roll back with the state change. A command handler only saves: it never
+  calls `pullEvents()` and receives no dispatcher (`domain-events/dispatched-on-save`).
 - A **domain event handler** (`application/event-handlers/`) reacts inside the same context.
   A **publisher** (`application/integration/publishers/`) is a reaction whose job is to
   translate the domain event into an integration event for the other contexts.
@@ -191,8 +193,9 @@ they go through the same public API, so a test cannot start from an invalid stat
 
 ## Limits and when not to use it
 
-- **Domain events are not a message queue.** They are dispatched in process after the commit.
-  A reaction that must survive a crash, or reach another context, goes through an integration
+- **Domain events are not a message queue.** They are dispatched in process, inside the
+  transaction of the command: a reaction that fails makes the command fail. A reaction that
+  must run apart from the command, or reach another context, goes through an integration
   event and the [transactional outbox](transactional-outbox.md).
 - **Domain events are not event sourcing.** The aggregate's state is stored as state. Events
   are notifications of changes, not the source of truth.

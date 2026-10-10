@@ -79,8 +79,10 @@ plain object literal fits it without ceremony, and nothing of the port can leak 
 by inheritance. A value that is not a port (settings, a database handle) is carried the same
 way, by an abstract class with readonly members bound to a plain object.
 
-The ESLint plugin README lists rules for this under `ports/*`; the kernel also refuses a port
-with a body or an adapter extending its port when the file loads.
+The rules are `ports/abstract-class`, `ports/implements-never-extends`,
+`ports/no-token-constant`, `ports/no-concrete-dependency` and `ports/value-import` (a port named
+in a dependency list is imported as a value, never with `import type`: the class is the token).
+The kernel also refuses a port with a body or an adapter extending its port when the file loads.
 
 ### The identity limit
 
@@ -111,21 +113,25 @@ wraps every binding that has a kind, a retry policy targets gateways and externa
 ## The composition root
 
 Something has to know every layer in order to connect them. The kit confines that knowledge:
-adapters are instantiated or registered only in the module of a context and in `main.ts`
-(`composition/only-in-module`). `main.ts` starts tracing first, then lists the modules: the
-kernel module (default buses, clock, id generator, in-memory defaults), the platform module
-(database, configuration, authorization, the event provider) and one module per context. The
+adapters are instantiated or bound, and declared classes assembled, only in a context's module
+file (explicit style), in `main.ts` and in the platform directory
+(`composition/only-in-module`). `main.ts` imports tracing first, loads the configuration, opens
+the storage and calls `composeApplication` of `src/platform/compose-application.ts`, which lists
+the modules: the kernel module (default buses, clock, id generator, in-memory defaults), the
+platform module (storage, the event provider, the policy around outbound adapters), the
+authorization and audit modules, and one module per context, built from its declarations. The
 container checks the whole graph before anything is instantiated: duplicate bindings, unbound
 dependencies and cycles are errors at startup, with the port and the module named (the list of
 checks is in the README of `@ddd-ts-kit/di`).
 
 ```mermaid
 flowchart TB
-  main[main.ts] --> K[kernel module]
-  main --> PF[platform module]
-  main --> C1[appointments]
-  main --> C2[calendars]
-  main --> C3[notifications]
+  main[main.ts] --> compose[platform/compose-application.ts]
+  compose --> K[kernel module]
+  compose --> PF[platform module]
+  compose --> C1[appointments]
+  compose --> C2[calendars]
+  compose --> C3[notifications]
   C1 -. ports bound to adapters .-> PF
 ```
 
@@ -136,7 +142,7 @@ flowchart TB
 | Where a binding is written | on the class, as a decorator of the kernel's declarations entry | in `<context>.module.ts`, one statement per binding |
 | Registration file per context | none by hand: a generated barrel, or discovery | the module file |
 | Adding a use case | add the files; the barrel is regenerated | add the files and a statement |
-| Reading the wiring of a context | spread over the classes; `ddd-ts-kit list` gathers it | one file |
+| Reading the wiring of a context | spread over the classes; `ddd-ts-kit describe <context>` gathers it | one file |
 | Values, factories, conditional bindings | not expressible by a decorator: written in a module | native |
 | Containers | only `@ddd-ts-kit/di` (on tsyringe) turns declarations into bindings | tsyringe, NestJS providers or manual wiring |
 | Domain | carries no decorator in either style | same |
@@ -158,7 +164,7 @@ A declared context reaches the root in one of two ways (`stack.assembly` in
 | Startup | nothing to read | reads directories and imports sequentially |
 | Bundled or serverless | fits | a bundler cannot follow it |
 | A file written by hand | must be in the barrel: `declarations/barrel-current` reports a stale one | picked up by itself |
-| Behind a broker of the kit | supported | refused by the CLI, as its README states |
+| Under Vitest | nothing to configure | `@ddd-ts-kit/di` must be inlined (`server.deps.inline`), which the generated config does |
 
 ### What a decorator cannot express
 
@@ -181,7 +187,7 @@ legacy decorators itself, and needs a plugin of the kit for standard ones.
 ## Limits and when not to use it
 
 - **Declared wiring is implicit.** Nobody reads one file to see how a context is assembled. The
-  generated barrel, `ddd-ts-kit list` and the startup checks compensate; a team that wants the
+  generated barrel, `ddd-ts-kit describe` and the startup checks compensate; a team that wants the
   wiring in one reviewed file chooses the explicit style.
 - **Ports cost files.** A port, an adapter and a fake for a dependency that will only ever have
   one implementation is overhead. The kit accepts it for anything that leaves the process,
@@ -189,9 +195,6 @@ legacy decorators itself, and needs a plugin of the kit for standard ones.
   same layer.
 - **Factories hide their dependencies.** A cycle or a missing port going through a factory is
   reported when it is resolved, not at startup.
-- **The repository READMEs currently disagree on tokens.** ARCHITECTURE.md, the kernel README
-  and the di README say the class is the token and there is no token constant; the CLI README
-  and the wiring skill still show token constants. This page follows the architecture reference.
 - **Decorators need care with other libraries**: a class decorator of another library that
   replaces the class must be written below the declaration (di README, "Limits").
 

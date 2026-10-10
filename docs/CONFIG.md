@@ -1,6 +1,13 @@
 # `ddd-ts-kit.config.json`
 
-Read by the CLI, the hook and the skills. It lives at the root of the consuming project.
+Read by the CLI, the ESLint plugin, the editor hook and the skills. It lives at the root of
+the consuming project. `ddd-ts-kit init` writes it; `generate context`, `generate service`,
+`generate worker` and `generate adr --deviation` edit it; `ddd-ts-kit check` reports what is
+inconsistent in it as `config/valid`.
+
+The example below is what `init --context billing:core --context catalog:supporting` writes,
+after `generate context shipping --classification supporting --upstream billing`. It holds no
+deviation.
 
 ```json
 {
@@ -16,66 +23,129 @@ Read by the CLI, the hook and the skills. It lives at the root of the consuming 
     "events": "outbox",
     "orm": "drizzle",
     "database": "postgres",
-    "tests": "vitest"
+    "tests": "vitest",
+    "docsUi": "swagger",
+    "ci": "github",
+    "authn": "jwt",
+    "authz": "rbac",
+    "broker": "none",
+    "cache": "none",
+    "audit": "on",
+    "errors": "none",
+    "logger": "stdout",
+    "style": "declared",
+    "assembly": "barrel"
   },
   "contexts": {
-    "billing": {
-      "classification": "core",
-      "upstreams": [
-        { "context": "catalog", "relationship": "published-language" }
-      ],
-      "extraDirectories": []
-    },
-    "catalog": { "classification": "supporting", "upstreams": [] }
+    "billing": { "classification": "core", "upstreams": [] },
+    "catalog": { "classification": "supporting", "upstreams": [] },
+    "shipping": {
+      "classification": "supporting",
+      "upstreams": [{ "context": "billing", "relationship": "published-language" }]
+    }
   },
-  "rules": {
-    "naming/suffix": "error",
-    "test/spec-required": "warn"
-  },
+  "rules": {},
   "domainAllowedPackages": ["@ddd-ts-kit/kernel"],
-  "applicationAllowedPackages": ["@ddd-ts-kit/kernel"]
+  "applicationAllowedPackages": ["@ddd-ts-kit/kernel", "@ddd-ts-kit/auth"]
 }
 ```
+
+## Paths
+
+| Key | Meaning | Default |
+|---|---|---|
+| `sourceRoot` | where the sources live | `src` |
+| `contextsDir` | the bounded contexts, one directory each | `<sourceRoot>/contexts` |
+| `sharedKernelDir` | the shared kernel | `<sourceRoot>/shared-kernel` |
+| `platformDir` | the technical platform | `<sourceRoot>/platform` |
+| `importAlias` | the alias of `sourceRoot` in imports | `@/` |
+
+## Stack
+
+The "Default" column is what `ddd-ts-kit init` writes when the flag is left out. A value
+outside the list stops every command with the list of accepted values.
 
 | Key | Values | Default |
 |---|---|---|
 | `stack.http` | `express`, `fastify`, `nest`, `none` | `express` |
 | `stack.validation` | `zod`, `class-validator`, `standard-schema`, `none` | `zod` |
-| `stack.di` | `tsyringe`, `nest`, `manual` | `tsyringe` (`nest` when `http` is `nest`) |
-| `stack.events` | `in-memory`, `outbox`, `custom` | `outbox` when an ORM is set (anything else then needs a `stack.events` deviation), `in-memory` otherwise |
-| `stack.orm` | `drizzle`, `knex`, `prisma`, `typeorm`, `custom`, `none` | `drizzle` |
-| `stack.database` | `postgres`, `mysql`, `sqlite`, `none` (the generated adapters target PostgreSQL; `mysql` and `sqlite` only with `orm: custom`) | `postgres` |
+| `stack.di` | `tsyringe`, `nest`, `manual`; `init` accepts `nest` with `http: nest` and only with it | `tsyringe` (`nest` when `http` is `nest`) |
+| `stack.events` | `in-memory`, `outbox`, `custom`; `init` offers `in-memory` and `outbox` | `outbox` when an ORM is set (anything else then needs a `stack.events` deviation), `in-memory` otherwise |
+| `stack.orm` | `drizzle`, `knex`, `prisma`, `typeorm`, `custom`, `none` | `drizzle` (`none` with `database: none`) |
+| `stack.database` | `postgres`, `mysql`, `sqlite`, `mongodb`, `none`. The generated adapters are written for PostgreSQL: `init` refuses another database with `drizzle`, `knex`, `prisma` or `typeorm`, and its `--database` flag does not offer `mongodb` | `postgres` with one of the four ORMs, `none` otherwise |
 | `stack.tests` | `vitest`, `jest` | `vitest` |
-| `stack.authn` | `jwt`, `keycloak`, `none` | `jwt` |
-| `stack.cache` | `none`, `redis`: what backs the kernel `Cache` port, the HTTP rate limiter and the wake-up of the outbox relay (Redis, Dragonfly or Valkey) | `none` |
-| `stack.audit` | `on`, `off`: whether the audit trail and its three sources are wired | `on` when an ORM is set, `off` otherwise |
-| `standardInterfaces` | `{ "<DeclaredName>": "<kernel interface to use instead>" }` merged over the default names of `standard/no-parallel-interface`; `false` drops a default name | `{}` |
-| `stack.authz` | `rbac`, `abac`, `rebac`, `custom` | `rbac` |
-| `stack.broker` | `none`, `rabbitmq`, `kafka`, `nats`, `redis` (Redis Streams on Redis, Dragonfly or Valkey), `custom` | `none` |
-| `stack.style` | `declared`: each class declares what it is with a decorator and a context has no module file; `explicit`: every binding is written in `<context>.module.ts` | `declared` with `di: tsyringe`, `explicit` otherwise |
-| `stack.assembly` | `barrel`, `discovery`: how a declared context reaches the composition root, one generated `<context>.declarations.ts` or a scan at startup | `barrel` |
+| `stack.docsUi` | `swagger`, `scalar`, `redoc`, `none` | `swagger` (`none` when `http` is `none`) |
 | `stack.ci` | `github`, `gitlab`, `both`, `none` | `github` |
-| `stack.docsUi` | `swagger`, `scalar`, `redoc`, `none` | `swagger` |
-| `contexts.<name>.deployable` | `true`, `false`: the context has its own entry point `src/apps/<name>/main.ts` | `false` |
-| `applicationAllowedPackages` | package names | `["@ddd-ts-kit/kernel", "@ddd-ts-kit/auth"]` |
-| `limits` | `{ "maxParameters": 3, "maxFunctionLines": 30 }`; `maxFunctionLines` is at most 100, a larger value is read as 100 and reported | as shown |
-| `onePerFile.allow` | `[{ "file": "<path or glob>", "reason": "<why these exports are one thing>" }]`: exempts a file from the count of `clean/one-export-per-file`, never from its file name check | `[]` |
+| `stack.authn` | `jwt`, `keycloak`, `none` | `jwt` |
+| `stack.authz` | `rbac`, `abac`, `rebac`, `custom` | `rbac` |
+| `stack.broker` | `none`, `rabbitmq`, `kafka`, `nats`, `redis` (Redis Streams), `custom`; `init` refuses a broker without an ORM, since a broker is reached through the outbox | `none` |
+| `stack.cache` | `none`, `redis`: what backs the kernel `Cache` port, the wake-up of the outbox relay, the rate limiter and the lock of the scheduled jobs | `none` |
+| `stack.audit` | `on`, `off`: whether the audit trail is wired | `on` when an ORM is set, `off` otherwise |
 | `stack.errors` | `none`, `sentry`: where unexpected failures are reported; `sentry` binds the kernel `ErrorReporter` to `@ddd-ts-kit/sentry` (Sentry or GlitchTip) | `none` |
-| `worker` | `true`, `false`: the project has `src/apps/worker/main.ts`; scheduled jobs then run there and not in the API process | `false` |
-| `stack.logger` | `stdout`, `pino`, `winston`: what implements the kernel `Logger` port. `stdout` writes JSON lines, redacts nothing and has no pretty format; `pino` and `winston` redact credential keys and accept `LOG_FORMAT=json` or `pretty` | `stdout` |
-| `commit` | `{ "maxFiles": 20, "maxLines": 600 }`: advised size of one commit, read by `ddd-ts-kit check --commit-size` (advisory, `--strict` exits 1) and by the editor hook (a reminder, never blocking). Generated files are not counted | as shown |
-| `guard` | `enforce`, `advise`, `off`: how the editor hook of the plugin reacts | `enforce` |
-| `deviations[]` | `{ "what", "adr", "reason" }`: a recorded exception. `what` is `rules.<id>`, `contexts.<name>.extraDirectories.<path>`, `domainAllowedPackages.<package>`, `applicationAllowedPackages.<package>`, `publishedLanguageAllowedPackages.<package>`, `guard` or `stack.events`; `adr` names an existing `docs/adr/<number>-*.md` | `[]` |
+| `stack.logger` | `stdout`, `pino`, `winston`: what implements the kernel `Logger` port | `stdout` |
+| `stack.style` | `declared`: each class declares what it is with a decorator and a context has no module file; `explicit`: every binding is written in `<context>.module.ts`. `init` accepts `declared` with `di: tsyringe` only | `declared` with `di: tsyringe`, `explicit` otherwise |
+| `stack.assembly` | `barrel`, `discovery`: how a declared context reaches the composition root, one generated `<context>.declarations.ts` or a scan at startup. `init` accepts the flag in the declared style only | `barrel` |
+
+A config file that omits a `stack` key is read with the same defaults, with one exception:
+without `stack.style` the project is read as `explicit`, whatever `stack.di` says, because
+such a file was written before the declared style existed.
+
+## Contexts
+
+| Key | Values | Default |
+|---|---|---|
 | `contexts.<name>.classification` | `core`, `supporting`, `generic` | required |
+| `contexts.<name>.upstreams[]` | a context name, or `{ "context", "relationship" }` | `[]` |
 | `contexts.<name>.upstreams[].relationship` | `published-language`, `customer-supplier`, `conformist`, `anti-corruption-layer`, `open-host-service`, `shared-kernel` | `published-language` |
-| `rules.<id>` | `error`, `warn`, `off` | `error` |
+| `contexts.<name>.extraDirectories[]` | a path inside the context, or `{ "path", "reason" }`: a directory added to the canonical tree. Each one is a deviation | `[]` |
+| `contexts.<name>.deployable` | `true`, `false`: the context has its own entry point `src/apps/<name>/main.ts`; `generate service <name>` sets it | `false` |
 
-Rule ids are those of [ARCHITECTURE.md](ARCHITECTURE.md) section 3.
+The contexts of the config and the directories of `contextsDir` must be the same set.
 
-A relaxed rule, an extra directory, an extra allowed package, a guard that is not `enforce`
-or events off the outbox are deviations: each needs an entry in `deviations` pointing to a
-decision record (`npx ddd-ts-kit generate adr "<title>" --deviation <what>` writes both).
+## Rules and limits
+
+| Key | Values | Default |
+|---|---|---|
+| `rules.<id>` | `error`, `warn`, `off`, for a rule id of [ARCHITECTURE.md](ARCHITECTURE.md) section 3 (`ddd-ts-kit rules` lists them) | the severity `ddd-ts-kit rules` prints: `error`, except the seven rules that default to `warn` |
+| `limits` | `{ "maxParameters": 3, "maxFunctionLines": 30 }`, read by `clean/function-size`; `maxFunctionLines` is at most 100, a larger value is read as 100 and reported | as shown |
+| `onePerFile.allow` | `[{ "file": "<path or glob>", "reason": "<why these exports are one thing>" }]`: exempts a file from the count of `clean/one-export-per-file`, never from its file name check. An entry without `file` or without `reason` allows nothing and is reported | `[]` |
+| `standardInterfaces` | `{ "<DeclaredName>": "<kernel interface to use instead>" }`, merged over the default names of `standard/no-parallel-interface`; `false` drops a default name | `{}` |
+| `domainAllowedPackages` | packages `domain/` may import | `["@ddd-ts-kit/kernel"]` |
+| `applicationAllowedPackages` | packages `application/` may import | `["@ddd-ts-kit/kernel", "@ddd-ts-kit/auth"]` |
+| `publishedLanguageAllowedPackages` | packages `published-language/` may import | `@ddd-ts-kit/kernel`, `@ddd-ts-kit/events`, `@ddd-ts-kit/validation` and the schema library of `stack.validation` (`zod`; `class-validator` with `class-transformer`; none for `standard-schema` and `none`) |
 
 `@ddd-ts-kit/aspects`, `@ddd-ts-kit/audit`, `@ddd-ts-kit/redis`, `@ddd-ts-kit/scheduling`,
-`@ddd-ts-kit/sentry` and `@ddd-ts-kit/tracing` stay
-refused in `domain/` and `application/` even when listed in an allow-list.
+`@ddd-ts-kit/sentry` and `@ddd-ts-kit/tracing` stay refused in `domain/` and `application/`
+even when listed in an allow-list.
+
+## Working agreements
+
+| Key | Values | Default |
+|---|---|---|
+| `commit` | `{ "maxFiles": 20, "maxLines": 600 }`: advised size of one commit, read by `ddd-ts-kit check --commit-size` (advisory, `--strict` exits 1) and by the editor hook (a reminder, never blocking). Generated files are not counted. A limit that is not a positive integer is read as its default and reported | as shown |
+| `guard` | `enforce`, `advise`, `off`: how the editor hook of the plugin reacts to a violation. The environment variable `DDD_TS_KIT_GUARD` takes precedence over it | `enforce` |
+| `worker` | `true`, `false`: the project has `src/apps/worker/main.ts`; scheduled jobs then run there and not in the API process. `generate worker` sets it | `false` |
+| `deviations[]` | `{ "what", "adr", "reason" }`: a recorded exception; `adr` names an existing `docs/adr/<number>-*.md` | `[]` |
+
+## Deviations
+
+These settings relax the reference, and `governance/recorded-deviation` reports each one that
+has no entry in `deviations`:
+
+| Setting | `what` of its deviation |
+|---|---|
+| a rule set to `off`, or to `warn` when its default is `error` | `rules.<id>` |
+| an extra directory in a context | `contexts.<name>.extraDirectories.<path>` |
+| a package added to an allow-list | `domainAllowedPackages.<package>`, `applicationAllowedPackages.<package>`, `publishedLanguageAllowedPackages.<package>` |
+| a guard that is not `enforce` | `guard` |
+| an ORM with events off the outbox | `stack.events` |
+
+`npx ddd-ts-kit generate adr "<title>" --deviation <what> --reason "<why>"` writes the
+decision record and the entry together.
+
+## Limits
+
+The parser is tolerant: a key it does not know is ignored without a message, and a wrong
+classification, relationship, rule id or guard mode is reported by `check` as `config/valid`,
+not when the file is read. Only a wrong `stack.*` value, or a file that is not a JSON object,
+stops a command.

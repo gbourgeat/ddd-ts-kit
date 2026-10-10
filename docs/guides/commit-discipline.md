@@ -45,7 +45,7 @@ The rule: **the regenerated file is in the same commit as the change that caused
 
 In a review, generated diffs are read, not line-commented: if the output is wrong, the source
 or the generator is wrong. They are never edited by hand, and the plugin's hook refuses such
-an edit for the three generated contracts.
+an edit for the three generated contracts, the barrels and `.dependency-cruiser.cjs`.
 
 ## Messages: conventional commits
 
@@ -83,11 +83,13 @@ title follows the same format and the pipeline checks it with the same configura
 
 ## Target sizes, and why
 
-These are targets to steer by, not limits a tool enforces. The plugin has its own advisory
-threshold, a little above them: its hook says so once, without blocking, when the uncommitted
-work goes past 20 files or 600 changed lines, generated files not counted (the defaults in
-`plugin/hooks/guard.mjs` on 2026-10-10; the skill `commit-discipline` names a `commit` key of
-the config to change them, which `docs/CONFIG.md` did not document on that day).
+These are targets to steer by. The kit measures one of them, with a threshold a little above
+the targets: `npx ddd-ts-kit check --commit-size` counts the files and lines about to be
+committed (`--staged` reads the index only) against `commit` in the config, 20 files and 600
+changed lines by default, generated files not counted (see [Configuration](../CONFIG.md)).
+Past the limits it names the slices to commit one by one. It is advisory: it exits 1 only
+with `--strict`. The generated `lefthook.yml` runs it at `pre-commit` without `--strict`, and
+the plugin's hook gives the same reminder in an agent session, without blocking.
 
 | Measure | Target | Past this, expect |
 |---|---|---|
@@ -154,8 +156,8 @@ Stated exactly, from [pipeline/README.md](../../pipeline/README.md) and the plug
 
 | Moment | What runs | Enforces |
 |---|---|---|
-| every file write in an agent session | the plugin's hook | refuses a hand-written file where a generator exists and an edit of a generated contract; asks the owner before a suppression, a skipped test or a change of the governed files; returns the violations of the written file; refuses to finish while architecture errors remain |
-| `pre-commit` (lefthook) | ESLint on staged sources; `ddd-ts-kit check` on staged sources under `src/` | code rules and structure on what is being committed |
+| every file write in an agent session | the plugin's hook | refuses a hand-written file where a generator exists and an edit of a generated file (contracts, barrels, `.dependency-cruiser.cjs`); asks the owner before a suppression, a skipped test or a change of the governed files; returns the violations of the written file; refuses to finish while architecture errors remain |
+| `pre-commit` (lefthook) | ESLint on staged sources; `ddd-ts-kit check` on staged sources under `src/`; `ddd-ts-kit check --commit-size --staged` | code rules and structure on what is being committed; the size of the commit, as advice |
 | `commit-msg` (lefthook) | commitlint | the conventional commit format |
 | `pre-push` (lefthook) | type check and unit tests | the project compiles and its fast tests pass |
 | pull request | the title check | the title is a conventional commit |
@@ -164,8 +166,9 @@ Stated exactly, from [pipeline/README.md](../../pipeline/README.md) and the plug
 The hooks are installed once per clone (`npm run hooks:install`). The plugin's hook fails open
 by design: a broken guard never blocks work, so it is a convenience and CI is the authority.
 
-**Not enforced by any tool:** the size of a commit or a pull request (the plugin's hook only
-advises, and only inside an agent session), one use case per commit,
+**Not enforced by any tool:** the size of a commit or a pull request (`check --commit-size`
+and the plugin's hook only advise, unless you add `--strict` to the `pre-commit` job), one
+use case per commit,
 generated files being in the *same* commit as their cause (the gate checks the final state of
 the branch, not each commit), the quality of a message beyond its format, and whether each
 intermediate commit builds. These are held by review and by habit. If per-commit greenness

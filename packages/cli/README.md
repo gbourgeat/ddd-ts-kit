@@ -183,7 +183,7 @@ ddd-ts-kit generate --help --json
 | `job` | `<context> <Name> (--every <duration> \| --cron "<expression>" [--time-zone <zone>]) --command <UseCaseName>` | `application/scheduling/<name>.job.ts`, a class `<Name>Job implements ScheduledJob` that sends the command, as `systemActor('<context>.<name>')` when it is protected, with `execution.scheduledAt` when the command takes it; `test/unit/<name>.job.spec.ts`, which runs the job (by name on tsyringe, `application.jobs.runNow`; `job.run(occurrence)` with hand wiring) and asserts the command it sent; its registration; its switch in `platform/job-settings.ts`; the grant of its system actor (below) |
 | `acl` | `<context> <upstreamOrSystemName>` | translator in `infrastructure/anti-corruption/`, spec |
 | `e2e` | `<context> <UseCaseName>` | `test/e2e/<use-case>.e2e.spec.ts` driving the route of the use case: 401 without a credential, 403 without the permission, the documented status with it; for a command, one more test asserts the trace of the request, exact on names and structure, with `installTestTracing()` and `expectSpanTree(storyOf(trace), [...])` of `@ddd-ts-kit/tracing/testing` (`POST /invoices`, then `command IssueInvoiceCommand`, then `repository InvoiceRepository.save`); needs the route |
-| `policy` | `<context> <Name> --permission <aggregate>.<action>` | `application/authorization/<name>.policy.ts`, spec, registration in `platform/auth/access-policies.ts` |
+| `policy` | `<context> <Name> --permission <aggregate>.<action>` | `application/authorization/<name>.policy.ts`, spec; declared: the class carries `@Policy(permission, { name })` and nothing else is written; explicit: registration in `platform/auth/access-policies.ts` |
 | `gateway` | `<context> <upstreamContext> <Name>` | the read contract in the upstream's published language (`<name>.contract.ts`, an abstract class and the token of the upstream value), the port `application/ports/<name>-gateway.port.ts`, an in-process adapter in `infrastructure/external/` bound `.as('gateway')`, a fake, one contract suite; refused unless the upstream is declared |
 | `adapter` | `<context> <Port> [--kind external\|gateway] [--decorators]` | `infrastructure/external/remote-<port>.adapter.ts` for an existing port, its spec, and on tsyringe its binding `builder.bind(<Port>).toClass(Remote<Port>).as(<kind>).with(ownPolicy(retry(...), timeout(...)))`; with `--decorators`, on every stack, the class carries `@Retry` and `@Timeout` of `@ddd-ts-kit/aspects/decorators` on its one outbound method and is bound `.with(ownPolicy())`. Explicit: a port that is already bound, or hand wiring, gets a note instead of a binding. Declared: the class carries `@Adapter(<Port>, { kind, aspects })`, or `@Gateway(<Port>, { aspects })` in `remote-<port>.gateway.ts` with `--kind gateway`, and a port that already has a declared adapter is refused |
 | `service` | `<context>` | `src/apps/<context>/main.ts` (kernel, platform, that context only, with its jobs: `jobSettings(process.env, '<context>')`), script `start:<context>`, a compose service behind the `services` profile, the knip entry, `deployable: true` in the config. The Dockerfile takes the entry as build argument `ENTRY` |
@@ -437,7 +437,8 @@ saying what to do instead. Exit code 1 when there is at least one error.
   an error and `minor` for a warning, with a fingerprint that does not depend on the line.
 - Severities come from `rules` in the config (`error`, `warn`, `off`). Default `error`, except
   `test/no-mocks`, `test/builder-required`, `clean/function-size`, `clean/no-noise-comment`,
-  `clean/no-flag-argument` and `standard/no-parallel-interface` (`warn`). `any` in a test file is
+  `clean/no-flag-argument`, `standard/no-parallel-interface` and, held by ESLint,
+  `application/command-query-separation` (`warn`). `any` in a test file is
   always a warning.
 - `limits: { "maxParameters": 3, "maxFunctionLines": 30 }` in the config sets
   `clean/function-size`. `maxFunctionLines` goes from 1 to 100: a value above is read as 100 and
@@ -483,7 +484,7 @@ saying what to do instead. Exit code 1 when there is at least one error.
 | `events/name-format` | an event name that is not `<context>.<aggregate>.<fact>` in kebab-case with the right context |
 | `events/defined-in-published-language` | `defineIntegrationEvent` outside a published language, without a payload, twice for one version; an event described by hand |
 | `language/glossary-term` | a class of the model named with a word the glossary of its context does not define; an empty glossary |
-| `language/no-technical-name` | `Manager`, `Helper`, `Util`, `Data`, `Info`, `Processor`, `Wrapper`, `Impl`, `Base`, `Abstract`, `Dto`, `Entity`, `Model` in a type declared under `domain/` or in a use case folder |
+| `language/no-technical-name` | `Manager`, `Helper`, `Util`, `Utils`, `Data`, `Info`, `Processor`, `Wrapper`, `Impl`, `Base`, `Abstract`, `Dto`, `Entity`, `Model` in a type declared under `domain/` or in a use case folder |
 | `purity/no-system-clock` | `new Date()` without argument, `Date.now()`, `performance.now()` in `domain/` or `application/` |
 | `purity/no-ambient-randomness` | `Math.random`, the random source of `crypto`, an id library |
 | `purity/no-environment` | `process.env` and friends, `console`, `fetch`, file system and network modules |

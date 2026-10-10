@@ -51,6 +51,11 @@ each consuming context listens through the bus under its own name. The bus is gi
 application as two ports of the kernel: `IntegrationEventPublisher` stays the outbox, and
 `EventSubscribers` hands each context the subscriber of its own consumer name.
 
+`init --broker kafka` writes this wiring in the platform of the project: the bus is built by
+`platform/events/create-event-provider.ts`, `platform/platform.module.ts` rebinds
+`EventSubscribers` on it, and `main.ts` gives it, traced, to the outbox relay. By hand, the
+same thing reads:
+
 ```ts
 // platform/messaging.module.ts
 import { defineContextModule } from '@ddd-ts-kit/di';
@@ -86,28 +91,37 @@ export const messagingModule = defineContextModule({
 
 ```ts
 // contexts/billing/application/integration/handlers/invoice-on-order-placed.integration-handler.ts
-import { CommandBus, type IntegrationEvent } from '@ddd-ts-kit/kernel';
+import { CommandBus, systemActor, type IntegrationEvent } from '@ddd-ts-kit/kernel';
 import { IntegrationEventHandler } from '@ddd-ts-kit/kernel/declarations';
 
 @IntegrationEventHandler(orderPlaced, { consumer: 'billing.invoice-on-order-placed' }, [CommandBus])
-export class InvoiceOnOrderPlaced {
+export class InvoiceOnOrderPlacedIntegrationHandler {
   constructor(private readonly commands: CommandBus) {}
 
-  readonly handle = async (event: IntegrationEvent<OrderPlacedPayload>): Promise<void> => {
-    await this.commands.execute(new IssueInvoice(event.payload.orderId));
-  };
+  // Nobody is calling: the handler acts as a system actor named after its consumer.
+  readonly actor = systemActor('billing.invoice-on-order-placed');
+
+  async handle(event: IntegrationEvent<OrderPlacedPayload>): Promise<void> {
+    await this.commands.execute(new IssueInvoice(this.actor, event.payload.orderId));
+  }
 }
 ```
 
 ```ts
 // main.ts
-import { createApplication, kernelModule } from '@ddd-ts-kit/di';
+import { contextModule, createApplication, kernelModule } from '@ddd-ts-kit/di';
 import { Clock } from '@ddd-ts-kit/kernel';
 import { OutboxRelay, OutboxStore } from '@ddd-ts-kit/events';
 import { aggregateOf, bus, messagingModule } from './platform/messaging.module.js';
 
 const app = createApplication({
-  modules: [kernelModule(), persistenceModule, messagingModule, orderingModule, billingModule],
+  modules: [
+    kernelModule(),
+    persistenceModule,
+    messagingModule,
+    contextModule('ordering', orderingDeclarations),
+    contextModule('billing', billingDeclarations),
+  ],
 });
 
 // The relay target is the bus. A record is marked published when every in-sync replica has it.
@@ -150,9 +164,12 @@ process.on('SIGTERM', async () => {
   clients of the bus (a modular monolith has several), and the `consumer` option names the
   one `bus.subscribe` works for. A context extracted to its own service keeps its name, so
   its group and its offsets: nothing changes on the cluster.
-- Tracing wraps both sides as with any provider (`tracedPublisher(bus)` as the relay target,
-  `tracedSubscriber(bus.forConsumer(name))` in `forContext`): the bus carries `traceparent`
-  and `correlationId` untouched, in the envelope and in the record headers.
+- Tracing is put around both sides from outside, as with any provider: `tracedPublisher(bus)`
+  as the relay target, and on the consuming side the instrumentation of the kernel module
+  (`kernelModule({ instrumentation: traceApplication() })`), which gives each declared handler
+  one span `process <consumer>` per attempt. `tracedSubscriber(bus.forConsumer(name))` is for
+  a composition without `kernelModule`. The bus carries `traceparent` and `correlationId`
+  untouched, in the envelope and in the record headers.
 - The correlation makes the round trip. Publish through `scopedPublisher(publisher, scope)` of
   the kernel: a declared handler (or `consume(definition, { ..., scope }, handler)` by hand,
   or a callback wrapped with `inEventScope`) runs in an execution context whose

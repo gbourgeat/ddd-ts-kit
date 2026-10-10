@@ -147,21 +147,24 @@ tracing, logged, timed, cached, retry, circuitBreaker, bulkhead, timeout, the ad
 - **Cache outside retry and breaker**: a hit costs nothing and is not refused by an open
   circuit.
 
-This is the order of [`@ddd-ts-kit/aspects`](../../packages/aspects/README.md). The
-`cross-cutting` skill of the plugin currently states the breaker outside the retry; the two
-texts disagree and this page follows the package README. Both orders exist in the literature:
-a breaker outside the retry sees one outcome per logical call. What must not vary is that the
-choice is deliberate and written once.
+This is the order of [`@ddd-ts-kit/aspects`](../../packages/aspects/README.md), and it follows
+from the code: its `retry` does not repeat a `CircuitOpenError`. The other order exists in the
+literature (a breaker outside the retry sees one outcome per logical call); the kit does not
+use it.
 
 ## Three forms, one implementation
 
 The kit applies the same policy in three ways, in this order of preference:
 
-1. **On one binding, at the composition root.** The adapter class imports nothing and the
-   policy of the whole application is read in one place.
-2. **On every binding of a kind, through the hook of the composition root.** For instance
-   retry with backoff and a timeout for every adapter of an outside system. This is how tracing
-   is applied.
+1. **On one binding.** In the declared style the declaration of the adapter states it,
+   `@Adapter(SmsSender, { kind: 'external', aspects: [ownPolicy(retry(...), timeout(2000))] })`,
+   which is what `ddd-ts-kit generate adapter` writes; in an explicit module the binding does,
+   `.with(retry(...), timeout(...))`. The methods of the class contain no policy.
+2. **On every binding of a kind, in the platform module**:
+   `builder.around(['external', 'gateway'], ...)`. The generated platform
+   (`src/platform/resilience/`) gives every adapter that leaves the process and states no
+   policy of its own three attempts with backoff and a time limit per attempt, both read from
+   the configuration.
 3. **As a decorator on the adapter class**, in `infrastructure/` or the platform, when the
    policy is part of what the adapter is: a client of a provider that documents its own retry
    rules.

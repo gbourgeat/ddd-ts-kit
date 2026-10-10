@@ -102,9 +102,9 @@ From [`packages/validation/README.md`](../../packages/validation/README.md):
 - **Standard Schema adapter and the contract.** The package README says the specification has
   no JSON Schema export, so the second argument is yours to give and `toJsonSchema()` answers
   `{}` without it. Checked today: standardschema.dev now also publishes a companion interface,
-  Standard JSON Schema (V1). The kit's README does not say its adapter reads it, so assume it
-  does not: with valibot or arktype, either pass the JSON Schema by hand or accept an empty
-  contract for that input.
+  Standard JSON Schema (V1). The kit's adapter does not read it (its source relies on
+  `~standard.validate` only): with valibot or arktype, either pass the JSON Schema by hand or
+  accept an empty contract for that input.
 - **Standard Schema issue codes.** The specification carries none: every issue has the code
   `invalid`.
 - **No asynchronous validation at the boundary**: a schema that validates asynchronously makes

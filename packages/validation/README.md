@@ -56,7 +56,9 @@ if (!result.ok) {
 ```
 
 The JSON Schema comes from zod 4's `z.toJSONSchema` (draft 2020-12, usable as is in OpenAPI
-3.1). It describes the input side by default; pass `{ io: 'output' }` for a response body.
+3.1). It describes the input side by default; pass `{ io: 'output' }` for a response body. A
+type JSON Schema cannot represent (a `Date`, a `bigint`) is written as `{}` rather than
+failing the generation.
 
 ## class-validator
 
@@ -90,7 +92,8 @@ const placeOrder = classSchema(PlaceOrderDto);
 default: an undeclared property is an issue. Override with
 `classSchema(Dto, { validator: { forbidNonWhitelisted: false }, transform: { ... } })`.
 Nested errors are flattened (`items.0.quantity`), one issue per failed constraint, the
-constraint name as `code`. The JSON Schema carries the nested classes under `$defs`.
+constraint name as `code`. The JSON Schema is draft 2020-12 and carries the nested classes
+reachable from the class under `$defs`.
 
 Requires `experimentalDecorators` in the project's `tsconfig.json`.
 
@@ -102,11 +105,15 @@ import { standardSchema } from '@ddd-ts-kit/validation/standard-schema';
 
 const placeOrder = standardSchema(
   v.object({ customerId: v.pipe(v.string(), v.uuid()) }),
-  // Optional: Standard Schema has no JSON Schema export, so the contract side is yours to give.
+  // Optional: the JSON Schema of the contract, which this adapter does not derive.
   { type: 'object', required: ['customerId'], properties: { customerId: { type: 'string', format: 'uuid' } } },
 );
 ```
 
-Without the second argument `toJsonSchema()` returns `{}`. The specification carries no error
-code, so every issue has the code `invalid`. A schema that validates asynchronously makes
+The adapter reads `~standard.validate` of Standard Schema v1 and nothing else: it derives no
+JSON Schema, neither from the library's own exporter nor from the separate Standard JSON
+Schema specification. Give it as the second argument (written by hand, or produced by the
+exporter of your library); without it `toJsonSchema()` returns `{}`, which the OpenAPI
+document shows as "any value". The specification carries no error code, so every issue has
+the code `invalid`. A schema that validates asynchronously makes
 `parse` throw: async schemas are not supported at the boundary.

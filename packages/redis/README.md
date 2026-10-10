@@ -20,6 +20,11 @@ Nothing here is imported from `domain/` or `application/`. A use case depends on
 (`Cache`, `Lock`, `RateLimiter` of the kernel); the adapter is chosen in `platform/` and bound
 in the composition root.
 
+With the CLI, `init --cache redis` writes `platform/redis/open-redis.ts` (one connection, the
+cache, the lock, the rate limiter, the relay signal, the readiness probe) and
+`init --broker redis` writes `platform/events/create-event-provider.ts` around
+`RedisStreamsEventBus`. What follows is each piece, wired by hand.
+
 ## Connection
 
 ```ts
@@ -81,7 +86,7 @@ not lead to the client. The object `connectRedis` answers gives its `client` by 
 ```ts
 // src/main.ts
 import { Cache, Lock, Metrics, RateLimiter } from '@ddd-ts-kit/kernel';
-import { createApplication, defineContextModule, kernelModule } from '@ddd-ts-kit/di';
+import { contextModule, createApplication, defineContextModule, kernelModule } from '@ddd-ts-kit/di';
 import { RedisCache, RedisLock, RedisRateLimiter } from '@ddd-ts-kit/redis';
 
 const platformModule = defineContextModule({
@@ -93,7 +98,7 @@ const platformModule = defineContextModule({
   },
 });
 
-const app = createApplication({ modules: [kernelModule(), platformModule, catalogModule] });
+const app = createApplication({ modules: [kernelModule(), platformModule, contextModule('catalog', catalogDeclarations)] });
 ```
 
 A port of the kernel is an abstract class, and the class is what a binding is keyed by: the
@@ -328,7 +333,7 @@ relay.start({ intervalMs: 500 });
 // Consuming side: one subscriber per consuming context, named after it.
 const billingEvents = tracedSubscriber(bus.forConsumer('billing'));
 subscribeAll(billingEvents, [
-  consume(orderPlaced, { consumer: 'billing.ordering.order.placed', processed, unitOfWork }, async (event) => {
+  consume(orderPlaced, { consumer: 'billing.ordering-order-placed', processed, unitOfWork }, async (event) => {
     await commandBus.execute(new IssueInvoice(event.payload.orderId));
   }),
 ]);
@@ -357,13 +362,18 @@ process.on('SIGTERM', async () => {
   import { EventSubscribers } from '@ddd-ts-kit/kernel';
 
   const app = createApplication({
-    modules: [kernelModule({ eventSubscribers: () => ({ forContext: (name) => bus.forConsumer(name) }) }), billingModule],
+    modules: [
+      kernelModule({ eventSubscribers: () => ({ forContext: (name) => bus.forConsumer(name) }) }),
+      contextModule('billing', billingDeclarations),
+    ],
   });
 
   // or, from a later module
   builder.rebind(EventSubscribers).toValue({ forContext: (name) => bus.forConsumer(name) });
   ```
-- The tracing wrappers work as with any provider: the bus carries `traceparent` and
+- The tracing wrappers work as with any provider (with `@ddd-ts-kit/di`, the consuming side
+  is traced by `kernelModule({ instrumentation: traceApplication() })` and `tracedSubscriber`
+  is left out): the bus carries `traceparent` and
   `correlationId` untouched, in the envelope and as fields of the entry, across a retry too.
   Next to the event, each handler receives the delivery (`EventDelivery` of the kernel):
   `{ attempt, maxAttempts, system: 'redis', destination, consumer }`, where `destination` is the

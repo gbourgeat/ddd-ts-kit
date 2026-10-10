@@ -1,7 +1,16 @@
 # The same provider on other brokers
 
-An outline, without code or dependencies, for implementing an integration event provider on
-Kafka, NATS JetStream and SQS/SNS. Each is held to what `RabbitMqEventBus` is held to.
+What an integration event provider owes, whatever the broker, and where each one stands:
+Kafka, NATS JetStream and Redis Streams are packages of the kit, held to what
+`RabbitMqEventBus` is held to; SQS/SNS is an outline, without code or dependencies.
+
+| Broker | Status | Where |
+|---|---|---|
+| RabbitMQ | package | [`@ddd-ts-kit/rabbitmq`](../README.md) |
+| Kafka | package | [`@ddd-ts-kit/kafka`](../../kafka/README.md) |
+| NATS JetStream | package | [`@ddd-ts-kit/nats`](../../nats/README.md) |
+| Redis Streams (Redis, Dragonfly, Valkey) | package | [`@ddd-ts-kit/redis`](../../redis/README.md), entry `./event-bus` |
+| SQS and SNS | outline, nothing built | below |
 
 ## What every provider owes
 
@@ -37,99 +46,43 @@ Common decisions, the same everywhere:
 - errors are reported by code, never by message;
 - retries are bounded and delayed, then the message is parked where an operator can see it and
   replay it;
-- consumers deduplicate with `consume` and a processed-event store: every one of these
-  brokers redelivers.
+- consumers deduplicate, through a declared `@IntegrationEventHandler` (or `consume` by hand)
+  and a processed-event store: every one of these brokers redelivers.
 
 ## Kafka
 
-| Concept here | Kafka |
+Built: [`@ddd-ts-kit/kafka`](../../kafka/README.md), which is the reference for its options,
+guarantees and limits. How the concepts of the RabbitMQ provider map, for
+`forConsumer('billing')` subscribed to `ordering.order.placed`:
+
+| Concept here | Kafka, as the package does it |
 |---|---|
-| exchange | a topic per event type (`<prefix>.<type>`), or one per producing context with the type in a header; decide once, the first is simpler to subscribe to |
-| routing key | the topic; the **message key** is the ordering key (aggregate id) |
-| publisher confirm | `acks=all` with the idempotent producer; `publish` resolves on the acknowledgement of the send |
-| queue per consumer | consumer group `<consumer>`, subscribed to the topics of its types |
-| manual ack | offset commit after the handler resolved, auto-commit off |
-| retry queue | retry topic(s) per group (`<consumer>.<type>.retry`), consumed after a delay |
-| dead queue | dead-letter topic per group (`<consumer>.<type>.dlt`) |
-| `x-attempt` | a header on the record sent to the retry topic |
-
-How it maps:
-
-- `publish`: send each record with key, headers and JSON value, await every send, reject if
-  one failed. The port gives no key: take it from a `keyOf(event)` option, the same function
-  given to the relay for `ordering: 'per-key'`.
-- `subscribe`: one consumer per group; dispatch each record to the handlers of its type;
-  commit the offset after they resolved.
-- A failure cannot be "nacked": the offset moves or the partition stops. So on failure,
-  produce the record to the retry topic (attempt header incremented), then commit. A consumer
-  of the retry topic waits until the record is old enough (pause the partition, do not sleep
-  in the poll loop), then handles it; after the last attempt it produces to the dead-letter
-  topic.
-- `settle` for the contract: lag of the group at zero on work and retry topics, and no handler
-  in flight.
-
-Pitfalls:
-
-- Committing before the transaction of the handler loses events; committing after duplicates
-  them on a crash. Only the second is acceptable: hence the processed-event store.
-- A slow handler exceeds `max.poll.interval.ms`, the group rebalances and the record is
-  handled twice, concurrently. Bound the handler time, or pause and keep polling.
-- The retry topic breaks per-key ordering. Where order matters, retry in place (blocking the
-  partition) a bounded time, then dead-letter: say which one the provider does.
-- Without `acks=all`, idempotence and `min.insync.replicas` at 2 or more, an acknowledged
-  write can still be lost: the publisher guarantee is void.
-- A new consumer group starts at `latest` by default and misses what was published before it
-  existed. A queue binding does not have that surprise; choose `earliest` deliberately.
-- Topics must exist with enough partitions before the first publish; auto-creation gives one
-  partition and the default replication.
-- A record that cannot be parsed blocks its partition for ever unless it is dead-lettered at
-  once: the poison path is not optional.
-- Change data capture (the Debezium outbox event router) can replace the relay and this
-  publisher entirely; the consuming side stays.
+| exchange and routing key | one topic per event type, named after the type (`topicOf` gives one per producing context instead); the **record key** is `keyOf(event)`, the ordering key |
+| publisher confirm | idempotent producer with `acks=all`; `publish` resolves on the acknowledgement of every record |
+| queue per consumer | the consumer group `billing`, starting at the earliest record |
+| manual ack | offset committed after the handlers resolved, never automatically |
+| retry queue | none: a failed record is retried **in place**, its partition paused for `retry.delayMs`, so the order of a key holds through a failure that heals |
+| dead queue | the dead-letter topic `billing.ordering.order.placed.dead` (`<consumer>.<topic>.dead`) |
+| `x-attempt` | counted by the consumer, written as a header on the dead-letter record |
+| deduplication id | the header `x-event-id`; the idempotent producer absorbs the retries of the client only, so the processed-event store stays necessary |
 
 ## NATS JetStream
 
-Core NATS has no persistence: only JetStream fits the ports.
+Built: [`@ddd-ts-kit/nats`](../../nats/README.md), the reference for its options, guarantees
+and limits. Core NATS has no persistence: only JetStream fits the ports. For
+`forConsumer('billing')` subscribed to `ordering.order.placed`:
 
-| Concept here | JetStream |
+| Concept here | JetStream, as the package does it |
 |---|---|
-| exchange | a stream capturing the subjects `<prefix>.>`, file storage, replicated |
-| routing key | the subject `<prefix>.<type>` |
-| publisher confirm | the publish acknowledgement of JetStream (`PubAck`); `publish` awaits it for every message |
-| queue per consumer | a durable pull consumer `<consumer>-<type>` with a filter subject |
-| manual ack | explicit ack policy; ack after the handler resolved |
-| retry queue | none needed: negative ack with a delay, or the `backoff` list of the consumer |
-| dead queue | no built-in one: see below |
-| `x-attempt` | the delivery count in the metadata of the message |
-
-How it maps:
-
-- `publish`: publish each message with the header `Nats-Msg-Id` set to the event id. The
-  stream then drops a duplicate published inside its deduplication window, which absorbs the
-  retries of the relay.
-- `subscribe`: create or bind the durable consumer, pull batches, dispatch, ack. Two instances
-  bound to the same durable share the messages; two durables each get everything.
-- Failure: negative ack with a delay; the server redelivers. The attempts are bounded by
-  `MaxDeliver`.
-- Dead-lettering is the provider's job. When the delivery count reaches the limit, publish the
-  message to a dead subject kept by a dead stream (`<prefix>.dead.<consumer>.<type>`), then
-  terminate it (`term`). Do both in that order.
-- `settle`: the consumer reports no pending and no unacknowledged message.
-
-Pitfalls:
-
-- The default acknowledgement wait (30 s) redelivers a message whose handler is still running:
-  set it above the worst case or send in-progress acks.
-- Relying on the max-deliveries advisory instead of the explicit publication above leaves the
-  message in the stream with no consumer that will ever see it again.
-- The deduplication window is short (two minutes by default): it covers a relay retry, not a
-  replay hours later. The processed-event store stays necessary.
-- Stream retention must be `limits` or `interest` with every consumer created **before** the
-  first publish; with `workqueue` retention two consumers cannot both get every event.
-- A subject token cannot contain a dot-separated type as one token: map the type to the
-  subject as is (`ordering.order.placed` is three tokens) and filter with the full subject.
-- Changing the configuration of an existing durable consumer is partly refused: version the
-  durable name, as for a queue with fixed arguments.
+| exchange | the stream `integration-events` capturing the subjects `events.>`, limits retention, file storage |
+| routing key | the subject `events.ordering.order.placed` (`<subjectPrefix>.<event type>`) |
+| publisher confirm | the publish acknowledgement of the stream, awaited for every message |
+| queue per consumer | the durable pull consumer `billing_ordering_order_placed`: consumer name and type, every character outside `[A-Za-z0-9_-]` replaced by `_` |
+| manual ack | explicit acknowledgement after the handlers resolved |
+| retry queue | none: `nak` with `retry.delayMs`, the server redelivers |
+| dead queue | the subject `dead.events.billing.ordering.order.placed` (`dead.<subjectPrefix>.<consumer>.<event type>`) kept by the stream `integration-events-dead`; the bus publishes the copy, waits for its acknowledgement, then terminates the original |
+| `x-attempt` | the delivery count of the server |
+| deduplication id | the header `Nats-Msg-Id`, set to the event id: the stream drops a second publication inside its duplicate window (2 minutes), which absorbs a retry of the relay, not a replay an hour later |
 
 ## SQS and SNS
 

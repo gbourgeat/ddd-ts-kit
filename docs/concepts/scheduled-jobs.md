@@ -42,7 +42,14 @@ clients, what counts as already reminded. Why this split:
 
 The name is `<context>.<job-name>`, written as a literal: it is the actor the job runs as, the
 key of its lock, its label in the metrics and the key of its settings, and it survives the
-renaming of the class.
+renaming of the class. It is unique in the project (`scheduling/job-name`). A job depends on no
+repository, no part of the model and no adapter (`scheduling/job-triggers-use-case`).
+
+```bash
+npx ddd-ts-kit generate job notifications SendReminders --cron "0 7 * * *" --time-zone Europe/Paris --command SendReminders
+```
+
+writes the job, its spec and its switch in the job settings of the platform.
 
 ## Schedules
 
@@ -159,7 +166,8 @@ match on the day.
 
 By default every process that starts the application runs the jobs. To run them in one
 deployment and serve requests in another, the same composition root is started with the jobs
-off on one side and without an HTTP server on the other. Keep the single-run lock on even with
+off on one side and without an HTTP server on the other: `npx ddd-ts-kit generate worker`
+writes `apps/worker/main.ts` and starts the API with its jobs off. Keep the single-run lock on even with
 one worker: a rolling deployment runs two for a while.
 
 ## Testing

@@ -49,7 +49,9 @@ builder
 ```
 
 The port is an abstract class and the class is what is bound. `StripeGateway` has no import
-from this package and no knowledge of the policy. Without a container an aspect is a function:
+from this package and no knowledge of the policy. In the declared style, the default of a
+generated project, there is no module file and the same policy is stated in the declaration
+of the adapter: `@Adapter(PaymentGateway, { kind: 'external', aspects: [retry({ attempts: 3 }), timeout(2000)] }, [PaymentSettings])`. Without a container an aspect is a function:
 `retry({ attempts: 3 })(new StripeGateway(settings), { kind: 'external' })`.
 
 ### 2. At the composition root, on every binding
@@ -84,8 +86,12 @@ const tracing: Aspect = (instance, info) =>
   info?.kind === undefined ? instance : traceDependency(instance, { kind: info.kind, ...(info.context === undefined ? {} : { context: info.context }) });
 ```
 
-An application on `kernelModule({ instrumentation: traceApplication() })` needs neither: the
-bindings are traced by the kernel module, outside the aspects given here.
+An application on `kernelModule({ instrumentation: traceApplication() })`, which is what the
+CLI generates, does not write this `tracing` aspect: the kernel module traces the bindings
+itself. Its span is inside whatever the `decorate` hook adds and outside the aspects of a
+binding (see "Order"). A generated project does not use the `decorate` hook either: its
+platform module puts the default policy around the adapters that leave the process with
+`builder.around(['external', 'gateway'], () => when(forKinds('external', 'gateway'), retry(...), timeout(...)))`.
 
 ### 3. As a decorator, on an adapter
 
@@ -175,7 +181,11 @@ when(allOf(forKinds('gateway', 'external'), forMethods('find*')), cached({ key, 
 ## Order
 
 `compose(a, b)`, `.with(a, b)`, `aspects(a, b)` and stacked decorators all read the same way:
-**the first is outermost**. The aspects of a binding are inside those of the `decorate` hook.
+**the first is outermost**. Around one instance the application nests, outermost first: the
+`decorate` hook, the aspects modules put around a kind with `builder.around(kinds, ...)` in
+the order of the modules (the span of `kernelModule({ instrumentation })` comes first, then
+for a repository the dispatch of its domain events, then the ones of the platform module),
+and last the aspects of the binding itself (`.with(...)`, or `aspects` of a declaration).
 Order changes meaning:
 
 - `retry` then `timeout`: each attempt has its own time limit. The other way round, one limit
@@ -192,6 +202,10 @@ The order that fits most adapters, outermost first:
 ```
 tracing, logged, timed, cached, retry, circuitBreaker, bulkhead, timeout, the adapter
 ```
+
+With the instrumentation of the kernel module, the tracing span is where the kernel module
+puts it: `logged` and `timed` given to the `decorate` hook are outside the span, the ones
+given to `builder.around` or to a binding are inside it.
 
 A repository has one more wrapper, put by `kernelModule()` between the `decorate` hook and the
 aspects of its binding: the dispatch of the domain events of what it saves. So the aspects of
@@ -245,7 +259,9 @@ const logger = new StdoutLogger({
 
 `fields` is read at each entry: here the trace ids of the tracing package and, through
 `logFieldsOf` of the kernel, the correlation id, actor and tenant of the current execution
-context. This package depends on neither. Fields cannot overwrite `time`, `level` or `message`.
+context. This package depends on neither. When the same field comes from several places, the
+later wins: `base`, then the fields of `child(...)`, then `fields()`, then the fields of the
+log call. None can overwrite `time`, `level` or `message`.
 
 It implements the whole port, held by `loggerContract` like the pino and winston adapters:
 

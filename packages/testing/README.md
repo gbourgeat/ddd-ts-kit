@@ -233,7 +233,7 @@ The default is the user `test-user`, correlation `test-correlation`, origin `tes
 import { aSession, anExecutionContext, createTestBuses, scoped } from '@ddd-ts-kit/testing';
 
 const { executionScope } = createTestBuses({ executionContext: anExecutionContext().as(ada).build() });
-const orders = new DrizzleOrderRepository(unitOfWork, executionScope, clock);
+const orders = new DrizzleOrderRepository(database, executionScope, clock);
 
 await orders.save(order); // stamped by ada, in her tenant
 await scoped(executionScope, anExecutionContext().as(bob).ofTenant('globex'), () => orders.findById(order.id));
@@ -270,6 +270,7 @@ afterAll(() => server.close());
 
 | Call | Does |
 |---|---|
+| `createHttpClient(baseUrl)` | the client alone, for a server the project starts itself: what the `test/e2e/support/start-application.ts` of a generated project uses, on its own `composeApplication(persistence, options)` |
 | `client.get / post / put / patch / delete` | JSON in, `{ status, headers, body }` out; `body` is parsed when the content type is JSON, text otherwise; a 4xx or 5xx is a response, not an exception |
 | `client.post(path, body, { headers })`, `client.withHeaders(headers)` | headers for one call, or a client for another caller |
 | `expectStatus(response, 201)` | hands the response back, or fails showing the body, where the API says why |
@@ -320,8 +321,8 @@ beforeEach(() => database.reset());
 
 ## Three levels with the same vocabulary
 
-One rule, "an order that is already paid cannot be paid again", at the three levels of
-`docs/ARCHITECTURE.md`. The builder is the same; only what runs underneath changes.
+One rule, "an order that is already paid cannot be paid again", at three of the four test
+levels of `docs/ARCHITECTURE.md` (the adapter level is the contract suites, below). The builder is the same; only what runs underneath changes.
 
 ```ts
 // 1. Domain: the aggregate alone. Milliseconds, no double.

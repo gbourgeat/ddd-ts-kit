@@ -103,7 +103,9 @@ configured by `KEYCLOAK_URL`, `KEYCLOAK_REALM`, `KEYCLOAK_AUDIENCE` and the opti
 `KEYCLOAK_CLIENT_ID`, plus a compose service (Keycloak 26.8.0 in development mode, behind the
 `identity` profile) and a realm file with the API client, a public client with the direct
 grant, its audience and tenant mappers, a realm role and two demo users, for local development
-only. The generated end-to-end specs sign their own tokens in the test. Every route declares
+only. `init --authn none` writes a development authenticator that trusts the
+`x-development-actor` header and refuses to be built in production. The generated end-to-end
+specs sign their own tokens in the test. Every route declares
 its `security`, and the route type refuses one that does not (`authz/declared` in the
 [architecture reference](../ARCHITECTURE.md)).
 

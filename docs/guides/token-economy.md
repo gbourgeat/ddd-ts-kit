@@ -36,15 +36,16 @@ time.
 | **One concept per small file** (`naming/one-concept-per-file`, a size ceiling on functions and files) | read a large file to use ten lines of it |
 | **Generated boilerplate.** `generate` writes the file, its spec, its builder and its wiring | write, and get subtly wrong, the constructor visibility, the suffix, the registration |
 | **`--json` output with `next`**: the `file:line` of every `TODO(domain)` | open the generated files to find what is left to decide |
-| **Machine-readable maps.** `ddd-ts-kit list --json` gives contexts, aggregates, use cases, events, handlers, permissions | walk the tree to learn what exists |
+| **Machine-readable maps.** `ddd-ts-kit list --json` gives contexts, aggregates, use cases, events, handlers, permissions; `describe <context> --json` gives one context as facts (use cases with their permission, routes, events, ports with their adapters, policies, gateways, dependencies); `status` and `todo` give the next step of the plan, the slices and the markers left as `file:line` | walk the tree to learn what exists and what is left |
 | **Path-scoped rules.** `init` writes `.claude/rules/*.md`, each scoped by a `paths` frontmatter, next to a short `CLAUDE.md` | carry the domain rules in context while editing a route, and the reverse |
-| **Generated per-context documentation.** `CONTEXT.md` with its generated lists, `docs/context-map.md` | read the code of a neighbouring context to learn what it publishes |
+| **Generated per-context documentation.** `CONTEXT.md` with its generated lists and `## Reference`, `docs/context-map.md` | read the code of a neighbouring context to learn what it publishes |
 | **A fix sentence on every violation**, and `explain <rule-id>` | guess at a rule from a failing check |
 | **Checks at each write** (the plugin's hook runs the per-file check) | discover a layer violation after the whole feature is written |
 | **Fast, local test levels**: domain and application specs run in milliseconds without infrastructure | wait on, and read the output of, a full stack to check one rule |
 
-The session start hook also reminds the workflow and the context map, capped in size, so a new
-session does not begin by rediscovering them.
+The session start hook also reminds the order of work, the next step of the plan and a
+one-line map per context,
+capped in size, so a new session does not begin by rediscovering them.
 
 None of this is specific to one agent product: a path convention and a JSON map help any tool
 that reads files. The path-scoped rule files and the hook use the Claude Code formats, since
@@ -56,9 +57,11 @@ the kit's plugin targets it.
 `next`, implement each `TODO(domain)`, replace each `it.todo`. Do not ask an agent to "create
 an aggregate": ask it to run the generator and fill the three decisions it lists.
 
-**Read the map, not the tree.** Start with `npx ddd-ts-kit list --json` and the `CONTEXT.md`
-of the context in hand. Read a neighbouring context's `CONTEXT.md` and `published-language/`,
-never its internals: the rules forbid depending on them anyway.
+**Read the map, not the tree.** Start with `npx ddd-ts-kit describe <context> --json` (or
+`list --json` for the whole project) and the `CONTEXT.md` of the context in hand;
+`npx ddd-ts-kit todo <context>` then says what is left to write, as `file:line`. Read a
+neighbouring context's `CONTEXT.md` and `published-language/`, never its internals: the rules
+forbid depending on them anyway.
 
 **Small, scoped tasks.** One use case in one context per task, then a fresh session. A task
 stated as "add the ability to cancel an appointment, in `appointments`, permission
@@ -80,7 +83,8 @@ subagent, or filter the output before it is read. Ask for failures only.
 
 **Keep state in files, not in the conversation.** The plugin's `start` skill records where the
 project stands in `docs/architecture/plan.md` and the slices in `docs/architecture/slices.md`,
-so a new session resumes from two short files instead of a long history.
+so a new session resumes from two short files instead of a long history, and
+`npx ddd-ts-kit status` reads both back in a few lines.
 
 **Do not paste what a path can say.** Point to `docs/ARCHITECTURE.md` by rule id rather than
 quoting it; the skills of the plugin do the same, on purpose.
@@ -171,7 +175,7 @@ to list every consumer. List files (`-l`) before reading matches, and bound the 
   API; whether it runs against the dual TypeScript 6 and 7 setup of a generated project was
   not verified.
 
-*With this kit:* `ddd-ts-kit list --json` is already an index of the architecture's concepts
+*With this kit:* `ddd-ts-kit list --json` (and `describe <context> --json`) is already an index of the architecture's concepts
 (aggregates, use cases, events, handlers, permissions). A symbol index complements it for
 everything below that level. For most projects a language server covers the need and neither
 of these is worth setting up.
@@ -232,9 +236,9 @@ as a default.
 
 | Problem | Tool | Expected saving | Cost to set up |
 |---|---|---|---|
-| "What exists in this project?" | `ddd-ts-kit list --json`, `CONTEXT.md`, `docs/context-map.md` | high: replaces tree walking | none, generated |
+| "What exists in this project?" | `ddd-ts-kit list --json`, `describe <context> --json`, `CONTEXT.md`, `docs/context-map.md` | high: replaces tree walking | none, generated |
 | "Where does this file go, what is it called?" | the canonical tree, `ddd-ts-kit generate` | high: no search, no boilerplate written | none |
-| "What is left to write in what was generated?" | `generate --json` (`next`, `todos`) | high: opens only the places to fill | none |
+| "What is left to write in what was generated?" | `generate --json` (`next`, `todos`), `ddd-ts-kit todo [<context>]`, `ddd-ts-kit status` | high: opens only the places to fill | none |
 | "Why is this check failing?" | the violation's `fix`, `ddd-ts-kit explain <rule-id>` | medium: no reading of the reference | none |
 | "Who calls or implements this symbol?" | a language-server plugin of the agent, or Serena | medium to high on cross-context questions | install a language server and a plugin or an MCP server; memory while indexing |
 | "Every place with this code shape", a mechanical rewrite | ast-grep | medium: one query, no false positives to read | one binary; learn the pattern syntax |
@@ -282,7 +286,7 @@ definitions and its own failure modes.
 - Claude Context, https://github.com/zilliztech/claude-context
 - typescript-language-server,
   https://github.com/typescript-language-server/typescript-language-server
-- This repository: the [CLI README](../../packages/cli/README.md) (`--json`, `list`, the
+- This repository: the [CLI README](../../packages/cli/README.md) (`--json`, `list`, `describe`, `status`, `todo`, the
   generated `CLAUDE.md` and `.claude/rules`), the root README (the hook).
 
 ## See also

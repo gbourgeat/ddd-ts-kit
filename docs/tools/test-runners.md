@@ -29,14 +29,20 @@ Versions and licences were read from npm on 2026-10-10.
 | | Vitest | Jest |
 |---|---|---|
 | Version, licence | 5.0.3, MIT | 30.5.2, MIT |
-| TypeScript | transformed by the bundler toolchain it is built on, no extra package | needs a transformer: the kit's template uses `@swc/jest` |
-| ES modules | native | through Node's experimental VM modules flag, which the generated scripts pass |
-| Decorators | lowers legacy decorators itself; standard (TC39) decorators need the kit's plugin | whatever the transformer does: the kit's template configures legacy decorators with metadata |
-| Projects (unit and integration apart) | yes, used by the kit | yes as a Jest feature; not used by the kit's template |
-| Coverage | V8 or Istanbul providers; per-path thresholds, used by the kit | built in; no threshold in the kit's template |
-| Watch mode | module-graph aware | file and git based |
+| TypeScript | supported out of the box, through Vite's transformers | needs a transformer (`babel-jest` with your Babel configuration by default): the kit's template uses `@swc/jest` |
+| ES modules | "ESM first" in its own words | experimental in Jest's own words, through Node's `--experimental-vm-modules` flag, which the generated scripts pass |
+| Decorators | lowers legacy decorators itself and not standard (TC39) ones, which need the kit's plugin (as the testing README states and the kit's suites exercise; not found on vitest.dev) | whatever the transformer does: the kit's template configures legacy decorators with metadata |
+| Projects (unit and integration apart) | yes, used by the kit | yes as a Jest feature (`projects`); not used by the kit's template |
+| Coverage | `v8`, `istanbul` or a custom provider; thresholds per glob pattern, used by the kit | `babel` (default) or `v8` provider; `coverageThreshold` global, per glob or per path; no threshold in the kit's template |
+| Watch mode | reruns the tests related to a change by searching the module graph | `--watch` reruns the tests related to changed files, which needs a git or hg repository and a static dependency graph; `--watchAll` reruns everything |
 | Globals | imported from `vitest` | imported from `@jest/globals` in generated specs |
-| Ecosystem | newer, growing, aligned with Vite | older, very large, many existing suites |
+| Ecosystem (a judgement, not a measured fact) | newer, aligned with Vite | older, many existing suites |
+
+The feature rows were read on 2026-10-10 from the documentation of Vitest 5.0.3
+(https://vitest.dev/guide/features , https://vitest.dev/config/coverage) and of Jest 30.5
+(https://jestjs.io/docs/configuration , https://jestjs.io/docs/ecmascript-modules ,
+https://jestjs.io/docs/cli). The decorator row for Vitest and the ecosystem row are not from
+those pages and are marked as such.
 
 Type checking is done by neither: both strip types. The compiler does it in its own gate.
 
@@ -86,17 +92,17 @@ Speed comparisons between the two depend on the project and were not measured fo
   documentation checks, lint, import graph, dead code) are listed in the CLI README; none of
   them is described there as a Jest project.
 
-**With Jest (`init --tests jest`).** The CLI README names the option and nothing more. What
-follows was read in the templates and the generator sources of `packages/cli` on 2026-10-10,
-which are being changed, so verify on your generated project:
+**With Jest (`init --tests jest`).** What follows was read in a project generated on
+2026-10-10:
 
 - a `jest.config.js` using `@swc/jest`, with decorators parsed in the legacy mode with
   metadata, ES module handling and the import alias mapped;
 - a `jest.e2e.config.js` extending it, with a longer timeout and one worker;
 - `jest`, `@jest/globals`, `@swc/core` and `@swc/jest` as development dependencies; generated
   specs import their globals from `@jest/globals`;
-- one test script for unit and adapter specs together: the integration script of the pipeline
-  only prints that adapter specs run with the unit specs;
+- one test script for unit and adapter specs together, run with
+  `node --experimental-vm-modules`: the integration script of the pipeline only prints that
+  adapter specs run with the unit specs;
 - no coverage threshold in the generated configuration;
 - unit tests of the CLI check that these files and the recorded stack are produced. No
   evidence was found that a generated Jest project is installed and run by the kit's own
@@ -115,7 +121,10 @@ which are being changed, so verify on your generated project:
 
 **Jest**
 
-- ES modules rely on a Node flag that Node still labels experimental.
+- ES modules rely on `--experimental-vm-modules`. The Node.js documentation (v26.11.1, read
+  on 2026-10-10, https://nodejs.org/api/vm.html) labels `vm.Module`, `vm.SourceTextModule` and
+  `vm.SyntheticModule` "Stability: 1 - Experimental", and Jest's own page calls its ESM
+  support experimental; mocking a module in ESM goes through `jest.unstable_mockModule`.
 - `@swc/jest` was last published in September 2025 (0.2.39 on npm); it works with current
   Jest as far as the template assumes, which was not run for this page.
 - The template compiles decorators in the legacy mode whatever the project's `tsconfig.json`
@@ -149,9 +158,11 @@ which are being changed, so verify on your generated project:
   thresholds, reports, mutation testing), `docs/ARCHITECTURE.md` sections 5 and 7; templates
   `packages/cli/templates/init/jest.config.js.tpl` and
   `packages/cli/templates/init/e2e/jest.e2e.config.js.tpl`.
-- Vitest: https://vitest.dev (guide, projects, coverage); npm: https://www.npmjs.com/package/vitest
-- Jest: https://jestjs.io/docs/getting-started and https://jestjs.io/docs/ecmascript-modules ;
-  npm: https://www.npmjs.com/package/jest
+- Vitest: https://vitest.dev/guide/features and https://vitest.dev/config/coverage (v5.0.3, read
+  on 2026-10-10); npm: https://www.npmjs.com/package/vitest
+- Jest 30.5: https://jestjs.io/docs/configuration , https://jestjs.io/docs/ecmascript-modules
+  and https://jestjs.io/docs/cli (read on 2026-10-10); npm: https://www.npmjs.com/package/jest
+- Node.js, `vm` module (stability of VM modules): https://nodejs.org/api/vm.html
 - `@swc/jest`: https://www.npmjs.com/package/@swc/jest
 - TC39 decorators proposal: https://github.com/tc39/proposal-decorators
 - Martin Fowler, "Mocks Aren't Stubs", martinfowler.com.

@@ -13,6 +13,7 @@ allowed-tools:
   - Bash(git log *)
   - Bash(git add *)
   - Bash(npx ddd-ts-kit check *)
+  - Bash(npx ddd-ts-kit todo *)
   - Bash(npx ddd-ts-kit docs --check)
 ---
 
@@ -45,9 +46,11 @@ that needed it.
 
 Target: at most `commit.maxFiles` files and `commit.maxLines` changed lines
 (`ddd-ts-kit.config.json`; 20 and 600 when the key is absent), generated files and the
-lockfile not counted. A generated use case with its route is 10 to 15 files, most of them
-small. The guard says so once, without blocking, when the working tree goes past the
-limits, and names the slices it sees.
+lockfile not counted. `npx ddd-ts-kit check --commit-size` measures what is about to be
+committed against them (`--staged` reads the index only; advisory, `--strict` exits 1 when
+over). A generated use case with its route is 10 to 15 files, most of them small. The guard
+says so once, without blocking, when the working tree goes past the limits, and names the
+slices it sees.
 
 ## Message
 
@@ -68,12 +71,14 @@ Conventional commits, checked by commitlint at `commit-msg`:
 ## Before committing
 
 1. `git status --short` and read it by slice: one use-case folder, its route, its specs.
-2. `npx ddd-ts-kit check --changed-since HEAD` and `npx ddd-ts-kit docs --check`.
+2. `npx ddd-ts-kit check --changed-since HEAD`, `npx ddd-ts-kit docs --check`, and
+   `npx ddd-ts-kit todo <context>`: no marker left in the slice.
 3. Stage by path, never everything at once when several slices are pending:
    `git add src/contexts/<context>/application/commands/<use-case> <its route> <its specs> <the barrel> <CONTEXT.md>`.
-4. Read `git diff --cached --stat`: does it tell one story?
+4. Read `git diff --cached --stat` and `npx ddd-ts-kit check --commit-size --staged`: one
+   story, within the limits?
 5. Commit. The pre-commit hook runs the linter and the architecture check on the staged
-   files; never pass `--no-verify`.
+   files, and the commit size; never pass `--no-verify`.
 
 Propose the commit (files and message) and let the user confirm, unless you were asked to
 commit or you are a worker in your own worktree, where each finished slice is committed.

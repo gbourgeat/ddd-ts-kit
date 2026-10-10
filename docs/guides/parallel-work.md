@@ -31,13 +31,15 @@ until the other exists, and the two meet in every file.
 |---|---|---|---|
 | `src/contexts/<A>/**` and `src/contexts/<B>/**` | different workers | yes | disjoint by construction |
 | two use case folders of one context | different workers | mostly | they meet in the aggregate, the barrel and the routes file: merge often |
-| `ddd-ts-kit.config.json` | `init`, `generate context`, `generate service`, `generate adr --deviation` | **no** | create all contexts and relationships in the bootstrap; later changes one at a time, by the platform owner |
-| `src/platform/application.ts`, `src/main.ts`, `platform.module.ts` | `generate context`, `generate gateway`, hand edits | **no** | registration regions are written between markers; two branches adding a context both touch them |
+| `ddd-ts-kit.config.json` | `init`, `generate context`, `generate service`, `generate worker`, `generate adr --deviation` | **no** | create all contexts and relationships in the bootstrap; later changes one at a time, by the platform owner |
+| `src/platform/compose-application.ts`, `src/platform/platform.module.ts`, `src/platform/platform-test.module.ts` | `generate context` (the first), `generate gateway` (the two modules), hand edits | **no** | registration regions are written between markers; two branches adding a context both touch them |
+| the registries of the platform: `src/platform/database/schema.ts` (with Prisma, `prisma/schema.prisma`), `src/platform/audit/audited-events.ts`, `src/platform/job-settings.ts`, the grants under `src/platform/auth/` | `generate repository` (the first of a context; every one with Prisma), `generate integration-event`, `generate job` | **no** | run these generators on the trunk before the workers start; `generate --help --json` says which kinds write shared files (`writesShared`) |
+| `src/main.ts` | hand edits | **no** | the platform owner |
 | `test/architecture/extractable.spec.ts` | `generate context` | **no** | same: written with each context |
 | `<context>.declarations.ts` (the barrel) | every `generate` in that context, and `docs` | per context | derived: never merge by hand, regenerate (below) |
 | `docs/context-map.md`, the generated lists of each `CONTEXT.md` | `ddd-ts-kit docs`, every `generate` | **no**, but cheap | derived: regenerate after merging |
 | `openapi/openapi.json`, `docs/integration/asyncapi.json`, `docs/integration/event-catalog.md` | `npm run docs:generate` | **no**, but cheap | derived and deterministic: regenerate after merging |
-| `.dependency-cruiser.cjs` | `depcruise-config --write`, every `generate` | **no**, but cheap | derived from the config: regenerate |
+| `.dependency-cruiser.cjs` | `depcruise-config --write`, `generate context` | **no**, but cheap | derived from the config: regenerate |
 | database migrations | the ORM's tooling | **no** | one schema per context keeps tables apart, but the migration sequence is one list: number at merge time |
 | the `published-language/` of an upstream | the upstream's owner | **no** for its consumers | merge the contract first; consumers branch from it |
 | `src/shared-kernel/` | co-owners | **no** | rare by design; one change at a time |
@@ -92,6 +94,21 @@ git worktree add ../scheduling-appointments -b feat/appointments-book
 git worktree add ../scheduling-calendars -b feat/calendars-working-hours
 ```
 
+For one worker per context the CLI does it in one command:
+
+```bash
+npx ddd-ts-kit worker-scope appointments
+```
+
+It adds a worktree on the branch `build/appointments` (by default in
+`../<project>-appointments`; `--worktree <path>` and `--branch <name>` change both), writes
+`.ddd-ts-kit/worker.json` naming the context in it, and prints the briefing of that worker:
+the directory it may write, the generators it may run, its rows of
+`docs/architecture/slices.md`, the contracts it consumes. `--dry-run` prints the same without
+touching anything. It needs a repository with at least one commit, and an existing worktree is
+kept: only the file is written again. `init` lists `.ddd-ts-kit/` in `.gitignore`, so the file
+is never committed.
+
 Each worktree needs its own `npm install` (dependencies are not shared between worktrees) and
 its own ports if two of them run `npm run dev` or the end-to-end tests at once: the generated
 `docker-compose.yml` takes its ports from `.env`, so give each worktree its own `.env`. Fast
@@ -108,8 +125,13 @@ Rules that keep worktrees from hurting:
 For coding agents specifically: an agent told to work "in the appointments context" that is
 started in the main checkout will still read, and may edit, anything. Give it a worktree and
 name the directory it owns. The plugin's hook refuses a hand-written file where a generator
-exists and any edit of a generated contract, and asks before a change of the governed files
-(the config, the lint and pipeline files), which is exactly the shared list above.
+exists and any edit of a generated file (the three contracts, the barrel,
+`.dependency-cruiser.cjs`), and asks before a change of the governed files (the config, the
+lint, test, compiler and pipeline configuration). For its `context-builder` agent it goes
+further: with a `.ddd-ts-kit/worker.json` in the worktree, a write outside
+`src/contexts/<context>/` and the end-to-end specs is refused, and so are a generator that
+writes shared files and a dependency change. A worker passes `--local-only` to `generate`:
+the command then refuses, and writes nothing, when the kind would write outside its context.
 
 ## Merge order
 
@@ -178,12 +200,12 @@ Merge `calendars` first, then `appointments`.
 | W1 | `src/contexts/calendars/` | `Calendar` aggregate, `SetWorkingHours`, `AddTimeOff`, their routes; emits the two events | nothing |
 | W2 | `src/contexts/appointments/` | `Appointment` aggregate, the booking commands and queries, the no-double-booking constraint; emits the three events | the declared `calendars` events, if it keeps a local copy of working hours |
 | W3 | `src/contexts/availability/` | integration handlers feeding its projection, `FindOpenSlots` | the declared events of both upstreams |
-| W4 | `src/contexts/notifications/` | handler under the consumer name `notifications.remind-on-appointment-booked`, the job `notifications.send-reminders`, the anti-corruption layer of the provider | the declared `appointments` events |
+| W4 | `src/contexts/notifications/` | handler under the consumer name `notifications.appointments-appointment-booked` (the generated form, `<context>.<reaction>`), the job `notifications.send-reminders`, the anti-corruption layer of the provider | the declared `appointments` events |
 
 Each worker's brief says: the one directory it may write, the files it must not touch (the
 config, `src/platform/`, `src/main.ts`, another context, any generated document), that it must
 not regenerate shared documents, and that it stops and reports if its slice seems to need a
-change outside its directory. W3 and W4 test their handlers with events built from the
+change outside its directory. `worker-scope` prints that brief. W3 and W4 test their handlers with events built from the
 declarations; they do not wait for W1 and W2 to finish.
 
 **Phase 3, integration (one worker).** Merge in the order of the map (`calendars`,
@@ -196,7 +218,9 @@ The plugin writes the same plan down as a table: the skill `plan-slices` produce
 `docs/architecture/slices.md`, where each row is a `contract`, a `skeleton` (an aggregate and
 its repository, whose generators also write shared files) or a `slice`, with an owner and the
 rows it depends on. Contracts and skeletons belong to the coordinator, slices to the worker of
-their context, and only the coordinator edits the file.
+their context, and only the coordinator edits the file. `npx ddd-ts-kit status` reads it back:
+the slices by status and by owner, and the `TODO(domain)`, `TODO(platform)` and `it.todo` left
+in each context; `npx ddd-ts-kit todo <context>` lists them as `file:line`.
 
 What makes the plan work is that phases 0 and 1 are deliberately not parallel. They take a
 small fraction of the total time and remove nearly every collision from the rest.
@@ -215,11 +239,10 @@ small fraction of the total time and remove nearly every collision from the rest
   Docker daemon.
 - **Nothing locks a file between people.** The rules forbid cross-context imports; they do not
   stop two branches from editing the config. The sequencing above is a discipline, held by
-  review and by the brief each worker receives. For agents the plugin goes one step further:
-  its skill `parallel-work` has the coordinator write a `.ddd-ts-kit/worker.json` naming the
-  context in each worktree, and the hook then refuses a write outside that context. This was
-  being added while this guide was written (2026-10-10) and is described by the skill, not yet
-  by a README; it fails open like the rest of the hook.
+  review and by the brief each worker receives. The confinement by `.ddd-ts-kit/worker.json`
+  described above applies only to the plugin's `context-builder` agent, inside a Claude Code
+  session, and fails open like the rest of the hook; `--local-only` holds for anyone, but only
+  for what `generate` writes.
 - **The plan assumes the declared style with a barrel per context.** In the explicit style,
   `<context>.module.ts` is a hand-maintained registration file inside each context: still
   private to the context, but a conflict point between two use cases of that context.
@@ -231,7 +254,7 @@ small fraction of the total time and remove nearly every collision from the rest
 - Sam Newman, *Building Microservices*, 2nd edition, O'Reilly, 2021, chapter 5 (contracts and
   consumer-first design).
 - This repository: the [CLI README](../../packages/cli/README.md) (what each generator writes,
-  marker regions, derived barrels), the skill `document`.
+  marker regions, derived barrels, `worker-scope`), the skills `parallel-work` and `plan-slices`.
 
 ## See also
 

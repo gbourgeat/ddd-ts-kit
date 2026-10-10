@@ -37,6 +37,7 @@ src/
   shared-kernel/                 optional: value objects used by two contexts or more
   platform/                      technical capabilities: config, database, events, auth, tracing, http server
   apps/<context>/main.ts         optional: one context run alone as a service
+  apps/worker/main.ts            optional: the scheduled jobs in a process of their own
   contexts/<context>/
     CONTEXT.md
     <context>.declarations.ts    generated barrel of the context's declared classes
@@ -61,7 +62,7 @@ src/
         publishers/              *.publisher.ts    (domain event to integration event)
         handlers/                *.integration-handler.ts (integration event to command)
     infrastructure/
-      persistence/               *.repository.ts adapters, mappers
+      persistence/               *.repository.ts adapters, *.mapper.ts, *.reader.ts, *.schema.ts
       external/                  adapters of outside systems
       anti-corruption/           translators of another context's or system's model
     presentation/
@@ -75,7 +76,9 @@ src/
 
 The tree is **closed**: a directory not listed here is a design decision, added to
 `extraDirectories` in the config with a reason, not created ad hoc. The levels named
-`<use-case>` are open.
+`<use-case>` are open, and so is everything below `test/unit/`, `test/integration/`,
+`test/fakes/` and `test/builders/`. End-to-end specs (`test/e2e/`) and the architecture test
+(`test/architecture/`) live at the project root, outside the contexts.
 
 ## 3. Dependency rules
 
@@ -93,13 +96,13 @@ presentation ──▶ application ──▶ domain ◀── infrastructure
 | `layer/infrastructure-no-presentation` | `infrastructure/` implements ports of `application/` and `domain/`, never imports `presentation/`. |
 | `context/published-language-only` | A file imports from another context only through that context's `published-language/`. |
 | `context/declared-relationship` | Such an import requires the relationship to be declared in the config. |
-| `context/published-language-is-a-contract` | `published-language/` imports only the kernel, `@ddd-ts-kit/events`, the schema library and other published languages (`publishedLanguageAllowedPackages`). |
+| `context/published-language-is-a-contract` | `published-language/` imports only the kernel, `@ddd-ts-kit/events`, `@ddd-ts-kit/validation`, the schema library of the project and other published languages (`publishedLanguageAllowedPackages`). |
 | `context/no-cycle` | The declared relationships form no cycle. |
-| `tree/closed` | A context holds only the canonical directories. |
-| `tree/context-doc` | Every context has a `CONTEXT.md` with the required sections. |
+| `tree/closed` | A context holds only the canonical directories, plus its declared `extraDirectories`, and no source file outside a role directory. |
+| `tree/context-doc` | Every context has a `CONTEXT.md` with the required sections (`Purpose`, `Classification`, `Ubiquitous language`, `Aggregates`, `Published events`, `Relationships`) and the classification declared in the config. |
 | `naming/suffix` | A file in a role directory carries the role's suffix, in kebab-case. |
-| `naming/one-concept-per-file` | One exported aggregate, entity, value object, event, handler per file. |
-| `test/spec-required` | Every aggregate, value object, domain service, command handler, query handler, domain event handler and integration event handler has a `*.spec.ts` in the context's `test/`. |
+| `naming/one-concept-per-file` | One exported aggregate, entity, value object, event, handler or job per file, and one declared class per role file. |
+| `test/spec-required` | Every aggregate, value object, domain service, command handler, query handler, domain event handler, integration event handler and job has a `*.spec.ts` in the context's `test/`. |
 | `events/name-format` | Domain and integration event names follow `<context>.<aggregate>.<fact-in-past-tense>`. |
 | `events/defined-in-published-language` | An integration event is declared once with `defineIntegrationEvent` in the producer's `published-language/`, with a payload schema. Catalog and AsyncAPI document are generated from these declarations. |
 | `test/no-mocks` | No `vi.mock`, `jest.mock`, `vi.fn`, `jest.fn`, `vi.spyOn`, `jest.spyOn` or mocking library in a context's `test/`. Use the fake of the port. Default severity `warn`. |
@@ -121,13 +124,13 @@ presentation ──▶ application ──▶ domain ◀── infrastructure
 | `application/handler-shape` | A `*.handler.ts` file exports one class with a single public method, `execute`. |
 | `application/command-query-separation` | A query handler never saves, deletes or publishes. Default severity `warn`. |
 | `events/outbox-required` | With a database, integration events are published through the transactional outbox, never straight to a broker or a bus from a handler. `stack.events` is `outbox` whenever `stack.orm` is set. |
-| `events/consumer-idempotent` | Every consumer is registered with a stable, unique consumer name and deduplicates through a processed-event store (bound once for the application, or given to the subscription). |
-| `context/extractable` | A context can run alone: its module wires with the kernel and the platform only, it reads no table of another context, shares no transaction with one, and calls another context only through a port whose adapter could be remote. |
+| `events/consumer-idempotent` | Every integration event handler is declared (`@IntegrationEventHandler(definition, { consumer })`) or registered with a stable consumer name, unique in the project, and deduplicates through a processed-event store (bound once for the application, or given to the subscription). Never a bare `subscribe`. |
+| `context/extractable` | A context can run alone: its module and its declared classes wire nothing of another context, it reads no table or schema of another context, imports no repository nor port of one, and exports no mutable state. It calls another context only through a port of its own whose adapter could be remote. |
 | `authz/declared` | Every command, query and route declares the permission it requires, or declares itself public. Nothing is reachable by default. |
 | `authz/in-application` | The permission is decided in the application layer through the `Authorizer` port. No role or ownership test in `presentation/`, no authorization in `infrastructure/`, no knowledge of the acting user's rights in `domain/` (a context whose model is access itself may hold roles as its own state). |
 | `authz/actor-explicit` | Use cases receive the actor in the command or query. `domain/` and `application/` never read the ambient `ExecutionScope` or `ActorContext`; only infrastructure and the platform may, for audit columns, tenant scoping and correlation. |
 | `governance/recorded-deviation` | A suppression, a lowered severity, an extra directory or an extra allowed package carries a reason and points to a decision record in `docs/adr/`. |
-| `aspects/outside-in` | Aspects are applied from outside. The decorators of `@ddd-ts-kit/aspects/decorators` are imported only by an adapter in `infrastructure/` or by the platform; everywhere else an aspect is a wrapper bound at the composition root (`.with(...)`, the `decorate` hook) or a bus middleware. |
+| `aspects/outside-in` | Aspects are applied from outside. The decorators of `@ddd-ts-kit/aspects/decorators` are imported only by an adapter in `infrastructure/` or by the platform; everywhere else an aspect is a wrapper given to a binding or to a declaration (`.with(...)`, `aspects` of `@Adapter`), put around every binding of a kind by the platform (`builder.around(...)`), or a bus middleware. |
 | `standard/no-parallel-interface` | No home-made copy of a standard interface of the kernel: no declared `ILogger`, `AppLogger`, `UserContext`, `CurrentUser`, `UserSession`, `PaginatedResult`, `AuditLog` and the like. Use the kernel interface and extend it by declaration merging; the list is `standardInterfaces` in the config. Default severity `warn`. |
 | `declarations/role-declared` | In the declared style, a role file exports a class carrying the decorator of its role, and a declared class lives in a role file. Consumer, policy and domain event names are non-empty string literals, and no class under `domain/` carries a declaration. |
 | `declarations/barrel-current` | In the declared style with a barrel, `<context>.declarations.ts` holds exactly one `export *` per role file of its context: a role file cannot be silently left unregistered. |
@@ -139,14 +142,18 @@ presentation ──▶ application ──▶ domain ◀── infrastructure
 | `clean/no-hash-private` | A class member is `private`, never `#name`. |
 | `clean/blank-lines` | A blank line before every `return` that is not alone in its block and between the logical blocks of a function (after a group of declarations, around `if`, `for`, `try`, around a multiline statement, around a method); no blank line at the edges of a block, never two in a row. Consecutive one-line guards, declarations and fields may stay together. |
 | `clean/one-export-per-file` | A source file exports one class, interface or function and is named after it in kebab-case. Its companions are the types of its own signature, a derived form it calls, or a closed family (a type with its constructors or combinators, the accessors of one private state); anything else is listed in `onePerFile.allow` with its reason. Entry files (`index.ts`, `<context>.declarations.ts`, subpath entries) only re-export. |
-| `clean/file-size` | A file is at most 350 lines, tests included; generated files and declaration files are exempt. |
+| `clean/file-size` | A file is at most 350 lines, tests included, and the limit is not configurable; files under a directory named `generated` and `.d.ts` files are exempt. |
 | `scheduling/job-triggers-use-case` | A job lives in `application/scheduling/*.job.ts`, implements `ScheduledJob` and only sends commands: no repository among its dependencies, no import of aggregates, entities, domain services or `infrastructure/`. |
 | `scheduling/job-name` | A job is named `<context>.<job-name>` by a string literal in lower-case kebab-case, the context being its own; its `systemActor` carries the same name; the name is unique in the project. |
 | `domain-events/dispatched-on-save` | Domain events leave with the save: no `pullEvents()` call in `application/` or `infrastructure/` of a context, and no `DomainEventDispatcher` imported, named in a dependency list or received by a constructor in `application/commands/`, `application/queries/` or a repository adapter. A handler writes `await repository.save(aggregate)` and nothing else; a removal that announces an event takes the aggregate. |
 | `tracing/platform-only` | `@ddd-ts-kit/tracing` (every entry) and `@opentelemetry/*` are imported only by the platform directory, `main.ts` and `apps/`. |
-| `composition/only-in-module` | Adapters are instantiated or registered only in `<context>.module.ts` and `main.ts`. |
+| `composition/only-in-module` | Adapters are instantiated or bound, and declared classes assembled (`contextModule`, `discoverContext`, `include`), only in `<context>.module.ts`, `main.ts`, `apps/` and the platform directory. In the declared style an adapter is bound by its own declaration and nothing instantiates it. |
+| `config/valid` | `ddd-ts-kit.config.json` is consistent: known contexts, classifications, relationships, rule ids and guard mode, the same contexts as on disk, a function limit within the ceiling, complete `onePerFile.allow` entries and positive commit limits. |
+| `config/suppression-needs-reason` | An inline suppression names its rule and gives a reason after `--`. |
 
-Only the module file and `main.ts` are allowed to know every layer.
+Only the composition root (`main.ts`, `apps/`, the platform directory) and what assembles a
+context (its generated `<context>.declarations.ts`, or its `<context>.module.ts` in the
+explicit style) are allowed to know every layer.
 
 ### Who checks what
 
@@ -154,9 +161,9 @@ Three analyzers hold the rules, each where it is exact:
 
 | Analyzer | Holds | When |
 |---|---|---|
-| `ddd-ts-kit check` (zero dependency, text level) | structure and project-wide facts: `tree/*`, `naming/*`, `language/*`, `config/*`, `context/no-cycle`, `test/spec-required`, `test/builder-required`, the config side of `events/outbox-required` and `governance/recorded-deviation` (decision records exist), unique consumer names, and a fast approximation of the code rules | at every file write (editor hook), in CI |
-| `@ddd-ts-kit/eslint-plugin` (syntax tree) | code: `layer/*`, `context/*` imports and `context/extractable`, `purity/*`, `clean/*`, `domain/*`, `application/*`, `authz/*`, `events/*`, `aspects/*`, `tracing/*`, `domain-events/*`, `standard/*`, `ports/*`, `scheduling/*`, `test/no-mocks`, and the comment side of `governance/recorded-deviation`. Authoritative when the two disagree | on staged files, in CI |
-| dependency-cruiser (resolved import graph) | the same boundaries through barrels and re-exports, cycles between files, orphans, undeclared dependencies | in CI |
+| `ddd-ts-kit check` (zero dependency, text level) | alone, structure and project-wide facts: `tree/*`, `naming/*`, `language/*`, `config/*`, `context/no-cycle`, `test/spec-required`, `test/builder-required`, `events/defined-in-published-language`, `composition/only-in-module`, `declarations/barrel-current`, the config side of `events/outbox-required` and of `governance/recorded-deviation` (decision records exist), and what must be unique in the project (consumer names, job names). It also holds a fast approximation of every code rule below except `domain/*` and `application/*`; of `clean/blank-lines` it holds the `return` and the padded block only | at every file write (editor hook), in CI |
+| `@ddd-ts-kit/eslint-plugin` (syntax tree) | code: `layer/*`, the imports of `context/*` and `context/extractable`, `purity/*`, `clean/*` (`clean/blank-lines` through four rules of `@stylistic/eslint-plugin` its presets enable), `domain/*`, `application/*`, `authz/*`, `events/name-format`, `events/outbox-required`, `events/consumer-idempotent`, `aspects/*`, `tracing/*`, `domain-events/*`, `standard/*`, `ports/*`, `scheduling/*`, `declarations/role-declared`, `test/no-mocks`, and the comment side of `governance/recorded-deviation`. `domain/*` and `application/*` are held by it alone. Authoritative when the two disagree | on staged files, in CI |
+| dependency-cruiser (resolved import graph) | the same boundaries through barrels and re-exports, cycles between files, orphans, undeclared dependencies; its configuration is generated from the config by `ddd-ts-kit depcruise-config` | in CI |
 
 knip (dead code and unused dependencies) and the TypeScript compiler in `strict` mode complete the gate.
 
@@ -184,10 +191,11 @@ through a port. Handlers orchestrate; business decisions live in the domain.
 **Buses.** Presentation and integration event handlers talk to the application through `CommandBus` and
 `QueryBus`, never to a handler class. Both are ports of `@ddd-ts-kit/kernel` with in-process
 implementations; another transport is an adapter chosen in the composition root. Cross-cutting
-behaviour (unit of work, authorization, logging) is a bus middleware, not code repeated in
-handlers. A command is a class extending `Command<Result>`, a query a class extending
-`Query<Result>`; a handler is registered by its own declaration, or in
-`<context>.module.ts` in the explicit style.
+behaviour (unit of work, authorization, logging, metrics, audit) is a bus middleware, not
+code repeated in handlers. A command is a class extending `Command<Result>`, a query a class extending
+`Query<Result>`. In the declared style, the default, a handler is registered by its own
+declaration (`@CommandHandler`, `@QueryHandler`) and the context has no module file; in the
+explicit style it is registered in `<context>.module.ts`.
 
 **Ports.** A port is an abstract class with abstract members only: no constructor, no
 field, no body. The class is the contract and the injection token at once, so there is no
@@ -255,7 +263,8 @@ deduplicates. What varies with the tools is the relay and the consumer side:
 |---|---|---|
 | same process, no broker | polling relay to the in-memory bus (or woken by the database: PostgreSQL `LISTEN/NOTIFY`) | processed-event store in the consumer's transaction |
 | RabbitMQ and other queue brokers | polling relay publishing with publisher confirms, mark published on confirm | durable queue per consumer, manual ack after commit, dead-letter exchange after bounded retries |
-| Kafka and other logs | polling relay, or change data capture reading the outbox table (Debezium outbox router); key = aggregate id for per-aggregate order | consumer group per consumer, offset committed after the handler's transaction, processed-event store for redelivery |
+| Kafka and other logs | polling relay, or change data capture reading the outbox table (Debezium outbox router); key = aggregate id for per-aggregate order | consumer group per consumer, offset committed after the handler's transaction, bounded retries in place then a dead-letter topic, processed-event store for redelivery |
+| NATS JetStream, Redis Streams | polling relay publishing with an acknowledgement (on JetStream the event id is the message id, so the stream drops a relay retry) | one durable consumer (JetStream) or consumer group (Redis) per consumer and event type, explicit acknowledgement after commit, bounded delayed redeliveries then a dead-letter stream |
 | cloud queues and topics (SQS/SNS, Pub/Sub) | polling relay, batch publish | visibility timeout above the handler's worst case, redrive policy to a dead-letter queue |
 
 Without a database there is nothing to be atomic with, and the in-memory bus alone is enough.
@@ -282,7 +291,9 @@ a generated architecture test boots every context alone to prove it stays true.
   command and query names the permission it requires, and a bus middleware asks the
   `Authorizer` port before the handler runs. Deny by default. Rules that need the state of the
   aggregate (only the author may edit, not after closing) are policies in
-  `application/authorization/*.policy.ts`, evaluated by the handler through the same port.
+  `application/authorization/*.policy.ts`; the handler asks them, once the aggregate is
+  loaded, through the `Access` port of `@ddd-ts-kit/auth`
+  (`access.authorize(command.actor, permission, element)`).
 - *Invariants* stay in the domain: "an invoice cannot be paid twice" is not a permission.
 
 The authorization model is the project's choice, behind the one port: roles (RBAC), policies
@@ -292,8 +303,8 @@ process or delegated to a dedicated service. Changing model changes an adapter a
 permission definitions, not the handlers.
 
 *The current actor.* Use cases get it explicitly, as data of the command or query. Lists are
-filtered by passing an access scope computed by the authorizer to the read port, never by
-filtering in memory after loading. Every unit of work (a request, a consumed event, a
+filtered by passing the access scope of the actor (`access.scope(actor, permission, type)`)
+to the read port, never by filtering in memory after loading. Every unit of work (a request, a consumed event, a
 scheduled job) runs inside an `ExecutionScope` opened at the boundary, holding the
 `ExecutionContext`: correlation and causation ids, actor, session, tenant, origin.
 Infrastructure that needs any of it without being handed it (audit columns, tenant scoping of
@@ -311,11 +322,16 @@ or `ILogger` is a defect.
 
 **Cross-cutting behaviour.** Logging, metrics, tracing, retry, timeout, circuit breaking and
 caching are never written inside domain or application code. They are applied from outside,
-in this order of preference: wrappers bound at the composition root
-(`.with(retry(...), timeout(...))`, or for every binding of a kind through the platform);
+in this order of preference: wrappers given from outside, for every binding of a kind by the
+platform (`builder.around(['external', 'gateway'], ...)`), or for one adapter on its
+declaration or its binding (`aspects` of `@Adapter`, `.with(retry(...), timeout(...))`);
 bus middlewares for what concerns every use case; and, for an adapter whose policy is part of
 its definition, a standard decorator on the adapter class in `infrastructure/` or `platform/`.
-None of the three is allowed in `domain/` or `application/`. What an aspect records follows
+None of the three is allowed in `domain/` or `application/`. Tracing is one more layer of
+the same kind, wired once by the platform: `kernelModule({ instrumentation: traceApplication() })`
+puts the spans around the buses, the bindings, the domain events, the publications, the
+consumers and the jobs, `tracedRoutes()` around the routes and `tracedPublisher(bus)` around
+what the outbox relay delivers with. What an aspect records follows
 the tracing rule: class, method, context, duration, error code; never arguments, results or
 error messages.
 
@@ -350,7 +366,8 @@ a gateway or an outside system, the domain events of a save and their handlers, 
 append, then, later and in the same trace, the publication by the relay and each consuming
 context with the commands it sends. A scheduled job is a trace of its own. Span names are
 stable and low in cardinality (`command BookAppointment`, `repository
-AppointmentRepository.save`, `process notification.appointment-booked`); health, readiness
+AppointmentRepository.save`, `process notification.appointment-booked`: `<kind> <Name>` for a
+use case, `<kind> <Port>.<method>` for a binding, `process <consumer>` for a consumed event); health, readiness
 and documentation routes and plumbing produce none. A span carries class, method, context,
 outcome and an error code, the root also the correlation id and the origin, never arguments,
 results, error messages or anything about the actor. The same correlation id is on log
