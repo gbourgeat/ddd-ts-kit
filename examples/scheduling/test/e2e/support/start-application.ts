@@ -1,0 +1,87 @@
+import { RelationTupleStore, type RelationTuple } from '@ddd-ts-kit/auth/rebac';
+import type { ErrorReporter, IntegrationEventSubscriber } from '@ddd-ts-kit/kernel';
+import { createHttpClient, type HttpClient } from '@ddd-ts-kit/testing/e2e';
+import { relateSystemActors } from '../../../src/platform/auth/relate-system-actors.js';
+import { composeApplication } from '../../../src/platform/compose-application.js';
+import type { AppConfig } from '../../../src/platform/config/app-config.js';
+import { loadConfig } from '../../../src/platform/config/load-config.js';
+import type { Persistence } from '../../../src/platform/database/persistence.js';
+import { openTestDatabase } from '../../../src/platform/database/open-test-database.js';
+import { createEventProvider } from '../../../src/platform/events/create-event-provider.js';
+import type { EventProvider } from '../../../src/platform/events/event-provider.js';
+import { inProcessEvents } from '../../../src/platform/events/in-process-events.js';
+import { startOutboxRelay } from '../../../src/platform/events/start-outbox-relay.js';
+import type { LogSettings } from '../../../src/platform/observability/create-logger.js';
+import { startHttpServer } from '../../../src/platform/http/start-http-server.js';
+import { openRedis } from '../../../src/platform/redis/open-redis.js';
+import { createCredentials, type TestActor } from './create-credentials.js';
+import { noRedis, testEnvironment } from './test-environment.js';
+
+/** The whole application, real adapters included, as a client and another context see it. */
+export interface RunningApplication {
+  readonly client: HttpClient;
+  /** Subscribe here (`collectEvents`) to assert the integration events the application publishes. */
+  readonly events: IntegrationEventSubscriber;
+
+  /** A client presenting the credential of `actor`; `client` itself presents none. */
+  as(actor: TestActor): Promise<HttpClient>;
+
+  /** Stores a relationship, as the application does when an element is created or shared. */
+  relate(tuple: RelationTuple): Promise<void>;
+
+  /** Empties the database, then stores the relationships of the system actors again: call it before each test. */
+  reset(): Promise<void>;
+
+  close(): Promise<void>;
+}
+
+/** What a spec about the application observed from outside gives it; left out, it logs and reports nowhere, on a storage that answers. */
+export interface StartOptions {
+  /** Where the application logs: a destination the spec reads. */
+  readonly log?: LogSettings;
+  /** Where unexpected failures are reported: a reporter the spec reads. */
+  readonly errors?: ErrorReporter;
+  /** Put around the storage before the application is composed on it: where a spec makes the infrastructure fail. */
+  readonly storage?: (persistence: Persistence) => Persistence;
+}
+
+/**
+ * Starts the application on a free port. The database is PostgreSQL in process unless
+ * DATABASE_URL names a migrated server (`npm run infra:up && npm run db:migrate`).
+ */
+export async function startApplication(options: StartOptions = {}): Promise<RunningApplication> {
+  // An empty variable (a blank line of .env) means the same as none.
+  const url = process.env['DATABASE_URL'] === '' ? undefined : process.env['DATABASE_URL'];
+  const database = await openTestDatabase(url);
+  const config = loadConfig(testEnvironment({ DATABASE_URL: url ?? 'postgres://in-process/tests' }));
+  const credentials = await createCredentials();
+  const redis = config.redisUrl === noRedis ? undefined : openRedis(config);
+  const persistence = options.storage?.(database.persistence) ?? database.persistence;
+  const observed = { ...(options.log === undefined ? {} : { log: options.log }), ...(options.errors === undefined ? {} : { errors: options.errors }) };
+  const application = composeApplication(persistence, { events: eventsOf(config), authenticator: credentials.authenticator, ...observed, ...(redis === undefined ? {} : { redis }) });
+
+  await application.start();
+
+  const relay = startOutboxRelay({ store: persistence.outbox, publisher: application.eventBus, intervalMs: 20, logger: application.logger });
+  const server = await startHttpServer(application, config);
+  const client = createHttpClient('http://127.0.0.1:' + server.port);
+  // The store of the running application: what a test relates is what its authorizer reads.
+  const tuples = application.container.resolve(RelationTupleStore);
+
+  return {
+    client,
+    events: application.eventSubscriber,
+    as: async (actor) => client.withHeaders(await credentials.headersOf(actor)),
+    relate: (tuple) => tuples.write([tuple]),
+    reset: () => database.reset().then(() => relateSystemActors(tuples)),
+    close: () => inOrder([() => server.close(), () => relay.stop(), () => application.stop(), () => redis?.close(), () => database.close()]),
+  };
+}
+
+function eventsOf(config: AppConfig): EventProvider {
+  return config.redisUrl === noRedis ? inProcessEvents() : createEventProvider(config);
+}
+
+async function inOrder(steps: readonly (() => Promise<void> | undefined)[]): Promise<void> {
+  for (const step of steps) await step();
+}

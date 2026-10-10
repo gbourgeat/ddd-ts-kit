@@ -1,0 +1,43 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx ddd-ts-kit check *)",
+      "Bash(npx ddd-ts-kit list *)",
+      "Bash(npx ddd-ts-kit generate *)",
+      "Bash(npx ddd-ts-kit docs *)",
+      "Bash(npx ddd-ts-kit explain *)",
+      "Bash(npx ddd-ts-kit rules)",
+      "Bash(npm run verify)",
+      "Bash(npm run typecheck)",
+      "Bash(npm run lint *)",
+      "Bash(npm test *)",
+      "Bash(npm run test:e2e *)",
+      "Bash(npm run docs:generate)",
+      "Bash(npm run docs:check)",
+      "Bash(npm run openapi:generate)",
+      "Bash(npm run openapi:check)",
+      "Bash(npm run events:generate)",
+      "Bash(npm run events:check)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(!./.env.example)",
+      "Edit(./openapi/openapi.json)",
+      "Edit(./docs/integration/asyncapi.json)",
+      "Edit(./docs/integration/event-catalog.md)"
+    ],
+    "ask": [
+      "Bash(git push *)",
+      "Bash(npm publish *)",
+      "Edit(./ddd-ts-kit.config.json)",
+      "Edit(./eslint.config.mjs)",
+      "Edit(./.dependency-cruiser.cjs)",
+      "Edit(./knip.json)",
+      "Edit(./lefthook.yml)",
+      "Edit(./.gitlab-ci.yml)",
+      "Edit(./.github/workflows/**)",
+      "Edit(./.claude/settings.json)"
+    ]
+  }
+}

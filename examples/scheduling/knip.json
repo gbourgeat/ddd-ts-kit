@@ -1,0 +1,36 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": [
+    "src/contexts/*/published-language/index.ts",
+    "src/contexts/*/test/fakes/*.ts",
+    "scripts/*.ts",
+    "test/e2e/**/*.ts",
+    "src/apps/*/main.ts"
+  ],
+  "project": [
+    "src/**/*.ts",
+    "scripts/**/*.ts",
+    "test/**/*.ts"
+  ],
+  "ignoreDependencies": [
+    "eslint-formatter-gitlab",
+    "@typescript/native"
+  ],
+  "ignoreBinaries": [
+    "flock",
+    "diff",
+    "patch"
+  ],
+  "ignoreExportsUsedInFile": true,
+  "vitest": {
+    "config": [
+      "vitest.config.ts",
+      "vitest.e2e.config.ts"
+    ],
+    "entry": [
+      "src/**/*.spec.ts",
+      "test/architecture/**/*.spec.ts",
+      "test/e2e/**/*.e2e.spec.ts"
+    ]
+  }
+}

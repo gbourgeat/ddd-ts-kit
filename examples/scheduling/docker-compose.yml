@@ -1,0 +1,133 @@
+# Local infrastructure. `npm run infra:up` starts it and waits until it is healthy;
+# add `--profile observability` to also get Jaeger, `--profile identity` to get Keycloak, `--profile errors` to get GlitchTip. Ports come from .env (see .env.example).
+# The compose project is named after the kit, so that its containers (ddd-ts-kit-example-*) cannot be taken for another stack of the machine.
+name: ddd-ts-kit-example
+
+services:
+  postgres:
+    image: postgres:18
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-app}
+      POSTGRES_DB: ${POSTGRES_DB:-app}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-54320}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  # Any Redis protocol server fits behind REDIS_URL (Redis, Valkey, Dragonfly): the adapters use their common subset.
+  # One server for all of it: the streams of the event bus live next to whatever else the platform keeps there.
+  cache:
+    image: docker.dragonflydb.io/dragonflydb/dragonfly:v2.0.2
+    ulimits:
+      memlock: -1
+    command: ["--maxmemory=512mb", "--proactor_threads=2"]
+    ports:
+      - "127.0.0.1:${REDIS_PORT:-54379}:6379"
+    volumes:
+      - cache-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  # Keycloak 26.8.0 in development mode, for local use only: it imports docker/keycloak/scheduling-realm.json
+  # at its first start (the API client, its audience mapper, a public client for the direct grant, demo users).
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.8.0
+    profiles: [identity]
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      KC_HEALTH_ENABLED: "true"
+    ports:
+      - "127.0.0.1:${KEYCLOAK_PORT:-54080}:8080"
+    volumes:
+      - ./docker/keycloak:/opt/keycloak/data/import:ro
+    healthcheck:
+      # The image has no HTTP client: the management port is asked through bash.
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/9000 && printf 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && grep -q '\"UP\"' <&3"]
+      interval: 5s
+      timeout: 5s
+      retries: 40
+
+  jaeger:
+    image: jaegertracing/jaeger:2.22.0
+    profiles: [observability]
+    ports:
+      - "127.0.0.1:${JAEGER_UI_PORT:-54686}:16686"
+      - "127.0.0.1:${OTLP_HTTP_PORT:-54318}:4318"
+
+  # GlitchTip 6 in development mode, for local use only: an error tracker that speaks the Sentry protocol.
+  # Its first start migrates its database, then creates a user (test@example.com / admin_pass), an organization
+  # and a project, and prints the DSN to put in SENTRY_DSN: `docker compose logs glitchtip | grep 'DSN:'`.
+  glitchtip:
+    image: glitchtip/glitchtip:6.2.6
+    profiles: [errors]
+    depends_on:
+      glitchtip-postgres:
+        condition: service_healthy
+      glitchtip-valkey:
+        condition: service_started
+    ports:
+      - "127.0.0.1:${GLITCHTIP_PORT:-54800}:8000"
+    environment:
+      # Web and worker in one process.
+      SERVER_ROLE: all_in_one
+      DATABASE_URL: postgres://postgres:postgres@glitchtip-postgres:5432/glitchtip
+      VALKEY_URL: redis://glitchtip-valkey:6379
+      # Never in production: openssl rand -hex 32.
+      SECRET_KEY: local-development-only-not-a-secret
+      GLITCHTIP_DOMAIN: http://localhost:${GLITCHTIP_PORT:-54800}
+      EMAIL_URL: consolemail://
+      DEFAULT_FROM_EMAIL: glitchtip@localhost
+      # Development only: required by the bootstrap below.
+      DEBUG: "true"
+      GLITCHTIP_BOOTSTRAP_DEV: "true"
+    healthcheck:
+      test: ["CMD", "python", "healthcheck.py"]
+      interval: 10s
+      timeout: 6s
+      retries: 6
+      start_period: 180s
+
+  glitchtip-postgres:
+    image: postgres:18
+    profiles: [errors]
+    environment:
+      POSTGRES_DB: glitchtip
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - glitchtip-postgres:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d glitchtip"]
+      interval: 5s
+      retries: 12
+
+  glitchtip-valkey:
+    image: valkey/valkey:9.1.2
+    profiles: [errors]
+
+  # The scheduled jobs in a process of their own: the same image, another entry point. The API then starts with its jobs off (RUN_JOBS).
+  worker:
+    build:
+      context: .
+      args:
+        ENTRY: dist/src/apps/worker/main.js
+    profiles: [services]
+    env_file: .env
+    environment:
+      RUN_JOBS: "true"
+
+
+volumes:
+  postgres-data:
+  cache-data:
+  glitchtip-postgres:

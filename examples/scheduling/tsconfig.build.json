@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  "exclude": [
+    "test",
+    "**/test/**",
+    "**/*.spec.ts",
+    "**/open-test-database.ts"
+  ]
+}

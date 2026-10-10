@@ -1,0 +1,108 @@
+{
+  "sourceRoot": "src",
+  "contextsDir": "src/contexts",
+  "sharedKernelDir": "src/shared-kernel",
+  "platformDir": "src/platform",
+  "importAlias": "@/",
+  "stack": {
+    "http": "express",
+    "validation": "class-validator",
+    "di": "tsyringe",
+    "events": "outbox",
+    "orm": "knex",
+    "database": "postgres",
+    "tests": "vitest",
+    "docsUi": "swagger",
+    "ci": "both",
+    "authn": "keycloak",
+    "authz": "rebac",
+    "broker": "redis",
+    "cache": "redis",
+    "audit": "on",
+    "errors": "sentry",
+    "logger": "pino",
+    "style": "declared",
+    "assembly": "barrel"
+  },
+  "contexts": {
+    "identity": {
+      "classification": "supporting",
+      "upstreams": []
+    },
+    "scheduling": {
+      "classification": "core",
+      "upstreams": [
+        {
+          "context": "identity",
+          "relationship": "customer-supplier"
+        }
+      ],
+      "extraDirectories": [
+        {
+          "path": "application/projections",
+          "reason": "The kernel declares projections in application/projections; the checker does not know the directory yet (docs/adr/0002)"
+        }
+      ]
+    },
+    "notification": {
+      "classification": "supporting",
+      "upstreams": [
+        {
+          "context": "scheduling",
+          "relationship": "published-language"
+        },
+        {
+          "context": "identity",
+          "relationship": "published-language"
+        }
+      ],
+      "extraDirectories": [
+        {
+          "path": "application/projections",
+          "reason": "The kernel declares projections in application/projections; the checker does not know the directory yet (docs/adr/0002)"
+        }
+      ]
+    },
+    "analytics": {
+      "classification": "supporting",
+      "upstreams": [
+        {
+          "context": "scheduling",
+          "relationship": "conformist"
+        }
+      ],
+      "extraDirectories": [
+        {
+          "path": "application/projections",
+          "reason": "The kernel declares projections in application/projections; the checker does not know the directory yet (docs/adr/0002)"
+        }
+      ]
+    }
+  },
+  "rules": {},
+  "domainAllowedPackages": [
+    "@ddd-ts-kit/kernel"
+  ],
+  "applicationAllowedPackages": [
+    "@ddd-ts-kit/kernel",
+    "@ddd-ts-kit/auth"
+  ],
+  "worker": true,
+  "deviations": [
+    {
+      "what": "contexts.scheduling.extraDirectories.application/projections",
+      "adr": "0002",
+      "reason": "The kernel declares projections in application/projections; the checker does not know the directory yet"
+    },
+    {
+      "what": "contexts.notification.extraDirectories.application/projections",
+      "adr": "0002",
+      "reason": "The kernel declares projections in application/projections; the checker does not know the directory yet"
+    },
+    {
+      "what": "contexts.analytics.extraDirectories.application/projections",
+      "adr": "0002",
+      "reason": "The kernel declares projections in application/projections; the checker does not know the directory yet"
+    }
+  ]
+}
