@@ -15,12 +15,16 @@ Loaded with the files they apply to:
 
 - `.claude/rules/domain.md`: `domain/` and the shared kernel
 - `.claude/rules/application.md`: `application/` and `published-language/`
-- `.claude/rules/infrastructure.md`: `infrastructure/`, module files, `{{config.platformDir}}/`, `main.ts`
+- `.claude/rules/infrastructure.md`: `infrastructure/`, {{#if style.explicit}}module files, {{/if}}`{{config.platformDir}}/`, `main.ts`
 - `.claude/rules/presentation.md`: `presentation/`, the OpenAPI contract
 - `.claude/rules/tests.md`: specs, fakes, builders
 
 ## Generated files
 
+{{#if style.declared}}
+Declared style: a class says what it is with a decorator of `@ddd-ts-kit/kernel/declarations` on the class of its role file, and there is no module file; tokens live in `application/ports/<context>.ports.ts`, nothing under `domain/` carries a decorator, a value or a factory is bound in `{{config.platformDir}}/platform.module.ts`.{{#if assembly.barrel}} The barrel `<context>.declarations.ts` is generated: `npx ddd-ts-kit generate` and `npx ddd-ts-kit docs` rewrite it, never edit it.{{/if}}
+
+{{/if}}
 Never edit `openapi/openapi.json`, `docs/integration/asyncapi.json`, `docs/integration/event-catalog.md` or `.dependency-cruiser.cjs`: change the code or the config, then run `npm run docs:generate` (and `npx ddd-ts-kit depcruise-config --write`).
 
 ## TypeScript

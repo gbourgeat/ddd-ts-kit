@@ -52,9 +52,10 @@ src/
       ports/                     *.port.ts         (interfaces to the outside world), <context>.ports.ts (their tokens)
       authorization/             <context>.permissions.ts, *.policy.ts (who may do what, here)
       event-handlers/            *.event-handler.ts (reactions to this context's domain events)
+      scheduling/                *.job.ts          (jobs run by time: schedule to command)
       integration/
         publishers/              *.publisher.ts    (domain event to integration event)
-        consumers/               *.consumer.ts     (integration event to command)
+        handlers/                *.integration-handler.ts (integration event to command)
     infrastructure/
       persistence/               *.repository.ts adapters, mappers
       external/                  adapters of outside systems
@@ -94,7 +95,7 @@ presentation ──▶ application ──▶ domain ◀── infrastructure
 | `tree/context-doc` | Every context has a `CONTEXT.md` with the required sections. |
 | `naming/suffix` | A file in a role directory carries the role's suffix, in kebab-case. |
 | `naming/one-concept-per-file` | One exported aggregate, entity, value object, event, handler per file. |
-| `test/spec-required` | Every aggregate, value object, domain service, command handler, query handler, event handler and consumer has a `*.spec.ts` in the context's `test/`. |
+| `test/spec-required` | Every aggregate, value object, domain service, command handler, query handler, domain event handler and integration event handler has a `*.spec.ts` in the context's `test/`. |
 | `events/name-format` | Domain and integration event names follow `<context>.<aggregate>.<fact-in-past-tense>`. |
 | `events/defined-in-published-language` | An integration event is declared once with `defineIntegrationEvent` in the producer's `published-language/`, with a payload schema. Catalog and AsyncAPI document are generated from these declarations. |
 | `test/no-mocks` | No `vi.mock`, `jest.mock`, `vi.fn`, `jest.fn`, `vi.spyOn`, `jest.spyOn` or mocking library in a context's `test/`. Use the fake of the port. Default severity `warn`. |
@@ -124,6 +125,10 @@ presentation ──▶ application ──▶ domain ◀── infrastructure
 | `governance/recorded-deviation` | A suppression, a lowered severity, an extra directory or an extra allowed package carries a reason and points to a decision record in `docs/adr/`. |
 | `aspects/outside-in` | Aspects are applied from outside. The decorators of `@ddd-ts-kit/aspects/decorators` are imported only by an adapter in `infrastructure/` or by the platform; everywhere else an aspect is a wrapper bound at the composition root (`.with(...)`, the `decorate` hook) or a bus middleware. |
 | `standard/no-parallel-interface` | No home-made copy of a standard interface of the kernel: no declared `ILogger`, `AppLogger`, `UserContext`, `CurrentUser`, `UserSession`, `PaginatedResult`, `AuditLog` and the like. Use the kernel interface and extend it by declaration merging; the list is `standardInterfaces` in the config. Default severity `warn`. |
+| `declarations/role-declared` | In the declared style, a role file exports a class carrying the decorator of its role, and a declared class lives in a role file. Consumer, policy and domain event names are non-empty string literals, and no class under `domain/` carries a declaration. |
+| `declarations/barrel-current` | In the declared style with a barrel, `<context>.declarations.ts` holds exactly one `export *` per role file of its context: a role file cannot be silently left unregistered. |
+| `scheduling/job-triggers-use-case` | A class of `application/scheduling/` declares `@Scheduled`, exposes one method `run`, and only sends commands or queries through the buses: no repository, no business branching. |
+| `scheduling/job-name` | A job name is a string literal `<context>.<job-name>`, unique in the project: it is the system actor, the lock key, the metrics label and the settings key of the job. |
 | `composition/only-in-module` | Adapters are instantiated or registered only in `<context>.module.ts` and `main.ts`. |
 
 Only the module file and `main.ts` are allowed to know every layer.
@@ -157,7 +162,7 @@ the application layer after the unit of work commits.
 most an identifier. A query never changes state and may bypass aggregates to read a projection
 through a port. Handlers orchestrate; business decisions live in the domain.
 
-**Buses.** Presentation and consumers talk to the application through `CommandBus` and
+**Buses.** Presentation and integration event handlers talk to the application through `CommandBus` and
 `QueryBus`, never to a handler class. Both are ports of `@ddd-ts-kit/kernel` with in-process
 implementations; another transport is an adapter chosen in the composition root. Cross-cutting
 behaviour (unit of work, authorization, logging) is a bus middleware, not code repeated in
@@ -166,8 +171,8 @@ handlers. A command is a class extending `Command<Result>`, a query a class exte
 
 **Declarations.** A class says what it is where it is written, and that is its
 registration: a command or a query carries `@Requires(permission)` or `@Public()`, its
-handler `@CommandHandler(Message, [tokens])` or `@QueryHandler`, a consumer
-`@EventListener(definition, { consumer })`, an adapter `@Repository`, `@Gateway` or
+handler `@CommandHandler(Message, [tokens])` or `@QueryHandler`, a reaction to an event
+`@DomainEventHandler` or `@IntegrationEventHandler(definition, { consumer })`, an adapter `@Repository`, `@Gateway` or
 `@Adapter` with the port token it implements, a policy `@Policy`. The token list names the
 constructor dependencies in order and the compiler checks it. Declarations are metadata of
 the kernel: they instantiate nothing and import no container. The composition root turns a
@@ -177,6 +182,16 @@ entities, value objects and domain events carry no decorator. Decorators work in
 decorator modes of TypeScript, so a project bound to the legacy mode by class-validator or
 NestJS uses the same ones. The explicit style (`<context>.module.ts` listing the bindings)
 remains available and can be mixed in.
+
+**Scheduled jobs.** A job run by time is declared with
+`@Scheduled('<context>.<job>', { every } or { cron, timeZone }, [tokens])` in
+`application/scheduling/` and does one thing: it sends a command. It runs in its own
+execution scope (origin `schedule`, a system actor named after the job, a fresh correlation
+id), so it is logged, measured and audited like any other unit of work. Across several
+instances a lock keeps an occurrence to one run, best effort: an occurrence may run twice or
+not at all, so the job or its command is idempotent, and `execution.scheduledAt`, never the
+clock, says which period the work is for. Jobs can run in the API process or in a dedicated
+worker, and a context extracted as a service takes its jobs with it.
 
 **Ports and adapters.** A port is named for what the application needs
 (`PaymentGateway`), not for the technology (`StripeClient`). Each port has a fake in `test/fakes/`.
@@ -225,7 +240,7 @@ a generated architecture test boots every context alone to prove it stays true.
 - *Authentication* (who is calling) is a platform concern at the boundary: an adapter of the
   `Authenticator` port verifies the credential and produces a `Session` holding the `Actor`
   (subject, tenant, roles or attributes, never the raw token) and how it authenticated.
-  Routes and consumers put the actor in the command or query. Every route declares its
+  Routes and integration event handlers put the actor in the command or query. Every route declares its
   `security`; the type refuses a route that does not.
 - *Authorization* (may this actor do this, on this) is an application concern: each context
   declares its permissions in `application/authorization/<context>.permissions.ts`, each

@@ -6,7 +6,7 @@ Applies to: `domain/` and `application/` of a context, tests excluded.
 
 ## Why
 
-A use case that reads "the current actor" from the air works behind an HTTP request and nowhere else: a consumer, a scheduled job and a test have to set a global first, and forget. The actor is data of the command or the query, like every other input. The `ExecutionScope` opened at the boundary (and `ActorContext`, a view of it) exists for code that is not handed the context: infrastructure and the platform read it for audit columns, tenant scoping and correlation.
+A use case that reads "the current actor" from the air works behind an HTTP request and nowhere else: an integration event handler, a scheduled job and a test have to set a global first, and forget. The actor is data of the command or the query, like every other input. The `ExecutionScope` opened at the boundary (and `ActorContext`, a view of it) exists for code that is not handed the context: infrastructure and the platform read it for audit columns, tenant scoping and correlation.
 
 ## Reported
 

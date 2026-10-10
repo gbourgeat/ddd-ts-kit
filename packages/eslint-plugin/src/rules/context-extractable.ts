@@ -2,11 +2,12 @@ import { ASTUtils, AST_NODE_TYPES, TSESLint, type TSESTree } from '@typescript-e
 import { resolveImport, type ContextLocation } from '../project/classify.js';
 import type { LintedFile } from '../project/linted-file.js';
 import { calleeName } from '../support/calls.js';
+import { declaredRoleOf, isDeclaredStyle } from '../support/declarations.js';
 import { defineRule, type Report } from '../support/define-rule.js';
 import { propertyName } from '../support/globals.js';
 import { inContext, staticString } from '../support/imports.js';
 
-type MessageId = 'foreignSchema' | 'foreignTable' | 'mutableBinding' | 'mutableState' | 'foreignWiring';
+type MessageId = 'foreignSchema' | 'foreignTable' | 'mutableBinding' | 'mutableState' | 'foreignWiring' | 'foreignToken';
 type Tell = Report<MessageId>;
 type Source = Readonly<TSESLint.SourceCode>;
 
@@ -28,6 +29,9 @@ const IMPORTS = new Set<AST_NODE_TYPES>([AST_NODE_TYPES.ImportDeclaration, AST_N
 const CONTAINERS = new Set(['Map', 'Set', 'WeakMap', 'WeakSet', 'Array']);
 const MUTATORS = new Set(['set', 'add', 'delete', 'clear', 'push', 'pop', 'shift', 'unshift', 'splice', 'sort', 'reverse', 'fill', 'copyWithin']);
 const WIRING = new Set(['bind', 'rebind', 'resolve', 'handledBy', 'toClass']);
+/** A token is a constant by convention: `INVOICE_REPOSITORY`, `CLOCK`. */
+const TOKEN_NAME = /^[A-Z][A-Z0-9]+(?:_[A-Z0-9]+)*$/;
+const PORTS_FILE = /\.ports\.ts$/;
 
 const BY_CONTRACT =
   'Read what "{{there}}" publishes: keep a projection of your own fed by its integration events, or declare a port in application/ports whose adapter calls it and could be remote tomorrow.';
@@ -40,15 +44,17 @@ export const contextExtractable = defineRule<MessageId>({
   messages: {
     foreignSchema: `"{{here}}" opens the database schema of "{{there}}": the two contexts could no longer be deployed apart. ${BY_CONTRACT}`,
     foreignTable: `This statement of "{{here}}" names a table of the schema of "{{there}}": a join or a foreign key across contexts cannot survive an extraction. ${BY_CONTRACT}`,
-    mutableBinding: '{{name}} is exported with `{{kind}}`: every importer shares one variable that any of them may see change. Export a `const`, and keep state that changes in an adapter bound in {{here}}.module.ts.',
+    mutableBinding: '{{name}} is exported with `{{kind}}`: every importer shares one variable that any of them may see change. Export a `const`, and keep state that changes in an adapter bound in {{here}}.module.ts or declared with `@Adapter`.',
     mutableState:
-      '{{name}} is exported and changed in this file: it is state shared by every importer, lost on restart and invisible to a second instance. Hold it in a class bound in {{here}}.module.ts (a repository, a cache behind a port) and export nothing mutable.',
+      '{{name}} is exported and changed in this file: it is state shared by every importer, lost on restart and invisible to a second instance. Hold it in a class bound in {{here}}.module.ts or declared by its decorator (a repository, a cache behind a port) and export nothing mutable.',
     foreignWiring: `The module of "{{here}}" wires {{name}}, which belongs to "{{there}}": the context could not start without the other. Bind a port of "{{here}}" to an adapter of its own, or receive the capability from the platform. ${BY_CONTRACT}`,
+    foreignToken:
+      'This role file of "{{here}}" imports {{name}} from "{{there}}": a declaration that names a token of another context cannot be wired alone, so "{{here}}" could no longer be extracted. Declare a port and its token in application/ports/{{here}}.ports.ts and implement it with a `@Gateway` of "{{here}}" that calls "{{there}}", or receive the capability from the platform.',
   },
   create({ file, sourceCode, report }) {
     const here = inContext(file);
     if (here === undefined || file.isTest) return {};
-    return { ...sharedState(here, sourceCode, report), ...boundaries(file, here, report) };
+    return { ...sharedState(here, sourceCode, report), ...boundaries(file, here, report), ...foreignTokens(file, here, report) };
   },
 });
 
@@ -157,4 +163,31 @@ function wiredNames(argument: TSESTree.CallExpressionArgument): TSESTree.Identif
   if (argument.type === AST_NODE_TYPES.Identifier) return [argument];
   if (argument.type !== AST_NODE_TYPES.ArrayExpression) return [];
   return argument.elements.filter((element) => element?.type === AST_NODE_TYPES.Identifier);
+}
+
+/**
+ * In the declared style a role file names the tokens it needs next to its decorator: one taken from
+ * another context, whatever the file (its ports, its published language), ties the two wirings.
+ */
+function foreignTokens(file: LintedFile, here: ContextLocation, tell: Tell): TSESLint.RuleListener {
+  if (!isDeclaredStyle(file) || declaredRoleOf(file) === undefined) return {};
+  return {
+    ImportDeclaration(node) {
+      const target = resolveImport(file.config, file.path, node.source.value);
+      if (target.kind !== 'file' || target.location.area !== 'context' || target.location.context === here.context) return;
+      const there = target.location.context;
+      const taken = PORTS_FILE.test(target.path) ? node.specifiers : node.specifiers.filter(namesToken);
+      for (const specifier of taken) tell({ node: specifier, messageId: 'foreignToken', data: { here: here.context, there, name: takenName(specifier) } });
+    },
+  };
+}
+
+function namesToken(specifier: TSESTree.ImportClause): boolean {
+  return TOKEN_NAME.test(takenName(specifier)) || TOKEN_NAME.test(specifier.local.name);
+}
+
+/** The name the other module exports, whatever it is renamed to locally. */
+function takenName(specifier: TSESTree.ImportClause): string {
+  if (specifier.type !== AST_NODE_TYPES.ImportSpecifier) return specifier.local.name;
+  return specifier.imported.type === AST_NODE_TYPES.Identifier ? specifier.imported.name : specifier.imported.value;
 }

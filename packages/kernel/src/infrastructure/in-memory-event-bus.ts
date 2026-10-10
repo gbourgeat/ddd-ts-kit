@@ -1,6 +1,6 @@
 import type {
   IntegrationEvent,
-  IntegrationEventHandler,
+  IntegrationEventCallback,
   IntegrationEventPublisher,
   IntegrationEventSubscriber,
   ProcessedEventStore,
@@ -8,7 +8,7 @@ import type {
 } from '../application/integration-event.js';
 import type {
   DomainEventDispatcher,
-  DomainEventHandler,
+  DomainEventCallback,
 } from '../application/domain-event-dispatcher.js';
 import type { DomainEvent } from '../domain/domain-event.js';
 
@@ -19,7 +19,7 @@ import type { DomainEvent } from '../domain/domain-event.js';
  */
 export class InMemoryEventBus implements IntegrationEventPublisher, IntegrationEventSubscriber {
   readonly published: IntegrationEvent[] = [];
-  readonly #handlers = new Map<string, Set<IntegrationEventHandler>>();
+  readonly #handlers = new Map<string, Set<IntegrationEventCallback>>();
 
   async publish(events: readonly IntegrationEvent[]): Promise<void> {
     const failures: unknown[] = [];
@@ -38,7 +38,7 @@ export class InMemoryEventBus implements IntegrationEventPublisher, IntegrationE
     }
   }
 
-  subscribe(type: string, handler: IntegrationEventHandler): Subscription {
+  subscribe(type: string, handler: IntegrationEventCallback): Subscription {
     const set = this.#handlers.get(type) ?? new Set();
     set.add(handler);
     this.#handlers.set(type, set);
@@ -47,9 +47,9 @@ export class InMemoryEventBus implements IntegrationEventPublisher, IntegrationE
 }
 
 export class InMemoryDomainEventDispatcher implements DomainEventDispatcher {
-  readonly #handlers = new Map<string, DomainEventHandler[]>();
+  readonly #handlers = new Map<string, DomainEventCallback[]>();
 
-  on(name: string, handler: DomainEventHandler): void {
+  on(name: string, handler: DomainEventCallback): void {
     this.#handlers.set(name, [...(this.#handlers.get(name) ?? []), handler]);
   }
 
@@ -89,8 +89,8 @@ function keyOf(consumer: string, eventId: string): string {
 export function idempotent(
   consumer: string,
   store: ProcessedEventStore,
-  handler: IntegrationEventHandler,
-): IntegrationEventHandler {
+  handler: IntegrationEventCallback,
+): IntegrationEventCallback {
   return async (event) => {
     if (!(await store.markProcessed(consumer, event.id))) return;
     try {

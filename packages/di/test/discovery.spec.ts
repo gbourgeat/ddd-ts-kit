@@ -58,6 +58,7 @@ function describeDiscovery(label: string, discover: () => Promise<Omit<Discovere
         'InvoiceIssuedEventHandler',
         'InvoiceOnOrderPlaced',
         'GetInvoiceHandler',
+        'IssueMonthlyInvoicesJob',
         'OutboxMailer',
         'RegistryCustomerGateway',
         'InMemoryInvoiceRepository',

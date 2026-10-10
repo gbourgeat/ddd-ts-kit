@@ -8,7 +8,7 @@ export interface ImportedName {
   readonly node: TSESTree.Node;
 }
 
-interface ImportSite {
+export interface ImportSite {
   readonly specifier: string;
   /** The specifier literal: where the report points. */
   readonly node: TSESTree.Node;

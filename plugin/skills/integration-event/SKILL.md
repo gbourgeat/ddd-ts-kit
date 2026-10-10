@@ -52,14 +52,15 @@ and each provider package documents its strategy.
 Declare the relationship first (skill `ddd-ts-kit:model-context`), then:
 
 ```bash
-npx ddd-ts-kit generate consumer <ctx> <upstream> <event-type> --json
+npx ddd-ts-kit generate integration-handler <ctx> <upstream> <event-type> --json
 ```
 
-- A consumer translates the event into a command of its own context and sends it on the
+- An integration event handler translates the event into a command of its own context and sends it on the
   `CommandBus`. No business logic in it.
 - Delivery is at-least-once and unordered across aggregates: wrap with `idempotent(...)`, and
   make the command safe to replay.
-- A consumer imports only the upstream's `published-language/`.
+- It imports only the upstream's `published-language/`, and is registered under a stable,
+  unique `consumer` name: the identity of its subscription.
 - Failure: let it throw so the provider retries; a poison message goes to a dead-letter
   destination, never swallowed.
 

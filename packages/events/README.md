@@ -144,7 +144,7 @@ lease of the store, so a relay that dies lets them come back. Adapters are held 
 ## Consume idempotently
 
 ```ts
-// contexts/billing/application/integration/consumers/order-placed.consumer.ts
+// contexts/billing/application/integration/handlers/order-placed.integration-handler.ts
 import { consume, subscribeAll } from '@ddd-ts-kit/events';
 
 export const billingSubscriptions = ({ commandBus, processed, unitOfWork }: BillingDependencies) => [

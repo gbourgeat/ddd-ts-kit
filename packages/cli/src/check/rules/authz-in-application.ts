@@ -1,3 +1,4 @@
+import { DECLARATIONS_ENTRY } from '../declarations.js';
 import type { Layer, Rule, SourceFile } from '../types.js';
 import { inLayer, reporter, toViolations, type Finding } from './helpers.js';
 
@@ -18,6 +19,9 @@ interface LayerDuty {
 }
 
 const AUTH_PACKAGE = '@ddd-ts-kit/auth';
+/** What declares or decides a right in application/: the two access decorators, the policy decorator and the token of the access port. */
+const ACCESS_DECLARATIONS = ['Requires', 'Public', 'Policy'];
+const ACCESS_TOKEN = 'ACCESS';
 const AUTHORIZERS = ['RoleBasedAuthorizer', 'PolicyBasedAuthorizer', 'RelationBasedAuthorizer', 'Authorizer', 'Access'];
 const ACTOR_NAMES = ['Actor', 'ActorContext', 'Session', 'ExecutionContext', 'AuthorizedCommand', 'AuthorizedQuery', 'anonymousActor', 'systemActor'];
 const IS_ADMIN: Shortcut = { pattern: /(?<![\w$])isAdmin(?![\w$])/, what: 'isAdmin' };
@@ -30,11 +34,12 @@ const DUTIES: readonly LayerDuty[] = [
       { pattern: /(?<![\w$])role\s*[!=]==?|[!=]==?\s*(?:[\w$]+\s*\.\s*)*role(?![\w$(])/, what: 'A comparison on a role' },
       IS_ADMIN,
     ],
-    imported: ({ target, names }) => {
+    imported: (module) => {
+      const { target, names } = module;
       const authorizer = target.kind === 'package' && target.name === AUTH_PACKAGE ? names.find((name) => AUTHORIZERS.includes(name)) : undefined;
-      return authorizer === undefined ? undefined : `${authorizer} is imported`;
+      return authorizer === undefined ? accessDeclaration(module) : `${authorizer} is imported`;
     },
-    fix: 'Let the route only build the command or query with actorOf(context.principal) (sessionOf, resolveSession and a SessionAuthenticator are request glue too): the permission is declared on the use case (.requires(...)) and decided by the bus middleware, and a rule on the loaded element is a policy in application/authorization/.',
+    fix: 'Let the route only build the command or query with actorOf(context.principal) (sessionOf, resolveSession and a SessionAuthenticator are request glue too): the permission is declared on the use case (.requires(...) in a module file, @Requires on the message class) and decided by the bus middleware, and a rule on the loaded element is a policy in application/authorization/.',
   },
   {
     layer: 'infrastructure',
@@ -42,7 +47,7 @@ const DUTIES: readonly LayerDuty[] = [
       { pattern: /(?<![\w$])[\w$]*(?:[aA]uthorizer|[aA]ccess)\s*\.\s*(?:authorize|check)\s*\(/, what: 'An authorization check' },
       { pattern: /(?<![\w$])ForbiddenError(?![\w$])/, what: 'ForbiddenError' },
     ],
-    imported: () => undefined,
+    imported: accessDeclaration,
     fix: 'Decide in the application layer (the bus middleware, or Access.authorize in the handler) and hand the adapter the AccessScope it has to apply: an adapter filters by that scope and by the tenant of ActorContext, it never refuses.',
   },
   {
@@ -57,6 +62,15 @@ const DUTIES: readonly LayerDuty[] = [
     fix: 'Keep invariants in the domain and move the right to application/authorization/: a permission checked by the bus middleware, or a policy evaluated through Access.authorize in the handler, which then calls the aggregate.',
   },
 ];
+
+/** `Requires`, `Public` and `Policy` of the kernel declarations and the `ACCESS` token belong to application/ alone. */
+function accessDeclaration({ target, names, specifier }: ImportedModule): string | undefined {
+  if (target.kind !== 'package') return undefined;
+  const declared = specifier === DECLARATIONS_ENTRY ? names.find((name) => ACCESS_DECLARATIONS.includes(name)) : undefined;
+  const token = target.name === AUTH_PACKAGE && names.includes(ACCESS_TOKEN) ? ACCESS_TOKEN : undefined;
+  const name = declared ?? token;
+  return name === undefined ? undefined : `${name} is imported`;
+}
 
 export const authzInApplication: Rule = {
   id: 'authz/in-application',

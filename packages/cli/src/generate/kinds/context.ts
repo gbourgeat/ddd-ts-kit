@@ -5,11 +5,13 @@ import { parseContextName, type Name } from '../../naming.js';
 import type { RenderContext } from '../../render.js';
 import { renderTemplate } from '../../templates.js';
 import type { Workspace } from '../../workspace.js';
-import { permissionsFile } from '../access.js';
+import { routesFile } from '../../declared/roles.js';
+import { assembledContext, hostedContext, permissionsFile } from '../access.js';
+import { isDeclared } from '../declared.js';
 import { applyWiring } from '../emit.js';
 import type { Kind } from '../kind.js';
 import { parseTerms, type GlossaryRow } from '../language.js';
-import { contextVars } from '../scope.js';
+import { contextVars, relativeTo } from '../scope.js';
 
 export const contextKind: Kind = {
   name: 'context',
@@ -99,6 +101,10 @@ function writeContextFiles(ws: Workspace, plan: { config: Config; context: Name;
   const base = contextVars(config, context);
   const vars = {
     ...base,
+    assembled: {
+      module: hostedContext({ config, context }, `${relativeTo(config.platformDir, config.contextsDir)}/${context.kebab}/`),
+      proofModule: assembledContext({ config, context }, `${relativeTo('test/architecture', config.contextsDir)}/${context.kebab}/`),
+    },
     doc: {
       classification: config.contexts[context.kebab]?.classification ?? '',
       purpose: request.purpose?.trim() || PURPOSE_TODO,
@@ -108,11 +114,11 @@ function writeContextFiles(ws: Workspace, plan: { config: Config; context: Name;
   };
   // The document comes first: the language is defined before the code that speaks it.
   ws.create(`${dir}/CONTEXT.md`, renderTemplate('context/CONTEXT.md.tpl', vars));
-  // A Nest application hosts the same hand-wired contexts: the two stacks share their templates.
-  const family = config.stack.di === 'tsyringe' ? 'tsyringe' : 'manual';
-  ws.create(`${dir}/${context.kebab}.module.ts`, renderTemplate(`context/module.${family}.ts.tpl`, vars));
+  const family = wiringFamily(config);
+  writeAssembly(ws, { config, context, dir, vars, family });
   ws.create(`${dir}/published-language/index.ts`, renderTemplate('context/published-language-index.ts.tpl', vars));
-  ws.create(`${dir}/${permissionsFile(context)}`, renderTemplate('context/permissions.ts.tpl', vars));
+  // Nothing imports the permissions of a declared context before its first protected use case, unless a registry lists them: the file is born when it is needed.
+  if (family !== 'declared' || ws.exists(permissionRegistry(config))) ws.create(`${dir}/${permissionsFile(context)}`, renderTemplate('context/permissions.ts.tpl', vars));
   registerPermissions(ws, config, vars);
   const proof = 'test/architecture/extractable.spec.ts';
   if (!ws.exists(proof)) ws.create(proof, renderTemplate(`architecture/extractable.${family}.spec.ts.tpl`, vars));
@@ -120,8 +126,33 @@ function writeContextFiles(ws: Workspace, plan: { config: Config; context: Name;
   applyWiring(ws, `${config.platformDir}/application.ts`, renderTemplate(`context/wiring.${family}.tpl`, vars));
 }
 
+/** A declared context wires itself; a Nest application hosts the same hand-wired contexts as the manual stack, so the two share their templates. */
+function wiringFamily(config: Config): 'declared' | 'tsyringe' | 'manual' {
+  if (isDeclared(config)) return 'declared';
+  return config.stack.di === 'tsyringe' ? 'tsyringe' : 'manual';
+}
+
+interface Assembly {
+  readonly config: Config;
+  readonly context: Name;
+  readonly dir: string;
+  readonly vars: RenderContext;
+  readonly family: string;
+}
+
+/**
+ * What assembles the context: its module file, or, when its classes declare themselves, nothing
+ * but the list of its routes (the barrel is derived from the tree at the end of the command).
+ */
+function writeAssembly(ws: Workspace, { config, context, dir, vars, family }: Assembly): void {
+  if (family !== 'declared') ws.create(`${dir}/${context.kebab}.module.ts`, renderTemplate(`context/module.${family}.ts.tpl`, vars));
+  else if (config.stack.http !== 'none') ws.create(`${dir}/${routesFile(context.kebab)}`, renderTemplate('context/routes.declared.ts.tpl', vars));
+}
+
+const permissionRegistry = (config: Config): string => `${config.platformDir}/auth/permissions.ts`;
+
 /** The models laid out over every permission (relationships, a custom adapter) read them from the registry of the platform. */
 function registerPermissions(ws: Workspace, config: Config, vars: RenderContext): void {
-  const registry = `${config.platformDir}/auth/permissions.ts`;
+  const registry = permissionRegistry(config);
   if (ws.exists(registry)) applyWiring(ws, registry, renderTemplate('context/permission-set.tpl', vars));
 }

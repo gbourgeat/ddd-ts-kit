@@ -105,7 +105,7 @@ describe('a declared context', () => {
     expect(IssueInvoiceHandler.built).toBe(built + 1);
   });
 
-  it('subscribes its event listeners when the application starts, once per consumer name', async () => {
+  it('subscribes its integration event handlers when the application starts, once per consumer name', async () => {
     const app = createTestApplication({ modules: [billingModule] });
     const placed = { id: 'evt-1', type: 'ordering.order.placed', version: 1, occurredAt: '2026-01-01T00:00:00.000Z', payload: { orderId: 'order-1', customerId: 'customer-9' } };
     await app.start();
@@ -120,7 +120,7 @@ describe('a declared context', () => {
     expect(await app.queryBus.execute(new GetInvoice('id-3'))).toBeUndefined();
   });
 
-  it('attaches its domain event listeners to the dispatcher, and leaves alone an event of another class', async () => {
+  it('attaches its domain event handlers to the dispatcher, and leaves alone an event of another class', async () => {
     const outbox = new Outbox();
     const app = createTestApplication({ modules: [billingModule], fakes: [fake(MAILER, outbox)] });
 
@@ -174,10 +174,10 @@ describe('a declared context', () => {
     expect(description.queries).toEqual([
       { message: 'GetInvoice', handler: 'GetInvoiceHandler', module: 'billing', access: 'public', origin: 'declared', declaredBy: 'GetInvoiceHandler' },
     ]);
-    expect(description.subscriptions).toEqual([
+    expect(description.integrationEventHandlers).toEqual([
       { event: 'ordering.order.placed', version: 1, consumer: 'billing.invoice-on-order-placed', handler: 'InvoiceOnOrderPlaced', module: 'billing', origin: 'declared', declaredBy: 'InvoiceOnOrderPlaced' },
     ]);
-    expect(description.reactions).toEqual([
+    expect(description.domainEventHandlers).toEqual([
       { event: 'InvoiceIssued', name: 'billing.invoice.issued', handler: 'InvoiceIssuedEventHandler', module: 'billing', origin: 'declared', declaredBy: 'InvoiceIssuedEventHandler' },
     ]);
     expect(description.policies).toEqual([
@@ -314,7 +314,7 @@ describe('the checks, on declared classes', () => {
     expect(failure.message).toContain('"loop.Chicken" -> "loop.Egg" -> "loop.Chicken"');
   });
 
-  it('refuses listeners without the kernel they attach to', () => {
+  it('refuses event handlers without the kernel they attach to', () => {
     const failure = wiringFailure(() => createApplication({ modules: [contextModule('billing', [InvoiceIssuedEventHandler, OutboxMailer])] }));
 
     expect(failure.code).toBe('UNBOUND_DEPENDENCY');

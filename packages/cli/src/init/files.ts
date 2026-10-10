@@ -1,4 +1,6 @@
 import type { Config } from '../config.js';
+import { isDeclared } from '../generate/declared.js';
+import { PROVIDED_BROKERS } from '../generate/scope.js';
 
 /**
  * One file `init` writes: its path in the project and its template under `templates/`. A
@@ -46,6 +48,8 @@ function platformFiles(config: Config): InitFile[] {
     [`${platform}/resilience.ts`, 'init/platform/resilience.ts.tpl'],
     [`${platform}/platform.module.ts`, `init/platform/platform.module.${family}.ts.tpl`],
     [`${platform}/application.ts`, `init/platform/application.${family}.ts.tpl`],
+    ...when(isDeclared(config) && hasDatabase(config), [[`${platform}/tokens.ts`, 'init/platform/tokens.ts.tpl']]),
+    ...when(isDeclared(config) && PROVIDED_BROKERS.includes(broker), [[`${platform}/listening-context.ts`, 'init/platform/listening-context.ts.tpl']]),
     [`${platform}/events.ts`, `init/platform/events.${broker}.ts.tpl`],
     ...when(broker === 'custom', [
       [`${platform}/custom-event-bus.ts`, 'init/platform/custom-event-bus.ts.tpl'],
@@ -75,6 +79,13 @@ function auditFiles(config: Config): InitFile[] {
   const file = (name: string, template = name): InitFile => [`${config.platformDir}/audit/${name}`, `init/platform/audit/${template}.tpl`];
   const readSide = [file('audit.permissions.ts'), file('audit.module.ts', `audit.module.${familyOf(config)}.ts`), file('list-audit-entries.query.ts'), file('list-audit-entries.handler.ts'), file('list-audit-entries.route.ts')];
   return [file('audit.ts'), file('audited-events.ts'), ...when(http !== 'none', readSide)];
+}
+
+const WITH_DATABASE = ['drizzle', 'knex', 'prisma', 'typeorm'];
+
+/** The storages a repository adapter reaches through the `DATABASE` token of the platform. */
+function hasDatabase(config: Config): boolean {
+  return WITH_DATABASE.includes(config.stack.orm);
 }
 
 function when(condition: boolean, files: readonly InitFile[]): readonly InitFile[] {

@@ -1,10 +1,12 @@
 import { ASTUtils, AST_NODE_TYPES, TSESLint, type TSESTree } from '@typescript-eslint/utils';
 import { calleeName, methodChain, missingKeys } from '../support/calls.js';
+import { className, type ClassNode } from '../support/classes.js';
+import { declarationReader, isDeclaredStyle, writtenName, type Declaration } from '../support/declarations.js';
 import { defineRule } from '../support/define-rule.js';
 import { propertyName } from '../support/globals.js';
 import { inContext } from '../support/imports.js';
 
-type MessageId = 'consumerName' | 'subscription' | 'directSubscribe';
+type MessageId = 'consumerName' | 'declaredName' | 'subscription' | 'directSubscribe';
 type Finding = TSESLint.ReportDescriptor<MessageId> | undefined;
 type Source = Readonly<TSESLint.SourceCode>;
 
@@ -17,9 +19,10 @@ export const eventsConsumerIdempotent = defineRule<MessageId>({
   id: 'events/consumer-idempotent',
   type: 'problem',
   recommended: 'error',
-  description: 'Every consumer of an integration event is registered with a stable consumer name and a processed-event store.',
+  description: 'Every consumer of an integration event is registered or declared with a stable consumer name and a processed-event store.',
   messages: {
     consumerName: `This consumer is declared without a name. ${WHY} Write \`.on(<definition>, { consumer: '{{context}}.<reaction>' })\`: the name is the idempotency scope and must never change.`,
+    declaredName: `{{className}} is declared with \`@IntegrationEventHandler\` but its \`consumer\` is {{problem}}. ${WHY} Write \`@IntegrationEventHandler(<definition>, { consumer: '{{context}}.<reaction>' }, [<tokens>])\` with the name as a string literal: it is the idempotency scope and must never change.`,
     subscription: `This subscription gives no {{missing}}. ${WHY} Pass \`{ consumer: '{{context}}.<reaction>', processed: <the processed-event store> }\` as third argument, or use \`consume\`, which also commits the mark with the handler.`,
     directSubscribe: `{{call}}() subscribes a handler that nothing deduplicates. ${WHY} Declare the consumer with \`builder.on(<definition>, { consumer })\` in the module, or wrap the handler with \`on\` or \`consume\` of ${EVENTS}.`,
   },
@@ -30,17 +33,30 @@ export const eventsConsumerIdempotent = defineRule<MessageId>({
     const tell = (finding: Finding): void => {
       if (finding !== undefined) report({ ...finding, data: { ...finding.data, context: here.context } });
     };
+    const declarationsOf = isDeclaredStyle(file) ? declarationReader(sourceCode.ast) : undefined;
+    const judgeClass = (node: ClassNode): void => {
+      for (const declaration of declarationsOf?.(node) ?? []) tell(unnamedHandler(node, declaration));
+    };
     return {
       CallExpression(node) {
         tell(unnamedConsumer(node));
         tell(unprotectedSubscription(node, sourceCode));
         if (subscribesHere) tell(directSubscription(node, sourceCode));
       },
+      ClassDeclaration: judgeClass,
+      ClassExpression: judgeClass,
     };
   },
 });
 
-/** `builder.on(definition, options).handledBy(Consumer)`: the chain tells this `on` from the one of an event emitter. */
+/** `@IntegrationEventHandler(definition, { consumer: 'billing.price-list' }, [...])`: the class is its own registration. */
+function unnamedHandler(node: ClassNode, declaration: Declaration): Finding {
+  if (declaration.name !== 'IntegrationEventHandler') return undefined;
+  const consumer = writtenName(declaration.arguments[1], 'consumer');
+  return 'value' in consumer ? undefined : { node: declaration.node, messageId: 'declaredName', data: { className: className(node), problem: consumer.problem } };
+}
+
+/** `builder.on(definition, options).handledBy(Handler)`: the chain tells this `on` from the one of an event emitter. */
 function unnamedConsumer(node: TSESTree.CallExpression): Finding {
   if (node.callee.type !== AST_NODE_TYPES.MemberExpression || !HANDLER_BINDINGS.has(calleeName(node) ?? '')) return undefined;
   const [declaration] = methodChain(node);

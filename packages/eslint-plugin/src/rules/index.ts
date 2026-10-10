@@ -13,6 +13,7 @@ import { cleanNoNoiseComment } from './clean-no-noise-comment.js';
 import { cleanStepdown } from './clean-stepdown.js';
 import { contextExtractable } from './context-extractable.js';
 import { contextDeclaredRelationship, contextPublishedLanguageIsAContract, contextPublishedLanguageOnly } from './context-boundaries.js';
+import { declarationsRoleDeclared } from './declarations-role-declared.js';
 import { domainAggregateEncapsulation } from './domain-aggregate-encapsulation.js';
 import { domainNoGenericError } from './domain-no-generic-error.js';
 import { domainValueObjectImmutability } from './domain-value-object-immutability.js';
@@ -60,6 +61,7 @@ const ALL = [
   aspectsOutsideIn,
   standardNoParallelInterface,
   governanceRecordedDeviation,
+  declarationsRoleDeclared,
 ];
 
 /** Keyed by ESLint name: the id of docs/ARCHITECTURE.md with its slash replaced by a dash. */

@@ -15,16 +15,19 @@ import {
   CLOCK,
   COMMAND_BUS,
   CommandHandler,
-  DomainEventListener,
-  EventListener,
+  DomainEventHandler,
+  IntegrationEventHandler,
   Gateway,
   Policy,
   Public,
   QueryHandler,
   Repository,
   Requires,
+  Scheduled,
   token,
   type EventContract,
+  type JobExecution,
+  type ScheduledJob,
 } from '../../../src/declarations.js';
 
 export interface Visit {
@@ -114,8 +117,8 @@ export const PatientRegistered: EventContract<PatientRegisteredPayload> = {
   },
 };
 
-@EventListener(PatientRegistered, { consumer: 'clinic.welcome-on-patient-registered' }, [COMMAND_BUS])
-export class WelcomeOnPatientRegistered {
+@IntegrationEventHandler(PatientRegistered, { consumer: 'clinic.welcome-on-patient-registered' }, [COMMAND_BUS])
+export class WelcomeOnPatientRegistered implements IntegrationEventHandler<PatientRegisteredPayload> {
   constructor(private readonly commands: CommandBus) {}
 
   readonly handle = async (event: IntegrationEvent<PatientRegisteredPayload>): Promise<void> => {
@@ -132,13 +135,31 @@ export class VisitScheduled implements DomainEvent {
   ) {}
 }
 
-@DomainEventListener(VisitScheduled, { name: 'clinic.visit.scheduled' }, [REMINDERS])
-export class RemindOnVisitScheduled {
+@DomainEventHandler(VisitScheduled, { name: 'clinic.visit.scheduled' }, [REMINDERS])
+export class RemindOnVisitScheduled implements DomainEventHandler<VisitScheduled> {
   constructor(private readonly reminders: Reminders) {}
 
   async handle(event: VisitScheduled): Promise<void> {
     await this.reminders.remind(event.aggregateId);
   }
+}
+
+@Scheduled('clinic.remind-tomorrow-visits', { cron: '0 18 * * mon-fri', timeZone: 'Europe/Paris', overlap: 'queue', timeoutMs: 120_000 }, [COMMAND_BUS])
+export class RemindTomorrowVisits implements ScheduledJob {
+  static built = 0;
+
+  constructor(private readonly commands: CommandBus) {
+    RemindTomorrowVisits.built += 1;
+  }
+
+  async run(execution: JobExecution): Promise<void> {
+    await this.commands.execute(new RequestCallback(`visits after ${execution.scheduledAt.toISOString()}`));
+  }
+}
+
+@Scheduled('clinic.purge-expired-callbacks', { every: '6h' })
+export class PurgeExpiredCallbacks {
+  async run(): Promise<void> {}
 }
 
 @Repository(VISITS)
@@ -191,6 +212,10 @@ export function declareTwice(): void {
   @Public()
   class Twice extends Command {}
   void Twice;
+}
+
+export function declareAJob(name: `${string}.${string}`, cron: string, timeZone: string): void {
+  Scheduled(name, { cron, timeZone });
 }
 
 export function declareAStranger(): void {

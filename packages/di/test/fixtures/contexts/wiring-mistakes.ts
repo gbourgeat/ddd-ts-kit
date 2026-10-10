@@ -1,5 +1,5 @@
 import { FixedClock, systemActor, type Clock, type Command, type CommandBus, type IntegrationEvent } from '@ddd-ts-kit/kernel';
-import { Adapter, CLOCK, COMMAND_BUS, CommandHandler, EventListener, token } from '@ddd-ts-kit/kernel/declarations';
+import { Adapter, CLOCK, COMMAND_BUS, CommandHandler, IntegrationEventHandler, token } from '@ddd-ts-kit/kernel/declarations';
 import { IssueInvoice } from './billing/application/commands/issue-invoice/issue-invoice.command.js';
 import { OrderPlaced, type OrderPlacedPayload } from './billing/published-language/order-placed.js';
 
@@ -12,7 +12,7 @@ export class SecondIssueInvoiceHandler {
   }
 }
 
-@EventListener(OrderPlaced, { consumer: 'billing.invoice-on-order-placed' }, [COMMAND_BUS])
+@IntegrationEventHandler(OrderPlaced, { consumer: 'billing.invoice-on-order-placed' }, [COMMAND_BUS])
 export class SecondInvoiceOnOrderPlaced {
   constructor(private readonly commands: CommandBus) {}
 

@@ -66,7 +66,8 @@ Usage
                   [--orm drizzle|knex|prisma|typeorm|custom|none] [--database postgres|mysql|sqlite|none]
                   [--events in-memory|outbox] [--docs-ui swagger|scalar|redoc|none]
                   [--ci github|gitlab|both|none] [--authn jwt|keycloak|none] [--authz rbac|abac|rebac|custom]
-                  [--broker none|rabbitmq|custom] [--cache none|redis] [--audit on|off]
+                  [--broker none|rabbitmq|kafka|nats|redis|custom] [--cache none|redis] [--audit on|off]
+                  [--style declared|explicit] [--assembly barrel|discovery]
                   [--allow-no-outbox "<reason>"]
                   [--context <name>:<core|supporting|generic>]... [--dry-run] [--force]
   ddd-ts-kit generate <kind> ... [--term "<Term>=<meaning>"]... [--allow-name] [--dry-run] [--force]     (alias: g)

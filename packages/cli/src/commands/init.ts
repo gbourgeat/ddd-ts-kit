@@ -4,7 +4,7 @@ import { runInit } from '../init/init.js';
 import { Arguments, type Command } from './args.js';
 import { printReport } from './report.js';
 
-const STACK_FLAGS = ['http', 'validation', 'di', 'tests', 'orm', 'database', 'events', 'ci', 'authn', 'authz', 'broker', 'cache', 'audit'] as const;
+const STACK_FLAGS = ['http', 'validation', 'di', 'tests', 'orm', 'database', 'events', 'ci', 'authn', 'authz', 'broker', 'cache', 'audit', 'style', 'assembly'] as const;
 
 export const initCommand: Command = (argv, io) => {
   const args = Arguments.parse(argv, {

@@ -63,4 +63,20 @@ export function inLayers(file: SourceFile, layers: readonly Layer[]): ContextLoc
   return layers.map((layer) => inLayer(file, layer)).find((location) => location !== undefined);
 }
 
+/** True when the classes of the project say what they are with decorators, false when module files bind them. */
+export function isDeclaredStyle(project: Project): boolean {
+  return project.config.stack.style === 'declared';
+}
+
+/** The path of a source relative to its context, the way the role table names files; undefined outside a context. */
+export function pathInContext(project: Project, file: SourceFile): string | undefined {
+  if (!inContext(file.location)) return undefined;
+  return file.path.slice(`${project.config.contextsDir}/${file.location.context}/`.length);
+}
+
+/** Where a binding is written, for a fix text: the declaration of the class, or the module file of the context. */
+export function bindingPlace(project: Project, context: string): string {
+  return isDeclaredStyle(project) ? 'its declaration (@Repository, @Gateway or @Adapter on the class)' : `${context}.module.ts`;
+}
+
 export const KEBAB_SEGMENT = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;

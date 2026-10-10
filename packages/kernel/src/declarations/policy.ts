@@ -1,7 +1,7 @@
 import type { DeclaredPolicy, PermissionRef } from './declaration.js';
 import type { ClassDeclarator, Dependencies } from './dependencies.js';
 import { DeclarationError, record } from './registry.js';
-import type { Named } from './listeners.js';
+import type { Named } from './event-handlers.js';
 
 export interface PolicyOptions<Name extends string = string> {
   /** Stable, lower-case words separated by dots or dashes: the reason given when the rule refuses. */

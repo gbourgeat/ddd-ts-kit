@@ -1,5 +1,8 @@
 import { OutboxRelay, type OutboxStore{{#if events.wakeable}}, type RelaySignal{{/if}} } from '@ddd-ts-kit/events';
 import { SystemClock, type IntegrationEventPublisher, type Logger } from '@ddd-ts-kit/kernel';
+{{#if broker.kafka}}
+import { aggregateKeyOf } from './events.js';
+{{/if}}
 
 export interface OutboxRelayOptions {
   readonly store: OutboxStore;
@@ -22,6 +25,11 @@ export function startOutboxRelay(options: OutboxRelayOptions): RunningRelay {
     store: options.store,
     publisher: options.publisher,
     clock: new SystemClock(),
+{{#if broker.kafka}}
+    // The events of one aggregate leave in the order they were stored, under the key Kafka orders them by: it takes a single running relay.
+    ordering: 'per-key',
+    keyOf: aggregateKeyOf,
+{{/if}}
 {{#if events.wakeable}}
     ...(options.wakeOn === undefined ? {} : { wakeOn: options.wakeOn }),
 {{/if}}

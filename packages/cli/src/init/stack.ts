@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {
+  ASSEMBLIES,
   AUDIT_MODES,
   AUTHN_STACKS,
   AUTHZ_STACKS,
@@ -16,11 +17,13 @@ import {
   ORM_STACKS,
   parseConfig,
   readConfig,
+  STYLES,
   TEST_STACKS,
   VALIDATION_STACKS,
   type Config,
 } from '../config.js';
 import { CliError } from '../errors.js';
+import { PROVIDED_BROKERS } from '../generate/scope.js';
 
 const EVENT_CHOICES = ['in-memory', 'outbox'] as const;
 
@@ -39,6 +42,8 @@ export interface StackOptions {
   readonly broker?: string;
   readonly cache?: string;
   readonly audit?: string;
+  readonly style?: string;
+  readonly assembly?: string;
   /** The reason given for running an ORM without the transactional outbox. */
   readonly allowNoOutbox?: string;
   readonly force: boolean;
@@ -54,8 +59,35 @@ export function resolveStack(root: string, options: StackOptions): Config {
   assertNestGoesWithNest(http, di);
   const docsUi = http === 'none' ? 'none' : (choose(DOCS_UIS, options.docsUi, 'docs-ui') ?? 'swagger');
   const persistence = resolvePersistence(options);
-  const stack = { http, di, ...resolveTooling(options), ...persistence, docsUi, ...resolveSecurity(options), broker: resolveBroker(options, persistence.orm), ...resolveOperations(options, persistence.orm) };
+  const broker = resolveBroker(options, persistence.orm);
+  const stack = { http, di, ...resolveTooling(options), ...persistence, docsUi, ...resolveSecurity(options), broker, ...resolveOperations(options, persistence.orm), ...resolveStyle(options, { di, broker }) };
   return parseConfig({ stack, contexts: {}, rules: {} });
+}
+
+/**
+ * A class declares what it is wherever something reads the declarations: `@ddd-ts-kit/di`, on
+ * tsyringe. Hand wiring and a NestJS container read none of them, so their contexts keep a
+ * module file.
+ */
+function resolveStyle(options: StackOptions, { di, broker }: { di: string; broker: string }): { style: string; assembly: string } {
+  const style = choose(STYLES, options.style, 'style') ?? (di === 'tsyringe' ? 'declared' : 'explicit');
+  if (style === 'declared' && di !== 'tsyringe') {
+    throw new CliError(
+      `--style declared cannot be combined with --di ${di}.`,
+      'The declarations of @ddd-ts-kit/kernel/declarations are turned into bindings by @ddd-ts-kit/di (contextModule, discoverContext), which runs on tsyringe: use --di tsyringe, or keep --style explicit, where every binding is written in <context>.module.ts.',
+    );
+  }
+  const assembly = choose(ASSEMBLIES, options.assembly, 'assembly');
+  if (assembly !== undefined && style !== 'declared') {
+    throw new CliError(`--assembly ${assembly} cannot be combined with --style explicit.`, 'An explicit context is assembled by its module file: drop --assembly, or use --style declared.');
+  }
+  if (assembly === 'discovery' && PROVIDED_BROKERS.includes(broker)) {
+    throw new CliError(
+      `--assembly discovery cannot be combined with --broker ${broker}.`,
+      'Behind a broker each context listens through a subscriber of its own name, which the composition root builds from the barrel of the context: keep --assembly barrel, or --broker none.',
+    );
+  }
+  return { style, assembly: assembly ?? 'barrel' };
 }
 
 /** The cache stays in the process unless asked otherwise; the audit trail is on as soon as there is a database to keep it in. */

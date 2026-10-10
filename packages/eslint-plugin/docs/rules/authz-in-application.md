@@ -6,7 +6,7 @@ Applies to: `presentation/`, `infrastructure/` and `domain/` of a context, tests
 
 ## Why
 
-A permission decided in three places is decided in none. A role test in a route is skipped by the consumer that sends the same command; a refusal in a repository cannot be audited; an aggregate that knows roles cannot change authorization model. One place decides: the application layer, through the `Authorizer` port.
+A permission decided in three places is decided in none. A role test in a route is skipped by the integration event handler that sends the same command; a refusal in a repository cannot be audited; an aggregate that knows roles cannot change authorization model. One place decides: the application layer, through the `Authorizer` port.
 
 ## Reported
 
@@ -14,12 +14,14 @@ In `presentation/`:
 
 - a read of `.roles`, `.permissions` or `.isAdmin` on anything
 - a comparison of a member named `role` with a string (`===`, `!==`, `==`, `!=`), and a `switch` on it
-- an import from `@ddd-ts-kit/auth` (any entry) of anything but the request glue (`actorOf`, `sessionOf`, `resolveSession`, `SessionAuthenticator`, `bearerCredential`, `inActorContext`, `principalResolver`, `HeaderValues`), the codes `FORBIDDEN` and `UNAUTHORIZED` and the error classes
+- an import from `@ddd-ts-kit/auth` (any entry) of anything but the request glue (`actorOf`, `sessionOf`, `resolveSession`, `SessionAuthenticator`, `bearerCredential`, `inActorContext`, `principalResolver`, `HeaderValues`), the codes `FORBIDDEN` and `UNAUTHORIZED` and the error classes (the `ACCESS` token included)
+- in a declared-style project (`stack.style: "declared"`): an import of `Requires`, `Public` or `Policy` from `@ddd-ts-kit/kernel/declarations`
 
 In `infrastructure/`:
 
 - a call to `.authorize(...)`, `.decide(...)` or `.check(...)` on something named `access` or `...authorizer...`, or declared with the type `Access` or `...Authorizer`
 - `new ForbiddenError(...)`
+- in a declared-style project: an import of `Requires`, `Public` or `Policy` from `@ddd-ts-kit/kernel/declarations`, or of `ACCESS` from `@ddd-ts-kit/auth` (any entry)
 
 In `domain/`:
 
@@ -57,6 +59,8 @@ invoice.void(command.actor.id, this.clock.now());
 
 The type of a receiver is read from its declaration in the same file (a parameter, a variable, a property, a parameter property): no type information is needed. A class of `infrastructure/` that `implements` an `...Authorizer` is an adapter of the port (a cache, a remote service) and may delegate to another authorizer.
 
+`application/` is where access is declared and decided: `Requires`, `Public` and `Policy` of `@ddd-ts-kit/kernel/declarations` and `ACCESS` of `@ddd-ts-kit/auth` are imported there freely, in both styles. In `domain/` of a declared-style project the whole declarations entry is refused by `layer-domain-purity`, so this rule does not report it a second time. The other names of the declarations entry (`Repository`, `CLOCK`, ...) are not the concern of this rule. An explicit-style project is judged as before: these imports are not reported outside `application/`.
+
 In `domain/`, `this.roles` and `this.state.roles` are not reported: a context whose subject is access itself (identity, membership) models roles as state.
 
 ## Options
@@ -67,6 +71,7 @@ None.
 
 ## Limits
 
+- `Requires`, `Public` or `Policy` reached through a namespace import of the declarations entry (`import * as declarations`) is not reported in `presentation/` and `infrastructure/`.
 - The names are the signal. A route of an administration API whose body legitimately carries `roles` or `permissions` (grant a role to a member) is reported when it reads them: destructure the body (`const { roles } = body`) or record the deviation.
 - A role test written without a member named `role` or `roles` (`isAdmin(user)`, `['admin'].includes(kind)`) is not seen.
 - `.check(...)` on an authorizer held under another name and typed in another file is not seen.

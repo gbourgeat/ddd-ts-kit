@@ -47,6 +47,18 @@ RABBITMQ_PORT=5672
 RABBITMQ_MANAGEMENT_PORT=15672
 AMQP_URL=amqp://app:app@localhost:5672
 {{/if}}
+{{#if broker.kafka}}
+
+# Kafka: the bootstrap brokers, as host:port separated by commas.
+KAFKA_PORT=9092
+KAFKA_BROKERS=localhost:9092
+{{/if}}
+{{#if broker.nats}}
+
+# NATS with JetStream.
+NATS_PORT=4222
+NATS_URL=nats://localhost:4222
+{{/if}}
 {{#if authn.jwt}}
 
 # Authentication: the issuer of the tokens, the audience this service answers to, the keys of the issuer.
@@ -54,9 +66,9 @@ AUTH_ISSUER=https://id.example.com/realms/app
 AUTH_AUDIENCE={{project.name}}
 AUTH_JWKS_URI=https://id.example.com/realms/app/protocol/openid-connect/certs
 {{/if}}
-{{#if cache.redis}}
+{{#if redis.server}}
 
-# The Redis protocol server (Dragonfly in docker-compose.yml): cache, rate limiter, wake-up of the outbox relay.
+# The Redis protocol server (Dragonfly in docker-compose.yml): {{redis.uses}}.
 REDIS_PORT=6379
 REDIS_URL=redis://localhost:6379
 {{/if}}

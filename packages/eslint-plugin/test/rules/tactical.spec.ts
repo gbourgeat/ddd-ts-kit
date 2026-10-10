@@ -95,6 +95,8 @@ ruleTester.run('application-handler-shape', applicationHandlerShape, {
     at(COMMAND_HANDLER, 'export class IssueInvoiceHandler { constructor(private readonly ids: IdGenerator) {} async execute(command: IssueInvoiceCommand): Promise<string> { return this.next(); } private next(): string { return this.ids.next(); } #audit(): void {} }'),
     at(QUERY_HANDLER, 'class ListInvoicesHandler { execute = async (): Promise<void> => {}; }\nexport { ListInvoicesHandler };\nexport type Row = { id: string };'),
     at(COMMAND_HANDLER, 'export default class IssueInvoiceHandler { execute(): void {} }'),
+    at(`${BILLING}/application/integration/handlers/catalog-product-listed.integration-handler.ts`, 'export class CatalogProductListedHandler { async handle(event: ProductListedV1): Promise<void> {} }'),
+    at(`${BILLING}/application/event-handlers/invoice-issued.event-handler.ts`, 'export class InvoiceIssuedEventHandler { async handle(event: InvoiceIssued): Promise<void> {} }'),
     at(`${BILLING}/application/event-handlers/invoice-issued.event-handler.ts`, 'export class InvoiceIssuedEventHandler { async handle(): Promise<void> {} }'),
     at(`${BILLING}/presentation/http/issue-invoice.handler.ts`, 'export const handler = 1;'),
   ],

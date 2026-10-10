@@ -1,14 +1,16 @@
-import type { Actored, Command, DependencyKind, Message, MessageInfo, MessageType, Query } from '@ddd-ts-kit/kernel';
+import type { Actored, Command, DependencyKind, Message, MessageInfo, MessageType, Query, ScheduledJob } from '@ddd-ts-kit/kernel';
 import type {
   BindingAspect,
   BindingAspectInfo,
   DependencyList,
   DependencyTokens,
   MessageHandler,
+  ScheduledOptions,
 } from '@ddd-ts-kit/kernel/declarations';
-import type { ConsumerOptions, EventConsumer, EventContract } from './consumer.js';
+import type { ConsumerOptions, EventContract, IntegrationEventHandler } from './consumer.js';
 import { consumptionOf, includeDeclared, type DeclaredSource } from './declared.js';
 import { WiringError } from './errors.js';
+import { writtenJob } from './jobs.js';
 import { describeToken, token, type Token } from './token.js';
 import {
   PUBLIC_REQUIREMENT,
@@ -22,6 +24,7 @@ import {
   addBinding,
   addHandling,
   addConsumption,
+  addJob,
   classRecipe,
   emptyDraft,
   factoryRecipe,
@@ -110,14 +113,19 @@ export interface ModuleBuilder {
   query<Q extends Query<unknown> & Actored>(type: MessageType<Q>): ProtectedUseCaseTarget<Q>;
   query<Q extends Query<unknown>>(type: MessageType<Q>): UseCaseTarget<Q>;
   /**
-   * Declares a consumer of an integration event: subscribed to `EVENT_SUBSCRIBER` when the
+   * Declares the handler of an integration event, under a consumer name: subscribed to `EVENT_SUBSCRIBER` when the
    * application starts, unsubscribed when it stops. Each event is handled inside
    * `EXECUTION_SCOPE`, in a context of origin `event` that continues its correlation.
    */
   on<Payload>(
     contract: EventContract<Payload>,
     options: ConsumerOptions,
-  ): HandlerTarget<EventConsumer<Payload>>;
+  ): HandlerTarget<IntegrationEventHandler<Payload>>;
+  /**
+   * Declares a job run by time, under its name: bound as a singleton and registered on
+   * `JOB_SCHEDULER`. `builder.job('billing.send-reminders', { every: '15m' }).handledBy(SendReminders, [COMMAND_BUS])`.
+   */
+  job(name: string, settings: ScheduledOptions): HandlerTarget<ScheduledJob>;
   /**
    * Adds classes that declare themselves with the decorators of `@ddd-ts-kit/kernel/declarations`:
    * a class, a list of them, or a namespace import of a barrel. `contextModule` is this call
@@ -183,11 +191,18 @@ class ModuleRecorder implements ModuleBuilder {
   readonly on = <Payload>(
     contract: EventContract<Payload>,
     options: ConsumerOptions,
-  ): HandlerTarget<EventConsumer<Payload>> =>
-    this.#handlerTarget<EventConsumer<Payload>>({
+  ): HandlerTarget<IntegrationEventHandler<Payload>> =>
+    this.#handlerTarget<IntegrationEventHandler<Payload>>({
       statement: `on(${contract.type})`,
       kind: 'consumer',
       record: (handler) => addConsumption(this.draft, consumptionOf({ contract, options, handler, module: this.module })),
+    });
+
+  readonly job = (name: string, settings: ScheduledOptions): HandlerTarget<ScheduledJob> =>
+    this.#handlerTarget<ScheduledJob>({
+      statement: `job(${name})`,
+      kind: 'job',
+      record: (job) => addJob(this.draft, writtenJob(name, settings, { job, module: this.module })),
     });
 
   readonly include = (declared: DeclaredSource): void => {

@@ -51,7 +51,9 @@ Read by the CLI, the hook and the skills. It lives at the root of the consuming 
 | `stack.audit` | `on`, `off`: whether the audit trail and its three sources are wired | `on` when an ORM is set, `off` otherwise |
 | `standardInterfaces` | `{ "<DeclaredName>": "<kernel interface to use instead>" }` merged over the default names of `standard/no-parallel-interface`; `false` drops a default name | `{}` |
 | `stack.authz` | `rbac`, `abac`, `rebac`, `custom` | `rbac` |
-| `stack.broker` | `none`, `rabbitmq`, `custom` | `none` |
+| `stack.broker` | `none`, `rabbitmq`, `kafka`, `nats`, `redis` (Redis Streams on Redis, Dragonfly or Valkey), `custom` | `none` |
+| `stack.style` | `declared`: each class declares what it is with a decorator and a context has no module file; `explicit`: every binding is written in `<context>.module.ts` | `declared` with `di: tsyringe`, `explicit` otherwise |
+| `stack.assembly` | `barrel`, `discovery`: how a declared context reaches the composition root, one generated `<context>.declarations.ts` or a scan at startup | `barrel` |
 | `stack.ci` | `github`, `gitlab`, `both`, `none` | `github` |
 | `stack.docsUi` | `swagger`, `scalar`, `redoc`, `none` | `swagger` |
 | `contexts.<name>.deployable` | `true`, `false`: the context has its own entry point `src/apps/<name>/main.ts` | `false` |

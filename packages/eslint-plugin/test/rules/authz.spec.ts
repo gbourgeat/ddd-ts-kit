@@ -18,7 +18,7 @@ ruleTester.run('authz-declared', authzDeclared, {
     at(MODULE, "builder.command(IssueInvoice).requires(billingPermissions['invoice.issue']).handledBy(IssueInvoiceHandler, [INVOICES]);"),
     at(MODULE, 'builder.query(GetCatalog).public().handledBy(GetCatalogHandler, [CATALOG]);'),
     at(MODULE, 'builder.query(GetCatalog).public().handledByFactory((resolve) => new GetCatalogHandler(resolve(CATALOG)));'),
-    at(MODULE, "builder.on(invoiceIssuedV1, { consumer: 'billing.remind' }).handledBy(RemindConsumer, [COMMAND_BUS]);"),
+    at(MODULE, "builder.on(invoiceIssuedV1, { consumer: 'billing.remind' }).handledBy(RemindHandler, [COMMAND_BUS]);"),
     at(HANDLER, 'builder.command(IssueInvoice).handledBy(IssueInvoiceHandler);'),
     at(SPEC, 'builder.command(IssueInvoice).handledBy(IssueInvoiceHandler);'),
     at(ROUTE, route("security: ['bearer']")),

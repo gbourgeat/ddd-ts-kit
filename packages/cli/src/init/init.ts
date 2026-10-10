@@ -6,7 +6,8 @@ import { writeDocs } from '../docs/docs.js';
 import { CliError } from '../errors.js';
 import { generateContext } from '../generate/kinds/context.js';
 import { writeAdr } from '../generate/kinds/governance.js';
-import { stackVars } from '../generate/scope.js';
+import { DISCOVERED_SUFFIXES } from '../declared/roles.js';
+import { stackVars, usesLegacyDecorators } from '../generate/scope.js';
 import { toName } from '../naming.js';
 import type { RenderContext } from '../render.js';
 import { readTemplate, renderTemplate } from '../templates.js';
@@ -86,9 +87,9 @@ function templateVars(config: Config, projectName: string): RenderContext {
     docs: { any: docsUi !== 'none', ui: docsUi },
     knip: knipVars(config),
     ci: { github: ci === 'github' || ci === 'both', gitlab: ci === 'gitlab' || ci === 'both', any: ci !== 'none' },
-    needs: { url: readsUrl(config) },
+    needs: { url: readsUrl(config), text: readsText(config) },
     keycloak: { version: KEYCLOAK_VERSION },
-    compose: { volumes: database === 'postgres' || database === 'mysql' || config.stack.cache === 'redis' },
+    compose: { volumes: database === 'postgres' || database === 'mysql' || config.stack.cache === 'redis' || ['redis', 'nats'].includes(config.stack.broker) },
     database: { postgres: database === 'postgres', mysql: database === 'mysql', sqlite: database === 'sqlite', server: database === 'postgres' || database === 'mysql' },
     paths: { databaseToGenerated: path.posix.relative(`${config.platformDir}/database`, 'generated'), scriptsToSource: `../${config.sourceRoot}`, e2eToPlatform: `../../../${config.platformDir}` },
   };
@@ -98,12 +99,18 @@ function templateVars(config: Config, projectName: string): RenderContext {
 function readsUrl(config: Config): boolean {
   const { orm, authn, http, broker, cache } = config.stack;
   const verifiesTokens = (authn === 'jwt' || authn === 'keycloak') && http !== 'none';
-  return WITH_URL.includes(orm) || verifiesTokens || broker === 'rabbitmq' || cache === 'redis';
+  return WITH_URL.includes(orm) || verifiesTokens || ['rabbitmq', 'nats', 'redis'].includes(broker) || cache === 'redis';
+}
+
+/** Whether the validated configuration holds a required text that is not a URL: the names a token is checked against, a list of brokers. */
+function readsText(config: Config): boolean {
+  const { authn, http, broker } = config.stack;
+  return ((authn === 'jwt' || authn === 'keycloak') && http !== 'none') || broker === 'kafka';
 }
 
 function writeTypeScriptConfigs(ws: Workspace, config: Config): void {
-  const { http, validation, orm } = config.stack;
-  const decorators = http === 'nest' || validation === 'class-validator';
+  const { orm } = config.stack;
+  const decorators = usesLegacyDecorators(config);
   const compilerOptions = {
     target: 'ES2023',
     lib: ['ES2023'],
@@ -130,6 +137,7 @@ function writeTypeScriptConfigs(ws: Workspace, config: Config): void {
 function knipVars(config: Config): RenderContext {
   const when = (text: string): string => (config.stack.http === 'none' ? '' : text);
   return {
+    discovered: `{${DISCOVERED_SUFFIXES.join(',')}}`,
     e2eEntry: when(',\n    "test/e2e/**/*.ts"'),
     e2eProject: when(', "test/**/*.ts"'),
     e2eConfig: when(', "vitest.e2e.config.ts"'),

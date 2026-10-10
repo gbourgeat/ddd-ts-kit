@@ -13,15 +13,16 @@ npm i @ddd-ts-kit/kernel
 | Area | Exports |
 |---|---|
 | Domain | `Entity`, `AggregateRoot` (version, recorded events), `ValueObject`, `DomainEvent`, `DomainError` with a stable `code` (`InvariantViolation`, `NotFoundError`, `ConflictError`, `ConcurrencyError`), `Result` with `ok`, `err`, `unwrap` |
-| Ports | `Clock`, `IdGenerator`, `UnitOfWork`, `Repository`, `UseCase`, `DependencyKind` (the roles a binding declares, read by di, tracing and aspects) |
+| Ports | `Clock`, `IdGenerator`, `UnitOfWork`, `Repository`, `UseCase`, `DependencyKind` (the roles a binding declares, read by di, tracing and aspects: `repository`, `gateway`, `external`, `use-case`, `publisher`, `consumer`, `job`) |
 | Buses | `Command`, `Query`, `CommandBus`, `QueryBus`, `BusMiddleware`, the in-process `InMemoryCommandBus` and `InMemoryQueryBus`, `unitOfWorkMiddleware` |
-| Events | `IntegrationEvent`, `EventBus` (publisher and subscriber), `ProcessedEventStore`, `idempotent`, `InMemoryEventBus`, `DomainEventDispatcher`, `executionContextOfEvent`, `inEventScope`, `scopedPublisher` |
+| Events | `IntegrationEvent`, `EventBus` (publisher and subscriber), `ProcessedEventStore`, `idempotent`, `InMemoryEventBus`, `DomainEventDispatcher`, `IntegrationEventCallback` and `DomainEventCallback` (the functions a subscriber and a dispatcher are given), `executionContextOfEvent`, `inEventScope`, `scopedPublisher` |
 | Actor | `Actor`, `AuthorizedCommand`, `AuthorizedQuery`, `ActorContext` |
 | Standard interfaces | `Session`, `ExecutionContext` and `ExecutionScope`, `Logger`, `Metrics`, `Cache`, `Lock`, `RateLimiter`, `Page` and `PageRequest`, `AuditStamp`, `TenantScoped`, `AuditTrail`, `AuditReader` and `AuditEntry` |
+| Scheduled jobs | `JobScheduler`, `ScheduledJob`, `JobExecution`, `JobSchedule`, `JobOptions`, `JobDefinition`, `JobRun`, `JobDescription`, `parseJobSchedule`, `describeJobSchedule`, `jobPolicy`, `executionContextOfJob` |
 | Persistence helpers | `optimisticUpdate`, `schemaNameOf`, `stampCreation`, `stampUpdate`, `tenantScopeOf`, `encodeCursor`, `decodeCursor` |
 | Doubles | `FixedClock`, `SequentialIdGenerator`, `InMemoryUnitOfWork`, `FixedActorContext`, `FixedExecutionScope`, `InMemoryLogger`, `InMemoryMetrics`, `InMemoryCache`, `InMemoryLock`, `InMemoryRateLimiter` |
 
-| Declarations (`@ddd-ts-kit/kernel/declarations`) | `Requires`, `Public`, `CommandHandler`, `QueryHandler`, `EventListener`, `DomainEventListener`, `Repository`, `Gateway`, `Adapter`, `Policy`, `declarationOf`, `listDeclarations`, `token` and the standard tokens (`CLOCK`, `COMMAND_BUS`, ...) |
+| Declarations (`@ddd-ts-kit/kernel/declarations`) | `Requires`, `Public`, `CommandHandler`, `QueryHandler`, `IntegrationEventHandler`, `DomainEventHandler`, `Scheduled`, `Repository`, `Gateway`, `Adapter`, `Policy`, `declarationOf`, `listDeclarations`, `token` and the standard tokens (`CLOCK`, `COMMAND_BUS`, ...) |
 
 The rules these blocks serve are in `docs/ARCHITECTURE.md`.
 
@@ -55,8 +56,9 @@ export class PlaceOrderHandler implements CommandHandler<PlaceOrder> {
 | `Public(options?)` | a command or query anybody may send | `@Public()` |
 | `CommandHandler(Message, [tokens])` | the one handler of a command | `@CommandHandler(PlaceOrder, [ORDERS, CLOCK])` |
 | `QueryHandler(Message, [tokens])` | the one handler of a query | `@QueryHandler(GetOrder, [ORDER_READS])` |
-| `EventListener(definition, { consumer, actorOf? }, [tokens])` | a consumer of an integration event | `@EventListener(OrderPlaced, { consumer: 'billing.invoice-on-order-placed' }, [COMMAND_BUS])` |
-| `DomainEventListener(Event, { name }, [tokens])` | a reaction to a domain event of its own context | `@DomainEventListener(OrderPaid, { name: 'ordering.order.paid' }, [COMMAND_BUS])` |
+| `IntegrationEventHandler(definition, { consumer, actorOf? }, [tokens])` | the handler of an integration event of another context | `@IntegrationEventHandler(OrderPlaced, { consumer: 'billing.invoice-on-order-placed' }, [COMMAND_BUS])` |
+| `DomainEventHandler(Event, { name }, [tokens])` | a handler of a domain event of its own context | `@DomainEventHandler(OrderPaid, { name: 'ordering.order.paid' }, [COMMAND_BUS])` |
+| `Scheduled(name, schedule and options, [tokens])` | a job run by time, which triggers use cases | `@Scheduled('billing.send-reminders', { cron: '0 7 * * 1-5', timeZone: 'Europe/Paris' }, [COMMAND_BUS])` |
 | `Repository(TOKEN, options?, [tokens])` | the adapter of a repository of the domain | `@Repository(ORDERS, [DATABASE, EXECUTION_SCOPE, CLOCK])` |
 | `Gateway(TOKEN, options?, [tokens])` | the adapter of a port that calls another context | `@Gateway(STOCK, [HTTP])` |
 | `Adapter(TOKEN, options?, [tokens])` | the adapter of any other port | `@Adapter(PAYMENTS, { kind: 'external' }, [CONFIG])` |
@@ -71,26 +73,37 @@ export class PlaceOrderHandler implements CommandHandler<PlaceOrder> {
   parameter, each of the type of its parameter, in order. A missing list, a missing token, an
   extra one, a wrong type or a wrong order does not compile. There is no parameter decorator
   and no reflection.
-- **The role is checked too**: a handler of another message or of another result, a listener
+- **The role is checked too**: a handler of another message or of another result, an event handler
   of another payload, an adapter that does not implement the port of its token, an abstract
   class are refused by the compiler.
 - **Options of a repository, a gateway and an adapter**: `transient: true` (one instance per
   resolution instead of one per application), `replaces: true` (takes the place of a binding
   made earlier, such as a default of the kernel module), `aspects: [...]` (wrappers, the first
   outermost); an adapter also takes `kind: 'external' | 'publisher'`.
-- **Names are written, not derived**: the consumer name, the policy name and the name of the
-  domain event survive the renaming of a class, and the empty string is refused.
+- **One name for the decorator and for the shape of its class**: `CommandHandler`,
+  `QueryHandler`, `IntegrationEventHandler` and `DomainEventHandler` are each a decorator and a
+  type, so one import serves `@IntegrationEventHandler(OrderPlaced, ...)` and
+  `implements IntegrationEventHandler<OrderPlacedPayload>`. A job implements `ScheduledJob`.
+- **Names are written, not derived**: the consumer name, the policy name, the job name and the
+  name of the domain event survive the renaming of a class, and the empty string is refused.
 - **Tokens** are made with `token<T>('context.Port')`, next to the port they stand for in
   `application/`. The tokens of the standard ports (`CLOCK`, `ID_GENERATOR`, `UNIT_OF_WORK`,
   `COMMAND_BUS`, `QUERY_BUS`, `EVENT_BUS`, `EVENT_PUBLISHER`, `EVENT_SUBSCRIBER`,
   `PROCESSED_EVENTS`, `DOMAIN_EVENTS`, `EXECUTION_SCOPE`, `ACTOR_CONTEXT`, `LOGGER`, `METRICS`,
-  `CACHE`, `LOCK`, `RATE_LIMITER`) are exported from here.
+  `CACHE`, `LOCK`, `RATE_LIMITER`, `JOB_SCHEDULER`) are exported from here.
 
 `declarationOf(Class)` answers what a class declared, as frozen plain data, or `undefined`;
 `listDeclarations()` lists the declared classes the process still holds, for diagnostics. A
 class plays one role: a second declaration on the same class throws `DeclarationError` when
 the file loads, and so does `@Requires` or `@Public` on what is neither a `Command` nor a
-`Query`. A declaration is not inherited by a subclass.
+`Query`, and `@Scheduled` with a name or a schedule that cannot be read. A declaration is not
+inherited by a subclass.
+
+The names of the main entry differ on purpose: there, `IntegrationEventCallback` and
+`DomainEventCallback` are the plain functions given to `subscribe` and to `on`. The main entry
+still exports them as `IntegrationEventHandler` and `DomainEventHandler`, and this entry the
+shapes as `IntegrationEventHandlerInstance` and `DomainEventHandlerInstance`: four deprecated
+aliases, kept for one release.
 
 **Where it is stored.** In one registry per process, reached through `Symbol.for`, with the
 classes held weakly. A context compiled against one copy of the kernel is therefore read by a
@@ -100,9 +113,43 @@ Node 24 does not define it, and the legacy decorator mode has no context to carr
 
 **Not in the domain.** `domain/` carries no decorator: aggregates, entities, value objects,
 domain events, domain services and repository interfaces declare nothing. A domain event is
-named by the listener that reacts to it, not by itself. `@UseCase` and `@Scheduled` do not
-exist: the canonical tree has one handler per command and no application service to bind, and
-a periodic job has no port in the kernel yet.
+named by the handler that reacts to it, not by itself. `@UseCase` does not exist: the
+canonical tree has one handler per command and no application service to bind.
+
+### Scheduled
+
+```ts
+// contexts/billing/application/scheduling/send-reminders.job.ts
+@Scheduled('billing.send-reminders', { cron: '0 7 * * 1-5', timeZone: 'Europe/Paris' }, [COMMAND_BUS])
+export class SendRemindersJob implements ScheduledJob {
+  constructor(private readonly commands: CommandBus) {}
+
+  async run(execution: JobExecution): Promise<void> {
+    await this.commands.execute(new SendReminders(systemActor('billing.send-reminders'), execution.scheduledAt));
+  }
+}
+```
+
+A job lives in `application/scheduling/`, in a `*.job.ts` file, and only triggers use cases:
+it receives buses and ports by its token list and typically sends one command. The second
+argument is the schedule and, next to it, the options:
+
+| Key | Default | |
+|---|---|---|
+| `every` | | an interval, as milliseconds or `'30s'`, `'15m'`, `'2h'`, `'1d'`, aligned on the Unix epoch |
+| `cron`, `timeZone` | `timeZone: 'UTC'` | the five standard fields, on the clocks of an IANA zone |
+| `overlap` | `'skip'` | an occurrence that comes while the previous run is in progress is skipped, or `'queue'`d behind it |
+| `missed` | `'skip'` | occurrences that passed without being reached are dropped, or the latest is `'run-once'` |
+| `timeoutMs` | none | the signal of a longer run is aborted |
+| `jitterMs` | `0` | a random delay before each run |
+| `enabled` | `true` | meant to be overridden by configuration where the job is wired |
+| `singleInstance` | `true` | the scheduler takes the `Lock` of each occurrence |
+
+Exactly one of `every` and `cron` is written, and the compiler refuses the rest. The name is
+`<context>.<job-name>` in lower case, unique in the application. `JobExecution` is what `run`
+receives: `scheduledAt`, `startedAt`, `attempt` and an abort `signal`. What the schedules mean
+across a change of clocks, what one instance among several guarantees and how a job is tested
+are in the README of `@ddd-ts-kit/scheduling`.
 
 ### Decorator modes
 
@@ -147,8 +194,8 @@ what it received as a principal.
 ### ExecutionContext and ExecutionScope
 
 What every unit of work carries, whatever started it: `correlationId`, `causationId?`, `actor`,
-`session?`, `tenantId?`, `locale?`, `deadline?`, `origin` (`http`, `event`, `schedule`, `cli`, or a
-string of the project) and `extensions`. `executionContext(init)` builds one and takes the tenant
+`session?`, `tenantId?`, `locale?`, `deadline?`, `scheduledAt?` (for a scheduled job, the instant it
+was due), `origin` (`http`, `event`, `schedule`, `cli`, or a string of the project) and `extensions`. `executionContext(init)` builds one and takes the tenant
 of the actor; `withActor(context, actor)` is the same work seen as another actor.
 
 `ExecutionScope` (`current()`, `require()`, `run(context, work)`) gives the context of the work
@@ -229,6 +276,38 @@ the guard of an invariant: what must not happen twice is refused by a database c
 `InMemoryLock(clock, { retryDelayMs?, sleep? })` excludes inside one process and expires by the
 `Clock`: the fake, and enough for a single instance. The adapter between processes is in
 `@ddd-ts-kit/redis`. `acquiring(attempt, waitMs, waiting)` is the retry loop an adapter shares.
+
+### JobScheduler
+
+```ts
+interface JobScheduler {
+  register(job: JobDefinition): void;      // { name, schedule, run, ...options }
+  start(): Promise<void>;
+  stop(): Promise<void>;                   // waits for the runs in progress, then aborts their signal
+  runNow(name: string): Promise<JobRun>;   // for an operation or a test
+  describe(): readonly JobDescription[];   // name, schedule, enabled, running, nextRunAt, lastRun
+}
+```
+
+What runs the declared jobs when they are due. It is not the `Scheduler` of
+`@ddd-ts-kit/aspects`, which is a timer for retry and timeout: this one knows jobs, schedules
+and instances. A `JobRun` is one occurrence and its outcome (`succeeded`, `failed` with the
+code of the error and never its message, `skipped-overlap`, `skipped-locked`, `missed`). A job
+that fails stops neither the scheduler nor the other jobs, and `runNow` answers `failed`
+instead of rejecting: only an unknown name rejects (`UnknownJobError`), and a name registered
+twice throws (`DuplicateJobError`).
+
+A run happens inside `ExecutionScope`, in the context `executionContextOfJob(name, { correlationId,
+scheduledAt, deadline? })` builds: origin `schedule`, `systemActor(name)`, a correlation of its
+own, and `scheduledAt`, the instant the run was due, which `ExecutionContext` carries for this
+origin.
+
+`parseJobSchedule(schedule)` validates a schedule and answers the form occurrences are
+computed from (`InvalidJobScheduleError`, code `INVALID_JOB_SCHEDULE`, otherwise);
+`describeJobSchedule(schedule)` is its text; `jobPolicy(options)` validates the options and
+fills in the defaults. The kernel holds no scheduler: the in-process one, the computation of
+occurrences and the manual one for tests are `@ddd-ts-kit/scheduling`, and the contract of the
+port is `jobSchedulerContract` of `@ddd-ts-kit/testing/contracts`.
 
 ### RateLimiter
 

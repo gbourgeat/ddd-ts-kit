@@ -15,9 +15,16 @@ export interface IntegrationEvent<Payload = unknown> {
   readonly correlationId?: string;
 }
 
-export type IntegrationEventHandler<E extends IntegrationEvent = IntegrationEvent> = (
+/** What a subscriber is given for one event type: the function a provider calls with each delivery. */
+export type IntegrationEventCallback<E extends IntegrationEvent = IntegrationEvent> = (
   event: E,
 ) => Promise<void>;
+
+/**
+ * @deprecated Renamed `IntegrationEventCallback`: `IntegrationEventHandler` is the decorator, and
+ * the shape of the class it decorates, of `@ddd-ts-kit/kernel/declarations`.
+ */
+export type IntegrationEventHandler<E extends IntegrationEvent = IntegrationEvent> = IntegrationEventCallback<E>;
 
 /** Driving port for any provider: in-memory, outbox + broker, SQS, Kafka, NATS, RabbitMQ... */
 export interface IntegrationEventPublisher {
@@ -29,7 +36,7 @@ export interface Subscription {
 }
 
 export interface IntegrationEventSubscriber {
-  subscribe(type: string, handler: IntegrationEventHandler): Subscription;
+  subscribe(type: string, handler: IntegrationEventCallback): Subscription;
 }
 
 /** Idempotency guard: at-least-once delivery is the rule, so every consumer needs one. */

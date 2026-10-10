@@ -1,9 +1,10 @@
 import type { ContextLocation, ImportTarget } from '../project/classify.js';
+import { DECLARATIONS_ENTRY, isDeclaredStyle } from '../support/declarations.js';
 import { defineRule } from '../support/define-rule.js';
 import { describeTarget, importListener, inLayer } from '../support/imports.js';
 import { OUTSIDE_CONCERN_MESSAGE, outsideConcern } from '../support/outside-concerns.js';
 
-type MessageId = 'package' | 'outsideConcern' | 'builtin' | 'upstreamContract' | 'outerLayer';
+type MessageId = 'package' | 'declarations' | 'outsideConcern' | 'builtin' | 'upstreamContract' | 'outerLayer';
 
 export const layerDomainPurity = defineRule<MessageId>({
   id: 'layer/domain-purity',
@@ -14,10 +15,11 @@ export const layerDomainPurity = defineRule<MessageId>({
     outsideConcern: OUTSIDE_CONCERN_MESSAGE,
     package:
       'The domain imports the package "{{name}}". Remove the import: express the need as plain TypeScript or as a port in application/ports, and keep decorators and schemas of "{{name}}" in infrastructure or presentation.',
+    declarations: `The domain imports "${DECLARATIONS_ENTRY}": the domain declares nothing. Aggregates, entities, value objects, events, services and repository interfaces carry no decorator and name no token. Remove the import: put the decorator on the class of application/ or infrastructure/ that plays the role, and keep tokens in application/ports.`,
     builtin:
       'The domain imports the Node built-in "{{name}}". Receive the value (an id, a date, a hash) as a parameter, produced by a port such as IdGenerator or Clock in the application layer.',
     upstreamContract:
-      'The domain of "{{here}}" imports the published language of "{{there}}". Translate the upstream contract in application/integration/consumers or infrastructure/anti-corruption and hand the domain its own types.',
+      'The domain of "{{here}}" imports the published language of "{{there}}". Translate the upstream contract in application/integration/handlers or infrastructure/anti-corruption and hand the domain its own types.',
     outerLayer:
       'The domain imports {{target}}. Invert the dependency: declare what the domain needs as an interface in domain/ (or a port in application/ports) and let the outer layer implement it.',
   },
@@ -25,8 +27,11 @@ export const layerDomainPurity = defineRule<MessageId>({
     const here = inLayer(file, 'domain');
     if (here === undefined) return {};
     const allowed = file.config.domainAllowedPackages;
+    const declares = isDeclaredStyle(file);
     return importListener(file, ({ node, target, specifier }) => {
-      if (target.kind === 'package') {
+      if (declares && specifier === DECLARATIONS_ENTRY) {
+        report({ node, messageId: 'declarations' });
+      } else if (target.kind === 'package') {
         const concern = outsideConcern(target.name);
         if (concern !== undefined) report({ node, messageId: 'outsideConcern', data: { importer: 'The domain', specifier, ...concern } });
         else if (!allowed.includes(target.name)) report({ node, messageId: 'package', data: { name: target.name } });

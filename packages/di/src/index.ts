@@ -2,6 +2,7 @@
 // though this package never uses decorators. Importing it here, before tsyringe, spares
 // consumers a line they would otherwise have to remember in every entry point and test.
 import 'reflect-metadata';
+import type { IntegrationEventHandler } from './consumer.js';
 
 export { token, describeToken, type Token } from './token.js';
 export { WiringError, type WiringErrorCode } from './errors.js';
@@ -33,9 +34,10 @@ export {
   UnreadableEventError,
   type ConsumerOptions,
   type ConsumerRuntime,
-  type EventConsumer,
   type EventContract,
+  type IntegrationEventHandler,
 } from './consumer.js';
+export type { JobsOptions } from './jobs.js';
 export {
   createApplication,
   override,
@@ -48,11 +50,12 @@ export {
 } from './application.js';
 export type {
   BindingDescription,
+  DomainEventHandlerDescription,
   HandlerDescription,
+  IntegrationEventHandlerDescription,
+  ScheduledJobDescription,
   OriginDescription,
   PolicyDescription,
-  ReactionDescription,
-  SubscriptionDescription,
   WiringDescription,
 } from './description.js';
 export {
@@ -66,6 +69,7 @@ export {
   EVENT_SUBSCRIBER,
   EXECUTION_SCOPE,
   ID_GENERATOR,
+  JOB_SCHEDULER,
   LOCK,
   LOGGER,
   METRICS,
@@ -93,5 +97,9 @@ export {
   fake,
   type TestApplication,
   type TestApplicationOptions,
+  type TestJobs,
   type TestKernel,
 } from './testing.js';
+
+/** @deprecated Renamed `IntegrationEventHandler`, as in `@ddd-ts-kit/kernel/declarations`. */
+export type IntegrationEventHandlerInstance<Payload> = IntegrationEventHandler<Payload>;

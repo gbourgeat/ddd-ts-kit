@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { writeBusinessDecisions } from './first-class-proof.js';
-import { cli, DEFAULT_STACK, read, REPO_ROOT, scaffoldEverything, tempDir, walk, write, type StackFlags } from './helpers.js';
+import { cli, DEFAULT_STACK, EXPLICIT_STACK, read, REPO_ROOT, scaffoldEverything, tempDir, walk, write, type StackFlags } from './helpers.js';
 
 interface CheckJson {
   ok: boolean;
@@ -16,9 +16,19 @@ interface CheckJson {
 const REBAC_ON_RABBITMQ: StackFlags = { ...DEFAULT_STACK, authz: 'rebac', broker: 'rabbitmq', ci: 'gitlab' };
 const ABAC_ON_KNEX_BY_HAND: StackFlags = { ...DEFAULT_STACK, orm: 'knex', di: 'manual', authz: 'abac' };
 
-/** The stack of the example application: Keycloak, relationships, knex, Redis protocol cache, audit trail, with RabbitMQ or without a broker. */
-const FIRST_CLASS: StackFlags = { http: 'express', validation: 'class-validator', di: 'tsyringe', tests: 'vitest', orm: 'knex', events: 'outbox', authn: 'keycloak', authz: 'rebac', broker: 'rabbitmq', cache: 'redis', audit: 'on' };
-const FIRST_CLASS_WITHOUT_BROKER: StackFlags = { ...FIRST_CLASS, broker: 'none' };
+/** The broker of the first-class stack when it is not the Redis protocol server of the cache. */
+const SECOND_BROKER = 'nats';
+const EXPLICIT_REBAC_ON_RABBITMQ: StackFlags = { ...REBAC_ON_RABBITMQ, style: 'explicit' };
+/** The declared style with discovery in place of the barrel. */
+const DISCOVERED_ON_KNEX: StackFlags = { ...DEFAULT_STACK, orm: 'knex', assembly: 'discovery' };
+
+/**
+ * The stack of the example application: Keycloak, relationships, knex, the audit trail, classes
+ * that declare themselves under the legacy decorator mode class-validator imposes, and one Redis
+ * protocol server for the cache and the event bus, or SECOND_BROKER next to the cache.
+ */
+const FIRST_CLASS: StackFlags = { http: 'express', validation: 'class-validator', di: 'tsyringe', tests: 'vitest', orm: 'knex', events: 'outbox', authn: 'keycloak', authz: 'rebac', broker: 'redis', cache: 'redis', audit: 'on', style: 'declared' };
+const FIRST_CLASS_ON_SECOND_BROKER: StackFlags = { ...FIRST_CLASS, broker: SECOND_BROKER };
 
 const STACKS: readonly StackFlags[] = [
   { http: 'express', validation: 'zod', di: 'tsyringe', tests: 'vitest', orm: 'drizzle', events: 'outbox' },
@@ -38,7 +48,16 @@ const STACKS: readonly StackFlags[] = [
   { http: 'fastify', validation: 'zod', di: 'tsyringe', tests: 'vitest', orm: 'drizzle', events: 'outbox', authn: 'none', authz: 'custom', broker: 'custom' },
   { http: 'express', validation: 'zod', di: 'manual', tests: 'vitest', orm: 'custom', events: 'outbox', authn: 'none', authz: 'rebac', broker: 'rabbitmq' },
   FIRST_CLASS,
-  FIRST_CLASS_WITHOUT_BROKER,
+  FIRST_CLASS_ON_SECOND_BROKER,
+  { ...FIRST_CLASS, broker: 'none' },
+  { ...FIRST_CLASS, broker: 'rabbitmq', style: 'explicit' },
+  EXPLICIT_STACK,
+  EXPLICIT_REBAC_ON_RABBITMQ,
+  DISCOVERED_ON_KNEX,
+  { ...DEFAULT_STACK, broker: 'redis' },
+  { ...DEFAULT_STACK, broker: 'kafka', orm: 'knex' },
+  { ...DEFAULT_STACK, broker: 'nats', style: 'explicit' },
+  { ...DEFAULT_STACK, broker: 'kafka', style: 'explicit', cache: 'redis' },
   { http: 'fastify', validation: 'zod', di: 'manual', tests: 'vitest', orm: 'drizzle', events: 'outbox', authn: 'keycloak', cache: 'redis' },
   { http: 'nest', validation: 'standard-schema', di: 'nest', tests: 'vitest', orm: 'knex', events: 'outbox', cache: 'redis', broker: 'rabbitmq' },
   { http: 'express', validation: 'zod', di: 'tsyringe', tests: 'vitest', orm: 'drizzle', events: 'outbox', audit: 'off' },
@@ -75,7 +94,11 @@ describe('a freshly generated project', () => {
     expect(billing).toEqual(
       expect.arrayContaining([
         'CONTEXT.md',
-        'billing.module.ts',
+        'billing.declarations.ts',
+        'application/ports/billing.ports.ts',
+        'application/authorization/only-issuer-cancels.policy.ts',
+        'infrastructure/external/remote-payment-gateway.adapter.ts',
+        'presentation/http/billing.routes.ts',
         'domain/aggregates/invoice.aggregate.ts',
         'domain/entities/invoice-line.entity.ts',
         'domain/value-objects/money.vo.ts',
@@ -94,7 +117,7 @@ describe('a freshly generated project', () => {
         'infrastructure/persistence/drizzle-invoice.repository.ts',
         'infrastructure/persistence/invoice.mapper.ts',
         'infrastructure/persistence/billing.schema.ts',
-        'infrastructure/persistence/in-memory-list-invoices.reader.ts',
+        'infrastructure/persistence/in-memory-list-invoices-reader.repository.ts',
         'infrastructure/anti-corruption/legacy-erp.translator.ts',
         'presentation/http/issue-invoice.route.ts',
         'presentation/http/list-invoices.route.ts',
@@ -110,7 +133,7 @@ describe('a freshly generated project', () => {
       ]),
     );
     expect(walk(root, 'src/contexts/shipping')).toEqual(
-      expect.arrayContaining(['src/contexts/shipping/application/integration/consumers/billing-invoice-issued.consumer.ts', 'src/contexts/shipping/test/unit/billing-invoice-issued.consumer.spec.ts']),
+      expect.arrayContaining(['src/contexts/shipping/application/integration/handlers/billing-invoice-issued.integration-handler.ts', 'src/contexts/shipping/test/unit/billing-invoice-issued.integration-handler.spec.ts']),
     );
   });
 });
@@ -168,6 +191,8 @@ describe.runIf(process.env['DDD_TS_KIT_E2E'] === '1')('a freshly generated proje
             '@ddd-ts-kit/audit/*': [workspace('audit', '*')],
             '@ddd-ts-kit/redis': [workspace('redis')],
             '@ddd-ts-kit/redis/*': [workspace('redis', '*')],
+            '@ddd-ts-kit/kafka': [workspace('kafka')],
+            '@ddd-ts-kit/nats': [workspace('nats')],
           },
         },
         include: ['src', 'scripts', 'test', path.join(REPO_ROOT, 'packages/validation/src/*.d.ts')],
@@ -196,6 +221,8 @@ describe.runIf(process.env['DDD_TS_KIT_E2E'] === '1')('a freshly generated proje
   const SERVICES = {
     AMQP_URL: process.env['DDD_TS_KIT_TEST_AMQP_URL'] ?? '',
     REDIS_URL: process.env['DDD_TS_KIT_TEST_REDIS_URL'] ?? '',
+    KAFKA_BROKERS: process.env['DDD_TS_KIT_TEST_KAFKA_BROKERS'] ?? '',
+    NATS_URL: process.env['DDD_TS_KIT_TEST_NATS_URL'] ?? '',
   };
 
   function runIn(root: string, command: string, args: readonly string[], extra: Readonly<Record<string, string>> = {}): string {
@@ -208,9 +235,12 @@ describe.runIf(process.env['DDD_TS_KIT_E2E'] === '1')('a freshly generated proje
   }
 
   const PROOF = [
-    ['the default stack: jwt, rbac, no broker', DEFAULT_STACK],
-    ['relationships and RabbitMQ, GitLab pipeline', REBAC_ON_RABBITMQ],
-    ['attribute policies on knex, wired by hand', ABAC_ON_KNEX_BY_HAND],
+    ['the default stack, declared: jwt, rbac, no broker', DEFAULT_STACK],
+    ['declared, relationships and RabbitMQ, GitLab pipeline', REBAC_ON_RABBITMQ],
+    ['declared, discovered instead of listed in a barrel', DISCOVERED_ON_KNEX],
+    ['the default stack in the explicit style', EXPLICIT_STACK],
+    ['explicit, relationships and RabbitMQ, GitLab pipeline', EXPLICIT_REBAC_ON_RABBITMQ],
+    ['explicit, attribute policies on knex, wired by hand', ABAC_ON_KNEX_BY_HAND],
   ] as const;
 
   it.each(PROOF)('passes its own specs, its end-to-end specs (401, 403, 2xx with tokens signed in the test), its build and its documentation checks (%s)', (_label, stack) => {
@@ -223,7 +253,7 @@ describe.runIf(process.env['DDD_TS_KIT_E2E'] === '1')('a freshly generated proje
     expect(specs).not.toContain('failed');
     expect(fs.existsSync(path.join(root, 'src/contexts/billing/test/integration/invoice.repository.contract.spec.ts'))).toBe(true);
     expect(fs.existsSync(path.join(root, 'test/architecture/extractable.spec.ts'))).toBe(true);
-    // A decorated adapter under test: the runner does not transform standard decorators, the plugin of vitest.config.ts does.
+    // A decorated adapter under test: the runner does not lower standard decorators, the plugin of vitest.config.ts does.
     expect(read(root, 'src/contexts/billing/infrastructure/external/remote-tax-rates.adapter.ts')).toContain('@Retry({ attempts: 3');
     expect(runIn(root, bin('vitest'), ['run', 'src/contexts/billing/test/integration/remote-tax-rates.adapter.spec.ts'])).toMatch(/Tests\s+1 passed/);
 
@@ -251,13 +281,16 @@ describe.runIf(process.env['DDD_TS_KIT_E2E'] === '1')('a freshly generated proje
   /**
    * The stack of the example application, with the business decisions of ./first-class-proof.ts:
    * tokens shaped like those of a Keycloak realm and signed in the test, a list narrowed by
-   * relationships, the audit trail read through its route, and the correlation id of a request
-   * followed to the published event. With DDD_TS_KIT_TEST_DATABASE_URL, _AMQP_URL and _REDIS_URL
-   * it runs on those servers (the database is migrated first); without them, in the process.
+   * relationships, the audit trail read through its route, the correlation id of a request
+   * followed to the published event, and that event carried from billing to the handler of
+   * shipping. With DDD_TS_KIT_TEST_DATABASE_URL, _REDIS_URL, _NATS_URL, _KAFKA_BROKERS and
+   * _AMQP_URL it runs on those servers (the database is migrated first), and the event really
+   * crosses the broker; without them, in the process.
    */
   it.each([
-    ['with RabbitMQ', FIRST_CLASS],
-    ['without a broker', FIRST_CLASS_WITHOUT_BROKER],
+    ['on one Redis protocol server for the cache and the event bus', FIRST_CLASS],
+    [`on ${SECOND_BROKER} next to the cache`, FIRST_CLASS_ON_SECOND_BROKER],
+    ['on Kafka next to the cache', { ...FIRST_CLASS, broker: 'kafka' }],
   ] as const)('the first-class stack %s passes its specs, its end-to-end proof, its build and its documentation checks', (_label, stack) => {
     const root = tempDir('first-class');
     scaffoldEverything(root, stack);
@@ -268,14 +301,17 @@ describe.runIf(process.env['DDD_TS_KIT_E2E'] === '1')('a freshly generated proje
     const specs = runIn(root, bin('vitest'), ['run']);
     expect(specs).toMatch(/Test Files\s+\d+ passed/);
     expect(specs).not.toContain('failed');
-    expect(cli(root, 'generate', 'adapter', 'billing', 'PaymentGateway', '--decorators', '--force').stderr).toContain('experimentalDecorators');
+    // class-validator imposes the legacy decorator mode: the declarations and the aspects on a method serve it as they are.
+    expect(JSON.parse(read(root, 'tsconfig.json'))).toMatchObject({ compilerOptions: { experimentalDecorators: true } });
+    expect(read(root, 'src/contexts/billing/infrastructure/external/remote-tax-rates.adapter.ts')).toMatch(/@Adapter\(TAX_RATES[\s\S]*@Retry\(\{ attempts: 3/);
+    expect(runIn(root, bin('vitest'), ['run', 'src/contexts/billing/test/integration/remote-tax-rates.adapter.spec.ts'])).toMatch(/Tests\s+1 passed/);
 
     buildAndCheckDocuments(root);
     expect(read(root, 'openapi/openapi.json')).toContain('"/audit/entries"');
     if (database !== '') runIn(root, bin('knex'), ['migrate:latest'], { DATABASE_URL: database });
 
     const endToEnd = runIn(root, bin('vitest'), ['run', '--config', 'vitest.e2e.config.ts'], { DATABASE_URL: database });
-    expect(endToEnd).toMatch(/Tests\s+8 passed/);
+    expect(endToEnd).toMatch(/Tests\s+9 passed/);
     expect(endToEnd).not.toContain('failed');
   }, 480_000);
 
@@ -329,21 +365,39 @@ describe.runIf(process.env['DDD_TS_KIT_E2E'] === '1')('a freshly generated proje
   const DEPCRUISE = ['depcruise', 'src', '--config', '.dependency-cruiser.cjs'] as const;
   const KNIP = ['knip'] as const;
   const SERVICE = 'src/contexts/billing/domain/services/pricing.service.ts';
+  const COMMAND = 'src/contexts/billing/application/commands/issue-invoice/issue-invoice.command.ts';
+  const HANDLER = 'src/contexts/billing/application/commands/issue-invoice/issue-invoice.handler.ts';
+  const EVENT_HANDLER = 'src/contexts/billing/application/event-handlers/invoice-issued.event-handler.ts';
+  const BARREL = 'src/contexts/billing/billing.declarations.ts';
+  const EDITED = [SERVICE, COMMAND, HANDLER, EVENT_HANDLER, BARREL];
 
   describe('under the three analyzers of the pipeline', () => {
     let root: string;
     let service: string;
+    let generated: Map<string, string>;
 
     beforeAll(() => {
       root = tempDir('analyzers');
       scaffoldEverything(root);
       installAsPublished(root);
-      service = read(root, SERVICE);
+      generated = new Map(EDITED.map((file) => [file, read(root, file)]));
+      service = generated.get(SERVICE) ?? '';
     }, 120_000);
 
     afterEach(() => {
-      write(root, SERVICE, service);
+      for (const [file, content] of generated) write(root, file, content);
     });
+
+    /** The rule ids `ddd-ts-kit check` reports, the way `npm run check:arch` runs it. */
+    function checked(): string[] {
+      return (cli(root, 'check', '--json').json() as { violations: { ruleId: string }[] }).violations.map((violation) => violation.ruleId);
+    }
+
+    const edited = (file: string, from: string, to: string): void => {
+      const content = generated.get(file) ?? '';
+      expect(content).toContain(from);
+      write(root, file, content.replace(from, to));
+    };
 
     it('has no finding: ESLint with the preset, dependency-cruiser with the generated configuration, knip', () => {
       expect(cli(root, 'depcruise-config', '--check').code).toBe(0);
@@ -353,10 +407,13 @@ describe.runIf(process.env['DDD_TS_KIT_E2E'] === '1')('a freshly generated proje
     }, 240_000);
 
     it.each([
-      ['relationships and RabbitMQ, GitLab pipeline', REBAC_ON_RABBITMQ],
-      ['attribute policies on knex, wired by hand', ABAC_ON_KNEX_BY_HAND],
-      ['the first-class stack with RabbitMQ', FIRST_CLASS],
-      ['the first-class stack without a broker', FIRST_CLASS_WITHOUT_BROKER],
+      ['declared, relationships and RabbitMQ, GitLab pipeline', REBAC_ON_RABBITMQ],
+      ['declared, discovered instead of listed in a barrel', DISCOVERED_ON_KNEX],
+      ['the default stack in the explicit style', EXPLICIT_STACK],
+      ['explicit, attribute policies on knex, wired by hand', ABAC_ON_KNEX_BY_HAND],
+      ['the first-class stack on one Redis protocol server', FIRST_CLASS],
+      [`the first-class stack on ${SECOND_BROKER}`, FIRST_CLASS_ON_SECOND_BROKER],
+      ['the first-class stack on Kafka', { ...FIRST_CLASS, broker: 'kafka' }],
     ] as const)('has no finding either with %s', (_label, stack) => {
       const other = tempDir('analyzers');
       scaffoldEverything(other, stack);
@@ -378,6 +435,34 @@ describe.runIf(process.env['DDD_TS_KIT_E2E'] === '1')('a freshly generated proje
       write(root, SERVICE, `import '../../infrastructure/persistence/invoice.mapper.js';\n${service}`);
 
       expect(findingsOf(root, DEPCRUISE)).toContain('layer-domain-purity');
+    }, 120_000);
+
+    it('both analyzers catch a command that no longer says who may send it', () => {
+      edited(COMMAND, "@Requires(billingPermissions['invoice.issue'])\n", '');
+
+      expect(checked()).toContain('authz/declared');
+      expect(findingsOf(root, ESLINT)).toContain('ddd-ts-kit/authz-declared');
+    }, 120_000);
+
+    it('both analyzers catch a handler that no longer declares itself', () => {
+      edited(HANDLER, '@CommandHandler(IssueInvoiceCommand, [INVOICE_REPOSITORY, DOMAIN_EVENTS, ID_GENERATOR, CLOCK])\n', '');
+
+      expect(checked()).toContain('declarations/role-declared');
+      expect(findingsOf(root, ESLINT)).toContain('ddd-ts-kit/declarations-role-declared');
+    }, 120_000);
+
+    it('both analyzers catch a domain event handler named after another event than the one it handles', () => {
+      edited(EVENT_HANDLER, "{ name: 'billing.invoice.issued' }", "{ name: 'billing.invoice.sent' }");
+
+      expect(checked()).toContain('declarations/role-declared');
+      expect(findingsOf(root, ESLINT)).toContain('ddd-ts-kit/declarations-role-declared');
+    }, 120_000);
+
+    it('the checker catches a barrel that a role file written by hand left behind, and so does the documentation check', () => {
+      edited(BARREL, "export * from './application/commands/issue-invoice/issue-invoice.handler.js';\n", '');
+
+      expect(checked()).toContain('declarations/barrel-current');
+      expect(cli(root, 'docs', '--check').stdout).toContain(`stale  ${BARREL}`);
     }, 120_000);
 
     it('knip catches an export nothing uses', () => {

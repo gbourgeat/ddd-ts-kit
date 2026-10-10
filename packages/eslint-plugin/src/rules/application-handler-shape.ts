@@ -1,5 +1,4 @@
-import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import { className, isCallable, memberName, visibilityOf, type ClassNode } from '../support/classes.js';
+import { className, exportedClasses, isCallable, memberName, visibilityOf } from '../support/classes.js';
 import { defineRule } from '../support/define-rule.js';
 
 export const applicationHandlerShape = defineRule<'noHandler' | 'severalClasses' | 'missingExecute' | 'extraPublicMethod'>({
@@ -35,20 +34,3 @@ export const applicationHandlerShape = defineRule<'noHandler' | 'severalClasses'
     };
   },
 });
-
-function exportedClasses(program: TSESTree.Program): ClassNode[] {
-  const exportedNames = new Set(program.body.flatMap(exportedLocalNames));
-  return program.body.flatMap((statement) => {
-    const exportedInline = statement.type === AST_NODE_TYPES.ExportNamedDeclaration || statement.type === AST_NODE_TYPES.ExportDefaultDeclaration;
-    const declaration = exportedInline ? statement.declaration : statement;
-    if (declaration?.type !== AST_NODE_TYPES.ClassDeclaration) return [];
-    return exportedInline || exportedNames.has(declaration.id?.name ?? '') ? [declaration] : [];
-  });
-}
-
-/** Names exported after their declaration: `export { IssueInvoiceHandler }` and `export default IssueInvoiceHandler`. */
-function exportedLocalNames(statement: TSESTree.ProgramStatement): string[] {
-  if (statement.type === AST_NODE_TYPES.ExportDefaultDeclaration) return statement.declaration.type === AST_NODE_TYPES.Identifier ? [statement.declaration.name] : [];
-  if (statement.type !== AST_NODE_TYPES.ExportNamedDeclaration || statement.source !== null) return [];
-  return statement.specifiers.map((specifier) => specifier.local.name);
-}

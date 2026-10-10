@@ -1,6 +1,9 @@
+import { declaredRoleOf } from '../../declared/roles.js';
+import { classesOf } from '../declarations.js';
+import { sourceAt } from '../project.js';
 import { exportedClass, firstArgument, statementEnd } from '../text-shapes.js';
 import type { Project, Rule, SourceFile } from '../types.js';
-import { inContext, inLayer, reporter, toViolations, type Finding } from './helpers.js';
+import { inContext, inLayer, isDeclaredStyle, pathInContext, reporter, toViolations, type Finding } from './helpers.js';
 
 const REGISTRATION = /\.\s*(command|query)\s*\(\s*([A-Z][\w$]*)\s*\)/g;
 const DECLARATION = /\.\s*(?:requires|public)\s*\(/;
@@ -8,6 +11,7 @@ const DEFINE_ROUTE = /(?<![\w$.])defineRoute\s*(?:<[^<>()]*>)?\s*\(/g;
 const SECURITY = /(?<![\w$.])security\s*[:,}]/;
 const MAP_ENTRY = /(?<![\w$.])(?:requires|publicUseCase)\s*\(\s*([\w$]+)/g;
 const USE_CASE_FILE = /\.(command|query)\.ts$/;
+const ACCESS_DECORATORS = ['Requires', 'Public'];
 
 export const authzDeclared: Rule = {
   id: 'authz/declared',
@@ -15,18 +19,18 @@ export const authzDeclared: Rule = {
   scope: 'file',
   run(project) {
     const report = reporter(project, this.id);
-    return project.files.flatMap((file) => toViolations(report, file.path, [...undeclaredRegistrations(file), ...routesWithoutSecurity(file)]));
+    return project.files.flatMap((file) => toViolations(report, file.path, [...undeclaredRegistrations(file, project), ...undeclaredMessages(file, project), ...routesWithoutSecurity(file)]));
   },
   /** Modules wired by hand list their use cases in an authorization map: every command and query has to be in it. */
   acrossProject(project) {
-    if (project.config.stack.di === 'tsyringe') return [];
+    if (project.config.stack.di === 'tsyringe' || isDeclaredStyle(project)) return [];
     const report = reporter(project, this.id);
     const declared = declaredUseCases(project);
     return project.files.flatMap((file) => toViolations(report, file.path, missingFromTheMap(file, declared)));
   },
 };
 
-function undeclaredRegistrations(file: SourceFile): Finding[] {
+function undeclaredRegistrations(file: SourceFile, project: Project): Finding[] {
   if (!inContext(file.location) || file.location.layer !== 'module') return [];
   const { code } = file.scan;
   const registrations = [...code.matchAll(REGISTRATION)];
@@ -34,6 +38,7 @@ function undeclaredRegistrations(file: SourceFile): Finding[] {
     const [, kind = '', name = ''] = match;
     const next = registrations[index + 1]?.index ?? code.length;
     if (DECLARATION.test(code.slice(match.index, Math.min(next, statementEnd(code, match.index))))) return [];
+    if (declaresItsAccess(messageSource(file, name, project), name)) return [];
     return [
       {
         line: file.scan.lineAt(match.index),
@@ -42,6 +47,33 @@ function undeclaredRegistrations(file: SourceFile): Finding[] {
       },
     ];
   });
+}
+
+/** The source that declares the class `name` used in `file`: the file its import points to, or the file itself. */
+function messageSource(file: SourceFile, name: string, project: Project): SourceFile {
+  const imported = file.imports.find(({ names }) => names.includes(name))?.target;
+  return (imported?.kind === 'file' ? sourceAt(project, imported.path) : undefined) ?? file;
+}
+
+/** `@Requires(...)` or `@Public()` on the message class is the declaration, whoever registers the message. */
+function declaresItsAccess(file: SourceFile, name: string): boolean {
+  const message = classesOf(file.scan).find((candidate) => candidate.name === name);
+  return message?.decorations.some((decoration) => ACCESS_DECORATORS.includes(decoration.name)) === true;
+}
+
+/** In the declared style there is no registration to read: the exported class of a command or query file says who may send it. */
+function undeclaredMessages(file: SourceFile, project: Project): Finding[] {
+  const role = isDeclaredStyle(project) && !file.isTest ? declaredRoleOf(pathInContext(project, file) ?? '') : undefined;
+  const message = classesOf(file.scan).find((candidate) => candidate.exported);
+  if (role === undefined || message === undefined || !['command', 'query'].includes(role.suffix)) return [];
+  if (message.decorations.some((decoration) => ACCESS_DECORATORS.includes(decoration.name))) return [];
+  return [
+    {
+      line: message.line,
+      message: `The ${role.suffix} ${message.name} declares no permission and is not declared public.`,
+      fix: `Put @Requires(<context>Permissions['<permission>']) above the class, or @Public() when anybody may send it, both imported from @ddd-ts-kit/kernel/declarations: nothing is reachable by default.`,
+    },
+  ];
 }
 
 function routesWithoutSecurity(file: SourceFile): Finding[] {
@@ -81,7 +113,7 @@ function missingFromTheMap(file: SourceFile, declared: ReadonlyMap<string, Reado
   const kind = USE_CASE_FILE.exec(file.path)?.[1];
   if (here === undefined || kind === undefined || here.inside.length !== 3 || here.inside[0] !== (kind === 'command' ? 'commands' : 'queries')) return [];
   const useCase = exportedClass(file);
-  if (useCase === undefined || declared.get(here.context)?.has(useCase.name) === true) return [];
+  if (useCase === undefined || isDeclared(file, useCase.name, declared.get(here.context))) return [];
   return [
     {
       line: useCase.line,
@@ -89,4 +121,8 @@ function missingFromTheMap(file: SourceFile, declared: ReadonlyMap<string, Reado
       fix: `Add requires(${useCase.name}, <context>Permissions['<permission>']) or publicUseCase(${useCase.name}) to the authorization entries of ${here.context}.module.ts (or of a file in application/authorization/).`,
     },
   ];
+}
+
+function isDeclared(file: SourceFile, name: string, inTheMap: ReadonlySet<string> | undefined): boolean {
+  return inTheMap?.has(name) === true || declaresItsAccess(file, name);
 }

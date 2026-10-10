@@ -14,6 +14,9 @@ const RAW_CONFIGS: readonly Record<string, unknown>[] = [
   { stack: { validation: 'none' }, publishedLanguageAllowedPackages: ['valibot'], rules: { 'clean/stepdown': 'warn' } },
   { standardInterfaces: { TenantInfo: 'TenantScoped', CurrentUser: false, Empty: '', Wrong: true, Count: 3 } },
   { standardInterfaces: ['ILogger'] },
+  { stack: { style: 'declared' } },
+  { stack: { style: 'declared', assembly: 'discovery' } },
+  { stack: { style: 'explicit', orm: 'none' } },
   { contexts: { billing: { classification: 'core', upstreams: ['catalog', { context: 'identity', relationship: 'conformist' }, 42], extraDirectories: ['jobs', { path: './sagas/', reason: 'long flows' }] } } },
 ];
 

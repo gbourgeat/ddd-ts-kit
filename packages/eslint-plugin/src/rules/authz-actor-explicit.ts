@@ -30,7 +30,7 @@ export const authzActorExplicit = defineRule<MessageId>({
     imported: `{{name}} is imported in the {{layer}} layer: it gives the actor or the execution context of the current unit of work without anybody passing it. ${INSTEAD}`,
     used: `{{name}} is used in the {{layer}} layer: it gives the actor or the execution context of the current unit of work without anybody passing it. ${INSTEAD}`,
     helper: `{{name}} is used in the {{layer}} layer: it reads the execution scope to stamp audit columns or to scope a statement by tenant, which is the work of a repository adapter. ${INSTEAD}`,
-    injected: `{{className}} is given {{port}}: a use case whose actor is ambient cannot be called from a consumer, a job or a test without setting a global. ${INSTEAD}`,
+    injected: `{{className}} is given {{port}}: a use case whose actor is ambient cannot be called from an integration event handler, a job or a test without setting a global. ${INSTEAD}`,
     read: `{{read}}() reads the ambient context in the {{layer}} layer. ${INSTEAD}`,
   },
   create({ file, sourceCode, report }) {

@@ -1,12 +1,13 @@
 import { fileURLToPath } from 'node:url';
-import ts from 'typescript';
-import { defineConfig, type Plugin } from 'vitest/config';
+import { decorators } from '@ddd-ts-kit/testing/vitest';
+import { defineConfig } from 'vitest/config';
 
 const INTEGRATION_SPECS = 'src/contexts/*/test/integration/**/*.spec.ts';
 const INTEGRATION_MODE = 'integration';
 
 export default defineConfig(({ mode }) => ({
-  plugins: [standardDecorators()],
+  // Vitest does not lower standard (TC39) decorators, which every class of a declared context carries: the compiler the project builds with does.
+  plugins: [decorators({ compiler: '@typescript/native' })],
   resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
   test: {
     projects: [
@@ -39,26 +40,4 @@ function measuredLayers(mode: string): string[] {
 
 function layer(name: string): string {
   return `src/contexts/*/${name}/**/*.ts`;
-}
-
-/**
- * Vitest does not transform standard (TC39) decorators, which an adapter may carry from
- * `@ddd-ts-kit/aspects/decorators`. A file that holds one is therefore compiled here by
- * TypeScript, with the compiler options of the project and a source map, before the runner
- * reads it; every other file goes through the runner untouched. A project compiled with
- * `experimentalDecorators` has no standard decorator, and the runner handles its legacy ones.
- */
-export function standardDecorators(): Plugin {
-  const project: { config?: { compilerOptions?: unknown } } = ts.readConfigFile('tsconfig.json', (file) => ts.sys.readFile(file));
-  const { options } = ts.convertCompilerOptionsFromJson(project.config?.compilerOptions ?? {}, '.');
-  const compilerOptions = { ...options, module: ts.ModuleKind.ESNext, sourceMap: true, inlineSourceMap: false, declaration: false };
-  return {
-    name: 'standard-decorators',
-    enforce: 'pre',
-    transform(code, id) {
-      if (options.experimentalDecorators === true || !id.endsWith('.ts') || !/^\s*@[A-Za-z_$]/m.test(code)) return null;
-      const { outputText, sourceMapText } = ts.transpileModule(code, { fileName: id, compilerOptions });
-      return { code: outputText.replace(/\n\/\/# sourceMappingURL=.*$/, ''), map: sourceMapText ?? null };
-    },
-  };
 }

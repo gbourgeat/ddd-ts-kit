@@ -108,7 +108,7 @@ describe('consumers declared with builder.on', () => {
 
     const app = createApplication({ modules: [kernelModule(), billingModule, audit] });
 
-    expect(app.describe().subscriptions).toEqual([
+    expect(app.describe().integrationEventHandlers).toEqual([
       {
         event: 'ordering.order.placed',
         version: 1,

@@ -1,5 +1,5 @@
 import { WiringError } from './errors.js';
-import { COMMAND_BUS, DOMAIN_EVENTS, EVENT_SUBSCRIBER, QUERY_BUS } from './kernel-tokens.js';
+import { COMMAND_BUS, DOMAIN_EVENTS, EVENT_SUBSCRIBER, JOB_SCHEDULER, QUERY_BUS } from './kernel-tokens.js';
 import { whereOf, type Wiring } from './wiring.js';
 import { describeToken, type Token } from './token.js';
 
@@ -36,11 +36,12 @@ function assertBusesBound(wiring: Wiring, overridden: Tokens): void {
       user: `the consumer "${consumer}"`,
       module,
     })),
-    ...wiring.reactions.map(({ name, module }) => ({
+    ...wiring.domainEventHandlers.map(({ name, module }) => ({
       bus: DOMAIN_EVENTS,
-      user: `a listener of the domain event "${name}"`,
+      user: `a handler of the domain event "${name}"`,
       module,
     })),
+    ...wiring.jobs.map(({ name, module }) => ({ bus: JOB_SCHEDULER, user: `the job "${name}"`, module })),
   ];
   for (const { bus, user, module } of needs) {
     if (wiring.bindings.has(bus) || overridden.has(bus)) continue;

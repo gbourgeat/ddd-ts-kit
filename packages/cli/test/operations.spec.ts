@@ -103,7 +103,7 @@ describe('generate query --list and generate adapter', () => {
   });
 
   it('binds an adapter with its own policy, or lets the class carry it as standard decorators', () => {
-    const root = project();
+    const root = project('--style', 'explicit');
     cli(root, 'generate', 'port', 'billing', 'PaymentGateway');
     cli(root, 'generate', 'port', 'billing', 'TaxRates');
     expect(cli(root, 'generate', 'adapter', 'billing', 'PaymentGateway').code).toBe(0);
@@ -113,18 +113,19 @@ describe('generate query --list and generate adapter', () => {
     expect(module).toContain("builder.bind(PAYMENT_GATEWAY).toFactory(() => new RemotePaymentGateway()).as('external').with(ownPolicy(retry({ attempts: 3, backoff: { baseMs: 100 } }), timeout(2000)));");
     expect(module).toContain("builder.bind(TAX_RATES).toFactory(() => new RemoteTaxRates()).as('gateway').with(ownPolicy());");
     expect(read(root, 'src/contexts/billing/infrastructure/external/remote-tax-rates.adapter.ts')).toContain("import { Retry, Timeout } from '@ddd-ts-kit/aspects/decorators';");
-    expect(read(root, 'vitest.config.ts')).toContain('ts.transpileModule(code, { fileName: id, compilerOptions })');
+    expect(read(root, 'vitest.config.ts')).toContain("import { decorators } from '@ddd-ts-kit/testing/vitest';");
     expect(cli(root, 'generate', 'adapter', 'billing', 'Unknown').code).toBe(2);
     expect(cli(root, 'generate', 'adapter', 'billing', 'PaymentGateway', '--kind', 'queue', '--force').code).toBe(2);
   });
 
-  it('refuses --decorators where decorator syntax has its legacy meaning', () => {
-    const root = project('--validation', 'class-validator');
+  it('takes --decorators where decorator syntax has its legacy meaning too: the aspects serve both modes', () => {
+    const root = project('--validation', 'class-validator', '--style', 'explicit');
     cli(root, 'generate', 'port', 'billing', 'PaymentGateway');
 
-    const refused = cli(root, 'generate', 'adapter', 'billing', 'PaymentGateway', '--decorators');
+    expect(cli(root, 'generate', 'adapter', 'billing', 'PaymentGateway', '--decorators').code).toBe(0);
 
-    expect(refused.code).toBe(2);
-    expect(refused.stderr).toContain('experimentalDecorators');
+    expect(read(root, 'src/contexts/billing/infrastructure/external/remote-payment-gateway.adapter.ts')).toContain('@Retry({ attempts: 3, backoff: { baseMs: 100 } })');
+    expect(read(root, 'src/contexts/billing/billing.module.ts')).toContain("builder.bind(PAYMENT_GATEWAY).toFactory(() => new RemotePaymentGateway()).as('external').with(ownPolicy());");
+    expect(read(root, 'vitest.config.ts')).not.toContain('decorators');
   });
 });

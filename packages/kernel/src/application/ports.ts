@@ -33,4 +33,5 @@ export type DependencyKind =
   | 'external'
   | 'use-case'
   | 'publisher'
-  | 'consumer';
+  | 'consumer'
+  | 'job';

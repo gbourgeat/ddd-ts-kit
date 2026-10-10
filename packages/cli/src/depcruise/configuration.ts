@@ -1,4 +1,5 @@
 import type { Config } from '../config.js';
+import { DISCOVERED_SUFFIXES } from '../declared/roles.js';
 
 /**
  * The dependency-cruiser rules of a project, derived from its config: the layer and context
@@ -180,11 +181,19 @@ function orphanExceptions(config: Config): string[] {
     `^${escape(config.platformDir)}/tracing\\.ts$`,
     `^${escape(config.contextsDir)}/[^/]+/published-language/`,
     `^${escape(config.contextsDir)}/[^/]+/test/fakes/`,
+    ...discoveredFiles(config),
     '\\.d\\.[cm]?ts$',
     '\\.(spec|test)\\.[cm]?ts$',
     '(^|/)[^/]+\\.config\\.[cm]?[jt]s$',
     '^scripts/',
   ];
+}
+
+/** Under discovery the role files of a declared context are loaded at startup, by no import. */
+function discoveredFiles(config: Config): string[] {
+  const { style, assembly } = config.stack;
+  if (style !== 'declared' || assembly !== 'discovery') return [];
+  return [`^${escape(config.contextsDir)}/[^/]+/(application|infrastructure)/.*\\.(${DISCOVERED_SUFFIXES.join('|')})\\.ts$`];
 }
 
 /** A package as resolved in node_modules, as a linked workspace, or as written when it is not installed. */

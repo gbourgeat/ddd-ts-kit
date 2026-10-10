@@ -1,5 +1,5 @@
 import { readConfig, type Stack } from '../config.js';
-import { e2eSpecs, readContexts, type ContextFacts } from '../docs/model.js';
+import { e2eSpecs, readContexts, type ContextFacts, type DeclaredFacts, type DeclaredUseCase } from '../docs/model.js';
 import { Workspace } from '../workspace.js';
 import { Arguments, type Command } from './args.js';
 
@@ -43,20 +43,50 @@ function formatProjectMap(map: ProjectMap): string {
 
 function formatContext(context: ContextSummary): string {
   const list = (label: string, values: readonly string[]): string => `  ${label}: ${values.length > 0 ? values.join(', ') : 'none'}`;
-  const flags = [...(context.declared ? [] : ['missing from the config']), ...(context.onDisk ? [] : ['missing on disk'])];
+  const lists = context.declarations === undefined ? context : declaredLists(context.declarations);
   return [
-    `${context.name} [${context.classification}]${flags.length > 0 ? ` (${flags.join(', ')})` : ''}`,
+    heading(context),
     `  glossary: ${context.glossary === 0 ? 'empty (define the ubiquitous language first)' : `${context.glossary} term${context.glossary === 1 ? '' : 's'}`}`,
     list('upstreams', context.upstreams.map((upstream) => `${upstream.context} (${upstream.relationship})`)),
     list('aggregates', context.aggregates),
-    list('commands', context.commands),
-    list('queries', context.queries),
+    list('commands', lists.commands),
+    list('queries', lists.queries),
     list('domain events', context.domainEvents),
     list('published events', context.publishedEvents),
+    list('integration event handlers', lists.integrationEventHandlers),
     list('builders', context.builders),
     list('permissions', context.permissions),
-    list('policies', context.policies),
-    list('gateways', context.gateways),
+    list('policies', lists.policies),
+    list('gateways', lists.gateways),
+    ...('adapters' in lists ? [list('adapters', lists.adapters)] : []),
     `  deployable alone: ${context.deployable ? 'yes' : 'no'}`,
   ].join('\n');
+}
+
+function heading(context: ContextSummary): string {
+  const flags = [...(context.declared ? [] : ['missing from the config']), ...(context.onDisk ? [] : ['missing on disk'])];
+  return `${context.name} [${context.classification}]${flags.length > 0 ? ` (${flags.join(', ')})` : ''}`;
+}
+
+interface DeclaredLists {
+  readonly commands: readonly string[];
+  readonly queries: readonly string[];
+  readonly integrationEventHandlers: readonly string[];
+  readonly policies: readonly string[];
+  readonly gateways: readonly string[];
+  readonly adapters: readonly string[];
+}
+
+/** The lists of a declared context, each element followed by what its declaration says. */
+function declaredLists(declarations: DeclaredFacts): DeclaredLists {
+  const useCases = (kind: DeclaredUseCase['kind']): string[] =>
+    declarations.useCases.filter((useCase) => useCase.kind === kind).map(({ name, requires }) => `${name} (${requires === 'public' ? 'public' : `requires ${requires}`})`);
+  return {
+    commands: useCases('command'),
+    queries: useCases('query'),
+    integrationEventHandlers: declarations.integrationEventHandlers.map(({ name, consumer, event }) => `${name} (consumer ${consumer === '' ? 'not written' : consumer}, on ${event})`),
+    policies: declarations.policies.map(({ name, permission }) => `${name} (on ${permission})`),
+    gateways: declarations.gateways.map(({ name, token }) => `${name} (${token})`),
+    adapters: declarations.adapters.map(({ name, token }) => `${name} (${token})`),
+  };
 }

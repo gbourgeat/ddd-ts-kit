@@ -15,7 +15,9 @@ export const DOCS_UIS = ['swagger', 'scalar', 'redoc', 'none'] as const;
 export const CI_PLATFORMS = ['github', 'gitlab', 'both', 'none'] as const;
 export const AUTHN_STACKS = ['jwt', 'keycloak', 'none'] as const;
 export const AUTHZ_STACKS = ['rbac', 'abac', 'rebac', 'custom'] as const;
-export const BROKER_STACKS = ['none', 'rabbitmq', 'custom'] as const;
+export const BROKER_STACKS = ['none', 'rabbitmq', 'kafka', 'nats', 'redis', 'custom'] as const;
+export const STYLES = ['declared', 'explicit'] as const;
+export const ASSEMBLIES = ['barrel', 'discovery'] as const;
 export const CACHE_STACKS = ['none', 'redis'] as const;
 export const AUDIT_MODES = ['on', 'off'] as const;
 export const GUARD_MODES = ['enforce', 'advise', 'off'] as const;
@@ -42,6 +44,8 @@ type CiPlatform = (typeof CI_PLATFORMS)[number];
 type AuthnStack = (typeof AUTHN_STACKS)[number];
 type AuthzStack = (typeof AUTHZ_STACKS)[number];
 type BrokerStack = (typeof BROKER_STACKS)[number];
+type Style = (typeof STYLES)[number];
+type Assembly = (typeof ASSEMBLIES)[number];
 type CacheStack = (typeof CACHE_STACKS)[number];
 type AuditMode = (typeof AUDIT_MODES)[number];
 export type Severity = (typeof SEVERITIES)[number];
@@ -68,6 +72,15 @@ export interface Stack {
   readonly cache: CacheStack;
   /** Whether the audit trail is wired: decisions, commands and integration events, recorded from outside the use cases. */
   readonly audit: AuditMode;
+  /**
+   * How a context is written: `declared`, each class says what it is with a decorator of
+   * `@ddd-ts-kit/kernel/declarations` and there is no module file; `explicit`, every binding is
+   * written in `<context>.module.ts`. A config that says nothing was written before the declared
+   * style existed: it is explicit.
+   */
+  readonly style: Style;
+  /** How a declared context reaches the composition root: one generated barrel, or discovery of its role files at startup. */
+  readonly assembly: Assembly;
 }
 
 export interface Upstream {
@@ -199,6 +212,8 @@ function parseStack(stack: Record<string, unknown>): Stack {
     broker: choose('broker', BROKER_STACKS, 'none'),
     cache: choose('cache', CACHE_STACKS, 'none'),
     audit: choose('audit', AUDIT_MODES, orm === 'none' ? 'off' : 'on'),
+    style: choose('style', STYLES, 'explicit'),
+    assembly: choose('assembly', ASSEMBLIES, 'barrel'),
   };
 }
 
@@ -265,7 +280,13 @@ export function serializeConfig(config: Config): string {
   }
   const { publishedLanguageAllowedPackages: _derived, limits: _limits, guard: _guard, deviations, standardInterfaces, ...written } = config;
   const optional = { ...(deviations.length > 0 ? { deviations } : {}), ...(Object.keys(standardInterfaces).length > 0 ? { standardInterfaces } : {}) };
-  return `${JSON.stringify({ ...written, contexts, ...optional }, null, 2)}\n`;
+  return `${JSON.stringify({ ...written, stack: writtenStack(config.stack), contexts, ...optional }, null, 2)}\n`;
+}
+
+/** The assembly is a choice of the declared style only: an explicit project has a module file and nothing to assemble. */
+function writtenStack(stack: Stack): Partial<Stack> {
+  const { assembly, ...rest } = stack;
+  return stack.style === 'declared' ? { ...rest, assembly } : rest;
 }
 
 /** Changes the config text through its JSON value, so that what the user wrote elsewhere keeps its shape. */

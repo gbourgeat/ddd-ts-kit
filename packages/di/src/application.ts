@@ -13,11 +13,13 @@ import { assertSound, cycleError } from './checks.js';
 import { describeWiring, type WiringDescription } from './description.js';
 import { WiringError } from './errors.js';
 import type { ConsumerRuntime } from './consumer.js';
+import { definitionOf, effectiveJobs, type EffectiveJob, type JobsOptions } from './jobs.js';
 import {
   COMMAND_BUS,
   DOMAIN_EVENTS,
   EVENT_SUBSCRIBER,
   EXECUTION_SCOPE,
+  JOB_SCHEDULER,
   PROCESSED_EVENTS,
   QUERY_BUS,
 } from './kernel-tokens.js';
@@ -66,13 +68,15 @@ export interface ApplicationOptions {
    * `.requires(permission)` nor `.public()`, or in which nothing checks them. Default `optional`.
    */
   readonly authorization?: AuthorizationMode;
+  /** Whether this process runs the declared jobs by time, and what configuration changes of each. */
+  readonly jobs?: JobsOptions;
 }
 
 export interface Application {
   readonly resolve: Resolve;
-  /** Calls `onStart` of every module, in declaration order, then subscribes the consumers. */
+  /** Calls `onStart` of every module, in declaration order, subscribes the consumers, then starts the job scheduler. */
   start(): Promise<void>;
-  /** Unsubscribes the consumers, then calls `onStop` of every started module, in reverse order. */
+  /** Stops the job scheduler, unsubscribes the consumers, then calls `onStop` of every started module, in reverse order. */
   stop(): Promise<void>;
   /** The wiring as plain data, for diagnostics and generated documentation. */
   describe(): WiringDescription;
@@ -96,7 +100,7 @@ export function assemble(wiring: Wiring, options: ApplicationOptions): Applicati
   const overridden = new Set(overrides.map(([target]) => target));
   assertSound(wiring, overridden);
   if (options.authorization === 'required') assertAuthorizationDeclared(wiring, overridden);
-  return new ContainerApplication(wiring, options);
+  return new ContainerApplication(wiring, options, effectiveJobs(wiring, options.jobs));
 }
 
 /**
@@ -123,11 +127,16 @@ class ContainerApplication implements Application {
   readonly #resolving: Token<unknown>[] = [];
   readonly #started: ContextModule[] = [];
   #subscriptions: Subscription[] | undefined;
+  // A private name: the test application lays its own `jobs` member over this object.
+  readonly #jobs: readonly EffectiveJob[];
+  #jobsStarted = false;
 
   constructor(
     private readonly wiring: Wiring,
     private readonly options: ApplicationOptions,
+    jobs: readonly EffectiveJob[],
   ) {
+    this.#jobs = jobs;
     // Registered first: a module binding or an override of the guard comes later and wins.
     this.container.register(USE_CASE_GUARD, { useValue: passEveryMessage });
     this.container.register(USE_CASE_DECLARATIONS, { useValue: declarationsOf(wiring) });
@@ -136,7 +145,8 @@ class ContainerApplication implements Application {
     for (const [target, value] of options.overrides ?? []) this.#registerValue(target, value);
     this.#registerHandlers('command');
     this.#registerHandlers('query');
-    this.#attachReactions();
+    this.#attachDomainEventHandlers();
+    this.#registerJobs();
   }
 
   // Arrow properties, here and below: callers destructure them and pass them around.
@@ -160,22 +170,24 @@ class ContainerApplication implements Application {
       await module.onStart?.({ resolve: this.resolve });
     }
     this.#subscriptions ??= this.#subscribeConsumers();
+    await this.#startJobs();
   };
 
   readonly stop = async (): Promise<void> => {
-    const failures = [...this.#unsubscribeConsumers(), ...(await this.#stopModules())];
+    const failures = [...(await this.#stopJobs()), ...this.#unsubscribeConsumers(), ...(await this.#stopModules())];
     if (failures.length > 0) {
       throw new AggregateError(failures, `${failures.length} module(s) failed to stop`);
     }
   };
 
-  readonly describe = (): WiringDescription => describeWiring(this.wiring, this.#overridden);
+  readonly describe = (): WiringDescription => describeWiring(this.wiring, this.#overridden, this.#jobs);
 
   replace(target: Token<unknown>, value: unknown): void {
     this.#registerValue(target, value);
     if (target === COMMAND_BUS) this.#registerHandlers('command');
     if (target === QUERY_BUS) this.#registerHandlers('query');
-    if (target === DOMAIN_EVENTS) this.#attachReactions();
+    if (target === DOMAIN_EVENTS) this.#attachDomainEventHandlers();
+    if (target === JOB_SCHEDULER) this.#registerJobs();
   }
 
   #register(binding: Binding): void {
@@ -215,11 +227,17 @@ class ContainerApplication implements Application {
     for (const handling of handlings) bus.register(handling.message, this.#lazily(handling));
   }
 
-  #attachReactions(): void {
-    const { reactions } = this.wiring;
-    if (reactions.length === 0) return;
+  #attachDomainEventHandlers(): void {
+    const { domainEventHandlers } = this.wiring;
+    if (domainEventHandlers.length === 0) return;
     const dispatcher = this.resolve(DOMAIN_EVENTS);
-    for (const reaction of reactions) reaction.attach(this.resolve, dispatcher);
+    for (const handling of domainEventHandlers) handling.attach(this.resolve, dispatcher);
+  }
+
+  #registerJobs(): void {
+    if (this.#jobs.length === 0) return;
+    const scheduler = this.resolve(JOB_SCHEDULER);
+    for (const job of this.#jobs) scheduler.register(definitionOf(job, this.resolve));
   }
 
   // Async so that a handler failing to be built rejects the execution instead of throwing
@@ -255,6 +273,25 @@ class ContainerApplication implements Application {
 
   #resolveIfBound<T>(target: Token<T>): T | undefined {
     return this.container.isRegistered(target) ? this.resolve(target) : undefined;
+  }
+
+  /** After the consumers: a job sends commands whose events must find their handlers subscribed. */
+  async #startJobs(): Promise<void> {
+    if (this.options.jobs?.start === false || this.#jobs.length === 0 || this.#jobsStarted) return;
+    this.#jobsStarted = true;
+    await this.resolve(JOB_SCHEDULER).start();
+  }
+
+  /** First: the runs in progress end, or are aborted, while everything they use is still up. */
+  async #stopJobs(): Promise<unknown[]> {
+    if (!this.#jobsStarted) return [];
+    this.#jobsStarted = false;
+    try {
+      await this.resolve(JOB_SCHEDULER).stop();
+      return [];
+    } catch (error) {
+      return [error];
+    }
   }
 
   #unsubscribeConsumers(): unknown[] {

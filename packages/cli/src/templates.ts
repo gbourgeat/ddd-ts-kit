@@ -21,6 +21,10 @@ export function readTemplate(name: string): string {
   return content;
 }
 
+export function templateExists(name: string): boolean {
+  return cache.has(name) || fs.existsSync(`${TEMPLATES_ROOT}${name}`);
+}
+
 export function renderTemplate(name: string, context: RenderContext): string {
   // Dropped conditional blocks may leave runs of blank lines behind: keep one, and one final newline.
   return render(readTemplate(name), context, `templates/${name}`).replace(/\n{3,}/g, '\n\n').replace(/\n+$/, '\n');

@@ -24,6 +24,11 @@ In `<context>.module.ts`:
 
 - a name imported from another context, outside its `published-language/`, given to `bind`, `rebind`, `resolve`, or to `handledBy` and `toClass` (directly or in the dependency list)
 
+In a role file of a declared-style project (`stack.style: "declared"`; the files of the table below):
+
+- a named import written in `UPPER_SNAKE_CASE` (a token) taken from another context, whatever the file: its ports, its published language, anything of it
+- anything imported from a `*.ports.ts` file of another context
+
 Incorrect:
 
 ```ts
@@ -39,6 +44,12 @@ export function remember(currency: string, rate: number): void {
 // billing/billing.module.ts
 import { CATALOG_READER } from '../catalog/catalog.module.js';
 builder.query(GetPrice).public().handledBy(GetPriceHandler, [CATALOG_READER]);
+
+// declared style: billing/application/queries/get-price/get-price.handler.ts
+import { PRODUCT_READER } from '../../../../catalog/application/ports/catalog.ports.js';
+
+@QueryHandler(GetPriceQuery, [PRODUCT_READER])
+export class GetPriceHandler {}
 ```
 
 Correct:
@@ -50,11 +61,30 @@ await sql`select i.id, p.label from billing.invoices i join billing.products p o
 // billing/billing.module.ts
 builder.bind(PRICE_SOURCE).toClass(InProcessPriceSource, [QUERY_BUS]).as('gateway');
 builder.query(GetPrice).public().handledBy(GetPriceHandler, [PRICE_SOURCE]);
+
+// declared style: the token is one of billing, its gateway calls catalog
+import { PRICE_CATALOG_GATEWAY } from '../../ports/billing.ports.js';
+
+@QueryHandler(GetPriceQuery, [PRICE_CATALOG_GATEWAY])
+export class GetPriceHandler {}
 ```
 
 ## Details
 
 The schema of a context is its name with dashes turned into underscores, as `schemaNameOf` computes it. A text reads as SQL when it holds one of `select`, `insert`, `update`, `delete`, `from`, `join`, `into`, `references`. The import of another context's internals is itself reported by `context/published-language-only`; this rule reports what is done with it.
+
+In the declared style there is no module file: a class names the tokens it needs next to its decorator, so the import of a token is the wiring. The role files are:
+
+| File, relative to the context | Role |
+|---|---|
+| `application/commands/**/*.command.ts`, `application/queries/**/*.query.ts` | message |
+| `application/commands/**/*.handler.ts`, `application/queries/**/*.handler.ts` | handler |
+| `application/integration/handlers/**/*.integration-handler.ts` | integration event handler |
+| `application/event-handlers/**/*.event-handler.ts`, `application/integration/publishers/**/*.publisher.ts` | reaction to a domain event |
+| `application/authorization/**/*.policy.ts` | policy |
+| `infrastructure/persistence/**/*.repository.ts`, `infrastructure/**/*.gateway.ts`, `infrastructure/**/*.adapter.ts` | adapter |
+
+Tokens of the same context, of `@ddd-ts-kit/kernel`, of `@ddd-ts-kit/auth` and of the platform directory are what a role file wires with. An integration event definition imported from the published language of an upstream (`productListedV1`) is not a token and is not reported. A module file kept in a declared-style project is judged as in the explicit style, and an explicit-style project is judged as before.
 
 ## Options
 
@@ -70,6 +100,8 @@ None.
 - SQL outside `infrastructure/persistence/` is not read.
 - A shared transaction (two contexts writing in one unit of work) is not visible in one file.
 - An exported container changed only by its importers is not seen; one never changed is taken for a constant. `Object.freeze` is not required.
+- In a role file only another context is reported: a constant in `UPPER_SNAKE_CASE` taken from the shared kernel or from a package is not known to be a token and is left alone.
+- A token of another context renamed to another case by a file of the importing context, or held in a namespace import of a file that is not a `*.ports.ts`, is not seen.
 - A foreign token that reaches the module through the platform or the shared kernel is not seen: `dependency-cruiser` and the generated test that boots each context alone close that gap.
 
 ## With the CLI checker

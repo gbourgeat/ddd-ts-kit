@@ -1,10 +1,12 @@
+import type { Config } from '../config.js';
 import { CliError } from '../errors.js';
 import type { Name } from '../naming.js';
 import type { RenderContext } from '../render.js';
 import { renderTemplate } from '../templates.js';
+import { isDeclared } from './declared.js';
 import { applyWiring } from './emit.js';
 import { concept } from './language.js';
-import { vars, type Scope } from './scope.js';
+import { PROVIDED_BROKERS, vars, type Scope } from './scope.js';
 
 /** A use case as the authorization sees it: its message class and whether it is a command or a query. */
 export interface UseCaseMessage {
@@ -64,6 +66,10 @@ function publicAccess(useCase: UseCaseMessage): RenderContext {
     manualDeclaration: `publicUseCase(${message}),`,
     permissionsImport: '',
     holder: '',
+    requirement: '',
+    useCasePermissionsImport: '',
+    decorator: 'Public',
+    decoration: 'Public()',
     queryBase: 'Query',
     constructorSample: 'constructor(readonly customerId: string) { super(); }',
   };
@@ -93,6 +99,10 @@ function protectedAccess(scope: Scope, useCase: UseCaseMessage, permission: stri
     manualDeclaration: `requires(${message}, ${requirement}),`,
     permissionsImport: `import { ${set} } from './${permissionsFile(scope.context).replace(/\.ts$/, '.js')}';`,
     holder: 'holder',
+    requirement,
+    useCasePermissionsImport: `import { ${set} } from '../../authorization/${scope.context.kebab}.permissions.js';`,
+    decorator: 'Requires',
+    decoration: `Requires(${requirement})`,
     queryBase: 'AuthorizedQuery',
     constructorSample: 'constructor(actor: Actor, readonly customerId: string) { super(actor); }',
   };
@@ -104,13 +114,50 @@ function resourceOption(scope: Scope): string {
   return `, { resource: () => ({ type: 'context', id: '${scope.context.kebab}' }) }`;
 }
 
-/** What a handler spec imports from the module file and lists as modules, with or without the guard. */
+/**
+ * What a handler spec builds its test application from: the module file of the context and what
+ * it exports, or the declarations of the context; with or without the guard.
+ */
 export function specVars(scope: Scope, access: RenderContext, tokens: readonly string[]): RenderContext {
   const isProtected = access['protected'] === true;
   const names = [...tokens, `${scope.context.camel}Module`, ...(isProtected ? [`${scope.context.camel}Permissions`] : [])];
+  const discovered = isDeclared(scope.config) && scope.config.stack.assembly === 'discovery';
   return {
     moduleNames: names.join(', '),
-    modules: ['platformTestModule', `${scope.context.camel}Module`, ...(isProtected ? ['holders'] : [])].join(', '),
+    modules: ['platformTestModule', assembledContext(scope, '../../'), ...(isProtected ? ['holders'] : [])].join(', '),
     guard: isProtected ? '.use(holders)' : '',
+    di: isDeclared(scope.config) && !discovered ? 'contextModule, ' : '',
+    // Discovery reads the disk: the arrangement of a spec waits for it.
+    async: discovered ? 'async ' : '',
+    await: discovered ? 'await ' : '',
   };
+}
+
+/**
+ * The module of the context as a composition root hosts it: the assembled context, which behind
+ * a broker of the kit listens through the subscriber of its own name.
+ */
+export function hostedContext(scope: Pick<Scope, 'config' | 'context'>, toContext: string): string {
+  const { config, context } = scope;
+  if (!listensOnBroker(config) || config.stack.assembly === 'discovery') return assembledContext(scope, toContext);
+  return `listeningContext('${context.kebab}', ${context.camel}Declarations)`;
+}
+
+/** What a composition root imports, beyond the declarations, to host a declared context. */
+export function hostImports(config: Config, toPlatform: string): string[] {
+  if (config.stack.assembly === 'discovery') return [];
+  return [listensOnBroker(config) ? `import { listeningContext } from '${toPlatform}/listening-context.js';` : "import { contextModule } from '@ddd-ts-kit/di';"];
+}
+
+const listensOnBroker = (config: Config): boolean => isDeclared(config) && PROVIDED_BROKERS.includes(config.stack.broker);
+
+/**
+ * The module of the context as the style of the project assembles it; `toContext` is the path
+ * from the file that writes it to the directory of the context.
+ */
+export function assembledContext(scope: Pick<Scope, 'config' | 'context'>, toContext: string): string {
+  const { config, context } = scope;
+  if (!isDeclared(config)) return `${context.camel}Module`;
+  if (config.stack.assembly === 'discovery') return `await discoverContext('${context.kebab}', new URL('${toContext}', import.meta.url))`;
+  return `contextModule('${context.kebab}', ${context.camel}Declarations)`;
 }

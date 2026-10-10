@@ -1,6 +1,8 @@
 import type { Actor } from '../application/actor.js';
 import type { Message, MessageInfo, MessageType, ResultOf } from '../application/bus.js';
 import type { IntegrationEvent } from '../application/integration-event.js';
+import type { JobOptions, ScheduledJob } from '../application/job.js';
+import type { JobSchedule } from '../application/job-schedule.js';
 import type { DependencyKind } from '../application/ports.js';
 import type { DomainEvent } from '../domain/domain-event.js';
 import type { Result } from '../domain/result.js';
@@ -55,7 +57,7 @@ export interface HandlerDeclaration {
 }
 
 /**
- * What a listener needs from the declaration of an integration event. A definition made by
+ * What an integration event handler needs from the declaration of an integration event. A definition made by
  * `defineIntegrationEvent` of `@ddd-ts-kit/events` fits as it is.
  */
 export interface EventContract<Payload> {
@@ -65,49 +67,49 @@ export interface EventContract<Payload> {
 }
 
 /**
- * A class of `application/integration/consumers/`. `handle` is declared as a property so that
- * the compiler compares its parameter strictly: a consumer of another event is rejected.
+ * A class of `application/integration/handlers/`. `handle` is declared as a property so that
+ * the compiler compares its parameter strictly: a handler of another event is rejected.
  */
-export interface EventConsumer<Payload> {
+export interface IntegrationEventHandler<Payload> {
   readonly handle: (event: IntegrationEvent<Payload>) => Promise<void>;
 }
 
-export interface EventListenerDeclaration {
-  readonly role: 'event-listener';
+export interface IntegrationEventHandlerDeclaration {
+  readonly role: 'integration-event-handler';
   readonly event: Pick<EventContract<unknown>, 'type' | 'version'>;
   /** Stable name of the consumer: the idempotency scope and the system actor it runs as. */
   readonly consumer: string;
   readonly actorOf?: (event: IntegrationEvent) => Actor | undefined;
   readonly dependencies: readonly Token<unknown>[];
   /** Hands the contract and the class to `use`, with the payload type the two share. */
-  pair<Outcome>(use: EventListenerUse<Outcome>): Outcome;
+  pair<Outcome>(use: IntegrationEventHandlerUse<Outcome>): Outcome;
 }
 
-export type EventListenerUse<Outcome> = <Payload>(
+export type IntegrationEventHandlerUse<Outcome> = <Payload>(
   contract: EventContract<Payload>,
-  implementation: new (...args: never) => EventConsumer<Payload>,
+  implementation: new (...args: never) => IntegrationEventHandler<Payload>,
 ) => Outcome;
 
 export type DomainEventType<E extends DomainEvent> = abstract new (...args: never) => E;
 
-/** A class of `application/event-handlers/`: one reaction to one domain event of its own context. */
-export interface DomainEventReaction<E extends DomainEvent> {
+/** A class of `application/event-handlers/`: one handler of one domain event of its own context. */
+export interface DomainEventHandler<E extends DomainEvent> {
   readonly handle: (event: E) => Promise<void>;
 }
 
-export interface DomainEventListenerDeclaration {
-  readonly role: 'domain-event-listener';
+export interface DomainEventHandlerDeclaration {
+  readonly role: 'domain-event-handler';
   /** The `name` the events of this type carry: what the dispatcher routes by. */
   readonly name: string;
   readonly event: DomainEventType<DomainEvent>;
   readonly dependencies: readonly Token<unknown>[];
   /** Hands the event type and the class to `use`, with the event type the two share. */
-  pair<Outcome>(use: DomainEventListenerUse<Outcome>): Outcome;
+  pair<Outcome>(use: DomainEventHandlerUse<Outcome>): Outcome;
 }
 
-export type DomainEventListenerUse<Outcome> = <E extends DomainEvent>(
+export type DomainEventHandlerUse<Outcome> = <E extends DomainEvent>(
   event: DomainEventType<E>,
-  implementation: new (...args: never) => DomainEventReaction<E>,
+  implementation: new (...args: never) => DomainEventHandler<E>,
 ) => Outcome;
 
 /** What an aspect is told about the instance it wraps. */
@@ -161,11 +163,23 @@ export interface PolicyDeclaration {
   readonly dependencies: readonly Token<unknown>[];
 }
 
+export interface JobDeclaration {
+  readonly role: 'job';
+  /** `<context>.<job-name>`: the system actor the job runs as, its lock and its metrics label. */
+  readonly name: string;
+  readonly schedule: JobSchedule;
+  /** As written: the defaults are filled in where the job is registered. */
+  readonly options: JobOptions;
+  readonly implementation: new (...args: never) => ScheduledJob;
+  readonly dependencies: readonly Token<unknown>[];
+}
+
 /** What a class said about itself. Plain data: reading it instantiates and resolves nothing. */
 export type Declaration =
   | MessageDeclaration
   | HandlerDeclaration
-  | EventListenerDeclaration
-  | DomainEventListenerDeclaration
+  | IntegrationEventHandlerDeclaration
+  | DomainEventHandlerDeclaration
   | PortDeclaration
-  | PolicyDeclaration;
+  | PolicyDeclaration
+  | JobDeclaration;

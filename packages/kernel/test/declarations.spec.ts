@@ -73,9 +73,9 @@ function describeTheClinic(label: string, load: () => Promise<Clinic>): void {
       });
     });
 
-    it('a listener of an integration event names its event and its stable consumer name', () => {
+    it('a handler of an integration event names its event and its stable consumer name', () => {
       const { WelcomeOnPatientRegistered, PatientRegistered } = clinic;
-      const declaration = declared(WelcomeOnPatientRegistered, 'event-listener');
+      const declaration = declared(WelcomeOnPatientRegistered, 'integration-event-handler');
 
       expect(declaration).toMatchObject({
         event: { type: 'registry.patient.registered', version: 1 },
@@ -88,9 +88,9 @@ function describeTheClinic(label: string, load: () => Promise<Clinic>): void {
       ]);
     });
 
-    it('a listener of a domain event names the event class and the name its events carry', () => {
+    it('a handler of a domain event names the event class and the name its events carry', () => {
       const { RemindOnVisitScheduled, VisitScheduled, REMINDERS } = clinic;
-      const declaration = declared(RemindOnVisitScheduled, 'domain-event-listener');
+      const declaration = declared(RemindOnVisitScheduled, 'domain-event-handler');
 
       expect(declaration).toMatchObject({ name: 'clinic.visit.scheduled', event: VisitScheduled, dependencies: [REMINDERS] });
       expect(declaration.pair((event, implementation): unknown[] => [event, implementation])).toEqual([
@@ -120,6 +120,29 @@ function describeTheClinic(label: string, load: () => Promise<Clinic>): void {
       });
       expect(declared(SmsReminders, 'adapter').aspects).toHaveLength(1);
       expect(declared(AlwaysFreeRooms, 'gateway')).toMatchObject({ kind: 'gateway', token: ROOMS, replaces: true });
+    });
+
+    it('a job names itself, its schedule, the options it wrote and the tokens of its constructor', () => {
+      const { RemindTomorrowVisits, PurgeExpiredCallbacks } = clinic;
+
+      expect(declared(RemindTomorrowVisits, 'job')).toEqual({
+        role: 'job',
+        name: 'clinic.remind-tomorrow-visits',
+        schedule: { cron: '0 18 * * mon-fri', timeZone: 'Europe/Paris' },
+        options: { overlap: 'queue', timeoutMs: 120_000 },
+        implementation: RemindTomorrowVisits,
+        dependencies: [COMMAND_BUS],
+      });
+      expect(declared(PurgeExpiredCallbacks, 'job')).toMatchObject({ schedule: { every: '6h' }, options: {}, dependencies: [] });
+      expect(RemindTomorrowVisits.built).toBe(0);
+    });
+
+    it('a job is refused where it is written: a name, a cron or a time zone that cannot be read', () => {
+      const declare = (name: `${string}.${string}`, cron = '0 7 * * *', timeZone = 'UTC') => () => clinic.declareAJob(name, cron, timeZone);
+
+      expect(declare('Clinic.PurgeCallbacks')).toThrow(/"Clinic.PurgeCallbacks" is not a job name: write <context>.<job-name>/);
+      expect(declare('clinic.purge', '0 7 * *')).toThrow(/Job "clinic.purge": Cron "0 7 \* \*" has 4 field\(s\): five are expected/);
+      expect(declare('clinic.purge', '0 7 * * *', 'Europe/Lutece')).toThrow(/Job "clinic.purge": "Europe\/Lutece" is not a time zone/);
     });
 
     it('a policy names its permission and the reason it gives', () => {

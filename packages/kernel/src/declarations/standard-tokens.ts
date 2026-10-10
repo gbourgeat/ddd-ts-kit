@@ -9,6 +9,7 @@ import type {
   IntegrationEventSubscriber,
   ProcessedEventStore,
 } from '../application/integration-event.js';
+import type { JobScheduler } from '../application/job.js';
 import type { Lock } from '../application/lock.js';
 import type { Logger } from '../application/logger.js';
 import type { Metrics } from '../application/metrics.js';
@@ -24,11 +25,11 @@ export const QUERY_BUS = standardToken<QueryBus>('kernel.QueryBus');
 export const EVENT_BUS = standardToken<EventBus>('kernel.EventBus');
 /** What use cases publish through. The event bus by default, an outbox once there is a database. */
 export const EVENT_PUBLISHER = standardToken<IntegrationEventPublisher>('kernel.EventPublisher');
-/** What event listeners are subscribed to. The event bus by default, a broker adapter otherwise. */
+/** What integration event handlers are subscribed to. The event bus by default, a broker adapter otherwise. */
 export const EVENT_SUBSCRIBER = standardToken<IntegrationEventSubscriber>('kernel.EventSubscriber');
-/** When bound, every event listener handles a redelivered event once. */
+/** When bound, every integration event handler handles a redelivered event once. */
 export const PROCESSED_EVENTS = standardToken<ProcessedEventStore>('kernel.ProcessedEventStore');
-/** Where the domain events of a context are dispatched, and where its domain event listeners are attached. */
+/** Where the domain events of a context are dispatched, and where its domain event handlers are attached. */
 export const DOMAIN_EVENTS = standardToken<DomainEventDispatcher>('kernel.DomainEvents');
 /**
  * The execution context of the work in progress, for infrastructure and cross-cutting code
@@ -47,3 +48,5 @@ export const CACHE = standardToken<Cache>('kernel.Cache');
 export const LOCK = standardToken<Lock>('kernel.Lock');
 /** Counts inside this process only until the platform rebinds it. */
 export const RATE_LIMITER = standardToken<RateLimiter>('kernel.RateLimiter');
+/** Where the declared jobs are registered. In this process, on `CLOCK` and `LOCK`, until the platform rebinds it. */
+export const JOB_SCHEDULER = standardToken<JobScheduler>('kernel.JobScheduler');

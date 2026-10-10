@@ -6,7 +6,7 @@ import { inContext, reporter } from './helpers.js';
 export const testSpecRequired: Rule = {
   id: 'test/spec-required',
   description:
-    "Every aggregate, value object, domain service, command handler, query handler, event handler and consumer has a *.spec.ts in the context's test/.",
+    "Every aggregate, value object, domain service, command handler, query handler, domain event handler and integration event handler has a *.spec.ts in the context's test/.",
   scope: 'project',
   run(project) {
     const report = reporter(project, this.id);

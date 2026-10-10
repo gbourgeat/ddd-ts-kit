@@ -45,26 +45,29 @@ export function contextVars(config: Config, context: Name): RenderContext {
     ...stackVars(config),
     context: { ...named(context), schema: context.kebab.replaceAll('-', '_') },
     paths: {
-      contextToPlatform: relative(dir, config.platformDir),
-      persistenceToPlatform: relative(`${dir}/infrastructure/persistence`, config.platformDir),
-      integrationToPlatform: relative(`${dir}/test/integration`, config.platformDir),
-      platformToContexts: relative(config.platformDir, config.contextsDir),
-      databaseToContexts: relative(`${config.platformDir}/database`, config.contextsDir),
-      persistenceToGenerated: relative(`${dir}/infrastructure/persistence`, 'generated'),
-      scriptsToSource: relative('scripts', config.sourceRoot),
-      e2eToSource: relative('test/e2e', config.sourceRoot),
-      authorizationToPlatform: relative(`${dir}/application/authorization`, config.platformDir),
-      authToContexts: relative(`${config.platformDir}/auth`, config.contextsDir),
-      auditToContexts: relative(`${config.platformDir}/audit`, config.contextsDir),
-      architectureToSource: relative('test/architecture', config.sourceRoot),
-      appToSource: relative(`${config.sourceRoot}/apps/${context.kebab}`, config.sourceRoot),
+      contextToPlatform: relativeTo(dir, config.platformDir),
+      persistenceToPlatform: relativeTo(`${dir}/infrastructure/persistence`, config.platformDir),
+      integrationToPlatform: relativeTo(`${dir}/test/integration`, config.platformDir),
+      platformToContexts: relativeTo(config.platformDir, config.contextsDir),
+      databaseToContexts: relativeTo(`${config.platformDir}/database`, config.contextsDir),
+      persistenceToGenerated: relativeTo(`${dir}/infrastructure/persistence`, 'generated'),
+      scriptsToSource: relativeTo('scripts', config.sourceRoot),
+      e2eToSource: relativeTo('test/e2e', config.sourceRoot),
+      authorizationToPlatform: relativeTo(`${dir}/application/authorization`, config.platformDir),
+      authToContexts: relativeTo(`${config.platformDir}/auth`, config.contextsDir),
+      auditToContexts: relativeTo(`${config.platformDir}/audit`, config.contextsDir),
+      architectureToSource: relativeTo('test/architecture', config.sourceRoot),
+      appToSource: relativeTo(`${config.sourceRoot}/apps/${context.kebab}`, config.sourceRoot),
     },
   };
 }
 
 export function stackVars(config: Config): RenderContext {
-  const { http, validation, di, tests, orm, events, authz, broker } = config.stack;
+  const { http, validation, di, tests, orm, events, authz, broker, style, assembly } = config.stack;
   return {
+    style: one(style, ['declared', 'explicit']),
+    assembly: { barrel: style === 'declared' && assembly === 'barrel', discovery: style === 'declared' && assembly === 'discovery' },
+    decorators: decoratorVars(config),
     http: { ...one(http, ['express', 'fastify', 'nest', 'none']), any: http !== 'none', plain: http === 'express' || http === 'fastify' },
     validation: one(validation, ['zod', 'class-validator', 'standard-schema', 'none']),
     di: one(di, ['tsyringe', 'nest', 'manual']),
@@ -72,8 +75,9 @@ export function stackVars(config: Config): RenderContext {
     events: { outbox: events === 'outbox', inMemory: events !== 'outbox', wakeable: wakesTheRelay(config), ...providerVars(broker) },
     authn: authenticationVars(config),
     authz: one(authz, ['rbac', 'abac', 'rebac', 'custom']),
-    broker: { ...one(broker, ['none', 'rabbitmq', 'custom']), external: broker !== 'none', name: broker },
+    broker: brokerVars(config),
     cache: cacheVars(config),
+    redis: redisVars(config),
     audit: auditVars(config),
     tests: { ...one(tests, ['vitest', 'jest']), module: tests === 'jest' ? '@jest/globals' : 'vitest' },
     config: {
@@ -85,7 +89,97 @@ export function stackVars(config: Config): RenderContext {
     },
     alias: { bare: config.importAlias.replace(/\/$/, '') },
     persistence: persistenceVars(config),
+    platform: { diImports: platformImports(config) },
+    composition: compositionVars(config),
   };
+}
+
+/** How the composition root hosts the contexts: their module files and route tokens, or their declarations and route lists. */
+function compositionVars(config: Config) {
+  const { style, assembly, http, broker } = config.stack;
+  const declared = style === 'declared';
+  const routed = http !== 'none';
+  const listening = declared && assembly === 'barrel' && PROVIDED_BROKERS.includes(broker);
+  return {
+    buses: declared && routed,
+    routeTokens: !declared && routed,
+    contextModule: declared && !listening,
+    listening,
+    kernelTypes: composedKernelTypes(config, declared && routed),
+    routesOf: declared ? 'routes(container.resolve(COMMAND_BUS), container.resolve(QUERY_BUS))' : 'container.resolve(routes)',
+  };
+}
+
+/** The kernel types the composition root names: the buses only where it hands them to the routes of each context. */
+function composedKernelTypes(config: Config, handsBuses: boolean): string {
+  const limited = config.stack.cache === 'redis' && config.stack.http !== 'none';
+  const types = [...(handsBuses ? ['CommandBus'] : []), 'IntegrationEventPublisher', 'IntegrationEventSubscriber', 'Logger', ...(handsBuses ? ['QueryBus'] : []), ...(limited ? ['RateLimiter'] : [])];
+  return types.join(', ');
+}
+
+/** What the platform module takes from the container package: the tokens it binds itself are made with `token`. */
+function platformImports(config: Config): string {
+  const { broker, audit, style } = config.stack;
+  const subscribes = broker !== 'none' || audit === 'on';
+  const makesTokens = style === 'explicit' || broker !== 'none';
+  return [...(subscribes ? ['EVENT_SUBSCRIBER'] : []), 'UNIT_OF_WORK', 'USE_CASE_GUARD', 'defineContextModule', 'kernelModule', ...(makesTokens ? ['token'] : []), 'type ContextModule', 'type Resolve'].join(', ');
+}
+
+/**
+ * One program has one decorator mode: the legacy one wherever a library of the stack only has
+ * legacy decorators (class-validator, NestJS), the standard one everywhere else. The declarations
+ * of the kernel and the aspects serve both.
+ */
+export function usesLegacyDecorators(config: Config): boolean {
+  return config.stack.http === 'nest' || config.stack.validation === 'class-validator';
+}
+
+function decoratorVars(config: Config) {
+  const legacy = usesLegacyDecorators(config);
+  return { legacy, standard: !legacy };
+}
+
+/** The brokers a provider package of the kit reaches: each gives every consuming context a subscriber of its own. */
+export const PROVIDED_BROKERS: readonly string[] = ['rabbitmq', 'kafka', 'nats', 'redis'];
+
+/** How the platform reaches a broker that has an address of its own: its environment variable, its key in the validated config, and what stands for "no broker" in the tests. */
+const BROKER_ADDRESS: Readonly<Record<string, { variable: string; key: string; absent: string; reader: string }>> = {
+  rabbitmq: { variable: 'AMQP_URL', key: 'amqpUrl', absent: 'amqp://in-process/tests', reader: 'readUrl' },
+  // A list of `host:port`, which is not a URL.
+  kafka: { variable: 'KAFKA_BROKERS', key: 'kafkaBrokers', absent: 'in-process:0', reader: 'readText' },
+  nats: { variable: 'NATS_URL', key: 'natsUrl', absent: 'nats://in-process/tests', reader: 'readUrl' },
+};
+
+function brokerVars(config: Config) {
+  const { broker } = config.stack;
+  const address = BROKER_ADDRESS[broker];
+  return {
+    ...one(broker, ['none', 'rabbitmq', 'kafka', 'nats', 'redis', 'custom']),
+    external: broker !== 'none',
+    provided: PROVIDED_BROKERS.includes(broker),
+    name: broker,
+    // Redis Streams run on the Redis protocol server of the platform, behind REDIS_URL like the cache.
+    addressed: address !== undefined,
+    variable: address?.variable ?? '',
+    key: address?.key ?? '',
+    absent: address?.absent ?? '',
+    reader: address?.reader ?? '',
+    inProcessWhen: inProcessTest(broker, address?.key),
+  };
+}
+
+/** What the end-to-end support of a project tests to keep its events in the process: the address of the broker was not given. */
+function inProcessTest(broker: string, key: string | undefined): string {
+  if (broker === 'redis') return 'config.redisUrl === NO_REDIS';
+  return key === undefined ? '' : `config.${key} === NO_BROKER`;
+}
+
+/** One Redis protocol server for whatever asks for one: the cache, the rate limiter and the relay signal, the streams of the event bus. */
+function redisVars(config: Config) {
+  const { cache, broker } = config.stack;
+  const streams = broker === 'redis';
+  const uses = [...(cache === 'redis' ? ['cache, rate limiter, wake-up of the outbox relay'] : []), ...(streams ? ['streams of the integration events'] : [])];
+  return { server: cache === 'redis' || streams, streams, service: cache === 'redis' ? 'cache' : 'streams', uses: uses.join(', ') };
 }
 
 /** One boolean per option, true for the chosen one: what a template tests with `{{#if stack.option}}`. */
@@ -142,10 +236,11 @@ function wakesTheRelay(config: Config): boolean {
 /** What `main.ts` calls to get the event provider of the chosen broker. */
 function providerVars(broker: string) {
   if (broker === 'none') return { providerName: 'inProcessEvents', provider: 'inProcessEvents()' };
-  return { providerName: 'createEventProvider', provider: broker === 'rabbitmq' ? 'createEventProvider(config)' : 'createEventProvider()' };
+  return { providerName: 'createEventProvider', provider: PROVIDED_BROKERS.includes(broker) ? 'createEventProvider(config)' : 'createEventProvider()' };
 }
 
-function relative(from: string, to: string): string {
+/** The relative specifier from one directory of the project to another, always starting with a dot. */
+export function relativeTo(from: string, to: string): string {
   const result = path.posix.relative(from, to);
   return result.startsWith('.') ? result : `./${result}`;
 }

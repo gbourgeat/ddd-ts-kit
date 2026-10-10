@@ -9,6 +9,7 @@ import {
   EVENT_SUBSCRIBER,
   EXECUTION_SCOPE,
   ID_GENERATOR,
+  JOB_SCHEDULER,
   LOCK,
   LOGGER,
   METRICS,
@@ -30,6 +31,7 @@ export {
   EVENT_SUBSCRIBER,
   EXECUTION_SCOPE,
   ID_GENERATOR,
+  JOB_SCHEDULER,
   LOCK,
   LOGGER,
   METRICS,
@@ -57,4 +59,5 @@ export const KERNEL_TOKENS: readonly Token<unknown>[] = [
   CACHE,
   LOCK,
   RATE_LIMITER,
+  JOB_SCHEDULER,
 ];

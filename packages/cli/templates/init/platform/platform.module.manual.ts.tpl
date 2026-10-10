@@ -72,7 +72,7 @@ type Adapt = <T extends object>(instance: T, info: AspectInfo) => T;
 
 /** The technical capabilities every context receives. */
 export interface Platform {
-  // The in-process buses: contexts register their handlers on them, routes and consumers
+  // The in-process buses: contexts register their handlers on them, routes and integration event handlers
   // only see the CommandBus and QueryBus ports.
   readonly commands: InMemoryCommandBus;
   readonly queries: InMemoryQueryBus;

@@ -1,4 +1,5 @@
 import type { ContextLocation, ImportTarget, Layer } from '../project/classify.js';
+import { DECLARATIONS_ENTRY, isDeclaredStyle } from '../support/declarations.js';
 import { defineRule } from '../support/define-rule.js';
 import { describeTarget, importListener, inLayer } from '../support/imports.js';
 import { OUTSIDE_CONCERN_MESSAGE, outsideConcern } from '../support/outside-concerns.js';
@@ -14,17 +15,20 @@ export const layerApplicationInward = defineRule<'package' | 'outsideConcern' | 
   messages: {
     outsideConcern: OUTSIDE_CONCERN_MESSAGE,
     package:
-      'The application layer imports the package "{{name}}". Declare a port in application/ports named after the need, implement it with "{{name}}" in infrastructure/, and bind it in {{context}}.module.ts.',
+      'The application layer imports the package "{{name}}". Declare a port in application/ports named after the need, implement it with "{{name}}" in infrastructure/, and bind it in {{context}}.module.ts (in the declared style, declare the adapter with `@Adapter`).',
     builtin:
       'The application layer imports the Node built-in "{{name}}". Hide the I/O behind a port in application/ports and implement it in infrastructure/external.',
     outward:
-      'The application layer imports {{target}}. Depend on a port (application/ports) or a repository interface (domain/repositories) instead, and let the module file bind the adapter.',
+      'The application layer imports {{target}}. Depend on a port (application/ports) or a repository interface (domain/repositories) instead, and let the module file, or the declaration of the adapter, bind it.',
   },
   create({ file, report }) {
     const here = inLayer(file, 'application');
     if (here === undefined) return {};
     const allowed = file.config.applicationAllowedPackages;
+    const declares = isDeclaredStyle(file);
     return importListener(file, ({ node, target, specifier }) => {
+      // Declarations are pure metadata: a declared use case imports them whatever the allow-list says.
+      if (declares && specifier === DECLARATIONS_ENTRY) return;
       if (target.kind === 'package') {
         const concern = outsideConcern(target.name);
         if (concern !== undefined) report({ node, messageId: 'outsideConcern', data: { importer: 'The application layer', specifier, ...concern } });

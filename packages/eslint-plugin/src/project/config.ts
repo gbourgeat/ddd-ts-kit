@@ -13,6 +13,17 @@ interface ContextConfig {
   readonly extraDirectories: readonly string[];
 }
 
+type Style = 'declared' | 'explicit';
+type Assembly = 'barrel' | 'discovery';
+
+/** The two stack choices a rule reads; the others only concern the generator. */
+interface Stack {
+  /** `declared`: each class says what it is with a decorator and there is no module file. A config that does not say is `explicit`. */
+  readonly style: Style;
+  /** How a declared context reaches the composition root: one generated barrel, or discovery of its role files. */
+  readonly assembly: Assembly;
+}
+
 interface Limits {
   readonly maxParameters: number;
   readonly maxFunctionLines: number;
@@ -30,11 +41,14 @@ export interface Config {
   readonly applicationAllowedPackages: readonly string[];
   readonly publishedLanguageAllowedPackages: readonly string[];
   readonly limits: Limits;
+  readonly stack: Stack;
   /** Names reported by `standard/no-parallel-interface`, over its defaults: the kernel interface to use instead, or `false` to drop a default. */
   readonly standardInterfaces: Readonly<Record<string, string | false>>;
 }
 
 const DEFAULT_LIMITS: Limits = { maxParameters: 3, maxFunctionLines: 30 };
+const STYLES: readonly Style[] = ['declared', 'explicit'];
+const ASSEMBLIES: readonly Assembly[] = ['barrel', 'discovery'];
 
 const KERNEL = ['@ddd-ts-kit/kernel'];
 /** The application layer declares its permissions and policies with `@ddd-ts-kit/auth`, which imports the kernel only. */
@@ -49,7 +63,7 @@ const SCHEMA_LIBRARIES: Readonly<Record<string, readonly string[]>> = {
 
 /**
  * Mirrors `parseConfig` of the CLI key by key, minus the stack choices that only the
- * generator needs. A malformed value falls back to its default: `ddd-ts-kit check` reports it
+ * generator needs: of `stack`, the style and the assembly are kept. A malformed value falls back to its default: `ddd-ts-kit check` reports it
  * as `config/valid`, a linter run must not stop on it.
  */
 export function parseConfig(raw: unknown): Config {
@@ -67,6 +81,7 @@ export function parseConfig(raw: unknown): Config {
     applicationAllowedPackages: strings(source['applicationAllowedPackages'], APPLICATION),
     publishedLanguageAllowedPackages: strings(source['publishedLanguageAllowedPackages'], contractPackages(source['stack'])),
     limits: parseLimits(source['limits']),
+    stack: parseStack(source['stack']),
     standardInterfaces: parseStandardInterfaces(source['standardInterfaces']),
   };
 }
@@ -74,6 +89,11 @@ export function parseConfig(raw: unknown): Config {
 export function configuredSeverity(config: Config, ruleId: string): Severity | undefined {
   const configured = config.rules[ruleId];
   return configured === 'error' || configured === 'warn' || configured === 'off' ? configured : undefined;
+}
+
+function parseStack(value: unknown): Stack {
+  const raw = isRecord(value) ? value : {};
+  return { style: oneOf(STYLES, raw['style'], 'explicit'), assembly: oneOf(ASSEMBLIES, raw['assembly'], 'barrel') };
 }
 
 function contractPackages(stack: unknown): readonly string[] {
@@ -127,6 +147,10 @@ function mapEntries<T>(value: unknown, parse: (entry: unknown) => T): Record<str
 
 function strings(value: unknown, fallback: readonly string[]): readonly string[] {
   return Array.isArray(value) ? value.filter((item) => typeof item === 'string') : fallback;
+}
+
+function oneOf<T extends string>(values: readonly T[], candidate: unknown, fallback: T): T {
+  return values.find((value) => value === candidate) ?? fallback;
 }
 
 function text(value: unknown, fallback: string): string {

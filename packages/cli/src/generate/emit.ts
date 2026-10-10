@@ -2,8 +2,9 @@ import type { Config } from '../config.js';
 import { CliError } from '../errors.js';
 import { insertInRegion, parseWiring } from '../markers.js';
 import type { RenderContext } from '../render.js';
-import { renderTemplate } from '../templates.js';
+import { renderTemplate, templateExists } from '../templates.js';
 import type { Workspace } from '../workspace.js';
+import { declareWiring, isDeclared } from './declared.js';
 import type { Scope } from './scope.js';
 
 /** One generated file: the template it comes from and its path inside the context. */
@@ -12,12 +13,26 @@ export type Output = readonly [template: string, target: string];
 /** Renders templates to paths relative to the context directory. */
 export function emit(scope: Scope, context: RenderContext, outputs: readonly Output[]): void {
   for (const [template, target] of outputs) {
-    scope.ws.create(`${scope.dir}/${target}`, renderTemplate(template, context));
+    scope.ws.create(`${scope.dir}/${target}`, renderTemplate(styled(scope.config, template), context));
   }
+}
+
+/**
+ * The template of the style of the project: where a file differs too much between the two
+ * styles to share one template, its declared twin sits next to it as `<name>.declared.<ext>.tpl`.
+ */
+function styled(config: Config, template: string): string {
+  if (!isDeclared(config)) return template;
+  const twin = template.replace(/((?:\.[a-z]+)?\.tpl)$/, '.declared$1');
+  return templateExists(twin) ? twin : template;
 }
 
 /** Registers a new element in the module file of the context. A kind written `<kind>/<variant>` has its wiring in `<variant>.wiring.<family>.tpl`. */
 export function wire(scope: Scope, kind: string, context: RenderContext): void {
+  if (isDeclared(scope.config)) {
+    declareWiring(scope, kind, context);
+    return;
+  }
   const file = `${scope.dir}/${scope.context.kebab}.module.ts`;
   const template = kind.includes('/') ? `${kind}.wiring` : `${kind}/wiring`;
   applyWiring(scope.ws, file, renderTemplate(`${template}.${wiringFamily(scope.config)}.tpl`, context));

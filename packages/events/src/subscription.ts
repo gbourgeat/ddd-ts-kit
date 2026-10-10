@@ -3,7 +3,7 @@ import {
   type Actor,
   type ExecutionScope,
   type IntegrationEvent,
-  type IntegrationEventHandler,
+  type IntegrationEventCallback,
   type IntegrationEventSubscriber,
   type ProcessedEventStore,
   type Subscription,
@@ -13,7 +13,7 @@ import { InvalidEventPayloadError, type IntegrationEventDefinition } from './def
 
 export interface EventSubscription {
   readonly type: string;
-  readonly handler: IntegrationEventHandler;
+  readonly handler: IntegrationEventCallback;
 }
 
 /** How a consumed event becomes the execution context of its handler. */

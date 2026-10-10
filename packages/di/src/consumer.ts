@@ -4,12 +4,12 @@ import {
   type Actor,
   type ExecutionScope,
   type IntegrationEvent,
-  type IntegrationEventHandler,
+  type IntegrationEventCallback,
   type ProcessedEventStore,
 } from '@ddd-ts-kit/kernel';
-import type { EventConsumer, EventContract } from '@ddd-ts-kit/kernel/declarations';
+import type { EventContract, IntegrationEventHandler } from '@ddd-ts-kit/kernel/declarations';
 
-export type { EventConsumer, EventContract };
+export type { EventContract, IntegrationEventHandler };
 
 export interface ConsumerOptions {
   /**
@@ -58,7 +58,7 @@ export interface Reception<Payload> {
  * consumer run in the execution context of the event: origin `event`, its correlation, the
  * event as cause.
  */
-export function receive<Payload>(reception: Reception<Payload>): IntegrationEventHandler {
+export function receive<Payload>(reception: Reception<Payload>): IntegrationEventCallback {
   const { contract, options, runtime, handle } = reception;
   const { processed, scope } = runtime;
   return async (event) => {

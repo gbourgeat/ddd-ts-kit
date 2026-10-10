@@ -1,4 +1,8 @@
 import { AuthorizedQuery, type Actor, type Page, type PageRequest } from '@ddd-ts-kit/kernel';
+{{#if style.declared}}
+import { Requires } from '@ddd-ts-kit/kernel/declarations';
+{{access.useCasePermissionsImport}}
+{{/if}}
 
 export interface {{name.pascal}}Item {
   readonly id: string;
@@ -10,6 +14,9 @@ export type {{name.pascal}}Sort = 'id';
 
 export type {{name.pascal}}Result = Page<{{name.pascal}}Item>;
 
+{{#if style.declared}}
+@{{access.decoration}}
+{{/if}}
 export class {{name.pascal}}Query extends AuthorizedQuery<{{name.pascal}}Result> {
   // TODO(domain): add the criteria of "{{name.words}}" as readonly primitives after the page (a status, a period).
   constructor(

@@ -4,6 +4,7 @@ import { CliError } from '../../errors.js';
 import { parseContextName, toName, type Name } from '../../naming.js';
 import type { RenderContext } from '../../render.js';
 import { renderTemplate } from '../../templates.js';
+import { isDeclared } from '../declared.js';
 import { applyWiring, emit, wire } from '../emit.js';
 import type { Kind } from '../kind.js';
 import { label, learnTerms } from '../language.js';
@@ -67,11 +68,11 @@ function exportFromPublishedLanguage(scope: Scope, declaration: string): void {
   else scope.ws.create(index, content);
 }
 
-export const consumerKind: Kind = {
-  name: 'consumer',
-  aliases: [],
-  usage: 'consumer <context> <upstreamContext> <eventType>',
-  summary: 'An idempotent consumer of an integration event of a declared upstream, its spec and its subscription.',
+export const integrationHandlerKind: Kind = {
+  name: 'integration-handler',
+  aliases: ['consumer'],
+  usage: 'integration-handler <context> <upstreamContext> <eventType>',
+  summary: 'An idempotent handler of an integration event of a declared upstream, its spec and its subscription under a consumer name.',
   positionals: ['context', 'upstreamContext', 'eventType'],
   run: (request) => {
     const scope = openScope(request);
@@ -79,20 +80,30 @@ export const consumerKind: Kind = {
     const eventType = eventTypeOf(upstream, request.args[2] ?? '');
     const name = toName(eventType.split('.').join(' '));
     const declaration = findDeclaration(scope, upstream.kebab, eventType);
+    if (declaration === undefined && isDeclared(scope.config)) throw undeclaredEvent(scope, upstream, eventType);
     const context = vars(scope, { name: named(name), upstream: upstreamVars(upstream, eventType, declaration), consumer: subscriptionVars(scope, declaration !== undefined) });
     emit(scope, context, [
-      ['consumer/consumer.ts.tpl', `application/integration/consumers/${name.kebab}.consumer.ts`],
-      ['consumer/consumer.spec.ts.tpl', `test/unit/${name.kebab}.consumer.spec.ts`],
+      ['integration-handler/integration-handler.ts.tpl', `application/integration/handlers/${name.kebab}.integration-handler.ts`],
+      ['integration-handler/integration-handler.spec.ts.tpl', `test/unit/${name.kebab}.integration-handler.spec.ts`],
     ]);
-    wire(scope, 'consumer', context);
+    wire(scope, 'integration-handler', context);
     if (declaration === undefined) {
-      scope.ws.note(`No declaration of ${eventType} was found in ${upstream.kebab}/published-language: the consumer receives an untyped payload.`);
+      scope.ws.note(`No declaration of ${eventType} was found in ${upstream.kebab}/published-language: the handler receives an untyped payload.`);
     }
   },
 };
 
+/** A handler declares itself against the declaration of its event: without one there is nothing to handle. */
+function undeclaredEvent(scope: Scope, upstream: Name, eventType: string): CliError {
+  const [, aggregate = '', fact = ''] = eventType.split('.');
+  return new CliError(
+    `${upstream.kebab} declares no ${eventType} in its published language.`,
+    `An integration event handler declares itself with @IntegrationEventHandler(<definition>, ...), which needs the declaration of the event: create it first with \`ddd-ts-kit generate integration-event ${upstream.kebab} ${toName(aggregate).pascal} ${toName(fact).pascal}\`, then run the command again.`,
+  );
+}
+
 /**
- * How the consumer subscribes. In the process, the wiring of the stack deduplicates; behind a
+ * How the handler subscribes. In the process, the wiring of the stack deduplicates; behind a
  * broker, each context listens under its own name and the mark commits with the handler's work.
  */
 function subscriptionVars(scope: Scope, isTyped: boolean) {

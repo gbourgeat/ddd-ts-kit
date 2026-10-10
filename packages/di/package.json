@@ -10,7 +10,7 @@
     "./discovery": { "types": "./dist/discovery.d.ts", "default": "./dist/discovery.js" }
   },
   "files": ["dist"],
-  "dependencies": { "@ddd-ts-kit/kernel": "0.1.0" },
+  "dependencies": { "@ddd-ts-kit/kernel": "0.1.0", "@ddd-ts-kit/scheduling": "0.1.0" },
   "peerDependencies": { "tsyringe": "^4.10.0", "reflect-metadata": ">=0.2.0" },
   "devDependencies": { "tsyringe": "^4.10.0", "reflect-metadata": "^0.2.2" }
 }

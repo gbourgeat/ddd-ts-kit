@@ -2,17 +2,7 @@ import { loggingMiddleware, metricsMiddleware } from '@ddd-ts-kit/aspects';
 {{#if http.any}}
 import type { Authenticator } from '@ddd-ts-kit/auth';
 {{/if}}
-{{#if broker.external}}
-import { EVENT_SUBSCRIBER, UNIT_OF_WORK, USE_CASE_GUARD, defineContextModule, kernelModule, token, type ContextModule, type Resolve } from '@ddd-ts-kit/di';
-{{/if}}
-{{#unless broker.external}}
-{{#if audit.on}}
-import { EVENT_SUBSCRIBER, UNIT_OF_WORK, USE_CASE_GUARD, defineContextModule, kernelModule, token, type ContextModule, type Resolve } from '@ddd-ts-kit/di';
-{{/if}}
-{{#unless audit.on}}
-import { UNIT_OF_WORK, USE_CASE_GUARD, defineContextModule, kernelModule, token, type ContextModule, type Resolve } from '@ddd-ts-kit/di';
-{{/unless}}
-{{/unless}}
+import { {{platform.diImports}} } from '@ddd-ts-kit/di';
 {{#if events.outbox}}
 {{#if audit.on}}
 import { OutboxPublisher, subscribeAll } from '@ddd-ts-kit/events';
@@ -29,7 +19,9 @@ import { subscribeAll } from '@ddd-ts-kit/events';
 import {
   AsyncLocalStorageExecutionScope,
   InMemoryCommandBus,
+{{#if style.explicit}}
   InMemoryDomainEventDispatcher,
+{{/if}}
   InMemoryQueryBus,
   SystemClock,
   UuidGenerator,
@@ -37,7 +29,9 @@ import {
   unitOfWorkMiddleware,
   type BusMiddleware,
   type Clock,
+{{#if style.explicit}}
   type DomainEventDispatcher,
+{{/if}}
   type ExecutionScope,
   type IdGenerator,
 {{#if broker.external}}
@@ -73,20 +67,34 @@ import { logDecisions } from './auth/decision-log.js';
 {{#if cache.redis}}
 import type { RedisServices } from './cache.js';
 {{/if}}
+{{#if style.explicit}}
 {{#if persistence.hasDatabase}}
 import type { DatabaseContext } from './database/database.js';
+{{/if}}
 {{/if}}
 import type { Persistence } from './database/persistence.js';
 import type { EventProvider } from './events.js';
 import { createLogger, createMetrics, type LogSettings } from './observability.js';
 
+{{#if style.declared}}
+{{#if persistence.hasDatabase}}
+import { DATABASE } from './tokens.js';
+{{/if}}
+// ddd-ts-kit:imports
+// /ddd-ts-kit:imports
+{{/if}}
+
+{{#if style.explicit}}
 export const DOMAIN_EVENTS = token<DomainEventDispatcher>('platform.DomainEventDispatcher');
+{{/if}}
 {{#if broker.external}}
 /** The subscriber of one consuming context: a broker gives each context queues of its own. */
 export const CONTEXT_EVENTS = token<(context: string) => IntegrationEventSubscriber>('platform.ContextEvents');
 {{/if}}
+{{#if style.explicit}}
 {{#if persistence.hasDatabase}}
 export const DATABASE = token<DatabaseContext>('platform.Database');
+{{/if}}
 {{/if}}
 
 /** What the platform is built on, beyond the storage: chosen in `main.ts`, defaulted for the tools and the tests. */
@@ -193,12 +201,18 @@ function platformOn(persistence: Persistence, options: PlatformOptions{{#if audi
   return defineContextModule({
     name: 'platform',
     register(builder) {
+{{#if style.explicit}}
       builder.bind(DOMAIN_EVENTS).toClass(InMemoryDomainEventDispatcher);
+{{/if}}
 {{#if broker.external}}
       builder.bind(CONTEXT_EVENTS).toValue((context) => tracedSubscriber(options.events.subscriberFor(context)));
 {{/if}}
 {{#if persistence.hasDatabase}}
       builder.bind(DATABASE).toValue(persistence.database);
+{{/if}}
+{{#if style.declared}}
+      // ddd-ts-kit:bindings
+      // /ddd-ts-kit:bindings
 {{/if}}
     },
 {{#if audit.on}}
@@ -253,7 +267,9 @@ const guardOf =
 export const platformTestModule = defineContextModule({
   name: 'platform',
   register(builder) {
+{{#if style.explicit}}
     builder.bind(DOMAIN_EVENTS).toClass(InMemoryDomainEventDispatcher);
+{{/if}}
 {{#if broker.external}}
     builder.bind(CONTEXT_EVENTS).toFactory((resolve) => () => resolve(EVENT_SUBSCRIBER));
 {{/if}}
@@ -261,6 +277,10 @@ export const platformTestModule = defineContextModule({
     builder.bind(DATABASE).toFactory(() => {
       throw new Error('A handler spec has no database: give a fake for the repository it uses.');
     });
+{{/if}}
+{{#if style.declared}}
+    // ddd-ts-kit:test-bindings
+    // /ddd-ts-kit:test-bindings
 {{/if}}
   },
 });

@@ -1,3 +1,4 @@
+import { DECLARATIONS_ENTRY } from '../declarations.js';
 import { outsideConcern } from '../outside-concerns.js';
 import type { ImportTarget, Rule, SourceFile } from '../types.js';
 import { describeTarget, inLayer, reporter, type Finding } from './helpers.js';
@@ -25,6 +26,7 @@ function impure({ target, line, specifier }: ImportedModule, context: string, al
   if (target.kind === 'package') {
     const concern = outsideConcern('The domain', target.name, specifier);
     if (concern !== undefined) return [{ line, ...concern }];
+    if (specifier === DECLARATIONS_ENTRY) return [{ line, ...DECLARES_NOTHING }];
     if (allowed.includes(target.name)) return [];
     const fix = `Remove the import: express the need as plain TypeScript or as a port in application/ports, and keep decorators and schemas of "${target.name}" in infrastructure or presentation.`;
     return [{ line, message: `The domain imports the package "${target.name}".`, fix }];
@@ -36,13 +38,19 @@ function impure({ target, line, specifier }: ImportedModule, context: string, al
   return outsideTheDomain(target, context).map((finding) => ({ line, ...finding }));
 }
 
+/** The kernel is allowed in the domain, its declarations entry is not: a declaration is wiring. */
+const DECLARES_NOTHING: Omit<Finding, 'line'> = {
+  message: `The domain imports "${DECLARATIONS_ENTRY}": the domain declares nothing, aggregates, entities, value objects, events, services and repository interfaces carry no decorator and name no token.`,
+  fix: 'Remove the import: put the declaration on the class that plays the role in application/ or infrastructure/ (a handler, a policy, an adapter) and keep the tokens in application/ports/<context>.ports.ts.',
+};
+
 function outsideTheDomain(target: ImportedFile, context: string): Omit<Finding, 'line'>[] {
   const there = target.location;
   if (there.area === 'shared-kernel') return [];
   if (there.area === 'context' && there.context !== context) {
     // Reaching into another context's internals is reported once, by context/published-language-only.
     if (there.layer !== 'published-language') return [];
-    const fix = 'Translate the upstream contract in application/integration/consumers or infrastructure/anti-corruption and hand the domain its own types.';
+    const fix = 'Translate the upstream contract in application/integration/handlers or infrastructure/anti-corruption and hand the domain its own types.';
     return [{ message: `The domain of "${context}" imports the published language of "${there.context}".`, fix }];
   }
   if (there.area === 'context' && there.layer === 'domain') return [];

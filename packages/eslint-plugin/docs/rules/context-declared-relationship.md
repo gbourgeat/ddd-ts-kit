@@ -16,7 +16,7 @@ Incorrect:
 
 ```ts
 // ddd-ts-kit.config.json: "shipping": { "upstreams": [] }
-// src/contexts/shipping/application/integration/consumers/billing-invoice-issued.consumer.ts
+// src/contexts/shipping/application/integration/handlers/billing-invoice-issued.integration-handler.ts
 import type { InvoiceIssuedV1 } from '@/contexts/billing/published-language/index.js';
 ```
 

@@ -76,11 +76,11 @@ export class GetInvoiceHandler implements QueryHandler<GetInvoice> { /* ... */ }
 ```
 
 ```ts
-// contexts/billing/application/integration/consumers/invoice-on-order-placed.consumer.ts
-import { COMMAND_BUS, EventListener } from '@ddd-ts-kit/kernel/declarations';
+// contexts/billing/application/integration/handlers/invoice-on-order-placed.integration-handler.ts
+import { COMMAND_BUS, IntegrationEventHandler } from '@ddd-ts-kit/kernel/declarations';
 import { OrderPlaced } from '../../../../ordering/published-language/index.js';
 
-@EventListener(OrderPlaced, { consumer: 'billing.invoice-on-order-placed' }, [COMMAND_BUS])
+@IntegrationEventHandler(OrderPlaced, { consumer: 'billing.invoice-on-order-placed' }, [COMMAND_BUS])
 export class InvoiceOnOrderPlaced {
   constructor(private readonly commands: CommandBus) {}
 
@@ -128,7 +128,7 @@ const app = createApplication({ modules: [kernelModule(), platformModule, contex
 ```
 
 The compiler checks every declaration where it is written: the handler handles that message
-and answers its result type, the listener handles the payload of that event, the adapter
+and answers its result type, the event handler handles the payload of that event, the adapter
 implements the port of its token, and the token list names the constructor parameters, in
 order, no more and no fewer.
 
@@ -141,8 +141,9 @@ The full list, with the options of each, is in the README of `@ddd-ts-kit/kernel
 |---|---|
 | `@Requires(permission, options?)` / `@Public()` on a command or a query | the access of the use case: what `.requires(...)` and `.public()` say in an explicit module, read by `authorization: 'required'` and by the authorization module |
 | `@CommandHandler(Message, [tokens])`, `@QueryHandler(Message, [tokens])` | a singleton of kind `use-case`, registered on `COMMAND_BUS` or `QUERY_BUS` |
-| `@EventListener(definition, { consumer }, [tokens])` | a singleton of kind `consumer`, subscribed to `EVENT_SUBSCRIBER` by `start()`, idempotent per consumer name, run in the execution context of the event |
-| `@DomainEventListener(Event, { name }, [tokens])` | a singleton of kind `consumer`, attached to `DOMAIN_EVENTS` when the application is created; an event dispatched under the name and built from another class is left alone |
+| `@IntegrationEventHandler(definition, { consumer }, [tokens])` | a singleton of kind `consumer`, subscribed to `EVENT_SUBSCRIBER` by `start()`, idempotent per consumer name, run in the execution context of the event |
+| `@DomainEventHandler(Event, { name }, [tokens])` | a singleton of kind `consumer`, attached to `DOMAIN_EVENTS` when the application is created; an event dispatched under the name and built from another class is left alone |
+| `@Scheduled(name, schedule and options, [tokens])` | a singleton of kind `job`, registered on `JOB_SCHEDULER` when the application is created, started by `start()` after the consumers and stopped first by `stop()`; see "Scheduled jobs" |
 | `@Repository(TOKEN, options?, [tokens])` | the binding of the token, kind `repository` |
 | `@Gateway(TOKEN, options?, [tokens])` | the binding of the token, kind `gateway` |
 | `@Adapter(TOKEN, { kind? }, [tokens])` | the binding of the token, kind `external` (default) or `publisher` |
@@ -175,9 +176,10 @@ themselves:
 |---|---|---|
 | `*.command`, `*.query` | `application/commands/`, `application/queries/` | `@Requires` or `@Public` |
 | `*.handler` | `application/commands/`, `application/queries/` | `@CommandHandler` or `@QueryHandler` |
-| `*.consumer` | `application/integration/consumers/` | `@EventListener` |
-| `*.event-handler` | `application/event-handlers/` | `@DomainEventListener` |
+| `*.integration-handler` | `application/integration/handlers/` | `@IntegrationEventHandler` |
+| `*.event-handler` | `application/event-handlers/` | `@DomainEventHandler` |
 | `*.policy` | `application/authorization/` | `@Policy` |
+| `*.job` | `application/scheduling/` | `@Scheduled` |
 | `*.repository` | `infrastructure/persistence/` | `@Repository` |
 | `*.gateway`, `*.adapter` | `infrastructure/` | `@Gateway`, `@Adapter` |
 
@@ -262,7 +264,7 @@ export const orderingModule = defineContextModule({
 ```
 
 The compiler checks that `PlaceOrderHandler` handles `PlaceOrder` and answers its result type,
-that the consumer handles the payload of `PaymentCaptured`, and that every token list matches
+that the event handler handles the payload of `PaymentCaptured`, and that every token list matches
 the constructor parameters, in order. Nothing else is needed: no handler token, no manual
 registration on a bus, no subscription code.
 
@@ -325,12 +327,13 @@ it('places an order and announces it', async () => {
 | `bind(token).toFactory((resolve) => instance)` | anything a constructor cannot express |
 | `bind(token).toValue(value)` | an existing object or a constant |
 | `.singleton()` / `.transient()` | one instance per application (default) or one per resolution |
-| `.as(kind)` | role of the binding, handed to the `decorate` hook: `repository`, `gateway`, `external`, `use-case`, `publisher`, `consumer` |
+| `.as(kind)` | role of the binding, handed to the `decorate` hook: `repository`, `gateway`, `external`, `use-case`, `publisher`, `consumer`, `job` |
 | `rebind(token).to...` | replaces the binding of a module listed earlier, such as a default of `kernelModule()` |
 | `command(Type).handledBy(Handler, [tokens])` | binds the handler (singleton, kind `use-case`) and registers it on `COMMAND_BUS` |
 | `query(Type).handledBy(Handler, [tokens])` | the same on `QUERY_BUS` |
-| `on(definition, { consumer }).handledBy(Consumer, [tokens])` | binds the consumer (kind `consumer`) and subscribes its `handle(event)` to `EVENT_SUBSCRIBER` |
-| `.handledByFactory((resolve) => handler)` | the factory form of the three lines above |
+| `on(definition, { consumer }).handledBy(Handler, [tokens])` | binds the integration event handler (kind `consumer`) and subscribes its `handle(event)` to `EVENT_SUBSCRIBER` |
+| `job(name, schedule and options).handledBy(Job, [tokens])` | binds the job (singleton, kind `job`) and registers its `run(execution)` on `JOB_SCHEDULER` |
+| `.handledByFactory((resolve) => handler)` | the factory form of the four lines above |
 | `include(declared)` | adds classes that declare themselves: what `contextModule` does |
 
 Handlers are registered when the application is created, which resolves the two buses; a
@@ -380,6 +383,7 @@ kernelModule({
 | `LOCK` | `Lock` | `InMemoryLock` on `CLOCK`: this process only | `lock` |
 | `RATE_LIMITER` | `RateLimiter` | `InMemoryRateLimiter` on `CLOCK`: this process only | `rateLimiter` |
 | `DOMAIN_EVENTS` | `DomainEventDispatcher` | `InMemoryDomainEventDispatcher` | `domainEvents` |
+| `JOB_SCHEDULER` | `JobScheduler` | `InProcessJobScheduler` of `@ddd-ts-kit/scheduling` on `CLOCK`, `LOCK`, `EXECUTION_SCOPE`, `ID_GENERATOR`, `LOGGER` and `METRICS` | `jobScheduler` |
 
 The tokens are defined in `@ddd-ts-kit/kernel/declarations` and exported again from here: a
 handler names `CLOCK` in its dependency list without importing this package. Each is a global
@@ -404,6 +408,63 @@ Use cases publish through `EVENT_PUBLISHER` and never through `EVENT_BUS`, so mo
 outbox touches no context. A bus given for `COMMAND_BUS` or `QUERY_BUS` needs a
 `register(type, handler)` method for the declared handlers to be attached to it.
 
+## Scheduled jobs
+
+A class of `application/scheduling/` that carries `@Scheduled` is a job of its context: nothing
+else registers it.
+
+```ts
+// contexts/billing/application/scheduling/send-reminders.job.ts
+@Scheduled('billing.send-reminders', { cron: '0 7 * * 1-5', timeZone: 'Europe/Paris' }, [COMMAND_BUS])
+export class SendRemindersJob implements ScheduledJob {
+  constructor(private readonly commands: CommandBus) {}
+
+  async run(execution: JobExecution): Promise<void> {
+    await this.commands.execute(new SendReminders(systemActor('billing.send-reminders'), execution.scheduledAt));
+  }
+}
+```
+
+- **Registered when the application is created**, on `JOB_SCHEDULER`, with the defaults of
+  its options filled in. The class is built on its first run, so a job that cannot be built
+  fails that run and nothing else.
+- **Started by `start()`**, after the modules and once the consumers are subscribed: a job
+  sends commands whose events must find their handlers. **Stopped first by `stop()`**, which
+  waits for the runs in progress, then aborts them, while everything they use is still up.
+- **Each run happens in `EXECUTION_SCOPE`**, in a context of origin `schedule`, as
+  `systemActor('<job name>')`, with a correlation of its own. The scheduler does it, not the
+  job.
+- **The default scheduler** is the in-process one of `@ddd-ts-kit/scheduling`, on the bound
+  `CLOCK` and `LOCK`. With the default lock, which excludes inside one process only, several
+  instances each run every job: bind a lock between processes (`RedisLock`) before scaling
+  out. What one instance among several guarantees, and what it does not, is in that README.
+- **An application without job** never resolves the scheduler.
+
+`createApplication({ jobs })` says whether this process runs the jobs and what configuration
+changes of each:
+
+```ts
+createApplication({
+  modules,
+  jobs: {
+    start: config.runJobs,                                           // default true
+    settings: {
+      'billing.send-reminders': { enabled: config.reminders.enabled },
+      'billing.export-ledger': { schedule: { every: '6h' }, timeoutMs: 300_000 },
+    },
+  },
+});
+```
+
+| Option | |
+|---|---|
+| `start: false` | the jobs are registered and described, `runNow` runs one, and `start()` never starts the scheduler: the process that serves requests next to a worker process that runs the jobs |
+| `settings['<job name>']` | `enabled`, `schedule` and any option of the declaration (`overlap`, `missed`, `timeoutMs`, `jitterMs`, `singleInstance`), which win over what the class wrote. A key left undefined changes nothing |
+
+`app.resolve(JOB_SCHEDULER)` is the port: `runNow(name)` for an operations endpoint,
+`describe()` for the next run and the last outcome of each job. A context extracted as its own
+service takes its jobs with it: they belong to its module, and nothing is global.
+
 ## Tests
 
 A declared context is tested like an explicit one: the module is the unit, the fakes replace
@@ -416,7 +477,7 @@ const app = createTestApplication({
 });
 ```
 
-`createTestApplication({ modules, fakes, now?, idPrefix?, actor?, session?, executionContext? })` puts the modules on a deterministic
+`createTestApplication({ modules, fakes, now?, idPrefix?, actor?, session?, executionContext?, jobs? })` puts the modules on a deterministic
 kernel, whether or not they list `kernelModule()`, and returns the application plus what a
 spec touches:
 
@@ -424,7 +485,7 @@ spec touches:
 |---|---|
 | `commandBus`, `queryBus` | the in-memory buses, with every declared handler |
 | `eventBus` | `InMemoryEventBus`; `eventBus.published` lists what the use cases announced |
-| `domainEvents` | `InMemoryDomainEventDispatcher`; dispatch a domain event to see the declared listeners react |
+| `domainEvents` | `InMemoryDomainEventDispatcher`; dispatch a domain event to see the declared handlers react |
 | `clock` | `FixedClock` at `now` (default `2026-01-01T00:00:00.000Z`); `clock.advance(ms)` |
 | `ids` | `SequentialIdGenerator`: `id-1`, `id-2`... |
 | `actorContext` | `FixedActorContext`; `actAs(actor)` changes who infrastructure sees |
@@ -432,6 +493,7 @@ spec touches:
 | `logger`, `metrics` | `InMemoryLogger` and `InMemoryMetrics`: assert `logger.entries`, `metrics.samples` |
 | `cache` | `InMemoryCache` on `clock` |
 | `lock`, `rateLimiter` | `InMemoryLock` and `InMemoryRateLimiter` on `clock` |
+| `jobs` | `runNow(name)` runs a declared job as the scheduler would and throws what it threw; `scheduler` is a `ManualJobScheduler` on `clock`, not started |
 | `get(token)` | `resolve`, typed by the token |
 | `as(actorOrSession, work)` | runs a block as someone else, then comes back |
 
@@ -456,6 +518,22 @@ app.as(aSession().of(accountant).impersonatedBy('support-7').build(), () => {
 Use cases still receive the actor in the command or query; `as` only decides what the
 repositories, the audit columns and the tenant scoping see while the block runs.
 
+**Jobs are never started by time** in a test application: `start()` subscribes the consumers
+and leaves the scheduler alone, whatever the clock does. A spec runs a job by name and asserts
+the fakes, as it would for a command:
+
+```ts
+await app.jobs.runNow('billing.send-reminders');
+
+expect(mailer.sent).toHaveLength(2);
+```
+
+For a spec about the schedule itself, `await app.jobs.scheduler.start()` then
+`await app.jobs.scheduler.advance(ms)` move `app.clock` and run what becomes due, and
+`app.jobs.scheduler.runs` lists what happened. The `jobs` option takes per-job settings, as
+`createApplication({ jobs: { settings } })` does. Runs take their correlation ids from a
+generator of their own (`job-run-1`...), so a job leaves the identifiers a spec predicts alone.
+
 A fake must stand for a token that a module binds or that a class depends on, otherwise
 `UNKNOWN_FAKE` is raised: a fake for the wrong token would silently leave the real adapter in
 place. Consumers receive events once `await app.start()` ran.
@@ -473,15 +551,20 @@ never share instances.
 
 - `DUPLICATE_BINDING`: a token bound twice, both modules named;
 - `NOTHING_TO_REBIND`: a `rebind` of a token that no earlier module binds;
-- `UNBOUND_DEPENDENCY`: a class dependency that no module binds, or handlers and consumers
-  declared without the bus they go on;
+- `UNBOUND_DEPENDENCY`: a class dependency that no module binds, or handlers, consumers and
+  jobs declared without the bus or the scheduler they go on;
 - `DEPENDENCY_CYCLE`: a cycle between class bindings, the path printed;
 - `INCOMPLETE_BINDING`: a `bind`, `command`, `query` or `on` left without its target;
 - `DUPLICATE_HANDLER`: a command or a query with two handlers, both modules named;
 - `DUPLICATE_CONSUMER`: two consumers of the same event sharing a name;
 - `BUS_WITHOUT_REGISTER`: handlers declared for a bus that cannot receive them;
 - `UNKNOWN_FAKE`: see above;
-- `UNDECLARED_CLASS`: a class listed in `contextModule` or `include` without a declaration.
+- `UNDECLARED_CLASS`: a class listed in `contextModule` or `include` without a declaration;
+- `DUPLICATE_JOB`: two jobs sharing a name, both modules named: the name is the lock, the
+  actor and the label of a job;
+- `UNKNOWN_JOB`: settings given for a job that no module declares;
+- `INVALID_JOB_SETTINGS`: a schedule or an option of the settings that cannot be read (a cron,
+  a time zone, a zero interval), or a job of an explicit module whose name or schedule cannot.
 
 The checks do not tell the two styles apart. For a declared class the message names the class
 and, when discovery loaded it, the file:
@@ -507,10 +590,12 @@ factory is reported when it is resolved (`DEPENDENCY_CYCLE`, `UNBOUND_TOKEN`).
                dependencies: ['ordering.OrderRepository', 'kernel.Clock'], overridden: false }],
   commands: [{ message: 'PlaceOrder', handler: 'PlaceOrderHandler', module: 'ordering' }],
   queries: [{ message: 'GetOrder', handler: 'GetOrderHandler', module: 'ordering' }],
-  subscriptions: [{ event: 'billing.payment.captured', version: 1, consumer: 'ordering.mark-order-paid',
-                    handler: 'MarkOrderPaidOnPaymentCaptured', module: 'ordering' }],
-  reactions: [],
+  integrationEventHandlers: [{ event: 'billing.payment.captured', version: 1, consumer: 'ordering.mark-order-paid',
+                               handler: 'MarkOrderPaidOnPaymentCaptured', module: 'ordering' }],
+  domainEventHandlers: [],
   policies: [],
+  jobs: [{ name: 'ordering.expire-carts', schedule: 'every 15m', overlap: 'skip', missed: 'skip', jitterMs: 0,
+           enabled: true, singleInstance: true, job: 'ExpireCartsJob', module: 'ordering' }],
   overrides: [],
 }
 ```
@@ -526,8 +611,9 @@ carries none of the three:
   file: '/app/dist/contexts/billing/infrastructure/persistence/knex-invoice.repository.js' }
 ```
 
-`reactions` lists the declared listeners of domain events, `policies` the declared policy
-classes.
+`domainEventHandlers` lists the declared handlers of domain events, `policies` the declared policy
+classes, `jobs` the jobs with the settings they run with, those of the application applied.
+What a job did last and when it runs next is not wiring: ask `app.resolve(JOB_SCHEDULER).describe()`.
 
 ## The `decorate` hook
 
@@ -573,19 +659,19 @@ takes an `actor` option.
   written below the declaration, so that the declaration lands on the class that is exported.
   A decorator that only annotates, as `@Injectable()` does, composes in either order.
 - A declaration is not inherited: a subclass declares itself or is bound explicitly.
-- A consumer name, a policy name and the name of a domain event are written in the
+- A consumer name, a policy name, a job name and the name of a domain event are written in the
   declaration; they are not derived from the class, which a refactoring renames.
 - Discovered files are imported by nothing. In a project using discovery, tell knip that they
   are entries and dependency-cruiser that they are not orphans:
 
   ```jsonc
   // knip.json
-  { "entry": ["src/main.ts", "src/contexts/*/{application,infrastructure}/**/*.{command,query,handler,consumer,event-handler,policy,repository,gateway,adapter}.ts"] }
+  { "entry": ["src/main.ts", "src/contexts/*/{application,infrastructure}/**/*.{command,query,handler,integration-handler,event-handler,policy,job,repository,gateway,adapter}.ts"] }
   ```
 
   ```js
   // .dependency-cruiser.cjs, in the pathNot of the no-orphans rule
-  '\\.(command|query|handler|consumer|event-handler|policy|repository|gateway|adapter)\\.ts$'
+  '\\.(command|query|handler|integration-handler|event-handler|policy|job|repository|gateway|adapter)\\.ts$'
   ```
 
   With a barrel and `contextModule` neither setting is needed.

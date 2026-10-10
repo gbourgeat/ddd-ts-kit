@@ -51,7 +51,7 @@ describe('shipped templates', () => {
   it('exist for every kind', () => {
     const kinds = new Set(templates.map((template) => template.split('/')[0]));
     expect([...kinds].sort()).toEqual(
-      ['acl', 'adapter', 'adr', 'architecture', 'gateway', 'policy', 'service', 'aggregate', 'builder', 'command', 'consumer', 'context', 'docs', 'domain-error', 'domain-event', 'domain-service', 'e2e', 'entity', 'event-handler', 'init', 'integration-event', 'pipeline', 'port', 'query', 'repository', 'route', 'value-object'].sort(),
+      ['acl', 'adapter', 'adr', 'architecture', 'gateway', 'policy', 'service', 'aggregate', 'builder', 'command', 'context', 'docs', 'domain-error', 'domain-event', 'domain-service', 'e2e', 'entity', 'event-handler', 'init', 'integration-event', 'integration-handler', 'pipeline', 'port', 'query', 'repository', 'route', 'value-object'].sort(),
     );
   });
 

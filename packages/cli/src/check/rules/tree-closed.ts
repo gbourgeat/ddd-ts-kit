@@ -1,6 +1,7 @@
 import path from 'node:path';
 import { isCanonicalDirectory, OPEN_DIRECTORIES, roleOf } from '../canonical.js';
 import type { Config } from '../../config.js';
+import { barrelFile } from '../../declared/roles.js';
 import type { Rule } from '../types.js';
 import { reporter, type Finding } from './helpers.js';
 
@@ -26,6 +27,8 @@ export const treeClosed: Rule = {
 
 interface Placed {
   readonly context: string;
+  /** True when the classes of the project declare themselves: the context then has a generated barrel at its root. */
+  readonly declared: boolean;
   /** Path of the entry inside its context. */
   readonly inside: string;
   readonly extras: readonly string[];
@@ -33,10 +36,10 @@ interface Placed {
 
 type Stray = Omit<Finding, 'line'>;
 
-function place(entry: string, { contextsDir, contexts }: Config): Placed | undefined {
+function place(entry: string, { contextsDir, contexts, stack }: Config): Placed | undefined {
   const [context = '', ...rest] = entry.slice(contextsDir.length + 1).replace(/\/$/, '').split('/');
   if (rest.length === 0) return undefined;
-  return { context, inside: rest.join('/'), extras: contexts[context]?.extraDirectories ?? [] };
+  return { context, declared: stack.style === 'declared', inside: rest.join('/'), extras: contexts[context]?.extraDirectories ?? [] };
 }
 
 function strayDirectory({ context, inside, extras }: Placed): Stray | undefined {
@@ -47,10 +50,11 @@ function strayDirectory({ context, inside, extras }: Placed): Stray | undefined 
   };
 }
 
-function straySource({ context, inside, extras }: Placed): Stray | undefined {
+function straySource(placed: Placed): Stray | undefined {
+  const { inside, extras } = placed;
   if (!inside.endsWith('.ts')) return undefined;
   const directory = path.posix.dirname(inside);
-  if (directory === '.') return atContextRoot(context, inside);
+  if (directory === '.') return atContextRoot(placed);
   const open = OPEN_DIRECTORIES.some((root) => directory === root || directory.startsWith(`${root}/`));
   if (open || roleOf(directory) !== undefined || coveredByExtra(extras, directory)) return undefined;
   return {
@@ -59,9 +63,11 @@ function straySource({ context, inside, extras }: Placed): Stray | undefined {
   };
 }
 
-function atContextRoot(context: string, file: string): Stray | undefined {
-  if (file === `${context}.module.ts`) return undefined;
-  return { message: `"${file}" sits at the root of the context.`, fix: `Move it into the directory of its role; only CONTEXT.md and ${context}.module.ts live at the root of a context.` };
+function atContextRoot({ context, declared, inside: file }: Placed): Stray | undefined {
+  const barrel = barrelFile(context);
+  if (file === `${context}.module.ts` || (declared && file === barrel)) return undefined;
+  const allowed = declared ? `CONTEXT.md, ${barrel} and ${context}.module.ts` : `CONTEXT.md and ${context}.module.ts`;
+  return { message: `"${file}" sits at the root of the context.`, fix: `Move it into the directory of its role; only ${allowed} live at the root of a context.` };
 }
 
 function coveredByExtra(extras: readonly string[], directory: string): boolean {

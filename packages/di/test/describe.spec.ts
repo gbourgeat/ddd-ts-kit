@@ -45,7 +45,7 @@ describe('application.describe', () => {
     });
   });
 
-  it('lists commands, queries and subscriptions with the module that declares them', () => {
+  it('lists commands, queries and integration event handlers with the module that declares them', () => {
     expect(description.commands).toEqual([
       { message: 'PlaceOrder', handler: 'PlaceOrderHandler', module: 'ordering' },
       { message: 'CancelOrder', handler: 'CancelOrderHandler', module: 'ordering' },
@@ -54,7 +54,7 @@ describe('application.describe', () => {
     expect(description.queries).toEqual([
       { message: 'GetOrder', handler: 'GetOrderHandler', module: 'ordering' },
     ]);
-    expect(description.subscriptions).toEqual([
+    expect(description.integrationEventHandlers).toEqual([
       {
         event: 'ordering.order.placed',
         version: 1,

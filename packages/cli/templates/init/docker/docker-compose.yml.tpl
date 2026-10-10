@@ -56,9 +56,54 @@ services:
       retries: 30
 
 {{/if}}
-{{#if cache.redis}}
+{{#if broker.kafka}}
+  # One node in KRaft mode, for local use: no ZooKeeper, one replica of everything.
+  kafka:
+    image: apache/kafka:4.3.1
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:${KAFKA_PORT:-9092}
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+    ports:
+      - "${KAFKA_PORT:-9092}:9092"
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 > /dev/null 2>&1"]
+      interval: 5s
+      timeout: 10s
+      retries: 30
+
+{{/if}}
+{{#if broker.nats}}
+  # JetStream on, its streams kept on a volume; the monitoring port answers the healthcheck.
+  nats:
+    image: nats:2.15.0-alpine
+    command: ["-js", "-sd", "/data", "-m", "8222"]
+    ports:
+      - "${NATS_PORT:-4222}:4222"
+    volumes:
+      - nats-data:/data
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8222/healthz"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+{{/if}}
+{{#if redis.server}}
   # Any Redis protocol server fits behind REDIS_URL (Redis, Valkey, Dragonfly): the adapters use their common subset.
-  cache:
+{{#if redis.streams}}
+  # One server for all of it: the streams of the event bus live next to whatever else the platform keeps there.
+{{/if}}
+  {{redis.service}}:
     image: docker.dragonflydb.io/dragonflydb/dragonfly:v2.0.2
     ulimits:
       memlock: -1
@@ -66,7 +111,7 @@ services:
     ports:
       - "${REDIS_PORT:-6379}:6379"
     volumes:
-      - cache-data:/data
+      - {{redis.service}}-data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 2s
@@ -113,6 +158,9 @@ volumes:
 {{#if database.mysql}}
   mysql-data:
 {{/if}}
-{{#if cache.redis}}
-  cache-data:
+{{#if broker.nats}}
+  nats-data:
+{{/if}}
+{{#if redis.server}}
+  {{redis.service}}-data:
 {{/if}}

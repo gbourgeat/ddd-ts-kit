@@ -1,7 +1,10 @@
 import { CONFIG_FILE, editConfigText } from '../../config.js';
 import { renderTemplate } from '../../templates.js';
 import type { Kind } from '../kind.js';
-import { openScope, vars, type Scope } from '../scope.js';
+import { barrelFile, routesFile } from '../../declared/roles.js';
+import { hostImports, hostedContext } from '../access.js';
+import { isDeclared } from '../declared.js';
+import { openScope, relativeTo, vars, type Scope } from '../scope.js';
 
 export const serviceKind: Kind = {
   name: 'service',
@@ -23,14 +26,47 @@ export const serviceKind: Kind = {
   },
 };
 
-/** What the entry point hands to `composeApplication` so that it hosts this context only. */
-function selectionOf(scope: Scope): { selection: string; selectionImport: string } {
+/** What the entry point hands to `composeApplication` so that it hosts this context only, and what it imports for it. */
+function selectionOf(scope: Scope): { selection: string; imports: string } {
   const { context, config } = scope;
-  if (config.stack.di !== 'tsyringe') return { selection: `[wire${context.pascal}]`, selectionImport: `wire${context.pascal}` };
-  if (config.stack.http === 'none') return { selection: `{ modules: [${context.camel}Module] }`, selectionImport: `${context.camel}Module` };
+  if (isDeclared(config)) return declaredSelection(scope);
+  const module = `${toSource(scope)}/contexts/${context.kebab}/${context.kebab}.module.js`;
+  const from = (names: string): string => `import { ${names} } from '${module}';`;
+  if (config.stack.di !== 'tsyringe') return { selection: `[wire${context.pascal}]`, imports: from(`wire${context.pascal}`) };
+  if (config.stack.http === 'none') return { selection: `{ modules: [${context.camel}Module] }`, imports: from(`${context.camel}Module`) };
+  return { selection: `{ modules: [${context.camel}Module], routes: [${context.constant}_ROUTES] }`, imports: from(`${context.constant}_ROUTES, ${context.camel}Module`) };
+}
+
+const toSource = (scope: Scope): string => relativeTo(`${scope.config.sourceRoot}/apps/${scope.context.kebab}`, scope.config.sourceRoot);
+
+/** The same line as in the composition root of the whole application, for this context alone. */
+function declaredSelection(scope: Scope): { selection: string; imports: string } {
+  const { context, config } = scope;
+  const directory = `${relativeTo(`${config.sourceRoot}/apps/${context.kebab}`, config.contextsDir)}/${context.kebab}`;
+  const withRoutes = config.stack.http !== 'none';
+  const imports = [
+    ...(config.stack.assembly === 'discovery' ? ["import { discoverContext } from '@ddd-ts-kit/di/discovery';"] : [`import * as ${context.camel}Declarations from '${directory}/${barrelFile(context.kebab).replace(/\.ts$/, '.js')}';`]),
+    ...hostImports(config, relativeTo(`${config.sourceRoot}/apps/${context.kebab}`, config.platformDir)),
+    ...(withRoutes ? [`import { ${context.camel}Routes } from '${directory}/${routesFile(context.kebab).replace(/\.ts$/, '.js')}';`] : []),
+  ];
+  const publishers = undiscoveredPublishers(scope, directory);
+  const modules = [hostedContext(scope, `${directory}/`), ...publishers.modules];
+  return { selection: `{ modules: [${modules.join(', ')}]${withRoutes ? `, routes: [${context.camel}Routes]` : ''} }`, imports: [...imports, ...publishers.imports].join('\n') };
+}
+
+/** `discoverContext` loads no `*.publisher` file: the entry point lists the publishers the context has today. */
+function undiscoveredPublishers(scope: Scope, directory: string): { modules: string[]; imports: string[] } {
+  const { ws, config, context, dir } = scope;
+  const folder = 'application/integration/publishers';
+  const found = config.stack.assembly !== 'discovery' ? [] : ws.list(`${dir}/${folder}`).flatMap((file) => {
+    const name = /export class (\w+)/.exec(ws.read(`${dir}/${folder}/${file}`) ?? '')?.[1];
+    return name === undefined ? [] : [{ name, file }];
+  });
+  if (found.length === 0) return { modules: [], imports: [] };
+  ws.note(`The publishers of ${context.kebab} are listed in the entry point, since discovery does not load them: add the ones generated later to its \`contextModule('${context.kebab}.publishers', [...])\`.`);
   return {
-    selection: `{ modules: [${context.camel}Module], routes: [${context.constant}_ROUTES] }`,
-    selectionImport: `${context.constant}_ROUTES, ${context.camel}Module`,
+    modules: [`contextModule('${context.kebab}.publishers', [${found.map(({ name }) => name).join(', ')}])`],
+    imports: ["import { contextModule } from '@ddd-ts-kit/di';", ...found.map(({ name, file }) => `import { ${name} } from '${directory}/${folder}/${file.replace(/\.ts$/, '.js')}';`)],
   };
 }
 

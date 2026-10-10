@@ -2,6 +2,9 @@ import { aspects, installAspectRuntime } from '@ddd-ts-kit/aspects';
 import {
   CACHE,
   CLOCK,
+{{#if composition.buses}}
+  COMMAND_BUS,
+{{/if}}
   EVENT_BUS,
 {{#unless broker.external}}
   EVENT_SUBSCRIBER,
@@ -11,25 +14,32 @@ import {
 {{/if}}
   LOGGER,
   METRICS,
+{{#if composition.buses}}
+  QUERY_BUS,
+{{/if}}
 {{#if cache.rateLimit}}
   RATE_LIMITER,
+{{/if}}
+{{#if composition.contextModule}}
+  contextModule,
 {{/if}}
   createApplication,
   type Application as Container,
   type ContextModule,
-{{#if http.any}}
+{{#if assembly.discovery}}
+  type DeclaredSource,
+{{/if}}
+{{#if composition.routeTokens}}
   type Token,
 {{/if}}
 } from '@ddd-ts-kit/di';
+{{#if assembly.discovery}}
+import { discoverContext } from '@ddd-ts-kit/di/discovery';
+{{/if}}
 {{#if http.any}}
 import { defineRoutes, type Route } from '@ddd-ts-kit/http';
 {{/if}}
-{{#if cache.rateLimit}}
-import type { IntegrationEventPublisher, IntegrationEventSubscriber, Logger, RateLimiter } from '@ddd-ts-kit/kernel';
-{{/if}}
-{{#unless cache.rateLimit}}
-import type { IntegrationEventPublisher, IntegrationEventSubscriber, Logger } from '@ddd-ts-kit/kernel';
-{{/unless}}
+import type { {{composition.kernelTypes}} } from '@ddd-ts-kit/kernel';
 {{#if broker.external}}
 import { tracedPublisher, tracedSubscriber } from '@ddd-ts-kit/tracing';
 {{/if}}
@@ -43,6 +53,9 @@ import { AUDIT_ROUTES } from './audit/audit.module.js';
 import { httpBoundary, type HttpBoundary } from './auth/http-boundary.js';
 {{/if}}
 import type { Persistence } from './database/persistence.js';
+{{#if composition.listening}}
+import { listeningContext } from './listening-context.js';
+{{/if}}
 import { platformModules, type PlatformOptions } from './platform.module.js';
 import { DEFAULT_RESILIENCE, adapterAspects, type ResilienceSettings } from './resilience.js';
 // ddd-ts-kit:imports
@@ -83,15 +96,30 @@ export interface Application {
 /** The contexts an application hosts: all of them here, one alone in `apps/<context>/main.ts`. */
 export interface ContextSelection {
   readonly modules: readonly ContextModule[];
-{{#if http.any}}
+{{#if composition.routeTokens}}
   readonly routes: readonly Token<readonly Route[]>[];
 {{/if}}
+{{#if composition.buses}}
+  /** The routes of each context, given the two buses they call. */
+  readonly routes: readonly ((commands: CommandBus, queries: QueryBus) => readonly Route[])[];
+{{/if}}
 }
+{{#if assembly.discovery}}
+
+/** `discoverContext` loads no `*.publisher` file: the reactions that publish integration events are listed here. */
+const PUBLISHERS: DeclaredSource = [
+  // ddd-ts-kit:publishers
+  // /ddd-ts-kit:publishers
+];
+{{/if}}
 
 const EVERY_CONTEXT: ContextSelection = {
   modules: [
     // ddd-ts-kit:contexts
     // /ddd-ts-kit:contexts
+{{#if assembly.discovery}}
+    contextModule('publishers', PUBLISHERS),
+{{/if}}
   ],
 {{#if http.any}}
   routes: [
@@ -111,10 +139,10 @@ export function composeApplication(persistence: Persistence, options: Applicatio
   return {
 {{#if http.any}}
 {{#if audit.route}}
-    routes: defineRoutes(...contexts.routes.map((routes) => container.resolve(routes)), container.resolve(AUDIT_ROUTES)),
+    routes: defineRoutes(...contexts.routes.map((routes) => {{composition.routesOf}}), container.resolve(AUDIT_ROUTES)),
 {{/if}}
 {{#unless audit.route}}
-    routes: defineRoutes(...contexts.routes.map((routes) => container.resolve(routes))),
+    routes: defineRoutes(...contexts.routes.map((routes) => {{composition.routesOf}})),
 {{/unless}}
     boundary: httpBoundary({ authenticator: options.authenticator, executionScope: container.resolve(EXECUTION_SCOPE), logger }),
 {{/if}}

@@ -1,18 +1,22 @@
 import { CONFIG_FILE } from '../../config.js';
+import { declaredRoleOf } from '../../declared/roles.js';
 import { braceDepthAt } from '../text-shapes.js';
 import type { Project, Rule, SourceFile } from '../types.js';
-import { inContext, lineOfSequence, reporter, toViolations, type ContextLocation, type Finding } from './helpers.js';
+import { inContext, isDeclaredStyle, lineOfSequence, pathInContext, reporter, toViolations, type ContextLocation, type Finding } from './helpers.js';
 
 const SCHEMA_CALL = /(?<![\w$])(?:schemaNameOf|contextSchema|pgSchema|withSchema)\s*\(\s*$/;
 const SHARED_STATE = /(?<![\w$.])export\s+(?:let\s+([\w$]+)|const\s+([\w$]+)\s*(?::[^=;]+)?=\s*new\s+(?:Map|Set|WeakMap)\s*[<(])/g;
 const GATEWAY_FIX =
   'Declare what this context needs as a gateway port in application/ports and call the other context from its adapter in infrastructure/external, through the published language: in process today, a remote client tomorrow.';
 
+const TOKEN_NAME = /^[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*$/;
+const PORTS_FILE = /\.ports\.ts$/;
+
 type ImportedModule = SourceFile['imports'][number];
 
 export const contextExtractable: Rule = {
   id: 'context/extractable',
-  description: 'A context can run alone: its module wires nothing of another context, it reads no table of another context, shares no repository with one and exports no mutable state.',
+  description: 'A context can run alone: its module and its declared classes wire nothing of another context, it reads no table of another context, shares no repository with one and exports no mutable state.',
   scope: 'file',
   run(project) {
     const report = reporter(project, this.id);
@@ -20,7 +24,9 @@ export const contextExtractable: Rule = {
     return project.files.flatMap((file) => {
       const here = inContext(file.location) && !file.isTest ? file.location : undefined;
       if (here === undefined) return [];
-      const findings = [...file.imports.flatMap((module) => foreignWiring(module, here)), ...foreignSchemas(file, here, contexts), ...sharedState(file)];
+      const declares = isDeclaredStyle(project) && declaredRoleOf(pathInContext(project, file) ?? '') !== undefined;
+      const tokens = declares ? file.imports.flatMap((module) => foreignTokens(module, here)) : [];
+      const findings = [...file.imports.flatMap((module) => foreignWiring(module, here)), ...tokens, ...foreignSchemas(file, here, contexts), ...sharedState(file)];
       return toViolations(report, file.path, findings);
     });
   },
@@ -63,6 +69,21 @@ function useCaseTie(here: ContextLocation, there: ContextLocation): Tie | undefi
   return { message: `A handler of "${here.context}" imports a repository of "${there.context}": one use case would span two contexts.`, fix: GATEWAY_FIX };
 }
 
+/** A declared class names what it depends on by token: a token of another context ties the wiring of the two. */
+function foreignTokens({ target, names, line }: ImportedModule, here: ContextLocation): Finding[] {
+  if (target.kind !== 'file' || !inContext(target.location) || target.location.context === here.context) return [];
+  const owner = target.location.context;
+  const token = PORTS_FILE.test(target.path) ? (names[0] ?? 'a token') : names.find((name) => name.length > 1 && TOKEN_NAME.test(name));
+  if (token === undefined) return [];
+  return [
+    {
+      line,
+      message: `A declared class of "${here.context}" names ${token}, a token of "${owner}": the context could no longer be wired alone.`,
+      fix: `Depend on a token of ${here.context} (application/ports/${here.context}.ports.ts), of the kernel, of @ddd-ts-kit/auth or of the platform; what ${here.context} needs from ${owner} is a gateway port of its own, whose adapter in infrastructure/external calls ${owner} through its published language.`,
+    },
+  ];
+}
+
 function foreignSchemas(file: SourceFile, here: ContextLocation, contexts: readonly string[]): Finding[] {
   if (here.layer !== 'infrastructure' || here.inside[0] !== 'persistence') return [];
   const others = contexts.filter((context) => context !== here.context);
@@ -92,7 +113,7 @@ function withoutEntryPoint(project: Project, context: string): Finding[] {
     {
       line: lineOfSequence(project.configText, ['"contexts"', `"${context}":`, '"deployable"']),
       message: `The context "${context}" is declared deployable but ${entryPoint} does not exist.`,
-      fix: `Create ${entryPoint}, composing ${context}.module.ts with the kernel and the platform only, or set contexts.${context}.deployable to false.`,
+      fix: `Create ${entryPoint}, composing ${isDeclaredStyle(project) ? `the declarations of ${context}` : `${context}.module.ts`} with the kernel and the platform only, or set contexts.${context}.deployable to false.`,
     },
   ];
 }

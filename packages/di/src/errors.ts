@@ -14,7 +14,10 @@ export type WiringErrorCode =
   | 'UNDECLARED_CLASS'
   | 'DISCOVERY_FAILED'
   | 'NOTHING_DECLARED'
-  | 'MISPLACED_DECLARATION';
+  | 'MISPLACED_DECLARATION'
+  | 'DUPLICATE_JOB'
+  | 'UNKNOWN_JOB'
+  | 'INVALID_JOB_SETTINGS';
 
 /** A mistake in the composition root. Never a business failure, hence not a DomainError. */
 export class WiringError extends Error {

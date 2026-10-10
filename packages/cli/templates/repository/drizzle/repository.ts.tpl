@@ -6,14 +6,24 @@ import { stampCreation, stampUpdate, tenantScopeOf, type Clock, type ExecutionSc
 {{#unless tenant.scoped}}
 import { stampCreation, stampUpdate, type Clock, type ExecutionScope } from '@ddd-ts-kit/kernel';
 {{/unless}}
+{{#if style.declared}}
+import { CLOCK, EXECUTION_SCOPE, Repository } from '@ddd-ts-kit/kernel/declarations';
+import { {{aggregate.constant}}_REPOSITORY } from '../../application/ports/{{context.kebab}}.ports.js';
+{{/if}}
 import type { {{aggregate.pascal}} } from '../../domain/aggregates/{{aggregate.kebab}}.aggregate.js';
 import type { {{aggregate.pascal}}Repository } from '../../domain/repositories/{{aggregate.kebab}}.repository.js';
 import type { DatabaseContext } from '{{paths.persistenceToPlatform}}/database/database.js';
+{{#if style.declared}}
+import { DATABASE } from '{{paths.persistenceToPlatform}}/tokens.js';
+{{/if}}
 import { {{aggregate.tableCamel}} } from './{{context.kebab}}.schema.js';
 import { {{aggregate.pascal}}Mapper, type {{aggregate.pascal}}Columns } from './{{aggregate.kebab}}.mapper.js';
 
 type Versioned{{aggregate.pascal}} = {{aggregate.pascal}}Columns & { readonly version: number };
 
+{{#if style.declared}}
+@Repository({{aggregate.constant}}_REPOSITORY, [DATABASE, EXECUTION_SCOPE, CLOCK])
+{{/if}}
 export class Drizzle{{aggregate.pascal}}Repository implements {{aggregate.pascal}}Repository {
   constructor(
     private readonly database: DatabaseContext,

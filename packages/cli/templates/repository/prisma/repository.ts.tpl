@@ -1,10 +1,20 @@
 import { stampCreation, stampUpdate, type Clock, type ExecutionScope } from '@ddd-ts-kit/kernel';
 import { optimisticUpdate } from '@ddd-ts-kit/prisma';
+{{#if style.declared}}
+import { CLOCK, EXECUTION_SCOPE, Repository } from '@ddd-ts-kit/kernel/declarations';
+import { {{aggregate.constant}}_REPOSITORY } from '../../application/ports/{{context.kebab}}.ports.js';
+{{/if}}
 import type { {{aggregate.pascal}} } from '../../domain/aggregates/{{aggregate.kebab}}.aggregate.js';
 import type { {{aggregate.pascal}}Repository } from '../../domain/repositories/{{aggregate.kebab}}.repository.js';
 import type { DatabaseContext } from '{{paths.persistenceToPlatform}}/database/database.js';
+{{#if style.declared}}
+import { DATABASE } from '{{paths.persistenceToPlatform}}/tokens.js';
+{{/if}}
 import { {{aggregate.pascal}}Mapper } from './{{aggregate.kebab}}.mapper.js';
 
+{{#if style.declared}}
+@Repository({{aggregate.constant}}_REPOSITORY, [DATABASE, EXECUTION_SCOPE, CLOCK])
+{{/if}}
 export class Prisma{{aggregate.pascal}}Repository implements {{aggregate.pascal}}Repository {
   constructor(
     private readonly database: DatabaseContext,

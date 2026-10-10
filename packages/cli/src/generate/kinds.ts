@@ -7,7 +7,7 @@ import { aggregateKind, builderKind, domainErrorKind, domainEventKind, domainSer
 import { e2eKind } from './kinds/e2e.js';
 import { serviceKind } from './kinds/extraction.js';
 import { adrKind } from './kinds/governance.js';
-import { aclKind, consumerKind, integrationEventKind } from './kinds/integration.js';
+import { aclKind, integrationHandlerKind, integrationEventKind } from './kinds/integration.js';
 import { routeKind } from './kinds/presentation.js';
 import { repositoryKind } from './kinds/repository.js';
 
@@ -26,7 +26,7 @@ export const KINDS: readonly Kind[] = [
   portKind,
   routeKind,
   integrationEventKind,
-  consumerKind,
+  integrationHandlerKind,
   eventHandlerKind,
   aclKind,
   e2eKind,

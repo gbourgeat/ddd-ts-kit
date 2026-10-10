@@ -2,7 +2,7 @@ import { connect } from 'amqplib';
 import type {
   EventBus,
   IntegrationEvent,
-  IntegrationEventHandler,
+  IntegrationEventCallback,
   IntegrationEventSubscriber,
   Subscription,
 } from '@ddd-ts-kit/kernel';
@@ -83,7 +83,7 @@ export class RabbitMqEventBus implements EventBus {
   }
 
   /** Subscribes the consumer named by the `consumer` option. */
-  subscribe(type: string, handler: IntegrationEventHandler): Subscription {
+  subscribe(type: string, handler: IntegrationEventCallback): Subscription {
     if (this.#settings.consumer === undefined) {
       throw new ConsumerNameRequiredError();
     }
@@ -151,7 +151,7 @@ export class RabbitMqEventBus implements EventBus {
     await this.#link.close();
   }
 
-  #subscribe(binding: ConsumerBinding, handler: IntegrationEventHandler): Subscription {
+  #subscribe(binding: ConsumerBinding, handler: IntegrationEventCallback): Subscription {
     if (this.#closed) {
       throw new EventBusClosedError();
     }

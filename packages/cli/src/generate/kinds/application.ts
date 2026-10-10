@@ -2,6 +2,7 @@ import { CliError } from '../../errors.js';
 import type { Name } from '../../naming.js';
 import type { RenderContext } from '../../render.js';
 import { accessVars, specVars } from '../access.js';
+import { isDeclared } from '../declared.js';
 import { emit, wire } from '../emit.js';
 import type { Kind } from '../kind.js';
 import { concept, label, learnTerms } from '../language.js';
@@ -55,19 +56,33 @@ export const queryKind: Kind = {
     const name = concept(scope, request.args[1] ?? '', { what: 'use case', strip: ['query', 'handler'] });
     const access = accessVars(scope, { name, kind: 'Query' });
     const variant = queryVariant(scope, access);
-    const context = vars(scope, { name: named(name), access, spec: specVars(scope, access, [`${name.constant}_READER`]), list: { resource: listedResource(access) } });
+    const reader = readerVars(scope, name);
+    const context = vars(scope, { name: named(name), access, spec: specVars(scope, access, [`${name.constant}_READER`]), list: { resource: listedResource(access) }, reader });
     const folder = `application/queries/${name.kebab}`;
     emit(scope, context, [
       [`query/${variant}query.ts.tpl`, `${folder}/${name.kebab}.query.ts`],
       [`query/${variant}handler.ts.tpl`, `${folder}/${name.kebab}.handler.ts`],
       [`query/${variant}reader.port.ts.tpl`, `application/ports/${name.kebab}-reader.port.ts`],
-      [`query/${variant}reader.in-memory.ts.tpl`, `infrastructure/persistence/in-memory-${name.kebab}.reader.ts`],
+      [`query/${variant}reader.in-memory.ts.tpl`, `infrastructure/persistence/${reader.file}.ts`],
       ['query/reader.fake.ts.tpl', `test/fakes/${name.kebab}-reader.fake.ts`],
       [`query/${variant}handler.spec.${scope.config.stack.di === 'tsyringe' ? 'tsyringe' : 'buses'}.ts.tpl`, `test/unit/${name.kebab}.handler.spec.ts`],
     ]);
     wire(scope, variant === '' ? 'query' : 'query/list', context);
   },
 };
+
+/**
+ * The in-memory adapter of the read port. Declared, it is a role file bound by its own
+ * decorator, so it carries the repository suffix and can be built without argument.
+ */
+function readerVars(scope: Scope, name: Name) {
+  const declared = isDeclared(scope.config);
+  return {
+    file: declared ? `in-memory-${name.kebab}-reader.repository` : `in-memory-${name.kebab}.reader`,
+    default: declared ? ' = {}' : '',
+    defaultList: declared ? ' = []' : '',
+  };
+}
 
 /** `--list`: the templates of a paginated list. A list is narrowed by what its actor may see, so it names a permission. */
 function queryVariant(scope: Scope, access: RenderContext): '' | 'list.' {
@@ -94,11 +109,17 @@ export const portKind: Kind = {
   run: (request) => {
     const scope = openScope(request);
     const name = label(scope, request.args[1] ?? '', { what: 'port', strip: ['port'] });
-    emit(scope, vars(scope, { name: named(name) }), [
+    const context = vars(scope, { name: named(name) });
+    emit(scope, context, [
       ['port/port.ts.tpl', `application/ports/${name.kebab}.port.ts`],
       ['port/fake.ts.tpl', `test/fakes/${name.kebab}.fake.ts`],
     ]);
-    scope.ws.note(`${name.pascal} has no adapter yet: implement it in infrastructure/external and bind it in ${scope.context.kebab}.module.ts.`);
+    if (isDeclared(scope.config)) {
+      wire(scope, 'port', context);
+      scope.ws.note(`${name.pascal} has its token (${name.constant}) and no adapter yet: \`ddd-ts-kit generate adapter ${scope.context.kebab} ${name.pascal}\` writes one that declares itself in infrastructure/external.`);
+    } else {
+      scope.ws.note(`${name.pascal} has no adapter yet: implement it in infrastructure/external and bind it in ${scope.context.kebab}.module.ts.`);
+    }
   },
 };
 

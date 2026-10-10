@@ -1,7 +1,7 @@
 import { SpanKind, context, trace, type Attributes, type Span } from '@opentelemetry/api';
 import type {
   IntegrationEvent,
-  IntegrationEventHandler,
+  IntegrationEventCallback,
   IntegrationEventPublisher,
   IntegrationEventSubscriber,
   Subscription,
@@ -52,7 +52,7 @@ export function tracedPublisher(publisher: IntegrationEventPublisher): Integrati
  */
 export function tracedSubscriber(subscriber: IntegrationEventSubscriber): IntegrationEventSubscriber {
   return {
-    subscribe(type: string, handler: IntegrationEventHandler): Subscription {
+    subscribe(type: string, handler: IntegrationEventCallback): Subscription {
       return subscriber.subscribe(type, async (event) => {
         const parent = contextWithTraceparent(context.active(), event.traceparent);
         const span = tracer().startSpan(

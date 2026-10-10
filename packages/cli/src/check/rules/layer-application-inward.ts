@@ -1,6 +1,6 @@
 import { outsideConcern } from '../outside-concerns.js';
 import type { Layer, Location, Rule, SourceFile } from '../types.js';
-import { describeTarget, inLayer, reporter, type Finding } from './helpers.js';
+import { bindingPlace, describeTarget, inLayer, isDeclaredStyle, reporter, type Finding } from './helpers.js';
 
 type ImportedModule = SourceFile['imports'][number];
 
@@ -13,28 +13,37 @@ export const layerApplicationInward: Rule = {
   scope: 'file',
   run(project) {
     const report = reporter(project, this.id);
-    const allowed = project.config.applicationAllowedPackages;
     return project.files.flatMap((file) => {
       const here = inLayer(file, 'application');
       if (here === undefined) return [];
-      return file.imports.flatMap((imported) => outward(imported, here.context, allowed)).map(({ line, message, fix }) => report({ file: file.path, line }, message, fix));
+      const wiring: Wiring = { context: here.context, allowed: project.config.applicationAllowedPackages, binding: bindingPlace(project, here.context), declared: isDeclaredStyle(project) };
+      return file.imports.flatMap((imported) => outward(imported, wiring)).map(({ line, message, fix }) => report({ file: file.path, line }, message, fix));
     });
   },
 };
 
-function outward({ target, line, specifier }: ImportedModule, context: string, allowed: readonly string[]): Finding[] {
+/** What the judgment of one import needs to know about the file that holds it. */
+interface Wiring {
+  readonly context: string;
+  readonly allowed: readonly string[];
+  /** Where an adapter is bound to its port, for the fix. */
+  readonly binding: string;
+  readonly declared: boolean;
+}
+
+function outward({ target, line, specifier }: ImportedModule, { context, allowed, binding, declared }: Wiring): Finding[] {
   if (target.kind === 'package') {
     const concern = outsideConcern('The application layer', target.name, specifier);
     if (concern !== undefined) return [{ line, ...concern }];
     if (allowed.includes(target.name)) return [];
-    const fix = `Declare a port in application/ports named after the need, implement it with "${target.name}" in infrastructure/, and bind it in ${context}.module.ts.`;
+    const fix = `Declare a port in application/ports named after the need, implement it with "${target.name}" in infrastructure/, and bind it in ${binding}.`;
     return [{ line, message: `The application layer imports the package "${target.name}".`, fix }];
   }
   if (target.kind === 'builtin') {
     return [{ line, message: `The application layer imports the Node built-in "${specifier}".`, fix: 'Hide the I/O behind a port in application/ports and implement it in infrastructure/external.' }];
   }
   if (isInward(target.location, context)) return [];
-  const fix = 'Depend on a port (application/ports) or a repository interface (domain/repositories) instead, and let the module file bind the adapter.';
+  const fix = `Depend on a port (application/ports) or a repository interface (domain/repositories) instead, and let ${declared ? 'the declaration of the adapter' : 'the module file'} bind the adapter.`;
   return [{ line, message: `The application layer imports ${describeTarget(target)}.`, fix }];
 }
 

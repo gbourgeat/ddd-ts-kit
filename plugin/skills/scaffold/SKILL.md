@@ -3,7 +3,7 @@ name: scaffold
 description: >-
   Creates ONE new file of a ddd-ts-kit role from a template with `ddd-ts-kit generate`
   (context, aggregate, entity, value object, domain event, domain error, domain service,
-  command, query, port, repository, route, integration event, consumer, event handler,
+  command, query, port, repository, route, integration event, integration event handler, domain event handler,
   anti-corruption layer, builder, e2e spec), with its spec and wiring, then lists the
   places where business logic is expected. Use whenever a single file of one of these roles
   is needed, instead of writing it by hand. For a whole feature or endpoint use use-case;
@@ -42,7 +42,7 @@ the architecture, so a generated file is conformant by construction and costs no
 | repository | `generate repository <ctx> <Aggregate>` | interface, in-memory adapter, contract suite |
 | route | `generate route <ctx> <UseCase> --method <M> --path <p>` | `presentation/http/` |
 | integration event | `generate integration-event <ctx> <Aggregate> <Fact>` | `published-language/` + publisher |
-| consumer | `generate consumer <ctx> <upstream> <event-type>` | `application/integration/consumers/` |
+| integration event handler | `generate integration-handler <ctx> <upstream> <event-type>` | `application/integration/handlers/` |
 | event handler | `generate event-handler <ctx> <Aggregate> <Fact>` | `application/event-handlers/` |
 | anti-corruption layer | `generate acl <ctx> <upstream-or-system>` | `infrastructure/anti-corruption/` |
 

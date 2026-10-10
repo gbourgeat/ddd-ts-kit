@@ -34,6 +34,8 @@ export interface ExecutionContext {
   readonly locale?: string;
   /** The instant after which the result is useless to the caller. */
   readonly deadline?: Date;
+  /** For the origin `schedule`: the instant the job was due, which is not the instant it started. */
+  readonly scheduledAt?: Date;
   readonly origin: ExecutionOrigin;
   readonly extensions: ExecutionContextExtensionValues;
 }

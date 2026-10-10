@@ -1,0 +1,15 @@
+{
+  "name": "@ddd-ts-kit/scheduling",
+  "version": "0.1.0",
+  "description": "Scheduled jobs that only trigger use cases: interval and cron schedules, one run across instances, no overlap, each run in its own execution scope.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" },
+    "./testing": { "types": "./dist/testing.d.ts", "default": "./dist/testing.js" }
+  },
+  "files": ["dist"],
+  "dependencies": { "@ddd-ts-kit/kernel": "0.1.0" },
+  "devDependencies": { "@ddd-ts-kit/testing": "0.1.0" }
+}

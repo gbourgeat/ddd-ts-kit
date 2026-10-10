@@ -1,16 +1,17 @@
-import type { DomainEvent, DomainEventDispatcher } from '@ddd-ts-kit/kernel';
+import type { DomainEvent, DomainEventDispatcher, ScheduledJob } from '@ddd-ts-kit/kernel';
 import {
   declarationOf,
   type Declaration,
   type DeclaredClass,
   type DeclaredPolicy,
-  type DomainEventListenerDeclaration,
-  type DomainEventReaction,
+  type DomainEventHandlerDeclaration,
+  type DomainEventHandler,
   type DomainEventType,
-  type EventConsumer,
   type EventContract,
-  type EventListenerDeclaration,
   type HandlerDeclaration,
+  type JobDeclaration,
+  type IntegrationEventHandlerDeclaration,
+  type IntegrationEventHandler,
   type PolicyDeclaration,
   type PortDeclaration,
 } from '@ddd-ts-kit/kernel/declarations';
@@ -22,12 +23,13 @@ import {
   addBinding,
   addConsumption,
   addHandling,
+  addJob,
   classRecipe,
   replaceBinding,
   type AnyMessageHandler,
   type Declarer,
+  type DomainEventHandling,
   type EventConsumption,
-  type EventReaction,
   type Resolve,
   type WiringDraft,
 } from './wiring.js';
@@ -99,14 +101,17 @@ function register(registration: Registration, declaration: Declaration): void {
     case 'query-handler':
       registerHandler(registration, declaration);
       return;
-    case 'event-listener':
-      registerEventListener(registration, declaration);
+    case 'integration-event-handler':
+      registerIntegrationEventHandler(registration, declaration);
       return;
-    case 'domain-event-listener':
-      registerDomainEventListener(registration, declaration);
+    case 'domain-event-handler':
+      registerDomainEventHandler(registration, declaration);
       return;
     case 'policy':
       registerPolicy(registration, declaration);
+      return;
+    case 'job':
+      registerJob(registration, declaration);
       return;
     default:
       registerPort(registration, declaration);
@@ -136,12 +141,12 @@ function registerHandler(registration: Registration, declaration: HandlerDeclara
   });
 }
 
-function registerEventListener(registration: Registration, declaration: EventListenerDeclaration): void {
+function registerIntegrationEventHandler(registration: Registration, declaration: IntegrationEventHandlerDeclaration): void {
   const { draft, module, declaredBy } = registration;
   const { consumer, actorOf, dependencies } = declaration;
   const options: ConsumerOptions = { consumer, ...(actorOf === undefined ? {} : { actorOf }) };
-  declaration.pair(<Payload>(contract: EventContract<Payload>, implementation: ClassOf<EventConsumer<Payload>>) => {
-    const handler = token<EventConsumer<Payload>>(implementation.name);
+  declaration.pair(<Payload>(contract: EventContract<Payload>, implementation: ClassOf<IntegrationEventHandler<Payload>>) => {
+    const handler = token<IntegrationEventHandler<Payload>>(implementation.name);
     addBinding(draft, {
       ...classRecipe(implementation, dependencies),
       token: handler,
@@ -158,7 +163,7 @@ function registerEventListener(registration: Registration, declaration: EventLis
 interface Subscribing<Payload> {
   readonly contract: EventContract<Payload>;
   readonly options: ConsumerOptions;
-  readonly handler: Token<EventConsumer<Payload>>;
+  readonly handler: Token<IntegrationEventHandler<Payload>>;
   readonly module: string;
   readonly declaredBy?: Declarer;
 }
@@ -178,11 +183,11 @@ export function consumptionOf<Payload>(subscribing: Subscribing<Payload>): Event
   };
 }
 
-function registerDomainEventListener(registration: Registration, declaration: DomainEventListenerDeclaration): void {
+function registerDomainEventHandler(registration: Registration, declaration: DomainEventHandlerDeclaration): void {
   const { draft, module, declaredBy } = registration;
   const { name, dependencies } = declaration;
-  declaration.pair(<E extends DomainEvent>(event: DomainEventType<E>, implementation: ClassOf<DomainEventReaction<E>>) => {
-    const handler = token<DomainEventReaction<E>>(implementation.name);
+  declaration.pair(<E extends DomainEvent>(event: DomainEventType<E>, implementation: ClassOf<DomainEventHandler<E>>) => {
+    const handler = token<DomainEventHandler<E>>(implementation.name);
     addBinding(draft, {
       ...classRecipe(implementation, dependencies),
       token: handler,
@@ -192,19 +197,19 @@ function registerDomainEventListener(registration: Registration, declaration: Do
       kind: 'consumer',
       aspects: [],
     });
-    draft.reactions.push({ name, event: event.name, handler, module, declaredBy, attach: attaching(name, event, handler) });
+    draft.domainEventHandlers.push({ name, event: event.name, handler, module, declaredBy, attach: attaching(name, event, handler) });
   });
 }
 
 /*
  * An event dispatched under the name and built from another class is left alone, as a
- * hand-written subscription would leave it: the listener is typed by the class it declared.
+ * hand-written subscription would leave it: the handler is typed by the class it declared.
  */
 function attaching<E extends DomainEvent>(
   name: string,
   event: DomainEventType<E>,
-  handler: Token<DomainEventReaction<E>>,
-): EventReaction['attach'] {
+  handler: Token<DomainEventHandler<E>>,
+): DomainEventHandling['attach'] {
   return (resolve: Resolve, dispatcher: DomainEventDispatcher) => {
     dispatcher.on(name, async (occurred) => {
       if (occurred instanceof event) await resolve(handler).handle(occurred);
@@ -225,6 +230,22 @@ function registerPolicy(registration: Registration, declaration: PolicyDeclarati
     aspects: [],
   });
   draft.policies.push({ name, permission, policy, module, declaredBy });
+}
+
+function registerJob(registration: Registration, declaration: JobDeclaration): void {
+  const { draft, module, declaredBy } = registration;
+  const { name, schedule, options, implementation, dependencies } = declaration;
+  const job = token<ScheduledJob>(implementation.name);
+  addBinding(draft, {
+    ...classRecipe(implementation, dependencies),
+    token: job,
+    module,
+    declaredBy,
+    lifetime: 'singleton',
+    kind: 'job',
+    aspects: [],
+  });
+  addJob(draft, { name, schedule, options, job, module, declaredBy });
 }
 
 function registerPort(registration: Registration, declaration: PortDeclaration): void {

@@ -3,6 +3,7 @@ import { DEPCRUISE_FILE, renderCruiseFile } from '../depcruise/configuration.js'
 import { CONTEXT_MAP, writeDocs } from '../docs/docs.js';
 import { CliError } from '../errors.js';
 import type { Kind, KindFlags } from '../generate/kind.js';
+import { refreshBarrels } from '../generate/declared.js';
 import { findKind, KINDS } from '../generate/kinds.js';
 import { Workspace } from '../workspace.js';
 import { Arguments, type Command } from './args.js';
@@ -51,6 +52,7 @@ function refreshDocs(ws: Workspace): void {
   const config = ws.read(CONFIG_FILE);
   if (config === undefined) return;
   const current = parseConfig(JSON.parse(config));
+  refreshBarrels(ws, current);
   if (ws.exists(CONTEXT_MAP)) writeDocs(ws, current);
   // The import graph rules are derived from the config: a new context or upstream changes them.
   if (ws.exists(DEPCRUISE_FILE)) ws.update(DEPCRUISE_FILE, renderCruiseFile(current));

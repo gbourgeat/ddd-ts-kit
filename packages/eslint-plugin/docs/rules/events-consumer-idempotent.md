@@ -13,30 +13,41 @@ Delivery is at least once. A consumer without a stable name and a processed-even
 - `<builder>.on(definition)` or `<builder>.on(definition, {})` followed by `.handledBy(...)` or `.handledByFactory(...)`, without a `consumer` (an empty string counts as absent)
 - `on(definition, handler)` of `@ddd-ts-kit/events` whose third argument does not carry both `consumer` and `processed`
 - in `application/` and the module file: a direct `.subscribe(...)` whose handler is not wrapped by `idempotent(...)`
+- in a declared-style project (`stack.style: "declared"`): a class carrying `@IntegrationEventHandler(...)` of `@ddd-ts-kit/kernel/declarations` whose options do not write `consumer` as a non-empty string literal (missing, empty, a variable, a template with a substitution, options held in a variable or only spread)
 
 Incorrect:
 
 ```ts
-builder.on(productListedV1).handledBy(ProductListedConsumer, [COMMAND_BUS]);
+builder.on(productListedV1).handledBy(ProductListedHandler, [COMMAND_BUS]);
 
 subscribeAll(platform.subscriber, [on(productListedV1, (event) => consumer.handle(event))]);
 
 resolve(EVENT_SUBSCRIBER).subscribe('catalog.product.listed', (event) => consumer.handle(event));
+
+// declared style
+@IntegrationEventHandler(productListedV1, { consumer: CONSUMER_NAME }, [COMMAND_BUS])
+export class CatalogProductListedHandler {}
 ```
 
 Correct:
 
 ```ts
-builder.on(productListedV1, { consumer: 'billing.price-list' }).handledBy(ProductListedConsumer, [COMMAND_BUS]);
+builder.on(productListedV1, { consumer: 'billing.price-list' }).handledBy(ProductListedHandler, [COMMAND_BUS]);
 
 subscribeAll(platform.subscriber, [
   on(productListedV1, (event) => consumer.handle(event), { consumer: 'billing.price-list', processed: platform.persistence.processedEvents }),
 ]);
+
+// declared style
+@IntegrationEventHandler(productListedV1, { consumer: 'billing.catalog-product-listed' }, [COMMAND_BUS])
+export class CatalogProductListedHandler {}
 ```
 
 ## Details
 
 `on` is recognised by its import from `@ddd-ts-kit/events`, under any local name; `builder.on` by the chain that ends with a handler, which tells it from the `on` of an event emitter. `consume` requires both options by its type and is not judged. `subscribe(type, idempotent(name, store, handler))` is accepted: `idempotent` of the kernel is what `on` and `consume` are built on.
+
+In a declared-style project an integration event handler class is its own registration: `@IntegrationEventHandler(definition, { consumer: '<context>.<reaction>' }, [tokens])` satisfies the rule and nothing has to be written in a module file. The decorator counts when its name is imported from `@ddd-ts-kit/kernel/declarations` in the file, under an alias or a namespace too. A module file kept in a declared-style project is judged as in the explicit style. In an explicit-style project the decorator is not read.
 
 ## Options
 
@@ -47,7 +58,8 @@ None.
 ## Limits
 
 - Options held in a variable or spread from another object are not followed: nothing is reported as missing.
-- That the consumer name is unique and stable over time is not checked here (`createApplication` refuses a name declared twice for the same event).
+- That the consumer name is unique and stable over time is not checked here: ESLint judges one file at a time, and two `@IntegrationEventHandler`, or one and a module registration, live in two files. `ddd-ts-kit check` compares the names of the whole project, decorators included, and `createApplication` refuses a name declared twice for the same event.
+- That a `*.integration-handler.ts` file carries `@IntegrationEventHandler` at all is the business of `declarations-role-declared`, which also reports the unwritten `consumer`.
 - That the store is transactional, or that the mark commits with the handler, is not checked: prefer `consume`, or pass `unitOfWork`.
 - Any `.subscribe(...)` in `application/` or the module file is taken for an event subscription, whatever the receiver is.
 

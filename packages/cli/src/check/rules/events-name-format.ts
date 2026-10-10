@@ -1,10 +1,7 @@
+import { domainEventNames } from '../domain-event-names.js';
 import { eventDeclarations, inDeclaration, isTypeLiteral } from '../event-declarations.js';
 import type { Rule, SourceFile } from '../types.js';
 import { inContext, KEBAB_SEGMENT, reporter, type ContextLocation } from './helpers.js';
-
-/** `key = '...'`, `key: '...'` and `key: string = '...'`. */
-const property = (key: string): RegExp => new RegExp(`(?<![\\w$.])${key}\\s*\\??\\s*(?:[:=]|:[^=;\\n'"]+=)\\s*$`);
-const NAME_PROPERTY = property('name');
 
 export const eventsNameFormat: Rule = {
   id: 'events/name-format',
@@ -36,10 +33,6 @@ interface Named {
 function eventNames(file: SourceFile, { layer, inside }: ContextLocation): Named[] {
   if (layer === 'domain' && inside[0] === 'events') return domainEventNames(file);
   return layer === 'published-language' ? integrationEventNames(file) : [];
-}
-
-function domainEventNames(file: SourceFile): Named[] {
-  return file.scan.strings.filter((literal) => NAME_PROPERTY.test(file.scan.code.slice(Math.max(0, literal.start - 200), literal.start)));
 }
 
 function integrationEventNames(file: SourceFile): Named[] {

@@ -1,17 +1,29 @@
-import { read, write } from './helpers.js';
+import { cli, exists, read, write } from './helpers.js';
+
+const SHIPPING_HANDLER = 'src/contexts/shipping/application/integration/handlers/billing-invoice-issued.integration-handler.ts';
+const DECLARED_READER = 'src/contexts/billing/infrastructure/persistence/in-memory-list-invoices-reader.repository.ts';
+const LINES = "[{ id: 'invoice-1' }, { id: 'invoice-2' }, { id: 'invoice-3' }]";
 
 /**
  * What a team writes after `init` and `generate` in the project of the first-class stack, kept
  * to the minimum the proof needs: the aggregate records its birth fact, the list reads three
- * lines, and the relationship schema knows the listed element. Nothing here repairs generated
- * code: each edit answers a `TODO(domain)` or a `TODO(platform)` the generator left.
+ * lines, the relationship schema knows the listed element, and shipping prepares a parcel when
+ * billing issues an invoice. Nothing here repairs generated code: each edit answers a
+ * `TODO(domain)` or a `TODO(platform)` the generator left, in either style.
  */
 export function writeBusinessDecisions(root: string): void {
+  const prepared = cli(root, 'generate', 'command', 'shipping', 'PrepareParcel', '--public', '--term', 'Prepare=To get a parcel ready for its carrier');
+  if (prepared.code !== 0) throw new Error(`generate command shipping PrepareParcel failed: ${prepared.stderr}`);
+  edit(root, SHIPPING_HANDLER, [
+    ["import { systemActor, type CommandBus } from '@ddd-ts-kit/kernel';", "import { systemActor, type CommandBus } from '@ddd-ts-kit/kernel';\nimport { PrepareParcelCommand } from '../../commands/prepare-parcel/prepare-parcel.command.js';"],
+    [/(async handle\(event: InvoiceIssuedV2\): Promise<void> \{\n)[^\n]*\n/, '$1    await this.commands.execute(new PrepareParcelCommand());\n'],
+  ]);
+  if (exists(root, DECLARED_READER)) edit(root, DECLARED_READER, [['readonly ListInvoicesItem[] = []', `readonly ListInvoicesItem[] = ${LINES}`]]);
+  else edit(root, 'src/contexts/billing/billing.module.ts', [['new InMemoryListInvoicesReader([])', `new InMemoryListInvoicesReader(${LINES})`]]);
   edit(root, 'src/contexts/billing/domain/aggregates/invoice.aggregate.ts', [
     ["import { AggregateRoot } from '@ddd-ts-kit/kernel';", "import { AggregateRoot } from '@ddd-ts-kit/kernel';\nimport { InvoiceIssued } from '../events/invoice-issued.event.js';"],
     ['    const created = new Invoice(id, { registeredAt: now });', '    const created = new Invoice(id, { registeredAt: now });\n    created.record(new InvoiceIssued(id, now));'],
   ]);
-  edit(root, 'src/contexts/billing/billing.module.ts', [['new InMemoryListInvoicesReader([])', "new InMemoryListInvoicesReader([{ id: 'invoice-1' }, { id: 'invoice-2' }, { id: 'invoice-3' }])"]]);
   edit(root, 'src/platform/auth/relationships.ts', [
     ["    permissions: { operate: union('operator') },\n  },", "    permissions: { operate: union('operator') },\n  },\n  invoice: {\n    relations: { viewer: ['user'] },\n    permissions: { view: union('viewer') },\n  },"],
     [
@@ -22,11 +34,12 @@ export function writeBusinessDecisions(root: string): void {
   write(root, 'test/e2e/first-class.e2e.spec.ts', PROOF_SPEC);
 }
 
-function edit(root: string, file: string, replacements: readonly (readonly [string, string])[]): void {
+function edit(root: string, file: string, replacements: readonly (readonly [string | RegExp, string])[]): void {
   let content = read(root, file);
   for (const [from, to] of replacements) {
-    if (!content.includes(from)) throw new Error(`${file} no longer holds what the proof edits: ${from}`);
-    content = content.replace(from, to);
+    const next = content.replace(from, to);
+    if (next === content) throw new Error(`${file} no longer holds what the proof edits: ${String(from)}`);
+    content = next;
   }
   write(root, file, content);
 }
@@ -117,6 +130,18 @@ describe('The first-class stack, end to end', () => {
       expect(published.received().filter((event) => event.correlationId === correlationId).map((event) => event.version).sort()).toEqual([1, 2]);
       expect(await entriesOf(correlationId)).toEqual(expect.arrayContaining([expect.objectContaining({ category: 'integration-event', action: 'billing.invoice.issued', outcome: 'succeeded', origin: 'event' })]));
     }, { timeoutMs: 10_000 });
+  });
+
+  it('carries an integration event from billing to shipping: outbox, relay, event bus, and the command the handler of shipping executes, once', async () => {
+    const ada = await operatorOf('billing', 'ada');
+    const correlationId = 'proof-crossing-' + Date.now();
+
+    expectStatus(await ada.withHeaders({ 'x-correlation-id': correlationId }).post('/invoices', {}), 201);
+
+    await eventually(async () => {
+      const prepared = (await entriesOf(correlationId)).filter((entry) => entry.action === 'PrepareParcelCommand');
+      expect(prepared).toEqual([expect.objectContaining({ category: 'command', outcome: 'succeeded', actorId: 'system:shipping.billing-invoice-issued', origin: 'event' })]);
+    }, { timeoutMs: 20_000 });
   });
 
   it('refuses the audit trail to an actor who does not hold audit:trail.read', async () => {

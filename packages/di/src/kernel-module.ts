@@ -25,6 +25,7 @@ import {
   type IdGenerator,
   type IntegrationEventPublisher,
   type IntegrationEventSubscriber,
+  type JobScheduler,
   type Lock,
   type Logger,
   type Metrics,
@@ -33,6 +34,7 @@ import {
   type RateLimiter,
   type UnitOfWork,
 } from '@ddd-ts-kit/kernel';
+import { InProcessJobScheduler } from '@ddd-ts-kit/scheduling';
 import { useCaseGuard } from './authorization.js';
 import {
   ACTOR_CONTEXT,
@@ -45,6 +47,7 @@ import {
   EVENT_SUBSCRIBER,
   EXECUTION_SCOPE,
   ID_GENERATOR,
+  JOB_SCHEDULER,
   LOCK,
   LOGGER,
   METRICS,
@@ -71,7 +74,7 @@ export interface KernelModuleOptions {
   /** Defaults to the event bus. A broker adapter goes here. */
   readonly eventSubscriber?: Provided<IntegrationEventSubscriber>;
   readonly processedEvents?: Provided<ProcessedEventStore>;
-  /** Defaults to a dispatcher inside this process, which the declared domain event listeners are attached to. */
+  /** Defaults to a dispatcher inside this process, which the declared domain event handlers are attached to. */
   readonly domainEvents?: Provided<DomainEventDispatcher>;
   /** Defaults to the actor of the execution scope, so the two cannot disagree. */
   readonly actorContext?: Provided<ActorContext>;
@@ -87,6 +90,11 @@ export interface KernelModuleOptions {
   readonly lock?: Provided<Lock>;
   /** Defaults to a limiter inside this process, counting by `CLOCK`: several instances each allow the limit. */
   readonly rateLimiter?: Provided<RateLimiter>;
+  /**
+   * Defaults to a scheduler inside this process, on `CLOCK`, `LOCK`, `EXECUTION_SCOPE`,
+   * `ID_GENERATOR`, `LOGGER` and `METRICS`: with the default lock, several instances each run every job.
+   */
+  readonly jobScheduler?: Provided<JobScheduler>;
 }
 
 /**
@@ -130,6 +138,22 @@ function bindCrossCuttingPorts(builder: ModuleBuilder, options: KernelModuleOpti
   builder
     .bind(RATE_LIMITER)
     .toFactory(either(options.rateLimiter, (resolve) => new InMemoryRateLimiter(resolve(CLOCK))));
+  builder.bind(JOB_SCHEDULER).toFactory(either(options.jobScheduler, inProcessJobScheduler));
+}
+
+/**
+ * The lock is resolved at each occurrence, not when the scheduler is built: the application
+ * resolves the scheduler at creation to register the jobs, and that must not open a connection.
+ */
+function inProcessJobScheduler(resolve: Resolve): JobScheduler {
+  return new InProcessJobScheduler({
+    clock: resolve(CLOCK),
+    lock: { acquire: (key, options) => resolve(LOCK).acquire(key, options) },
+    scope: resolve(EXECUTION_SCOPE),
+    ids: resolve(ID_GENERATOR),
+    logger: resolve(LOGGER),
+    metrics: resolve(METRICS),
+  });
 }
 
 function scopedActorContext(resolve: Resolve): ActorContext {

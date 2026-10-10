@@ -22,10 +22,10 @@ export interface AppConfig {
 {{#if authn.keycloak}}
   readonly keycloak: KeycloakConfig;
 {{/if}}
-{{#if broker.rabbitmq}}
-  readonly amqpUrl: string;
+{{#if broker.addressed}}
+  readonly {{broker.key}}: string;
 {{/if}}
-{{#if cache.redis}}
+{{#if redis.server}}
   readonly redisUrl: string;
 {{/if}}
 {{#if cache.rateLimit}}
@@ -102,8 +102,8 @@ export function loadConfig(env: Variables): AppConfig {
 {{#if docs.any}}
     docsEnabled: readFlag(env['API_DOCS'], environment !== 'production'),
 {{/if}}
-{{#if broker.rabbitmq}}
-    amqpUrl: readUrl(env, 'AMQP_URL', problems),
+{{#if broker.addressed}}
+    {{broker.key}}: {{broker.reader}}(env, '{{broker.variable}}', problems),
 {{/if}}
 {{#if authn.jwt}}
     auth: readAuth(env, problems),
@@ -111,7 +111,7 @@ export function loadConfig(env: Variables): AppConfig {
 {{#if authn.keycloak}}
     keycloak: readKeycloak(env, problems),
 {{/if}}
-{{#if cache.redis}}
+{{#if redis.server}}
     redisUrl: readUrl(env, 'REDIS_URL', problems),
 {{/if}}
 {{#if cache.rateLimit}}
@@ -206,7 +206,7 @@ function readUrl(env: Variables, name: string, problems: string[]): string {
   return raw;
 }
 {{/if}}
-{{#if authn.tokens}}
+{{#if needs.text}}
 
 function readText(env: Variables, name: string, problems: string[]): string {
   const raw = env[name] ?? '';

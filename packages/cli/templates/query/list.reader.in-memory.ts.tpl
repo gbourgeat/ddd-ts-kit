@@ -1,10 +1,17 @@
 import type { AccessScope } from '@ddd-ts-kit/auth';
 import { InvalidPageRequestError, decodeCursor, encodeCursor, pageOf, type PageRequest } from '@ddd-ts-kit/kernel';
+{{#if style.declared}}
+import { Repository } from '@ddd-ts-kit/kernel/declarations';
+import { {{name.constant}}_READER } from '../../application/ports/{{context.kebab}}.ports.js';
+{{/if}}
 import type { {{name.pascal}}Reader } from '../../application/ports/{{name.kebab}}-reader.port.js';
 import type { {{name.pascal}}Item, {{name.pascal}}Result, {{name.pascal}}Sort } from '../../application/queries/{{name.kebab}}/{{name.kebab}}.query.js';
 
+{{#if style.declared}}
+@Repository({{name.constant}}_READER)
+{{/if}}
 export class InMemory{{name.pascal}}Reader implements {{name.pascal}}Reader {
-  constructor(private readonly items: readonly {{name.pascal}}Item[]) {}
+  constructor(private readonly items: readonly {{name.pascal}}Item[]{{reader.defaultList}}) {}
 
   async list(scope: AccessScope, page: PageRequest<{{name.pascal}}Sort>): Promise<{{name.pascal}}Result> {
     // TODO(domain): replace these canned lines by a real read of the projection; a production adapter (SQL view, search index) implements the same port next to this file, turns the scope into a condition of its statement, and orders by the sort field then by `id` in the same direction, so that a cursor resumes on a total order.

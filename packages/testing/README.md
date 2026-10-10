@@ -378,10 +378,14 @@ repositoryContract(runner, { ...options, name: 'DrizzleOrderRepository', createR
 | `processedEventStoreContract` | any `ProcessedEventStore`: once per consumer and event, also under concurrent deliveries |
 | `cacheContract` | any `Cache`: round trip of every shape of value, isolation of entries, deletion, time to live |
 | `lockContract` | any `Lock`: one holder at a time also under concurrent requests, release, expiry, a late release ignored, growing fencing token, `waitMs` |
+| `jobSchedulerContract` | any `JobScheduler`: registration and description, a duplicate name and an unreadable schedule refused, `runNow` (also for a disabled job, an unknown name rejected), nothing by time before `start` or after `stop`, no overlap by default, a failing job answered `failed` with its code while the others go on, the execution context of a run |
 | `rateLimiterContract` | any `RateLimiter`: limit, `remaining` and `retryAfterMs`, refused calls not counted, sliding window, isolation of keys, concurrent calls |
 
 The cache, lock and rate limiter suites also take `elapse(ms)`, which makes time pass for the
-subject: advance the clock it reads, or really wait when the time is a server's.
+subject: advance the clock it reads, or really wait when the time is a server's. The job
+scheduler suite takes it from `createScheduler`, with the scheduler and the scope it runs its
+jobs in: `{ scheduler, scope, elapse }`. It asks for a few seconds at most, with jobs of every
+second.
 
 The suites use only `describe`, `it`, `beforeEach`, `expect(...).toBe` and `toEqual`
 (`afterEach` is optional), which the globals of vitest and jest both provide: that part of a

@@ -11,6 +11,11 @@ import { ContractSuite, type Awaitable, type ContractRunner } from './contracts/
 export { ContractSuite, type Awaitable, type ContractRunner } from './contracts/suite.js';
 export { cacheContract, type CacheContractOptions } from './contracts/cache-contract.js';
 export { lockContract, type LockContractOptions } from './contracts/lock-contract.js';
+export {
+  jobSchedulerContract,
+  type JobSchedulerContractOptions,
+  type JobSchedulerUnderContract,
+} from './contracts/job-scheduler-contract.js';
 export { rateLimiterContract, type RateLimiterContractOptions } from './contracts/rate-limiter-contract.js';
 
 export interface RepositoryContractOptions<A extends AggregateRoot<Id>, Id extends string | number> {

@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { scan } from '../src/check/scanner.js';
 import { KINDS } from '../src/generate/kinds.js';
 import { insertInRegion, parseWiring } from '../src/markers.js';
-import { cli, exists, read, scaffoldEverything, tempDir, walk, write, type CliResult } from './helpers.js';
+import { cli, exists, EXPLICIT_STACK, read, scaffoldEverything, tempDir, walk, write, type CliResult } from './helpers.js';
 
 interface Report {
   readonly dryRun: boolean;
@@ -62,7 +62,7 @@ describe('generate', () => {
 
   beforeAll(() => {
     root = tempDir('generate');
-    expect(cli(root, 'init').code).toBe(0);
+    expect(cli(root, 'init', '--style', 'explicit').code).toBe(0);
     expect(cli(root, 'generate', 'context', 'billing', '--classification', 'core', '--term', 'Invoice=A request for payment', '--term', 'Issue=To make an invoice final').code).toBe(0);
     expect(cli(root, 'generate', 'context', 'shipping', '--classification', 'supporting').code).toBe(0);
   });
@@ -179,8 +179,8 @@ describe('generate', () => {
     expect(read(root, target)).toContain('export class Invoice');
   });
 
-  it('refuses a consumer of an upstream that is not declared, and says how to declare it', () => {
-    const result = cli(root, 'generate', 'consumer', 'shipping', 'billing', 'billing.invoice.issued', '--json');
+  it('refuses an integration event handler of an upstream that is not declared, and says how to declare it', () => {
+    const result = cli(root, 'generate', 'integration-handler', 'shipping', 'billing', 'billing.invoice.issued', '--json');
 
     expect(result.code).toBe(2);
     expect(failure(result).message).toContain('does not declare "billing" as an upstream');
@@ -226,7 +226,7 @@ describe('generated code', () => {
 
   beforeAll(() => {
     root = tempDir('generated');
-    results = scaffoldEverything(root);
+    results = scaffoldEverything(root, EXPLICIT_STACK);
   });
 
   it('carries no comment but the TODO(domain) and TODO(platform) ones and the marker regions', () => {
@@ -299,14 +299,14 @@ describe('generated code', () => {
     expect(read(root, 'src/contexts/billing/CONTEXT.md')).toContain('- `billing.invoice.issued` (version 1)\n- `billing.invoice.issued` (version 2)');
   });
 
-  it('types the consumer with the newest declaration of the upstream and subscribes it idempotently', () => {
-    const consumer = read(root, 'src/contexts/shipping/application/integration/consumers/billing-invoice-issued.consumer.ts');
+  it('types the integration event handler with the newest declaration of the upstream and subscribes it idempotently, under its consumer name', () => {
+    const consumer = read(root, 'src/contexts/shipping/application/integration/handlers/billing-invoice-issued.integration-handler.ts');
     const module = read(root, 'src/contexts/shipping/shipping.module.ts');
 
     expect(consumer).toContain("import type { InvoiceIssuedV2 } from '../../../../billing/published-language/index.js';");
     expect(consumer).toContain('constructor(private readonly commands: CommandBus) {}');
     expect(module).toContain("import { invoiceIssuedV2 as billingInvoiceIssuedDefinition } from '../billing/published-language/index.js';");
-    expect(module).toContain("builder.on(billingInvoiceIssuedDefinition, { consumer: 'shipping.billing-invoice-issued' }).handledBy(BillingInvoiceIssuedConsumer, [COMMAND_BUS]);");
+    expect(module).toContain("builder.on(billingInvoiceIssuedDefinition, { consumer: 'shipping.billing-invoice-issued' }).handledBy(BillingInvoiceIssuedHandler, [COMMAND_BUS]);");
   });
 
   it('writes an end-to-end spec that drives the route of the use case', () => {
@@ -363,7 +363,7 @@ describe('authorization, extraction and governance kinds', () => {
 
   beforeAll(() => {
     root = tempDir('wave4');
-    scaffoldEverything(root);
+    scaffoldEverything(root, EXPLICIT_STACK);
   });
 
   it('refuses a use case that declares neither a permission nor that it is public, and explains deny by default', () => {
@@ -384,7 +384,7 @@ describe('authorization, extraction and governance kinds', () => {
     expect(read(root, `${billing}/presentation/http/issue-invoice.route.ts`)).toContain("security: ['bearer'],");
     expect(read(root, `${billing}/presentation/http/issue-invoice.route.ts`)).toContain('new IssueInvoiceCommand(actorOf(input.context.principal))');
     expect(read(root, 'src/contexts/order-fulfilment/presentation/http/track-purchase-order.route.ts')).toContain('security: false,');
-    expect(read(root, 'src/contexts/shipping/application/integration/consumers/billing-invoice-issued.consumer.ts')).toContain("systemActor('shipping.billing-invoice-issued')");
+    expect(read(root, 'src/contexts/shipping/application/integration/handlers/billing-invoice-issued.integration-handler.ts')).toContain("systemActor('shipping.billing-invoice-issued')");
   });
 
   it('writes a policy with its spec and registers it with the policies Access asks', () => {

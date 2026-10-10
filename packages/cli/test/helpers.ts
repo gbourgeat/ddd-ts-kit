@@ -69,6 +69,8 @@ export interface StackFlags {
   readonly ci?: string;
   readonly cache?: string;
   readonly audit?: string;
+  readonly style?: string;
+  readonly assembly?: string;
 }
 
 export const DEFAULT_STACK: StackFlags = { http: 'express', validation: 'zod', di: 'tsyringe', tests: 'vitest', orm: 'drizzle', events: 'outbox' };
@@ -84,19 +86,23 @@ export function scaffoldEverything(root: string, stack: StackFlags = DEFAULT_STA
   const noOutbox = stack.orm !== 'none' && stack.events !== 'outbox' ? ['--allow-no-outbox', 'A single process with no consumer that has to survive a crash'] : [];
   step('init', ...Object.entries(stack).flatMap(([key, value]) => [`--${key}`, String(value)]), ...noOutbox);
   scaffoldBilling(step, withHttp);
-  if (takesStandardDecorators(stack)) scaffoldDecoratedAdapter(step);
-  scaffoldShipping(step);
+  scaffoldDecoratedAdapter(step);
+  scaffoldShipping(step, isDeclared(stack));
   scaffoldOrderFulfilment(step, withHttp);
   return results;
 }
 
 type Step = (...args: string[]) => void;
 
-/** `generate adapter --decorators` is refused where decorator syntax has its legacy meaning (class-validator, NestJS) and under jest. */
-export function takesStandardDecorators(stack: StackFlags): boolean {
-  return stack.validation !== 'class-validator' && stack.http !== 'nest' && stack.tests !== 'jest';
+/** The style `init` gives a stack that does not name one: declared wherever the declarations are read, on tsyringe. */
+export function isDeclared(stack: StackFlags): boolean {
+  return (stack.style ?? (stack.di === 'tsyringe' ? 'declared' : 'explicit')) === 'declared';
 }
 
+/** The default stack with every binding written in a module file, as before the declared style. */
+export const EXPLICIT_STACK: StackFlags = { ...DEFAULT_STACK, style: 'explicit' };
+
+/** An adapter whose outbound method carries its policy as decorators: they serve both decorator modes. */
 function scaffoldDecoratedAdapter(step: Step): void {
   step('generate', 'port', 'billing', 'TaxRates');
   step('generate', 'adapter', 'billing', 'TaxRates', '--decorators');
@@ -137,13 +143,18 @@ function scaffoldBillingRoutes(step: Step): void {
   step('generate', 'e2e', 'billing', 'IssueInvoice');
 }
 
-/** A downstream context: one consumer of a declared event, one of an event without a declaration. */
-function scaffoldShipping(step: Step): void {
+/**
+ * A downstream context: one handler of a declared event and a gateway. Where the wiring is
+ * written in a module file, also a handler of an event without a declaration and a second
+ * adapter of the gateway port: a declared class needs the declaration of its event, and a token
+ * takes one declared adapter.
+ */
+function scaffoldShipping(step: Step, declared: boolean): void {
   step('generate', 'context', 'shipping', '--classification', 'supporting', '--upstream', 'billing:customer-supplier', ...term('Parcel=A package handed to a carrier'));
-  step('generate', 'consumer', 'shipping', 'billing', 'billing.invoice.issued');
-  step('generate', 'consumer', 'shipping', 'billing', 'billing.invoice.cancelled');
+  step('generate', 'integration-handler', 'shipping', 'billing', 'billing.invoice.issued');
+  if (!declared) step('generate', 'consumer', 'shipping', 'billing', 'billing.invoice.cancelled');
   step('generate', 'gateway', 'shipping', 'billing', 'InvoiceStatus');
-  step('generate', 'adapter', 'shipping', 'InvoiceStatusGateway', '--kind', 'gateway');
+  if (!declared) step('generate', 'adapter', 'shipping', 'InvoiceStatusGateway', '--kind', 'gateway');
   step('generate', 'service', 'shipping');
   step('generate', 'adr', 'Keep shipping in the same repository as billing');
 }

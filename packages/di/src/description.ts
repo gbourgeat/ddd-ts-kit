@@ -1,4 +1,5 @@
-import type { DependencyKind, MessageInfo } from '@ddd-ts-kit/kernel';
+import { describeJobSchedule, type DependencyKind, type JobPolicy, type MessageInfo } from '@ddd-ts-kit/kernel';
+import type { EffectiveJob } from './jobs.js';
 import type { Binding, BindingSource, Declarer, Lifetime, Wiring } from './wiring.js';
 import { describeToken, type Token } from './token.js';
 
@@ -37,7 +38,7 @@ export interface HandlerDescription extends OriginDescription {
   readonly permission?: string;
 }
 
-export interface SubscriptionDescription extends OriginDescription {
+export interface IntegrationEventHandlerDescription extends OriginDescription {
   readonly event: string;
   readonly version: number;
   readonly consumer: string;
@@ -45,8 +46,8 @@ export interface SubscriptionDescription extends OriginDescription {
   readonly module: string;
 }
 
-/** A listener of a domain event of its own context. */
-export interface ReactionDescription extends OriginDescription {
+/** A handler of a domain event of its own context. */
+export interface DomainEventHandlerDescription extends OriginDescription {
   readonly event: string;
   readonly name: string;
   readonly handler: string;
@@ -60,17 +61,28 @@ export interface PolicyDescription extends OriginDescription {
   readonly module: string;
 }
 
+/** A job as it will run: the settings of the application applied, the defaults filled in. */
+export interface ScheduledJobDescription extends OriginDescription, JobPolicy {
+  readonly name: string;
+  /** `every 15m`, `cron 0 7 * * 1-5 (Europe/Paris)`. */
+  readonly schedule: string;
+  readonly job: string;
+  readonly module: string;
+}
+
 /** The wiring as plain, serializable data: tokens and classes appear by name. */
 export interface WiringDescription {
   readonly modules: readonly string[];
   readonly bindings: readonly BindingDescription[];
   readonly commands: readonly HandlerDescription[];
   readonly queries: readonly HandlerDescription[];
-  readonly subscriptions: readonly SubscriptionDescription[];
-  /** The declared listeners of domain events. */
-  readonly reactions: readonly ReactionDescription[];
+  readonly integrationEventHandlers: readonly IntegrationEventHandlerDescription[];
+  /** The declared handlers of domain events. */
+  readonly domainEventHandlers: readonly DomainEventHandlerDescription[];
   /** The declared policy classes. */
   readonly policies: readonly PolicyDescription[];
+  /** The declared jobs. What they did last and when they run next is asked to the job scheduler. */
+  readonly jobs: readonly ScheduledJobDescription[];
   /** Every overridden token, including those no module binds. */
   readonly overrides: readonly string[];
 }
@@ -78,13 +90,14 @@ export interface WiringDescription {
 export function describeWiring(
   wiring: Wiring,
   overridden: ReadonlySet<Token<unknown>>,
+  jobs: readonly EffectiveJob[],
 ): WiringDescription {
   return {
     modules: wiring.modules,
     bindings: [...wiring.bindings.values()].map((binding) => describeBinding(binding, overridden)),
     commands: describeHandlers(wiring, 'command'),
     queries: describeHandlers(wiring, 'query'),
-    subscriptions: wiring.consumptions.map(({ type, version, consumer, handler, module, declaredBy }) => ({
+    integrationEventHandlers: wiring.consumptions.map(({ type, version, consumer, handler, module, declaredBy }) => ({
       event: type,
       version,
       consumer,
@@ -92,7 +105,7 @@ export function describeWiring(
       module,
       ...originOf(declaredBy),
     })),
-    reactions: wiring.reactions.map(({ event, name, handler, module, declaredBy }) => ({
+    domainEventHandlers: wiring.domainEventHandlers.map(({ event, name, handler, module, declaredBy }) => ({
       event,
       name,
       handler: describeToken(handler),
@@ -106,6 +119,7 @@ export function describeWiring(
       module,
       ...originOf(declaredBy),
     })),
+    jobs: jobs.map(describeJob),
     overrides: [...overridden].map(describeToken),
   };
 }
@@ -125,6 +139,10 @@ function describeBinding(
     overridden: overridden.has(binding.token),
     ...originOf(binding.declaredBy),
   };
+}
+
+function describeJob({ name, schedule, policy, job, module, declaredBy }: EffectiveJob): ScheduledJobDescription {
+  return { name, schedule: describeJobSchedule(schedule), ...policy, job: describeToken(job), module, ...originOf(declaredBy) };
 }
 
 function originOf(declaredBy: Declarer | undefined): OriginDescription {

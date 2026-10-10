@@ -27,7 +27,7 @@ ruleTester.run('context-declared-relationship', contextDeclaredRelationship, {
     at('src/contexts/shipping/shipping.module.ts', "import { x } from '@/contexts/billing/published-language/index.js';", { contexts: { shipping: { classification: 'supporting', upstreams: ['billing'] } } }),
   ],
   invalid: [
-    { ...at('src/contexts/shipping/application/integration/consumers/billing-invoice-issued.consumer.ts', "import type { InvoiceIssuedV1 } from '@/contexts/billing/published-language/index.js';"), errors: [{ messageId: 'undeclared', data: { here: 'shipping', there: 'billing' } }] },
+    { ...at('src/contexts/shipping/application/integration/handlers/billing-invoice-issued.integration-handler.ts', "import type { InvoiceIssuedV1 } from '@/contexts/billing/published-language/index.js';"), errors: [{ messageId: 'undeclared', data: { here: 'shipping', there: 'billing' } }] },
     { ...at('src/contexts/catalog/catalog.module.ts', "import('../billing/published-language/index.js');"), errors: [{ messageId: 'undeclared' }] },
     { ...at('src/contexts/unknown/domain/x.ts', "import type { A } from '../../billing/published-language/index.js';"), errors: [{ messageId: 'undeclared' }] },
   ],

@@ -1,7 +1,10 @@
 import type {
   DependencyKind,
   DomainEventDispatcher,
-  IntegrationEventHandler,
+  IntegrationEventCallback,
+  JobOptions,
+  JobSchedule,
+  ScheduledJob,
   Message,
   MessageInfo,
   MessageType,
@@ -59,14 +62,14 @@ export interface EventConsumption {
   readonly handler: Token<unknown>;
   readonly module: string;
   readonly declaredBy?: Declarer;
-  readonly subscribe: (resolve: Resolve, runtime: ConsumerRuntime) => IntegrationEventHandler;
+  readonly subscribe: (resolve: Resolve, runtime: ConsumerRuntime) => IntegrationEventCallback;
 }
 
-/** A listener of a domain event of its own context, attached to the dispatcher of the application. */
-export interface EventReaction {
+/** A handler of a domain event of its own context, attached to the dispatcher of the application. */
+export interface DomainEventHandling {
   /** The name the events carry. */
   readonly name: string;
-  /** Name of the class the listener is typed by: an event of another class is not handed to it. */
+  /** Name of the class the handler is typed by: an event of another class is not handed to it. */
   readonly event: string;
   readonly handler: Token<unknown>;
   readonly module: string;
@@ -83,25 +86,38 @@ export interface PolicyBinding {
   readonly declaredBy?: Declarer;
 }
 
+/** A job a context declared, for the application to register on the job scheduler. */
+export interface JobRegistration {
+  readonly name: string;
+  readonly schedule: JobSchedule;
+  /** As declared: the settings of the application and the defaults come on top. */
+  readonly options: JobOptions;
+  readonly job: Token<ScheduledJob>;
+  readonly module: string;
+  readonly declaredBy?: Declarer;
+}
+
 export interface Wiring {
   readonly modules: readonly string[];
   readonly bindings: ReadonlyMap<Token<unknown>, Binding>;
   readonly handlings: readonly MessageHandling[];
   readonly consumptions: readonly EventConsumption[];
-  readonly reactions: readonly EventReaction[];
+  readonly domainEventHandlers: readonly DomainEventHandling[];
   readonly policies: readonly PolicyBinding[];
+  readonly jobs: readonly JobRegistration[];
 }
 
 export interface WiringDraft {
   readonly bindings: Map<Token<unknown>, Binding>;
   readonly handlings: MessageHandling[];
   readonly consumptions: EventConsumption[];
-  readonly reactions: EventReaction[];
+  readonly domainEventHandlers: DomainEventHandling[];
   readonly policies: PolicyBinding[];
+  readonly jobs: JobRegistration[];
 }
 
 export function emptyDraft(): WiringDraft {
-  return { bindings: new Map(), handlings: [], consumptions: [], reactions: [], policies: [] };
+  return { bindings: new Map(), handlings: [], consumptions: [], domainEventHandlers: [], policies: [], jobs: [] };
 }
 
 export function addBinding(draft: WiringDraft, binding: Binding): void {
@@ -150,6 +166,17 @@ export function addConsumption(draft: WiringDraft, consumption: EventConsumption
     );
   }
   draft.consumptions.push(consumption);
+}
+
+export function addJob(draft: WiringDraft, registration: JobRegistration): void {
+  const existing = draft.jobs.find((other) => other.name === registration.name);
+  if (existing !== undefined) {
+    throw new WiringError(
+      'DUPLICATE_JOB',
+      `Job "${registration.name}" is declared twice: in ${whereOf(existing)} and in ${whereOf(registration)}. The name of a job is its lock, its actor and its label: it is unique in an application.`,
+    );
+  }
+  draft.jobs.push(registration);
 }
 
 interface Located {

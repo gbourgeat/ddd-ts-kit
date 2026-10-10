@@ -1,0 +1,16 @@
+import { systemActor, type CommandBus } from '@ddd-ts-kit/kernel';
+import { COMMAND_BUS, IntegrationEventHandler } from '@ddd-ts-kit/kernel/declarations';
+import { {{upstream.definition}}, type {{upstream.eventType}} } from '{{upstream.import}}';
+
+@IntegrationEventHandler({{upstream.definition}}, { consumer: '{{context.kebab}}.{{name.kebab}}' }, [COMMAND_BUS])
+export class {{name.pascal}}Handler {
+  static readonly eventType = '{{upstream.eventName}}';
+
+  readonly actor = systemActor('{{context.kebab}}.{{name.kebab}}');
+
+  constructor(private readonly commands: CommandBus) {}
+
+  async handle(event: {{upstream.eventType}}): Promise<void> {
+    // TODO(domain): translate `event.payload` (the language of {{upstream.kebab}}) into a command of {{context.kebab}}, built with `this.actor` (nobody is calling: the handler acts as a system actor the authorization model has to grant), and execute it with `this.commands.execute(...)`; delivery is at least once, so the command has to be safe to repeat.
+  }
+}

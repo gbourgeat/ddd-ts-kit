@@ -11,6 +11,8 @@ import { cleanNoNoiseComment } from './clean-no-noise-comment.js';
 import { cleanStepdown } from './clean-stepdown.js';
 import { compositionOnlyInModule } from './composition-only-in-module.js';
 import { createConfigValid } from './config-valid.js';
+import { declarationsBarrelCurrent } from './declarations-barrel-current.js';
+import { declarationsRoleDeclared } from './declarations-role-declared.js';
 import { contextDeclaredRelationship } from './context-declared-relationship.js';
 import { contextExtractable } from './context-extractable.js';
 import { contextNoCycle } from './context-no-cycle.js';
@@ -79,6 +81,8 @@ const architectureRules: readonly Rule[] = [
   standardNoParallelInterface,
   governanceRecordedDeviation,
   compositionOnlyInModule,
+  declarationsRoleDeclared,
+  declarationsBarrelCurrent,
 ];
 
 /**

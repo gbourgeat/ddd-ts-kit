@@ -10,7 +10,7 @@ const BILLING = 'src/contexts/billing';
 const SHIPPING = 'src/contexts/shipping';
 const MODULE = `${BILLING}/billing.module.ts`;
 const COMMAND = `${BILLING}/application/commands/issue-invoice/issue-invoice.command.ts`;
-const CONSUMER = `${SHIPPING}/application/integration/consumers/invoice-cancelled.consumer.ts`;
+const INTEGRATION_HANDLER = `${SHIPPING}/application/integration/handlers/invoice-cancelled.integration-handler.ts`;
 const ADAPTER = `${BILLING}/infrastructure/persistence/in-memory-invoice.repository.ts`;
 const CONFIG = 'ddd-ts-kit.config.json';
 
@@ -109,25 +109,25 @@ describe('authz/declared', () => {
 });
 
 describe('events/consumer-idempotent', () => {
-  const consumer = { [CONSUMER]: 'export class InvoiceCancelledConsumer {}\n' };
+  const handler = { [INTEGRATION_HANDLER]: 'export class InvoiceCancelledHandler {}\n' };
   const module = (registration: string): Record<string, string> => ({ [`${SHIPPING}/shipping.module.ts`]: `export function start(): void {\n  ${registration}\n}\n` });
 
-  it('finds the consumer by its class, its instance or its token in a named registration', () => {
+  it('finds the integration event handler by its class, its instance or its token in a named registration', () => {
     const registrations = [
-      "builder.on(invoiceCancelledV1, { consumer: 'shipping.invoice-cancelled' }).handledBy(InvoiceCancelledConsumer, [COMMAND_BUS]);",
-      "subscribeAll(subscriber, [consume(invoiceCancelledV1, { consumer: 'shipping.invoice-cancelled', processed, unitOfWork }, (event) => invoiceCancelledConsumer.handle(event))]);",
-      "subscriber.subscribe(InvoiceCancelledConsumer.eventType, idempotent('shipping.invoice-cancelled', store, (event) => resolve(INVOICE_CANCELLED_CONSUMER).handle(event)));",
+      "builder.on(invoiceCancelledV1, { consumer: 'shipping.invoice-cancelled' }).handledBy(InvoiceCancelledHandler, [COMMAND_BUS]);",
+      "subscribeAll(subscriber, [consume(invoiceCancelledV1, { consumer: 'shipping.invoice-cancelled', processed, unitOfWork }, (event) => invoiceCancelledHandler.handle(event))]);",
+      "subscriber.subscribe(InvoiceCancelledHandler.eventType, idempotent('shipping.invoice-cancelled', store, (event) => resolve(INVOICE_CANCELLED_HANDLER).handle(event)));",
     ];
     for (const registration of registrations) {
-      expect(reported(projectWith({ ...consumer, ...module(registration) }), 'events/consumer-idempotent'), registration).toEqual([]);
+      expect(reported(projectWith({ ...handler, ...module(registration) }), 'events/consumer-idempotent'), registration).toEqual([]);
     }
   });
 
-  it('reports a consumer that is only bound, and says nothing about it in check-file', () => {
-    const root = projectWith({ ...consumer, ...module("builder.bind(INVOICE_CANCELLED_CONSUMER).toClass(InvoiceCancelledConsumer, [COMMAND_BUS]).as('consumer');") });
+  it('reports an integration event handler that is only bound, and says nothing about it in check-file', () => {
+    const root = projectWith({ ...handler, ...module("builder.bind(INVOICE_CANCELLED_HANDLER).toClass(InvoiceCancelledHandler, [COMMAND_BUS]).as('consumer');") });
 
-    expect(reported(root, 'events/consumer-idempotent').map(({ file }) => file)).toEqual([CONSUMER]);
-    expect(reported(root, 'events/consumer-idempotent', CONSUMER)).toEqual([]);
+    expect(reported(root, 'events/consumer-idempotent').map(({ file }) => file)).toEqual([INTEGRATION_HANDLER]);
+    expect(reported(root, 'events/consumer-idempotent', INTEGRATION_HANDLER)).toEqual([]);
   });
 
   it('names the file that took a consumer name first', () => {

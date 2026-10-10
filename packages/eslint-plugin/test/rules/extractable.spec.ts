@@ -21,7 +21,7 @@ ruleTester.run('context-extractable', contextExtractable, {
     at(PORT, 'const cache = new Map<string, number>();\ncache.set("a", 1);\nexport function rate(): number { return cache.size; }', CONFIG),
     at('src/platform/registry.ts', 'export let current = 0;\nexport const all = [];\nall.push(1);', CONFIG),
     at(`${BILLING}/test/fakes/rates.fake.ts`, 'export let calls = 0;', CONFIG),
-    at(MODULE, "import { CLOCK } from '@ddd-ts-kit/di';\nimport { PLATFORM_DATABASE } from '@/platform/platform.module.js';\nimport { productListedV1 } from '@/contexts/catalog/published-language/index.js';\nbuilder.bind(REPO).toClass(Repo, [PLATFORM_DATABASE, CLOCK]);\nbuilder.on(productListedV1, { consumer: 'billing.x' }).handledBy(Consumer, [resolve(CLOCK)]);", CONFIG),
+    at(MODULE, "import { CLOCK } from '@ddd-ts-kit/di';\nimport { PLATFORM_DATABASE } from '@/platform/platform.module.js';\nimport { productListedV1 } from '@/contexts/catalog/published-language/index.js';\nbuilder.bind(REPO).toClass(Repo, [PLATFORM_DATABASE, CLOCK]);\nbuilder.on(productListedV1, { consumer: 'billing.x' }).handledBy(Handler, [resolve(CLOCK)]);", CONFIG),
     at(MODULE, "import { CATALOG_READER } from '@/contexts/catalog/catalog.module.js';\nexport const all = describe(CATALOG_READER);", CONFIG),
   ],
   invalid: [

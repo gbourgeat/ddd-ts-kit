@@ -1,4 +1,8 @@
 import { ConcurrencyError } from '@ddd-ts-kit/kernel';
+{{#if style.declared}}
+import { Repository } from '@ddd-ts-kit/kernel/declarations';
+import { {{aggregate.constant}}_REPOSITORY } from '../../application/ports/{{context.kebab}}.ports.js';
+{{/if}}
 import { {{aggregate.pascal}}, type {{aggregate.pascal}}State } from '../../domain/aggregates/{{aggregate.kebab}}.aggregate.js';
 import type { {{aggregate.pascal}}Repository } from '../../domain/repositories/{{aggregate.kebab}}.repository.js';
 
@@ -7,6 +11,9 @@ interface Stored{{aggregate.pascal}} {
   readonly version: number;
 }
 
+{{#if style.declared}}
+@Repository({{aggregate.constant}}_REPOSITORY)
+{{/if}}
 export class InMemory{{aggregate.pascal}}Repository implements {{aggregate.pascal}}Repository {
   readonly #rows = new Map<string, Stored{{aggregate.pascal}}>();
 

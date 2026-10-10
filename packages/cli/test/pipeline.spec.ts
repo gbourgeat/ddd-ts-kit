@@ -43,11 +43,30 @@ describe('pipeline templates', () => {
     expect(template('gitlab/gitlab-ci.yml')).toBe(expected);
   });
 
-  it('the vitest config differs by the placeholders of the source root, the contexts directory and the alias, and by the architecture specs it runs', () => {
+  it('the vitest config differs by the placeholders of the source root, the contexts directory and the alias, by the architecture specs it runs, and by the decorators plugin, which is written for the standard decorator mode only', () => {
     // The proof that each context wires alone lives in test/architecture, outside the source root.
-    const rendered = template('vitest.config.ts.tpl').replace(", 'test/architecture/**/*.spec.ts'", '').replaceAll('{{config.contextsDir}}', 'src/contexts').replaceAll('{{config.sourceRoot}}', 'src').replaceAll('{{alias.bare}}', '@');
+    const rendered = template('vitest.config.ts.tpl')
+      .replaceAll(/^\{\{(?:#if decorators\.standard|\/if)\}\}\n/gm, '')
+      .replace(", 'test/architecture/**/*.spec.ts'", '')
+      .replaceAll('{{config.contextsDir}}', 'src/contexts')
+      .replaceAll('{{config.sourceRoot}}', 'src')
+      .replaceAll('{{alias.bare}}', '@');
 
     expect(rendered).toBe(source('vitest.config.ts'));
+  });
+
+  it('a project compiled with experimentalDecorators gets a vitest config without the plugin: the runner lowers legacy decorators itself', () => {
+    const standard = tempDir('pipeline');
+    cli(standard, 'init');
+    const legacy = tempDir('pipeline');
+    cli(legacy, 'init', '--validation', 'class-validator');
+
+    expect(read(standard, 'vitest.config.ts')).toContain("plugins: [decorators({ compiler: '@typescript/native' })]");
+    expect(read(standard, 'vitest.e2e.config.ts')).toContain("plugins: [decorators({ compiler: '@typescript/native' })]");
+    expect(read(legacy, 'vitest.config.ts')).not.toContain('decorators');
+    expect(read(legacy, 'vitest.e2e.config.ts')).not.toContain('decorators');
+    expect(JSON.parse(read(legacy, 'tsconfig.json'))).toMatchObject({ compilerOptions: { experimentalDecorators: true } });
+    expect(JSON.parse(read(standard, 'tsconfig.json')).compilerOptions).not.toHaveProperty('experimentalDecorators');
   });
 
   it('the ESLint config differs only for Prisma, whose generated client is not linted', () => {
@@ -60,9 +79,9 @@ describe('pipeline templates', () => {
     expect(read(prisma, 'eslint.config.mjs')).toContain("ignores: ['generated/**']");
   });
 
-  it('the knip config differs by the fakes kept as entry points and by what the stack does not have', () => {
+  it('the knip config of an explicit project differs by the fakes kept as entry points and by what the stack does not have', () => {
     const root = tempDir('pipeline');
-    cli(root, 'init', '--ci', 'gitlab');
+    cli(root, 'init', '--ci', 'gitlab', '--style', 'explicit');
     const expected: { entry: string[] } = JSON.parse(source('knip.json')) as { entry: string[] };
     // A fake is test support kept ready for the specs to come: with it, the port it implements is in use.
     expected.entry.splice(2, 0, 'src/contexts/*/test/fakes/*.ts');
@@ -71,6 +90,17 @@ describe('pipeline templates', () => {
     expect(generated.vitest.entry.splice(1, 1)).toEqual(['test/architecture/**/*.spec.ts']);
 
     expect(generated).toEqual(expected);
+  });
+
+  it('the knip config of a declared project has no module file to enter by: the barrel of each context is imported by the composition root', () => {
+    const explicit = tempDir('pipeline');
+    cli(explicit, 'init', '--style', 'explicit');
+    const declared = tempDir('pipeline');
+    cli(declared, 'init');
+    const entries = (root: string): string[] => (JSON.parse(read(root, 'knip.json')) as { entry: string[] }).entry;
+
+    expect(entries(explicit)).toContain('src/contexts/*/*.module.ts');
+    expect(entries(declared)).toEqual(entries(explicit).filter((entry) => entry !== 'src/contexts/*/*.module.ts'));
   });
 
   it('carries every script and every analyzer of the pipeline into package.json', () => {

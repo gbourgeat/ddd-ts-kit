@@ -24,7 +24,7 @@ const GENERATORS = [
   [/\.query\.ts$/, 'query <context> <UseCase>'],
   [/\.port\.ts$/, 'port <context> <Name>'],
   [/\.route\.ts$/, 'route <context> <UseCase> --method <M> --path <p>'],
-  [/\.consumer\.ts$/, 'consumer <context> <upstream> <event-type>'],
+  [/\.integration-handler\.ts$/, 'integration-handler <context> <upstream> <event-type>'],
   [/\.publisher\.ts$/, 'integration-event <context> <Aggregate> <Fact>'],
   [/\.builder\.ts$/, 'builder <context> <Aggregate>'],
 ];

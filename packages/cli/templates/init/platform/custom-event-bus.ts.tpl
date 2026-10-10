@@ -1,4 +1,4 @@
-import { InMemoryEventBus, type EventBus, type IntegrationEvent, type IntegrationEventHandler, type Subscription } from '@ddd-ts-kit/kernel';
+import { InMemoryEventBus, type EventBus, type IntegrationEvent, type IntegrationEventCallback, type Subscription } from '@ddd-ts-kit/kernel';
 
 /**
  * The adapter of the `EventBus` port for your broker or queue service. This stub delivers in
@@ -13,7 +13,7 @@ export class CustomEventBus implements EventBus {
     return this.#delivery.publish(events);
   }
 
-  subscribe(eventType: string, handler: IntegrationEventHandler): Subscription {
+  subscribe(eventType: string, handler: IntegrationEventCallback): Subscription {
     return this.#delivery.subscribe(eventType, handler);
   }
 }

@@ -1,7 +1,12 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "entry": [
+{{#if style.explicit}}
     "{{config.contextsDir}}/*/*.module.ts",
+{{/if}}
+{{#if assembly.discovery}}
+    "{{config.contextsDir}}/*/{application,infrastructure}/**/*.{{knip.discovered}}.ts",
+{{/if}}
     "{{config.contextsDir}}/*/published-language/index.ts",
     "{{config.contextsDir}}/*/test/fakes/*.ts",
     "scripts/*.ts"{{knip.e2eEntry}}

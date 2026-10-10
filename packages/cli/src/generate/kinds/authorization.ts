@@ -1,6 +1,7 @@
 import { CliError } from '../../errors.js';
 import { renderTemplate } from '../../templates.js';
 import { declarePermission, permissionNamed } from '../access.js';
+import { isDeclared } from '../declared.js';
 import { applyWiring, emit, wire } from '../emit.js';
 import type { Kind } from '../kind.js';
 import { label } from '../language.js';
@@ -25,7 +26,8 @@ export const policyKind: Kind = {
       ['policy/policy.ts.tpl', `application/authorization/${name.kebab}.policy.ts`],
       ['policy/policy.spec.ts.tpl', `test/unit/${name.kebab}.policy.spec.ts`],
     ]);
-    applyWiring(scope.ws, `${scope.config.platformDir}/auth/access-policies.ts`, renderTemplate('policy/registration.tpl', context));
+    // A declared policy is found through its decorator: only a policy written as a value is listed for `Access`.
+    if (!isDeclared(scope.config)) applyWiring(scope.ws, `${scope.config.platformDir}/auth/access-policies.ts`, renderTemplate('policy/registration.tpl', context));
   },
 };
 
@@ -52,6 +54,7 @@ export const gatewayKind: Kind = {
     ]);
     if (scope.config.stack.di === 'tsyringe') wire(scope, 'gateway', context);
     else scope.ws.note(`Instantiate InProcess${name.pascal}Gateway in ${scope.context.kebab}.module.ts, with the implementation of ${name.pascal}Contract the platform hands over, and give it to the handlers that need it.`);
+    if (isDeclared(scope.config)) scope.ws.note(`${name.constant}_UPSTREAM is bound to an empty value in ${scope.config.platformDir}/platform.module.ts, for the application and for the specs: bind the implementation of ${name.pascal}Contract there.`);
     scope.ws.note(`${name.pascal}Contract is published by ${upstream}: implement it there and hand that implementation to the gateway in the composition root. Extracting ${upstream} then replaces the in-process adapter by a remote one, and nothing else.`);
   },
 };

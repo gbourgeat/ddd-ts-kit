@@ -2,7 +2,7 @@ import { describe, expect, it } from '{{tests.module}}';
 {{#if adapter.decorated}}
 import { createAspectFakes, withAspectRuntime } from '@ddd-ts-kit/aspects/testing';
 {{/if}}
-import { Remote{{name.pascal}} } from '../../infrastructure/external/remote-{{name.kebab}}.adapter.js';
+import { Remote{{name.pascal}} } from '../../infrastructure/external/{{adapter.file}}.js';
 
 describe('Remote{{name.pascal}}', () => {
 {{#if adapter.decorated}}

@@ -1,6 +1,6 @@
 // Imported first on purpose: instrumentation has to be installed before any module it patches is loaded.
 import { tracing } from '{{paths.appToSource}}/platform/tracing.js';
-import { {{service.selectionImport}} } from '{{paths.appToSource}}/contexts/{{context.kebab}}/{{context.kebab}}.module.js';
+{{service.imports}}
 import { composeApplication } from '{{paths.appToSource}}/platform/application.js';
 {{#if http.any}}
 import { createAuthenticator } from '{{paths.appToSource}}/platform/auth/authenticator.js';

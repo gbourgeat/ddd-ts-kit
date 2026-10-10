@@ -60,11 +60,11 @@ function isDeclaration(value: unknown): value is AnyIntegrationEventDefinition {
   return typeof value === 'object' && value !== null && 'type' in value && 'version' in value && 'payload' in value && 'create' in value;
 }
 
-/** Who consumes what, read from the sources: a consumer names the type it listens to in `eventType`. */
+/** Who consumes what, read from the sources: an integration event handler names the type it handles in `eventType`. */
 function consumersByEventType(): Record<string, string[]> {
   const consumers: Record<string, string[]> = {};
   for (const context of contextNames()) {
-    const directory = path.resolve(CONTEXTS, context, 'application/integration/consumers');
+    const directory = path.resolve(CONTEXTS, context, 'application/integration/handlers');
     for (const file of fs.existsSync(directory) ? fs.readdirSync(directory) : []) {
       const type = /static readonly eventType = '([^']+)'/.exec(fs.readFileSync(path.join(directory, file), 'utf8'))?.[1];
       if (type !== undefined) {

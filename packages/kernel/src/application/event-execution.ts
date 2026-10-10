@@ -2,7 +2,7 @@ import { systemActor, type Actor } from './actor.js';
 import { executionContext, type ExecutionContext, type ExecutionScope } from './execution-context.js';
 import type {
   IntegrationEvent,
-  IntegrationEventHandler,
+  IntegrationEventCallback,
   IntegrationEventPublisher,
 } from './integration-event.js';
 
@@ -36,8 +36,8 @@ export function executionContextOfEvent(
 export function inEventScope(
   scope: ExecutionScope,
   options: EventExecutionOptions,
-  handler: IntegrationEventHandler,
-): IntegrationEventHandler {
+  handler: IntegrationEventCallback,
+): IntegrationEventCallback {
   return (event) => scope.run(executionContextOfEvent(event, options), () => handler(event));
 }
 

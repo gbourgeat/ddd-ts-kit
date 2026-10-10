@@ -46,6 +46,21 @@ export function className(node: ClassNode): string {
   return node.id?.name ?? 'the class';
 }
 
+/** The classes declared at the top of a module, exported or not. */
+export function topLevelClasses(program: TSESTree.Program): TSESTree.ClassDeclaration[] {
+  return program.body.flatMap((statement) => {
+    const declaration = isInlineExport(statement) ? statement.declaration : statement;
+    return declaration?.type === AST_NODE_TYPES.ClassDeclaration ? [declaration] : [];
+  });
+}
+
+/** Those a module exports: inline, by `export { A }` or by `export default A`. */
+export function exportedClasses(program: TSESTree.Program): TSESTree.ClassDeclaration[] {
+  const inline = new Set(program.body.flatMap((statement) => (isInlineExport(statement) && statement.declaration?.type === AST_NODE_TYPES.ClassDeclaration ? [statement.declaration] : [])));
+  const exportedNames = new Set(program.body.flatMap(exportedLocalNames));
+  return topLevelClasses(program).filter((declaration) => inline.has(declaration) || exportedNames.has(declaration.id?.name ?? ''));
+}
+
 export interface MemberSite {
   readonly member: TSESTree.ClassElement;
   readonly body: TSESTree.ClassBody;
@@ -62,6 +77,17 @@ export function enclosingMember(node: TSESTree.Node): MemberSite | undefined {
     child = parent;
   }
   return undefined;
+}
+
+function isInlineExport(statement: TSESTree.ProgramStatement): statement is TSESTree.ExportNamedDeclaration | TSESTree.ExportDefaultDeclaration {
+  return statement.type === AST_NODE_TYPES.ExportNamedDeclaration || statement.type === AST_NODE_TYPES.ExportDefaultDeclaration;
+}
+
+/** Names exported after their declaration: `export { IssueInvoiceHandler }` and `export default IssueInvoiceHandler`. */
+function exportedLocalNames(statement: TSESTree.ProgramStatement): string[] {
+  if (statement.type === AST_NODE_TYPES.ExportDefaultDeclaration) return statement.declaration.type === AST_NODE_TYPES.Identifier ? [statement.declaration.name] : [];
+  if (statement.type !== AST_NODE_TYPES.ExportNamedDeclaration || statement.source !== null) return [];
+  return statement.specifiers.map((specifier) => specifier.local.name);
 }
 
 function isKeyed(member: TSESTree.ClassElement): member is Keyed {

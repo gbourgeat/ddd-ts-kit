@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { CONFIG_FILE, parseConfig } from '../config.js';
+import { barrelFile, renderBarrel } from '../declared/roles.js';
 import { runCheck } from './engine.js';
 import { loadProject } from './project.js';
 import { CONTEXT_DOC_HEADINGS } from './rules/tree-context-doc.js';
@@ -45,8 +46,8 @@ const MODULE = `${BILLING}/billing.module.ts`;
 const COMMAND = `${BILLING}/application/commands/issue-invoice/issue-invoice.command.ts`;
 const QUERY = `${BILLING}/application/queries/list-issued-invoices/list-issued-invoices.query.ts`;
 const PUBLISHER = `${BILLING}/application/integration/publishers/invoice-issued.publisher.ts`;
-const CONSUMER = `${BILLING}/application/integration/consumers/product-listed.consumer.ts`;
-const CONSUMER_SPEC = `${BILLING}/test/unit/product-listed.consumer.spec.ts`;
+const INTEGRATION_HANDLER = `${BILLING}/application/integration/handlers/product-listed.integration-handler.ts`;
+const INTEGRATION_HANDLER_SPEC = `${BILLING}/test/unit/product-listed.integration-handler.spec.ts`;
 const PLATFORM_MODULE = 'src/platform/platform.module.ts';
 /** The decision record behind what the fixtures relax on purpose, so that only the rule under test speaks. */
 const FIXTURE_ADR = 'docs/adr/0001-fixture-decisions.md';
@@ -61,6 +62,106 @@ const OUTSIDE_PACKAGE_DEVIATION = (list: string, name: string): Record<string, s
 
 const aggregate = (body: string): Files => ({ [AGGREGATE]: body, [AGGREGATE_SPEC]: SPEC, [BUILDER]: 'export const anInvoice = 1;\n' });
 const handler = (body: string): Files => ({ [HANDLER]: body, [HANDLER_SPEC]: SPEC });
+
+const PORTS = `${BILLING}/application/ports/billing.ports.ts`;
+const ROUTES = `${BILLING}/presentation/http/billing.routes.ts`;
+const POLICY = `${BILLING}/application/authorization/only-issuer-voids.policy.ts`;
+const EVENT_HANDLER = `${BILLING}/application/event-handlers/invoice-issued.event-handler.ts`;
+const EVENT_HANDLER_SPEC = `${BILLING}/test/unit/invoice-issued.event-handler.spec.ts`;
+const QUERY_HANDLER = `${BILLING}/application/queries/list-issued-invoices/list-issued-invoices.handler.ts`;
+const GATEWAY = `${BILLING}/infrastructure/external/in-process-price-catalog.gateway.ts`;
+const BARREL = `${BILLING}/billing.declarations.ts`;
+const CATALOG_INTEGRATION_HANDLER = `${CATALOG}/application/integration/handlers/product-listed.integration-handler.ts`;
+const source = (...lines: string[]): string => `${lines.join('\n')}\n`;
+
+/** The role files of a context written in the declared style, as the generator writes them. */
+const DECLARED = {
+  command: source("import { Requires } from '@ddd-ts-kit/kernel/declarations';", '', "@Requires(billingPermissions['invoice.issue'])", 'export class IssueInvoiceCommand {}'),
+  handler: source(
+    "import { CLOCK, CommandHandler } from '@ddd-ts-kit/kernel/declarations';",
+    "import { INVOICE_REPOSITORY } from '../../ports/billing.ports.js';",
+    "import { IssueInvoiceCommand } from './issue-invoice.command.js';",
+    '',
+    '@CommandHandler(IssueInvoiceCommand, [INVOICE_REPOSITORY, CLOCK])',
+    'export class IssueInvoiceHandler {}',
+  ),
+  query: source("import { Public } from '@ddd-ts-kit/kernel/declarations';", '', '@Public()', 'export class InvoicesIssuedQuery {}'),
+  queryHandler: source("import { QueryHandler } from '@ddd-ts-kit/kernel/declarations';", '', '@QueryHandler(InvoicesIssuedQuery, [])', 'export class InvoicesIssuedHandler {}'),
+  ports: source("import { token } from '@ddd-ts-kit/kernel/declarations';", "export const INVOICE_REPOSITORY = token<InvoiceRepository>('billing.InvoiceRepository');"),
+  integrationHandler: source(
+    "import { COMMAND_BUS, IntegrationEventHandler } from '@ddd-ts-kit/kernel/declarations';",
+    "import { productListedV1 } from '../../../../catalog/published-language/index.js';",
+    '',
+    '@IntegrationEventHandler(',
+    '  productListedV1,',
+    "  { consumer: 'billing.product-listed' },",
+    '  [COMMAND_BUS],',
+    ')',
+    'export class ProductListedHandler {}',
+  ),
+  event: source('export class InvoiceIssued {', "  readonly name = 'billing.invoice.issued';", '}'),
+  eventHandler: source(
+    "import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';",
+    "import { InvoiceIssued } from '../../domain/events/invoice-issued.event.js';",
+    '',
+    "@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued' })",
+    'export class InvoiceIssuedEventHandler {}',
+  ),
+  publisher: source(
+    "import { DomainEventHandler, EVENT_PUBLISHER } from '@ddd-ts-kit/kernel/declarations';",
+    "import { InvoiceIssued } from '../../../domain/events/invoice-issued.event.js';",
+    '',
+    "@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued' }, [EVENT_PUBLISHER])",
+    'export class InvoiceIssuedPublisher {}',
+  ),
+  policy: source("import { Policy } from '@ddd-ts-kit/kernel/declarations';", '', "@Policy(billingPermissions['invoice.void'], { name: 'billing.only-issuer-voids' })", 'export class OnlyIssuerVoidsPolicy {}'),
+  repository: source(
+    "import { CLOCK, Repository } from '@ddd-ts-kit/kernel/declarations';",
+    "import { DATABASE } from '../../../../platform/tokens.js';",
+    "import { INVOICE_REPOSITORY } from '../../application/ports/billing.ports.js';",
+    '',
+    '@Repository(INVOICE_REPOSITORY, [DATABASE, CLOCK])',
+    'export class InMemoryInvoiceRepository {}',
+  ),
+  gateway: source("import { Gateway } from '@ddd-ts-kit/kernel/declarations';", '', '@Gateway(PRICE_CATALOG_GATEWAY, [PRICE_CATALOG_UPSTREAM])', 'export class InProcessPriceCatalogGateway {}'),
+  adapter: source("import { Adapter } from '@ddd-ts-kit/kernel/declarations';", '', "@Adapter(PAYMENT_PROVIDER, { kind: 'external' })", 'export class RemotePaymentProvider {}'),
+} as const;
+
+/** One file of each role, with the specs the other rules ask for. */
+const DECLARED_CONTEXT: Files = {
+  [COMMAND]: DECLARED.command,
+  [HANDLER]: DECLARED.handler,
+  [HANDLER_SPEC]: SPEC,
+  [QUERY]: DECLARED.query,
+  [QUERY_HANDLER]: DECLARED.queryHandler,
+  [`${BILLING}/test/unit/list-issued-invoices.handler.spec.ts`]: SPEC,
+  [PORTS]: DECLARED.ports,
+  [INTEGRATION_HANDLER]: DECLARED.integrationHandler,
+  [INTEGRATION_HANDLER_SPEC]: SPEC,
+  [EVENT]: DECLARED.event,
+  [EVENT_HANDLER]: DECLARED.eventHandler,
+  [EVENT_HANDLER_SPEC]: SPEC,
+  [PUBLISHER]: DECLARED.publisher,
+  [POLICY]: DECLARED.policy,
+  [ADAPTER]: DECLARED.repository,
+  [GATEWAY]: DECLARED.gateway,
+  [`${BILLING}/infrastructure/external/remote-payment-provider.adapter.ts`]: DECLARED.adapter,
+};
+
+/** The barrel of `DECLARED_CONTEXT`, written out so that the fixtures do not prove the rule with its own code. */
+const DECLARED_BARREL = source(
+  "export * from './application/authorization/only-issuer-voids.policy.js';",
+  "export * from './application/commands/issue-invoice/issue-invoice.command.js';",
+  "export * from './application/commands/issue-invoice/issue-invoice.handler.js';",
+  "export * from './application/event-handlers/invoice-issued.event-handler.js';",
+  "export * from './application/integration/handlers/product-listed.integration-handler.js';",
+  "export * from './application/integration/publishers/invoice-issued.publisher.js';",
+  "export * from './application/queries/list-issued-invoices/list-issued-invoices.handler.js';",
+  "export * from './application/queries/list-issued-invoices/list-issued-invoices.query.js';",
+  "export * from './infrastructure/external/in-process-price-catalog.gateway.js';",
+  "export * from './infrastructure/external/remote-payment-provider.adapter.js';",
+  "export * from './infrastructure/persistence/in-memory-invoice.repository.js';",
+);
 
 export const FIXTURES: readonly Fixture[] = [
   {
@@ -1033,23 +1134,23 @@ export const FIXTURES: readonly Fixture[] = [
   },
   {
     ruleId: 'events/consumer-idempotent',
-    name: 'consumers registered under their own name, by the builder and by hand',
+    name: 'integration event handlers registered under their own consumer name, by the builder and by hand',
     expect: 'pass',
     files: project({
-      [CONSUMER]: 'export class ProductListedConsumer {}\n',
-      [CONSUMER_SPEC]: SPEC,
-      [`${BILLING}/application/integration/consumers/product-withdrawn.consumer.ts`]: 'export class ProductWithdrawnConsumer {}\n',
-      [`${BILLING}/test/unit/product-withdrawn.consumer.spec.ts`]: SPEC,
+      [INTEGRATION_HANDLER]: 'export class ProductListedHandler {}\n',
+      [INTEGRATION_HANDLER_SPEC]: SPEC,
+      [`${BILLING}/application/integration/handlers/product-withdrawn.integration-handler.ts`]: 'export class ProductWithdrawnHandler {}\n',
+      [`${BILLING}/test/unit/product-withdrawn.integration-handler.spec.ts`]: SPEC,
       [MODULE]: [
         'export function register(builder: Builder): void {',
         '  builder',
         "    .on(productListedV1, { consumer: 'billing.product-listed' })",
-        '    .handledBy(ProductListedConsumer, [COMMAND_BUS]);',
+        '    .handledBy(ProductListedHandler, [COMMAND_BUS]);',
         "  process.on('SIGTERM', stop);",
         '}',
-        'const productWithdrawnConsumer = create(commandBus);',
+        'const productWithdrawnHandler = create(commandBus);',
         'export const subscriptions = [',
-        "  consume(productWithdrawnV1, { consumer: 'billing.product-withdrawn', processed, unitOfWork }, (event) => productWithdrawnConsumer.handle(event)),",
+        "  consume(productWithdrawnV1, { consumer: 'billing.product-withdrawn', processed, unitOfWork }, (event) => productWithdrawnHandler.handle(event)),",
         "  on(productRenamedV1, rename, { consumer: 'billing.product-renamed', processed: store }),",
         "  subscribe(idempotent('billing.product-archived', store, archive)),",
         '];',
@@ -1059,12 +1160,12 @@ export const FIXTURES: readonly Fixture[] = [
   },
   {
     ruleId: 'events/consumer-idempotent',
-    name: 'a consumer subscribed without a consumer name',
-    expect: { file: CONSUMER },
+    name: 'an integration event handler subscribed without a consumer name',
+    expect: { file: INTEGRATION_HANDLER },
     files: project({
-      [CONSUMER]: 'export class ProductListedConsumer {}\n',
-      [CONSUMER_SPEC]: SPEC,
-      [MODULE]: "export const subscription = subscriber.subscribe('catalog.product.listed', (event) => productListedConsumer.handle(event));\n",
+      [INTEGRATION_HANDLER]: 'export class ProductListedHandler {}\n',
+      [INTEGRATION_HANDLER_SPEC]: SPEC,
+      [MODULE]: "export const subscription = subscriber.subscribe('catalog.product.listed', (event) => productListedHandler.handle(event));\n",
     }),
   },
   {
@@ -1482,6 +1583,338 @@ export const FIXTURES: readonly Fixture[] = [
     expect: { file: CONFIG_FILE },
     files: project({}, { [CONFIG_FILE]: config({ guard: 'advise', deviations: [{ what: 'guard', adr: 'ADR-0042', reason: '' }] }) }),
   },
+  {
+    ruleId: 'authz/declared',
+    name: 'declared style: @Requires or @Public on the message class is the declaration, whatever the lines it spans',
+    expect: 'pass',
+    files: declaredProject({
+      [COMMAND]: "import { Requires } from '@ddd-ts-kit/kernel/declarations';\n\n@Requires(\n  billingPermissions['invoice.issue'],\n  { audited: ['customerId'] },\n)\nexport class IssueInvoiceCommand {}\n",
+      [QUERY]: DECLARED.query,
+    }),
+  },
+  {
+    ruleId: 'authz/declared',
+    name: 'declared style: a command class carrying neither @Requires nor @Public',
+    expect: { file: COMMAND },
+    files: declaredProject({ [COMMAND]: 'export class IssueInvoiceCommand {}\n', [QUERY]: DECLARED.query }),
+  },
+  {
+    ruleId: 'authz/declared',
+    name: 'declared style: a decorator of the same name that does not come from the kernel declarations',
+    expect: { file: QUERY },
+    files: declaredProject({ [QUERY]: "import { Public } from '../../authorization/home-made.js';\n\n@Public()\nexport class InvoicesIssuedQuery {}\n" }),
+  },
+  {
+    ruleId: 'authz/declared',
+    name: 'explicit style: a module registering a message that declares its own access',
+    expect: 'pass',
+    files: project({
+      [COMMAND]: DECLARED.command,
+      [MODULE]:
+        "import { IssueInvoiceCommand } from './application/commands/issue-invoice/issue-invoice.command.js';\nexport function register(builder: Builder): void {\n  builder.command(IssueInvoiceCommand).handledBy(IssueInvoiceHandler, [CLOCK]);\n}\n",
+    }),
+  },
+  {
+    ruleId: 'authz/declared',
+    name: 'wired by hand: a decorated command needs no entry in the authorization map',
+    expect: 'pass',
+    files: project({ [COMMAND]: DECLARED.command, [MODULE]: 'export const authorization = [];\n' }, { [CONFIG_FILE]: config({ stack: { di: 'manual' } }) }),
+  },
+  {
+    ruleId: 'authz/in-application',
+    name: 'the access decorators, a policy and the access token in application/',
+    expect: 'pass',
+    files: declaredProject({
+      [COMMAND]: DECLARED.command,
+      ...handler(
+        "import { ACCESS } from '@ddd-ts-kit/auth';\nimport { CommandHandler } from '@ddd-ts-kit/kernel/declarations';\nimport { IssueInvoiceCommand } from './issue-invoice.command.js';\n\n@CommandHandler(IssueInvoiceCommand, [ACCESS])\nexport class IssueInvoiceHandler {}\n",
+      ),
+      [POLICY]: DECLARED.policy,
+    }),
+  },
+  {
+    ruleId: 'authz/in-application',
+    name: 'an access decorator imported by a route',
+    expect: { file: ROUTE },
+    files: project({ [ROUTE]: "import { Requires } from '@ddd-ts-kit/kernel/declarations';\nexport const declare = Requires;\n" }),
+  },
+  {
+    ruleId: 'authz/in-application',
+    name: 'the access token imported by an adapter',
+    expect: { file: ADAPTER },
+    files: project({ [ADAPTER]: "import { ACCESS } from '@ddd-ts-kit/auth';\nexport class InMemoryInvoiceRepository {\n  readonly needs = [ACCESS];\n}\n" }),
+  },
+  {
+    ruleId: 'layer/application-inward',
+    name: 'declared style: a handler importing the kernel declarations and the tokens of its context',
+    expect: 'pass',
+    files: declaredProject({ [COMMAND]: DECLARED.command, ...handler(DECLARED.handler), [PORTS]: DECLARED.ports }),
+  },
+  {
+    ruleId: 'layer/domain-purity',
+    name: 'the kernel declarations in the domain, although the kernel is allowed',
+    expect: { file: AGGREGATE },
+    files: project(aggregate("import { token } from '@ddd-ts-kit/kernel/declarations';\nexport class Invoice {}\nexport const INVOICES = token('billing.Invoices');\n")),
+  },
+  {
+    ruleId: 'composition/only-in-module',
+    name: 'a declared adapter bound by its declaration, contexts assembled in main.ts, an entry point and the platform',
+    expect: 'pass',
+    files: declaredProject({
+      [ADAPTER]: DECLARED.repository,
+      'src/main.ts': "import { contextModule } from '@ddd-ts-kit/di';\nimport * as billingDeclarations from './contexts/billing/billing.declarations.js';\nexport const billing = contextModule('billing', billingDeclarations);\n",
+      'src/apps/billing/main.ts': "import { discoverContext } from '@ddd-ts-kit/di/discovery';\nexport const billing = await discoverContext('billing', new URL('../../contexts/billing/', import.meta.url));\n",
+      [PLATFORM_MODULE]: "import { defineModule } from '@ddd-ts-kit/di';\nexport const platformModule = defineModule('platform', (builder) => {\n  builder.include(platformAdapters);\n});\n",
+    }),
+  },
+  {
+    ruleId: 'composition/only-in-module',
+    name: 'a context assembled outside the composition root',
+    expect: { file: 'src/bootstrap.ts' },
+    files: project({ 'src/bootstrap.ts': "import { contextModule } from '@ddd-ts-kit/di';\nexport const billing = contextModule('billing', declared);\n" }),
+  },
+  {
+    ruleId: 'composition/only-in-module',
+    name: 'declared classes included in a module builder by an adapter',
+    expect: { file: `${BILLING}/infrastructure/external/extend-billing.ts` },
+    files: project({
+      [`${BILLING}/infrastructure/external/extend-billing.ts`]: "import type { ModuleBuilder } from '@ddd-ts-kit/di';\nexport function extend(builder: ModuleBuilder): void {\n  builder.include(declared);\n}\n",
+    }),
+  },
+  {
+    ruleId: 'events/consumer-idempotent',
+    name: 'declared style: a handler named by its @IntegrationEventHandler, without a module file',
+    expect: 'pass',
+    files: declaredProject({ [INTEGRATION_HANDLER]: DECLARED.integrationHandler, [INTEGRATION_HANDLER_SPEC]: SPEC }),
+  },
+  {
+    ruleId: 'events/consumer-idempotent',
+    name: 'explicit style: a handler that declares itself is not looked for in the module file',
+    expect: 'pass',
+    files: project({ [INTEGRATION_HANDLER]: DECLARED.integrationHandler, [INTEGRATION_HANDLER_SPEC]: SPEC, [MODULE]: 'export const billingModule = {};\n' }),
+  },
+  {
+    ruleId: 'events/consumer-idempotent',
+    name: 'a declared handler whose consumer name is not a string literal',
+    expect: { file: INTEGRATION_HANDLER },
+    files: project({
+      [INTEGRATION_HANDLER]: "import { IntegrationEventHandler } from '@ddd-ts-kit/kernel/declarations';\n\n@IntegrationEventHandler(productListedV1, { consumer: CONSUMER_NAME }, [])\nexport class ProductListedHandler {}\n",
+      [INTEGRATION_HANDLER_SPEC]: SPEC,
+    }),
+  },
+  {
+    ruleId: 'events/consumer-idempotent',
+    name: 'one consumer name declared by two contexts',
+    expect: { file: CATALOG_INTEGRATION_HANDLER },
+    files: project({
+      [INTEGRATION_HANDLER]: DECLARED.integrationHandler,
+      [INTEGRATION_HANDLER_SPEC]: SPEC,
+      [CATALOG_INTEGRATION_HANDLER]: "import { IntegrationEventHandler } from '@ddd-ts-kit/kernel/declarations';\n\n@IntegrationEventHandler(productListedV1, { consumer: 'billing.product-listed' }, [])\nexport class ProductListedHandler {}\n",
+      [`${CATALOG}/test/unit/product-listed.integration-handler.spec.ts`]: SPEC,
+    }),
+  },
+  {
+    ruleId: 'events/consumer-idempotent',
+    name: 'one consumer name declared by a class and registered in a module',
+    expect: { file: MODULE },
+    files: project({
+      [INTEGRATION_HANDLER]: DECLARED.integrationHandler,
+      [INTEGRATION_HANDLER_SPEC]: SPEC,
+      [MODULE]: "export const subscriptions = [consume(productWithdrawnV1, { consumer: 'billing.product-listed', processed, unitOfWork }, withdraw)];\n",
+    }),
+  },
+  {
+    ruleId: 'context/extractable',
+    name: 'declared style: tokens of the context, the kernel, the auth package and the platform',
+    expect: 'pass',
+    files: declaredProject({
+      [COMMAND]: DECLARED.command,
+      ...handler(
+        "import { ACCESS } from '@ddd-ts-kit/auth';\nimport { CLOCK, CommandHandler } from '@ddd-ts-kit/kernel/declarations';\nimport { INVOICE_REPOSITORY } from '../../ports/billing.ports.js';\nimport { IssueInvoiceCommand } from './issue-invoice.command.js';\n\n@CommandHandler(IssueInvoiceCommand, [INVOICE_REPOSITORY, ACCESS, CLOCK])\nexport class IssueInvoiceHandler {}\n",
+      ),
+      [PORTS]: DECLARED.ports,
+      [ADAPTER]: DECLARED.repository,
+      [INTEGRATION_HANDLER]: DECLARED.integrationHandler,
+      [INTEGRATION_HANDLER_SPEC]: SPEC,
+    }),
+  },
+  {
+    ruleId: 'context/extractable',
+    name: 'declared style: a handler naming a token of the ports of another context',
+    expect: { file: HANDLER },
+    also: ['context/published-language-only'],
+    files: declaredProject({
+      [COMMAND]: DECLARED.command,
+      ...handler(
+        "import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';\nimport { PRODUCT_REPOSITORY } from '../../../../catalog/application/ports/catalog.ports.js';\nimport { IssueInvoiceCommand } from './issue-invoice.command.js';\n\n@CommandHandler(IssueInvoiceCommand, [PRODUCT_REPOSITORY])\nexport class IssueInvoiceHandler {}\n",
+      ),
+    }),
+  },
+  {
+    ruleId: 'context/extractable',
+    name: 'declared style: a gateway naming a token exported by the published language of another context',
+    expect: { file: GATEWAY },
+    files: declaredProject({
+      [GATEWAY]: "import { Gateway } from '@ddd-ts-kit/kernel/declarations';\nimport { PRICE_CATALOG } from '../../../catalog/published-language/index.js';\n\n@Gateway(PRICE_CATALOG_GATEWAY, [PRICE_CATALOG])\nexport class InProcessPriceCatalogGateway {}\n",
+    }),
+  },
+  {
+    ruleId: 'context/extractable',
+    name: 'explicit style: a constant of a published language imported by a handler is judged as before',
+    expect: 'pass',
+    files: project(handler("import { PRICE_CATALOG } from '../../../../catalog/published-language/index.js';\nexport class IssueInvoiceHandler {\n  readonly catalog = PRICE_CATALOG;\n}\n")),
+  },
+  {
+    ruleId: 'naming/suffix',
+    name: 'declared style: the ports file and the routes file named after the context',
+    expect: 'pass',
+    files: declaredProject({ [PORTS]: DECLARED.ports, [ROUTES]: 'export const billingRoutes = (): unknown[] => [];\n' }),
+  },
+  {
+    ruleId: 'naming/suffix',
+    name: 'explicit style: a ports file named after the context',
+    expect: { file: PORTS },
+    files: project({ [PORTS]: DECLARED.ports }),
+  },
+  {
+    ruleId: 'tree/closed',
+    name: 'declared style: the generated barrel at the root of a context, next to a module file kept on purpose',
+    expect: 'pass',
+    files: declaredProject({ [MODULE]: 'export const billingModule = {};\n' }),
+  },
+  {
+    ruleId: 'tree/closed',
+    name: 'explicit style: a barrel of declarations at the root of a context',
+    expect: { file: BARREL },
+    files: project({ [BARREL]: 'export {};\n' }),
+  },
+  {
+    ruleId: 'naming/one-concept-per-file',
+    name: 'declared style: two declared classes in one role file',
+    expect: { file: POLICY },
+    files: declaredProject({
+      [POLICY]: `${DECLARED.policy}\n@Policy(billingPermissions['invoice.issue'], { name: 'billing.only-accountant-issues' })\nexport class OnlyAccountantIssuesPolicy {}\n`,
+    }),
+  },
+  {
+    ruleId: 'naming/one-concept-per-file',
+    name: 'explicit style: two classes in a policy file are judged as before',
+    expect: 'pass',
+    files: project({ [POLICY]: 'export class OnlyIssuerVoidsPolicy {}\nexport class OnlyAccountantIssuesPolicy {}\n' }),
+  },
+  {
+    ruleId: 'declarations/role-declared',
+    name: 'every role file exports a class carrying the decorator of its role, with written names',
+    expect: 'pass',
+    files: declaredProject(DECLARED_CONTEXT),
+  },
+  {
+    ruleId: 'declarations/role-declared',
+    name: 'explicit style: role files without a decorator, wired by the module file',
+    expect: 'pass',
+    files: project({ ...handler('export class IssueInvoiceHandler {}\n'), [POLICY]: 'export class OnlyIssuerVoidsPolicy {}\n', [ADAPTER]: 'export class InMemoryInvoiceRepository {}\n' }),
+  },
+  {
+    ruleId: 'declarations/role-declared',
+    name: 'a handler file whose class declares nothing',
+    expect: { file: HANDLER },
+    files: declaredProject({ [COMMAND]: DECLARED.command, ...handler('export class IssueInvoiceHandler {}\n') }),
+  },
+  {
+    ruleId: 'declarations/role-declared',
+    name: 'a command handler declared as a query handler',
+    expect: { file: HANDLER },
+    files: declaredProject({
+      [COMMAND]: DECLARED.command,
+      ...handler("import { QueryHandler } from '@ddd-ts-kit/kernel/declarations';\n\n@QueryHandler(IssueInvoiceCommand, [])\nexport class IssueInvoiceHandler {}\n"),
+    }),
+  },
+  {
+    ruleId: 'declarations/role-declared',
+    name: 'a policy named by a variable',
+    expect: { file: POLICY },
+    files: declaredProject({ [POLICY]: "import { Policy } from '@ddd-ts-kit/kernel/declarations';\n\n@Policy(billingPermissions['invoice.void'], { name: POLICY_NAME })\nexport class OnlyIssuerVoidsPolicy {}\n" }),
+  },
+  {
+    ruleId: 'declarations/role-declared',
+    name: 'a domain event handler named by a template with a substitution',
+    expect: { file: EVENT_HANDLER },
+    files: declaredProject({
+      [EVENT_HANDLER]: "import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';\n\n@DomainEventHandler(InvoiceIssued, { name: `${CONTEXT}.invoice.issued` })\nexport class InvoiceIssuedEventHandler {}\n",
+      [EVENT_HANDLER_SPEC]: SPEC,
+    }),
+  },
+  {
+    ruleId: 'declarations/role-declared',
+    name: 'an integration event handler whose consumer name is a variable',
+    expect: { file: INTEGRATION_HANDLER },
+    also: ['events/consumer-idempotent'],
+    files: declaredProject({
+      [INTEGRATION_HANDLER]: "import { IntegrationEventHandler } from '@ddd-ts-kit/kernel/declarations';\n\n@IntegrationEventHandler(productListedV1, options, [])\nexport class ProductListedHandler {}\n",
+      [INTEGRATION_HANDLER_SPEC]: SPEC,
+    }),
+  },
+  {
+    ruleId: 'declarations/role-declared',
+    name: 'a domain event handler written under another name than the one its event carries',
+    expect: { file: EVENT_HANDLER },
+    files: declaredProject({
+      [EVENT]: DECLARED.event,
+      [EVENT_HANDLER]: DECLARED.eventHandler.replace('billing.invoice.issued', 'billing.invoice.sent'),
+      [EVENT_HANDLER_SPEC]: SPEC,
+    }),
+  },
+  {
+    ruleId: 'declarations/role-declared',
+    name: 'a declaration decorator on a class of the domain',
+    expect: { file: AGGREGATE },
+    also: ['layer/domain-purity'],
+    files: declaredProject(aggregate("import { Repository } from '@ddd-ts-kit/kernel/declarations';\n\n@Repository(INVOICES)\nexport class Invoice {}\n")),
+  },
+  {
+    ruleId: 'declarations/role-declared',
+    name: 'a declared class in a file that is not a role file',
+    expect: { file: `${BILLING}/infrastructure/persistence/in-memory-invoices.reader.ts` },
+    files: declaredProject({
+      [`${BILLING}/infrastructure/persistence/in-memory-invoices.reader.ts`]: "import { Adapter } from '@ddd-ts-kit/kernel/declarations';\n\n@Adapter(INVOICES_READER)\nexport class InMemoryInvoicesReader {}\n",
+    }),
+  },
+  {
+    ruleId: 'declarations/barrel-current',
+    name: 'a barrel listing the role files of its context, one export per file, sorted by path',
+    expect: 'pass',
+    files: declaredProject(DECLARED_CONTEXT, { [BARREL]: DECLARED_BARREL }),
+  },
+  {
+    ruleId: 'declarations/barrel-current',
+    name: 'assembly by discovery: no barrel to keep',
+    expect: 'pass',
+    files: discoveredProject(DECLARED_CONTEXT),
+  },
+  {
+    ruleId: 'declarations/barrel-current',
+    name: 'explicit style: no barrel is expected',
+    expect: 'pass',
+    files: project({ ...handler('export class IssueInvoiceHandler {}\n'), [MODULE]: 'export const billingModule = {};\n' }),
+  },
+  {
+    ruleId: 'declarations/barrel-current',
+    name: 'a declared context without its barrel',
+    expect: { file: BARREL },
+    files: withoutFile(declaredProject(DECLARED_CONTEXT), BARREL),
+  },
+  {
+    ruleId: 'declarations/barrel-current',
+    name: 'a role file added by hand that the barrel does not list',
+    expect: { file: BARREL },
+    files: declaredProject(DECLARED_CONTEXT, { [BARREL]: DECLARED_BARREL.replace("export * from './application/authorization/only-issuer-voids.policy.js';\n", '') }),
+  },
+  {
+    ruleId: 'declarations/barrel-current',
+    name: 'assembly by discovery: a barrel left behind',
+    expect: { file: BARREL },
+    files: discoveredProject(DECLARED_CONTEXT, { [BARREL]: DECLARED_BARREL }),
+  },
 ];
 
 export interface FixtureOutcome {
@@ -1542,6 +1975,28 @@ function project(files: Files, overrides: Files = {}): Files {
     ...files,
     ...overrides,
   };
+}
+
+/** The same two contexts in the declared style, each with the barrel of the role files it is given. */
+function declaredProject(files: Files, overrides: Files = {}): Files {
+  const written = project(files, { [CONFIG_FILE]: config({ stack: { style: 'declared' } }) });
+  const barrels = Object.fromEntries(
+    ['billing', 'catalog'].map((context) => {
+      const directory = `src/contexts/${context}/`;
+      const inside = Object.keys(written).flatMap((file) => (file.startsWith(directory) ? [file.slice(directory.length)] : []));
+      return [`${directory}${barrelFile(context)}`, renderBarrel(inside)];
+    }),
+  );
+  return { ...written, ...barrels, ...overrides };
+}
+
+/** The declared style assembled by discovery: the role files are found at startup, no barrel lists them. */
+function discoveredProject(files: Files, overrides: Files = {}): Files {
+  return project(files, { [CONFIG_FILE]: config({ stack: { style: 'declared', assembly: 'discovery' } }), ...overrides });
+}
+
+function withoutFile(files: Files, removed: string): Files {
+  return Object.fromEntries(Object.entries(files).filter(([file]) => file !== removed));
 }
 
 function writeFiles(root: string, files: Files): void {

@@ -19,11 +19,14 @@ import {
   type ExecutionContext,
   type InMemoryCommandBus,
   type InMemoryQueryBus,
+  type JobRun,
   type Session,
 } from '@ddd-ts-kit/kernel';
+import { ManualJobScheduler } from '@ddd-ts-kit/scheduling/testing';
 import { USE_CASE_GUARD, passEveryMessage, type AuthorizationMode } from './authorization.js';
 import { assemble, override, type Application, type Override } from './application.js';
 import { WiringError } from './errors.js';
+import type { JobsOptions } from './jobs.js';
 import { guardedQueryBus, transactionalCommandBus } from './kernel-module.js';
 import {
   ACTOR_CONTEXT,
@@ -36,6 +39,7 @@ import {
   EVENT_SUBSCRIBER,
   EXECUTION_SCOPE,
   ID_GENERATOR,
+  JOB_SCHEDULER,
   KERNEL_TOKENS,
   LOCK,
   LOGGER,
@@ -74,6 +78,8 @@ export interface TestApplicationOptions {
   readonly executionContext?: ExecutionContext;
   /** See `ApplicationOptions.authorization`. */
   readonly authorization?: AuthorizationMode;
+  /** See `JobsOptions.settings`: what configuration changes of a declared job, by job name. */
+  readonly jobs?: NonNullable<JobsOptions['settings']>;
 }
 
 export interface TestKernel {
@@ -81,7 +87,7 @@ export interface TestKernel {
   readonly queryBus: InMemoryQueryBus;
   /** Publisher and subscriber at once; `published` lists what the use cases announced. */
   readonly eventBus: InMemoryEventBus;
-  /** Where a spec dispatches a domain event to see the declared listeners of the context react. */
+  /** Where a spec dispatches a domain event to see the declared handlers of the context react. */
   readonly domainEvents: InMemoryDomainEventDispatcher;
   readonly clock: FixedClock;
   readonly ids: SequentialIdGenerator;
@@ -102,6 +108,22 @@ export interface TestKernel {
   readonly lock: InMemoryLock;
   /** Counts by `clock`. */
   readonly rateLimiter: InMemoryRateLimiter;
+  /** The declared jobs, which no time starts: a spec runs one, then asserts its fakes. */
+  readonly jobs: TestJobs;
+}
+
+export interface TestJobs {
+  /**
+   * Runs a job now, as the scheduler would (execution scope of origin `schedule`, system actor
+   * of the job), and answers what became of it. Unlike the port, it throws what the job threw:
+   * a spec wants the failure, not its code.
+   */
+  runNow(name: string): Promise<JobRun>;
+  /**
+   * On `clock`, not started: for a spec about time itself, `await jobs.scheduler.start()` then
+   * `await jobs.scheduler.advance(ms)`, and `jobs.scheduler.runs` lists what happened.
+   */
+  readonly scheduler: ManualJobScheduler;
 }
 
 export interface TestApplication extends Application, TestKernel {
@@ -135,6 +157,7 @@ export function createTestApplication(options: TestApplicationOptions): TestAppl
     modules: options.modules,
     overrides: [...kernelOverrides(kernel), ...guardOverride(wiring), ...fakes],
     ...(options.authorization === undefined ? {} : { authorization: options.authorization }),
+    jobs: { start: false, ...(options.jobs === undefined ? {} : { settings: options.jobs }) },
   });
   return Object.assign(application, kernel, { get: application.resolve, as: runningAs(kernel.executionScope) });
 }
@@ -174,6 +197,8 @@ function createTestKernel(options: TestApplicationOptions, resolve: Resolve): Te
   const clock = new FixedClock(options.now ?? DEFAULT_NOW);
   const context = options.executionContext ?? defaultExecutionContext(options);
   const actorContext = new FixedActorContext(context.actor);
+  const executionScope = new FixedExecutionScope(context, actorContext);
+  const observability = { logger: new InMemoryLogger(), metrics: new InMemoryMetrics(), lock: new InMemoryLock(clock) };
   return {
     commandBus: transactionalCommandBus(resolve),
     queryBus: guardedQueryBus(resolve),
@@ -182,12 +207,22 @@ function createTestKernel(options: TestApplicationOptions, resolve: Resolve): Te
     clock,
     ids: new SequentialIdGenerator(options.idPrefix),
     actorContext,
-    executionScope: new FixedExecutionScope(context, actorContext),
-    logger: new InMemoryLogger(),
-    metrics: new InMemoryMetrics(),
+    executionScope,
+    ...observability,
     cache: new InMemoryCache(clock),
-    lock: new InMemoryLock(clock),
     rateLimiter: new InMemoryRateLimiter(clock),
+    jobs: testJobs(new ManualJobScheduler({ clock, scope: executionScope, ids: new SequentialIdGenerator('job-run'), ...observability })),
+  };
+}
+
+function testJobs(scheduler: ManualJobScheduler): TestJobs {
+  return {
+    scheduler,
+    async runNow(name) {
+      const run = await scheduler.runNow(name);
+      if (run.outcome === 'failed') throw scheduler.failures.at(-1);
+      return run;
+    },
   };
 }
 
@@ -219,5 +254,6 @@ function kernelOverrides(kernel: TestKernel): Override[] {
     override(CACHE, kernel.cache),
     override(LOCK, kernel.lock),
     override(RATE_LIMITER, kernel.rateLimiter),
+    override(JOB_SCHEDULER, kernel.jobs.scheduler),
   ];
 }

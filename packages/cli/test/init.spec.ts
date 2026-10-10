@@ -44,11 +44,45 @@ describe('init', () => {
         '.claude/rules/presentation.md',
         '.claude/rules/tests.md',
         'src/contexts/billing/CONTEXT.md',
-        'src/contexts/billing/billing.module.ts',
+        'src/contexts/billing/billing.declarations.ts',
+        'src/contexts/billing/presentation/http/billing.routes.ts',
         'src/contexts/billing/published-language/index.ts',
+        'src/platform/tokens.ts',
       ]),
     );
+    expect(report.created).not.toContain('src/contexts/billing/billing.module.ts');
     expect(walk(root)).toEqual([...report.created].sort());
+    expect(read(root, 'src/contexts/billing/billing.declarations.ts')).toBe('export {};\n');
+    expect(read(root, 'src/platform/application.ts')).toContain("contextModule('billing', billingDeclarations),");
+  });
+
+  it('writes each context as a module file with --style explicit, and says so in the config', () => {
+    const root = tempDir('init');
+
+    const report = cli(root, 'init', '--style', 'explicit', '--context', 'billing:core', '--json').json() as { created: string[] };
+
+    expect(report.created).toContain('src/contexts/billing/billing.module.ts');
+    expect(report.created).not.toContain('src/contexts/billing/billing.declarations.ts');
+    expect(report.created).not.toContain('src/platform/tokens.ts');
+    expect((JSON.parse(read(root, 'ddd-ts-kit.config.json')) as { stack: Record<string, string> }).stack).toMatchObject({ style: 'explicit' });
+    expect((JSON.parse(read(root, 'ddd-ts-kit.config.json')) as { stack: Record<string, string> }).stack).not.toHaveProperty('assembly');
+    expect(read(root, 'src/platform/application.ts')).toContain('billingModule,');
+  });
+
+  it('keeps the declared style for the container that reads the declarations, and the barrel for the declared style', () => {
+    const failure = (...args: string[]): { message: string; fix: string } => (cli(tempDir('init'), 'init', ...args, '--json').json() as { error: { message: string; fix: string } }).error;
+
+    expect(failure('--di', 'manual', '--style', 'declared').message).toBe('--style declared cannot be combined with --di manual.');
+    expect(failure('--http', 'nest', '--style', 'declared').fix).toContain('use --di tsyringe, or keep --style explicit');
+    expect(failure('--style', 'explicit', '--assembly', 'discovery').message).toBe('--assembly discovery cannot be combined with --style explicit.');
+    expect(failure('--style', 'implicit').fix).toBe('Use one of: declared, explicit.');
+    const discovered = tempDir('init');
+    cli(discovered, 'init', '--assembly', 'discovery', '--context', 'billing:core');
+    expect((JSON.parse(read(discovered, 'ddd-ts-kit.config.json')) as { stack: Record<string, string> }).stack).toMatchObject({ style: 'declared', assembly: 'discovery' });
+    expect(exists(discovered, 'src/contexts/billing/billing.declarations.ts')).toBe(false);
+    expect(read(discovered, 'src/platform/application.ts')).toContain("await discoverContext('billing', new URL('../contexts/billing/', import.meta.url)),");
+    expect(read(discovered, 'knip.json')).toContain('"src/contexts/*/{application,infrastructure}/**/*.{command,query,handler,integration-handler,event-handler,policy,repository,gateway,adapter}.ts"');
+    expect(read(discovered, '.dependency-cruiser.cjs')).toContain('(command|query|handler|integration-handler|event-handler|policy|repository|gateway|adapter)');
   });
 
   it('refuses to leave the outbox out with a database unless the decision is recorded', () => {
@@ -98,7 +132,7 @@ describe('init', () => {
 
     const config = JSON.parse(read(root, 'ddd-ts-kit.config.json')) as { stack: Record<string, string>; contexts: Record<string, { classification: string }> };
 
-    expect(config.stack).toEqual({ http: 'fastify', validation: 'class-validator', di: 'manual', events: 'outbox', orm: 'drizzle', database: 'postgres', tests: 'jest', docsUi: 'swagger', ci: 'github', authn: 'jwt', authz: 'rbac', broker: 'none', cache: 'none', audit: 'on' });
+    expect(config.stack).toEqual({ http: 'fastify', validation: 'class-validator', di: 'manual', events: 'outbox', orm: 'drizzle', database: 'postgres', tests: 'jest', docsUi: 'swagger', ci: 'github', authn: 'jwt', authz: 'rbac', broker: 'none', cache: 'none', audit: 'on', style: 'explicit' });
     expect(Object.keys(config.contexts)).toEqual(['billing', 'catalog']);
     expect(config.contexts['catalog']?.classification).toBe('generic');
   });

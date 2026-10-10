@@ -119,7 +119,8 @@ compiler in strict mode complete the gate.
 | [`ddd-ts-kit`](packages/cli) | the CLI: `init`, `generate`, `check`, `docs`, `list`, `explain` |
 | [`@ddd-ts-kit/kernel`](packages/kernel) | entities, aggregates, value objects, domain errors, `Result`; command, query and event buses with in-memory implementations; the standard extensible interfaces: `Actor`, `Session`, `ExecutionContext`, `Logger`, `Metrics`, `Cache`, `Page`, `Clock`, `IdGenerator`, `UnitOfWork` |
 | [`@ddd-ts-kit/events`](packages/events) | typed integration event declarations, registry, transactional outbox and relay, AsyncAPI and event catalog generation |
-| [`@ddd-ts-kit/rabbitmq`](packages/rabbitmq) | the reference broker provider: confirmed publishing, durable queue per consumer, bounded retries, dead letters |
+| [`@ddd-ts-kit/rabbitmq`](packages/rabbitmq), [`kafka`](packages/kafka), [`nats`](packages/nats), [`redis/event-bus`](packages/redis) | broker providers behind one contract: acknowledged publishing for the outbox relay, one durable subscription per consumer, bounded retries, dead letters |
+| [`@ddd-ts-kit/scheduling`](packages/scheduling) | jobs run by time that only trigger use cases: intervals and cron with time zones, one run across instances, each run in its own execution scope |
 | [`@ddd-ts-kit/auth`](packages/auth) | actors, permissions declared per use case, deny by default; role, attribute and relationship (Zanzibar-style) authorizers behind one port; JWT authentication |
 | [`@ddd-ts-kit/aspects`](packages/aspects) | logging, metrics, retry, timeout, circuit breaker, cache and bulkhead applied from outside: wrappers, bus middlewares, standard decorators |
 | [`@ddd-ts-kit/audit`](packages/audit) | hash-chained, append-only audit trail fed by authorization decisions, commands and integration events |

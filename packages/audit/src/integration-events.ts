@@ -6,7 +6,7 @@ import {
   type ExecutionScope,
   type IdGenerator,
   type IntegrationEvent,
-  type IntegrationEventHandler,
+  type IntegrationEventCallback,
   type ProcessedEventStore,
   type UnitOfWork,
 } from '@ddd-ts-kit/kernel';
@@ -36,7 +36,7 @@ export interface AuditIntegrationEventsOptions {
 /** What `subscribeAll` of `@ddd-ts-kit/events` takes. */
 export interface AuditSubscription {
   readonly type: string;
-  readonly handler: IntegrationEventHandler;
+  readonly handler: IntegrationEventCallback;
 }
 
 /**

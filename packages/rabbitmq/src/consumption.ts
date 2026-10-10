@@ -1,5 +1,5 @@
 import type { ChannelModel, ConfirmChannel, ConsumeMessage } from 'amqplib';
-import type { IntegrationEvent, IntegrationEventHandler, Subscription } from '@ddd-ts-kit/kernel';
+import type { IntegrationEvent, IntegrationEventCallback, Subscription } from '@ddd-ts-kit/kernel';
 import {
   ATTEMPT_HEADER,
   DEAD_REASON_HEADER,
@@ -33,7 +33,7 @@ export interface ConsumptionSettings {
 interface QueueSubscription {
   readonly binding: ConsumerBinding;
   readonly queues: QueueNames;
-  readonly handlers: Set<IntegrationEventHandler>;
+  readonly handlers: Set<IntegrationEventCallback>;
   consumerTag: string | undefined;
 }
 
@@ -66,7 +66,7 @@ export class Consumption {
     return [...this.#subscriptions.values()].map((subscription) => subscription.binding);
   }
 
-  add(binding: ConsumerBinding, handler: IntegrationEventHandler): Subscription {
+  add(binding: ConsumerBinding, handler: IntegrationEventCallback): Subscription {
     const subscription = this.#subscriptionOf(binding);
     subscription.handlers.add(handler);
     return {
@@ -235,7 +235,7 @@ export class Consumption {
     this.settings.onDelivery({ queue, attempt: attemptOf(message), outcome });
   }
 
-  #remove(subscription: QueueSubscription, handler: IntegrationEventHandler): void {
+  #remove(subscription: QueueSubscription, handler: IntegrationEventCallback): void {
     subscription.handlers.delete(handler);
     if (subscription.handlers.size > 0) {
       return;
@@ -251,7 +251,7 @@ export class Consumption {
 
 /** Runs every handler, so one that fails does not starve the others; gives the first code. */
 async function failureOf(
-  handlers: ReadonlySet<IntegrationEventHandler>,
+  handlers: ReadonlySet<IntegrationEventCallback>,
   event: IntegrationEvent,
 ): Promise<string | undefined> {
   let code: string | undefined;

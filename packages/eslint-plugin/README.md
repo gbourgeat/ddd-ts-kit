@@ -2,11 +2,12 @@
 
 AST-accurate ESLint rules for the architecture of [docs/ARCHITECTURE.md](../../docs/ARCHITECTURE.md):
 layer and context boundaries, purity of the domain and the application, clean code ordering,
-tactical DDD shapes. Flat config only, ESLint 9 and 10.
+tactical DDD shapes, and the declarations of a declared-style project. Flat config only, ESLint 9
+and 10.
 
 Every rule reads `ddd-ts-kit.config.json` ([docs/CONFIG.md](../../docs/CONFIG.md)), found by
 walking up from the linted file, and classifies the file into context and layer exactly like
-`ddd-ts-kit check` does.
+`ddd-ts-kit check` does. It also reads `stack.style` there: see [The two styles](#the-two-styles).
 
 ## Install
 
@@ -60,8 +61,8 @@ slash by a dash. `strict` sets every rule to `error`.
 
 | Id | ESLint name | Holds | Default | Implementation |
 |---|---|---|---|---|
-| [`layer/domain-purity`](docs/rules/layer-domain-purity.md) | `ddd-ts-kit/layer-domain-purity` | `domain/` imports only its own domain, the shared kernel and the allowed packages; never `@ddd-ts-kit/aspects`, `audit`, `redis` or `tracing`, even allowed | `error` | custom |
-| [`layer/application-inward`](docs/rules/layer-application-inward.md) | `ddd-ts-kit/layer-application-inward` | `application/` never imports `infrastructure/`, `presentation/`, a framework, a driver or a package applying a concern from outside (`@ddd-ts-kit/aspects`, `audit`, `redis`, `tracing`) | `error` | custom |
+| [`layer/domain-purity`](docs/rules/layer-domain-purity.md) | `ddd-ts-kit/layer-domain-purity` | `domain/` imports only its own domain, the shared kernel and the allowed packages; never `@ddd-ts-kit/aspects`, `audit`, `redis` or `tracing`, even allowed, nor `@ddd-ts-kit/kernel/declarations` in the declared style | `error` | custom |
+| [`layer/application-inward`](docs/rules/layer-application-inward.md) | `ddd-ts-kit/layer-application-inward` | `application/` never imports `infrastructure/`, `presentation/`, a framework, a driver or a package applying a concern from outside (`@ddd-ts-kit/aspects`, `audit`, `redis`, `tracing`); `@ddd-ts-kit/kernel/declarations` is always allowed in the declared style | `error` | custom |
 | [`layer/presentation-no-infrastructure`](docs/rules/layer-presentation-no-infrastructure.md) | `ddd-ts-kit/layer-presentation-no-infrastructure` | `presentation/` never imports `infrastructure/` | `error` | custom |
 | [`layer/infrastructure-no-presentation`](docs/rules/layer-infrastructure-no-presentation.md) | `ddd-ts-kit/layer-infrastructure-no-presentation` | `infrastructure/` never imports `presentation/` | `error` | custom |
 | [`context/published-language-only`](docs/rules/context-published-language-only.md) | `ddd-ts-kit/context-published-language-only` | another context is imported only through its `published-language/` | `error` | custom |
@@ -84,17 +85,48 @@ slash by a dash. `strict` sets every rule to `error`.
 | [`test/no-mocks`](docs/rules/test-no-mocks.md) | `ddd-ts-kit/test-no-mocks` | no `vi.mock`, `vi.fn`, `vi.spyOn`, their `jest` twins or a mocking library in a context's tests | `warn` | custom |
 | [`events/name-format`](docs/rules/events-name-format.md) | `ddd-ts-kit/events-name-format` | event names follow `<context>.<aggregate>.<fact>` in kebab-case | `error` | custom |
 | [`events/outbox-required`](docs/rules/events-outbox-required.md) | `ddd-ts-kit/events-outbox-required` | no broker client and no concrete bus in `domain/` and `application/`; a publisher depends on the `IntegrationEventPublisher` port | `error` | custom |
-| [`events/consumer-idempotent`](docs/rules/events-consumer-idempotent.md) | `ddd-ts-kit/events-consumer-idempotent` | a consumer is declared with a `consumer` name and a processed-event store, never by a bare `subscribe` | `error` | custom |
-| [`context/extractable`](docs/rules/context-extractable.md) | `ddd-ts-kit/context-extractable` | no schema or table of another context, no exported mutable state, no token of another context wired in the module | `error` | custom |
-| [`authz/declared`](docs/rules/authz-declared.md) | `ddd-ts-kit/authz-declared` | a registered command or query says `.requires(...)` or `.public()`, a route declares `security`, an authorized message forwards its actor | `error` | custom |
-| [`authz/in-application`](docs/rules/authz-in-application.md) | `ddd-ts-kit/authz-in-application` | no role test in `presentation/`, no authorization in `infrastructure/`, no actor, session, execution context or rights in `domain/` | `error` | custom |
+| [`events/consumer-idempotent`](docs/rules/events-consumer-idempotent.md) | `ddd-ts-kit/events-consumer-idempotent` | a consumer is declared with a `consumer` name and a processed-event store, never by a bare `subscribe`; in the declared style `@IntegrationEventHandler` writes its `consumer` as a string literal | `error` | custom |
+| [`context/extractable`](docs/rules/context-extractable.md) | `ddd-ts-kit/context-extractable` | no schema or table of another context, no exported mutable state, no token of another context wired in the module or, in the declared style, imported by a role file | `error` | custom |
+| [`authz/declared`](docs/rules/authz-declared.md) | `ddd-ts-kit/authz-declared` | a registered command or query says `.requires(...)` or `.public()`, or its class carries `@Requires` or `@Public` (required on every message of the declared style), a route declares `security`, an authorized message forwards its actor | `error` | custom |
+| [`authz/in-application`](docs/rules/authz-in-application.md) | `ddd-ts-kit/authz-in-application` | no role test in `presentation/`, no authorization in `infrastructure/`, no actor, session, execution context or rights in `domain/`; in the declared style `Requires`, `Public`, `Policy` and `ACCESS` stay in `application/` | `error` | custom |
 | [`authz/actor-explicit`](docs/rules/authz-actor-explicit.md) | `ddd-ts-kit/authz-actor-explicit` | no `ExecutionScope`, `ActorContext` or `AsyncLocalStorage`, no read of the ambient context, no `stampCreation`, `stampUpdate` or `tenantScopeOf` in `domain/` and `application/` | `error` | custom |
 | [`aspects/outside-in`](docs/rules/aspects-outside-in.md) | `ddd-ts-kit/aspects-outside-in` | `@ddd-ts-kit/aspects/decorators` is imported only in `infrastructure/` and in the platform | `error` | custom |
 | [`standard/no-parallel-interface`](docs/rules/standard-no-parallel-interface.md) | `ddd-ts-kit/standard-no-parallel-interface` | no declared `ILogger`, `UserContext`, `PaginatedResult` and the like next to the standard interfaces of the kernel (`standardInterfaces` in the config) | `warn` | custom |
 | [`governance/recorded-deviation`](docs/rules/governance-recorded-deviation.md) | `ddd-ts-kit/governance-recorded-deviation` | every suppression names its rules and points to `ADR-<number>` after `--` | `error` | custom |
+| [`declarations/role-declared`](docs/rules/declarations-role-declared.md) | `ddd-ts-kit/declarations-role-declared` | declared style only: a role file exports a class carrying the decorator of its role, the `consumer` and `name` of a declaration are string literals, a domain event handler names its event as the event does, `domain/` carries no declaration decorator | `error` | custom |
 
 `domain/*` and `application/*` ids are added by this plugin: the shape of a class needs a syntax
 tree, so the CLI checker has no equivalent.
+
+### The two styles
+
+`stack.style` in `ddd-ts-kit.config.json` says how the contexts of the project are written:
+`explicit`, every binding is written in `<context>.module.ts`; `declared`, each class says what
+it is with a decorator of `@ddd-ts-kit/kernel/declarations` and there is no module file. A
+config that does not say is `explicit`, and an explicit-style project is judged exactly as before
+the declared style existed.
+
+| Rule | Added in a declared-style project |
+|---|---|
+| `authz/declared` | an exported class of a `*.command.ts` or `*.query.ts` file carries `@Requires(...)` or `@Public()` |
+| `authz/in-application` | `Requires`, `Public` and `Policy` are not imported in `presentation/` or `infrastructure/`, nor `ACCESS` in `infrastructure/` |
+| `layer/application-inward` | `@ddd-ts-kit/kernel/declarations` is allowed whatever `applicationAllowedPackages` says |
+| `layer/domain-purity` | `@ddd-ts-kit/kernel/declarations` is refused in `domain/` |
+| `events/consumer-idempotent` | `@IntegrationEventHandler` writes its `consumer` as a non-empty string literal |
+| `context/extractable` | a role file imports no token of another context |
+| `declarations/role-declared` | the whole rule |
+
+One thing holds in both styles: a message class carrying `@Requires` or `@Public` is declared,
+so a module that registers it without `.requires(...)` or `.public()` is not reported.
+
+A decorator is read from the syntax tree and counts when its name is imported from
+`@ddd-ts-kit/kernel/declarations` in the file, under an alias (`{ Repository as Repo }`) or a
+namespace (`declarations.Repository`) too. Two checks look at a class of another file (the
+message a module registers, the event a `@DomainEventHandler` names): the import is resolved
+like any other, the file is read from disk and parsed without types, and nothing is concluded
+when it cannot be. `stack.assembly` (`barrel` or `discovery`) is read with the style; no rule of
+this plugin depends on it, since the barrel is a fact of the project that `ddd-ts-kit check`
+holds (`declarations/barrel-current`).
 
 ### Standard rules instead of custom ones
 
@@ -171,8 +203,8 @@ Two tools, one set of ids, no overlap of authority.
 
 | Concern | Authority | Why |
 |---|---|---|
-| imports and boundaries (`layer/*`, `context/published-language-only`, `context/declared-relationship`, `context/published-language-is-a-contract`), `purity/*`, `clean/*`, `test/no-mocks`, `events/name-format`, `domain/*`, `application/*`, the code side of `events/outbox-required`, `events/consumer-idempotent`, `context/extractable`, `authz/*`, `aspects/outside-in`, `standard/no-parallel-interface` and `governance/recorded-deviation` | this plugin | it reads the syntax tree: no false positive from a string or a comment, shadowing and arrow functions are understood |
-| the tree (`tree/closed`, `tree/context-doc`), names and files (`naming/*`, `test/spec-required`, `test/builder-required`), the language (`language/*`), the config (`config/*`, `context/no-cycle`), `events/defined-in-published-language`, `composition/only-in-module`, the config side of the ids above (`stack.events`, lowered severities, that a decision record exists) | `ddd-ts-kit check` | they judge the project, the glossary and files that are not sources; ESLint judges one source at a time |
+| imports and boundaries (`layer/*`, `context/published-language-only`, `context/declared-relationship`, `context/published-language-is-a-contract`), `purity/*`, `clean/*`, `test/no-mocks`, `events/name-format`, `domain/*`, `application/*`, the code side of `events/outbox-required`, `events/consumer-idempotent`, `context/extractable`, `authz/*`, `aspects/outside-in`, `standard/no-parallel-interface`, `declarations/role-declared` and `governance/recorded-deviation` | this plugin | it reads the syntax tree: no false positive from a string or a comment, shadowing and arrow functions are understood |
+| the tree (`tree/closed`, `tree/context-doc`), names and files (`naming/*`, `test/spec-required`, `test/builder-required`), the language (`language/*`), the config (`config/*`, `context/no-cycle`), `events/defined-in-published-language`, `composition/only-in-module`, `declarations/barrel-current`, unique consumer names, one declared class per role file, the config side of the ids above (`stack.events`, lowered severities, that a decision record exists) | `ddd-ts-kit check` | they judge the project, the glossary and files that are not sources; ESLint judges one source at a time |
 | the real dependency graph (barrels, cycles, orphans, dev dependencies in production code) | dependency-cruiser, configured by `pipeline/depcruise-config.mjs` | it resolves modules instead of classifying paths |
 
 The CLI keeps approximating the code-level rules with regular expressions, without dependency:
