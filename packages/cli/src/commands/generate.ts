@@ -59,6 +59,7 @@ const OPTIONS = {
   kind: TEXT,
   decorators: SWITCH,
   deviation: TEXT,
+  phase: TEXT,
   reason: TEXT,
   every: TEXT,
   cron: TEXT,
@@ -107,7 +108,7 @@ function flagsOf(args: Arguments): KindFlags {
   const commandName = args.text('command');
 
   return {
-    ...args.texts(['classification', 'purpose', 'code', 'aggregate', 'method', 'path', 'version', 'permission', 'deviation', 'reason', 'kind', 'every', 'cron']),
+    ...args.texts(['classification', 'purpose', 'code', 'aggregate', 'method', 'path', 'version', 'permission', 'deviation', 'reason', 'kind', 'every', 'cron', 'phase']),
     ...(timeZone === undefined ? {} : { timeZone }),
     ...(commandName === undefined ? {} : { commandName }),
     upstream: args.many('upstream'),

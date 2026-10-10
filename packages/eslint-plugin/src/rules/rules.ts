@@ -20,6 +20,7 @@ import { contextDeclaredRelationship, contextPublishedLanguageIsAContract, conte
 import { declarationsRoleDeclared } from './declarations-role-declared.js';
 import { domainAggregateEncapsulation } from './domain-aggregate-encapsulation.js';
 import { domainEventsDispatchedOnSave } from './domain-events-dispatched-on-save.js';
+import { domainEventsTransactionalBeforeCommit } from './domain-events-transactional-before-commit.js';
 import { domainNoGenericError } from './domain-no-generic-error.js';
 import { domainValueObjectImmutability } from './domain-value-object-immutability.js';
 import { eventsConsumerIdempotent } from './events-consumer-idempotent.js';
@@ -68,6 +69,7 @@ const ALL = [
   applicationHandlerShape,
   applicationCommandQuerySeparation,
   domainEventsDispatchedOnSave,
+  domainEventsTransactionalBeforeCommit,
   testNoMocks,
   eventsNameFormat,
   eventsOutboxRequired,

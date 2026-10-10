@@ -6,4 +6,4 @@ const {{event.camel}}EventHandler = platform.adapter(new {{event.pascal}}EventHa
 
 platform.domainEvents.on('{{event.name}}', async (event) => {
   if (event instanceof {{event.pascal}}) await {{event.camel}}EventHandler.handle(event);
-});
+}{{#if handler.afterCommit}}, { phase: 'after-commit' }{{/if}});

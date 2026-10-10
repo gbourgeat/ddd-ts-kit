@@ -102,7 +102,13 @@ describe('the module file of an explicit context', () => {
 
     expect(module).toContain("builder.bind(InvoiceIssuedPublisher).toClass(InvoiceIssuedPublisher, [IntegrationEventPublisher, IdGenerator]).as('domain-event-handler');");
     expect(module).toContain("resolve(DomainEventDispatcher).on('billing.invoice.issued', async (event) => {\n      if (event instanceof InvoiceIssued) await resolve(InvoiceIssuedV2Publisher).handle(event);\n    });");
-    expect(module).toContain('if (event instanceof InvoiceIssued) await resolve(InvoiceIssuedEventHandler).handle(event);');
+    expect(module).toContain('if (event instanceof InvoiceIssued) await resolve(InvoiceIssuedEventHandler).handle(event);\n    });');
+  });
+
+  it('subscribes a reaction generated with --phase after-commit in that phase', () => {
+    const module = read(root, `${BILLING}/billing.module.ts`);
+
+    expect(module).toContain("if (event instanceof InvoiceMarkedAsPaid) await resolve(InvoiceMarkedAsPaidEventHandler).handle(event);\n    }, { phase: 'after-commit' });");
   });
 
   it('lists the routes of the context in one function of the two buses, next to the routes', () => {

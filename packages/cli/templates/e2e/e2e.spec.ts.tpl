@@ -75,7 +75,7 @@ describe('{{name.title}}, end to end', () => {
     });
 {{/unless}}
 
-    // Exact on names and structure, and kept before the tests whose request leaves work behind (a relay still publishing would add its spans here). Once "{{name.words}}" announces a fact, its spans come under the save: `domain-event <name>`, `handler <Class>`, `outbox append <type>`, then, awaited with `eventually`, `publish <type>` and `process <consumer>` with the command it sends.
+    // Exact on names and structure, and kept before the tests whose request leaves work behind (a relay still publishing would add its spans here). Once "{{name.words}}" announces a fact, its spans come after the save, under `unit-of-work before-commit`: `domain-event <name>`, `handler <Class>`, `outbox append <type>`, then, awaited with `eventually`, `publish <type>` and `process <consumer>` with the command it sends.
     expectSpanTree(storyOf(trace), [
       { name: '{{e2e.method}} {{e2e.path}}', kind: 'SERVER', children: [{ name: 'command {{name.pascal}}Command'{{e2e.saved}} }] },
     ]);

@@ -1,13 +1,30 @@
 import { describe, expect, it } from '{{tests.module}}';
+import { InMemoryDomainEventDispatcher, InMemoryUnitOfWork, announceDomainEvents, unitOfWorkStage } from '@ddd-ts-kit/kernel';
 import { {{event.pascal}}EventHandler } from '../../application/event-handlers/{{event.kebab}}.event-handler.js';
 import { {{event.pascal}} } from '../../domain/events/{{event.kebab}}.event.js';
 
 describe('When {{event.words}}', () => {
-  it('reacts without failing', async () => {
+{{#unless handler.afterCommit}}
+  it('reacts at the end of the unit of work, before the commit, without failing', async () => {
+{{/unless}}
+{{#if handler.afterCommit}}
+  it('reacts once the unit of work has committed, without failing', async () => {
+{{/if}}
     const handler = new {{event.pascal}}EventHandler();
     const event = new {{event.pascal}}('{{aggregate.kebab}}-1', new Date('2026-01-01T00:00:00.000Z'));
+    const domainEvents = new InMemoryDomainEventDispatcher();
+    const reactedAt: string[] = [];
 
-    await expect(handler.handle(event)).resolves.toBeUndefined();
+    const asSubscribed = async (): Promise<void> => {
+      await handler.handle(event);
+      reactedAt.push(unitOfWorkStage());
+    };
+
+    domainEvents.on('{{event.name}}', asSubscribed, { phase: '{{handler.phase}}' });
+    await new InMemoryUnitOfWork().run(() => announceDomainEvents([event], domainEvents));
+
+    expect(reactedAt).toEqual(['{{handler.phase}}']);
+    expect(domainEvents.afterCommitFailures).toEqual([]);
   });
 
   // TODO(domain): replace each entry below by a test named after the policy this reaction implements.
