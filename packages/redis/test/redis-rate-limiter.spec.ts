@@ -13,6 +13,7 @@ afterAll(closeAll);
 describe.skipIf(!REAL_SERVER)('RedisRateLimiter on a server', () => {
   let client: Redis;
   let clock: FixedClock;
+
   beforeEach(() => {
     client ??= connect();
   });
@@ -21,6 +22,7 @@ describe.skipIf(!REAL_SERVER)('RedisRateLimiter on a server', () => {
     name: 'RedisRateLimiter',
     createLimiter: () => {
       clock = new FixedClock(NOW);
+
       return new RedisRateLimiter(client, { namespace: aNamespace(), clock });
     },
     elapse: (ms) => clock.advance(ms),
@@ -41,6 +43,7 @@ describe.skipIf(!REAL_SERVER)('RedisRateLimiter on a server', () => {
   it('keeps one member per allowed call and lets the server forget the key after the window', async () => {
     const namespace = aNamespace();
     const limiter = new RedisRateLimiter(client, { namespace, clock: new FixedClock(NOW) });
+
     for (let call = 0; call < 5; call += 1) await limiter.consume('tenant-acme', { limit: 3, windowMs: 45_000 });
 
     expect(await client.zcard(`${namespace}:tenant-acme`)).toBe(3);
@@ -50,10 +53,12 @@ describe.skipIf(!REAL_SERVER)('RedisRateLimiter on a server', () => {
   it('limits on the clock of the machine by default', async () => {
     const limiter = new RedisRateLimiter(client, { namespace: aNamespace() });
     const twoPerWindow = { limit: 2, windowMs: 300 };
+
     await limiter.consume('tenant-acme', twoPerWindow);
     await limiter.consume('tenant-acme', twoPerWindow);
 
     const refused = await limiter.consume('tenant-acme', twoPerWindow);
+
     await sleep(refused.retryAfterMs + 20);
 
     expect(refused.allowed).toBe(false);

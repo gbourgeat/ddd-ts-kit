@@ -22,10 +22,8 @@ import {
   type PayloadOf,
 } from '../src/index.js';
 import { at, orderPlacedV1 } from './support/events.js';
-import {
-  TransactionalMemory,
-  TransactionalProcessedEventStore,
-} from './support/transactional-memory.js';
+import { TransactionalMemory } from './support/transactional-memory.js';
+import { TransactionalProcessedEventStore } from './support/transactional-processed-event-store.js';
 
 const placed = (id: string, orderId = 'order-1'): IntegrationEvent<PayloadOf<typeof orderPlacedV1>> =>
   orderPlacedV1.create({ orderId, total: 30 }, { id, occurredAt: at });
@@ -37,6 +35,7 @@ class InvoicingFailed extends Error {
 /** A consumer writing in the transactional memory, failing its first `failures` deliveries. */
 const invoicing = (memory: TransactionalMemory, failures = 0) => {
   let remaining = failures;
+
   return consume(
     orderPlacedV1,
     {
@@ -46,6 +45,7 @@ const invoicing = (memory: TransactionalMemory, failures = 0) => {
     },
     async (event) => {
       memory.state().invoicedOrders.push(event.payload.orderId);
+
       if (remaining > 0) {
         remaining -= 1;
         throw new InvoicingFailed();
@@ -58,6 +58,7 @@ describe('consume', () => {
   it('runs the deduplication and the handler in one unit of work', async () => {
     const memory = new TransactionalMemory();
     const transactions: boolean[] = [];
+
     const { handler } = consume(
       orderPlacedV1,
       {
@@ -104,6 +105,7 @@ describe('consume', () => {
     const { handler } = invoicing(memory);
 
     await handler({ ...placed('evt-1'), version: 2 });
+
     await expect(handler({ ...placed('evt-2'), payload: {} })).rejects.toBeInstanceOf(
       InvalidEventPayloadError,
     );
@@ -117,10 +119,12 @@ describe('consume', () => {
     const processed = new InMemoryReleasableProcessedEventStore();
     const unitOfWork = new InMemoryUnitOfWork();
     const handled: string[] = [];
+
     const consumerNamed = (consumer: string) =>
       consume(orderPlacedV1, { consumer, processed, unitOfWork }, async (event) => {
         handled.push(`${consumer}:${event.id}`);
       });
+
     subscribeAll(bus, [consumerNamed('billing'), consumerNamed('shipping')]);
 
     await bus.publish([placed('evt-1'), placed('evt-1')]);
@@ -132,17 +136,20 @@ describe('consume', () => {
 describe('a handler that fails, without a transaction to roll the mark back', () => {
   const failingOnce = (handled: string[]) => {
     let failed = false;
+
     return async (event: IntegrationEvent) => {
       if (!failed) {
         failed = true;
         throw new InvoicingFailed();
       }
+
       handled.push(event.id);
     };
   };
 
   it('is processed again on redelivery when the store can release its mark', async () => {
     const handled: string[] = [];
+
     const { handler } = on(orderPlacedV1, failingOnce(handled), {
       consumer: 'billing',
       processed: new InMemoryReleasableProcessedEventStore(),
@@ -158,6 +165,7 @@ describe('a handler that fails, without a transaction to roll the mark back', ()
   it('keeps the mark of a success when the event is delivered again', async () => {
     const processed = new InMemoryReleasableProcessedEventStore();
     const handled: string[] = [];
+
     const { handler } = on(orderPlacedV1, async (event) => void handled.push(event.id), {
       consumer: 'billing',
       processed,
@@ -172,6 +180,7 @@ describe('a handler that fails, without a transaction to roll the mark back', ()
 
   it('loses the event with a store that can neither roll back nor release', async () => {
     const handled: string[] = [];
+
     const { handler } = on(orderPlacedV1, failingOnce(handled), {
       consumer: 'billing',
       processed: new MarkOnlyStore(),
@@ -185,12 +194,15 @@ describe('a handler that fails, without a transaction to roll the mark back', ()
 });
 
 class MarkOnlyStore implements ProcessedEventStore {
-  readonly #seen = new Set<string>();
+  private readonly seen = new Set<string>();
 
   async markProcessed(consumer: string, eventId: string): Promise<boolean> {
     const key = `${consumer} ${eventId}`;
-    if (this.#seen.has(key)) return false;
-    this.#seen.add(key);
+
+    if (this.seen.has(key)) return false;
+
+    this.seen.add(key);
+
     return true;
   }
 }
@@ -210,6 +222,7 @@ describe('a consumer given an execution scope', () => {
       { correlationId: 'corr-1', causationId: 'evt-1', actor: systemActor('billing'), origin: 'event', extensions: {} },
       { correlationId: 'evt-2', causationId: 'evt-2', actor: systemActor('billing'), origin: 'event', extensions: {} },
     ]);
+
     expect(scope.current()).toBeUndefined();
   });
 
@@ -217,12 +230,15 @@ describe('a consumer given an execution scope', () => {
     const scope = new AsyncLocalStorageExecutionScope();
     const memory = new TransactionalMemory();
     const seenByStore: (string | undefined)[] = [];
+
     const processed: ProcessedEventStore = {
       markProcessed: async () => {
         seenByStore.push(scope.current()?.correlationId);
+
         return memory.inTransaction();
       },
     };
+
     const { handler } = consume(orderPlacedV1, { consumer: 'billing', processed, unitOfWork: memory, scope }, async () => {
       seenByStore.push(scope.current()?.causationId);
     });
@@ -235,6 +251,7 @@ describe('a consumer given an execution scope', () => {
   it('acts as the actor the project reads from its own envelope', async () => {
     const scope = new AsyncLocalStorageExecutionScope();
     const actors: (string | undefined)[] = [];
+
     const { handler } = on(orderPlacedV1, async () => void actors.push(scope.current()?.tenantId), {
       consumer: 'billing',
       scope,
@@ -254,12 +271,14 @@ describe('the correlation of one stimulus, from a command to the consumers of it
     const publisher = scopedPublisher(new OutboxPublisher(store), scope);
     const request = executionContext({ correlationId: 'corr-7', actor: systemActor('test'), origin: 'http' });
     const seen: (string | undefined)[] = [];
+
     const { handler } = on(orderPlacedV1, async () => void seen.push(scope.current()?.correlationId), {
       consumer: 'billing',
       scope,
     });
 
     await scope.run(request, () => publisher.publish([placed('evt-1')]));
+
     for (const { event } of store.records()) await handler(event);
 
     expect(store.records().map(({ event }) => event.correlationId)).toEqual(['corr-7']);

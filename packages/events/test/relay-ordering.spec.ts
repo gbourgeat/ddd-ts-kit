@@ -9,7 +9,7 @@ import {
   type OutboxRelayFailure,
 } from '../src/index.js';
 import { at, invoiceIssued } from './support/events.js';
-import { RecoveringPublisher } from './support/publishers.js';
+import { RecoveringPublisher } from './support/recovering-publisher.js';
 
 /** `a-1` is the first event of order `a`: the id says the key and the position. */
 const event = (id: string): IntegrationEvent =>
@@ -28,6 +28,7 @@ const setup = (failures: Record<string, number>, ordering: OutboxOrdering = 'per
   const store = new InMemoryOutboxStore({ leaseMs: 60_000 });
   const publisher = new RecoveringPublisher(failures);
   const reported: OutboxRelayFailure[] = [];
+
   const relay = new OutboxRelay({
     store,
     publisher,
@@ -39,10 +40,13 @@ const setup = (failures: Record<string, number>, ordering: OutboxOrdering = 'per
     keyOf: orderIdOf,
     onFailure: (failure) => reported.push(failure),
   });
+
   const laterTick = async () => {
     clock.advance(RETRY_MS);
+
     return relay.tick();
   };
+
   return { clock, store, publisher, relay, reported, laterTick };
 };
 
@@ -52,17 +56,18 @@ class StoreUnavailable extends Error {
 
 /** A store that cannot record the first failure it is told about, as during a failover. */
 class ForgetfulStore extends InMemoryOutboxStore {
-  #outages = 1;
+  private outages = 1;
 
   override async markFailed(
     id: string,
     error: { readonly code: string },
     nextAttemptAt: Date | null,
   ): Promise<void> {
-    if (this.#outages > 0) {
-      this.#outages -= 1;
+    if (this.outages > 0) {
+      this.outages -= 1;
       throw new StoreUnavailable();
     }
+
     await super.markFailed(id, error, nextAttemptAt);
   }
 }
@@ -73,6 +78,7 @@ const recordOf = (store: InMemoryOutboxStore, id: string): OutboxRecord | undefi
 describe('OutboxRelay without ordering', () => {
   it('lets the successors of a failed record overtake it', async () => {
     const { store, publisher, relay, laterTick } = setup({ 'a-1': 1 }, 'none');
+
     await store.append([event('a-1'), event('a-2')]);
 
     await relay.tick();
@@ -85,6 +91,7 @@ describe('OutboxRelay without ordering', () => {
 describe('OutboxRelay with per-key ordering', () => {
   it('holds the successors of a failed record back, and only those of its key', async () => {
     const { store, publisher, relay } = setup({ 'a-1': 2 });
+
     await store.append([event('a-1'), event('b-1'), event('a-2'), event('a-3')]);
 
     expect(await relay.tick()).toEqual({ published: 1, failed: 1 });
@@ -95,6 +102,7 @@ describe('OutboxRelay with per-key ordering', () => {
 
   it('publishes the key in order once the failing publisher recovers', async () => {
     const { store, publisher, relay, laterTick } = setup({ 'a-1': 2 });
+
     await store.append([event('a-1'), event('b-1'), event('a-2'), event('a-3')]);
 
     await relay.tick();
@@ -107,6 +115,7 @@ describe('OutboxRelay with per-key ordering', () => {
 
   it('holds back a record appended while the head of its key waits for its retry', async () => {
     const { store, publisher, relay, laterTick } = setup({ 'a-1': 1 });
+
     await store.append([event('a-1'), event('a-2')]);
     await relay.tick();
 
@@ -120,6 +129,7 @@ describe('OutboxRelay with per-key ordering', () => {
 
   it('keeps the order when a successor fails in its turn', async () => {
     const { store, publisher, relay, laterTick } = setup({ 'a-1': 1, 'a-2': 1 });
+
     await store.append([event('a-1'), event('a-2'), event('a-3')]);
 
     await relay.tick();
@@ -132,6 +142,7 @@ describe('OutboxRelay with per-key ordering', () => {
 
   it('does not count the claims spent waiting as delivery attempts', async () => {
     const { store, publisher, relay, reported, laterTick } = setup({ 'a-1': 2, 'a-2': 2 });
+
     await store.append([event('a-1'), event('a-2')]);
 
     await relay.tick();
@@ -145,8 +156,22 @@ describe('OutboxRelay with per-key ordering', () => {
     expect(await store.stats()).toEqual({ pending: 0, failed: 0, dead: 0 });
   });
 
+  it('leaves events without a key unordered', async () => {
+    const { store, publisher, relay } = setup({ 'evt-1': 1 });
+    const unkeyed = (id: string): IntegrationEvent => ({ ...event('x-1'), id, type: 'legacy.thing.happened' });
+
+    await store.append([unkeyed('evt-1'), unkeyed('evt-2')]);
+
+    await relay.tick();
+
+    expect(publisher.delivered).toEqual(['evt-2']);
+  });
+});
+
+describe('OutboxRelay with per-key ordering, when the head of a key goes away', () => {
   it('stops blocking the key once its head is dead', async () => {
     const { store, publisher, relay, reported, laterTick } = setup({ 'a-1': 5 });
+
     await store.append([event('a-1'), event('a-2')]);
 
     await relay.tick();
@@ -160,6 +185,7 @@ describe('OutboxRelay with per-key ordering', () => {
 
   it('releases a key whose head left the queue by another way', async () => {
     const { store, publisher, relay, laterTick } = setup({ 'a-1': 5 });
+
     await store.append([event('a-1'), event('a-2')]);
     await relay.tick();
 
@@ -174,6 +200,7 @@ describe('OutboxRelay with per-key ordering', () => {
     const store = new ForgetfulStore({ leaseMs: 60_000 });
     const publisher = new RecoveringPublisher({ 'a-1': 1 });
     const relay = new OutboxRelay({ store, publisher, clock, ordering: 'per-key', keyOf: orderIdOf });
+
     await store.append([event('a-1')]);
     await expect(relay.tick()).rejects.toBeInstanceOf(StoreUnavailable);
 
@@ -184,15 +211,5 @@ describe('OutboxRelay with per-key ordering', () => {
     await relay.tick();
 
     expect(publisher.delivered).toEqual(['a-1', 'a-2']);
-  });
-
-  it('leaves events without a key unordered', async () => {
-    const { store, publisher, relay } = setup({ 'evt-1': 1 });
-    const unkeyed = (id: string): IntegrationEvent => ({ ...event('x-1'), id, type: 'legacy.thing.happened' });
-    await store.append([unkeyed('evt-1'), unkeyed('evt-2')]);
-
-    await relay.tick();
-
-    expect(publisher.delivered).toEqual(['evt-2']);
   });
 });

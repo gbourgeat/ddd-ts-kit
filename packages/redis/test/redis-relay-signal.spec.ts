@@ -15,6 +15,7 @@ describe.skipIf(!REAL_SERVER)('RedisRelaySignal on a server', () => {
     const channel = aNamespace();
     const [here, there, elsewhere] = [new RedisRelaySignal(connect(), { channel }), new RedisRelaySignal(connect(), { channel }), new RedisRelaySignal(connect(), { channel: aNamespace() })];
     const woken: string[] = [];
+
     there.subscribe(() => void woken.push('there'));
     there.subscribe(() => void woken.push('there too'));
     elsewhere.subscribe(() => void woken.push('elsewhere'));
@@ -31,6 +32,7 @@ describe.skipIf(!REAL_SERVER)('RedisRelaySignal on a server', () => {
     const [here, there] = [new RedisRelaySignal(connect(), { channel }), new RedisRelaySignal(connect(), { channel })];
     const woken: string[] = [];
     const first = there.subscribe(() => void woken.push('first'));
+
     there.subscribe(() => void woken.push('second'));
     await sleep(100);
 
@@ -53,8 +55,10 @@ describe.skipIf(!REAL_SERVER)('RedisRelaySignal on a server', () => {
     const store = new InMemoryOutboxStore();
     const bus = new InMemoryEventBus();
     const relay = new OutboxRelay({ store, publisher: bus, clock: new SystemClock(), wakeOn });
+
     relay.start({ intervalMs: 60_000 });
     await sleep(150);
+
     const commands = new InMemoryCommandBus()
       .use(relayWakeUpMiddleware(inTheApi))
       .register(IssueInvoice, { execute: () => store.append([issued('evt-1')]) });
@@ -78,9 +82,11 @@ describe('RedisRelaySignal while the server is away', () => {
 describe('relayWakeUpMiddleware', () => {
   it('notifies after a command that succeeded, never after one that failed, and gives its answer through', async () => {
     const notified: string[] = [];
+
     const commands = new InMemoryCommandBus()
       .use(relayWakeUpMiddleware({ notify: async () => void notified.push('woken') }))
       .register(IssueInvoice, { execute: async () => undefined });
+
     const failing = new InMemoryCommandBus()
       .use(relayWakeUpMiddleware({ notify: async () => void notified.push('woken after a failure') }))
       .register(IssueInvoice, { execute: async () => Promise.reject(new Error('The handler failed')) });

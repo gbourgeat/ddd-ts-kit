@@ -80,10 +80,13 @@ processedEventStoreContract(runner, {
 
 const NOW = new Date('2026-03-01T10:00:00.000Z');
 let clock: FixedClock;
+
 const aClock = () => {
   clock = new FixedClock(NOW);
+
   return clock;
 };
+
 const elapse = (ms: number) => clock.advance(ms);
 
 cacheContract(runner, { name: 'InMemoryCache', createCache: () => new InMemoryCache(aClock()), elapse });

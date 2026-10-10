@@ -12,6 +12,7 @@ afterAll(closeAll);
 
 describe.skipIf(!REAL_SERVER)('RedisCache on a server', () => {
   let client: Redis;
+
   beforeEach(() => {
     client ??= connect();
   });
@@ -26,6 +27,7 @@ describe.skipIf(!REAL_SERVER)('RedisCache on a server', () => {
 
   it('prefixes its keys with the namespace, so that two contexts never read each other', async () => {
     const [billing, shipping] = [aNamespace(), aNamespace()];
+
     await new RedisCache(client, { namespace: billing }).set(price('sku-1'), { amount: 12 });
 
     expect(await new RedisCache(client, { namespace: shipping }).get(price('sku-1'))).toBeUndefined();
@@ -34,6 +36,7 @@ describe.skipIf(!REAL_SERVER)('RedisCache on a server', () => {
 
   it('stores the time to live on the server, in milliseconds', async () => {
     const namespace = aNamespace();
+
     await new RedisCache(client, { namespace }).set(price('sku-1'), { amount: 12 }, { ttlMs: 90_000 });
 
     const remaining = await client.pttl(`${namespace}:price:sku-1`);
@@ -45,7 +48,9 @@ describe.skipIf(!REAL_SERVER)('RedisCache on a server', () => {
   it('deletes by prefix across more keys than one scan returns, and nothing else', async () => {
     const namespace = aNamespace();
     const cache = new RedisCache(client, { namespace });
+
     for (let index = 0; index < 450; index += 1) await cache.set(price(`sku-${index}`), { amount: index });
+
     await cache.set(cacheKey<string>('pricing-rule'), 'kept: the prefix ends with a colon');
     await new RedisCache(client, { namespace: `${namespace}-other` }).set(price('sku-1'), { amount: 1 });
 
@@ -59,6 +64,7 @@ describe.skipIf(!REAL_SERVER)('RedisCache on a server', () => {
 
   it('reads a prefix literally, wildcards included', async () => {
     const cache = new RedisCache(client, { namespace: aNamespace() });
+
     await cache.set(cacheKey<number>('a*b', '1'), 1);
     await cache.set(cacheKey<number>('a-b', '1'), 2);
     await cache.set(cacheKey<number>('q[1]?', '1'), 3);
@@ -71,10 +77,12 @@ describe.skipIf(!REAL_SERVER)('RedisCache on a server', () => {
 
   it('serializes through the codec it is given', async () => {
     const namespace = aNamespace();
+
     const dated: CacheCodec = {
       encode: (value) => JSON.stringify(value),
       decode: (text) => JSON.parse(text, (key, value) => (key === 'at' ? new Date(value) : value)),
     };
+
     const cache = new RedisCache(client, { namespace, codec: dated });
     const key = cacheKey<{ at: Date }>('visit');
 
@@ -87,62 +95,11 @@ describe.skipIf(!REAL_SERVER)('RedisCache on a server', () => {
     const namespace = aNamespace();
     const metrics = new InMemoryMetrics();
     const cache = new RedisCache(client, { namespace, metrics });
+
     await client.set(`${namespace}:price:sku-1`, '{not json');
 
     expect(await cache.get(price('sku-1'))).toBeUndefined();
     expect(metrics.counterValue('cache_errors_total', { operation: 'get', context: namespace })).toBe(1);
-  });
-
-  describe('getOrLoad', () => {
-    it('computes a missing value once for the callers of one process, then answers from the cache', async () => {
-      const cache = new RedisCache(client, { namespace: aNamespace() });
-      const loads = { count: 0 };
-      const load = async () => {
-        loads.count += 1;
-        await sleep(30);
-        return { amount: 12 };
-      };
-
-      const answers = await Promise.all(Array.from({ length: 5 }, () => cache.getOrLoad(price('sku-1'), load, { ttlMs: 60_000 })));
-      const again = await cache.getOrLoad(price('sku-1'), load);
-
-      expect(answers).toEqual(Array.from({ length: 5 }, () => ({ amount: 12 })));
-      expect(again).toEqual({ amount: 12 });
-      expect(loads.count).toBe(1);
-    });
-
-    it('computes it once across processes when given a lock', async () => {
-      const namespace = aNamespace();
-      const processes = [connect(), connect(), connect()].map((connection) => new RedisCache(connection, { namespace, lock: new RedisLock(connection, { namespace }) }));
-      const loads = { count: 0 };
-      const load = async () => {
-        loads.count += 1;
-        await sleep(80);
-        return { amount: 12 };
-      };
-
-      const answers = await Promise.all(processes.map((cache) => cache.getOrLoad(price('sku-1'), load, { ttlMs: 60_000 })));
-
-      expect(answers).toEqual([{ amount: 12 }, { amount: 12 }, { amount: 12 }]);
-      expect(loads.count).toBe(1);
-    });
-
-    it('computes the value itself rather than fail when the one computing takes too long', async () => {
-      const namespace = aNamespace();
-      const lock = new RedisLock(client, { namespace });
-      const cache = new RedisCache(client, { namespace, lock });
-      await lock.acquire(`cache:${namespace}:price:sku-1`, { ttlMs: 30_000 });
-
-      expect(await cache.getOrLoad(price('sku-1'), async () => ({ amount: 7 }), { waitMs: 60 })).toEqual({ amount: 7 });
-    });
-
-    it('does not cache a failure, and lets the next caller try', async () => {
-      const cache = new RedisCache(client, { namespace: aNamespace(), lock: new RedisLock(client, { namespace: aNamespace() }) });
-
-      await expect(cache.getOrLoad(price('sku-1'), async () => Promise.reject(new Error('The pricing service is away')))).rejects.toThrow('away');
-
-      expect(await cache.getOrLoad(price('sku-1'), async () => ({ amount: 3 }))).toEqual({ amount: 3 });
-    });
   });
 });
 

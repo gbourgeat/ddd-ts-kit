@@ -43,7 +43,9 @@ class PlaceOrderHandler implements CommandHandler<PlaceOrder> {
   async execute(command: PlaceOrder): Promise<string> {
     const id = this.ids.next();
     const order = Order.place(id, { id: 'customer-1', name: 'Ada' }, [{ sku: command.sku, quantity: 2 }], this.clock.now());
+
     await this.orders.save(order);
+
     await this.publisher.publish([
       {
         id: this.ids.next(),
@@ -53,6 +55,7 @@ class PlaceOrderHandler implements CommandHandler<PlaceOrder> {
         payload: { orderId: id, total: order.total },
       },
     ]);
+
     return id;
   }
 }
@@ -61,12 +64,14 @@ describe('createTestBuses', () => {
   it('makes a handler spec three lines of arrangement', async () => {
     const { commandBus, eventBus, ids, clock, publishedEvents } = createTestBuses({ idPrefix: 'order' });
     const orders = new InMemoryOrders();
+
     commandBus.register(PlaceOrder, new PlaceOrderHandler(orders, eventBus, ids, clock));
 
     const id = await commandBus.execute(new PlaceOrder('book'));
 
     expect(id).toBe('order-1');
     expect(orders.count()).toBe(1);
+
     expect(publishedEvents<{ orderId: string; total: number }>('ordering.order.placed')).toEqual([
       {
         id: 'order-2',
@@ -76,6 +81,7 @@ describe('createTestBuses', () => {
         payload: { orderId: 'order-1', total: 20 },
       },
     ]);
+
     expect(publishedEvents('billing.invoice.issued')).toEqual([]);
     expect(publishedEvents()).toHaveLength(1);
   });
@@ -83,10 +89,13 @@ describe('createTestBuses', () => {
   it('gives a query bus, a frozen clock that can move and a unit of work', async () => {
     const { commandBus, queryBus, clock, unitOfWork } = createTestBuses({ now: at });
     const orders = new InMemoryOrders();
+
     await orders.save(Order.place('order-1', { id: 'c', name: 'Ada' }, [{ sku: 'pen', quantity: 3 }], at));
+
     const handler: QueryHandler<GetOrderTotal> = {
       execute: async (query) => (await orders.findById(query.orderId))?.total ?? 0,
     };
+
     queryBus.register(GetOrderTotal, handler);
     commandBus.use(unitOfWorkMiddleware(unitOfWork));
 
@@ -104,6 +113,7 @@ describe('InMemoryRepository', () => {
   it('exposes what is stored for assertions and for the finders of a subclass', async () => {
     const orders = new InMemoryOrders();
     const paid = place('order-2');
+
     paid.pay(at);
     await orders.save(place('order-1'));
     await orders.save(paid);
@@ -118,6 +128,7 @@ describe('InMemoryRepository', () => {
 
   it('hands out copies: changing one does not change the store', async () => {
     const orders = new InMemoryOrders();
+
     await orders.save(place('order-1'));
 
     orders.all()[0]?.pay(at);
@@ -128,6 +139,7 @@ describe('InMemoryRepository', () => {
   it('manages the version of the aggregate', async () => {
     const orders = new InMemoryOrders();
     const order = place('order-1');
+
     expect(order.version).toBe(0);
 
     await orders.save(order);
@@ -140,9 +152,11 @@ describe('InMemoryRepository', () => {
 
   it('raises a ConcurrencyError on a lost update, and when creating what already exists', async () => {
     const orders = new InMemoryOrders();
+
     await orders.save(place('order-1'));
 
     await expect(orders.save(place('order-1'))).rejects.toBeInstanceOf(ConcurrencyError);
+
     await expect(orders.save(place('order-1'))).rejects.toMatchObject({
       code: 'CONCURRENCY_CONFLICT',
       message: 'Aggregate order-1 was modified concurrently',
@@ -153,6 +167,7 @@ describe('InMemoryRepository', () => {
     const clone = (order: Order): Order => Order.rehydrate(structuredClone<OrderSnapshot>(order.toSnapshot()));
     const orders = new InMemoryRepository<Order>({ clone });
     const order = place('order-1');
+
     await orders.save(order);
 
     order.pay(at);

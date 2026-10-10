@@ -26,6 +26,7 @@ class InMemoryResourceAttributes implements ResourceAttributes {
 
   async of(resource: ResourceRef): Promise<ResourceAttributeValues | undefined> {
     this.asked.push(resource);
+
     return this.known[`${resource.type}:${resource.id}`];
   }
 }
@@ -72,10 +73,12 @@ describe('PolicyBasedAuthorizer', () => {
 
   it('decides on the attributes of the actor and of the resource', async () => {
     expect(await authorizer.check({ actor: salesClerk, permission: read, resource: first })).toEqual({ allowed: true });
+
     expect(await authorizer.check({ actor: salesClerk, permission: read, resource: second })).toEqual({
       allowed: false,
       reason: 'NO_MATCHING_POLICY',
     });
+
     expect(await authorizer.check({ actor: legalManager, permission: read, resource: first })).toEqual({ allowed: true });
   });
 
@@ -119,11 +122,13 @@ describe('PolicyBasedAuthorizer', () => {
       allowed: false,
       reason: 'ANONYMOUS',
     });
+
     expect(attributes.asked).toEqual([]);
   });
 
   it('gives a rule no attribute for a resource nobody knows, or for no resource', async () => {
     const seen: ResourceAttributeValues[] = [];
+
     const watching = new PolicyBasedAuthorizer({
       policies: [permit('watch', [read], ({ attributes }) => seen.push(attributes) > 0)],
       clock,

@@ -12,7 +12,7 @@ import {
   tracedSubscriber,
   withSpan,
 } from '../src/index.js';
-import { setupTracing, type TestTracing } from './support.js';
+import { setupTracing, type TestTracing } from './support/setup-tracing.js';
 
 const TRACE_ID = '4bf92f3577b34da6a3ce929d0e0e4736';
 const SPAN_ID = '00f067aa0ba902b7';
@@ -75,6 +75,7 @@ describe('traceparent', () => {
     runWithTraceparent(TRACEPARENT, () => withSpan('work', () => undefined));
 
     const span = tracing.span('work');
+
     expect(span.spanContext().traceId).toBe(TRACE_ID);
     expect(span.parentSpanContext?.spanId).toBe(SPAN_ID);
   });
@@ -92,14 +93,18 @@ describe('tracedPublisher', () => {
     await withSpan('request', () => tracedPublisher(bus).publish([orderPlaced()]));
 
     const span = tracing.span('publish ordering.order.placed');
+
     expect(span.kind).toBe(SpanKind.PRODUCER);
     expect(span.parentSpanContext?.spanId).toBe(tracing.span('request').spanContext().spanId);
+
     expect(span.attributes).toEqual({
       'messaging.operation': 'publish',
       'messaging.destination.name': 'ordering.order.placed',
       'messaging.message.id': 'evt-1',
     });
+
     const { traceId, spanId } = span.spanContext();
+
     expect(bus.published[0]?.traceparent).toBe(`00-${traceId}-${spanId}-01`);
     expect(bus.published[0]?.payload).toEqual(orderPlaced().payload);
   });
@@ -111,12 +116,14 @@ describe('tracedPublisher', () => {
 
     expect(bus.published[0]?.traceparent).toBe(TRACEPARENT);
     const span = tracing.span('publish ordering.order.placed');
+
     expect(span.spanContext().traceId).toBe(TRACE_ID);
     expect(span.parentSpanContext?.spanId).toBe(SPAN_ID);
   });
 
   it('opens one span per event and publishes the batch in one call', async () => {
     const batches: number[] = [];
+
     const publisher = tracedPublisher({
       publish: async (events) => void batches.push(events.length),
     });
@@ -124,6 +131,7 @@ describe('tracedPublisher', () => {
     await publisher.publish([orderPlaced(), orderPlaced({ id: 'evt-2', type: 'ordering.order.paid' })]);
 
     expect(batches).toEqual([2]);
+
     expect(tracing.spans().map((span) => span.name)).toEqual([
       'publish ordering.order.placed',
       'publish ordering.order.paid',
@@ -132,6 +140,7 @@ describe('tracedPublisher', () => {
 
   it('marks the spans failed without the message and rethrows', async () => {
     const failure = new Error('broker refused jane@example.org');
+
     const publisher = tracedPublisher({
       publish: async () => {
         throw failure;
@@ -141,6 +150,7 @@ describe('tracedPublisher', () => {
     await expect(publisher.publish([orderPlaced()])).rejects.toBe(failure);
 
     const span = tracing.span('publish ordering.order.placed');
+
     expect(span.status).toEqual({ code: SpanStatusCode.ERROR });
     expect(JSON.stringify([span.attributes, span.events])).not.toContain('jane');
   });
@@ -159,6 +169,7 @@ describe('tracedSubscriber', () => {
   it('runs the handler in a CONSUMER span continuing the event traceparent', async () => {
     const bus = new InMemoryEventBus();
     let seenInHandler: string | undefined;
+
     tracedSubscriber(bus).subscribe('ordering.order.placed', async () => {
       seenInHandler = correlationIdFromActiveSpan();
     });
@@ -166,31 +177,37 @@ describe('tracedSubscriber', () => {
     await bus.publish([orderPlaced({ traceparent: TRACEPARENT })]);
 
     const span = tracing.span('process ordering.order.placed');
+
     expect(span.kind).toBe(SpanKind.CONSUMER);
     expect(span.spanContext().traceId).toBe(TRACE_ID);
     expect(span.parentSpanContext?.spanId).toBe(SPAN_ID);
+
     expect(span.attributes).toEqual({
       'messaging.operation': 'process',
       'messaging.destination.name': 'ordering.order.placed',
       'messaging.message.id': 'evt-1',
     });
+
     expect(seenInHandler).toBe(TRACE_ID);
   });
 
   it('links publisher and consumer into one trace through the bus', async () => {
     const bus = new InMemoryEventBus();
+
     tracedSubscriber(bus).subscribe('ordering.order.placed', async () => {});
 
     await tracedPublisher(bus).publish([orderPlaced()]);
 
     const produced = tracing.span('publish ordering.order.placed');
     const consumed = tracing.span('process ordering.order.placed');
+
     expect(consumed.spanContext().traceId).toBe(produced.spanContext().traceId);
     expect(consumed.parentSpanContext?.spanId).toBe(produced.spanContext().spanId);
   });
 
   it('marks the span failed and lets the bus see the handler error', async () => {
     const bus = new InMemoryEventBus();
+
     tracedSubscriber(bus).subscribe('ordering.order.placed', async () => {
       throw new Error('cannot bill jane@example.org');
     });
@@ -198,12 +215,14 @@ describe('tracedSubscriber', () => {
     await expect(bus.publish([orderPlaced()])).rejects.toThrow(AggregateError);
 
     const span = tracing.span('process ordering.order.placed');
+
     expect(span.status).toEqual({ code: SpanStatusCode.ERROR });
     expect(span.events).toHaveLength(0);
   });
 
   it('returns a subscription that unsubscribes the handler', async () => {
     const bus = new InMemoryEventBus();
+
     tracedSubscriber(bus)
       .subscribe('ordering.order.placed', async () => {})
       .unsubscribe();

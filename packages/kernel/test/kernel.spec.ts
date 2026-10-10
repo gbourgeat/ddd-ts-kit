@@ -21,6 +21,7 @@ class Cart extends AggregateRoot {
   constructor(id: string) {
     super(id);
   }
+
   checkout(): void {
     this.record({ name: 'shop.cart.checked-out', aggregateId: this.id, occurredAt: new Date(0) });
   }
@@ -44,6 +45,7 @@ describe('ValueObject', () => {
 describe('AggregateRoot', () => {
   it('hands recorded events over exactly once', () => {
     const cart = new Cart('c1');
+
     cart.checkout();
     expect(cart.pullEvents()).toHaveLength(1);
     expect(cart.pullEvents()).toHaveLength(0);
@@ -61,6 +63,7 @@ describe('InMemoryEventBus', () => {
   it('delivers to subscribers and keeps the published log', async () => {
     const bus = new InMemoryEventBus();
     const seen: string[] = [];
+
     bus.subscribe('shop.cart.checked-out', async (e) => void seen.push(e.id));
     await bus.publish([event('e1')]);
     expect(seen).toEqual(['e1']);
@@ -70,9 +73,11 @@ describe('InMemoryEventBus', () => {
   it('runs every handler even when one fails, then reports all failures', async () => {
     const bus = new InMemoryEventBus();
     let ran = false;
+
     bus.subscribe('shop.cart.checked-out', async () => {
       throw new Error('first');
     });
+
     bus.subscribe('shop.cart.checked-out', async () => void (ran = true));
     await expect(bus.publish([event('e1')])).rejects.toBeInstanceOf(AggregateError);
     expect(ran).toBe(true);
@@ -81,6 +86,7 @@ describe('InMemoryEventBus', () => {
   it('processes a redelivered event once per consumer', async () => {
     const bus = new InMemoryEventBus();
     let count = 0;
+
     bus.subscribe('shop.cart.checked-out', idempotent('mailer', new InMemoryProcessedEventStore(), async () => void count++));
     await bus.publish([event('e1'), event('e1')]);
     expect(count).toBe(1);
@@ -89,8 +95,10 @@ describe('InMemoryEventBus', () => {
   it('handles a redelivered event again when the first handling failed', async () => {
     const store = new InMemoryProcessedEventStore();
     let attempts = 0;
+
     const handler = idempotent('mailer', store, async () => {
       attempts += 1;
+
       if (attempts === 1) throw new Error('smtp down');
     });
 

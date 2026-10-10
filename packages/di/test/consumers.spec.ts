@@ -1,31 +1,47 @@
 import { describe, expect, it } from 'vitest';
-import { InMemoryCommandBus, InMemoryEventBus, type IntegrationEvent } from '@ddd-ts-kit/kernel';
 import {
-  COMMAND_BUS,
-  EVENT_BUS,
-  EVENT_SUBSCRIBER,
+  CommandBus,
+  EventBus,
+  InMemoryCommandBus,
+  InMemoryEventBus,
+  IntegrationEventSubscriber,
+  type IntegrationEvent,
+} from '@ddd-ts-kit/kernel';
+import {
   UnreadableEventError,
   createApplication,
+  createTestApplication,
   defineContextModule,
   kernelModule,
   type ContextModule,
   type EventContract,
 } from '../src/index.js';
+import { InvoiceOnOrderPlaced } from './support/billing/application/integration/handlers/invoice-on-order-placed.integration-handler.js';
+import { InvoiceLedger } from './support/billing/application/ports/invoice-ledger.port.js';
+import { billingModule } from './support/billing/billing.module.js';
 import { wiringFailure } from './support/failure.js';
-import {
-  INVOICE_LEDGER,
-  InvoiceOnOrderPlaced,
-  OrderPlaced,
-  billingModule,
-  orderPlaced,
-} from './support/ordering.js';
+import { PlaceOrder } from './support/ordering/application/commands/place-order/place-order.command.js';
+import { orderingModule } from './support/ordering/ordering.module.js';
+import { orderPlaced } from './support/ordering/published-language/order-placed-event.js';
+import { OrderPlaced } from './support/ordering/published-language/order-placed.js';
 
 const placed = (id: string, orderId: string): IntegrationEvent => orderPlaced(id, { orderId, sku: 'book' });
+const neverSeenBefore = { markProcessed: async () => true };
+
+function busesWithoutProcessedEvents(bus: InMemoryEventBus): ContextModule {
+  return defineContextModule({
+    name: 'platform',
+    register(builder) {
+      builder.bind(IntegrationEventSubscriber).toValue(bus);
+      builder.bind(CommandBus).toClass(InMemoryCommandBus);
+    },
+  });
+}
 
 describe('consumers declared with builder.on', () => {
   it('receive nothing before start, the events after it, and nothing once stopped', async () => {
     const app = createApplication({ modules: [kernelModule(), billingModule] });
-    const bus = app.resolve(EVENT_BUS);
+    const bus = app.resolve(EventBus);
 
     await bus.publish([placed('event-1', 'order-1')]);
     await app.start();
@@ -33,7 +49,7 @@ describe('consumers declared with builder.on', () => {
     await app.stop();
     await bus.publish([placed('event-3', 'order-3')]);
 
-    expect(app.resolve(INVOICE_LEDGER).invoicedOrders).toEqual(['order-2']);
+    expect(app.resolve(InvoiceLedger).invoicedOrders).toEqual(['order-2']);
   });
 
   it('subscribe once, however many times the application is started', async () => {
@@ -43,70 +59,89 @@ describe('consumers declared with builder.on', () => {
 
     await app.start();
     await app.start();
-    await app.resolve(EVENT_BUS).publish([placed('event-1', 'order-1')]);
+    await app.resolve(EventBus).publish([placed('event-1', 'order-1')]);
 
-    expect(app.resolve(INVOICE_LEDGER).invoicedOrders).toEqual(['order-1']);
+    expect(app.resolve(InvoiceLedger).invoicedOrders).toEqual(['order-1']);
   });
 
   it('handle a redelivered event once when a processed event store is bound', async () => {
     const app = createApplication({ modules: [kernelModule(), billingModule] });
+
     await app.start();
 
-    await app.resolve(EVENT_BUS).publish([placed('event-1', 'order-1'), placed('event-1', 'order-1')]);
+    await app.resolve(EventBus).publish([placed('event-1', 'order-1'), placed('event-1', 'order-1')]);
 
-    expect(app.resolve(INVOICE_LEDGER).invoicedOrders).toEqual(['order-1']);
+    expect(app.resolve(InvoiceLedger).invoicedOrders).toEqual(['order-1']);
   });
 
   it('handle every delivery when no processed event store is bound', async () => {
     const bus = new InMemoryEventBus();
     const app = createApplication({ modules: [busesWithoutProcessedEvents(bus), billingModule] });
+
     await app.start();
 
     await bus.publish([placed('event-1', 'order-1'), placed('event-1', 'order-1')]);
 
-    expect(app.resolve(INVOICE_LEDGER).invoicedOrders).toEqual(['order-1', 'order-1']);
+    expect(app.resolve(InvoiceLedger).invoicedOrders).toEqual(['order-1', 'order-1']);
   });
 
   it('skip another version of the event without consuming its idempotency key', async () => {
     const app = createApplication({ modules: [kernelModule(), billingModule] });
+
     await app.start();
 
-    await app.resolve(EVENT_BUS).publish([orderPlaced('event-1', { order: 'renamed in v2' }, 2)]);
-    await app.resolve(EVENT_BUS).publish([placed('event-1', 'order-1')]);
+    await app.resolve(EventBus).publish([orderPlaced('event-1', { order: 'renamed in v2' }, 2)]);
+    await app.resolve(EventBus).publish([placed('event-1', 'order-1')]);
 
-    expect(app.resolve(INVOICE_LEDGER).invoicedOrders).toEqual(['order-1']);
+    expect(app.resolve(InvoiceLedger).invoicedOrders).toEqual(['order-1']);
   });
 
   it('refuse an event its contract cannot read, so the provider retries it', async () => {
     const app = createApplication({ modules: [kernelModule(), billingModule] });
+
     await app.start();
 
     const failure = await app
-      .resolve(EVENT_BUS)
+      .resolve(EventBus)
       .publish([orderPlaced('event-1', { orderId: 42 })])
       .catch((error: unknown) => error);
 
     expect(failure).toBeInstanceOf(AggregateError);
+
     expect(failure).toMatchObject({
       errors: [{ code: 'UNREADABLE_EVENT', eventType: 'ordering.order.placed', reason: 'invalid-payload' }],
     });
-    expect(new UnreadableEventError('a.b.c', 1, 'invalid-payload').message).toBe(
-      'Cannot read a.b.c v1: invalid-payload',
-    );
+
+    expect(new UnreadableEventError('a.b.c', 1, 'invalid-payload').message).toBe('Cannot read a.b.c v1: invalid-payload');
   });
 
-  it('take a factory and appear in the description', () => {
-    const received: string[] = [];
-    const audit = defineContextModule({
+  it('are delivered the events of a test application once started, each event once', async () => {
+    const app = createTestApplication({ modules: [orderingModule, billingModule] });
+
+    await app.start();
+
+    const id = await app.commandBus.execute(new PlaceOrder('book'));
+
+    await app.eventBus.publish([...app.eventBus.published]);
+    await app.stop();
+
+    expect(app.get(InvoiceLedger).invoicedOrders).toEqual([id]);
+  });
+});
+
+describe('the declaration of a consumer', () => {
+  const audit = (handle: (orderId: string) => void = () => {}): ContextModule =>
+    defineContextModule({
       name: 'audit',
       register(builder) {
         builder
           .on(OrderPlaced, { consumer: 'audit.order-placed' })
-          .handledByFactory(() => ({ handle: async (event) => void received.push(event.payload.orderId) }));
+          .handledByFactory(() => ({ handle: async (event) => void handle(event.payload.orderId) }));
       },
     });
 
-    const app = createApplication({ modules: [kernelModule(), billingModule, audit] });
+  it('takes a factory and appears in the description', () => {
+    const app = createApplication({ modules: [kernelModule(), billingModule, audit()] });
 
     expect(app.describe().integrationEventHandlers).toEqual([
       {
@@ -126,68 +161,71 @@ describe('consumers declared with builder.on', () => {
     ]);
   });
 
-  it('reject two consumers sharing a name for the same event', () => {
+  it('binds the handler class under itself, as a consumer', () => {
+    const app = createApplication({ modules: [kernelModule(), billingModule] });
+
+    expect(app.resolve(InvoiceOnOrderPlaced)).toBeInstanceOf(InvoiceOnOrderPlaced);
+
+    expect(app.describe().bindings).toContainEqual(
+      expect.objectContaining({ token: 'InvoiceOnOrderPlaced', kind: 'consumer', dependencies: ['CommandBus'] }),
+    );
+  });
+
+  it('rejects two consumers sharing a name for the same event, before the class bound twice', () => {
     const twin = defineContextModule({
       name: 'twin',
       register(builder) {
-        builder
-          .on(OrderPlaced, { consumer: 'billing.invoice-on-order-placed' })
-          .handledBy(InvoiceOnOrderPlaced, [COMMAND_BUS]);
+        builder.on(OrderPlaced, { consumer: 'billing.invoice-on-order-placed' }).handledBy(InvoiceOnOrderPlaced, [CommandBus]);
       },
     });
 
     const error = wiringFailure(() => createApplication({ modules: [kernelModule(), billingModule, twin] }));
 
     expect(error.code).toBe('DUPLICATE_CONSUMER');
-    expect(error.message).toContain('"billing"');
-    expect(error.message).toContain('"twin"');
+    expect(error.message).toContain('in module "billing" and in module "twin"');
   });
 
-  it('ask for the kernel module when there is nothing to subscribe to', () => {
-    const audit = defineContextModule({
-      name: 'audit',
+  it('rejects a handler class given to two consumers: one class is one binding', () => {
+    const twin = defineContextModule({
+      name: 'twin',
       register(builder) {
-        builder
-          .on(OrderPlaced, { consumer: 'audit.order-placed' })
-          .handledByFactory(() => ({ handle: async () => {} }));
+        builder.on(OrderPlaced, { consumer: 'twin.invoice-on-order-placed' }).handledBy(InvoiceOnOrderPlaced, [CommandBus]);
       },
     });
 
-    const error = wiringFailure(() => createApplication({ modules: [audit] }));
+    const error = wiringFailure(() => createApplication({ modules: [kernelModule(), billingModule, twin] }));
 
-    expect(error.code).toBe('UNBOUND_DEPENDENCY');
-    expect(error.message).toContain('the consumer "audit.order-placed"');
-    expect(error.message).toContain('"kernel.EventSubscriber"');
+    expect(error.code).toBe('DUPLICATE_BINDING');
+    expect(error.message).toBe('Token "InvoiceOnOrderPlaced" is bound twice: by module "billing" and by module "twin".');
   });
 
-  it('reject, at compile time, a consumer of another payload', () => {
+  it('asks for the kernel module when there is nothing to subscribe to', () => {
+    const error = wiringFailure(() => createApplication({ modules: [audit()] }));
+
+    expect(error.code).toBe('UNBOUND_DEPENDENCY');
+
+    expect(error.message).toBe(
+      'Module "audit" declares the consumer "audit.order-placed", but no module binds "IntegrationEventSubscriber" or "EventSubscribers". Add kernelModule() to the modules.',
+    );
+  });
+
+  it('is typed: a consumer of another payload and a consumer without a name are refused at compile time', () => {
+    const neverParsed = (): never => {
+      throw new Error('this contract only exists for the compiler');
+    };
+
     const Shipped: EventContract<{ parcelId: string }> = { ...OrderPlaced, type: 'shipping.parcel.shipped', parse: neverParsed };
+
     const module = defineContextModule({
       name: 'typed',
       register(builder) {
         // @ts-expect-error InvoiceOnOrderPlaced handles OrderPlaced, not a shipped parcel
-        builder.on(Shipped, { consumer: 'billing.on-shipped' }).handledBy(InvoiceOnOrderPlaced, [COMMAND_BUS]);
+        builder.on(Shipped, { consumer: 'billing.on-shipped' }).handledBy(InvoiceOnOrderPlaced, [CommandBus]);
         // @ts-expect-error the consumer name is the idempotency scope and has no default
-        builder.on(OrderPlaced).handledBy(InvoiceOnOrderPlaced, [COMMAND_BUS]);
+        builder.on(OrderPlaced).handledBy(InvoiceOnOrderPlaced, [CommandBus]);
       },
     });
 
     expect(module.name).toBe('typed');
   });
 });
-
-const neverSeenBefore = { markProcessed: async () => true };
-
-function neverParsed(): never {
-  throw new Error('this contract only exists for the compiler');
-}
-
-function busesWithoutProcessedEvents(bus: InMemoryEventBus): ContextModule {
-  return defineContextModule({
-    name: 'platform',
-    register(builder) {
-      builder.bind(EVENT_SUBSCRIBER).toValue(bus);
-      builder.bind(COMMAND_BUS).toClass(InMemoryCommandBus);
-    },
-  });
-}

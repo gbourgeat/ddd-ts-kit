@@ -53,24 +53,55 @@ const event = orderPlaced.create(
 await this.publisher.publish([event]);
 ```
 
+The composition root binds the store under its port, `OutboxStore`, and replaces the
+publisher of the kernel by the outbox. Ports are abstract classes and the class is what a
+module binds and resolves:
+
 ```ts
-// main.ts
-import { createEventRegistry, OutboxPublisher, OutboxRelay, validatingPublisher } from '@ddd-ts-kit/events';
+// platform/messaging.module.ts
+import { defineContextModule } from '@ddd-ts-kit/di';
+import { IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
+import { createEventRegistry, OutboxPublisher, OutboxStore, validatingPublisher } from '@ddd-ts-kit/events';
 
 const registry = createEventRegistry([orderPlaced, invoiceIssued]);
-const store = new DrizzleOutboxStore(unitOfWork); // or InMemoryOutboxStore in a single process
-const publisher = validatingPublisher(new OutboxPublisher(store), registry, { unknown: 'reject' });
+
+export const messagingModule = defineContextModule({
+  name: 'messaging',
+  register(builder) {
+    // The adapter of your database, or InMemoryOutboxStore in a single process.
+    builder.bind(OutboxStore).toClass(SqlOutboxStore, [Database]);
+    builder
+      .rebind(IntegrationEventPublisher)
+      .toFactory((resolve) =>
+        validatingPublisher(new OutboxPublisher(resolve(OutboxStore)), registry, { unknown: 'reject' }),
+      );
+  },
+});
+```
+
+```ts
+// main.ts
+import { createApplication, kernelModule } from '@ddd-ts-kit/di';
+import { Clock, Logger } from '@ddd-ts-kit/kernel';
+import { OutboxRelay, OutboxStore } from '@ddd-ts-kit/events';
+
+const app = createApplication({ modules: [kernelModule(), persistenceModule, messagingModule, orderingModule] });
+const logger = app.resolve(Logger);
 
 const relay = new OutboxRelay({
-  store,
+  store: app.resolve(OutboxStore),
   publisher: broker, // the real provider: any IntegrationEventPublisher
-  clock,
+  clock: app.resolve(Clock),
   maxAttempts: 8,
-  onFailure: (failure) => logger.warn(failure), // codes only, never an error message
+  onFailure: (failure) => logger.warn('outbox relay failure', { ...failure }), // codes only, never an error message
 });
 relay.start({ intervalMs: 500 });
 process.on('SIGTERM', () => void relay.stop()); // waits for the tick in progress
 ```
+
+An adapter `implements OutboxStore` and never extends it: the port has abstract members only.
+Without a container the same objects are built by hand:
+`new OutboxPublisher(store)`, `new OutboxRelay({ store, publisher: broker, clock })`.
 
 `relay.tick()` claims a batch, publishes each event, marks it published, or schedules a retry
 with an exponential backoff; after `maxAttempts` the record is `dead` until
@@ -85,9 +116,11 @@ it (below).
 ### Waking the relay instead of polling fast
 
 A relay can sleep on a long interval and still publish at once, when the store tells it that
-something was appended. `wakeOn` takes a `RelaySignal`
-(`{ subscribe(listener): { unsubscribe() } }`): PostgreSQL `LISTEN/NOTIFY`, a change stream,
-or `InMemoryRelaySignal` in a single process.
+something was appended. `wakeOn` takes a `RelaySignal`, a port of one method
+(`subscribe(listener): { unsubscribe() }`): PostgreSQL `LISTEN/NOTIFY`, a change stream,
+or `InMemoryRelaySignal` in a single process. A module binds it like the store,
+`builder.bind(RelaySignal).toClass(PostgresRelaySignal, [Database])`, and the relay takes
+`wakeOn: app.resolve(RelaySignal)`.
 
 ```ts
 const signal = new InMemoryRelaySignal();
@@ -143,8 +176,32 @@ lease of the store, so a relay that dies lets them come back. Adapters are held 
 
 ## Consume idempotently
 
+With `@ddd-ts-kit/di`, a declared integration event handler is idempotent with nothing to
+write: its idempotency mark and its work run in one unit of work whenever a `UnitOfWork` and a
+`ProcessedEventStore` are bound, which `kernelModule()` does. The composition root builds no
+handler by hand:
+
 ```ts
-// contexts/billing/application/integration/handlers/order-placed.integration-handler.ts
+// contexts/billing/application/integration/handlers/invoice-on-order-placed.integration-handler.ts
+import { CommandBus, type IntegrationEvent } from '@ddd-ts-kit/kernel';
+import { IntegrationEventHandler } from '@ddd-ts-kit/kernel/declarations';
+import { orderPlaced, type OrderPlaced } from '../../../../ordering/published-language/order-placed.event.js';
+
+@IntegrationEventHandler(orderPlaced, { consumer: 'billing.invoice-on-order-placed' }, [CommandBus])
+export class InvoiceOnOrderPlaced {
+  constructor(private readonly commands: CommandBus) {}
+
+  async handle(event: IntegrationEvent<OrderPlaced>): Promise<void> {
+    await this.commands.execute(new IssueInvoice(event.payload.orderId, event.payload.total));
+  }
+}
+```
+
+`consume` is the tool of a project that wires without di. It gives the same semantics to a
+plain function:
+
+```ts
+// contexts/billing/billing.subscriptions.ts
 import { consume, subscribeAll } from '@ddd-ts-kit/events';
 
 export const billingSubscriptions = ({ commandBus, processed, unitOfWork }: BillingDependencies) => [
@@ -153,7 +210,7 @@ export const billingSubscriptions = ({ commandBus, processed, unitOfWork }: Bill
   }),
 ];
 
-// billing.module.ts
+// main.ts
 const subscription = subscribeAll(subscriber, billingSubscriptions(dependencies));
 ```
 
@@ -175,7 +232,9 @@ handler then fails, a transactional store keeps the mark (it was committed on it
 redelivery is skipped: the event is lost for that consumer. Without a database, use a store
 that can take its mark back, a `ReleasableProcessedEventStore` such as
 `InMemoryReleasableProcessedEventStore`: `on` and `consume` release the mark of a handler that
-failed. The `InMemoryProcessedEventStore` of the kernel cannot.
+failed (the `InMemoryProcessedEventStore` of the kernel releases too). `ReleasableProcessedEventStore` is a type, not a port of its own: it is the
+`ProcessedEventStore` port of the kernel with its optional `release` made mandatory, and such
+a store is bound under `ProcessedEventStore`.
 
 ### The execution context of a consumed event
 
@@ -203,9 +262,11 @@ On the publishing side, `scopedPublisher` of the kernel fills the correlation in
 never pass it by hand:
 
 ```ts
-import { scopedPublisher } from '@ddd-ts-kit/kernel';
+import { ExecutionScope, IntegrationEventPublisher, scopedPublisher } from '@ddd-ts-kit/kernel';
 
-const publisher = scopedPublisher(new OutboxPublisher(outboxStore), scope); // what handlers publish to
+builder
+  .rebind(IntegrationEventPublisher) // what handlers publish to
+  .toFactory((resolve) => scopedPublisher(new OutboxPublisher(resolve(OutboxStore)), resolve(ExecutionScope)));
 ```
 
 An event created with a `correlationId` keeps it; one published outside of any execution

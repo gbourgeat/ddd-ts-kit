@@ -20,6 +20,7 @@ export interface Line {
 
 export class OrderPaid implements DomainEvent {
   readonly name = 'ordering.order.paid';
+
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
@@ -35,23 +36,28 @@ export interface OrderSnapshot {
 }
 
 export class Order extends AggregateRoot {
-  #customer: Customer;
-  #lines: Line[];
-  #status: 'placed' | 'paid';
+  private readonly customer: Customer;
+
+  private readonly lines: Line[];
+
+  private paymentStatus: 'placed' | 'paid';
 
   private constructor(snapshot: OrderSnapshot) {
     super(snapshot.id);
-    this.#customer = snapshot.customer;
-    this.#lines = [...snapshot.lines];
-    this.#status = snapshot.status;
+    this.customer = snapshot.customer;
+    this.lines = [...snapshot.lines];
+    this.paymentStatus = snapshot.status;
   }
 
   static place(id: string, customer: Customer, lines: readonly Line[], at: Date): Order {
     if (lines.length === 0) {
       throw new EmptyOrder('An order needs at least one line');
     }
+
     const order = new Order({ id, customer, lines: [...lines], status: 'placed' });
+
     order.record({ name: 'ordering.order.placed', aggregateId: id, occurredAt: at });
+
     return order;
   }
 
@@ -60,31 +66,33 @@ export class Order extends AggregateRoot {
   }
 
   pay(at: Date): void {
-    if (this.#status === 'paid') {
+    if (this.paymentStatus === 'paid') {
       throw new OrderAlreadyPaid(`Order ${this.id} is already paid`);
     }
-    this.#status = 'paid';
+
+    this.paymentStatus = 'paid';
     this.record(new OrderPaid(this.id, at, this.total));
   }
 
   addLine(line: Line, at: Date): void {
-    if (this.#status === 'paid') {
+    if (this.paymentStatus === 'paid') {
       throw new OrderAlreadyPaid(`Order ${this.id} is already paid`);
     }
-    this.#lines.push(line);
+
+    this.lines.push(line);
     this.record({ name: 'ordering.order.line-added', aggregateId: this.id, occurredAt: at });
   }
 
   get status(): 'placed' | 'paid' {
-    return this.#status;
+    return this.paymentStatus;
   }
 
   get total(): number {
-    return this.#lines.reduce((sum, line) => sum + line.quantity * 10, 0);
+    return this.lines.reduce((sum, line) => sum + line.quantity * 10, 0);
   }
 
   toSnapshot(): OrderSnapshot {
-    return { id: this.id, customer: this.#customer, lines: [...this.#lines], status: this.#status };
+    return { id: this.id, customer: this.customer, lines: [...this.lines], status: this.status };
   }
 }
 

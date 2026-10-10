@@ -10,6 +10,7 @@ afterAll(closeAll);
 
 describe.skipIf(!REAL_SERVER)('RedisLock on a server', () => {
   let client: Redis;
+
   beforeEach(() => {
     client ??= connect();
   });
@@ -40,6 +41,7 @@ describe.skipIf(!REAL_SERVER)('RedisLock on a server', () => {
   it('gives a later holder a higher token than a holder whose lock expired, which a resource can compare', async () => {
     const lock = new RedisLock(client, { namespace: aNamespace() });
     const paused = await lock.acquire('nightly-export', { ttlMs: 60 });
+
     await sleep(120);
 
     const current = await lock.acquire('nightly-export', { ttlMs: 30_000 });
@@ -50,14 +52,18 @@ describe.skipIf(!REAL_SERVER)('RedisLock on a server', () => {
   it('serializes the work of those who wait for it', async () => {
     const namespace = aNamespace();
     const running = { now: 0, most: 0 };
+
     const work = async (lock: RedisLock) => {
       const handle = await lock.acquire('nightly-export', { ttlMs: 30_000, waitMs: 5_000 });
+
       if (handle === undefined) return 'gave up';
+
       running.now += 1;
       running.most = Math.max(running.most, running.now);
       await sleep(15);
       running.now -= 1;
       await handle.release();
+
       return 'done';
     };
 

@@ -1,42 +1,37 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
+  Clock,
   Command,
+  CommandBus,
+  EventBus,
   FixedClock,
+  IdGenerator,
   InMemoryCommandBus,
   InMemoryQueryBus,
+  IntegrationEventPublisher,
   Query,
+  QueryBus,
   SequentialIdGenerator,
-  type CommandBus,
-  type UnitOfWork,
+  UnitOfWork,
 } from '@ddd-ts-kit/kernel';
 import {
-  CLOCK,
-  COMMAND_BUS,
-  EVENT_BUS,
-  EVENT_PUBLISHER,
-  ID_GENERATOR,
-  QUERY_BUS,
-  UNIT_OF_WORK,
   createApplication,
   defineContextModule,
   kernelModule,
   override,
   overrideForTests,
-  token,
   type BindingInfo,
 } from '../src/index.js';
 import { wiringFailure } from './support/failure.js';
-import {
-  CancelOrder,
-  CancelOrderHandler,
-  GetOrder,
-  GetOrderHandler,
-  InMemoryOrderRepository,
-  ORDER_REPOSITORY,
-  PlaceOrder,
-  PlaceOrderHandler,
-  orderingModule,
-} from './support/ordering.js';
+import { CancelOrder } from './support/ordering/application/commands/cancel-order/cancel-order.command.js';
+import { CancelOrderHandler } from './support/ordering/application/commands/cancel-order/cancel-order.handler.js';
+import { PlaceOrder } from './support/ordering/application/commands/place-order/place-order.command.js';
+import { PlaceOrderHandler } from './support/ordering/application/commands/place-order/place-order.handler.js';
+import { GetOrder } from './support/ordering/application/queries/get-order/get-order.query.js';
+import { GetOrderHandler } from './support/ordering/application/queries/get-order/get-order.handler.js';
+import { OrderRepository } from './support/ordering/domain/repositories/order.repository.js';
+import { InMemoryOrderRepository } from './support/ordering/infrastructure/persistence/in-memory-order.repository.js';
+import { orderingModule } from './support/ordering/ordering.module.js';
 
 const deterministicKernel = (): ReturnType<typeof kernelModule> =>
   kernelModule({
@@ -52,10 +47,10 @@ describe('kernelModule', () => {
   it('binds in-process defaults that handlers can be registered on', () => {
     const app = createApplication({ modules: [kernelModule()] });
 
-    expect(app.resolve(COMMAND_BUS)).toBeInstanceOf(InMemoryCommandBus);
-    expect(app.resolve(QUERY_BUS)).toBeInstanceOf(InMemoryQueryBus);
-    expect(app.resolve(CLOCK).now()).toBeInstanceOf(Date);
-    expect(app.resolve(ID_GENERATOR).next()).toMatch(/^[0-9a-f-]{36}$/);
+    expect(app.resolve(CommandBus)).toBeInstanceOf(InMemoryCommandBus);
+    expect(app.resolve(QueryBus)).toBeInstanceOf(InMemoryQueryBus);
+    expect(app.resolve(Clock).now()).toBeInstanceOf(Date);
+    expect(app.resolve(IdGenerator).next()).toMatch(/^[0-9a-f-]{36}$/);
   });
 
   it('publishes and subscribes through the event bus unless they are separated', () => {
@@ -63,70 +58,77 @@ describe('kernelModule', () => {
     const together = createApplication({ modules: [kernelModule()] });
     const separated = createApplication({ modules: [kernelModule({ eventPublisher: outbox })] });
 
-    expect(together.resolve(EVENT_PUBLISHER)).toBe(together.resolve(EVENT_BUS));
-    expect(separated.resolve(EVENT_PUBLISHER)).toBe(outbox);
+    expect(together.resolve(IntegrationEventPublisher)).toBe(together.resolve(EventBus));
+    expect(separated.resolve(IntegrationEventPublisher)).toBe(outbox);
   });
 
   it('takes an instance or a factory for each default', () => {
     const app = createApplication({ modules: [deterministicKernel()] });
 
-    expect(app.resolve(CLOCK).now()).toEqual(new Date('2026-05-01T08:00:00.000Z'));
-    expect(app.resolve(ID_GENERATOR).next()).toBe('order-1');
+    expect(app.resolve(Clock).now()).toEqual(new Date('2026-05-01T08:00:00.000Z'));
+    expect(app.resolve(IdGenerator).next()).toBe('order-1');
   });
 
   it('lets a later module rebind a default, with its dependencies checked', async () => {
-    class Database {
-      readonly transactions: string[] = [];
+    abstract class Database {
+      abstract readonly transactions: string[];
     }
     class DatabaseUnitOfWork implements UnitOfWork {
       constructor(private readonly database: Database) {}
 
       async run<T>(work: () => Promise<T>): Promise<T> {
         this.database.transactions.push('begin');
+
         const result = await work();
+
         this.database.transactions.push('commit');
+
         return result;
       }
     }
-    const DATABASE = token<Database>('platform.Database');
+
     const persistence = defineContextModule({
       name: 'persistence',
       register(builder) {
-        builder.bind(DATABASE).toClass(Database);
-        builder.rebind(UNIT_OF_WORK).toClass(DatabaseUnitOfWork, [DATABASE]);
+        builder.bind(Database).toValue({ transactions: [] });
+        builder.rebind(UnitOfWork).toClass(DatabaseUnitOfWork, [Database]);
       },
     });
 
     const app = createApplication({ modules: [kernelModule(), persistence, orderingModule] });
 
-    await app.resolve(COMMAND_BUS).execute(new PlaceOrder('book'));
+    await app.resolve(CommandBus).execute(new PlaceOrder('book'));
 
-    expect(app.resolve(DATABASE).transactions).toEqual(['begin', 'commit']);
+    expect(app.resolve(Database).transactions).toEqual(['begin', 'commit']);
   });
 
   it('refuses to rebind what no earlier module binds', () => {
     const early = defineContextModule({
       name: 'early',
-      register: (builder) => void builder.rebind(CLOCK).toValue(new FixedClock(new Date(0))),
+      register: (builder) => void builder.rebind(Clock).toValue(new FixedClock(new Date(0))),
     });
 
     const error = wiringFailure(() => createApplication({ modules: [early, kernelModule()] }));
 
     expect(error.code).toBe('NOTHING_TO_REBIND');
-    expect(error.message).toContain('"early"');
-    expect(error.message).toContain('"kernel.Clock"');
+
+    expect(error.message).toBe(
+      'Module "early" rebinds "Clock", which no earlier module binds. List the module that binds it first, or use bind.',
+    );
   });
 });
 
 describe('commands and queries', () => {
-  it('reaches a handler through the bus, never by resolving it', async () => {
+  it('reaches a handler through the bus', async () => {
     const app = createApplication({ modules: [deterministicKernel(), orderingModule] });
 
-    const id = await app.resolve(COMMAND_BUS).execute(new PlaceOrder('book'));
-    await app.resolve(COMMAND_BUS).execute(new CancelOrder(id));
+    const id = await app.resolve(CommandBus).execute(new PlaceOrder('book'));
+
+    await app.resolve(CommandBus).execute(new CancelOrder(id));
 
     expect(id).toBe('order-1');
-    expect(await app.resolve(QUERY_BUS).execute(new GetOrder(id))).toEqual({
+
+    expect(await app.resolve(QueryBus).execute(new GetOrder(id))).toEqual({
       id: 'order-1',
       sku: 'book',
       placedAt: new Date('2026-05-01T08:00:00.000Z'),
@@ -136,75 +138,91 @@ describe('commands and queries', () => {
 
   it('builds a handler on its first message, once', async () => {
     const app = createApplication({ modules: [deterministicKernel(), orderingModule] });
+
     expect(PlaceOrderHandler.built).toBe(0);
 
-    await app.resolve(COMMAND_BUS).execute(new PlaceOrder('book'));
-    await app.resolve(COMMAND_BUS).execute(new PlaceOrder('pen'));
+    await app.resolve(CommandBus).execute(new PlaceOrder('book'));
+    await app.resolve(CommandBus).execute(new PlaceOrder('pen'));
 
+    expect(PlaceOrderHandler.built).toBe(1);
+  });
+
+  it('binds a handler class under itself: the one the bus runs is the one the application resolves', async () => {
+    const app = createApplication({ modules: [deterministicKernel(), orderingModule] });
+
+    await app.resolve(CommandBus).execute(new PlaceOrder('book'));
+
+    expect(app.resolve(PlaceOrderHandler)).toBeInstanceOf(PlaceOrderHandler);
     expect(PlaceOrderHandler.built).toBe(1);
   });
 
   it('hands handlers to the decorate hook as use cases of their module', async () => {
     const seen: BindingInfo[] = [];
+
     const app = createApplication({
       modules: [deterministicKernel(), orderingModule],
       decorate: (instance, info) => {
         seen.push(info);
+
         return instance;
       },
     });
 
-    await app.resolve(QUERY_BUS).execute(new GetOrder('order-1'));
+    await app.resolve(QueryBus).execute(new GetOrder('order-1'));
 
-    expect(seen.map(({ token, context, kind }) => [token.description, context, kind])).toContainEqual([
-      'GetOrderHandler',
-      'ordering',
-      'use-case',
-    ]);
+    expect(seen).toContainEqual({ token: GetOrderHandler, context: 'ordering', kind: 'use-case' });
   });
+});
 
-  it('takes a factory when a constructor is not enough', async () => {
+describe('a handler built by a factory', () => {
+  it('takes a factory when a constructor is not enough, bound under a class made for the statement', async () => {
     class Ping extends Query<string> {}
-    const app = createApplication({
-      modules: [
-        kernelModule(),
-        defineContextModule({
-          name: 'health',
-          register(builder) {
-            builder
-              .query(Ping)
-              .handledByFactory((resolve) => ({ execute: async () => typeof resolve(CLOCK).now() }));
-          },
-        }),
-      ],
+
+    const health = defineContextModule({
+      name: 'health',
+      register(builder) {
+        builder.query(Ping).handledByFactory((resolve) => ({ execute: async () => typeof resolve(Clock).now() }));
+      },
     });
 
-    expect(await app.resolve(QUERY_BUS).execute(new Ping())).toBe('object');
-    expect(app.describe().queries).toEqual([
-      { message: 'Ping', handler: 'query(Ping) handler', module: 'health' },
-    ]);
+    const app = createApplication({ modules: [kernelModule(), health] });
+
+    expect(await app.resolve(QueryBus).execute(new Ping())).toBe('object');
+    expect(app.describe().queries).toEqual([{ message: 'Ping', handler: 'query(Ping) handler', module: 'health' }]);
+
+    expect(app.describe().bindings).toContainEqual({
+      token: 'query(Ping) handler',
+      module: 'health',
+      kind: 'use-case',
+      lifetime: 'singleton',
+      source: 'factory',
+      dependencies: [],
+      overridden: false,
+    });
   });
 
   it('rejects the execution when the handler cannot be built', async () => {
     class Broken extends Command {}
-    const MISSING = token<string>('Missing');
-    const app = createApplication({
-      modules: [
-        kernelModule(),
-        defineContextModule({
-          name: 'broken',
-          register(builder) {
-            builder.command(Broken).handledByFactory((resolve) => {
-              resolve(MISSING);
-              return { execute: async () => {} };
-            });
-          },
-        }),
-      ],
+    abstract class Missing {
+      abstract readonly text: string;
+    }
+
+    const broken = defineContextModule({
+      name: 'broken',
+      register(builder) {
+        builder.command(Broken).handledByFactory((resolve) => {
+          resolve(Missing);
+
+          return { execute: async () => {} };
+        });
+      },
     });
 
-    await expect(app.resolve(COMMAND_BUS).execute(new Broken())).rejects.toMatchObject({
+    const app = createApplication({ modules: [kernelModule(), broken] });
+
+    await expect(app.resolve(CommandBus).execute(new Broken())).rejects.toMatchObject({
       code: 'UNBOUND_TOKEN',
+      message: 'No module binds "Missing", required by "command(Broken) handler".',
     });
   });
 
@@ -212,27 +230,75 @@ describe('commands and queries', () => {
     const app = createApplication({ modules: [deterministicKernel(), orderingModule] });
     const replacement = new InMemoryCommandBus();
 
-    overrideForTests(app, COMMAND_BUS, replacement);
+    overrideForTests(app, CommandBus, replacement);
 
     await expect(replacement.execute(new PlaceOrder('book'))).resolves.toBe('order-1');
   });
+});
 
+describe('the checks on commands and queries', () => {
   it('rejects a command handled twice, naming both modules', () => {
     const duplicate = defineContextModule({
       name: 'archive',
-      register: (builder) => builder.command(CancelOrder).handledBy(CancelOrderHandler, [ORDER_REPOSITORY]),
+      register: (builder) => builder.command(CancelOrder).handledBy(CancelOrderHandler, [OrderRepository]),
     });
 
-    const error = wiringFailure(() =>
-      createApplication({ modules: [kernelModule(), orderingModule, duplicate] }),
-    );
+    const error = wiringFailure(() => createApplication({ modules: [kernelModule(), orderingModule, duplicate] }));
 
     expect(error.code).toBe('DUPLICATE_HANDLER');
-    expect(error.message).toContain('"CancelOrder"');
-    expect(error.message).toContain('"ordering"');
-    expect(error.message).toContain('"archive"');
+
+    expect(error.message).toBe(
+      'The command "CancelOrder" has two handlers: "CancelOrderHandler" in module "ordering" and "CancelOrderHandler" in module "archive".',
+    );
   });
 
+  it('rejects a handler class given to two statements: one class is one binding', () => {
+    class Archive extends Command {}
+    class Purge extends Command {}
+    class RetentionHandler {
+      async execute(_command: Archive | Purge): Promise<void> {}
+    }
+
+    const retention = defineContextModule({
+      name: 'retention',
+      register(builder) {
+        builder.command(Archive).handledBy(RetentionHandler);
+        builder.command(Purge).handledBy(RetentionHandler);
+      },
+    });
+
+    const error = wiringFailure(() => createApplication({ modules: [kernelModule(), retention] }));
+
+    expect(error.code).toBe('DUPLICATE_BINDING');
+    expect(error.message).toBe('Token "RetentionHandler" is bound twice: by module "retention" and by module "retention".');
+  });
+
+  it('accepts one factory per statement where one class would serve two messages', async () => {
+    class Archive extends Command<string> {}
+    class Purge extends Command<string> {}
+    class RetentionHandler {
+      async execute(command: Archive | Purge): Promise<string> {
+        return command.constructor.name;
+      }
+    }
+    const shared = new RetentionHandler();
+
+    const retention = defineContextModule({
+      name: 'retention',
+      register(builder) {
+        builder.command(Archive).handledByFactory(() => shared);
+        builder.command(Purge).handledByFactory(() => shared);
+      },
+    });
+
+    const app = createApplication({ modules: [kernelModule(), retention] });
+
+    expect(await app.resolve(CommandBus).execute(new Archive())).toBe('Archive');
+    expect(await app.resolve(CommandBus).execute(new Purge())).toBe('Purge');
+  });
+});
+
+describe('what a handler needs', () => {
   it('rejects a handler dependency that no module binds, before any message', () => {
     const error = wiringFailure(() => createApplication({ modules: [orderingModule] }));
 
@@ -244,63 +310,37 @@ describe('commands and queries', () => {
     const lonely = defineContextModule({
       name: 'lonely',
       register(builder) {
-        builder.bind(ORDER_REPOSITORY).toClass(InMemoryOrderRepository);
-        builder.query(GetOrder).handledBy(GetOrderHandler, [ORDER_REPOSITORY]);
+        builder.bind(OrderRepository).toClass(InMemoryOrderRepository);
+        builder.query(GetOrder).handledBy(GetOrderHandler, [OrderRepository]);
       },
     });
 
     const error = wiringFailure(() => createApplication({ modules: [lonely] }));
 
     expect(error.code).toBe('UNBOUND_DEPENDENCY');
-    expect(error.message).toContain('the query "GetOrder"');
-    expect(error.message).toContain('kernelModule()');
+
+    expect(error.message).toBe(
+      'Module "lonely" declares the query "GetOrder", but no module binds "QueryBus". Add kernelModule() to the modules.',
+    );
   });
 
   it('rejects a bus that cannot receive handlers', () => {
     const remote: CommandBus = { execute: () => Promise.reject(new Error('remote transport')) };
 
     const error = wiringFailure(() =>
-      createApplication({
-        modules: [deterministicKernel(), orderingModule],
-        overrides: [override(COMMAND_BUS, remote)],
-      }),
+      createApplication({ modules: [deterministicKernel(), orderingModule], overrides: [override(CommandBus, remote)] }),
     );
 
     expect(error.code).toBe('BUS_WITHOUT_REGISTER');
-    expect(error.message).toContain('"kernel.CommandBus"');
+    expect(error.message).toContain('"CommandBus" has no register(type, handler) method');
   });
 
   it('rejects a command left without a handler', () => {
-    const sloppy = defineContextModule({
-      name: 'sloppy',
-      register: (builder) => void builder.command(PlaceOrder),
-    });
+    const sloppy = defineContextModule({ name: 'sloppy', register: (builder) => void builder.command(PlaceOrder) });
 
     const error = wiringFailure(() => createApplication({ modules: [kernelModule(), sloppy] }));
 
     expect(error.code).toBe('INCOMPLETE_BINDING');
     expect(error.message).toContain('command(PlaceOrder) without handledBy or handledByFactory');
-  });
-});
-
-describe('typing of the use case declarations', () => {
-  it('rejects, at compile time, a wrong handler and misordered dependencies', () => {
-    const module = defineContextModule({
-      name: 'typed',
-      register(builder) {
-        // @ts-expect-error CancelOrderHandler does not handle PlaceOrder
-        builder.command(PlaceOrder).handledBy(CancelOrderHandler, [ORDER_REPOSITORY]);
-        // @ts-expect-error a query handler answering another result type is not its handler
-        builder.query(GetOrder).handledByFactory(() => ({ execute: async () => 42 }));
-        builder
-          .command(PlaceOrder)
-          // @ts-expect-error the tokens must follow the order of the constructor parameters
-          .handledBy(PlaceOrderHandler, [ORDER_REPOSITORY, EVENT_PUBLISHER, CLOCK, ID_GENERATOR]);
-        // @ts-expect-error a constructor with parameters needs its tokens
-        builder.query(GetOrder).handledBy(GetOrderHandler);
-      },
-    });
-
-    expect(module.name).toBe('typed');
   });
 });

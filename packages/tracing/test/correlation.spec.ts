@@ -19,7 +19,7 @@ import {
   tracedSubscriber,
   withSpan,
 } from '../src/index.js';
-import { setupTracing, type TestTracing } from './support.js';
+import { setupTracing, type TestTracing } from './support/setup-tracing.js';
 
 const ada: Actor = { id: 'ada', type: 'user', tenantId: 'acme', roles: [], attributes: { email: 'ada@example.test' } };
 const request: ExecutionContext = executionContext({ correlationId: 'corr-1', actor: ada, origin: 'http' });
@@ -49,6 +49,7 @@ describe('with an execution scope', () => {
       [CORRELATION_ID_ATTRIBUTE]: 'corr-1',
       [ORIGIN_ATTRIBUTE]: 'http',
     });
+
     expect(tracing.span('gateway.Ping.ping').attributes).not.toHaveProperty(CORRELATION_ID_ATTRIBUTE);
   });
 
@@ -64,6 +65,7 @@ describe('with an execution scope', () => {
     await withSpan('GET /orders', () => scope.run(request, () => ping.ping()));
 
     const recorded = JSON.stringify(tracing.spans().map((span) => span.attributes));
+
     expect(recorded).not.toContain('ada');
     expect(recorded).not.toContain('acme');
   });
@@ -79,6 +81,7 @@ describe('with an execution scope', () => {
   it('names the correlation of a consumed event on its process span', async () => {
     const bus = new InMemoryEventBus();
     const ping = gateway();
+
     const event: IntegrationEvent = {
       id: 'evt-1',
       type: 'ordering.order.placed',
@@ -87,6 +90,7 @@ describe('with an execution scope', () => {
       payload: {},
       correlationId: 'corr-9',
     };
+
     tracedSubscriber(bus).subscribe(
       event.type,
       inEventScope(scope, { consumer: 'billing.invoice' }, () => ping.ping()),

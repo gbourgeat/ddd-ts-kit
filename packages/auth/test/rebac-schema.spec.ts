@@ -21,8 +21,10 @@ const failure = (definition: SchemaDefinition): string => {
     defineSchema(definition);
   } catch (error) {
     if (error instanceof SchemaError) return error.message;
+
     throw error;
   }
+
   return 'accepted';
 };
 
@@ -63,6 +65,7 @@ describe('defineSchema', () => {
     expect(failure({ ...base, document: { permissions: { edit: from('parent', 'edit') } } })).toBe(
       '"document#edit" follows "parent", which is not a relation of "document".',
     );
+
     expect(
       failure({
         ...base,
@@ -92,6 +95,7 @@ describe('defineSchema', () => {
     expect(failure({ document: { permissions: { edit: union('view'), view: exclusion('comment', 'edit'), comment: 'edit' } } })).toBe(
       '"document" has a rewrite that cannot terminate: edit -> view -> comment -> edit.',
     );
+
     expect(failure({ document: { permissions: { edit: 'edit' } } })).toContain('edit -> edit');
   });
 
@@ -102,6 +106,7 @@ describe('defineSchema', () => {
 
   it('refuses an empty union or intersection, which would grant nobody or everybody', () => {
     expect(failure({ document: { permissions: { edit: union() } } })).toBe('"document#edit" has an empty union.');
+
     expect(failure({ document: { permissions: { edit: intersection() } } })).toBe(
       '"document#edit" has an empty intersection.',
     );
@@ -129,6 +134,7 @@ describe('tuples', () => {
 describe('SchemaCheckedTupleStore', () => {
   const stores = () => {
     const inner = new InMemoryRelationTupleStore();
+
     return { inner, store: new SchemaCheckedTupleStore(schema, inner) };
   };
 
@@ -158,6 +164,7 @@ describe('SchemaCheckedTupleStore', () => {
 
   it('deletes through', async () => {
     const { inner, store } = stores();
+
     await store.write([fact('document:1', 'owner', 'user:ada')]);
 
     await store.delete([fact('document:1', 'owner', 'user:ada')]);

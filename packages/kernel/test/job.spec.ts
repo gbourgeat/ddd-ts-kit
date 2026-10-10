@@ -19,20 +19,25 @@ function refusal(attempt: () => unknown): string {
     attempt();
   } catch (error) {
     if (error instanceof InvalidJobScheduleError && error.code === 'INVALID_JOB_SCHEDULE') return error.message;
+
     throw error;
   }
+
   throw new Error('Expected the schedule to be refused');
 }
 
 function cron(expression: string, timeZone?: string) {
   const parsed = parseJobSchedule({ cron: expression, ...(timeZone === undefined ? {} : { timeZone }) });
+
   if (parsed.kind !== 'cron') throw new Error('Expected a cron');
+
   return parsed;
 }
 
 describe('a duration', () => {
   it('is a whole number of milliseconds, or a number and a unit', () => {
     expect(parseDuration(1_500)).toBe(1_500);
+
     expect([parseDuration('250ms'), parseDuration('30s'), parseDuration('15m'), parseDuration('2h'), parseDuration('1d')]).toEqual([
       250, 30_000, 900_000, 7_200_000, 86_400_000,
     ]);
@@ -69,6 +74,7 @@ describe('a cron expression', () => {
       dayOfMonthRestricted: false,
       everyHour: true,
     });
+
     expect(cron('0 0 * * 6-7').daysOfWeek).toEqual([0, 6]);
     expect(cron('5,5,1 0 * * *').minutes).toEqual([1, 5]);
   });
@@ -123,6 +129,7 @@ describe('a schedule', () => {
 
     expect(jobScheduleOf(settings)).toEqual({ cron: '0 7 * * *', timeZone: 'Europe/Paris' });
     expect(jobScheduleOf({ every: '1h' })).toEqual({ every: '1h' });
+
     for (const written of [{}, { every: '1h', cron: '0 * * * *' }, { every: '1h', timeZone: 'UTC' }, { timeZone: 'UTC' }] as const) {
       expect(refusal(() => jobScheduleOf(written))).toBe('A schedule is either { every } or { cron, timeZone? }.');
     }
@@ -132,6 +139,7 @@ describe('a schedule', () => {
 describe('the options of a job', () => {
   it('have explicit defaults: no overlap, nothing caught up, no jitter, enabled, one instance, no timeout', () => {
     expect(jobPolicy({})).toEqual({ overlap: 'skip', missed: 'skip', jitterMs: 0, enabled: true, singleInstance: true });
+
     expect(jobPolicy({ overlap: 'queue', missed: 'run-once', timeoutMs: 5_000, jitterMs: 250, enabled: false, singleInstance: false })).toEqual({
       overlap: 'queue',
       missed: 'run-once',
@@ -209,6 +217,7 @@ describe('the execution context of a run', () => {
       deadline,
       extensions: {},
     });
+
     expect(executionContextOfJob('billing.send-reminders', { correlationId: 'run-2', scheduledAt })).not.toHaveProperty('deadline');
     expect(parseJobSchedule(schedule).kind).toBe('interval');
   });

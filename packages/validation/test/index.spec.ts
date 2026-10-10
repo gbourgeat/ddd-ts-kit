@@ -16,21 +16,25 @@ const positive = customSchema<number>(
   { type: 'number', exclusiveMinimum: 0 },
 );
 
-describe('the Schema port', () => {
+describe('the Schema contract', () => {
   it('returns the parsed value when the input is valid', () => {
     const value: Infer<typeof positive> = parseOrThrow(positive, 3);
+
     expect(value).toBe(3);
   });
 
   it('throws a domain error carrying the issues when the input is not valid', () => {
     let caught: unknown;
+
     try {
       parseOrThrow(positive, -1);
     } catch (error) {
       caught = error;
     }
+
     expect(caught).toBeInstanceOf(ValidationError);
     expect(caught).toBeInstanceOf(DomainError);
+
     expect(caught).toMatchObject({
       code: 'VALIDATION_FAILED',
       issues: [{ path: '', code: 'positive' }],

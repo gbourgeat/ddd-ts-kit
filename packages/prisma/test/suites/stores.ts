@@ -13,15 +13,18 @@ import { createDatabase, type TestDatabase } from '../support/database.js';
 const runner = { describe, it, expect, beforeEach, afterEach };
 
 let database: TestDatabase;
+
 beforeAll(async () => {
   database = await createDatabase();
 });
+
 afterAll(async () => {
   await database.close();
 });
 
 const unitOfWork = () => createPrismaUnitOfWork(database.prisma);
 const now = new Date('2026-03-01T10:00:00.000Z');
+
 const event = (id: string): IntegrationEvent => ({
   id,
   type: 'billing.invoice.issued',
@@ -31,6 +34,7 @@ const event = (id: string): IntegrationEvent => ({
 });
 
 type Claim = PrismaOutboxClaim<Prisma.TransactionClient>;
+
 const skipLocked: Claim = {
   strategy: 'skip-locked',
   dialect: 'postgresql',
@@ -51,6 +55,7 @@ outboxStoreContract(runner, {
   leaseMs: 30_000,
   createStore: async () => {
     await database.truncate();
+
     return messagingOutbox(skipLocked);
   },
 });
@@ -60,6 +65,7 @@ outboxStoreContract(runner, {
   leaseMs: 5_000,
   createStore: async () => {
     await database.truncate();
+
     return new PrismaOutboxStore(unitOfWork(), {
       delegate: (client) => client.outboxRecord,
       claim: { strategy: 'skip-locked', dialect: 'postgresql', raw: (client) => client },
@@ -73,6 +79,7 @@ outboxStoreContract(runner, {
   leaseMs: 30_000,
   createStore: async () => {
     await database.truncate();
+
     return messagingOutbox('compare-and-set');
   },
 });
@@ -81,6 +88,7 @@ processedEventStoreContract(runner, {
   name: 'PrismaProcessedEventStore in a schema of its own',
   createStore: async () => {
     await database.truncate();
+
     return new PrismaProcessedEventStore(unitOfWork(), {
       delegate: (client) => client.messagingProcessedEvent,
     });
@@ -91,6 +99,7 @@ processedEventStoreContract(runner, {
   name: 'PrismaProcessedEventStore in the default schema',
   createStore: async () => {
     await database.truncate();
+
     return new PrismaProcessedEventStore(unitOfWork(), { delegate: (client) => client.processedEvent });
   },
 });
@@ -100,6 +109,7 @@ describe('the shipped schema fragment', () => {
     const rows = await database.prisma.$queryRaw<{ indexdef: string }[]>`
       select indexdef from pg_indexes
       where schemaname = 'messaging' and tablename = ${table} order by indexname`;
+
     return rows.map((row) => row.indexdef);
   };
 
@@ -136,6 +146,7 @@ describe('PrismaOutboxStore.claimBatch', () => {
 
   it('locks the due rows with FOR UPDATE SKIP LOCKED inside one transaction', async () => {
     const store = messagingOutbox(skipLocked);
+
     await store.append([event('evt-1')]);
     database.queries.length = 0;
 
@@ -154,6 +165,7 @@ describe('PrismaOutboxStore.claimBatch', () => {
 
   it('sends plain Prisma Client queries, and no lock clause, when claiming by compare-and-set', async () => {
     const store = messagingOutbox('compare-and-set');
+
     await store.append([event('evt-1')]);
     database.queries.length = 0;
 
@@ -171,6 +183,12 @@ describe('PrismaOutboxStore.claimBatch', () => {
     expect(withTable('outbox"; drop table x; --')).toThrow(TypeError);
     expect(withTable('outbox_v2')).not.toThrow();
   });
+});
+
+describe('PrismaOutboxStore.claimBatch between relays', () => {
+  beforeEach(async () => {
+    await database.truncate();
+  });
 
   it.each(['skip-locked', 'compare-and-set'] as const)(
     'shares the pending records between concurrent relays without overlap (%s)',
@@ -178,6 +196,7 @@ describe('PrismaOutboxStore.claimBatch', () => {
       const claim = strategy === 'skip-locked' ? skipLocked : strategy;
       const relayA = messagingOutbox(claim);
       const relayB = messagingOutbox(claim);
+
       await relayA.append(Array.from({ length: 40 }, (_, index) => event(`evt-${index}`)));
 
       const batches = await Promise.all([
@@ -188,6 +207,7 @@ describe('PrismaOutboxStore.claimBatch', () => {
       ]);
 
       const ids = batches.flat().map((record) => record.event.id);
+
       expect(ids).toHaveLength(40);
       expect(new Set(ids).size).toBe(40);
       expect(await relayA.claimBatch(10, now)).toEqual([]);
@@ -199,13 +219,17 @@ describe('PrismaOutboxStore.claimBatch', () => {
       // PGlite is a single session: holding a lock on one connection while claiming on another
       // needs a real server (DDD_TS_KIT_TEST_DATABASE_URL).
       test.skip();
+
       return;
     }
+
     const store = messagingOutbox(skipLocked);
+
     await store.append([event('evt-1'), event('evt-2'), event('evt-3')]);
 
     const claimed = await database.prisma.$transaction(async (holder) => {
       await holder.$queryRaw`select id from messaging.outbox where id in ('evt-1', 'evt-2') for update`;
+
       return store.claimBatch(10, now);
     });
 
@@ -215,10 +239,12 @@ describe('PrismaOutboxStore.claimBatch', () => {
 
   it('joins the unit of work it is called in instead of opening a transaction', async () => {
     const work = unitOfWork();
+
     const store = new PrismaOutboxStore(work, {
       delegate: (client) => client.messagingOutboxRecord,
       claim: skipLocked,
     });
+
     await store.append([event('evt-1')]);
     database.queries.length = 0;
 
@@ -228,12 +254,20 @@ describe('PrismaOutboxStore.claimBatch', () => {
     expect(database.queries.filter((query) => query === 'COMMIT')).toHaveLength(1);
     expect(database.queries.at(-1)).toBe('COMMIT');
   });
+});
+
+describe('PrismaOutboxStore: what a record keeps', () => {
+  beforeEach(async () => {
+    await database.truncate();
+  });
 
   it('stores timestamps as instants and gives them back as dates', async () => {
     const store = messagingOutbox(skipLocked, 1_000);
+
     await store.append([event('evt-1')]);
 
     const [claimed] = await store.claimBatch(1, now);
+
     await store.markPublished(['evt-1'], now);
     const row = await database.prisma.messagingOutboxRecord.findUnique({ where: { id: 'evt-1' } });
 
@@ -244,6 +278,7 @@ describe('PrismaOutboxStore.claimBatch', () => {
   it('keeps a payload that is not an object as it was published', async () => {
     const store = messagingOutbox(skipLocked);
     const payloads: unknown[] = ['plain text', [1, 'two', null], 42, null];
+
     await store.append(payloads.map((payload, index) => ({ ...event(`evt-${index}`), payload })));
 
     const claimed = await store.claimBatch(10, now);

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { FixedClock, anonymousActor } from '@ddd-ts-kit/kernel';
 import {
-  Access,
+  PolicyAccess,
   AuthorizationSetupError,
   ForbiddenError,
   ListingNotSupportedError,
@@ -38,8 +38,8 @@ describe('a policy', () => {
   });
 });
 
-describe('Access with policies', () => {
-  const access = new Access({ policies: [onlyAuthorEditsDraft], clock: new FixedClock(NOON) });
+describe('PolicyAccess with policies', () => {
+  const access = new PolicyAccess({ policies: [onlyAuthorEditsDraft], clock: new FixedClock(NOON) });
 
   it('lets the handler go on when the policy allows', async () => {
     await expect(access.authorize(author, edit, draft)).resolves.toBeUndefined();
@@ -49,6 +49,7 @@ describe('Access with policies', () => {
     const refusal = await access.authorize(reader, edit, draft).catch((error: unknown) => error);
 
     expect(refusal).toBeInstanceOf(ForbiddenError);
+
     expect(refusal).toMatchObject({
       code: 'FORBIDDEN',
       permissionId: 'publishing:article.edit',
@@ -58,10 +59,11 @@ describe('Access with policies', () => {
 
   it('reads the time from the clock', async () => {
     const clock = new FixedClock(NOON);
-    const timed = new Access({ policies: [onlyAuthorEditsDraft], clock });
+    const timed = new PolicyAccess({ policies: [onlyAuthorEditsDraft], clock });
 
     expect(await timed.decide(author, edit, scheduled)).toEqual({ allowed: true });
     clock.advance(24 * 3_600_000);
+
     expect(await timed.decide(author, edit, scheduled)).toEqual({
       allowed: false,
       reason: 'article.only-author-edits-draft',
@@ -85,9 +87,11 @@ describe('Access with policies', () => {
       permission: edit,
       allows: () => ({ allowed: false, reason: 'EDITORIAL_FREEZE' }),
     });
-    const freezing = new Access({ policies: [onlyAuthorEditsDraft, frozen], clock: new FixedClock(NOON) });
+
+    const freezing = new PolicyAccess({ policies: [onlyAuthorEditsDraft, frozen], clock: new FixedClock(NOON) });
 
     expect(await freezing.decide(author, edit, draft)).toEqual({ allowed: false, reason: 'EDITORIAL_FREEZE' });
+
     expect(await freezing.decide(reader, edit, draft)).toEqual({
       allowed: false,
       reason: 'article.only-author-edits-draft',
@@ -99,10 +103,11 @@ describe('Access with policies', () => {
   });
 });
 
-describe('Access with an authorizer', () => {
+describe('PolicyAccess with an authorizer', () => {
   it('asks the authorizer once the policies allow, about the resource the subject stands for', async () => {
     const authorizer = new RecordingAuthorizer();
-    const access = new Access({
+
+    const access = new PolicyAccess({
       authorizer,
       policies: [onlyAuthorEditsDraft],
       clock: new FixedClock(NOON),
@@ -118,7 +123,7 @@ describe('Access with an authorizer', () => {
   });
 
   it('refuses when the authorizer refuses, whatever the policies say', async () => {
-    const access = new Access({
+    const access = new PolicyAccess({
       authorizer: new DenyAll('NO_MATCHING_ROLE'),
       policies: [onlyAuthorEditsDraft],
       clock: new FixedClock(NOON),
@@ -129,7 +134,7 @@ describe('Access with an authorizer', () => {
 
   it('takes a plain resource reference as its own resource, never an aggregate that looks like one', async () => {
     const authorizer = new RecordingAuthorizer();
-    const access = new Access({ authorizer, clock: new FixedClock(NOON) });
+    const access = new PolicyAccess({ authorizer, clock: new FixedClock(NOON) });
 
     await access.authorize(author, read, { type: 'article', id: 'article-9' });
     await access.authorize(author, read, { type: 'article', id: 'article-9', title: 'Tuples' });
@@ -140,7 +145,8 @@ describe('Access with an authorizer', () => {
 
   it('reports every decision to the audit hook', async () => {
     const audit: DecisionRecord[] = [];
-    const access = new Access({
+
+    const access = new PolicyAccess({
       policies: [onlyAuthorEditsDraft],
       clock: new FixedClock(NOON),
       onDecision: (record) => void audit.push(record),
@@ -160,25 +166,25 @@ describe('Access with an authorizer', () => {
   });
 });
 
-describe('Access.scope', () => {
+describe('PolicyAccess.scope', () => {
   const clock = new FixedClock(NOON);
 
   it('gives the scope the authorizer computes, to hand to a read port', async () => {
     const authorizer = new RoleBasedAuthorizer({ roles: { writer: [read] } });
-    const access = new Access({ authorizer, clock });
+    const access = new PolicyAccess({ authorizer, clock });
 
     expect(await access.scope(author, read, 'article')).toEqual({ kind: 'all' });
     expect(await access.scope(author, edit, 'article')).toEqual({ kind: 'none' });
   });
 
   it('gives nothing to the anonymous actor', async () => {
-    expect(await new Access({ authorizer: new AllowAll(), clock }).scope(anonymousActor(), read, 'article')).toEqual({
+    expect(await new PolicyAccess({ authorizer: new AllowAll(), clock }).scope(anonymousActor(), read, 'article')).toEqual({
       kind: 'none',
     });
   });
 
   it('fails loudly when the model cannot enumerate, instead of guessing', async () => {
-    const access = new Access({ authorizer: { check: async () => ({ allowed: true }) }, clock });
+    const access = new PolicyAccess({ authorizer: { check: async () => ({ allowed: true }) }, clock });
 
     await expect(access.scope(author, read, 'article')).rejects.toBeInstanceOf(ListingNotSupportedError);
   });

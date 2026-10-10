@@ -1,7 +1,7 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { getTableConfig } from 'drizzle-orm/pg-core';
-import { DomainError, FixedClock } from '@ddd-ts-kit/kernel';
-import { ada, scopeOf } from './support/scopes.js';
+import { Clock, DomainError, ExecutionScope, FixedClock } from '@ddd-ts-kit/kernel';
+import { Repository } from '@ddd-ts-kit/kernel/declarations';
 import { repositoryContract } from '@ddd-ts-kit/testing/contracts';
 import {
   CONCURRENCY_CONFLICT,
@@ -12,12 +12,19 @@ import {
   schemaNameOf,
 } from '../src/postgres.js';
 import { createDatabase } from './support/database.js';
-import { DrizzleInvoiceRepository, Invoice, invoices } from './support/invoices.js';
+import { Database } from './support/platform/database/database.js';
+import { ada, scopeOf } from './support/scopes.js';
+import { Invoice } from './support/billing-core/domain/invoice.js';
+import { InvoiceRepository } from './support/billing-core/domain/repositories/invoice.repository.js';
+import { DrizzleInvoiceRepository } from './support/billing-core/infrastructure/persistence/drizzle-invoice.repository.js';
+import { invoices } from './support/billing-core/infrastructure/persistence/invoices.js';
 
 let database: Awaited<ReturnType<typeof createDatabase>>;
+
 beforeAll(async () => {
   database = await createDatabase([invoices]);
 });
+
 afterAll(async () => {
   await database.client.close();
 });
@@ -30,12 +37,14 @@ const repository = () =>
   );
 
 let next = 0;
+
 repositoryContract<Invoice>(
   { describe, it, expect, beforeEach, afterEach },
   {
     name: 'A Drizzle repository built on executor() and optimisticUpdate',
     createRepository: async () => {
       await database.truncate();
+
       return repository();
     },
     createAggregate: () => Invoice.draft(`inv-${(next += 1)}`, 100),
@@ -44,6 +53,14 @@ repositoryContract<Invoice>(
     stateOf: (invoice) => invoice.state,
   },
 );
+
+describe('a repository declared with @Repository', () => {
+  it('names its port, then the ports of its constructor in order', () => {
+    const declare = Repository(InvoiceRepository, [Database, ExecutionScope, Clock]);
+
+    expect(() => declare(DrizzleInvoiceRepository)).not.toThrow();
+  });
+});
 
 describe('optimisticUpdate', () => {
   const aggregate = (version: number) => ({ id: 'inv-1', version });
@@ -54,6 +71,7 @@ describe('optimisticUpdate', () => {
 
     await optimisticUpdate(invoice, async (step) => {
       steps.push(step);
+
       return 1;
     });
 
@@ -67,10 +85,12 @@ describe('optimisticUpdate', () => {
     const failing = optimisticUpdate(invoice, async () => 0);
 
     await expect(failing).rejects.toBeInstanceOf(ConcurrencyError);
+
     await expect(optimisticUpdate(invoice, async () => 0)).rejects.toMatchObject({
       code: CONCURRENCY_CONFLICT,
       message: 'Aggregate inv-1 was modified concurrently',
     });
+
     expect(invoice.version).toBe(3);
   });
 
@@ -82,6 +102,7 @@ describe('optimisticUpdate', () => {
   it('refuses to create an aggregate that already exists', async () => {
     await database.truncate();
     const subject = repository();
+
     await subject.save(Invoice.draft('inv-1', 100));
 
     await expect(subject.save(Invoice.draft('inv-1', 999))).rejects.toBeInstanceOf(ConcurrencyError);

@@ -45,6 +45,7 @@ class CountingUnitOfWork extends InMemoryUnitOfWork {
 
   override run<T>(work: () => Promise<T>): Promise<T> {
     this.opened += 1;
+
     return super.run(work);
   }
 }
@@ -54,16 +55,19 @@ function application(authorizer = new RecordingAuthorizer()) {
   const handled: string[] = [];
   const unitOfWork = new CountingUnitOfWork();
   const guard = authorizationMiddleware({ authorizer, map, onDecision: (record) => void audit.push(record) });
+
   const commands = new InMemoryCommandBus()
     .use(guard)
     .use(unitOfWorkMiddleware(unitOfWork))
     .register(IssueInvoice, { execute: async (command) => `invoice for ${command.customerId}` })
     .register(VoidInvoice, { execute: async (command) => void handled.push(command.invoiceId) })
     .register(ArchiveInvoices, { execute: async () => void handled.push('archived') });
+
   const queries = new InMemoryQueryBus()
     .use(guard)
     .register(ListInvoices, { execute: async () => ['inv-1'] })
     .register(GetCatalog, { execute: async () => ['book'] });
+
   return { authorizer, audit, handled, unitOfWork, commands, queries };
 }
 
@@ -96,11 +100,13 @@ describe('authorizationMiddleware', () => {
     const refusal = await commands.execute(new VoidInvoice(ada, 'inv-7')).catch((error: unknown) => error);
 
     expect(refusal).toBeInstanceOf(ForbiddenError);
+
     expect(refusal).toMatchObject({
       code: 'FORBIDDEN',
       reason: 'NO_MATCHING_ROLE',
       permissionId: 'billing:invoice.void',
     });
+
     expect(handled).toEqual([]);
     expect(unitOfWork.opened).toBe(0);
   });
@@ -137,13 +143,16 @@ describe('authorizationMiddleware', () => {
   it('refuses a protected message sent without its actor, as a programming error', async () => {
     class ImportInvoices extends Command {}
     const loose = AuthorizationMap.of({ ...requires(IssueInvoice, billingPermissions['invoice.issue']), type: ImportInvoices });
+
     const bus = new InMemoryCommandBus()
       .use(authorizationMiddleware({ authorizer: new RecordingAuthorizer(), map: loose }))
       .register(ImportInvoices, { execute: async () => undefined });
 
     await expect(bus.execute(new ImportInvoices())).rejects.toBeInstanceOf(MissingActorError);
   });
+});
 
+describe('the audit hook of authorizationMiddleware', () => {
   it('reports every decision to the audit hook, allowed or refused', async () => {
     const allowing = application();
     const refusing = application(new RecordingAuthorizer(new DenyAll('NO_MATCHING_ROLE')));
@@ -162,6 +171,7 @@ describe('authorizationMiddleware', () => {
         decision: { allowed: true },
       },
     ]);
+
     expect(refusing.audit.map((record) => record.decision)).toEqual([
       { allowed: false, reason: 'NO_MATCHING_ROLE' },
       { allowed: false, reason: 'ANONYMOUS' },
@@ -176,6 +186,7 @@ describe('authorizationMiddleware', () => {
         throw new RangeError('audit store down');
       },
     });
+
     const bus = new InMemoryCommandBus().use(guard).register(IssueInvoice, { execute: async () => 'issued' });
 
     await expect(bus.execute(new IssueInvoice(ada, 'customer-1'))).rejects.toBeInstanceOf(RangeError);

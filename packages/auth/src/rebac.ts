@@ -1,37 +1,33 @@
+export { defineSchema } from './rebac/define-schema.js';
+export type { ExpandNode } from './rebac/expand-node.js';
+export { InMemoryRelationTupleStore } from './rebac/in-memory-relation-tuple-store.js';
+export { InvalidTupleError } from './rebac/invalid-tuple-error.js';
+export { objectOf } from './rebac/object-of.js';
+export { parseObject } from './rebac/parse-object.js';
+export { parseSubject } from './rebac/parse-subject.js';
+export type { PermissionMapping } from './rebac/permission-mapping.js';
 export {
   RelationBasedAuthorizer,
-  ReverseExpansionLimitError,
-  type PermissionMapping,
   type RelationBasedAuthorizerOptions,
-} from './rebac/authorizer.js';
-export type { ExpandNode } from './rebac/evaluation.js';
+} from './rebac/relation-based-authorizer.js';
+export type { RelationTuple } from './rebac/relation-tuple.js';
+export { RelationTupleStore } from './rebac/relation-tuple-store.js';
+export type { Resolution } from './rebac/resolution.js';
+export { ReverseExpansionLimitError } from './rebac/reverse-expansion-limit-error.js';
 export {
-  Schema,
-  SchemaError,
-  defineSchema,
   exclusion,
   from,
   intersection,
   union,
   type ExclusionRewrite,
   type FromRewrite,
-  type Resolution,
   type Rewrite,
-  type SchemaDefinition,
   type SetRewrite,
-  type TypeDefinition,
-} from './rebac/schema.js';
-export {
-  InMemoryRelationTupleStore,
-  SchemaCheckedTupleStore,
-  type RelationTupleStore,
-} from './rebac/store.js';
-export {
-  InvalidTupleError,
-  objectOf,
-  parseObject,
-  parseSubject,
-  tupleKey,
-  type RelationTuple,
-  type SubjectRef,
-} from './rebac/tuples.js';
+} from './rebac/rewrite.js';
+export { Schema } from './rebac/schema.js';
+export { SchemaCheckedTupleStore } from './rebac/schema-checked-tuple-store.js';
+export type { SchemaDefinition } from './rebac/schema-definition.js';
+export { SchemaError } from './rebac/schema-error.js';
+export type { SubjectRef } from './rebac/subject-ref.js';
+export { tupleKey } from './rebac/tuple-key.js';
+export type { TypeDefinition } from './rebac/type-definition.js';

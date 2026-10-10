@@ -1,0 +1,44 @@
+import { AsyncLocalStorage } from 'node:async_hooks';
+import type { ExtractTablesWithRelations, TablesRelationalConfig } from 'drizzle-orm';
+import type {
+  PgDatabase,
+  PgQueryResultHKT,
+  PgTransaction,
+  PgTransactionConfig,
+} from 'drizzle-orm/pg-core';
+import type { UnitOfWork } from '@ddd-ts-kit/kernel';
+import type { DrizzleContext } from './drizzle-context.js';
+
+/** One object for both ports: bind it to `UnitOfWork` and to the `DrizzleContext` of the project. */
+export interface DrizzleUnitOfWork<
+  Q extends PgQueryResultHKT,
+  F extends Record<string, unknown> = Record<string, never>,
+  S extends TablesRelationalConfig = ExtractTablesWithRelations<F>,
+> extends UnitOfWork,
+    DrizzleContext<Q, F, S> {}
+
+/**
+ * A unit of work over `db.transaction`, for any drizzle PostgreSQL driver (node-postgres,
+ * postgres-js, PGlite, Neon...). The transaction travels in an AsyncLocalStorage owned by this
+ * unit of work, so two databases never see each other's transaction. A nested `run` joins the
+ * outer transaction: it commits or rolls back as a whole.
+ */
+export function createDrizzleUnitOfWork<
+  Q extends PgQueryResultHKT,
+  F extends Record<string, unknown>,
+  S extends TablesRelationalConfig,
+>(db: PgDatabase<Q, F, S>, config?: PgTransactionConfig): DrizzleUnitOfWork<Q, F, S> {
+  const current = new AsyncLocalStorage<PgTransaction<Q, F, S>>();
+
+  return {
+    run<T>(work: () => Promise<T>): Promise<T> {
+      if (current.getStore() !== undefined) {
+        return work();
+      }
+
+      return db.transaction((transaction) => current.run(transaction, work), config);
+    },
+    executor: () => current.getStore() ?? db,
+    inTransaction: () => current.getStore() !== undefined,
+  };
+}

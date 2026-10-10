@@ -32,11 +32,14 @@ const DECORATED = [
 /** A project on disk: its tsconfig and one source, with the plugin set up at its root. */
 function projectWith(compilerOptions: object, options: DecoratorsOptions = {}) {
   const root = mkdtempSync(path.join(workspace, 'project-'));
+
   writeFileSync(path.join(root, 'package.json'), '{}');
   writeFileSync(path.join(root, 'tsconfig.json'), JSON.stringify({ compilerOptions }));
   const plugin: DecoratorsPlugin = decorators({ compiler: path.join(ROOT, 'node_modules/@typescript/native/bin/tsc'), ...options });
   const cacheDir = path.join(root, 'cache');
+
   plugin.configResolved({ root, cacheDir });
+
   return { root, plugin, cached: () => readdirSync(path.join(cacheDir, 'ddd-ts-kit-decorators')) };
 }
 
@@ -79,6 +82,7 @@ describe('decorators(), the Vitest plugin', () => {
 
   it('follows the tsconfig nearest to the file, as the runner does', () => {
     const { root, plugin } = projectWith({ target: 'es2023' });
+
     mkdirSync(path.join(root, 'legacy'));
     writeFileSync(path.join(root, 'legacy/tsconfig.json'), JSON.stringify({ compilerOptions: { experimentalDecorators: true } }));
 
@@ -102,6 +106,7 @@ describe('decorators(), the Vitest plugin', () => {
 
     const first = plugin.transform(DECORATED, file);
     const again = plugin.transform(DECORATED, file);
+
     plugin.transform(`${DECORATED}export const later = 2;\n`, file);
 
     expect(again).toEqual(first);
@@ -110,6 +115,7 @@ describe('decorators(), the Vitest plugin', () => {
 
   it('compiles .mts as well, and takes a tsconfig named in its options', () => {
     const named = mkdtempSync(path.join(workspace, 'named-'));
+
     writeFileSync(path.join(named, 'tsconfig.test.json'), JSON.stringify({ compilerOptions: { target: 'es2022', useDefineForClassFields: false } }));
     const { root, plugin } = projectWith({ target: 'es2023' }, { tsconfig: path.join(named, 'tsconfig.test.json') });
 

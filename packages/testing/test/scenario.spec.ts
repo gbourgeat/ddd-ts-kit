@@ -15,8 +15,10 @@ const failureOf = (assertion: () => unknown): string => {
     assertion();
   } catch (error) {
     expect(error).toBeInstanceOf(AssertionError);
+
     return error instanceof Error ? error.message : '';
   }
+
   throw new Error('The scenario was expected to fail');
 };
 
@@ -95,6 +97,7 @@ describe('asynchronous scenarios', () => {
   it('awaits an asynchronous arrangement', async () => {
     const loaded = scenario(async () => {
       await later();
+
       return anOrder().paid().build();
     });
 
@@ -166,6 +169,7 @@ describe('failure messages', () => {
         .when((order) => order.addLine({ sku: 'pen', quantity: 1 }, at))
         .thenEvents([OrderPaid]),
     );
+
     expect(message).toContain('event 1: expected an instance of OrderPaid, recorded ordering.order.line-added');
 
     expect(failureOf(() => paying().thenEvents(['ordering.order.shipped']))).toContain(
@@ -191,6 +195,7 @@ describe('failure messages', () => {
     expect(failureOf(() => payingTwice().thenError(EmptyOrder))).toBe(
       'Expected the action to fail with EmptyOrder, but it failed with OrderAlreadyPaid (code ORDER_ALREADY_PAID): Order order-1 is already paid.',
     );
+
     expect(failureOf(() => payingTwice().thenError('EMPTY_ORDER'))).toContain(
       'Expected the action to fail with code EMPTY_ORDER',
     );
@@ -202,6 +207,7 @@ describe('failure messages', () => {
 
     expect(failureOf(() => payingTwice().thenEventNames([]))).toContain(`Expected events, ${unexpected}`);
     expect(failureOf(() => payingTwice().thenNoEvent())).toContain(`Expected no event, ${unexpected}`);
+
     expect(failureOf(() => payingTwice().thenState(() => undefined))).toContain(
       `Expected a state, ${unexpected}`,
     );

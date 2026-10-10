@@ -1,7 +1,10 @@
 import { anonymousActor } from '@ddd-ts-kit/kernel';
 import { ContractSuite, type Awaitable, type ContractRunner } from '@ddd-ts-kit/testing/contracts';
-import type { AccessScope, Authorizer, CheckRequest, Decision } from '../authorizer.js';
-import type { Permission } from '../permissions.js';
+import type { AccessScope } from '../authorization/access-scope.js';
+import type { Authorizer } from '../authorization/authorizer.js';
+import type { CheckRequest } from '../authorization/check-request.js';
+import type { Decision } from '../authorization/decision.js';
+import type { Permission } from '../permissions/permission.js';
 
 export interface AuthorizerFixture {
   readonly authorizer: Authorizer;
@@ -121,7 +124,9 @@ class AuthorizerSuite extends ContractSuite<AuthorizerFixture> {
   private async scopeOf({ actor, permission, resource }: CheckRequest): Promise<AccessScope | undefined> {
     const { authorizer } = this.subject;
     const resourceType = resource?.type ?? this.subject.granted.resource?.type;
+
     if (resourceType === undefined) return undefined;
+
     return authorizer.listAccessible?.({ actor, permission, resourceType });
   }
 }
@@ -133,7 +138,10 @@ function reasonOf(decision: Decision): string {
 /** A filter is for the read port to apply: nothing here can tell what it covers. */
 function covers(scope: AccessScope, id: string | undefined): 'yes' | 'no' | 'unknown' {
   if (scope.kind === 'all') return 'yes';
+
   if (scope.kind === 'none') return 'no';
+
   if (scope.kind === 'filter' || id === undefined) return 'unknown';
+
   return scope.ids.includes(id) ? 'yes' : 'no';
 }

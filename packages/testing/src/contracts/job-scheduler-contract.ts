@@ -1,5 +1,7 @@
 import type { ExecutionContext, ExecutionScope, JobExecution, JobScheduler } from '@ddd-ts-kit/kernel';
-import { ContractSuite, type Awaitable, type ContractRunner } from './suite.js';
+import type { Awaitable } from './awaitable.js';
+import type { ContractRunner } from './contract-runner.js';
+import { ContractSuite } from './contract-suite.js';
 
 export interface JobSchedulerUnderContract {
   readonly scheduler: JobScheduler;
@@ -40,6 +42,7 @@ class JobSchedulerSuite extends ContractSuite<JobSchedulerUnderContract> {
     this.afterEach(async () => {
       await this.scheduler.stop();
     });
+
     this.registers();
     this.runsOnDemand();
     this.runsByTime();
@@ -75,6 +78,7 @@ class JobSchedulerSuite extends ContractSuite<JobSchedulerUnderContract> {
   private runsOnDemand(): void {
     this.it('runs a job at once when asked, started or not, and says what became of it', async () => {
       const executions: JobExecution[] = [];
+
       this.scheduler.register({ name: REMINDERS, schedule: EVERY_SECOND, run: async (execution) => void executions.push(execution) });
 
       const run = await this.scheduler.runNow(REMINDERS);
@@ -87,6 +91,7 @@ class JobSchedulerSuite extends ContractSuite<JobSchedulerUnderContract> {
 
     this.it('runs a disabled job when asked, and never by time', async () => {
       let runs = 0;
+
       this.scheduler.register({ name: REMINDERS, schedule: EVERY_SECOND, enabled: false, run: async () => void (runs += 1) });
       await this.scheduler.start();
 
@@ -110,6 +115,7 @@ class JobSchedulerSuite extends ContractSuite<JobSchedulerUnderContract> {
   private runsByTime(): void {
     this.it('runs nothing until it is started, then each job when it is due', async () => {
       let runs = 0;
+
       this.scheduler.register({ name: REMINDERS, schedule: EVERY_SECOND, run: async () => void (runs += 1) });
 
       await this.subject.elapse(1_500);
@@ -123,12 +129,14 @@ class JobSchedulerSuite extends ContractSuite<JobSchedulerUnderContract> {
 
     this.it('runs nothing more once stopped', async () => {
       let runs = 0;
+
       this.scheduler.register({ name: REMINDERS, schedule: EVERY_SECOND, run: async () => void (runs += 1) });
       await this.scheduler.start();
       await this.subject.elapse(1_500);
 
       await this.scheduler.stop();
       const before = runs;
+
       await this.subject.elapse(2_500);
 
       this.expect(runs).toBe(before);
@@ -139,9 +147,11 @@ class JobSchedulerSuite extends ContractSuite<JobSchedulerUnderContract> {
     this.it('does not start a job again while its previous run is in progress', async () => {
       let started = 0;
       let finish = (): void => undefined;
+
       const blocked = new Promise<void>((resolve) => {
         finish = resolve;
       });
+
       this.scheduler.register({ name: EXPORT, schedule: EVERY_SECOND, run: () => ((started += 1), blocked) });
       await this.scheduler.start();
 
@@ -155,6 +165,7 @@ class JobSchedulerSuite extends ContractSuite<JobSchedulerUnderContract> {
   private isolatesFailures(): void {
     this.it('answers failed with the code of the error, never rejecting, and keeps running the other jobs', async () => {
       let runs = 0;
+
       this.scheduler.register({ name: EXPORT, schedule: EVERY_SECOND, run: () => Promise.reject(new CodedFailure('the ledger of ACME is closed')) });
       this.scheduler.register({ name: REMINDERS, schedule: EVERY_SECOND, run: async () => void (runs += 1) });
       await this.scheduler.start();
@@ -183,12 +194,15 @@ class JobSchedulerSuite extends ContractSuite<JobSchedulerUnderContract> {
   private opensAScope(): void {
     this.it('runs each job in an execution context of its own: origin schedule, the system actor of the job', async () => {
       const seen: (ExecutionContext | undefined)[] = [];
+
       this.scheduler.register({ name: REMINDERS, schedule: EVERY_SECOND, run: async () => void seen.push(this.subject.scope.current()) });
 
       const first = await this.scheduler.runNow(REMINDERS);
+
       await this.scheduler.runNow(REMINDERS);
 
       const [context, next] = seen;
+
       this.expect([context?.origin, context?.actor.id, context?.actor.type]).toEqual(['schedule', `system:${REMINDERS}`, 'system']);
       this.expect(context?.scheduledAt?.getTime()).toBe(first.scheduledAt.getTime());
       this.expect(typeof context?.correlationId === 'string' && context.correlationId !== next?.correlationId).toBe(true);
@@ -199,6 +213,7 @@ class JobSchedulerSuite extends ContractSuite<JobSchedulerUnderContract> {
 function codeOf(attempt: () => unknown): unknown {
   try {
     attempt();
+
     return undefined;
   } catch (error) {
     return typeof error === 'object' && error !== null && 'code' in error ? error.code : error;

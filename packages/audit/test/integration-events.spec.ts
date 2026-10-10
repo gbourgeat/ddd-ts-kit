@@ -10,9 +10,12 @@ import {
 } from '@ddd-ts-kit/kernel';
 import { createEventRegistry, defineIntegrationEvent, subscribeAll } from '@ddd-ts-kit/events';
 import { InMemoryAuditTrail, auditIntegrationEvents, type AuditRecord, type AuditTrail } from '../src/index.js';
-import { NOW, StagingUnitOfWork, TransactionalAuditTrail, ada, requestOf } from './support/fixtures.js';
+import { NOW, ada, requestOf } from './support/fixtures.js';
+import { StagingUnitOfWork } from './support/staging-unit-of-work.js';
+import { TransactionalAuditTrail } from './support/transactional-audit-trail.js';
 
 const anything = { parse: (input: unknown) => ok(input), toJsonSchema: () => ({}) };
+
 const registry = createEventRegistry([
   defineIntegrationEvent({ type: 'scheduling.appointment.cancelled', version: 1, payload: anything }),
   defineIntegrationEvent({ type: 'scheduling.appointment.cancelled', version: 2, payload: anything }),
@@ -46,6 +49,7 @@ describe('auditIntegrationEvents', () => {
   it('records that the event happened from its envelope alone, never its payload', async () => {
     const trail = new InMemoryAuditTrail();
     const { bus, ...options } = wiring(trail);
+
     subscribeAll(bus, auditIntegrationEvents(trail, { ...options, registry }));
 
     await bus.publish([cancelled('evt-1', { correlationId: 'correlation-9' })]);
@@ -69,12 +73,14 @@ describe('auditIntegrationEvents', () => {
         hash: trail.entries[0]?.hash,
       },
     ]);
+
     expect(JSON.stringify(trail.entries)).not.toContain('lin@example.org');
   });
 
   it('records a redelivered event once, and each event of a type', async () => {
     const trail = new InMemoryAuditTrail();
     const { bus, ...options } = wiring(trail);
+
     subscribeAll(bus, auditIntegrationEvents(trail, { ...options, registry }));
 
     await bus.publish([cancelled('evt-1'), cancelled('evt-1'), cancelled('evt-2', { version: 2 })]);
@@ -86,6 +92,7 @@ describe('auditIntegrationEvents', () => {
   it('falls back on the id of the event when it carries no correlation', async () => {
     const trail = new InMemoryAuditTrail();
     const { bus, ...options } = wiring(trail);
+
     subscribeAll(bus, auditIntegrationEvents(trail, { ...options, registry }));
 
     await bus.publish([cancelled('evt-1')]);
@@ -97,6 +104,7 @@ describe('auditIntegrationEvents', () => {
     const trail = new InMemoryAuditTrail();
     const { bus, ...options } = wiring(trail);
     const scope = new FixedExecutionScope(requestOf(ada, { origin: 'event', correlationId: 'from-the-boundary' }));
+
     subscribeAll(bus, auditIntegrationEvents(trail, { ...options, registry, scope, consumer: 'audit-trail' }));
 
     await bus.publish([cancelled('evt-1', { correlationId: 'from-the-envelope' })]);
@@ -108,20 +116,26 @@ describe('auditIntegrationEvents', () => {
       causationId: 'evt-1',
     });
   });
+});
 
+describe('auditIntegrationEvents when the entry cannot be written or committed', () => {
   it('records the redelivery of an event whose entry could not be written the first time', async () => {
     const committed = new InMemoryAuditTrail();
     const failing = { times: 1 };
+
     const flaky: AuditTrail = {
       record: async (record: AuditRecord) => {
         if (failing.times > 0) {
           failing.times -= 1;
           throw new Error('The audit store is unreachable');
         }
+
         await committed.record(record);
       },
     };
+
     const { bus, ...options } = wiring(flaky);
+
     subscribeAll(bus, auditIntegrationEvents(flaky, { ...options, registry }));
 
     await expect(bus.publish([cancelled('evt-1')])).rejects.toThrow(AggregateError);
@@ -135,6 +149,7 @@ describe('auditIntegrationEvents', () => {
     const unitOfWork = new StagingUnitOfWork();
     const trail = new TransactionalAuditTrail(unitOfWork, committed);
     const { bus, ...options } = wiring(trail);
+
     subscribeAll(bus, auditIntegrationEvents(trail, { ...options, registry, unitOfWork }));
 
     unitOfWork.failOnCommit = true;

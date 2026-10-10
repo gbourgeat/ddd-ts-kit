@@ -32,6 +32,7 @@ describe('aSession', () => {
       authenticationMethod: 'password',
       extensions: {},
     });
+
     expect(aSession().build().id).toBe('session-2');
   });
 
@@ -61,6 +62,7 @@ describe('aSession', () => {
       timeZone: 'Europe/Paris',
       extensions: {},
     });
+
     expect(isImpersonated(session)).toBe(true);
     expect(isExpired(session, new Date('2026-01-01T19:59:59.000Z'))).toBe(false);
   });
@@ -153,6 +155,7 @@ describe('createTestBuses', () => {
 
     expect(executionScope.require()).toMatchObject({ correlationId: 'test-correlation', origin: 'test' });
     expect(actorContext.require().id).toBe('test-user');
+
     expect(stampCreation(executionScope, clock)).toEqual({
       createdAt: clock.now(),
       createdBy: 'test-user',

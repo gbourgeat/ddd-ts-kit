@@ -1,81 +1,56 @@
-import type { DomainEvent } from './domain/domain-event.js';
-import type { DomainEventHandler, IntegrationEventHandler } from './declarations/event-handlers.js';
-
-export { token, describeToken, type Token } from './declarations/token.js';
-export {
-  ACTOR_CONTEXT,
-  CACHE,
-  CLOCK,
-  COMMAND_BUS,
-  DOMAIN_EVENTS,
-  EVENT_BUS,
-  EVENT_PUBLISHER,
-  EVENT_SUBSCRIBER,
-  EXECUTION_SCOPE,
-  ID_GENERATOR,
-  JOB_SCHEDULER,
-  LOCK,
-  LOGGER,
-  METRICS,
-  PROCESSED_EVENTS,
-  QUERY_BUS,
-  RATE_LIMITER,
-  UNIT_OF_WORK,
-} from './declarations/standard-tokens.js';
-export type {
-  AccessDeclaration,
-  AuditedFieldHint,
-  BindingAspect,
-  BindingAspectInfo,
-  Declaration,
-  DeclaredClass,
-  DeclaredPolicy,
-  DomainEventHandlerDeclaration,
-  DomainEventHandlerUse,
-  DomainEventType,
-  EventContract,
-  HandlerDeclaration,
-  IntegrationEventHandlerDeclaration,
-  IntegrationEventHandlerUse,
-  JobDeclaration,
-  MessageDeclaration,
-  MessageHandler,
-  PermissionRef,
-  PolicyDeclaration,
-  PolicyVerdict,
-  PortDeclaration,
-  ResourcePointer,
-} from './declarations/declaration.js';
-export type {
-  ClassDeclarator,
-  Dependencies,
-  DependencyList,
-  DependencyMismatch,
-  DependencyTokens,
-  MatchingDependencies,
-} from './declarations/dependencies.js';
-export {
-  DeclarationError,
-  declarationOf,
-  listDeclarations,
-  type DeclaredEntry,
-} from './declarations/registry.js';
-export { Public, Requires, type MessageDeclarator, type ProtectedOptions, type PublicOptions } from './declarations/messages.js';
-export { CommandHandler, QueryHandler } from './declarations/handlers.js';
-export {
-  DomainEventHandler,
-  IntegrationEventHandler,
-  type DomainEventHandlerOptions,
-  type IntegrationEventHandlerOptions,
-} from './declarations/event-handlers.js';
-export { Scheduled, type ScheduledOptions } from './declarations/scheduled.js';
-export type { JobExecution, JobOptions, ScheduledJob } from './application/job.js';
-export type { CronSchedule, DurationText, IntervalSchedule, JobSchedule } from './application/job-schedule.js';
-export { Adapter, Gateway, Repository, type AdapterOptions, type PortOptions } from './declarations/ports.js';
-export { Policy, type PolicyOptions } from './declarations/policy.js';
-
-/** @deprecated Renamed `IntegrationEventHandler`: the decorator and the shape of its class share one name. */
-export type IntegrationEventHandlerInstance<Payload> = IntegrationEventHandler<Payload>;
-
-/** @deprecated Renamed `DomainEventHandler`: the decorator and the shape of its class share one name. */
-export type DomainEventHandlerInstance<E extends DomainEvent> = DomainEventHandler<E>;
+export { type AdapterOptions, Adapter } from './declarations/decorators/adapter.js';
+export { CommandHandler } from './declarations/decorators/command-handler.js';
+export { type DomainEventHandlerOptions, DomainEventHandler } from './declarations/decorators/domain-event-handler.js';
+export { Gateway } from './declarations/decorators/gateway.js';
+export { type IntegrationEventHandlerOptions, IntegrationEventHandler } from './declarations/decorators/integration-event-handler.js';
+export type { MessageDeclarator } from './declarations/decorators/message-declarator.js';
+export { type PolicyOptions, Policy } from './declarations/decorators/policy.js';
+export type { PortOptions } from './declarations/decorators/port-options.js';
+export { type PublicOptions, Public } from './declarations/decorators/public.js';
+export { QueryHandler } from './declarations/decorators/query-handler.js';
+export { Repository } from './declarations/decorators/repository.js';
+export { type ProtectedOptions, Requires } from './declarations/decorators/requires.js';
+export { type ScheduledOptions, Scheduled } from './declarations/decorators/scheduled.js';
+export type { ClassDeclarator } from './declarations/dependencies/class-declarator.js';
+export type { ConcreteDependency } from './declarations/dependencies/concrete-dependency.js';
+export type { Dependencies } from './declarations/dependencies/dependencies.js';
+export type { DependencyList } from './declarations/dependencies/dependency-list.js';
+export type { DependencyMismatch } from './declarations/dependencies/dependency-mismatch.js';
+export type { DependencyTokens } from './declarations/dependencies/dependency-tokens.js';
+export type { MatchingDependencies } from './declarations/dependencies/matching-dependencies.js';
+export type { StandIns } from './declarations/dependencies/stand-ins.js';
+export type { AccessDeclaration } from './declarations/model/access-declaration.js';
+export type { AuditedFieldHint } from './declarations/model/audited-field-hint.js';
+export type { BindingAspectInfo } from './declarations/model/binding-aspect-info.js';
+export type { BindingAspect } from './declarations/model/binding-aspect.js';
+export type { Declaration } from './declarations/model/declaration.js';
+export type { DeclaredClass } from './declarations/model/declared-class.js';
+export type { DeclaredPolicy } from './declarations/model/declared-policy.js';
+export type { DomainEventHandlerDeclaration } from './declarations/model/domain-event-handler-declaration.js';
+export type { DomainEventHandlerUse } from './declarations/model/domain-event-handler-use.js';
+export type { DomainEventType } from './declarations/model/domain-event-type.js';
+export type { EventContract } from './declarations/model/event-contract.js';
+export type { HandlerDeclaration } from './declarations/model/handler-declaration.js';
+export type { IntegrationEventHandlerDeclaration } from './declarations/model/integration-event-handler-declaration.js';
+export type { IntegrationEventHandlerUse } from './declarations/model/integration-event-handler-use.js';
+export type { JobDeclaration } from './declarations/model/job-declaration.js';
+export type { MessageDeclaration } from './declarations/model/message-declaration.js';
+export type { MessageHandler } from './declarations/model/message-handler.js';
+export type { PermissionRef } from './declarations/model/permission-ref.js';
+export type { PolicyDeclaration } from './declarations/model/policy-declaration.js';
+export type { PolicyVerdict } from './declarations/model/policy-verdict.js';
+export type { PortDeclaration } from './declarations/model/port-declaration.js';
+export type { ResourcePointer } from './declarations/model/resource-pointer.js';
+export { DeclarationError } from './declarations/registry/declaration-error.js';
+export { declarationOf } from './declarations/registry/declaration-of.js';
+export type { DeclaredEntry } from './declarations/registry/declared-entry.js';
+export { listDeclarations } from './declarations/registry/list-declarations.js';
+export { describeToken } from './declarations/token/describe-token.js';
+export { portDefect } from './declarations/token/port-defect.js';
+export { tokenIdentity } from './declarations/token/token-identity.js';
+export type { Token } from './declarations/token/token.js';
+export type { DurationText } from './application/scheduling/duration-text.js';
+export type { JobExecution } from './application/scheduling/job-execution.js';
+export type { JobOptions } from './application/scheduling/job-options.js';
+export type { IntervalSchedule, CronSchedule, JobSchedule } from './application/scheduling/job-schedule.js';
+export type { ScheduledJob } from './application/scheduling/scheduled-job.js';

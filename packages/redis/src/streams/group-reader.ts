@@ -1,13 +1,19 @@
 import type { Redis } from 'ioredis';
 import { inEventScope, type IntegrationEventCallback, type Subscription } from '@ddd-ts-kit/kernel';
-import { closeRedis } from '../connection.js';
-import { entriesByStream } from './codec.js';
-import { BrokerUnavailableError, EventBusClosedError, failureCode } from './errors.js';
-import { reconnectDelay, type Settings } from './options.js';
-import { claimDue } from './redelivery.js';
+import { closeRedis } from '../connection/close-redis.js';
+import { claimDue, type RedeliverySettings } from './claim-due.js';
+import { entriesByStream } from './codec/entries-by-stream.js';
+import type { Delivery } from './delivery.js';
+import { BrokerUnavailableError } from './errors/broker-unavailable-error.js';
+import { EventBusClosedError } from './errors/event-bus-closed-error.js';
+import { failureCode } from './errors/failure-code.js';
+import { reconnectDelay } from './options/reconnect-delay.js';
+import type { Settings } from './options/settings.js';
 import type { ServerLink } from './server-link.js';
-import { Settlement, type Delivery } from './settlement.js';
-import { createGroup, groupOf, type ConsumerBinding } from './topology.js';
+import { Settlement } from './settlement.js';
+import type { ConsumerBinding } from './topology/consumer-binding.js';
+import { createGroup } from './topology/create-group.js';
+import { groupOf } from './topology/group-of.js';
 
 interface StreamSubscription {
   readonly type: string;
@@ -24,47 +30,58 @@ const NO_HANDLER: ReadonlySet<IntegrationEventCallback> = new Set();
  * one at a time.
  */
 export class GroupReader {
-  readonly #subscriptions = new Map<string, StreamSubscription>();
-  readonly #declared = new Set<string>();
-  readonly #settlement: Settlement;
-  #running: Promise<void> | undefined;
-  #interrupt: (() => void) | undefined;
-  #stopping = false;
-  #inFlight = 0;
-  #failures = 0;
-  #sweptAt = 0;
+  private readonly subscriptions = new Map<string, StreamSubscription>();
+
+  private readonly declared = new Set<string>();
+
+  private readonly settlement: Settlement;
+
+  private running: Promise<void> | undefined;
+
+  private interrupt: (() => void) | undefined;
+
+  private stopping = false;
+
+  private unsettled = 0;
+
+  private failures = 0;
+
+  private sweptAt = 0;
 
   constructor(
     private readonly consumer: string,
     private readonly link: ServerLink,
     private readonly settings: Settings,
   ) {
-    this.#settlement = new Settlement(link.client, { ...settings, consumer });
+    this.settlement = new Settlement(link.client, { ...settings, consumer });
   }
 
+  /** Entries read by this reader and not settled yet. */
   get inFlight(): number {
-    return this.#inFlight;
+    return this.unsettled;
   }
 
   get idle(): boolean {
-    return this.#subscriptions.size === 0;
+    return this.subscriptions.size === 0;
   }
 
   bindings(): ConsumerBinding[] {
-    return [...this.#subscriptions.values()].map(({ type }) => ({ consumer: this.consumer, type }));
+    return [...this.subscriptions.values()].map(({ type }) => ({ consumer: this.consumer, type }));
   }
 
   subscribe(type: string, handler: IntegrationEventCallback): Subscription {
     const stream = this.settings.streamOf(type);
-    const subscription = this.#subscriptions.get(stream) ?? { type, handlers: new Set() };
+    const subscription = this.subscriptions.get(stream) ?? { type, handlers: new Set() };
     const { scope } = this.settings;
     const scoped = scope === undefined ? handler : inEventScope(scope, { consumer: this.consumer }, handler);
+
     subscription.handlers.add(scoped);
-    this.#subscriptions.set(stream, subscription);
-    this.#running ??= this.#run();
+    this.subscriptions.set(stream, subscription);
+    this.running ??= this.run();
+
     return {
       unsubscribe: () => {
-        this.#remove(stream, scoped);
+        this.remove(stream, scoped);
       },
     };
   }
@@ -73,85 +90,102 @@ export class GroupReader {
   async declare(client: Redis): Promise<void> {
     for (const { consumer, type } of this.bindings()) {
       const group = groupOf(this.settings, { consumer, type });
-      if (!this.#declared.has(group.stream)) {
+
+      if (!this.declared.has(group.stream)) {
         await createGroup(client, group);
-        this.#declared.add(group.stream);
+        this.declared.add(group.stream);
       }
     }
   }
 
   /** Reads nothing more, lets the batch in progress finish and settle, then leaves the group. */
   async stop(): Promise<void> {
-    this.#stopping = true;
-    this.#interrupt?.();
-    await this.#running;
+    this.stopping = true;
+    this.interrupt?.();
+    await this.running;
   }
 
   // The group stays, with its position: the consumer keeps accumulating, it only stopped reading.
-  #remove(stream: string, handler: IntegrationEventCallback): void {
-    const subscription = this.#subscriptions.get(stream);
+  private remove(stream: string, handler: IntegrationEventCallback): void {
+    const subscription = this.subscriptions.get(stream);
+
     subscription?.handlers.delete(handler);
-    if (subscription?.handlers.size === 0) this.#subscriptions.delete(stream);
+
+    if (subscription?.handlers.size === 0) this.subscriptions.delete(stream);
   }
 
-  async #run(): Promise<void> {
+  private async run(): Promise<void> {
     const reader = this.link.reader();
-    while (!this.#stopping) {
+
+    while (!this.stopping) {
       try {
-        await this.#turn(reader);
-        this.#failures = 0;
+        await this.turn(reader);
+        this.failures = 0;
       } catch (error) {
-        await this.#recover(error);
+        await this.recover(error);
       }
     }
-    await this.#leave(reader);
+
+    await this.leave(reader);
   }
 
-  async #turn(reader: Redis): Promise<void> {
+  private async turn(reader: Redis): Promise<void> {
     await this.declare(await this.link.ready());
-    const streams = [...this.#subscriptions.keys()];
-    if (this.#sweepIsDue()) {
-      const due = await Promise.all(streams.map((stream) => claimDue(reader, stream, this.#redelivery())));
-      await this.#handle(due.flat());
+
+    const streams = [...this.subscriptions.keys()];
+
+    if (this.sweepIsDue()) {
+      const due = await Promise.all(streams.map((stream) => claimDue(reader, stream, this.redelivery())));
+
+      await this.handle(due.flat());
     }
-    if (!this.#stopping && streams.length > 0) {
-      await this.#handle(await this.#read(reader, streams));
+
+    if (!this.stopping && streams.length > 0) {
+      await this.handle(await this.read(reader, streams));
     }
   }
 
-  #sweepIsDue(): boolean {
+  private sweepIsDue(): boolean {
     const { blockMs, retry } = this.settings;
-    if (Date.now() - this.#sweptAt < Math.min(blockMs, retry.delayMs)) return false;
-    this.#sweptAt = Date.now();
+
+    if (Date.now() - this.sweptAt < Math.min(blockMs, retry.delayMs)) return false;
+
+    this.sweptAt = Date.now();
+
     return true;
   }
 
-  #redelivery(): Parameters<typeof claimDue>[2] {
+  private redelivery(): RedeliverySettings {
     const { instance, batchSize, retry } = this.settings;
     // Never below the retry delay: an entry waiting for its retry is not an abandoned one.
     const visibilityTimeoutMs = Math.max(this.settings.visibilityTimeoutMs, retry.delayMs);
+
     return { consumer: this.consumer, instance, batchSize, retryDelayMs: retry.delayMs, visibilityTimeoutMs };
   }
 
-  async #handle(deliveries: readonly Delivery[]): Promise<void> {
-    this.#inFlight += deliveries.length;
+  private async handle(deliveries: readonly Delivery[]): Promise<void> {
+    this.unsettled += deliveries.length;
+
     const streams = [...new Set(deliveries.map((delivery) => delivery.stream))];
-    await Promise.all(streams.map((stream) => this.#inOrder(deliveries.filter((delivery) => delivery.stream === stream))));
+
+    await Promise.all(streams.map((stream) => this.inOrder(deliveries.filter((delivery) => delivery.stream === stream))));
   }
 
-  async #inOrder(deliveries: readonly Delivery[]): Promise<void> {
+  private async inOrder(deliveries: readonly Delivery[]): Promise<void> {
     for (const delivery of deliveries) {
-      const handlers = this.#subscriptions.get(delivery.stream)?.handlers ?? NO_HANDLER;
-      await this.#settlement.settle(delivery, handlers);
-      this.#inFlight -= 1;
+      const handlers = this.subscriptions.get(delivery.stream)?.handlers ?? NO_HANDLER;
+
+      await this.settlement.settle(delivery, handlers);
+      this.unsettled -= 1;
     }
   }
 
-  async #read(reader: Redis, streams: readonly string[]): Promise<Delivery[]> {
+  private async read(reader: Redis, streams: readonly string[]): Promise<Delivery[]> {
     const { instance, batchSize, blockMs } = this.settings;
     const ids = streams.map(() => '>');
     // The named command, not `call`: ioredis maps the reply of the commands it knows to its classic shape.
     const reply = await reader.xreadgroup('GROUP', this.consumer, instance, 'COUNT', batchSize, 'BLOCK', blockMs, 'STREAMS', ...streams, ...ids);
+
     return [...entriesByStream(reply)].flatMap(([stream, entries]) => entries.map((entry) => ({ stream, entry, attempt: 1 })));
   }
 
@@ -159,28 +193,32 @@ export class GroupReader {
    * After a failure the groups are created again before the next read: a server that came
    * back without its data has lost them. The link already reported a connection that is down.
    */
-  async #recover(error: unknown): Promise<void> {
-    this.#declared.clear();
+  private async recover(error: unknown): Promise<void> {
+    this.declared.clear();
+
     if (!(error instanceof BrokerUnavailableError) && !(error instanceof EventBusClosedError)) {
       this.settings.onFailure({ kind: 'connection', code: failureCode(error) });
     }
-    this.#failures += 1;
-    await this.#rest(reconnectDelay(this.settings.reconnect, this.#failures));
+
+    this.failures += 1;
+    await this.rest(reconnectDelay(this.settings.reconnect, this.failures));
   }
 
-  #rest(ms: number): Promise<void> {
-    if (this.#stopping) return Promise.resolve();
+  private rest(ms: number): Promise<void> {
+    if (this.stopping) return Promise.resolve();
+
     return new Promise((resolve) => {
       const timer = setTimeout(resolve, ms);
-      this.#interrupt = () => {
+
+      this.interrupt = () => {
         clearTimeout(timer);
         resolve();
       };
     });
   }
 
-  async #leave(reader: Redis): Promise<void> {
-    await this.#retire().catch(() => undefined);
+  private async leave(reader: Redis): Promise<void> {
+    await this.retire().catch(() => undefined);
     await closeRedis(reader);
   }
 
@@ -188,11 +226,13 @@ export class GroupReader {
    * Removes this process from its groups, where it leaves nothing pending: deleting a
    * consumer drops its pending entries, and those must stay for another instance to claim.
    */
-  async #retire(): Promise<void> {
+  private async retire(): Promise<void> {
     const { client } = this.link;
     const { instance } = this.settings;
-    for (const stream of this.#declared) {
+
+    for (const stream of this.declared) {
       const pending = await client.xpending(stream, this.consumer, '-', '+', 1, instance);
+
       if (pending.length === 0) await client.xgroup('DELCONSUMER', stream, this.consumer, instance);
     }
   }

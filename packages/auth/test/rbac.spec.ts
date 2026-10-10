@@ -90,6 +90,7 @@ describe('RoleBasedAuthorizer role hierarchy', () => {
     roles: { clerk: [read], accountant: [issue], controller: [voiding], auditor: [] },
     inherits: { accountant: ['clerk'], controller: ['accountant'], partner: ['controller', 'auditor'] },
   });
+
   const allowed = async (role: string, permission: Permission = read) =>
     (await authorizer.check({ actor: { ...ada, roles: [role] }, permission })).allowed;
 
@@ -124,7 +125,9 @@ describe('RoleBasedAuthorizer tenant check', () => {
     tenantOf: tenantOfContext,
     crossTenantRoles: ['operator'],
   });
+
   const operator: Actor = { id: 'ops', type: 'user', roles: ['operator'], attributes: {} };
+
   const about = (actor: Actor, tenantId?: string) =>
     authorizer.check({ actor, permission: read, ...(tenantId === undefined ? {} : { context: { tenantId } }) });
 

@@ -74,25 +74,62 @@ to pass to `knex.schema.createSchemaIfNotExists`, `knex.schema.withSchema` and
 
 ## Composition root
 
+`createKnexUnitOfWork(db)` gives one object that is two ports: the kernel `UnitOfWork`, and
+`KnexContext`, the handle repositories and stores run their queries on. Bind it to both:
+
 ```ts
-// main.ts
+// platform/database/persistence.module.ts
 import knex from 'knex';
-import { InMemoryCommandBus, SystemClock, unitOfWorkMiddleware } from '@ddd-ts-kit/kernel';
-import { OutboxPublisher, OutboxRelay } from '@ddd-ts-kit/events';
-import { createKnexUnitOfWork, KnexOutboxStore, KnexProcessedEventStore } from '@ddd-ts-kit/knex';
+import { defineContextModule } from '@ddd-ts-kit/di';
+import { IntegrationEventPublisher, ProcessedEventStore, UnitOfWork } from '@ddd-ts-kit/kernel';
+import { OutboxPublisher, OutboxStore } from '@ddd-ts-kit/events';
+import {
+  createKnexUnitOfWork,
+  KnexContext,
+  KnexOutboxStore,
+  KnexProcessedEventStore,
+} from '@ddd-ts-kit/knex';
 
 const db = knex({ client: 'pg', connection: process.env.DATABASE_URL });
 const unitOfWork = createKnexUnitOfWork(db);
 
-// Every command runs in one transaction; handlers do not know it.
-const commandBus = new InMemoryCommandBus().use(unitOfWorkMiddleware(unitOfWork));
+export const persistenceModule = defineContextModule({
+  name: 'persistence',
+  register(builder) {
+    builder.rebind(UnitOfWork).toValue(unitOfWork);
+    builder.bind(KnexContext).toValue(unitOfWork);
+    builder.bind(OutboxStore).toClass(KnexOutboxStore, [KnexContext]);
+    builder.rebind(ProcessedEventStore).toClass(KnexProcessedEventStore, [KnexContext]);
+    builder.rebind(IntegrationEventPublisher).toClass(OutboxPublisher, [OutboxStore]);
+  },
+});
+```
 
-const outboxStore = new KnexOutboxStore(unitOfWork, { schema: 'messaging' });
-const publisher = new OutboxPublisher(outboxStore); // what handlers publish to
-const processed = new KnexProcessedEventStore(unitOfWork, { schema: 'messaging' });
-const invoices = new KnexInvoiceRepository(unitOfWork);
+```ts
+// main.ts
+const app = createApplication({ modules: [kernelModule(), persistenceModule, billingModule] });
+```
 
-const relay = new OutboxRelay({ store: outboxStore, publisher: broker, clock: new SystemClock() });
+List the module after `kernelModule()`: `rebind` replaces its in-memory defaults. The command
+bus of the kernel module runs every command in the bound `UnitOfWork`; handlers do not know it.
+
+`toClass` builds the stores with their default options (tables `outbox` and
+`processed_events` in the default schema of the connection). A store with options is built by
+a factory:
+
+```ts
+builder
+  .bind(OutboxStore)
+  .toFactory((resolve) => new KnexOutboxStore(resolve(KnexContext), { schema: 'messaging' }));
+builder
+  .rebind(ProcessedEventStore)
+  .toFactory((resolve) => new KnexProcessedEventStore(resolve(KnexContext), { schema: 'messaging' }));
+```
+
+The relay reads the same store and hands the records to the broker:
+
+```ts
+const relay = new OutboxRelay({ store: app.resolve(OutboxStore), publisher: broker, clock: app.resolve(Clock) });
 relay.start({ intervalMs: 500 });
 ```
 
@@ -103,21 +140,28 @@ rolled back with the business write: that is the whole point of the outbox.
 `createKnexUnitOfWork(db, { isolationLevel: 'repeatable read' })` forwards the transaction
 configuration of knex.
 
+`KnexContext` is an abstract class, so it is its own injection token. A project with two
+databases gives each a class of its own (`export abstract class Ledger extends KnexContext {}`
+in `platform/database/`) and binds each to its unit of work.
+
 ## Repository
 
-A repository receives the context, never a transaction. `executor()` is the transaction of the
-unit of work when there is one and the root knex instance otherwise.
+The port lives in the domain, the adapter in infrastructure. A repository receives the context,
+never a transaction: `executor()` is the transaction of the unit of work when there is one and
+the root knex instance otherwise.
+
+```ts
+// contexts/billing-core/domain/repositories/invoice.repository.ts
+import { Repository } from '@ddd-ts-kit/kernel';
+
+export abstract class InvoiceRepository extends Repository<Invoice> {}
+```
 
 ```ts
 // contexts/billing-core/infrastructure/persistence/knex-invoice.repository.ts
 import type { Knex } from 'knex';
-import type { Repository } from '@ddd-ts-kit/kernel';
-import {
-  insertIgnoringConflict,
-  optimisticUpdate,
-  schemaNameOf,
-  type KnexContext,
-} from '@ddd-ts-kit/knex';
+import { Repository } from '@ddd-ts-kit/kernel/declarations';
+import { insertIgnoringConflict, KnexContext, optimisticUpdate, schemaNameOf } from '@ddd-ts-kit/knex';
 
 const BILLING = schemaNameOf('billing-core'); // billing_core
 
@@ -128,35 +172,45 @@ interface InvoiceRow {
   version: number;
 }
 
-export class KnexInvoiceRepository implements Repository<Invoice> {
+@Repository(InvoiceRepository, [KnexContext])
+export class KnexInvoiceRepository implements InvoiceRepository {
   constructor(private readonly context: KnexContext) {}
 
   async findById(id: string): Promise<Invoice | undefined> {
-    const row = await this.#invoices().where({ id }).first();
+    const row = await this.invoices().where({ id }).first();
+
     if (row === undefined) {
       return undefined;
     }
+
     const invoice = Invoice.rehydrate(row);
     invoice.version = row.version;
+
     return invoice;
   }
 
   async save(invoice: Invoice): Promise<void> {
     await optimisticUpdate(invoice, async ({ expected, next }) => {
       const row = { ...invoice.state, version: next };
+
       if (expected === 0) {
-        const inserted = await insertIgnoringConflict(this.context.executor(), this.#invoices(), { row, conflict: 'id' });
+        const inserted = await insertIgnoringConflict(this.context.executor(), this.invoices(), { row, conflict: 'id' });
+
         return inserted ? 1 : 0;
       }
-      return this.#invoices().where({ id: invoice.id, version: expected }).update(row);
+
+      return this.invoices().where({ id: invoice.id, version: expected }).update(row);
     });
   }
 
-  #invoices(): Knex.QueryBuilder<InvoiceRow, InvoiceRow[]> {
+  private invoices(): Knex.QueryBuilder<InvoiceRow, InvoiceRow[]> {
     return this.context.executor()<InvoiceRow, InvoiceRow[]>('invoices').withSchema(BILLING);
   }
 }
 ```
+
+Without the decorator, the same binding is one line of the module of the context:
+`builder.bind(InvoiceRepository).toClass(KnexInvoiceRepository, [KnexContext])`.
 
 `optimisticUpdate` gives the version to expect and the version to write, raises a
 `ConcurrencyError` (a `DomainError` with code `CONCURRENCY_CONFLICT`) when the guarded
@@ -191,43 +245,47 @@ export async function up(knex: Knex): Promise<void> {
 ```
 
 ```ts
-import { stampCreation, stampUpdate, tenantScopeOf } from '@ddd-ts-kit/kernel';
+import { Clock, ExecutionScope, stampCreation, stampUpdate, tenantScopeOf } from '@ddd-ts-kit/kernel';
 import { auditRow, tenantRow, type AuditRow, type TenantRow } from '@ddd-ts-kit/knex';
 
 interface InvoiceRow extends VersionedInvoice, TenantRow, AuditRow {}
 
-export class KnexInvoiceRepository implements Repository<Invoice> {
+@Repository(InvoiceRepository, [KnexContext, ExecutionScope, Clock])
+export class KnexInvoiceRepository implements InvoiceRepository {
   constructor(
     private readonly context: KnexContext,
-    private readonly scope: ExecutionScope, // EXECUTION_SCOPE
+    private readonly scope: ExecutionScope,
     private readonly clock: Clock,
   ) {}
 
   async findById(id: string): Promise<Invoice | undefined> {
-    const row = await this.#invoices().where({ id, ...this.#ownTenant() }).first();
+    const row = await this.invoices().where({ id, ...this.ownTenant() }).first();
+
     return row === undefined ? undefined : InvoiceMapper.toDomain(row);
   }
 
   async save(invoice: Invoice): Promise<void> {
     await optimisticUpdate(invoice, async ({ expected, next }) => {
       const state = { ...InvoiceMapper.toRow(invoice), version: next };
-      return expected === 0 ? this.#insert(state) : this.#update(state, expected);
+
+      return expected === 0 ? this.insert(state) : this.update(state, expected);
     });
   }
 
-  async #insert(state: VersionedInvoice): Promise<number> {
-    const row = { ...state, ...this.#ownTenant(), ...auditRow(stampCreation(this.scope, this.clock)) };
-    const inserted = await insertIgnoringConflict(this.context.executor(), this.#invoices(), { row, conflict: 'id' });
+  private async insert(state: VersionedInvoice): Promise<number> {
+    const row = { ...state, ...this.ownTenant(), ...auditRow(stampCreation(this.scope, this.clock)) };
+    const inserted = await insertIgnoringConflict(this.context.executor(), this.invoices(), { row, conflict: 'id' });
+
     return inserted ? 1 : 0;
   }
 
-  #update(state: VersionedInvoice, expected: number): Promise<number> {
-    return this.#invoices()
-      .where({ id: state.id, version: expected, ...this.#ownTenant() })
+  private update(state: VersionedInvoice, expected: number): Promise<number> {
+    return this.invoices()
+      .where({ id: state.id, version: expected, ...this.ownTenant() })
       .update({ ...state, ...auditRow(stampUpdate(this.scope, this.clock)) });
   }
 
-  #ownTenant(): TenantRow {
+  private ownTenant(): TenantRow {
     return tenantRow(tenantScopeOf(this.scope));
   }
 }
@@ -236,33 +294,50 @@ export class KnexInvoiceRepository implements Repository<Invoice> {
 A list query takes the kernel `PageRequest` and answers a `Page`, in both variants:
 
 ```ts
-import { decodeCursor, encodeCursor, pageOf } from '@ddd-ts-kit/kernel';
+// contexts/billing-core/application/ports/invoice-queries.port.ts
+export abstract class InvoiceQueries {
+  abstract list(request: PageRequest<'amount'>): Promise<Page<InvoiceSummary>>;
+}
+```
 
-export class KnexInvoiceQueries {
+```ts
+// contexts/billing-core/infrastructure/persistence/knex-invoice.queries.ts
+import { ExecutionScope, encodeCursor, pageOf, tenantScopeOf } from '@ddd-ts-kit/kernel';
+import { Adapter } from '@ddd-ts-kit/kernel/declarations';
+
+@Adapter(InvoiceQueries, [KnexContext, ExecutionScope])
+export class KnexInvoiceQueries implements InvoiceQueries {
+  constructor(
+    private readonly context: KnexContext,
+    private readonly scope: ExecutionScope,
+  ) {}
+
   async list(request: PageRequest<'amount'>): Promise<Page<InvoiceSummary>> {
-    return request.kind === 'offset' ? this.#byOffset(request) : this.#byCursor(request);
+    return request.kind === 'offset' ? this.byOffset(request) : this.byCursor(request);
   }
 
-  async #byOffset(request: OffsetPageRequest<'amount'>): Promise<Page<InvoiceSummary>> {
-    const rows = await this.#ownInvoices()
+  private async byOffset(request: OffsetPageRequest<'amount'>): Promise<Page<InvoiceSummary>> {
+    const rows = await this.ownInvoices()
       .orderBy(totalOrder(directionOf(request)))
       .limit(request.limit)
       .offset(request.offset);
-    const counted = await this.#ownInvoices().count<{ total: string | number }[]>({ total: '*' }).first();
+    const counted = await this.ownInvoices().count<{ total: string | number }[]>({ total: '*' }).first();
+
     return pageOf(rows.map(toSummary), { total: Number(counted?.total ?? 0) });
   }
 
-  async #byCursor(request: CursorPageRequest<'amount'>): Promise<Page<InvoiceSummary>> {
+  private async byCursor(request: CursorPageRequest<'amount'>): Promise<Page<InvoiceSummary>> {
     const direction = directionOf(request);
-    const query = this.#ownInvoices().orderBy(totalOrder(direction)).limit(request.limit + 1);
+    const query = this.ownInvoices().orderBy(totalOrder(direction)).limit(request.limit + 1);
     const rows = await (request.cursor === undefined ? query : beyond(query, positionOf(request.cursor), direction));
     const items = rows.slice(0, request.limit);
     const last = items.at(-1);
     const more = rows.length > request.limit && last !== undefined;
+
     return pageOf(items.map(toSummary), more ? { nextCursor: encodeCursor({ amount: last.amount, id: last.id }) } : {});
   }
 
-  #ownInvoices() {
+  private ownInvoices() {
     return invoicesOf(this.context).where(tenantRow(tenantScopeOf(this.scope)));
   }
 }
@@ -278,6 +353,7 @@ const totalOrder = (direction: SortDirection) => [
 // The rows after a position, as a tuple comparison: the tie-breaker decides among equals.
 function beyond(query: Knex.QueryBuilder, { amount, id }: { amount: number; id: string }, direction: SortDirection) {
   const past = direction === 'asc' ? '>' : '<';
+
   return query.where((after) => {
     void after.where('amount', past, amount).orWhere((tied) => {
       void tied.where('amount', amount).where('id', past, id);

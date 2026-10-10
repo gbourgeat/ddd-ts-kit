@@ -39,29 +39,71 @@ export const orders = orderManagement.table('orders', {
 
 ## Composition root
 
+`DrizzleContext` is the handle repositories and stores run their queries on. It is generic
+over the drizzle database, so the project names its own database with a class, which is then
+the injection token:
+
 ```ts
-// main.ts
+// platform/database/database.ts
+import type { NodePgQueryResultHKT } from 'drizzle-orm/node-postgres';
+import { DrizzleContext } from '@ddd-ts-kit/drizzle/postgres';
+
+export abstract class Database extends DrizzleContext<NodePgQueryResultHKT> {}
+```
+
+`createDrizzleUnitOfWork(db)` gives one object that is both the kernel `UnitOfWork` and that
+`Database`. Bind it to both:
+
+```ts
+// platform/database/persistence.module.ts
 import { drizzle } from 'drizzle-orm/node-postgres';
-import { InMemoryCommandBus, SystemClock, unitOfWorkMiddleware } from '@ddd-ts-kit/kernel';
-import { OutboxPublisher, OutboxRelay } from '@ddd-ts-kit/events';
+import { defineContextModule } from '@ddd-ts-kit/di';
+import { IntegrationEventPublisher, ProcessedEventStore, UnitOfWork } from '@ddd-ts-kit/kernel';
+import { OutboxPublisher, OutboxStore } from '@ddd-ts-kit/events';
 import {
   createDrizzleUnitOfWork,
   DrizzleOutboxStore,
   DrizzleProcessedEventStore,
 } from '@ddd-ts-kit/drizzle/postgres';
+import { Database } from './database.js';
+import { outbox, processedEvents } from './schema.js';
 
 const db = drizzle(process.env.DATABASE_URL);
 const unitOfWork = createDrizzleUnitOfWork(db);
 
-// Every command runs in one transaction; handlers do not know it.
-const commandBus = new InMemoryCommandBus().use(unitOfWorkMiddleware(unitOfWork));
+export const persistenceModule = defineContextModule({
+  name: 'persistence',
+  register(builder) {
+    builder.rebind(UnitOfWork).toValue(unitOfWork);
+    builder.bind(Database).toValue(unitOfWork);
+    builder
+      .bind(OutboxStore)
+      .toFactory((resolve) => new DrizzleOutboxStore(resolve(Database), { table: outbox }));
+    builder
+      .rebind(ProcessedEventStore)
+      .toFactory((resolve) => new DrizzleProcessedEventStore(resolve(Database), { table: processedEvents }));
+    builder.rebind(IntegrationEventPublisher).toClass(OutboxPublisher, [OutboxStore]);
+  },
+});
+```
 
-const outboxStore = new DrizzleOutboxStore(unitOfWork, { table: outbox });
-const publisher = new OutboxPublisher(outboxStore); // what handlers publish to
-const processed = new DrizzleProcessedEventStore(unitOfWork, { table: processedEvents });
-const orders = new DrizzleOrderRepository(unitOfWork);
+```ts
+// main.ts
+const app = createApplication({ modules: [kernelModule(), persistenceModule, orderManagementModule] });
+```
 
-const relay = new OutboxRelay({ store: outboxStore, publisher: broker, clock: new SystemClock() });
+List the module after `kernelModule()`: `rebind` replaces its in-memory defaults. The command
+bus of the kernel module runs every command in the bound `UnitOfWork`; handlers do not know it.
+
+The factories pass the tables of the `messaging` schema. With the tables in `public`, the
+stores need no option and the class is bound directly:
+`builder.bind(OutboxStore).toClass(DrizzleOutboxStore, [Database])`,
+`builder.rebind(ProcessedEventStore).toClass(DrizzleProcessedEventStore, [Database])`.
+
+The relay reads the same store and hands the records to the broker:
+
+```ts
+const relay = new OutboxRelay({ store: app.resolve(OutboxStore), publisher: broker, clock: app.resolve(Clock) });
 relay.start({ intervalMs: 500 });
 ```
 
@@ -72,25 +114,36 @@ business write: that is the whole point of the outbox.
 
 ## Repository
 
-A repository receives the context, never a transaction. `executor()` is the transaction of the
-unit of work when there is one and `db` otherwise.
+The port lives in the domain, the adapter in infrastructure. A repository receives the
+database, never a transaction: `executor()` is the transaction of the unit of work when there
+is one and `db` otherwise.
+
+```ts
+// contexts/order-management/domain/repositories/order.repository.ts
+import { Repository } from '@ddd-ts-kit/kernel';
+
+export abstract class OrderRepository extends Repository<Order> {}
+```
 
 ```ts
 // contexts/order-management/infrastructure/persistence/drizzle-order.repository.ts
 import { and, eq } from 'drizzle-orm';
-import type { NodePgQueryResultHKT } from 'drizzle-orm/node-postgres';
-import { optimisticUpdate, type DrizzleContext } from '@ddd-ts-kit/drizzle/postgres';
+import { Repository } from '@ddd-ts-kit/kernel/declarations';
+import { optimisticUpdate } from '@ddd-ts-kit/drizzle/postgres';
 
+@Repository(OrderRepository, [Database])
 export class DrizzleOrderRepository implements OrderRepository {
-  constructor(private readonly context: DrizzleContext<NodePgQueryResultHKT>) {}
+  constructor(private readonly database: Database) {}
 
   async findById(id: string): Promise<Order | undefined> {
-    const [row] = await this.context.executor().select().from(orders).where(eq(orders.id, id));
+    const [row] = await this.database.executor().select().from(orders).where(eq(orders.id, id));
+
     return row === undefined ? undefined : OrderMapper.toDomain(row); // sets order.version
   }
 
   async save(order: Order): Promise<void> {
-    const db = this.context.executor();
+    const db = this.database.executor();
+
     await optimisticUpdate(order, async ({ expected, next }) => {
       const row = { ...OrderMapper.toRow(order), version: next };
       const written =
@@ -101,16 +154,20 @@ export class DrizzleOrderRepository implements OrderRepository {
               .set(row)
               .where(and(eq(orders.id, order.id), eq(orders.version, expected)))
               .returning({ id: orders.id });
+
       return written.length;
     });
   }
 }
 ```
 
+Without the decorator, the same binding is one line of the module of the context:
+`builder.bind(OrderRepository).toClass(DrizzleOrderRepository, [Database])`.
+
 `optimisticUpdate` gives the version to expect and the version to write, raises a
 `ConcurrencyError` (a `DomainError` with code `CONCURRENCY_CONFLICT`) when the guarded
 statement wrote no row, and moves `order.version` on otherwise. If your database was created
-with a relational schema (`drizzle(url, { schema })`), type the context as
+with a relational schema (`drizzle(url, { schema })`), declare `Database` as
 `DrizzleContext<NodePgQueryResultHKT, typeof schema>` to keep `executor().query`.
 
 ## Audit columns, tenant scoping and pages
@@ -139,39 +196,44 @@ export const invoices = contextSchema('billing-core').table(
 ```
 
 ```ts
-import { stampCreation, stampUpdate, tenantScopeOf } from '@ddd-ts-kit/kernel';
+import { Clock, ExecutionScope, stampCreation, stampUpdate, tenantScopeOf } from '@ddd-ts-kit/kernel';
+import { Repository } from '@ddd-ts-kit/kernel/declarations';
 
-export class DrizzleInvoiceRepository implements Repository<Invoice> {
+@Repository(InvoiceRepository, [Database, ExecutionScope, Clock])
+export class DrizzleInvoiceRepository implements InvoiceRepository {
   constructor(
-    private readonly context: DrizzleContext<NodePgQueryResultHKT>,
-    private readonly scope: ExecutionScope, // EXECUTION_SCOPE
+    private readonly database: Database,
+    private readonly scope: ExecutionScope,
     private readonly clock: Clock,
   ) {}
 
   async findById(id: string): Promise<Invoice | undefined> {
-    const [row] = await this.context
+    const [row] = await this.database
       .executor()
       .select()
       .from(invoices)
       .where(and(eq(invoices.id, id), ownTenant(this.scope)));
+
     return row === undefined ? undefined : InvoiceMapper.toDomain(row);
   }
 
   async save(invoice: Invoice): Promise<void> {
     await optimisticUpdate(invoice, async ({ expected, next }) => {
       const state = { ...InvoiceMapper.toRow(invoice), version: next };
-      const written = expected === 0 ? await this.#insert(state) : await this.#update(state, expected);
+      const written = expected === 0 ? await this.insert(state) : await this.update(state, expected);
+
       return written.length;
     });
   }
 
-  #insert(state: VersionedInvoice) {
+  private insert(state: VersionedInvoice) {
     const row = { ...state, ...tenantScopeOf(this.scope), ...stampCreation(this.scope, this.clock) };
-    return this.context.executor().insert(invoices).values(row).onConflictDoNothing().returning({ id: invoices.id });
+
+    return this.database.executor().insert(invoices).values(row).onConflictDoNothing().returning({ id: invoices.id });
   }
 
-  #update(state: VersionedInvoice, expected: number) {
-    return this.context
+  private update(state: VersionedInvoice, expected: number) {
+    return this.database
       .executor()
       .update(invoices)
       .set({ ...state, ...stampUpdate(this.scope, this.clock) })
@@ -186,15 +248,30 @@ const ownTenant = (scope: ExecutionScope) => eq(invoices.tenantId, tenantScopeOf
 A list query takes the kernel `PageRequest` and answers a `Page`, in both variants:
 
 ```ts
-import { decodeCursor, encodeCursor, pageOf } from '@ddd-ts-kit/kernel';
+// contexts/billing-core/application/ports/invoice-queries.port.ts
+export abstract class InvoiceQueries {
+  abstract list(request: PageRequest<'amount'>): Promise<Page<InvoiceSummary>>;
+}
+```
 
-export class DrizzleInvoiceQueries {
+```ts
+// contexts/billing-core/infrastructure/persistence/drizzle-invoice.queries.ts
+import { ExecutionScope, decodeCursor, encodeCursor, pageOf } from '@ddd-ts-kit/kernel';
+import { Adapter } from '@ddd-ts-kit/kernel/declarations';
+
+@Adapter(InvoiceQueries, [Database, ExecutionScope])
+export class DrizzleInvoiceQueries implements InvoiceQueries {
+  constructor(
+    private readonly database: Database,
+    private readonly scope: ExecutionScope,
+  ) {}
+
   list(request: PageRequest<'amount'>): Promise<Page<InvoiceSummary>> {
-    return request.kind === 'offset' ? this.#byOffset(request) : this.#byCursor(request);
+    return request.kind === 'offset' ? this.byOffset(request) : this.byCursor(request);
   }
 
-  async #byOffset(request: OffsetPageRequest<'amount'>): Promise<Page<InvoiceSummary>> {
-    const db = this.context.executor();
+  private async byOffset(request: OffsetPageRequest<'amount'>): Promise<Page<InvoiceSummary>> {
+    const db = this.database.executor();
     const rows = await db
       .select()
       .from(invoices)
@@ -202,13 +279,14 @@ export class DrizzleInvoiceQueries {
       .orderBy(...totalOrder(directionOf(request)))
       .limit(request.limit)
       .offset(request.offset);
+
     return pageOf(rows.map(toSummary), { total: await db.$count(invoices, ownTenant(this.scope)) });
   }
 
-  async #byCursor(request: CursorPageRequest<'amount'>): Promise<Page<InvoiceSummary>> {
+  private async byCursor(request: CursorPageRequest<'amount'>): Promise<Page<InvoiceSummary>> {
     const direction = directionOf(request);
     const after = request.cursor === undefined ? undefined : beyond(positionOf(request.cursor), direction);
-    const rows = await this.context
+    const rows = await this.database
       .executor()
       .select()
       .from(invoices)
@@ -218,6 +296,7 @@ export class DrizzleInvoiceQueries {
     const items = rows.slice(0, request.limit);
     const last = items.at(-1);
     const more = rows.length > request.limit && last !== undefined;
+
     return pageOf(items.map(toSummary), more ? { nextCursor: encodeCursor({ amount: last.amount, id: last.id }) } : {});
   }
 }
@@ -227,20 +306,24 @@ const directionOf = (request: PageRequest<'amount'>) => request.sort[0]?.directi
 // The primary key follows the sort field, in the same direction: the order is total.
 function totalOrder(direction: SortDirection): SQL[] {
   const toward = direction === 'asc' ? asc : desc;
+
   return [toward(invoices.amount), toward(invoices.id)];
 }
 
 // The rows after a position, as a tuple comparison: the tie-breaker decides among equals.
 function beyond({ amount, id }: { amount: number; id: string }, direction: SortDirection) {
   const past = direction === 'asc' ? gt : lt;
+
   return or(past(invoices.amount, amount), and(eq(invoices.amount, amount), past(invoices.id, id)));
 }
 
 function positionOf(cursor: string): { amount: number; id: string } {
   const { amount, id } = decodeCursor(cursor);
+
   if (typeof amount !== 'number' || typeof id !== 'string') {
     throw new InvalidPageRequestError('The cursor of a page is the nextCursor of a previous page');
   }
+
   return { amount, id };
 }
 ```

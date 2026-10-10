@@ -13,6 +13,7 @@ import { createDatabase, type TestDatabase } from './support/database.js';
 const runner = { describe, it, expect, beforeEach, afterEach };
 
 let database: TestDatabase;
+
 beforeAll(async () => {
   database = await createDatabase(
     async (knex) => {
@@ -22,12 +23,14 @@ beforeAll(async () => {
     ['messaging.outbox', 'messaging.processed_events', 'outbox', 'processed_events'],
   );
 });
+
 afterAll(async () => {
   await database.close();
 });
 
 const context = () => createKnexUnitOfWork(database.knex);
 const now = new Date('2026-03-01T10:00:00.000Z');
+
 const event = (id: string): IntegrationEvent => ({
   id,
   type: 'billing.invoice.issued',
@@ -41,6 +44,7 @@ outboxStoreContract(runner, {
   leaseMs: 30_000,
   createStore: async () => {
     await database.truncate();
+
     return new KnexOutboxStore(context(), { schema: 'messaging', leaseMs: 30_000 });
   },
 });
@@ -50,6 +54,7 @@ outboxStoreContract(runner, {
   leaseMs: 5_000,
   createStore: async () => {
     await database.truncate();
+
     return new KnexOutboxStore(context(), { leaseMs: 5_000 });
   },
 });
@@ -59,6 +64,7 @@ outboxStoreContract(runner, {
   leaseMs: 30_000,
   createStore: async () => {
     await database.truncate();
+
     return new KnexOutboxStore(context(), { schema: 'messaging', claim: 'compare-and-set' });
   },
 });
@@ -67,6 +73,7 @@ processedEventStoreContract(runner, {
   name: 'KnexProcessedEventStore in a schema of its own',
   createStore: async () => {
     await database.truncate();
+
     return new KnexProcessedEventStore(context(), { schema: 'messaging' });
   },
 });
@@ -75,6 +82,7 @@ processedEventStoreContract(runner, {
   name: 'KnexProcessedEventStore in the default schema',
   createStore: async () => {
     await database.truncate();
+
     return new KnexProcessedEventStore(context());
   },
 });
@@ -85,6 +93,7 @@ describe('createOutboxTables', () => {
       "select indexdef from pg_indexes where schemaname = 'messaging' and tablename = ? order by indexname",
       [table],
     );
+
     return rows.map((row) => row.indexdef);
   };
 
@@ -111,6 +120,7 @@ describe('createOutboxTables', () => {
 
   it('is undone by dropOutboxTables', async () => {
     const names = { outboxTable: 'outbox_tmp', processedEventsTable: 'processed_tmp' };
+
     await createOutboxTables(database.knex, names);
     expect(await database.knex.schema.hasTable('outbox_tmp')).toBe(true);
 
@@ -128,6 +138,7 @@ describe('KnexOutboxStore.claimBatch', () => {
 
   it('locks the due rows with FOR UPDATE SKIP LOCKED inside one transaction', async () => {
     const store = new KnexOutboxStore(context(), { schema: 'messaging' });
+
     await store.append([event('evt-1')]);
     database.queries.length = 0;
 
@@ -145,6 +156,7 @@ describe('KnexOutboxStore.claimBatch', () => {
 
   it('sends no lock clause when claiming by compare-and-set', async () => {
     const store = new KnexOutboxStore(context(), { schema: 'messaging', claim: 'compare-and-set' });
+
     await store.append([event('evt-1')]);
     database.queries.length = 0;
 
@@ -161,6 +173,7 @@ describe('KnexOutboxStore.claimBatch', () => {
     async (claim) => {
       const relayA = new KnexOutboxStore(context(), { schema: 'messaging', claim });
       const relayB = new KnexOutboxStore(context(), { schema: 'messaging', claim });
+
       await relayA.append(Array.from({ length: 40 }, (_, index) => event(`evt-${index}`)));
 
       const batches = await Promise.all([
@@ -171,6 +184,7 @@ describe('KnexOutboxStore.claimBatch', () => {
       ]);
 
       const ids = batches.flat().map((record) => record.event.id);
+
       expect(ids).toHaveLength(40);
       expect(new Set(ids).size).toBe(40);
       expect(await relayA.claimBatch(10, now)).toEqual([]);
@@ -182,25 +196,37 @@ describe('KnexOutboxStore.claimBatch', () => {
       // PGlite is a single session: holding a lock on one connection while claiming on another
       // needs a real server (DDD_TS_KIT_TEST_DATABASE_URL).
       test.skip();
+
       return;
     }
+
     const store = new KnexOutboxStore(context(), { schema: 'messaging' });
+
     await store.append([event('evt-1'), event('evt-2'), event('evt-3')]);
 
     const claimed = await database.knex.transaction(async (holder) => {
       await holder('outbox').withSchema('messaging').whereIn('id', ['evt-1', 'evt-2']).forUpdate();
+
       return store.claimBatch(10, now);
     });
 
     expect(claimed.map((record) => record.event.id)).toEqual(['evt-3']);
     expect((await store.claimBatch(10, now)).map((record) => record.event.id)).toEqual(['evt-1', 'evt-2']);
   });
+});
+
+describe('KnexOutboxStore: what a record keeps', () => {
+  beforeEach(async () => {
+    await database.truncate();
+  });
 
   it('stores timestamps as instants and gives them back as dates', async () => {
     const store = new KnexOutboxStore(context(), { schema: 'messaging', leaseMs: 1_000 });
+
     await store.append([event('evt-1')]);
 
     const [claimed] = await store.claimBatch(1, now);
+
     await store.markPublished(['evt-1'], now);
     const row: unknown = await database.knex('outbox').withSchema('messaging').first();
 
@@ -211,6 +237,7 @@ describe('KnexOutboxStore.claimBatch', () => {
   it('keeps a payload that is not an object as it was published', async () => {
     const store = new KnexOutboxStore(context(), { schema: 'messaging' });
     const payloads: unknown[] = ['plain text', [1, 'two', null], 42, null];
+
     await store.append(payloads.map((payload, index) => ({ ...event(`evt-${index}`), payload })));
 
     const claimed = await store.claimBatch(10, now);

@@ -19,15 +19,18 @@ const defaultOutbox = outboxTable();
 const defaultProcessed = processedEventsTable();
 
 let database: Awaited<ReturnType<typeof createDatabase>>;
+
 beforeAll(async () => {
   database = await createDatabase([outbox, processed, defaultOutbox, defaultProcessed]);
 });
+
 afterAll(async () => {
   await database.client.close();
 });
 
 const context = () => createDrizzleUnitOfWork(database.db);
 const now = new Date('2026-03-01T10:00:00.000Z');
+
 const event = (id: string): IntegrationEvent => ({
   id,
   type: 'billing.invoice.issued',
@@ -41,6 +44,7 @@ outboxStoreContract(runner, {
   leaseMs: 30_000,
   createStore: async () => {
     await database.truncate();
+
     return new DrizzleOutboxStore(context(), { table: outbox, leaseMs: 30_000 });
   },
 });
@@ -50,6 +54,7 @@ outboxStoreContract(runner, {
   leaseMs: 5_000,
   createStore: async () => {
     await database.truncate();
+
     return new DrizzleOutboxStore(context(), { leaseMs: 5_000 });
   },
 });
@@ -58,6 +63,7 @@ processedEventStoreContract(runner, {
   name: 'DrizzleProcessedEventStore in a schema of its own',
   createStore: async () => {
     await database.truncate();
+
     return new DrizzleProcessedEventStore(context(), { table: processed });
   },
 });
@@ -66,6 +72,7 @@ processedEventStoreContract(runner, {
   name: 'DrizzleProcessedEventStore in the public schema',
   createStore: async () => {
     await database.truncate();
+
     return new DrizzleProcessedEventStore(context());
   },
 });
@@ -104,15 +111,18 @@ describe('DrizzleOutboxStore.claimBatch', () => {
 
   it('locks the due rows with FOR UPDATE SKIP LOCKED inside one transaction', async () => {
     const store = new DrizzleOutboxStore(context(), { table: outbox });
+
     await store.append([event('evt-1')]);
     database.logger.queries.length = 0;
 
     await store.claimBatch(10, now);
 
     const [select, update] = database.logger.queries;
+
     expect(select).toMatch(
       /^select "id" from "messaging"\."outbox" where .*"status" = \$1 and .*"next_attempt_at" <= \$2.* order by .*"next_attempt_at", .*"sequence" limit \$3 for update skip locked$/,
     );
+
     expect(update).toMatch(/^update "messaging"\."outbox" set "attempts" = .* \+ 1, "next_attempt_at" = \$1/);
     expect(database.logger.queries).toHaveLength(2);
   });
@@ -120,6 +130,7 @@ describe('DrizzleOutboxStore.claimBatch', () => {
   it('shares the pending records between relays without overlap', async () => {
     const relayA = new DrizzleOutboxStore(context(), { table: outbox });
     const relayB = new DrizzleOutboxStore(context(), { table: outbox });
+
     await relayA.append(Array.from({ length: 10 }, (_, index) => event(`evt-${index}`)));
 
     const batches = await Promise.all([
@@ -129,6 +140,7 @@ describe('DrizzleOutboxStore.claimBatch', () => {
     ]);
 
     const ids = batches.flat().map((record) => record.event.id);
+
     expect(ids).toHaveLength(10);
     expect(new Set(ids).size).toBe(10);
     expect(await relayA.claimBatch(4, now)).toEqual([]);
@@ -136,9 +148,11 @@ describe('DrizzleOutboxStore.claimBatch', () => {
 
   it('stores timestamps as instants and gives them back as dates', async () => {
     const store = new DrizzleOutboxStore(context(), { table: outbox, leaseMs: 1_000 });
+
     await store.append([event('evt-1')]);
 
     const [claimed] = await store.claimBatch(1, now);
+
     await store.markPublished(['evt-1'], now);
     const [row] = await database.db.select().from(outbox);
 

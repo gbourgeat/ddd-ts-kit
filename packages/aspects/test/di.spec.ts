@@ -1,17 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import {
-  CACHE,
-  CLOCK,
-  LOGGER,
-  METRICS,
-  createApplication,
-  createTestApplication,
-  defineContextModule,
-  kernelModule,
-  token,
-  type Decorate,
-} from '@ddd-ts-kit/di';
-import { InMemoryLogger, InMemoryMetrics, type Clock } from '@ddd-ts-kit/kernel';
+import { createApplication, createTestApplication, defineContextModule, kernelModule, type Decorate } from '@ddd-ts-kit/di';
+import { Cache, Clock, InMemoryLogger, InMemoryMetrics, Logger, Metrics } from '@ddd-ts-kit/kernel';
 import {
   aspects,
   cached,
@@ -26,15 +15,16 @@ import {
   type Aspect,
 } from '../src/index.js';
 import { withAspectRuntime } from '../src/testing.js';
-import { QuoteGateway, Unreachable } from './support/adapters.js';
-
-const QUOTES = token<QuoteGateway>('pricing.Quotes');
-const RATES = token<QuoteGateway>('pricing.Rates');
-const NOW = token<Clock>('pricing.Now');
+import { ArchivedQuotes } from './support/pricing/application/ports/archived-quotes.port.js';
+import { Now } from './support/pricing/application/ports/now.port.js';
+import { Quotes } from './support/pricing/application/ports/quotes.port.js';
+import { QuoteGateway } from './support/quote-gateway.js';
+import { Unreachable } from './support/unreachable.js';
 
 function recording(journal: string[], label: string): Aspect {
   return defineAspect((joinPoint) => async ({ proceed }) => {
     journal.push(`${label} ${joinPoint.kind ?? 'no kind'} ${joinPoint.context ?? ''} ${joinPoint.token ?? ''}`);
+
     return proceed();
   });
 }
@@ -42,24 +32,27 @@ function recording(journal: string[], label: string): Aspect {
 describe('aspects on one binding, with .with(...)', () => {
   it('wrap the bound class and nothing else, the first outermost', async () => {
     const journal: string[] = [];
+
     const pricing = defineContextModule({
       name: 'pricing',
       register(builder) {
         builder
-          .bind(QUOTES)
+          .bind(Quotes)
           .toClass(QuoteGateway)
           .as('external')
           .with(recording(journal, 'outer'), recording(journal, 'inner'));
-        builder.bind(RATES).toClass(QuoteGateway).as('external');
+
+        builder.bind(ArchivedQuotes).toClass(QuoteGateway).as('external');
       },
     });
+
     const app = createApplication({ modules: [pricing] });
 
-    await app.resolve(QUOTES).quote('EUR-USD');
-    await app.resolve(RATES).quote('EUR-USD');
+    await app.resolve(Quotes).quote('EUR-USD');
+    await app.resolve(ArchivedQuotes).quote('EUR-USD');
 
-    expect(app.resolve(QUOTES)).toBeInstanceOf(QuoteGateway);
-    expect(journal).toEqual(['outer external pricing pricing.Quotes', 'inner external pricing pricing.Quotes']);
+    expect(app.resolve(Quotes)).toBeInstanceOf(QuoteGateway);
+    expect(journal).toEqual(['outer external pricing Quotes', 'inner external pricing Quotes']);
   });
 
   it('give an adapter its resilience where it is bound', async () => {
@@ -67,13 +60,14 @@ describe('aspects on one binding, with .with(...)', () => {
       name: 'pricing',
       register(builder) {
         builder
-          .bind(QUOTES)
+          .bind(Quotes)
           .toFactory(() => new QuoteGateway().failNext(new Unreachable()))
           .as('external')
           .with(retry({ attempts: 2, sleep: async () => undefined }));
       },
     });
-    const quotes = createApplication({ modules: [pricing] }).resolve(QUOTES);
+
+    const quotes = createApplication({ modules: [pricing] }).resolve(Quotes);
 
     expect(await quotes.quote('EUR-USD')).toMatchObject({ rate: 1.08 });
     expect(quotes.calls).toHaveLength(2);
@@ -84,15 +78,16 @@ describe('aspects on every binding, as the decorate hook', () => {
   const pricing = defineContextModule({
     name: 'pricing',
     register(builder) {
-      builder.bind(QUOTES).toClass(QuoteGateway).as('external');
-      builder.bind(RATES).toClass(QuoteGateway).as('repository');
-      builder.bind(NOW).toFactory((resolve) => resolve(CLOCK));
+      builder.bind(Quotes).toClass(QuoteGateway).as('external');
+      builder.bind(ArchivedQuotes).toClass(QuoteGateway).as('repository');
+      builder.bind(Now).toFactory((resolve) => resolve(Clock));
     },
   });
 
   it('observe what the selectors pick, with the collaborators of the kernel', async () => {
     const logger = new InMemoryLogger();
     const metrics = new InMemoryMetrics();
+
     const app = createApplication({
       modules: [kernelModule({ logger, metrics }), pricing],
       decorate: aspects(
@@ -100,19 +95,20 @@ describe('aspects on every binding, as the decorate hook', () => {
         when(forKinds('external'), when(forMethods('quote'), cached({ key: (_method, [pair]) => String(pair), ttlMs: 1000 }))),
       ),
     });
+
     installAspectRuntime({
-      logger: app.resolve(LOGGER),
-      metrics: app.resolve(METRICS),
-      cache: app.resolve(CACHE),
-      clock: app.resolve(CLOCK),
+      logger: app.resolve(Logger),
+      metrics: app.resolve(Metrics),
+      cache: app.resolve(Cache),
+      clock: app.resolve(Clock),
     });
 
-    await app.resolve(QUOTES).quote('EUR-USD');
-    await app.resolve(QUOTES).quote('EUR-USD');
-    await app.resolve(RATES).quote('EUR-USD');
+    await app.resolve(Quotes).quote('EUR-USD');
+    await app.resolve(Quotes).quote('EUR-USD');
+    await app.resolve(ArchivedQuotes).quote('EUR-USD');
     installAspectRuntime({});
 
-    expect(app.resolve(QUOTES).calls).toHaveLength(1);
+    expect(app.resolve(Quotes).calls).toHaveLength(1);
     expect(metrics.counterValue('dependency_call_total', { context: 'pricing', kind: 'external' })).toBe(2);
     expect(metrics.counterValue('dependency_call_total', { kind: 'repository' })).toBe(1);
     expect(logger.entries.filter((entry) => entry.level === 'info')).toHaveLength(3);
@@ -121,32 +117,36 @@ describe('aspects on every binding, as the decorate hook', () => {
 
   it('come around the aspects of a binding, and compose with any other decorate function', async () => {
     const journal: string[] = [];
+
     const tracing: Aspect = (instance, info) => {
       journal.push(`traced ${info?.kind ?? 'no kind'}`);
+
       return instance;
     };
+
     const decorate: Decorate = aspects(tracing, recording(journal, 'global'));
+
     const module = defineContextModule({
       name: 'pricing',
       register(builder) {
-        builder.bind(QUOTES).toClass(QuoteGateway).as('gateway').with(recording(journal, 'binding'));
+        builder.bind(Quotes).toClass(QuoteGateway).as('gateway').with(recording(journal, 'binding'));
       },
     });
 
-    await createApplication({ modules: [module], decorate }).resolve(QUOTES).quote('EUR-USD');
+    await createApplication({ modules: [module], decorate }).resolve(Quotes).quote('EUR-USD');
 
     expect(journal).toEqual([
       'traced gateway',
-      'global gateway pricing pricing.Quotes',
-      'binding gateway pricing pricing.Quotes',
+      'global gateway pricing Quotes',
+      'binding gateway pricing Quotes',
     ]);
   });
 
   it('leave alone what is not an object', () => {
     const decorate = aspects(logged());
 
-    expect(decorate('a value', { token: Symbol('pricing.Label'), context: 'pricing' })).toBe('a value');
-    expect(decorate(null, { token: Symbol('pricing.Nothing'), context: 'pricing' })).toBeNull();
+    expect(decorate('a value', { token: Quotes, context: 'pricing' })).toBe('a value');
+    expect(decorate(null, { token: Now, context: 'pricing' })).toBeNull();
   });
 });
 
@@ -155,17 +155,19 @@ describe('a test application', () => {
     const pricing = defineContextModule({
       name: 'pricing',
       register(builder) {
-        builder.bind(QUOTES).toClass(QuoteGateway).as('external').with(logged(), timed());
+        builder.bind(Quotes).toClass(QuoteGateway).as('external').with(logged(), timed());
       },
     });
+
     const app = createTestApplication({ modules: [pricing] });
 
-    await withAspectRuntime(app, () => app.get(QUOTES).quote('EUR-USD'));
+    await withAspectRuntime(app, () => app.get(Quotes).quote('EUR-USD'));
 
     expect(app.logger.entries.map((entry) => entry.message)).toEqual([
       'QuoteGateway.quote started',
       'QuoteGateway.quote succeeded',
     ]);
+
     expect(app.metrics.counterValue('dependency_call_total', { outcome: 'success' })).toBe(1);
   });
 });

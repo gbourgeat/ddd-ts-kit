@@ -1,0 +1,16 @@
+import type { DomainEventDispatcher } from '@ddd-ts-kit/kernel';
+import type { Token } from '@ddd-ts-kit/kernel/declarations';
+import type { Declarer } from './declarer.js';
+import type { Resolve } from './resolve.js';
+
+/** A handler of a domain event of its own context, attached to the dispatcher of the application. */
+export interface DomainEventHandling {
+  /** The name the events carry. */
+  readonly name: string;
+  /** Name of the class the handler is typed by: an event of another class is not handed to it. */
+  readonly event: string;
+  readonly handler: Token<unknown>;
+  readonly module: string;
+  readonly declaredBy?: Declarer;
+  readonly attach: (resolve: Resolve, dispatcher: DomainEventDispatcher) => void;
+}

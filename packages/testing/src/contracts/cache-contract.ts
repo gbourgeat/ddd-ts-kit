@@ -1,5 +1,7 @@
 import { cacheKey, type Cache, type CacheKey } from '@ddd-ts-kit/kernel';
-import { ContractSuite, type Awaitable, type ContractRunner } from './suite.js';
+import type { Awaitable } from './awaitable.js';
+import type { ContractRunner } from './contract-runner.js';
+import { ContractSuite } from './contract-suite.js';
 
 export interface CacheContractOptions {
   readonly name: string;
@@ -21,11 +23,11 @@ interface Quote {
 }
 
 class CacheSuite extends ContractSuite<Cache> {
-  readonly #elapse: (ms: number) => Awaitable<void>;
-
-  constructor(runner: ContractRunner, options: CacheContractOptions) {
+  constructor(
+    runner: ContractRunner,
+    private readonly options: CacheContractOptions,
+  ) {
     super(runner, () => options.createCache());
-    this.#elapse = (ms) => options.elapse(ms);
   }
 
   protected tests(): void {
@@ -87,7 +89,7 @@ class CacheSuite extends ContractSuite<Cache> {
       await this.subject.set(quoteOf('EUR/GBP'), EUR_USD);
       this.expect(await this.subject.get(quoteOf('EUR/USD'))).toEqual(EUR_USD);
 
-      await this.#elapse(500);
+      await this.options.elapse(500);
 
       this.expect(await this.subject.get(quoteOf('EUR/USD'))).toBe(undefined);
       this.expect(await this.subject.get(quoteOf('EUR/GBP'))).toEqual(EUR_USD);
@@ -97,7 +99,7 @@ class CacheSuite extends ContractSuite<Cache> {
       await this.subject.set(quoteOf('EUR/USD'), EUR_USD, { ttlMs: 100 });
       await this.subject.set(quoteOf('EUR/USD'), EUR_USD);
 
-      await this.#elapse(200);
+      await this.options.elapse(200);
 
       this.expect(await this.subject.get(quoteOf('EUR/USD'))).toEqual(EUR_USD);
     });

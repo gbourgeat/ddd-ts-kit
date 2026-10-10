@@ -1,11 +1,13 @@
 # @ddd-ts-kit/di
 
-Typed tokens and context modules on top of [tsyringe](https://github.com/microsoft/tsyringe),
-for projects that want dependency injection without a heavy framework.
+Context modules on top of [tsyringe](https://github.com/microsoft/tsyringe), for projects that
+want dependency injection without a heavy framework.
 
-A class says what it is, and the context is assembled from what its classes say. There is no
-file listing bindings to keep in step with the code. The explicit module, where every binding
-is written by hand, stays supported and mixes with the declared style in one application.
+A port is an abstract class, and the class is what you inject by. A class says what it is, and
+the context is assembled from what its classes say: there is no file listing bindings to keep in
+step with the code, and no constant standing for a port. The explicit module, where every
+binding is written by hand, stays supported and mixes with the declared style in one
+application.
 
 ```
 npm i @ddd-ts-kit/di tsyringe reflect-metadata
@@ -21,12 +23,23 @@ The decorators come from `@ddd-ts-kit/kernel/declarations`, which holds no conta
 application layer imports the kernel and nothing else. This package turns the declarations
 into bindings; nothing else does. The domain carries no decorator.
 
-```ts
-// contexts/billing/application/ports/billing.ports.ts
-import { token } from '@ddd-ts-kit/kernel/declarations';
+A port lives where the layer that owns it lives: a repository port in
+`domain/repositories/`, any other port in `application/ports/`, one abstract class per file.
 
-export const INVOICES = token<InvoiceRepository>('billing.InvoiceRepository');
-export const PAYMENTS = token<PaymentGateway>('billing.PaymentGateway');
+```ts
+// contexts/billing/domain/repositories/invoice.repository.ts
+import { Repository } from '@ddd-ts-kit/kernel';
+
+export abstract class InvoiceRepository extends Repository<Invoice> {
+  abstract findUnpaidOf(customerId: string): Promise<readonly Invoice[]>;
+}
+```
+
+```ts
+// contexts/billing/application/ports/payment-gateway.port.ts
+export abstract class PaymentGateway {
+  abstract capture(invoiceId: string, amount: Money): Promise<PaymentReceipt>;
+}
 ```
 
 ```ts
@@ -46,14 +59,15 @@ export class IssueInvoice extends AuthorizedCommand<string> {
 
 ```ts
 // contexts/billing/application/commands/issue-invoice/issue-invoice.handler.ts
-import { CLOCK, CommandHandler, EVENT_PUBLISHER, ID_GENERATOR } from '@ddd-ts-kit/kernel/declarations';
+import { Clock, DomainEventDispatcher, IdGenerator } from '@ddd-ts-kit/kernel';
+import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
 
-@CommandHandler(IssueInvoice, [INVOICES, PAYMENTS, EVENT_PUBLISHER, ID_GENERATOR, CLOCK])
+@CommandHandler(IssueInvoice, [InvoiceRepository, PaymentGateway, DomainEventDispatcher, IdGenerator, Clock])
 export class IssueInvoiceHandler implements CommandHandler<IssueInvoice> {
   constructor(
     private readonly invoices: InvoiceRepository,
     private readonly payments: PaymentGateway,
-    private readonly publisher: IntegrationEventPublisher,
+    private readonly domainEvents: DomainEventDispatcher,
     private readonly ids: IdGenerator,
     private readonly clock: Clock,
   ) {}
@@ -71,30 +85,48 @@ export class GetInvoice extends Query<InvoiceView | undefined> {
   }
 }
 
-@QueryHandler(GetInvoice, [INVOICES])
+@QueryHandler(GetInvoice, [InvoiceRepository])
 export class GetInvoiceHandler implements QueryHandler<GetInvoice> { /* ... */ }
 ```
 
 ```ts
 // contexts/billing/application/integration/handlers/invoice-on-order-placed.integration-handler.ts
-import { COMMAND_BUS, IntegrationEventHandler } from '@ddd-ts-kit/kernel/declarations';
-import { OrderPlaced } from '../../../../ordering/published-language/index.js';
+import { CommandBus, systemActor, type IntegrationEvent } from '@ddd-ts-kit/kernel';
+import { IntegrationEventHandler } from '@ddd-ts-kit/kernel/declarations';
+import { OrderPlaced, type OrderPlacedPayload } from '../../../../ordering/published-language/index.js';
 
-@IntegrationEventHandler(OrderPlaced, { consumer: 'billing.invoice-on-order-placed' }, [COMMAND_BUS])
-export class InvoiceOnOrderPlaced {
+@IntegrationEventHandler(OrderPlaced, { consumer: 'billing.invoice-on-order-placed' }, [CommandBus])
+export class InvoiceOnOrderPlaced implements IntegrationEventHandler<OrderPlacedPayload> {
   constructor(private readonly commands: CommandBus) {}
 
-  readonly handle = async (event: IntegrationEvent<OrderPlacedPayload>): Promise<void> => {
+  async handle(event: IntegrationEvent<OrderPlacedPayload>): Promise<void> {
     await this.commands.execute(new IssueInvoice(systemActor('billing.invoice-on-order-placed'), event.payload.customerId));
-  };
+  }
+}
+```
+
+```ts
+// contexts/billing/application/integration/publishers/invoice-issued.publisher.ts
+import { IdGenerator, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
+import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
+
+@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued' }, [IntegrationEventPublisher, IdGenerator])
+export class InvoiceIssuedPublisher implements DomainEventHandler<InvoiceIssued> {
+  constructor(
+    private readonly publisher: IntegrationEventPublisher,
+    private readonly ids: IdGenerator,
+  ) {}
+
+  async handle(event: InvoiceIssued): Promise<void> { /* publishes billing.invoice.issued */ }
 }
 ```
 
 ```ts
 // contexts/billing/infrastructure/persistence/knex-invoice.repository.ts
-import { CLOCK, EXECUTION_SCOPE, Repository } from '@ddd-ts-kit/kernel/declarations';
+import { Clock, ExecutionScope } from '@ddd-ts-kit/kernel';
+import { Repository } from '@ddd-ts-kit/kernel/declarations';
 
-@Repository(INVOICES, [DATABASE, EXECUTION_SCOPE, CLOCK])
+@Repository(InvoiceRepository, [Database, ExecutionScope, Clock])
 export class KnexInvoiceRepository implements InvoiceRepository { /* ... */ }
 ```
 
@@ -103,7 +135,7 @@ export class KnexInvoiceRepository implements InvoiceRepository { /* ... */ }
 import { Gateway } from '@ddd-ts-kit/kernel/declarations';
 import { retry, timeout } from '@ddd-ts-kit/aspects';
 
-@Gateway(PAYMENTS, { aspects: [retry({ attempts: 3 }), timeout(2000)] }, [HTTP])
+@Gateway(PaymentGateway, { aspects: [retry({ attempts: 3 }), timeout(2000)] }, [PaymentSettings])
 export class HttpPaymentGateway implements PaymentGateway { /* ... */ }
 ```
 
@@ -111,12 +143,14 @@ That is the whole context. It is assembled in one line, in one of two ways.
 
 ```ts
 // main.ts, discovered: no file of the context names its classes
-import { COMMAND_BUS, createApplication, kernelModule } from '@ddd-ts-kit/di';
+import { CommandBus } from '@ddd-ts-kit/kernel';
+import { createApplication, kernelModule } from '@ddd-ts-kit/di';
 import { discoverContext } from '@ddd-ts-kit/di/discovery';
 
 const billing = await discoverContext('billing', new URL('./contexts/billing/', import.meta.url));
 const app = createApplication({ modules: [kernelModule(), platformModule, billing], authorization: 'required' });
 await app.start();
+const invoiceId = await app.resolve(CommandBus).execute(new IssueInvoice(actor, 'customer-1')); // typed string
 ```
 
 ```ts
@@ -127,12 +161,96 @@ import * as billing from './contexts/billing/billing.declarations.js';
 const app = createApplication({ modules: [kernelModule(), platformModule, contextModule('billing', billing)] });
 ```
 
-The compiler checks every declaration where it is written: the handler handles that message
-and answers its result type, the event handler handles the payload of that event, the adapter
-implements the port of its token, and the token list names the constructor parameters, in
-order, no more and no fewer.
+## Ports and values
 
-### What a class may declare
+### A port is an abstract class
+
+The class names the dependency and carries its type: a dependency list is checked against a
+constructor, `app.resolve(Clock)` answers a `Clock`, and nothing else stands for the port. The
+ports of the kernel (`Clock`, `IdGenerator`, `UnitOfWork`, `CommandBus`, `QueryBus`,
+`IntegrationEventPublisher`, `ExecutionScope`...) are abstract classes imported from
+`@ddd-ts-kit/kernel`; yours are written the same way.
+
+The rule, checked when a binding is registered (`INVALID_PORT` for `toClass`, a
+`DeclarationError` for a decorator):
+
+- a port has abstract members only: no body, no constructor parameter, no private or protected
+  member. One exception, `static readonly tokenKey` (see "Identity");
+- a port may extend another port, and is then another port;
+- an adapter `implements` its port and never `extends` it;
+- a class bound to itself (`bind(Settings).toClass(Settings, [...])`, a handler, a job, a
+  policy) is no port and keeps its methods.
+
+Because a port holds nothing but a shape, a fake and a plain object stand for it:
+`fake(Clock, { now: () => new Date(0) })`.
+
+### A value is typed by an abstract class too
+
+A configuration object, a database handle, a list, a primitive: an abstract class with
+`abstract readonly` properties, bound with `toValue` to a plain object. That is the one way.
+
+```ts
+// platform/database.ts
+export abstract class Database {
+  abstract readonly client: Knex;
+}
+
+// contexts/billing/application/ports/payment-settings.port.ts
+export abstract class PaymentSettings {
+  abstract readonly apiUrl: string;
+  abstract readonly apiKey: string;
+}
+
+// platform/platform.module.ts
+builder.bind(Database).toValue({ client: knex(config.database) });
+builder.bind(PaymentSettings).toValue({ apiUrl: config.payments.url, apiKey: config.payments.key });
+```
+
+A primitive is wrapped: `abstract class TaxRate { abstract readonly value: number }`, then
+`builder.bind(TaxRate).toValue({ value: 0.2 })`.
+
+### What the compiler checks
+
+Where the declaration or the statement is written, with no run:
+
+| Mistake | Example |
+|---|---|
+| the class does not implement the port | `bind(Mailer).toClass(SmsSender)`, `@Repository(InvoiceRepository)` on a class missing `findById` |
+| the value does not have the shape of the port | `bind(Clock).toValue('noon')`, `fake(OrderRepository, { save })`, `override(Clock, 12)` |
+| the list names a port of another type | `handledBy(GetOrderHandler, [Clock])` for a constructor taking an `OrderRepository` |
+| the list is in another order than the constructor | `[IdGenerator, Clock]` for `(clock: Clock, ids: IdGenerator)` |
+| the list is missing, one short or one too many | `toClass(ReserveStock)` for a constructor with parameters |
+| the list names a concrete class where its port is expected | `[InMemoryOrderRepository]` for a parameter typed `OrderRepository` |
+| the handler does not handle that message or answers another result | `command(PlaceOrder).handledBy(CancelOrderHandler, ...)` |
+| the event handler handles another payload | `on(ParcelShipped, ...).handledBy(InvoiceOnOrderPlaced, ...)` |
+| `.requires(...)` on a message that carries no actor | `query(GetCatalog).requires(permission)` |
+
+Two limits of a structural type system. A concrete class is told apart from its port by what
+it adds: a class with no member of its own, private ones included, is the port for the
+compiler. And a constructor whose parameters are all optional still has parameters: it takes a
+dependency list.
+
+### Identity
+
+`tokenIdentity(port)` is the symbol a container keys a port by; `describeToken(port)` is its
+class name, which is what error messages and `describe()` print.
+
+- A port of your project is identified by the class itself. Two classes of the same name are
+  two ports, and a class that extends a port is another port.
+- A port that declares `static readonly tokenKey = '<package>.<Port>'` is identified by that
+  key, the same in every copy of its package a process loads. The ports of the kernel all
+  declare one (`kernel.Clock`...), and so do `UseCaseGuard`, `UseCaseDeclarations` and
+  `DeclaredPolicies` of this package: a handler compiled against one copy of the kernel is
+  wired by a container built on another.
+- The key is not inherited: `abstract class BusinessClock extends Clock` is another port, bound
+  separately.
+
+The limit: a port of your own without a `tokenKey`, loaded twice (the same file imported as
+source and as compiled output, or a package installed in two versions), is two ports. The
+binding made for one does not answer the other, which the application reports as unbound.
+Load each port once, or give a port that a published package exposes a `tokenKey`.
+
+## What a class may declare
 
 The full list, with the options of each, is in the README of `@ddd-ts-kit/kernel`
 ("Declarations"). What this package does with each:
@@ -140,19 +258,23 @@ The full list, with the options of each, is in the README of `@ddd-ts-kit/kernel
 | Declaration | Becomes |
 |---|---|
 | `@Requires(permission, options?)` / `@Public()` on a command or a query | the access of the use case: what `.requires(...)` and `.public()` say in an explicit module, read by `authorization: 'required'` and by the authorization module |
-| `@CommandHandler(Message, [tokens])`, `@QueryHandler(Message, [tokens])` | a singleton of kind `use-case`, registered on `COMMAND_BUS` or `QUERY_BUS` |
-| `@IntegrationEventHandler(definition, { consumer }, [tokens])` | a singleton of kind `consumer`, subscribed to `EVENT_SUBSCRIBER` by `start()`, idempotent per consumer name, run in the execution context of the event |
-| `@DomainEventHandler(Event, { name }, [tokens])` | a singleton of kind `consumer`, attached to `DOMAIN_EVENTS` when the application is created; an event dispatched under the name and built from another class is left alone |
-| `@Scheduled(name, schedule and options, [tokens])` | a singleton of kind `job`, registered on `JOB_SCHEDULER` when the application is created, started by `start()` after the consumers and stopped first by `stop()`; see "Scheduled jobs" |
-| `@Repository(TOKEN, options?, [tokens])` | the binding of the token, kind `repository` |
-| `@Gateway(TOKEN, options?, [tokens])` | the binding of the token, kind `gateway` |
-| `@Adapter(TOKEN, { kind? }, [tokens])` | the binding of the token, kind `external` (default) or `publisher` |
-| `@Policy(permission, { name }, [tokens])` | a singleton listed under `DECLARED_POLICIES`, which `authorizationModule` evaluates through `ACCESS` |
+| `@CommandHandler(Message, [ports])`, `@QueryHandler(Message, [ports])` | a singleton of kind `use-case`, registered on `CommandBus` or `QueryBus` |
+| `@IntegrationEventHandler(contract, { consumer }, [ports])` | a singleton of kind `consumer`, subscribed by `start()` on the subscriber of its context, idempotent per consumer name, run in the execution context of the event, its mark and its work in one unit of work |
+| `@DomainEventHandler(Event, { name }, [ports])` | a singleton of kind `consumer`, attached to `DomainEventDispatcher` when the application is created; an event dispatched under the name and built from another class is left alone |
+| `@Scheduled(name, schedule and options, [ports])` | a singleton of kind `job`, registered on `JobScheduler` when the application is created, started by `start()` after the consumers and stopped first by `stop()`; see "Scheduled jobs" |
+| `@Repository(Port, options?, [ports])` | the binding of the port, kind `repository` |
+| `@Gateway(Port, options?, [ports])` | the binding of the port, kind `gateway` |
+| `@Adapter(Port, { kind? }, [ports])` | the binding of the port, kind `external` (default) or `publisher` |
+| `@Policy(permission, { name }, [ports])` | a singleton listed in `DeclaredPolicies`, which the authorization module evaluates |
+
+A handler, a job, a policy and an event handler are bound under themselves: the class is what
+builds them, and `app.resolve(IssueInvoiceHandler)` answers the instance the bus runs. One
+class is therefore one binding: listing a declared class in two modules is refused.
 
 The options of a repository, a gateway and an adapter are the ones of an explicit binding:
 `transient: true` for `.transient()`, `aspects: [...]` for `.with(...)`, the first outermost,
 and `replaces: true` for `rebind`, which a platform adapter uses to take the place of a default
-of the kernel module (`@Adapter(UNIT_OF_WORK, { replaces: true }, [DATABASE])`). The kind
+of the kernel module (`@Adapter(UnitOfWork, { replaces: true }, [Database])`). The kind
 reaches the `decorate` hook, so tracing and global aspects see declared adapters as they see
 explicit ones. A handler is built on the first message it handles; nothing is built when a
 class is declared or when a module is created.
@@ -160,7 +282,7 @@ class is declared or when a module is created.
 ### `contextModule(name, declared)`
 
 `declared` is a class, a list (lists may nest) or the namespace import of a barrel. Of a
-namespace only the declared classes are kept, so the barrel may also export tokens and types.
+namespace only the declared classes are kept, so the barrel may also export ports and types.
 A class named directly in a list must carry a declaration (`UNDECLARED_CLASS`): a forgotten
 decorator is not skipped in silence. A class met twice is taken once. The module is static:
 a bundler follows every class, and so does a dead-code analysis.
@@ -177,14 +299,19 @@ themselves:
 | `*.command`, `*.query` | `application/commands/`, `application/queries/` | `@Requires` or `@Public` |
 | `*.handler` | `application/commands/`, `application/queries/` | `@CommandHandler` or `@QueryHandler` |
 | `*.integration-handler` | `application/integration/handlers/` | `@IntegrationEventHandler` |
+| `*.publisher` | `application/integration/publishers/` | `@DomainEventHandler` |
 | `*.event-handler` | `application/event-handlers/` | `@DomainEventHandler` |
 | `*.policy` | `application/authorization/` | `@Policy` |
 | `*.job` | `application/scheduling/` | `@Scheduled` |
 | `*.repository` | `infrastructure/persistence/` | `@Repository` |
 | `*.gateway`, `*.adapter` | `infrastructure/` | `@Gateway`, `@Adapter` |
 
-`domain/`, `presentation/`, `published-language/` and `test/` are never read, so the
-repository interfaces of the domain and the fakes are left alone. It fails with a
+A publisher is a domain event handler whose work is to announce the event to the other
+contexts: the same declaration as an event handler, under a suffix and a folder that say what
+it is for.
+
+`domain/`, `presentation/`, `published-language/` and `test/` are never read, and neither are
+the `*.port` files of `application/ports/`: ports and fakes are left alone. It fails with a
 `WiringError` naming the file:
 
 - `DISCOVERY_FAILED`: a file that throws while loading (the failure is kept as `cause`), or a
@@ -232,49 +359,45 @@ config.
 
 The alternative: every binding written by hand in `<context>.module.ts`. It needs no
 decorator at all, and suits a context whose wiring is unusual (factories, values, conditional
-bindings) or a team that wants the wiring in one file.
+bindings) or a team that wants the wiring in one file. The ports are the same abstract classes,
+in the same files.
 
 ```ts
 // contexts/ordering/ordering.module.ts
-import { CLOCK, COMMAND_BUS, EVENT_PUBLISHER, ID_GENERATOR, defineContextModule, token } from '@ddd-ts-kit/di';
+import { Clock, CommandBus, IdGenerator, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
+import { defineContextModule } from '@ddd-ts-kit/di';
 import { PaymentCaptured } from '../billing/published-language/index.js';
-
-export const ORDER_REPOSITORY = token<OrderRepository>('ordering.OrderRepository');
-export const ORDER_READS = token<OrderReads>('ordering.OrderReads');
-export const STOCK_GATEWAY = token<StockGateway>('ordering.StockGateway');
 
 export const orderingModule = defineContextModule({
   name: 'ordering',
   register(builder) {
-    builder.bind(ORDER_REPOSITORY).toClass(DrizzleOrderRepository, [DATABASE]).as('repository');
-    builder.bind(ORDER_READS).toClass(DrizzleOrderReads, [DATABASE]).as('repository');
-    builder.bind(STOCK_GATEWAY).toClass(HttpStockGateway, [STOCK_API_URL]).as('gateway');
+    builder.bind(OrderRepository).toClass(DrizzleOrderRepository, [Database]).as('repository');
+    builder.bind(OrderReads).toClass(DrizzleOrderReads, [Database]).as('repository');
+    builder.bind(StockGateway).toClass(HttpStockGateway, [StockSettings]).as('gateway');
 
     builder
       .command(PlaceOrder)
-      .handledBy(PlaceOrderHandler, [ORDER_REPOSITORY, STOCK_GATEWAY, EVENT_PUBLISHER, ID_GENERATOR, CLOCK]);
-    builder.command(MarkOrderPaid).handledBy(MarkOrderPaidHandler, [ORDER_REPOSITORY, CLOCK]);
-    builder.query(GetOrder).handledBy(GetOrderHandler, [ORDER_READS]);
+      .handledBy(PlaceOrderHandler, [OrderRepository, StockGateway, IntegrationEventPublisher, IdGenerator, Clock]);
+    builder.command(MarkOrderPaid).handledBy(MarkOrderPaidHandler, [OrderRepository, Clock]);
+    builder.query(GetOrder).handledBy(GetOrderHandler, [OrderReads]);
 
     builder
       .on(PaymentCaptured, { consumer: 'ordering.mark-order-paid' })
-      .handledBy(MarkOrderPaidOnPaymentCaptured, [COMMAND_BUS]);
+      .handledBy(MarkOrderPaidOnPaymentCaptured, [CommandBus]);
   },
 });
 ```
 
-The compiler checks that `PlaceOrderHandler` handles `PlaceOrder` and answers its result type,
-that the event handler handles the payload of `PaymentCaptured`, and that every token list matches
-the constructor parameters, in order. Nothing else is needed: no handler token, no manual
-registration on a bus, no subscription code.
+Nothing else is needed: no manual registration on a bus, no subscription code.
 
 ```ts
 // main.ts
-import { COMMAND_BUS, createApplication, kernelModule } from '@ddd-ts-kit/di';
+import { CommandBus } from '@ddd-ts-kit/kernel';
+import { createApplication, kernelModule } from '@ddd-ts-kit/di';
 
 const app = createApplication({ modules: [kernelModule(), platformModule, orderingModule, billingModule] });
 await app.start();
-const orderId = await app.resolve(COMMAND_BUS).execute(new PlaceOrder('sku-1')); // typed string
+const orderId = await app.resolve(CommandBus).execute(new PlaceOrder('sku-1')); // typed string
 process.on('SIGTERM', () => void app.stop());
 ```
 
@@ -286,7 +409,7 @@ it('places an order and announces it', async () => {
   const orders = new InMemoryOrderRepository();
   const app = createTestApplication({
     modules: [orderingModule],
-    fakes: [fake(ORDER_REPOSITORY, orders), fake(STOCK_GATEWAY, new InMemoryStock({ 'sku-1': 3 }))],
+    fakes: [fake(OrderRepository, orders), fake(StockGateway, new InMemoryStock({ 'sku-1': 3 }))],
   });
 
   const orderId = await app.commandBus.execute(new PlaceOrder('sku-1'));
@@ -301,14 +424,14 @@ it('places an order and announces it', async () => {
 - **In one application**: declared and explicit modules are listed together; every check
   below applies across them.
 - **In one module**: `builder.include(declared)` adds declared classes next to explicit
-  statements, for the config value or the factory a decorator cannot express.
+  statements, for the value or the factory a decorator cannot express.
 
   ```ts
   export const billingModule = defineContextModule({
     name: 'billing',
     register(builder) {
       builder.include(billing);
-      builder.bind(TAX_RATE).toValue(config.taxRate);
+      builder.bind(TaxRate).toValue({ value: config.taxRate });
     },
   });
   ```
@@ -316,78 +439,171 @@ it('places an order and announces it', async () => {
 - **A decorated message in an explicit module**: `builder.command(IssueInvoice).handledBy(...)`
   reads the `@Requires` or `@Public` of the message; `.requires(...)` and `.public()` written
   on the builder win.
-- **Replacing a declared adapter**: a later module calls `builder.rebind(TOKEN)`, and a test
-  gives `fake(TOKEN, ...)`, exactly as for an explicit binding.
+- **Replacing a declared adapter**: a later module calls `builder.rebind(Port)`, and a test
+  gives `fake(Port, ...)`, exactly as for an explicit binding.
 
 ## Statements of an explicit module
 
 | Call | Meaning |
 |---|---|
-| `bind(token).toClass(Class, [tokens])` | `new Class(...)` with the tokens resolved in order; the list is omitted for a constructor without parameters |
-| `bind(token).toFactory((resolve) => instance)` | anything a constructor cannot express |
-| `bind(token).toValue(value)` | an existing object or a constant |
+| `bind(Port).toClass(Class, [ports])` | `new Class(...)` with the ports resolved in order; the list is omitted for a constructor without parameters. The class implements the port (`INVALID_PORT` when the port has a body or the class extends it) |
+| `bind(Port).toFactory((resolve) => instance)` | anything a constructor cannot express |
+| `bind(Port).toValue(value)` | an existing object, a fake, or the plain object a value class types |
 | `.singleton()` / `.transient()` | one instance per application (default) or one per resolution |
 | `.as(kind)` | role of the binding, handed to the `decorate` hook: `repository`, `gateway`, `external`, `use-case`, `publisher`, `consumer`, `job` |
-| `rebind(token).to...` | replaces the binding of a module listed earlier, such as a default of `kernelModule()` |
-| `command(Type).handledBy(Handler, [tokens])` | binds the handler (singleton, kind `use-case`) and registers it on `COMMAND_BUS` |
-| `query(Type).handledBy(Handler, [tokens])` | the same on `QUERY_BUS` |
-| `on(definition, { consumer }).handledBy(Handler, [tokens])` | binds the integration event handler (kind `consumer`) and subscribes its `handle(event)` to `EVENT_SUBSCRIBER` |
-| `job(name, schedule and options).handledBy(Job, [tokens])` | binds the job (singleton, kind `job`) and registers its `run(execution)` on `JOB_SCHEDULER` |
-| `.handledByFactory((resolve) => handler)` | the factory form of the four lines above |
+| `rebind(Port).to...` | replaces the binding of a module listed earlier, such as a default of `kernelModule()` |
+| `command(Type).handledBy(Handler, [ports])` | binds the handler under itself (singleton, kind `use-case`) and registers it on `CommandBus` |
+| `query(Type).handledBy(Handler, [ports])` | the same on `QueryBus` |
+| `on(contract, { consumer }).handledBy(Handler, [ports])` | binds the integration event handler under itself (kind `consumer`) and subscribes its `handle(event)` on the subscriber of the module |
+| `job(name, schedule and options).handledBy(Job, [ports])` | binds the job under itself (singleton, kind `job`) and registers its `run(execution)` on `JobScheduler` |
+| `.handledByFactory((resolve) => handler)` | the factory form of the four lines above, bound under a class made for the statement, which reads `command(PlaceOrder) handler` in a description |
 | `include(declared)` | adds classes that declare themselves: what `contextModule` does |
+
+**One class is one binding.** `handledBy(Handler)` binds the class under itself, so the same
+handler class cannot be given to two statements: the second is refused with
+`DUPLICATE_BINDING`. One handler per message is the rule the kit follows everywhere; where one
+object really serves two statements, give each `handledByFactory(() => shared)`.
 
 Handlers are registered when the application is created, which resolves the two buses; a
 handler itself is built on the first message it handles, then reused. Consumers are subscribed
 by `start()` and unsubscribed by `stop()`, since a subscription is a side effect.
 
-`definition` is anything with `type`, `version` and `parse(event)`: a declaration made by
+## Integration event handlers
+
+`contract` is anything with `type`, `version` and `parse(event)`: a declaration made by
 `defineIntegrationEvent` of `@ddd-ts-kit/events` fits as it is. An event of another version is
-skipped, an event the definition cannot read throws `UnreadableEventError` so that the provider
+skipped, an event the contract cannot read throws `UnreadableEventError` so that the provider
 retries or dead-letters it, and a redelivered event is handled once per `consumer` name when
-`PROCESSED_EVENTS` is bound. The name is required: it is the idempotency key, and it must
+`ProcessedEventStore` is bound. The name is required: it is the idempotency key, and it must
 survive the renaming of a class.
 
-Every consumer handles its events inside `EXECUTION_SCOPE`, in a context of its own: origin
+### The execution context of the event
+
+Every consumer handles its events inside `ExecutionScope`, in a context of its own: origin
 `event`, the correlation of the event (its id when it names none), the event as `causationId`,
-and `systemActor(consumer)` as actor, which is therefore what `ACTOR_CONTEXT` answers to the
+and `systemActor(consumer)` as actor, which is therefore what `ActorContext` answers to the
 repositories of the consuming context. Nothing to wire. A project whose envelopes name an
-actor adds `on(definition, { consumer, actorOf: (event) => actor })`. For the correlation to
+actor adds `on(contract, { consumer, actorOf: (event) => actor })`. For the correlation to
 start at the request, publish through a scoped publisher:
 
 ```ts
 kernelModule({
-  eventPublisher: (resolve) => scopedPublisher(new OutboxPublisher(store), resolve(EXECUTION_SCOPE)),
+  eventPublisher: (resolve) => scopedPublisher(new OutboxPublisher(store), resolve(ExecutionScope)),
 });
 ```
 
+### One unit of work per event
+
+When `UnitOfWork` and `ProcessedEventStore` are both bound, which `kernelModule()` does, the
+idempotency mark and the work of the handler run inside one `unitOfWork.run`, opened inside
+the execution context of the event:
+
+- a handler that fails leaves no mark: the transaction that held it is rolled back, and the
+  redelivery is handled;
+- a handler that succeeds commits its mark with its writes: the redelivery is skipped, and
+  there is no window where one is kept without the other;
+- a command the handler sends runs its own `unitOfWork.run` inside that one, so the
+  `UnitOfWork` adapter must join the transaction that is open, as the adapters of the kit do;
+- the unit of work is resolved at each event, as the command bus resolves it at each command.
+
+This holds for a store whose mark is written in the database of the unit of work. Without a
+`UnitOfWork` bound, the mark is taken first and given back with `release` when the handler
+fails, for a store that has one; a store without `release` keeps the mark of a failed handler.
+
+### The subscriber of each context
+
+A handler of a context is subscribed on `EventSubscribers.forContext(<module name>)`. By
+default every context gets the single `IntegrationEventSubscriber`, which is the in-memory
+event bus: one process, one bus, nothing to say.
+
+A broker gives each consuming context its own subscriber, so that the context keeps its queues
+when it is extracted. Say it once, in the kernel module or from a later module:
+
+```ts
+kernelModule({ eventBus: bus, eventSubscribers: { forContext: (name) => bus.forConsumer(name) } });
+
+builder.rebind(EventSubscribers).toValue({ forContext: (name) => bus.forConsumer(name) });
+```
+
+The name handed to `forContext` is the name of the module: the first argument of
+`contextModule` and `discoverContext`, the `name` of `defineContextModule`. An application
+without the kernel module needs one of the two bound, `IntegrationEventSubscriber` or
+`EventSubscribers`; `EventSubscribers` wins when both are.
+
+## Behind a broker
+
+Discovery, a broker and a database, with no helper of your own. The complete composition root:
+
+```ts
+// main.ts
+import { EventSubscribers, ProcessedEventStore, UnitOfWork } from '@ddd-ts-kit/kernel';
+import { createApplication, defineContextModule, kernelModule } from '@ddd-ts-kit/di';
+import { discoverContext } from '@ddd-ts-kit/di/discovery';
+import { RabbitMqEventBus } from '@ddd-ts-kit/rabbitmq';
+
+const bus = new RabbitMqEventBus({ connection: config.amqpUrl });
+
+const platformModule = defineContextModule({
+  name: 'platform',
+  register(builder) {
+    builder.bind(Database).toValue({ client: knex(config.database) });
+    builder.rebind(UnitOfWork).toClass(DatabaseUnitOfWork, [Database]);
+    builder.rebind(ProcessedEventStore).toClass(DatabaseProcessedEvents, [Database]);
+    builder.rebind(EventSubscribers).toValue({ forContext: (name) => bus.forConsumer(name) });
+  },
+  onStop: () => bus.close(),
+});
+
+const app = createApplication({
+  modules: [
+    kernelModule({ eventBus: bus }),
+    platformModule,
+    await discoverContext('ordering', new URL('./contexts/ordering/', import.meta.url)),
+    await discoverContext('billing', new URL('./contexts/billing/', import.meta.url)),
+  ],
+  authorization: 'required',
+});
+
+await app.start();
+process.on('SIGTERM', () => void app.stop());
+```
+
+That is all: `discoverContext('billing', ...)` names the module `billing`, so its integration
+event handlers are subscribed on `bus.forConsumer('billing')`, each event handled in the
+execution context of the event, its mark and its work in one database transaction. With a
+barrel instead of discovery the two lines become `contextModule('ordering', ordering)` and
+`contextModule('billing', billing)`, and nothing else changes. `DatabaseUnitOfWork` and
+`DatabaseProcessedEvents` stand for the adapters of your persistence package; any bus with a
+`forConsumer(name)` fits where `RabbitMqEventBus` is.
+
 ## The kernel module
 
-`kernelModule(options?)` binds the tokens every context depends on.
+`kernelModule(options?)` binds the ports every context depends on.
 
-| Token | Port | Default | Option |
-|---|---|---|---|
-| `CLOCK` | `Clock` | `SystemClock` | `clock` |
-| `ID_GENERATOR` | `IdGenerator` | `UuidGenerator` | `ids` |
-| `UNIT_OF_WORK` | `UnitOfWork` | `InMemoryUnitOfWork` | `unitOfWork` |
-| `COMMAND_BUS` | `CommandBus` | `InMemoryCommandBus` running each command in the unit of work | `commandBus` |
-| `QUERY_BUS` | `QueryBus` | `InMemoryQueryBus` | `queryBus` |
-| `EVENT_BUS` | `EventBus` | `InMemoryEventBus` | `eventBus` |
-| `EVENT_PUBLISHER` | `IntegrationEventPublisher` | the event bus | `eventPublisher` |
-| `EVENT_SUBSCRIBER` | `IntegrationEventSubscriber` | the event bus | `eventSubscriber` |
-| `PROCESSED_EVENTS` | `ProcessedEventStore` | `InMemoryProcessedEventStore` | `processedEvents` |
-| `EXECUTION_SCOPE` | `ExecutionScope` | `AsyncLocalStorageExecutionScope` | `executionScope` |
-| `ACTOR_CONTEXT` | `ActorContext` | `ScopedActorContext`: the actor of the execution scope | `actorContext` |
-| `LOGGER` | `Logger` | `NoopLogger` | `logger` |
-| `METRICS` | `Metrics` | `NoopMetrics` | `metrics` |
-| `CACHE` | `Cache` | `InMemoryCache` on `CLOCK` | `cache` |
-| `LOCK` | `Lock` | `InMemoryLock` on `CLOCK`: this process only | `lock` |
-| `RATE_LIMITER` | `RateLimiter` | `InMemoryRateLimiter` on `CLOCK`: this process only | `rateLimiter` |
-| `DOMAIN_EVENTS` | `DomainEventDispatcher` | `InMemoryDomainEventDispatcher` | `domainEvents` |
-| `JOB_SCHEDULER` | `JobScheduler` | `InProcessJobScheduler` of `@ddd-ts-kit/scheduling` on `CLOCK`, `LOCK`, `EXECUTION_SCOPE`, `ID_GENERATOR`, `LOGGER` and `METRICS` | `jobScheduler` |
+| Port | Default | Option |
+|---|---|---|
+| `Clock` | `SystemClock` | `clock` |
+| `IdGenerator` | `UuidGenerator` | `ids` |
+| `UnitOfWork` | `InMemoryUnitOfWork` | `unitOfWork` |
+| `CommandBus` | `InMemoryCommandBus` running each command in the unit of work | `commandBus` |
+| `QueryBus` | `InMemoryQueryBus` | `queryBus` |
+| `EventBus` | `InMemoryEventBus` | `eventBus` |
+| `IntegrationEventPublisher` | the event bus | `eventPublisher` |
+| `IntegrationEventSubscriber` | the event bus | `eventSubscriber` |
+| `EventSubscribers` | the single `IntegrationEventSubscriber`, for every context | `eventSubscribers` |
+| `ProcessedEventStore` | `InMemoryProcessedEventStore` | `processedEvents` |
+| `ExecutionScope` | `AsyncLocalStorageExecutionScope` | `executionScope` |
+| `ActorContext` | `ScopedActorContext`: the actor of the execution scope | `actorContext` |
+| `DomainEventDispatcher` | `InMemoryDomainEventDispatcher` | `domainEvents` |
+| `Logger` | `NoopLogger` | `logger` |
+| `Metrics` | `NoopMetrics` | `metrics` |
+| `Cache` | `InMemoryCache` on `Clock` | `cache` |
+| `Lock` | `InMemoryLock` on `Clock`: this process only | `lock` |
+| `RateLimiter` | `InMemoryRateLimiter` on `Clock`: this process only | `rateLimiter` |
+| `JobScheduler` | `InProcessJobScheduler` of `@ddd-ts-kit/scheduling` on `Clock`, `Lock`, `ExecutionScope`, `IdGenerator`, `Logger` and `Metrics` | `jobScheduler` |
 
-The tokens are defined in `@ddd-ts-kit/kernel/declarations` and exported again from here: a
-handler names `CLOCK` in its dependency list without importing this package. Each is a global
-symbol, the same in every copy of the kernel a process loads.
+The ports are the abstract classes of `@ddd-ts-kit/kernel`: a handler names `Clock` in its
+dependency list without importing this package.
 
 An option is an instance or a `(resolve) => instance` factory. An adapter with dependencies of
 its own reads better in the module that owns them:
@@ -396,16 +612,15 @@ its own reads better in the module that owns them:
 export const persistenceModule = defineContextModule({
   name: 'persistence',
   register(builder) {
-    builder.bind(DATABASE).toFactory(() => connect(config.databaseUrl));
-    builder.rebind(UNIT_OF_WORK).toClass(DrizzleUnitOfWork, [DATABASE]);
-    builder.rebind(EVENT_PUBLISHER).toClass(OutboxPublisher, [DATABASE, CLOCK]).as('publisher');
-    builder.rebind(EVENT_SUBSCRIBER).toClass(BrokerSubscriber, [BROKER]);
+    builder.bind(Database).toFactory(() => ({ client: connect(config.databaseUrl) }));
+    builder.rebind(UnitOfWork).toClass(DrizzleUnitOfWork, [Database]);
+    builder.rebind(IntegrationEventPublisher).toClass(OutboxPublisher, [Database, Clock]).as('publisher');
   },
 });
 ```
 
-Use cases publish through `EVENT_PUBLISHER` and never through `EVENT_BUS`, so moving to an
-outbox touches no context. A bus given for `COMMAND_BUS` or `QUERY_BUS` needs a
+Use cases publish through `IntegrationEventPublisher` and never through `EventBus`, so moving
+to an outbox touches no context. A bus given for `CommandBus` or `QueryBus` needs a
 `register(type, handler)` method for the declared handlers to be attached to it.
 
 ## Scheduled jobs
@@ -415,7 +630,10 @@ else registers it.
 
 ```ts
 // contexts/billing/application/scheduling/send-reminders.job.ts
-@Scheduled('billing.send-reminders', { cron: '0 7 * * 1-5', timeZone: 'Europe/Paris' }, [COMMAND_BUS])
+import { CommandBus, systemActor } from '@ddd-ts-kit/kernel';
+import { Scheduled, type JobExecution, type ScheduledJob } from '@ddd-ts-kit/kernel/declarations';
+
+@Scheduled('billing.send-reminders', { cron: '0 7 * * 1-5', timeZone: 'Europe/Paris' }, [CommandBus])
 export class SendRemindersJob implements ScheduledJob {
   constructor(private readonly commands: CommandBus) {}
 
@@ -425,17 +643,17 @@ export class SendRemindersJob implements ScheduledJob {
 }
 ```
 
-- **Registered when the application is created**, on `JOB_SCHEDULER`, with the defaults of
+- **Registered when the application is created**, on `JobScheduler`, with the defaults of
   its options filled in. The class is built on its first run, so a job that cannot be built
   fails that run and nothing else.
 - **Started by `start()`**, after the modules and once the consumers are subscribed: a job
   sends commands whose events must find their handlers. **Stopped first by `stop()`**, which
   waits for the runs in progress, then aborts them, while everything they use is still up.
-- **Each run happens in `EXECUTION_SCOPE`**, in a context of origin `schedule`, as
+- **Each run happens in `ExecutionScope`**, in a context of origin `schedule`, as
   `systemActor('<job name>')`, with a correlation of its own. The scheduler does it, not the
   job.
 - **The default scheduler** is the in-process one of `@ddd-ts-kit/scheduling`, on the bound
-  `CLOCK` and `LOCK`. With the default lock, which excludes inside one process only, several
+  `Clock` and `Lock`. With the default lock, which excludes inside one process only, several
   instances each run every job: bind a lock between processes (`RedisLock`) before scaling
   out. What one instance among several guarantees, and what it does not, is in that README.
 - **An application without job** never resolves the scheduler.
@@ -461,7 +679,7 @@ createApplication({
 | `start: false` | the jobs are registered and described, `runNow` runs one, and `start()` never starts the scheduler: the process that serves requests next to a worker process that runs the jobs |
 | `settings['<job name>']` | `enabled`, `schedule` and any option of the declaration (`overlap`, `missed`, `timeoutMs`, `jitterMs`, `singleInstance`), which win over what the class wrote. A key left undefined changes nothing |
 
-`app.resolve(JOB_SCHEDULER)` is the port: `runNow(name)` for an operations endpoint,
+`app.resolve(JobScheduler)` is the port: `runNow(name)` for an operations endpoint,
 `describe()` for the next run and the last outcome of each job. A context extracted as its own
 service takes its jobs with it: they belong to its module, and nothing is global.
 
@@ -473,9 +691,12 @@ its adapters.
 ```ts
 const app = createTestApplication({
   modules: [contextModule('billing', billing)],
-  fakes: [fake(PAYMENTS, new InMemoryPayments())],
+  fakes: [fake(PaymentGateway, new InMemoryPayments())],
 });
 ```
+
+`fake(Port, value)` is checked: the value implements the port. An in-memory class, an object
+literal and a class written in the spec all fit, since a port is a shape.
 
 `createTestApplication({ modules, fakes, now?, idPrefix?, actor?, session?, executionContext?, jobs? })` puts the modules on a deterministic
 kernel, whether or not they list `kernelModule()`, and returns the application plus what a
@@ -484,7 +705,7 @@ spec touches:
 | Member | Is |
 |---|---|
 | `commandBus`, `queryBus` | the in-memory buses, with every declared handler |
-| `eventBus` | `InMemoryEventBus`; `eventBus.published` lists what the use cases announced |
+| `eventBus` | `InMemoryEventBus`; `eventBus.published` lists what the use cases announced. Every context listens on it, whatever `EventSubscribers` the modules bind |
 | `domainEvents` | `InMemoryDomainEventDispatcher`; dispatch a domain event to see the declared handlers react |
 | `clock` | `FixedClock` at `now` (default `2026-01-01T00:00:00.000Z`); `clock.advance(ms)` |
 | `ids` | `SequentialIdGenerator`: `id-1`, `id-2`... |
@@ -494,7 +715,7 @@ spec touches:
 | `cache` | `InMemoryCache` on `clock` |
 | `lock`, `rateLimiter` | `InMemoryLock` and `InMemoryRateLimiter` on `clock` |
 | `jobs` | `runNow(name)` runs a declared job as the scheduler would and throws what it threw; `scheduler` is a `ManualJobScheduler` on `clock`, not started |
-| `get(token)` | `resolve`, typed by the token |
+| `get(Port)` | `resolve`, typed by the port |
 | `as(actorOrSession, work)` | runs a block as someone else, then comes back |
 
 `actor`, `session` and `executionContext` say who infrastructure sees by default: an actor, a
@@ -534,13 +755,13 @@ For a spec about the schedule itself, `await app.jobs.scheduler.start()` then
 `createApplication({ jobs: { settings } })` does. Runs take their correlation ids from a
 generator of their own (`job-run-1`...), so a job leaves the identifiers a spec predicts alone.
 
-A fake must stand for a token that a module binds or that a class depends on, otherwise
-`UNKNOWN_FAKE` is raised: a fake for the wrong token would silently leave the real adapter in
+A fake must stand for a port that a module binds or that a class depends on, otherwise
+`UNKNOWN_FAKE` is raised: a fake for the wrong port would silently leave the real adapter in
 place. Consumers receive events once `await app.start()` ran.
 
-`createApplication({ overrides: [override(TOKEN, value)] })` is the unchecked form, and
-`overrideForTests(app, TOKEN, value)` swaps a binding on an existing application; call it
-before the first `resolve`, since a singleton already built keeps what it was given. An
+`createApplication({ overrides: [override(Port, value)] })` is the same pair without that
+check, and `overrideForTests(app, Port, value)` swaps a binding on an existing application;
+call it before the first `resolve`, since a singleton already built keeps what it was given. An
 override replaces the binding, may stand in for a module that is not loaded, and is not
 decorated. Every application owns a tsyringe child container (`app.container`), so two tests
 never share instances.
@@ -549,12 +770,14 @@ never share instances.
 
 `createApplication` throws a `WiringError` (with a `code`) before anything is instantiated:
 
-- `DUPLICATE_BINDING`: a token bound twice, both modules named;
-- `NOTHING_TO_REBIND`: a `rebind` of a token that no earlier module binds;
+- `DUPLICATE_BINDING`: a port bound twice, or a class given to two statements or listed in two
+  modules, both modules named;
+- `NOTHING_TO_REBIND`: a `rebind` of a port that no earlier module binds;
+- `INVALID_PORT`: a class bound to a port that carries a body, or that it extends;
 - `UNBOUND_DEPENDENCY`: a class dependency that no module binds, or handlers, consumers and
-  jobs declared without the bus or the scheduler they go on;
+  jobs declared without the bus, the subscriber or the scheduler they go on;
 - `DEPENDENCY_CYCLE`: a cycle between class bindings, the path printed;
-- `INCOMPLETE_BINDING`: a `bind`, `command`, `query` or `on` left without its target;
+- `INCOMPLETE_BINDING`: a `bind`, `command`, `query`, `on` or `job` left without its target;
 - `DUPLICATE_HANDLER`: a command or a query with two handlers, both modules named;
 - `DUPLICATE_CONSUMER`: two consumers of the same event sharing a name;
 - `BUS_WITHOUT_REGISTER`: handlers declared for a bus that cannot receive them;
@@ -566,28 +789,31 @@ never share instances.
 - `INVALID_JOB_SETTINGS`: a schedule or an option of the settings that cannot be read (a cron,
   a time zone, a zero interval), or a job of an explicit module whose name or schedule cannot.
 
+`DUPLICATE_HANDLER`, `DUPLICATE_CONSUMER` and `DUPLICATE_JOB` are reported before the
+`DUPLICATE_BINDING` of the class they share, so the message says what the mistake is.
+
 The checks do not tell the two styles apart. For a declared class the message names the class
 and, when discovery loaded it, the file:
 
 ```
-Token "billing.InvoiceRepository" is bound twice: by module "billing" (declared by class
+Token "InvoiceRepository" is bound twice: by module "billing" (declared by class
 KnexInvoiceRepository in /app/dist/contexts/billing/infrastructure/persistence/knex-invoice.repository.js)
 and by module "invoicing" (declared by class InMemoryInvoiceRepository).
 ```
 
-Factories do not declare what they resolve, so a cycle or a missing token going through a
+Factories do not declare what they resolve, so a cycle or a missing port going through a
 factory is reported when it is resolved (`DEPENDENCY_CYCLE`, `UNBOUND_TOKEN`).
 
 ## Diagnostics
 
-`app.describe()` returns the wiring as plain, serializable data: tokens and classes by name.
+`app.describe()` returns the wiring as plain, serializable data: ports and classes by name.
 
 ```ts
 {
   modules: ['kernel', 'ordering'],
   bindings: [{ token: 'PlaceOrderHandler', module: 'ordering', kind: 'use-case', lifetime: 'singleton',
                source: 'class', implementation: 'PlaceOrderHandler',
-               dependencies: ['ordering.OrderRepository', 'kernel.Clock'], overridden: false }],
+               dependencies: ['OrderRepository', 'Clock'], overridden: false }],
   commands: [{ message: 'PlaceOrder', handler: 'PlaceOrderHandler', module: 'ordering' }],
   queries: [{ message: 'GetOrder', handler: 'GetOrderHandler', module: 'ordering' }],
   integrationEventHandlers: [{ event: 'billing.payment.captured', version: 1, consumer: 'ordering.mark-order-paid',
@@ -605,32 +831,51 @@ class) and, when discovery loaded it, `file`. An entry written in a module is `e
 carries none of the three:
 
 ```ts
-{ token: 'billing.InvoiceRepository', module: 'billing', kind: 'repository', lifetime: 'singleton',
-  source: 'class', implementation: 'KnexInvoiceRepository', dependencies: ['platform.Database'],
+{ token: 'InvoiceRepository', module: 'billing', kind: 'repository', lifetime: 'singleton',
+  source: 'class', implementation: 'KnexInvoiceRepository', dependencies: ['Database'],
   overridden: false, origin: 'declared', declaredBy: 'KnexInvoiceRepository',
   file: '/app/dist/contexts/billing/infrastructure/persistence/knex-invoice.repository.js' }
 ```
 
-`domainEventHandlers` lists the declared handlers of domain events, `policies` the declared policy
-classes, `jobs` the jobs with the settings they run with, those of the application applied.
-What a job did last and when it runs next is not wiring: ask `app.resolve(JOB_SCHEDULER).describe()`.
+`domainEventHandlers` lists the declared handlers of domain events, publishers included,
+`policies` the declared policy classes, `jobs` the jobs with the settings they run with, those
+of the application applied. What a job did last and when it runs next is not wiring: ask
+`app.resolve(JobScheduler).describe()`.
 
 ## The `decorate` hook
 
 `createApplication({ decorate })` receives every instance a binding creates, handlers and
-consumers included, with `{ token, context, kind? }`, and returns the instance to hand out. It
-is the place for cross-cutting wrappers such as tracing; see the README of
-`@ddd-ts-kit/tracing`. This package depends on no tracing library.
+consumers included, with `{ token, context, kind? }` where `token` is the port class, and
+returns the instance to hand out. It is the place for cross-cutting wrappers such as tracing;
+see the README of `@ddd-ts-kit/tracing`. This package depends on no tracing library.
 
 One binding takes its own wrappers with `.with(...)`, the first outermost:
 
 ```ts
-builder.bind(PAYMENTS).toClass(HttpPaymentGateway, [HTTP]).as('external').with(retry({ attempts: 3 }), timeout(2000));
+builder.bind(PaymentGateway).toClass(HttpPaymentGateway, [PaymentSettings]).as('external').with(retry({ attempts: 3 }), timeout(2000));
 ```
 
-A `BindingAspect` is `(instance, { kind?, className, context, token }) => instance`; the aspects
-of `@ddd-ts-kit/aspects` fit as they are, and its `aspects(...)` builds a `decorate` hook. The
-`decorate` hook comes around the aspects of a binding.
+A `BindingAspect` is `(instance, { kind?, className, context, token }) => instance`, where
+`token` is the name of the port; the aspects of `@ddd-ts-kit/aspects` fit as they are, and its
+`aspects(...)` builds a `decorate` hook. The `decorate` hook comes around the aspects of a
+binding.
+
+## The tsyringe container
+
+`app.container` is the tsyringe child container of the application, for interoperability. A
+port is registered there under `tokenIdentity(port)`, a symbol, never under the class: tsyringe
+would try to build a class it is asked for, and an abstract class is not one of its tokens.
+
+```ts
+import { tokenIdentity } from '@ddd-ts-kit/di';
+
+app.container.isRegistered(tokenIdentity(Clock));          // true
+app.container.resolve<Clock>(tokenIdentity(Clock));        // what app.resolve(Clock) answers
+app.container.isRegistered(PlaceOrderHandler);             // false: bound under its identity too
+```
+
+`app.resolve(Port)` is the typed way in, and the one that reports a cycle or an unbound port
+with the names of who asked.
 
 ## Access control
 
@@ -638,40 +883,52 @@ A use case says what it requires, or says it is public: on the message itself wi
 `@Requires(permission)` or `@Public()`, or where it is registered:
 
 ```ts
-builder.command(IssueInvoice).requires(permissions['invoice.issue']).handledBy(IssueInvoiceHandler, [INVOICES, CLOCK]);
-builder.query(GetCatalog).public().handledBy(GetCatalogHandler, [CATALOG]);
+builder.command(IssueInvoice).requires(permissions['invoice.issue']).handledBy(IssueInvoiceHandler, [InvoiceRepository, Clock]);
+builder.query(GetCatalog).public().handledBy(GetCatalogHandler, [Catalog]);
 ```
 
 `.requires` exists only for messages that carry an actor (`AuthorizedCommand`,
 `AuthorizedQuery` of the kernel). With `createApplication({ modules, authorization: 'required' })`
 an application whose command or query declares neither, in either way, does not start
 (`UNDECLARED_AUTHORIZATION`), and one that declares them without a module enforcing them does
-not either (`AUTHORIZATION_NOT_ENFORCED`). The enforcement itself, the authorizers and the
-tokens typed by them live in `@ddd-ts-kit/auth` (`authorizationModule` from
-`@ddd-ts-kit/auth/di`). `ACTOR_CONTEXT` is bound by `kernelModule()`; the test application
-takes an `actor` option.
+not either (`AUTHORIZATION_NOT_ENFORCED`).
+
+Three classes of this package carry it:
+
+| Class | Is |
+|---|---|
+| `UseCaseGuard` | the port both buses ask before anything else, the unit of work included: `check(message, next, info)`. Unbound, every message passes; an authorization module binds it |
+| `UseCaseDeclarations` | a value, `{ list }`: what every command and query declared, for whoever enforces it |
+| `DeclaredPolicies` | a value, `{ list }`: the `@Policy` classes of the contexts, each resolved by its class |
+
+The enforcement itself and the authorizers live in `@ddd-ts-kit/auth` (`authorizationModule`
+from `@ddd-ts-kit/auth/di`). `ActorContext` is bound by `kernelModule()`; the test application
+takes an `actor` option, and lets every message through unless a listed module binds
+`UseCaseGuard`.
 
 ## Limits
 
 - A class plays one role: one declaration per class, and an adapter that implements two ports
-  is bound explicitly, once per token.
+  is bound explicitly, once per port.
+- A class is one binding: a handler class serves one statement, a declared class one module.
 - A class decorator of another library that replaces the class (answers a new one) must be
   written below the declaration, so that the declaration lands on the class that is exported.
   A decorator that only annotates, as `@Injectable()` does, composes in either order.
 - A declaration is not inherited: a subclass declares itself or is bound explicitly.
 - A consumer name, a policy name, a job name and the name of a domain event are written in the
   declaration; they are not derived from the class, which a refactoring renames.
+- A port of your own is identified by its class: see "Identity" for a port loaded twice.
 - Discovered files are imported by nothing. In a project using discovery, tell knip that they
   are entries and dependency-cruiser that they are not orphans:
 
   ```jsonc
   // knip.json
-  { "entry": ["src/main.ts", "src/contexts/*/{application,infrastructure}/**/*.{command,query,handler,integration-handler,event-handler,policy,job,repository,gateway,adapter}.ts"] }
+  { "entry": ["src/main.ts", "src/contexts/*/{application,infrastructure}/**/*.{command,query,handler,integration-handler,publisher,event-handler,policy,job,repository,gateway,adapter}.ts"] }
   ```
 
   ```js
   // .dependency-cruiser.cjs, in the pathNot of the no-orphans rule
-  '\\.(command|query|handler|integration-handler|event-handler|policy|job|repository|gateway|adapter)\\.ts$'
+  '\\.(command|query|handler|integration-handler|publisher|event-handler|policy|job|repository|gateway|adapter)\\.ts$'
   ```
 
   With a barrel and `contextModule` neither setting is needed.

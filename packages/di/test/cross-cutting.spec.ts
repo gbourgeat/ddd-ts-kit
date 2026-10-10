@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  ActorContext,
+  Cache,
+  ExecutionScope,
   FixedClock,
   FixedExecutionScope,
   InMemoryCache,
@@ -7,26 +10,22 @@ import {
   InMemoryLogger,
   InMemoryMetrics,
   InMemoryRateLimiter,
+  Lock,
+  Logger,
+  Metrics,
   NoopLogger,
   NoopMetrics,
+  RateLimiter,
   ScopedActorContext,
   cacheKey,
   executionContext,
   type Actor,
 } from '@ddd-ts-kit/kernel';
 import {
-  ACTOR_CONTEXT,
-  CACHE,
-  EXECUTION_SCOPE,
-  LOCK,
-  LOGGER,
-  METRICS,
-  RATE_LIMITER,
   createApplication,
   createTestApplication,
   defineContextModule,
   kernelModule,
-  token,
   type BindingAspect,
   type BindingAspectInfo,
 } from '../src/index.js';
@@ -38,22 +37,22 @@ describe('kernelModule', () => {
   it('binds the cross-cutting ports to defaults that do nothing or stay in memory', async () => {
     const app = createApplication({ modules: [kernelModule()] });
 
-    expect(app.resolve(LOGGER)).toBeInstanceOf(NoopLogger);
-    expect(app.resolve(METRICS)).toBeInstanceOf(NoopMetrics);
-    expect(app.resolve(CACHE)).toBeInstanceOf(InMemoryCache);
-    await app.resolve(CACHE).set(cacheKey<number>('answer'), 42, { ttlMs: 60_000 });
-    expect(await app.resolve(CACHE).get(cacheKey<number>('answer'))).toBe(42);
+    expect(app.resolve(Logger)).toBeInstanceOf(NoopLogger);
+    expect(app.resolve(Metrics)).toBeInstanceOf(NoopMetrics);
+    expect(app.resolve(Cache)).toBeInstanceOf(InMemoryCache);
+    await app.resolve(Cache).set(cacheKey<number>('answer'), 42, { ttlMs: 60_000 });
+    expect(await app.resolve(Cache).get(cacheKey<number>('answer'))).toBe(42);
   });
 
   it('binds the lock and the rate limiter to their in-memory implementations, replaced through its options', async () => {
     const app = createApplication({ modules: [kernelModule()] });
     const lock = new InMemoryLock(new FixedClock(new Date(0)));
 
-    expect(app.resolve(LOCK)).toBeInstanceOf(InMemoryLock);
-    expect(app.resolve(RATE_LIMITER)).toBeInstanceOf(InMemoryRateLimiter);
-    expect((await app.resolve(LOCK).acquire('report', { ttlMs: 1_000 }))?.fencingToken).toBe(1);
-    expect(await app.resolve(RATE_LIMITER).consume('client-a', { limit: 1, windowMs: 1_000 })).toMatchObject({ allowed: true });
-    expect(createApplication({ modules: [kernelModule({ lock })] }).resolve(LOCK)).toBe(lock);
+    expect(app.resolve(Lock)).toBeInstanceOf(InMemoryLock);
+    expect(app.resolve(RateLimiter)).toBeInstanceOf(InMemoryRateLimiter);
+    expect((await app.resolve(Lock).acquire('report', { ttlMs: 1_000 }))?.fencingToken).toBe(1);
+    expect(await app.resolve(RateLimiter).consume('client-a', { limit: 1, windowMs: 1_000 })).toMatchObject({ allowed: true });
+    expect(createApplication({ modules: [kernelModule({ lock })] }).resolve(Lock)).toBe(lock);
   });
 
   it('takes the adapters of the platform through its options', () => {
@@ -63,15 +62,15 @@ describe('kernelModule', () => {
 
     const app = createApplication({ modules: [kernelModule({ logger, metrics, executionScope })] });
 
-    expect(app.resolve(LOGGER)).toBe(logger);
-    expect(app.resolve(METRICS)).toBe(metrics);
-    expect(app.resolve(EXECUTION_SCOPE)).toBe(executionScope);
+    expect(app.resolve(Logger)).toBe(logger);
+    expect(app.resolve(Metrics)).toBe(metrics);
+    expect(app.resolve(ExecutionScope)).toBe(executionScope);
   });
 
   it('makes the actor context read the execution scope: the two cannot disagree', () => {
     const app = createApplication({ modules: [kernelModule()] });
-    const scope = app.resolve(EXECUTION_SCOPE);
-    const actors = app.resolve(ACTOR_CONTEXT);
+    const scope = app.resolve(ExecutionScope);
+    const actors = app.resolve(ActorContext);
     const request = executionContext({ correlationId: 'corr-1', actor: ada, origin: 'http' });
 
     expect(actors).toBeInstanceOf(ScopedActorContext);
@@ -86,9 +85,9 @@ describe('createTestApplication', () => {
   it('exposes the in-memory fakes of the cross-cutting ports', async () => {
     const app = createTestApplication({ modules: [] });
 
-    app.get(LOGGER).info('order shipped', { context: 'shipping' });
-    app.get(METRICS).counter('orders_total').increment();
-    await app.get(CACHE).set(cacheKey<string>('greeting'), 'hello', { ttlMs: 1000 });
+    app.get(Logger).info('order shipped', { context: 'shipping' });
+    app.get(Metrics).counter('orders_total').increment();
+    await app.get(Cache).set(cacheKey<string>('greeting'), 'hello', { ttlMs: 1000 });
     app.clock.advance(1000);
 
     expect(app.logger.entries).toEqual([{ level: 'info', message: 'order shipped', fields: { context: 'shipping' } }]);
@@ -100,8 +99,8 @@ describe('createTestApplication', () => {
     const app = createTestApplication({ modules: [] });
     const once = { limit: 1, windowMs: 1_000 };
 
-    await app.get(LOCK).acquire('report', { ttlMs: 1_000 });
-    await app.get(RATE_LIMITER).consume('client-a', once);
+    await app.get(Lock).acquire('report', { ttlMs: 1_000 });
+    await app.get(RateLimiter).consume('client-a', once);
     expect(await app.lock.acquire('report', { ttlMs: 1_000 })).toBeUndefined();
     expect((await app.rateLimiter.consume('client-a', once)).allowed).toBe(false);
     app.clock.advance(1_000);
@@ -113,13 +112,15 @@ describe('createTestApplication', () => {
   it('gives infrastructure an execution context that follows the current actor', () => {
     const app = createTestApplication({ modules: [], actor: ada });
 
-    expect(app.get(EXECUTION_SCOPE)).toBe(app.executionScope);
+    expect(app.get(ExecutionScope)).toBe(app.executionScope);
+
     expect(app.executionScope.require()).toMatchObject({
       correlationId: 'test-correlation',
       origin: 'test',
       actor: ada,
       tenantId: 'acme',
     });
+
     app.actorContext.actAs(bob);
     expect(app.executionScope.require().actor).toBe(bob);
     app.executionScope.enter(executionContext({ correlationId: 'corr-9', actor: ada, origin: 'event' }));
@@ -127,22 +128,32 @@ describe('createTestApplication', () => {
   });
 });
 
-class Greeter {
+abstract class Greeter {
+  abstract greet(name: string): Promise<string>;
+}
+
+class PoliteGreeter implements Greeter {
   async greet(name: string): Promise<string> {
     return `hello ${name}`;
   }
 }
 
-const GREETER = token<Greeter>('greeting.Greeter');
-const MOTTO = token<string>('greeting.Motto');
+/** A string is all this asks for: the one value a module can bind that is not an object. */
+abstract class Motto {
+  abstract readonly length: number;
+}
 
 /** A binding aspect made by hand: it replaces `greet` on the instance it is given. */
 function marking(mark: string, seen: BindingAspectInfo[] = []): BindingAspect {
   return (instance, info) => {
     seen.push(info);
+
     const greet: unknown = Reflect.get(instance, 'greet');
+
     if (typeof greet !== 'function') return instance;
+
     Reflect.set(instance, 'greet', async (name: string) => `${mark}(${String(await Reflect.apply(greet, instance, [name]))})`);
+
     return instance;
   };
 }
@@ -152,53 +163,56 @@ describe('binding.with(...aspects)', () => {
     const greeting = defineContextModule({
       name: 'greeting',
       register(builder) {
-        builder.bind(GREETER).toClass(Greeter).as('gateway').with(marking('outer'), marking('inner')).transient();
+        builder.bind(Greeter).toClass(PoliteGreeter).as('gateway').with(marking('outer'), marking('inner')).transient();
       },
     });
+
     const app = createApplication({ modules: [greeting] });
 
-    expect(await app.resolve(GREETER).greet('ada')).toBe('outer(inner(hello ada))');
-    expect(await app.resolve(GREETER).greet('bob')).toBe('outer(inner(hello bob))');
-    expect(app.resolve(GREETER)).toBeInstanceOf(Greeter);
+    expect(await app.resolve(Greeter).greet('ada')).toBe('outer(inner(hello ada))');
+    expect(await app.resolve(Greeter).greet('bob')).toBe('outer(inner(hello bob))');
+    expect(app.resolve(Greeter)).toBeInstanceOf(PoliteGreeter);
   });
 
-  it('tells the aspect the class, the kind, the module and the token', () => {
+  it('tells the aspect the class, the kind, the module and the port', () => {
     const seen: BindingAspectInfo[] = [];
+
     const greeting = defineContextModule({
       name: 'greeting',
       register(builder) {
-        builder.bind(GREETER).toFactory(() => new Greeter()).with(marking('m', seen)).as('external');
+        builder.bind(Greeter).toFactory(() => new PoliteGreeter()).with(marking('m', seen)).as('external');
       },
     });
 
-    createApplication({ modules: [greeting] }).resolve(GREETER);
+    createApplication({ modules: [greeting] }).resolve(Greeter);
 
-    expect(seen).toEqual([{ className: 'Greeter', context: 'greeting', token: 'greeting.Greeter', kind: 'external' }]);
+    expect(seen).toEqual([{ className: 'PoliteGreeter', context: 'greeting', token: 'Greeter', kind: 'external' }]);
   });
 
   it('puts the decorate hook of the application around the aspects of the binding', async () => {
     const greeting = defineContextModule({
       name: 'greeting',
       register(builder) {
-        builder.bind(GREETER).toClass(Greeter).with(marking('binding'));
+        builder.bind(Greeter).toClass(PoliteGreeter).with(marking('binding'));
       },
     });
+
     const app = createApplication({
       modules: [greeting],
-      decorate: (instance) => (instance instanceof Greeter ? marking('application')(instance, { className: '', context: '', token: '' }) : instance),
+      decorate: (instance) => (instance instanceof PoliteGreeter ? marking('application')(instance, { className: '', context: '', token: '' }) : instance),
     });
 
-    expect(await app.resolve(GREETER).greet('ada')).toBe('application(binding(hello ada))');
+    expect(await app.resolve(Greeter).greet('ada')).toBe('application(binding(hello ada))');
   });
 
   it('leaves a value that is not an object alone', () => {
     const greeting = defineContextModule({
       name: 'greeting',
       register(builder) {
-        builder.bind(MOTTO).toValue('be kind').with(marking('never'));
+        builder.bind(Motto).toValue('be kind').with(marking('never'));
       },
     });
 
-    expect(createApplication({ modules: [greeting] }).resolve(MOTTO)).toBe('be kind');
+    expect(createApplication({ modules: [greeting] }).resolve(Motto)).toBe('be kind');
   });
 });

@@ -1,7 +1,9 @@
 import { declarationOf } from '@ddd-ts-kit/kernel/declarations';
 import { expect, it } from 'vitest';
-import { EmptyJournal, JOURNAL } from './journal.mjs';
-import { InMemoryLedger, LEDGER } from './ledger.js';
+import { Journal } from './application/ports/journal.port.js';
+import { Ledger } from './domain/repositories/ledger.repository.js';
+import { EmptyJournal } from './infrastructure/external/empty-journal.adapter.mjs';
+import { InMemoryLedger } from './infrastructure/persistence/in-memory-ledger.repository.js';
 
 it('runs a TypeScript source that holds standard decorators', () => {
   const ledger = new InMemoryLedger();
@@ -10,8 +12,8 @@ it('runs a TypeScript source that holds standard decorators', () => {
   ledger.record(2);
 
   expect(ledger.total()).toBe(42);
-  expect(declarationOf(InMemoryLedger)).toMatchObject({ role: 'repository', token: LEDGER });
-  expect(declarationOf(EmptyJournal)).toMatchObject({ role: 'adapter', token: JOURNAL, kind: 'external' });
+  expect(declarationOf(InMemoryLedger)).toMatchObject({ role: 'repository', token: Ledger });
+  expect(declarationOf(EmptyJournal)).toMatchObject({ role: 'adapter', token: Journal, kind: 'external' });
 });
 
 it('reports a failure at the line of the source, not of what was compiled', () => {
@@ -24,5 +26,5 @@ it('reports a failure at the line of the source, not of what was compiled', () =
   })();
 
   expect(failure).toBeInstanceOf(RangeError);
-  expect(failure instanceof Error ? failure.stack : '').toMatch(/ledger\.ts:15:/);
+  expect(failure instanceof Error ? failure.stack : '').toMatch(/in-memory-ledger\.repository\.ts:9:/);
 });

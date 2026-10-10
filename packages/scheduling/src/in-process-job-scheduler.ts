@@ -14,22 +14,17 @@ import {
   type Logger,
   type Metrics,
 } from '@ddd-ts-kit/kernel';
-import { JobAbortedError } from './errors.js';
-import { latestOccurrence, nextOccurrence } from './occurrences.js';
-import { JobRecorder, type JobRunObserver } from './recorder.js';
-import { RegisteredJob, type Occurrence } from './registered-job.js';
-import { JobRunner } from './runner.js';
-import { systemJobTimers, type JobTimers } from './timers.js';
-
-/**
- * Where a scheduler remembers the last occurrence it handled for each job, so that a restart
- * knows what passed while the process was down. Shared by the instances of an application: a
- * table, a key of a store.
- */
-export interface JobCheckpoints {
-  read(job: string): Promise<Date | undefined>;
-  write(job: string, handled: Date): Promise<void>;
-}
+import { JobAbortedError } from './errors/job-aborted-error.js';
+import type { JobCheckpoints } from './job-checkpoints.js';
+import { JobRecorder } from './job-recorder.js';
+import type { JobRunObserver } from './job-run-observer.js';
+import { JobRunner } from './job-runner.js';
+import type { JobTimers } from './job-timers.js';
+import type { Occurrence } from './occurrence.js';
+import { latestOccurrence } from './occurrences/latest-occurrence.js';
+import { nextOccurrence } from './occurrences/next-occurrence.js';
+import { RegisteredJob } from './registered-job.js';
+import { systemJobTimers } from './system-job-timers.js';
 
 export interface InProcessJobSchedulerOptions {
   /** Every instant comes from it: the system clock is never read. */
@@ -75,148 +70,186 @@ const LONGEST_SLEEP_MS = 3_600_000;
  * instances of an application each run one: the `Lock` decides which of them runs an occurrence.
  */
 export class InProcessJobScheduler implements JobScheduler {
-  readonly #jobs = new Map<string, RegisteredJob>();
-  readonly #ticks = new Set<Promise<void>>();
-  readonly #runs = new Set<Promise<JobRun>>();
-  readonly #settings: Settings;
-  readonly #recorder: JobRecorder;
-  readonly #runner: JobRunner;
-  #started = false;
-  #stopping = false;
+  private readonly jobs = new Map<string, RegisteredJob>();
+
+  private readonly ticks = new Set<Promise<void>>();
+
+  private readonly runsInProgress = new Set<Promise<JobRun>>();
+
+  private readonly settings: Settings;
+
+  private readonly recorder: JobRecorder;
+
+  private readonly runner: JobRunner;
+
+  private started = false;
+
+  private stopping = false;
 
   constructor(options: InProcessJobSchedulerOptions) {
     const { clock, logger = new NoopLogger(), metrics = new NoopMetrics(), timers = systemJobTimers } = options;
     const { lateAfterMs = 60_000, graceMs = 30_000, lockTtlMs = 900_000, random = Math.random, checkpoints, onRun } = options;
-    this.#settings = { clock, logger, metrics, timers, lateAfterMs, graceMs, lockTtlMs, random, ...(checkpoints === undefined ? {} : { checkpoints }) };
-    this.#recorder = new JobRecorder({ clock, logger, metrics, ...(onRun === undefined ? {} : { onRun }) });
     const { lock, scope, ids } = options;
-    this.#runner = new JobRunner({ clock, lock, scope, ids, timers, lockTtlMs, lateAfterMs }, this.#recorder);
+
+    this.settings = { clock, logger, metrics, timers, lateAfterMs, graceMs, lockTtlMs, random, ...(checkpoints === undefined ? {} : { checkpoints }) };
+    this.recorder = new JobRecorder({ clock, logger, metrics, ...(onRun === undefined ? {} : { onRun }) });
+    this.runner = new JobRunner({ clock, lock, scope, ids, timers, lockTtlMs, lateAfterMs }, this.recorder);
   }
 
   register(definition: JobDefinition): void {
-    if (this.#jobs.has(definition.name)) throw new DuplicateJobError(definition.name);
+    if (this.jobs.has(definition.name)) throw new DuplicateJobError(definition.name);
+
     const job = new RegisteredJob(definition);
-    this.#jobs.set(job.name, job);
-    if (this.#started) void this.#follow(job, this.#begin(job));
+
+    this.jobs.set(job.name, job);
+
+    if (this.started) void this.follow(job, this.begin(job));
   }
 
   async start(): Promise<void> {
-    if (this.#started) return;
-    this.#started = true;
-    await Promise.all([...this.#jobs.values()].map((job) => this.#follow(job, this.#begin(job))));
+    if (this.started) return;
+
+    this.started = true;
+    await Promise.all([...this.jobs.values()].map((job) => this.follow(job, this.begin(job))));
   }
 
   async stop(): Promise<void> {
-    this.#started = false;
-    this.#stopping = true;
-    for (const job of this.#jobs.values()) job.cancelSleep?.();
-    await Promise.all(this.#ticks);
-    const cancelAbort = this.#settings.timers.schedule(this.#settings.graceMs, () => {
-      for (const job of this.#jobs.values()) job.abort?.(new JobAbortedError(job.name));
+    this.started = false;
+    this.stopping = true;
+
+    for (const job of this.jobs.values()) job.cancelSleep?.();
+
+    await Promise.all(this.ticks);
+
+    const cancelAbort = this.settings.timers.schedule(this.settings.graceMs, () => {
+      for (const job of this.jobs.values()) job.abort?.(new JobAbortedError(job.name));
     });
-    await Promise.all(this.#runs);
+
+    await Promise.all(this.runsInProgress);
     cancelAbort();
-    this.#stopping = false;
+    this.stopping = false;
   }
 
   async runNow(name: string): Promise<JobRun> {
-    const job = this.#jobs.get(name);
+    const job = this.jobs.get(name);
+
     if (job === undefined) throw new UnknownJobError(name);
-    return this.#trigger(job, { scheduledAt: this.#settings.clock.now(), manual: true });
+
+    return this.trigger(job, { scheduledAt: this.settings.clock.now(), manual: true });
   }
 
   describe(): readonly JobDescription[] {
-    return [...this.#jobs.values()].map((job) => ({
+    return [...this.jobs.values()].map((job) => ({
       name: job.name,
       schedule: job.scheduleText,
       enabled: job.policy.enabled,
       running: job.active !== undefined,
-      ...(this.#started && job.cursor !== undefined ? { nextRunAt: nextOccurrence(job.schedule, job.cursor) } : {}),
+      ...(this.started && job.cursor !== undefined ? { nextRunAt: nextOccurrence(job.schedule, job.cursor) } : {}),
       ...(job.lastRun === undefined ? {} : { lastRun: job.lastRun }),
     }));
   }
 
   /** A tick never rejects: what goes wrong while following a job is logged, and the others go on. */
-  #follow(job: RegisteredJob, tick: Promise<void>): Promise<void> {
+  private follow(job: RegisteredJob, tick: Promise<void>): Promise<void> {
     const followed = tick.catch((error: unknown) => {
-      this.#recorder.fault(job, error);
+      this.recorder.fault(job, error);
     });
-    this.#ticks.add(followed);
-    return followed.finally(() => this.#ticks.delete(followed));
+
+    this.ticks.add(followed);
+
+    return followed.finally(() => this.ticks.delete(followed));
   }
 
-  async #begin(job: RegisteredJob): Promise<void> {
+  private async begin(job: RegisteredJob): Promise<void> {
     if (!job.policy.enabled) return;
-    job.cursor = (await this.#remembered(job)) ?? this.#settings.clock.now();
-    await this.#tick(job);
+
+    job.cursor = (await this.remembered(job)) ?? this.settings.clock.now();
+    await this.tick(job);
   }
 
   /** A checkpoint that cannot be read is no reason to leave the job asleep: it starts from now. */
-  async #remembered(job: RegisteredJob): Promise<Date | undefined> {
+  private async remembered(job: RegisteredJob): Promise<Date | undefined> {
     try {
-      return await this.#settings.checkpoints?.read(job.name);
+      return await this.settings.checkpoints?.read(job.name);
     } catch (error) {
-      this.#recorder.fault(job, error);
+      this.recorder.fault(job, error);
+
       return undefined;
     }
   }
 
-  async #tick(job: RegisteredJob): Promise<void> {
+  private async tick(job: RegisteredJob): Promise<void> {
     try {
-      await this.#handleDue(job);
+      await this.handleDue(job);
     } finally {
-      this.#sleep(job);
+      this.sleep(job);
     }
   }
 
   /** Of the occurrences that became due, the latest is run when it is on time or owed; the others are missed. */
-  async #handleDue(job: RegisteredJob): Promise<void> {
-    const now = this.#settings.clock.now();
+  private async handleDue(job: RegisteredJob): Promise<void> {
+    const now = this.settings.clock.now();
     const after = job.cursor ?? now;
     const due = latestOccurrence(job.schedule, { after, notAfter: now });
+
     if (due === undefined) return;
+
     job.cursor = due;
+
     const earliest = nextOccurrence(job.schedule, after);
-    const late = now.getTime() - due.getTime() > this.#settings.lateAfterMs + job.policy.jitterMs;
+    const late = now.getTime() - due.getTime() > this.settings.lateAfterMs + job.policy.jitterMs;
     const runs = !late || job.policy.missed === 'run-once';
-    if (!runs || earliest.getTime() < due.getTime()) this.#recorder.notRun(job, { scheduledAt: earliest, manual: false }, 'missed');
-    if (runs) void this.#trigger(job, { scheduledAt: due, manual: false });
-    await this.#settings.checkpoints?.write(job.name, due);
+
+    if (!runs || earliest.getTime() < due.getTime()) this.recorder.notRun(job, { scheduledAt: earliest, manual: false }, 'missed');
+
+    if (runs) void this.trigger(job, { scheduledAt: due, manual: false });
+
+    await this.settings.checkpoints?.write(job.name, due);
   }
 
-  #sleep(job: RegisteredJob): void {
-    if (!this.#started || job.cursor === undefined) return;
-    const { clock, timers, random } = this.#settings;
+  private sleep(job: RegisteredJob): void {
+    if (!this.started || job.cursor === undefined) return;
+
+    const { clock, timers, random } = this.settings;
     const untilNext = nextOccurrence(job.schedule, job.cursor).getTime() - clock.now().getTime();
     const jitter = Math.floor(random() * (job.policy.jitterMs + 1));
+
     job.cancelSleep = timers.schedule(Math.min(Math.max(0, untilNext), LONGEST_SLEEP_MS) + jitter, () => {
-      void this.#follow(job, this.#tick(job));
+      void this.follow(job, this.tick(job));
     });
   }
 
-  #trigger(job: RegisteredJob, occurrence: Occurrence): Promise<JobRun> {
+  private trigger(job: RegisteredJob, occurrence: Occurrence): Promise<JobRun> {
     const previous = job.active;
-    if (previous === undefined) return this.#occupy(job, this.#runner.run(job, occurrence));
+
+    if (previous === undefined) return this.occupy(job, this.runner.run(job, occurrence));
+
     if (job.policy.overlap === 'skip' || job.waiting) {
-      return Promise.resolve(this.#recorder.notRun(job, occurrence, 'skipped-overlap'));
+      return Promise.resolve(this.recorder.notRun(job, occurrence, 'skipped-overlap'));
     }
+
     job.waiting = true;
-    return this.#occupy(job, previous.then(() => this.#afterPrevious(job, occurrence)));
+
+    return this.occupy(job, previous.then(() => this.afterPrevious(job, occurrence)));
   }
 
-  #occupy(job: RegisteredJob, run: Promise<JobRun>): Promise<JobRun> {
+  private occupy(job: RegisteredJob, run: Promise<JobRun>): Promise<JobRun> {
     const active = run.finally(() => {
-      this.#runs.delete(active);
+      this.runsInProgress.delete(active);
+
       if (job.active === active) job.active = undefined;
     });
+
     job.active = active;
-    this.#runs.add(active);
+    this.runsInProgress.add(active);
+
     return active;
   }
 
   /** A run that waited behind another is dropped when the scheduler is stopping. */
-  #afterPrevious(job: RegisteredJob, occurrence: Occurrence): JobRun | Promise<JobRun> {
+  private afterPrevious(job: RegisteredJob, occurrence: Occurrence): JobRun | Promise<JobRun> {
     job.waiting = false;
-    return this.#stopping ? this.#recorder.notRun(job, occurrence, 'missed') : this.#runner.run(job, occurrence);
+
+    return this.stopping ? this.recorder.notRun(job, occurrence, 'missed') : this.runner.run(job, occurrence);
   }
 }

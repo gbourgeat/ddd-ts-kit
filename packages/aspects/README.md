@@ -16,23 +16,48 @@ The same policy, written three ways. All three run the same code.
 ### 1. At the composition root, on one binding (preferred)
 
 ```ts
+// contexts/billing/application/ports/payment-gateway.port.ts
+export abstract class PaymentGateway {
+  abstract charge(payment: Payment, signal?: AbortSignal): Promise<Receipt>;
+}
+
+// contexts/billing/application/ports/payment-settings.port.ts
+export abstract class PaymentSettings {
+  abstract readonly baseUrl: string;
+
+  abstract readonly apiKey: string;
+}
+
+// contexts/billing/infrastructure/external/stripe.gateway.ts
+export class StripeGateway implements PaymentGateway {
+  constructor(private readonly settings: PaymentSettings) {}
+
+  async charge(payment: Payment, signal?: AbortSignal): Promise<Receipt> {
+    return post(`${this.settings.baseUrl}/charges`, payment, { apiKey: this.settings.apiKey, signal });
+  }
+}
+
 // contexts/billing/billing.module.ts
 import { retry, timeout } from '@ddd-ts-kit/aspects';
 
+builder.bind(PaymentSettings).toValue({ baseUrl: config.stripe.url, apiKey: config.stripe.key });
 builder
-  .bind(PAYMENT_GATEWAY)
-  .toClass(HttpPaymentGateway, [HTTP_CLIENT])
+  .bind(PaymentGateway)
+  .toClass(StripeGateway, [PaymentSettings])
   .as('external')
   .with(retry({ attempts: 3 }), timeout(2000, { signal: true }));
 ```
 
-`HttpPaymentGateway` has no import from this package and no knowledge of the policy. Without
-a container an aspect is a function: `retry({ attempts: 3 })(new HttpPaymentGateway(http), { kind: 'external' })`.
+The port is an abstract class and the class is what is bound. `StripeGateway` has no import
+from this package and no knowledge of the policy. Without a container an aspect is a function:
+`retry({ attempts: 3 })(new StripeGateway(settings), { kind: 'external' })`.
 
 ### 2. At the composition root, on every binding
 
 ```ts
 // main.ts
+import { Cache, Clock, Logger, Metrics } from '@ddd-ts-kit/kernel';
+import { createApplication, kernelModule } from '@ddd-ts-kit/di';
 import { StdoutLogger, aspects, forKinds, installAspectRuntime, logged, retry, timed, timeout, when } from '@ddd-ts-kit/aspects';
 
 const app = createApplication({
@@ -45,10 +70,10 @@ const app = createApplication({
 });
 
 installAspectRuntime({
-  logger: app.resolve(LOGGER),
-  metrics: app.resolve(METRICS),
-  cache: app.resolve(CACHE),
-  clock: app.resolve(CLOCK),
+  logger: app.resolve(Logger),
+  metrics: app.resolve(Metrics),
+  cache: app.resolve(Cache),
+  clock: app.resolve(Clock),
 });
 ```
 
@@ -62,16 +87,16 @@ const tracing: Aspect = (instance, info) =>
 ### 3. As a decorator, on an adapter
 
 ```ts
-// contexts/billing/infrastructure/external/http-payment.gateway.ts
+// contexts/billing/infrastructure/external/stripe.gateway.ts
 import { Retry, Timeout } from '@ddd-ts-kit/aspects/decorators';
 
-export class HttpPaymentGateway implements PaymentGateway {
-  constructor(private readonly http: HttpClient) {}
+export class StripeGateway implements PaymentGateway {
+  constructor(private readonly settings: PaymentSettings) {}
 
   @Retry({ attempts: 3 })
   @Timeout(2000, { signal: true })
   async charge(payment: Payment, signal?: AbortSignal): Promise<Receipt> {
-    return this.http.post('/charges', payment, { signal });
+    return post(`${this.settings.baseUrl}/charges`, payment, { apiKey: this.settings.apiKey, signal });
   }
 }
 ```
@@ -172,7 +197,10 @@ options, or from the runtime that the composition root installs once with
 `installAspectRuntime({ logger, metrics, cache, clock, scheduler })`. The runtime is read when
 a call is made, never when a class is decorated or an instance wrapped, so the order of the
 statements in `main.ts` does not matter. A missing collaborator raises `AspectRuntimeError`,
-which names it. The clock and the scheduler default to the system ones.
+which names it. The clock and the scheduler default to the system ones. `Scheduler` is the port
+of this package for "run this later" (`schedule(work, delayMs)`), an abstract class like the
+ports of the kernel: `systemScheduler` is its default, `ManualScheduler` of `./testing` the one
+of a spec.
 
 ## Use cases: bus middlewares
 
@@ -211,11 +239,21 @@ context. This package depends on neither. Fields cannot overwrite `time`, `level
 
 ## What wrapping guarantees
 
-- The instance is wrapped in place: same object, `instanceof`, `this` and `#private` members
-  intact. A frozen instance is fronted by a proxy of the same type.
+- The instance is wrapped in place: same object, `instanceof`, `this` and `private` members
+  intact. A frozen instance is fronted by a proxy of the same type, and its methods run with
+  that proxy as `this`.
+- **Every asynchronous method reachable by name is advised, whatever its TypeScript
+  visibility**: `private` is erased by the compiler, so a `private async` method, and a field
+  that holds an asynchronous function, are wrapped like a public method. A method that calls
+  another through `this` goes through the advice of that other one, on a frozen instance as on
+  any other. Where that is not wanted (a retry around a public method and around the private
+  step it calls multiplies the attempts), select the methods: `when(forMethods('charge', 'refund'), retry(...))`,
+  or decorate them one by one.
+- A frozen instance stays frozen: its fields, `private` ones included, cannot be assigned. State
+  it must change lives in an object it holds (a `Map`, an array).
 - Applying the same aspect twice to an instance is a no-op.
-- Getters, symbols, `#private` members, generators, synchronous methods and lifecycle hooks
-  (`LIFECYCLE_HOOKS`) are left alone.
+- Getters, symbols, generators, synchronous methods and lifecycle hooks (`LIFECYCLE_HOOKS`) are
+  left alone.
 - A method declared `async` is advised from its first call. A method that merely returns a
   promise is advised from its second call: declare adapter methods `async`. A decorated method
   is always advised.
@@ -229,7 +267,7 @@ decorated classes and for aspects that read the runtime, `@ddd-ts-kit/aspects/te
 import { createAspectFakes, withAspectRuntime } from '@ddd-ts-kit/aspects/testing';
 
 const fakes = createAspectFakes();           // logger, metrics, cache, clock, scheduler
-const gateway = new HttpPaymentGateway(fakeHttp);
+const gateway = new StripeGateway({ baseUrl: 'http://stripe.test', apiKey: 'test' });
 
 const pending = withAspectRuntime(fakes, () => gateway.charge(payment));
 fakes.scheduler.advance(2000);               // time moves when the test says so
@@ -267,8 +305,9 @@ source line.
   `@Retry` fails with a syntax error): add `decorators()` of `@ddd-ts-kit/testing/vitest` to
   the Vitest config. Files wrapped at the composition root need nothing in either mode.
 - **With a declaration.** `@Adapter(...)` on the class and `@Retry(...)` on its methods
-  compose, with the `aspects` of the declaration around the decorators of the methods. A
-  static method, a `#private` method and a method named by a symbol are refused.
+  compose, with the `aspects` of the declaration around the decorators of the methods:
+  `@Adapter(PaymentGateway, { kind: 'external' }, [PaymentSettings])`. A static method, a
+  method named by a symbol and a hard-private (`#`) method are refused.
 
 The `./decorators` entry is separate: nothing else in the package imports it.
 

@@ -40,14 +40,17 @@ class OrderBuilder extends Builder<OrderProps, Order> {
   // Through the public API only: a built order went through the same rules as a real one.
   protected construct(props: OrderProps): Order {
     const order = Order.place(props.id, props.customer, props.lines, at);
+
     if (props.paid) {
       order.pay(at);
     }
+
     return order;
   }
 
   buildRequest(): PlaceOrderRequest {
     const { customer, lines } = this.props();
+
     return { customerId: customer.id, lines };
   }
 

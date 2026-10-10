@@ -22,13 +22,16 @@ export interface TestPostgres {
  */
 export async function startPostgres(): Promise<TestPostgres> {
   const serverUrl = process.env['DDD_TS_KIT_TEST_DATABASE_URL'];
+
   return serverUrl === undefined || serverUrl === '' ? startPglite() : createDatabaseOn(serverUrl);
 }
 
 async function startPglite(): Promise<TestPostgres> {
   const db = await PGlite.create();
   const server = new PGLiteSocketServer({ db, host: '127.0.0.1', port: 0, maxConnections: 10 });
+
   await server.start();
+
   return {
     url: `postgresql://postgres:postgres@${server.getServerConn()}/postgres`,
     real: false,
@@ -42,18 +45,24 @@ async function startPglite(): Promise<TestPostgres> {
 
 async function createDatabaseOn(serverUrl: string): Promise<TestPostgres> {
   const name = `ddd_ts_kit_test_${randomBytes(6).toString('hex')}`;
+
   const admin = async (statement: string): Promise<void> => {
     const client = new pg.Client({ connectionString: serverUrl });
+
     await client.connect();
+
     try {
       await client.query(statement);
     } finally {
       await client.end();
     }
   };
+
   await admin(`create database ${name}`);
   const url = new URL(serverUrl);
+
   url.pathname = `/${name}`;
+
   return {
     url: url.toString(),
     real: true,

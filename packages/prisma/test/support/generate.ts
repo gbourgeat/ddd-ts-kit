@@ -57,9 +57,11 @@ const inSchema = (models: string, schema: string): string =>
  */
 async function composeSchema(): Promise<string> {
   const fragment = await readFile(`${packageRoot}prisma/outbox.postgresql.prisma`, 'utf8');
+
   const renamed = fragment
     .replace('model OutboxRecord ', 'model MessagingOutboxRecord ')
     .replace('model ProcessedEvent ', 'model MessagingProcessedEvent ');
+
   return [HEADER, inSchema(fragment, 'public'), inSchema(renamed, 'messaging'), INVOICE].join('\n');
 }
 
@@ -74,6 +76,7 @@ async function generate(schema: string, stamp: string): Promise<void> {
   await rm(generated, { recursive: true, force: true });
   await mkdir(generated, { recursive: true });
   await writeFile(`${generated}/schema.prisma`, schema);
+
   // `migrate diff` wants a datasource URL even though it never connects for an empty source.
   await writeFile(
     `${generated}/prisma.config.ts`,
@@ -87,6 +90,7 @@ async function generate(schema: string, stamp: string): Promise<void> {
       '',
     ].join('\n'),
   );
+
   await prisma(['generate', '--schema', 'schema.prisma']);
   await prisma(['migrate', 'diff', '--from-empty', '--to-schema', 'schema.prisma', '--script', '-o', 'ddl.sql']);
   await writeFile(`${generated}/stamp`, stamp);
@@ -102,13 +106,16 @@ async function acquireLock(): Promise<void> {
   for (;;) {
     try {
       await mkdir(lock);
+
       return;
     } catch {
       const age = Date.now() - (await stat(lock).then((entry) => entry.mtimeMs, () => Date.now()));
+
       if (age > 120_000) {
         // Left behind by a run that was killed.
         await rm(lock, { recursive: true, force: true });
       }
+
       await pause(100);
     }
   }
@@ -123,10 +130,13 @@ export async function ensureGeneratedClient(): Promise<void> {
   const schema = await composeSchema();
   const version: unknown = require('prisma/package.json').version;
   const stamp = createHash('sha256').update(`${String(version)}\n${schema}`).digest('hex');
+
   if (await isUpToDate(stamp)) {
     return;
   }
+
   await acquireLock();
+
   try {
     if (!(await isUpToDate(stamp))) {
       await generate(schema, stamp);

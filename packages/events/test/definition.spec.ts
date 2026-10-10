@@ -20,6 +20,7 @@ describe('defineIntegrationEvent', () => {
       producer: 'ordering',
       deprecated: true,
     });
+
     expect(invoiceIssued.deprecated).toBe(false);
     expect(shipmentSent.producer).toBe('logistics');
   });
@@ -44,6 +45,7 @@ describe('defineIntegrationEvent', () => {
       version: 3,
       payload,
     });
+
     expect(definition.producer).toBe('order-management');
   });
 
@@ -66,6 +68,7 @@ describe('create', () => {
       { invoiceId: 'inv-1', orderId: 'order-1' },
       { id: 'evt-1', occurredAt: at },
     );
+
     expect(event).toEqual({
       id: 'evt-1',
       type: 'billing.invoice.issued',
@@ -85,6 +88,7 @@ describe('create', () => {
         correlationId: 'corr-1',
       },
     );
+
     expect(event.occurredAt).toBe('2026-03-01T11:00:00+01:00');
     expect(event.traceparent).toBe('00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01');
     expect(event.correlationId).toBe('corr-1');
@@ -92,10 +96,13 @@ describe('create', () => {
 
   it('throws with the issues when the payload is invalid, without quoting the data', () => {
     const invalid: unknown = { invoiceId: 'inv-1', orderId: 42 };
+
     const create = (): unknown =>
       // The cast stands for a caller that escaped the type system: the schema is the last guard.
       invoiceIssued.create(invalid as PayloadOf<typeof invoiceIssued>, { id: 'e', occurredAt: at });
+
     expect(create).toThrow(InvalidEventPayloadError);
+
     try {
       create();
     } catch (error) {
@@ -105,6 +112,7 @@ describe('create', () => {
         eventVersion: 1,
         issues: [{ path: 'orderId', code: 'invalid_type' }],
       });
+
       expect(String(error)).toContain('billing.invoice.issued v1 (orderId: invalid_type)');
     }
   });
@@ -128,6 +136,7 @@ describe('parse and is', () => {
 
   it('returns the typed event when type, version and payload match', () => {
     const parsed = invoiceIssued.parse(event);
+
     expect(parsed).toEqual({ ok: true, value: event });
     expect(invoiceIssued.is(event)).toBe(true);
   });
@@ -141,20 +150,24 @@ describe('parse and is', () => {
         actual: 'billing.invoice.issued',
       },
     });
+
     expect(orderPlacedV1.is(event)).toBe(false);
   });
 
   it('reports another version', () => {
     const next = { ...event, version: 2 };
+
     expect(invoiceIssued.parse(next)).toEqual({
       ok: false,
       error: { reason: 'version-mismatch', expected: 1, actual: 2 },
     });
+
     expect(invoiceIssued.is(next)).toBe(false);
   });
 
   it('reports an invalid payload with its issues', () => {
     const parsed = invoiceIssued.parse({ ...event, payload: { invoiceId: 'inv-1' } });
+
     expect(parsed).toMatchObject({
       ok: false,
       error: { reason: 'invalid-payload', issues: [{ path: 'orderId' }] },

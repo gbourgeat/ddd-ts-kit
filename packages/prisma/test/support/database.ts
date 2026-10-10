@@ -30,17 +30,22 @@ const TABLES = [
 export async function createDatabase(): Promise<TestDatabase> {
   const postgres = await startPostgres();
   const migration = new pg.Client({ connectionString: postgres.url });
+
   await migration.connect();
   await migration.query(await readFile(DDL_PATH, 'utf8'));
   await migration.end();
+
   const prisma = new PrismaClient({
     adapter: new PrismaPg({ connectionString: postgres.url, max: postgres.poolSize }),
     log: [{ emit: 'event', level: 'query' }],
   });
+
   const queries: string[] = [];
+
   prisma.$on('query', (event) => {
     queries.push(event.query);
   });
+
   return {
     prisma,
     real: postgres.real,

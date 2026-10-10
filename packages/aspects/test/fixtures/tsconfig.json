@@ -9,5 +9,6 @@
     "sourceMap": false,
     "experimentalDecorators": true
   },
-  "include": ["*.ts", "../../src/testing.ts"]
+  "include": ["**/*.ts", "../../src/testing.ts"],
+  "exclude": ["dist"]
 }

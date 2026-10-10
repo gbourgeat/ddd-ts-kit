@@ -1,10 +1,11 @@
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { contextModule, createApplication, kernelModule } from '@ddd-ts-kit/di';
-import { PairNotQuoted, Unreachable } from './support/adapters.js';
-import { decoratorModes, removeCompiled } from './support/decorator-modes.js';
 import { decoratorOf } from '../src/decorators.js';
-import type { DecoratedRateGateway } from './fixtures/decorated-gateway.js';
+import type { DecoratedRateGateway } from './fixtures/decorated-rate-gateway.js';
+import { decoratorModes, removeCompiled } from './support/decorator-modes.js';
+import { PairNotQuoted } from './support/pair-not-quoted.js';
+import { Unreachable } from './support/unreachable.js';
 
 /*
  * The decorators serve the two decorator modes of the compiler. The fixtures are therefore run
@@ -14,8 +15,8 @@ import type { DecoratedRateGateway } from './fixtures/decorated-gateway.js';
  */
 const FIXTURES = path.join(import.meta.dirname, 'fixtures');
 
-type Fixture = typeof import('./fixtures/decorated-gateway.js');
-type Declared = typeof import('./fixtures/declared-gateway.js');
+type Fixture = typeof import('./fixtures/decorated-rate-gateway.js');
+type Declared = typeof import('./fixtures/pricing/index.js');
 type Testing = typeof import('../src/testing.js');
 
 interface Loaded {
@@ -25,15 +26,15 @@ interface Loaded {
 }
 
 describeDecorators('as the test runner transforms them (experimentalDecorators, no plugin)', async () => ({
-  fixture: await import('./fixtures/decorated-gateway.js'),
-  declared: await import('./fixtures/declared-gateway.js'),
+  fixture: await import('./fixtures/decorated-rate-gateway.js'),
+  declared: await import('./fixtures/pricing/index.js'),
   testing: await import('../src/testing.js'),
 }));
 
 for (const mode of decoratorModes(FIXTURES)) {
   describeDecorators(`compiled by ${mode.label}`, async () => ({
-    fixture: (await mode.load('test/fixtures/decorated-gateway.js')) as Fixture,
-    declared: (await mode.load('test/fixtures/declared-gateway.js')) as Declared,
+    fixture: (await mode.load('test/fixtures/decorated-rate-gateway.js')) as Fixture,
+    declared: (await mode.load('test/fixtures/pricing/index.js')) as Declared,
     testing: (await mode.load('src/testing.js')) as Testing,
   }));
 }
@@ -43,19 +44,24 @@ afterAll(() => {
 });
 
 function describeDecorators(label: string, load: () => Promise<Loaded>): void {
-  let fixture: Fixture;
-  let declared: Declared;
-  let testing: Testing;
+  describeDecoratedAdapter(label, load);
+  describeDecoratedResilience(label, load);
+  describeDeclaredAdapter(label, load);
+}
 
-  beforeAll(async () => {
-    ({ fixture, declared, testing } = await load());
-  }, 60_000);
-
-  function createGateway(): DecoratedRateGateway {
-    return new fixture.DecoratedRateGateway();
-  }
-
+function describeDecoratedAdapter(label: string, load: () => Promise<Loaded>): void {
   describe(`decorators on an adapter, ${label}`, () => {
+    let fixture: Fixture;
+    let testing: Testing;
+
+    beforeAll(async () => {
+      ({ fixture, testing } = await load());
+    }, 60_000);
+
+    function createGateway(): DecoratedRateGateway {
+      return new fixture.DecoratedRateGateway();
+    }
+
     it('leave the class as it was: same type, private state, undecorated methods', async () => {
       const gateway = createGateway();
 
@@ -72,10 +78,12 @@ function describeDecorators(label: string, load: () => Promise<Loaded>): void {
       await testing.withAspectRuntime(fakes, () => gateway.rate('EUR-USD'));
 
       expect(gateway.calls).toEqual(['rate:EUR-USD', 'rate:EUR-USD']);
+
       expect(fakes.logger.entries.map((entry) => entry.message)).toEqual([
         'DecoratedRateGateway.rate started',
         'DecoratedRateGateway.rate succeeded',
       ]);
+
       expect(fakes.metrics.counterValue('rates_total', { class: 'DecoratedRateGateway', outcome: 'success' })).toBe(1);
     });
 
@@ -101,6 +109,21 @@ function describeDecorators(label: string, load: () => Promise<Loaded>): void {
       expect(gateway.calls).toEqual(['cachedRate:EUR-USD']);
       expect(fakes.cache.size).toBe(1);
     });
+  });
+}
+
+function describeDecoratedResilience(label: string, load: () => Promise<Loaded>): void {
+  describe(`stateful decorators on an adapter, ${label}`, () => {
+    let fixture: Fixture;
+    let testing: Testing;
+
+    beforeAll(async () => {
+      ({ fixture, testing } = await load());
+    }, 60_000);
+
+    function createGateway(): DecoratedRateGateway {
+      return new fixture.DecoratedRateGateway();
+    }
 
     it('keep their state per instance', async () => {
       const fakes = testing.createAspectFakes();
@@ -120,23 +143,33 @@ function describeDecorators(label: string, load: () => Promise<Loaded>): void {
 
       const outcome = testing.withAspectRuntime(fakes, async () => {
         const slow = gateway.slowRate('EUR-USD');
+
         await expect(gateway.slowRate('EUR-GBP')).rejects.toMatchObject({ code: 'BULKHEAD_FULL' });
         fakes.scheduler.advance(2000);
+
         return slow.catch((error: unknown) => error);
       });
 
       expect(await outcome).toMatchObject({ code: 'TIMEOUT' });
     });
   });
+}
 
+function describeDeclaredAdapter(label: string, load: () => Promise<Loaded>): void {
   describe(`an adapter that declares itself and carries aspects, ${label}`, () => {
+    let declared: Declared;
+
+    beforeAll(async () => {
+      ({ declared } = await load());
+    }, 60_000);
+
     const application = () =>
       createApplication({
         modules: [kernelModule(), contextModule('pricing', [declared.DeclaredThenMarked, declared.MarkedThenDeclared])],
       });
 
     it('is bound by its declaration and keeps the policy of its method decorator', async () => {
-      const rates = application().resolve(declared.RATES);
+      const rates = application().resolve(declared.Rates);
 
       expect(rates).toBeInstanceOf(declared.DeclaredThenMarked);
       expect(await rates.rate('EUR-USD')).toBe(1.08);
@@ -148,18 +181,19 @@ function describeDecorators(label: string, load: () => Promise<Loaded>): void {
 
       expect(declared.isMarked(declared.DeclaredThenMarked)).toBe(true);
       expect(declared.isMarked(declared.MarkedThenDeclared)).toBe(true);
-      expect(await app.resolve(declared.SPOT_RATES).rate('EUR-USD')).toBe(1.08);
-      expect(declared.attemptsOf(app.resolve(declared.SPOT_RATES))).toBe(2);
+      expect(await app.resolve(declared.SpotRates).rate('EUR-USD')).toBe(1.08);
+      expect(declared.attemptsOf(app.resolve(declared.SpotRates))).toBe(2);
     });
 
     it('takes the aspects of its declaration around the ones of its methods', async () => {
       const app = application();
 
-      await app.resolve(declared.SPOT_RATES).rate('EUR-USD');
+      await app.resolve(declared.SpotRates).rate('EUR-USD');
 
       expect(declared.wrapped).toContain('MarkedThenDeclared as external in pricing');
+
       expect(app.describe().bindings).toContainEqual(
-        expect.objectContaining({ token: 'pricing.SpotRates', kind: 'external', origin: 'declared' }),
+        expect.objectContaining({ token: 'SpotRates', kind: 'external', origin: 'declared' }),
       );
     });
   });
@@ -167,6 +201,7 @@ function describeDecorators(label: string, load: () => Promise<Loaded>): void {
 
 describe('decoratorOf', () => {
   const decorate = decoratorOf(() => undefined);
+
   const contextOf = (overrides: object) =>
     ({ kind: 'method', name: 'find', static: false, private: false, addInitializer: () => undefined, ...overrides }) as never;
 
@@ -179,6 +214,7 @@ describe('decoratorOf', () => {
 
   it('refuses, in the legacy call, a static method, a symbol name and what is not a method', () => {
     const descriptor = (): PropertyDescriptor => ({ value: async () => undefined });
+
     class Gateway {}
 
     expect(() => decorate(Gateway, 'find', descriptor())).toThrow(TypeError);

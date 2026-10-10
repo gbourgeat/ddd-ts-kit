@@ -1,0 +1,92 @@
+import { readdir } from 'node:fs/promises';
+import path from 'node:path';
+import { WiringError } from '../errors/wiring-error.js';
+import { ROLE_RULES, type RoleRule } from './role-rule.js';
+
+export interface RoleFile {
+  readonly absolute: string;
+  /** Relative to the context, with forward slashes. */
+  readonly relative: string;
+  readonly rule: RoleRule;
+}
+
+interface Selection {
+  /** The extensions that are loaded, the preferred first. */
+  readonly extensions: readonly string[];
+  readonly ignore?: (file: string) => boolean;
+}
+
+interface Candidate extends RoleFile {
+  /** The path without its extension: one file under two extensions is one candidate. */
+  readonly stem: string;
+  readonly rank: number;
+}
+
+const SCANNED_LAYERS = ['application', 'infrastructure'];
+
+/** The role files of a context, sorted by path, so that two machines and two runs wire it in the same order. */
+export async function roleFilesOf(root: string, selection: Selection): Promise<RoleFile[]> {
+  const byStem = new Map<string, Candidate>();
+
+  for (const relative of await sourcesOf(root)) {
+    const candidate = candidateOf(root, relative, selection.extensions);
+
+    if (candidate === undefined || selection.ignore?.(relative) === true) continue;
+
+    const known = byStem.get(candidate.stem);
+
+    if (known === undefined || candidate.rank < known.rank) byStem.set(candidate.stem, candidate);
+  }
+
+  return [...byStem.values()].sort((left, right) => compare(left.relative, right.relative));
+}
+
+async function sourcesOf(root: string): Promise<string[]> {
+  const layers = await Promise.all(SCANNED_LAYERS.map((layer) => filesUnder(root, layer)));
+
+  if (layers.every((layer) => layer === undefined)) {
+    throw new WiringError(
+      'DISCOVERY_FAILED',
+      `${root} holds neither application/ nor infrastructure/: it is not the directory of a bounded context.`,
+    );
+  }
+
+  return layers.flatMap((layer) => layer ?? []);
+}
+
+async function filesUnder(root: string, layer: string): Promise<string[] | undefined> {
+  try {
+    const entries = await readdir(path.join(root, layer), { recursive: true, withFileTypes: true });
+
+    return entries
+      .filter((entry) => entry.isFile())
+      .map((entry) => path.relative(root, path.join(entry.parentPath, entry.name)).split(path.sep).join('/'));
+  } catch (error) {
+    if (isMissing(error)) return undefined;
+
+    throw error;
+  }
+}
+
+function isMissing(error: unknown): boolean {
+  return typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT';
+}
+
+function candidateOf(root: string, relative: string, extensions: readonly string[]): Candidate | undefined {
+  const rank = extensions.findIndex((extension) => relative.endsWith(extension));
+
+  if (rank === -1 || /\.d\.[cm]?ts$/.test(relative)) return undefined;
+
+  const stem = relative.slice(0, -String(extensions[rank]).length);
+  const rule = ROLE_RULES.find(({ suffix }) => stem.endsWith(`.${suffix}`));
+
+  if (rule === undefined) return undefined;
+
+  return { absolute: path.join(root, relative), relative, rule, stem, rank };
+}
+
+function compare(left: string, right: string): number {
+  if (left === right) return 0;
+
+  return left < right ? -1 : 1;
+}

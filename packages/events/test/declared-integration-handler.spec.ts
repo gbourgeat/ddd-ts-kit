@@ -9,6 +9,7 @@ type OrderPlaced = PayloadOf<typeof orderPlacedV1>;
 describe('an event definition, given to the integration event handler declaration of the kernel', () => {
   it('fits as it is: the handler is typed by its payload and keeps its type and version', () => {
     const totals: number[] = [];
+
     class TotalOnOrderPlaced {
       readonly handle = async (event: IntegrationEvent<OrderPlaced>): Promise<void> => {
         totals.push(event.payload.total);

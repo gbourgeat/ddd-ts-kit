@@ -13,16 +13,15 @@ npm i @ddd-ts-kit/kernel
 | Area | Exports |
 |---|---|
 | Domain | `Entity`, `AggregateRoot` (version, recorded events), `ValueObject`, `DomainEvent`, `DomainError` with a stable `code` (`InvariantViolation`, `NotFoundError`, `ConflictError`, `ConcurrencyError`), `Result` with `ok`, `err`, `unwrap` |
-| Ports | `Clock`, `IdGenerator`, `UnitOfWork`, `Repository`, `UseCase`, `DependencyKind` (the roles a binding declares, read by di, tracing and aspects: `repository`, `gateway`, `external`, `use-case`, `publisher`, `consumer`, `job`) |
+| Ports | `Clock`, `IdGenerator`, `UnitOfWork`, `Repository` (abstract classes: each one is its own injection token), `UseCase`, `DependencyKind` (the roles a binding declares, read by di, tracing and aspects: `repository`, `gateway`, `external`, `use-case`, `publisher`, `consumer`, `job`) |
 | Buses | `Command`, `Query`, `CommandBus`, `QueryBus`, `BusMiddleware`, the in-process `InMemoryCommandBus` and `InMemoryQueryBus`, `unitOfWorkMiddleware` |
-| Events | `IntegrationEvent`, `EventBus` (publisher and subscriber), `ProcessedEventStore`, `idempotent`, `InMemoryEventBus`, `DomainEventDispatcher`, `IntegrationEventCallback` and `DomainEventCallback` (the functions a subscriber and a dispatcher are given), `executionContextOfEvent`, `inEventScope`, `scopedPublisher` |
+| Events | `IntegrationEvent`, `IntegrationEventPublisher`, `IntegrationEventSubscriber`, `EventBus` (both at once), `EventSubscribers` (the subscriber of each bounded context), `ProcessedEventStore`, `idempotent`, `InMemoryEventBus`, `DomainEventDispatcher`, `IntegrationEventCallback` and `DomainEventCallback` (the functions a subscriber and a dispatcher are given), `executionContextOfEvent`, `inEventScope`, `scopedPublisher` |
 | Actor | `Actor`, `AuthorizedCommand`, `AuthorizedQuery`, `ActorContext` |
 | Standard interfaces | `Session`, `ExecutionContext` and `ExecutionScope`, `Logger`, `Metrics`, `Cache`, `Lock`, `RateLimiter`, `Page` and `PageRequest`, `AuditStamp`, `TenantScoped`, `AuditTrail`, `AuditReader` and `AuditEntry` |
 | Scheduled jobs | `JobScheduler`, `ScheduledJob`, `JobExecution`, `JobSchedule`, `JobOptions`, `JobDefinition`, `JobRun`, `JobDescription`, `parseJobSchedule`, `describeJobSchedule`, `jobPolicy`, `executionContextOfJob` |
 | Persistence helpers | `optimisticUpdate`, `schemaNameOf`, `stampCreation`, `stampUpdate`, `tenantScopeOf`, `encodeCursor`, `decodeCursor` |
 | Doubles | `FixedClock`, `SequentialIdGenerator`, `InMemoryUnitOfWork`, `FixedActorContext`, `FixedExecutionScope`, `InMemoryLogger`, `InMemoryMetrics`, `InMemoryCache`, `InMemoryLock`, `InMemoryRateLimiter` |
-
-| Declarations (`@ddd-ts-kit/kernel/declarations`) | `Requires`, `Public`, `CommandHandler`, `QueryHandler`, `IntegrationEventHandler`, `DomainEventHandler`, `Scheduled`, `Repository`, `Gateway`, `Adapter`, `Policy`, `declarationOf`, `listDeclarations`, `token` and the standard tokens (`CLOCK`, `COMMAND_BUS`, ...) |
+| Declarations (`@ddd-ts-kit/kernel/declarations`) | `Requires`, `Public`, `CommandHandler`, `QueryHandler`, `IntegrationEventHandler`, `DomainEventHandler`, `Scheduled`, `Repository`, `Gateway`, `Adapter`, `Policy`, `declarationOf`, `listDeclarations`, `Token`, `describeToken`, `tokenIdentity`, `portDefect` |
 
 The rules these blocks serve are in `docs/ARCHITECTURE.md`.
 
@@ -36,46 +35,175 @@ declarations into bindings is the job of `@ddd-ts-kit/di` (`contextModule`,
 `discoverContext`), and of nothing else.
 
 ```ts
-import { CLOCK, CommandHandler, Requires, token } from '@ddd-ts-kit/kernel/declarations';
+// contexts/ordering/domain/repositories/order.repository.ts
+import { Repository } from '@ddd-ts-kit/kernel';
+import type { Order } from '../aggregates/order.aggregate.js';
 
-export const ORDERS = token<OrderRepository>('ordering.OrderRepository');
+export abstract class OrderRepository extends Repository<Order> {
+  abstract findOpenOf(customerId: string): Promise<readonly Order[]>;
+}
+```
 
-@Requires(permissions['order.place'])
-export class PlaceOrder extends AuthorizedCommand<string> { /* ... */ }
+```ts
+// contexts/ordering/application/commands/place-order/place-order.handler.ts
+import { Clock } from '@ddd-ts-kit/kernel';
+import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
+import { OrderRepository } from '../../../domain/repositories/order.repository.js';
+import { PlaceOrder } from './place-order.command.js';
 
-@CommandHandler(PlaceOrder, [ORDERS, CLOCK])
+@CommandHandler(PlaceOrder, [OrderRepository, Clock])
 export class PlaceOrderHandler implements CommandHandler<PlaceOrder> {
-  constructor(private readonly orders: OrderRepository, private readonly clock: Clock) {}
+  constructor(
+    private readonly orders: OrderRepository,
+    private readonly clock: Clock,
+  ) {}
+
   async execute(command: PlaceOrder): Promise<string> { /* ... */ }
 }
 ```
+
+```ts
+// contexts/ordering/infrastructure/persistence/knex-order.repository.ts
+import { Clock, ExecutionScope } from '@ddd-ts-kit/kernel';
+import { Repository } from '@ddd-ts-kit/kernel/declarations';
+import { Database } from '../../application/ports/database.port.js';
+import { OrderRepository } from '../../domain/repositories/order.repository.js';
+
+@Repository(OrderRepository, [Database, ExecutionScope, Clock])
+export class KnexOrderRepository implements OrderRepository {
+  constructor(
+    private readonly database: Database,
+    private readonly scope: ExecutionScope,
+    private readonly clock: Clock,
+  ) {}
+
+  /* findById, save, findOpenOf */
+}
+```
+
+`Repository` is two things under one name, each in its entry: the abstract class a repository
+port extends (main entry, imported by the port) and the decorator of its adapter (this entry,
+imported by the adapter). No file needs both.
+
+### Ports and tokens
+
+**A port is an abstract class, and the class is the injection token.** The class names the
+dependency and carries its type: a dependency list is checked against a constructor, and
+`app.resolve(Clock)` answers a `Clock`. `Token<T>` is that type: `abstract new (...args: never) => T`.
+There is no token constant and no token file. A port has one place, one abstract class per file:
+
+| Port | File |
+|---|---|
+| a repository of the domain | `domain/repositories/*.repository.ts` |
+| any other port, and a value class | `application/ports/*.port.ts` |
+
+```ts
+// contexts/ordering/application/ports/payment-gateway.port.ts
+export abstract class PaymentGateway {
+  abstract charge(orderId: string, amount: Money): Promise<PaymentReceipt>;
+}
+```
+
+**The port rule.** A port has abstract members only: no body, no constructor parameter, no
+private or protected member. A port may extend another port. An adapter `implements` its port
+and never `extends` it. The type stays structural, so a fake, an in-memory class or a plain
+object literal stands for a port without ceremony.
+
+**`Repository<A, Id>`** is the contract every repository shares (`findById`, `save`), as an
+abstract class. The repository port of an aggregate extends it and adds its own finders, as
+`OrderRepository` above; the adapter implements that port.
+
+**A value that is no port** (a configuration object, a database handle, a list, a primitive)
+is typed by an abstract class too, with `abstract readonly` properties, and a plain object is
+bound to it with `toValue` of `@ddd-ts-kit/di`:
+
+```ts
+// contexts/ordering/application/ports/database.port.ts
+export abstract class Database {
+  abstract readonly client: Knex;
+}
+
+// contexts/ordering/application/ports/payment-settings.port.ts
+export abstract class PaymentSettings {
+  abstract readonly apiKey: string;
+}
+
+// composition root
+builder.bind(Database).toValue({ client: knex });
+builder.bind(PaymentSettings).toValue({ apiKey: configuration.paymentApiKey });
+```
+
+That is the one way: no string token, no symbol token, no helper.
+
+**Identity across copies.** A class is its own identity, and two copies of a package loaded in
+one process (a duplicated install, a bundle next to `node_modules`) hold two classes. A port
+that declares `static readonly tokenKey = '<package>.<Port>'` is known by that key instead,
+the same in every copy: `tokenIdentity(port)` answers what a container keys by, and
+`describeToken(port)` its name. Every injectable port of the kernel carries one (`kernel.Clock`,
+`kernel.CommandBus`, ...); `Repository<A, Id>` is a base to extend, never a token, and carries
+none.
+
+```ts
+export abstract class PaymentGateway {
+  static readonly tokenKey = 'ordering.PaymentGateway';
+
+  abstract charge(orderId: string, amount: Money): Promise<PaymentReceipt>;
+}
+```
+
+The limit, plainly: **a port of your own that declares no `tokenKey` and is loaded twice is
+two tokens.** What is bound under one copy is not found under the other. An application
+compiled as one program never meets it; a port published in a package that may be installed
+twice, or bundled next to `node_modules`, declares a `tokenKey`. The key is the identity: two
+ports that declare the same key are the same token, so prefix it with the package or the
+context. It is declared, never inherited: a port that extends a keyed port declares its own.
+
+**What the compiler refuses**, in both decorator modes:
+
+- a dependency list that does not name one port per constructor parameter, each of the type of
+  its parameter, in order: a missing list, a missing or extra entry, a wrong type, a wrong order;
+- a class that does not implement the port it is declared the adapter of, and an abstract class;
+- a concrete class named where its port is expected: `[InMemoryOrderRepository, Clock]` for a
+  parameter typed `OrderRepository`. A list names ports, never what implements them.
+
+**What is refused when the file loads**, with a `DeclarationError` from `@Repository`,
+`@Gateway` and `@Adapter`, because the compiler cannot see it:
+
+- a port with a body: `TalkativePharmacy implements greet: a port is an abstract class with
+  abstract members only`. A member inherited from a parent port counts;
+- an adapter that extends its port: `CornerPharmacy extends Pharmacy: an adapter implements
+  its port, it never extends it`.
+
+`portDefect(port, implementation)` is that check, answering the reason or `undefined`; a
+container applies it to a binding made by hand. A class bound to itself is no port and is
+left alone.
+
+### The decorators
 
 | Decorator | On | Example |
 |---|---|---|
 | `Requires(permission, options?)` | a command or query that carries its actor | `@Requires(permissions['visit.schedule'], { resource: (c: ScheduleVisit) => ({ type: 'patient', id: c.patientId }), audited: ['startsAt'] })` |
 | `Public(options?)` | a command or query anybody may send | `@Public()` |
-| `CommandHandler(Message, [tokens])` | the one handler of a command | `@CommandHandler(PlaceOrder, [ORDERS, CLOCK])` |
-| `QueryHandler(Message, [tokens])` | the one handler of a query | `@QueryHandler(GetOrder, [ORDER_READS])` |
-| `IntegrationEventHandler(definition, { consumer, actorOf? }, [tokens])` | the handler of an integration event of another context | `@IntegrationEventHandler(OrderPlaced, { consumer: 'billing.invoice-on-order-placed' }, [COMMAND_BUS])` |
-| `DomainEventHandler(Event, { name }, [tokens])` | a handler of a domain event of its own context | `@DomainEventHandler(OrderPaid, { name: 'ordering.order.paid' }, [COMMAND_BUS])` |
-| `Scheduled(name, schedule and options, [tokens])` | a job run by time, which triggers use cases | `@Scheduled('billing.send-reminders', { cron: '0 7 * * 1-5', timeZone: 'Europe/Paris' }, [COMMAND_BUS])` |
-| `Repository(TOKEN, options?, [tokens])` | the adapter of a repository of the domain | `@Repository(ORDERS, [DATABASE, EXECUTION_SCOPE, CLOCK])` |
-| `Gateway(TOKEN, options?, [tokens])` | the adapter of a port that calls another context | `@Gateway(STOCK, [HTTP])` |
-| `Adapter(TOKEN, options?, [tokens])` | the adapter of any other port | `@Adapter(PAYMENTS, { kind: 'external' }, [CONFIG])` |
-| `Policy(permission, { name }, [tokens])` | a rule that needs the loaded element | `@Policy(permissions['invoice.void'], { name: 'billing.only-issuer-voids' })` |
+| `CommandHandler(Message, [ports])` | the one handler of a command | `@CommandHandler(PlaceOrder, [OrderRepository, Clock])` |
+| `QueryHandler(Message, [ports])` | the one handler of a query | `@QueryHandler(GetOrder, [OrderReadModel])` |
+| `IntegrationEventHandler(definition, { consumer, actorOf? }, [ports])` | the handler of an integration event of another context | `@IntegrationEventHandler(OrderPlaced, { consumer: 'billing.invoice-on-order-placed' }, [CommandBus])` |
+| `DomainEventHandler(Event, { name }, [ports])` | a handler of a domain event of its own context | `@DomainEventHandler(OrderPaid, { name: 'ordering.order.paid' }, [CommandBus])` |
+| `Scheduled(name, schedule and options, [ports])` | a job run by time, which triggers use cases | `@Scheduled('billing.send-reminders', { cron: '0 7 * * 1-5', timeZone: 'Europe/Paris' }, [CommandBus])` |
+| `Repository(Port, options?, [ports])` | the adapter of a repository of the domain | `@Repository(OrderRepository, [Database, ExecutionScope, Clock])` |
+| `Gateway(Port, options?, [ports])` | the adapter of a port that calls another context | `@Gateway(StockGateway, [HttpClient])` |
+| `Adapter(Port, options?, [ports])` | the adapter of any other port | `@Adapter(PaymentGateway, { kind: 'external' }, [PaymentSettings])` |
+| `Policy(permission, { name }, [ports])` | a rule that needs the loaded element | `@Policy(permissions['invoice.void'], { name: 'billing.only-issuer-voids' })` |
 
 - **Access is said on the message.** A command extends `Command` or `AuthorizedCommand`, a
   query `Query` or `AuthorizedQuery`: the base class already says which of the two it is, so
   the decorator only says who may send it. `@Requires` is refused by the compiler on a message
   without an actor. `audited` lists the fields an audit trail may record (a name, or
   `{ field, masked: true }`), as plain data; the compiler checks that the message has them.
-- **Dependencies are a token list**, checked against the constructor: one token per
-  parameter, each of the type of its parameter, in order. A missing list, a missing token, an
-  extra one, a wrong type or a wrong order does not compile. There is no parameter decorator
-  and no reflection.
-- **The role is checked too**: a handler of another message or of another result, an event handler
-  of another payload, an adapter that does not implement the port of its token, an abstract
-  class are refused by the compiler.
+- **Dependencies are a list of ports**, checked against the constructor as said above. The
+  list is left out for a constructor without parameters. There is no parameter decorator and
+  no reflection.
+- **The role is checked too**: a handler of another message or of another result, an event
+  handler of another payload, a job without `run` are refused by the compiler.
 - **Options of a repository, a gateway and an adapter**: `transient: true` (one instance per
   resolution instead of one per application), `replaces: true` (takes the place of a binding
   made earlier, such as a default of the kernel module), `aspects: [...]` (wrappers, the first
@@ -86,11 +214,8 @@ export class PlaceOrderHandler implements CommandHandler<PlaceOrder> {
   `implements IntegrationEventHandler<OrderPlacedPayload>`. A job implements `ScheduledJob`.
 - **Names are written, not derived**: the consumer name, the policy name, the job name and the
   name of the domain event survive the renaming of a class, and the empty string is refused.
-- **Tokens** are made with `token<T>('context.Port')`, next to the port they stand for in
-  `application/`. The tokens of the standard ports (`CLOCK`, `ID_GENERATOR`, `UNIT_OF_WORK`,
-  `COMMAND_BUS`, `QUERY_BUS`, `EVENT_BUS`, `EVENT_PUBLISHER`, `EVENT_SUBSCRIBER`,
-  `PROCESSED_EVENTS`, `DOMAIN_EVENTS`, `EXECUTION_SCOPE`, `ACTOR_CONTEXT`, `LOGGER`, `METRICS`,
-  `CACHE`, `LOCK`, `RATE_LIMITER`, `JOB_SCHEDULER`) are exported from here.
+- **A declared class is its own token**: `@ddd-ts-kit/di` binds a handler, a job or a policy
+  under its class.
 
 `declarationOf(Class)` answers what a class declared, as frozen plain data, or `undefined`;
 `listDeclarations()` lists the declared classes the process still holds, for diagnostics. A
@@ -100,10 +225,8 @@ the file loads, and so does `@Requires` or `@Public` on what is neither a `Comma
 inherited by a subclass.
 
 The names of the main entry differ on purpose: there, `IntegrationEventCallback` and
-`DomainEventCallback` are the plain functions given to `subscribe` and to `on`. The main entry
-still exports them as `IntegrationEventHandler` and `DomainEventHandler`, and this entry the
-shapes as `IntegrationEventHandlerInstance` and `DomainEventHandlerInstance`: four deprecated
-aliases, kept for one release.
+`DomainEventCallback` are the plain functions given to `subscribe` and to `on`, and
+`CommandHandler` and `QueryHandler` are the interfaces alone.
 
 **Where it is stored.** In one registry per process, reached through `Symbol.for`, with the
 classes held weakly. A context compiled against one copy of the kernel is therefore read by a
@@ -112,15 +235,24 @@ reloaded by a watcher leaves no trace of its former classes. `Symbol.metadata` i
 Node 24 does not define it, and the legacy decorator mode has no context to carry it.
 
 **Not in the domain.** `domain/` carries no decorator: aggregates, entities, value objects,
-domain events, domain services and repository interfaces declare nothing. A domain event is
+domain events, domain services and repository ports declare nothing. A domain event is
 named by the handler that reacts to it, not by itself. `@UseCase` does not exist: the
 canonical tree has one handler per command and no application service to bind.
+
+### Integration events and their subscribers
+
+`IntegrationEventPublisher` is what use cases publish through, `IntegrationEventSubscriber`
+what handlers are subscribed on, and `EventBus` both at once. `EventSubscribers` gives each
+bounded context its subscriber: `forContext(name)` answers an `IntegrationEventSubscriber`.
+One bus serves every context by default; a broker gives each consuming context its own, so
+that a context extracted into its own process keeps its queues. `@ddd-ts-kit/di` subscribes
+the integration event handlers of a context on `EventSubscribers.forContext(<context name>)`.
 
 ### Scheduled
 
 ```ts
 // contexts/billing/application/scheduling/send-reminders.job.ts
-@Scheduled('billing.send-reminders', { cron: '0 7 * * 1-5', timeZone: 'Europe/Paris' }, [COMMAND_BUS])
+@Scheduled('billing.send-reminders', { cron: '0 7 * * 1-5', timeZone: 'Europe/Paris' }, [CommandBus])
 export class SendRemindersJob implements ScheduledJob {
   constructor(private readonly commands: CommandBus) {}
 
@@ -131,7 +263,7 @@ export class SendRemindersJob implements ScheduledJob {
 ```
 
 A job lives in `application/scheduling/`, in a `*.job.ts` file, and only triggers use cases:
-it receives buses and ports by its token list and typically sends one command. The second
+it receives buses and ports by its dependency list and typically sends one command. The second
 argument is the schedule and, next to it, the options:
 
 | Key | Default | |
@@ -154,7 +286,7 @@ are in the README of `@ddd-ts-kit/scheduling`.
 ### Decorator modes
 
 Every decorator of this entry works under both decorator modes of TypeScript, and the same
-source line type-checks under both, checks of the role and of the token list included.
+source line type-checks under both, checks of the role and of the dependency list included.
 
 | Stack | `tsconfig.json` |
 |---|---|
@@ -280,12 +412,12 @@ the guard of an invariant: what must not happen twice is refused by a database c
 ### JobScheduler
 
 ```ts
-interface JobScheduler {
-  register(job: JobDefinition): void;      // { name, schedule, run, ...options }
-  start(): Promise<void>;
-  stop(): Promise<void>;                   // waits for the runs in progress, then aborts their signal
-  runNow(name: string): Promise<JobRun>;   // for an operation or a test
-  describe(): readonly JobDescription[];   // name, schedule, enabled, running, nextRunAt, lastRun
+abstract class JobScheduler {
+  abstract register(job: JobDefinition): void;      // { name, schedule, run, ...options }
+  abstract start(): Promise<void>;
+  abstract stop(): Promise<void>;                   // waits for the runs in progress, then aborts their signal
+  abstract runNow(name: string): Promise<JobRun>;   // for an operation or a test
+  abstract describe(): readonly JobDescription[];   // name, schedule, enabled, running, nextRunAt, lastRun
 }
 ```
 
@@ -370,11 +502,12 @@ never run unscoped by omission. Every adapter package names the columns the same
 ### AuditTrail, AuditReader and AuditEntry
 
 ```ts
-interface AuditTrail {
-  record(record: AuditRecord): Promise<void>;
+abstract class AuditTrail {
+  abstract record(record: AuditRecord): Promise<void>;
 }
-interface AuditReader {
-  list(filter: AuditFilter, page: PageRequest<AuditSortField>): Promise<Page<AuditEntry>>;
+
+abstract class AuditReader {
+  abstract list(filter: AuditFilter, page: PageRequest<AuditSortField>): Promise<Page<AuditEntry>>;
 }
 ```
 

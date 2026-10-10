@@ -1,4 +1,4 @@
-import type { ProcessedEventStore, UnitOfWork } from '@ddd-ts-kit/kernel';
+import type { UnitOfWork } from '@ddd-ts-kit/kernel';
 
 interface MemoryState {
   readonly processed: Set<string>;
@@ -10,52 +10,43 @@ interface MemoryState {
  * and reaches the committed state only if the work succeeds.
  */
 export class TransactionalMemory implements UnitOfWork {
-  #committed: MemoryState = { processed: new Set(), invoicedOrders: [] };
-  #working: MemoryState | undefined;
   commits = 0;
 
+  private committedState: MemoryState = { processed: new Set(), invoicedOrders: [] };
+
+  private working: MemoryState | undefined;
+
   async run<T>(work: () => Promise<T>): Promise<T> {
-    if (this.#working !== undefined) {
+    if (this.working !== undefined) {
       return work();
     }
-    this.#working = {
-      processed: new Set(this.#committed.processed),
-      invoicedOrders: [...this.#committed.invoicedOrders],
+
+    this.working = {
+      processed: new Set(this.committedState.processed),
+      invoicedOrders: [...this.committedState.invoicedOrders],
     };
+
     try {
       const result = await work();
-      this.#committed = this.#working;
+
+      this.committedState = this.working;
       this.commits += 1;
+
       return result;
     } finally {
-      this.#working = undefined;
+      this.working = undefined;
     }
   }
 
   inTransaction(): boolean {
-    return this.#working !== undefined;
+    return this.working !== undefined;
   }
 
   state(): MemoryState {
-    return this.#working ?? this.#committed;
+    return this.working ?? this.committedState;
   }
 
   committed(): MemoryState {
-    return this.#committed;
-  }
-}
-
-/** Writes on the current transaction, as a SQL adapter does: no way to take a mark back. */
-export class TransactionalProcessedEventStore implements ProcessedEventStore {
-  constructor(private readonly memory: TransactionalMemory) {}
-
-  async markProcessed(consumer: string, eventId: string): Promise<boolean> {
-    const key = JSON.stringify([consumer, eventId]);
-    const { processed } = this.memory.state();
-    if (processed.has(key)) {
-      return false;
-    }
-    processed.add(key);
-    return true;
+    return this.committedState;
   }
 }

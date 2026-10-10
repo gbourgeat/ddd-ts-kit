@@ -13,6 +13,7 @@ export abstract class ValueObject<Props extends Record<string, unknown>> {
     if (other === undefined || other === null || other.constructor !== this.constructor) {
       return false;
     }
+
     return structurallyEqual(this.props, other.props);
   }
 
@@ -23,17 +24,22 @@ export abstract class ValueObject<Props extends Record<string, unknown>> {
 
 function structurallyEqual(a: unknown, b: unknown): boolean {
   if (Object.is(a, b)) return true;
+
   if (a instanceof Date && b instanceof Date) return a.getTime() === b.getTime();
+
   if (Array.isArray(a) && Array.isArray(b)) {
     return a.length === b.length && a.every((item, i) => structurallyEqual(item, b[i]));
   }
+
   if (isRecord(a) && isRecord(b)) {
     const keys = Object.keys(a);
+
     return (
       keys.length === Object.keys(b).length &&
       keys.every((key) => key in b && structurallyEqual(a[key], b[key]))
     );
   }
+
   return false;
 }
 

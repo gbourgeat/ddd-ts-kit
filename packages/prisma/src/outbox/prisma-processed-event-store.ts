@@ -1,0 +1,35 @@
+import type { ProcessedEventStore } from '@ddd-ts-kit/kernel';
+import type { PrismaContext } from '../unit-of-work/prisma-context.js';
+import type { PrismaProcessedEventDelegate } from './prisma-processed-event-delegate.js';
+
+export interface PrismaProcessedEventStoreOptions<Tx> {
+  /** How to reach the model from a client: `(client) => client.processedEvent`. */
+  readonly delegate: (client: Tx) => PrismaProcessedEventDelegate;
+}
+
+/**
+ * Idempotency of consumers. It writes on the client of the context: when the consumer runs
+ * inside a unit of work, the mark commits with the effects of the handler and disappears with
+ * them if the handler fails, so the redelivery is processed.
+ */
+export class PrismaProcessedEventStore<Tx> implements ProcessedEventStore {
+  private readonly context: PrismaContext<Tx>;
+
+  private readonly modelOf: (client: Tx) => PrismaProcessedEventDelegate;
+
+  constructor(context: PrismaContext<Tx>, options: PrismaProcessedEventStoreOptions<Tx>) {
+    this.context = context;
+    this.modelOf = options.delegate;
+  }
+
+  async markProcessed(consumer: string, eventId: string): Promise<boolean> {
+    // INSERT ... ON CONFLICT DO NOTHING: unlike a caught unique violation, it leaves the
+    // surrounding PostgreSQL transaction usable.
+    const { count } = await this.modelOf(this.context.client()).createMany({
+      data: [{ consumer, eventId }],
+      skipDuplicates: true,
+    });
+
+    return count === 1;
+  }
+}

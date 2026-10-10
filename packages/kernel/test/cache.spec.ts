@@ -10,6 +10,7 @@ const quoteKey = (pair: string) => cacheKey<Quote>('quote', pair);
 
 function createCache(maxEntries?: number): { cache: InMemoryCache; clock: FixedClock } {
   const clock = new FixedClock(new Date('2026-03-01T10:00:00.000Z'));
+
   return { clock, cache: new InMemoryCache(clock, maxEntries === undefined ? {} : { maxEntries }) };
 }
 
@@ -32,6 +33,7 @@ describe('InMemoryCache', () => {
 
   it('forgets an entry once its time to live has passed', async () => {
     const { cache, clock } = createCache();
+
     await cache.set(quoteKey('EUR-USD'), { pair: 'EUR-USD', rate: 1.08 }, { ttlMs: 1000 });
 
     clock.advance(999);
@@ -43,6 +45,7 @@ describe('InMemoryCache', () => {
 
   it('keeps an entry without time to live until it is deleted', async () => {
     const { cache, clock } = createCache();
+
     await cache.set(quoteKey('EUR-USD'), { pair: 'EUR-USD', rate: 1.08 });
 
     clock.advance(86_400_000);
@@ -53,6 +56,7 @@ describe('InMemoryCache', () => {
 
   it('replaces the value and the time to live of a key set again', async () => {
     const { cache, clock } = createCache();
+
     await cache.set(quoteKey('EUR-USD'), { pair: 'EUR-USD', rate: 1.08 }, { ttlMs: 1000 });
     await cache.set(quoteKey('EUR-USD'), { pair: 'EUR-USD', rate: 1.1 });
 

@@ -1,22 +1,21 @@
 import { describe, expect, it } from 'vitest';
 import {
+  ActorContext,
   AuthorizedCommand,
   AuthorizedQuery,
   Command,
+  CommandBus,
   FixedActorContext,
   InMemoryUnitOfWork,
   Query,
+  QueryBus,
+  UnitOfWork,
   systemActor,
   type Actor,
-  type BusMiddleware,
 } from '@ddd-ts-kit/kernel';
 import {
-  ACTOR_CONTEXT,
-  COMMAND_BUS,
-  QUERY_BUS,
-  UNIT_OF_WORK,
-  USE_CASE_DECLARATIONS,
-  USE_CASE_GUARD,
+  UseCaseDeclarations,
+  UseCaseGuard,
   createApplication,
   createTestApplication,
   defineContextModule,
@@ -60,10 +59,12 @@ const billingModule = defineContextModule({
         context: (command) => ({ onBehalfOf: command.actor.id }),
       })
       .handledBy(IssueInvoiceHandler);
+
     builder
       .query(ListInvoices)
       .requires(readInvoices)
       .handledByFactory(() => ({ execute: async () => ['inv-1'] }));
+
     builder
       .query(GetCatalog)
       .public()
@@ -79,14 +80,16 @@ const archivingModule = defineContextModule({
   },
 });
 
-const refuseEverything: BusMiddleware = async () => {
-  throw new RangeError('refused by the guard');
+const refuseEverything: UseCaseGuard = {
+  check: async () => {
+    throw new RangeError('refused by the guard');
+  },
 };
 
 const guardModule = defineContextModule({
   name: 'authorization',
   register(builder) {
-    builder.bind(USE_CASE_GUARD).toValue(refuseEverything);
+    builder.bind(UseCaseGuard).toValue(refuseEverything);
   },
 });
 
@@ -94,7 +97,7 @@ describe('declaring the access to a use case next to its handler', () => {
   it('records what each command and query requires, as data', () => {
     const app = createApplication({ modules: [kernelModule(), billingModule, archivingModule] });
 
-    const declarations = app.resolve(USE_CASE_DECLARATIONS);
+    const declarations = app.resolve(UseCaseDeclarations).list;
 
     const summary = declarations.map(({ kind, message, module, access, permission }) => ({
       kind,
@@ -103,6 +106,7 @@ describe('declaring the access to a use case next to its handler', () => {
       access,
       permission,
     }));
+
     expect(summary).toEqual([
       { kind: 'command', message: 'IssueInvoice', module: 'billing', access: 'protected', permission: issueInvoice },
       { kind: 'query', message: 'ListInvoices', module: 'billing', access: 'protected', permission: readInvoices },
@@ -114,7 +118,7 @@ describe('declaring the access to a use case next to its handler', () => {
 
   it('derives the resource and the context from the message it was declared for', () => {
     const app = createApplication({ modules: [kernelModule(), billingModule] });
-    const [issuing] = app.resolve(USE_CASE_DECLARATIONS);
+    const [issuing] = app.resolve(UseCaseDeclarations).list;
     const command = new IssueInvoice(ada, 'customer-1');
 
     expect(issuing?.resourceOf?.(command)).toEqual({ type: 'customer', id: 'customer-1' });
@@ -130,6 +134,7 @@ describe('declaring the access to a use case next to its handler', () => {
       { message: 'ArchiveInvoices', handler: 'command(ArchiveInvoices) handler', module: 'archiving' },
       { message: 'PurgeInvoices', handler: 'command(PurgeInvoices) handler', module: 'archiving' },
     ]);
+
     expect(queries.map(({ message, access }) => [message, access])).toEqual([
       ['ListInvoices', 'protected'],
       ['GetCatalog', 'public'],
@@ -176,6 +181,7 @@ describe('authorization: required', () => {
     );
 
     expect(error.code).toBe('UNDECLARED_AUTHORIZATION');
+
     expect(error.message).toBe(
       'Authorization is required and the command "ArchiveInvoices" (module "archiving"), the command "PurgeInvoices" (module "archiving") declare no access. Write .requires(permission) or .public() before handledBy.',
     );
@@ -187,17 +193,21 @@ describe('authorization: required', () => {
     );
 
     expect(error.code).toBe('AUTHORIZATION_NOT_ENFORCED');
-    expect(error.message).toContain('"kernel.UseCaseGuard"');
+
+    expect(error.message).toBe(
+      'Authorization is required but no module binds "UseCaseGuard": the declared permissions would never be checked. Add an authorization module to the modules.',
+    );
   });
 
   it('accepts an application that declares everything and binds a guard', () => {
     expect(() =>
       createApplication({ modules: [kernelModule(), billingModule, guardModule], authorization: 'required' }),
     ).not.toThrow();
+
     expect(() =>
       createApplication({
         modules: [kernelModule(), billingModule],
-        overrides: [override(USE_CASE_GUARD, refuseEverything)],
+        overrides: [override(UseCaseGuard, refuseEverything)],
         authorization: 'required',
       }),
     ).not.toThrow();
@@ -206,7 +216,7 @@ describe('authorization: required', () => {
   it('is not the default: an application without declarations keeps working', async () => {
     const app = createApplication({ modules: [kernelModule(), archivingModule] });
 
-    await expect(app.resolve(COMMAND_BUS).execute(new ArchiveInvoices())).resolves.toBeUndefined();
+    await expect(app.resolve(CommandBus).execute(new ArchiveInvoices())).resolves.toBeUndefined();
   });
 
   it('holds a test application to the same declarations', () => {
@@ -225,6 +235,7 @@ describe('the use case guard', () => {
 
     override run<T>(work: () => Promise<T>): Promise<T> {
       this.opened += 1;
+
       return super.run(work);
     }
   }
@@ -232,24 +243,25 @@ describe('the use case guard', () => {
   it('lets every message through when no module binds it', async () => {
     const app = createApplication({ modules: [kernelModule(), billingModule] });
 
-    expect(await app.resolve(COMMAND_BUS).execute(new IssueInvoice(ada, 'customer-1'))).toBe('invoice for customer-1');
-    expect(await app.resolve(QUERY_BUS).execute(new GetCatalog())).toEqual(['book']);
+    expect(await app.resolve(CommandBus).execute(new IssueInvoice(ada, 'customer-1'))).toBe('invoice for customer-1');
+    expect(await app.resolve(QueryBus).execute(new GetCatalog())).toEqual(['book']);
   });
 
   it('runs before the handlers of both buses, and before the unit of work', async () => {
     const unitOfWork = new CountingUnitOfWork();
+
     const app = createApplication({
       modules: [kernelModule({ unitOfWork }), billingModule, guardModule],
     });
 
-    await expect(app.resolve(COMMAND_BUS).execute(new IssueInvoice(ada, 'customer-1'))).rejects.toBeInstanceOf(RangeError);
-    await expect(app.resolve(QUERY_BUS).execute(new GetCatalog())).rejects.toBeInstanceOf(RangeError);
+    await expect(app.resolve(CommandBus).execute(new IssueInvoice(ada, 'customer-1'))).rejects.toBeInstanceOf(RangeError);
+    await expect(app.resolve(QueryBus).execute(new GetCatalog())).rejects.toBeInstanceOf(RangeError);
     expect(unitOfWork.opened).toBe(0);
   });
 
   it('guards a test application as well when a module binds it, and allows everything otherwise', async () => {
     const unitOfWork = new CountingUnitOfWork();
-    const guarded = createTestApplication({ modules: [billingModule, guardModule], fakes: [fake(UNIT_OF_WORK, unitOfWork)] });
+    const guarded = createTestApplication({ modules: [billingModule, guardModule], fakes: [fake(UnitOfWork, unitOfWork)] });
     const open = createTestApplication({ modules: [billingModule] });
 
     await expect(guarded.commandBus.execute(new IssueInvoice(ada, 'customer-1'))).rejects.toBeInstanceOf(RangeError);
@@ -260,9 +272,10 @@ describe('the use case guard', () => {
 
   it('can be faked in a test', async () => {
     const seen: string[] = [];
+
     const app = createTestApplication({
       modules: [billingModule, guardModule],
-      fakes: [fake(USE_CASE_GUARD, (_message, next, info) => (seen.push(info.name), next()))],
+      fakes: [fake(UseCaseGuard, { check: (_message, next, info) => (seen.push(info.name), next()) })],
     });
 
     await app.queryBus.execute(new GetCatalog());
@@ -274,7 +287,7 @@ describe('the use case guard', () => {
 describe('the actor context', () => {
   it('is bound by the kernel module, one asynchronous chain per request', async () => {
     const app = createApplication({ modules: [kernelModule()] });
-    const context = app.resolve(ACTOR_CONTEXT);
+    const context = app.resolve(ActorContext);
 
     expect(context.current()).toBeUndefined();
     expect(await context.run(ada, async () => context.require().id)).toBe('ada');
@@ -283,16 +296,16 @@ describe('the actor context', () => {
   it('can be replaced through the options of the kernel module', () => {
     const fixed = new FixedActorContext(systemActor('job'));
 
-    expect(createApplication({ modules: [kernelModule({ actorContext: fixed })] }).resolve(ACTOR_CONTEXT)).toBe(fixed);
+    expect(createApplication({ modules: [kernelModule({ actorContext: fixed })] }).resolve(ActorContext)).toBe(fixed);
   });
 
   it('holds a default user in a test application, or the actor the test names', () => {
     const byDefault = createTestApplication({ modules: [] });
     const named = createTestApplication({ modules: [], actor: ada });
 
-    expect(byDefault.get(ACTOR_CONTEXT).require()).toEqual({ id: 'test-user', type: 'user', roles: [], attributes: {} });
-    expect(named.get(ACTOR_CONTEXT).require()).toBe(ada);
-    expect(named.actorContext).toBe(named.get(ACTOR_CONTEXT));
+    expect(byDefault.get(ActorContext).require()).toEqual({ id: 'test-user', type: 'user', roles: [], attributes: {} });
+    expect(named.get(ActorContext).require()).toBe(ada);
+    expect(named.actorContext).toBe(named.get(ActorContext));
   });
 
   it('lets a test change who is acting', () => {
@@ -300,6 +313,6 @@ describe('the actor context', () => {
 
     app.actorContext.actAs(systemActor('job'));
 
-    expect(app.get(ACTOR_CONTEXT).require().id).toBe('system:job');
+    expect(app.get(ActorContext).require().id).toBe('system:job');
   });
 });

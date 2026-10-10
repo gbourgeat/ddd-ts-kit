@@ -1,52 +1,10 @@
-import { beforeAll, describe, expect, it } from 'vitest';
-import { anonymousActor, anonymousSession } from '@ddd-ts-kit/kernel';
-import { SignJWT, UnsecuredJWT, exportJWK, generateKeyPair, type CryptoKey, type JWTPayload } from 'jose';
+import { inspect } from 'node:util';
+import { describe, expect, it } from 'vitest';
+import { anonymousActor } from '@ddd-ts-kit/kernel';
+import { SignJWT, UnsecuredJWT, exportJWK, type JWTPayload } from 'jose';
 import { InvalidCredentialError } from '../src/index.js';
 import { JwtAuthenticator } from '../src/jwt.js';
-
-declare module '@ddd-ts-kit/kernel' {
-  interface SessionExtensions {
-    readonly plan: 'free' | 'team';
-  }
-}
-
-const ISSUER = 'https://id.example.test/realms/shop';
-const AUDIENCE = 'shop-api';
-
-let signing: CryptoKey;
-let verifying: CryptoKey;
-let foreign: CryptoKey;
-
-beforeAll(async () => {
-  ({ privateKey: signing, publicKey: verifying } = await generateKeyPair('RS256'));
-  ({ privateKey: foreign } = await generateKeyPair('RS256'));
-});
-
-interface TokenOptions {
-  readonly key?: CryptoKey;
-  readonly issuer?: string;
-  readonly audience?: string;
-  readonly expiresIn?: string | number;
-  readonly issuedAt?: number;
-  readonly notBefore?: string;
-}
-
-function token(claims: JWTPayload, options: TokenOptions = {}): Promise<string> {
-  const jwt = new SignJWT({ sub: 'ada', ...claims })
-    .setProtectedHeader({ alg: 'RS256' })
-    .setIssuer(options.issuer ?? ISSUER)
-    .setAudience(options.audience ?? AUDIENCE)
-    .setIssuedAt(options.issuedAt)
-    .setExpirationTime(options.expiresIn ?? '5m');
-  if (options.notBefore !== undefined) jwt.setNotBefore(options.notBefore);
-  return jwt.sign(options.key ?? signing);
-}
-
-const authenticator = () => new JwtAuthenticator({ key: verifying, issuer: ISSUER, audience: AUDIENCE });
-
-async function refusalOf(credential: string, subject = authenticator()): Promise<unknown> {
-  return subject.authenticate(credential).catch((error: unknown) => error);
-}
+import { AUDIENCE, ISSUER, authenticator, foreign, refusalOf, signing, token, verifying } from './support/tokens.js';
 
 describe('JwtAuthenticator', () => {
   it('answers the anonymous actor without credential', async () => {
@@ -100,7 +58,9 @@ describe('JwtAuthenticator', () => {
       reason: 'BAD_SIGNATURE',
     });
   });
+});
 
+describe('JwtAuthenticator, signature, key and shape of the token', () => {
   it('refuses a token altered after it was signed', async () => {
     const [header = '', , signature = ''] = (await token({ roles: ['clerk'] })).split('.');
     const forged = Buffer.from(JSON.stringify({ sub: 'ada', iss: ISSUER, aud: AUDIENCE, roles: ['admin'] })).toString('base64url');
@@ -123,6 +83,7 @@ describe('JwtAuthenticator', () => {
 
   it('refuses an algorithm outside the allow-list, such as a shared secret passed off as a key', async () => {
     const secret = new TextEncoder().encode('a-shared-secret-of-at-least-32-bytes!');
+
     const symmetric = await new SignJWT({ sub: 'ada' })
       .setProtectedHeader({ alg: 'HS256' })
       .setIssuer(ISSUER)
@@ -131,9 +92,19 @@ describe('JwtAuthenticator', () => {
       .sign(secret);
 
     expect(await refusalOf(symmetric)).toMatchObject({ reason: 'ALGORITHM_NOT_ALLOWED' });
+
     expect(
       await new JwtAuthenticator({ key: secret, issuer: ISSUER, audience: AUDIENCE, algorithms: ['HS256'] }).authenticate(symmetric),
     ).toMatchObject({ id: 'ada' });
+  });
+
+  it('shows no verification key when it is logged, spread or serialized', () => {
+    const secret = new TextEncoder().encode('a-shared-secret-of-at-least-32-bytes!');
+    const subject = new JwtAuthenticator({ key: secret, issuer: ISSUER, audience: AUDIENCE, algorithms: ['HS256'] });
+
+    expect(JSON.stringify(subject)).toBe('{}');
+    expect(Object.values({ ...subject }).every((value) => typeof value === 'function')).toBe(true);
+    expect(inspect(subject, { depth: null, showHidden: true }).replace(/\s+/g, '')).not.toContain(secret.slice(0, 8).join(','));
   });
 
   it.each(['', 'not-a-token', 'a.b.c'])('refuses the malformed credential %j', async (credential) => {
@@ -208,118 +179,6 @@ describe('JwtAuthenticator default claim mapping', () => {
       roles: ['integration'],
       attributes: { region: 'eu' },
     });
-  });
-});
-
-describe('JwtAuthenticator session', () => {
-  const ISSUED_AT = 1_772_359_200;
-  const sessionOf = async (claims: JWTPayload, subject = authenticator()) =>
-    subject.authenticateSession(await token(claims, { issuedAt: ISSUED_AT, expiresIn: 4_102_444_800 }));
-
-  it('answers the anonymous session without credential', async () => {
-    expect(await authenticator().authenticateSession(undefined)).toBe(anonymousSession());
-  });
-
-  it('reads the session of the token: id, instants, method, strength, locale and time zone', async () => {
-    const session = await sessionOf({
-      sid: 'session-42',
-      jti: 'token-7',
-      amr: ['pwd', 'otp', 'mfa'],
-      acr: 'aal2',
-      locale: 'fr-FR',
-      zoneinfo: 'Europe/Paris',
-      tenant_id: 'acme',
-    });
-
-    expect(session).toEqual({
-      id: 'session-42',
-      actor: { id: 'ada', type: 'user', tenantId: 'acme', roles: [], attributes: {} },
-      issuedAt: new Date('2026-03-01T10:00:00.000Z'),
-      expiresAt: new Date('2100-01-01T00:00:00.000Z'),
-      authenticationMethod: 'password',
-      authenticationStrength: { mfa: true, assuranceLevel: 'aal2' },
-      locale: 'fr-FR',
-      timeZone: 'Europe/Paris',
-      extensions: {},
-    });
-  });
-
-  it('keeps nothing of the token in the session', async () => {
-    const credential = await token({ sid: 'session-42' });
-
-    const session = await authenticator().authenticateSession(credential);
-
-    expect(JSON.stringify(session)).not.toContain(credential);
-  });
-
-  it('answers the same actor as authenticate', async () => {
-    const credential = await token({ roles: ['clerk'], tenant_id: 'acme' });
-
-    expect((await authenticator().authenticateSession(credential)).actor).toEqual(
-      await authenticator().authenticate(credential),
-    );
-  });
-
-  it('identifies the session by the token id without sid, and by subject and issue instant without either', async () => {
-    expect((await sessionOf({ jti: 'token-7' })).id).toBe('token-7');
-    expect((await sessionOf({})).id).toBe('ada@1772359200000');
-  });
-
-  it('says a token is a token when nothing tells how the subject signed in', async () => {
-    const session = await sessionOf({});
-
-    expect(session.authenticationMethod).toBe('token');
-    expect(session).not.toHaveProperty('authenticationStrength');
-    expect(session).not.toHaveProperty('impersonatedBy');
-    expect(session).not.toHaveProperty('locale');
-  });
-
-  it('reports a single factor as such, and an assurance level alone', async () => {
-    expect((await sessionOf({ amr: ['pwd'] })).authenticationStrength).toEqual({ mfa: false });
-    expect((await sessionOf({ acr: '1' })).authenticationStrength).toEqual({ assuranceLevel: '1' });
-  });
-
-  it('lets the project say the method, as a value or from the claims', async () => {
-    const fixed = new JwtAuthenticator({ key: verifying, issuer: ISSUER, audience: AUDIENCE, authenticationMethod: 'sso' });
-    const computed = new JwtAuthenticator({
-      key: verifying,
-      issuer: ISSUER,
-      audience: AUDIENCE,
-      authenticationMethod: (claims) => (claims['client_id'] === undefined ? 'sso' : 'service'),
-    });
-
-    expect((await sessionOf({}, fixed)).authenticationMethod).toBe('sso');
-    expect((await sessionOf({ client_id: 'billing-worker' }, computed)).authenticationMethod).toBe('service');
-  });
-
-  it('reads who impersonates the subject from the actor claim of RFC 8693', async () => {
-    expect((await sessionOf({ act: { sub: 'support-7' } })).impersonatedBy).toBe('support-7');
-    expect((await sessionOf({ act: 'not-an-object' })).impersonatedBy).toBe('not-an-object');
-    expect(await sessionOf({ act: { client: 'x' } })).not.toHaveProperty('impersonatedBy');
-  });
-
-  it('reads the impersonator from the claim it is told, as an id or as an object', async () => {
-    const perNote = new JwtAuthenticator({ key: verifying, issuer: ISSUER, audience: AUDIENCE, impersonatorClaim: 'impersonator' });
-
-    expect((await sessionOf({ impersonator: 'support-7', act: { sub: 'ignored' } }, perNote)).impersonatedBy).toBe('support-7');
-    expect((await sessionOf({ impersonator: { id: 'support-8', username: 'sam' } }, perNote)).impersonatedBy).toBe('support-8');
-  });
-
-  it('lets the project add its extensions from the claims', async () => {
-    const withPlan = new JwtAuthenticator({
-      key: verifying,
-      issuer: ISSUER,
-      audience: AUDIENCE,
-      toSessionExtensions: (claims) => ({ plan: claims['plan'] === 'team' ? 'team' : 'free' }),
-    });
-
-    expect((await sessionOf({ plan: 'team' }, withPlan)).extensions).toEqual({ plan: 'team' });
-  });
-
-  it('refuses for a session what it refuses for an actor', async () => {
-    const expired = await token({}, { expiresIn: Math.floor(Date.now() / 1000) - 60 });
-
-    await expect(authenticator().authenticateSession(expired)).rejects.toMatchObject({ reason: 'TOKEN_EXPIRED' });
   });
 });
 

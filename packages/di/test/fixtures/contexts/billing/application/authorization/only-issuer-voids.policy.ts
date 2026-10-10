@@ -1,6 +1,6 @@
 import type { Actor } from '@ddd-ts-kit/kernel';
 import { Policy } from '@ddd-ts-kit/kernel/declarations';
-import type { Invoice } from '../../domain/repositories/invoice.repository.js';
+import type { Invoice } from '../../domain/invoice.js';
 import { permissions } from './billing.permissions.js';
 
 @Policy(permissions['invoice.void'], { name: 'billing.only-issuer-voids' })

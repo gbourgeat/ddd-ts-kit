@@ -1,5 +1,7 @@
 import type { Lock, LockHandle } from '@ddd-ts-kit/kernel';
-import { ContractSuite, type Awaitable, type ContractRunner } from './suite.js';
+import type { Awaitable } from './awaitable.js';
+import type { ContractRunner } from './contract-runner.js';
+import { ContractSuite } from './contract-suite.js';
 
 export interface LockContractOptions {
   readonly name: string;
@@ -17,11 +19,11 @@ export function lockContract(runner: ContractRunner, options: LockContractOption
 const HELD = { ttlMs: 30_000 };
 
 class LockSuite extends ContractSuite<Lock> {
-  readonly #elapse: (ms: number) => Awaitable<void>;
-
-  constructor(runner: ContractRunner, options: LockContractOptions) {
+  constructor(
+    runner: ContractRunner,
+    private readonly options: LockContractOptions,
+  ) {
     super(runner, () => options.createLock());
-    this.#elapse = (ms) => options.elapse(ms);
   }
 
   protected tests(): void {
@@ -66,14 +68,15 @@ class LockSuite extends ContractSuite<Lock> {
       await this.subject.acquire('report:2026-03', { ttlMs: 300 });
       this.expect(await this.subject.acquire('report:2026-03', HELD)).toBe(undefined);
 
-      await this.#elapse(400);
+      await this.options.elapse(400);
 
       this.expect((await this.subject.acquire('report:2026-03', HELD)) !== undefined).toBe(true);
     });
 
     this.it('ignores the release of a holder whose lock expired and was taken by another', async () => {
       const late = await this.subject.acquire('report:2026-03', { ttlMs: 300 });
-      await this.#elapse(400);
+
+      await this.options.elapse(400);
       await this.subject.acquire('report:2026-03', HELD);
 
       await late?.release();
@@ -85,8 +88,10 @@ class LockSuite extends ContractSuite<Lock> {
   private fences(): void {
     this.it('numbers the acquisitions of a key with a token that only grows', async () => {
       const tokens: number[] = [];
+
       for (let turn = 0; turn < 3; turn += 1) {
         const handle = await this.held('report:2026-03');
+
         tokens.push(handle.fencingToken);
         await handle.release();
       }
@@ -115,7 +120,9 @@ class LockSuite extends ContractSuite<Lock> {
 
   private async held(key: string): Promise<LockHandle> {
     const handle = await this.subject.acquire(key, HELD);
+
     if (handle === undefined) throw new Error(`The lock ${key} was expected to be free`);
+
     return handle;
   }
 }

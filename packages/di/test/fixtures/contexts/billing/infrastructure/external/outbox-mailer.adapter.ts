@@ -1,16 +1,15 @@
-import type { Clock } from '@ddd-ts-kit/kernel';
-import { Adapter, CLOCK, type BindingAspect } from '@ddd-ts-kit/kernel/declarations';
-import { MAILER, type Mailer } from '../../application/ports/billing.ports.js';
-
-/** What the aspect of the declaration was told, for a spec to read. */
-export const wrappedMailers: string[] = [];
+import { Clock } from '@ddd-ts-kit/kernel';
+import { Adapter, type BindingAspect } from '@ddd-ts-kit/kernel/declarations';
+import { Mailer } from '../../application/ports/mailer.port.js';
+import { wrappedMailers } from './wrapped-mailers.js';
 
 const noting: BindingAspect = (instance, info) => {
   wrappedMailers.push(`${info.className} as ${info.kind ?? 'nothing'} in ${info.context} for ${info.token}`);
+
   return instance;
 };
 
-@Adapter(MAILER, { kind: 'external', transient: true, aspects: [noting] }, [CLOCK])
+@Adapter(Mailer, { kind: 'external', transient: true, aspects: [noting] }, [Clock])
 export class OutboxMailer implements Mailer {
   static readonly sent: string[] = [];
 

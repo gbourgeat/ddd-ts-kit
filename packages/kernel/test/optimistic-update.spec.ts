@@ -8,6 +8,7 @@ describe('optimisticUpdate', () => {
 
     await optimisticUpdate(aggregate, async (step) => {
       steps.push(step);
+
       return 1;
     });
 
@@ -21,6 +22,7 @@ describe('optimisticUpdate', () => {
 
     await optimisticUpdate(aggregate, async (step) => {
       steps.push(step);
+
       return 1;
     });
 
@@ -31,8 +33,10 @@ describe('optimisticUpdate', () => {
   it('can save the same aggregate again after a success', async () => {
     const aggregate = { id: 'invoice-1', version: 0 };
     const steps: VersionStep[] = [];
+
     const write = async (step: VersionStep): Promise<number> => {
       steps.push(step);
+
       return 1;
     };
 

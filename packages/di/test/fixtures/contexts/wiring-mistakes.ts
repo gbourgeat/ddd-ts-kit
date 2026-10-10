@@ -1,9 +1,15 @@
-import { FixedClock, systemActor, type Clock, type Command, type CommandBus, type IntegrationEvent } from '@ddd-ts-kit/kernel';
-import { Adapter, CLOCK, COMMAND_BUS, CommandHandler, IntegrationEventHandler, token } from '@ddd-ts-kit/kernel/declarations';
+import { Clock, CommandBus, FixedClock, IdGenerator, systemActor, type Command, type IntegrationEvent } from '@ddd-ts-kit/kernel';
+import { Adapter, CommandHandler, IntegrationEventHandler, QueryHandler, Repository } from '@ddd-ts-kit/kernel/declarations';
 import { IssueInvoice } from './billing/application/commands/issue-invoice/issue-invoice.command.js';
+import { CustomerDirectory } from './billing/application/ports/customer-directory.port.js';
+import { Mailer } from './billing/application/ports/mailer.port.js';
+import { GetInvoice } from './billing/application/queries/get-invoice/get-invoice.query.js';
+import type { Invoice } from './billing/domain/invoice.js';
+import { InvoiceRepository } from './billing/domain/repositories/invoice.repository.js';
+import { InMemoryInvoiceRepository } from './billing/infrastructure/persistence/in-memory-invoice.repository.js';
 import { OrderPlaced, type OrderPlacedPayload } from './billing/published-language/order-placed.js';
 
-/** Classes that only exist to make a wiring check fail. */
+/** Classes that only exist to make a wiring check fail, when the application is created or when they compile. */
 
 @CommandHandler(IssueInvoice)
 export class SecondIssueInvoiceHandler {
@@ -12,7 +18,7 @@ export class SecondIssueInvoiceHandler {
   }
 }
 
-@IntegrationEventHandler(OrderPlaced, { consumer: 'billing.invoice-on-order-placed' }, [COMMAND_BUS])
+@IntegrationEventHandler(OrderPlaced, { consumer: 'billing.invoice-on-order-placed' }, [CommandBus])
 export class SecondInvoiceOnOrderPlaced {
   constructor(private readonly commands: CommandBus) {}
 
@@ -21,20 +27,25 @@ export class SecondInvoiceOnOrderPlaced {
   };
 }
 
-export const CHICKEN = token<Chicken>('loop.Chicken');
-export const EGG = token<Egg>('loop.Egg');
-
-@Adapter(CHICKEN, [EGG])
-export class Chicken {
-  constructor(readonly egg: Egg) {}
+export abstract class Chicken {
+  abstract readonly hatchedFrom: Egg;
 }
 
-@Adapter(EGG, [CHICKEN])
-export class Egg {
-  constructor(readonly chicken: Chicken) {}
+export abstract class Egg {
+  abstract readonly laidBy: Chicken;
 }
 
-@Adapter(CLOCK, { replaces: true })
+@Adapter(Chicken, [Egg])
+export class HatchedChicken implements Chicken {
+  constructor(readonly hatchedFrom: Egg) {}
+}
+
+@Adapter(Egg, [Chicken])
+export class LaidEgg implements Egg {
+  constructor(readonly laidBy: Chicken) {}
+}
+
+@Adapter(Clock, { replaces: true })
 export class FrozenClock extends FixedClock implements Clock {
   constructor() {
     super(new Date(0));
@@ -47,4 +58,76 @@ export function declareHandler<M extends Command<unknown>>(
   handler: new () => { execute(command: M): Promise<unknown> },
 ): void {
   Reflect.apply(CommandHandler(message), undefined, [handler]);
+}
+
+/*
+ * What the compiler refuses, in every decorator mode. Each class below is a mistake a project
+ * makes, and none is ever listed in a module.
+ */
+
+// @ts-expect-error an adapter implements every member of its port: `send` is missing
+@Adapter(Mailer)
+export class SilentMailer {
+  async queue(_to: string): Promise<void> {}
+}
+
+// @ts-expect-error the first dependency must be the port of the first parameter: a Mailer is no InvoiceRepository
+@QueryHandler(GetInvoice, [Mailer])
+export class GetInvoiceFromTheMailer {
+  constructor(private readonly invoices: InvoiceRepository) {}
+
+  async execute(query: GetInvoice): Promise<Invoice | undefined> {
+    return this.invoices.findById(query.invoiceId);
+  }
+}
+
+// @ts-expect-error the list follows the order of the constructor parameters
+@Adapter(Mailer, [IdGenerator, Clock])
+export class MisorderedMailer implements Mailer {
+  constructor(
+    private readonly clock: Clock,
+    private readonly ids: IdGenerator,
+  ) {}
+
+  async send(to: string): Promise<void> {
+    void `${to} ${this.ids.next()} ${this.clock.now().toISOString()}`;
+  }
+}
+
+// @ts-expect-error a constructor with parameters needs its dependency list
+@QueryHandler(GetInvoice)
+export class GetInvoiceWithoutList {
+  constructor(private readonly invoices: InvoiceRepository) {}
+
+  async execute(query: GetInvoice): Promise<Invoice | undefined> {
+    return this.invoices.findById(query.invoiceId);
+  }
+}
+
+// @ts-expect-error one dependency too many: the constructor takes one parameter
+@QueryHandler(GetInvoice, [InvoiceRepository, Clock])
+export class GetInvoiceWithOneTooMany {
+  constructor(private readonly invoices: InvoiceRepository) {}
+
+  async execute(query: GetInvoice): Promise<Invoice | undefined> {
+    return this.invoices.findById(query.invoiceId);
+  }
+}
+
+// @ts-expect-error the list names the port, not the in-memory class that implements it
+@QueryHandler(GetInvoice, [InMemoryInvoiceRepository])
+export class GetInvoiceFromMemory {
+  constructor(private readonly invoices: InvoiceRepository) {}
+
+  async execute(query: GetInvoice): Promise<Invoice | undefined> {
+    return this.invoices.findById(query.invoiceId);
+  }
+}
+
+// @ts-expect-error a repository adapter implements its port: a customer directory is no invoice repository
+@Repository(InvoiceRepository)
+export class DirectoryAsRepository implements CustomerDirectory {
+  async exists(): Promise<boolean> {
+    return false;
+  }
 }

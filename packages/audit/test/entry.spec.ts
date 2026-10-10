@@ -30,6 +30,7 @@ const record: AuditRecord = {
 describe('AuditEntryExtensions', () => {
   it('types the fields a project adds, optional when read', async () => {
     const trail = new InMemoryAuditTrail();
+
     await trail.record(record);
     const [entry] = trail.entries;
 
@@ -67,8 +68,10 @@ describe('canonicalize', () => {
 describe('hashOf', () => {
   it('is the SHA-256 of the canonical form of the entry without its hash, which anybody can compute again', async () => {
     const trail = new InMemoryAuditTrail();
+
     await trail.record(record);
     const [entry] = trail.entries;
+
     const canonical =
       '{"action":"CancelAppointmentCommand","actor":{"id":"ada","tenantId":"acme","type":"user"},"category":"command","chain":"tenant:acme",' +
       '"correlationId":"correlation-1","extensions":{"region":"eu","release":{"version":"1.4.0"}},"id":"entry-1",' +
@@ -80,8 +83,10 @@ describe('hashOf', () => {
 
   it('changes with any field, the link to the previous entry included', async () => {
     const trail = new InMemoryAuditTrail();
+
     await trail.record(record);
     const [entry] = trail.entries;
+
     if (entry === undefined) throw new Error('The entry was not recorded');
 
     expect(hashOf({ ...entry, outcome: 'failed' })).not.toBe(entry.hash);

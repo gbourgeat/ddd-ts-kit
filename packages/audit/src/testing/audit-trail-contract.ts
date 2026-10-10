@@ -1,11 +1,9 @@
-import { cursorPage, offsetPage, type Sort } from '@ddd-ts-kit/kernel';
+import { cursorPage, offsetPage, type AuditEntry, type AuditFilter, type AuditRecord, type AuditSortField, type Sort } from '@ddd-ts-kit/kernel';
 import { ContractSuite, type Awaitable, type ContractRunner } from '@ddd-ts-kit/testing/contracts';
-import { GENESIS_HASH, hashOf } from '../canonical.js';
-import type { AuditEntry, AuditRecord } from '../entry.js';
-import type { AuditFilter, AuditReader, AuditSortField, AuditTrail } from '../trail.js';
-import { verifyChain } from '../verify.js';
-
-export interface AuditTrailUnderContract extends AuditTrail, AuditReader {}
+import { GENESIS_HASH } from '../chain/genesis-hash.js';
+import { hashOf } from '../chain/hash-of.js';
+import { verifyChain } from '../verify/verify-chain.js';
+import type { AuditTrailUnderContract } from './audit-trail-under-contract.js';
 
 export interface AuditTrailContractOptions {
   readonly name: string;
@@ -28,11 +26,11 @@ const ALPHA = 'tenant:alpha';
 const BY_SEQUENCE: readonly Sort<AuditSortField>[] = [{ field: 'sequence', direction: 'asc' }];
 
 class AuditTrailSuite extends ContractSuite<AuditTrailUnderContract> {
-  readonly #options: AuditTrailContractOptions;
+  private readonly options: AuditTrailContractOptions;
 
   constructor(runner: ContractRunner, options: AuditTrailContractOptions) {
     super(runner, () => options.createTrail());
-    this.#options = options;
+    this.options = options;
   }
 
   protected tests(): void {
@@ -52,6 +50,7 @@ class AuditTrailSuite extends ContractSuite<AuditTrailUnderContract> {
 
     this.it('gives back what was recorded, sealed as the first entry of its chain', async () => {
       const record = fullRecord('entry-1');
+
       await this.subject.record(record);
 
       const [entry] = await this.all();
@@ -95,6 +94,7 @@ class AuditTrailSuite extends ContractSuite<AuditTrailUnderContract> {
 
       this.expect(await verifyChain(this.subject, { chain: ALPHA, from: 3, to: 6 })).toEqual({ valid: true, checked: 4 });
       const beyond = await verifyChain(this.subject, { chain: ALPHA, to: 9 });
+
       this.expect(beyond).toEqual({ valid: false, checked: 7, break: { kind: 'missing-entry', chain: ALPHA, position: 7, sequence: 8 } });
     });
   }
@@ -107,19 +107,24 @@ class AuditTrailSuite extends ContractSuite<AuditTrailUnderContract> {
       const altered: AuditEntry[] = entries.map((entry) => (entry.sequence === 2 ? { ...entry, outcome: 'failed' } : entry));
 
       const altering = { kind: 'altered-content', chain: ALPHA, position: 1, sequence: 2, entryId: 'a-2' };
+
       this.expect(await verifyChain(altered)).toEqual({ valid: false, checked: 1, break: altering });
     });
 
-    const { tamper } = this.#options;
+    const { tamper } = this.options;
+
     if (tamper === undefined) return;
+
     this.it('shows an entry rewritten in the storage itself', async () => {
       await this.recordAll([inTenant('a-1', 'alpha'), inTenant('a-2', 'alpha'), inTenant('a-3', 'alpha')]);
       const [, second] = await this.entriesOf(ALPHA);
+
       if (second === undefined) throw new Error('The second entry of the chain was not listed');
 
       await tamper(second, 'contract.thing.forged');
 
       const altering = { kind: 'altered-content', chain: ALPHA, position: 1, sequence: 2, entryId: 'a-2' };
+
       this.expect(await verifyChain(this.subject, { chain: ALPHA })).toEqual({ valid: false, checked: 1, break: altering });
     });
   }
@@ -150,6 +155,7 @@ class AuditTrailSuite extends ContractSuite<AuditTrailUnderContract> {
       ['chain and positions', { chain: ALPHA, fromSequence: 2, toSequence: 3 }, ['e-2', 'e-3']],
       ['several criteria at once', { actorId: 'ada', category: 'authorization' }, ['e-3']],
     ];
+
     for (const [criterion, filter, expected] of cases) {
       this.it(`lists by ${criterion}`, async () => {
         await this.recordAll(JOURNAL);
@@ -213,11 +219,14 @@ class AuditTrailSuite extends ContractSuite<AuditTrailUnderContract> {
   private async walk(sort: readonly Sort<AuditSortField>[]): Promise<string[]> {
     const ids: string[] = [];
     let cursor: string | undefined;
+
     do {
       const page = await this.subject.list({}, cursorPage({ limit: 3, sort, ...(cursor === undefined ? {} : { cursor }) }));
+
       ids.push(...page.items.map((entry) => entry.id));
       cursor = page.nextCursor;
     } while (cursor !== undefined);
+
     return ids;
   }
 }

@@ -19,14 +19,17 @@ let pool: pg.Pool;
 let otherPool: pg.Pool | undefined;
 let db: NodePgDatabase;
 let elsewhere: NodePgDatabase;
+
 beforeAll(async () => {
   postgres = await startPostgres();
   const connect = () => new pg.Pool({ connectionString: postgres.url, max: postgres.poolSize });
+
   pool = connect();
   otherPool = postgres.real ? connect() : undefined;
   db = drizzle(pool);
   elsewhere = otherPool === undefined ? db : drizzle(otherPool);
 });
+
 afterAll(async () => {
   await pool.end();
   await otherPool?.end();
@@ -43,17 +46,23 @@ let schemas = 0;
 async function freshSchema(): Promise<string> {
   schemas += 1;
   const schema = `audit_${schemas}`;
+
   for (const statement of migrationOf(schema)) await pool.query(statement);
+
   return schema;
 }
 
 async function fixture(options: AuditTrailOptions = {}): Promise<SqlTrailFixture> {
   const schema = await freshSchema();
+
   const on = (database: NodePgDatabase) => {
     const unitOfWork = createDrizzleUnitOfWork(database);
+
     return { unitOfWork, trail: new DrizzleAuditTrail(unitOfWork, { ...options, schema }) };
   };
+
   const here = on(db);
+
   return {
     ...here,
     run: (statement) => here.unitOfWork.executor().execute(statement.replaceAll('$table', `"${schema}"."audit_entries"`)),
@@ -67,6 +76,7 @@ auditTrailContract(runner, {
   name: 'DrizzleAuditTrail in a schema of its own',
   createTrail: async () => {
     current = await fixture();
+
     return current.trail;
   },
   tamper: async (entry, action) => {
@@ -80,7 +90,9 @@ auditTrailContract(runner, {
   name: 'DrizzleAuditTrail in the public schema',
   createTrail: async () => {
     await pool.query('drop table if exists "audit_entries", "audit_chains"; drop function if exists "audit_entries_append_only"()');
+
     for (const statement of migrationOf()) await pool.query(statement);
+
     return new DrizzleAuditTrail(createDrizzleUnitOfWork(db));
   },
 });
@@ -96,17 +108,22 @@ describe('table definitions', () => {
 
   it('declare the columns the knex migration helper creates, so that both stores read the same table', async () => {
     const schema = await freshSchema();
+
     const columnsOf = async (table: string) => {
       const { rows } = await pool.query<{ column_name: string; data_type: string; is_nullable: string }>(
         'select column_name, data_type, is_nullable from information_schema.columns where table_schema = $1 and table_name = $2 order by column_name',
         [schema, table],
       );
+
       return rows;
     };
+
     const fromDrizzle = { entries: await columnsOf('audit_entries'), chains: await columnsOf('audit_chains') };
 
-    const { auditTablesSql } = await import('../src/sql/tables.js');
+    const { auditTablesSql } = await import('../src/sql/audit-tables-sql.js');
+
     await pool.query(`drop table "${schema}"."audit_entries", "${schema}"."audit_chains"; drop function "${schema}"."audit_entries_append_only"()`);
+
     for (const statement of auditTablesSql({ schema })) await pool.query(statement);
 
     expect({ entries: await columnsOf('audit_entries'), chains: await columnsOf('audit_chains') }).toEqual(fromDrizzle);
@@ -117,7 +134,9 @@ describe('table definitions', () => {
 describe('DrizzleAuditTrail on the PGlite driver', () => {
   it('reads the rows the way that driver returns them', async () => {
     const client = new PGlite();
+
     for (const statement of migrationOf('audit')) await client.exec(statement);
+
     const unitOfWork = createDrizzleUnitOfWork(drizzlePglite(client));
     const trail = new DrizzleAuditTrail(unitOfWork, { schema: 'audit' });
 
@@ -125,6 +144,7 @@ describe('DrizzleAuditTrail on the PGlite driver', () => {
     await unitOfWork.run(() => trail.record({ ...aRecord('entry-2'), changes: { rows: 2000, email: { masked: 'k1:9f' } } }));
 
     const { items, total } = await trail.list({ chain: 'tenant:acme' }, { kind: 'offset', offset: 0, limit: 10, sort: [] });
+
     expect(total).toBe(2);
     expect(items[1]).toMatchObject({ id: 'entry-2', sequence: 2, occurredAt: aRecord('x').occurredAt, changes: { rows: 2000, email: { masked: 'k1:9f' } } });
     expect(await verifyChain(trail, { chain: 'tenant:acme' })).toEqual({ valid: true, checked: 2 });

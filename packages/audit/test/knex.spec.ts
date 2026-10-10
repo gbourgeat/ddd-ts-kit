@@ -12,15 +12,20 @@ const runner = { describe, it, expect, beforeEach };
 let postgres: TestPostgres;
 let db: Knex;
 let elsewhere: Knex;
+
 beforeAll(async () => {
   postgres = await startPostgres();
   const connect = () => knex({ client: 'pg', connection: postgres.url, pool: { min: 0, max: postgres.poolSize } });
+
   db = connect();
   elsewhere = postgres.real ? connect() : db;
 });
+
 afterAll(async () => {
   await db.destroy();
+
   if (elsewhere !== db) await elsewhere.destroy();
+
   await postgres.stop();
 });
 
@@ -30,17 +35,23 @@ let schemas = 0;
 async function freshSchema(): Promise<string> {
   schemas += 1;
   const schema = `audit_${schemas}`;
+
   await createAuditTables(db, { schema });
+
   return schema;
 }
 
 async function fixture(options: AuditTrailOptions = {}): Promise<SqlTrailFixture> {
   const schema = await freshSchema();
+
   const on = (database: Knex) => {
     const unitOfWork = createKnexUnitOfWork(database);
+
     return { unitOfWork, trail: new KnexAuditTrail(unitOfWork, { ...options, schema }) };
   };
+
   const here = on(db);
+
   return {
     ...here,
     run: (statement) => here.unitOfWork.executor().raw(statement.replaceAll('$table', `"${schema}"."audit_entries"`)),
@@ -54,6 +65,7 @@ auditTrailContract(runner, {
   name: 'KnexAuditTrail in a schema of its own',
   createTrail: async () => {
     current = await fixture();
+
     return current.trail;
   },
   tamper: async (entry, action) => {
@@ -68,6 +80,7 @@ auditTrailContract(runner, {
   createTrail: async () => {
     await dropAuditTables(db);
     await createAuditTables(db);
+
     return new KnexAuditTrail(createKnexUnitOfWork(db));
   },
 });
@@ -79,6 +92,7 @@ describe('createAuditTables', () => {
     const schema = await freshSchema();
 
     const { rows: indexes } = await db.raw<{ rows: { indexname: string }[] }>('select indexname from pg_indexes where schemaname = ? order by indexname', [schema]);
+
     const { rows: triggers } = await db.raw<{ rows: { tgname: string }[] }>(
       `select tgname from pg_trigger where tgrelid = '"${schema}"."audit_entries"'::regclass and not tgisinternal order by tgname`,
     );
@@ -92,11 +106,13 @@ describe('createAuditTables', () => {
       'audit_entries_pkey',
       'audit_entries_resource_idx',
     ]);
+
     expect(triggers.map((row) => row.tgname)).toEqual(['audit_entries_no_rewrite', 'audit_entries_no_truncate']);
   });
 
   it('is undone by dropAuditTables, guard included', async () => {
     const schema = await freshSchema();
+
     await new KnexAuditTrail(createKnexUnitOfWork(db), { schema }).record(aRecord('entry-1'));
 
     await dropAuditTables(db, { schema });
@@ -104,6 +120,7 @@ describe('createAuditTables', () => {
     expect(await db.schema.withSchema(schema).hasTable('audit_entries')).toBe(false);
     expect(await db.schema.withSchema(schema).hasTable('audit_chains')).toBe(false);
     const { rows } = await db.raw<{ rows: unknown[] }>(`select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = ? and p.proname = 'audit_entries_append_only'`, [schema]);
+
     expect(rows).toEqual([]);
   });
 });

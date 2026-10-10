@@ -19,13 +19,17 @@ function aRecord(id: string, tenantId = 'acme'): AuditRecord {
 
 async function aChain(length: number, tenantId = 'acme'): Promise<AuditEntry[]> {
   const trail = new InMemoryAuditTrail();
+
   for (let index = 1; index <= length; index += 1) await trail.record(aRecord(`${tenantId}-${index}`, tenantId));
+
   return trail.entries;
 }
 
 function nth(entries: readonly AuditEntry[], index: number): AuditEntry {
   const entry = entries[index];
+
   if (entry === undefined) throw new Error(`The chain holds no entry at index ${index}`);
+
   return entry;
 }
 
@@ -36,11 +40,14 @@ function present(entries: readonly (AuditEntry | undefined)[]): AuditEntry[] {
 /** What somebody who can write to the store does: change the content and recompute the hashes after it. */
 function rewrittenFrom(entries: readonly AuditEntry[], sequence: number): AuditEntry[] {
   const rewritten: AuditEntry[] = [];
+
   for (const entry of entries) {
     const previous = rewritten.at(-1);
     const forged = entry.sequence < sequence ? entry : { ...entry, action: 'ForgedCommand', previousHash: previous?.hash ?? entry.previousHash };
+
     rewritten.push({ ...forged, hash: hashOf(forged) });
   }
+
   return rewritten;
 }
 
@@ -52,6 +59,7 @@ describe('verifyChain', () => {
 
   it('reports altered content at the entry that no longer hashes to its hash', async () => {
     const entries = await aChain(5);
+
     entries[2] = { ...nth(entries, 2), reason: 'INVENTED' };
 
     expect(await verifyChain(entries)).toEqual({
@@ -64,6 +72,7 @@ describe('verifyChain', () => {
   it('reports altered content where an entry was rewritten with a hash of its own', async () => {
     const entries = await aChain(5);
     const forged = { ...nth(entries, 2), action: 'ForgedCommand' };
+
     entries[2] = { ...forged, hash: hashOf(forged) };
 
     const outcome = await verifyChain(entries);
@@ -73,6 +82,7 @@ describe('verifyChain', () => {
 
   it('reports a missing entry where the sequence jumps', async () => {
     const entries = await aChain(5);
+
     entries.splice(2, 1);
 
     expect(await verifyChain(entries)).toEqual({
@@ -111,9 +121,12 @@ describe('verifyChain', () => {
 
     expect(await verifyChain(present([first, second, second]))).toMatchObject({ valid: false, break: { kind: 'reordered', position: 2, sequence: 3 } });
   });
+});
 
+describe('verifyChain, ranges, several chains and readers', () => {
   it('examines only the positions asked for, trusting the entry before the first one', async () => {
     const entries = await aChain(6);
+
     entries[0] = { ...nth(entries, 0), reason: 'INVENTED' };
 
     expect(await verifyChain(entries, { from: 3, to: 5 })).toEqual({ valid: true, checked: 3 });
@@ -129,6 +142,7 @@ describe('verifyChain', () => {
     expect(await verifyChain(mixed, { chain: 'tenant:other' })).toEqual({ valid: true, checked: 2 });
 
     mixed[3] = { ...nth(other, 1), outcome: 'failed' };
+
     expect(await verifyChain(mixed)).toEqual({
       valid: false,
       checked: 4,
@@ -138,6 +152,7 @@ describe('verifyChain', () => {
 
   it('reads the chain from a reader, page by page', async () => {
     const trail = new InMemoryAuditTrail();
+
     for (let index = 1; index <= 230; index += 1) await trail.record(aRecord(`acme-${index}`));
 
     expect(await verifyChain(trail, { chain: CHAIN })).toEqual({ valid: true, checked: 230 });
@@ -157,6 +172,7 @@ describe('anchoring', () => {
     const trail = new InMemoryAuditTrail({ sealing: { every: 3, onSeal: (checkpoint) => void sealed.push(checkpoint) } });
 
     for (let index = 1; index <= 7; index += 1) await trail.record(aRecord(`acme-${index}`));
+
     await trail.record(aRecord('other-1', 'other'));
 
     expect(sealed).toEqual([
@@ -168,16 +184,19 @@ describe('anchoring', () => {
   it('shows a chain rewritten as a whole, which is consistent with itself', async () => {
     const sealed: AuditCheckpoint[] = [];
     const trail = new InMemoryAuditTrail({ sealing: { every: 2, onSeal: (checkpoint) => void sealed.push(checkpoint) } });
+
     for (let index = 1; index <= 5; index += 1) await trail.record(aRecord(`acme-${index}`));
 
     const rewritten = rewrittenFrom(trail.entries, 2);
 
     expect(await verifyChain(rewritten)).toEqual({ valid: true, checked: 5 });
+
     expect(await verifyChain(rewritten, { checkpoints: sealed })).toEqual({
       valid: false,
       checked: 1,
       break: { kind: 'altered-content', chain: CHAIN, position: 1, sequence: 2, entryId: 'acme-2' },
     });
+
     expect(await verifyChain(trail.entries, { checkpoints: sealed })).toEqual({ valid: true, checked: 5 });
   });
 });

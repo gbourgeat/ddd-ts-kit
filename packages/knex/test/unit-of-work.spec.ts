@@ -8,12 +8,16 @@ import {
   createOutboxTables,
 } from '../src/index.js';
 import { createDatabase, type TestDatabase } from './support/database.js';
-import { BILLING, createInvoicesTable, Invoice, KnexInvoiceRepository } from './support/invoices.js';
+import { Invoice } from './support/billing-core/domain/invoice.js';
+import { BILLING } from './support/billing-core/infrastructure/persistence/billing-schema.js';
+import { createInvoicesTable } from './support/billing-core/infrastructure/persistence/create-invoices-table.js';
+import { KnexInvoiceRepository } from './support/billing-core/infrastructure/persistence/knex-invoice.repository.js';
 import { ada, scopeOf } from './support/scopes.js';
 
 const now = new Date('2026-03-01T10:00:00.000Z');
 
 let database: TestDatabase;
+
 beforeAll(async () => {
   database = await createDatabase(
     async (knex) => {
@@ -23,9 +27,11 @@ beforeAll(async () => {
     [`${BILLING}.invoices`, 'outbox', 'processed_events'],
   );
 });
+
 afterAll(async () => {
   await database.close();
 });
+
 beforeEach(async () => {
   await database.truncate();
 });
@@ -42,6 +48,7 @@ const issued = (invoiceId: string): IntegrationEvent => ({
 const wire = () => {
   const unitOfWork = createKnexUnitOfWork(database.knex);
   const store = new KnexOutboxStore(unitOfWork);
+
   return {
     unitOfWork,
     store,
@@ -56,13 +63,14 @@ const invoiceIds = async (): Promise<string[]> =>
 
 class PaymentProviderDown extends Error {}
 
-describe('createKnexUnitOfWork', () => {
+describe('createKnexUnitOfWork: one transaction for the write and the event', () => {
   it('commits the business write and the event together', async () => {
     const { unitOfWork, repository, publisher, store } = wire();
 
     const result = await unitOfWork.run(async () => {
       await repository.save(Invoice.draft('inv-1', 100));
       await publisher.publish([issued('inv-1')]);
+
       return 'done';
     });
 
@@ -88,6 +96,7 @@ describe('createKnexUnitOfWork', () => {
 
   it('rolls back the business write when the event cannot be stored', async () => {
     const { unitOfWork, repository, publisher } = wire();
+
     await publisher.publish([issued('inv-1')]);
 
     const failing = unitOfWork.run(async () => {
@@ -98,7 +107,9 @@ describe('createKnexUnitOfWork', () => {
     await expect(failing).rejects.toBeDefined();
     expect(await repository.findById('inv-1')).toBeUndefined();
   });
+});
 
+describe('the KnexContext of a unit of work', () => {
   it('gives the transaction inside run and the root instance outside', async () => {
     const { unitOfWork } = wire();
 
@@ -117,14 +128,17 @@ describe('createKnexUnitOfWork', () => {
 
   it('joins the outer transaction on a nested run: one rollback undoes both', async () => {
     const { unitOfWork, repository } = wire();
+
     database.queries.length = 0;
 
     const failing = unitOfWork.run(async () => {
       const outer = unitOfWork.executor();
+
       await unitOfWork.run(async () => {
         expect(unitOfWork.executor()).toBe(outer);
         await repository.save(Invoice.draft('inv-1', 100));
       });
+
       await repository.save(Invoice.draft('inv-2', 200));
       throw new PaymentProviderDown();
     });
@@ -142,6 +156,7 @@ describe('createKnexUnitOfWork', () => {
       const { rows } = await unitOfWork
         .executor()
         .raw<{ rows: { transaction_isolation: string }[] }>('show transaction_isolation');
+
       return rows;
     });
 
@@ -186,6 +201,7 @@ describe('outbox end to end', () => {
       await repository.save(Invoice.draft('inv-1', 100));
       await publisher.publish([issued('inv-1')]);
     });
+
     await unitOfWork
       .run(async () => {
         await repository.save(Invoice.draft('inv-2', 200));
@@ -209,6 +225,7 @@ describe('KnexProcessedEventStore in a unit of work', () => {
       expect(await store.markProcessed('billing', 'evt-1')).toBe(true);
       throw new PaymentProviderDown();
     });
+
     await expect(firstDelivery).rejects.toBeInstanceOf(PaymentProviderDown);
 
     expect(await unitOfWork.run(() => store.markProcessed('billing', 'evt-1'))).toBe(true);

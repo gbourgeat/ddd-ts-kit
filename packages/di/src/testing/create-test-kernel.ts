@@ -1,0 +1,79 @@
+import {
+  FixedActorContext,
+  FixedClock,
+  FixedExecutionScope,
+  InMemoryCache,
+  InMemoryDomainEventDispatcher,
+  InMemoryEventBus,
+  InMemoryLock,
+  InMemoryLogger,
+  InMemoryMetrics,
+  InMemoryRateLimiter,
+  SequentialIdGenerator,
+  executionContext,
+  type Actor,
+  type ExecutionContext,
+} from '@ddd-ts-kit/kernel';
+import { ManualJobScheduler } from '@ddd-ts-kit/scheduling/testing';
+import { guardedQueryBus } from '../kernel/guarded-query-bus.js';
+import { transactionalCommandBus } from '../kernel/transactional-command-bus.js';
+import type { Resolve } from '../wiring/resolve.js';
+import type { TestApplicationOptions } from './test-application-options.js';
+import type { TestJobs } from './test-jobs.js';
+import type { TestKernel } from './test-kernel.js';
+
+const DEFAULT_NOW = new Date('2026-01-01T00:00:00.000Z');
+const DEFAULT_ACTOR: Actor = { id: 'test-user', type: 'user', roles: [], attributes: {} };
+
+/** The deterministic stand-ins of the kernel ports, which a spec reads and moves. */
+export function createTestKernel(options: TestApplicationOptions, resolve: Resolve): TestKernel {
+  const clock = new FixedClock(options.now ?? DEFAULT_NOW);
+  const context = options.executionContext ?? defaultExecutionContext(options);
+  const actorContext = new FixedActorContext(context.actor);
+  const executionScope = new FixedExecutionScope(context, actorContext);
+  const observability = { logger: new InMemoryLogger(), metrics: new InMemoryMetrics(), lock: new InMemoryLock(clock) };
+
+  const scheduler = new ManualJobScheduler({
+    clock,
+    scope: executionScope,
+    ids: new SequentialIdGenerator('job-run'),
+    ...observability,
+  });
+
+  return {
+    commandBus: transactionalCommandBus(resolve),
+    queryBus: guardedQueryBus(resolve),
+    eventBus: new InMemoryEventBus(),
+    domainEvents: new InMemoryDomainEventDispatcher(),
+    clock,
+    ids: new SequentialIdGenerator(options.idPrefix),
+    actorContext,
+    executionScope,
+    ...observability,
+    cache: new InMemoryCache(clock),
+    rateLimiter: new InMemoryRateLimiter(clock),
+    jobs: testJobs(scheduler),
+  };
+}
+
+function defaultExecutionContext({ session, actor }: TestApplicationOptions): ExecutionContext {
+  return executionContext({
+    correlationId: 'test-correlation',
+    actor: session?.actor ?? actor ?? DEFAULT_ACTOR,
+    origin: 'test',
+    ...(session === undefined ? {} : { session }),
+  });
+}
+
+function testJobs(scheduler: ManualJobScheduler): TestJobs {
+  return {
+    scheduler,
+    async runNow(name) {
+      const run = await scheduler.runNow(name);
+
+      if (run.outcome === 'failed') throw scheduler.failures.at(-1);
+
+      return run;
+    },
+  };
+}

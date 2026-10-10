@@ -1,12 +1,12 @@
 # @ddd-ts-kit/validation
 
-One `Schema` port for input validation at the boundary, with adapters for zod, class-validator
-and any Standard Schema library. Routes, DTOs and the OpenAPI generator depend on the port, so
-the validation library can change without touching them.
+One `Schema` contract for input validation at the boundary, with adapters for zod,
+class-validator and any Standard Schema library. Routes, DTOs and the OpenAPI generator depend
+on the contract, so the validation library can change without touching them.
 
 Business rules do not belong here: they live in the domain and never import a validation library.
 
-## The port
+## The contract
 
 ```ts
 import { parseOrThrow, type Infer, type Schema } from '@ddd-ts-kit/validation';
@@ -18,6 +18,10 @@ interface Schema<T> {
 
 type ValidationIssue = { path: string; code: string; message: string }; // path: "items.0.sku"
 ```
+
+A schema is a value: one per input, handed to the route or the event that validates with it.
+It is never bound in a container, so it is an interface and not an injectable port (an abstract
+class): there is nothing to declare in a composition root.
 
 - `parse` never throws for an invalid input: it returns `err(issues)`.
 - `parseOrThrow(schema, input)` returns the value or throws a `ValidationError`, a `DomainError`

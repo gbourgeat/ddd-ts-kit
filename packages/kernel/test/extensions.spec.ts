@@ -44,6 +44,7 @@ describe('SessionExtensions', () => {
       authenticationMethod: 'sso',
       extensions: { plan: 'team' },
     };
+
     const plan: 'free' | 'team' | undefined = session.extensions.plan;
     // @ts-expect-error -- an extension is optional when read: the anonymous session has none
     const certain: 'free' | 'team' = session.extensions.plan;
@@ -67,6 +68,7 @@ describe('ExecutionContextExtensions', () => {
     const plain = executionContext({ correlationId: 'corr-1', actor: ada, origin: 'http' });
     const regional = executionContext({ ...plain, extensions: { region: 'eu-west-3' } });
     const region: string | undefined = regional.extensions.region;
+
     // @ts-expect-error -- a region is a string
     executionContext({ ...plain, extensions: { region: 3 } });
 

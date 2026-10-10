@@ -1,8 +1,8 @@
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
 import { InvoiceIssued } from '../../domain/events/invoice-issued.event.js';
-import { MAILER, type Mailer } from '../ports/billing.ports.js';
+import { Mailer } from '../ports/mailer.port.js';
 
-@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued' }, [MAILER])
+@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued' }, [Mailer])
 export class InvoiceIssuedEventHandler implements DomainEventHandler<InvoiceIssued> {
   constructor(private readonly mailer: Mailer) {}
 

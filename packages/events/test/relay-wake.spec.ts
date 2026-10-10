@@ -1,16 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { FixedClock, InMemoryEventBus, type IntegrationEvent } from '@ddd-ts-kit/kernel';
+import { FixedClock, InMemoryEventBus } from '@ddd-ts-kit/kernel';
 import {
   InMemoryOutboxStore,
   InMemoryRelaySignal,
   OutboxRelay,
   type OutboxRecord,
 } from '../src/index.js';
-import { at, invoiceIssued } from './support/events.js';
-import { GatedPublisher, eventually } from './support/publishers.js';
-
-const event = (id: string): IntegrationEvent =>
-  invoiceIssued.create({ invoiceId: `inv-${id}`, orderId: 'order-1' }, { id, occurredAt: at });
+import { at } from './support/events.js';
+import { eventually } from './support/eventually.js';
+import { GatedPublisher } from './support/gated-publisher.js';
+import { invoiceIssuedEvent as event } from './support/invoice-issued-event.js';
 
 const AN_HOUR = 3_600_000;
 
@@ -20,6 +19,7 @@ class CountingStore extends InMemoryOutboxStore {
 
   override async claimBatch(limit: number, now: Date): Promise<OutboxRecord[]> {
     this.claims += 1;
+
     return super.claimBatch(limit, now);
   }
 }
@@ -28,6 +28,7 @@ describe('InMemoryRelaySignal', () => {
   it('notifies its subscribers until they unsubscribe', () => {
     const signal = new InMemoryRelaySignal();
     let heard = 0;
+
     const subscription = signal.subscribe(() => {
       heard += 1;
     });
@@ -46,6 +47,7 @@ describe('OutboxRelay woken by the store', () => {
     const store = new InMemoryOutboxStore({ signal });
     const bus = new InMemoryEventBus();
     const relay = new OutboxRelay({ store, publisher: bus, clock: new FixedClock(at), wakeOn: signal });
+
     relay.start({ intervalMs: AN_HOUR });
 
     await store.append([event('evt-1')]);
@@ -62,6 +64,7 @@ describe('OutboxRelay woken by the store', () => {
     const store = new CountingStore({ signal });
     const publisher = new GatedPublisher();
     const relay = new OutboxRelay({ store, publisher, clock: new FixedClock(at), wakeOn: signal });
+
     await store.append([event('evt-1')]);
     relay.start({ intervalMs: AN_HOUR });
     await publisher.entered;
@@ -81,12 +84,14 @@ describe('OutboxRelay woken by the store', () => {
     const signal = new InMemoryRelaySignal();
     const silentStore = new InMemoryOutboxStore();
     const bus = new InMemoryEventBus();
+
     const relay = new OutboxRelay({
       store: silentStore,
       publisher: bus,
       clock: new FixedClock(at),
       wakeOn: signal,
     });
+
     relay.start({ intervalMs: 10 });
 
     await silentStore.append([event('evt-1')]);
@@ -99,12 +104,14 @@ describe('OutboxRelay woken by the store', () => {
   it('no longer listens once stopped', async () => {
     const signal = new InMemoryRelaySignal();
     const store = new CountingStore({ signal });
+
     const relay = new OutboxRelay({
       store,
       publisher: new InMemoryEventBus(),
       clock: new FixedClock(at),
       wakeOn: signal,
     });
+
     relay.start({ intervalMs: AN_HOUR });
     await relay.stop();
     const claimsWhenStopped = store.claims;

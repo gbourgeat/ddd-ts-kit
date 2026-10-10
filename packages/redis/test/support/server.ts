@@ -9,15 +9,19 @@ const opened: Redis[] = [];
 
 export function connect(): Redis {
   const client = new Redis(SERVER_URL, { maxRetriesPerRequest: 1 });
+
   opened.push(client);
+
   return client;
 }
 
 /** A client whose server is away: nothing listens on port 1, and it does not try again. */
 export function connectToNothing(): Redis {
   const client = new Redis({ host: '127.0.0.1', port: 1, retryStrategy: () => null, maxRetriesPerRequest: 0 });
+
   client.on('error', () => undefined);
   opened.push(client);
+
   return client;
 }
 

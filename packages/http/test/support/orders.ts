@@ -65,12 +65,15 @@ export const getOrder = defineRoute(
     if (params.orderId === SHIPPED_ORDER) {
       throw new OrderAlreadyShipped('The order has already been shipped.');
     }
+
     if (params.orderId === BROKEN_ORDER) {
       throw new Error(SECRET);
     }
+
     if (params.orderId !== KNOWN_ORDER) {
       throw new NotFoundError(`Order ${params.orderId} does not exist.`);
     }
+
     return {
       status: 200,
       body: { id: params.orderId, customerId: 'c-1', lines: query.expand === 'lines' ? 2 : 0 },
@@ -94,6 +97,7 @@ export const cancelOrder = defineRoute(
     if (params.orderId === SHIPPED_ORDER) {
       throw new ConflictError('A shipped order cannot be cancelled.');
     }
+
     return { status: 204 };
   },
 );

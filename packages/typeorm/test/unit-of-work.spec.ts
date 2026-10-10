@@ -9,7 +9,9 @@ import {
   processedEventEntity,
 } from '../src/index.js';
 import { createDatabase, type TestDatabase } from './support/database.js';
-import { Invoice, TypeOrmInvoiceRepository, invoices } from './support/invoices.js';
+import { Invoice } from './support/billing-core/domain/invoice.js';
+import { invoices } from './support/billing-core/infrastructure/persistence/invoices.js';
+import { TypeOrmInvoiceRepository } from './support/billing-core/infrastructure/persistence/typeorm-invoice.repository.js';
 import { ada, scopeOf } from './support/scopes.js';
 
 const outbox = outboxEntity();
@@ -17,12 +19,15 @@ const processed = processedEventEntity();
 const now = new Date('2026-03-01T10:00:00.000Z');
 
 let database: TestDatabase;
+
 beforeAll(async () => {
   database = await createDatabase([invoices, outbox, processed]);
 });
+
 afterAll(async () => {
   await database.close();
 });
+
 beforeEach(async () => {
   await database.truncate();
 });
@@ -39,6 +44,7 @@ const issued = (invoiceId: string): IntegrationEvent => ({
 const wire = () => {
   const unitOfWork = createTypeOrmUnitOfWork(database.dataSource);
   const store = new TypeOrmOutboxStore(unitOfWork, { entity: outbox });
+
   return {
     unitOfWork,
     store,
@@ -53,13 +59,14 @@ const invoiceIds = async (): Promise<string[]> =>
 
 class PaymentProviderDown extends Error {}
 
-describe('createTypeOrmUnitOfWork', () => {
+describe('createTypeOrmUnitOfWork: one transaction for the write and the event', () => {
   it('commits the business write and the event together', async () => {
     const { unitOfWork, repository, publisher, store } = wire();
 
     const result = await unitOfWork.run(async () => {
       await repository.save(Invoice.draft('inv-1', 100));
       await publisher.publish([issued('inv-1')]);
+
       return 'done';
     });
 
@@ -85,6 +92,7 @@ describe('createTypeOrmUnitOfWork', () => {
 
   it('rolls back the business write when the event cannot be stored', async () => {
     const { unitOfWork, repository, publisher } = wire();
+
     await publisher.publish([issued('inv-1')]);
 
     const failing = unitOfWork.run(async () => {
@@ -95,7 +103,9 @@ describe('createTypeOrmUnitOfWork', () => {
     await expect(failing).rejects.toBeDefined();
     expect(await repository.findById('inv-1')).toBeUndefined();
   });
+});
 
+describe('the TypeOrmContext of a unit of work', () => {
   it('gives the transactional manager inside run and the root manager outside', async () => {
     const { unitOfWork } = wire();
 
@@ -114,14 +124,17 @@ describe('createTypeOrmUnitOfWork', () => {
 
   it('joins the outer transaction on a nested run: one rollback undoes both', async () => {
     const { unitOfWork, repository } = wire();
+
     database.queries.length = 0;
 
     const failing = unitOfWork.run(async () => {
       const outer = unitOfWork.manager();
+
       await unitOfWork.run(async () => {
         expect(unitOfWork.manager()).toBe(outer);
         await repository.save(Invoice.draft('inv-1', 100));
       });
+
       await repository.save(Invoice.draft('inv-2', 200));
       throw new PaymentProviderDown();
     });
@@ -180,6 +193,7 @@ describe('outbox end to end', () => {
       await repository.save(Invoice.draft('inv-1', 100));
       await publisher.publish([issued('inv-1')]);
     });
+
     await unitOfWork
       .run(async () => {
         await repository.save(Invoice.draft('inv-2', 200));
@@ -203,6 +217,7 @@ describe('TypeOrmProcessedEventStore in a unit of work', () => {
       expect(await store.markProcessed('billing', 'evt-1')).toBe(true);
       throw new PaymentProviderDown();
     });
+
     await expect(firstDelivery).rejects.toBeInstanceOf(PaymentProviderDown);
 
     expect(await unitOfWork.run(() => store.markProcessed('billing', 'evt-1'))).toBe(true);

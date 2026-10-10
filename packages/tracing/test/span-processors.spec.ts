@@ -1,7 +1,7 @@
 import { trace } from '@opentelemetry/api';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { ErrorMessageScrubber, UrlSecretSpanProcessor } from '../src/index.js';
-import { setupTracing, type TestTracing } from './support.js';
+import { setupTracing, type TestTracing } from './support/setup-tracing.js';
 
 let tracing: TestTracing;
 
@@ -13,8 +13,10 @@ afterEach(() => tracing.teardown());
 
 function exportedAttribute(key: string, value: string): unknown {
   const span = trace.getTracer('test').startSpan('GET');
+
   span.setAttribute(key, value);
   span.end();
+
   return tracing.span('GET').attributes[key];
 }
 
@@ -46,11 +48,13 @@ describe('UrlSecretSpanProcessor', () => {
 describe('ErrorMessageScrubber', () => {
   it('keeps the exception type and removes its message, stack trace and status message', () => {
     const span = trace.getTracer('test').startSpan('query');
+
     span.recordException(new TypeError('duplicate key jane@example.org'));
     span.setStatus({ code: 2, message: 'duplicate key jane@example.org' });
     span.end();
 
     const exported = tracing.span('query');
+
     expect(exported.events[0]?.attributes).toEqual({ 'exception.type': 'TypeError' });
     expect(exported.status).toEqual({ code: 2 });
     expect(JSON.stringify([exported.events, exported.status])).not.toContain('jane');

@@ -63,11 +63,13 @@ describe('Session', () => {
     const session = systemSession('invoice-reminder', clock.now());
 
     expect(isSystem(session.actor)).toBe(true);
+
     expect(session).toMatchObject({
       id: 'system:invoice-reminder',
       authenticationMethod: 'service',
       issuedAt: clock.now(),
     });
+
     expect(Object.isFrozen(session)).toBe(true);
   });
 });

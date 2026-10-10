@@ -186,6 +186,10 @@ chain is a promise: `await given(order).when(async (o) => ...).thenEventNames([.
 ```ts
 import { createTestBuses, InMemoryRepository, snapshots } from '@ddd-ts-kit/testing';
 
+// domain/repositories/order.repository.ts: the port is an abstract class
+export abstract class OrderRepository extends Repository<Order> {}
+
+// test/fakes/in-memory-order.repository.ts: the fake implements the port, it never extends it
 class InMemoryOrderRepository extends InMemoryRepository<Order> implements OrderRepository {
   constructor() {
     super(snapshots({ toSnapshot: (order) => order.toSnapshot(), fromSnapshot: Order.rehydrate }));
@@ -320,7 +324,7 @@ it('refuses to pay an order twice', () => {
 // 2. Application: the real handler through the bus, fakes for the ports.
 it('refuses to pay an order twice', async () => {
   const orders = new InMemoryOrderRepository();
-  const app = createTestApplication({ modules: [orderingModule], fakes: [fake(ORDER_REPOSITORY, orders)] });
+  const app = createTestApplication({ modules: [orderingModule], fakes: [fake(OrderRepository, orders)] });
   const order = anOrder().paid().build();
   await orders.save(order);
 
@@ -342,7 +346,8 @@ it('refuses to pay an order twice', async () => {
 });
 ```
 
-Level 2 uses `createTestApplication` of `@ddd-ts-kit/di`; with another container,
+Level 2 uses `createTestApplication` and `fake` of `@ddd-ts-kit/di`: the port, an abstract
+class, is what the fake is bound under. With another container,
 `createTestBuses()` above gives the same buses to register the handler on. At level 3 the
 customer of `anOrder()` is generated, the order line is whatever the default says, and the
 only values the test states are the ones the rule depends on: the order is paid, then paid

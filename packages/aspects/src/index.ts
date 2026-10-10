@@ -1,62 +1,47 @@
-export { compose, defineAspect, when } from './aspect.js';
-export type {
-  Advice,
-  AdviceFactory,
-  Aspect,
-  AspectInfo,
-  AspectKind,
-  Invocation,
-  JoinPoint,
-  Selector,
-} from './types.js';
-export { LIFECYCLE_HOOKS } from './weave.js';
-export { allOf, anyOf, forClasses, forContext, forKinds, forMethods, not } from './selectors.js';
-export {
-  AspectRuntimeError,
-  installAspectRuntime,
-  systemScheduler,
-  type AspectRuntime,
-  type Scheduler,
-} from './runtime.js';
-export {
-  BULKHEAD_FULL,
-  CIRCUIT_OPEN,
-  TIMEOUT,
-  AspectNotAllowedError,
-  BulkheadFullError,
-  CircuitOpenError,
-  TimeoutError,
-  describeError,
-  type ErrorDescription,
-} from './errors.js';
-export { logged, type LoggedOptions } from './logged.js';
-export { timed, type TimedOptions } from './timed.js';
-export {
-  delayBeforeRetry,
-  fullJitter,
-  isTransient,
-  noJitter,
-  retry,
-  type Backoff,
-  type Jitter,
-  type RetryOptions,
-} from './retry.js';
-export { timeout, type TimeoutOptions } from './timeout.js';
-export {
-  circuitBreaker,
-  circuitStateGauge,
-  type CircuitBreakerOptions,
-  type CircuitState,
-  type CircuitStateChange,
-} from './circuit-breaker.js';
-export { cached, type CachedOptions } from './cached.js';
-export { bulkhead, type BulkheadOptions } from './bulkhead.js';
-export type { StateScope } from './scope.js';
-export { aspects, type DecoratedBinding } from './di.js';
-export {
-  loggingMiddleware,
-  metricsMiddleware,
-  type LoggingMiddlewareOptions,
-  type MetricsMiddlewareOptions,
-} from './bus-middlewares.js';
-export { StdoutLogger, type StdoutLoggerOptions } from './stdout-logger.js';
+export { compose } from './aspect/compose.js';
+export { defineAspect } from './aspect/define-aspect.js';
+export { when } from './aspect/when.js';
+export type { Advice } from './aspect/advice.js';
+export type { AdviceFactory } from './aspect/advice-factory.js';
+export type { Aspect } from './aspect/aspect.js';
+export type { AspectInfo } from './aspect/aspect-info.js';
+export type { AspectKind } from './aspect/aspect-kind.js';
+export type { Invocation } from './aspect/invocation.js';
+export type { JoinPoint } from './aspect/join-point.js';
+export type { Selector } from './aspect/selector.js';
+export { LIFECYCLE_HOOKS } from './weaving/lifecycle-hooks.js';
+export { allOf, anyOf, forClasses, forContext, forKinds, forMethods, not } from './aspect/selectors.js';
+export { AspectRuntimeError } from './runtime/aspect-runtime-error.js';
+export { installAspectRuntime } from './runtime/installed-runtime.js';
+export { systemScheduler } from './runtime/system-scheduler.js';
+export type { AspectRuntime } from './runtime/aspect-runtime.js';
+export { Scheduler } from './runtime/scheduler.js';
+export { BULKHEAD_FULL, BulkheadFullError } from './errors/bulkhead-full-error.js';
+export { CIRCUIT_OPEN, CircuitOpenError } from './errors/circuit-open-error.js';
+export { TIMEOUT, TimeoutError } from './errors/timeout-error.js';
+export { AspectNotAllowedError } from './errors/aspect-not-allowed-error.js';
+export { describeError } from './errors/describe-error.js';
+export type { ErrorDescription } from './errors/error-description.js';
+export { logged, type LoggedOptions } from './observability/logged.js';
+export { timed, type TimedOptions } from './observability/timed.js';
+export { retry, type RetryOptions } from './retry/retry.js';
+export { delayBeforeRetry } from './retry/delay-before-retry.js';
+export { fullJitter } from './retry/full-jitter.js';
+export { isTransient } from './retry/is-transient.js';
+export { noJitter } from './retry/no-jitter.js';
+export type { Backoff } from './retry/backoff.js';
+export type { Jitter } from './retry/jitter.js';
+export { timeout, type TimeoutOptions } from './timeout/timeout.js';
+export { circuitBreaker } from './circuit-breaker/circuit-breaker.js';
+export { circuitStateGauge } from './circuit-breaker/circuit-state-gauge.js';
+export type { CircuitBreakerOptions } from './circuit-breaker/circuit-breaker-options.js';
+export type { CircuitState } from './circuit-breaker/circuit-state.js';
+export type { CircuitStateChange } from './circuit-breaker/circuit-state-change.js';
+export { cached, type CachedOptions } from './cached/cached.js';
+export { bulkhead } from './bulkhead/bulkhead.js';
+export type { BulkheadOptions } from './bulkhead/bulkhead-options.js';
+export type { StateScope } from './state/state-scope.js';
+export { aspects, type DecoratedBinding } from './di/aspects.js';
+export { loggingMiddleware, type LoggingMiddlewareOptions } from './observability/logging-middleware.js';
+export { metricsMiddleware, type MetricsMiddlewareOptions } from './observability/metrics-middleware.js';
+export { StdoutLogger, type StdoutLoggerOptions } from './observability/stdout-logger.js';

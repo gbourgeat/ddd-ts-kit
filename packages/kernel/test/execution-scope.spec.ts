@@ -23,6 +23,7 @@ import {
 
 const ada: Actor = { id: 'ada', type: 'user', tenantId: 'acme', roles: [], attributes: {} };
 const bob: Actor = { id: 'bob', type: 'user', roles: [], attributes: {} };
+
 const adaSession: Session = {
   id: 'session-1',
   actor: ada,
@@ -31,6 +32,7 @@ const adaSession: Session = {
   impersonatedBy: 'support-7',
   extensions: {},
 };
+
 const request = executionContext({ correlationId: 'corr-1', actor: ada, session: adaSession, origin: 'http' });
 const job = executionContext({ correlationId: 'corr-2', actor: bob, origin: 'schedule' });
 
@@ -38,9 +40,11 @@ describe('ExecutionContext', () => {
   it('takes the tenant of the actor unless one is named', () => {
     expect(request.tenantId).toBe('acme');
     expect(job.tenantId).toBeUndefined();
+
     expect(executionContext({ correlationId: 'c', actor: ada, tenantId: 'globex', origin: 'cli' }).tenantId).toBe(
       'globex',
     );
+
     expect(request.extensions).toEqual({});
     expect(Object.isFrozen(request)).toBe(true);
   });
@@ -71,6 +75,7 @@ describe('ExecutionContext', () => {
       tenantId: 'acme',
       impersonatedBy: 'support-7',
     });
+
     expect(logFieldsOf({ ...job, causationId: 'event-9' })).toEqual({
       correlationId: 'corr-2',
       causationId: 'event-9',
@@ -96,6 +101,7 @@ describe.each<[string, () => ExecutionScope]>([
 
     const seen = await scope.run(request, async () => {
       await Promise.resolve();
+
       return [scope.current(), scope.require()];
     });
 
@@ -108,6 +114,7 @@ describe.each<[string, () => ExecutionScope]>([
 
     const seen = scope.run(request, () => {
       const inner = scope.run(job, () => scope.require().correlationId);
+
       return [inner, scope.require().correlationId];
     });
 
@@ -122,6 +129,7 @@ describe.each<[string, () => ExecutionScope]>([
         throw new RangeError('boom');
       }),
     ).toThrow(RangeError);
+
     expect(scope.current()).toBeUndefined();
   });
 });
@@ -129,9 +137,11 @@ describe.each<[string, () => ExecutionScope]>([
 describe('AsyncLocalStorageExecutionScope', () => {
   it('keeps concurrent units of work apart', async () => {
     const scope = new AsyncLocalStorageExecutionScope();
+
     const correlationAfter = (context: ExecutionContext, turns: number): Promise<string> =>
       scope.run(context, async () => {
         for (let turn = 0; turn < turns; turn += 1) await Promise.resolve();
+
         return scope.require().correlationId;
       });
 
@@ -188,6 +198,7 @@ describe('FixedExecutionScope', () => {
     expect(scope.require().actor).toBe(bob);
 
     const seen = await scope.run(request, async () => actors.require());
+
     expect(seen).toBe(ada);
     expect(actors.require()).toBe(bob);
 

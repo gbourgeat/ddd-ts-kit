@@ -1,0 +1,75 @@
+import type { JsonSchema } from '@ddd-ts-kit/validation';
+import type { ErrorMapper } from '../error/error-mapper.js';
+import { statusTitle } from '../error/status-title.js';
+import type { ResponseSpec } from '../route/response-spec.js';
+import type { Route } from '../route/route.js';
+import { isRecord } from '../support/is-record.js';
+import { compare } from './compare.js';
+import type { Definitions } from './definitions.js';
+
+const VALIDATION_FAILED = 'VALIDATION_FAILED';
+const PROBLEM_REF = { $ref: '#/components/schemas/Problem' };
+
+/** The declared responses, plus one problem response per status of the declared error codes. */
+export function responses(route: Route, mapper: ErrorMapper, definitions: Definitions): JsonSchema {
+  const byStatus = declaredResponses(route, definitions);
+
+  for (const [status, codes] of errorCodesByStatus(route, mapper)) {
+    byStatus.set(status, problemResponse(status, codes, byStatus.get(status)));
+  }
+
+  const statuses = [...byStatus.keys()].sort((a, b) => a - b);
+
+  return Object.fromEntries(statuses.map((status) => [String(status), byStatus.get(status)]));
+}
+
+function declaredResponses(route: Route, definitions: Definitions): Map<number, JsonSchema> {
+  const byStatus = new Map<number, JsonSchema>();
+  // A copy has a string index, which is how the statuses are enumerated.
+  const declaredByKey: Readonly<Record<string, ResponseSpec>> = { ...route.responses };
+
+  for (const [key, declared] of Object.entries(declaredByKey)) {
+    byStatus.set(Number(key), {
+      description: declared.description,
+      ...(declared.body === undefined
+        ? {}
+        : { content: { 'application/json': { schema: definitions.embed(declared.body) } } }),
+    });
+  }
+
+  return byStatus;
+}
+
+function errorCodesByStatus(route: Route, mapper: ErrorMapper): Map<number, string[]> {
+  const validatesInput = Object.values(route.request ?? {}).some((schema) => schema !== undefined);
+  const codes = new Set([...(route.errors ?? []), ...(validatesInput ? [VALIDATION_FAILED] : [])]);
+  const codesByStatus = new Map<number, string[]>();
+
+  for (const code of codes) {
+    const status = mapper.statusOf(code);
+
+    codesByStatus.set(status, [...(codesByStatus.get(status) ?? []), code]);
+  }
+
+  return codesByStatus;
+}
+
+function problemResponse(
+  status: number,
+  codes: readonly string[],
+  declared: JsonSchema | undefined,
+): JsonSchema {
+  const sorted = [...codes].sort(compare);
+
+  return {
+    description:
+      declared === undefined
+        ? `${statusTitle(status)}. Error codes: ${sorted.join(', ')}.`
+        : declared['description'],
+    content: {
+      ...(isRecord(declared?.['content']) ? declared['content'] : {}),
+      'application/problem+json': { schema: PROBLEM_REF },
+    },
+    'x-error-codes': sorted,
+  };
+}

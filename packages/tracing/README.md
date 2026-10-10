@@ -28,30 +28,52 @@ export const tracing = initTracing({
 ```ts
 // main.ts
 import { tracing } from './platform/tracing.js'; // first import, see "Load order"
-import { createApplication } from '@ddd-ts-kit/di';
-import { InMemoryEventBus } from '@ddd-ts-kit/kernel';
-import { traceDependency, tracedPublisher, tracedSubscriber } from '@ddd-ts-kit/tracing';
+import { createApplication, kernelModule } from '@ddd-ts-kit/di';
+import { ExecutionScope, InMemoryEventBus } from '@ddd-ts-kit/kernel';
+import { configureTracing, traceBindings, tracedPublisher, tracedSubscriber } from '@ddd-ts-kit/tracing';
 
 const bus = new InMemoryEventBus();
 
 const app = createApplication({
   modules: [
-    platformModule({ publisher: tracedPublisher(bus), subscriber: tracedSubscriber(bus) }),
+    kernelModule({ eventPublisher: tracedPublisher(bus), eventSubscriber: tracedSubscriber(bus) }),
     orderingModule,
     billingModule,
   ],
-  // Every binding declared with .as(kind) is traced; the classes know nothing about it.
-  decorate: (instance, { context, kind }) =>
-    kind !== undefined && typeof instance === 'object' && instance !== null
-      ? traceDependency(instance, { kind, context })
-      : instance,
+  decorate: traceBindings(),
 });
+
+configureTracing({ executionScope: app.resolve(ExecutionScope) }); // see "Logs and support reference"
 
 await app.start();
 process.on('SIGTERM', () => void app.stop().then(() => tracing.shutdown()));
 ```
 
-Without a container: `traceDependency(new PgOrderRepository(db), { kind: 'repository', context: 'ordering' })`
+`traceBindings()` is a `decorate` hook: every binding declared with a kind is traced under the
+name of its context, and the classes know nothing about it.
+
+```ts
+// contexts/ordering/domain/repositories/order.repository.ts
+export abstract class OrderRepository extends Repository<Order> {}
+
+// contexts/ordering/infrastructure/persistence/knex-order.repository.ts
+export class KnexOrderRepository implements OrderRepository {
+  constructor(private readonly database: Database) {}
+
+  async findById(id: string): Promise<Order | undefined> { /* ... */ }
+
+  async save(order: Order): Promise<void> { /* ... */ }
+}
+
+// contexts/ordering/ordering.module.ts
+builder.bind(OrderRepository).toClass(KnexOrderRepository, [Database]).as('repository');
+// spans: repository.KnexOrderRepository.findById, repository.KnexOrderRepository.save
+```
+
+A binding declared without a kind, and a bound value that is not an object, are handed out
+untouched.
+
+Without a container: `traceDependency(new KnexOrderRepository(database), { kind: 'repository', context: 'ordering' })`
 and `traceUseCase(new PlaceOrderHandler(repository), { context: 'ordering' })`.
 
 ### Load order
@@ -74,10 +96,16 @@ modules also need the `@opentelemetry/instrumentation` loader hook.
 - Synchronous methods are not traced. A method declared `async` is traced from its first call; a
   method that merely returns a promise is traced from its second call. A traced call returns a
   promise, so do not wrap an object whose methods return a chainable query builder.
-- Getters, symbols, `#private` members, generators and lifecycle hooks (`onModuleInit`,
-  `onModuleDestroy`, `onApplicationBootstrap`, `onApplicationShutdown`, `dispose`) are left alone.
+- Getters, symbols, generators and lifecycle hooks (`onModuleInit`, `onModuleDestroy`,
+  `onApplicationBootstrap`, `onApplicationShutdown`, `dispose`) are left alone.
 - The instance is wrapped in place: same object, `instanceof` and `this` intact, wrapping twice
-  is a no-op. A frozen instance is fronted by a proxy instead.
+  is a no-op. Nothing enumerable is added, so the instance spreads and compares as before.
+- `private` is a compile-time keyword: at run time a private method is a method and a function
+  held in a private field is a method too. Both are traced when async, and a method that calls
+  another through `this` produces a child span. Name them as you would name a span.
+- A frozen or sealed instance is fronted by a proxy instead. Its methods and getters run with
+  the real instance as `this`, so a class extending a built-in (`Map`) still works; the calls
+  it makes on itself are then not traced, only the call made from outside is.
 - Under one local root (an HTTP request, a consumed message), at most 25 spans share a name and
   200 exist in total. Beyond that the call runs untraced and `app.dependency_spans.dropped`
   counts on the root span. Requires `LocalRootTracker` on the provider (`initTracing` installs it).
@@ -117,7 +145,7 @@ response.setHeader('x-correlation-id', correlationIdFromActiveSpan() ?? '');
 With an `ExecutionScope` of the kernel, a trace and the execution context name each other:
 
 ```ts
-configureTracing({ executionScope }); // the scope the boundaries run in: app.resolve(EXECUTION_SCOPE)
+configureTracing({ executionScope: app.resolve(ExecutionScope) }); // the scope the boundaries run in
 
 const logger = pino({ mixin: () => traceLogFields() });
 // inside a request: { correlationId, origin, actorId, tenantId?, causationId?, trace_id, span_id }
@@ -132,8 +160,8 @@ const logger = pino({ mixin: () => traceLogFields() });
 - `traceLogFields(scope)` takes the scope as an argument instead, for a logger built before
   tracing is configured. `correlationIdFromActiveSpan()` is unchanged: the trace id remains the
   support reference when the project has no execution scope.
-- `DependencyKind`, the role given to `traceDependency`, is now the type of the kernel,
-  re-exported here under the same name.
+- `DependencyKind`, the role given to `traceDependency`, is the type of the kernel, re-exported
+  here under the same name.
 
 `withSpan(name, fn, attributes?)` exists for platform code (a migration, a scheduled job). Domain
 and application code never call it.

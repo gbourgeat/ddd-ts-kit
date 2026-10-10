@@ -1,20 +1,6 @@
-import { DataSource, type EntitySchema, type Logger } from 'typeorm';
+import { DataSource, type EntitySchema } from 'typeorm';
 import { startPostgres } from './postgres.js';
-
-/** A TypeORM logger that keeps the SQL it was given, to assert what was really sent. */
-export class RecordingLogger implements Logger {
-  readonly queries: string[] = [];
-
-  logQuery(query: string): void {
-    this.queries.push(query);
-  }
-
-  logQueryError(): void {}
-  logQuerySlow(): void {}
-  logSchemaBuild(): void {}
-  logMigration(): void {}
-  log(): void {}
-}
+import { RecordingLogger } from './recording-logger.js';
 
 export interface TestDatabase {
   readonly dataSource: DataSource;
@@ -35,6 +21,7 @@ export async function createDatabase(
 ): Promise<TestDatabase> {
   const postgres = await startPostgres();
   const logger = new RecordingLogger();
+
   const dataSource = new DataSource({
     type: 'postgres',
     url: postgres.url,
@@ -42,17 +29,22 @@ export async function createDatabase(
     poolSize: postgres.poolSize,
     logger,
   });
+
   await dataSource.initialize();
   const tables = entities.map((entity) => dataSource.getMetadata(entity));
+
   for (const schema of new Set(tables.map((table) => table.schema))) {
     if (schema !== undefined) {
       await dataSource.query(`create schema if not exists "${schema}"`);
     }
   }
+
   await dataSource.synchronize();
+
   const targets = tables
     .map((table) => [table.schema, table.tableName].filter((part) => part !== undefined))
     .map((parts) => parts.map((part) => `"${part}"`).join('.'));
+
   return {
     dataSource,
     real: postgres.real,

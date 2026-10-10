@@ -44,12 +44,12 @@ src/
       value-objects/             *.vo.ts
       events/                    *.event.ts
       errors/                    *.error.ts
-      repositories/              *.repository.ts   (interfaces only)
+      repositories/              *.repository.ts   (ports: abstract classes)
       services/                  *.service.ts      (stateless domain logic over several aggregates)
     application/
       commands/<use-case>/       *.command.ts, *.handler.ts
       queries/<use-case>/        *.query.ts, *.handler.ts
-      ports/                     *.port.ts         (interfaces to the outside world), <context>.ports.ts (their tokens)
+      ports/                     *.port.ts         (ports to the outside world: abstract classes)
       authorization/             <context>.permissions.ts, *.policy.ts (who may do what, here)
       event-handlers/            *.event-handler.ts (reactions to this context's domain events)
       scheduling/                *.job.ts          (jobs run by time: schedule to command)
@@ -167,19 +167,27 @@ behaviour (unit of work, authorization, logging) is a bus middleware, not code r
 handlers. A command is a class extending `Command<Result>`, a query a class extending
 `Query<Result>`; handlers are registered in `<context>.module.ts`.
 
+**Ports.** A port is an abstract class with abstract members only: no constructor, no
+field, no body. The class is the contract and the injection token at once, so there is no
+constant and no token file. An adapter implements its port and never extends it; a fake or a
+plain object fits as well, the type being structural. A repository port extends the kernel
+`Repository<Aggregate>`. A value that is not a port (settings, a database handle) is carried
+the same way, by an abstract class with readonly members bound to a plain object.
+
 **Declarations.** A class says what it is where it is written, and that is its
 registration: a command or a query carries `@Requires(permission)` or `@Public()`, its
-handler `@CommandHandler(Message, [tokens])` or `@QueryHandler`, a reaction to an event
-`@DomainEventHandler` or `@IntegrationEventHandler(definition, { consumer })`, an adapter `@Repository`, `@Gateway` or
-`@Adapter` with the port token it implements, a policy `@Policy`. The token list names the
-constructor dependencies in order and the compiler checks it. Declarations are metadata of
-the kernel: they instantiate nothing and import no container. The composition root turns a
-context's declarations into its module, from the generated barrel or by discovery, so a
-context has no hand-maintained registration file. The domain declares nothing: aggregates,
-entities, value objects and domain events carry no decorator. Decorators work in both
-decorator modes of TypeScript, so a project bound to the legacy mode by class-validator or
-NestJS uses the same ones. The explicit style (`<context>.module.ts` listing the bindings)
-remains available and can be mixed in.
+handler `@CommandHandler(Message, [ports])` or `@QueryHandler`, a reaction to an event
+`@DomainEventHandler` or `@IntegrationEventHandler(definition, { consumer })`, a job
+`@Scheduled`, an adapter `@Repository`, `@Gateway` or `@Adapter` with the port it implements,
+a policy `@Policy`. The list names the ports the constructor receives, in order, and the
+compiler checks it: `@CommandHandler(PlaceOrder, [OrderRepository, Clock])`. Declarations are
+metadata of the kernel: they instantiate nothing and import no container. The composition
+root turns a context's declarations into its module, from the generated barrel or by
+discovery, so a context has no hand-maintained registration file. The domain declares
+nothing: aggregates, entities, value objects and domain events carry no decorator. Decorators
+work in both decorator modes of TypeScript, so a project bound to the legacy mode by
+class-validator or NestJS uses the same ones. The explicit style (`<context>.module.ts`
+listing the bindings) remains available and can be mixed in.
 
 **Scheduled jobs.** A job run by time is declared with
 `@Scheduled('<context>.<job>', { every } or { cron, timeZone }, [tokens])` in
@@ -348,6 +356,16 @@ predicate (`isOverdue`). No encoding, no technical suffix in the domain.
 **Functions.** Small, one thing, one level of abstraction. At most three parameters; beyond
 that the parameters are a concept that deserves a type. No flag argument, no output argument.
 Command or query, never both: a function changes state or answers, not both.
+
+**Files.** One exported class, interface or function per file, named after it; the only
+companions are the types of its own signature. A file never exceeds 350 lines: past that it
+holds more than one responsibility. Index files only re-export.
+
+**Layout.** A blank line before every `return` unless it is alone in its block, and between
+the logical blocks of a function: after a group of declarations, around `if`, `for`, `try`.
+Class members are `private`, not `#`.
+
+**Size.** A function does one thing and stays short: 30 lines by default, never more than 100.
 
 **Order (the stepdown rule).** A file reads like a newspaper: the high-level intention at the
 top, details below. In a class: static factories, then public methods, then private methods,

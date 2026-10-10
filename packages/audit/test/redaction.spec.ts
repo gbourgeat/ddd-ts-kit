@@ -14,15 +14,20 @@ import {
   type MaskingSubject,
 } from '../src/index.js';
 import { aSource, ada } from './support/fixtures.js';
-import { CancelAppointmentCommand, RescheduleAppointmentCommand, aRescheduling } from './support/scheduling.js';
+import { aRescheduling } from './support/scheduling/a-rescheduling.js';
+import { CancelAppointmentCommand } from './support/scheduling/application/commands/cancel-appointment.command.js';
+import { RescheduleAppointmentCommand } from './support/scheduling/application/commands/reschedule-appointment.command.js';
 
 async function changesRecordedWith(fields: readonly AuditedMessage[], masker?: AuditMasker) {
   const trail = new InMemoryAuditTrail();
+
   const commands = new InMemoryCommandBus()
     .use(auditMiddleware(trail, { ...aSource(), fields, ...(masker === undefined ? {} : { masker }) }))
     .register(RescheduleAppointmentCommand, { execute: async (command) => command.appointmentId })
     .register(CancelAppointmentCommand, { execute: async () => undefined });
+
   await commands.execute(new RescheduleAppointmentCommand(ada, aRescheduling()));
+
   return trail.entries[0];
 }
 
@@ -47,6 +52,7 @@ describe('redaction', () => {
     const entry = await changesRecordedWith(fields, hmacMasker('a-secret-of-the-platform', { keyId: 'k1' }));
 
     const expected = createHmac('sha256', 'a-secret-of-the-platform').update('"lin@example.org"', 'utf8').digest('hex');
+
     expect(entry?.changes).toEqual({ status: 'confirmed', patientEmail: { masked: `k1:${expected}` } });
     expect(JSON.stringify(entry)).not.toContain('lin@example.org');
   });
@@ -61,12 +67,15 @@ describe('redaction', () => {
 
   it('tells the masker whom the entry is about, so that a key can be chosen per tenant or per person', async () => {
     const subjects: MaskingSubject[] = [];
+
     const perTenant: AuditMasker = {
       mask: async (value, subject) => {
         subjects.push(subject);
+
         return `${subject.tenantId ?? 'none'}:${String(value).length}`;
       },
     };
+
     const fields = [
       auditedFields(RescheduleAppointmentCommand, [masked('patientEmail')], {
         resource: (command) => ({ type: 'appointment', id: command.appointmentId }),

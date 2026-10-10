@@ -19,7 +19,10 @@ import {
   type OutboxRelayFailure,
 } from '@ddd-ts-kit/events';
 import type { NatsFailure } from '../src/index.js';
-import { Broker, NATS_URL, eventually, failuresOf } from './support/broker.js';
+import { Broker } from './support/broker.js';
+import { NATS_URL } from './support/environment.js';
+import { failuresOf } from './support/hooks.js';
+import { eventually } from './support/waiting.js';
 
 const orderPlaced = defineIntegrationEvent({
   type: 'ordering.order.placed',
@@ -36,14 +39,16 @@ const orderPlaced = defineIntegrationEvent({
 /** The ordering context: a state change and its event, stored together. */
 class Ordering {
   readonly orders: string[] = [];
-  #events = 0;
+
+  private events = 0;
 
   constructor(private readonly publisher: IntegrationEventPublisher) {}
 
   async placeOrder(orderId: string): Promise<void> {
     this.orders.push(orderId);
-    this.#events += 1;
-    const meta = { id: `evt-${String(this.#events)}`, occurredAt: new Date() };
+    this.events += 1;
+    const meta = { id: `evt-${String(this.events)}`, occurredAt: new Date() };
+
     await this.publisher.publish([orderPlaced.create({ orderId }, meta)]);
   }
 }
@@ -54,14 +59,15 @@ class ConfirmationLost extends Error {
 
 /** The broker takes the first publication, but the relay never learns it: it must retry. */
 class LosingTheFirstConfirmation implements IntegrationEventPublisher {
-  #lost = false;
+  private lost = false;
 
   constructor(private readonly inner: IntegrationEventPublisher) {}
 
   async publish(events: readonly IntegrationEvent[]): Promise<void> {
     await this.inner.publish(events);
-    if (!this.#lost) {
-      this.#lost = true;
+
+    if (!this.lost) {
+      this.lost = true;
       throw new ConfirmationLost();
     }
   }
@@ -74,43 +80,50 @@ interface BillingState {
 
 /** The database of billing in miniature: a failed unit of work leaves nothing behind. */
 class BillingDatabase implements UnitOfWork, ProcessedEventStore {
-  #committed: BillingState = { invoicedOrders: [], processed: new Set() };
-  #working: BillingState | undefined;
+  private committed: BillingState = { invoicedOrders: [], processed: new Set() };
+
+  private working: BillingState | undefined;
 
   async run<T>(work: () => Promise<T>): Promise<T> {
-    this.#working = {
-      invoicedOrders: [...this.#committed.invoicedOrders],
-      processed: new Set(this.#committed.processed),
+    this.working = {
+      invoicedOrders: [...this.committed.invoicedOrders],
+      processed: new Set(this.committed.processed),
     };
+
     try {
       const result = await work();
-      this.#committed = this.#working;
+
+      this.committed = this.working;
+
       return result;
     } finally {
-      this.#working = undefined;
+      this.working = undefined;
     }
   }
 
   async markProcessed(consumer: string, eventId: string): Promise<boolean> {
-    const { processed } = this.#state();
+    const { processed } = this.state();
     const key = JSON.stringify([consumer, eventId]);
+
     if (processed.has(key)) {
       return false;
     }
+
     processed.add(key);
+
     return true;
   }
 
   invoice(orderId: string): void {
-    this.#state().invoicedOrders.push(orderId);
+    this.state().invoicedOrders.push(orderId);
   }
 
   invoicedOrders(): string[] {
-    return [...this.#committed.invoicedOrders];
+    return [...this.committed.invoicedOrders];
   }
 
-  #state(): BillingState {
-    return this.#working ?? this.#committed;
+  private state(): BillingState {
+    return this.working ?? this.committed;
   }
 }
 
@@ -136,6 +149,7 @@ describe.skipIf(NATS_URL === undefined)('outbox, relay, NATS JetStream and an id
     const outbox = new InMemoryOutboxStore({ signal });
     const ordering = new Ordering(new OutboxPublisher(outbox));
     const producerBus = broker.bus();
+
     const relay = new OutboxRelay({
       store: outbox,
       publisher: new LosingTheFirstConfirmation(producerBus),
@@ -149,17 +163,21 @@ describe.skipIf(NATS_URL === undefined)('outbox, relay, NATS JetStream and an id
     const database = new BillingDatabase();
     const deliveries: string[] = [];
     let providerOutages = 1;
+
     const subscriptions = subscribeAll(billingBus, [
       consume(orderPlaced, { consumer: 'billing', processed: database, unitOfWork: database }, async (event) => {
         deliveries.push(event.id);
         database.invoice(event.payload.orderId);
+
         if (providerOutages > 0) {
           providerOutages -= 1;
           throw new PaymentProviderDown();
         }
       }),
     ]);
+
     const everyDelivery: string[] = [];
+
     billingBus.subscribe(orderPlaced.type, async (event) => void everyDelivery.push(event.id));
     await billingBus.assertTopology();
 
@@ -175,12 +193,15 @@ describe.skipIf(NATS_URL === undefined)('outbox, relay, NATS JetStream and an id
     expect(ordering.orders).toEqual(['order-1', 'order-2', 'order-3']);
     expect(database.invoicedOrders().sort()).toEqual(['order-1', 'order-2', 'order-3']);
     expect(await outbox.stats()).toEqual({ pending: 0, failed: 0, dead: 0 });
+
     expect(relayFailures).toEqual([
       expect.objectContaining({ kind: 'publish', eventId: 'evt-1', code: 'CONFIRMATION_LOST', dead: false }),
     ]);
+
     expect(busFailures).toEqual([
       expect.objectContaining({ kind: 'handler', code: 'PAYMENT_PROVIDER_DOWN', attempt: 1, dead: false }),
     ]);
+
     // Three events, one published twice by the relay and dropped by the stream as a
     // duplicate, one delivered again after the failure.
     expect((await broker.published()).map((message) => message.headers['Nats-Msg-Id'])).toEqual([
@@ -188,6 +209,7 @@ describe.skipIf(NATS_URL === undefined)('outbox, relay, NATS JetStream and an id
       'evt-2',
       'evt-3',
     ]);
+
     expect(everyDelivery.length).toBe(4);
     expect(deliveries.length).toBe(4);
   });

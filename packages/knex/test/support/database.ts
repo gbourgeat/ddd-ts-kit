@@ -17,16 +17,21 @@ export async function createDatabase(
   tables: readonly string[],
 ): Promise<TestDatabase> {
   const postgres = await startPostgres();
+
   const db = knex({
     client: 'pg',
     connection: postgres.url,
     pool: { min: 0, max: postgres.poolSize },
   });
+
   const queries: string[] = [];
+
   db.on('query', (query: { sql: string }) => {
     queries.push(query.sql);
   });
+
   await migrate(db);
+
   return {
     knex: db,
     real: postgres.real,

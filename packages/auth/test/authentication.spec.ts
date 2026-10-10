@@ -143,6 +143,7 @@ describe('resolveSession', () => {
 describe('a route of @ddd-ts-kit/http', () => {
   const actorContext = new AsyncLocalStorageActorContext();
   const seenByInfrastructure: (string | undefined)[] = [];
+
   const queries = new InMemoryQueryBus()
     .use(
       authorizationMiddleware({
@@ -153,9 +154,11 @@ describe('a route of @ddd-ts-kit/http', () => {
     .register(ListInvoices, {
       execute: async () => {
         seenByInfrastructure.push(actorContext.current()?.id);
+
         return ['inv-1'];
       },
     });
+
   const listInvoices = defineRoute(
     {
       method: 'GET',
@@ -168,13 +171,17 @@ describe('a route of @ddd-ts-kit/http', () => {
     },
     inActorContext(actorContext, async ({ context }) => {
       await queries.execute(new ListInvoices(actorOf(context.principal)));
+
       return { status: 200 as const };
     }),
   );
+
   const resolvePrincipal = principalResolver(new FakeAuthenticator({ 'token-of-ada': ada, 'token-of-bob': bob }));
+
   const call = (authorization?: string) => {
     const headers = authorization === undefined ? {} : { authorization };
     const request: RawRequest = { params: {}, query: {}, headers, body: undefined, raw: { headers } };
+
     return executeRoute(listInvoices, request, { resolvePrincipal });
   };
 
@@ -198,6 +205,7 @@ describe('a route of @ddd-ts-kit/http given an execution scope', () => {
   const executionScope = new AsyncLocalStorageExecutionScope();
   const actorContext = new ScopedActorContext(executionScope, new SequentialIdGenerator('corr'));
   const seen: unknown[] = [];
+
   const whoAmI = defineRoute(
     {
       method: 'GET',
@@ -209,6 +217,7 @@ describe('a route of @ddd-ts-kit/http given an execution scope', () => {
     },
     ({ context }) => {
       const ambient = executionScope.require();
+
       seen.push({
         session: sessionOf(context).id,
         actor: actorContext.require().id,
@@ -216,9 +225,11 @@ describe('a route of @ddd-ts-kit/http given an execution scope', () => {
         tenantId: ambient.tenantId,
         sameContext: ambient === context.execution,
       });
+
       return { status: 204 as const };
     },
   );
+
   const resolvePrincipal = principalResolver(new FakeAuthenticator({ 'token-of-support': supportAsAda }));
 
   it('runs the handler in the session of the caller, with no wrapper around the handler', async () => {
@@ -230,6 +241,7 @@ describe('a route of @ddd-ts-kit/http given an execution scope', () => {
     expect(seen).toEqual([
       { session: 'session-9', actor: 'ada', impersonatedBy: 'support-7', tenantId: ada.tenantId, sameContext: true },
     ]);
+
     expect(executionScope.current()).toBeUndefined();
   });
 

@@ -1,11 +1,7 @@
-export interface Invoice {
-  readonly id: string;
-  readonly customerId: string;
-  readonly issuedBy: string;
-  readonly issuedAt: Date;
-}
+import type { Invoice } from '../invoice.js';
 
-export interface InvoiceRepository {
-  save(invoice: Invoice): Promise<void>;
-  findById(id: string): Promise<Invoice | undefined>;
+export abstract class InvoiceRepository {
+  abstract save(invoice: Invoice): Promise<void>;
+
+  abstract findById(id: string): Promise<Invoice | undefined>;
 }

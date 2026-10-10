@@ -12,6 +12,7 @@ const quote = (name: string): string => `"${name}"`;
 export function createTableSql(table: PgTable): string[] {
   const config = getTableConfig(table);
   const name = [config.schema, config.name].filter((part) => part !== undefined).map(quote).join('.');
+
   const columns = config.columns.map((column) =>
     [
       `${quote(column.name)} ${column.getSQLType()}`,
@@ -21,11 +22,15 @@ export function createTableSql(table: PgTable): string[] {
       column.isUnique ? ' unique' : '',
     ].join(''),
   );
+
   const primaryKeys = config.primaryKeys.map((key) => `primary key (${key.columns.map((column) => quote(column.name)).join(', ')})`);
+
   const indexes = config.indexes.map(({ config: index }) => {
     const on = index.columns.map((column) => ('name' in column && column.name !== undefined ? quote(column.name) : ''));
+
     return `create index ${quote(index.name ?? '')} on ${name} (${on.join(', ')})`;
   });
+
   return [
     ...(config.schema === undefined ? [] : [`create schema if not exists ${quote(config.schema)}`]),
     `create table ${name} (${[...columns, ...primaryKeys].join(', ')})`,
@@ -35,6 +40,8 @@ export function createTableSql(table: PgTable): string[] {
 
 function defaultOf(value: unknown): string {
   if (value === undefined) return '';
+
   if (is(value, SQL)) return ` default ${dialect.sqlToQuery(value.inlineParams()).sql}`;
+
   return ` default '${typeof value === 'string' ? value : JSON.stringify(value)}'`;
 }

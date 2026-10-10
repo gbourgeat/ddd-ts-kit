@@ -10,10 +10,12 @@ auditTrailContract(runner, {
   name: 'InMemoryAuditTrail',
   createTrail: () => {
     trail = new InMemoryAuditTrail();
+
     return trail;
   },
   tamper: (entry, action) => {
     const index = trail.entries.findIndex((stored) => stored.id === entry.id);
+
     trail.entries[index] = { ...entry, action };
   },
 });

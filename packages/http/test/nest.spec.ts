@@ -18,7 +18,9 @@ describeAdapter(
       logger: false,
       abortOnError: false,
     });
+
     await app.listen(0, '127.0.0.1');
+
     return { url: await app.getUrl(), close: () => app.close() };
   },
   (raw) => (raw as Request).headers.authorization,
@@ -31,7 +33,9 @@ describeAdapter(
       logger: false,
       abortOnError: false,
     });
+
     await app.listen(0, '127.0.0.1');
+
     return { url: await app.getUrl(), close: () => app.close() };
   },
   (raw) => (raw as FastifyRequest).headers.authorization,
@@ -39,11 +43,13 @@ describeAdapter(
 
 describe('a Nest routes module built from injected dependencies', () => {
   const GREETER = Symbol('greeter');
+
   interface Greeter {
     greet(name: string): string;
   }
 
   class GreeterModule {}
+
   const greeterModule: DynamicModule = {
     module: GreeterModule,
     providers: [{ provide: GREETER, useValue: { greet: (name: string) => `Hello ${name}` } }],
@@ -71,10 +77,14 @@ describe('a Nest routes module built from injected dependencies', () => {
       },
       { imports: [greeterModule] },
     );
+
     const app = await NestFactory.create(routes, { logger: false, abortOnError: false });
+
     await app.listen(0, '127.0.0.1');
+
     try {
       const response = await fetch(`${await app.getUrl()}/greetings/Ada`);
+
       expect(response.status).toBe(200);
       expect(await response.json()).toEqual({ text: 'Hello Ada' });
       // A path nobody declared still reaches Nest's own not-found handling.

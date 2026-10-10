@@ -19,14 +19,18 @@ const requested: string[] = [];
 /** Stands for the realm: serves its public keys where Keycloak does, and nothing else. */
 beforeAll(async () => {
   const pair = await generateKeyPair('RS256');
+
   signing = pair.privateKey;
   ({ privateKey: foreign } = await generateKeyPair('RS256'));
   const keys = JSON.stringify({ keys: [{ ...(await exportJWK(pair.publicKey)), kid: KEY_ID, alg: 'RS256', use: 'sig' }] });
+
   keycloak = createServer((request, response) => {
     requested.push(request.url ?? '');
     const found = request.url === CERTS_PATH;
+
     response.writeHead(found ? 200 : 404, { 'content-type': 'application/json' }).end(found ? keys : '{}');
   });
+
   await new Promise<void>((resolve) => keycloak.listen(0, '127.0.0.1', resolve));
   baseUrl = `http://127.0.0.1:${(keycloak.address() as AddressInfo).port}`;
 });
@@ -173,9 +177,12 @@ describe('keycloakAuthenticator', () => {
       username: 'ada',
       email: 'ada@example.test',
     });
+
     expect((await renamed.authenticate(await signed({ ...withoutGroups, memberships: ['/finance'] }))).attributes['groups']).toEqual(['/finance']);
   });
+});
 
+describe('keycloakAuthenticator at the boundary', () => {
   it('refuses a token Keycloak issued for the account console only, the default without an audience mapper', async () => {
     const refusal = await authenticator()
       .authenticate(await signed({ ...userClaims(), aud: 'account' }))
@@ -189,6 +196,7 @@ describe('keycloakAuthenticator', () => {
     const otherRealm = { ...userClaims(), iss: `${baseUrl}/realms/other` };
 
     await expect(authenticator().authenticate(await signed(otherRealm))).rejects.toMatchObject({ reason: 'CLAIM_MISMATCH' });
+
     await expect(authenticator().authenticate(await signed(userClaims(), foreign))).rejects.toMatchObject({
       reason: 'BAD_SIGNATURE',
     });

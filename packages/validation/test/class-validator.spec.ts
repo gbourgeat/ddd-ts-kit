@@ -47,7 +47,9 @@ describe('the class-validator adapter', () => {
       customerId: '0b8f6e0e-2f4b-4c58-9c0e-6f1d2a3b4c5d',
       items: [{ sku: 'A-1', quantity: 2 }],
     });
+
     expect(result.ok).toBe(true);
+
     if (result.ok) {
       expect(result.value).toBeInstanceOf(PlaceOrderDto);
       expect(result.value.items[0]).toBeInstanceOf(OrderItemDto);
@@ -57,7 +59,9 @@ describe('the class-validator adapter', () => {
 
   it('flattens nested errors into dotted paths, one issue per constraint', () => {
     const result = order.parse({ customerId: 'nope', items: [{ sku: '', quantity: 0 }] });
+
     expect(result.ok).toBe(false);
+
     if (!result.ok) {
       expect(result.error).toEqual(
         expect.arrayContaining([
@@ -75,6 +79,7 @@ describe('the class-validator adapter', () => {
       items: [{ sku: 'A-1', quantity: 1 }],
       admin: true,
     });
+
     expect(result).toMatchObject({
       ok: false,
       error: [{ path: 'admin', code: 'whitelistValidation' }],
@@ -84,7 +89,9 @@ describe('the class-validator adapter', () => {
   it('lets the caller relax the whitelist', () => {
     const relaxed = classSchema(OrderItemDto, { validator: { forbidNonWhitelisted: false } });
     const result = relaxed.parse({ sku: 'A-1', quantity: 1, extra: true });
+
     expect(result.ok).toBe(true);
+
     if (result.ok) {
       expect(result.value).not.toHaveProperty('extra');
     }
@@ -97,6 +104,7 @@ describe('the class-validator adapter', () => {
 
   it('produces a self-contained JSON Schema carrying the nested class', () => {
     const schema = order.toJsonSchema();
+
     expect(schema).toMatchObject({
       $schema: 'https://json-schema.org/draft/2020-12/schema',
       type: 'object',
@@ -113,6 +121,7 @@ describe('the class-validator adapter', () => {
         },
       },
     });
+
     expect(schema['required']).toEqual(['customerId', 'items']);
     expect(Object.keys(schema['$defs'] ?? {})).toEqual(['OrderItemDto']);
   });

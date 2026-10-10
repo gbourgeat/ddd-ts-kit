@@ -1,0 +1,35 @@
+import type { Actor, ExecutionContext, Session } from '@ddd-ts-kit/kernel';
+import type { Override } from '../application/override.js';
+import type { AuthorizationMode } from '../authorization/authorization-mode.js';
+import type { JobsOptions } from '../jobs/jobs-options.js';
+import type { ContextModule } from '../module/context-module.js';
+
+export interface TestApplicationOptions {
+  /** The context modules under test. `kernelModule()` may be listed or left out. */
+  readonly modules: readonly ContextModule[];
+  /** Each must stand for a port that a module binds or that a class depends on. */
+  readonly fakes?: readonly Override[];
+  /** The instant the clock is frozen at. Default 2026-01-01T00:00:00.000Z. */
+  readonly now?: Date;
+  /** Prefix of the generated identifiers. Default `id`, giving `id-1`, `id-2`... */
+  readonly idPrefix?: string;
+  /**
+   * Who infrastructure sees as the current actor. Default: the user `test-user`, without role.
+   * Use cases never read it: a test passes the actor in the command or query.
+   */
+  readonly actor?: Actor;
+  /**
+   * The session infrastructure sees in the execution context. Its actor is the current actor:
+   * give `session` or `actor`, the session wins.
+   */
+  readonly session?: Session;
+  /**
+   * The whole execution context infrastructure sees, for a spec about a tenant, a correlation,
+   * a deadline or an origin. Its actor and session win over `actor` and `session`.
+   */
+  readonly executionContext?: ExecutionContext;
+  /** See `ApplicationOptions.authorization`. */
+  readonly authorization?: AuthorizationMode;
+  /** See `JobsOptions.settings`: what configuration changes of a declared job, by job name. */
+  readonly jobs?: NonNullable<JobsOptions['settings']>;
+}

@@ -10,19 +10,24 @@ import {
 } from '@ddd-ts-kit/kernel';
 import { createPrismaUnitOfWork } from '../../src/index.js';
 import { createDatabase, type TestDatabase } from '../support/database.js';
-import { Invoice, PrismaInvoiceQueries, PrismaInvoiceRepository } from '../support/invoices.js';
+import { Invoice } from '../support/billing-core/domain/invoice.js';
+import { PrismaInvoiceQueries } from '../support/billing-core/infrastructure/persistence/prisma-invoice.queries.js';
+import { PrismaInvoiceRepository } from '../support/billing-core/infrastructure/persistence/prisma-invoice.repository.js';
 import { ada, bob, eve, nobody, scopeOf } from '../support/scopes.js';
 
 const MORNING = new Date('2026-03-01T10:00:00.000Z');
 
 let database: TestDatabase;
 let clock: FixedClock;
+
 beforeAll(async () => {
   database = await createDatabase();
 });
+
 afterAll(async () => {
   await database.close();
 });
+
 beforeEach(async () => {
   await database.truncate();
   clock = new FixedClock(MORNING);
@@ -30,6 +35,7 @@ beforeEach(async () => {
 
 const repositoryOf = (scope: ExecutionScope) =>
   new PrismaInvoiceRepository(createPrismaUnitOfWork(database.prisma), scope, clock);
+
 const queriesOf = (scope: ExecutionScope) => new PrismaInvoiceQueries(createPrismaUnitOfWork(database.prisma), scope);
 
 /** The stored row, read without tenant scoping: what an operator would see in the table. */
@@ -67,6 +73,7 @@ describe('audit columns', () => {
     await draft(scopeOf(ada), 'inv-1', 100);
     clock.advance(3_600_000);
     const invoice = await repositoryOf(scopeOf(bob)).findById('inv-1');
+
     invoice?.addCharge(50);
 
     if (invoice !== undefined) await repositoryOf(scopeOf(bob)).save(invoice);
@@ -100,6 +107,7 @@ describe('tenant scoping', () => {
   it('refuses to update a row of another tenant, even with its id and version in hand', async () => {
     await draft(scopeOf(ada), 'inv-1', 100);
     const invoice = await repositoryOf(scopeOf(ada)).findById('inv-1');
+
     invoice?.addCharge(900);
 
     const stolen = invoice === undefined ? undefined : repositoryOf(scopeOf(eve)).save(invoice);
@@ -126,10 +134,12 @@ describe('a list query', () => {
     'inv-f': 100,
     'inv-g': 300,
   };
+
   const ASCENDING = ['inv-a', 'inv-b', 'inv-c', 'inv-d', 'inv-e', 'inv-f', 'inv-g'];
 
   beforeEach(async () => {
     for (const [id, amount] of Object.entries(AMOUNTS).reverse()) await draft(scopeOf(ada), id, amount);
+
     await draft(scopeOf(eve), 'inv-of-globex', 100);
   });
 
@@ -150,6 +160,7 @@ describe('a list query', () => {
       ],
       total: 7,
     });
+
     expect([...idsOf(first), ...idsOf(second), ...idsOf(third)]).toEqual(ASCENDING);
   });
 
@@ -170,6 +181,7 @@ describe('a list query', () => {
       const page = await queries.list(
         cursorPage({ limit: 2, sort: [{ field: 'amount', direction }], ...(cursor === undefined ? {} : { cursor }) }),
       );
+
       seen.push(...idsOf(page));
       cursor = page.nextCursor;
     } while (cursor !== undefined);

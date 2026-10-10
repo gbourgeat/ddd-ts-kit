@@ -60,36 +60,66 @@ TypeORM does not create schemas: create them in the migration (`CREATE SCHEMA IF
 
 ## Composition root
 
+`createTypeOrmUnitOfWork(dataSource)` gives one object that is two ports: the kernel
+`UnitOfWork`, and `TypeOrmContext`, the handle repositories and stores run their queries on.
+Bind it to both:
+
 ```ts
-// main.ts
+// platform/database/persistence.module.ts
 import { DataSource } from 'typeorm';
-import { InMemoryCommandBus, SystemClock, unitOfWorkMiddleware } from '@ddd-ts-kit/kernel';
-import { OutboxPublisher, OutboxRelay } from '@ddd-ts-kit/events';
+import { defineContextModule } from '@ddd-ts-kit/di';
+import { IntegrationEventPublisher, ProcessedEventStore, UnitOfWork } from '@ddd-ts-kit/kernel';
+import { OutboxPublisher, OutboxStore } from '@ddd-ts-kit/events';
 import {
   createTypeOrmUnitOfWork,
+  TypeOrmContext,
   TypeOrmOutboxStore,
   TypeOrmProcessedEventStore,
 } from '@ddd-ts-kit/typeorm';
 
-const dataSource = new DataSource({
+export const dataSource = new DataSource({
   type: 'postgres',
   url: process.env.DATABASE_URL,
   entities: [outbox, processedEvents, invoices],
 });
-await dataSource.initialize();
 const unitOfWork = createTypeOrmUnitOfWork(dataSource);
 
-// Every command runs in one transaction; handlers do not know it.
-const commandBus = new InMemoryCommandBus().use(unitOfWorkMiddleware(unitOfWork));
+export const persistenceModule = defineContextModule({
+  name: 'persistence',
+  register(builder) {
+    builder.rebind(UnitOfWork).toValue(unitOfWork);
+    builder.bind(TypeOrmContext).toValue(unitOfWork);
+    builder
+      .bind(OutboxStore)
+      .toFactory((resolve) => new TypeOrmOutboxStore(resolve(TypeOrmContext), { entity: outbox }));
+    builder
+      .rebind(ProcessedEventStore)
+      .toFactory((resolve) => new TypeOrmProcessedEventStore(resolve(TypeOrmContext), { entity: processedEvents }));
+    builder.rebind(IntegrationEventPublisher).toClass(OutboxPublisher, [OutboxStore]);
+  },
+  onStart: async () => {
+    await dataSource.initialize();
+  },
+  onStop: () => dataSource.destroy(),
+});
+```
 
-const outboxStore = new TypeOrmOutboxStore(unitOfWork, { entity: outbox });
-const publisher = new OutboxPublisher(outboxStore); // what handlers publish to
-const processed = new TypeOrmProcessedEventStore(unitOfWork, { entity: processedEvents });
-const invoiceRepository = new TypeOrmInvoiceRepository(unitOfWork);
+```ts
+// main.ts
+const app = createApplication({ modules: [kernelModule(), persistenceModule, billingModule] });
 
-const relay = new OutboxRelay({ store: outboxStore, publisher: broker, clock: new SystemClock() });
+const relay = new OutboxRelay({ store: app.resolve(OutboxStore), publisher: broker, clock: app.resolve(Clock) });
 relay.start({ intervalMs: 500 });
 ```
+
+List the module after `kernelModule()`: `rebind` replaces its in-memory defaults. The command
+bus of the kernel module runs every command in the bound `UnitOfWork`; handlers do not know it.
+
+Pass to a store the very entity the data source registers. Without `entity`, a store uses
+`outboxEntity()` or `processedEventEntity()`, which TypeORM matches by name with the default
+entity in the default schema; the class is then bound directly:
+`builder.bind(OutboxStore).toClass(TypeOrmOutboxStore, [TypeOrmContext])`,
+`builder.rebind(ProcessedEventStore).toClass(TypeOrmProcessedEventStore, [TypeOrmContext])`.
 
 `unitOfWork.run(work)` opens `dataSource.transaction` and keeps the transactional
 `EntityManager` in an `AsyncLocalStorage`; a nested `run` joins the outer transaction (no
@@ -97,46 +127,65 @@ savepoint). Because `append` uses the current manager, an event published by a h
 then fails is rolled back with the business write: that is the whole point of the outbox.
 `createTypeOrmUnitOfWork(dataSource, 'REPEATABLE READ')` sets the isolation level.
 
-Pass to a store the very entity the data source registers. Without `entity`, a store uses
-`outboxEntity()` or `processedEventEntity()`, which TypeORM matches by name with the default
-entity in the default schema.
+`TypeOrmContext` is an abstract class, so it is its own injection token. A project with two
+data sources gives each a class of its own (`export abstract class Ledger extends TypeOrmContext {}`
+in `platform/database/`) and binds each to its unit of work.
 
 ## Repository
 
-A repository receives the context, never a transaction. `manager()` is the transactional
-manager of the unit of work when there is one and `dataSource.manager` otherwise.
+The port lives in the domain, the adapter in infrastructure. A repository receives the context,
+never a transaction: `manager()` is the transactional manager of the unit of work when there
+is one and `dataSource.manager` otherwise.
+
+```ts
+// contexts/billing-core/domain/repositories/invoice.repository.ts
+import { Repository } from '@ddd-ts-kit/kernel';
+
+export abstract class InvoiceRepository extends Repository<Invoice> {}
+```
 
 ```ts
 // contexts/billing-core/infrastructure/persistence/typeorm-invoice.repository.ts
-import type { Repository } from '@ddd-ts-kit/kernel';
-import { insertIgnoringConflict, optimisticUpdate, type TypeOrmContext } from '@ddd-ts-kit/typeorm';
+import { Repository } from '@ddd-ts-kit/kernel/declarations';
+import { insertIgnoringConflict, optimisticUpdate, TypeOrmContext } from '@ddd-ts-kit/typeorm';
 
-export class TypeOrmInvoiceRepository implements Repository<Invoice> {
+@Repository(InvoiceRepository, [TypeOrmContext])
+export class TypeOrmInvoiceRepository implements InvoiceRepository {
   constructor(private readonly context: TypeOrmContext) {}
 
   async findById(id: string): Promise<Invoice | undefined> {
     const row = await this.context.manager().findOneBy(invoices, { id });
+
     if (row === null) {
       return undefined;
     }
+
     const invoice = Invoice.rehydrate(row);
     invoice.version = row.version;
+
     return invoice;
   }
 
   async save(invoice: Invoice): Promise<void> {
     const manager = this.context.manager();
+
     await optimisticUpdate(invoice, async ({ expected, next }) => {
       const row = { ...invoice.state, version: next };
+
       if (expected === 0) {
         return (await insertIgnoringConflict(manager, invoices, row)) ? 1 : 0;
       }
+
       const updated = await manager.update(invoices, { id: invoice.id, version: expected }, row);
+
       return updated.affected ?? 0;
     });
   }
 }
 ```
+
+Without the decorator, the same binding is one line of the module of the context:
+`builder.bind(InvoiceRepository).toClass(TypeOrmInvoiceRepository, [TypeOrmContext])`.
 
 `optimisticUpdate` gives the version to expect and the version to write, raises a
 `ConcurrencyError` (a `DomainError` with code `CONCURRENCY_CONFLICT`) when the guarded
@@ -179,35 +228,41 @@ export const invoices = new EntitySchema<InvoiceRow>({
 ```
 
 ```ts
-import { stampCreation, stampUpdate, tenantScopeOf } from '@ddd-ts-kit/kernel';
+import { Clock, ExecutionScope, stampCreation, stampUpdate, tenantScopeOf } from '@ddd-ts-kit/kernel';
+import { Repository } from '@ddd-ts-kit/kernel/declarations';
 
-export class TypeOrmInvoiceRepository implements Repository<Invoice> {
+@Repository(InvoiceRepository, [TypeOrmContext, ExecutionScope, Clock])
+export class TypeOrmInvoiceRepository implements InvoiceRepository {
   constructor(
     private readonly context: TypeOrmContext,
-    private readonly scope: ExecutionScope, // EXECUTION_SCOPE
+    private readonly scope: ExecutionScope,
     private readonly clock: Clock,
   ) {}
 
   async findById(id: string): Promise<Invoice | undefined> {
     const row = await this.context.manager().findOneBy(invoices, { id, ...tenantScopeOf(this.scope) });
+
     return row === null ? undefined : InvoiceMapper.toDomain(row);
   }
 
   async save(invoice: Invoice): Promise<void> {
     await optimisticUpdate(invoice, async ({ expected, next }) => {
       const state = { ...InvoiceMapper.toRow(invoice), version: next };
-      return expected === 0 ? this.#insert(state) : this.#update(state, expected);
+
+      return expected === 0 ? this.insert(state) : this.update(state, expected);
     });
   }
 
-  async #insert(state: VersionedInvoice): Promise<number> {
+  private async insert(state: VersionedInvoice): Promise<number> {
     const row = { ...state, ...tenantScopeOf(this.scope), ...stampCreation(this.scope, this.clock) };
+
     return (await insertIgnoringConflict(this.context.manager(), invoices, row)) ? 1 : 0;
   }
 
-  async #update(state: VersionedInvoice, expected: number): Promise<number> {
+  private async update(state: VersionedInvoice, expected: number): Promise<number> {
     const guarded = { id: state.id, version: expected, ...tenantScopeOf(this.scope) };
     const row = { ...state, ...stampUpdate(this.scope, this.clock) };
+
     return (await this.context.manager().update(invoices, guarded, row)).affected ?? 0;
   }
 }
@@ -219,25 +274,41 @@ database server, not of the `Clock`, and know nothing of who acts.
 A list query takes the kernel `PageRequest` and answers a `Page`, in both variants:
 
 ```ts
-import { LessThan, MoreThan, type FindOptionsWhere } from 'typeorm';
-import { decodeCursor, encodeCursor, pageOf } from '@ddd-ts-kit/kernel';
+// contexts/billing-core/application/ports/invoice-queries.port.ts
+export abstract class InvoiceQueries {
+  abstract list(request: PageRequest<'amount'>): Promise<Page<InvoiceSummary>>;
+}
+```
 
-export class TypeOrmInvoiceQueries {
+```ts
+// contexts/billing-core/infrastructure/persistence/typeorm-invoice.queries.ts
+import { LessThan, MoreThan, type FindOptionsWhere } from 'typeorm';
+import { ExecutionScope, encodeCursor, pageOf, tenantScopeOf } from '@ddd-ts-kit/kernel';
+import { Adapter } from '@ddd-ts-kit/kernel/declarations';
+
+@Adapter(InvoiceQueries, [TypeOrmContext, ExecutionScope])
+export class TypeOrmInvoiceQueries implements InvoiceQueries {
+  constructor(
+    private readonly context: TypeOrmContext,
+    private readonly scope: ExecutionScope,
+  ) {}
+
   async list(request: PageRequest<'amount'>): Promise<Page<InvoiceSummary>> {
-    return request.kind === 'offset' ? this.#byOffset(request) : this.#byCursor(request);
+    return request.kind === 'offset' ? this.byOffset(request) : this.byCursor(request);
   }
 
-  async #byOffset(request: OffsetPageRequest<'amount'>): Promise<Page<InvoiceSummary>> {
+  private async byOffset(request: OffsetPageRequest<'amount'>): Promise<Page<InvoiceSummary>> {
     const [rows, total] = await this.context.manager().findAndCount(invoices, {
       where: tenantScopeOf(this.scope),
       order: totalOrder(directionOf(request)),
       take: request.limit,
       skip: request.offset,
     });
+
     return pageOf(rows.map(toSummary), { total });
   }
 
-  async #byCursor(request: CursorPageRequest<'amount'>): Promise<Page<InvoiceSummary>> {
+  private async byCursor(request: CursorPageRequest<'amount'>): Promise<Page<InvoiceSummary>> {
     const direction = directionOf(request);
     const tenant = tenantScopeOf(this.scope);
     const rows = await this.context.manager().find(invoices, {
@@ -248,6 +319,7 @@ export class TypeOrmInvoiceQueries {
     const items = rows.slice(0, request.limit);
     const last = items.at(-1);
     const more = rows.length > request.limit && last !== undefined;
+
     return pageOf(items.map(toSummary), more ? { nextCursor: encodeCursor({ amount: last.amount, id: last.id }) } : {});
   }
 }
@@ -265,6 +337,7 @@ function beyond(
   tenant: TenantScoped,
 ): FindOptionsWhere<InvoiceRow>[] {
   const past = direction === 'asc' ? MoreThan : LessThan;
+
   return [
     { ...tenant, amount: past(amount) },
     { ...tenant, amount, id: past(id) },

@@ -25,49 +25,90 @@ receives fixes, but it is the previous line of the client; nothing made it neces
 ## Composition root
 
 Handlers never see this package. They publish to the outbox; the relay publishes to NATS;
-each consuming context subscribes through the bus under its own name.
+each consuming context listens through the bus under its own name. The bus is given to the
+application as two ports of the kernel: `IntegrationEventPublisher` stays the outbox, and
+`EventSubscribers` hands each context the subscriber of its own consumer name.
 
 ```ts
-// main.ts
-import { SystemClock } from '@ddd-ts-kit/kernel';
-import { OutboxPublisher, OutboxRelay, consume, subscribeAll, validatingPublisher } from '@ddd-ts-kit/events';
+// platform/messaging.module.ts
+import { defineContextModule } from '@ddd-ts-kit/di';
+import { EventSubscribers, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
+import { OutboxPublisher, OutboxStore } from '@ddd-ts-kit/events';
 import { NatsEventBus } from '@ddd-ts-kit/nats';
-import { tracedPublisher, tracedSubscriber } from '@ddd-ts-kit/tracing';
 
-const bus = new NatsEventBus({
+export const bus = new NatsEventBus({
   connection: config.natsUrl, // or a list, or options of the client, or a factory opening a new connection
   stream: 'integration-events', // the default
   subjectPrefix: 'events', // the default: events go to events.<event type>
   replicas: 3, // default 1
   retry: { maxAttempts: 5, delayMs: 5_000 }, // the defaults
   prefetch: 10, // the default
-  onFailure: (failure) => logger.warn(failure), // codes only, never an error message
+  onFailure: (failure) => logger.warn('event bus failure', { ...failure }), // codes only, never an error message
   onDelivery: ({ consumer, outcome }) => deliveries.add(1, { consumer, outcome }),
 });
 
-// Publishing side: handlers write to the outbox, in the transaction of the command.
-const publisher = validatingPublisher(new OutboxPublisher(outboxStore), registry);
+export const messagingModule = defineContextModule({
+  name: 'messaging',
+  register(builder) {
+    // Publishing side: handlers write to the outbox, in the transaction of the command.
+    builder.rebind(IntegrationEventPublisher).toClass(OutboxPublisher, [OutboxStore]);
+    // Consuming side: one subscriber per consuming context, named after it.
+    builder.rebind(EventSubscribers).toValue({ forContext: (name) => bus.forConsumer(name) });
+  },
+});
+```
+
+```ts
+// contexts/billing/application/integration/handlers/invoice-on-order-placed.integration-handler.ts
+import { CommandBus, type IntegrationEvent } from '@ddd-ts-kit/kernel';
+import { IntegrationEventHandler } from '@ddd-ts-kit/kernel/declarations';
+
+@IntegrationEventHandler(orderPlaced, { consumer: 'billing.invoice-on-order-placed' }, [CommandBus])
+export class InvoiceOnOrderPlaced {
+  constructor(private readonly commands: CommandBus) {}
+
+  readonly handle = async (event: IntegrationEvent<OrderPlacedPayload>): Promise<void> => {
+    await this.commands.execute(new IssueInvoice(event.payload.orderId));
+  };
+}
+```
+
+```ts
+// main.ts
+import { createApplication, kernelModule } from '@ddd-ts-kit/di';
+import { Clock } from '@ddd-ts-kit/kernel';
+import { OutboxRelay, OutboxStore } from '@ddd-ts-kit/events';
+import { bus, messagingModule } from './platform/messaging.module.js';
+
+const app = createApplication({
+  modules: [kernelModule(), persistenceModule, messagingModule, orderingModule, billingModule],
+});
 
 // The relay target is the bus. A record is marked published when the stream acknowledged it.
-const relay = new OutboxRelay({ store: outboxStore, publisher: tracedPublisher(bus), clock: new SystemClock() });
-relay.start({ intervalMs: 500 });
+const relay = new OutboxRelay({ store: app.resolve(OutboxStore), publisher: bus, clock: app.resolve(Clock) });
 
-// Consuming side: one subscriber per consuming context, named after it.
-const billingEvents = tracedSubscriber(bus.forConsumer('billing'));
-subscribeAll(billingEvents, [
-  consume(orderPlaced, { consumer: 'billing.ordering.order.placed', processed, unitOfWork }, async (event) => {
-    await commandBus.execute(new IssueInvoice(event.payload.orderId));
-  }),
-]);
-
+await app.start(); // subscribes the handler of billing on bus.forConsumer('billing')
 await bus.assertTopology(); // fail at startup, not at the first message
+relay.start({ intervalMs: 500 });
 
 process.on('SIGTERM', async () => {
   await relay.stop(); // the tick in progress finishes
+  await app.stop(); // the handlers are unsubscribed
   await bus.close(); // consumers stop, handlers in progress finish and acknowledge
 });
 ```
 
+- `persistenceModule` binds `OutboxStore`, and rebinds `UnitOfWork` and `ProcessedEventStore`
+  to the database: see the README of the persistence adapter. A declared integration event
+  handler is subscribed on the subscriber of its own context (`forContext` receives the name
+  of its module), and since `UnitOfWork` and `ProcessedEventStore` are bound, its idempotency
+  mark and its work commit in one unit of work: a redelivery is deduplicated, a failure
+  leaves nothing behind.
+- Without an outbox the bus is the event bus of the kernel module, and handlers publish
+  straight to the broker:
+  `kernelModule({ eventBus: bus, eventSubscribers: () => ({ forContext: (name) => bus.forConsumer(name) }) })`.
+- Without a container the same objects are wired by hand: `bus.forConsumer('billing')` is an
+  `IntegrationEventSubscriber`, to give to `subscribeAll` and `consume` of `@ddd-ts-kit/events`.
 - `publish(events)` resolves only when the stream acknowledged **every** message of the batch
   as stored and rejects otherwise (`PUBLISH_NOT_ACKNOWLEDGED`, `BROKER_UNAVAILABLE`,
   `EVENT_BUS_CLOSED`). Nothing is buffered for later: the outbox is the buffer.
@@ -78,12 +119,14 @@ process.on('SIGTERM', async () => {
   The window covers a retry, not a replay hours later: consumers still deduplicate.
 - A consumer name is required to subscribe: `bus.forConsumer('billing')` gives an
   `IntegrationEventSubscriber` for one context on the shared connection (a modular monolith
-  has several), and the `consumer` option names the one `bus.subscribe` works for.
-- The tracing wrappers work as with any provider: the bus carries `traceparent` and
-  `correlationId` untouched, in the envelope and in the message headers.
+  has several), and the `consumer` option names the one `bus.subscribe` works for (a service
+  that is a single context).
+- Tracing wraps both sides as with any provider (`tracedPublisher(bus)` as the relay target,
+  `tracedSubscriber(bus.forConsumer(name))` in `forContext`): the bus carries `traceparent`
+  and `correlationId` untouched, in the envelope and in the message headers.
 - The correlation makes the round trip. Publish through `scopedPublisher(publisher, scope)` of
-  the kernel and consume with `consume(definition, { ..., scope }, handler)`, or wrap a
-  handler with `inEventScope`: the consumer runs in an execution context whose
+  the kernel: a declared handler (or `consume(definition, { ..., scope }, handler)` by hand,
+  or a callback wrapped with `inEventScope`) runs in an execution context whose
   `correlationId` is the one of the request that published, whose `causationId` is the event,
   and a redelivery runs in the same one.
 - A context extracted to its own service keeps its consumer name and so its durable
@@ -129,8 +172,9 @@ aggregate matters.
 ## Retry and dead-letter behaviour
 
 1. A message is acknowledged after every handler subscribed to its durable consumer
-   resolved. Use `consume` of `@ddd-ts-kit/events`: the acknowledgement then follows the
-   commit of the unit of work, and a redelivery is deduplicated.
+   resolved. A declared `@IntegrationEventHandler` (or `consume` of `@ddd-ts-kit/events` by
+   hand) commits its work and its idempotency mark in one unit of work: the acknowledgement
+   then follows that commit, and a redelivery is deduplicated.
 2. When a handler throws, the bus refuses the message with a delay (`nak` with
    `retry.delayMs`): the server delivers it again after that delay, to any instance. The
    attempt number is the delivery count of the server. No hot loop.
@@ -264,8 +308,8 @@ docker rm -f ddd-ts-kit-test-nats
 ```
 
 They run the contract suite on file and on memory storage, then the behaviours of this
-provider (acknowledged publication cut mid-flight, deduplication inside and outside the
-duplicate window, redelivery, dead-lettering, replay, poison, competing and separate
-consumers, reconnection through a TCP relay the test cuts, graceful close) and the whole
-chain from the outbox to an idempotent consumer. Every test works on streams of its own and
+provider, one suite per behaviour (`publishing`, with the deduplication inside and outside
+the duplicate window, `consuming`, `correlation`, `retries`, `dead-letters`, `topology`,
+`connection-loss` through a TCP relay the test cuts, `closing`) and the whole chain from the
+outbox to an idempotent consumer. Every test works on streams of its own and
 deletes them.

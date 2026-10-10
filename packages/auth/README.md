@@ -12,10 +12,10 @@ npm i jose            # only for @ddd-ts-kit/auth/jwt
 
 | Entry | Holds | Imports |
 |---|---|---|
-| `@ddd-ts-kit/auth` | permissions, `requires`, `AuthorizationMap`, `authorizationMiddleware`, `Authorizer`, policies and `Access`, `RoleBasedAuthorizer`, `PolicyBasedAuthorizer`, `Authenticator`, HTTP glue | the kernel only |
+| `@ddd-ts-kit/auth` | permissions, `requires`, `AuthorizationMap`, `authorizationMiddleware`, the ports `Authorizer`, `Access`, `Authenticator` and `SessionAuthenticator`, policies and `PolicyAccess`, `RoleBasedAuthorizer`, `PolicyBasedAuthorizer`, HTTP glue | the kernel only |
 | `@ddd-ts-kit/auth/rebac` | schema DSL, relation tuples, `RelationTupleStore`, `RelationBasedAuthorizer` | the kernel only |
 | `@ddd-ts-kit/auth/jwt` | `JwtAuthenticator`, `keycloakAuthenticator` | `jose` (optional peer), the only file that does |
-| `@ddd-ts-kit/auth/di` | `authorizationModule`, the tokens `AUTHORIZER`, `AUTHENTICATOR`, `AUTHORIZATION_MAP`, `ACCESS` | `@ddd-ts-kit/di` (optional peer) |
+| `@ddd-ts-kit/auth/di` | `authorizationModule`, `authorizationMapOf`, and again the classes the module binds: `Authorizer`, `Authenticator`, `Access`, `AuthorizationMap` | `@ddd-ts-kit/di` (optional peer) |
 | `@ddd-ts-kit/auth/testing` | `anActor()`, `AllowAll`, `DenyAll`, `RecordingAuthorizer`, `FakeAuthenticator`, the two contract suites | `@ddd-ts-kit/testing` (optional peer), the runner you pass |
 
 The actor model lives in `@ddd-ts-kit/kernel`: `Actor`, `anonymousActor()`, `systemActor(name)`,
@@ -76,7 +76,9 @@ refuses `requires` on a message that has none. `Command` and `Query` stay for pu
 
 ```ts
 // contexts/billing/billing.module.ts
+import { Access } from '@ddd-ts-kit/auth';
 import { defineContextModule } from '@ddd-ts-kit/di';
+import { Clock, IdGenerator } from '@ddd-ts-kit/kernel';
 
 export const billingModule = defineContextModule({
   name: 'billing',
@@ -84,14 +86,14 @@ export const billingModule = defineContextModule({
     builder
       .command(IssueInvoice)
       .requires(billingPermissions['invoice.issue'])
-      .handledBy(IssueInvoiceHandler, [INVOICE_REPOSITORY, ID_GENERATOR]);
+      .handledBy(IssueInvoiceHandler, [InvoiceRepository, IdGenerator]);
     builder
       .command(VoidInvoice)
       .requires(billingPermissions['invoice.void'], {
         resource: (command) => ({ type: 'invoice', id: command.invoiceId }),
       })
-      .handledBy(VoidInvoiceHandler, [INVOICE_REPOSITORY, ACCESS, CLOCK]);
-    builder.query(GetCatalog).public().handledBy(GetCatalogHandler, [CATALOG]);
+      .handledBy(VoidInvoiceHandler, [InvoiceRepository, Access, Clock]);
+    builder.query(GetCatalog).public().handledBy(GetCatalogHandler, [Catalog]);
   },
 });
 ```
@@ -111,8 +113,8 @@ import { Requires } from '@ddd-ts-kit/kernel/declarations';
 })
 export class VoidInvoice extends AuthorizedCommand { /* ... */ }
 
-// void-invoice.handler.ts: ACCESS comes from '@ddd-ts-kit/auth', which the application layer may import
-@CommandHandler(VoidInvoice, [INVOICE_REPOSITORY, ACCESS, CLOCK])
+// void-invoice.handler.ts: Access comes from '@ddd-ts-kit/auth', which the application layer may import
+@CommandHandler(VoidInvoice, [InvoiceRepository, Access, Clock])
 export class VoidInvoiceHandler implements CommandHandler<VoidInvoice> { /* ... */ }
 ```
 
@@ -121,9 +123,13 @@ the same `authorization: 'required'` check; written on the builder, a requiremen
 the one of the message. A policy class declared with
 `@Policy(permission, { name: 'invoice.only-issuer-voids' })` (an `allows(actor, subject, { now })`
 method, and `appliesTo(subject)` when it must tell its subjects apart) is evaluated by
-`ACCESS` next to the policies given to `authorizationModule`. The tokens `ACCESS`,
-`AUTHORIZER`, `AUTHENTICATOR` and `AUTHORIZATION_MAP` are exported by `@ddd-ts-kit/auth` and,
-as before, by `@ddd-ts-kit/auth/di`.
+`Access` next to the policies given to `authorizationModule`.
+
+The ports of this package are abstract classes, and the class is what a dependency list, a
+binding or a test names: `Authorizer`, `Access`, `Authenticator`, `SessionAuthenticator` and
+`ResourceAttributes` from `@ddd-ts-kit/auth`, `RelationTupleStore` from
+`@ddd-ts-kit/auth/rebac`. An adapter `implements` its port and never extends it; a plain
+object with the same methods stands for it in a test.
 
 ### 4. A policy, for a rule that needs the loaded element
 
@@ -163,9 +169,10 @@ export class VoidInvoiceHandler {
 the policy or the authorizer gave. A policy is a plain object: its spec calls
 `onlyIssuerVoidsSameDay.allows(actor, invoice, { now })` and needs nothing else.
 
-`AccessOptions.resourceOf` says how a subject names its resource (`invoice => ({ type: 'invoice',
-id: invoice.id })`) when the authorizer decides per element. By default only a plain
-`{ type, id }` is taken as a resource reference.
+`Access` is the port the handler depends on; `PolicyAccess` is its implementation, which
+`authorizationModule` binds. `PolicyAccessOptions.resourceOf` says how a subject names its
+resource (`invoice => ({ type: 'invoice', id: invoice.id })`) when the authorizer decides per
+element. By default only a plain `{ type, id }` is taken as a resource reference.
 
 ### 5. The composition root
 
@@ -202,10 +209,36 @@ const app = createApplication({
 });
 ```
 
+The module binds `Authorizer`, `Access` (a `PolicyAccess` over the authorizer, the policies and
+the `Clock` of the application), the `AuthorizationMap` built from what the use cases declared
+and, when one is given, `Authenticator`. Each is resolved by its class:
+
+```ts
+const authorizer = app.resolve(Authorizer);
+const declared = app.resolve(AuthorizationMap).declarations(); // for documentation and administration screens
+```
+
+An authenticator that has dependencies of its own is bound by a module of the platform
+instead of being given as an option:
+
+```ts
+// platform/auth/auth.module.ts
+import { Authenticator } from '@ddd-ts-kit/auth';
+import { defineContextModule } from '@ddd-ts-kit/di';
+
+export const authModule = defineContextModule({
+  name: 'auth',
+  register(builder) {
+    builder.bind(Authenticator).toClass(SessionCookieAuthenticator, [SessionStore]);
+  },
+});
+```
+
 `authorizationModule` binds the guard that the command and query buses of `kernelModule()` run
 before anything else, the unit of work included: a refused command opens no transaction. A bus
 of your own, given through `kernelModule({ commandBus })`, has to run the guard itself:
-`.use((message, next, info) => resolve(USE_CASE_GUARD)(message, next, info))`.
+`.use((message, next, info) => resolve(UseCaseGuard).check(message, next, info))`, `UseCaseGuard`
+being the port of `@ddd-ts-kit/di` the module binds.
 `authorization: 'required'` makes `createApplication` throw a `WiringError`
 (`UNDECLARED_AUTHORIZATION`) naming every command and query that has neither `.requires(...)`
 nor `.public()`, and another (`AUTHORIZATION_NOT_ENFORCED`) when no module binds a guard. The
@@ -258,11 +291,12 @@ export const voidInvoiceRoute = (commandBus: CommandBus) =>
 
 ```ts
 // platform/http/server.ts
-import { principalResolver } from '@ddd-ts-kit/auth';
+import { Authenticator, principalResolver } from '@ddd-ts-kit/auth';
+import { ExecutionScope } from '@ddd-ts-kit/kernel';
 
 const options = {
-  resolvePrincipal: principalResolver(app.resolve(AUTHENTICATOR)), // answers a Session
-  executionScope: app.resolve(EXECUTION_SCOPE),
+  resolvePrincipal: principalResolver(app.resolve(Authenticator)), // answers a Session
+  executionScope: app.resolve(ExecutionScope),
 };
 // passed to the adapter of @ddd-ts-kit/http: mountExpress(server, routes, options)
 ```
@@ -276,7 +310,7 @@ error mapping of `@ddd-ts-kit/http` answers with 401 and 403.
 that is present and is not a well-formed bearer credential is refused, never treated as an
 anonymous call. It answers a kernel `Session` (the anonymous session without credential), which
 the pipeline puts, with its actor, in the execution context of the request, and which the
-`executionScope` option makes ambient for infrastructure: `ACTOR_CONTEXT` of `kernelModule()`
+`executionScope` option makes ambient for infrastructure: `ActorContext` of `kernelModule()`
 reads its actor from that scope (see "The current actor"). A consumer or a scheduled job does
 the same with `actorContext.run(systemActor('invoice-reminder'), () => commandBus.execute(...))`.
 
@@ -313,7 +347,9 @@ const session = await resolveSession(authenticator, credential);
 
 `JwtAuthenticator` verifies the signature, the issuer, the audience, the expiry and the
 algorithm (asymmetric families only unless told otherwise; `alg: none` is always refused), and
-is a `SessionAuthenticator`. Nothing of the token is kept in the actor or in the session.
+is a `SessionAuthenticator`. Nothing of the token is kept in the actor or in the session. The
+verification key, which may be a shared secret, is not a property of the authenticator:
+logging or serializing the object shows no key.
 
 | Field of the session | Claim |
 |---|---|
@@ -586,9 +622,10 @@ words; the adapter knows the model.
 
 ```ts
 // application/ports/document-grants.port.ts
-export interface DocumentGrants {
-  ownerAssigned(documentId: string, ownerId: string): Promise<void>;
-  sharedWithGroup(documentId: string, groupId: string): Promise<void>;
+export abstract class DocumentGrants {
+  abstract ownerAssigned(documentId: string, ownerId: string): Promise<void>;
+
+  abstract sharedWithGroup(documentId: string, groupId: string): Promise<void>;
 }
 
 // application/commands/create-document/create-document.handler.ts
@@ -635,9 +672,10 @@ adapters only, through the three helpers of the kernel:
 // contexts/billing/infrastructure/persistence/drizzle-invoice.repository.ts
 import { stampCreation, stampUpdate, tenantScopeOf } from '@ddd-ts-kit/kernel';
 
+@Repository(InvoiceRepository, [Database, ExecutionScope, Clock])
 export class DrizzleInvoiceRepository implements InvoiceRepository {
   constructor(
-    private readonly context: DrizzleContext<NodePgQueryResultHKT>,
+    private readonly context: Database,
     private readonly scope: ExecutionScope,
     private readonly clock: Clock,
   ) {}
@@ -657,9 +695,9 @@ export class DrizzleInvoiceRepository implements InvoiceRepository {
 ```
 
 The whole repository, tested, is in the README of each adapter package (`@ddd-ts-kit/drizzle`,
-`knex`, `prisma`, `typeorm`). `kernelModule()` binds `EXECUTION_SCOPE` to an
+`knex`, `prisma`, `typeorm`). `kernelModule()` binds `ExecutionScope` to an
 `AsyncLocalStorageExecutionScope`, which follows the asynchronous call chain so concurrent
-requests never mix, and `ACTOR_CONTEXT` to a `ScopedActorContext` over it: the current actor is
+requests never mix, and `ActorContext` to a `ScopedActorContext` over it: the current actor is
 the actor of the current execution context, so the two cannot disagree, and an adapter written
 against `ActorContext` keeps working. `require()` throws `NoExecutionContextError` (or
 `NoCurrentActorError`) when a boundary opened nothing, and `tenantScopeOf` throws
@@ -745,11 +783,11 @@ const accountant = anActor().named('ada').ofTenant('acme').withRole('accountant'
 
 - **Handlers.** `createTestApplication({ modules: [billingModule] })` allows every use case: a
   handler spec is not about rights. `actor` sets who infrastructure sees through
-  `ACTOR_CONTEXT` (default: the user `test-user`); `app.actorContext.actAs(actor)` changes it.
+  `ActorContext` (default: the user `test-user`); `app.actorContext.actAs(actor)` changes it.
   The actor of a use case is the one the test puts in the command.
 - **Rights of a context.** List `authorizationModule({ authorizer })` with the real model, or
   with a `RecordingAuthorizer` to assert what was asked as data (`authorizer.checks`); replace
-  the authorizer of a composed application with `fake(AUTHORIZER, new AllowAll())`. Add
+  the authorizer of a composed application with `fake(Authorizer, new AllowAll())`. Add
   `authorization: 'required'` so that a use case without declaration fails the spec at wiring.
 - **Policies.** Plain objects: call `policy.allows(actor, subject, { now })`.
 - **Boundaries.** `FakeAuthenticator({ 'token-of-ada': ada })` behind `principalResolver`; a credential may stand for a whole session, `{ 'token-of-support': aSession().of(ada).impersonatedBy('support-7').build() }`.

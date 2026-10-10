@@ -72,22 +72,28 @@ volumes:
 
 ```ts
 // src/main.ts
-import { CACHE, METRICS, createApplication, defineContextModule, kernelModule } from '@ddd-ts-kit/di';
-import { RedisCache } from '@ddd-ts-kit/redis';
+import { Cache, Lock, Metrics, RateLimiter } from '@ddd-ts-kit/kernel';
+import { createApplication, defineContextModule, kernelModule } from '@ddd-ts-kit/di';
+import { RedisCache, RedisLock, RedisRateLimiter } from '@ddd-ts-kit/redis';
 
 const platformModule = defineContextModule({
   name: 'platform',
   register(builder) {
-    builder.rebind(CACHE).toFactory((resolve) => new RedisCache(redis.client, { namespace: 'app', metrics: resolve(METRICS) }));
+    builder.rebind(Cache).toFactory((resolve) => new RedisCache(redis.client, { namespace: 'app', metrics: resolve(Metrics) }));
+    builder.rebind(Lock).toValue(new RedisLock(redis.client, { namespace: 'app' }));
+    builder.rebind(RateLimiter).toValue(new RedisRateLimiter(redis.client, { namespace: 'app' }));
   },
 });
 
 const app = createApplication({ modules: [kernelModule(), platformModule, catalogModule] });
 ```
 
-`kernelModule({ cache: (resolve) => new RedisCache(...) })` does the same in one line. `cached`
-of `@ddd-ts-kit/aspects` and every adapter that resolves `CACHE` then use it without knowing.
-A context that wants its keys apart builds its own instance with its own `namespace`.
+A port of the kernel is an abstract class, and the class is what a binding is keyed by: the
+three adapters `implements` theirs, and a use case that names `Cache`, `Lock` or `RateLimiter`
+in its dependencies receives them. `kernelModule({ cache: (resolve) => new RedisCache(...), lock: ..., rateLimiter: ... })`
+does the same through its options. `cached` of `@ddd-ts-kit/aspects` and everything that
+resolves `Cache` then use it without knowing. A context that wants its keys apart builds its
+own instance with its own `namespace`.
 
 | Option | Default | Effect |
 |---|---|---|
@@ -135,8 +141,8 @@ case is the unprotected one. A failed computation is not cached.
 `RedisLock` implements the kernel `Lock` port:
 
 ```ts
-interface Lock {
-  acquire(key: string, options: { ttlMs: number; waitMs?: number }): Promise<LockHandle | undefined>;
+abstract class Lock {
+  abstract acquire(key: string, options: { ttlMs: number; waitMs?: number }): Promise<LockHandle | undefined>;
 }
 interface LockHandle { readonly key: string; readonly fencingToken: number; release(): Promise<void> }
 ```
@@ -155,8 +161,9 @@ try {
 owner> NX PX ttl`, and a release that deletes the key only if it still holds that owner
 (compare-and-delete), so a holder whose lock expired cannot free the lock of the next one.
 `waitMs` polls every `retryDelayMs` (default 25 ms). `InMemoryLock` of the kernel is the same
-contract inside one process, for tests and single instances; it is what `LOCK` of
-`@ddd-ts-kit/di` is bound to until the platform rebinds it.
+contract inside one process, for tests and single instances; it is what `kernelModule()` of
+`@ddd-ts-kit/di` binds `Lock` to until the platform rebinds it (`builder.rebind(Lock)`, shown
+under [Cache](#cache)).
 
 **What it guarantees, and what it does not.** At most one holder at a time, provided the
 server keeps its data and the holder finishes within `ttlMs`. It is **not a consensus lock**.
@@ -188,8 +195,8 @@ and the caller decides.
 `RedisRateLimiter` implements the kernel `RateLimiter` port:
 
 ```ts
-interface RateLimiter {
-  consume(key: string, limit: { limit: number; windowMs: number }): Promise<{ allowed: boolean; remaining: number; retryAfterMs: number }>;
+abstract class RateLimiter {
+  abstract consume(key: string, limit: { limit: number; windowMs: number }): Promise<{ allowed: boolean; remaining: number; retryAfterMs: number }>;
 }
 ```
 
@@ -216,7 +223,8 @@ server.addHook('onRequest', async (request, reply) => {
 
 A use case that must be limited for a business reason (three password resets per hour)
 depends on the `RateLimiter` port of the kernel and receives the adapter by injection
-(`RATE_LIMITER` of `@ddd-ts-kit/di`); `InMemoryRateLimiter` on a `FixedClock` is its fake.
+(`builder.rebind(RateLimiter)`, shown under [Cache](#cache)); `InMemoryRateLimiter` on a
+`FixedClock` is its fake.
 
 - **Exact, at a memory cost.** One member per allowed call: a key costs memory in proportion
   to its limit. Fine up to thousands per window; for tens of thousands, limit a coarser key or
@@ -244,7 +252,9 @@ new OutboxRelay({ store, publisher, clock, wakeOn: signal }).start({ intervalMs:
 commandBus.use(relayWakeUpMiddleware(signal)).use(unitOfWorkMiddleware(unitOfWork));
 ```
 
-It satisfies the `RelaySignal` port of `@ddd-ts-kit/events` structurally (no dependency), with
+It satisfies the `RelaySignal` port of `@ddd-ts-kit/events` structurally: this package does not
+depend on `@ddd-ts-kit/events`, so the class does not name the port, and it is accepted wherever
+a `RelaySignal` is expected, `builder.bind(RelaySignal).toValue(signal)` included. It has
 the semantics of the in-memory signal: **a hint, never a delivery**. Publish/subscribe keeps
 nothing for a subscriber that is away; a notification sent while the relay reconnects, or
 before it subscribed, is lost, and the event goes out at the next poll. Keep a real
@@ -331,6 +341,20 @@ process.on('SIGTERM', async () => {
   `IntegrationEventSubscriber` for one context (a modular monolith has several, each with a
   reading connection of its own), and the `consumer` option names the one `bus.subscribe`
   works for (a service that is a single context).
+- With `@ddd-ts-kit/di`, the declared integration event handlers of a context are subscribed on
+  `EventSubscribers.forContext(<module name>)`. Give it the bus, and each context reads under
+  its own name:
+
+  ```ts
+  import { EventSubscribers } from '@ddd-ts-kit/kernel';
+
+  const app = createApplication({
+    modules: [kernelModule({ eventSubscribers: () => ({ forContext: (name) => bus.forConsumer(name) }) }), billingModule],
+  });
+
+  // or, from a later module
+  builder.rebind(EventSubscribers).toValue({ forContext: (name) => bus.forConsumer(name) });
+  ```
 - The tracing wrappers work as with any provider: the bus carries `traceparent` and
   `correlationId` untouched, in the envelope and as fields of the entry.
 - The correlation makes the round trip. Publish through `scopedPublisher(publisher, scope)` of

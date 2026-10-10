@@ -9,7 +9,9 @@ import {
   processedEventsTable,
 } from '../src/postgres.js';
 import { createDatabase } from './support/database.js';
-import { DrizzleInvoiceRepository, Invoice, invoices } from './support/invoices.js';
+import { Invoice } from './support/billing-core/domain/invoice.js';
+import { DrizzleInvoiceRepository } from './support/billing-core/infrastructure/persistence/drizzle-invoice.repository.js';
+import { invoices } from './support/billing-core/infrastructure/persistence/invoices.js';
 import { ada, scopeOf } from './support/scopes.js';
 
 const outbox = outboxTable();
@@ -17,12 +19,15 @@ const processed = processedEventsTable();
 const now = new Date('2026-03-01T10:00:00.000Z');
 
 let database: Awaited<ReturnType<typeof createDatabase>>;
+
 beforeAll(async () => {
   database = await createDatabase([invoices, outbox, processed]);
 });
+
 afterAll(async () => {
   await database.client.close();
 });
+
 beforeEach(async () => {
   await database.truncate();
 });
@@ -39,6 +44,7 @@ const issued = (invoiceId: string): IntegrationEvent => ({
 const wire = () => {
   const unitOfWork = createDrizzleUnitOfWork(database.db);
   const store = new DrizzleOutboxStore(unitOfWork, { table: outbox });
+
   return {
     unitOfWork,
     store,
@@ -50,13 +56,14 @@ const wire = () => {
 
 class PaymentProviderDown extends Error {}
 
-describe('createDrizzleUnitOfWork', () => {
+describe('createDrizzleUnitOfWork: one transaction for the write and the event', () => {
   it('commits the business write and the event together', async () => {
     const { unitOfWork, repository, publisher, store } = wire();
 
     const result = await unitOfWork.run(async () => {
       await repository.save(Invoice.draft('inv-1', 100));
       await publisher.publish([issued('inv-1')]);
+
       return 'done';
     });
 
@@ -82,6 +89,7 @@ describe('createDrizzleUnitOfWork', () => {
 
   it('rolls back the business write when the event cannot be stored', async () => {
     const { unitOfWork, repository, publisher } = wire();
+
     await publisher.publish([issued('inv-1')]);
 
     const failing = unitOfWork.run(async () => {
@@ -92,7 +100,9 @@ describe('createDrizzleUnitOfWork', () => {
     await expect(failing).rejects.toBeDefined();
     expect(await repository.findById('inv-1')).toBeUndefined();
   });
+});
 
+describe('the DrizzleContext of a unit of work', () => {
   it('gives the transaction inside run and the database outside', async () => {
     const { unitOfWork } = wire();
 
@@ -111,14 +121,17 @@ describe('createDrizzleUnitOfWork', () => {
 
   it('joins the outer transaction on a nested run: one rollback undoes both', async () => {
     const { unitOfWork, repository } = wire();
+
     database.logger.queries.length = 0;
 
     const failing = unitOfWork.run(async () => {
       const outer = unitOfWork.executor();
+
       await unitOfWork.run(async () => {
         expect(unitOfWork.executor()).toBe(outer);
         await repository.save(Invoice.draft('inv-1', 100));
       });
+
       await repository.save(Invoice.draft('inv-2', 200));
       throw new PaymentProviderDown();
     });
@@ -166,6 +179,7 @@ describe('outbox end to end', () => {
       await repository.save(Invoice.draft('inv-1', 100));
       await publisher.publish([issued('inv-1')]);
     });
+
     await unitOfWork
       .run(async () => {
         await repository.save(Invoice.draft('inv-2', 200));
@@ -189,6 +203,7 @@ describe('DrizzleProcessedEventStore in a unit of work', () => {
       expect(await store.markProcessed('billing', 'evt-1')).toBe(true);
       throw new PaymentProviderDown();
     });
+
     await expect(firstDelivery).rejects.toBeInstanceOf(PaymentProviderDown);
 
     expect(await unitOfWork.run(() => store.markProcessed('billing', 'evt-1'))).toBe(true);

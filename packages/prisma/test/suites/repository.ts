@@ -1,5 +1,6 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { DomainError, FixedClock } from '@ddd-ts-kit/kernel';
+import { Clock, DomainError, ExecutionScope, FixedClock } from '@ddd-ts-kit/kernel';
+import { Repository } from '@ddd-ts-kit/kernel/declarations';
 import { repositoryContract } from '@ddd-ts-kit/testing/contracts';
 import {
   CONCURRENCY_CONFLICT,
@@ -9,13 +10,18 @@ import {
   schemaNameOf,
 } from '../../src/index.js';
 import { createDatabase, type TestDatabase } from '../support/database.js';
-import { Invoice, PrismaInvoiceRepository } from '../support/invoices.js';
+import { Invoice } from '../support/billing-core/domain/invoice.js';
+import { InvoiceRepository } from '../support/billing-core/domain/repositories/invoice.repository.js';
+import { PrismaInvoiceRepository } from '../support/billing-core/infrastructure/persistence/prisma-invoice.repository.js';
+import { Database } from '../support/platform/database/database.js';
 import { ada, scopeOf } from '../support/scopes.js';
 
 let database: TestDatabase;
+
 beforeAll(async () => {
   database = await createDatabase();
 });
+
 afterAll(async () => {
   await database.close();
 });
@@ -28,12 +34,14 @@ const repository = () =>
   );
 
 let next = 0;
+
 repositoryContract<Invoice>(
   { describe, it, expect, beforeEach, afterEach },
   {
     name: 'A Prisma repository built on client() and optimisticUpdate',
     createRepository: async () => {
       await database.truncate();
+
       return repository();
     },
     createAggregate: () => Invoice.draft(`inv-${(next += 1)}`, 100),
@@ -42,6 +50,14 @@ repositoryContract<Invoice>(
     stateOf: (invoice) => invoice.state,
   },
 );
+
+describe('a repository declared with @Repository', () => {
+  it('names its port, then the ports of its constructor in order', () => {
+    const declare = Repository(InvoiceRepository, [Database, ExecutionScope, Clock]);
+
+    expect(() => declare(PrismaInvoiceRepository)).not.toThrow();
+  });
+});
 
 describe('optimisticUpdate', () => {
   const aggregate = (version: number) => ({ id: 'inv-1', version });
@@ -52,6 +68,7 @@ describe('optimisticUpdate', () => {
 
     await optimisticUpdate(invoice, async (step) => {
       steps.push(step);
+
       return 1;
     });
 
@@ -65,10 +82,12 @@ describe('optimisticUpdate', () => {
     const failing = optimisticUpdate(invoice, async () => 0);
 
     await expect(failing).rejects.toBeInstanceOf(ConcurrencyError);
+
     await expect(optimisticUpdate(invoice, async () => 0)).rejects.toMatchObject({
       code: CONCURRENCY_CONFLICT,
       message: 'Aggregate inv-1 was modified concurrently',
     });
+
     expect(invoice.version).toBe(3);
   });
 
@@ -80,6 +99,7 @@ describe('optimisticUpdate', () => {
   it('refuses to create an aggregate that already exists', async () => {
     await database.truncate();
     const subject = repository();
+
     await subject.save(Invoice.draft('inv-1', 100));
 
     await expect(subject.save(Invoice.draft('inv-1', 999))).rejects.toBeInstanceOf(ConcurrencyError);
@@ -92,6 +112,7 @@ describe('schemaNameOf', () => {
     expect(schemaNameOf('billing')).toBe('billing');
     expect(schemaNameOf('order-management')).toBe('order_management');
     expect(schemaNameOf('billing-core')).toBe('billing_core');
+
     expect(await database.prisma.$queryRaw`select to_regclass('billing_core.invoices')::text as name`).toEqual([
       { name: 'billing_core.invoices' },
     ]);

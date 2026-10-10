@@ -12,6 +12,7 @@ import { zodSchema } from '@ddd-ts-kit/validation/zod';
 import { defineRoute, executeRoute, type ErrorContext, type RawRequest } from '../src/index.js';
 
 const ada: Actor = { id: 'ada', type: 'user', tenantId: 'acme', roles: ['clerk'], attributes: {} };
+
 const session: Session = {
   id: 'session-1',
   actor: ada,
@@ -31,6 +32,7 @@ const request = (headers: RawRequest['headers'] = {}): RawRequest => ({
 
 function recordingRoute(scope?: AsyncLocalStorageExecutionScope) {
   const seen: { handed?: ExecutionContext; ambient?: ExecutionContext | undefined } = {};
+
   const route = defineRoute(
     {
       method: 'GET',
@@ -44,9 +46,11 @@ function recordingRoute(scope?: AsyncLocalStorageExecutionScope) {
     ({ context }) => {
       seen.handed = context.execution;
       seen.ambient = scope?.current();
+
       return { status: 204 };
     },
   );
+
   return { route, seen };
 }
 
@@ -62,6 +66,7 @@ describe('the execution context of a request', () => {
       origin: 'http',
       extensions: {},
     });
+
     expect(response.headers).toMatchObject({ 'x-request-id': 'req-7', 'x-correlation-id': 'req-7' });
   });
 
@@ -122,7 +127,9 @@ describe('the execution context of a request', () => {
 
     expect(seen.handed?.locale).toBe(locale);
   });
+});
 
+describe('the execution context around the handler', () => {
   it('gives a deadline counted from the arrival when the requests have a time budget', async () => {
     const { route, seen } = recordingRoute();
     const clock = new FixedClock(new Date('2026-03-01T10:00:00.000Z'));
@@ -154,6 +161,7 @@ describe('the execution context of a request', () => {
       executionScope: scope,
       withPrincipal: (_principal, work) => {
         seenByHook.push(scope.current()?.correlationId);
+
         return work();
       },
     });

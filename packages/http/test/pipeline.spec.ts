@@ -48,9 +48,11 @@ const report = defineRoute(
     // Type-level checks: the handler input and output follow the schemas.
     const year: number = params.year;
     const tenant: string = headers['x-tenant'];
+
     if (year === 1999) {
       return { status: 204 };
     }
+
     return { status: 200, body: { year, tenant } };
   },
 );
@@ -81,6 +83,7 @@ describe('defineRoute', () => {
         { method: 'GET', path, operationId: 'x', summary: 'x', responses: { 200: { description: 'ok' } }, security: false },
         () => ({ status: 200 }),
       );
+
     expect(declare('orders')).toThrow(/literal segments/);
     expect(declare('/orders/*')).toThrow(/literal segments/);
     expect(declare('/orders/{orderId}')).toThrow(/literal segments/);
@@ -100,6 +103,7 @@ describe('defineRoutes', () => {
 
   it('refuses two routes sharing a method and a path, whatever the parameter is called', () => {
     const twin = { ...report, operationId: 'readReportAgain', path: '/reports/:y' };
+
     expect(() => defineRoutes(report, twin)).toThrow(/GET \/reports\/:y/);
   });
 });
@@ -107,6 +111,7 @@ describe('defineRoutes', () => {
 describe('prefixRoutes', () => {
   it('puts every route under the prefix', () => {
     const paths = prefixRoutes('/api/v1/', [placeOrder, getOrder]).map((route) => route.path);
+
     expect(paths).toEqual(['/api/v1/orders', '/api/v1/orders/:orderId']);
   });
 });
@@ -125,6 +130,7 @@ describe('the error mapper', () => {
 
   it('lets a project add and override codes', () => {
     const mapper = createErrorMapper({ INVARIANT_VIOLATION: 400, QUOTA_EXCEEDED: 429 });
+
     expect(mapper.statusOf('INVARIANT_VIOLATION')).toBe(400);
     expect(mapper.statusOf('QUOTA_EXCEEDED')).toBe(429);
     expect(mapper.statusOf('NOT_FOUND')).toBe(404);
@@ -152,6 +158,7 @@ describe('toProblem', () => {
 
   it('carries the issues of a validation error', () => {
     const issues = [{ path: 'body.sku', code: 'too_small', message: 'Too short.' }];
+
     expect(toProblem(new ValidationError(issues), mapper, 'req-1')).toMatchObject({
       status: 422,
       code: 'VALIDATION_FAILED',
@@ -161,6 +168,7 @@ describe('toProblem', () => {
 
   it('builds the type URI the project asked for', () => {
     const custom = createErrorMapper({}, { typeOf: (code) => `https://errors.example.com/${code}` });
+
     expect(toProblem(new InvariantViolation('No.'), custom, 'r').type).toBe(
       'https://errors.example.com/INVARIANT_VIOLATION',
     );
@@ -182,11 +190,13 @@ describe('toProblem', () => {
     class LedgerUnavailable extends DomainError {
       readonly code = 'LEDGER_UNAVAILABLE';
     }
+
     const problem = toProblem(
       new LedgerUnavailable('ledger at 10.0.0.4 timed out'),
       createErrorMapper({ LEDGER_UNAVAILABLE: 503 }),
       'req-1',
     );
+
     expect(problem).toEqual({
       type: 'about:blank',
       title: 'Service Unavailable',
@@ -203,6 +213,7 @@ describe('executeRoute', () => {
       report,
       request({ params: { year: '2024' }, headers: { 'x-tenant': 'acme', accept: '*/*' } }),
     );
+
     expect(response.status).toBe(200);
     expect(response.body).toEqual({ year: 2024, tenant: 'acme' });
     expect(response.headers['content-type']).toBe('application/json; charset=utf-8');
@@ -210,7 +221,9 @@ describe('executeRoute', () => {
 
   it('reports the issues of every invalid part at once', async () => {
     const response = await executeRoute(report, request({ params: { year: 'soon' } }));
+
     expect(response.status).toBe(422);
+
     expect(response.body).toMatchObject({
       code: 'VALIDATION_FAILED',
       issues: [{ path: 'params.year' }, { path: 'headers.x-tenant' }],
@@ -219,6 +232,7 @@ describe('executeRoute', () => {
 
   it('uses the request id strategy it is given', async () => {
     const response = await executeRoute(report, request(), { requestId: () => 'fixed' });
+
     expect(response.headers['x-request-id']).toBe('fixed');
     expect(response.body).toMatchObject({ requestId: 'fixed' });
   });
@@ -228,6 +242,7 @@ describe('executeRoute', () => {
       report,
       request({ params: { year: '1999' }, headers: { 'x-tenant': 'acme', 'x-request-id': 'a b\nc' } }),
     );
+
     expect(response.status).toBe(204);
     expect(response.headers['x-request-id']).toMatch(/^[0-9a-f-]{36}$/);
     expect(response).not.toHaveProperty('body');
@@ -239,6 +254,7 @@ describe('executeRoute', () => {
         throw new Error('logger down');
       },
     });
+
     expect(response.status).toBe(422);
   });
 
@@ -247,13 +263,17 @@ describe('executeRoute', () => {
       ...report,
       handle: () => ({ status, ...(body === undefined ? {} : { body }) }),
     });
+
     const valid = request({ params: { year: '2024' }, headers: { 'x-tenant': 'acme' } });
+
     const run = async (status: number, body?: unknown) => {
       const errors: unknown[] = [];
+
       const response = await executeRoute(drifting(status, body), valid, {
         validateResponses: true,
         onError: (error) => errors.push(error),
       });
+
       return { response, error: errors[0] };
     };
 
@@ -263,12 +283,14 @@ describe('executeRoute', () => {
 
     it('reports an undeclared status as a server fault', async () => {
       const { response, error } = await run(202);
+
       expect(response.status).toBe(500);
       expect(error).toBeInstanceOf(ResponseContractError);
     });
 
     it('reports a body that does not match its schema, with the issues for the log', async () => {
       const { response, error } = await run(200, { year: '2024' });
+
       expect(response.status).toBe(500);
       expect(error).toMatchObject({ issues: expect.arrayContaining([expect.objectContaining({ path: 'year' })]) });
     });
@@ -280,6 +302,7 @@ describe('executeRoute', () => {
 
   it('does not check responses unless asked', async () => {
     const drifting = { ...report, handle: () => ({ status: 202 }) };
+
     expect((await executeRoute(drifting, request({ params: { year: '1' }, headers: { 'x-tenant': 'a' } }))).status).toBe(202);
   });
 });
@@ -291,6 +314,7 @@ describe('serializeBody', () => {
 
   it('writes JSON by default, strings included', () => {
     const headers = { 'content-type': 'application/json; charset=utf-8' };
+
     expect(serializeBody({ status: 200, headers, body: { a: 1 } })).toBe('{"a":1}');
     expect(serializeBody({ status: 200, headers, body: 'text' })).toBe('"text"');
   });
@@ -301,6 +325,7 @@ describe('serializeBody', () => {
 
   it('writes bytes as is', () => {
     const bytes = new Uint8Array([1, 2, 3]);
+
     expect(serializeBody({ status: 200, headers: {}, body: bytes })).toBe(bytes);
   });
 });
@@ -309,6 +334,7 @@ describe('withPrincipal', () => {
   it('runs the handler inside the scope opened for the resolved principal', async () => {
     const scope = new AsyncLocalStorage<unknown>();
     const request = { params: {}, query: {}, headers: {}, body: undefined, raw: undefined };
+
     const route = defineRoute(
       { method: 'GET', path: '/me', operationId: 'whoAmI', summary: 'Who am I', security: ['bearer'], responses: { 200: { description: 'The caller.', body: zodSchema(z.object({ id: z.string() }), { io: 'output' }) } } },
       async () => ({ status: 200, body: { id: String(scope.getStore()) } }),
@@ -322,4 +348,3 @@ describe('withPrincipal', () => {
     expect(response.body).toEqual({ id: 'ada' });
   });
 });
-

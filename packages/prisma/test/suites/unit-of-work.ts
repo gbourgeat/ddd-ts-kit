@@ -16,18 +16,22 @@ import {
 } from '../../src/index.js';
 import type { Prisma } from '../generated/client/client.js';
 import { createDatabase, type TestDatabase } from '../support/database.js';
-import { Invoice, PrismaInvoiceRepository } from '../support/invoices.js';
+import { Invoice } from '../support/billing-core/domain/invoice.js';
+import { PrismaInvoiceRepository } from '../support/billing-core/infrastructure/persistence/prisma-invoice.repository.js';
 import { ada, scopeOf } from '../support/scopes.js';
 
 const now = new Date('2026-03-01T10:00:00.000Z');
 
 let database: TestDatabase;
+
 beforeAll(async () => {
   database = await createDatabase();
 });
+
 afterAll(async () => {
   await database.close();
 });
+
 beforeEach(async () => {
   await database.truncate();
 });
@@ -43,10 +47,12 @@ const issued = (invoiceId: string): IntegrationEvent => ({
 /** The wiring of a composition root. */
 const wire = () => {
   const unitOfWork = createPrismaUnitOfWork(database.prisma);
+
   const store = new PrismaOutboxStore(unitOfWork, {
     delegate: (client) => client.outboxRecord,
     claim: { strategy: 'skip-locked', dialect: 'postgresql', raw: (client) => client },
   });
+
   return {
     unitOfWork,
     store,
@@ -61,13 +67,14 @@ const invoiceIds = async (): Promise<string[]> =>
 
 class PaymentProviderDown extends Error {}
 
-describe('createPrismaUnitOfWork', () => {
+describe('createPrismaUnitOfWork: one transaction for the write and the event', () => {
   it('commits the business write and the event together', async () => {
     const { unitOfWork, repository, publisher, store } = wire();
 
     const result = await unitOfWork.run(async () => {
       await repository.save(Invoice.draft('inv-1', 100));
       await publisher.publish([issued('inv-1')]);
+
       return 'done';
     });
 
@@ -93,6 +100,7 @@ describe('createPrismaUnitOfWork', () => {
 
   it('rolls back the business write when the event cannot be stored', async () => {
     const { unitOfWork, repository, publisher } = wire();
+
     await publisher.publish([issued('inv-1')]);
 
     const failing = unitOfWork.run(async () => {
@@ -103,7 +111,9 @@ describe('createPrismaUnitOfWork', () => {
     await expect(failing).rejects.toBeDefined();
     expect(await repository.findById('inv-1')).toBeUndefined();
   });
+});
 
+describe('the PrismaContext of a unit of work', () => {
   it('gives the transaction client inside run and the root client outside', async () => {
     const { unitOfWork } = wire();
 
@@ -122,14 +132,17 @@ describe('createPrismaUnitOfWork', () => {
 
   it('joins the outer transaction on a nested run: one rollback undoes both', async () => {
     const { unitOfWork, repository } = wire();
+
     database.queries.length = 0;
 
     const failing = unitOfWork.run(async () => {
       const outer = unitOfWork.client();
+
       await unitOfWork.run(async () => {
         expect(unitOfWork.client()).toBe(outer);
         await repository.save(Invoice.draft('inv-1', 100));
       });
+
       await repository.save(Invoice.draft('inv-2', 200));
       throw new PaymentProviderDown();
     });
@@ -158,6 +171,7 @@ describe('createPrismaUnitOfWork', () => {
     const extended = database.prisma.$extends({
       model: { invoice: { countDrafts: () => database.prisma.invoice.count({ where: { status: 'draft' } }) } },
     });
+
     const unitOfWork = createPrismaUnitOfWork(extended);
     const context: PrismaContext<PrismaTransactionClient<typeof extended>> = unitOfWork;
 
@@ -172,6 +186,7 @@ describe('createPrismaUnitOfWork', () => {
           ...stampCreation(scopeOf(ada), new FixedClock(now)),
         },
       });
+
       expect(await context.client().invoice.count()).toBe(1);
       throw new PaymentProviderDown();
     });
@@ -186,7 +201,9 @@ describe('createPrismaUnitOfWork', () => {
 
     expect(same.inTransaction()).toBe(false);
   });
+});
 
+describe('units of work side by side', () => {
   it('keeps the transactions of two units of work on the same database apart', async () => {
     const first = createPrismaUnitOfWork(database.prisma);
     const second = createPrismaUnitOfWork(database.prisma);
@@ -225,6 +242,7 @@ describe('outbox end to end', () => {
       await repository.save(Invoice.draft('inv-1', 100));
       await publisher.publish([issued('inv-1')]);
     });
+
     await unitOfWork
       .run(async () => {
         await repository.save(Invoice.draft('inv-2', 200));
@@ -248,6 +266,7 @@ describe('PrismaProcessedEventStore in a unit of work', () => {
       expect(await store.markProcessed('billing', 'evt-1')).toBe(true);
       throw new PaymentProviderDown();
     });
+
     await expect(firstDelivery).rejects.toBeInstanceOf(PaymentProviderDown);
 
     expect(await unitOfWork.run(() => store.markProcessed('billing', 'evt-1'))).toBe(true);

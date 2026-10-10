@@ -25,11 +25,13 @@ describe('anActor', () => {
       roles: ['accountant', 'clerk', 'auditor'],
       attributes: { department: 'sales' },
     });
+
     expect(anActor().asService().named('billing-worker').build().type).toBe('service');
   });
 
   it('is immutable: a shared builder does not leak from one test to the next', () => {
     const base = anActor().named('ada');
+
     base.withRole('admin');
 
     expect(base.build().roles).toEqual([]);
@@ -66,6 +68,7 @@ describe('the fake authorizers', () => {
 
     expect((await authorizer.check({ actor: ada, permission: read })).allowed).toBe(true);
     expect((await authorizer.check({ actor: stranger, permission: read })).allowed).toBe(false);
+
     expect(await authorizer.listAccessible({ actor: stranger, permission: read, resourceType: 'invoice' })).toEqual({
       kind: 'none',
     });

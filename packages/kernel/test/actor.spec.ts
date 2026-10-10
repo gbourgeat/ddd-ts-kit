@@ -112,6 +112,7 @@ describe.each<[string, () => ActorContext]>([
 
     const seen = await context.run(ada, async () => {
       await Promise.resolve();
+
       return [context.current(), context.require()];
     });
 
@@ -124,6 +125,7 @@ describe.each<[string, () => ActorContext]>([
 
     const seen = context.run(ada, () => {
       const inner = context.run(bob, () => context.require().id);
+
       return [inner, context.require().id];
     });
 
@@ -138,6 +140,7 @@ describe.each<[string, () => ActorContext]>([
         throw new RangeError('boom');
       }),
     ).toThrow(RangeError);
+
     expect(context.current()).toBeUndefined();
   });
 });
@@ -145,9 +148,11 @@ describe.each<[string, () => ActorContext]>([
 describe('AsyncLocalStorageActorContext', () => {
   it('keeps concurrent requests apart', async () => {
     const context = new AsyncLocalStorageActorContext();
+
     const idAfterPause = (actor: Actor, pause: number): Promise<string> =>
       context.run(actor, async () => {
         await new Promise((resolve) => setTimeout(resolve, pause));
+
         return context.require().id;
       });
 

@@ -10,6 +10,7 @@ describe('InMemoryRateLimiter', () => {
     const limiter = new InMemoryRateLimiter(clock);
 
     const first = await limiter.consume('client-a', TWO_PER_SECOND);
+
     clock.advance(300);
     const second = await limiter.consume('client-a', TWO_PER_SECOND);
     const refused = await limiter.consume('client-a', TWO_PER_SECOND);
@@ -24,6 +25,7 @@ describe('InMemoryRateLimiter', () => {
   it('slides: a call is allowed again once the oldest one has left the window, and keys stay apart', async () => {
     const clock = new FixedClock(NOW);
     const limiter = new InMemoryRateLimiter(clock);
+
     await limiter.consume('client-a', TWO_PER_SECOND);
     await limiter.consume('client-a', TWO_PER_SECOND);
 

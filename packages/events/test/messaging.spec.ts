@@ -32,6 +32,7 @@ const rawEvent = (overrides: Partial<IntegrationEvent>): IntegrationEvent => ({
 describe('EventRegistry', () => {
   it('lists the definitions by type then version, whatever the registration order', () => {
     const registry = new EventRegistry().register(orderPlacedV2, shipmentSent);
+
     registry.register(invoiceIssued, orderPlacedV1);
 
     expect(registry.all().map((definition) => `${definition.type}@${definition.version}`)).toEqual([
@@ -61,6 +62,7 @@ describe('EventRegistry', () => {
     const registry = createEventRegistry([orderPlacedV1]);
 
     expect(() => registry.register(orderPlacedV1)).toThrow(DuplicateEventDefinitionError);
+
     expect(() => createEventRegistry([invoiceIssued, invoiceIssued])).toThrow(
       'billing.invoice.issued v1',
     );
@@ -71,9 +73,11 @@ describe('on', () => {
   it('hands the typed event to the handler', async () => {
     const bus = new InMemoryEventBus();
     const totals: number[] = [];
+
     const subscription = on(orderPlacedV1, async (event) => {
       totals.push(event.payload.total);
     });
+
     bus.subscribe(subscription.type, subscription.handler);
 
     await bus.publish([placedV1('evt-1')]);
@@ -85,6 +89,7 @@ describe('on', () => {
   it('skips another version of the same type', async () => {
     const bus = new InMemoryEventBus();
     const handled: string[] = [];
+
     subscribeAll(bus, [
       on(orderPlacedV1, async (event) => {
         handled.push(`v1:${event.id}`);
@@ -101,6 +106,7 @@ describe('on', () => {
 
   it('throws on an invalid payload so that the provider retries or dead-letters', async () => {
     const handled: string[] = [];
+
     const { handler } = on(orderPlacedV1, async (event) => {
       handled.push(event.id);
     });
@@ -108,6 +114,7 @@ describe('on', () => {
     await expect(handler(rawEvent({ payload: { orderId: 7 } }))).rejects.toBeInstanceOf(
       InvalidEventPayloadError,
     );
+
     expect(handled).toEqual([]);
   });
 
@@ -115,11 +122,13 @@ describe('on', () => {
     const bus = new InMemoryEventBus();
     const processed = new InMemoryProcessedEventStore();
     const handled: string[] = [];
+
     const record = (consumer: string) =>
       on(orderPlacedV1, async (event) => void handled.push(`${consumer}:${event.id}`), {
         consumer,
         processed,
       });
+
     subscribeAll(bus, [record('billing'), record('shipping')]);
 
     await bus.publish([placedV1('evt-1'), placedV1('evt-1'), placedV1('evt-2')]);
@@ -143,10 +152,12 @@ describe('subscribeAll', () => {
   it('returns one subscription that removes every handler', async () => {
     const bus = new InMemoryEventBus();
     const handled: string[] = [];
+
     const subscription = subscribeAll(bus, [
       on(orderPlacedV1, async (event) => void handled.push(event.id)),
       on(invoiceIssued, async (event) => void handled.push(event.id)),
     ]);
+
     const invoice = invoiceIssued.create(
       { invoiceId: 'inv-1', orderId: 'order-1' },
       { id: 'evt-2', occurredAt: at },
@@ -179,6 +190,7 @@ describe('validatingPublisher', () => {
     await expect(
       publisher.publish([placedV1('evt-1'), rawEvent({ version: 2 })]),
     ).rejects.toBeInstanceOf(UnknownEventError);
+
     expect(bus.published).toEqual([]);
   });
 
@@ -190,6 +202,7 @@ describe('validatingPublisher', () => {
       code: 'INVALID_EVENT_PAYLOAD',
       issues: [{ path: 'total' }],
     });
+
     expect(bus.published).toEqual([]);
   });
 

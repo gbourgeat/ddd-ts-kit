@@ -12,6 +12,7 @@ const contractWith = (name: string, options: Partial<RedisStreamsEventBusOptions
     createBus() {
       const server = Server.connect(SERVER_URL);
       const bus = server.bus(options);
+
       return { bus, settle: () => server.settled(bus), close: () => server.dispose() };
     },
   });

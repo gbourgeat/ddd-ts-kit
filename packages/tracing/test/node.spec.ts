@@ -34,6 +34,7 @@ describe('initTracing', () => {
   it('starts an SDK with the tracker and the scrubbing processors installed', async () => {
     const exporter = new InMemorySpanExporter();
     const processor = new SimpleSpanProcessor(exporter);
+
     const tracing = initTracing({
       serviceName: 'billing',
       serviceVersion: '1.2.3',
@@ -42,7 +43,9 @@ describe('initTracing', () => {
       instrumentations: [],
       extraSpanProcessors: [processor],
     });
+
     configureTracing({ maxSpansPerName: 1 });
+
     const gateway = traceDependency(
       { ping: async (): Promise<void> => {} },
       { kind: 'gateway', className: 'Ping' },
@@ -57,18 +60,24 @@ describe('initTracing', () => {
       },
       { 'url.full': 'https://example.org/?token=abc' },
     );
+
     // Export waits for the detected resource attributes, and shutdown empties the exporter.
     await processor.forceFlush();
     const spans = [...exporter.getFinishedSpans()];
+
     await tracing.shutdown();
 
     const request = spans.find((span) => span.name === 'request');
+
     expect(spans.map((span) => span.name)).toEqual(['gateway.Ping.ping', 'request']);
+
     expect(request?.attributes).toEqual({
       'url.full': 'https://example.org/?token=REDACTED',
       [DROPPED_SPANS_ATTRIBUTE]: 1,
     });
+
     expect(request?.events[0]?.attributes).not.toHaveProperty('exception.message');
+
     expect(request?.resource.attributes).toMatchObject({
       'service.name': 'billing',
       'service.version': '1.2.3',

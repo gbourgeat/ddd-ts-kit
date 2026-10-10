@@ -1,0 +1,1 @@
+export const INTERNAL_ERROR_CODE = 'INTERNAL_ERROR';

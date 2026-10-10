@@ -76,7 +76,9 @@ message of an unexpected error never leaves the process. Log it from the `onErro
 ## Options shared by the adapters
 
 ```ts
-const options = {
+import type { ExecuteOptions } from '@ddd-ts-kit/http';
+
+const options: ExecuteOptions = {
   errorMapper,
   resolvePrincipal: (raw) => authenticate(raw), // throw UnauthorizedError to refuse
   onError: (error, { requestId, correlationId, operationId, problem }) => {
@@ -104,9 +106,12 @@ as `context.execution`:
 | `deadline` | arrival plus `requestTimeoutMs`, when the option is set |
 
 ```ts
-const options = {
+import { Clock, ExecutionScope } from '@ddd-ts-kit/kernel';
+
+const options: ExecuteOptions = {
   resolvePrincipal: principalResolver(authenticator), // of @ddd-ts-kit/auth: answers a Session
-  executionScope,          // the ExecutionScope of the application: app.resolve(EXECUTION_SCOPE)
+  executionScope: app.resolve(ExecutionScope), // the scope the application runs its use cases in
+  clock: app.resolve(Clock),
   requestTimeoutMs: 10_000,
 };
 ```
@@ -120,6 +125,41 @@ option that says when a request arrived, the system clock by default.
 
 Use cases still receive the actor explicitly: `new PlaceOrder(context.execution.actor, body)`,
 or `actorOf(context.principal)` of `@ddd-ts-kit/auth`, which reads the same actor.
+
+## In the composition root
+
+The package binds and resolves nothing: routes are a plain list and `ExecuteOptions` a plain
+object, both built where the server starts. What it takes from the application are ports,
+resolved by their class:
+
+```ts
+import { createApplication, defineContextModule, kernelModule } from '@ddd-ts-kit/di';
+import { ErrorMapper, createErrorMapper, type ExecuteOptions } from '@ddd-ts-kit/http';
+import { Clock, ExecutionScope } from '@ddd-ts-kit/kernel';
+
+const httpModule = defineContextModule({
+  name: 'http',
+  register(builder) {
+    builder.bind(ErrorMapper).toValue(createErrorMapper({ ORDER_ALREADY_SHIPPED: 409 }));
+  },
+});
+
+const app = createApplication({ modules: [kernelModule(), httpModule, orderingModule] });
+
+const options: ExecuteOptions = {
+  errorMapper: app.resolve(ErrorMapper),
+  executionScope: app.resolve(ExecutionScope),
+  clock: app.resolve(Clock),
+};
+```
+
+| What | Is | Why |
+|---|---|---|
+| `ErrorMapper` | a port: an abstract class, the class is the token | one per application, and the server and the contract generator must be given the same one; binding it is optional, `createErrorMapper(...)` in a constant works as well |
+| `ExecutionScope`, `Clock` | ports of the kernel | resolved from the application and handed over in the options |
+| `resolvePrincipal`, `withPrincipal`, `onError`, `requestId` | functions of `ExecuteOptions` | hooks of one server, written where it starts; the injectable side of authentication is the `Authenticator` of `@ddd-ts-kit/auth`, which `principalResolver` turns into `resolvePrincipal` |
+| the route list | a value, `readonly Route[]` | the result of `defineRoutes(...)`, passed to the mount and to `generateOpenApi` |
+| `Schema` | an interface of `@ddd-ts-kit/validation` | one value per request part, declared in the route |
 
 ## Pagination
 

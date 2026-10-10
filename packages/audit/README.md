@@ -14,7 +14,7 @@ npm i drizzle-orm      # only for @ddd-ts-kit/audit/drizzle
 
 | Entry | Holds | Imports |
 |---|---|---|
-| `@ddd-ts-kit/audit` | `InMemoryAuditTrail`, the three sources, `auditedFields`, `verifyChain`; re-exported from the kernel: `AuditEntry`, the `AuditTrail` and `AuditReader` ports and the types they name | the kernel only |
+| `@ddd-ts-kit/audit` | `InMemoryAuditTrail`, the three sources, `auditedFields`, the `AuditMasker` port and `hmacMasker`, `verifyChain`; re-exported from the kernel: `AuditEntry`, the `AuditTrail` and `AuditReader` ports and the types they name | the kernel only |
 | `@ddd-ts-kit/audit/knex` | `KnexAuditTrail`, `createAuditTables`, `dropAuditTables` | `knex` (optional peer) |
 | `@ddd-ts-kit/audit/drizzle` | `DrizzleAuditTrail`, `auditEntriesTable`, `auditChainsTable`, `auditGuardStatements` | `drizzle-orm` (optional peer) |
 | `@ddd-ts-kit/audit/testing` | `auditTrailContract` | `@ddd-ts-kit/testing` (optional peer), the runner you pass |
@@ -40,9 +40,11 @@ row, not the history).
 
 ## The entry
 
-The entry and the two ports are standard interfaces of the kernel, so that code which records
-or lists depends on the kernel alone; this package re-exports them, and holds everything that
-makes a trail tamper-evident: the chain, the sources, redaction, verification and the stores.
+The entry is a standard type of the kernel, and the two ports, `AuditTrail` and `AuditReader`,
+are abstract classes of the kernel, so that code which records or lists depends on the kernel
+alone. A port class is also what a binding is keyed by: there is no token beside it. This
+package re-exports them, and holds everything that makes a trail tamper-evident: the chain, the
+sources, redaction, verification and the stores.
 
 ```ts
 interface AuditEntry {
@@ -115,7 +117,9 @@ The first entry of a chain has `previousHash` equal to `GENESIS_HASH` (64 zeros)
 
 ## Wiring the sources
 
-Everything happens in the composition root. The order of the command middlewares matters:
+Everything happens in the composition root. Assembled by hand first; the same pieces bound in
+an application of `@ddd-ts-kit/di` come [after the four sources](#in-an-application-of-ddd-ts-kitdi).
+The order of the command middlewares matters:
 
 ```ts
 // src/platform/audit/audit.ts
@@ -236,6 +240,70 @@ await trail.record(auditRecordOf({ scope, clock, ids }, {
 This is infrastructure code. A call to the trail in `domain/` or `application/` is the defect
 this package exists to prevent.
 
+### In an application of `@ddd-ts-kit/di`
+
+The store is bound to both ports, and the masker to its own, each under its class:
+
+```ts
+// src/platform/audit/audit.module.ts
+import { AuditReader, AuditTrail } from '@ddd-ts-kit/kernel';
+import { defineContextModule } from '@ddd-ts-kit/di';
+import { AuditMasker, hmacMasker } from '@ddd-ts-kit/audit';
+import { KnexAuditTrail } from '@ddd-ts-kit/audit/knex';
+
+export const trail = new KnexAuditTrail(unitOfWork, { schema: 'audit' }); // the unit of work bound to `UnitOfWork` and `KnexContext`
+
+export const auditModule = defineContextModule({
+  name: 'audit',
+  register(builder) {
+    builder.bind(AuditTrail).toValue(trail);
+    builder.bind(AuditReader).toValue(trail);
+    builder.bind(AuditMasker).toValue(hmacMasker(config.auditMaskingSecret, { keyId: 'k1' }));
+  },
+});
+```
+
+`builder.bind(AuditTrail).toClass(KnexAuditTrail, [KnexContext])` binds a store with its default
+options instead, `KnexContext` being the port of `@ddd-ts-kit/knex`.
+
+The sources are installed where the buses are built. The command bus of `kernelModule()` runs
+the use case guard, then the unit of work; the audit middleware has to sit between the two, so
+the bus is given through the options:
+
+```ts
+// src/main.ts
+import { AuditTrail, InMemoryCommandBus, unitOfWorkMiddleware } from '@ddd-ts-kit/kernel';
+import { UseCaseGuard, createApplication, kernelModule } from '@ddd-ts-kit/di';
+import { authorizationModule } from '@ddd-ts-kit/auth/di';
+import { AuditMasker, auditDecisions, auditMiddleware } from '@ddd-ts-kit/audit';
+
+const source = { scope, clock, ids };
+
+const app = createApplication({
+  modules: [
+    kernelModule({
+      executionScope: scope,
+      clock,
+      ids,
+      unitOfWork,
+      commandBus: (resolve) =>
+        new InMemoryCommandBus()
+          .use((message, next, info) => resolve(UseCaseGuard).check(message, next, info))
+          .use(auditMiddleware(resolve(AuditTrail), { ...source, unitOfWork, masker: resolve(AuditMasker), fields }))
+          .use(unitOfWorkMiddleware(unitOfWork)),
+    }),
+    auditModule,
+    schedulingModule,
+    authorizationModule({ authorizer, onDecision: auditDecisions(trail, { ...source, sensitivePermissions: ['records:medical-file.read'] }) }),
+  ],
+  authorization: 'required',
+});
+```
+
+A handler or an adapter that needs the trail names the port in its dependencies and receives
+the store: `[AuditReader]` for the query that lists entries (see [Querying](#querying)),
+`[AuditTrail]` for the infrastructure adapter that records by hand.
+
 ## Redaction
 
 **By default an entry carries no payload.** `changes` exists only for what was declared:
@@ -279,15 +347,22 @@ personal data be erased. The two coexist as long as the chain never holds the da
    person for whoever holds the secret.
 3. **Crypto-shredding for erasure.** Write a masker that derives one key per data subject (or
    per tenant) from a key store, using the `MaskingSubject` it receives (`actorId`, `tenantId`,
-   `resource`):
+   `resource`). `AuditMasker` is a port, an abstract class with the one method `mask`: the
+   adapter `implements` it and is bound under it:
 
    ```ts
-   const perSubject: AuditMasker = {
-     mask: async (value, subject) => {
-       const key = await keys.keyOf(subject.resource?.id ?? subject.actorId); // created on first use
+   // infrastructure/external/per-subject-masker.ts
+   export class PerSubjectMasker implements AuditMasker {
+     constructor(private readonly keys: SubjectKeys) {}
+
+     async mask(value: AuditScalar, subject: MaskingSubject): Promise<string> {
+       const key = await this.keys.keyOf(subject.resource?.id ?? subject.actorId); // created on first use
+
        return hmacMasker(key.secret, { keyId: key.id }).mask(value, subject);
-     },
-   };
+     }
+   }
+
+   builder.bind(AuditMasker).toClass(PerSubjectMasker, [SubjectKeys]);
    ```
 
    Erasing a person is deleting their key: every mask made with it becomes a random-looking
@@ -423,7 +498,7 @@ it as a use case like any other, which makes it protected and audited by the mec
 // application/queries/list-audit-entries/list-audit-entries.query.ts
 import { AuthorizedQuery, type AuditEntry, type Page } from '@ddd-ts-kit/kernel';
 
-export class ListAuditEntriesQuery extends AuthorizedQuery<Page<AuditEntry>> { /* actor, filter, page */ }
+export class ListAuditEntriesQuery extends AuthorizedQuery<Page<AuditEntry>> { /* actor, tenantId, filter, page */ }
 
 // authorization: deny by default, one permission, flagged sensitive
 requires(ListAuditEntriesQuery, auditPermissions['trail.read']);
@@ -431,10 +506,25 @@ auditDecisions(trail, { ...source, sensitivePermissions: ['audit:trail.read'] })
 auditMiddleware(trail, { ...source, queries: [ListAuditEntriesQuery] });
 ```
 
+```ts
+// application/queries/list-audit-entries/list-audit-entries.handler.ts
+import { AuditReader, type AuditEntry, type Page } from '@ddd-ts-kit/kernel';
+import { QueryHandler } from '@ddd-ts-kit/kernel/declarations';
+
+@QueryHandler(ListAuditEntriesQuery, [AuditReader])
+export class ListAuditEntriesHandler {
+  constructor(private readonly reader: AuditReader) {}
+
+  execute(query: ListAuditEntriesQuery): Promise<Page<AuditEntry>> {
+    return this.reader.list({ ...query.filter, tenantId: query.tenantId }, query.page);
+  }
+}
+```
+
 Whoever reads the trail leaves an entry in it. The handler depends on `AuditReader` of the
-kernel, which `application/` may import. It scopes the filter to the tenant of
-the actor (an access scope computed by the authorizer), so one tenant never lists another's
-entries.
+kernel, which `application/` may import, and receives the store bound to it. It scopes the
+filter to the tenant of the actor (an access scope computed by the authorizer), so one tenant
+never lists another's entries.
 
 ## Limits
 

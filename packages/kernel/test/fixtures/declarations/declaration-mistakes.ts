@@ -1,11 +1,9 @@
-import { AuthorizedCommand, Command, Query, type Actor, type Clock, type CommandBus } from '../../../src/index.js';
+import { AuthorizedCommand, Clock, Command, IdGenerator, Query, type Actor, type CommandBus } from '../../../src/index.js';
 import {
   Adapter,
-  CLOCK,
   CommandHandler,
   DomainEventHandler,
   IntegrationEventHandler,
-  ID_GENERATOR,
   Policy,
   Public,
   QueryHandler,
@@ -15,12 +13,12 @@ import {
 } from '../../../src/declarations.js';
 import {
   PatientRegistered,
+  InMemoryVisitRepository,
   ScheduleVisit,
-  VISITS,
+  VisitRepository,
   VisitScheduled,
   scheduleVisits,
   type Visit,
-  type VisitRepository,
 } from './declared-clinic.js';
 
 /*
@@ -32,7 +30,7 @@ class CancelVisit extends AuthorizedCommand {}
 class CountVisits extends Query<number> {}
 
 // @ts-expect-error -- a handler of another message: it executes CancelVisit, not ScheduleVisit
-@CommandHandler(ScheduleVisit, [VISITS, CLOCK])
+@CommandHandler(ScheduleVisit, [VisitRepository, Clock])
 export class HandlerOfAnotherMessage {
   constructor(
     readonly visits: VisitRepository,
@@ -50,8 +48,8 @@ export class HandlerWithAnotherResult {
   }
 }
 
-// @ts-expect-error -- a token of the wrong type: ID_GENERATOR does not resolve to a Clock
-@CommandHandler(ScheduleVisit, [VISITS, ID_GENERATOR])
+// @ts-expect-error -- the wrong port: IdGenerator is not a Clock
+@CommandHandler(ScheduleVisit, [VisitRepository, IdGenerator])
 export class HandlerWithAWrongToken {
   constructor(
     readonly visits: VisitRepository,
@@ -64,8 +62,21 @@ export class HandlerWithAWrongToken {
 }
 
 // @ts-expect-error -- the tokens in the wrong order: the constructor takes the repository first
-@CommandHandler(ScheduleVisit, [CLOCK, VISITS])
+@CommandHandler(ScheduleVisit, [Clock, VisitRepository])
 export class HandlerWithTokensOutOfOrder {
+  constructor(
+    readonly visits: VisitRepository,
+    readonly clock: Clock,
+  ) {}
+
+  async execute(_command: ScheduleVisit): Promise<string> {
+    return 'visit-1';
+  }
+}
+
+// @ts-expect-error -- a class where its port is expected: the list names VisitRepository, not what implements it
+@CommandHandler(ScheduleVisit, [InMemoryVisitRepository, Clock])
+export class HandlerNamingAnAdapter {
   constructor(
     readonly visits: VisitRepository,
     readonly clock: Clock,
@@ -87,7 +98,7 @@ export class HandlerWithoutItsList {
 }
 
 // @ts-expect-error -- one token too many: the constructor takes one parameter
-@CommandHandler(ScheduleVisit, [VISITS, CLOCK])
+@CommandHandler(ScheduleVisit, [VisitRepository, Clock])
 export class HandlerWithOneTokenTooMany {
   constructor(readonly visits: VisitRepository) {}
 
@@ -97,7 +108,7 @@ export class HandlerWithOneTokenTooMany {
 }
 
 // @ts-expect-error -- one token missing: the constructor takes two parameters
-@QueryHandler(CountVisits, [VISITS])
+@QueryHandler(CountVisits, [VisitRepository])
 export class HandlerWithOneTokenMissing {
   constructor(
     readonly visits: VisitRepository,
@@ -117,16 +128,25 @@ export class ProtectedWithoutActor extends Command {}
 @Public({ audited: ['reason'] })
 export class AuditedWithoutTheField extends Command {}
 
-// @ts-expect-error -- the class does not implement the port its token stands for
-@Repository(VISITS)
+// @ts-expect-error -- the class does not implement its port: findById is missing
+@Repository(VisitRepository)
 export class NotARepository {
   async save(_visit: Visit): Promise<void> {}
 }
 
+// @ts-expect-error -- an adapter of another port: a Clock is no VisitRepository
+@Repository(VisitRepository)
+export class ClockInPlaceOfARepository implements Clock {
+  now(): Date {
+    return new Date(0);
+  }
+}
+
 // @ts-expect-error -- an abstract class cannot be bound
-@Adapter(VISITS)
+@Adapter(VisitRepository)
 export abstract class AbstractRepository implements VisitRepository {
   abstract save(visit: Visit): Promise<void>;
+
   abstract findById(id: string): Promise<Visit | undefined>;
 }
 
@@ -178,8 +198,8 @@ export class JobWithoutItsList {
   async run(): Promise<void> {}
 }
 
-// @ts-expect-error -- a token of the wrong type: CLOCK does not resolve to a CommandBus
-@Scheduled('clinic.with-a-wrong-token', { cron: '0 7 * * *' }, [CLOCK])
+// @ts-expect-error -- the wrong port: Clock is not a CommandBus
+@Scheduled('clinic.with-a-wrong-token', { cron: '0 7 * * *' }, [Clock])
 export class JobWithAWrongToken {
   constructor(readonly commands: CommandBus) {}
 

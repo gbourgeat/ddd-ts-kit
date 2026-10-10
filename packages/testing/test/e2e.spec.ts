@@ -29,41 +29,52 @@ interface OrderView {
  */
 class OrderingApplication implements DatabaseReset {
   readonly events = new InMemoryEventBus();
-  readonly #orders = new Map<string, OrderView>();
+
+  private readonly orders = new Map<string, OrderView>();
 
   async reset(): Promise<void> {
-    this.#orders.clear();
+    this.orders.clear();
   }
 
   readonly handle = (request: IncomingMessage, response: ServerResponse): void => {
-    void this.#route(request, response);
+    void this.route(request, response);
   };
 
-  async #route(request: IncomingMessage, response: ServerResponse): Promise<void> {
+  private async route(request: IncomingMessage, response: ServerResponse): Promise<void> {
     const { method, url } = request;
-    if (method === 'POST' && url === '/orders') return this.#place(request, response);
+
+    if (method === 'POST' && url === '/orders') return this.place(request, response);
+
     if (method === 'GET' && url === '/health') return send(response, 200, 'text/plain', 'up');
+
     if (method === 'GET' && url === '/headers') return sendJson(response, 200, request.headers);
+
     if (method === 'DELETE') return send(response, 204);
+
     if (method === 'PUT' || method === 'PATCH') {
       return sendJson(response, 200, { method, received: await readJson(request) });
     }
-    const order = this.#orders.get(url?.replace('/orders/', '') ?? '');
+
+    const order = this.orders.get(url?.replace('/orders/', '') ?? '');
+
     return order === undefined ? sendProblem(response, 404, 'NOT_FOUND') : sendJson(response, 200, order);
   }
 
-  async #place(request: IncomingMessage, response: ServerResponse): Promise<void> {
+  private async place(request: IncomingMessage, response: ServerResponse): Promise<void> {
     const body = await readJson(request);
+
     if (!isPlaceOrderRequest(body) || body.lines.length === 0) {
       return sendProblem(response, 422, 'EMPTY_ORDER');
     }
+
     const order: OrderView = {
-      id: `order-${this.#orders.size + 1}`,
+      id: `order-${this.orders.size + 1}`,
       customerId: body.customerId,
       status: 'placed',
       placedBy: request.headers.authorization ?? null,
     };
-    this.#orders.set(order.id, order);
+
+    this.orders.set(order.id, order);
     setTimeout(() => void this.events.publish([orderPlaced(order)]), 30);
     sendJson(response, 201, order);
   }
@@ -85,7 +96,9 @@ function isPlaceOrderRequest(body: unknown): body is PlaceOrderRequest {
 
 async function readJson(request: IncomingMessage): Promise<unknown> {
   let text = '';
+
   for await (const chunk of request.setEncoding('utf8')) text += chunk;
+
   return text === '' ? undefined : JSON.parse(text);
 }
 
@@ -95,11 +108,13 @@ function sendJson(response: ServerResponse, status: number, body: unknown): void
 
 function sendProblem(response: ServerResponse, status: number, code: string): void {
   const problem = { type: `urn:problem:${code}`, title: 'Refused', status, code, detail: 'Read the code' };
+
   send(response, status, 'application/problem+json; charset=utf-8', JSON.stringify(problem));
 }
 
 function send(response: ServerResponse, status: number, contentType?: string, body?: string): void {
   if (contentType !== undefined) response.setHeader('Content-Type', contentType);
+
   response.statusCode = status;
   response.end(body);
 }
@@ -213,7 +228,9 @@ describe('eventually', () => {
 
     const value = await eventually(() => {
       attempts += 1;
+
       if (attempts < 3) throw new Error('not yet');
+
       return 'projected';
     }, { intervalMs: 1 });
 
@@ -231,6 +248,7 @@ describe('eventually', () => {
 
   it('fails with the last error once the time is up', async () => {
     let attempts = 0;
+
     const never = eventually(() => {
       attempts += 1;
       throw new Error(`projection is ${attempts} event(s) behind`);
@@ -239,10 +257,12 @@ describe('eventually', () => {
     const failure: unknown = await never.catch((error: unknown) => error);
 
     expect(failure).toBeInstanceOf(Error);
+
     expect(failure).toMatchObject({
       message: `Still failing after 40 ms: projection is ${attempts} event(s) behind`,
       cause: { message: `projection is ${attempts} event(s) behind` },
     });
+
     expect(attempts).toBeGreaterThan(1);
   });
 });
@@ -250,16 +270,19 @@ describe('eventually', () => {
 describe('collectEvents', () => {
   it('records what the application publishes, as another context would receive it', async () => {
     const events = collectEvents(application.events, ['ordering.order.placed']);
+
     const request = anOrder()
       .placedBy(generated((faker) => ({ id: faker.string.uuid(), name: faker.person.fullName() })))
       .withLine(aLine())
       .buildRequest();
 
     const { body: order } = expectStatus(await server.client.post<OrderView>('/orders', request), 201);
+
     const announced = await events.waitFor<{ orderId: string }>(
       'ordering.order.placed',
       (event) => event.payload.orderId === order.id,
     );
+
     events.stop();
 
     expect(announced.id).toBe(`event-${order.id}`);
@@ -295,6 +318,7 @@ describe('collectEvents', () => {
   it('says what it received when the awaited event never comes', async () => {
     const bus = new InMemoryEventBus();
     const events = collectEvents(bus, ['ordering.order.placed']);
+
     await bus.publish([orderPlaced(view('order-1'))]);
 
     const waiting = events.waitFor('ordering.order.placed', (event) => event.id === 'event-order-9', {

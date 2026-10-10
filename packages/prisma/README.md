@@ -90,39 +90,72 @@ Contexts never relate to each other's models: no `@relation` across schemas.
 
 ## Composition root
 
+`PrismaContext` is the client repositories and stores run their queries on. It is generic over
+the transaction client of your generated client, so the project names its own database with a
+class, which is then the injection token:
+
 ```ts
-// main.ts
+// platform/database/database.ts
+import { PrismaContext } from '@ddd-ts-kit/prisma';
+import type { Prisma } from '../../generated/prisma/client.js';
+
+export abstract class Database extends PrismaContext<Prisma.TransactionClient> {}
+```
+
+`createPrismaUnitOfWork(prisma)` gives one object that is both the kernel `UnitOfWork` and
+that `Database`. Bind it to both:
+
+```ts
+// platform/database/persistence.module.ts
 import { PrismaPg } from '@prisma/adapter-pg';
-import { InMemoryCommandBus, SystemClock, unitOfWorkMiddleware } from '@ddd-ts-kit/kernel';
-import { OutboxPublisher, OutboxRelay } from '@ddd-ts-kit/events';
+import { defineContextModule } from '@ddd-ts-kit/di';
+import { IntegrationEventPublisher, ProcessedEventStore, UnitOfWork } from '@ddd-ts-kit/kernel';
+import { OutboxPublisher, OutboxStore } from '@ddd-ts-kit/events';
 import {
   createPrismaUnitOfWork,
   PrismaOutboxStore,
   PrismaProcessedEventStore,
 } from '@ddd-ts-kit/prisma';
-import { PrismaClient } from './generated/prisma/client.js';
+import { PrismaClient } from '../../generated/prisma/client.js';
+import { Database } from './database.js';
 
 const prisma = new PrismaClient({
   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
 });
 const unitOfWork = createPrismaUnitOfWork(prisma);
-
-// Every command runs in one transaction; handlers do not know it.
-const commandBus = new InMemoryCommandBus().use(unitOfWorkMiddleware(unitOfWork));
-
 const outboxStore = new PrismaOutboxStore(unitOfWork, {
   delegate: (client) => client.messagingOutboxRecord,
   claim: { strategy: 'skip-locked', dialect: 'postgresql', schema: 'messaging', raw: (client) => client },
 });
-const publisher = new OutboxPublisher(outboxStore); // what handlers publish to
-const processed = new PrismaProcessedEventStore(unitOfWork, {
-  delegate: (client) => client.messagingProcessedEvent,
-});
-const invoices = new PrismaInvoiceRepository(unitOfWork);
 
-const relay = new OutboxRelay({ store: outboxStore, publisher: broker, clock: new SystemClock() });
+export const persistenceModule = defineContextModule({
+  name: 'persistence',
+  register(builder) {
+    builder.rebind(UnitOfWork).toValue(unitOfWork);
+    builder.bind(Database).toValue(unitOfWork);
+    builder.bind(OutboxStore).toValue(outboxStore);
+    builder.rebind(ProcessedEventStore).toFactory(
+      (resolve) =>
+        new PrismaProcessedEventStore(resolve(Database), { delegate: (client) => client.messagingProcessedEvent }),
+    );
+    builder.rebind(IntegrationEventPublisher).toClass(OutboxPublisher, [OutboxStore]);
+  },
+});
+```
+
+```ts
+// main.ts
+const app = createApplication({ modules: [kernelModule(), persistenceModule, billingModule] });
+
+const relay = new OutboxRelay({ store: app.resolve(OutboxStore), publisher: broker, clock: app.resolve(Clock) });
 relay.start({ intervalMs: 500 });
 ```
+
+List the module after `kernelModule()`: `rebind` replaces its in-memory defaults. The command
+bus of the kernel module runs every command in the bound `UnitOfWork`; handlers do not know it.
+The stores are built here and not by `toClass`, because both need to be told how to reach
+their model. The outbox store takes the unit of work itself, not only the context: its
+`skip-locked` claim opens a short transaction of its own.
 
 `unitOfWork.run(work)` opens the interactive `prisma.$transaction` and keeps the transaction
 client in an `AsyncLocalStorage`; a nested `run` joins the outer transaction. `delegate` is a
@@ -136,45 +169,62 @@ forwards the options of `$transaction`.
 
 ## Repository
 
-A repository receives the context, never a transaction. `client()` is the transaction client
-of the unit of work when there is one and the root client otherwise.
+The port lives in the domain, the adapter in infrastructure. A repository receives the
+database, never a transaction: `client()` is the transaction client of the unit of work when
+there is one and the root client otherwise.
+
+```ts
+// contexts/billing-core/domain/repositories/invoice.repository.ts
+import { Repository } from '@ddd-ts-kit/kernel';
+
+export abstract class InvoiceRepository extends Repository<Invoice> {}
+```
 
 ```ts
 // contexts/billing-core/infrastructure/persistence/prisma-invoice.repository.ts
-import type { Repository } from '@ddd-ts-kit/kernel';
-import { optimisticUpdate, type PrismaContext } from '@ddd-ts-kit/prisma';
-import type { Prisma } from '../../../../generated/prisma/client.js';
+import { Repository } from '@ddd-ts-kit/kernel/declarations';
+import { optimisticUpdate } from '@ddd-ts-kit/prisma';
 
-export class PrismaInvoiceRepository implements Repository<Invoice> {
-  constructor(private readonly context: PrismaContext<Prisma.TransactionClient>) {}
+@Repository(InvoiceRepository, [Database])
+export class PrismaInvoiceRepository implements InvoiceRepository {
+  constructor(private readonly database: Database) {}
 
   async findById(id: string): Promise<Invoice | undefined> {
-    const row = await this.context.client().invoice.findUnique({ where: { id } });
+    const row = await this.database.client().invoice.findUnique({ where: { id } });
+
     if (row === null) {
       return undefined;
     }
+
     const invoice = InvoiceMapper.toDomain(row);
     invoice.version = row.version;
+
     return invoice;
   }
 
   async save(invoice: Invoice): Promise<void> {
-    const invoices = this.context.client().invoice;
+    const invoices = this.database.client().invoice;
+
     await optimisticUpdate(invoice, async ({ expected, next }) => {
       const row = { ...invoice.state, version: next };
       const written =
         expected === 0
           ? await invoices.createMany({ data: [row], skipDuplicates: true })
           : await invoices.updateMany({ where: { id: invoice.id, version: expected }, data: row });
+
       return written.count;
     });
   }
 }
 ```
 
+Without the decorator, the same binding is one line of the module of the context:
+`builder.bind(InvoiceRepository).toClass(PrismaInvoiceRepository, [Database])`.
+
 `Prisma.TransactionClient` is the type of `client()` for a plain client. An extended client
 (`prisma.$extends(...)`) has a transaction client type of its own, which Prisma does not make
-assignable to it: write `PrismaContext<PrismaTransactionClient<typeof prisma>>` instead.
+assignable to it: declare `Database` as `PrismaContext<PrismaTransactionClient<typeof prisma>>`
+instead.
 
 `optimisticUpdate` gives the version to expect and the version to write, raises a
 `ConcurrencyError` (a `DomainError` with code `CONCURRENCY_CONFLICT`) when the guarded
@@ -214,36 +264,41 @@ No `@default(now())` and no `@updatedAt` on them: the instant is the one of the 
 Prisma's own attributes know nothing of who acts.
 
 ```ts
-import { stampCreation, stampUpdate, tenantScopeOf } from '@ddd-ts-kit/kernel';
+import { Clock, ExecutionScope, stampCreation, stampUpdate, tenantScopeOf } from '@ddd-ts-kit/kernel';
+import { Repository } from '@ddd-ts-kit/kernel/declarations';
 
-export class PrismaInvoiceRepository implements Repository<Invoice> {
+@Repository(InvoiceRepository, [Database, ExecutionScope, Clock])
+export class PrismaInvoiceRepository implements InvoiceRepository {
   constructor(
-    private readonly context: PrismaContext<Prisma.TransactionClient>,
-    private readonly scope: ExecutionScope, // EXECUTION_SCOPE
+    private readonly database: Database,
+    private readonly scope: ExecutionScope,
     private readonly clock: Clock,
   ) {}
 
   async findById(id: string): Promise<Invoice | undefined> {
     // findFirst, not findUnique: the tenant is part of every condition, and it is not part of the key.
-    const row = await this.context.client().invoice.findFirst({ where: { id, ...tenantScopeOf(this.scope) } });
+    const row = await this.database.client().invoice.findFirst({ where: { id, ...tenantScopeOf(this.scope) } });
+
     return row === null ? undefined : InvoiceMapper.toDomain(row);
   }
 
   async save(invoice: Invoice): Promise<void> {
     await optimisticUpdate(invoice, async ({ expected, next }) => {
       const state = { ...InvoiceMapper.toRow(invoice), version: next };
-      const written = expected === 0 ? await this.#insert(state) : await this.#update(state, expected);
+      const written = expected === 0 ? await this.insert(state) : await this.update(state, expected);
+
       return written.count;
     });
   }
 
-  #insert(state: VersionedInvoice): Promise<Prisma.BatchPayload> {
+  private insert(state: VersionedInvoice): Promise<Prisma.BatchPayload> {
     const row = { ...state, ...tenantScopeOf(this.scope), ...stampCreation(this.scope, this.clock) };
-    return this.context.client().invoice.createMany({ data: [row], skipDuplicates: true });
+
+    return this.database.client().invoice.createMany({ data: [row], skipDuplicates: true });
   }
 
-  #update(state: VersionedInvoice, expected: number): Promise<Prisma.BatchPayload> {
-    return this.context.client().invoice.updateMany({
+  private update(state: VersionedInvoice, expected: number): Promise<Prisma.BatchPayload> {
+    return this.database.client().invoice.updateMany({
       where: { id: state.id, version: expected, ...tenantScopeOf(this.scope) },
       data: { ...state, ...stampUpdate(this.scope, this.clock) },
     });
@@ -254,15 +309,30 @@ export class PrismaInvoiceRepository implements Repository<Invoice> {
 A list query takes the kernel `PageRequest` and answers a `Page`, in both variants:
 
 ```ts
-import { decodeCursor, encodeCursor, pageOf } from '@ddd-ts-kit/kernel';
+// contexts/billing-core/application/ports/invoice-queries.port.ts
+export abstract class InvoiceQueries {
+  abstract list(request: PageRequest<'amount'>): Promise<Page<InvoiceSummary>>;
+}
+```
 
-export class PrismaInvoiceQueries {
+```ts
+// contexts/billing-core/infrastructure/persistence/prisma-invoice.queries.ts
+import { ExecutionScope, encodeCursor, pageOf, tenantScopeOf } from '@ddd-ts-kit/kernel';
+import { Adapter } from '@ddd-ts-kit/kernel/declarations';
+
+@Adapter(InvoiceQueries, [Database, ExecutionScope])
+export class PrismaInvoiceQueries implements InvoiceQueries {
+  constructor(
+    private readonly database: Database,
+    private readonly scope: ExecutionScope,
+  ) {}
+
   async list(request: PageRequest<'amount'>): Promise<Page<InvoiceSummary>> {
-    return request.kind === 'offset' ? this.#byOffset(request) : this.#byCursor(request);
+    return request.kind === 'offset' ? this.byOffset(request) : this.byCursor(request);
   }
 
-  async #byOffset(request: OffsetPageRequest<'amount'>): Promise<Page<InvoiceSummary>> {
-    const { invoice } = this.context.client();
+  private async byOffset(request: OffsetPageRequest<'amount'>): Promise<Page<InvoiceSummary>> {
+    const { invoice } = this.database.client();
     const where = tenantScopeOf(this.scope);
     const rows = await invoice.findMany({
       where,
@@ -270,13 +340,14 @@ export class PrismaInvoiceQueries {
       take: request.limit,
       skip: request.offset,
     });
+
     return pageOf(rows.map(toSummary), { total: await invoice.count({ where }) });
   }
 
-  async #byCursor(request: CursorPageRequest<'amount'>): Promise<Page<InvoiceSummary>> {
+  private async byCursor(request: CursorPageRequest<'amount'>): Promise<Page<InvoiceSummary>> {
     const direction = directionOf(request);
     const tenant = tenantScopeOf(this.scope);
-    const rows = await this.context.client().invoice.findMany({
+    const rows = await this.database.client().invoice.findMany({
       where: request.cursor === undefined ? tenant : beyond(positionOf(request.cursor), direction, tenant),
       orderBy: totalOrder(direction),
       take: request.limit + 1,
@@ -284,6 +355,7 @@ export class PrismaInvoiceQueries {
     const items = rows.slice(0, request.limit);
     const last = items.at(-1);
     const more = rows.length > request.limit && last !== undefined;
+
     return pageOf(items.map(toSummary), more ? { nextCursor: encodeCursor({ amount: last.amount, id: last.id }) } : {});
   }
 }
@@ -303,6 +375,7 @@ function beyond(
   tenant: TenantScoped,
 ): Prisma.InvoiceWhereInput {
   const past = direction === 'asc' ? 'gt' : 'lt';
+
   return { ...tenant, OR: [{ amount: { [past]: amount } }, { amount, id: { [past]: id } }] };
 }
 ```

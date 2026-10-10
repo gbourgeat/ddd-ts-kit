@@ -1,13 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { FixedClock } from '@ddd-ts-kit/kernel';
-import { CLOCK, createApplication, kernelModule, override } from '../src/index.js';
-import { billingModule, orderingModule } from './support/ordering.js';
+import { Clock, FixedClock } from '@ddd-ts-kit/kernel';
+import { createApplication, kernelModule, override } from '../src/index.js';
+import { billingModule } from './support/billing/billing.module.js';
+import { orderingModule } from './support/ordering/ordering.module.js';
 
 describe('application.describe', () => {
   const app = createApplication({
     modules: [kernelModule(), orderingModule, billingModule],
-    overrides: [override(CLOCK, new FixedClock(new Date(0)))],
+    overrides: [override(Clock, new FixedClock(new Date(0)))],
   });
+
   const description = app.describe();
 
   it('lists the modules, in order', () => {
@@ -16,7 +18,7 @@ describe('application.describe', () => {
 
   it('lists every binding with its kind, lifetime, source and dependencies, by name', () => {
     expect(description.bindings).toContainEqual({
-      token: 'ordering.OrderRepository',
+      token: 'OrderRepository',
       module: 'ordering',
       kind: 'repository',
       lifetime: 'singleton',
@@ -25,6 +27,7 @@ describe('application.describe', () => {
       dependencies: [],
       overridden: false,
     });
+
     expect(description.bindings).toContainEqual({
       token: 'PlaceOrderHandler',
       module: 'ordering',
@@ -32,11 +35,12 @@ describe('application.describe', () => {
       lifetime: 'singleton',
       source: 'class',
       implementation: 'PlaceOrderHandler',
-      dependencies: ['ordering.OrderRepository', 'kernel.EventPublisher', 'kernel.IdGenerator', 'kernel.Clock'],
+      dependencies: ['OrderRepository', 'IntegrationEventPublisher', 'IdGenerator', 'Clock'],
       overridden: false,
     });
+
     expect(description.bindings).toContainEqual({
-      token: 'kernel.Clock',
+      token: 'Clock',
       module: 'kernel',
       lifetime: 'singleton',
       source: 'factory',
@@ -51,9 +55,11 @@ describe('application.describe', () => {
       { message: 'CancelOrder', handler: 'CancelOrderHandler', module: 'ordering' },
       { message: 'IssueInvoice', handler: 'IssueInvoiceHandler', module: 'billing' },
     ]);
+
     expect(description.queries).toEqual([
       { message: 'GetOrder', handler: 'GetOrderHandler', module: 'ordering' },
     ]);
+
     expect(description.integrationEventHandlers).toEqual([
       {
         event: 'ordering.order.placed',
@@ -63,7 +69,8 @@ describe('application.describe', () => {
         module: 'billing',
       },
     ]);
-    expect(description.overrides).toEqual(['kernel.Clock']);
+
+    expect(description.overrides).toEqual(['Clock']);
   });
 
   it('is plain data that survives serialization', () => {

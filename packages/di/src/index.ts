@@ -2,104 +2,72 @@
 // though this package never uses decorators. Importing it here, before tsyringe, spares
 // consumers a line they would otherwise have to remember in every entry point and test.
 import 'reflect-metadata';
-import type { IntegrationEventHandler } from './consumer.js';
 
-export { token, describeToken, type Token } from './token.js';
-export { WiringError, type WiringErrorCode } from './errors.js';
-export {
-  defineContextModule,
-  type BindingAspect,
-  type BindingAspectInfo,
-  type BindingOptions,
-  type BindingSource,
-  type BindingTarget,
-  type ContextModule,
-  type DependencyKind,
-  type DependencyList,
-  type DependencyTokens,
-  type HandlerTarget,
-  type Lifetime,
-  type MessageHandler,
-  type ModuleBuilder,
-  type ModuleContext,
-  type ProtectedUseCaseTarget,
-  type Resolve,
-  type UseCaseTarget,
-  type ValueBindingOptions,
-} from './module.js';
-export { contextModule } from './context-module.js';
-export type { DeclaredSource } from './declared.js';
-export type { Declarer, PolicyBinding } from './wiring.js';
-export {
-  UnreadableEventError,
-  type ConsumerOptions,
-  type ConsumerRuntime,
-  type EventContract,
-  type IntegrationEventHandler,
-} from './consumer.js';
-export type { JobsOptions } from './jobs.js';
-export {
-  createApplication,
-  override,
-  overrideForTests,
-  type Application,
-  type ApplicationOptions,
-  type BindingInfo,
-  type Decorate,
-  type Override,
-} from './application.js';
+export { describeToken, tokenIdentity, type Token } from '@ddd-ts-kit/kernel/declarations';
+export { WiringError, type WiringErrorCode } from './errors/wiring-error.js';
+export type { DependencyKind } from '@ddd-ts-kit/kernel';
+export type {
+  BindingAspect,
+  BindingAspectInfo,
+  DependencyList,
+  DependencyTokens,
+  EventContract,
+  IntegrationEventHandler,
+  MessageHandler,
+  PermissionRef,
+  ResourcePointer,
+} from '@ddd-ts-kit/kernel/declarations';
+export type { BindingOptions } from './module/binding-options.js';
+export type { BindingTarget } from './module/binding-target.js';
+export type { ContextModule } from './module/context-module.js';
+export { defineContextModule } from './module/define-context-module.js';
+export type { HandlerTarget } from './module/handler-target.js';
+export type { ModuleBuilder } from './module/module-builder.js';
+export type { ModuleContext } from './module/module-context.js';
+export type { ProtectedUseCaseTarget } from './module/protected-use-case-target.js';
+export type { UseCaseTarget } from './module/use-case-target.js';
+export type { ValueBindingOptions } from './module/value-binding-options.js';
+export type { BindingSource } from './wiring/binding-source.js';
+export type { Declarer } from './wiring/declarer.js';
+export type { Lifetime } from './wiring/lifetime.js';
+export type { PolicyBinding } from './wiring/policy-binding.js';
+export type { Resolve } from './wiring/resolve.js';
+export { contextModule } from './declared/context-module.js';
+export type { DeclaredSource } from './declared/declared-source.js';
+export type { ConsumerOptions } from './consumer/consumer-options.js';
+export type { ConsumerRuntime } from './consumer/consumer-runtime.js';
+export { UnreadableEventError } from './consumer/unreadable-event-error.js';
+export type { JobsOptions } from './jobs/jobs-options.js';
+export type { ApplicationOptions } from './application/application-options.js';
+export type { Application } from './application/application.js';
+export type { BindingInfo } from './application/binding-info.js';
+export { createApplication } from './application/create-application.js';
+export type { Decorate } from './application/decorate.js';
+export { overrideForTests } from './application/override-for-tests.js';
+export { override, type Override } from './application/override.js';
 export type {
   BindingDescription,
   DomainEventHandlerDescription,
   HandlerDescription,
   IntegrationEventHandlerDescription,
-  ScheduledJobDescription,
   OriginDescription,
   PolicyDescription,
+  ScheduledJobDescription,
   WiringDescription,
-} from './description.js';
-export {
-  ACTOR_CONTEXT,
-  CACHE,
-  CLOCK,
-  COMMAND_BUS,
-  DOMAIN_EVENTS,
-  EVENT_BUS,
-  EVENT_PUBLISHER,
-  EVENT_SUBSCRIBER,
-  EXECUTION_SCOPE,
-  ID_GENERATOR,
-  JOB_SCHEDULER,
-  LOCK,
-  LOGGER,
-  METRICS,
-  PROCESSED_EVENTS,
-  QUERY_BUS,
-  RATE_LIMITER,
-  UNIT_OF_WORK,
-} from './kernel-tokens.js';
-export {
-  DECLARED_POLICIES,
-  USE_CASE_DECLARATIONS,
-  USE_CASE_GUARD,
-  type AuthorizationMode,
-} from './authorization.js';
-export type {
-  PermissionRef,
-  RequirementOptions,
-  ResourcePointer,
-  UseCaseAccess,
-  UseCaseDeclaration,
-} from './use-case-access.js';
-export { kernelModule, type KernelModuleOptions, type Provided } from './kernel-module.js';
-export {
-  createTestApplication,
-  fake,
-  type TestApplication,
-  type TestApplicationOptions,
-  type TestJobs,
-  type TestKernel,
-} from './testing.js';
-
-/** @deprecated Renamed `IntegrationEventHandler`, as in `@ddd-ts-kit/kernel/declarations`. */
-export type IntegrationEventHandlerInstance<Payload> = IntegrationEventHandler<Payload>;
+} from './description/wiring-description.js';
+export type { AuthorizationMode } from './authorization/authorization-mode.js';
+export { DeclaredPolicies } from './authorization/declared-policies.js';
+export type { RequirementOptions } from './authorization/requirement-options.js';
+export type { UseCaseAccess } from './authorization/use-case-access.js';
+export type { UseCaseDeclaration } from './authorization/use-case-declaration.js';
+export { UseCaseDeclarations } from './authorization/use-case-declarations.js';
+export { UseCaseGuard } from './authorization/use-case-guard.js';
+export type { KernelModuleOptions } from './kernel/kernel-module-options.js';
+export { kernelModule } from './kernel/kernel-module.js';
+export type { Provided } from './kernel/provided.js';
+export { createTestApplication } from './testing/create-test-application.js';
+export { fake } from './testing/fake.js';
+export type { TestApplicationOptions } from './testing/test-application-options.js';
+export type { TestApplication } from './testing/test-application.js';
+export type { TestJobs } from './testing/test-jobs.js';
+export type { TestKernel } from './testing/test-kernel.js';

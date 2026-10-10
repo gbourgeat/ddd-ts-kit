@@ -1,8 +1,8 @@
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
-import type { Invoice, InvoiceRepository } from '../../domain/repositories/invoice.repository.js';
-import { INVOICES } from '../../application/ports/billing.ports.js';
+import type { Invoice } from '../../domain/invoice.js';
+import { InvoiceRepository } from '../../domain/repositories/invoice.repository.js';
 
-@Repository(INVOICES)
+@Repository(InvoiceRepository)
 export class InMemoryInvoiceRepository implements InvoiceRepository {
   readonly invoices = new Map<string, Invoice>();
 

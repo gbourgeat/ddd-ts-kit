@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
+  ActorContext,
+  EventBus,
+  ExecutionScope,
+  IntegrationEventPublisher,
   executionContext,
   scopedPublisher,
   systemActor,
@@ -8,17 +12,11 @@ import {
   type IntegrationEvent,
   type Session,
 } from '@ddd-ts-kit/kernel';
-import {
-  ACTOR_CONTEXT,
-  EVENT_BUS,
-  EVENT_PUBLISHER,
-  EXECUTION_SCOPE,
-  createApplication,
-  createTestApplication,
-  defineContextModule,
-  kernelModule,
-} from '../src/index.js';
-import { OrderPlaced, PlaceOrder, orderPlaced, orderingModule } from './support/ordering.js';
+import { createApplication, createTestApplication, defineContextModule, kernelModule } from '../src/index.js';
+import { PlaceOrder } from './support/ordering/application/commands/place-order/place-order.command.js';
+import { orderingModule } from './support/ordering/ordering.module.js';
+import { orderPlaced } from './support/ordering/published-language/order-placed-event.js';
+import { OrderPlaced } from './support/ordering/published-language/order-placed.js';
 
 const ada: Actor = { id: 'ada', type: 'user', tenantId: 'acme', roles: ['accountant'], attributes: {} };
 const bob: Actor = { id: 'bob', type: 'user', roles: ['clerk'], attributes: {} };
@@ -40,7 +38,7 @@ function auditing(seen: (ExecutionContext | undefined)[], actorOf?: (event: Inte
       builder
         .on(OrderPlaced, { consumer: 'audit.order-placed', ...(actorOf === undefined ? {} : { actorOf }) })
         .handledByFactory((resolve) => ({
-          handle: async () => void seen.push(resolve(EXECUTION_SCOPE).current()),
+          handle: async () => void seen.push(resolve(ExecutionScope).current()),
         }));
     },
   });
@@ -55,9 +53,10 @@ describe('a consumer declared with builder.on', () => {
   it('handles each event in the execution scope: origin event, its correlation, the event as cause', async () => {
     const seen: (ExecutionContext | undefined)[] = [];
     const app = createApplication({ modules: [kernelModule(), auditing(seen)] });
+
     await app.start();
 
-    await app.resolve(EVENT_BUS).publish([placed('event-1', 'corr-1'), placed('event-2')]);
+    await app.resolve(EventBus).publish([placed('event-1', 'corr-1'), placed('event-2')]);
 
     expect(seen).toEqual([
       {
@@ -75,23 +74,27 @@ describe('a consumer declared with builder.on', () => {
         extensions: {},
       },
     ]);
-    expect(app.resolve(EXECUTION_SCOPE).current()).toBeUndefined();
+
+    expect(app.resolve(ExecutionScope).current()).toBeUndefined();
   });
 
   it('is the current actor of infrastructure while it handles', async () => {
     const actors: (string | undefined)[] = [];
+
     const reading = defineContextModule({
       name: 'reading',
       register(builder) {
         builder.on(OrderPlaced, { consumer: 'reading.order-placed' }).handledByFactory((resolve) => ({
-          handle: async () => void actors.push(resolve(ACTOR_CONTEXT).current()?.id),
+          handle: async () => void actors.push(resolve(ActorContext).current()?.id),
         }));
       },
     });
+
     const app = createApplication({ modules: [kernelModule(), reading] });
+
     await app.start();
 
-    await app.resolve(EVENT_BUS).publish([placed('event-1')]);
+    await app.resolve(EventBus).publish([placed('event-1')]);
 
     expect(actors).toEqual(['system:reading.order-placed']);
   });
@@ -99,23 +102,27 @@ describe('a consumer declared with builder.on', () => {
   it('acts as the actor the project reads from its own envelope', async () => {
     const seen: (ExecutionContext | undefined)[] = [];
     const app = createApplication({ modules: [kernelModule(), auditing(seen, () => ada)] });
+
     await app.start();
 
-    await app.resolve(EVENT_BUS).publish([placed('event-1')]);
+    await app.resolve(EventBus).publish([placed('event-1')]);
 
     expect(seen).toMatchObject([{ actor: ada, tenantId: 'acme' }]);
   });
 
   it('continues the correlation of the command that published the event, through a scoped publisher', async () => {
     const seen: (ExecutionContext | undefined)[] = [];
+
     const kernel = kernelModule({
-      eventPublisher: (resolve) => scopedPublisher(resolve(EVENT_BUS), resolve(EXECUTION_SCOPE)),
+      eventPublisher: (resolve) => scopedPublisher(resolve(EventBus), resolve(ExecutionScope)),
     });
+
     const app = createApplication({ modules: [kernel, orderingModule, auditing(seen)] });
+
     await app.start();
     const request = executionContext({ correlationId: 'corr-7', actor: ada, origin: 'http' });
 
-    await app.resolve(EXECUTION_SCOPE).run(request, () => app.resolve(EVENT_PUBLISHER).publish([placed('event-1')]));
+    await app.resolve(ExecutionScope).run(request, () => app.resolve(IntegrationEventPublisher).publish([placed('event-1')]));
 
     expect(seen).toMatchObject([{ correlationId: 'corr-7', causationId: 'event-1', origin: 'event' }]);
   });
@@ -123,6 +130,7 @@ describe('a consumer declared with builder.on', () => {
   it('handles events in the scope of a test application too, and gives the test its actor back', async () => {
     const seen: (ExecutionContext | undefined)[] = [];
     const app = createTestApplication({ modules: [orderingModule, auditing(seen)], actor: ada });
+
     await app.start();
 
     await app.commandBus.execute(new PlaceOrder('book'));
@@ -144,6 +152,7 @@ describe('createTestApplication', () => {
       session: adaSession,
       tenantId: 'acme',
     });
+
     expect(app.actorContext.require()).toBe(ada);
   });
 

@@ -1,15 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { FixedExecutionScope, InMemoryCommandBus, InMemoryQueryBus, NoExecutionContextError, unitOfWorkMiddleware } from '@ddd-ts-kit/kernel';
 import { InMemoryAuditTrail, UNEXPECTED_ERROR, auditMiddleware, auditedFields, type AuditMiddlewareOptions, type AuditRecord, type AuditTrail } from '../src/index.js';
-import { NOW, StagingUnitOfWork, TransactionalAuditTrail, aSource, ada } from './support/fixtures.js';
-import {
-  AppointmentAlreadyCancelled,
-  CancelAppointmentCommand,
-  ListAppointmentsQuery,
-  ReadMedicalFileQuery,
-  RescheduleAppointmentCommand,
-  aRescheduling,
-} from './support/scheduling.js';
+import { NOW, aSource, ada } from './support/fixtures.js';
+import { StagingUnitOfWork } from './support/staging-unit-of-work.js';
+import { TransactionalAuditTrail } from './support/transactional-audit-trail.js';
+import { aRescheduling } from './support/scheduling/a-rescheduling.js';
+import { CancelAppointmentCommand } from './support/scheduling/application/commands/cancel-appointment.command.js';
+import { RescheduleAppointmentCommand } from './support/scheduling/application/commands/reschedule-appointment.command.js';
+import { ListAppointmentsQuery } from './support/scheduling/application/queries/list-appointments.query.js';
+import { ReadMedicalFileQuery } from './support/scheduling/application/queries/read-medical-file.query.js';
+import { AppointmentAlreadyCancelled } from './support/scheduling/domain/errors/appointment-already-cancelled.js';
 
 /** A command bus as a composition root builds it: audit, then the unit of work, then the handlers. */
 function application(options: Partial<AuditMiddlewareOptions> = {}) {
@@ -18,20 +18,26 @@ function application(options: Partial<AuditMiddlewareOptions> = {}) {
   const appointments: string[] = [];
   const trail = new TransactionalAuditTrail(unitOfWork, committed);
   const audit = auditMiddleware(trail, { ...aSource(), unitOfWork, ...options });
+
   const cancel = async (command: CancelAppointmentCommand) => {
     await unitOfWork.write(async () => void appointments.push(`${command.appointmentId} cancelled`));
+
     if (command.appointmentId === 'apt-gone') throw new AppointmentAlreadyCancelled('Appointment apt-gone is already cancelled');
+
     if (command.appointmentId === 'apt-broken') throw new Error('connection reset while writing to patient lin@example.org');
   };
+
   const commands = new InMemoryCommandBus()
     .use(audit)
     .use(unitOfWorkMiddleware(unitOfWork))
     .register(CancelAppointmentCommand, { execute: cancel })
     .register(RescheduleAppointmentCommand, { execute: async (command) => command.appointmentId });
+
   const queries = new InMemoryQueryBus()
     .use(audit)
     .register(ListAppointmentsQuery, { execute: async () => ['apt-1'] })
     .register(ReadMedicalFileQuery, { execute: async () => 'file' });
+
   return { committed, unitOfWork, appointments, commands, queries };
 }
 
@@ -54,6 +60,7 @@ describe('auditMiddleware', () => {
       causationId: 'request-1',
       origin: 'http',
     });
+
     expect(committed.entries[0]).not.toHaveProperty('reason');
   });
 
@@ -74,6 +81,7 @@ describe('auditMiddleware', () => {
 
   it('writes the entry of a succeeded command in its transaction: no commit, no entry saying it succeeded', async () => {
     const { committed, unitOfWork, appointments, commands } = application();
+
     unitOfWork.failOnCommit = true;
 
     await expect(commands.execute(new CancelAppointmentCommand(ada, 'apt-1'))).rejects.toThrow('The commit was refused');
@@ -99,17 +107,22 @@ describe('auditMiddleware', () => {
     expect(committed.entries[0]?.reason).toBe(UNEXPECTED_ERROR);
     expect(JSON.stringify(committed.entries)).not.toContain('lin@example.org');
   });
+});
 
+describe('auditMiddleware when the trail fails, or without a unit of work', () => {
   it('fails the command, and rolls it back, when its entry cannot be written', async () => {
     const committed = new InMemoryAuditTrail();
     const unitOfWork = new StagingUnitOfWork();
     const appointments: string[] = [];
+
     const refusingSuccesses: AuditTrail = {
       record: async (record) => {
         if (record.outcome === 'succeeded') throw new Error('The audit store is unreachable');
+
         await committed.record(record);
       },
     };
+
     const commands = new InMemoryCommandBus()
       .use(auditMiddleware(refusingSuccesses, { ...aSource(), unitOfWork }))
       .use(unitOfWorkMiddleware(unitOfWork))
@@ -124,6 +137,7 @@ describe('auditMiddleware', () => {
   it('gives the caller the failure of the use case, not the failure of its audit, and reports the lost entry', async () => {
     const lost: (AuditRecord | undefined)[] = [];
     const down: AuditTrail = { record: async () => Promise.reject(new Error('The audit store is unreachable')) };
+
     const commands = new InMemoryCommandBus()
       .use(auditMiddleware(down, { ...aSource(), onLostRecord: (_error, record) => void lost.push(record) }))
       .register(CancelAppointmentCommand, { execute: async () => Promise.reject(new AppointmentAlreadyCancelled('Already cancelled')) });
@@ -135,6 +149,7 @@ describe('auditMiddleware', () => {
 
   it('records after the handler when it is given no unit of work', async () => {
     const trail = new InMemoryAuditTrail();
+
     const commands = new InMemoryCommandBus()
       .use(auditMiddleware(trail, aSource()))
       .register(CancelAppointmentCommand, { execute: async () => undefined });
@@ -143,7 +158,9 @@ describe('auditMiddleware', () => {
 
     expect(outcomes(trail)).toEqual([{ action: 'CancelAppointmentCommand', outcome: 'succeeded', reason: undefined }]);
   });
+});
 
+describe('auditMiddleware, queries, declared fields and the execution context', () => {
   it('leaves queries alone by default, records the ones it is given, or all of them', async () => {
     const none = application();
     const some = application({ queries: [ReadMedicalFileQuery] });

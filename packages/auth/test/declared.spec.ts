@@ -1,14 +1,25 @@
 import { describe, expect, it } from 'vitest';
 import { anonymousActor } from '@ddd-ts-kit/kernel';
 import { contextModule, createTestApplication } from '@ddd-ts-kit/di';
-import { ACCESS, AuthorizationSetupError, ForbiddenError, RoleBasedAuthorizer, UnauthenticatedError } from '../src/index.js';
-import { AUTHORIZATION_MAP, authorizationModule } from '../src/di.js';
-import * as ledger from './fixtures/declared/declared-ledger.js';
+import {
+  Access,
+  AuthorizationMap,
+  AuthorizationSetupError,
+  ForbiddenError,
+  RoleBasedAuthorizer,
+  UnauthenticatedError,
+} from '../src/index.js';
+import { authorizationModule } from '../src/di.js';
+import { AnybodyAudits } from './fixtures/declared/ledger/application/authorization/anybody-audits.policy.js';
+import { ledgerPermissions } from './fixtures/declared/ledger/application/authorization/ledger.permissions.js';
+import { EntryRepository } from './fixtures/declared/ledger/domain/repositories/entry.repository.js';
+import * as declared from './fixtures/declared/ledger/ledger.declarations.js';
 import { ada, bob } from './support/billing.js';
 
-const { AnybodyAudits, CountEntries, ENTRIES, OnlyPosterReverses, PostEntry, ReverseEntry, ledgerPermissions, ...declared } = ledger;
+const { CountEntries, OnlyPosterReverses, PostEntry, ReverseEntry } = declared;
 
-const ledgerModule = contextModule('ledger', [PostEntry, ReverseEntry, CountEntries, OnlyPosterReverses, declared]);
+const ledgerModule = contextModule('ledger', [declared]);
+
 const accountants = () =>
   new RoleBasedAuthorizer({
     roles: {
@@ -16,6 +27,7 @@ const accountants = () =>
       clerk: [ledgerPermissions['entry.reverse']],
     },
   });
+
 const application = () =>
   createTestApplication({
     modules: [ledgerModule, authorizationModule({ authorizer: accountants() })],
@@ -33,7 +45,7 @@ describe('a context whose classes declare their access', () => {
   });
 
   it('feeds the authorization map, for documentation and administration screens', () => {
-    const declarations = application().get(AUTHORIZATION_MAP).declarations();
+    const declarations = application().get(AuthorizationMap).declarations();
 
     expect(declarations.map((declaration) => [declaration.type.name, declaration.access])).toEqual([
       ['PostEntry', 'protected'],
@@ -50,9 +62,10 @@ describe('a context whose classes declare their access', () => {
       code: 'FORBIDDEN',
       reason: 'ledger.only-poster-reverses',
     });
+
     await app.commandBus.execute(new ReverseEntry(ada, entryId));
 
-    expect(app.get(ENTRIES).posted.size).toBe(0);
+    expect(await app.get(EntryRepository).count()).toBe(0);
   });
 
   it('builds a declared policy once, when a decision first needs it', async () => {
@@ -61,7 +74,7 @@ describe('a context whose classes declare their access', () => {
     const entry = { id: 'entry-1', account: 'cash', postedBy: 'ada' };
 
     expect(OnlyPosterReverses.built).toBe(built);
-    const access = app.get(ACCESS);
+    const access = app.get(Access);
 
     expect(await access.decide(ada, ledgerPermissions['entry.reverse'], entry)).toEqual({ allowed: true });
     expect(await access.decide(bob, ledgerPermissions['entry.reverse'], entry)).toMatchObject({ allowed: false });
@@ -74,7 +87,7 @@ describe('a context whose classes declare their access', () => {
       modules: [contextModule('ledger', [AnybodyAudits]), authorizationModule({ authorizer: accountants() })],
     });
 
-    expect(() => app.get(ACCESS)).toThrow(AuthorizationSetupError);
-    expect(() => app.get(ACCESS)).toThrow('Module "ledger" declares the policy "ledger.anybody-audits"');
+    expect(() => app.get(Access)).toThrow(AuthorizationSetupError);
+    expect(() => app.get(Access)).toThrow('Module "ledger" declares the policy "ledger.anybody-audits"');
   });
 });

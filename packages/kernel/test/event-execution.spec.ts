@@ -55,6 +55,7 @@ describe('inEventScope', () => {
     const scope = new AsyncLocalStorageExecutionScope();
     const bus = new InMemoryEventBus();
     const seen: (ExecutionContext | undefined)[] = [];
+
     bus.subscribe(
       'ordering.order.placed',
       inEventScope(scope, { consumer: 'billing.invoice' }, async () => void seen.push(scope.current())),
@@ -66,6 +67,7 @@ describe('inEventScope', () => {
       ['corr-1', 'evt-1'],
       ['evt-2', 'evt-2'],
     ]);
+
     expect(scope.current()).toBeUndefined();
   });
 });

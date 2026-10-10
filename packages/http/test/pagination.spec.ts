@@ -23,6 +23,7 @@ const issuesOf = (query: unknown, options = {}): unknown => {
   } catch (error) {
     return error instanceof ValidationError ? error.issues.map(({ path, code }) => `${path}: ${code}`) : error;
   }
+
   return 'accepted';
 };
 
@@ -49,6 +50,7 @@ describe('pageRequestFrom', () => {
       { field: 'placedAt', direction: 'desc' },
       { field: 'total', direction: 'asc' },
     ]);
+
     expect(pageRequestFrom({ sort: ['-placedAt', 'total'] }, { sortable: SORTABLE }).sort).toEqual(page.sort);
   });
 
@@ -91,6 +93,7 @@ describe('pageResponse', () => {
 
 describe('a paginated route', () => {
   const order = zodSchema(z.object({ id: z.string(), total: z.number() }), { io: 'output' });
+
   const listOrders = defineRoute(
     {
       method: 'GET',
@@ -109,8 +112,10 @@ describe('a paginated route', () => {
       })),
     }),
   );
+
   const call = (query: Record<string, unknown>) => {
     const request: RawRequest = { params: {}, query, headers: {}, body: undefined, raw: undefined };
+
     return executeRoute(listOrders, request, { validateResponses: true });
   };
 
@@ -138,6 +143,7 @@ describe('a paginated route', () => {
       { name: 'cursor', in: 'query', required: false, schema: { type: 'string' } },
       { name: 'sort', in: 'query', required: false, schema: { type: 'string' } },
     ]);
+
     expect(operation?.['responses']).toMatchObject({
       200: {
         content: {

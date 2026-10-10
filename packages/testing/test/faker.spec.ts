@@ -131,6 +131,7 @@ describe('reportSeedOnFailure', () => {
   it('prints the seed and how to replay under a failed test, and nothing under a passed one', () => {
     const printed: string[] = [];
     const runner = new RecordingRunner();
+
     reportSeedOnFailure(runner, (message) => printed.push(message));
 
     runner.runTest({ fails: false });
@@ -144,16 +145,19 @@ describe('reportSeedOnFailure', () => {
 
 /** A runner reduced to what the helper touches: hooks before a test, reports after a failed one. */
 class RecordingRunner {
-  readonly #setups: (() => void)[] = [];
-  #reports: (() => void)[] = [];
+  private readonly setups: (() => void)[] = [];
 
-  readonly beforeEach = (setup: () => void): void => void this.#setups.push(setup);
+  private reports: (() => void)[] = [];
 
-  readonly onTestFailed = (report: () => void): void => void this.#reports.push(report);
+  readonly beforeEach = (setup: () => void): void => void this.setups.push(setup);
+
+  readonly onTestFailed = (report: () => void): void => void this.reports.push(report);
 
   runTest({ fails }: { fails: boolean }): void {
-    this.#reports = [];
-    for (const setup of this.#setups) setup();
-    if (fails) for (const report of this.#reports) report();
+    this.reports = [];
+
+    for (const setup of this.setups) setup();
+
+    if (fails) for (const report of this.reports) report();
   }
 }

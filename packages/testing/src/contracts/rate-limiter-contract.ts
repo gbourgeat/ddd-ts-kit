@@ -1,5 +1,7 @@
 import type { RateLimiter } from '@ddd-ts-kit/kernel';
-import { ContractSuite, type Awaitable, type ContractRunner } from './suite.js';
+import type { Awaitable } from './awaitable.js';
+import type { ContractRunner } from './contract-runner.js';
+import { ContractSuite } from './contract-suite.js';
 
 export interface RateLimiterContractOptions {
   readonly name: string;
@@ -17,11 +19,11 @@ export function rateLimiterContract(runner: ContractRunner, options: RateLimiter
 const THREE_PER_SECOND = { limit: 3, windowMs: 1_000 };
 
 class RateLimiterSuite extends ContractSuite<RateLimiter> {
-  readonly #elapse: (ms: number) => Awaitable<void>;
-
-  constructor(runner: ContractRunner, options: RateLimiterContractOptions) {
+  constructor(
+    runner: ContractRunner,
+    private readonly options: RateLimiterContractOptions,
+  ) {
     super(runner, () => options.createLimiter());
-    this.#elapse = (ms) => options.elapse(ms);
   }
 
   protected tests(): void {
@@ -43,21 +45,23 @@ class RateLimiterSuite extends ContractSuite<RateLimiter> {
 
     this.it('refuses the call beyond the limit and says when to come back', async () => {
       await this.consume();
-      await this.#elapse(100);
+      await this.options.elapse(100);
       await this.consume();
-      await this.#elapse(100);
+      await this.options.elapse(100);
       await this.consume();
-      await this.#elapse(100);
+      await this.options.elapse(100);
 
       this.expect(await this.consume()).toEqual({ allowed: false, remaining: 0, retryAfterMs: 700 });
     });
 
     this.it('does not count a refused call', async () => {
       for (let call = 0; call < 3; call += 1) await this.consume();
-      await this.#elapse(500);
+
+      await this.options.elapse(500);
+
       for (let call = 0; call < 5; call += 1) await this.consume();
 
-      await this.#elapse(500);
+      await this.options.elapse(500);
 
       this.expect((await this.consume()).allowed).toBe(true);
     });
@@ -66,13 +70,13 @@ class RateLimiterSuite extends ContractSuite<RateLimiter> {
   private slides(): void {
     this.it('allows a call again as soon as the oldest one has left the window, and only as many', async () => {
       await this.consume();
-      await this.#elapse(400);
+      await this.options.elapse(400);
       await this.consume();
       await this.consume();
-      await this.#elapse(599);
+      await this.options.elapse(599);
       this.expect((await this.consume()).allowed).toBe(false);
 
-      await this.#elapse(1);
+      await this.options.elapse(1);
 
       this.expect(await this.consume()).toEqual({ allowed: true, remaining: 0, retryAfterMs: 0 });
       this.expect(await this.consume()).toEqual({ allowed: false, remaining: 0, retryAfterMs: 400 });
@@ -81,7 +85,7 @@ class RateLimiterSuite extends ContractSuite<RateLimiter> {
     this.it('starts afresh once the whole window has passed without a call', async () => {
       for (let call = 0; call < 3; call += 1) await this.consume();
 
-      await this.#elapse(1_000);
+      await this.options.elapse(1_000);
 
       this.expect(await this.consume()).toEqual({ allowed: true, remaining: 2, retryAfterMs: 0 });
     });

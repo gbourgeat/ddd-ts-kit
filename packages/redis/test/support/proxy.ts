@@ -7,9 +7,12 @@ import type { AddressInfo } from 'node:net';
  * It is how a network failure is produced for real, without touching the server.
  */
 export class FaultyNetwork {
-  readonly #sockets = new Set<Socket>();
-  #repliesHeld = false;
-  #refusing = false;
+  private readonly sockets = new Set<Socket>();
+
+  private repliesHeld = false;
+
+  private refusing = false;
+
   bytesFromClient = 0;
 
   private constructor(
@@ -17,41 +20,45 @@ export class FaultyNetwork {
     private readonly target: URL,
   ) {
     server.on('connection', (client) => {
-      this.#relay(client);
+      this.relay(client);
     });
   }
 
   static async to(serverUrl: string): Promise<FaultyNetwork> {
     const server = createServer();
+
     await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+
     return new FaultyNetwork(server, new URL(serverUrl));
   }
 
   /** The server URL, through this relay. */
   get url(): string {
     const through = new URL(this.target.href);
+
     through.hostname = '127.0.0.1';
     through.port = String((this.server.address() as AddressInfo).port);
+
     return through.href;
   }
 
   holdReplies(): void {
-    this.#repliesHeld = true;
+    this.repliesHeld = true;
   }
 
   cutConnections(): void {
-    for (const socket of this.#sockets) {
+    for (const socket of this.sockets) {
       socket.destroy();
     }
   }
 
   refuseConnections(): void {
-    this.#refusing = true;
+    this.refusing = true;
   }
 
   restore(): void {
-    this.#repliesHeld = false;
-    this.#refusing = false;
+    this.repliesHeld = false;
+    this.refusing = false;
   }
 
   async close(): Promise<void> {
@@ -59,30 +66,36 @@ export class FaultyNetwork {
     await new Promise((resolve) => this.server.close(resolve));
   }
 
-  #relay(client: Socket): void {
-    if (this.#refusing) {
+  private relay(client: Socket): void {
+    if (this.refusing) {
       client.destroy();
+
       return;
     }
+
     const server = createConnection({
       host: this.target.hostname,
       port: Number(this.target.port || 6379),
     });
+
     for (const socket of [client, server]) {
-      this.#sockets.add(socket);
+      this.sockets.add(socket);
       socket.on('error', () => undefined);
+
       socket.on('close', () => {
-        this.#sockets.delete(socket);
+        this.sockets.delete(socket);
         client.destroy();
         server.destroy();
       });
     }
+
     client.on('data', (data) => {
       this.bytesFromClient += data.length;
       server.write(data);
     });
+
     server.on('data', (data) => {
-      if (!this.#repliesHeld) {
+      if (!this.repliesHeld) {
         client.write(data);
       }
     });

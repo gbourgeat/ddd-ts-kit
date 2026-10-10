@@ -18,20 +18,26 @@ describe('the Standard Schema adapter, with valibot', () => {
       customerId: '0b8f6e0e-2f4b-4c58-9c0e-6f1d2a3b4c5d',
       items: [{ sku: 'A-1', quantity: 2 }],
     });
+
     expect(result.ok).toBe(true);
+
     if (result.ok) {
       const quantity: number | undefined = result.value.items[0]?.quantity;
+
       expect(quantity).toBe(2);
     }
   });
 
   it('reports each issue with its dotted path', () => {
     const result = order.parse({ customerId: 'nope', items: [{ sku: '', quantity: 1.5 }] });
+
     expect(result.ok).toBe(false);
+
     if (!result.ok) {
       expect(result.error.map((issue) => issue.path)).toEqual(
         expect.arrayContaining(['customerId', 'items.0.sku', 'items.0.quantity']),
       );
+
       expect(result.error.every((issue) => issue.code === 'invalid' && issue.message !== '')).toBe(true);
     }
   });
@@ -42,6 +48,7 @@ describe('the Standard Schema adapter, with valibot', () => {
 
   it('exposes the JSON Schema supplied by the caller', () => {
     const described = standardSchema(valibotOrder, { type: 'object', required: ['customerId', 'items'] });
+
     expect(described.toJsonSchema()).toEqual({ type: 'object', required: ['customerId', 'items'] });
   });
 
@@ -49,6 +56,7 @@ describe('the Standard Schema adapter, with valibot', () => {
     const asynchronous = v.objectAsync({
       sku: v.pipeAsync(v.string(), v.checkAsync(async () => true)),
     });
+
     expect(() => standardSchema(asynchronous).parse({ sku: 'A-1' })).toThrow(
       /async schemas are not supported at the boundary/,
     );
@@ -72,6 +80,7 @@ describe('the Standard Schema adapter, with a hand-written schema', () => {
       ok: false,
       error: [{ path: 'amount.value', code: 'invalid', message: 'An even number is expected.' }],
     });
+
     expect(standardSchema(even).parse(4)).toEqual({ ok: true, value: 4 });
   });
 });

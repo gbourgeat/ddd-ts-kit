@@ -1,5 +1,5 @@
-import { Entity } from './entity.js';
 import type { DomainEvent } from './domain-event.js';
+import { Entity } from './entity.js';
 
 /**
  * Consistency boundary and transaction boundary. Only the root is reachable from
@@ -10,16 +10,18 @@ export abstract class AggregateRoot<Id extends string | number = string> extends
   /** Optimistic concurrency token, managed by the repository adapter. */
   version = 0;
 
-  #events: DomainEvent[] = [];
+  private events: DomainEvent[] = [];
 
   /** Hands the recorded events to the application layer and clears them. */
   pullEvents(): DomainEvent[] {
-    const events = this.#events;
-    this.#events = [];
+    const events = this.events;
+
+    this.events = [];
+
     return events;
   }
 
   protected record(event: DomainEvent): void {
-    this.#events.push(event);
+    this.events.push(event);
   }
 }

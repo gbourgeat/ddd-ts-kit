@@ -1,5 +1,5 @@
 import type { Actor } from '@ddd-ts-kit/kernel';
-import { definePermissions } from '../../src/index.js';
+import { definePermissions, type Decision, type Permission, type ResourceRef } from '../../src/index.js';
 import {
   InMemoryRelationTupleStore,
   RelationBasedAuthorizer,
@@ -68,6 +68,29 @@ export async function authorizerWith(
   options: Partial<RelationBasedAuthorizerOptions> = {},
 ): Promise<RelationBasedAuthorizer> {
   const store = new InMemoryRelationTupleStore();
+
   await store.write(tuples);
+
   return new RelationBasedAuthorizer({ schema, store, mapping, ...options });
+}
+
+export const ada = user('ada');
+export const bob = user('bob');
+
+export function document(id: string): ResourceRef {
+  return { type: 'document', id };
+}
+
+interface Asking {
+  readonly actor?: Actor;
+  readonly permission?: Permission;
+  readonly id?: string;
+}
+
+/** By default: may ada edit the document 1, given the tuples. */
+export async function allowed(tuples: readonly RelationTuple[], request: Asking): Promise<Decision> {
+  const authorizer = await authorizerWith(tuples);
+  const { actor = ada, permission = docsPermissions['document.edit'], id = '1' } = request;
+
+  return authorizer.check({ actor, permission, resource: document(id) });
 }

@@ -16,15 +16,18 @@ const outbox = outboxEntity({ schema: 'messaging' });
 const processed = processedEventEntity({ schema: 'messaging' });
 
 let database: TestDatabase;
+
 beforeAll(async () => {
   database = await createDatabase([outbox, processed, outboxEntity(), processedEventEntity()]);
 });
+
 afterAll(async () => {
   await database.close();
 });
 
 const context = () => createTypeOrmUnitOfWork(database.dataSource);
 const now = new Date('2026-03-01T10:00:00.000Z');
+
 const event = (id: string): IntegrationEvent => ({
   id,
   type: 'billing.invoice.issued',
@@ -38,6 +41,7 @@ outboxStoreContract(runner, {
   leaseMs: 30_000,
   createStore: async () => {
     await database.truncate();
+
     return new TypeOrmOutboxStore(context(), { entity: outbox, leaseMs: 30_000 });
   },
 });
@@ -47,6 +51,7 @@ outboxStoreContract(runner, {
   leaseMs: 5_000,
   createStore: async () => {
     await database.truncate();
+
     return new TypeOrmOutboxStore(context(), { leaseMs: 5_000 });
   },
 });
@@ -56,6 +61,7 @@ outboxStoreContract(runner, {
   leaseMs: 30_000,
   createStore: async () => {
     await database.truncate();
+
     return new TypeOrmOutboxStore(context(), { entity: outbox, claim: 'compare-and-set' });
   },
 });
@@ -64,6 +70,7 @@ processedEventStoreContract(runner, {
   name: 'TypeOrmProcessedEventStore in a schema of its own',
   createStore: async () => {
     await database.truncate();
+
     return new TypeOrmProcessedEventStore(context(), { entity: processed });
   },
 });
@@ -72,6 +79,7 @@ processedEventStoreContract(runner, {
   name: 'TypeOrmProcessedEventStore in the default schema',
   createStore: async () => {
     await database.truncate();
+
     return new TypeOrmProcessedEventStore(context());
   },
 });
@@ -82,6 +90,7 @@ describe('entity schemas', () => {
       "select indexdef from pg_indexes where schemaname = 'messaging' and tablename = $1 order by indexname",
       [table],
     );
+
     return rows.map((row) => row.indexdef);
   };
 
@@ -117,6 +126,7 @@ describe('entity schemas', () => {
   it('pick the column types of the dialect', () => {
     const types = (dialect: 'postgres' | 'mysql' | 'sqlite') => {
       const { columns } = outboxEntity({ dialect }).options;
+
       return [columns.payload?.type, columns.nextAttemptAt?.type, columns.id?.primary, columns.sequence?.primary];
     };
 
@@ -133,6 +143,7 @@ describe('TypeOrmOutboxStore.claimBatch', () => {
 
   it('locks the due rows with FOR UPDATE SKIP LOCKED inside one transaction', async () => {
     const store = new TypeOrmOutboxStore(context(), { entity: outbox });
+
     await store.append([event('evt-1')]);
     database.queries.length = 0;
 
@@ -150,6 +161,7 @@ describe('TypeOrmOutboxStore.claimBatch', () => {
 
   it('sends no lock clause when claiming by compare-and-set', async () => {
     const store = new TypeOrmOutboxStore(context(), { entity: outbox, claim: 'compare-and-set' });
+
     await store.append([event('evt-1')]);
     database.queries.length = 0;
 
@@ -168,6 +180,7 @@ describe('TypeOrmOutboxStore.claimBatch', () => {
     async (claim) => {
       const relayA = new TypeOrmOutboxStore(context(), { entity: outbox, claim });
       const relayB = new TypeOrmOutboxStore(context(), { entity: outbox, claim });
+
       await relayA.append(Array.from({ length: 40 }, (_, index) => event(`evt-${index}`)));
 
       const batches = await Promise.all([
@@ -178,6 +191,7 @@ describe('TypeOrmOutboxStore.claimBatch', () => {
       ]);
 
       const ids = batches.flat().map((record) => record.event.id);
+
       expect(ids).toHaveLength(40);
       expect(new Set(ids).size).toBe(40);
       expect(await relayA.claimBatch(10, now)).toEqual([]);
@@ -189,9 +203,12 @@ describe('TypeOrmOutboxStore.claimBatch', () => {
       // PGlite is a single session: holding a lock on one connection while claiming on another
       // needs a real server (DDD_TS_KIT_TEST_DATABASE_URL).
       test.skip();
+
       return;
     }
+
     const store = new TypeOrmOutboxStore(context(), { entity: outbox });
+
     await store.append([event('evt-1'), event('evt-2'), event('evt-3')]);
 
     const claimed = await database.dataSource.transaction(async (holder) => {
@@ -200,18 +217,27 @@ describe('TypeOrmOutboxStore.claimBatch', () => {
         .where({ id: In(['evt-1', 'evt-2']) })
         .setLock('pessimistic_write')
         .getMany();
+
       return store.claimBatch(10, now);
     });
 
     expect(claimed.map((record) => record.event.id)).toEqual(['evt-3']);
     expect((await store.claimBatch(10, now)).map((record) => record.event.id)).toEqual(['evt-1', 'evt-2']);
   });
+});
+
+describe('TypeOrmOutboxStore: what a record keeps', () => {
+  beforeEach(async () => {
+    await database.truncate();
+  });
 
   it('stores timestamps as instants and gives them back as dates', async () => {
     const store = new TypeOrmOutboxStore(context(), { entity: outbox, leaseMs: 1_000 });
+
     await store.append([event('evt-1')]);
 
     const [claimed] = await store.claimBatch(1, now);
+
     await store.markPublished(['evt-1'], now);
     const row = await database.dataSource.manager.findOneBy(outbox, { id: 'evt-1' });
 
@@ -222,6 +248,7 @@ describe('TypeOrmOutboxStore.claimBatch', () => {
   it('keeps a payload that is not an object as it was published', async () => {
     const store = new TypeOrmOutboxStore(context(), { entity: outbox });
     const payloads: unknown[] = ['plain text', [1, 'two', null], 42, null];
+
     await store.append(payloads.map((payload, index) => ({ ...event(`evt-${index}`), payload })));
 
     const claimed = await store.claimBatch(10, now);

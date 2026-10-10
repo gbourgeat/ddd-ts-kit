@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { eventBusContract } from '@ddd-ts-kit/testing/contracts';
 import type { StreamStorage } from '../src/index.js';
-import { Broker, NATS_URL } from './support/broker.js';
+import { Broker } from './support/broker.js';
+import { NATS_URL } from './support/environment.js';
 
 const runner = { describe, it, beforeEach, afterEach, expect };
 
@@ -11,6 +12,7 @@ const contractOn = (url: string, storage: StreamStorage): void => {
     async createBus() {
       const broker = await Broker.connect(url);
       const bus = broker.bus({ storage });
+
       return { bus, settle: () => broker.settled(bus), close: () => broker.dispose() };
     },
   });

@@ -95,9 +95,12 @@ Consumers: \`billing\`, \`shipping\`
     const other = generateEventCatalog(createEventRegistry([...definitions].reverse()), {
       consumers: { 'ordering.order.placed': ['billing', 'shipping'] },
     });
+
     expect(other).toBe(catalog);
   });
+});
 
+describe('generateEventCatalog, on what a registry may lack', () => {
   it('takes a title and renders an empty registry', () => {
     expect(generateEventCatalog(createEventRegistry(), { title: 'Shop events' })).toBe(
       '# Shop events\n\nGenerated from the integration event declarations. Do not edit by hand: regenerate.\n',
@@ -110,6 +113,7 @@ Consumers: \`billing\`, \`shipping\`
       version: 1,
       payload: customSchema((input) => ok(input)),
     });
+
     expect(generateEventCatalog(createEventRegistry([opaque]))).toContain(
       '#### Payload of version 1\n\nNo documented field.\n',
     );

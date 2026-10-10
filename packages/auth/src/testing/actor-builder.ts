@@ -39,10 +39,3 @@ export class ActorBuilder extends Builder<ActorProps, Actor> {
     return tenantId === undefined ? actor : { ...actor, tenantId };
   }
 }
-
-const builder = new ActorBuilder();
-
-/** `anActor().named('ada').withRole('accountant').ofTenant('acme').build()` */
-export function anActor(): ActorBuilder {
-  return builder;
-}

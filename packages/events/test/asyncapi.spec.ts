@@ -5,6 +5,7 @@ import { invoiceIssued, orderPlacedV1, orderPlacedV2, shipmentSent } from './sup
 
 const info = { title: 'Shop events', version: '1.4.0', description: 'Published language.' };
 const definitions = [orderPlacedV2, shipmentSent, invoiceIssued, orderPlacedV1];
+
 const document = generateAsyncApi({
   info,
   registry: createEventRegistry(definitions),
@@ -27,6 +28,7 @@ describe('generateAsyncApi', () => {
       'ordering.order.placed',
       'shipping.shipment.sent',
     ]);
+
     expect(document.channels['ordering.order.placed']).toEqual({
       address: 'ordering.order.placed',
       description: 'An order was placed by a customer.',
@@ -35,6 +37,7 @@ describe('generateAsyncApi', () => {
         v2: { $ref: '#/components/messages/ordering.order.placed.v2' },
       },
     });
+
     expect(document.channels['shipping.shipment.sent']).not.toHaveProperty('description');
   });
 
@@ -49,6 +52,7 @@ describe('generateAsyncApi', () => {
         ],
       },
     });
+
     expect(Object.keys(document.operations)).toHaveLength(3);
   });
 
@@ -81,6 +85,7 @@ describe('generateAsyncApi', () => {
 
   it('flags deprecated versions and tags the declared producer', () => {
     const { messages } = document.components;
+
     expect(messages['ordering.order.placed.v1']).toMatchObject({ deprecated: true });
     expect(messages['ordering.order.placed.v2']).not.toHaveProperty('deprecated');
     expect(messages['shipping.shipment.sent.v1']).toMatchObject({ tags: [{ name: 'logistics' }] });
@@ -90,17 +95,22 @@ describe('generateAsyncApi', () => {
     expect(document.components.schemas).toEqual({
       'ordering.order.placed.v2.Money': expect.objectContaining({ type: 'object' }),
     });
+
     const text = JSON.stringify(document);
+
     expect(text).toContain('"$ref":"#/components/schemas/ordering.order.placed.v2.Money"');
     expect(text).not.toContain('$defs');
     expect(text).not.toContain('$schema');
   });
+});
 
+describe('generateAsyncApi, optional parts and determinism', () => {
   it('omits what was not given', () => {
     const minimal = generateAsyncApi({
       info: { title: 'T', version: '1' },
       registry: createEventRegistry([invoiceIssued]),
     });
+
     expect(minimal).not.toHaveProperty('servers');
     expect(minimal.info).toEqual({ title: 'T', version: '1' });
     expect(minimal.components).not.toHaveProperty('schemas');
@@ -115,6 +125,7 @@ describe('generateAsyncApi', () => {
         production: { host: 'broker.example.com:5671', protocol: 'amqps' },
       },
     });
+
     expect(stringifyAsyncApi(reversed)).toBe(stringifyAsyncApi(document));
   });
 });
@@ -135,6 +146,7 @@ describe('stringifyAsyncApi and checkAsyncApiDrift', () => {
 
   it('sees the drift when a declaration changed', () => {
     const before = generateAsyncApi({ info, registry: createEventRegistry([orderPlacedV1]) });
+
     expect(checkAsyncApiDrift(before, text)).toEqual({ drift: true });
   });
 });

@@ -11,12 +11,12 @@ npm i @ddd-ts-kit/scheduling
 
 | Entry | Holds | Imports |
 |---|---|---|
-| `@ddd-ts-kit/scheduling` | `InProcessJobScheduler`, `nextOccurrence`, `latestOccurrence`, `systemJobTimers`, the `JobTimers` and `JobCheckpoints` types, `JobTimeoutError`, `JobAbortedError`, `JobLockUnavailableError`, the metric names | the kernel |
+| `@ddd-ts-kit/scheduling` | `InProcessJobScheduler`, `nextOccurrence`, `latestOccurrence`, `systemJobTimers`, the `JobTimers` and `JobCheckpoints` ports, `JobTimeoutError`, `JobAbortedError`, `JobLockUnavailableError`, the metric names | the kernel |
 | `@ddd-ts-kit/scheduling/testing` | `ManualJobScheduler`, `ManualJobTimers` | the kernel |
 
 The declaration (`@Scheduled`), the port (`JobScheduler`) and the schedule parser live in
 `@ddd-ts-kit/kernel`, so `application/` imports the kernel and nothing else.
-`@ddd-ts-kit/di` binds `InProcessJobScheduler` to `JOB_SCHEDULER` in its kernel module and
+`@ddd-ts-kit/di` binds `JobScheduler` to an `InProcessJobScheduler` in its kernel module and
 registers the declared jobs: an application built with it needs no line of this README but
 the job itself.
 
@@ -27,11 +27,11 @@ and timeout (`schedule(work, delayMs)`); this one knows jobs, schedules and inst
 
 ```ts
 // src/contexts/billing/application/scheduling/send-payment-reminders.job.ts
-import { systemActor, type CommandBus } from '@ddd-ts-kit/kernel';
-import { COMMAND_BUS, Scheduled, type JobExecution, type ScheduledJob } from '@ddd-ts-kit/kernel/declarations';
+import { CommandBus, systemActor } from '@ddd-ts-kit/kernel';
+import { Scheduled, type JobExecution, type ScheduledJob } from '@ddd-ts-kit/kernel/declarations';
 import { SendPaymentReminders } from '../commands/send-payment-reminders/send-payment-reminders.command.js';
 
-@Scheduled('billing.send-payment-reminders', { cron: '0 7 * * 1-5', timeZone: 'Europe/Paris' }, [COMMAND_BUS])
+@Scheduled('billing.send-payment-reminders', { cron: '0 7 * * 1-5', timeZone: 'Europe/Paris' }, [CommandBus])
 export class SendPaymentRemindersJob implements ScheduledJob {
   constructor(private readonly commands: CommandBus) {}
 
@@ -47,9 +47,10 @@ export class SendPaymentRemindersJob implements ScheduledJob {
 - **The name** is `<context>.<job-name>`, in lower case, written as a string literal and unique
   in the application: it is the system actor the job runs as, the key of its lock, its label in
   the metrics and the key of its settings. It survives the renaming of the class.
-- **The token list** names the constructor parameters in order, and the compiler checks it, as
-  for every declaration of the kit. A job receives buses and ports. It does not receive a
-  repository: what it would do with one is a use case.
+- **The dependency list** names the ports of the constructor parameters in order, and the
+  compiler checks it, as for every declaration of the kit. A port is an abstract class, and the
+  class is what is listed: `[CommandBus]`. A job receives buses and ports. It does not receive
+  a repository: what it would do with one is a use case.
 - **`run(execution)`** receives:
 
   | Field | |
@@ -148,13 +149,28 @@ blocked. A timer a few seconds late still runs its occurrence. What passed **whi
 was down** is only known with `checkpoints`:
 
 ```ts
-new InProcessJobScheduler({ ...ports, checkpoints });   // { read(job): Promise<Date | undefined>, write(job, handled): Promise<void> }
+// the port, exported by this package
+export abstract class JobCheckpoints {
+  abstract read(job: string): Promise<Date | undefined>;
+
+  abstract write(job: string, handled: Date): Promise<void>;
+}
+
+// src/platform/scheduling/knex-job-checkpoints.ts, your adapter
+export class KnexJobCheckpoints implements JobCheckpoints {
+  constructor(private readonly database: Database) {}
+
+  async read(job: string): Promise<Date | undefined> { /* one row per job */ }
+
+  async write(job: string, handled: Date): Promise<void> { /* upsert */ }
+}
 ```
 
 The scheduler writes there the last occurrence it handled for each job and reads it when it
 starts. Without it a restart forgets: every job starts from the instant of the start, and
 `run-once` only covers what was missed while the process was alive. The store is yours, a
-table or a key shared by the instances.
+table or a key shared by the instances. It is given to the scheduler where the scheduler is
+built: see "Replacing the scheduler".
 
 **A timeout does not kill.** A run is a promise, and nothing can stop a promise: the scheduler
 aborts the signal, stops waiting and frees the job for its next occurrence. A job that ignores
@@ -194,7 +210,7 @@ the others record `skipped-locked`.
 - **With `InMemoryLock`**, the default of `kernelModule()`, the lock excludes inside one
   process only: two instances both run every job. It is correct for a single instance and for
   tests, and nothing more.
-- **With a lock between processes** (`RedisLock` of `@ddd-ts-kit/redis`, bound to `LOCK`), the
+- **With a lock between processes** (`RedisLock` of `@ddd-ts-kit/redis`, bound to `Lock`), the
   guarantee is real, and it is this one: **at most one run per occurrence, best effort**.
 
 What is not guaranteed, so that you design for it:
@@ -249,6 +265,40 @@ context, registered by the application that lists its module. Nothing is global.
 progress up to `graceMs` (30 s by default), then aborts their signals with a `JobAbortedError`
 and returns; a run that waited in a queue is dropped and recorded `missed`. Set the grace
 below the termination grace of the platform.
+
+### Replacing the scheduler
+
+`kernelModule()` builds the scheduler on the kernel ports it binds: `Clock`, `Lock`,
+`ExecutionScope`, `IdGenerator`, `Logger` and `Metrics`. To build it otherwise (with
+checkpoints, another grace period, an error tracker on `onRun`), give the kernel module yours:
+
+```ts
+import { Clock, ExecutionScope, IdGenerator, Lock, Logger, Metrics } from '@ddd-ts-kit/kernel';
+import { createApplication, kernelModule } from '@ddd-ts-kit/di';
+import { InProcessJobScheduler, JobCheckpoints } from '@ddd-ts-kit/scheduling';
+
+const kernel = kernelModule({
+  jobScheduler: (resolve) =>
+    new InProcessJobScheduler({
+      clock: resolve(Clock),
+      // asked at each occurrence: building the scheduler must not open a connection
+      lock: { acquire: (key, options) => resolve(Lock).acquire(key, options) },
+      scope: resolve(ExecutionScope),
+      ids: resolve(IdGenerator),
+      logger: resolve(Logger),
+      metrics: resolve(Metrics),
+      checkpoints: resolve(JobCheckpoints),
+      graceMs: 10_000,
+    }),
+});
+
+const app = createApplication({ modules: [kernel, platformModule, billingModule] });
+```
+
+with, in the module of the platform, `builder.bind(JobCheckpoints).toClass(KnexJobCheckpoints, [Database])`.
+A later module replaces the scheduler the same way, with
+`builder.rebind(JobScheduler).toFactory((resolve) => new InProcessJobScheduler({ ... }))`, and
+so does another implementation of the `JobScheduler` port (on a database, on a queue).
 
 Without `@ddd-ts-kit/di`:
 
@@ -310,7 +360,7 @@ A spec of a job is a spec of the use case it triggers: run the job, assert the f
 not involved, and the test application of `@ddd-ts-kit/di` never starts jobs by time.
 
 ```ts
-const app = createTestApplication({ modules: [contextModule('billing', billing)], fakes: [fake(MAILER, mailer)] });
+const app = createTestApplication({ modules: [contextModule('billing', billing)], fakes: [fake(Mailer, mailer)] });
 
 await app.jobs.runNow('billing.send-payment-reminders');
 

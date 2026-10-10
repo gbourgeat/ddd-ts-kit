@@ -19,6 +19,7 @@ describe('InMemoryLogger', () => {
     logger.error('carrier failed', { errorType: 'TimeoutError', errorCode: 'TIMEOUT' });
 
     expect(logger.entries.map((entry) => entry.level)).toEqual(LOG_LEVELS);
+
     expect(logger.entries[1]).toEqual({
       level: 'info',
       message: 'order shipped',
@@ -39,6 +40,7 @@ describe('InMemoryLogger', () => {
         fields: { service: 'shop', context: 'invoicing', correlationId: 'corr-1' },
       },
     ]);
+
     logger.clear();
     expect(child.entries).toEqual([]);
   });
@@ -96,6 +98,7 @@ describe('InMemoryMetrics', () => {
     expect(metrics.samples).toEqual([
       { kind: 'counter', name: 'calls_total', value: 1, labels: { context: 'billing' } },
     ]);
+
     metrics.clear();
     expect(metrics.samples).toEqual([]);
   });
