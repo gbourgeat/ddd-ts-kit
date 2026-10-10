@@ -1,0 +1,32 @@
+import { IdGenerator, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
+import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
+import { AppointmentCompleted } from '../../../domain/events/appointment-completed.event.js';
+import { appointmentCompletedV1 } from '../../../published-language/appointment-completed.v1.integration-event.js';
+
+@DomainEventHandler(AppointmentCompleted, { name: 'scheduling.appointment.completed' }, [IntegrationEventPublisher, IdGenerator])
+export class AppointmentCompletedPublisher implements DomainEventHandler<AppointmentCompleted> {
+  constructor(
+    private readonly publisher: IntegrationEventPublisher,
+    private readonly ids: IdGenerator,
+  ) {}
+
+  async handle(event: AppointmentCompleted): Promise<void> {
+    const booking = event.booking;
+
+    const published = appointmentCompletedV1.create(
+      {
+        appointmentId: event.aggregateId,
+        calendarId: booking.calendarId,
+        practiceId: booking.practiceId,
+        practitionerId: booking.practitionerId,
+        patientId: booking.patientId,
+        startsAt: booking.slot.startsAt.toISOString(),
+        endsAt: booking.slot.endsAt.toISOString(),
+        day: booking.day,
+      },
+      { id: this.ids.next(), occurredAt: event.occurredAt },
+    );
+
+    await this.publisher.publish([published]);
+  }
+}
