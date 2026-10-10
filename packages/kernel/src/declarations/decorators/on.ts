@@ -10,6 +10,8 @@ import type { Named } from './named.js';
 import { pendingApplications } from './pending-applications.js';
 import type { ProjectionMethodDecorator } from './projection-method-decorator.js';
 
+type DomainEventName<Name extends string = string> = Pick<DomainEventHandlerOptions<Name>, 'name'>;
+
 type Applied = Omit<Extract<ProjectionApplication, { kind: 'integration' }>, 'method'> | Omit<Extract<ProjectionApplication, { kind: 'domain' }>, 'method'>;
 
 /**
@@ -22,12 +24,12 @@ type Applied = Omit<Extract<ProjectionApplication, { kind: 'integration' }>, 'me
 export function On<Payload>(contract: EventContract<Payload>): ProjectionMethodDecorator<IntegrationEvent<Payload>>;
 export function On<E extends DomainEvent, const Name extends string>(
   event: DomainEventType<E>,
-  options: DomainEventHandlerOptions<Name> & Named<Name, 'name'>,
+  options: DomainEventName<Name> & Named<Name, 'name'>,
 ): ProjectionMethodDecorator<E>;
 
 export function On(
   source: EventContract<unknown> | DomainEventType<DomainEvent>,
-  options?: DomainEventHandlerOptions,
+  options?: DomainEventName,
 ): ProjectionMethodDecorator<never> {
   const applied = appliedOf(source, options);
 
@@ -44,7 +46,7 @@ export function On(
   };
 }
 
-function appliedOf(source: EventContract<unknown> | DomainEventType<DomainEvent>, options?: DomainEventHandlerOptions): Applied {
+function appliedOf(source: EventContract<unknown> | DomainEventType<DomainEvent>, options?: DomainEventName): Applied {
   if (typeof source !== 'function') return { kind: 'integration', contract: source };
 
   const name = options?.name ?? '';

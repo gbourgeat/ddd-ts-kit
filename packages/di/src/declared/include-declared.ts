@@ -158,18 +158,19 @@ function registerIntegrationEventHandler(registration: Registration, declaration
 
 function registerDomainEventHandler(registration: Registration, declaration: DomainEventHandlerDeclaration): void {
   const { draft, module, declaredBy } = registration;
-  const { name, dependencies } = declaration;
+  const { name, phase, dependencies } = declaration;
 
   declaration.pair(<E extends DomainEvent>(event: DomainEventType<E>, implementation: ClassOf<DomainEventHandler<E>>) => {
     draft.addBinding(underItself(registration, { implementation, dependencies, kind: 'domain-event-handler' }));
 
     draft.addDomainEventHandler({
       name,
+      phase,
       event: event.name,
       handler: implementation,
       module,
       declaredBy,
-      attach: attaching(name, event, implementation),
+      attach: attaching({ name, phase }, event, implementation),
     });
   });
 }
@@ -179,14 +180,16 @@ function registerDomainEventHandler(registration: Registration, declaration: Dom
  * hand-written subscription would leave it: the handler is typed by the class it declared.
  */
 function attaching<E extends DomainEvent>(
-  name: string,
+  { name, phase }: Pick<DomainEventHandlerDeclaration, 'name' | 'phase'>,
   event: DomainEventType<E>,
   handler: Token<DomainEventHandler<E>>,
 ): DomainEventHandling['attach'] {
   return (resolve, dispatcher) => {
-    dispatcher.on(name, async (occurred) => {
+    const handle = async (occurred: DomainEvent): Promise<void> => {
       if (occurred instanceof event) await resolve(handler).handle(occurred);
-    });
+    };
+
+    dispatcher.on(name, handle, { phase });
   };
 }
 

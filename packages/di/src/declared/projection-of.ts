@@ -76,6 +76,7 @@ function handlingOf({ declaration, module, declaredBy }: Declared, { event, name
 
   return {
     name,
+    phase: 'before-commit',
     event: event.name,
     handler: implementation,
     module,

@@ -17,27 +17,30 @@ export function bookingTree(afterAppend: readonly ExpectedSpan[] = []): Expected
             name: 'repository AppointmentRepository.save',
             kind: 'INTERNAL',
             attributes: { 'code.namespace': 'InMemoryAppointmentRepository', 'code.function': 'save', 'app.dependency.kind': 'repository' },
-            children: [
-              {
-                name: 'domain-event scheduling.appointment.booked',
-                kind: 'INTERNAL',
-                children: [
-                  {
-                    name: 'handler AppointmentBookedPublisher',
-                    kind: 'INTERNAL',
-                    attributes: { 'app.dependency.kind': 'domain-event-handler', 'app.context': 'scheduling' },
-                    children: [
-                      {
-                        name: 'outbox append scheduling.appointment.booked',
-                        kind: 'INTERNAL',
-                        attributes: { 'messaging.system': 'outbox', 'messaging.operation.type': 'create', 'messaging.message.id': 'id-2' },
-                        children: afterAppend,
-                      },
-                    ],
-                  },
-                ],
-              },
-            ],
+          },
+          { name: 'unit-of-work before-commit', kind: 'INTERNAL', children: [bookedEvent(afterAppend)] },
+        ],
+      },
+    ],
+  };
+}
+
+/** The event the save recorded, dispatched at the end of the unit of work, with its publisher. */
+function bookedEvent(afterAppend: readonly ExpectedSpan[]): ExpectedSpan {
+  return {
+    name: 'domain-event scheduling.appointment.booked',
+    kind: 'INTERNAL',
+    children: [
+      {
+        name: 'handler AppointmentBookedPublisher',
+        kind: 'INTERNAL',
+        attributes: { 'app.dependency.kind': 'domain-event-handler', 'app.context': 'scheduling' },
+        children: [
+          {
+            name: 'outbox append scheduling.appointment.booked',
+            kind: 'INTERNAL',
+            attributes: { 'messaging.system': 'outbox', 'messaging.operation.type': 'create', 'messaging.message.id': 'id-2' },
+            children: afterAppend,
           },
         ],
       },

@@ -49,6 +49,8 @@ export interface IntegrationEventHandlerDescription extends OriginDescription {
 export interface DomainEventHandlerDescription extends OriginDescription {
   readonly event: string;
   readonly name: string;
+  /** `before-commit`: inside the transaction of the unit of work; `after-commit`: once it has committed. */
+  readonly phase: 'before-commit' | 'after-commit';
   readonly handler: string;
   readonly module: string;
 }

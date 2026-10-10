@@ -173,6 +173,19 @@ whole point of the outbox.
 `createPrismaUnitOfWork(prisma, { timeout: 15_000, isolationLevel: 'RepeatableRead' })`
 forwards the options of `$transaction`.
 
+`run` is built on `withinUnitOfWork` of the kernel. The domain events of the aggregates saved
+inside it wait until `work` has returned, then are dispatched inside the transaction, before
+the commit: their handlers see every save, and what they write commits or rolls back with it.
+If `work`, a handler or the commit fails, nothing is left: no row, no outbox record, no handler
+run after the commit. Handlers declared `after-commit` run once the transaction has committed.
+A nested `run` joins the unit of work in progress: one dispatch, at the end of the outermost.
+A `run` called directly (a consumer, a script) has the same timing as a command.
+`unitOfWorkContract` of `@ddd-ts-kit/testing/contracts` proves it, with a deferred constraint
+for the commit that fails; on a real PostgreSQL (`DDD_TS_KIT_TEST_DATABASE_URL`) it also proves
+that the rows of a `before-commit` handler are invisible from another connection and visible
+to the `after-commit` handlers.
+The `before-commit` handlers run inside the time Prisma allows the transaction (`timeout`).
+
 ## Repository
 
 The port lives in the domain, the adapter in infrastructure. A repository receives the
@@ -594,8 +607,8 @@ What Prisma does not allow, and what the package does about it:
 
 ## Testing an adapter
 
-The stores of this package pass `outboxStoreContract` and `processedEventStoreContract` of
-`@ddd-ts-kit/testing/contracts`. Hold your repositories to `repositoryContract` the same way,
+The unit of work of this package passes `unitOfWorkContract`, and its stores
+`outboxStoreContract` and `processedEventStoreContract`, of `@ddd-ts-kit/testing/contracts`. Hold your repositories to `repositoryContract` the same way,
 next to their in-memory fake. The tests of this package need no container and no manual step:
 
 ```

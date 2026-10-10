@@ -83,7 +83,10 @@ function anApplication(repository: FlakyParcelRepository, handled: string[]): Ap
 
 const sending: ExpectedSpan = {
   name: 'command SendParcel',
-  children: [{ name: 'repository ParcelRepository.save', children: [{ name: 'domain-event shipping.parcel.sent' }] }],
+  children: [
+    { name: 'repository ParcelRepository.save' },
+    { name: 'unit-of-work before-commit', kind: 'INTERNAL', children: [{ name: 'domain-event shipping.parcel.sent' }] },
+  ],
 };
 
 let tracing: TestTracing;
@@ -97,7 +100,7 @@ afterAll(() => tracing.uninstall());
 beforeEach(() => resetTracingConfiguration());
 
 describe('the wrappers of a repository, outermost first: the span, the dispatch, the aspects of the binding', () => {
-  it('shows one save, retries included, with the event it announced inside, dispatched once', async () => {
+  it('shows one save, retries included, then the event it recorded at the end of the unit of work, dispatched once', async () => {
     const repository = new FlakyParcelRepository();
     const handled: string[] = [];
     const app = anApplication(repository, handled);

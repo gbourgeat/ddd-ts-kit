@@ -1,4 +1,4 @@
-import type { DomainEventDispatcher } from '@ddd-ts-kit/kernel';
+import type { DomainEventDispatcher, DomainEventPhase } from '@ddd-ts-kit/kernel';
 import type { Token } from '@ddd-ts-kit/kernel/declarations';
 import type { Declarer } from './declarer.js';
 import type { Resolve } from './resolve.js';
@@ -7,6 +7,8 @@ import type { Resolve } from './resolve.js';
 export interface DomainEventHandling {
   /** The name the events carry. */
   readonly name: string;
+  /** When the handler runs relative to the commit of the unit of work. */
+  readonly phase: DomainEventPhase;
   /** Name of the class the handler is typed by: an event of another class is not handed to it. */
   readonly event: string;
   readonly handler: Token<unknown>;

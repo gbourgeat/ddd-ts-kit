@@ -4,6 +4,7 @@ import {
   FixedExecutionScope,
   InMemoryCache,
   InMemoryDomainEventDispatcher,
+  reportAfterCommitFailures,
   InMemoryErrorReporter,
   InMemoryEventBus,
   InMemoryLock,
@@ -35,6 +36,7 @@ export function createTestKernel(options: TestApplicationOptions, resolve: Resol
   const executionScope = new FixedExecutionScope(context, actorContext);
   const observability = { logger: new InMemoryLogger(), metrics: new InMemoryMetrics(), lock: new InMemoryLock(clock) };
   const errors = new InMemoryErrorReporter();
+  const afterCommitFailed = reportAfterCommitFailures({ reporter: errors, logger: observability.logger, scope: executionScope });
 
   const scheduler = new ManualJobScheduler({
     clock,
@@ -48,7 +50,7 @@ export function createTestKernel(options: TestApplicationOptions, resolve: Resol
     commandBus: transactionalCommandBus(resolve),
     queryBus: guardedQueryBus(resolve),
     eventBus: new InMemoryEventBus(),
-    domainEvents: new InMemoryDomainEventDispatcher(),
+    domainEvents: new InMemoryDomainEventDispatcher(afterCommitFailed),
     clock,
     ids: new SequentialIdGenerator(options.idPrefix),
     actorContext,

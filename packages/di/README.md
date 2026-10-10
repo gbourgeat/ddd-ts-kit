@@ -81,8 +81,9 @@ export class IssueInvoiceHandler implements CommandHandler<IssueInvoice> {
 }
 ```
 
-The handler only saves. The domain events the aggregate recorded leave with the save: see
-"Domain events leave with the save".
+The handler only saves. The save hands over the domain events the aggregate recorded, and the
+unit of work of the command dispatches them once the handler has returned, before the commit:
+see "Domain events and the unit of work".
 
 ```ts
 // contexts/billing/application/queries/get-invoice/get-invoice.query.ts and .handler.ts
@@ -268,10 +269,10 @@ The full list, with the options of each, is in the README of `@ddd-ts-kit/kernel
 | `@Requires(permission, options?)` / `@Public()` on a command or a query | the access of the use case: what `.requires(...)` and `.public()` say in an explicit module, read by `authorization: 'required'` and by the authorization module |
 | `@CommandHandler(Message, [ports])`, `@QueryHandler(Message, [ports])` | a singleton of kind `use-case`, registered on `CommandBus` or `QueryBus` |
 | `@IntegrationEventHandler(contract, { consumer }, [ports])` | a singleton of kind `consumer`, subscribed by `start()` on the subscriber of its context, idempotent per consumer name, run in the execution context of the event, its mark and its work in one unit of work |
-| `@DomainEventHandler(Event, { name }, [ports])` | a singleton of kind `domain-event-handler`, attached to `DomainEventDispatcher` when the application is created; an event dispatched under the name and built from another class is left alone |
+| `@DomainEventHandler(Event, { name, phase? }, [ports])` | a singleton of kind `domain-event-handler`, attached to `DomainEventDispatcher` when the application is created, in its phase: `before-commit` (default), at the end of the unit of work and inside its transaction, or `after-commit`, once it has committed; an event dispatched under the name and built from another class is left alone |
 | `@Projection(name, [ports])`, with `@On(definition)` or `@On(Event, { name })` on its methods | a singleton of kind `consumer`. Each integration event it applies is subscribed by `start()` under the name of the projection, exactly as a handler of integration events is: its own execution context, idempotent per name, its mark and its write in one unit of work. Each domain event of its own context is attached to `DomainEventDispatcher` and applied inside the save. See "Projections" |
 | `@Scheduled(name, schedule and options, [ports])` | a singleton of kind `job`, registered on `JobScheduler` when the application is created, started by `start()` after the consumers and stopped first by `stop()`; see "Scheduled jobs" |
-| `@Repository(Port, options?, [ports])` | the binding of the port, kind `repository`: its save dispatches the domain events of the aggregate |
+| `@Repository(Port, options?, [ports])` | the binding of the port, kind `repository`: its save hands the domain events of the aggregate to the unit of work, which dispatches them at its end |
 | `@Gateway(Port, options?, [ports])` | the binding of the port, kind `gateway` |
 | `@Adapter(Port, { kind? }, [ports])` | the binding of the port, kind `external` (default) or `publisher` |
 | `@Policy(permission, { name }, [ports])` | a singleton listed in `DeclaredPolicies`, which the authorization module evaluates |
@@ -640,7 +641,7 @@ barrel instead of discovery the two lines become `contextModule('ordering', orde
 | `Clock` | `SystemClock` | `clock` |
 | `IdGenerator` | `UuidGenerator` | `ids` |
 | `UnitOfWork` | `InMemoryUnitOfWork` | `unitOfWork` |
-| `CommandBus` | `InMemoryCommandBus` running each command, and the dispatch of the domain events its saves announce, in the unit of work | `commandBus` |
+| `CommandBus` | `InMemoryCommandBus` running each command in the unit of work: the domain events its saves announce are dispatched once the handler has returned, before the commit, then the `after-commit` handlers run | `commandBus` |
 | `QueryBus` | `InMemoryQueryBus` | `queryBus` |
 | `EventBus` | `InMemoryEventBus` | `eventBus` |
 | `IntegrationEventPublisher` | the event bus | `eventPublisher` |
@@ -649,7 +650,7 @@ barrel instead of discovery the two lines become `contextModule('ordering', orde
 | `ProcessedEventStore` | `InMemoryProcessedEventStore` | `processedEvents` |
 | `ExecutionScope` | `AsyncLocalStorageExecutionScope` | `executionScope` |
 | `ActorContext` | `ScopedActorContext`: the actor of the execution scope | `actorContext` |
-| `DomainEventDispatcher` | `InMemoryDomainEventDispatcher`, which the save of every repository dispatches to | `domainEvents` |
+| `DomainEventDispatcher` | `InMemoryDomainEventDispatcher`, which hears what the save of every repository announced; a failure of an `after-commit` handler goes to the `Logger` and the `ErrorReporter` (`reportAfterCommitFailures`) | `domainEvents` |
 | `Logger` | `NoopLogger`. `app.stop()` flushes it last, after the error reporter, and stops all the same when the flush fails | `logger` |
 | `Metrics` | `NoopMetrics` | `metrics` |
 | `ErrorReporter` | `NoopErrorReporter`. The default buses and the default scheduler hand it their unexpected failures (never a `DomainError`), and `app.stop()` gives it two seconds to flush | `errorReporter` |
@@ -762,7 +763,7 @@ spec touches:
 |---|---|
 | `commandBus`, `queryBus` | the in-memory buses, with every declared handler |
 | `eventBus` | `InMemoryEventBus`; `eventBus.published` lists what the use cases announced. Every context listens on it, whatever `EventSubscribers` the modules bind |
-| `domainEvents` | `InMemoryDomainEventDispatcher`: the save of every repository, adapter or fake, dispatches to it, and a spec may dispatch a domain event itself to see the declared handlers react |
+| `domainEvents` | `InMemoryDomainEventDispatcher`: the save of every repository, adapter or fake, announces to it, with the timing of the application (at the end of the command, then after it for `after-commit` handlers); a spec may dispatch a domain event itself to see the declared handlers react, and `domainEvents.afterCommitFailures` holds what `after-commit` handlers threw |
 | `clock` | `FixedClock` at `now` (default `2026-01-01T00:00:00.000Z`); `clock.advance(ms)` |
 | `ids` | `SequentialIdGenerator`: `id-1`, `id-2`... |
 | `actorContext` | `FixedActorContext`; `actAs(actor)` changes who infrastructure sees |
@@ -897,36 +898,64 @@ carries none of the three:
   file: '/app/dist/contexts/billing/infrastructure/persistence/knex-invoice.repository.js' }
 ```
 
-`domainEventHandlers` lists the declared handlers of domain events, publishers included,
+`domainEventHandlers` lists the declared handlers of domain events, publishers included, each
+with its `phase` (`before-commit` or `after-commit`),
 `policies` the declared policy classes, `jobs` the jobs with the settings they run with, those
 of the application applied. What a job did last and when it runs next is not wiring: ask
 `app.resolve(JobScheduler).describe()`.
 
-## Domain events leave with the save
+## Domain events and the unit of work
+
+An effect of a domain event exists only if the state change that recorded it is committed.
 
 A handler writes `await this.orders.save(order); return order.id;` and nothing else: no
 `pullEvents()`, no `DomainEventDispatcher` in a use case. `kernelModule()` puts
 `dispatchingOnSave` of the kernel around every binding of kind `repository`, in every module:
 declared with `@Repository`, bound `.as('repository')`, or bound under a port that extends the
 kernel `Repository` (which is a repository whether the module says so or not). A repository
-adapter contains no dispatch code.
+adapter contains no dispatch code. The save only hands the events over; the unit of work of the
+command dispatches them at its end.
 
 | Question | Answer |
 |---|---|
-| Which methods | Every method of the repository that is handed an aggregate, or an array of them, and resolves: `save(order)`, `saveAll([a, b])`, `remove(order)`. A method that is handed no aggregate (`findById`, `remove(id)`) dispatches nothing: a removal that announces an event takes the aggregate |
-| Which events, in which order | Those the aggregates of the call recorded, pulled once the call resolved: in the order of the arguments, then of recording |
-| Where | Inside the unit of work of the command: the default command bus runs the handler, hence the save and the dispatch, in `UnitOfWork.run`. What the domain event handlers write, the outbox included, commits or rolls back with the state |
-| A handler of the event fails | The save rejects with what it threw, the command fails, the unit of work rolls back. The events still waiting are dropped, and the aggregate instance has given its events: do not save it again |
-| The save fails | Nothing is pulled: the events stay on the aggregate, nothing is dispatched |
-| A handler saves another aggregate | Its events wait behind the ones already announced and are dispatched by the same chain, in recording order, without recursion. The first save resolves when the chain is empty |
-| A handler sends a command | That command is a unit of work of its own: its events are dispatched before it returns |
-| The same aggregate saved twice | The second save dispatches what was recorded since the first, which may be nothing |
-| A save outside of any unit of work | Still dispatches. Nothing is atomic then: the state is written, the handlers run, and a handler that fails rejects the save without undoing it |
+| Which methods | Every method of the repository that is handed an aggregate, or an array of them, and resolves: `save(order)`, `saveAll([a, b])`, `remove(order)`. A method that is handed no aggregate (`findById`, `remove(id)`) announces nothing: a removal that announces an event takes the aggregate |
+| Which events, in which order | Those the aggregates of the call recorded, pulled once the call resolved: in the order of the arguments, then of recording, and across the saves of the command in the order of the saves |
+| When | Once the command handler has returned, inside the transaction, before the commit: the default command bus runs the handler in `UnitOfWork.run`, and a save only queues. Every handler sees every save of the command. What the domain event handlers write, the outbox included, commits or rolls back with the state |
+| After the commit | Handlers declared `phase: 'after-commit'` run once the transaction has committed, never when it rolled back, in the order the events were dispatched, awaited before the command answers. At most once: a crash between the commit and the run loses them |
+| A `before-commit` handler fails | The command fails with what it threw and the unit of work rolls back. The events still waiting are dropped, no `after-commit` handler runs, and the aggregate instances have given their events: do not save them again, a retry reloads them |
+| An `after-commit` handler fails | The command still succeeds. The failure is logged (`Logger.error`, "A domain event handler failed after the commit", with `domainEvent`, `errorType`, `errorCode`) and handed to the `ErrorReporter` under the operation `after-commit <event name>`; the other handlers still run |
+| The save fails | Nothing is pulled: the events stay on the aggregate. The command fails, and the events queued by earlier saves are dropped |
+| The command handler throws after a save, or the commit fails | The queued events are dropped: no handler of either phase for a handler that threw, no `after-commit` handler for a commit that failed; nothing stored, no outbox row |
+| A handler saves another aggregate | Before the commit: its events wait behind the ones already queued and are dispatched in recording order, without recursion. After the commit: refused before the write with `SaveAfterCommitError`; send a command through the `CommandBus` instead |
+| A handler sends a command | Before the commit, that command joins the unit of work in progress: one dispatch, at the end of the outermost, one commit. After the commit, it is a unit of work of its own |
+| The same aggregate saved twice | The second save announces what was recorded since the first, which may be nothing |
+| A save outside of any unit of work | Dispatches before it resolves, `before-commit` handlers then `after-commit` ones. Nothing is atomic then: the state is written, the handlers run, and a handler that fails rejects the save without undoing it |
 | An adapter that pulls the events itself | Leaves nothing to dispatch: no double dispatch, and no dispatch at all unless the adapter does it. An adapter never calls `pullEvents()` |
-| Order of the wrappers | Outermost first: the `decorate` hook, the instrumentation (the span of the save), the dispatch, the aspects other modules put around the kind (`builder.around`), the aspects of the binding (`.with(retry(...))`). A retried save dispatches once; a handler that fails is not retried as a failed save; the span of the save contains what the save announced |
+| Order of the wrappers | Outermost first: the `decorate` hook, the instrumentation (the span of the save), the hand-over of the events, the aspects other modules put around the kind (`builder.around`), the aspects of the binding (`.with(retry(...))`). A retried save announces once |
+
+A `before-commit` handler may only have effects the transaction covers, because the commit can
+still fail after it ran: `domain-events/transactional-before-commit` holds it. An effect outside
+the database is an `after-commit` handler when it may be lost, an integration event through the
+outbox when it must not:
+
+```ts
+@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued', phase: 'after-commit' }, [Cache])
+export class InvoiceIssuedEventHandler implements DomainEventHandler<InvoiceIssued> {
+  constructor(private readonly cache: Cache) {}
+
+  async handle(event: InvoiceIssued): Promise<void> {
+    await this.cache.delete(cacheKey<InvoiceSummary>('invoice-summary', event.aggregateId));
+  }
+}
+```
+
+A `UnitOfWork` given through `kernelModule({ unitOfWork })` gets this timing for commands
+whatever it is made of: the default command bus puts `withinUnitOfWork` of the kernel around
+it. Built on `withinUnitOfWork` itself, as the ORM packages are, it gives the same timing to a
+`run` called directly, the one of a consumer included.
 
 In a test application, the adapter of a module and the fake given for a repository port both
-dispatch to `app.domainEvents`, whether `kernelModule()` is listed or not. Without a container,
+announce to `app.domainEvents`, whether `kernelModule()` is listed or not. Without a container,
 `dispatchingOnSave(repository, () => dispatcher)` of the kernel is the same wrapper, and
 `createTestBuses().dispatching(fake)` of `@ddd-ts-kit/testing` applies it to a fake.
 

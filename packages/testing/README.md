@@ -211,12 +211,28 @@ it('places an order and announces it', async () => {
 });
 ```
 
-The handler only saves: `await this.orders.save(order); return order.id;`. Domain events leave
-with the save. `dispatching(fake)` gives the fake what the application gives every repository:
-once `save` (or any method handed the aggregate) resolved, the events the aggregate recorded
-are dispatched to `domainEvents`, in recording order. With `createTestApplication` of
-`@ddd-ts-kit/di` there is nothing to call: the fake given for a repository port dispatches to
-`app.domainEvents`, and the declared domain event handlers react.
+The handler only saves: `await this.orders.save(order); return order.id;`. `dispatching(fake)`
+gives the fake what the application gives every repository: once `save` (or any method handed
+the aggregate) resolved, the events the aggregate recorded are handed over to `domainEvents`.
+
+A handler spec has the production timing. `commandBus` runs every command in `unitOfWork`
+(an `InMemoryUnitOfWork`), as the bus of the application does: the events of every save wait
+until the command handler has returned, then are dispatched in recording order, and
+`execute` resolves once the handlers of both phases ran. A handler that fails in the
+`before-commit` phase rejects `execute`; nothing is undone, since there is no transaction in
+memory. Called outside a command, `orders.save(order)` dispatches before it resolves.
+
+```ts
+domainEvents.on('ordering.order.placed', (event) => board.refresh(event.aggregateId), { phase: 'after-commit' });
+
+await commandBus.execute(new PlaceOrder('sku-1'));       // resolves even when the handler above failed
+
+expect(domainEvents.afterCommitFailures).toEqual([]);    // { error, event } of each failure, the last hundred
+```
+
+With `createTestApplication` of `@ddd-ts-kit/di` there is nothing to call: the fake given for a
+repository port announces to `app.domainEvents` with the same timing, and the declared domain
+event handlers react, each in its phase.
 
 `InMemoryRepository` is a fake, not a mock: a working repository over a Map that keeps its own
 copy of what is saved (through `snapshots({ toSnapshot, fromSnapshot })` or `{ clone }`) and
@@ -390,6 +406,7 @@ repositoryContract(runner, { ...options, name: 'DrizzleOrderRepository', createR
 |---|---|
 | `repositoryContract` | save then find, unknown id, update, isolation of the stored copy, optimistic concurrency (any error with code `CONCURRENCY_CONFLICT`) |
 | `eventBusContract` | any `EventBus` provider: routing by type, several subscribers, unsubscribe, exact envelope round trip (`traceparent`, `correlationId`), handler failure surfaces. Redeliveries are accepted; return `settle()` from `createBus` for providers that deliver asynchronously |
+| `unitOfWorkContract` | any `UnitOfWork`, called through `run` without a command bus: domain events wait for the end and are dispatched before the commit, so handlers see every save and what they write, the outbox included, commits with it; a failure in a save, in the work, in a handler or in the commit (a deferred constraint) leaves nothing behind; `after-commit` handlers run once the rows are committed, never otherwise. An adapter not built on `withinUnitOfWork` fails here |
 | `outboxStoreContract` | any outbox store: order, limit, lease, concurrent claims, published, failed, dead, `retryDead`, purge |
 | `processedEventStoreContract` | any `ProcessedEventStore`: once per consumer and event, also under concurrent deliveries |
 | `cacheContract` | any `Cache`: round trip of every shape of value, isolation of entries, deletion, time to live |
@@ -405,6 +422,16 @@ subject: advance the clock it reads, or really wait when the time is a server's.
 scheduler suite takes it from `createScheduler`, with the scheduler and the scope it runs its
 jobs in: `{ scheduler, scope, elapse }`. It asks for a few seconds at most, with jobs of every
 second.
+
+The unit of work suite takes `createUnitOfWork`, called before each test, which answers a
+`UnitOfWorkUnderContract` over an empty table and an empty outbox:
+`{ unitOfWork, outbox, insert(id), insertRefusedAtCommit(id), ids(), committedIds?(), close?() }`.
+The table holds an identifier under a primary key and a reference to a row of the same table
+that the database checks at commit only (a deferred constraint): `insertRefusedAtCommit` writes
+a row the commit refuses. Give `committedIds`, what another connection sees, where the
+database serves several connections: the suite then also proves that the rows of a
+`before-commit` handler are invisible from outside the transaction and visible to the
+`after-commit` handlers.
 
 The suites use only `describe`, `it`, `beforeEach`, `expect(...).toBe` and `toEqual`
 (`afterEach` is optional), which the globals of vitest and jest both provide: that part of a

@@ -108,6 +108,7 @@ function describeDiscovery(label: string, discover: () => Promise<Omit<Discovere
       expect(description.domainEventHandlers).toContainEqual({
         event: 'InvoiceIssued',
         name: 'billing.invoice.issued',
+        phase: 'before-commit',
         handler: 'InvoiceIssuedPublisher',
         module: 'billing',
         origin: 'declared',

@@ -1,3 +1,4 @@
+import type { DomainEventPhase } from '../../application/events/domain-event-phase.js';
 import type { DomainEvent } from '../../domain/domain-event.js';
 import type { ClassDeclarator } from '../dependencies/class-declarator.js';
 import type { Dependencies } from '../dependencies/dependencies.js';
@@ -10,6 +11,11 @@ import type { Named } from './named.js';
 export interface DomainEventHandlerOptions<Name extends string = string> {
   /** The `name` the events of this type carry, `<context>.<aggregate>.<fact>`: what the dispatcher routes by. */
   readonly name: Name;
+  /**
+   * `before-commit`, the default: at the end of the unit of work, inside its transaction.
+   * `after-commit`: once it has committed, for an effect no transaction covers; at most once.
+   */
+  readonly phase?: DomainEventPhase;
 }
 
 /**
@@ -19,8 +25,11 @@ export interface DomainEventHandlerOptions<Name extends string = string> {
 export type DomainEventHandler<E extends DomainEvent> = DomainEventHandlerShape<E>;
 
 /**
- * A handler of a domain event of its own context, run where the event is dispatched:
- * `@DomainEventHandler(OrderPaid, { name: 'ordering.order.paid' }, [CommandBus])`.
+ * A handler of a domain event of its own context, run at the end of the unit of work that
+ * recorded the event, before the commit:
+ * `@DomainEventHandler(OrderPaid, { name: 'ordering.order.paid' }, [CommandBus])`. One whose
+ * effect is outside the transaction runs after it:
+ * `@DomainEventHandler(OrderPaid, { name: 'ordering.order.paid', phase: 'after-commit' }, [Cache])`.
  */
 export function DomainEventHandler<
   E extends DomainEvent,
@@ -31,7 +40,7 @@ export function DomainEventHandler<
   options: DomainEventHandlerOptions<Name> & Named<Name, 'name'>,
   dependencies?: D,
 ): ClassDeclarator<DomainEventHandlerShape<E>, D> {
-  const { name } = options;
+  const { name, phase = 'before-commit' } = options;
 
   assertNamed(name, `A handler of ${event.name} needs the name its events carry`);
 
@@ -39,6 +48,7 @@ export function DomainEventHandler<
     record(target, {
       role: 'domain-event-handler',
       name,
+      phase,
       event,
       dependencies: dependencies ?? [],
       pair: (use) => use(event, target),

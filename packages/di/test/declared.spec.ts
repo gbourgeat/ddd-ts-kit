@@ -179,8 +179,8 @@ describe('what a declared context says of itself', () => {
     ]);
 
     expect(description.domainEventHandlers).toEqual([
-      { event: 'InvoiceIssued', name: 'billing.invoice.issued', handler: 'InvoiceIssuedEventHandler', module: 'billing', origin: 'declared', declaredBy: 'InvoiceIssuedEventHandler' },
-      { event: 'InvoiceIssued', name: 'billing.invoice.issued', handler: 'InvoiceIssuedPublisher', module: 'billing', origin: 'declared', declaredBy: 'InvoiceIssuedPublisher' },
+      { event: 'InvoiceIssued', name: 'billing.invoice.issued', phase: 'before-commit', handler: 'InvoiceIssuedEventHandler', module: 'billing', origin: 'declared', declaredBy: 'InvoiceIssuedEventHandler' },
+      { event: 'InvoiceIssued', name: 'billing.invoice.issued', phase: 'before-commit', handler: 'InvoiceIssuedPublisher', module: 'billing', origin: 'declared', declaredBy: 'InvoiceIssuedPublisher' },
     ]);
 
     expect(description.policies).toEqual([

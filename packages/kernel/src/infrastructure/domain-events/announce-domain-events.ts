@@ -1,17 +1,23 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 import type { DomainEventDispatcher } from '../../application/ports/domain-event-dispatcher.js';
 import type { DomainEvent } from '../../domain/domain-event.js';
-import { domainEventFlow, type AnnouncedEvent, type DomainEventFlow } from './domain-event-flow.js';
+import { dispatchAfterCommit } from './dispatch-after-commit.js';
+import { dispatchBeforeCommit } from './dispatch-before-commit.js';
+import { here } from './here.js';
+import { SaveAfterCommitError } from './save-after-commit-error.js';
+import { unitOfWorkScope, type QueuedDomainEvent, type UnitOfWorkScope } from './unit-of-work-scope.js';
 
 /**
- * Dispatches the events one by one, in the order given. Events announced meanwhile, by a
- * handler that saves an aggregate, wait behind the ones already announced instead of being
- * dispatched inside that handler: the whole chain goes out in recording order, without
- * recursion, and the promise resolves once nothing is left. The first handler that fails
- * rejects it, and what was still waiting is dropped with it.
+ * Hands over the events a save pulled from its aggregates.
  *
- * Each event is dispatched in the asynchronous context of the save that announced it, so what
- * follows the call chain (a trace, an execution scope) names that save.
+ * Inside a unit of work they only join its queue, behind what earlier saves recorded: the unit
+ * of work dispatches them at its end, before the commit (`withinUnitOfWork`), and the promise
+ * resolves at once.
+ *
+ * Outside of any, the save is all there is to wait for: they are dispatched now, `before-commit`
+ * handlers then `after-commit` ones, in the asynchronous context of that save. Events recorded
+ * meanwhile, by a handler that saves an aggregate, wait behind them: one chain, in recording
+ * order, without recursion. The first `before-commit` handler that fails rejects the promise.
  */
 export async function announceDomainEvents(
   events: readonly DomainEvent[],
@@ -19,25 +25,36 @@ export async function announceDomainEvents(
 ): Promise<void> {
   if (events.length === 0) return;
 
-  const whereAnnounced = AsyncLocalStorage.snapshot();
-  const current = domainEventFlow.getStore();
-  const flow: DomainEventFlow = current?.open === true ? current : { waiting: [], open: true };
+  const current = unitOfWorkScope.getStore();
 
-  const dispatch = (event: DomainEvent): Promise<void> =>
-    whereAnnounced(() => domainEventFlow.run(flow, () => dispatcher.dispatch([event])));
+  if (current?.stage === 'after-commit') throw new SaveAfterCommitError('announceDomainEvents');
 
-  flow.waiting.push(...events.map((event): AnnouncedEvent => ({ event, dispatch })));
+  if (current !== undefined && current.stage !== 'closed') {
+    current.queue.push(...queued(events, dispatcher, current.kind === 'save' ? AsyncLocalStorage.snapshot() : here));
 
-  if (flow !== current) await drained(flow);
+    return;
+  }
+
+  await dispatchedNow(queued(events, dispatcher, AsyncLocalStorage.snapshot()));
 }
 
-async function drained(flow: DomainEventFlow): Promise<void> {
+function queued(
+  events: readonly DomainEvent[],
+  dispatcher: Pick<DomainEventDispatcher, 'dispatch'>,
+  within: QueuedDomainEvent['within'],
+): QueuedDomainEvent[] {
+  return events.map((event) => ({ event, dispatcher, within }));
+}
+
+async function dispatchedNow(events: QueuedDomainEvent[]): Promise<void> {
+  const scope: UnitOfWorkScope = { kind: 'save', stage: 'open', queue: events, dispatched: [] };
+
   try {
-    for (let next = flow.waiting.shift(); next !== undefined; next = flow.waiting.shift()) {
-      await next.dispatch(next.event);
-    }
+    await dispatchBeforeCommit(scope);
   } finally {
-    flow.open = false;
-    flow.waiting.length = 0;
+    scope.stage = 'closed';
+    scope.queue.length = 0;
   }
+
+  await dispatchAfterCommit(scope);
 }

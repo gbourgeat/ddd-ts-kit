@@ -91,3 +91,19 @@ export class LoanOpenedPublisher implements DomainEventHandler<LoanOpened> {
     ]);
   }
 }
+
+/** An effect no transaction covers: it notes what is committed when it runs. */
+@DomainEventHandler(LoanOpened, { name: 'lending.loan.opened', phase: 'after-commit' })
+export class LoanOpenedNotice implements DomainEventHandler<LoanOpened> {
+  static committed: () => readonly string[] = () => [];
+
+  static sent: string[] = [];
+
+  static failure: Error | undefined;
+
+  async handle(event: LoanOpened): Promise<void> {
+    if (LoanOpenedNotice.failure !== undefined) throw LoanOpenedNotice.failure;
+
+    LoanOpenedNotice.sent.push(`${event.aggregateId} with ${LoanOpenedNotice.committed().join(',')} committed`);
+  }
+}

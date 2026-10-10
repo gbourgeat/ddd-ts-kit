@@ -176,6 +176,7 @@ describe('a discovered publisher', () => {
       {
         event: 'InvoiceIssued',
         name: 'billing.invoice.issued',
+        phase: 'before-commit',
         handler: 'InvoiceIssuedPublisher',
         module: 'billing',
         origin: 'declared',

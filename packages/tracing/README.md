@@ -83,9 +83,10 @@ POST /appointments                                        SERVER    scheduling
   command BookAppointment                                 INTERNAL
     repository AppointmentRepository.findOverlapping      INTERNAL
     repository AppointmentRepository.save                 INTERNAL
+    unit-of-work before-commit                            INTERNAL  after every save, before the commit
       domain-event scheduling.appointment.booked          INTERNAL
         handler AppointmentBookedPublisher                INTERNAL
-          outbox append scheduling.appointment.booked     INTERNAL  (the response is sent here)
+          outbox append scheduling.appointment.booked     INTERNAL  (the response is sent once this is committed)
             publish scheduling.appointment.booked         PRODUCER  by the relay, later, same trace
               process notification.appointment-booked     CONSUMER  notification
                 command SendBookingConfirmation           INTERNAL
@@ -105,6 +106,38 @@ job scheduling.send-reminders                             INTERNAL  (root)
     repository AppointmentRepository.findOverlapping      INTERNAL
 ```
 
+### The phases of a unit of work
+
+The handlers of domain events are not under the save that recorded the event: the unit of work
+dispatches them once the command handler has returned. Under the span of the command, in order:
+
+```
+command SendParcels                                       INTERNAL
+  repository ParcelRepository.save                        INTERNAL
+  repository ParcelRepository.save                        INTERNAL
+  unit-of-work before-commit                              INTERNAL  the events of both saves
+    domain-event shipping.parcel.sent                     INTERNAL
+      repository ParcelRepository.save                    INTERNAL  a handler saves another aggregate
+    domain-event shipping.parcel.sent                     INTERNAL
+  unit-of-work before-commit                              INTERNAL  what the handlers recorded in turn
+    domain-event shipping.parcel.tracked                  INTERNAL
+  unit-of-work after-commit                               INTERNAL  once committed, same trace
+    domain-event shipping.parcel.sent                     INTERNAL
+    domain-event shipping.parcel.sent                     INTERNAL
+```
+
+- `unit-of-work before-commit` follows the save spans. What the handlers recorded in turn is
+  under a second span of the same name.
+- `unit-of-work after-commit` is there when an event has a handler of that phase, and holds
+  only those events. It is a child of the command span, and stays in the trace when its
+  handler fails: the command span still says `succeeded`.
+- A handler declared with a kind (`@DomainEventHandler`) is a `handler <ClassName>` span under
+  its `domain-event` span; a callback attached with `dispatcher.on` has none.
+- Outside any unit of work (a repository called alone) the `domain-event` spans stay under the
+  save span that dispatched them, without a phase span.
+
+This tree is asserted by `test/unit-of-work-phases.spec.ts`.
+
 ### Span names, kinds and attributes
 
 | Span | Kind | Made by | Attributes |
@@ -112,6 +145,8 @@ job scheduling.send-reminders                             INTERNAL  (root)
 | `<METHOD> <route template>` | SERVER | `tracedRoutes()` (renames the span an HTTP instrumentation opened, or starts one) | `http.route`, `http.request.method`, `http.response.status_code`, `app.operation`, `app.correlation_id`, `app.origin`, `app.outcome`, `app.error.code` |
 | `command <Name>`, `query <Name>` | INTERNAL | `traceUseCases()`, a bus middleware | `app.use_case.kind`, `app.use_case.name`, `app.context`, `app.outcome`, `app.error.code`, `error.type` |
 | `<kind> <Port>.<method>`: `repository`, `gateway`, `external`, `publisher` | INTERNAL | `traceBindings()` | `code.namespace` (the adapter class), `code.function`, `app.dependency.kind`, `app.context` |
+| `unit-of-work before-commit` | INTERNAL | `tracedDomainEvents()`, around each round of events dispatched at the end of a unit of work, before the commit | none |
+| `unit-of-work after-commit` | INTERNAL | `tracedDomainEvents()`, around the events that have an `after-commit` handler, once the unit of work has committed | none |
 | `domain-event <name>` | INTERNAL | `tracedDomainEvents()` | `app.domain_event.name` |
 | `handler <ClassName>` | INTERNAL | `traceBindings()`, kind `domain-event-handler` | `code.namespace`, `code.function`, `app.dependency.kind`, `app.context` |
 | `outbox append <type>` | INTERNAL | `tracedPublisher()` around a publisher that stores | `messaging.system` (`outbox`), `messaging.operation.name` (`append`), `messaging.operation.type` (`create`), `messaging.destination.name`, `messaging.message.id` |
@@ -224,10 +259,12 @@ after the port when it is given and after the class otherwise.
   the real instance as `this`; the calls it makes on itself are then not traced.
 - **Order of the wrappers of a repository** under `kernelModule({ instrumentation })`,
   outermost first: the `decorate` hook of the application when there is one, the span, the
-  dispatch of domain events (`dispatchingOnSave` of the kernel), then the aspects of the
-  binding (`retry`, `timeout`). So `repository X.save` covers the retries and contains the `domain-event` spans
-  of what the save announced, a retried save dispatches once, and a failing handler is not
-  retried as if the save had failed.
+  hand-over of domain events (`dispatchingOnSave` of the kernel), then the aspects of the
+  binding (`retry`, `timeout`). So `repository X.save` covers the retries, and a retried save
+  announces its events once. Inside a unit of work `repository X.save` contains no
+  `domain-event` span: the save only queues the events, and they are dispatched under
+  `unit-of-work before-commit`, a sibling that follows the saves. Outside any unit of work the
+  save dispatches before it resolves, and the `domain-event` spans are its children.
 
 ## Noise
 
@@ -332,7 +369,8 @@ it('books an appointment in one trace', async () => {
       attributes: { 'app.context': 'scheduling', 'app.outcome': 'succeeded' },
       children: [
         { name: 'repository AppointmentRepository.findOverlapping' },
-        { name: 'repository AppointmentRepository.save', children: [{ name: 'domain-event scheduling.appointment.booked' }] },
+        { name: 'repository AppointmentRepository.save' },
+        { name: 'unit-of-work before-commit', children: [{ name: 'domain-event scheduling.appointment.booked' }] },
       ],
     },
   ]);

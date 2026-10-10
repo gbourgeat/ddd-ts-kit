@@ -124,6 +124,16 @@ relay.start({ intervalMs: 500 });
 current transaction, an event published by a handler that then fails is rolled back with the
 business write: that is the whole point of the outbox.
 
+`run` is built on `withinUnitOfWork` of the kernel. The domain events of the aggregates saved
+inside it wait until `work` has returned, then are dispatched inside the transaction, before
+the commit: their handlers see every save, and what they write commits or rolls back with it.
+If `work`, a handler or the commit fails, nothing is left: no row, no outbox record, no handler
+run after the commit. Handlers declared `after-commit` run once the transaction has committed.
+A nested `run` joins the unit of work in progress: one dispatch, at the end of the outermost.
+A `run` called directly (a consumer, a script) has the same timing as a command.
+`unitOfWorkContract` of `@ddd-ts-kit/testing/contracts` proves it on PGlite, with a deferred
+constraint for the commit that fails.
+
 ## Repository
 
 The port lives in the domain, the adapter in infrastructure. A repository receives the
@@ -451,9 +461,10 @@ and on PostgreSQL 18.
 
 ## Testing an adapter
 
-The stores of this package pass `outboxStoreContract` and `processedEventStoreContract` of
-`@ddd-ts-kit/testing/contracts` on PGlite (PostgreSQL in process, no container). Hold your
-repositories to `repositoryContract` the same way, next to their in-memory fake.
+The unit of work of this package passes `unitOfWorkContract`, and its stores
+`outboxStoreContract` and `processedEventStoreContract`, of `@ddd-ts-kit/testing/contracts` on
+PGlite (PostgreSQL in process, no container). Hold your repositories to `repositoryContract`
+the same way, next to their in-memory fake.
 
 The criteria translator and the read model store also run on a real server when
 `DDD_TS_KIT_TEST_DATABASE_URL` is set, through `drizzle-orm/node-postgres`, each spec file in a
