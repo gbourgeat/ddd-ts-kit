@@ -41,19 +41,27 @@ sequenceDiagram
   participant D as Domain event handlers
   H->>A: cancel(reason, at)
   A->>A: check invariants, change state, record AppointmentCancelled
-  H->>R: save(appointment)
-  R-->>D: once the save resolved, the recorded events are dispatched, in order
-  D->>D: reactions inside the same context
+  H->>R: save(appointment), the recorded events are queued
+  H-->>D: once the handler has returned, the queue is dispatched, in recording order
+  D->>D: reactions inside the same context, before the commit
   Note over H,D: all inside the unit of work of the command, which then commits or rolls back
+  Note over D: handlers declared after-commit run once it has committed
 ```
 
 - The **aggregate records** the event in the method that made the change. It does not publish
   anything: it has no bus and no dependency.
-- Events **leave with the save**: once a repository method handed the aggregate resolves, the
-  events it recorded are dispatched in order, inside the unit of work of the command
-  ([ARCHITECTURE.md](../ARCHITECTURE.md), section 4, "Domain events"). The handlers and the
-  outbox commit or roll back with the state change. A command handler only saves: it never
-  calls `pullEvents()` and receives no dispatcher (`domain-events/dispatched-on-save`).
+- Events **are handed over by the save and dispatched at the end of the unit of work**: a
+  repository method handed the aggregate queues the events it recorded, and once the command
+  handler has returned they are dispatched in recording order, inside the transaction, before
+  the commit ([ARCHITECTURE.md](../ARCHITECTURE.md), section 4, "Domain events"). Every handler
+  sees every save of the command. The handlers and the outbox commit or roll back with the
+  state change. A command handler only saves: it never calls `pullEvents()` and receives no
+  dispatcher (`domain-events/dispatched-on-save`).
+- A handler runs **before the commit** by default, and may only have effects the transaction
+  covers. One whose effect is outside the database is declared `phase: 'after-commit'`: it runs
+  once the transaction has committed, at most once, and never saves an aggregate. The phases
+  and their failures are in
+  [Domain and integration events](domain-and-integration-events.md).
 - A **domain event handler** (`application/event-handlers/`) reacts inside the same context.
   A **publisher** (`application/integration/publishers/`) is a reaction whose job is to
   translate the domain event into an integration event for the other contexts.
@@ -193,8 +201,8 @@ they go through the same public API, so a test cannot start from an invalid stat
 
 ## Limits and when not to use it
 
-- **Domain events are not a message queue.** They are dispatched in process, inside the
-  transaction of the command: a reaction that fails makes the command fail. A reaction that
+- **Domain events are not a message queue.** They are dispatched in process, by default
+  inside the transaction of the command: a reaction that fails makes the command fail. A reaction that
   must run apart from the command, or reach another context, goes through an integration
   event and the [transactional outbox](transactional-outbox.md).
 - **Domain events are not event sourcing.** The aggregate's state is stored as state. Events

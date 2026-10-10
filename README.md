@@ -111,7 +111,8 @@ Rules have ids, a reason and a fix (`npx ddd-ts-kit explain <rule-id>`):
   environment access in domain or application.
 - **Tactical DDD** (`domain/*`, `application/*`, `events/*`, `domain-events/*`): encapsulated
   aggregates, immutable value objects, specific domain errors, one handler per use case,
-  domain events that leave with the save, integration events declared once with a schema.
+  domain events dispatched at the end of the unit of work (before the commit, or after it for a
+  declared handler), integration events declared once with a schema.
 - **Ports and wiring** (`ports/*`, `declarations/*`, `composition/*`): a port is an abstract
   class and its own injection token, an adapter implements it, a class declares its role with
   a decorator and is assembled in one place.

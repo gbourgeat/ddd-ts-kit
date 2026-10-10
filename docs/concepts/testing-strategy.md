@@ -155,7 +155,7 @@ assert what a client observes (responses, published events), never the database 
 |---|---|---|
 | "A cancelled appointment cannot be rescheduled" | domain | an invariant: no I/O needed, exhaustive cases are cheap |
 | Boundaries of `TimeSlot` (end before start, zero length) | domain, table-driven | value object validation |
-| "Cancelling publishes `appointments.appointment.cancelled` with the save; a refusal saves and publishes nothing" | application | orchestration: load, one intention, save |
+| "Cancelling publishes `appointments.appointment.cancelled` once the command handler has returned; a refusal saves and publishes nothing" | application | orchestration: load, one intention, save |
 | Each declared error code of a use case | application | the contract of the handler |
 | "An actor without `appointment.cancel` is refused" | application, with the authorization module listed | a property of the wiring of the context |
 | "Only the client who booked may cancel" (the policy) | unit, on the policy alone | a pure function |

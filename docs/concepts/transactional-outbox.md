@@ -75,11 +75,18 @@ sequenceDiagram
   once", and the consumer absorbs the duplicate (see
   [Delivery and idempotency](delivery-and-idempotency.md)).
 
-In the kit, the publisher of the application layer (a handler of the domain event, run with the
-save) only knows the `IntegrationEventPublisher` port. With a database the
+In the kit, the publisher of the application layer is a handler of the domain event in the
+`before-commit` phase: it runs at the end of the unit of work of the command, after every save
+and before the commit, and only knows the `IntegrationEventPublisher` port. With a database the
 composition root binds that port to the outbox publisher, which only stores; the store is an
 adapter of the ORM package (Drizzle, Knex, Prisma, TypeORM), and the relay publishes to the real
 provider. Nothing in `domain/` or `application/` changes when the provider does.
+
+If the command handler throws, a later handler fails or the commit itself fails, the row
+disappears with the transaction: the relay never publishes for a command that rolled back. The
+timing of domain events is in
+[Domain and integration events](domain-and-integration-events.md), "When a domain event is
+handled".
 
 ## Relay strategies
 
