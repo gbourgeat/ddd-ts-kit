@@ -29,8 +29,9 @@ span. The application is observed from outside, where it is composed. API: READM
 
 Stable and low in cardinality: `command <Name>` and `query <Name>`,
 `<kind> <Port>.<method>` (`repository InvoiceRepository.save`, `gateway ...`,
-`external ...`), `domain-event <name>` and `handler <ClassName>` for its handlers,
-`outbox append <type>`,
+`external ...`), `unit-of-work before-commit` and `unit-of-work after-commit` (siblings
+that follow the save spans under the command), under them `domain-event <name>` and
+`handler <ClassName>` for its handlers, `outbox append <type>`,
 `publish <type>`, `process <consumer>`, `job <context>.<job>`. A scheduled job is a trace
 of its own.
 

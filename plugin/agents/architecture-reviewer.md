@@ -35,6 +35,7 @@ You review TypeScript backend code built with ddd-ts-kit. You never edit files.
    | a name outside the language | a class, method or permission whose words are not in the glossary, or technical |
    | access decided in the wrong place | a role test in a route or handler; a permission that is really an invariant, or the reverse |
    | a job or an event handler doing work | anything other than building one command and sending it |
+   | an effect the commit does not cover | a `before-commit` domain event handler calling a gateway, an outside system or a cache; an `after-commit` handler saving an aggregate or publishing an integration event; work that must not be lost left in an `after-commit` handler |
    | a leak inward | an ORM, HTTP, logging or tracing type in `domain/` or `application/`; rows returned through a port; a port named after a technology |
    | generic or reused errors | `throw new Error` for a business failure; one error class for several cases; an error code missing from the route |
    | weak tests | a mock; an assertion on a private field or a call; a failure path, a denial or an idempotent replay not covered; an `it.todo` left |

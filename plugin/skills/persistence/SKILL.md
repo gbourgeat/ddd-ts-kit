@@ -42,6 +42,8 @@ lookups of the port, the columns, the mapper.
   local projection fed by integration events (`context/extractable`).
 - **Transactions belong to the application.** The unit of work is a middleware of the command
   bus; a repository picks up the ambient transaction, never receives one, never commits.
+  Domain events are dispatched at its end, before the commit. A unit of work of your own
+  builds `run` on `withinUnitOfWork` of the kernel and passes `unitOfWorkContract`.
 - **Optimistic concurrency** on the aggregate's `version`: a conflicting save raises
   `ConcurrencyError`.
 - **Audit and tenant columns are standard**: `created_at`, `created_by`, `updated_at`,

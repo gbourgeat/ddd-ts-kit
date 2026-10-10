@@ -50,8 +50,16 @@ npx ddd-ts-kit generate route <ctx> <UseCase> --method POST --path /<resource> -
 
 A read is `generate query ... (--permission ... | --public)`; a list adds `--list` (paged,
 narrowed in the query by the caller's access scope). A reaction inside the context is
-`generate event-handler`; work started by time is `generate job ... --command <UseCase>`,
-which only sends the command.
+`generate event-handler` (phase below); work started by time is
+`generate job ... --command <UseCase>`, which only sends the command.
+
+**Phase of a domain event handler.** Pick by what the effect is:
+
+| The effect | Write |
+|---|---|
+| in the transaction: a repository, the outbox, a command of the context | the default, `before-commit`. Transactional dependencies only (`domain-events/transactional-before-commit`); a failure fails the command |
+| outside the database, and may be lost (a cache, a best-effort call) | `generate event-handler ... --phase after-commit`. Runs once committed, at most once; never saves an aggregate, it sends a command through `CommandBus` |
+| outside the database, and must not be lost | an integration event through the outbox (skill `ddd-ts-kit:integration-event`) |
 
 Each output lists `next`: the `file:line` of every `TODO(domain)`. Those are the only places
 to open.
@@ -64,8 +72,9 @@ to open.
    the wrong layer.
 2. **Application.** In the handler spec: the happy path, each failure by its error code,
    nothing saved or published on failure. The handler loads, calls one intention method,
-   saves; an `if` on business state belongs in the aggregate. The events the aggregate
-   recorded leave with the save: no `pullEvents()`, no dispatcher in a handler
+   saves; an `if` on business state belongs in the aggregate. The save hands over the events
+   the aggregate recorded, and they are dispatched once the handler has returned, before the
+   commit: no `pullEvents()`, no dispatcher in a handler
    (`domain-events/dispatched-on-save`). Time and identifiers come from `Clock` and
    `IdGenerator`.
 3. **Presentation.** The route: input schema (shape only), mapping to the command with

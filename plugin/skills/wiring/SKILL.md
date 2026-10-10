@@ -45,7 +45,7 @@ A class says what it is on its own file, and that is its registration. There is 
 |---|---|
 | command, query | `@Requires(permission)` or `@Public()` |
 | handler | `@CommandHandler(Message, [Ports])`, `@QueryHandler(Message, [Ports])` |
-| reaction to a domain event, publisher | `@DomainEventHandler(Event, { name }, [Ports])` |
+| reaction to a domain event, publisher | `@DomainEventHandler(Event, { name }, [Ports])`; `{ name, phase: 'after-commit' }` for an effect outside the transaction (never a publisher) |
 | integration event handler | `@IntegrationEventHandler(definition, { consumer }, [Ports])` |
 | scheduled job | `@Scheduled('<context>.<job>', { every } or { cron, timeZone }, [CommandBus])` |
 | policy | `@Policy(permission, { name })` |
