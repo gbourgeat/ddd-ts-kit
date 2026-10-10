@@ -20,6 +20,12 @@ class Flaky{{name.pascal}} extends Remote{{name.pascal}} {
 }
 {{/if}}
 
+class Unwired{{name.pascal}} extends Remote{{name.pascal}} {
+  async sendUnwired(operation: string): Promise<unknown> {
+    return this.transport({ operation, payload: {} });
+  }
+}
+
 describe('Remote{{name.pascal}}', () => {
   {{#if adapter.decorated}}
   it('sends again a call the outside system failed, and answers once it succeeds', async () => {
@@ -39,6 +45,12 @@ describe('Remote{{name.pascal}}', () => {
     expect(new Remote{{name.pascal}}()).toBeInstanceOf(Remote{{name.pascal}});
   });
   {{/unless}}
+
+  it('refuses to send a call as long as its transport is not written, and names the operation', async () => {
+    const adapter = new Unwired{{name.pascal}}();
+
+    await expect(adapter.sendUnwired('ping')).rejects.toThrow('"ping" was not sent');
+  });
 
   // TODO(domain): replace each entry below by a behaviour of {{name.pascal}} against the real outside system or its sandbox; hold this adapter and the fake of test/fakes to the same expectations.
   it.todo('answers what the outside system answers, in the types of {{context.kebab}}');

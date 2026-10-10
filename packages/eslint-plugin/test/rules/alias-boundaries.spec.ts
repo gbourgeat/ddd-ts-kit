@@ -1,4 +1,4 @@
-import { Linter } from 'eslint';
+import { TSESLint } from '@typescript-eslint/utils';
 import tseslint from 'typescript-eslint';
 import { describe, expect, it } from 'vitest';
 import plugin, { rules } from '../../src/index.js';
@@ -60,7 +60,7 @@ function verdicts({ file }: BoundaryCase, specifier: string): Verdict[] {
     'export type Kept = Named;',
   ].join('\n');
 
-  const found = new Linter().verify(
+  const found = new TSESLint.Linter({ configType: 'flat' }).verify(
     code,
     {
       files: ['**/*.ts'],

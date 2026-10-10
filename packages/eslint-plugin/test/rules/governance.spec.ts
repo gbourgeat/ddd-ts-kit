@@ -1,4 +1,4 @@
-import { Linter } from 'eslint';
+import { TSESLint } from '@typescript-eslint/utils';
 import { describe, expect, it } from 'vitest';
 import plugin from '../../src/index.js';
 import { governanceRecordedDeviation } from '../../src/rules/governance-recorded-deviation.js';
@@ -38,7 +38,7 @@ ruleTester.run('governance-recorded-deviation', governanceRecordedDeviation, {
 });
 
 describe('governance-recorded-deviation against the directives that silence it', () => {
-  const linter = new Linter();
+  const linter = new TSESLint.Linter({ configType: 'flat' });
 
   const lint = (code: string): string[] =>
     linter

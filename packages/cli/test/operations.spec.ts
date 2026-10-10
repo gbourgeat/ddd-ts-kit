@@ -236,6 +236,6 @@ describe('generate query --search and generate adapter', () => {
       "builder.bind(PaymentGateway).toClass(RemotePaymentGateway).as('external').with(ownPolicy());",
     );
 
-    expect(read(root, 'vitest.config.ts')).not.toContain('decorators');
+    expect(read(root, 'vitest.config.ts')).not.toContain('decorators(');
   });
 });

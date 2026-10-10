@@ -1,6 +1,6 @@
 node_modules
 dist
-coverage
+/coverage/
 .env
 *.tsbuildinfo
 .ddd-ts-kit/

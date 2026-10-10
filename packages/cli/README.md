@@ -122,7 +122,7 @@ config, `docsUi`, `ci` and `logger` included.
 | `.dependency-cruiser.cjs` | the import graph rules, generated from the config (see `depcruise-config`) |
 | `biome.json` | the formatter: Biome with its linter and its import organiser off, line width 120; `npm run format` writes, `npm run format:check` checks, and what the CLI generates is already formatted |
 | `knip.json` | dead code: entry points are `main.ts` and `apps/*/main.ts`, the scripts, the specs and the fakes, the module files in the explicit style, the role files under discovery (jobs and publishers included) |
-| `vitest.config.ts` | unit and integration projects, coverage thresholds per layer, in the standard decorator mode `decorators()` of `@ddd-ts-kit/testing/vitest`, which compiles the files holding a decorator with the compiler of the project (Vitest does not lower standard decorators; it lowers legacy ones itself, so a project with `experimentalDecorators` gets no plugin), and under `--assembly discovery` `server.deps.inline: ['@ddd-ts-kit/di']` |
+| `vitest.config.ts` | unit and integration projects, the coverage thresholds read from `ddd-ts-kit.config.json` (`governedCoverage`), per context and layer, in the standard decorator mode `decorators()` of `@ddd-ts-kit/testing/vitest`, which compiles the files holding a decorator with the compiler of the project (Vitest does not lower standard decorators; it lowers legacy ones itself, so a project with `experimentalDecorators` gets no plugin), and under `--assembly discovery` `server.deps.inline: ['@ddd-ts-kit/di']` |
 | `lefthook.yml`, `commitlint.config.mjs` | pre-commit (ESLint, the format check and `check` on the staged files, `check --commit-size --staged`, which never blocks), pre-push (types, unit tests) and commit-msg hooks (`npm run hooks:install`), conventional commits |
 | `--ci github` | `.github/workflows/ci.yml`, `codeql.yml`, `pr-title.yml`, `.github/dependabot.yml`, `.github/branch-protection.md`, `renovate.json` |
 | `--ci gitlab` | `.gitlab-ci.yml` (architecture findings as a Code Quality report through `check --format gitlab`), `.gitlab/merge-request-settings.md`, `renovate.json` |
@@ -150,8 +150,10 @@ with `.env` loaded by `--env-file-if-exists` and tracing preloaded),
 `deadcode`, `quality`, `openapi:generate|check`, `events:generate|check`, `docs:generate|check`,
 `db:generate`, `db:migrate`, `infra:up`, `infra:down`, `hooks:install`, `start:<context>` and
 `start:worker` once `generate service` and `generate worker` wrote their entry, the `ci:*` scripts the
-pipelines call, and `verify`: typecheck, lint, tests, end-to-end tests, `check:arch`,
-`depcruise`, `deadcode`, `docs:check`.
+pipelines call, `test:coverage` (every spec once, each context and layer held to the thresholds of
+`ddd-ts-kit.config.json`) and `verify`, which chains the whole baseline: typecheck, lint,
+`format:check`, `test:coverage`, end-to-end tests, `check:arch`, `depcruise`, `deadcode`,
+`docs:check`.
 
 `package.json` carries two compilers: `typescript ~6.0.3`, which the tools load as a library,
 and `@typescript/native` (`npm:typescript@~7.0.2`), which `build` and `typecheck` call by path

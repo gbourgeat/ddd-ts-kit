@@ -139,7 +139,8 @@ From [`pipeline/README.md`](../../pipeline/README.md), the
 - **Hooks.** lefthook: ESLint and the checker on staged files before a commit, with the
   advisory `check --commit-size --staged`; type check and unit tests before a push; commitlint
   on the message.
-- **Coverage thresholds per layer**, highest for `domain/`, lowest for `infrastructure/`.
+- **Coverage thresholds per layer**, highest for `domain/`, lowest for `infrastructure/`, read
+  from the config file, applied to each context, enforced by `verify` and by the pipeline.
 - **Drift gates.** The context map, the generated parts of each `CONTEXT.md`, the barrels
   (`declarations/barrel-current`), `.dependency-cruiser.cjs`, the OpenAPI document, the
   AsyncAPI document and the event catalog are regenerated and compared.

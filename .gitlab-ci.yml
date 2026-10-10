@@ -175,6 +175,7 @@ example:
     POSTGRES_PASSWORD: app
     POSTGRES_DB: app
   script:
+    # Its own gate with the coverage thresholds, then every rule of the catalogue broken once in a copy of it (example:conformance).
     - npm run example:verify
     # The adapter specs again, on a server: two concurrent bookings meet real transactions.
     - export DATABASE_URL=postgres://app:app@postgres:5432/app

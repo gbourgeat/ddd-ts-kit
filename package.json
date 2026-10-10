@@ -14,8 +14,9 @@
     "build:tsc6": "node node_modules/typescript/bin/tsc -b packages/kernel packages/validation packages/http packages/tracing packages/di packages/events packages/testing packages/drizzle packages/knex packages/prisma packages/typeorm packages/aspects packages/rabbitmq packages/auth packages/audit packages/redis packages/scheduling packages/pino packages/winston packages/sentry packages/kafka packages/nats packages/cli packages/eslint-plugin",
     "test": "vitest run",
     "check:self": "node packages/cli/dist/bin.js check --self",
-    "verify": "npm run build && npm run test && npm run check:self",
-    "example:verify": "npm run verify --workspace examples/scheduling",
+    "verify": "npm run ci:typecheck && npm run ci:lint && npm run ci:format && npm run ci:test:unit && npm run ci:arch && npm run ci:deadcode && npm run ci:docs && npm run ci:build",
+    "example:verify": "npm run verify --workspace examples/scheduling && npm run example:conformance",
+    "example:conformance": "DDD_TS_KIT_CONFORMANCE=1 vitest run --no-file-parallelism --hookTimeout=240000 packages/cli/test/conformance",
     "lint": "eslint --config eslint.config.mjs .",
     "format": "biome format --write .",
     "format:check": "biome format .",
@@ -24,19 +25,19 @@
     "package:check": "node pipeline/monorepo/package-check.mjs",
     "check:dashes": "node pipeline/monorepo/no-dashes.mjs",
     "quality": "npm run format:check && npm run lint && npm run knip && npm run depcruise && npm run package:check",
-    "ci:typecheck": "npm run build",
+    "ci:typecheck": "npm run build && npm run typecheck:tests",
     "ci:lint": "eslint --config eslint.config.mjs .",
     "ci:format": "npm run format:check",
     "ci:arch": "npm run check:self && npm run depcruise && node --test plugin/hooks/guard.test.mjs",
     "ci:deadcode": "knip",
-    "ci:test:unit": "vitest run --coverage --coverage.provider=v8 --coverage.include='packages/*/src/**' --coverage.reporter=text --coverage.reporter=cobertura --coverage.reporter=lcov",
+    "ci:test:unit": "vitest run --coverage",
     "ci:test:integration": "vitest run packages/drizzle packages/knex packages/prisma packages/typeorm packages/audit",
     "ci:test:alias": "DDD_TS_KIT_E2E=1 vitest run --no-file-parallelism --hookTimeout=240000 packages/cli/test/e2e/alias-runtime.spec.ts packages/cli/test/e2e/alias-tools.spec.ts",
     "ci:test:e2e": "DDD_TS_KIT_E2E=1 vitest run --no-file-parallelism --hookTimeout=180000 packages/cli/test/e2e",
     "ci:docs": "npm run check:dashes",
     "ci:audit": "npm audit --omit=dev --audit-level=high",
     "ci:build": "npm run package:check",
-    "typecheck:tests": "for p in kernel di kafka redis rabbitmq nats events auth aspects tracing audit drizzle knex prisma typeorm sentry scheduling http testing; do node node_modules/@typescript/native/bin/tsc -p packages/$p/tsconfig.test.json || exit 1; done"
+    "typecheck:tests": "tsx packages/prisma/test/support/generate-client.ts && for p in kernel di kafka redis rabbitmq nats events auth aspects tracing audit drizzle knex prisma typeorm sentry scheduling http testing eslint-plugin pino winston; do node node_modules/@typescript/native/bin/tsc -p packages/$p/tsconfig.test.json || exit 1; done && for p in cli validation; do node node_modules/@typescript/native/bin/tsc -p packages/$p/test/tsconfig.json || exit 1; done"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",
@@ -55,8 +56,12 @@
     "knip": "^6.41.0",
     "lefthook": "^2.2.1",
     "publint": "^0.3.25",
+    "tsx": "^4.23.15",
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.71.1",
     "vitest": "^5.0.3"
+  },
+  "overrides": {
+    "@types/pg": "8.23.1"
   }
 }

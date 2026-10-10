@@ -13,6 +13,7 @@ allowed-tools:
   - Bash(npx ddd-ts-kit check *)
   - Bash(npx ddd-ts-kit list *)
   - Bash(npm test *)
+  - Bash(npm run test:coverage)
   - Bash(npm run test:e2e *)
 ---
 
@@ -94,5 +95,9 @@ the database.
   boundaries of a value object.
 - No shared mutable state; never read a private field; no snapshot of whole objects.
 
-Finish with `npm test -- <context>` and
+A coverage rate says that code ran under a test, never that the test asserts anything: write
+the spec for the behaviour, and let the rate follow. The thresholds of `ddd-ts-kit.config.json`
+are a floor per context and layer, not a goal; a test written to move a number proves nothing.
+
+Finish with `npm test -- <context>`, `npm run test:coverage` before the slice is closed, and
 `npx ddd-ts-kit check --rule test/no-mocks --rule test/builder-required --rule test/spec-required`.

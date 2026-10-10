@@ -3,7 +3,7 @@ import type { Name } from '../../naming/index.js';
 import type { RenderContext } from '../../templating/index.js';
 import { accessVars } from '../access-vars.js';
 import { concept } from '../concept.js';
-import { emit } from '../emit.js';
+import { emit, type Output } from '../emit.js';
 import { isDeclared } from '../is-declared.js';
 import type { Kind } from '../kind.js';
 import { learnTerms } from '../learn-terms.js';
@@ -98,7 +98,13 @@ function writeQuery(scope: Scope, { name, variant, reader }: QueryFiles, context
       `query/${variant}handler.spec.${scope.config.stack.di === 'tsyringe' ? 'tsyringe' : 'buses'}.ts.tpl`,
       `test/unit/${name.kebab}.handler.spec.ts`,
     ],
+    ...readerSpec(variant, reader),
   ]);
 
   wire(scope, variant === '' ? 'query' : 'query/search', context);
+}
+
+/** The canned reader of a search pages, sorts and filters by the access scope: an adapter, held by a spec of its own. */
+function readerSpec(variant: Variant, reader: string): Output[] {
+  return variant === '' ? [] : [['query/search.reader.spec.ts.tpl', `test/integration/${reader}.spec.ts`]];
 }

@@ -1,4 +1,12 @@
-import { CONFIG_FILE, defaultAllowedPackages, type Config, type Deviation } from '../../config/index.js';
+import {
+  CONFIG_FILE,
+  COVERAGE_LAYERS,
+  COVERAGE_METRICS,
+  defaultAllowedPackages,
+  REFERENCE_COVERAGE,
+  type Config,
+  type Deviation,
+} from '../../config/index.js';
 import { DEFAULT_SEVERITIES } from '../catalogue/default-severities.js';
 import { commentLines } from '../comments/comment-lines.js';
 import { ADR_DIRECTORY } from '../governance/adr-directory.js';
@@ -38,7 +46,7 @@ interface ConfigFinding extends Flaw {
 export const governanceRecordedDeviation: Rule = {
   id: 'governance/recorded-deviation',
   description:
-    'A suppression, a lowered severity, an extra directory or an extra allowed package carries a reason and points to a decision record in docs/adr/.',
+    'A suppression, a lowered severity, a lowered coverage threshold, an extra directory or an extra allowed package carries a reason and points to a decision record in docs/adr/.',
   scope: 'file',
   run(project) {
     const records = new DecisionRecords(project.root);
@@ -118,6 +126,7 @@ function missingRecordFix(number: number): string {
 function unrecordedRelaxations(config: Config): ConfigFinding[] {
   const relaxations = [
     ...loweredRules(config),
+    ...loweredCoverage(config),
     ...extraDirectories(config),
     ...extraPackages(config),
     ...guardMode(config),
@@ -144,6 +153,17 @@ function loweredRules({ rules }: Config): Relaxation[] {
       said: `The rule "${id}" is lowered to "${severity}"`,
       where: ['"rules"', `"${id}":`],
     }));
+}
+
+/** Raising a threshold is free; a rate under the reference accepts code no test has run. */
+function loweredCoverage({ coverage }: Config): Relaxation[] {
+  return COVERAGE_LAYERS.flatMap((layer) =>
+    COVERAGE_METRICS.filter((metric) => coverage[layer][metric] < REFERENCE_COVERAGE[layer][metric]).map((metric) => ({
+      what: `coverage.${layer}.${metric}`,
+      said: `The coverage threshold "${layer}.${metric}" is ${coverage[layer][metric]}, below the reference of ${REFERENCE_COVERAGE[layer][metric]}`,
+      where: ['"coverage"', `"${layer}"`, `"${metric}"`],
+    })),
+  );
 }
 
 function extraDirectories({ contexts }: Config): Relaxation[] {
@@ -203,7 +223,7 @@ function flawedDeviation({ what, adr, reason }: Deviation, records: DecisionReco
   if (what === '') {
     flaws.push({
       message: 'A deviation does not say what it relaxes.',
-      fix: 'Set "what" to the setting it justifies, for example "rules.<id>", "guard" or "domainAllowedPackages.<package>".',
+      fix: 'Set "what" to the setting it justifies, for example "rules.<id>", "guard", "coverage.<layer>.<rate>" or "domainAllowedPackages.<package>".',
     });
   }
 

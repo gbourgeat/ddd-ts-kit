@@ -17,7 +17,8 @@ const cli = path.resolve(root, '../../packages/cli/dist/bin.js');
 const stateDir = path.resolve(root, '../../node_modules/.cache/ddd-ts-kit-example');
 const snapshotDir = path.join(stateDir, 'generated');
 const logFile = path.join(stateDir, 'generator-log.jsonl');
-const lockFile = '/tmp/ddd-ts-kit-example-generate.lock';
+// With the rest of the state, not in the shared temporary directory: nothing is left behind there.
+const lockFile = path.join(stateDir, 'generate.lock');
 const args = process.argv.slice(2);
 const command = args[0] === 'g' ? 'generate' : args[0];
 
@@ -74,6 +75,8 @@ function passThrough() {
 }
 
 function underLock() {
+  fs.mkdirSync(stateDir, { recursive: true });
+
   const run = spawnSync('flock', [lockFile, process.execPath, fileURLToPath(import.meta.url), ...args], {
     stdio: 'inherit',
     env: { ...process.env, KIT_LOCKED: '1' },

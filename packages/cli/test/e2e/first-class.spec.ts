@@ -60,7 +60,7 @@ describe.runIf(SLOW).each(FIRST_CLASS_BROKERS)('the first-class stack, events on
     expect(read(root, DECORATED)).toMatch(/@Adapter\(TaxRates[\s\S]*@Retry\(\{ attempts: 3/);
 
     expect(runIn(root, { command: bin('vitest'), args: ['run', DECORATED_SPEC, ...JOB_SPECS] })).toMatch(
-      /Tests\s+3 passed \| 6 todo/,
+      /Tests\s+4 passed \| 6 todo/,
     );
   }, 480_000);
 

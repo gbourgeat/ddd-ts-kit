@@ -52,7 +52,7 @@ describe.runIf(SLOW).each(PROVEN)('a freshly generated project (%s)', (_label, s
       isDeclared(stack) ? /@Adapter\(TaxRates[\s\S]*@Retry\(\{ attempts: 3/ : /@Retry\(\{ attempts: 3/,
     );
 
-    expect(vitest(DECORATED_SPEC)).toMatch(/Tests\s+1 passed/);
+    expect(vitest(DECORATED_SPEC)).toMatch(/Tests\s+2 passed/);
     expect(vitest('test/architecture/extractable.spec.ts')).toMatch(/Tests\s+\d+ passed/);
   }, 240_000);
 

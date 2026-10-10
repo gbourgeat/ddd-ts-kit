@@ -20,7 +20,7 @@ export const ALIAS_DECLARED_FIXTURES: readonly Fixture[] = [
     files: aliasDeclarations({
       [CONFIG_FILE]: config({ importAlias: '#app/' }),
       'package.json': manifest({ '#app/*.js': SOURCES, '#test/*.js': TESTS, '#scripts/*.js': SCRIPTS }),
-      'jest.config.js': `export default { testEnvironmentOptions: { customExportConditions: ['${CONDITION}'] } };\n`,
+      'jest.config.js': `export default { testEnvironmentOptions: { customExportConditions: ['${CONDITION}'] }, ...governedJestCoverage() };\n`,
       'jest.e2e.config.js': "import base from './jest.config.js';\nexport default { ...base };\n",
     }),
   },
@@ -68,8 +68,16 @@ export const ALIAS_DECLARED_FIXTURES: readonly Fixture[] = [
     'tsconfig.build.json',
     json({ extends: './tsconfig.json', compilerOptions: { outDir: 'build' } }),
   ),
-  failing('a vitest config without the condition', 'vitest.config.ts', 'export default { test: {} };\n'),
-  failing('a jest config without the condition', 'jest.config.js', "export default { testEnvironment: 'node' };\n"),
+  failing(
+    'a vitest config without the condition',
+    'vitest.config.ts',
+    "export default { test: { coverage: governedCoverage('') } };\n",
+  ),
+  failing(
+    'a jest config without the condition',
+    'jest.config.js',
+    "export default { testEnvironment: 'node', ...governedJestCoverage() };\n",
+  ),
   failing(
     'a dependency-cruiser config without the condition',
     '.dependency-cruiser.cjs',

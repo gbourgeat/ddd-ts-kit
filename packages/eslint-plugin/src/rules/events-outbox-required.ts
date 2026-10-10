@@ -17,9 +17,12 @@ const DEFAULT_BROKER_PACKAGES = [
   '@aws-sdk/client-sns',
   '@google-cloud/pubsub',
   '@ddd-ts-kit/rabbitmq',
+  'bullmq',
+  'ioredis',
 ];
 
-const CONCRETE_BUSES = new Set(['InMemoryEventBus', 'OutboxRelay', 'OutboxPublisher']);
+/** What carries events past the outbox: the bus port itself, every bus of a broker, and the parts of the outbox the platform alone assembles. */
+const TRANSPORT = /^(?:[\w$]*EventBus|OutboxRelay|OutboxPublisher|OutboxStore)$/;
 const TRANSPORT_TYPE = /(?:EventBus|Relay)$/;
 
 const THROUGH_THE_PORT =
@@ -32,10 +35,10 @@ export const eventsOutboxRequired = defineRule<MessageId, [Options]>({
   type: 'problem',
   recommended: 'error',
   description:
-    'Integration events leave through the transactional outbox: domain/ and application/ never reach a broker client or a concrete bus.',
+    'Integration events leave through the transactional outbox: domain/ and application/ never reach a broker client, a bus (the EventBus port included) or a part of the outbox.',
   messages: {
     broker: `The {{layer}} layer imports the broker client "{{name}}": an event sent straight to a broker is lost or duplicated when the transaction of the command fails. ${THROUGH_THE_PORT}`,
-    concreteBus: `The {{layer}} layer imports {{name}}, one transport among others: the use case would decide how events leave. ${THROUGH_THE_PORT}`,
+    concreteBus: `The {{layer}} layer imports {{name}}, which carries events past the outbox: the use case would decide how events leave. ${THROUGH_THE_PORT}`,
     publisherDependency: `{{className}} is given a {{type}}: a publisher of application/integration/publishers translates a domain event and hands it to a port. Type the parameter IntegrationEventPublisher. ${THROUGH_THE_PORT}`,
   },
   schema: [
@@ -60,9 +63,11 @@ export const eventsOutboxRequired = defineRule<MessageId, [Options]>({
       ...importListener(file, ({ node, target, names }) => {
         if (target.kind === 'package' && brokers.includes(target.name)) {
           report({ node, messageId: 'broker', data: { name: target.name, layer } });
+
+          return;
         }
 
-        for (const bus of names.filter((imported) => CONCRETE_BUSES.has(imported.name))) {
+        for (const bus of names.filter((imported) => TRANSPORT.test(imported.name))) {
           report({ node: bus.node, messageId: 'concreteBus', data: { name: bus.name, layer } });
         }
       }),

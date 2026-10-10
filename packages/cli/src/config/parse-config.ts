@@ -5,6 +5,7 @@ import { defaultAllowedPackages } from './default-allowed-packages.js';
 import { DEFAULT_IMPORT_ALIAS } from './default-import-alias.js';
 import { parseCommitLimits } from './parse-commit-limits.js';
 import { parseContext } from './parse-context.js';
+import { parseCoverage } from './parse-coverage.js';
 import { parseLimits } from './parse-limits.js';
 import { parseOnePerFile } from './parse-one-per-file.js';
 import { parseStack } from './parse-stack.js';
@@ -60,13 +61,14 @@ function parseAllowedPackages(raw: Record<string, unknown>, validation: string):
 
 type Governance = Pick<
   Config,
-  'limits' | 'onePerFile' | 'commit' | 'guard' | 'deviations' | 'standardInterfaces' | 'worker'
+  'limits' | 'onePerFile' | 'coverage' | 'commit' | 'guard' | 'deviations' | 'standardInterfaces' | 'worker'
 >;
 
 function parseGovernance(raw: Record<string, unknown>): Governance {
   return {
     limits: parseLimits(raw['limits']),
     onePerFile: parseOnePerFile(raw['onePerFile']),
+    coverage: parseCoverage(raw['coverage']),
     commit: parseCommitLimits(raw['commit']),
     guard: text(raw['guard'], 'enforce'),
     deviations: parseDeviations(raw['deviations']),

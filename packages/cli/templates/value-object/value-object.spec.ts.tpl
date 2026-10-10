@@ -8,6 +8,7 @@ describe('{{name.pascal}}', () => {
     const second = unwrap({{name.pascal}}.create('sample'));
 
     expect(first.equals(second)).toBe(true);
+    expect(first.value).toBe('sample');
   });
 
   it('refuses an empty value with a coded error', () => {

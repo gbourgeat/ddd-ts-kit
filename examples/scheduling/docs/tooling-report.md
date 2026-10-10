@@ -545,3 +545,87 @@ Frictions:
    the sources are three edits; the checker names the first two.
 3. **`docs/demo-transcript.md` and `docs/tooling/` are recordings** made before this change and
    were left as recorded.
+
+## 2026-10-10: coverage as a governed setting, and every rule proven on this application
+
+### What changed here
+
+- `vitest.config.ts` writes no threshold any more: it spreads `governedCoverage(mode)` of
+  `@ddd-ts-kit/testing/coverage`, which reads the `coverage` key of `ddd-ts-kit.config.json`.
+  This application sets no rate, so the reference applies: domain 90/85/90/90, application
+  85/80/85/85, presentation 80/70/80/80, infrastructure 70/60/70/70 (statements, branches,
+  functions, lines), to each context on its own.
+- `npm run verify` now runs `npm run test:coverage` (every spec once, the four layers measured)
+  where it ran `npm run test`: the thresholds are enforced by the gate a developer runs, not
+  only by the pipeline.
+- `plugins: [decoratorCoverage()]` in `vitest.config.ts`: this application compiles with
+  `emitDecoratorMetadata`, and the transform guards every type a decorated class names with
+  `typeof Port === "undefined" ? Object : Port`, a branch no test takes.
+
+### What the measure found
+
+Before this change the pipeline script `ci:test:unit` of this application failed: the branch
+rate of `application/` was 74.1 % for a floor of 80 %, and `verify` did not say so because it
+measured nothing. Two causes:
+
+1. **The compiler, not the code.** Most of the uncovered branches of `application/` were the
+   metadata guards above, one per port of every declared handler. With `decoratorCoverage()`
+   the branch rate of the four `application/` layers is between 98.68 % and 100 %.
+2. **Three real gaps**, each closed by a spec, none by a lower threshold:
+   - `analyticsRoutes`, `identityRoutes` and `notificationRoutes` were called by the end-to-end
+     specs only, which are not measured: each context has a `<context>.routes.spec.ts` that
+     holds its list of routes (no two routes answer the same method and path, nor share an
+     operation id). `generate context` now writes that spec.
+   - `grant-delegation.route.ts`: no spec sent a delegation without an end. Added: "hands the
+     use case a delegation without an end when the client gives none".
+
+### Rates on 2026-10-10 (statements, branches, functions, lines, in %)
+
+| Context | Layer | Statements | Branches | Functions | Lines |
+|---|---|---|---|---|---|
+| analytics | domain | 100.00 | 100.00 | 100.00 | 100.00 |
+| analytics | application | 100.00 | 100.00 | 100.00 | 100.00 |
+| analytics | presentation | 100.00 | 100.00 | 100.00 | 100.00 |
+| analytics | infrastructure | 98.33 | 85.71 | 100.00 | 98.28 |
+| identity | domain | 100.00 | 100.00 | 100.00 | 100.00 |
+| identity | application | 100.00 | 100.00 | 100.00 | 100.00 |
+| identity | presentation | 100.00 | 100.00 | 100.00 | 100.00 |
+| identity | infrastructure | 100.00 | 89.58 | 100.00 | 100.00 |
+| notification | domain | 100.00 | 100.00 | 100.00 | 100.00 |
+| notification | application | 100.00 | 100.00 | 100.00 | 100.00 |
+| notification | presentation | 100.00 | 100.00 | 100.00 | 100.00 |
+| notification | infrastructure | 98.32 | 83.33 | 100.00 | 98.31 |
+| scheduling | domain | 99.37 | 96.95 | 99.08 | 99.34 |
+| scheduling | application | 99.76 | 98.68 | 100.00 | 99.76 |
+| scheduling | presentation | 100.00 | 94.44 | 100.00 | 100.00 |
+| scheduling | infrastructure | 100.00 | 92.06 | 100.00 | 100.00 |
+
+These rates say that the code ran under a spec. What the specs assert is another matter, held
+by their names and by the end-to-end journeys.
+
+### Every rule of the kit, broken once in a copy of this application
+
+`npm run example:conformance`, at the root of the kit, copies this application to a temporary
+directory, installs the kit in the copy as a registry would, and for each of the 67 rule ids
+of the catalogue writes one minimal violation and reads what the tool that owns the rule
+says: `ddd-ts-kit check`, ESLint with the preset, Biome. A rule held by both the checker and
+ESLint has to be reported by both, on the file that breaks it, with nothing else beside it
+than the companions the case declares. The untouched copy has nothing to report to the
+checker, ESLint, Biome, dependency-cruiser, knip and the type checker. No rule is declared not
+applicable to this application. The suite fails when a rule of the catalogue has no case, so a
+rule added to the kit is applied here or the pipeline says so. It runs in about 40 seconds,
+after the gate of this application, in `npm run example:verify`.
+
+### Deviations of this application, reviewed
+
+Three entries, one decision: `application/projections` is an extra directory of `scheduling`,
+`notification` and `analytics` (ADR 0002). Still needed: the kernel has a `@Projection` role
+and the canonical tree of the checker does not know its directory. The removal condition of
+the record is unchanged. No rule is lowered, no package is added to an allow-list, no source
+carries a suppression or a coverage ignore comment.
+
+### Limits
+
+- The generator lock of `scripts/kit.mjs` moved from the temporary directory of the system to
+  the state directory of the script: nothing is left behind there.
+- The end-to-end specs are not measured: a route reached only end to end counts as uncovered.

@@ -57,7 +57,7 @@ Speed comparisons between the two depend on the project and were not measured fo
 - **Decorator mode of the project.** With class-validator or NestJS the project is in the
   legacy decorator mode and both runners handle it. In the standard mode, Vitest needs one
   plugin line and the Jest template would need its transformer options changed.
-- **Coverage gates per layer.** Provided for Vitest; to be written for Jest.
+- **Coverage gates per layer.** Both configs read the thresholds from `ddd-ts-kit.config.json` (`governedCoverage`, `governedJestCoverage`). The Vitest gate is run on generated projects by the end-to-end suite of the CLI; the Jest one is written and not run there, the workspace does not install Jest.
 - **Framework habits.** NestJS documentation and generators assume Jest; that is a habit, not
   a constraint, since handlers and aggregates of the kit are tested without the framework.
 
@@ -76,8 +76,9 @@ Speed comparisons between the two depend on the project and were not measured fo
 
 **With Vitest (the default):**
 
-- `vitest.config.ts` with `unit` and `integration` projects and coverage thresholds per layer
-  (domain highest, infrastructure lowest, the latter measured by the integration run);
+- `vitest.config.ts` with `unit` and `integration` projects and the coverage thresholds of the
+  config file, per context and layer (domain highest, infrastructure lowest, the latter measured
+  by the integration run of the pipeline);
 - a separate end-to-end configuration that starts the whole application on a free port, on an
   in-process PostgreSQL unless a database URL is given;
 - JUnit and Cobertura reports for GitLab, the Actions reporter for GitHub;
@@ -103,7 +104,8 @@ Speed comparisons between the two depend on the project and were not measured fo
 - one test script for unit and adapter specs together, run with
   `node --experimental-vm-modules`: the integration script of the pipeline only prints that
   adapter specs run with the unit specs;
-- no coverage threshold in the generated configuration;
+- `jest.config.js` with the `v8` coverage provider and the thresholds of the config file, per
+  context and layer, in the one run Jest makes (`npm run test:coverage`);
 - unit tests of the CLI check that these files and the recorded stack are produced. No
   evidence was found that a generated Jest project is installed and run by the kit's own
   end-to-end suite.

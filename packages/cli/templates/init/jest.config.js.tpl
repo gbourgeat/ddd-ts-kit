@@ -1,3 +1,5 @@
+import { governedJestCoverage } from '@ddd-ts-kit/testing/coverage';
+
 export default {
   testEnvironment: 'node',
   // Under this condition an import alias answers the source file, not the compiled one (package.json, "imports").
@@ -16,4 +18,9 @@ export default {
       },
     ],
   },
+  coverageProvider: 'v8',
+  coverageReporters: ['text', 'cobertura', 'lcov'],
+  coverageDirectory: 'coverage',
+  // What is measured and the floor of each layer come from "coverage" in ddd-ts-kit.config.json, the reference when it is absent: a threshold is written nowhere else.
+  ...governedJestCoverage(),
 };

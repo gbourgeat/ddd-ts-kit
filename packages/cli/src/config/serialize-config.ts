@@ -1,5 +1,6 @@
 import type { Config } from './config.js';
 import { DEFAULT_COMMIT_LIMITS } from './default-commit-limits.js';
+import { isReferenceCoverage } from './is-reference-coverage.js';
 import type { Stack } from './stack.js';
 import { formatJson } from '../json/format-json.js';
 
@@ -46,11 +47,14 @@ function writtenContexts(config: Config): Record<string, unknown> {
   return Object.fromEntries(contexts);
 }
 
-function optionalKeys({ deviations, standardInterfaces, onePerFile, worker, commit }: Config): Record<string, unknown> {
+function optionalKeys(config: Config): Record<string, unknown> {
+  const { deviations, standardInterfaces, onePerFile, worker, commit, coverage } = config;
+
   const sized =
     commit.maxFiles !== DEFAULT_COMMIT_LIMITS.maxFiles || commit.maxLines !== DEFAULT_COMMIT_LIMITS.maxLines;
 
   return {
+    ...(isReferenceCoverage(coverage) ? {} : { coverage }),
     ...(deviations.length > 0 ? { deviations } : {}),
     ...(Object.keys(standardInterfaces).length > 0 ? { standardInterfaces } : {}),
     ...(onePerFile.allow.length > 0 ? { onePerFile } : {}),

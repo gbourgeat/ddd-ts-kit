@@ -49,6 +49,30 @@ describe('POST /practices/:practiceId/desks/:practitionerId/delegations', () => 
     ]);
   });
 
+  it('hands the use case a delegation without an end when the client gives none', async () => {
+    const sent: GrantDelegationCommand[] = [];
+
+    const commands = new InMemoryCommandBus().register(GrantDelegationCommand, {
+      execute: async (command) => {
+        sent.push(command);
+
+        return 'grant-delegation-1';
+      },
+    });
+
+    const openEnded = { assistantId: 'person-3', availabilityIncluded: false };
+
+    await executeRoute(grantDelegationRoute(commands), {
+      params,
+      query: {},
+      headers: {},
+      body: openEnded,
+      raw: undefined,
+    });
+
+    expect(sent.map((command) => command.terms)).toEqual([openEnded]);
+  });
+
   it.each([
     ['a body without an assistant', { availabilityIncluded: true }],
     [

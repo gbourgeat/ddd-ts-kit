@@ -66,6 +66,16 @@ export const OUTBOX_FIXTURES: readonly Fixture[] = [
   },
   {
     ruleId: 'events/outbox-required',
+    name: 'a handler given the bus port of the kernel',
+    expect: { file: HANDLER },
+    files: project(
+      handler(
+        "import type { EventBus } from '@ddd-ts-kit/kernel';\nexport class IssueInvoiceHandler {\n  constructor(private readonly bus: EventBus) {}\n}\n",
+      ),
+    ),
+  },
+  {
+    ruleId: 'events/outbox-required',
     name: 'a publisher that depends on the whole bus',
     expect: { file: PUBLISHER },
     also: ['domain-events/transactional-before-commit'],

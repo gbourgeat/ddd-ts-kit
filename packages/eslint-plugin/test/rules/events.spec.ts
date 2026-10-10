@@ -44,6 +44,17 @@ ruleTester.run('events-outbox-required', eventsOutboxRequired, {
       errors: [{ messageId: 'concreteBus', data: { name: 'InMemoryEventBus', layer: 'application' } }],
     },
     {
+      ...at(
+        HANDLER,
+        "import { EventBus } from '@ddd-ts-kit/kernel';\nimport type { OutboxStore } from '@ddd-ts-kit/events';",
+      ),
+      errors: [
+        { messageId: 'concreteBus', data: { name: 'EventBus', layer: 'application' } },
+        { messageId: 'concreteBus', data: { name: 'OutboxStore', layer: 'application' } },
+      ],
+    },
+    { ...at(HANDLER, "import Redis from 'ioredis';"), errors: [{ messageId: 'broker' }] },
+    {
       ...at(PUBLISHER, "import type { OutboxPublisher, OutboxRelay as Relay } from '@ddd-ts-kit/events';"),
       errors: [
         { messageId: 'concreteBus', data: { name: 'OutboxPublisher', layer: 'application' } },

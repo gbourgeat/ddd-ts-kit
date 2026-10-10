@@ -17,7 +17,7 @@ equivalent and cannot drift, and every gate runs on a laptop with the same comma
 | `depcruise-config.mjs` | not installed | a standalone dependency-cruiser configuration that reads `ddd-ts-kit.config.json` each time it is loaded. A project gets `.dependency-cruiser.cjs` instead, written from the config by `ddd-ts-kit depcruise-config --write` (`init` and `generate context` write it) and held current by `depcruise-config --check` |
 | `../biome.json` (the root of this repository) | `biome.json` | the formatter: Biome with its linter and its import organiser off, line width 120. The template the CLI ships is the same file, byte for byte; it is not copied here because Biome accepts one root configuration per repository |
 | `knip.json` | `knip.json` | dead code and unused dependencies |
-| `vitest.config.ts` | `vitest.config.ts` | `unit` and `integration` projects, coverage thresholds per layer |
+| `vitest.config.ts` | `vitest.config.ts` | `unit` and `integration` projects; what is measured and the thresholds are read from `coverage` in `ddd-ts-kit.config.json` (`governedCoverage` of `@ddd-ts-kit/testing/coverage`), per context and layer |
 | `lefthook.yml` | `lefthook.yml` | git hooks |
 | `commitlint.config.mjs` | `commitlint.config.mjs` | conventional commits, shared by the hook and both CI title checks |
 | `renovate.json` | `renovate.json` | dependency updates, on either platform |
@@ -45,8 +45,8 @@ not a benchmark.
 | 1 | architecture | `ci:arch:check` | the tree, `CONTEXT.md`, the glossary, names, required specs and builders, event declarations, the declarations barrel, where adapters are bound, the config and its deviations | 0.3 s |
 | 1 | architecture | `ci:arch:graph` | a `.dependency-cruiser.cjs` that no longer matches the config, then the resolved import graph: the same layer and context rules through barrels, cycles, orphans, dev dependencies and test files imported by production code, undeclared packages | 0.8 s |
 | 1 | dead code | `ci:deadcode` | unused files, exports, types and dependencies | 0.6 s |
-| 2 | unit tests | `ci:test:unit` | behaviour of the domain, the application and the routes; coverage thresholds of these three layers | seconds |
-| 3 | integration tests | `ci:test:integration` | adapters against a real PostgreSQL; coverage threshold of `infrastructure/` | tens of seconds |
+| 2 | unit tests | `ci:test:unit` | behaviour of the domain, the application and the routes; coverage thresholds of these three layers, per context (`--mode unit`) | seconds |
+| 3 | integration tests | `ci:test:integration` | adapters against a real PostgreSQL; coverage threshold of `infrastructure/`, per context (`--mode integration`) | tens of seconds |
 | 4 | end-to-end tests | `ci:test:e2e` | the whole application through HTTP and the event bus | tens of seconds |
 | 2 | docs and contract drift | `ci:docs` | a stale context map, `CONTEXT.md` list, OpenAPI document, AsyncAPI document or event catalog | a build |
 | 1 | security | `ci:audit`, gitleaks, platform scanners | a high or critical advisory in a production dependency, a committed secret | seconds |

@@ -22,7 +22,7 @@ export const aclKind: Kind = {
 
     emit(scope, vars(scope, { name: named(name) }), [
       ['acl/translator.ts.tpl', `infrastructure/anti-corruption/${name.kebab}.translator.ts`],
-      ['acl/translator.spec.ts.tpl', `test/unit/${name.kebab}.translator.spec.ts`],
+      ['acl/translator.spec.ts.tpl', `test/integration/${name.kebab}.translator.spec.ts`],
     ]);
 
     if (scope.config.contexts[name.kebab] !== undefined && relationship !== 'anti-corruption-layer') {

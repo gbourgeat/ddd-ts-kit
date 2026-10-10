@@ -4,7 +4,7 @@ A ddd-ts-kit project: one bounded context per directory of `src/contexts/`, each
 
 ## Commands
 
-- `npm run verify`: types, lint, format, tests, architecture rules, import graph, dead code, documentation drift. Once, before a commit that closes a slice.
+- `npm run verify`: types, lint, format, tests with the coverage thresholds of `ddd-ts-kit.config.json` (per context and layer), architecture rules, import graph, dead code, documentation drift. Once, before a commit that closes a slice. A layer under its threshold gets the missing test, never an exclusion.
 - `npx ddd-ts-kit check --changed-since <ref>`: the architecture rules on what changed; `npx ddd-ts-kit explain <rule-id>` gives the reason and an example.
 - `npx ddd-ts-kit list --json`: the map of the contexts. `npx ddd-ts-kit describe <context> --json`: one context as data (use cases, routes, events, ports, dependencies).
 - `npx ddd-ts-kit status`: the next step of the plan, the slices by status, the markers left per context. `npx ddd-ts-kit todo [<context>]`: each remaining `TODO(domain)` and `it.todo` as `file:line`.

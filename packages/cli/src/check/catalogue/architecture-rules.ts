@@ -52,6 +52,7 @@ import { schedulingJobName } from '../rules/scheduling-job-name.js';
 import { schedulingJobTriggersUseCase } from '../rules/scheduling-job-triggers-use-case.js';
 import { standardNoParallelInterface } from '../rules/standard-no-parallel-interface.js';
 import { testBuilderRequired } from '../rules/test-builder-required.js';
+import { testCoverageGoverned } from '../rules/test-coverage-governed.js';
 import { testNoMocks } from '../rules/test-no-mocks.js';
 import { testSpecRequired } from '../rules/test-spec-required.js';
 import { tracingPlatformOnly } from '../rules/tracing-platform-only.js';
@@ -78,6 +79,7 @@ export const ARCHITECTURE_RULES: readonly Rule[] = [
   eventsDefinedInPublishedLanguage,
   testNoMocks,
   testBuilderRequired,
+  testCoverageGoverned,
   languageGlossaryTerm,
   languageNoTechnicalName,
   purityNoSystemClock,

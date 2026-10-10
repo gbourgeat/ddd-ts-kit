@@ -35,7 +35,7 @@ export function aliasDeclarations(overrides: FixtureFiles = {}): FixtureFiles {
       'package.json': json(MANIFEST),
       'tsconfig.json': `// The type check.\n${json(TSCONFIG).replace('"dist"\n', '"dist",\n')}`,
       'tsconfig.build.json': json({ extends: './tsconfig.json', exclude: ['test'] }),
-      'vitest.config.ts': `export default { ssr: { resolve: { conditions: ['${CONDITION}'] } } };\n`,
+      'vitest.config.ts': `export default { ssr: { resolve: { conditions: ['${CONDITION}'] } }, test: { coverage: governedCoverage('') } };\n`,
       'vitest.e2e.config.ts': "export { default } from './vitest.config.js';\n",
       '.dependency-cruiser.cjs': `module.exports = { options: { enhancedResolveOptions: { conditionNames: ['${CONDITION}', 'import'] } } };\n`,
       'knip.json': json({ entry: ['src/main.ts'] }),

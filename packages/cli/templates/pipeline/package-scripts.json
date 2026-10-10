@@ -12,7 +12,7 @@
     "ci:arch:check": "ddd-ts-kit check",
     "ci:arch:graph": "depcruise src --config depcruise-config.mjs",
     "ci:deadcode": "knip",
-    "ci:test:unit": "vitest run --project unit --coverage",
+    "ci:test:unit": "vitest run --project unit --coverage --mode unit",
     "ci:test:integration": "vitest run --project integration --coverage --mode integration",
     "ci:test:e2e": "vitest run --config vitest.e2e.config.ts --passWithNoTests",
     "ci:docs": "npm run docs:check",
