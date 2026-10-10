@@ -1,0 +1,40 @@
+name: Bug
+description: Something the kit does differs from what its documentation says.
+labels: [bug]
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - CLI (init, generate, check, docs)
+        - Runtime package
+        - ESLint plugin
+        - Claude Code plugin (skills, agents, hook)
+        - Pipeline assets (GitHub, GitLab)
+        - Documentation
+        - Example application
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: How to reproduce
+      description: The commands run, from an empty directory when possible, and the relevant part of `ddd-ts-kit.config.json`.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected and observed
+      description: What the documentation or the rule says, and what happened. Paste the output.
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: Commit of ddd-ts-kit, Node.js, operating system.
+    validations:
+      required: true
