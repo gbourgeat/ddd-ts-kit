@@ -1,0 +1,1584 @@
+{
+  "asyncapi": "3.0.0",
+  "info": {
+    "title": "scheduling",
+    "version": "0.1.0"
+  },
+  "channels": {
+    "identity.delegation.granted": {
+      "address": "identity.delegation.granted",
+      "description": "A practitioner let an assistant of the same practice manage their calendars, with or without their availability, until an optional end.",
+      "messages": {
+        "v1": {
+          "$ref": "#/components/messages/identity.delegation.granted.v1"
+        }
+      }
+    },
+    "identity.delegation.revoked": {
+      "address": "identity.delegation.revoked",
+      "description": "A delegation ended: withdrawn, expired at its end date, or because one of the two left the practice.",
+      "messages": {
+        "v1": {
+          "$ref": "#/components/messages/identity.delegation.revoked.v1"
+        }
+      }
+    },
+    "identity.person.registered": {
+      "address": "identity.person.registered",
+      "description": "A person signed in for the first time and is now known to the platform, with the name and the address to reach them.",
+      "messages": {
+        "v1": {
+          "$ref": "#/components/messages/identity.person.registered.v1"
+        }
+      }
+    },
+    "identity.practice.member-added": {
+      "address": "identity.practice.member-added",
+      "description": "A person became a member of a practice with a role; the time zone of the practice travels with it so that a consumer needs nothing else to place the member.",
+      "messages": {
+        "v1": {
+          "$ref": "#/components/messages/identity.practice.member-added.v1"
+        }
+      }
+    },
+    "identity.practice.member-removed": {
+      "address": "identity.practice.member-removed",
+      "description": "A membership ended: the person no longer holds this role in the practice.",
+      "messages": {
+        "v1": {
+          "$ref": "#/components/messages/identity.practice.member-removed.v1"
+        }
+      }
+    },
+    "identity.practice.opened": {
+      "address": "identity.practice.opened",
+      "description": "A practice was opened, in its time zone, with its first manager.",
+      "messages": {
+        "v1": {
+          "$ref": "#/components/messages/identity.practice.opened.v1"
+        }
+      }
+    },
+    "scheduling.appointment.booked": {
+      "address": "scheduling.appointment.booked",
+      "description": "A slot is now held for a patient: booked, or requested when the patient must still confirm before a deadline.",
+      "messages": {
+        "v1": {
+          "$ref": "#/components/messages/scheduling.appointment.booked.v1"
+        }
+      }
+    },
+    "scheduling.appointment.cancelled": {
+      "address": "scheduling.appointment.cancelled",
+      "description": "An appointment was cancelled before taking place, by the patient or by the practice; its slot is free again. The reason given stays in scheduling.",
+      "messages": {
+        "v1": {
+          "$ref": "#/components/messages/scheduling.appointment.cancelled.v1"
+        }
+      }
+    },
+    "scheduling.appointment.completed": {
+      "address": "scheduling.appointment.completed",
+      "description": "The appointment took place.",
+      "messages": {
+        "v1": {
+          "$ref": "#/components/messages/scheduling.appointment.completed.v1"
+        }
+      }
+    },
+    "scheduling.appointment.confirmed": {
+      "address": "scheduling.appointment.confirmed",
+      "description": "The patient confirmed a requested appointment: it will be honoured.",
+      "messages": {
+        "v1": {
+          "$ref": "#/components/messages/scheduling.appointment.confirmed.v1"
+        }
+      }
+    },
+    "scheduling.appointment.expired": {
+      "address": "scheduling.appointment.expired",
+      "description": "A requested appointment was not confirmed in time; its slot is free again.",
+      "messages": {
+        "v1": {
+          "$ref": "#/components/messages/scheduling.appointment.expired.v1"
+        }
+      }
+    },
+    "scheduling.appointment.marked-no-show": {
+      "address": "scheduling.appointment.marked-no-show",
+      "description": "The patient did not come to the appointment.",
+      "messages": {
+        "v1": {
+          "$ref": "#/components/messages/scheduling.appointment.marked-no-show.v1"
+        }
+      }
+    },
+    "scheduling.appointment.rescheduled": {
+      "address": "scheduling.appointment.rescheduled",
+      "description": "An appointment moved to another slot of the same calendar, in one step; the previous slot is free again.",
+      "messages": {
+        "v1": {
+          "$ref": "#/components/messages/scheduling.appointment.rescheduled.v1"
+        }
+      }
+    },
+    "scheduling.calendar.created": {
+      "address": "scheduling.calendar.created",
+      "description": "A practitioner has a new calendar in a practice, in the time zone of that practice.",
+      "messages": {
+        "v1": {
+          "$ref": "#/components/messages/scheduling.calendar.created.v1"
+        }
+      }
+    }
+  },
+  "operations": {
+    "send.identity.delegation.granted": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/identity.delegation.granted"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/identity.delegation.granted/messages/v1"
+        }
+      ]
+    },
+    "send.identity.delegation.revoked": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/identity.delegation.revoked"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/identity.delegation.revoked/messages/v1"
+        }
+      ]
+    },
+    "send.identity.person.registered": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/identity.person.registered"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/identity.person.registered/messages/v1"
+        }
+      ]
+    },
+    "send.identity.practice.member-added": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/identity.practice.member-added"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/identity.practice.member-added/messages/v1"
+        }
+      ]
+    },
+    "send.identity.practice.member-removed": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/identity.practice.member-removed"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/identity.practice.member-removed/messages/v1"
+        }
+      ]
+    },
+    "send.identity.practice.opened": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/identity.practice.opened"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/identity.practice.opened/messages/v1"
+        }
+      ]
+    },
+    "send.scheduling.appointment.booked": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/scheduling.appointment.booked"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/scheduling.appointment.booked/messages/v1"
+        }
+      ]
+    },
+    "send.scheduling.appointment.cancelled": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/scheduling.appointment.cancelled"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/scheduling.appointment.cancelled/messages/v1"
+        }
+      ]
+    },
+    "send.scheduling.appointment.completed": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/scheduling.appointment.completed"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/scheduling.appointment.completed/messages/v1"
+        }
+      ]
+    },
+    "send.scheduling.appointment.confirmed": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/scheduling.appointment.confirmed"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/scheduling.appointment.confirmed/messages/v1"
+        }
+      ]
+    },
+    "send.scheduling.appointment.expired": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/scheduling.appointment.expired"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/scheduling.appointment.expired/messages/v1"
+        }
+      ]
+    },
+    "send.scheduling.appointment.marked-no-show": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/scheduling.appointment.marked-no-show"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/scheduling.appointment.marked-no-show/messages/v1"
+        }
+      ]
+    },
+    "send.scheduling.appointment.rescheduled": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/scheduling.appointment.rescheduled"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/scheduling.appointment.rescheduled/messages/v1"
+        }
+      ]
+    },
+    "send.scheduling.calendar.created": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/scheduling.calendar.created"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/scheduling.calendar.created/messages/v1"
+        }
+      ]
+    }
+  },
+  "components": {
+    "messages": {
+      "identity.delegation.granted.v1": {
+        "name": "identity.delegation.granted",
+        "title": "identity.delegation.granted v1",
+        "summary": "A practitioner let an assistant of the same practice manage their calendars, with or without their availability, until an optional end.",
+        "contentType": "application/json",
+        "tags": [
+          {
+            "name": "identity"
+          }
+        ],
+        "payload": {
+          "type": "object",
+          "required": [
+            "id",
+            "type",
+            "version",
+            "occurredAt",
+            "payload"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Unique id of the event: the idempotency key."
+            },
+            "type": {
+              "type": "string",
+              "const": "identity.delegation.granted"
+            },
+            "version": {
+              "type": "integer",
+              "const": 1
+            },
+            "occurredAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "payload": {
+              "properties": {
+                "delegationId": {
+                  "type": "string"
+                },
+                "practiceId": {
+                  "type": "string"
+                },
+                "practitionerId": {
+                  "type": "string"
+                },
+                "assistantId": {
+                  "type": "string"
+                },
+                "availabilityIncluded": {
+                  "type": "boolean"
+                },
+                "endsAt": {
+                  "oneOf": [
+                    {
+                      "format": "date",
+                      "type": "string"
+                    },
+                    {
+                      "format": "date-time",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "type": "object",
+              "required": [
+                "delegationId",
+                "practiceId",
+                "practitionerId",
+                "assistantId",
+                "availabilityIncluded"
+              ]
+            },
+            "traceparent": {
+              "type": "string",
+              "description": "W3C traceparent captured at publication."
+            },
+            "correlationId": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "identity.delegation.revoked.v1": {
+        "name": "identity.delegation.revoked",
+        "title": "identity.delegation.revoked v1",
+        "summary": "A delegation ended: withdrawn, expired at its end date, or because one of the two left the practice.",
+        "contentType": "application/json",
+        "tags": [
+          {
+            "name": "identity"
+          }
+        ],
+        "payload": {
+          "type": "object",
+          "required": [
+            "id",
+            "type",
+            "version",
+            "occurredAt",
+            "payload"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Unique id of the event: the idempotency key."
+            },
+            "type": {
+              "type": "string",
+              "const": "identity.delegation.revoked"
+            },
+            "version": {
+              "type": "integer",
+              "const": 1
+            },
+            "occurredAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "payload": {
+              "properties": {
+                "delegationId": {
+                  "type": "string"
+                },
+                "practiceId": {
+                  "type": "string"
+                },
+                "practitionerId": {
+                  "type": "string"
+                },
+                "assistantId": {
+                  "type": "string"
+                },
+                "cause": {
+                  "type": "string",
+                  "enum": [
+                    "revoked",
+                    "expired",
+                    "member-removed"
+                  ]
+                }
+              },
+              "type": "object",
+              "required": [
+                "delegationId",
+                "practiceId",
+                "practitionerId",
+                "assistantId",
+                "cause"
+              ]
+            },
+            "traceparent": {
+              "type": "string",
+              "description": "W3C traceparent captured at publication."
+            },
+            "correlationId": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "identity.person.registered.v1": {
+        "name": "identity.person.registered",
+        "title": "identity.person.registered v1",
+        "summary": "A person signed in for the first time and is now known to the platform, with the name and the address to reach them.",
+        "contentType": "application/json",
+        "tags": [
+          {
+            "name": "identity"
+          }
+        ],
+        "payload": {
+          "type": "object",
+          "required": [
+            "id",
+            "type",
+            "version",
+            "occurredAt",
+            "payload"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Unique id of the event: the idempotency key."
+            },
+            "type": {
+              "type": "string",
+              "const": "identity.person.registered"
+            },
+            "version": {
+              "type": "integer",
+              "const": 1
+            },
+            "occurredAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "payload": {
+              "properties": {
+                "personId": {
+                  "type": "string"
+                },
+                "displayName": {
+                  "type": "string"
+                },
+                "email": {
+                  "format": "email",
+                  "type": "string"
+                }
+              },
+              "type": "object",
+              "required": [
+                "personId",
+                "displayName",
+                "email"
+              ]
+            },
+            "traceparent": {
+              "type": "string",
+              "description": "W3C traceparent captured at publication."
+            },
+            "correlationId": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "identity.practice.member-added.v1": {
+        "name": "identity.practice.member-added",
+        "title": "identity.practice.member-added v1",
+        "summary": "A person became a member of a practice with a role; the time zone of the practice travels with it so that a consumer needs nothing else to place the member.",
+        "contentType": "application/json",
+        "tags": [
+          {
+            "name": "identity"
+          }
+        ],
+        "payload": {
+          "type": "object",
+          "required": [
+            "id",
+            "type",
+            "version",
+            "occurredAt",
+            "payload"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Unique id of the event: the idempotency key."
+            },
+            "type": {
+              "type": "string",
+              "const": "identity.practice.member-added"
+            },
+            "version": {
+              "type": "integer",
+              "const": 1
+            },
+            "occurredAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "payload": {
+              "properties": {
+                "practiceId": {
+                  "type": "string"
+                },
+                "personId": {
+                  "type": "string"
+                },
+                "role": {
+                  "type": "string",
+                  "enum": [
+                    "manager",
+                    "practitioner",
+                    "assistant"
+                  ]
+                },
+                "displayName": {
+                  "type": "string"
+                },
+                "timeZone": {
+                  "type": "string"
+                }
+              },
+              "type": "object",
+              "required": [
+                "practiceId",
+                "personId",
+                "role",
+                "displayName",
+                "timeZone"
+              ]
+            },
+            "traceparent": {
+              "type": "string",
+              "description": "W3C traceparent captured at publication."
+            },
+            "correlationId": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "identity.practice.member-removed.v1": {
+        "name": "identity.practice.member-removed",
+        "title": "identity.practice.member-removed v1",
+        "summary": "A membership ended: the person no longer holds this role in the practice.",
+        "contentType": "application/json",
+        "tags": [
+          {
+            "name": "identity"
+          }
+        ],
+        "payload": {
+          "type": "object",
+          "required": [
+            "id",
+            "type",
+            "version",
+            "occurredAt",
+            "payload"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Unique id of the event: the idempotency key."
+            },
+            "type": {
+              "type": "string",
+              "const": "identity.practice.member-removed"
+            },
+            "version": {
+              "type": "integer",
+              "const": 1
+            },
+            "occurredAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "payload": {
+              "properties": {
+                "practiceId": {
+                  "type": "string"
+                },
+                "personId": {
+                  "type": "string"
+                },
+                "role": {
+                  "type": "string",
+                  "enum": [
+                    "manager",
+                    "practitioner",
+                    "assistant"
+                  ]
+                }
+              },
+              "type": "object",
+              "required": [
+                "practiceId",
+                "personId",
+                "role"
+              ]
+            },
+            "traceparent": {
+              "type": "string",
+              "description": "W3C traceparent captured at publication."
+            },
+            "correlationId": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "identity.practice.opened.v1": {
+        "name": "identity.practice.opened",
+        "title": "identity.practice.opened v1",
+        "summary": "A practice was opened, in its time zone, with its first manager.",
+        "contentType": "application/json",
+        "tags": [
+          {
+            "name": "identity"
+          }
+        ],
+        "payload": {
+          "type": "object",
+          "required": [
+            "id",
+            "type",
+            "version",
+            "occurredAt",
+            "payload"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Unique id of the event: the idempotency key."
+            },
+            "type": {
+              "type": "string",
+              "const": "identity.practice.opened"
+            },
+            "version": {
+              "type": "integer",
+              "const": 1
+            },
+            "occurredAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "payload": {
+              "properties": {
+                "practiceId": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "timeZone": {
+                  "type": "string"
+                },
+                "managerId": {
+                  "type": "string"
+                }
+              },
+              "type": "object",
+              "required": [
+                "practiceId",
+                "name",
+                "timeZone",
+                "managerId"
+              ]
+            },
+            "traceparent": {
+              "type": "string",
+              "description": "W3C traceparent captured at publication."
+            },
+            "correlationId": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "scheduling.appointment.booked.v1": {
+        "name": "scheduling.appointment.booked",
+        "title": "scheduling.appointment.booked v1",
+        "summary": "A slot is now held for a patient: booked, or requested when the patient must still confirm before a deadline.",
+        "contentType": "application/json",
+        "tags": [
+          {
+            "name": "scheduling"
+          }
+        ],
+        "payload": {
+          "type": "object",
+          "required": [
+            "id",
+            "type",
+            "version",
+            "occurredAt",
+            "payload"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Unique id of the event: the idempotency key."
+            },
+            "type": {
+              "type": "string",
+              "const": "scheduling.appointment.booked"
+            },
+            "version": {
+              "type": "integer",
+              "const": 1
+            },
+            "occurredAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "payload": {
+              "properties": {
+                "appointmentId": {
+                  "type": "string"
+                },
+                "calendarId": {
+                  "type": "string"
+                },
+                "practiceId": {
+                  "type": "string"
+                },
+                "practitionerId": {
+                  "type": "string"
+                },
+                "patientId": {
+                  "type": "string"
+                },
+                "startsAt": {
+                  "oneOf": [
+                    {
+                      "format": "date",
+                      "type": "string"
+                    },
+                    {
+                      "format": "date-time",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "endsAt": {
+                  "oneOf": [
+                    {
+                      "format": "date",
+                      "type": "string"
+                    },
+                    {
+                      "format": "date-time",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "day": {
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "booked",
+                    "requested"
+                  ]
+                },
+                "confirmBefore": {
+                  "oneOf": [
+                    {
+                      "format": "date",
+                      "type": "string"
+                    },
+                    {
+                      "format": "date-time",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "type": "object",
+              "required": [
+                "appointmentId",
+                "calendarId",
+                "practiceId",
+                "practitionerId",
+                "patientId",
+                "startsAt",
+                "endsAt",
+                "day",
+                "status"
+              ]
+            },
+            "traceparent": {
+              "type": "string",
+              "description": "W3C traceparent captured at publication."
+            },
+            "correlationId": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "scheduling.appointment.cancelled.v1": {
+        "name": "scheduling.appointment.cancelled",
+        "title": "scheduling.appointment.cancelled v1",
+        "summary": "An appointment was cancelled before taking place, by the patient or by the practice; its slot is free again. The reason given stays in scheduling.",
+        "contentType": "application/json",
+        "tags": [
+          {
+            "name": "scheduling"
+          }
+        ],
+        "payload": {
+          "type": "object",
+          "required": [
+            "id",
+            "type",
+            "version",
+            "occurredAt",
+            "payload"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Unique id of the event: the idempotency key."
+            },
+            "type": {
+              "type": "string",
+              "const": "scheduling.appointment.cancelled"
+            },
+            "version": {
+              "type": "integer",
+              "const": 1
+            },
+            "occurredAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "payload": {
+              "properties": {
+                "appointmentId": {
+                  "type": "string"
+                },
+                "calendarId": {
+                  "type": "string"
+                },
+                "practiceId": {
+                  "type": "string"
+                },
+                "practitionerId": {
+                  "type": "string"
+                },
+                "patientId": {
+                  "type": "string"
+                },
+                "startsAt": {
+                  "oneOf": [
+                    {
+                      "format": "date",
+                      "type": "string"
+                    },
+                    {
+                      "format": "date-time",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "endsAt": {
+                  "oneOf": [
+                    {
+                      "format": "date",
+                      "type": "string"
+                    },
+                    {
+                      "format": "date-time",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "day": {
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                  "type": "string"
+                },
+                "cancelledBy": {
+                  "type": "string",
+                  "enum": [
+                    "patient",
+                    "practice"
+                  ]
+                }
+              },
+              "type": "object",
+              "required": [
+                "appointmentId",
+                "calendarId",
+                "practiceId",
+                "practitionerId",
+                "patientId",
+                "startsAt",
+                "endsAt",
+                "day",
+                "cancelledBy"
+              ]
+            },
+            "traceparent": {
+              "type": "string",
+              "description": "W3C traceparent captured at publication."
+            },
+            "correlationId": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "scheduling.appointment.completed.v1": {
+        "name": "scheduling.appointment.completed",
+        "title": "scheduling.appointment.completed v1",
+        "summary": "The appointment took place.",
+        "contentType": "application/json",
+        "tags": [
+          {
+            "name": "scheduling"
+          }
+        ],
+        "payload": {
+          "type": "object",
+          "required": [
+            "id",
+            "type",
+            "version",
+            "occurredAt",
+            "payload"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Unique id of the event: the idempotency key."
+            },
+            "type": {
+              "type": "string",
+              "const": "scheduling.appointment.completed"
+            },
+            "version": {
+              "type": "integer",
+              "const": 1
+            },
+            "occurredAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "payload": {
+              "properties": {
+                "appointmentId": {
+                  "type": "string"
+                },
+                "calendarId": {
+                  "type": "string"
+                },
+                "practiceId": {
+                  "type": "string"
+                },
+                "practitionerId": {
+                  "type": "string"
+                },
+                "patientId": {
+                  "type": "string"
+                },
+                "startsAt": {
+                  "oneOf": [
+                    {
+                      "format": "date",
+                      "type": "string"
+                    },
+                    {
+                      "format": "date-time",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "endsAt": {
+                  "oneOf": [
+                    {
+                      "format": "date",
+                      "type": "string"
+                    },
+                    {
+                      "format": "date-time",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "day": {
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                  "type": "string"
+                }
+              },
+              "type": "object",
+              "required": [
+                "appointmentId",
+                "calendarId",
+                "practiceId",
+                "practitionerId",
+                "patientId",
+                "startsAt",
+                "endsAt",
+                "day"
+              ]
+            },
+            "traceparent": {
+              "type": "string",
+              "description": "W3C traceparent captured at publication."
+            },
+            "correlationId": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "scheduling.appointment.confirmed.v1": {
+        "name": "scheduling.appointment.confirmed",
+        "title": "scheduling.appointment.confirmed v1",
+        "summary": "The patient confirmed a requested appointment: it will be honoured.",
+        "contentType": "application/json",
+        "tags": [
+          {
+            "name": "scheduling"
+          }
+        ],
+        "payload": {
+          "type": "object",
+          "required": [
+            "id",
+            "type",
+            "version",
+            "occurredAt",
+            "payload"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Unique id of the event: the idempotency key."
+            },
+            "type": {
+              "type": "string",
+              "const": "scheduling.appointment.confirmed"
+            },
+            "version": {
+              "type": "integer",
+              "const": 1
+            },
+            "occurredAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "payload": {
+              "properties": {
+                "appointmentId": {
+                  "type": "string"
+                },
+                "calendarId": {
+                  "type": "string"
+                },
+                "practiceId": {
+                  "type": "string"
+                },
+                "practitionerId": {
+                  "type": "string"
+                },
+                "patientId": {
+                  "type": "string"
+                },
+                "startsAt": {
+                  "oneOf": [
+                    {
+                      "format": "date",
+                      "type": "string"
+                    },
+                    {
+                      "format": "date-time",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "endsAt": {
+                  "oneOf": [
+                    {
+                      "format": "date",
+                      "type": "string"
+                    },
+                    {
+                      "format": "date-time",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "day": {
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                  "type": "string"
+                }
+              },
+              "type": "object",
+              "required": [
+                "appointmentId",
+                "calendarId",
+                "practiceId",
+                "practitionerId",
+                "patientId",
+                "startsAt",
+                "endsAt",
+                "day"
+              ]
+            },
+            "traceparent": {
+              "type": "string",
+              "description": "W3C traceparent captured at publication."
+            },
+            "correlationId": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "scheduling.appointment.expired.v1": {
+        "name": "scheduling.appointment.expired",
+        "title": "scheduling.appointment.expired v1",
+        "summary": "A requested appointment was not confirmed in time; its slot is free again.",
+        "contentType": "application/json",
+        "tags": [
+          {
+            "name": "scheduling"
+          }
+        ],
+        "payload": {
+          "type": "object",
+          "required": [
+            "id",
+            "type",
+            "version",
+            "occurredAt",
+            "payload"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Unique id of the event: the idempotency key."
+            },
+            "type": {
+              "type": "string",
+              "const": "scheduling.appointment.expired"
+            },
+            "version": {
+              "type": "integer",
+              "const": 1
+            },
+            "occurredAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "payload": {
+              "properties": {
+                "appointmentId": {
+                  "type": "string"
+                },
+                "calendarId": {
+                  "type": "string"
+                },
+                "practiceId": {
+                  "type": "string"
+                },
+                "practitionerId": {
+                  "type": "string"
+                },
+                "patientId": {
+                  "type": "string"
+                },
+                "startsAt": {
+                  "oneOf": [
+                    {
+                      "format": "date",
+                      "type": "string"
+                    },
+                    {
+                      "format": "date-time",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "endsAt": {
+                  "oneOf": [
+                    {
+                      "format": "date",
+                      "type": "string"
+                    },
+                    {
+                      "format": "date-time",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "day": {
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                  "type": "string"
+                }
+              },
+              "type": "object",
+              "required": [
+                "appointmentId",
+                "calendarId",
+                "practiceId",
+                "practitionerId",
+                "patientId",
+                "startsAt",
+                "endsAt",
+                "day"
+              ]
+            },
+            "traceparent": {
+              "type": "string",
+              "description": "W3C traceparent captured at publication."
+            },
+            "correlationId": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "scheduling.appointment.marked-no-show.v1": {
+        "name": "scheduling.appointment.marked-no-show",
+        "title": "scheduling.appointment.marked-no-show v1",
+        "summary": "The patient did not come to the appointment.",
+        "contentType": "application/json",
+        "tags": [
+          {
+            "name": "scheduling"
+          }
+        ],
+        "payload": {
+          "type": "object",
+          "required": [
+            "id",
+            "type",
+            "version",
+            "occurredAt",
+            "payload"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Unique id of the event: the idempotency key."
+            },
+            "type": {
+              "type": "string",
+              "const": "scheduling.appointment.marked-no-show"
+            },
+            "version": {
+              "type": "integer",
+              "const": 1
+            },
+            "occurredAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "payload": {
+              "properties": {
+                "appointmentId": {
+                  "type": "string"
+                },
+                "calendarId": {
+                  "type": "string"
+                },
+                "practiceId": {
+                  "type": "string"
+                },
+                "practitionerId": {
+                  "type": "string"
+                },
+                "patientId": {
+                  "type": "string"
+                },
+                "startsAt": {
+                  "oneOf": [
+                    {
+                      "format": "date",
+                      "type": "string"
+                    },
+                    {
+                      "format": "date-time",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "endsAt": {
+                  "oneOf": [
+                    {
+                      "format": "date",
+                      "type": "string"
+                    },
+                    {
+                      "format": "date-time",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "day": {
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                  "type": "string"
+                }
+              },
+              "type": "object",
+              "required": [
+                "appointmentId",
+                "calendarId",
+                "practiceId",
+                "practitionerId",
+                "patientId",
+                "startsAt",
+                "endsAt",
+                "day"
+              ]
+            },
+            "traceparent": {
+              "type": "string",
+              "description": "W3C traceparent captured at publication."
+            },
+            "correlationId": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "scheduling.appointment.rescheduled.v1": {
+        "name": "scheduling.appointment.rescheduled",
+        "title": "scheduling.appointment.rescheduled v1",
+        "summary": "An appointment moved to another slot of the same calendar, in one step; the previous slot is free again.",
+        "contentType": "application/json",
+        "tags": [
+          {
+            "name": "scheduling"
+          }
+        ],
+        "payload": {
+          "type": "object",
+          "required": [
+            "id",
+            "type",
+            "version",
+            "occurredAt",
+            "payload"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Unique id of the event: the idempotency key."
+            },
+            "type": {
+              "type": "string",
+              "const": "scheduling.appointment.rescheduled"
+            },
+            "version": {
+              "type": "integer",
+              "const": 1
+            },
+            "occurredAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "payload": {
+              "properties": {
+                "appointmentId": {
+                  "type": "string"
+                },
+                "calendarId": {
+                  "type": "string"
+                },
+                "practiceId": {
+                  "type": "string"
+                },
+                "practitionerId": {
+                  "type": "string"
+                },
+                "patientId": {
+                  "type": "string"
+                },
+                "startsAt": {
+                  "oneOf": [
+                    {
+                      "format": "date",
+                      "type": "string"
+                    },
+                    {
+                      "format": "date-time",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "endsAt": {
+                  "oneOf": [
+                    {
+                      "format": "date",
+                      "type": "string"
+                    },
+                    {
+                      "format": "date-time",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "day": {
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                  "type": "string"
+                },
+                "previousStartsAt": {
+                  "oneOf": [
+                    {
+                      "format": "date",
+                      "type": "string"
+                    },
+                    {
+                      "format": "date-time",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "previousDay": {
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                  "type": "string"
+                }
+              },
+              "type": "object",
+              "required": [
+                "appointmentId",
+                "calendarId",
+                "practiceId",
+                "practitionerId",
+                "patientId",
+                "startsAt",
+                "endsAt",
+                "day",
+                "previousStartsAt",
+                "previousDay"
+              ]
+            },
+            "traceparent": {
+              "type": "string",
+              "description": "W3C traceparent captured at publication."
+            },
+            "correlationId": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "scheduling.calendar.created.v1": {
+        "name": "scheduling.calendar.created",
+        "title": "scheduling.calendar.created v1",
+        "summary": "A practitioner has a new calendar in a practice, in the time zone of that practice.",
+        "contentType": "application/json",
+        "tags": [
+          {
+            "name": "scheduling"
+          }
+        ],
+        "payload": {
+          "type": "object",
+          "required": [
+            "id",
+            "type",
+            "version",
+            "occurredAt",
+            "payload"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Unique id of the event: the idempotency key."
+            },
+            "type": {
+              "type": "string",
+              "const": "scheduling.calendar.created"
+            },
+            "version": {
+              "type": "integer",
+              "const": 1
+            },
+            "occurredAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "payload": {
+              "properties": {
+                "calendarId": {
+                  "type": "string"
+                },
+                "practiceId": {
+                  "type": "string"
+                },
+                "practitionerId": {
+                  "type": "string"
+                },
+                "timeZone": {
+                  "type": "string"
+                }
+              },
+              "type": "object",
+              "required": [
+                "calendarId",
+                "practiceId",
+                "practitionerId",
+                "timeZone"
+              ]
+            },
+            "traceparent": {
+              "type": "string",
+              "description": "W3C traceparent captured at publication."
+            },
+            "correlationId": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}

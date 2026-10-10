@@ -1,0 +1,4302 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "scheduling",
+    "version": "0.1.0"
+  },
+  "tags": [
+    {
+      "name": "analytics"
+    },
+    {
+      "name": "audit"
+    },
+    {
+      "name": "identity"
+    },
+    {
+      "name": "notification"
+    },
+    {
+      "name": "scheduling"
+    }
+  ],
+  "paths": {
+    "/appointments": {
+      "get": {
+        "operationId": "listAppointments",
+        "summary": "List appointments",
+        "tags": [
+          "scheduling"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "filter[id]",
+            "in": "query",
+            "description": "Filters on `id`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq, in. The value is text.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Filters on `id`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq, in. The value is text.",
+              "x-filter-operators": [
+                "eq",
+                "in"
+              ],
+              "x-filter-type": "string"
+            }
+          },
+          {
+            "name": "filter[calendarId]",
+            "in": "query",
+            "description": "Filters on `calendarId`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq, in. The value is text.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Filters on `calendarId`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq, in. The value is text.",
+              "x-filter-operators": [
+                "eq",
+                "in"
+              ],
+              "x-filter-type": "string"
+            }
+          },
+          {
+            "name": "filter[practiceId]",
+            "in": "query",
+            "description": "Filters on `practiceId`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq. The value is text.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Filters on `practiceId`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq. The value is text.",
+              "x-filter-operators": [
+                "eq"
+              ],
+              "x-filter-type": "string"
+            }
+          },
+          {
+            "name": "filter[practitionerId]",
+            "in": "query",
+            "description": "Filters on `practitionerId`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq. The value is text.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Filters on `practitionerId`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq. The value is text.",
+              "x-filter-operators": [
+                "eq"
+              ],
+              "x-filter-type": "string"
+            }
+          },
+          {
+            "name": "filter[patientId]",
+            "in": "query",
+            "description": "Filters on `patientId`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq. The value is text.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Filters on `patientId`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq. The value is text.",
+              "x-filter-operators": [
+                "eq"
+              ],
+              "x-filter-type": "string"
+            }
+          },
+          {
+            "name": "filter[appointmentTypeId]",
+            "in": "query",
+            "description": "Filters on `appointmentTypeId`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq. The value is text.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Filters on `appointmentTypeId`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq. The value is text.",
+              "x-filter-operators": [
+                "eq"
+              ],
+              "x-filter-type": "string"
+            }
+          },
+          {
+            "name": "filter[startsAt]",
+            "in": "query",
+            "description": "Filters on `startsAt`, written `<operator>:<value>`; the value alone means `eq`. Operators: gte, lt, between. The value is an ISO 8601 instant with its zone.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Filters on `startsAt`, written `<operator>:<value>`; the value alone means `eq`. Operators: gte, lt, between. The value is an ISO 8601 instant with its zone.",
+              "x-filter-operators": [
+                "gte",
+                "lt",
+                "between"
+              ],
+              "x-filter-type": "instant"
+            }
+          },
+          {
+            "name": "filter[heldUntil]",
+            "in": "query",
+            "description": "Filters on `heldUntil`, written `<operator>:<value>`; the value alone means `eq`. Operators: gt. The value is an ISO 8601 instant with its zone.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Filters on `heldUntil`, written `<operator>:<value>`; the value alone means `eq`. Operators: gt. The value is an ISO 8601 instant with its zone.",
+              "x-filter-operators": [
+                "gt"
+              ],
+              "x-filter-type": "instant"
+            }
+          },
+          {
+            "name": "filter[day]",
+            "in": "query",
+            "description": "Filters on `day`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq, gte, lte, between. The value is text.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Filters on `day`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq, gte, lte, between. The value is text.",
+              "x-filter-operators": [
+                "eq",
+                "gte",
+                "lte",
+                "between"
+              ],
+              "x-filter-type": "string"
+            }
+          },
+          {
+            "name": "filter[status]",
+            "in": "query",
+            "description": "Filters on `status`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq, ne, in. The value is text.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Filters on `status`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq, ne, in. The value is text.",
+              "x-filter-operators": [
+                "eq",
+                "ne",
+                "in"
+              ],
+              "x-filter-type": "string"
+            }
+          },
+          {
+            "name": "filter[confirmBefore]",
+            "in": "query",
+            "description": "Filters on `confirmBefore`, written `<operator>:<value>`; the value alone means `eq`. Operators: isNull. The value is an ISO 8601 instant with its zone.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Filters on `confirmBefore`, written `<operator>:<value>`; the value alone means `eq`. Operators: isNull. The value is an ISO 8601 instant with its zone.",
+              "x-filter-operators": [
+                "isNull"
+              ],
+              "x-filter-type": "instant"
+            }
+          },
+          {
+            "name": "filter[cancelledBy]",
+            "in": "query",
+            "description": "Filters on `cancelledBy`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq, isNull. The value is text.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Filters on `cancelledBy`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq, isNull. The value is text.",
+              "x-filter-operators": [
+                "eq",
+                "isNull"
+              ],
+              "x-filter-type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "The fields to sort by, a leading \"-\" for descending, repeated or separated by commas.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "startsAt",
+                  "-startsAt",
+                  "day",
+                  "-day",
+                  "changedAt",
+                  "-changedAt",
+                  "id",
+                  "-id"
+                ]
+              },
+              "description": "The fields to sort by, a leading \"-\" for descending, repeated or separated by commas."
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Size of the page.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "description": "Size of the page."
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Items to skip. Not with `cursor`.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Items to skip. Not with `cursor`."
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "description": "The `nextCursor` of the previous page. Not with `offset`.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The `nextCursor` of the previous page. Not with `offset`."
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "One page of the list.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "items"
+                  ],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "calendarId": {
+                            "type": "string"
+                          },
+                          "practiceId": {
+                            "type": "string"
+                          },
+                          "practitionerId": {
+                            "type": "string"
+                          },
+                          "patientId": {
+                            "type": "string"
+                          },
+                          "appointmentTypeId": {
+                            "type": "string"
+                          },
+                          "startsAt": {
+                            "oneOf": [
+                              {
+                                "format": "date",
+                                "type": "string"
+                              },
+                              {
+                                "format": "date-time",
+                                "type": "string"
+                              }
+                            ]
+                          },
+                          "endsAt": {
+                            "oneOf": [
+                              {
+                                "format": "date",
+                                "type": "string"
+                              },
+                              {
+                                "format": "date-time",
+                                "type": "string"
+                              }
+                            ]
+                          },
+                          "day": {
+                            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "requested",
+                              "booked",
+                              "cancelled",
+                              "expired",
+                              "completed",
+                              "no-show"
+                            ]
+                          },
+                          "confirmBefore": {
+                            "oneOf": [
+                              {
+                                "format": "date",
+                                "type": "string"
+                              },
+                              {
+                                "format": "date-time",
+                                "type": "string"
+                              }
+                            ]
+                          },
+                          "cancelledBy": {
+                            "type": "string",
+                            "enum": [
+                              "patient",
+                              "practice"
+                            ]
+                          }
+                        },
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "calendarId",
+                          "practiceId",
+                          "practitionerId",
+                          "patientId",
+                          "appointmentTypeId",
+                          "startsAt",
+                          "endsAt",
+                          "day",
+                          "status"
+                        ]
+                      }
+                    },
+                    "total": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "Present when it is cheap to count."
+                    },
+                    "nextCursor": {
+                      "type": "string",
+                      "description": "Present when more items follow."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Error codes: UNAUTHORIZED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "UNAUTHORIZED"
+            ]
+          },
+          "403": {
+            "description": "Forbidden. Error codes: FORBIDDEN.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "FORBIDDEN"
+            ]
+          },
+          "422": {
+            "description": "Unprocessable Content. Error codes: INVALID_CRITERIA, VALIDATION_FAILED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "INVALID_CRITERIA",
+              "VALIDATION_FAILED"
+            ]
+          }
+        }
+      },
+      "post": {
+        "operationId": "bookAppointment",
+        "summary": "Book appointment",
+        "tags": [
+          "scheduling"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "calendarId": {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "appointmentTypeId": {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "startsAt": {
+                    "oneOf": [
+                      {
+                        "format": "date",
+                        "type": "string"
+                      },
+                      {
+                        "format": "date-time",
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "patientId": {
+                    "minLength": 1,
+                    "type": "string"
+                  }
+                },
+                "type": "object",
+                "required": [
+                  "calendarId",
+                  "appointmentTypeId",
+                  "startsAt"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Done; the body carries the identifier.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "id"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Error codes: UNAUTHORIZED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "UNAUTHORIZED"
+            ]
+          },
+          "403": {
+            "description": "Forbidden. Error codes: FORBIDDEN.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "FORBIDDEN"
+            ]
+          },
+          "404": {
+            "description": "Not Found. Error codes: UNKNOWN_CALENDAR.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "UNKNOWN_CALENDAR"
+            ]
+          },
+          "409": {
+            "description": "Conflict. Error codes: PATIENT_LIMIT_REACHED, SLOT_TAKEN.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "PATIENT_LIMIT_REACHED",
+              "SLOT_TAKEN"
+            ]
+          },
+          "422": {
+            "description": "Unprocessable Content. Error codes: BOOKING_TOO_FAR, BOOKING_TOO_LATE, OFF_GRID, OUTSIDE_AVAILABILITY, UNKNOWN_APPOINTMENT_TYPE, VALIDATION_FAILED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "BOOKING_TOO_FAR",
+              "BOOKING_TOO_LATE",
+              "OFF_GRID",
+              "OUTSIDE_AVAILABILITY",
+              "UNKNOWN_APPOINTMENT_TYPE",
+              "VALIDATION_FAILED"
+            ]
+          }
+        }
+      }
+    },
+    "/appointments/{appointmentId}": {
+      "get": {
+        "operationId": "getAppointment",
+        "summary": "Get appointment",
+        "tags": [
+          "scheduling"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "appointmentId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The answer.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "patientName": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "calendarId": {
+                      "type": "string"
+                    },
+                    "practiceId": {
+                      "type": "string"
+                    },
+                    "practitionerId": {
+                      "type": "string"
+                    },
+                    "patientId": {
+                      "type": "string"
+                    },
+                    "appointmentTypeId": {
+                      "type": "string"
+                    },
+                    "startsAt": {
+                      "oneOf": [
+                        {
+                          "format": "date",
+                          "type": "string"
+                        },
+                        {
+                          "format": "date-time",
+                          "type": "string"
+                        }
+                      ]
+                    },
+                    "endsAt": {
+                      "oneOf": [
+                        {
+                          "format": "date",
+                          "type": "string"
+                        },
+                        {
+                          "format": "date-time",
+                          "type": "string"
+                        }
+                      ]
+                    },
+                    "day": {
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "requested",
+                        "booked",
+                        "cancelled",
+                        "expired",
+                        "completed",
+                        "no-show"
+                      ]
+                    },
+                    "confirmBefore": {
+                      "oneOf": [
+                        {
+                          "format": "date",
+                          "type": "string"
+                        },
+                        {
+                          "format": "date-time",
+                          "type": "string"
+                        }
+                      ]
+                    },
+                    "cancelledBy": {
+                      "type": "string",
+                      "enum": [
+                        "patient",
+                        "practice"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "calendarId",
+                    "practiceId",
+                    "practitionerId",
+                    "patientId",
+                    "appointmentTypeId",
+                    "startsAt",
+                    "endsAt",
+                    "day",
+                    "status"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Error codes: UNAUTHORIZED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "UNAUTHORIZED"
+            ]
+          },
+          "403": {
+            "description": "Forbidden. Error codes: FORBIDDEN.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "FORBIDDEN"
+            ]
+          },
+          "404": {
+            "description": "Not Found. Error codes: APPOINTMENT_NOT_FOUND.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "APPOINTMENT_NOT_FOUND"
+            ]
+          },
+          "422": {
+            "description": "Unprocessable Content. Error codes: VALIDATION_FAILED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "VALIDATION_FAILED"
+            ]
+          }
+        }
+      }
+    },
+    "/appointments/{appointmentId}/cancellation": {
+      "post": {
+        "operationId": "cancelAppointment",
+        "summary": "Cancel appointment",
+        "tags": [
+          "scheduling"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "appointmentId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "reason": {
+                    "maxLength": 500,
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Done; the body carries the identifier.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "id"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Error codes: UNAUTHORIZED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "UNAUTHORIZED"
+            ]
+          },
+          "403": {
+            "description": "Forbidden. Error codes: FORBIDDEN.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "FORBIDDEN"
+            ]
+          },
+          "404": {
+            "description": "Not Found. Error codes: APPOINTMENT_NOT_FOUND.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "APPOINTMENT_NOT_FOUND"
+            ]
+          },
+          "409": {
+            "description": "Conflict. Error codes: APPOINTMENT_ENDED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "APPOINTMENT_ENDED"
+            ]
+          },
+          "422": {
+            "description": "Unprocessable Content. Error codes: REASON_REQUIRED, VALIDATION_FAILED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "REASON_REQUIRED",
+              "VALIDATION_FAILED"
+            ]
+          }
+        }
+      }
+    },
+    "/appointments/{appointmentId}/completion": {
+      "post": {
+        "operationId": "completeAppointment",
+        "summary": "Complete appointment",
+        "tags": [
+          "scheduling"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "appointmentId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Done; the body carries the identifier.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "id"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Error codes: UNAUTHORIZED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "UNAUTHORIZED"
+            ]
+          },
+          "403": {
+            "description": "Forbidden. Error codes: FORBIDDEN.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "FORBIDDEN"
+            ]
+          },
+          "404": {
+            "description": "Not Found. Error codes: APPOINTMENT_NOT_FOUND.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "APPOINTMENT_NOT_FOUND"
+            ]
+          },
+          "409": {
+            "description": "Conflict. Error codes: APPOINTMENT_ENDED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "APPOINTMENT_ENDED"
+            ]
+          },
+          "422": {
+            "description": "Unprocessable Content. Error codes: APPOINTMENT_NOT_STARTED, VALIDATION_FAILED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "APPOINTMENT_NOT_STARTED",
+              "VALIDATION_FAILED"
+            ]
+          }
+        }
+      }
+    },
+    "/appointments/{appointmentId}/confirmation": {
+      "post": {
+        "operationId": "confirmAppointment",
+        "summary": "Confirm appointment",
+        "tags": [
+          "scheduling"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "appointmentId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Done; the body carries the identifier.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "id"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Error codes: UNAUTHORIZED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "UNAUTHORIZED"
+            ]
+          },
+          "403": {
+            "description": "Forbidden. Error codes: FORBIDDEN.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "FORBIDDEN"
+            ]
+          },
+          "404": {
+            "description": "Not Found. Error codes: APPOINTMENT_NOT_FOUND.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "APPOINTMENT_NOT_FOUND"
+            ]
+          },
+          "409": {
+            "description": "Conflict. Error codes: APPOINTMENT_ALREADY_CONFIRMED, APPOINTMENT_ENDED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "APPOINTMENT_ALREADY_CONFIRMED",
+              "APPOINTMENT_ENDED"
+            ]
+          },
+          "422": {
+            "description": "Unprocessable Content. Error codes: VALIDATION_FAILED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "VALIDATION_FAILED"
+            ]
+          }
+        }
+      }
+    },
+    "/appointments/{appointmentId}/no-show": {
+      "post": {
+        "operationId": "markAppointmentNoShow",
+        "summary": "Mark appointment no show",
+        "tags": [
+          "scheduling"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "appointmentId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Done; the body carries the identifier.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "id"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Error codes: UNAUTHORIZED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "UNAUTHORIZED"
+            ]
+          },
+          "403": {
+            "description": "Forbidden. Error codes: FORBIDDEN.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "FORBIDDEN"
+            ]
+          },
+          "404": {
+            "description": "Not Found. Error codes: APPOINTMENT_NOT_FOUND.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "APPOINTMENT_NOT_FOUND"
+            ]
+          },
+          "409": {
+            "description": "Conflict. Error codes: APPOINTMENT_ENDED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "APPOINTMENT_ENDED"
+            ]
+          },
+          "422": {
+            "description": "Unprocessable Content. Error codes: APPOINTMENT_NOT_STARTED, VALIDATION_FAILED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "APPOINTMENT_NOT_STARTED",
+              "VALIDATION_FAILED"
+            ]
+          }
+        }
+      }
+    },
+    "/appointments/{appointmentId}/reschedule": {
+      "post": {
+        "operationId": "rescheduleAppointment",
+        "summary": "Reschedule appointment",
+        "tags": [
+          "scheduling"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "appointmentId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "startsAt": {
+                    "oneOf": [
+                      {
+                        "format": "date",
+                        "type": "string"
+                      },
+                      {
+                        "format": "date-time",
+                        "type": "string"
+                      }
+                    ]
+                  }
+                },
+                "type": "object",
+                "required": [
+                  "startsAt"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Done; the body carries the identifier.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "id"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Error codes: UNAUTHORIZED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "UNAUTHORIZED"
+            ]
+          },
+          "403": {
+            "description": "Forbidden. Error codes: FORBIDDEN.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "FORBIDDEN"
+            ]
+          },
+          "404": {
+            "description": "Not Found. Error codes: APPOINTMENT_NOT_FOUND, UNKNOWN_CALENDAR.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "APPOINTMENT_NOT_FOUND",
+              "UNKNOWN_CALENDAR"
+            ]
+          },
+          "409": {
+            "description": "Conflict. Error codes: APPOINTMENT_ENDED, PATIENT_LIMIT_REACHED, SLOT_TAKEN.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "APPOINTMENT_ENDED",
+              "PATIENT_LIMIT_REACHED",
+              "SLOT_TAKEN"
+            ]
+          },
+          "422": {
+            "description": "Unprocessable Content. Error codes: BOOKING_TOO_FAR, BOOKING_TOO_LATE, OFF_GRID, OUTSIDE_AVAILABILITY, UNKNOWN_APPOINTMENT_TYPE, VALIDATION_FAILED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "BOOKING_TOO_FAR",
+              "BOOKING_TOO_LATE",
+              "OFF_GRID",
+              "OUTSIDE_AVAILABILITY",
+              "UNKNOWN_APPOINTMENT_TYPE",
+              "VALIDATION_FAILED"
+            ]
+          }
+        }
+      }
+    },
+    "/audit/entries": {
+      "get": {
+        "operationId": "listAuditEntries",
+        "summary": "List the entries of the audit trail",
+        "tags": [
+          "audit"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Size of the page.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "description": "Size of the page."
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Items to skip. Not with `cursor`.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Items to skip. Not with `cursor`."
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "description": "The `nextCursor` of the previous page. Not with `offset`.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The `nextCursor` of the previous page. Not with `offset`."
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Comma-separated fields, a leading \"-\" for descending. Sortable: occurredAt, sequence.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Comma-separated fields, a leading \"-\" for descending. Sortable: occurredAt, sequence."
+            }
+          },
+          {
+            "name": "actorId",
+            "in": "query",
+            "description": "Entries about what this actor did.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Entries about what this actor did."
+            }
+          },
+          {
+            "name": "action",
+            "in": "query",
+            "description": "A permission id, a command name or an event type.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "A permission id, a command name or an event type."
+            }
+          },
+          {
+            "name": "outcome",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "allowed",
+                "denied",
+                "succeeded",
+                "failed"
+              ]
+            }
+          },
+          {
+            "name": "correlationId",
+            "in": "query",
+            "description": "Everything one request or event caused.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Everything one request or event caused."
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of entries.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "items"
+                  ],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "chain",
+                          "sequence",
+                          "occurredAt",
+                          "category",
+                          "action",
+                          "outcome",
+                          "actorId",
+                          "actorType",
+                          "correlationId",
+                          "origin",
+                          "previousHash",
+                          "hash"
+                        ],
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "chain": {
+                            "type": "string"
+                          },
+                          "sequence": {
+                            "type": "integer",
+                            "minimum": 1
+                          },
+                          "occurredAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "category": {
+                            "type": "string"
+                          },
+                          "action": {
+                            "type": "string"
+                          },
+                          "outcome": {
+                            "type": "string",
+                            "enum": [
+                              "allowed",
+                              "denied",
+                              "succeeded",
+                              "failed"
+                            ]
+                          },
+                          "reason": {
+                            "type": "string"
+                          },
+                          "actorId": {
+                            "type": "string"
+                          },
+                          "actorType": {
+                            "type": "string"
+                          },
+                          "impersonatedBy": {
+                            "type": "string"
+                          },
+                          "tenantId": {
+                            "type": "string"
+                          },
+                          "resourceType": {
+                            "type": "string"
+                          },
+                          "resourceId": {
+                            "type": "string"
+                          },
+                          "context": {
+                            "type": "string"
+                          },
+                          "correlationId": {
+                            "type": "string"
+                          },
+                          "causationId": {
+                            "type": "string"
+                          },
+                          "origin": {
+                            "type": "string"
+                          },
+                          "previousHash": {
+                            "type": "string"
+                          },
+                          "hash": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "total": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "Present when it is cheap to count."
+                    },
+                    "nextCursor": {
+                      "type": "string",
+                      "description": "Present when more items follow."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Error codes: UNAUTHORIZED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "UNAUTHORIZED"
+            ]
+          },
+          "403": {
+            "description": "Forbidden. Error codes: FORBIDDEN.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "FORBIDDEN"
+            ]
+          },
+          "422": {
+            "description": "Unprocessable Content. Error codes: VALIDATION_FAILED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "VALIDATION_FAILED"
+            ]
+          }
+        }
+      }
+    },
+    "/calendars": {
+      "post": {
+        "operationId": "createCalendar",
+        "summary": "Create calendar",
+        "tags": [
+          "scheduling"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "practiceId": {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "practitionerId": {
+                    "minLength": 1,
+                    "type": "string"
+                  }
+                },
+                "type": "object",
+                "required": [
+                  "practiceId",
+                  "practitionerId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Done; the body carries the identifier.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "id"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Error codes: UNAUTHORIZED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "UNAUTHORIZED"
+            ]
+          },
+          "403": {
+            "description": "Forbidden. Error codes: FORBIDDEN.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "FORBIDDEN"
+            ]
+          },
+          "422": {
+            "description": "Unprocessable Content. Error codes: UNKNOWN_PRACTITIONER, UNKNOWN_TIME_ZONE, VALIDATION_FAILED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "UNKNOWN_PRACTITIONER",
+              "UNKNOWN_TIME_ZONE",
+              "VALIDATION_FAILED"
+            ]
+          }
+        }
+      }
+    },
+    "/calendars/{calendarId}/appointment-types": {
+      "post": {
+        "operationId": "defineAppointmentType",
+        "summary": "Define appointment type",
+        "tags": [
+          "scheduling"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "calendarId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "name": {
+                    "maxLength": 120,
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "duration": {
+                    "type": "integer"
+                  },
+                  "grid": {
+                    "type": "integer"
+                  },
+                  "buffer": {
+                    "type": "integer"
+                  },
+                  "needsConfirmation": {
+                    "type": "boolean"
+                  }
+                },
+                "type": "object",
+                "required": [
+                  "name",
+                  "duration",
+                  "grid",
+                  "buffer",
+                  "needsConfirmation"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Done; the body carries the identifier.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "id"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Error codes: UNAUTHORIZED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "UNAUTHORIZED"
+            ]
+          },
+          "403": {
+            "description": "Forbidden. Error codes: FORBIDDEN.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "FORBIDDEN"
+            ]
+          },
+          "404": {
+            "description": "Not Found. Error codes: UNKNOWN_CALENDAR.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "UNKNOWN_CALENDAR"
+            ]
+          },
+          "422": {
+            "description": "Unprocessable Content. Error codes: INVALID_APPOINTMENT_TYPE, VALIDATION_FAILED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "INVALID_APPOINTMENT_TYPE",
+              "VALIDATION_FAILED"
+            ]
+          }
+        }
+      }
+    },
+    "/calendars/{calendarId}/days/{day}": {
+      "get": {
+        "operationId": "getCalendarDay",
+        "summary": "Get calendar day",
+        "tags": [
+          "scheduling"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "calendarId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "name": "day",
+            "in": "path",
+            "schema": {
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The answer.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "calendarId": {
+                      "type": "string"
+                    },
+                    "day": {
+                      "type": "string"
+                    },
+                    "timeZone": {
+                      "type": "string"
+                    },
+                    "open": {
+                      "items": {
+                        "$ref": "#/components/schemas/CalendarDaySpanDto"
+                      },
+                      "type": "array"
+                    },
+                    "timeOff": {
+                      "items": {
+                        "$ref": "#/components/schemas/CalendarDaySpanDto"
+                      },
+                      "type": "array"
+                    },
+                    "appointmentTypes": {
+                      "items": {
+                        "$ref": "#/components/schemas/CalendarDayAppointmentTypeDto"
+                      },
+                      "type": "array"
+                    },
+                    "busy": {
+                      "items": {
+                        "$ref": "#/components/schemas/CalendarDayBusyDto"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "calendarId",
+                    "day",
+                    "timeZone",
+                    "open",
+                    "timeOff",
+                    "appointmentTypes",
+                    "busy"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Error codes: UNAUTHORIZED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "UNAUTHORIZED"
+            ]
+          },
+          "403": {
+            "description": "Forbidden. Error codes: FORBIDDEN.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "FORBIDDEN"
+            ]
+          },
+          "404": {
+            "description": "Not Found. Error codes: UNKNOWN_CALENDAR.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "UNKNOWN_CALENDAR"
+            ]
+          },
+          "422": {
+            "description": "Unprocessable Content. Error codes: INVALID_DAY, VALIDATION_FAILED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "INVALID_DAY",
+              "VALIDATION_FAILED"
+            ]
+          }
+        }
+      }
+    },
+    "/calendars/{calendarId}/exceptions": {
+      "post": {
+        "operationId": "addException",
+        "summary": "Add exception",
+        "tags": [
+          "scheduling"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "calendarId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "day": {
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                    "type": "string"
+                  },
+                  "ranges": {
+                    "items": {
+                      "$ref": "#/components/schemas/DayRangeDto"
+                    },
+                    "type": "array",
+                    "maxItems": 20
+                  }
+                },
+                "type": "object",
+                "required": [
+                  "day",
+                  "ranges"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Done; the body carries the identifier.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "id"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Error codes: UNAUTHORIZED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "UNAUTHORIZED"
+            ]
+          },
+          "403": {
+            "description": "Forbidden. Error codes: FORBIDDEN.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "FORBIDDEN"
+            ]
+          },
+          "404": {
+            "description": "Not Found. Error codes: UNKNOWN_CALENDAR.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "UNKNOWN_CALENDAR"
+            ]
+          },
+          "422": {
+            "description": "Unprocessable Content. Error codes: INVALID_DAY, INVALID_RANGE, VALIDATION_FAILED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "INVALID_DAY",
+              "INVALID_RANGE",
+              "VALIDATION_FAILED"
+            ]
+          }
+        }
+      }
+    },
+    "/calendars/{calendarId}/opening-hours": {
+      "put": {
+        "operationId": "setOpeningHours",
+        "summary": "Set opening hours",
+        "tags": [
+          "scheduling"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "calendarId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "ranges": {
+                    "items": {
+                      "$ref": "#/components/schemas/OpeningRangeDto"
+                    },
+                    "type": "array",
+                    "maxItems": 100
+                  }
+                },
+                "type": "object",
+                "required": [
+                  "ranges"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Done; the body carries the identifier.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "id"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Error codes: UNAUTHORIZED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "UNAUTHORIZED"
+            ]
+          },
+          "403": {
+            "description": "Forbidden. Error codes: FORBIDDEN.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "FORBIDDEN"
+            ]
+          },
+          "404": {
+            "description": "Not Found. Error codes: UNKNOWN_CALENDAR.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "UNKNOWN_CALENDAR"
+            ]
+          },
+          "422": {
+            "description": "Unprocessable Content. Error codes: INVALID_RANGE, VALIDATION_FAILED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "INVALID_RANGE",
+              "VALIDATION_FAILED"
+            ]
+          }
+        }
+      }
+    },
+    "/calendars/{calendarId}/time-off": {
+      "post": {
+        "operationId": "addTimeOff",
+        "summary": "Add time off",
+        "tags": [
+          "scheduling"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "calendarId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "startsAt": {
+                    "oneOf": [
+                      {
+                        "format": "date",
+                        "type": "string"
+                      },
+                      {
+                        "format": "date-time",
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "endsAt": {
+                    "oneOf": [
+                      {
+                        "format": "date",
+                        "type": "string"
+                      },
+                      {
+                        "format": "date-time",
+                        "type": "string"
+                      }
+                    ]
+                  }
+                },
+                "type": "object",
+                "required": [
+                  "startsAt",
+                  "endsAt"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Done; the body carries the identifier.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "id"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Error codes: UNAUTHORIZED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "UNAUTHORIZED"
+            ]
+          },
+          "403": {
+            "description": "Forbidden. Error codes: FORBIDDEN.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "FORBIDDEN"
+            ]
+          },
+          "404": {
+            "description": "Not Found. Error codes: UNKNOWN_CALENDAR.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "UNKNOWN_CALENDAR"
+            ]
+          },
+          "409": {
+            "description": "Conflict. Error codes: TIME_OFF_OVER_APPOINTMENTS.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "TIME_OFF_OVER_APPOINTMENTS"
+            ]
+          },
+          "422": {
+            "description": "Unprocessable Content. Error codes: INVALID_TIME_OFF, VALIDATION_FAILED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "INVALID_TIME_OFF",
+              "VALIDATION_FAILED"
+            ]
+          }
+        }
+      }
+    },
+    "/calendars/{calendarId}/waitlist": {
+      "post": {
+        "operationId": "joinWaitlist",
+        "summary": "Join waitlist",
+        "tags": [
+          "scheduling"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "calendarId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "patientId": {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "appointmentTypeId": {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "day": {
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                    "type": "string"
+                  }
+                },
+                "type": "object",
+                "required": [
+                  "patientId",
+                  "appointmentTypeId",
+                  "day"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Done; the body carries the identifier.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "id"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Error codes: UNAUTHORIZED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "UNAUTHORIZED"
+            ]
+          },
+          "403": {
+            "description": "Forbidden. Error codes: FORBIDDEN.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "FORBIDDEN"
+            ]
+          },
+          "404": {
+            "description": "Not Found. Error codes: UNKNOWN_CALENDAR.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "UNKNOWN_CALENDAR"
+            ]
+          },
+          "409": {
+            "description": "Conflict. Error codes: ALREADY_WAITING.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "ALREADY_WAITING"
+            ]
+          },
+          "422": {
+            "description": "Unprocessable Content. Error codes: INVALID_DAY, UNKNOWN_APPOINTMENT_TYPE, VALIDATION_FAILED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "INVALID_DAY",
+              "UNKNOWN_APPOINTMENT_TYPE",
+              "VALIDATION_FAILED"
+            ]
+          }
+        }
+      }
+    },
+    "/notifications": {
+      "get": {
+        "operationId": "listNotifications",
+        "summary": "List notifications",
+        "tags": [
+          "notification"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Size of the page.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "description": "Size of the page."
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Items to skip. Not with `cursor`.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Items to skip. Not with `cursor`."
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "description": "The `nextCursor` of the previous page. Not with `offset`.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The `nextCursor` of the previous page. Not with `offset`."
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Comma-separated fields, a leading \"-\" for descending. Sortable: sentAt.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Comma-separated fields, a leading \"-\" for descending. Sortable: sentAt."
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "One page of the list.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "items"
+                  ],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "request",
+                              "confirmation",
+                              "rescheduling",
+                              "cancellation",
+                              "reminder"
+                            ]
+                          },
+                          "appointmentId": {
+                            "type": "string"
+                          },
+                          "startsAt": {
+                            "oneOf": [
+                              {
+                                "format": "date",
+                                "type": "string"
+                              },
+                              {
+                                "format": "date-time",
+                                "type": "string"
+                              }
+                            ]
+                          },
+                          "sentAt": {
+                            "oneOf": [
+                              {
+                                "format": "date",
+                                "type": "string"
+                              },
+                              {
+                                "format": "date-time",
+                                "type": "string"
+                              }
+                            ]
+                          }
+                        },
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "kind",
+                          "appointmentId",
+                          "startsAt",
+                          "sentAt"
+                        ]
+                      }
+                    },
+                    "total": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "Present when it is cheap to count."
+                    },
+                    "nextCursor": {
+                      "type": "string",
+                      "description": "Present when more items follow."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Error codes: UNAUTHORIZED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "UNAUTHORIZED"
+            ]
+          },
+          "403": {
+            "description": "Forbidden. Error codes: FORBIDDEN.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "FORBIDDEN"
+            ]
+          },
+          "422": {
+            "description": "Unprocessable Content. Error codes: VALIDATION_FAILED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "VALIDATION_FAILED"
+            ]
+          }
+        }
+      }
+    },
+    "/people/me": {
+      "put": {
+        "operationId": "registerPerson",
+        "summary": "Register person",
+        "tags": [
+          "identity"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "displayName": {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "email": {
+                    "format": "email",
+                    "type": "string"
+                  }
+                },
+                "type": "object",
+                "required": [
+                  "displayName",
+                  "email"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Done; the body carries the identifier.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "id"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Error codes: UNAUTHORIZED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "UNAUTHORIZED"
+            ]
+          },
+          "403": {
+            "description": "Forbidden. Error codes: FORBIDDEN.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "FORBIDDEN"
+            ]
+          },
+          "422": {
+            "description": "Unprocessable Content. Error codes: INVALID_DISPLAY_NAME, INVALID_EMAIL, VALIDATION_FAILED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "INVALID_DISPLAY_NAME",
+              "INVALID_EMAIL",
+              "VALIDATION_FAILED"
+            ]
+          }
+        }
+      }
+    },
+    "/practices": {
+      "post": {
+        "operationId": "openPractice",
+        "summary": "Open practice",
+        "tags": [
+          "identity"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "name": {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "timeZone": {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "managerId": {
+                    "minLength": 1,
+                    "type": "string"
+                  }
+                },
+                "type": "object",
+                "required": [
+                  "name",
+                  "timeZone",
+                  "managerId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Done; the body carries the identifier.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "id"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Error codes: UNAUTHORIZED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "UNAUTHORIZED"
+            ]
+          },
+          "403": {
+            "description": "Forbidden. Error codes: FORBIDDEN.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "FORBIDDEN"
+            ]
+          },
+          "404": {
+            "description": "Not Found. Error codes: PERSON_NOT_REGISTERED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "PERSON_NOT_REGISTERED"
+            ]
+          },
+          "422": {
+            "description": "Unprocessable Content. Error codes: UNKNOWN_TIME_ZONE, VALIDATION_FAILED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "UNKNOWN_TIME_ZONE",
+              "VALIDATION_FAILED"
+            ]
+          }
+        }
+      }
+    },
+    "/practices/{practiceId}/agenda": {
+      "get": {
+        "operationId": "listPracticeAgenda",
+        "summary": "List practice agenda",
+        "tags": [
+          "scheduling"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "practiceId",
+            "in": "path",
+            "schema": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "name": "filter[id]",
+            "in": "query",
+            "description": "Filters on `id`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq, in. The value is text.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Filters on `id`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq, in. The value is text.",
+              "x-filter-operators": [
+                "eq",
+                "in"
+              ],
+              "x-filter-type": "string"
+            }
+          },
+          {
+            "name": "filter[calendarId]",
+            "in": "query",
+            "description": "Filters on `calendarId`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq, in. The value is text.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Filters on `calendarId`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq, in. The value is text.",
+              "x-filter-operators": [
+                "eq",
+                "in"
+              ],
+              "x-filter-type": "string"
+            }
+          },
+          {
+            "name": "filter[practiceId]",
+            "in": "query",
+            "description": "Filters on `practiceId`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq. The value is text.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Filters on `practiceId`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq. The value is text.",
+              "x-filter-operators": [
+                "eq"
+              ],
+              "x-filter-type": "string"
+            }
+          },
+          {
+            "name": "filter[practitionerId]",
+            "in": "query",
+            "description": "Filters on `practitionerId`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq. The value is text.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Filters on `practitionerId`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq. The value is text.",
+              "x-filter-operators": [
+                "eq"
+              ],
+              "x-filter-type": "string"
+            }
+          },
+          {
+            "name": "filter[patientId]",
+            "in": "query",
+            "description": "Filters on `patientId`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq. The value is text.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Filters on `patientId`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq. The value is text.",
+              "x-filter-operators": [
+                "eq"
+              ],
+              "x-filter-type": "string"
+            }
+          },
+          {
+            "name": "filter[appointmentTypeId]",
+            "in": "query",
+            "description": "Filters on `appointmentTypeId`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq. The value is text.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Filters on `appointmentTypeId`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq. The value is text.",
+              "x-filter-operators": [
+                "eq"
+              ],
+              "x-filter-type": "string"
+            }
+          },
+          {
+            "name": "filter[startsAt]",
+            "in": "query",
+            "description": "Filters on `startsAt`, written `<operator>:<value>`; the value alone means `eq`. Operators: gte, lt, between. The value is an ISO 8601 instant with its zone.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Filters on `startsAt`, written `<operator>:<value>`; the value alone means `eq`. Operators: gte, lt, between. The value is an ISO 8601 instant with its zone.",
+              "x-filter-operators": [
+                "gte",
+                "lt",
+                "between"
+              ],
+              "x-filter-type": "instant"
+            }
+          },
+          {
+            "name": "filter[heldUntil]",
+            "in": "query",
+            "description": "Filters on `heldUntil`, written `<operator>:<value>`; the value alone means `eq`. Operators: gt. The value is an ISO 8601 instant with its zone.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Filters on `heldUntil`, written `<operator>:<value>`; the value alone means `eq`. Operators: gt. The value is an ISO 8601 instant with its zone.",
+              "x-filter-operators": [
+                "gt"
+              ],
+              "x-filter-type": "instant"
+            }
+          },
+          {
+            "name": "filter[day]",
+            "in": "query",
+            "description": "Filters on `day`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq, gte, lte, between. The value is text.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Filters on `day`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq, gte, lte, between. The value is text.",
+              "x-filter-operators": [
+                "eq",
+                "gte",
+                "lte",
+                "between"
+              ],
+              "x-filter-type": "string"
+            }
+          },
+          {
+            "name": "filter[status]",
+            "in": "query",
+            "description": "Filters on `status`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq, ne, in. The value is text.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Filters on `status`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq, ne, in. The value is text.",
+              "x-filter-operators": [
+                "eq",
+                "ne",
+                "in"
+              ],
+              "x-filter-type": "string"
+            }
+          },
+          {
+            "name": "filter[confirmBefore]",
+            "in": "query",
+            "description": "Filters on `confirmBefore`, written `<operator>:<value>`; the value alone means `eq`. Operators: isNull. The value is an ISO 8601 instant with its zone.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Filters on `confirmBefore`, written `<operator>:<value>`; the value alone means `eq`. Operators: isNull. The value is an ISO 8601 instant with its zone.",
+              "x-filter-operators": [
+                "isNull"
+              ],
+              "x-filter-type": "instant"
+            }
+          },
+          {
+            "name": "filter[cancelledBy]",
+            "in": "query",
+            "description": "Filters on `cancelledBy`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq, isNull. The value is text.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Filters on `cancelledBy`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq, isNull. The value is text.",
+              "x-filter-operators": [
+                "eq",
+                "isNull"
+              ],
+              "x-filter-type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "The fields to sort by, a leading \"-\" for descending, repeated or separated by commas.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "startsAt",
+                  "-startsAt",
+                  "day",
+                  "-day",
+                  "changedAt",
+                  "-changedAt",
+                  "id",
+                  "-id"
+                ]
+              },
+              "description": "The fields to sort by, a leading \"-\" for descending, repeated or separated by commas."
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Size of the page.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "description": "Size of the page."
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Items to skip. Not with `cursor`.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Items to skip. Not with `cursor`."
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "description": "The `nextCursor` of the previous page. Not with `offset`.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The `nextCursor` of the previous page. Not with `offset`."
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "One page of the list.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "items"
+                  ],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "total": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "Present when it is cheap to count."
+                    },
+                    "nextCursor": {
+                      "type": "string",
+                      "description": "Present when more items follow."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Error codes: UNAUTHORIZED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "UNAUTHORIZED"
+            ]
+          },
+          "403": {
+            "description": "Forbidden. Error codes: FORBIDDEN.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "FORBIDDEN"
+            ]
+          },
+          "422": {
+            "description": "Unprocessable Content. Error codes: INVALID_CRITERIA, VALIDATION_FAILED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "INVALID_CRITERIA",
+              "VALIDATION_FAILED"
+            ]
+          }
+        }
+      }
+    },
+    "/practices/{practiceId}/desks/{practitionerId}/delegations": {
+      "post": {
+        "operationId": "grantDelegation",
+        "summary": "Grant delegation",
+        "tags": [
+          "identity"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "practiceId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "name": "practitionerId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "assistantId": {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "availabilityIncluded": {
+                    "type": "boolean"
+                  },
+                  "endsAt": {
+                    "oneOf": [
+                      {
+                        "format": "date",
+                        "type": "string"
+                      },
+                      {
+                        "format": "date-time",
+                        "type": "string"
+                      }
+                    ]
+                  }
+                },
+                "type": "object",
+                "required": [
+                  "assistantId",
+                  "availabilityIncluded"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Done; the body carries the identifier.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "id"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Error codes: UNAUTHORIZED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "UNAUTHORIZED"
+            ]
+          },
+          "403": {
+            "description": "Forbidden. Error codes: FORBIDDEN.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "FORBIDDEN"
+            ]
+          },
+          "404": {
+            "description": "Not Found. Error codes: PRACTICE_NOT_FOUND.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "PRACTICE_NOT_FOUND"
+            ]
+          },
+          "409": {
+            "description": "Conflict. Error codes: DELEGATION_ALREADY_ACTIVE.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "DELEGATION_ALREADY_ACTIVE"
+            ]
+          },
+          "422": {
+            "description": "Unprocessable Content. Error codes: DELEGATION_ENDS_IN_THE_PAST, NOT_AN_ASSISTANT, NOT_A_PRACTITIONER, VALIDATION_FAILED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "DELEGATION_ENDS_IN_THE_PAST",
+              "NOT_AN_ASSISTANT",
+              "NOT_A_PRACTITIONER",
+              "VALIDATION_FAILED"
+            ]
+          }
+        }
+      }
+    },
+    "/practices/{practiceId}/desks/{practitionerId}/delegations/{delegationId}": {
+      "delete": {
+        "operationId": "revokeDelegation",
+        "summary": "Revoke delegation",
+        "tags": [
+          "identity"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "practiceId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "name": "practitionerId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "name": "delegationId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Done; the body carries the identifier.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "id"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Error codes: UNAUTHORIZED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "UNAUTHORIZED"
+            ]
+          },
+          "403": {
+            "description": "Forbidden. Error codes: FORBIDDEN.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "FORBIDDEN"
+            ]
+          },
+          "404": {
+            "description": "Not Found. Error codes: DELEGATION_NOT_FOUND.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "DELEGATION_NOT_FOUND"
+            ]
+          },
+          "409": {
+            "description": "Conflict. Error codes: DELEGATION_NOT_ACTIVE.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "DELEGATION_NOT_ACTIVE"
+            ]
+          },
+          "422": {
+            "description": "Unprocessable Content. Error codes: VALIDATION_FAILED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "VALIDATION_FAILED"
+            ]
+          }
+        }
+      }
+    },
+    "/practices/{practiceId}/members": {
+      "post": {
+        "operationId": "addMember",
+        "summary": "Add member",
+        "tags": [
+          "identity"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "practiceId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "personId": {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "role": {
+                    "type": "string",
+                    "enum": [
+                      "manager",
+                      "practitioner",
+                      "assistant"
+                    ]
+                  }
+                },
+                "type": "object",
+                "required": [
+                  "personId",
+                  "role"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Done; the body carries the identifier.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "id"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Error codes: UNAUTHORIZED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "UNAUTHORIZED"
+            ]
+          },
+          "403": {
+            "description": "Forbidden. Error codes: FORBIDDEN.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "FORBIDDEN"
+            ]
+          },
+          "404": {
+            "description": "Not Found. Error codes: PERSON_NOT_REGISTERED, PRACTICE_NOT_FOUND.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "PERSON_NOT_REGISTERED",
+              "PRACTICE_NOT_FOUND"
+            ]
+          },
+          "409": {
+            "description": "Conflict. Error codes: ALREADY_MEMBER.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "ALREADY_MEMBER"
+            ]
+          },
+          "422": {
+            "description": "Unprocessable Content. Error codes: UNKNOWN_ROLE, VALIDATION_FAILED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "UNKNOWN_ROLE",
+              "VALIDATION_FAILED"
+            ]
+          }
+        }
+      }
+    },
+    "/practices/{practiceId}/members/{personId}": {
+      "delete": {
+        "operationId": "removeMember",
+        "summary": "Remove member",
+        "tags": [
+          "identity"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "practiceId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "name": "personId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Done; the body carries the identifier.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "id"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Error codes: UNAUTHORIZED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "UNAUTHORIZED"
+            ]
+          },
+          "403": {
+            "description": "Forbidden. Error codes: FORBIDDEN.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "FORBIDDEN"
+            ]
+          },
+          "404": {
+            "description": "Not Found. Error codes: PRACTICE_NOT_FOUND.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "PRACTICE_NOT_FOUND"
+            ]
+          },
+          "409": {
+            "description": "Conflict. Error codes: LAST_MANAGER.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "LAST_MANAGER"
+            ]
+          },
+          "422": {
+            "description": "Unprocessable Content. Error codes: NOT_A_MEMBER, VALIDATION_FAILED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "NOT_A_MEMBER",
+              "VALIDATION_FAILED"
+            ]
+          }
+        }
+      }
+    },
+    "/practices/{practiceId}/occupancy": {
+      "get": {
+        "operationId": "listOccupancy",
+        "summary": "List occupancy",
+        "tags": [
+          "analytics"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "practiceId",
+            "in": "path",
+            "schema": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "name": "filter[practiceId]",
+            "in": "query",
+            "description": "Filters on `practiceId`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq. The value is text.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Filters on `practiceId`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq. The value is text.",
+              "x-filter-operators": [
+                "eq"
+              ],
+              "x-filter-type": "string"
+            }
+          },
+          {
+            "name": "filter[calendarId]",
+            "in": "query",
+            "description": "Filters on `calendarId`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq, in. The value is text.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Filters on `calendarId`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq, in. The value is text.",
+              "x-filter-operators": [
+                "eq",
+                "in"
+              ],
+              "x-filter-type": "string"
+            }
+          },
+          {
+            "name": "filter[day]",
+            "in": "query",
+            "description": "Filters on `day`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq, gte, lte, between. The value is text.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Filters on `day`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq, gte, lte, between. The value is text.",
+              "x-filter-operators": [
+                "eq",
+                "gte",
+                "lte",
+                "between"
+              ],
+              "x-filter-type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "The fields to sort by, a leading \"-\" for descending, repeated or separated by commas.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "calendarId",
+                  "-calendarId",
+                  "day",
+                  "-day",
+                  "heldMinutes",
+                  "-heldMinutes",
+                  "id",
+                  "-id"
+                ]
+              },
+              "description": "The fields to sort by, a leading \"-\" for descending, repeated or separated by commas."
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Size of the page.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "description": "Size of the page."
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Items to skip. Not with `cursor`.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Items to skip. Not with `cursor`."
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "description": "The `nextCursor` of the previous page. Not with `offset`.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The `nextCursor` of the previous page. Not with `offset`."
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "One page of the list.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "items"
+                  ],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "calendarId": {
+                            "type": "string"
+                          },
+                          "day": {
+                            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                            "type": "string"
+                          },
+                          "heldMinutes": {
+                            "minimum": 0,
+                            "type": "integer"
+                          },
+                          "appointmentsHeld": {
+                            "minimum": 0,
+                            "type": "integer"
+                          },
+                          "completed": {
+                            "minimum": 0,
+                            "type": "integer"
+                          },
+                          "noShows": {
+                            "minimum": 0,
+                            "type": "integer"
+                          },
+                          "cancelledByPatient": {
+                            "minimum": 0,
+                            "type": "integer"
+                          },
+                          "cancelledByPractice": {
+                            "minimum": 0,
+                            "type": "integer"
+                          }
+                        },
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "calendarId",
+                          "day",
+                          "heldMinutes",
+                          "appointmentsHeld",
+                          "completed",
+                          "noShows",
+                          "cancelledByPatient",
+                          "cancelledByPractice"
+                        ]
+                      }
+                    },
+                    "total": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "Present when it is cheap to count."
+                    },
+                    "nextCursor": {
+                      "type": "string",
+                      "description": "Present when more items follow."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Error codes: UNAUTHORIZED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "UNAUTHORIZED"
+            ]
+          },
+          "403": {
+            "description": "Forbidden. Error codes: FORBIDDEN.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "FORBIDDEN"
+            ]
+          },
+          "422": {
+            "description": "Unprocessable Content. Error codes: VALIDATION_FAILED.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "VALIDATION_FAILED"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CalendarDayAppointmentDto": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "patientId": {
+            "type": "string"
+          },
+          "appointmentTypeId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "requested",
+              "booked"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "patientId",
+          "appointmentTypeId",
+          "status"
+        ]
+      },
+      "CalendarDayAppointmentTypeDto": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "duration": {
+            "type": "integer"
+          },
+          "grid": {
+            "type": "integer"
+          },
+          "buffer": {
+            "type": "integer"
+          },
+          "needsConfirmation": {
+            "type": "boolean"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "duration",
+          "grid",
+          "buffer",
+          "needsConfirmation"
+        ]
+      },
+      "CalendarDayBusyDto": {
+        "properties": {
+          "startsAt": {
+            "oneOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "format": "date-time",
+                "type": "string"
+              }
+            ]
+          },
+          "endsAt": {
+            "oneOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "format": "date-time",
+                "type": "string"
+              }
+            ]
+          },
+          "heldUntil": {
+            "oneOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "format": "date-time",
+                "type": "string"
+              }
+            ]
+          },
+          "appointment": {
+            "$ref": "#/components/schemas/CalendarDayAppointmentDto"
+          }
+        },
+        "type": "object",
+        "required": [
+          "startsAt",
+          "endsAt",
+          "heldUntil"
+        ]
+      },
+      "CalendarDaySpanDto": {
+        "properties": {
+          "startsAt": {
+            "oneOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "format": "date-time",
+                "type": "string"
+              }
+            ]
+          },
+          "endsAt": {
+            "oneOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "format": "date-time",
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "startsAt",
+          "endsAt"
+        ]
+      },
+      "DayRangeDto": {
+        "properties": {
+          "start": {
+            "pattern": "^\\d{2}:\\d{2}$",
+            "type": "string"
+          },
+          "end": {
+            "pattern": "^\\d{2}:\\d{2}$",
+            "type": "string"
+          }
+        },
+        "type": "object",
+        "required": [
+          "start",
+          "end"
+        ]
+      },
+      "OpeningRangeDto": {
+        "properties": {
+          "weekday": {
+            "type": "string",
+            "enum": [
+              "monday",
+              "tuesday",
+              "wednesday",
+              "thursday",
+              "friday",
+              "saturday",
+              "sunday"
+            ]
+          },
+          "start": {
+            "pattern": "^\\d{2}:\\d{2}$",
+            "type": "string"
+          },
+          "end": {
+            "pattern": "^\\d{2}:\\d{2}$",
+            "type": "string"
+          }
+        },
+        "type": "object",
+        "required": [
+          "weekday",
+          "start",
+          "end"
+        ]
+      },
+      "Problem": {
+        "type": "object",
+        "description": "Problem details (RFC 9457) with a stable machine-readable code.",
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code",
+          "requestId"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "URI identifying the kind of problem."
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer"
+          },
+          "code": {
+            "type": "string",
+            "description": "Stable error code; branch on this, not on the title."
+          },
+          "detail": {
+            "type": "string"
+          },
+          "issues": {
+            "type": "array",
+            "description": "Present when the request failed validation.",
+            "items": {
+              "type": "object",
+              "required": [
+                "path",
+                "code",
+                "message"
+              ],
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "description": "Dotted path, for example body.items.0.sku."
+                },
+                "code": {
+                  "type": "string"
+                },
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "requestId": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}
