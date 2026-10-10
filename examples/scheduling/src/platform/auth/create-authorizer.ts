@@ -7,7 +7,11 @@ import { RolesAndRelationshipsAuthorizer } from './roles-and-relationships.autho
 
 /** A role of the token first (`role-grants.ts`); else relationships: is there a path of stored tuples from this element to the actor? */
 export function createAuthorizer(store: RelationTupleStore): Authorizer {
-  const relationships = new RelationBasedAuthorizer({ schema: relationshipSchema, store, mapping: permissionMapping() });
+  const relationships = new RelationBasedAuthorizer({
+    schema: relationshipSchema,
+    store,
+    mapping: permissionMapping(),
+  });
 
   return new RolesAndRelationshipsAuthorizer(relationships, roleGrants);
 }

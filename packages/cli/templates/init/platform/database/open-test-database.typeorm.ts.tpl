@@ -30,7 +30,9 @@ async function openInProcess(): Promise<TestDatabase> {
   await server.start();
 
   // PGlite is one session behind every socket: a second connection would step into the transaction of the first.
-  const dataSource = createDataSource('postgresql://postgres:postgres@' + server.getServerConn() + '/postgres', { poolSize: 1 });
+  const dataSource = createDataSource('postgresql://postgres:postgres@' + server.getServerConn() + '/postgres', {
+    poolSize: 1,
+  });
 
   await dataSource.initialize();
   await createTables(dataSource);
@@ -59,14 +61,18 @@ async function openServer(url: string): Promise<TestDatabase> {
 // TypeORM creates tables, not schemas.
 async function createTables(dataSource: DataSource): Promise<void> {
   for (const schema of new Set(dataSource.entityMetadatas.map((table) => table.schema))) {
-    if (schema !== undefined) await dataSource.query('create schema if not exists "' + schema + '"');
+    if (schema !== undefined) {
+      await dataSource.query('create schema if not exists "' + schema + '"');
+    }
   }
 
   await dataSource.synchronize();
 }
 
 async function truncateAll(dataSource: DataSource): Promise<void> {
-  const names = dataSource.entityMetadatas.map((table) => (table.schema === undefined ? '' : '"' + table.schema + '".') + '"' + table.tableName + '"');
+  const names = dataSource.entityMetadatas.map(
+    (table) => (table.schema === undefined ? '' : '"' + table.schema + '".') + '"' + table.tableName + '"',
+  );
 
   await dataSource.query('truncate table ' + names.join(', ') + ' restart identity');
 }

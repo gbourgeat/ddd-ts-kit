@@ -34,7 +34,12 @@ export class JobRecorder {
 
   /** The occurrence could not even be started. */
   refused(job: RegisteredJob, occurrence: Occurrence, error: unknown): JobRun {
-    const run: JobRun = { job: job.name, outcome: 'failed', scheduledAt: occurrence.scheduledAt, errorCode: errorCodeOf(error) };
+    const run: JobRun = {
+      job: job.name,
+      outcome: 'failed',
+      scheduledAt: occurrence.scheduledAt,
+      errorCode: errorCodeOf(error),
+    };
 
     return this.record(job, run, { failure: { error } });
   }
@@ -45,7 +50,12 @@ export class JobRecorder {
 
   /** The scheduler itself stumbled while following a job: it goes on with the next occurrence. */
   fault(job: RegisteredJob, error: unknown): void {
-    const fields = { job: job.name, context: contextOf(job.name), errorType: typeOf(error), errorCode: errorCodeOf(error) };
+    const fields = {
+      job: job.name,
+      context: contextOf(job.name),
+      errorType: typeOf(error),
+      errorCode: errorCodeOf(error),
+    };
 
     quietly(() => {
       this.options.logger.error('Scheduled job could not be followed', fields);
@@ -84,13 +94,17 @@ export class JobRecorder {
 
     this.options.metrics.counter(RUNS_COUNTER).increment(labels);
 
-    if (run.durationMs !== undefined) this.options.metrics.histogram(DURATION_HISTOGRAM).record(run.durationMs, labels);
+    if (run.durationMs !== undefined) {
+      this.options.metrics.histogram(DURATION_HISTOGRAM).record(run.durationMs, labels);
+    }
   }
 
   private log(run: JobRun, { correlationId, failure }: Detail): void {
     const level = LEVELS[run.outcome];
 
-    if (!this.options.logger.isLevelEnabled(level)) return;
+    if (!this.options.logger.isLevelEnabled(level)) {
+      return;
+    }
 
     const fields: LogFields = {
       job: run.job,

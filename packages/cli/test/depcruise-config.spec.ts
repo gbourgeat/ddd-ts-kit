@@ -32,7 +32,9 @@ describe('depcruise-config', () => {
     const config = readJson(root, 'ddd-ts-kit.config.json');
     const upstreams = jsonAt(config, 'contexts', 'order-fulfilment', 'upstreams');
 
-    if (Array.isArray(upstreams)) upstreams.push({ context: 'billing', relationship: 'conformist' });
+    if (Array.isArray(upstreams)) {
+      upstreams.push({ context: 'billing', relationship: 'conformist' });
+    }
 
     write(root, 'ddd-ts-kit.config.json', JSON.stringify(config, null, 2));
 
@@ -52,9 +54,15 @@ describe('depcruise-config', () => {
 
     cli(discovered, 'init', '--assembly', 'discovery', '--broker', 'nats');
 
-    expect(read(root, FILE)).toContain('declare the need as a port, an abstract class in domain/repositories or application/ports.');
+    expect(read(root, FILE)).toContain(
+      'declare the need as a port, an abstract class in domain/repositories or application/ports.',
+    );
+
     expect(read(root, FILE)).not.toContain('integration-handler|event-handler|publisher|policy|job');
-    expect(read(discovered, FILE)).toContain('(command|query|handler|integration-handler|event-handler|publisher|policy|job|repository|gateway|adapter)');
+
+    expect(read(discovered, FILE)).toContain(
+      '(command|query|handler|integration-handler|event-handler|publisher|policy|job|repository|gateway|adapter)',
+    );
   });
 });
 
@@ -66,7 +74,11 @@ describe('depcruise-config against the script of the pipeline', () => {
     sourceRoot: 'app',
     contextsDir: 'app/contexts',
     stack: { validation: 'class-validator' },
-    contexts: { billing: { classification: 'core', upstreams: [] }, 'order-fulfilment': { classification: 'generic', upstreams: [{ context: 'billing' }, 'catalog'] }, catalog: { classification: 'generic' } },
+    contexts: {
+      billing: { classification: 'core', upstreams: [] },
+      'order-fulfilment': { classification: 'generic', upstreams: [{ context: 'billing' }, 'catalog'] },
+      catalog: { classification: 'generic' },
+    },
     domainAllowedPackages: ['@ddd-ts-kit/kernel', 'decimal.js'],
     // Written out, as `init` does: the shipped script does not know that the application layer may import the auth package by default.
     applicationAllowedPackages: ['@ddd-ts-kit/kernel', '@ddd-ts-kit/auth'],
@@ -83,7 +95,11 @@ describe('depcruise-config against the script of the pipeline', () => {
   });
 
   it('builds the same rules and options, plus the fakes and the entry points of single contexts among the files that may have no importer', async () => {
-    const shipped: unknown = jsonAt(await import(pathToFileURL(path.join(sandbox, 'depcruise-config.mjs')).href), 'default');
+    const shipped: unknown = jsonAt(
+      await import(pathToFileURL(path.join(sandbox, 'depcruise-config.mjs')).href),
+      'default',
+    );
+
     const ported: unknown = JSON.parse(JSON.stringify(cruiseConfiguration(parseConfig(projectConfig))));
     const orphansOf = (configuration: unknown): string[] => stringsAt(orphanRule(configuration), 'from', 'pathNot');
     // An entry point of a context run alone has no importer either; the port follows `platformDir` for tracing.ts, the same place by default.
@@ -100,7 +116,10 @@ function orphanRule(configuration: unknown): unknown {
 }
 
 function withoutOrphans(configuration: unknown): unknown {
-  return { rules: rulesOf(configuration).filter((rule) => jsonAt(rule, 'name') !== 'no-orphans'), options: jsonAt(configuration, 'options') };
+  return {
+    rules: rulesOf(configuration).filter((rule) => jsonAt(rule, 'name') !== 'no-orphans'),
+    options: jsonAt(configuration, 'options'),
+  };
 }
 
 function rulesOf(configuration: unknown): unknown[] {

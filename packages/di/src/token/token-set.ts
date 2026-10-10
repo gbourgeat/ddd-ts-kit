@@ -5,7 +5,9 @@ export class TokenSet {
   private readonly members = new TokenMap<true>();
 
   constructor(tokens: Iterable<Token<unknown>> = []) {
-    for (const target of tokens) this.add(target);
+    for (const target of tokens) {
+      this.add(target);
+    }
   }
 
   has(target: Token<unknown>): boolean {

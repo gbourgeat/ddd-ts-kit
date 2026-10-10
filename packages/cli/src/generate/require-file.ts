@@ -12,7 +12,12 @@ export interface Prerequisite {
 export function requireFile(scope: Scope, prerequisite: Prerequisite): void {
   const target = `${scope.dir}/${prerequisite.file}`;
 
-  if (scope.ws.exists(target)) return;
+  if (scope.ws.exists(target)) {
+    return;
+  }
 
-  throw new CliError(`${prerequisite.what} does not exist in "${scope.context.kebab}" (${target}).`, `Create it first with \`${prerequisite.createdBy}\`.`);
+  throw new CliError(
+    `${prerequisite.what} does not exist in "${scope.context.kebab}" (${target}).`,
+    `Create it first with \`${prerequisite.createdBy}\`.`,
+  );
 }

@@ -12,7 +12,9 @@ import { reportedFailures } from './reported-failures.js';
 export function transactionalCommandBus(resolve: Resolve, observed?: BusMiddleware): InMemoryCommandBus {
   const bus = new InMemoryCommandBus().use(reportedFailures(resolve)).use(useCaseGuardMiddleware(resolve));
 
-  if (observed !== undefined) bus.use(observed);
+  if (observed !== undefined) {
+    bus.use(observed);
+  }
 
   return bus.use(unitOfWorkMiddleware({ run: (work) => resolve(UnitOfWork).run(work) }));
 }

@@ -26,7 +26,13 @@ import { FakeWaitlistRepository } from '../fakes/waitlist.repository.fake.js';
 import { FakeSchedulingRelationships } from '../fakes/scheduling-relationships.fake.js';
 
 // The use cases of the context ask `Access`, and a freed slot is offered to the waitlist by the context itself.
-const authorization = authorizationModule({ authorizer: new RoleBasedAuthorizer({ roles: { system: [schedulingPermissions['waitlist.offer']] }, systemRole: 'system' }) });
+const authorization = authorizationModule({
+  authorizer: new RoleBasedAuthorizer({
+    roles: { system: [schedulingPermissions['waitlist.offer']] },
+    systemRole: 'system',
+  }),
+});
+
 // A freed slot is offered to the waitlist of its calendar: every calendar exists here, and nobody waits.
 const calendars = { findById: async (id: string) => aCalendar().identifiedBy(id).build(), save: async () => undefined };
 const bornAt = new Date('2026-03-01T08:00:00.000Z');
@@ -72,7 +78,11 @@ describe('The agenda, kept from the facts of the appointments', () => {
     appointment.confirm(at('07:00'));
     await appointments.save(appointment);
 
-    expect(await agenda.get('appointment-1')).toMatchObject({ status: 'booked', confirmBefore: null, changedAt: at('07:00') });
+    expect(await agenda.get('appointment-1')).toMatchObject({
+      status: 'booked',
+      confirmBefore: null,
+      changedAt: at('07:00'),
+    });
   });
 
   it('moves a rescheduled appointment and keeps where it stands', async () => {
@@ -81,7 +91,16 @@ describe('The agenda, kept from the facts of the appointments', () => {
 
     await appointments.save(appointment);
 
-    appointment.reschedule(Slot.between(new Date('2026-03-03T23:30:00.000Z'), new Date('2026-03-04T00:00:00.000Z'), new Date('2026-03-04T00:10:00.000Z')), '2026-03-04', at('07:00'));
+    appointment.reschedule(
+      Slot.between(
+        new Date('2026-03-03T23:30:00.000Z'),
+        new Date('2026-03-04T00:00:00.000Z'),
+        new Date('2026-03-04T00:10:00.000Z'),
+      ),
+      '2026-03-04',
+      at('07:00'),
+    );
+
     await appointments.save(appointment);
 
     expect(await agenda.get('appointment-1')).toMatchObject({
@@ -104,7 +123,11 @@ describe('The agenda, kept from the facts of the appointments', () => {
     appointment.cancel(unwrap(Cancellation.create('practice', 'The practitioner is away.')), at('07:00'));
     await appointments.save(appointment);
 
-    expect(await agenda.get('appointment-1')).toMatchObject({ status: 'cancelled', cancelledBy: 'practice', changedAt: at('07:00') });
+    expect(await agenda.get('appointment-1')).toMatchObject({
+      status: 'cancelled',
+      cancelledBy: 'practice',
+      changedAt: at('07:00'),
+    });
   });
 
   it.each([
@@ -118,15 +141,26 @@ describe('The agenda, kept from the facts of the appointments', () => {
 
     expect(await agenda.get('appointment-1')).toMatchObject(expected);
   });
+});
 
+describe('The agenda, given facts twice or out of order', () => {
   it('ends on the same entry when a fact is applied twice', async () => {
     const agenda = new FakeAgenda();
     const projection = new AgendaProjection(agenda);
     const { booking } = planned().build();
     const booked = new AppointmentBooked('appointment-1', bornAt, { booking });
-    const cancelled = new AppointmentCancelled('appointment-1', at('07:00'), { booking, cancellation: unwrap(Cancellation.create('patient')) });
 
-    const writes = [await projection.booked(booked), await projection.cancelled(cancelled), await projection.booked(booked), await projection.cancelled(cancelled)];
+    const cancelled = new AppointmentCancelled('appointment-1', at('07:00'), {
+      booking,
+      cancellation: unwrap(Cancellation.create('patient')),
+    });
+
+    const writes = [
+      await projection.booked(booked),
+      await projection.cancelled(cancelled),
+      await projection.booked(booked),
+      await projection.cancelled(cancelled),
+    ];
 
     expect(writes).toEqual(['applied', 'applied', 'stale', 'stale']);
     expect(await agenda.get('appointment-1')).toMatchObject({ status: 'cancelled', cancelledBy: 'patient' });
@@ -138,7 +172,10 @@ describe('The agenda, kept from the facts of the appointments', () => {
     const { booking } = planned().build();
     const expired = new AppointmentExpired('appointment-1', bornAt, booking);
 
-    const writes = [await projection.expired(expired), await projection.booked(new AppointmentBooked('appointment-1', bornAt, { booking }))];
+    const writes = [
+      await projection.expired(expired),
+      await projection.booked(new AppointmentBooked('appointment-1', bornAt, { booking })),
+    ];
 
     expect(writes).toEqual(['applied', 'stale']);
     expect(await agenda.get('appointment-1')).toMatchObject({ status: 'expired' });
@@ -149,7 +186,9 @@ describe('The agenda, kept from the facts of the appointments', () => {
     const projection = new AgendaProjection(agenda);
     const { booking } = planned().build();
 
-    const write = await projection.rescheduled(new AppointmentRescheduled('appointment-1', at('07:00'), { booking, previous: booking }));
+    const write = await projection.rescheduled(
+      new AppointmentRescheduled('appointment-1', at('07:00'), { booking, previous: booking }),
+    );
 
     expect(write).toBe('ignored');
     expect(await agenda.get('appointment-1')).toBeUndefined();
@@ -160,8 +199,18 @@ function arrange() {
   const agenda = new FakeAgenda();
 
   const application = createTestApplication({
-    modules: [platformTestModule, contextModule('scheduling', { ...schedulingDeclarations, AgendaProjection }), authorization],
-    fakes: [fake(Agenda, agenda), fake(AppointmentRepository, new FakeAppointmentRepository()), fake(SchedulingRelationships, new FakeSchedulingRelationships()), fake(CalendarRepository, calendars), fake(WaitlistRepository, new FakeWaitlistRepository())],
+    modules: [
+      platformTestModule,
+      contextModule('scheduling', { ...schedulingDeclarations, AgendaProjection }),
+      authorization,
+    ],
+    fakes: [
+      fake(Agenda, agenda),
+      fake(AppointmentRepository, new FakeAppointmentRepository()),
+      fake(SchedulingRelationships, new FakeSchedulingRelationships()),
+      fake(CalendarRepository, calendars),
+      fake(WaitlistRepository, new FakeWaitlistRepository()),
+    ],
   });
 
   return { appointments: application.get(AppointmentRepository), agenda };
@@ -172,5 +221,14 @@ function at(time: string): Date {
 }
 
 function planned() {
-  return anAppointment().identifiedBy('appointment-1').bornAt(bornAt).onCalendar('calendar-4').inPractice('practice-2').withPractitioner('practitioner-3').forPatient('patient-5').startingAt(at('09:00')).lasting(30).withBuffer(10);
+  return anAppointment()
+    .identifiedBy('appointment-1')
+    .bornAt(bornAt)
+    .onCalendar('calendar-4')
+    .inPractice('practice-2')
+    .withPractitioner('practitioner-3')
+    .forPatient('patient-5')
+    .startingAt(at('09:00'))
+    .lasting(30)
+    .withBuffer(10);
 }

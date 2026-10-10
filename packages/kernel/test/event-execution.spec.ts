@@ -130,7 +130,12 @@ describe('what observes the events from outside', () => {
   it('hands the delivery through the event scope to the handler', async () => {
     const scope = new AsyncLocalStorageExecutionScope();
     const deliveries: unknown[] = [];
-    const handler = inEventScope(scope, { consumer: 'billing' }, async (_event, delivery) => void deliveries.push(delivery));
+
+    const handler = inEventScope(
+      scope,
+      { consumer: 'billing' },
+      async (_event, delivery) => void deliveries.push(delivery),
+    );
 
     await handler(placed(), { attempt: 2, maxAttempts: 3 });
 

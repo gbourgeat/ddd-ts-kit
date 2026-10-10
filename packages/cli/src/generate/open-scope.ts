@@ -9,7 +9,9 @@ export function openScope(request: KindRequest): Scope {
   const { ws, config, flags } = request;
   const context = toName(request.args[0] ?? '');
 
-  if (config.contexts[context.kebab] === undefined) throw unknownContext(config, context);
+  if (config.contexts[context.kebab] === undefined) {
+    throw unknownContext(config, context);
+  }
 
   return { ws, config, context, dir: `${config.contextsDir}/${context.kebab}`, flags };
 }
@@ -20,6 +22,8 @@ function unknownContext(config: Config, context: Name): CliError {
 
   return new CliError(
     `Unknown context "${context.kebab}".`,
-    known.length > 0 ? `Use one of: ${known.join(', ')}; or create it with ${create}.` : `Create it first with ${create}.`,
+    known.length > 0
+      ? `Use one of: ${known.join(', ')}; or create it with ${create}.`
+      : `Create it first with ${create}.`,
   );
 }

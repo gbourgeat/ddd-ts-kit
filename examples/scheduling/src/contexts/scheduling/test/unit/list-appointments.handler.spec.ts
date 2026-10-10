@@ -12,10 +12,14 @@ import { anAgendaEntry } from '../builders/agenda-entry.builder.js';
 import { FakeAgenda } from '../fakes/agenda.fake.js';
 
 // As the relationships would answer: anybody signed in may list, and reads the appointments related to them.
-const READABLE: Readonly<Record<string, readonly string[]>> = { 'patient-1': ['appointment-a', 'appointment-c'], 'assistant-1': ['appointment-a', 'appointment-b', 'appointment-c'] };
+const READABLE: Readonly<Record<string, readonly string[]>> = {
+  'patient-1': ['appointment-a', 'appointment-c'],
+  'assistant-1': ['appointment-a', 'appointment-b', 'appointment-c'],
+};
 
 const byRelationships: Authorizer = {
-  check: async ({ actor }) => (actor.roles.includes('signed-in') ? { allowed: true } : { allowed: false, reason: 'NO_MATCHING_ROLE' }),
+  check: async ({ actor }) =>
+    actor.roles.includes('signed-in') ? { allowed: true } : { allowed: false, reason: 'NO_MATCHING_ROLE' },
   listAccessible: async ({ actor }) => ({ kind: 'ids', ids: READABLE[actor.id] ?? [] }),
 };
 
@@ -23,10 +27,18 @@ const patient = anActor().named('patient-1').withRole('signed-in').build();
 const assistant = anActor().named('assistant-1').withRole('signed-in').build();
 
 const ENTRIES = [
-  anAgendaEntry().withMany({ id: 'appointment-a', startsAt: at('10:00'), status: 'booked' }).build(),
-  anAgendaEntry().withMany({ id: 'appointment-b', startsAt: at('09:00'), status: 'booked', patientId: 'patient-2' }).build(),
-  anAgendaEntry().withMany({ id: 'appointment-c', startsAt: at('08:00'), status: 'cancelled', cancelledBy: 'patient' }).build(),
-  anAgendaEntry().withMany({ id: 'appointment-d', startsAt: at('07:00'), patientId: 'patient-3' }).build(),
+  anAgendaEntry()
+    .withMany({ id: 'appointment-a', startsAt: at('10:00'), status: 'booked' })
+    .build(),
+  anAgendaEntry()
+    .withMany({ id: 'appointment-b', startsAt: at('09:00'), status: 'booked', patientId: 'patient-2' })
+    .build(),
+  anAgendaEntry()
+    .withMany({ id: 'appointment-c', startsAt: at('08:00'), status: 'cancelled', cancelledBy: 'patient' })
+    .build(),
+  anAgendaEntry()
+    .withMany({ id: 'appointment-d', startsAt: at('07:00'), patientId: 'patient-3' })
+    .build(),
 ];
 
 const everything = Criteria.of<AgendaEntry>();
@@ -35,7 +47,9 @@ describe('List appointments', () => {
   it('answers one page of what the actor may read, by start, with the total', async () => {
     const application = await arrange(...ENTRIES);
 
-    const page = await application.queryBus.execute(new ListAppointmentsQuery(assistant, everything.page(offsetPage({ limit: 2 }))));
+    const page = await application.queryBus.execute(
+      new ListAppointmentsQuery(assistant, everything.page(offsetPage({ limit: 2 }))),
+    );
 
     expect(page.items.map((entry) => entry.id)).toEqual(['appointment-c', 'appointment-b']);
     expect(page.total).toBe(3);
@@ -52,7 +66,9 @@ describe('List appointments', () => {
   it('lists nothing to an actor nothing is related to', async () => {
     const application = await arrange(...ENTRIES);
 
-    const page = await application.queryBus.execute(new ListAppointmentsQuery(anActor().named('stranger').withRole('signed-in').build(), everything));
+    const page = await application.queryBus.execute(
+      new ListAppointmentsQuery(anActor().named('stranger').withRole('signed-in').build(), everything),
+    );
 
     expect(page.items).toEqual([]);
   });
@@ -68,7 +84,10 @@ describe('List appointments', () => {
 
   it('never widens what the actor may read, whatever alternative the criteria names', async () => {
     const application = await arrange(...ENTRIES);
-    const widened = everything.or((any) => any.where('patientId', 'eq', 'patient-1').where('patientId', 'eq', 'patient-3'));
+
+    const widened = everything.or((any) =>
+      any.where('patientId', 'eq', 'patient-1').where('patientId', 'eq', 'patient-3'),
+    );
 
     const page = await application.queryBus.execute(new ListAppointmentsQuery(patient, widened));
 
@@ -79,23 +98,39 @@ describe('List appointments', () => {
     const application = await arrange(...ENTRIES);
     const unsortable = everything.orderBy('endsAt');
 
-    await expect(application.queryBus.execute(new ListAppointmentsQuery(assistant, unsortable))).rejects.toMatchObject({ code: 'INVALID_CRITERIA' });
+    await expect(application.queryBus.execute(new ListAppointmentsQuery(assistant, unsortable))).rejects.toMatchObject({
+      code: 'INVALID_CRITERIA',
+    });
   });
 
   it('is refused to an actor who does not hold the permission appointment.list', async () => {
     const application = await arrange(...ENTRIES);
 
-    await expect(application.queryBus.execute(new ListAppointmentsQuery(anActor().build(), everything))).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(
+      application.queryBus.execute(new ListAppointmentsQuery(anActor().build(), everything)),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
   });
 });
 
 async function arrange(...entries: readonly AgendaEntry[]) {
   const agenda = new FakeAgenda();
 
-  await entries.reduce((written, entry, index) => written.then(() => agenda.upsertIfNewer(entry.id, { eventId: `event-${index}`, occurredAt: entry.changedAt }, () => entry)).then(() => undefined), Promise.resolve());
+  await entries.reduce(
+    (written, entry, index) =>
+      written
+        .then(() =>
+          agenda.upsertIfNewer(entry.id, { eventId: `event-${index}`, occurredAt: entry.changedAt }, () => entry),
+        )
+        .then(() => undefined),
+    Promise.resolve(),
+  );
 
   return createTestApplication({
-    modules: [platformTestModule, contextModule('scheduling', schedulingDeclarations), authorizationModule({ authorizer: byRelationships })],
+    modules: [
+      platformTestModule,
+      contextModule('scheduling', schedulingDeclarations),
+      authorizationModule({ authorizer: byRelationships }),
+    ],
     fakes: [fake(Agenda, agenda)],
   });
 }

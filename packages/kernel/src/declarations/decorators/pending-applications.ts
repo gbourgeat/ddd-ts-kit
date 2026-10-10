@@ -16,7 +16,9 @@ const PENDING = Symbol.for('@ddd-ts-kit/kernel/declarations/pending-applications
 export function pendingApplications(): PendingApplication[] {
   const existing: unknown = Reflect.get(globalThis, PENDING);
 
-  if (isPending(existing)) return existing;
+  if (isPending(existing)) {
+    return existing;
+  }
 
   const created: PendingApplication[] = [];
 

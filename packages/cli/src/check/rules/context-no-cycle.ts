@@ -3,7 +3,8 @@ import type { Rule } from '../model/rule.js';
 import { lineOf } from '../support/line-of.js';
 import { reporter } from '../support/reporter.js';
 
-const FIX = 'Decide which context is upstream and remove the opposite upstream entry; the downstream reacts to integration events instead of being imported.';
+const FIX =
+  'Decide which context is upstream and remove the opposite upstream entry; the downstream reacts to integration events instead of being imported.';
 
 export const contextNoCycle: Rule = {
   id: 'context/no-cycle',
@@ -15,7 +16,11 @@ export const contextNoCycle: Rule = {
     return cyclesOf(project.config.contexts).map((cycle) => {
       const [first = ''] = cycle;
 
-      return report({ file: CONFIG_FILE, line: lineOf(project.configText, `"${first}"`) }, `Contexts depend on each other in a cycle: ${[...cycle, first].join(' -> ')}.`, FIX);
+      return report(
+        { file: CONFIG_FILE, line: lineOf(project.configText, `"${first}"`) },
+        `Contexts depend on each other in a cycle: ${[...cycle, first].join(' -> ')}.`,
+        FIX,
+      );
     });
   },
 };
@@ -32,19 +37,27 @@ function cyclesOf(contexts: Config['contexts']): string[][] {
       const cycle = trail.slice(at);
       const key = [...cycle].sort().join('|');
 
-      if (!cycles.has(key)) cycles.set(key, cycle);
+      if (!cycles.has(key)) {
+        cycles.set(key, cycle);
+      }
 
       return;
     }
 
-    if (done.has(name)) return;
+    if (done.has(name)) {
+      return;
+    }
 
-    for (const upstream of contexts[name]?.upstreams ?? []) visit(upstream.context, [...trail, name]);
+    for (const upstream of contexts[name]?.upstreams ?? []) {
+      visit(upstream.context, [...trail, name]);
+    }
 
     done.add(name);
   };
 
-  for (const name of Object.keys(contexts)) visit(name, []);
+  for (const name of Object.keys(contexts)) {
+    visit(name, []);
+  }
 
   return [...cycles.values()];
 }

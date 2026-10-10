@@ -29,11 +29,15 @@ export class GetCalendarDayHandler implements QueryHandler<GetCalendarDayQuery> 
    * times leave this handler.
    */
   async execute({ actor, calendarId, day }: GetCalendarDayQuery): Promise<GetCalendarDayResult> {
-    if (!TimeZone.isDay(day)) throw new InvalidDayError(day);
+    if (!TimeZone.isDay(day)) {
+      throw new InvalidDayError(day);
+    }
 
     const calendar = await this.calendarRepository.findById(calendarId);
 
-    if (calendar === undefined) throw new UnknownCalendarError(calendarId);
+    if (calendar === undefined) {
+      throw new UnknownCalendarError(calendarId);
+    }
 
     const scope = await this.access.scope(actor, schedulingPermissions['appointment.read'], 'appointment');
     const readable = new Map((await this.heldOn({ calendarId, day }, scope)).map((entry) => [entry.id, entry]));
@@ -42,8 +46,16 @@ export class GetCalendarDayHandler implements QueryHandler<GetCalendarDayQuery> 
     return { ...availabilityOf(calendar, day), busy: held.map((entry) => busyOf(entry, readable.get(entry.id))) };
   }
 
-  private async heldOn(place: { readonly calendarId: string; readonly day: string }, scope: ReadScope, offset = 0): Promise<readonly AgendaEntry[]> {
-    const active = Criteria.of<AgendaEntry>().where('calendarId', 'eq', place.calendarId).where('day', 'eq', place.day).where('status', 'in', ['requested', 'booked']);
+  private async heldOn(
+    place: { readonly calendarId: string; readonly day: string },
+    scope: ReadScope,
+    offset = 0,
+  ): Promise<readonly AgendaEntry[]> {
+    const active = Criteria.of<AgendaEntry>()
+      .where('calendarId', 'eq', place.calendarId)
+      .where('day', 'eq', place.day)
+      .where('status', 'in', ['requested', 'booked']);
+
     const page = await this.agenda.list(scoped(active.page(offsetPage({ offset, limit: PAGE })), scope, { ids: 'id' }));
 
     return page.items.length < PAGE ? page.items : [...page.items, ...(await this.heldOn(place, scope, offset + PAGE))];
@@ -59,8 +71,13 @@ function availabilityOf(calendar: Calendar, day: string): Omit<GetCalendarDayRes
     calendarId: calendar.id,
     day,
     timeZone: timeZone.name,
-    open: calendar.rangesOn(day).map((range) => ({ startsAt: timeZone.instantAt(day, range.startMinute), endsAt: timeZone.instantAt(day, range.endMinute) })),
-    timeOff: calendar.timeOffs.filter((timeOff) => timeOff.covers(startOfDay, endOfDay)).map(({ startsAt, endsAt }) => ({ startsAt, endsAt })),
+    open: calendar.rangesOn(day).map((range) => ({
+      startsAt: timeZone.instantAt(day, range.startMinute),
+      endsAt: timeZone.instantAt(day, range.endMinute),
+    })),
+    timeOff: calendar.timeOffs
+      .filter((timeOff) => timeOff.covers(startOfDay, endOfDay))
+      .map(({ startsAt, endsAt }) => ({ startsAt, endsAt })),
     appointmentTypes: calendar.appointmentTypes.map((appointmentType) => appointmentType.toJSON()),
   };
 }
@@ -68,7 +85,17 @@ function availabilityOf(calendar: Calendar, day: string): Omit<GetCalendarDayRes
 function busyOf(entry: AgendaEntry, readable: AgendaEntry | undefined): GetCalendarDayResult['busy'][number] {
   const span = { startsAt: entry.startsAt, endsAt: entry.endsAt, heldUntil: entry.heldUntil };
 
-  if (readable === undefined || (readable.status !== 'requested' && readable.status !== 'booked')) return span;
+  if (readable === undefined || (readable.status !== 'requested' && readable.status !== 'booked')) {
+    return span;
+  }
 
-  return { ...span, appointment: { id: readable.id, patientId: readable.patientId, appointmentTypeId: readable.appointmentTypeId, status: readable.status } };
+  return {
+    ...span,
+    appointment: {
+      id: readable.id,
+      patientId: readable.patientId,
+      appointmentTypeId: readable.appointmentTypeId,
+      status: readable.status,
+    },
+  };
 }

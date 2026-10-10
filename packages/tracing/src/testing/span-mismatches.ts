@@ -2,16 +2,24 @@ import type { ExpectedSpan } from './expected-span.js';
 import type { SpanNode } from './span-node.js';
 
 /** What differs between the spans found under one parent and the ones expected there, as sentences. */
-export function spanMismatches(actual: readonly SpanNode[], expected: readonly ExpectedSpan[], under = 'the trace'): string[] {
+export function spanMismatches(
+  actual: readonly SpanNode[],
+  expected: readonly ExpectedSpan[],
+  under = 'the trace',
+): string[] {
   const found = actual.map((span) => span.name).join(', ') || 'none';
   const wanted = expected.map((span) => span.name).join(', ') || 'none';
 
-  if (found !== wanted) return [`under ${under}: expected the spans [${wanted}], found [${found}]`];
+  if (found !== wanted) {
+    return [`under ${under}: expected the spans [${wanted}], found [${found}]`];
+  }
 
   return expected.flatMap((span, index) => {
     const node = actual[index];
 
-    return node === undefined ? [] : [...ownMismatches(node, span), ...spanMismatches(node.children, span.children ?? [], `"${span.name}"`)];
+    return node === undefined
+      ? []
+      : [...ownMismatches(node, span), ...spanMismatches(node.children, span.children ?? [], `"${span.name}"`)];
   });
 }
 

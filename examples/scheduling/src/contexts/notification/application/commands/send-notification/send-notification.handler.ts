@@ -22,12 +22,16 @@ export class SendNotificationHandler implements CommandHandler<SendNotificationC
     const { recipientId, cause } = command.notice;
     const alreadySent = await this.notificationRepository.findByCause(cause, recipientId);
 
-    if (alreadySent !== undefined) return alreadySent.id;
+    if (alreadySent !== undefined) {
+      return alreadySent.id;
+    }
 
     const kind = unwrap(NotificationKind.create(command.notice.kind));
     const contact = await this.contacts.get(recipientId);
 
-    if (contact === undefined) throw new ContactUnknownError(recipientId);
+    if (contact === undefined) {
+      throw new ContactUnknownError(recipientId);
+    }
 
     const target = Notification.create(this.ids.next(), { ...command.notice, kind }, this.clock.now());
 

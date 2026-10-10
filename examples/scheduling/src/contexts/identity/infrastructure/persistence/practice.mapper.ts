@@ -16,7 +16,9 @@ export const PracticeMapper = {
       registeredAt: row.registered_at,
       name: row.name,
       timeZone: unwrap(TimeZone.create(row.time_zone)),
-      members: storedMembersOf(row.members).map((member) => Membership.create(member.personId, unwrap(Role.create(member.role)))),
+      members: storedMembersOf(row.members).map((member) =>
+        Membership.create(member.personId, unwrap(Role.create(member.role))),
+      ),
     });
 
     loaded.version = row.version;
@@ -26,9 +28,19 @@ export const PracticeMapper = {
 
   toRow(saved: Practice): PracticeColumns {
     const state = saved.toState();
-    const members: readonly StoredMember[] = state.members.map((member) => ({ personId: member.personId, role: member.role }));
 
-    return { id: saved.id, registered_at: state.registeredAt, name: state.name, time_zone: state.timeZone.value, members: JSON.stringify(members) };
+    const members: readonly StoredMember[] = state.members.map((member) => ({
+      personId: member.personId,
+      role: member.role,
+    }));
+
+    return {
+      id: saved.id,
+      registered_at: state.registeredAt,
+      name: state.name,
+      time_zone: state.timeZone.value,
+      members: JSON.stringify(members),
+    };
   },
 };
 
@@ -40,5 +52,12 @@ function storedMembersOf(column: unknown): readonly StoredMember[] {
 }
 
 function isStoredMember(value: unknown): value is StoredMember {
-  return typeof value === 'object' && value !== null && 'personId' in value && 'role' in value && typeof value.personId === 'string' && typeof value.role === 'string';
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'personId' in value &&
+    'role' in value &&
+    typeof value.personId === 'string' &&
+    typeof value.role === 'string'
+  );
 }

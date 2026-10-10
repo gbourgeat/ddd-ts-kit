@@ -17,7 +17,11 @@ describe.skipIf(!REAL_SERVER)('RedisCache on a server', () => {
     client ??= connect();
   });
 
-  cacheContract(runner, { name: 'RedisCache', createCache: () => new RedisCache(client, { namespace: aNamespace() }), elapse: sleep });
+  cacheContract(runner, {
+    name: 'RedisCache',
+    createCache: () => new RedisCache(client, { namespace: aNamespace() }),
+    elapse: sleep,
+  });
 
   cacheContract(runner, {
     name: 'RedisCache failing loudly',
@@ -49,7 +53,9 @@ describe.skipIf(!REAL_SERVER)('RedisCache on a server', () => {
     const namespace = aNamespace();
     const cache = new RedisCache(client, { namespace });
 
-    for (let index = 0; index < 450; index += 1) await cache.set(price(`sku-${index}`), { amount: index });
+    for (let index = 0; index < 450; index += 1) {
+      await cache.set(price(`sku-${index}`), { amount: index });
+    }
 
     await cache.set(cacheKey<string>('pricing-rule'), 'kept: the prefix ends with a colon');
     await new RedisCache(client, { namespace: `${namespace}-other` }).set(price('sku-1'), { amount: 1 });
@@ -58,7 +64,11 @@ describe.skipIf(!REAL_SERVER)('RedisCache on a server', () => {
 
     expect(await cache.get(price('sku-7'))).toBeUndefined();
     expect(await cache.get(cacheKey<string>('pricing-rule'))).toBe('kept: the prefix ends with a colon');
-    expect(await new RedisCache(client, { namespace: `${namespace}-other` }).get(price('sku-1'))).toEqual({ amount: 1 });
+
+    expect(await new RedisCache(client, { namespace: `${namespace}-other` }).get(price('sku-1'))).toEqual({
+      amount: 1,
+    });
+
     expect(await cache.deleteByPrefix('price:')).toBe(0);
   });
 

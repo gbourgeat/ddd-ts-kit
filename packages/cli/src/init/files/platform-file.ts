@@ -7,7 +7,8 @@ import type { InitFile } from './init-file.js';
  * (`http/start-http-server.ts` from `http/start-http-server.express.ts.tpl`).
  */
 export function platformFile(config: Config, file: string, variant?: string): InitFile {
-  const template = variant === undefined ? file : file.replace(/(\.contract\.spec)?\.ts$/, (extension) => `.${variant}${extension}`);
+  const template =
+    variant === undefined ? file : file.replace(/(\.contract\.spec)?\.ts$/, (extension) => `.${variant}${extension}`);
 
   return [`${config.platformDir}/${file}`, `init/platform/${template}.tpl`];
 }

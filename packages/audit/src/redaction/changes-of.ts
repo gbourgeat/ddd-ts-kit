@@ -16,30 +16,42 @@ export async function changesOf(projection: AuditProjection, redaction: Redactio
   for (const [field, value] of Object.entries(projection.plain ?? {})) {
     const scalar = scalarOf(value);
 
-    if (scalar !== undefined) changes[field] = scalar;
+    if (scalar !== undefined) {
+      changes[field] = scalar;
+    }
   }
 
   for (const [field, value] of Object.entries(projection.masked ?? {})) {
     const scalar = scalarOf(value);
 
-    if (scalar !== undefined) changes[field] = await maskOf(scalar, field, redaction);
+    if (scalar !== undefined) {
+      changes[field] = await maskOf(scalar, field, redaction);
+    }
   }
 
   return Object.keys(changes).length === 0 ? undefined : changes;
 }
 
 function scalarOf(value: unknown): AuditScalar | undefined {
-  if (value === null || typeof value === 'string' || typeof value === 'boolean') return value;
+  if (value === null || typeof value === 'string' || typeof value === 'boolean') {
+    return value;
+  }
 
-  if (typeof value === 'number') return Number.isFinite(value) ? value : undefined;
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : undefined;
+  }
 
-  if (typeof value === 'bigint') return value.toString();
+  if (typeof value === 'bigint') {
+    return value.toString();
+  }
 
   return value instanceof Date ? value.toISOString() : undefined;
 }
 
 async function maskOf(value: AuditScalar, field: string, { masker, subject }: Redaction): Promise<AuditChange> {
-  if (masker === undefined) throw new MissingMaskerError(field);
+  if (masker === undefined) {
+    throw new MissingMaskerError(field);
+  }
 
   return { masked: await masker.mask(value, { ...subject, field }) };
 }

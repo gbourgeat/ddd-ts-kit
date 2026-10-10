@@ -4,8 +4,11 @@ pre-commit:
   parallel: true
   jobs:
     - name: eslint
-      glob: "*.{ts,mts,cts,js,mjs,cjs}"
+      glob: '*.{ts,mts,cts,js,mjs,cjs}'
       run: npx --no -- eslint --config eslint.config.mjs --no-warn-ignored {staged_files}
+    - name: format
+      glob: '*.{ts,mts,cts,js,mjs,cjs,json,jsonc}'
+      run: npx --no -- biome format --no-errors-on-unmatched {staged_files}
     - name: no em dash or en dash
       run: npm run ci:docs
 

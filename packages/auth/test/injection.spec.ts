@@ -26,7 +26,10 @@ describe('injecting the ports of authorization', () => {
     const sharing = defineContextModule({
       name: 'sharing',
       register(builder) {
-        builder.command(ShareDocument).requires(share).handledBy(ShareOwnedDocumentHandler, [DocumentRepository, Access]);
+        builder
+          .command(ShareDocument)
+          .requires(share)
+          .handledBy(ShareOwnedDocumentHandler, [DocumentRepository, Access]);
       },
     });
 
@@ -37,8 +40,11 @@ describe('injecting the ports of authorization', () => {
     const swapped = defineContextModule({
       name: 'swapped',
       register(builder) {
-        // @ts-expect-error -- the constructor expects the repository first, then Access
-        builder.command(ShareDocument).requires(share).handledBy(ShareOwnedDocumentHandler, [Access, DocumentRepository]);
+        builder
+          .command(ShareDocument)
+          .requires(share)
+          // @ts-expect-error -- the constructor expects the repository first, then Access
+          .handledBy(ShareOwnedDocumentHandler, [Access, DocumentRepository]);
       },
     });
 
@@ -49,8 +55,11 @@ describe('injecting the ports of authorization', () => {
     const confused = defineContextModule({
       name: 'confused',
       register(builder) {
-        // @ts-expect-error -- an Authorizer checks requests, it does not authorize a loaded subject
-        builder.command(ShareDocument).requires(share).handledBy(ShareOwnedDocumentHandler, [DocumentRepository, Authorizer]);
+        builder
+          .command(ShareDocument)
+          .requires(share)
+          // @ts-expect-error -- an Authorizer checks requests, it does not authorize a loaded subject
+          .handledBy(ShareOwnedDocumentHandler, [DocumentRepository, Authorizer]);
       },
     });
 
@@ -61,8 +70,11 @@ describe('injecting the ports of authorization', () => {
     const coupled = defineContextModule({
       name: 'coupled',
       register(builder) {
-        // @ts-expect-error -- PolicyAccess is an implementation: a dependency list names the port, Access
-        builder.command(ShareDocument).requires(share).handledBy(ShareOwnedDocumentHandler, [DocumentRepository, PolicyAccess]);
+        builder
+          .command(ShareDocument)
+          .requires(share)
+          // @ts-expect-error -- PolicyAccess is an implementation: a dependency list names the port, Access
+          .handledBy(ShareOwnedDocumentHandler, [DocumentRepository, PolicyAccess]);
       },
     });
 

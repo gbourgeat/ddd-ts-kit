@@ -14,7 +14,11 @@ describe('DELETE /practices/:practiceId/members/:personId', () => {
   it('answers 200 when the use case succeeds', async () => {
     const commands = new InMemoryCommandBus().register(RemoveMemberCommand, { execute: async () => 'remove-member-1' });
 
-    const response = await executeRoute(removeMemberRoute(commands), { params, query: {}, headers: {}, body, raw: undefined }, { validateResponses: true });
+    const response = await executeRoute(
+      removeMemberRoute(commands),
+      { params, query: {}, headers: {}, body, raw: undefined },
+      { validateResponses: true },
+    );
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual({ id: 'remove-member-1' });
@@ -47,7 +51,13 @@ describe('DELETE /practices/:practiceId/members/:personId', () => {
       },
     });
 
-    const response = await executeRoute(removeMemberRoute(commands), { params, query: {}, headers: {}, body, raw: undefined });
+    const response = await executeRoute(removeMemberRoute(commands), {
+      params,
+      query: {},
+      headers: {},
+      body,
+      raw: undefined,
+    });
 
     expect(response.status).toBe(422);
     expect(response.body).toMatchObject({ code });

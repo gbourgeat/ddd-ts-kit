@@ -43,9 +43,20 @@ export class Appointment extends AggregateRoot<string> {
   }
 
   /** Requests: the slot is held until `confirmBefore`, and freed then unless the appointment was confirmed. */
-  static request(id: string, booking: Booking, terms: { readonly now: Date; readonly confirmBefore: Date }): Appointment {
+  static request(
+    id: string,
+    booking: Booking,
+    terms: { readonly now: Date; readonly confirmBefore: Date },
+  ): Appointment {
     const { now, confirmBefore } = terms;
-    const created = new Appointment(id, { registeredAt: now, changedAt: now, booking, status: 'requested', confirmBefore });
+
+    const created = new Appointment(id, {
+      registeredAt: now,
+      changedAt: now,
+      booking,
+      status: 'requested',
+      confirmBefore,
+    });
 
     created.record(new AppointmentBooked(id, now, { booking, confirmBefore }));
 
@@ -63,14 +74,27 @@ export class Appointment extends AggregateRoot<string> {
       throw new AppointmentAlreadyConfirmedError(this.id);
     }
 
-    this.state = { registeredAt: this.state.registeredAt, changedAt: now, booking: this.state.booking, status: 'booked' };
+    this.state = {
+      registeredAt: this.state.registeredAt,
+      changedAt: now,
+      booking: this.state.booking,
+      status: 'booked',
+    };
+
     this.record(new AppointmentConfirmed(this.id, now, this.state.booking));
   }
 
   cancel(cancellation: Cancellation, now: Date): void {
     this.refuseWhenEnded();
 
-    this.state = { registeredAt: this.state.registeredAt, changedAt: now, booking: this.state.booking, status: 'cancelled', cancellation };
+    this.state = {
+      registeredAt: this.state.registeredAt,
+      changedAt: now,
+      booking: this.state.booking,
+      status: 'cancelled',
+      cancellation,
+    };
+
     this.record(new AppointmentCancelled(this.id, now, { booking: this.state.booking, cancellation }));
   }
 
@@ -89,7 +113,13 @@ export class Appointment extends AggregateRoot<string> {
     this.refuseWhenEnded();
     this.refuseBeforeStart(now);
 
-    this.state = { registeredAt: this.state.registeredAt, changedAt: now, booking: this.state.booking, status: 'completed' };
+    this.state = {
+      registeredAt: this.state.registeredAt,
+      changedAt: now,
+      booking: this.state.booking,
+      status: 'completed',
+    };
+
     this.record(new AppointmentCompleted(this.id, now, this.state.booking));
   }
 
@@ -97,7 +127,13 @@ export class Appointment extends AggregateRoot<string> {
     this.refuseWhenEnded();
     this.refuseBeforeStart(now);
 
-    this.state = { registeredAt: this.state.registeredAt, changedAt: now, booking: this.state.booking, status: 'no-show' };
+    this.state = {
+      registeredAt: this.state.registeredAt,
+      changedAt: now,
+      booking: this.state.booking,
+      status: 'no-show',
+    };
+
     this.record(new AppointmentMarkedNoShow(this.id, now, this.state.booking));
   }
 
@@ -109,7 +145,13 @@ export class Appointment extends AggregateRoot<string> {
       return;
     }
 
-    this.state = { registeredAt: this.state.registeredAt, changedAt: at, booking: this.state.booking, status: 'expired' };
+    this.state = {
+      registeredAt: this.state.registeredAt,
+      changedAt: at,
+      booking: this.state.booking,
+      status: 'expired',
+    };
+
     this.record(new AppointmentExpired(this.id, at, this.state.booking));
   }
 

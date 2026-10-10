@@ -6,7 +6,9 @@ export function replaceRegion(content: string, region: string, body: readonly st
   const open = lines.findIndex((line) => marker(region, false).test(line));
   const close = lines.findIndex((line, index) => index > open && marker(region, true).test(line));
 
-  if (open === -1 || close === -1) return undefined;
+  if (open === -1 || close === -1) {
+    return undefined;
+  }
 
   const indent = /^\s*/.exec(lines[close] ?? '')?.[0] ?? '';
 

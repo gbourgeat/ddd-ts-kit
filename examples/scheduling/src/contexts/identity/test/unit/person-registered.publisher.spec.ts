@@ -8,7 +8,12 @@ describe('Publishing "person registered" to other contexts', () => {
     const bus = new InMemoryEventBus();
     const publisher = new PersonRegisteredPublisher(bus, new SequentialIdGenerator('event'));
 
-    await publisher.handle(new PersonRegistered('person-1', new Date('2026-01-01T00:00:00.000Z'), { displayName: 'Ada Lovelace', email: 'ada@example.com' }));
+    await publisher.handle(
+      new PersonRegistered('person-1', new Date('2026-01-01T00:00:00.000Z'), {
+        displayName: 'Ada Lovelace',
+        email: 'ada@example.com',
+      }),
+    );
 
     expect(bus.published).toEqual([
       {

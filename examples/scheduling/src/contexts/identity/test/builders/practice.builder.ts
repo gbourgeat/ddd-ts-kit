@@ -64,7 +64,11 @@ export class PracticeBuilder extends Builder<PracticeIngredients, Practice> {
     const opened = Practice.create(ingredients.id, opening, ingredients.bornAt);
 
     for (const joiner of ingredients.joiners) {
-      const newcomer = { personId: joiner.personId, role: unwrap(Role.create(joiner.role)), displayName: nameOf(joiner.personId) };
+      const newcomer = {
+        personId: joiner.personId,
+        role: unwrap(Role.create(joiner.role)),
+        displayName: nameOf(joiner.personId),
+      };
 
       opened.addMember(newcomer, ingredients.bornAt);
     }

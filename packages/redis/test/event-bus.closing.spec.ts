@@ -70,7 +70,10 @@ describe.skipIf(!REAL_SERVER)('RedisStreamsEventBus, closing', { timeout: 30_000
     await bus.close();
 
     await expect(bus.publish([anEvent('evt-2')])).rejects.toMatchObject({ code: 'EVENT_BUS_CLOSED' });
-    expect(() => bus.subscribe(PLACED, async () => undefined)).toThrow(expect.objectContaining({ code: 'EVENT_BUS_CLOSED' }));
+
+    expect(() => bus.subscribe(PLACED, async () => undefined)).toThrow(
+      expect.objectContaining({ code: 'EVENT_BUS_CLOSED' }),
+    );
   });
 
   it('leaves open a client it was handed, and closes only the readers it duplicated from it', async () => {

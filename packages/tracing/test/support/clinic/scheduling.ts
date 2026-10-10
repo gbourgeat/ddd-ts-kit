@@ -60,13 +60,17 @@ export class InMemoryAppointmentRepository implements AppointmentRepository {
   }
 
   async findOverlapping(slot: string): Promise<Appointment | undefined> {
-    if (this.unreachable) throw new TypeError('connection to db.internal:5432 refused for user admin');
+    if (this.unreachable) {
+      throw new TypeError('connection to db.internal:5432 refused for user admin');
+    }
 
     return [...this.appointments.values()].find((appointment) => appointment.slot === slot);
   }
 
   async save(appointment: Appointment): Promise<void> {
-    if (appointment.slot === 'unreachable') throw new TypeError('connection to db.internal:5432 refused for user admin');
+    if (appointment.slot === 'unreachable') {
+      throw new TypeError('connection to db.internal:5432 refused for user admin');
+    }
 
     this.appointments.set(appointment.id, appointment);
   }
@@ -87,7 +91,9 @@ export class BookAppointmentHandler {
   ) {}
 
   async execute(command: BookAppointment): Promise<string> {
-    if ((await this.appointments.findOverlapping(command.slot)) !== undefined) throw new SlotTaken(`slot ${command.slot} is taken`);
+    if ((await this.appointments.findOverlapping(command.slot)) !== undefined) {
+      throw new SlotTaken(`slot ${command.slot} is taken`);
+    }
 
     const appointment = Appointment.book(this.ids.next(), command.slot, this.clock.now());
 
@@ -167,7 +173,9 @@ export const schedulingModule = defineContextModule({
   },
   onStart({ resolve }) {
     resolve(DomainEventDispatcher).on('scheduling.appointment.booked', async (event) => {
-      if (event instanceof AppointmentBooked) await resolve(AppointmentBookedPublisher).handle(event);
+      if (event instanceof AppointmentBooked) {
+        await resolve(AppointmentBookedPublisher).handle(event);
+      }
     });
   },
 });

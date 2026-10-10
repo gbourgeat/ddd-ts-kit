@@ -72,7 +72,9 @@ async function truncateAll(client: PrismaClient): Promise<void> {
     select table_schema, table_name from information_schema.tables
     where table_type = 'BASE TABLE' and table_schema not in ('pg_catalog', 'information_schema') and table_name <> '_prisma_migrations'`;
 
-  if (tables.length === 0) return;
+  if (tables.length === 0) {
+    return;
+  }
 
   const names = tables.map((table) => '"' + table.table_schema + '"."' + table.table_name + '"').join(', ');
 

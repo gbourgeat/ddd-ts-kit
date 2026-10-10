@@ -32,7 +32,14 @@ describe.skipIf(!REAL_SERVER)('RedisStreamsEventBus, when the connection is lost
     await eventually(() => reported.length >= 2);
     await expect(bus.publish([anEvent('evt-lost')])).rejects.toMatchObject({ code: 'BROKER_UNAVAILABLE' });
     network.restore();
-    await eventually(() => bus.publish([anEvent('evt-2')]).then(() => true, () => false));
+
+    await eventually(() =>
+      bus.publish([anEvent('evt-2')]).then(
+        () => true,
+        () => false,
+      ),
+    );
+
     await server.settled(bus);
 
     expect(billing.ids()).toEqual(['evt-1', 'evt-2']);

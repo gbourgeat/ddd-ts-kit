@@ -17,7 +17,11 @@ describe('POST /calendars', () => {
       },
     });
 
-    const response = await executeRoute(createCalendarRoute(commands), request({ practiceId: 'practice-1', practitionerId: 'practitioner-1' }), { validateResponses: true });
+    const response = await executeRoute(
+      createCalendarRoute(commands),
+      request({ practiceId: 'practice-1', practitionerId: 'practitioner-1' }),
+      { validateResponses: true },
+    );
 
     expect(response).toMatchObject({ status: 201, body: { id: 'calendar-1' } });
     expect(received).toMatchObject([{ practiceId: 'practice-1', practitionerId: 'practitioner-1' }]);
@@ -42,7 +46,11 @@ describe('POST /calendars', () => {
       },
     });
 
-    const response = await executeRoute(createCalendarRoute(commands), request({ practiceId: 'practice-1', practitionerId: 'practitioner-1' }), { validateResponses: true });
+    const response = await executeRoute(
+      createCalendarRoute(commands),
+      request({ practiceId: 'practice-1', practitionerId: 'practitioner-1' }),
+      { validateResponses: true },
+    );
 
     expect(response).toMatchObject({ status: 422, body: { code: 'UNKNOWN_PRACTITIONER' } });
   });

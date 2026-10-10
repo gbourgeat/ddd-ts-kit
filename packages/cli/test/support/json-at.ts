@@ -3,7 +3,9 @@ export function jsonAt(value: unknown, ...keys: readonly string[]): unknown {
   let current = value;
 
   for (const key of keys) {
-    if (typeof current !== 'object' || current === null) return undefined;
+    if (typeof current !== 'object' || current === null) {
+      return undefined;
+    }
 
     current = Reflect.get(current, key);
   }

@@ -7,8 +7,13 @@ export type CheckFormat = 'text' | 'json' | 'github' | 'gitlab';
 const CODE_QUALITY_SEVERITIES = { error: 'major', warn: 'minor' } as const;
 
 export function formatCheck(result: CheckResult, format: CheckFormat): string {
-  if (format === 'gitlab') return JSON.stringify(result.violations.map(toCodeQualityIssue), null, 2);
-  if (format === 'json') return JSON.stringify(jsonOf(result), null, 2);
+  if (format === 'gitlab') {
+    return JSON.stringify(result.violations.map(toCodeQualityIssue), null, 2);
+  }
+
+  if (format === 'json') {
+    return JSON.stringify(jsonOf(result), null, 2);
+  }
 
   const lines = result.violations.map(format === 'github' ? githubLine : textLine);
 
@@ -67,7 +72,9 @@ function toCodeQualityIssue(violation: Violation, index: number, all: readonly V
   return {
     description: `${violation.message} Fix: ${violation.fix}`,
     check_name: violation.ruleId,
-    fingerprint: createHash('sha256').update(`${identity(violation)}\n${rank}`).digest('hex'),
+    fingerprint: createHash('sha256')
+      .update(`${identity(violation)}\n${rank}`)
+      .digest('hex'),
     severity: CODE_QUALITY_SEVERITIES[violation.severity],
     location: { path: violation.file, lines: { begin: violation.line } },
   };

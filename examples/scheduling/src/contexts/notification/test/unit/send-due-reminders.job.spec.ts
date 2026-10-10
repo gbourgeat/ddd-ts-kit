@@ -17,7 +17,13 @@ import { FakeMailer } from '../fakes/mailer.fake.js';
 import { FakeNotificationRepository } from '../fakes/notification.repository.fake.js';
 import { FakeReminderRepository } from '../fakes/reminder.repository.fake.js';
 
-const holders = authorizationModule({ authorizer: new RoleBasedAuthorizer({ roles: { scheduler: Object.values(notificationPermissions) }, systemRole: 'scheduler' }) });
+const holders = authorizationModule({
+  authorizer: new RoleBasedAuthorizer({
+    roles: { scheduler: Object.values(notificationPermissions) },
+    systemRole: 'scheduler',
+  }),
+});
+
 const NOW = new Date('2026-01-09T09:00:00.000Z');
 
 describe('Send due reminders, when its time comes', () => {
@@ -41,11 +47,16 @@ describe('Send due reminders, when its time comes', () => {
   it('sends each due reminder once, even when the same occurrence runs twice', async () => {
     const { application, reminderRepository, mailer } = await arrangeObserved();
 
-    await reminderRepository.save(aReminder().of('appointment-1').plannedFor(new Date('2026-01-10T09:00:00.000Z')).build());
+    await reminderRepository.save(
+      aReminder().of('appointment-1').plannedFor(new Date('2026-01-10T09:00:00.000Z')).build(),
+    );
+
     await application.jobs.runNow('notification.send-due-reminders');
     await application.jobs.runNow('notification.send-due-reminders');
 
-    expect(mailer.delivered).toEqual([{ address: 'ada@example.test', recipientId: 'patient-1', kind: 'reminder', appointmentId: 'appointment-1' }]);
+    expect(mailer.delivered).toEqual([
+      { address: 'ada@example.test', recipientId: 'patient-1', kind: 'reminder', appointmentId: 'appointment-1' },
+    ]);
   });
 });
 
@@ -72,7 +83,12 @@ async function arrange() {
 
   const application = createTestApplication({
     modules: [platformTestModule, contextModule('notification', notificationDeclarations), holders],
-    fakes: [fake(ReminderRepository, reminderRepository), fake(NotificationRepository, notificationRepository), fake(Contacts, contacts), fake(Mailer, mailer)],
+    fakes: [
+      fake(ReminderRepository, reminderRepository),
+      fake(NotificationRepository, notificationRepository),
+      fake(Contacts, contacts),
+      fake(Mailer, mailer),
+    ],
     now: NOW,
   });
 

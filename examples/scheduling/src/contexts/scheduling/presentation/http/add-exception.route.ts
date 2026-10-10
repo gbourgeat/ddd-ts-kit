@@ -26,7 +26,10 @@ export function addExceptionRoute(commands: CommandBus): Route {
     },
     async (input) => {
       const { day, ranges } = input.body;
-      const id = await commands.execute(new AddExceptionCommand(actorOf(input.context.principal), input.params.calendarId, day, ranges));
+
+      const id = await commands.execute(
+        new AddExceptionCommand(actorOf(input.context.principal), input.params.calendarId, day, ranges),
+      );
 
       return { status: 201, body: { id } };
     },

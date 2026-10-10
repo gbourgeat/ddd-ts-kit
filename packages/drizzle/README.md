@@ -393,7 +393,9 @@ of identifiers: every value is a parameter encoded by its column, a text search 
 async list(criteria: ScopedCriteria<AppointmentRow>): Promise<Page<AppointmentRow>> {
   const plan = planCriteria(appointmentCriteria, criteria);
 
-  if (plan.empty) return pageOfPlan(plan, []);
+  if (plan.empty) {
+    return pageOfPlan(plan, []);
+  }
 
   const { where, orderBy, limit, offset } = criteriaToDrizzle(plan, COLUMNS);
   const rows = await this.database.executor().select().from(appointments).where(where).orderBy(...orderBy).limit(limit).offset(offset);

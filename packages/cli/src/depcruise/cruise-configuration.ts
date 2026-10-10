@@ -15,7 +15,10 @@ export interface CruiseConfiguration {
  * from pipeline/depcruise-config.mjs; a test holds the two to the same output.
  */
 export function cruiseConfiguration(config: Config): CruiseConfiguration {
-  return { forbidden: [...layerRules(config), ...contextRules(config), ...hygieneRules(config)], options: cruiseOptions() };
+  return {
+    forbidden: [...layerRules(config), ...contextRules(config), ...hygieneRules(config)],
+    options: cruiseOptions(),
+  };
 }
 
 /**

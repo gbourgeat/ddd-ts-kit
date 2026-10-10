@@ -21,12 +21,21 @@ const contexts: readonly (readonly [string, ContextModule])[] = [
 ];
 
 describe('A bounded context is a deployable unit in waiting', () => {
-  it.each(contexts)('%s wires alone from its declarations, on the kernel and the platform, with no other context', (_name, module) => {
-    expect(() => createTestApplication({ modules: [platformTestModule, authorization, module], authorization: 'optional' })).not.toThrow();
-  });
+  it.each(contexts)(
+    '%s wires alone from its declarations, on the kernel and the platform, with no other context',
+    (_name, module) => {
+      expect(() =>
+        createTestApplication({ modules: [platformTestModule, authorization, module], authorization: 'optional' }),
+      ).not.toThrow();
+    },
+  );
 
   it.each(contexts)('%s takes its scheduled jobs with it, and no job of another context', (name, module) => {
-    const application = createTestApplication({ modules: [platformTestModule, authorization, module], authorization: 'optional' });
+    const application = createTestApplication({
+      modules: [platformTestModule, authorization, module],
+      authorization: 'optional',
+    });
+
     const jobs = application.describe().jobs.map((job) => job.name);
 
     expect(jobs.filter((job) => !job.startsWith(name + '.'))).toEqual([]);

@@ -20,6 +20,11 @@ export const PersonMapper = {
   toRow(saved: Person): PersonColumns {
     const state = saved.toState();
 
-    return { id: saved.id, registered_at: state.registeredAt, display_name: state.displayName.value, email: state.email.value };
+    return {
+      id: saved.id,
+      registered_at: state.registeredAt,
+      display_name: state.displayName.value,
+      email: state.email.value,
+    };
   },
 };

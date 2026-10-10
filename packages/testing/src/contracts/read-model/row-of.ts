@@ -5,7 +5,9 @@ import { criteriaContractRows } from '../criteria/criteria-contract-rows.js';
 export function rowOf(id: string): CriteriaContractRow {
   const found = criteriaContractRows().find((candidate) => candidate.id === id);
 
-  if (found === undefined) throw new Error(`The contract dataset holds no row ${id}`);
+  if (found === undefined) {
+    throw new Error(`The contract dataset holds no row ${id}`);
+  }
 
   return found;
 }

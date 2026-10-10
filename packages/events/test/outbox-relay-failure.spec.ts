@@ -54,9 +54,11 @@ describe('OutboxRelay.tick when the provider refuses an event', () => {
     expect(await store.stats()).toEqual({ pending: 0, failed: 0, dead: 1 });
     expect(publisher.delivered).toEqual([]);
 
-    expect(reported.map((failure) => (failure.kind === 'publish' ? failure.dead : undefined))).toEqual(
-      [false, false, true],
-    );
+    expect(reported.map((failure) => (failure.kind === 'publish' ? failure.dead : undefined))).toEqual([
+      false,
+      false,
+      true,
+    ]);
   });
 
   it('publishes a dead record again once it is retried', async () => {

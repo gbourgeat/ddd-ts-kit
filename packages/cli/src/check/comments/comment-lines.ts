@@ -14,7 +14,14 @@ export interface CommentLine {
 }
 
 export function commentLines(file: SourceFile): CommentLine[] {
-  const lines: CommentLine[] = file.scan.comments.map((comment) => ({ line: comment.line, text: comment.text, block: false, jsdoc: false, trailing: !comment.ownLine, sample: false }));
+  const lines: CommentLine[] = file.scan.comments.map((comment) => ({
+    line: comment.line,
+    text: comment.text,
+    block: false,
+    jsdoc: false,
+    trailing: !comment.ownLine,
+    sample: false,
+  }));
 
   return [...lines, ...file.scan.blockComments.flatMap(linesOfBlock)].sort((a, b) => a.line - b.line);
 }
@@ -27,9 +34,19 @@ function linesOfBlock(comment: BlockCommentRecord): CommentLine[] {
     const text = raw.replace(/^\s*\*+ ?/, '').trim();
     const fence = text.startsWith('```');
 
-    if (fence) fenced = !fenced;
-    else if (text.startsWith('@')) sample = text.startsWith('@example');
+    if (fence) {
+      fenced = !fenced;
+    } else if (text.startsWith('@')) {
+      sample = text.startsWith('@example');
+    }
 
-    return { line: comment.line + index, text, block: true, jsdoc: comment.jsdoc, trailing: false, sample: sample || fenced || fence };
+    return {
+      line: comment.line + index,
+      text,
+      block: true,
+      jsdoc: comment.jsdoc,
+      trailing: false,
+      sample: sample || fenced || fence,
+    };
   });
 }

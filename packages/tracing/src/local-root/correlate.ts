@@ -9,15 +9,21 @@ export const ORIGIN_ATTRIBUTE = 'app.origin';
  * and for which tenant never become span attributes.
  */
 export function correlate(root: LocalRoot): void {
-  if (root.correlated) return;
+  if (root.correlated) {
+    return;
+  }
 
   const execution = tracingConfiguration().executionScope?.current();
 
-  if (execution === undefined) return;
+  if (execution === undefined) {
+    return;
+  }
 
   root.correlated = true;
 
-  if (!root.span.isRecording()) return;
+  if (!root.span.isRecording()) {
+    return;
+  }
 
   root.span.setAttribute(CORRELATION_ID_ATTRIBUTE, execution.correlationId);
   root.span.setAttribute(ORIGIN_ATTRIBUTE, execution.origin);

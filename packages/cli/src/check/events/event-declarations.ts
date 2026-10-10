@@ -24,7 +24,13 @@ export function eventDeclarations(file: SourceFile): EventDeclaration[] {
     const end = callEnd(code, argumentsStart);
     const body = code.slice(match.index, end);
 
-    return { start: match.index, end, type: typeOf(file, argumentsStart, end), version: VERSION_KEY.exec(body)?.[1] ?? '?', hasPayload: PAYLOAD_KEY.test(body) };
+    return {
+      start: match.index,
+      end,
+      type: typeOf(file, argumentsStart, end),
+      version: VERSION_KEY.exec(body)?.[1] ?? '?',
+      hasPayload: PAYLOAD_KEY.test(body),
+    };
   });
 }
 
@@ -32,7 +38,9 @@ function typeOf(file: SourceFile, argumentsStart: number, end: number): EventDec
   const { code, strings } = file.scan;
 
   const type = strings.find((literal) => {
-    if (literal.start < argumentsStart || literal.start >= end || !isTypeLiteral(file, literal.start)) return false;
+    if (literal.start < argumentsStart || literal.start >= end || !isTypeLiteral(file, literal.start)) {
+      return false;
+    }
 
     // Directly in the options object: one brace deep, not inside a nested call.
     const before = code.slice(argumentsStart, literal.start);

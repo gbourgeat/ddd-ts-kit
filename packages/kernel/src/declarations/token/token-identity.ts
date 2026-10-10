@@ -11,12 +11,16 @@ import type { Token } from './token.js';
 export function tokenIdentity(target: Token<unknown>): symbol {
   const key = stableKeyOf(target);
 
-  if (key !== undefined) return Symbol.for(`@ddd-ts-kit/token/${key}`);
+  if (key !== undefined) {
+    return Symbol.for(`@ddd-ts-kit/token/${key}`);
+  }
 
   const identities = identitiesByClass();
   const known = identities.get(target);
 
-  if (known !== undefined) return known;
+  if (known !== undefined) {
+    return known;
+  }
 
   const identity = Symbol(describeToken(target));
 
@@ -26,7 +30,9 @@ export function tokenIdentity(target: Token<unknown>): symbol {
 }
 
 function stableKeyOf(target: Token<unknown>): string | undefined {
-  if (!Object.hasOwn(target, 'tokenKey')) return undefined;
+  if (!Object.hasOwn(target, 'tokenKey')) {
+    return undefined;
+  }
 
   const key: unknown = Reflect.get(target, 'tokenKey');
 
@@ -42,7 +48,9 @@ const IDENTITIES = Symbol.for('@ddd-ts-kit/kernel/token-identities/v1');
 function identitiesByClass(): WeakMap<Token<unknown>, symbol> {
   const existing: unknown = Reflect.get(globalThis, IDENTITIES);
 
-  if (isIdentityMap(existing)) return existing;
+  if (isIdentityMap(existing)) {
+    return existing;
+  }
 
   const created = new WeakMap<Token<unknown>, symbol>();
 

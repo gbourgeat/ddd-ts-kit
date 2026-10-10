@@ -37,6 +37,8 @@ export class ManualScheduler implements Scheduler {
 
     this.scheduled = this.scheduled.filter((scheduled) => scheduled.dueAt > this.elapsed);
 
-    for (const { work } of due.sort((first, second) => first.dueAt - second.dueAt)) work();
+    for (const { work } of due.sort((first, second) => first.dueAt - second.dueAt)) {
+      work();
+    }
   }
 }

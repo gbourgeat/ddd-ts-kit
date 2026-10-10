@@ -4,28 +4,43 @@
     "SessionStart": [
       {
         "matcher": "startup|resume|clear|compact",
-        "hooks": [{ "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/guard.mjs\" session", "timeout": 10 }]
+        "hooks": [
+          { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/guard.mjs\" session", "timeout": 10 }
+        ]
       }
     ],
     "PreToolUse": [
       {
         "matcher": "Write|Edit|MultiEdit",
-        "hooks": [{ "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/guard.mjs\" pre-write", "timeout": 5 }]
+        "hooks": [
+          { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/guard.mjs\" pre-write", "timeout": 5 }
+        ]
       },
       {
         "matcher": "Bash",
-        "hooks": [{ "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/guard.mjs\" pre-bash", "timeout": 5 }]
+        "hooks": [
+          { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/guard.mjs\" pre-bash", "timeout": 5 }
+        ]
       }
     ],
     "PostToolUse": [
       {
         "matcher": "Write|Edit|MultiEdit",
-        "hooks": [{ "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/guard.mjs\" post-write", "timeout": 15 }]
+        "hooks": [
+          { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/guard.mjs\" post-write", "timeout": 15 }
+        ]
       }
     ],
     "Stop": [
       {
-        "hooks": [{ "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/guard.mjs\" stop", "timeout": 90, "statusMessage": "ddd-ts-kit: architecture check" }]
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/guard.mjs\" stop",
+            "timeout": 90,
+            "statusMessage": "ddd-ts-kit: architecture check"
+          }
+        ]
       }
     ]
   }

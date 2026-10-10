@@ -9,7 +9,9 @@ export type WiringFamily = 'declared' | 'tsyringe' | 'manual';
  * contexts as the manual stack).
  */
 export function wiringFamily(config: Config): WiringFamily {
-  if (isDeclared(config)) return 'declared';
+  if (isDeclared(config)) {
+    return 'declared';
+  }
 
   return config.stack.di === 'tsyringe' ? 'tsyringe' : 'manual';
 }

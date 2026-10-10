@@ -12,7 +12,11 @@ export class CustomerOrdersProjection {
   async orderPlaced(event: IntegrationEvent<OrderPlacedPayload>): Promise<ReadModelWrite> {
     const { customerId, orderId } = event.payload;
 
-    return this.customers.upsertIfNewer(customerId, stampOf(event), (customer) => ({ customerId, orders: (customer?.orders ?? 0) + 1, lastOrderId: orderId }));
+    return this.customers.upsertIfNewer(customerId, stampOf(event), (customer) => ({
+      customerId,
+      orders: (customer?.orders ?? 0) + 1,
+      lastOrderId: orderId,
+    }));
   }
 
   @On(CustomerForgotten, { name: 'reporting.customer.forgotten' })

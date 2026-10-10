@@ -4,7 +4,9 @@ import type { PgColumn } from 'drizzle-orm/pg-core';
 export function columnOf(columns: Readonly<Record<string, PgColumn>>, field: string): PgColumn {
   const column = Object.hasOwn(columns, field) ? columns[field] : undefined;
 
-  if (column === undefined) throw new Error(`The field "${field}" is mapped to no column`);
+  if (column === undefined) {
+    throw new Error(`The field "${field}" is mapped to no column`);
+  }
 
   return column;
 }

@@ -9,7 +9,9 @@ import { Invoice } from '../../domain/aggregates/invoice.aggregate.js';
 @Scheduled('billing.send-reminders', { every: '15m' }, [InvoiceRepository, Mailer])
 export class SendRemindersJob {
   async run(): Promise<void> {
-    for (const invoice of await this.invoices.findOverdue()) await this.mailer.remind(invoice);
+    for (const invoice of await this.invoices.findOverdue()) {
+      await this.mailer.remind(invoice);
+    }
   }
 }`,
     good: `// application/scheduling/send-reminders.job.ts

@@ -21,7 +21,10 @@ function contentOf(root: string): string {
   try {
     return fs.readFileSync(path.join(root, CONFIG_FILE), 'utf8');
   } catch {
-    throw new CliError(`No ${CONFIG_FILE} in ${root}.`, 'Run `ddd-ts-kit init` at the project root, or pass --cwd <project root>.');
+    throw new CliError(
+      `No ${CONFIG_FILE} in ${root}.`,
+      'Run `ddd-ts-kit init` at the project root, or pass --cwd <project root>.',
+    );
   }
 }
 

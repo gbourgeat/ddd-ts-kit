@@ -1,6 +1,14 @@
 import { inspect } from 'node:util';
 import type { Redis } from 'ioredis';
-import { NoopMetrics, type Cache, type CacheEntryOptions, type CacheKey, type Counter, type Lock, type Metrics } from '@ddd-ts-kit/kernel';
+import {
+  NoopMetrics,
+  type Cache,
+  type CacheEntryOptions,
+  type CacheKey,
+  type Counter,
+  type Lock,
+  type Metrics,
+} from '@ddd-ts-kit/kernel';
 import { namespaced } from '../keys/namespaced.js';
 import { prefixPattern } from '../keys/prefix-pattern.js';
 import { conceal } from '../secrecy/conceal.js';
@@ -70,7 +78,9 @@ export class RedisCache implements Cache {
   async get<T>(key: CacheKey<T>): Promise<T | undefined> {
     const text = await this.guarded('get', () => this.client.get(this.keyOf(key.name)));
 
-    if (text === undefined || text === null) return undefined;
+    if (text === undefined || text === null) {
+      return undefined;
+    }
 
     return this.guarded('get', async () => {
       // eslint-disable-next-line ddd-ts-kit/clean-no-escape-hatch -- the server holds text: the link between a key and the type of its value is only known to the CacheKey that wrote it
@@ -83,9 +93,13 @@ export class RedisCache implements Cache {
     const { ttlMs } = options;
 
     await this.guarded('set', async () => {
-      if (ttlMs === undefined) await this.client.set(name, this.codec.encode(value));
-      else if (ttlMs <= 0) await this.client.del(name);
-      else await this.client.set(name, this.codec.encode(value), 'PX', Math.ceil(ttlMs));
+      if (ttlMs === undefined) {
+        await this.client.set(name, this.codec.encode(value));
+      } else if (ttlMs <= 0) {
+        await this.client.del(name);
+      } else {
+        await this.client.set(name, this.codec.encode(value), 'PX', Math.ceil(ttlMs));
+      }
     });
   }
 
@@ -114,9 +128,12 @@ export class RedisCache implements Cache {
   async getOrLoad<T>(key: CacheKey<T>, load: () => Promise<T>, options: LoadOptions = {}): Promise<T> {
     const hit = await this.get(key);
 
-    if (hit !== undefined) return hit;
+    if (hit !== undefined) {
+      return hit;
+    }
 
-    const pending = this.loading.get(key.name) ?? this.loadOnce(key, load, options).finally(() => this.loading.delete(key.name));
+    const pending =
+      this.loading.get(key.name) ?? this.loadOnce(key, load, options).finally(() => this.loading.delete(key.name));
 
     this.loading.set(key.name, pending);
 
@@ -144,7 +161,9 @@ export class RedisCache implements Cache {
     } catch (error) {
       this.errors.increment({ operation, ...(this.namespace === undefined ? {} : { context: this.namespace }) });
 
-      if (this.failing) throw error;
+      if (this.failing) {
+        throw error;
+      }
 
       return undefined;
     }
@@ -158,7 +177,9 @@ export class RedisCache implements Cache {
       const [next, keys] = await this.client.scan(cursor, 'MATCH', pattern, 'COUNT', SCAN_BATCH);
 
       // One key per command: a cluster refuses a DEL whose keys live in different slots.
-      for (const key of keys) deleted += await this.client.del(key);
+      for (const key of keys) {
+        deleted += await this.client.del(key);
+      }
 
       cursor = next;
     } while (cursor !== '0');
@@ -172,7 +193,9 @@ export class RedisCache implements Cache {
     try {
       const filled = this.lock === undefined ? undefined : await this.get(key);
 
-      if (filled !== undefined) return filled;
+      if (filled !== undefined) {
+        return filled;
+      }
 
       const value = await load();
 
@@ -186,7 +209,10 @@ export class RedisCache implements Cache {
 
   private async lockFor(name: string, options: LoadOptions): Promise<{ release(): Promise<void> } | undefined> {
     try {
-      return await this.lock?.acquire(`cache:${this.keyOf(name)}`, { ttlMs: options.lockTtlMs ?? 10_000, waitMs: options.waitMs ?? 2_000 });
+      return await this.lock?.acquire(`cache:${this.keyOf(name)}`, {
+        ttlMs: options.lockTtlMs ?? 10_000,
+        waitMs: options.waitMs ?? 2_000,
+      });
     } catch {
       return undefined;
     }

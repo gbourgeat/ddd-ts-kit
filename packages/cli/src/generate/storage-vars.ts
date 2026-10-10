@@ -17,7 +17,10 @@ const PACKAGE_TOKENS: Readonly<Record<string, { readonly token: string; readonly
 export function storageVars(config: Config, contextDir: string): RenderContext {
   const provided = PACKAGE_TOKENS[config.stack.orm];
   const token = provided?.token ?? 'Database';
-  const from = (directory: string): string => provided?.from ?? `${relativeTo(directory, config.platformDir)}/database/database.js`;
+
+  const from = (directory: string): string =>
+    provided?.from ?? `${relativeTo(directory, config.platformDir)}/database/database.js`;
+
   const named = isDeclared(config) ? token : `type ${token}`;
 
   return {

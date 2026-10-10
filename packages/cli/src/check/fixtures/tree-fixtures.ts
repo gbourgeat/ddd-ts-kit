@@ -63,7 +63,9 @@ export const TREE_FIXTURES: readonly Fixture[] = [
     name: 'no CONTEXT.md',
     expect: { file: `${BILLING}/CONTEXT.md` },
     files: (() => {
-      const { [`${BILLING}/CONTEXT.md`]: _removed, ...rest } = project({ [`${BILLING}/published-language/index.ts`]: 'export {};\n' });
+      const { [`${BILLING}/CONTEXT.md`]: _removed, ...rest } = project({
+        [`${BILLING}/published-language/index.ts`]: 'export {};\n',
+      });
 
       return rest;
     })(),
@@ -72,7 +74,15 @@ export const TREE_FIXTURES: readonly Fixture[] = [
     ruleId: 'tree/context-doc',
     name: 'a missing section',
     expect: { file: `${BILLING}/CONTEXT.md` },
-    files: project({}, { [`${BILLING}/CONTEXT.md`]: contextDoc('core', CONTEXT_DOC_HEADINGS.filter((heading) => heading !== '## Relationships')) }),
+    files: project(
+      {},
+      {
+        [`${BILLING}/CONTEXT.md`]: contextDoc(
+          'core',
+          CONTEXT_DOC_HEADINGS.filter((heading) => heading !== '## Relationships'),
+        ),
+      },
+    ),
   },
   {
     ruleId: 'tree/context-doc',
@@ -86,7 +96,8 @@ export const TREE_FIXTURES: readonly Fixture[] = [
     expect: 'pass',
     files: project({
       ...aggregate('export class Invoice {}\n'),
-      [`${BILLING}/domain/errors/invoice-already-issued.error.ts`]: 'export class InvoiceAlreadyIssuedError extends Error {}\n',
+      [`${BILLING}/domain/errors/invoice-already-issued.error.ts`]:
+        'export class InvoiceAlreadyIssuedError extends Error {}\n',
       [`${BILLING}/domain/errors/index.ts`]: "export * from './invoice-already-issued.error.js';\n",
       [`${BILLING}/presentation/http/invoice.dto.ts`]: 'export interface InvoiceDto { readonly id: string }\n',
     }),
@@ -95,20 +106,30 @@ export const TREE_FIXTURES: readonly Fixture[] = [
     ruleId: 'naming/suffix',
     name: 'a file without the suffix of its role',
     expect: { file: `${BILLING}/domain/errors/invoice-already-issued.ts` },
-    files: project({ [`${BILLING}/domain/errors/invoice-already-issued.ts`]: 'export class InvoiceAlreadyIssued extends Error {}\n' }),
+    files: project({
+      [`${BILLING}/domain/errors/invoice-already-issued.ts`]: 'export class InvoiceAlreadyIssued extends Error {}\n',
+    }),
   },
   {
     ruleId: 'naming/suffix',
     name: 'a file name that is not kebab-case',
     expect: { file: `${BILLING}/domain/errors/InvoiceAlreadyIssued.error.ts` },
     also: ['clean/one-export-per-file'],
-    files: project({ [`${BILLING}/domain/errors/InvoiceAlreadyIssued.error.ts`]: 'export class InvoiceAlreadyIssuedError extends Error {}\n' }),
+    files: project({
+      [`${BILLING}/domain/errors/InvoiceAlreadyIssued.error.ts`]:
+        'export class InvoiceAlreadyIssuedError extends Error {}\n',
+    }),
   },
   {
     ruleId: 'naming/one-concept-per-file',
     name: 'one exported class, with private helpers and types',
     expect: 'pass',
-    files: project(aggregate('class Money {}\n\nexport interface InvoiceState {\n  readonly total: Money;\n}\n\nexport class Invoice {\n  constructor(readonly state: InvoiceState) {}\n}\n// export class Ghost {}\n'), { [CONFIG_FILE]: config({ rules: { 'clean/no-commented-out-code': 'off' } }) }),
+    files: project(
+      aggregate(
+        'class Money {}\n\nexport interface InvoiceState {\n  readonly total: Money;\n}\n\nexport class Invoice {\n  constructor(readonly state: InvoiceState) {}\n}\n// export class Ghost {}\n',
+      ),
+      { [CONFIG_FILE]: config({ rules: { 'clean/no-commented-out-code': 'off' } }) },
+    ),
   },
   {
     ruleId: 'naming/one-concept-per-file',
@@ -129,7 +150,8 @@ export const TREE_FIXTURES: readonly Fixture[] = [
     expect: 'pass',
     files: declaredProject({
       [ROUTES]: 'export const billingRoutes = (): unknown[] => [];\n',
-      [`${BILLING}/application/commands/issue-invoice/issue-invoice.result.ts`]: 'export interface IssueInvoiceResult {\n  readonly invoiceId: string;\n}\n',
+      [`${BILLING}/application/commands/issue-invoice/issue-invoice.result.ts`]:
+        'export interface IssueInvoiceResult {\n  readonly invoiceId: string;\n}\n',
       [JOB]: DECLARED.job,
       [JOB_SPEC]: SPEC,
     }),
@@ -144,7 +166,9 @@ export const TREE_FIXTURES: readonly Fixture[] = [
     ruleId: 'naming/suffix',
     name: 'a routes file named after another context',
     expect: { file: `${BILLING}/presentation/http/shipping.routes.ts` },
-    files: project({ [`${BILLING}/presentation/http/shipping.routes.ts`]: 'export const shippingRoutes = (): unknown[] => [];\n' }),
+    files: project({
+      [`${BILLING}/presentation/http/shipping.routes.ts`]: 'export const shippingRoutes = (): unknown[] => [];\n',
+    }),
   },
   {
     ruleId: 'naming/suffix',
@@ -183,6 +207,8 @@ export const TREE_FIXTURES: readonly Fixture[] = [
     ruleId: 'naming/one-concept-per-file',
     name: 'explicit style: a second declared class in a policy file is not counted',
     expect: 'pass',
-    files: project({ [POLICY]: `${DECLARED.policy}\n@Policy(billingPermissions['invoice.issue'], { name: 'billing.only-accountant-issues' })\nclass OnlyAccountantIssuesPolicy {}\n` }),
+    files: project({
+      [POLICY]: `${DECLARED.policy}\n@Policy(billingPermissions['invoice.issue'], { name: 'billing.only-accountant-issues' })\nclass OnlyAccountantIssuesPolicy {}\n`,
+    }),
   },
 ];

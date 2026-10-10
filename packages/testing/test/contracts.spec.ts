@@ -49,8 +49,7 @@ repositoryContract<Order>(runner, {
 
 repositoryContract<Order>(runner, {
   name: 'InMemoryRepository with a clone function',
-  createRepository: () =>
-    new InMemoryRepository<Order>({ clone: (order) => Order.rehydrate(order.toSnapshot()) }),
+  createRepository: () => new InMemoryRepository<Order>({ clone: (order) => Order.rehydrate(order.toSnapshot()) }),
   createAggregate: () => anOrder().build(),
   mutate: (order) => order.addLine({ sku: 'pen', quantity: 1 }, at),
   idOf: (order) => order.id,
@@ -100,7 +99,11 @@ cacheContract(runner, { name: 'InMemoryCache', createCache: () => new InMemoryCa
 
 lockContract(runner, { name: 'InMemoryLock', createLock: () => new InMemoryLock(aClock()), elapse });
 
-rateLimiterContract(runner, { name: 'InMemoryRateLimiter', createLimiter: () => new InMemoryRateLimiter(aClock()), elapse });
+rateLimiterContract(runner, {
+  name: 'InMemoryRateLimiter',
+  createLimiter: () => new InMemoryRateLimiter(aClock()),
+  elapse,
+});
 
 criteriaContract(runner, {
   name: 'evaluateCriteria',
@@ -111,5 +114,8 @@ criteriaContract(runner, {
 
 readModelStoreContract(runner, {
   name: 'InMemoryReadModelTable',
-  createTable: () => ({ table: new InMemoryReadModelTable<CriteriaContractRow>(), unitOfWork: new InMemoryUnitOfWork() }),
+  createTable: () => ({
+    table: new InMemoryReadModelTable<CriteriaContractRow>(),
+    unitOfWork: new InMemoryUnitOfWork(),
+  }),
 });

@@ -5,7 +5,10 @@ export async function applyThrough(projection: object, method: string, event: un
   const apply: unknown = Reflect.get(projection, method);
 
   if (typeof apply !== 'function') {
-    throw new WiringError('INCOMPLETE_BINDING', `Projection ${projection.constructor.name} declares that "${method}" applies an event, and has no such method.`);
+    throw new WiringError(
+      'INCOMPLETE_BINDING',
+      `Projection ${projection.constructor.name} declares that "${method}" applies an event, and has no such method.`,
+    );
   }
 
   const outcome: unknown = await Reflect.apply(apply, projection, [event]);

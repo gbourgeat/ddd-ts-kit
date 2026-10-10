@@ -23,9 +23,7 @@ describe('traceDependency, a failing call', () => {
     await wrapped.findBalance('acc-1');
     await expect(wrapped.debit('acc-1', 5000)).rejects.toThrow();
 
-    const recorded = JSON.stringify(
-      tracing.spans().map((span) => [span.attributes, span.events, span.status]),
-    );
+    const recorded = JSON.stringify(tracing.spans().map((span) => [span.attributes, span.events, span.status]));
 
     expect(recorded).not.toContain('acc-1');
     expect(recorded).not.toContain('5000');
@@ -62,13 +60,13 @@ describe('traceDependency, a failing call', () => {
     await expect(wrapped.rejectWithDriverCode()).rejects.toThrow();
     await expect(wrapped.rejectWithUnsafeCode()).rejects.toThrow();
 
-    expect(
-      tracing.span('repository AccountRepository.rejectWithDriverCode').attributes['app.error.code'],
-    ).toBe('ECONNREFUSED');
+    expect(tracing.span('repository AccountRepository.rejectWithDriverCode').attributes['app.error.code']).toBe(
+      'ECONNREFUSED',
+    );
 
-    expect(
-      tracing.span('repository AccountRepository.rejectWithUnsafeCode').attributes,
-    ).not.toHaveProperty('app.error.code');
+    expect(tracing.span('repository AccountRepository.rejectWithUnsafeCode').attributes).not.toHaveProperty(
+      'app.error.code',
+    );
   });
 
   it('omits error.type when the class name is not identifier-shaped', async () => {

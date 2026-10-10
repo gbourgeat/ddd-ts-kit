@@ -7,6 +7,8 @@ export class ExpireDelegationsJob implements ScheduledJob {
   constructor(private readonly commands: CommandBus) {}
 
   async run(execution: JobExecution): Promise<void> {
-    await this.commands.execute(new ExpireDelegationsCommand(systemActor('identity.expire-delegations'), execution.scheduledAt));
+    await this.commands.execute(
+      new ExpireDelegationsCommand(systemActor('identity.expire-delegations'), execution.scheduledAt),
+    );
   }
 }

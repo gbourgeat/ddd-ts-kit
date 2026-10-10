@@ -14,7 +14,9 @@ export class MarkAppointmentNoShowHandler implements CommandHandler<MarkAppointm
   async execute(command: MarkAppointmentNoShowCommand): Promise<string> {
     const target = await this.appointmentRepository.findById(command.appointmentId);
 
-    if (target === undefined) throw new AppointmentNotFoundError(command.appointmentId);
+    if (target === undefined) {
+      throw new AppointmentNotFoundError(command.appointmentId);
+    }
 
     target.markNoShow(this.clock.now());
 

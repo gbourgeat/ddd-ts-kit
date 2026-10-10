@@ -33,11 +33,19 @@ export function grantDelegationRoute(commands: CommandBus): Route {
       security: ['bearer'],
     },
     async (input) => {
-      const { assistantId, availabilityIncluded, endsAt } = input.body;
-      const terms = { assistantId, availabilityIncluded, ...(endsAt === undefined ? {} : { endsAt: new Date(endsAt) }) };
-      const id = await commands.execute(new GrantDelegationCommand(actorOf(input.context.principal), input.params, terms));
+      const id = await commands.execute(
+        new GrantDelegationCommand(actorOf(input.context.principal), input.params, termsOf(input.body)),
+      );
 
       return { status: 201, body: { id } };
     },
   );
+}
+
+function termsOf({ assistantId, availabilityIncluded, endsAt }: GrantDelegationBody): GrantDelegationCommand['terms'] {
+  return {
+    assistantId,
+    availabilityIncluded,
+    ...(endsAt === undefined ? {} : { endsAt: new Date(endsAt) }),
+  };
 }

@@ -47,7 +47,9 @@ export function authorizationModule(options: AuthorizationModuleOptions): Contex
     register(builder) {
       builder.bind(Authorizer).toFactory(provided(options.authorizer));
 
-      if (authenticator !== undefined) builder.bind(Authenticator).toFactory(provided(authenticator));
+      if (authenticator !== undefined) {
+        builder.bind(Authenticator).toFactory(provided(authenticator));
+      }
 
       builder.bind(AuthorizationMap).toFactory((resolve) => authorizationMapOf(resolve(UseCaseDeclarations).list));
       builder.bind(Access).toFactory((resolve) => accessOf(options, resolve));

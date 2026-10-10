@@ -28,15 +28,28 @@ describe('Person', () => {
   it('announces that the person is registered, with the name and the address to reach them', () => {
     const bornAt = new Date('2026-03-01T00:00:00.000Z');
 
-    const born = aPerson().identifiedBy('person-7').named('Ada Lovelace').reachedAt('ada@example.com').bornAt(bornAt).build();
+    const born = aPerson()
+      .identifiedBy('person-7')
+      .named('Ada Lovelace')
+      .reachedAt('ada@example.com')
+      .bornAt(bornAt)
+      .build();
 
     expect(born.pullEvents()).toEqual([
-      { name: 'identity.person.registered', aggregateId: 'person-7', occurredAt: bornAt, facts: { displayName: 'Ada Lovelace', email: 'ada@example.com' } },
+      {
+        name: 'identity.person.registered',
+        aggregateId: 'person-7',
+        occurredAt: bornAt,
+        facts: { displayName: 'Ada Lovelace', email: 'ada@example.com' },
+      },
     ]);
   });
 
   it('takes the new name and the new address of a person who registers again, and announces nothing new', () => {
-    const contact = { displayName: unwrap(DisplayName.create('Ada King')), email: unwrap(Email.create('ada.king@example.com')) };
+    const contact = {
+      displayName: unwrap(DisplayName.create('Ada King')),
+      email: unwrap(Email.create('ada.king@example.com')),
+    };
 
     given(aPerson().named('Ada Lovelace').reachedAt('ada@example.com'))
       .when((person) => person.registerAgain(contact))
@@ -49,7 +62,11 @@ describe('Person', () => {
 
   it('keeps the day of the first registration when the person registers again', () => {
     const first = new Date('2026-03-01T00:00:00.000Z');
-    const contact = { displayName: unwrap(DisplayName.create('Ada King')), email: unwrap(Email.create('ada.king@example.com')) };
+
+    const contact = {
+      displayName: unwrap(DisplayName.create('Ada King')),
+      email: unwrap(Email.create('ada.king@example.com')),
+    };
 
     given(aPerson().bornAt(first))
       .when((person) => person.registerAgain(contact))

@@ -45,7 +45,11 @@ const shipped: IntegrationEvent = {
 
 describe('errorReportOf', () => {
   it('completes what the capture point says from the execution context and the code of the error', () => {
-    const report = errorReportOf(new ConnectionLost('socket closed'), { origin: 'command', operation: 'ShipOrder' }, request);
+    const report = errorReportOf(
+      new ConnectionLost('socket closed'),
+      { origin: 'command', operation: 'ShipOrder' },
+      request,
+    );
 
     expect(report).toEqual({
       origin: 'http',
@@ -59,13 +63,17 @@ describe('errorReportOf', () => {
   });
 
   it('keeps the origin of the capture point outside of any execution context, and no code for an error without one', () => {
-    expect(errorReportOf(new Error('boom'), { origin: 'process', operation: 'uncaughtException', severity: 'fatal' })).toEqual({
+    expect(
+      errorReportOf(new Error('boom'), { origin: 'process', operation: 'uncaughtException', severity: 'fatal' }),
+    ).toEqual({
       origin: 'process',
       operation: 'uncaughtException',
       severity: 'fatal',
     });
 
-    expect(errorReportOf({ code: 'a message, not a code' }, { origin: 'command', operation: 'X' })).not.toHaveProperty('errorCode');
+    expect(errorReportOf({ code: 'a message, not a code' }, { origin: 'command', operation: 'X' })).not.toHaveProperty(
+      'errorCode',
+    );
   });
 });
 
@@ -171,7 +179,15 @@ describe('errorReportingMiddleware', () => {
     expect(errors.reports).toEqual([
       {
         error: failure,
-        report: { origin: 'http', operation: 'ShipOrder', correlationId: 'corr-1', actorId: 'ada', tenantId: 'acme', errorCode: 'ECONNRESET', severity: 'error' },
+        report: {
+          origin: 'http',
+          operation: 'ShipOrder',
+          correlationId: 'corr-1',
+          actorId: 'ada',
+          tenantId: 'acme',
+          errorCode: 'ECONNRESET',
+          severity: 'error',
+        },
       },
     ]);
   });
@@ -185,7 +201,12 @@ describe('errorReportingMiddleware', () => {
   });
 
   it('stays silent while an event is being consumed: the delivery is retried, and its provider reports the event it gives up', async () => {
-    const consuming = executionContext({ correlationId: 'corr-7', actor: systemActor('shipping.notify'), origin: 'event' });
+    const consuming = executionContext({
+      correlationId: 'corr-7',
+      actor: systemActor('shipping.notify'),
+      origin: 'event',
+    });
+
     const { bus, errors } = aBus(new ConnectionLost('socket closed'), new FixedExecutionScope(consuming));
 
     await expect(bus.execute(new ShipOrder())).rejects.toBeInstanceOf(ConnectionLost);
@@ -200,7 +221,9 @@ describe('errorReportingMiddleware', () => {
     bus.register(ShipOrder, { execute: () => Promise.reject(new Error('boom')) });
     await expect(bus.execute(new ShipOrder())).rejects.toThrow('boom');
 
-    expect(errors.reports.map(({ report }) => report)).toEqual([{ origin: 'command', operation: 'ShipOrder', severity: 'error' }]);
+    expect(errors.reports.map(({ report }) => report)).toEqual([
+      { origin: 'command', operation: 'ShipOrder', severity: 'error' },
+    ]);
   });
 });
 
@@ -217,7 +240,13 @@ describe('DeadLetterReports', () => {
     return { errors, deadLetters, deliver };
   }
 
-  const attempt = { kind: 'handler', consumer: 'shipping.notify', eventId: 'evt-1', eventType: shipped.type, code: 'ECONNRESET' };
+  const attempt = {
+    kind: 'handler',
+    consumer: 'shipping.notify',
+    eventId: 'evt-1',
+    eventType: shipped.type,
+    code: 'ECONNRESET',
+  };
 
   it('does not report a delivery that fails and is retried', async () => {
     const { errors, deadLetters, deliver } = aConsumer(new ConnectionLost('socket closed'));
@@ -268,13 +297,29 @@ describe('DeadLetterReports', () => {
     const deadLetters = new DeadLetterReports(errors);
 
     deadLetters.onFailure({ kind: 'poison', queue: 'shipping.notify.work', code: 'POISON_MESSAGE' });
-    deadLetters.onFailure({ kind: 'publish', eventId: 'evt-9', eventType: shipped.type, code: 'ETIMEDOUT', dead: true });
 
-    expect(errors.reports.map(({ error }) => error)).toEqual([expect.any(DeadLetterError), expect.any(DeadLetterError)]);
+    deadLetters.onFailure({
+      kind: 'publish',
+      eventId: 'evt-9',
+      eventType: shipped.type,
+      code: 'ETIMEDOUT',
+      dead: true,
+    });
+
+    expect(errors.reports.map(({ error }) => error)).toEqual([
+      expect.any(DeadLetterError),
+      expect.any(DeadLetterError),
+    ]);
 
     expect(errors.reports.map(({ report }) => report)).toEqual([
       { origin: 'event', operation: 'poison shipping.notify.work', errorCode: 'POISON_MESSAGE', severity: 'error' },
-      { origin: 'event', operation: 'ordering.order.shipped', correlationId: 'evt-9', errorCode: 'ETIMEDOUT', severity: 'error' },
+      {
+        origin: 'event',
+        operation: 'ordering.order.shipped',
+        correlationId: 'evt-9',
+        errorCode: 'ETIMEDOUT',
+        severity: 'error',
+      },
     ]);
   });
 

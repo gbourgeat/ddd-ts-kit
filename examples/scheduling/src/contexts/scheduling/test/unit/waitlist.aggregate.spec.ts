@@ -11,8 +11,14 @@ import { aWaitlist } from '../builders/waitlist.builder.js';
 
 /** Friday before the Monday the waitlists of this spec wait for. */
 const now = new Date('2026-02-27T10:00:00.000Z');
+
 /** Open all day, offering a consultation of thirty minutes and a surgery of an hour followed by a buffer of fifteen minutes. */
-const calendar = aCalendar().identifiedBy('calendar-1').openEveryDay(['08:00', '20:00']).offering('consultation').offering('surgery', { duration: 60, buffer: 15 }).build();
+const calendar = aCalendar()
+  .identifiedBy('calendar-1')
+  .openEveryDay(['08:00', '20:00'])
+  .offering('consultation')
+  .offering('surgery', { duration: 60, buffer: 15 })
+  .build();
 
 describe('Waitlist', () => {
   it('is born with the identity of its calendar and its day', () => {
@@ -48,7 +54,9 @@ describe('Waitlist', () => {
     given(aWaitlist().joinedBy('patient-1'))
       .when((waitlist) => waitlist.join(waiter('patient-2', 'surgery'), now))
       .thenEvents([{ name: 'scheduling.waitlist.joined', patientId: 'patient-2', appointmentTypeId: 'surgery' }])
-      .thenState((waitlist) => expect(waitlist.waiters.map((known) => known.patientId)).toEqual(['patient-1', 'patient-2']));
+      .thenState((waitlist) =>
+        expect(waitlist.waiters.map((known) => known.patientId)).toEqual(['patient-1', 'patient-2']),
+      );
   });
 
   it('refuses a patient who already waits, whatever the appointment type', () => {
@@ -90,7 +98,10 @@ describe('Waitlist, offering a freed slot', () => {
     const waitlist = aWaitlist().joinedBy('patient-1', 'surgery').build();
 
     expect(waitlist.offer({ slot: freed('09:00', '10:00'), calendar, held: [] }, now)).toBeUndefined();
-    expect(waitlist.offer({ slot: freed('09:00', '10:00', '10:15'), calendar, held: [] }, now)?.waiter.patientId).toBe('patient-1');
+
+    expect(waitlist.offer({ slot: freed('09:00', '10:00', '10:15'), calendar, held: [] }, now)?.waiter.patientId).toBe(
+      'patient-1',
+    );
   });
 
   it('offers a shorter appointment in a longer freed slot', () => {
@@ -103,7 +114,9 @@ describe('Waitlist, offering a freed slot', () => {
 
   it('offers nothing over a slot that is still held', () => {
     given(aWaitlist().joinedBy('patient-1'))
-      .when((waitlist) => waitlist.offer({ slot: freed('09:00', '09:30'), calendar, held: [freed('09:15', '09:45')] }, now))
+      .when((waitlist) =>
+        waitlist.offer({ slot: freed('09:00', '09:30'), calendar, held: [freed('09:15', '09:45')] }, now),
+      )
       .thenEvents([])
       .thenState((waitlist) => expect(waitlist.waiters).toHaveLength(1));
   });
@@ -111,7 +124,10 @@ describe('Waitlist, offering a freed slot', () => {
   it('offers nothing when the calendar can no longer take the slot: too late, or outside its availability', () => {
     const waitlist = aWaitlist().joinedBy('patient-1').build();
 
-    expect(waitlist.offer({ slot: freed('09:00', '09:30'), calendar, held: [] }, new Date('2026-03-02T07:30:00.000Z'))).toBeUndefined();
+    expect(
+      waitlist.offer({ slot: freed('09:00', '09:30'), calendar, held: [] }, new Date('2026-03-02T07:30:00.000Z')),
+    ).toBeUndefined();
+
     expect(waitlist.offer({ slot: freed('22:00', '22:30'), calendar, held: [] }, now)).toBeUndefined();
     expect(waitlist.waiters).toHaveLength(1);
   });
@@ -125,7 +141,10 @@ describe('Waitlist, offering a freed slot', () => {
   it('never holds an offer past the start of its slot', () => {
     const waitlist = aWaitlist().joinedBy('patient-1').build();
 
-    const offer = waitlist.offer({ slot: freed('09:00', '09:30'), calendar, held: [] }, new Date('2026-03-02T05:45:00.000Z'));
+    const offer = waitlist.offer(
+      { slot: freed('09:00', '09:30'), calendar, held: [] },
+      new Date('2026-03-02T05:45:00.000Z'),
+    );
 
     expect(offer?.expiresAt).toEqual(new Date('2026-03-02T06:15:00.000Z'));
   });

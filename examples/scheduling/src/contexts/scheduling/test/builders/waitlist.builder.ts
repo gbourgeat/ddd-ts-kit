@@ -32,7 +32,12 @@ export class WaitlistBuilder extends Builder<WaitlistIngredients, Waitlist> {
   }
 
   protected defaults(): Defaults<WaitlistIngredients> {
-    return { bornAt: new Date('2026-01-01T00:00:00.000Z'), calendarId: sequence('calendar'), day: '2026-03-02', waiters: [] };
+    return {
+      bornAt: new Date('2026-01-01T00:00:00.000Z'),
+      calendarId: sequence('calendar'),
+      day: '2026-03-02',
+      waiters: [],
+    };
   }
 
   protected construct({ bornAt, calendarId, day, waiters }: WaitlistIngredients): Waitlist {

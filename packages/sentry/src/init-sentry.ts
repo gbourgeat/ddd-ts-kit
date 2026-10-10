@@ -35,7 +35,9 @@ const NOTHING_COLLECTED: NonNullable<NodeOptions['dataCollection']> = {
  * `@ddd-ts-kit/tracing`; no performance data unless `tracesSampleRate` is given.
  */
 export function initSentry(options: InitSentryOptions = {}): ErrorReporter {
-  if (options.enabled === false || options.dsn === undefined || options.dsn === '') return new NoopErrorReporter();
+  if (options.enabled === false || options.dsn === undefined || options.dsn === '') {
+    return new NoopErrorReporter();
+  }
 
   const client = initWithoutDefaultIntegrations(sdkOptionsOf(options, options.dsn));
 

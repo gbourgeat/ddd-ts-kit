@@ -3,7 +3,9 @@ import { IntegrationEventHandler } from '@ddd-ts-kit/kernel/declarations';
 import { appointmentExpiredV1, type AppointmentExpiredV1 } from '../../../../scheduling/published-language/index.js';
 import { WithdrawReminderCommand } from '../../commands/withdraw-reminder/withdraw-reminder.command.js';
 
-@IntegrationEventHandler(appointmentExpiredV1, { consumer: 'notification.scheduling-appointment-expired' }, [CommandBus])
+@IntegrationEventHandler(appointmentExpiredV1, { consumer: 'notification.scheduling-appointment-expired' }, [
+  CommandBus,
+])
 export class SchedulingAppointmentExpiredIntegrationHandler {
   static readonly eventType = 'scheduling.appointment.expired';
 

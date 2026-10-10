@@ -9,10 +9,20 @@ import type { RoleGrant } from './role-grant.js';
 export const roleGrants: readonly RoleGrant[] = [
   { role: 'platform-admin', permissions: ['identity:practice.open', 'audit:trail.read'], listing: 'all' },
   {
-    permissions: ['identity:person.register', 'scheduling:calendar.browse', 'scheduling:appointment.list', 'notification:notification.read'],
+    permissions: [
+      'identity:person.register',
+      'scheduling:calendar.browse',
+      'scheduling:appointment.list',
+      'notification:notification.read',
+    ],
     listing: 'relationships',
   },
-  { role: 'patient', permissions: ['scheduling:appointment.book', 'scheduling:waitlist.join'], listing: 'relationships', when: selfService },
+  {
+    role: 'patient',
+    permissions: ['scheduling:appointment.book', 'scheduling:waitlist.join'],
+    listing: 'relationships',
+    when: selfService,
+  },
   { role: 'support', permissions: [], listing: 'relationships' },
 ];
 

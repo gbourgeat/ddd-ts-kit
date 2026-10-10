@@ -18,9 +18,7 @@ export interface DefineIntegrationEventOptions<P> {
   readonly deprecated?: boolean;
 }
 
-export function defineIntegrationEvent<P>(
-  options: DefineIntegrationEventOptions<P>,
-): IntegrationEventDefinition<P> {
+export function defineIntegrationEvent<P>(options: DefineIntegrationEventOptions<P>): IntegrationEventDefinition<P> {
   const { type, version, payload } = options;
 
   assertTypeAndVersion(type, version);
@@ -68,11 +66,7 @@ function producerOf({ type, producer }: DefineIntegrationEventOptions<unknown>):
   return name;
 }
 
-function createEvent<P>(
-  { type, version, payload }: EventContract<P>,
-  input: P,
-  meta: EventMeta,
-): IntegrationEvent<P> {
+function createEvent<P>({ type, version, payload }: EventContract<P>, input: P, meta: EventMeta): IntegrationEvent<P> {
   const parsed = payload.parse(input);
 
   if (!parsed.ok) {

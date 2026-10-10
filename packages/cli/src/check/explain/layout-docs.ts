@@ -19,7 +19,7 @@ export const LAYOUT_DOCS: Readonly<Record<string, RuleDoc>> = {
 }`,
   },
   'clean/blank-lines': {
-    why: 'A function reads in steps: what it gathers, what it decides, what it answers. A blank line before `return` sets the outcome apart, and a block that starts and ends on its braces wastes no line. This checker holds the cheap part only: the `return` and the padded block. ESLint holds the whole layout (after a group of declarations, around `if`, `for`, `try` and a multiline statement, between class members) and is authoritative, with an automatic fix.',
+    why: 'A function reads in steps: what it gathers, what it decides, what it answers. A blank line before `return` sets the outcome apart, and a block that starts and ends on its braces wastes no line. This checker holds the cheap part only: the `return` and the padded block. ESLint holds the blank lines between statements (after a group of declarations, around `if`, `for`, `try` and a multiline statement, between class members) and is authoritative, with an automatic fix; the formatter removes the padding of a block.',
     bad: `function total(lines: readonly Line[]): Money {
 
   const amounts = lines.map((line) => line.amount);
@@ -29,6 +29,25 @@ export const LAYOUT_DOCS: Readonly<Record<string, RuleDoc>> = {
   const amounts = lines.map((line) => line.amount);
 
   return sum(amounts);
+}`,
+  },
+  'clean/braces': {
+    why: 'A branch or a loop written between braces, its body on its own lines, is visible at a glance, and a statement added to it later cannot silently fall outside it. Every `if`, `else`, `for`, `while` and `do` is written that way, `else` on the line of the closing brace. A ternary, an arrow function returning an expression and a one-line object literal are not judged. ESLint holds the braces on the syntax tree (`curly`) and adds them; the formatter puts the body on its own lines.',
+    bad: `if (wrapped.has(repository)) return repository;
+
+for (const step of steps) await step();
+
+if (invoice.isPaid()) { return receipt; }`,
+    good: `if (wrapped.has(repository)) {
+  return repository;
+}
+
+for (const step of steps) {
+  await step();
+}
+
+if (invoice.isPaid()) {
+  return receipt;
 }`,
   },
   'clean/one-export-per-file': {

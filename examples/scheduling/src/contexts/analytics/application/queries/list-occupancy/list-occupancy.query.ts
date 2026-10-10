@@ -4,7 +4,9 @@ import { analyticsPermissions } from '../../authorization/analytics.permissions.
 import type { Occupancy } from '../../ports/occupancy-reader.port.js';
 import type { ListOccupancyResult } from './list-occupancy.result.js';
 
-@Requires(analyticsPermissions['occupancy.read'], { resource: (query: ListOccupancyQuery) => ({ type: 'practice', id: query.practiceId }) })
+@Requires(analyticsPermissions['occupancy.read'], {
+  resource: (query: ListOccupancyQuery) => ({ type: 'practice', id: query.practiceId }),
+})
 export class ListOccupancyQuery extends AuthorizedQuery<ListOccupancyResult> {
   /** `criteria`: the calendars, the days, the order and the page asked for, as the read of the occupancy accepts them. */
   constructor(

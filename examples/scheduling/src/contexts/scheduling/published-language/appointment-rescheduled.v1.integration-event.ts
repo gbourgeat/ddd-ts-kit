@@ -6,7 +6,8 @@ import { AppointmentRescheduledV1Payload } from './appointment-rescheduled.v1.pa
 export const appointmentRescheduledV1 = defineIntegrationEvent({
   type: 'scheduling.appointment.rescheduled',
   version: 1,
-  description: 'An appointment moved to another slot of the same calendar, in one step; the previous slot is free again.',
+  description:
+    'An appointment moved to another slot of the same calendar, in one step; the previous slot is free again.',
   payload: classSchema(AppointmentRescheduledV1Payload),
 });
 

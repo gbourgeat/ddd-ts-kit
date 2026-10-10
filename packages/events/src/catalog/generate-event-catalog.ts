@@ -14,15 +14,10 @@ export interface EventCatalogOptions {
  * A Markdown catalog of every declared event, grouped by producer context. Deterministic:
  * commit the file and let CI fail when the regenerated content differs.
  */
-export function generateEventCatalog(
-  registry: EventRegistry,
-  options: EventCatalogOptions = {},
-): string {
+export function generateEventCatalog(registry: EventRegistry, options: EventCatalogOptions = {}): string {
   const definitions = registry.all();
 
-  const producers = [...new Set(definitions.map((definition) => definition.producer))].sort(
-    compareText,
-  );
+  const producers = [...new Set(definitions.map((definition) => definition.producer))].sort(compareText);
 
   const lines = [
     `# ${options.title ?? 'Event catalog'}`,
@@ -72,9 +67,7 @@ function eventSection(
     `### ${type}`,
     '',
     ...versionsTable(versions),
-    ...(names.length === 0
-      ? []
-      : ['', `Consumers: ${names.map((name) => `\`${name}\``).join(', ')}`]),
+    ...(names.length === 0 ? [] : ['', `Consumers: ${names.map((name) => `\`${name}\``).join(', ')}`]),
     ...versions.flatMap((definition) => [
       '',
       `#### Payload of version ${definition.version}`,
@@ -103,12 +96,7 @@ function payloadTable(fields: readonly PayloadField[]): string[] {
 
   return table(
     ['Field', 'Type', 'Required', 'Description'],
-    fields.map((field) => [
-      `\`${field.path}\``,
-      field.type,
-      field.required ? 'yes' : 'no',
-      field.description,
-    ]),
+    fields.map((field) => [`\`${field.path}\``, field.type, field.required ? 'yes' : 'no', field.description]),
   );
 }
 

@@ -1,6 +1,11 @@
 import { randomUUID } from 'node:crypto';
 import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
-import { streamNamesOf, type RedisStreamsDelivery, type RedisStreamsFailure, type StreamNames } from '../../src/event-bus.js';
+import {
+  streamNamesOf,
+  type RedisStreamsDelivery,
+  type RedisStreamsFailure,
+  type StreamNames,
+} from '../../src/event-bus.js';
 
 export const PLACED = 'ordering.order.placed';
 export const TRACEPARENT = '00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01';
@@ -44,6 +49,8 @@ export const recorder = (failures = 0) => {
   return { received, handler, ids: () => received.map((event) => event.id) };
 };
 
-export const deliveriesOf = (settled: RedisStreamsDelivery[]) => (delivery: RedisStreamsDelivery) => void settled.push(delivery);
+export const deliveriesOf = (settled: RedisStreamsDelivery[]) => (delivery: RedisStreamsDelivery) =>
+  void settled.push(delivery);
 
-export const failuresOf = (reported: RedisStreamsFailure[]) => (failure: RedisStreamsFailure) => void reported.push(failure);
+export const failuresOf = (reported: RedisStreamsFailure[]) => (failure: RedisStreamsFailure) =>
+  void reported.push(failure);

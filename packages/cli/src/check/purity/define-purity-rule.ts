@@ -22,16 +22,24 @@ export function definePurityRule(rule: PurityRule): Rule {
 
 function forbiddenCode(file: SourceFile, rule: PurityRule, layer: string): Finding[] {
   return rule.code.flatMap(({ pattern, what }) =>
-    [...file.scan.code.matchAll(pattern)].map((match) => ({ line: file.scan.lineAt(match.index), message: `${what} is used in the ${layer} layer.`, fix: rule.fix })),
+    [...file.scan.code.matchAll(pattern)].map((match) => ({
+      line: file.scan.lineAt(match.index),
+      message: `${what} is used in the ${layer} layer.`,
+      fix: rule.fix,
+    })),
   );
 }
 
 function forbiddenImports(file: SourceFile, rule: PurityRule, layer: string): Finding[] {
   return file.imports.flatMap(({ target, line }) => {
-    if (target.kind === 'file') return [];
+    if (target.kind === 'file') {
+      return [];
+    }
 
     const name = target.kind === 'builtin' ? (target.name.replace(/^node:/, '').split('/')[0] ?? '') : target.name;
 
-    return rule.modules.includes(name) ? [{ line, message: `"${target.name}" is imported in the ${layer} layer.`, fix: rule.fix }] : [];
+    return rule.modules.includes(name)
+      ? [{ line, message: `"${target.name}" is imported in the ${layer} layer.`, fix: rule.fix }]
+      : [];
   });
 }

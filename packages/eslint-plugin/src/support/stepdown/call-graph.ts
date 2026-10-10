@@ -16,8 +16,13 @@ export class CallGraph<Declaration> {
 
     for (let current = pending.pop(); current !== undefined; current = pending.pop()) {
       for (const callee of this.callees.get(current) ?? []) {
-        if (callee === to) return true;
-        if (!seen.has(callee)) pending.push(callee);
+        if (callee === to) {
+          return true;
+        }
+
+        if (!seen.has(callee)) {
+          pending.push(callee);
+        }
 
         seen.add(callee);
       }

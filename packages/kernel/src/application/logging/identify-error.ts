@@ -17,7 +17,9 @@ export function identifyError(error: unknown): ErrorIdentity {
 }
 
 function codeOf(error: unknown): string | undefined {
-  if (typeof error !== 'object' || error === null || !('code' in error)) return undefined;
+  if (typeof error !== 'object' || error === null || !('code' in error)) {
+    return undefined;
+  }
 
   const { code } = error;
 

@@ -11,7 +11,9 @@ import { importedFrom } from '../support/imported-from.js';
 export function classDeclaring(project: Project, file: SourceFile, name: string): ClassShape | undefined {
   const local = file.structure.classes.find((shape) => shape.name === name && shape.depth === 0);
 
-  if (local !== undefined) return local;
+  if (local !== undefined) {
+    return local;
+  }
 
   const target = importedFrom(file, name)?.target;
   const source = target?.kind === 'file' ? sourceAt(project, target.path) : undefined;

@@ -35,7 +35,11 @@ export class Criteria<Row> {
   static from<Row>(parts: CriteriaParts): Criteria<Row> {
     const filters = (parts.filters ?? []).reduce((all, node) => all.plus(node), Filters.none<Row>());
 
-    return new Criteria<Row>({ filters, sort: parts.sort ?? [], ...(parts.page === undefined ? {} : { page: parts.page }) });
+    return new Criteria<Row>({
+      filters,
+      sort: parts.sort ?? [],
+      ...(parts.page === undefined ? {} : { page: parts.page }),
+    });
   }
 
   private constructor(private readonly state: State<Row>) {}

@@ -122,7 +122,9 @@ describe('a consumer declared with builder.on', () => {
     await app.start();
     const request = executionContext({ correlationId: 'corr-7', actor: ada, origin: 'http' });
 
-    await app.resolve(ExecutionScope).run(request, () => app.resolve(IntegrationEventPublisher).publish([placed('event-1')]));
+    await app
+      .resolve(ExecutionScope)
+      .run(request, () => app.resolve(IntegrationEventPublisher).publish([placed('event-1')]));
 
     expect(seen).toMatchObject([{ correlationId: 'corr-7', causationId: 'event-1', origin: 'event' }]);
   });

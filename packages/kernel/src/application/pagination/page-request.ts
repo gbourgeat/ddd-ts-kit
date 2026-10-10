@@ -16,6 +16,4 @@ export interface CursorPageRequest<Field extends string = string> {
 }
 
 /** What every list query carries. Build one with `offsetPage` or `cursorPage`: they validate. */
-export type PageRequest<Field extends string = string> =
-  | OffsetPageRequest<Field>
-  | CursorPageRequest<Field>;
+export type PageRequest<Field extends string = string> = OffsetPageRequest<Field> | CursorPageRequest<Field>;

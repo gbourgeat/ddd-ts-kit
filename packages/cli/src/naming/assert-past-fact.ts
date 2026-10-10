@@ -3,7 +3,9 @@ import { looksLikePastFact } from './looks-like-past-fact.js';
 import type { Name } from './name.js';
 
 export function assertPastFact(fact: Name, allowName: boolean): void {
-  if (allowName || looksLikePastFact(fact)) return;
+  if (allowName || looksLikePastFact(fact)) {
+    return;
+  }
 
   throw new CliError(
     `"${fact.pascal}" does not read as something that happened.`,

@@ -17,9 +17,7 @@ export class Consumption {
   }
 
   bindings(): ConsumerBinding[] {
-    return [...this.groups.values()].flatMap((group) =>
-      group.types().map((type) => ({ consumer: group.name, type })),
-    );
+    return [...this.groups.values()].flatMap((group) => group.types().map((type) => ({ consumer: group.name, type })));
   }
 
   add({ consumer, type }: ConsumerBinding, handler: IntegrationEventCallback): Subscription {

@@ -6,7 +6,9 @@ const COMPOSE = 'docker-compose.yml';
 export function addComposeService(ws: Workspace, name: string, service: string): void {
   const compose = ws.read(COMPOSE);
 
-  if (compose === undefined || compose.includes(`\n  ${name}:\n`)) return;
+  if (compose === undefined || compose.includes(`\n  ${name}:\n`)) {
+    return;
+  }
 
   const volumes = compose.indexOf('\nvolumes:');
   const head = (volumes === -1 ? compose : compose.slice(0, volumes)).trimEnd();

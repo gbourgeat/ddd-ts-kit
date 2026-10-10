@@ -14,25 +14,33 @@ export class Rendering {
   ) {}
 
   text(text: string): void {
-    if (this.emitting()) this.output += text;
+    if (this.emitting()) {
+      this.output += text;
+    }
   }
 
   tag(block: string | undefined, path: string): void {
     if (block === '#if' || block === '#unless') {
       this.open.push(this.condition(path) === (block === '#if'));
     } else if (block !== undefined) {
-      if (this.open.pop() === undefined) throw this.failure(`"{{${block}}}" closes nothing`);
+      if (this.open.pop() === undefined) {
+        throw this.failure(`"{{${block}}}" closes nothing`);
+      }
     } else if (this.emitting()) {
       this.output += this.value(path);
     }
   }
 
   result(): string {
-    if (this.open.length > 0) throw this.failure('an "{{#if}}" block is never closed');
+    if (this.open.length > 0) {
+      throw this.failure('an "{{#if}}" block is never closed');
+    }
 
     const leftover = /\{\{[^}]*\}\}/.exec(this.output);
 
-    if (leftover !== null) throw this.failure(`leftover placeholder "${leftover[0]}"`);
+    if (leftover !== null) {
+      throw this.failure(`leftover placeholder "${leftover[0]}"`);
+    }
 
     return this.output;
   }
@@ -44,7 +52,9 @@ export class Rendering {
   private condition(path: string): boolean {
     const value = lookup(this.context, path);
 
-    if (typeof value === 'boolean') return value;
+    if (typeof value === 'boolean') {
+      return value;
+    }
 
     throw this.failure(`condition "${path}" is not a known boolean`);
   }
@@ -52,7 +62,9 @@ export class Rendering {
   private value(path: string): string {
     const value = lookup(this.context, path);
 
-    if (value === undefined || typeof value === 'object') throw this.failure(`unknown placeholder "{{${path}}}"`);
+    if (value === undefined || typeof value === 'object') {
+      throw this.failure(`unknown placeholder "{{${path}}}"`);
+    }
 
     return String(value);
   }
@@ -66,7 +78,9 @@ function lookup(context: RenderContext, path: string): RenderValue | undefined {
   let current: RenderValue | undefined = context;
 
   for (const key of path.split('.')) {
-    if (typeof current !== 'object') return undefined;
+    if (typeof current !== 'object') {
+      return undefined;
+    }
 
     current = current[key];
   }

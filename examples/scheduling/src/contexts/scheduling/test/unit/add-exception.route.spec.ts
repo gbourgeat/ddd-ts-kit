@@ -22,7 +22,10 @@ describe('POST /calendars/:calendarId/exceptions', () => {
     const response = await executeRoute(addExceptionRoute(commands), request(valid), { validateResponses: true });
 
     expect(response).toMatchObject({ status: 201, body: { id: 'calendar-1' } });
-    expect(received).toMatchObject([{ calendarId: 'calendar-1', day: '2026-05-01', ranges: [{ start: '10:00', end: '12:00' }] }]);
+
+    expect(received).toMatchObject([
+      { calendarId: 'calendar-1', day: '2026-05-01', ranges: [{ start: '10:00', end: '12:00' }] },
+    ]);
   });
 
   it.each([

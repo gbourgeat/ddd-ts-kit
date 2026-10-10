@@ -15,11 +15,14 @@ const EXPORTED_CLASS = /(?<![\w$.])export\s+(?:default\s+)?(?:abstract\s+)?class
 
 export const namingOneConceptPerFile: Rule = {
   id: 'naming/one-concept-per-file',
-  description: 'One exported aggregate, entity, value object, event, handler or job per file, and one declared class per role file.',
+  description:
+    'One exported aggregate, entity, value object, event, handler or job per file, and one declared class per role file.',
   scope: 'file',
   run(project) {
     return perFile(project, this.id, (file) => {
-      if (!inContext(file.location) || file.isTest) return [];
+      if (!inContext(file.location) || file.isTest) {
+        return [];
+      }
 
       const exported = severalExportedClasses(file);
 
@@ -29,12 +32,16 @@ export const namingOneConceptPerFile: Rule = {
 };
 
 function severalExportedClasses(file: SourceFile): Finding[] {
-  if (!inContext(file.location) || roleOf(roleDirectory(file.location))?.oneConcept !== true) return [];
+  if (!inContext(file.location) || roleOf(roleDirectory(file.location))?.oneConcept !== true) {
+    return [];
+  }
 
   const classes = [...file.scan.code.matchAll(EXPORTED_CLASS)];
   const [first, second] = classes;
 
-  if (first === undefined || second === undefined) return [];
+  if (first === undefined || second === undefined) {
+    return [];
+  }
 
   return [
     {
@@ -47,12 +54,16 @@ function severalExportedClasses(file: SourceFile): Finding[] {
 
 /** In the declared style a role file is found by its name and read for one class: a second declared class hides behind the first. */
 function severalDeclaredClasses(file: SourceFile, project: Project): Finding[] {
-  if (!isDeclaredStyle(project) || declaredRoleOf(pathInContext(project, file) ?? '') === undefined) return [];
+  if (!isDeclaredStyle(project) || declaredRoleOf(pathInContext(project, file) ?? '') === undefined) {
+    return [];
+  }
 
   const declared = classesOf(file.scan).filter(({ decorations }) => decorations.length > 0);
   const [first, second] = declared;
 
-  if (first === undefined || second === undefined) return [];
+  if (first === undefined || second === undefined) {
+    return [];
+  }
 
   return [
     {

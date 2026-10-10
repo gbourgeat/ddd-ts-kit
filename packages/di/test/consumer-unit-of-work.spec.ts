@@ -38,7 +38,9 @@ function billing(ledger: { write(line: string): void }, refused: Set<string> = n
         handle: async (event) => {
           ledger.write(`invoice for ${event.payload.orderId}`);
 
-          if (refused.has(event.payload.orderId)) throw new RangeError(`cannot invoice ${event.payload.orderId}`);
+          if (refused.has(event.payload.orderId)) {
+            throw new RangeError(`cannot invoice ${event.payload.orderId}`);
+          }
         },
       }));
     },

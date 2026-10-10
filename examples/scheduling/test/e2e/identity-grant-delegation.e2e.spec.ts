@@ -2,31 +2,129 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, onTestFailed } f
 import { collectEvents, expectProblem, expectStatus } from '@ddd-ts-kit/testing/e2e';
 import { reportSeedOnFailure } from '@ddd-ts-kit/testing/faker';
 import { expectSpanTree, installTestTracing } from '@ddd-ts-kit/tracing/testing';
-import { delegationGrantedV1, type DelegationGrantedV1Payload } from '../../src/contexts/identity/published-language/index.js';
+import {
+  delegationGrantedV1,
+  type DelegationGrantedV1Payload,
+} from '../../src/contexts/identity/published-language/index.js';
 import { startApplication, type RunningApplication } from './support/start-application.js';
 import { storyOf } from './support/story-of.js';
 
+const tracing = installTestTracing();
+let application: RunningApplication;
+
+beforeAll(async () => {
+  application = await startApplication();
+});
+
+afterAll(async () => {
+  await application.close();
+  tracing.uninstall();
+});
+
+beforeEach(async () => {
+  await application.reset();
+});
+
+reportSeedOnFailure({ beforeEach, onTestFailed });
+
 describe('Grant delegation, end to end', () => {
-  const tracing = installTestTracing();
-  let application: RunningApplication;
+  it('is one trace: the request, the use case, what it saves and what follows the fact', async () => {
+    const practiceId = await openPracticeWithMembers(application);
+    const grace = await application.as({ id: 'grace' });
 
-  beforeAll(async () => {
-    application = await startApplication();
+    const trace = await tracing.traceOf(async () => {
+      expectStatus(await grace.post('/practices/' + practiceId + '/desks/grace/delegations', terms), 201);
+    });
+
+    // The relay is still publishing what the arrangement announced: only the trace of the request is told here.
+    expectSpanTree(
+      storyOf(trace).filter((span) => span.kind === 'SERVER'),
+      storyOfTheRequest,
+    );
   });
 
-  afterAll(async () => {
-    await application.close();
-    tracing.uninstall();
+  it('answers 201 to POST /practices/:practiceId/desks/:practitionerId/delegations for the practitioner of the desk and for a manager of the practice', async () => {
+    const practiceId = await openPracticeWithMembers(application);
+
+    await register(application, 'marie');
+    const ada = await application.as({ id: 'ada' });
+
+    expectStatus(
+      await ada.post('/practices/' + practiceId + '/members', { personId: 'marie', role: 'assistant' }),
+      201,
+    );
+
+    const grace = await application.as({ id: 'grace' });
+
+    const byThePractitioner = await grace.post('/practices/' + practiceId + '/desks/grace/delegations', terms);
+
+    const byTheManager = await ada.post('/practices/' + practiceId + '/desks/grace/delegations', {
+      ...terms,
+      assistantId: 'marie',
+    });
+
+    expectStatus(byThePractitioner, 201);
+    expectStatus(byTheManager, 201);
   });
 
-  beforeEach(async () => {
-    await application.reset();
+  it('publishes that the delegation is granted, with its terms', async () => {
+    const events = collectEvents(application.events, [delegationGrantedV1]);
+    const practiceId = await openPracticeWithMembers(application);
+    const grace = await application.as({ id: 'grace' });
+    const endsAt = new Date(Date.now() + 86_400_000).toISOString();
+
+    const granted = expectStatus(
+      await grace.post<{ id: string }>('/practices/' + practiceId + '/desks/grace/delegations', {
+        ...terms,
+        availabilityIncluded: true,
+        endsAt,
+      }),
+      201,
+    );
+
+    const announced = await events.waitFor<DelegationGrantedV1Payload>(
+      delegationGrantedV1,
+      (event) => event.payload.delegationId === granted.body.id,
+    );
+
+    expect(announced.payload).toEqual({
+      delegationId: granted.body.id,
+      practiceId,
+      practitionerId: 'grace',
+      assistantId: 'linus',
+      availabilityIncluded: true,
+      endsAt,
+    });
+
+    events.stop();
   });
 
-  reportSeedOnFailure({ beforeEach, onTestFailed });
+  it('answers the documented problem for each business refusal', async () => {
+    const practiceId = await openPracticeWithMembers(application);
+    const grace = await application.as({ id: 'grace' });
+    const delegations = '/practices/' + practiceId + '/desks/grace/delegations';
 
+    expectProblem(await grace.post(delegations, { ...terms, assistantId: 'ada' }), {
+      status: 422,
+      code: 'NOT_AN_ASSISTANT',
+    });
+
+    expectProblem(await grace.post(delegations, { ...terms, endsAt: '2000-01-01T00:00:00.000Z' }), {
+      status: 422,
+      code: 'DELEGATION_ENDS_IN_THE_PAST',
+    });
+
+    expectStatus(await grace.post(delegations, terms), 201);
+    expectProblem(await grace.post(delegations, terms), { status: 409, code: 'DELEGATION_ALREADY_ACTIVE' });
+  });
+});
+
+describe('Grant delegation, end to end, kept from who may not grant it', () => {
   it('answers 401 to a caller who presents no credential', async () => {
-    const response = await application.client.post('/practices/practice-id-1/desks/practitioner-id-1/delegations', terms);
+    const response = await application.client.post(
+      '/practices/practice-id-1/desks/practitioner-id-1/delegations',
+      terms,
+    );
 
     expectStatus(response, 401);
   });
@@ -40,51 +138,6 @@ describe('Grant delegation, end to end', () => {
     expectStatus(response, 403);
   });
 
-  it('is one trace: the request, the use case, what it saves and what follows the fact', async () => {
-    const practiceId = await openPracticeWithMembers(application);
-    const grace = await application.as({ id: 'grace' });
-
-    const trace = await tracing.traceOf(async () => {
-      expectStatus(await grace.post('/practices/' + practiceId + '/desks/grace/delegations', terms), 201);
-    });
-
-    // The relay is still publishing what the arrangement announced: only the trace of the request is told here.
-    expectSpanTree(storyOf(trace).filter((span) => span.kind === 'SERVER'), storyOfTheRequest);
-  });
-
-  it('answers 201 to POST /practices/:practiceId/desks/:practitionerId/delegations for the practitioner of the desk and for a manager of the practice', async () => {
-    const practiceId = await openPracticeWithMembers(application);
-
-    await register(application, 'marie');
-    const ada = await application.as({ id: 'ada' });
-
-    expectStatus(await ada.post('/practices/' + practiceId + '/members', { personId: 'marie', role: 'assistant' }), 201);
-    const grace = await application.as({ id: 'grace' });
-
-    const byThePractitioner = await grace.post('/practices/' + practiceId + '/desks/grace/delegations', terms);
-    const byTheManager = await ada.post('/practices/' + practiceId + '/desks/grace/delegations', { ...terms, assistantId: 'marie' });
-
-    expectStatus(byThePractitioner, 201);
-    expectStatus(byTheManager, 201);
-  });
-
-  it('publishes that the delegation is granted, with its terms', async () => {
-    const events = collectEvents(application.events, [delegationGrantedV1]);
-    const practiceId = await openPracticeWithMembers(application);
-    const grace = await application.as({ id: 'grace' });
-    const endsAt = new Date(Date.now() + 86_400_000).toISOString();
-
-    const granted = expectStatus(
-      await grace.post<{ id: string }>('/practices/' + practiceId + '/desks/grace/delegations', { ...terms, availabilityIncluded: true, endsAt }),
-      201,
-    );
-
-    const announced = await events.waitFor<DelegationGrantedV1Payload>(delegationGrantedV1, (event) => event.payload.delegationId === granted.body.id);
-
-    expect(announced.payload).toEqual({ delegationId: granted.body.id, practiceId, practitionerId: 'grace', assistantId: 'linus', availabilityIncluded: true, endsAt });
-    events.stop();
-  });
-
   it('answers 403 on the desk of a member who is not a practitioner: nobody holds a desk that does not exist', async () => {
     const practiceId = await openPracticeWithMembers(application);
     const ada = await application.as({ id: 'ada' });
@@ -92,17 +145,6 @@ describe('Grant delegation, end to end', () => {
     const response = await ada.post('/practices/' + practiceId + '/desks/linus/delegations', terms);
 
     expectStatus(response, 403);
-  });
-
-  it('answers the documented problem for each business refusal', async () => {
-    const practiceId = await openPracticeWithMembers(application);
-    const grace = await application.as({ id: 'grace' });
-    const delegations = '/practices/' + practiceId + '/desks/grace/delegations';
-
-    expectProblem(await grace.post(delegations, { ...terms, assistantId: 'ada' }), { status: 422, code: 'NOT_AN_ASSISTANT' });
-    expectProblem(await grace.post(delegations, { ...terms, endsAt: '2000-01-01T00:00:00.000Z' }), { status: 422, code: 'DELEGATION_ENDS_IN_THE_PAST' });
-    expectStatus(await grace.post(delegations, terms), 201);
-    expectProblem(await grace.post(delegations, terms), { status: 409, code: 'DELEGATION_ALREADY_ACTIVE' });
   });
 });
 
@@ -113,11 +155,23 @@ async function openPracticeWithMembers(application: RunningApplication): Promise
   await register(application, 'ada', 'grace', 'linus');
 
   const root = await application.as({ id: 'root', roles: ['platform-admin'] });
-  const opened = expectStatus(await root.post<{ id: string }>('/practices', { name: 'Riverside', timeZone: 'Europe/Paris', managerId: 'ada' }), 201);
+
+  const opened = expectStatus(
+    await root.post<{ id: string }>('/practices', { name: 'Riverside', timeZone: 'Europe/Paris', managerId: 'ada' }),
+    201,
+  );
+
   const ada = await application.as({ id: 'ada' });
 
-  expectStatus(await ada.post('/practices/' + opened.body.id + '/members', { personId: 'grace', role: 'practitioner' }), 201);
-  expectStatus(await ada.post('/practices/' + opened.body.id + '/members', { personId: 'linus', role: 'assistant' }), 201);
+  expectStatus(
+    await ada.post('/practices/' + opened.body.id + '/members', { personId: 'grace', role: 'practitioner' }),
+    201,
+  );
+
+  expectStatus(
+    await ada.post('/practices/' + opened.body.id + '/members', { personId: 'linus', role: 'assistant' }),
+    201,
+  );
 
   return opened.body.id;
 }
@@ -127,13 +181,17 @@ async function register(application: RunningApplication, ...personIds: readonly 
   for (const personId of personIds) {
     const person = await application.as({ id: personId });
 
-    expectStatus(await person.put('/people/me', { displayName: 'Name of ' + personId, email: personId + '@example.com' }), 200);
+    expectStatus(
+      await person.put('/people/me', { displayName: 'Name of ' + personId, email: personId + '@example.com' }),
+      200,
+    );
   }
 }
 
 const storyOfTheRequest: Parameters<typeof expectSpanTree>[1] = [
   {
-    name: 'POST /practices/:practiceId/desks/:practitionerId/delegations', kind: 'SERVER',
+    name: 'POST /practices/:practiceId/desks/:practitionerId/delegations',
+    kind: 'SERVER',
     children: [
       {
         name: 'command GrantDelegationCommand',
@@ -149,15 +207,11 @@ const storyOfTheRequest: Parameters<typeof expectSpanTree>[1] = [
                 children: [
                   {
                     name: 'handler DelegationGrantedEventHandler',
-                    children: [
-                      { name: 'repository IdentityRelationships.recordDelegation' },
-                    ],
+                    children: [{ name: 'repository IdentityRelationships.recordDelegation' }],
                   },
                   {
                     name: 'handler DelegationGrantedPublisher',
-                    children: [
-                      { name: 'outbox append identity.delegation.granted' },
-                    ],
+                    children: [{ name: 'outbox append identity.delegation.granted' }],
                   },
                 ],
               },

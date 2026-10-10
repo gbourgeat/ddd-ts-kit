@@ -7,8 +7,11 @@ export function matchingBracket(code: string, open: number): number {
   for (let i = open; i < code.length; i += 1) {
     const char = code.charAt(i);
 
-    if (BRACKETS.openers.includes(char)) depth += 1;
-    else if (BRACKETS.closers.includes(char) && (depth -= 1) === 0) return i;
+    if (BRACKETS.openers.includes(char)) {
+      depth += 1;
+    } else if (BRACKETS.closers.includes(char) && (depth -= 1) === 0) {
+      return i;
+    }
   }
 
   return code.length - 1;

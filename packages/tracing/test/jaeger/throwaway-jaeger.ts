@@ -52,8 +52,11 @@ function freePort(): Promise<number> {
       const address = server.address();
 
       server.close(() => {
-        if (typeof address === 'object' && address !== null) resolve(address.port);
-        else reject(new Error('no free port'));
+        if (typeof address === 'object' && address !== null) {
+          resolve(address.port);
+        } else {
+          reject(new Error('no free port'));
+        }
       });
     });
   });
@@ -66,7 +69,9 @@ async function answering(url: string): Promise<void> {
       () => false,
     );
 
-    if (up) return;
+    if (up) {
+      return;
+    }
 
     await new Promise((resolve) => setTimeout(resolve, 200));
   }

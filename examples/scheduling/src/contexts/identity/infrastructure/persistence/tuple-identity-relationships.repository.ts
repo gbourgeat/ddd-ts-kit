@@ -48,11 +48,19 @@ function tuplesOfMembership({ practiceId, personId, role }: Membership): readonl
 
   const desk = deskOf(practiceId, personId);
 
-  return [member, { object: desk, relation: 'holder', subject: userOf(personId) }, { object: desk, relation: 'practice', subject: practice }];
+  return [
+    member,
+    { object: desk, relation: 'holder', subject: userOf(personId) },
+    { object: desk, relation: 'practice', subject: practice },
+  ];
 }
 
 /** The delegation on the whole desk, then the one on its availabilities only. */
-function tuplesOfDelegation({ practiceId, practitionerId, assistantId }: Delegation): readonly [RelationTuple, RelationTuple] {
+function tuplesOfDelegation({
+  practiceId,
+  practitionerId,
+  assistantId,
+}: Delegation): readonly [RelationTuple, RelationTuple] {
   const desk = deskOf(practiceId, practitionerId);
 
   return [

@@ -8,11 +8,18 @@ export function selfCheck(args: Arguments, io: Io): number {
   const failed = outcomes.filter((outcome) => !outcome.ok);
 
   if (args.json) {
-    const fixtures = outcomes.map(({ fixture, ok, detail }) => ({ ruleId: fixture.ruleId, name: fixture.name, ok, detail }));
+    const fixtures = outcomes.map(({ fixture, ok, detail }) => ({
+      ruleId: fixture.ruleId,
+      name: fixture.name,
+      ok,
+      detail,
+    }));
 
     io.out(JSON.stringify({ ok: failed.length === 0, fixtures }, null, 2));
   } else {
-    for (const { fixture, ok, detail } of outcomes) io.out(`${ok ? 'ok  ' : 'FAIL'}  ${fixture.ruleId}: ${fixture.name}${ok ? '' : `\n      ${detail}`}`);
+    for (const { fixture, ok, detail } of outcomes) {
+      io.out(`${ok ? 'ok  ' : 'FAIL'}  ${fixture.ruleId}: ${fixture.name}${ok ? '' : `\n      ${detail}`}`);
+    }
 
     io.out(`\n${outcomes.length - failed.length}/${outcomes.length} rule fixtures behave as expected.`);
   }

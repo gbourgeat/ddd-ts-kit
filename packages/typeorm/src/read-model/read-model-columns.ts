@@ -10,7 +10,9 @@ import type { ReadModelStamps } from './read-model-stamps.js';
  * `last_event_at`, `last_event_version` and `deleted`, the trace a removed row leaves so that
  * a late event does not bring it back.
  */
-export function readModelColumns(dialect: TypeOrmDialect = 'postgres'): Record<keyof ReadModelStamps, EntitySchemaColumnOptions> {
+export function readModelColumns(
+  dialect: TypeOrmDialect = 'postgres',
+): Record<keyof ReadModelStamps, EntitySchemaColumnOptions> {
   return {
     lastEventId: { name: 'last_event_id', type: 'varchar', length: INDEXABLE_LENGTH },
     lastEventAt: { ...INSTANT[dialect], name: 'last_event_at' },

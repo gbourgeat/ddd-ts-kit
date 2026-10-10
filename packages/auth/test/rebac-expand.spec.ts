@@ -28,7 +28,12 @@ describe('RelationBasedAuthorizer.expand', () => {
       'intersection',
       true,
       [
-        ['document:1#sign', 'computed', true, [['document:1#approver', 'relation', true, [['document:1#approver', 'direct', true, '@user:ada']]]]],
+        [
+          'document:1#sign',
+          'computed',
+          true,
+          [['document:1#approver', 'relation', true, [['document:1#approver', 'direct', true, '@user:ada']]]],
+        ],
         [
           'document:1#sign',
           'computed',
@@ -60,7 +65,14 @@ describe('RelationBasedAuthorizer.expand', () => {
                               'userset',
                               true,
                               '@group:eng#member',
-                              [['group:eng#member', 'relation', true, [['group:eng#member', 'direct', true, '@user:ada']]]],
+                              [
+                                [
+                                  'group:eng#member',
+                                  'relation',
+                                  true,
+                                  [['group:eng#member', 'direct', true, '@user:ada']],
+                                ],
+                              ],
                             ],
                           ],
                         ],
@@ -79,9 +91,12 @@ describe('RelationBasedAuthorizer.expand', () => {
   });
 
   it('shows where a cycle and the depth limit cut the evaluation', async () => {
-    const looping = await authorizerWith([fact('folder:x', 'parent', 'folder:y'), fact('folder:y', 'parent', 'folder:x')], {
-      maxDepth: 3,
-    });
+    const looping = await authorizerWith(
+      [fact('folder:x', 'parent', 'folder:y'), fact('folder:y', 'parent', 'folder:x')],
+      {
+        maxDepth: 3,
+      },
+    );
 
     const vias = (node: ExpandNode): string[] => [node.via, ...node.children.flatMap(vias)];
 
@@ -95,8 +110,8 @@ describe('RelationBasedAuthorizer.expand', () => {
   it('refuses to explain a permission that is not mapped', async () => {
     const authorizer = await authorizerWith([]);
 
-    await expect(authorizer.expand({ actor: ada, permission: viewFolder, resource: document('1') })).rejects.toBeInstanceOf(
-      SchemaError,
-    );
+    await expect(
+      authorizer.expand({ actor: ada, permission: viewFolder, resource: document('1') }),
+    ).rejects.toBeInstanceOf(SchemaError);
   });
 });

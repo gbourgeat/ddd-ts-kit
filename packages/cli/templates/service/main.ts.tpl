@@ -38,22 +38,22 @@ const application = composeApplication(
   persistence,
   {
     events: {{events.provider}},
-{{#if errors.sentry}}
+    {{#if errors.sentry}}
     errors,
-{{/if}}
-{{#if http.any}}
+    {{/if}}
+    {{#if http.any}}
     authenticator: createAuthenticator(config),
-{{/if}}
+    {{/if}}
     log: { ...config.log, service: config.serviceName, environment: config.environment },
     traceConsumers: config.tracing.consumers,
     resilience: config.resilience,
     // A context run alone takes its jobs with it, and only its own.
     jobs: { start: config.runJobs, settings: jobSettings(process.env, '{{context.kebab}}') },
-{{#if cache.redis}}
+    {{#if cache.redis}}
     redis,
-{{/if}}
+    {{/if}}
   },
-  {{service.selection}},
+  {{service.selection}}
 );
 
 await application.start();
@@ -64,15 +64,15 @@ const relay = startOutboxRelay({
   publisher: application.eventBus,
   intervalMs: config.outboxRelayIntervalMs,
   logger: application.logger,
-{{#if errors.sentry}}
+  {{#if errors.sentry}}
   errors,
-{{/if}}
-{{#if cache.relaySignal}}
+  {{/if}}
+  {{#if cache.relaySignal}}
   wakeOn: redis.relaySignal,
-{{/if}}
-{{#if persistence.signals}}
+  {{/if}}
+  {{#if persistence.signals}}
   wakeOn: persistence.relaySignal,
-{{/if}}
+  {{/if}}
 });
 
 {{/if}}
@@ -89,16 +89,16 @@ process.once('SIGTERM', () => void shutdown());
 process.once('SIGINT', () => void shutdown());
 
 async function shutdown(): Promise<void> {
-{{#if http.any}}
+  {{#if http.any}}
   await server.close();
-{{/if}}
-{{#if events.outbox}}
+  {{/if}}
+  {{#if events.outbox}}
   await relay.stop();
-{{/if}}
+  {{/if}}
   await application.stop();
-{{#if cache.redis}}
+  {{#if cache.redis}}
   await redis.close();
-{{/if}}
+  {{/if}}
   await persistence.close();
   await tracing.shutdown();
 }

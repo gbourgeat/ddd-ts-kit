@@ -19,13 +19,20 @@ function identityTests(filter: AuditFilter): EntryTest[] {
     [filter.correlationId, (entry) => entry.correlationId],
   ];
 
-  return expected.flatMap(([value, read]) => (value === undefined ? [] : [(entry: AuditEntry) => read(entry) === value]));
+  return expected.flatMap(([value, read]) =>
+    value === undefined ? [] : [(entry: AuditEntry) => read(entry) === value],
+  );
 }
 
 function resourceTests({ resource }: AuditFilter): EntryTest[] {
-  if (resource === undefined) return [];
+  if (resource === undefined) {
+    return [];
+  }
 
-  return [(entry) => entry.resource?.type === resource.type && (resource.id === undefined || entry.resource.id === resource.id)];
+  return [
+    (entry) =>
+      entry.resource?.type === resource.type && (resource.id === undefined || entry.resource.id === resource.id),
+  ];
 }
 
 function rangeTests(filter: AuditFilter): EntryTest[] {

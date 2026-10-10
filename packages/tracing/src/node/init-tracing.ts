@@ -81,7 +81,10 @@ export function initTracing(options: InitTracingOptions): TracingHandle {
   return { shutdown: () => sdk.shutdown() };
 }
 
-function instrumentationsOf({ ignoredPaths, autoInstrumentations }: InitTracingOptions): ReturnType<typeof defaultInstrumentations> {
+function instrumentationsOf({
+  ignoredPaths,
+  autoInstrumentations,
+}: InitTracingOptions): ReturnType<typeof defaultInstrumentations> {
   return defaultInstrumentations({
     ...(ignoredPaths === undefined ? {} : { ignoredPaths }),
     ...(autoInstrumentations === undefined ? {} : { settings: autoInstrumentations }),
@@ -92,9 +95,7 @@ function resourceOf(options: InitTracingOptions): resources.Resource {
   return resources.defaultResource().merge(
     resources.resourceFromAttributes({
       ...(options.serviceVersion === undefined ? {} : { 'service.version': options.serviceVersion }),
-      ...(options.environment === undefined
-        ? {}
-        : { 'deployment.environment.name': options.environment }),
+      ...(options.environment === undefined ? {} : { 'deployment.environment.name': options.environment }),
     }),
   );
 }
@@ -113,7 +114,9 @@ function spanProcessorsOf(options: InitTracingOptions): tracing.SpanProcessor[] 
 }
 
 function exporterFor(options: InitTracingOptions): OTLPTraceExporter | undefined {
-  if (options.exporterUrl !== undefined) return new OTLPTraceExporter({ url: options.exporterUrl });
+  if (options.exporterUrl !== undefined) {
+    return new OTLPTraceExporter({ url: options.exporterUrl });
+  }
 
   const fromEnvironment =
     process.env['OTEL_EXPORTER_OTLP_TRACES_ENDPOINT'] ?? process.env['OTEL_EXPORTER_OTLP_ENDPOINT'];

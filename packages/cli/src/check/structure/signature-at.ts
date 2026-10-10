@@ -17,7 +17,9 @@ export function signatureAt(code: string, openParenthesis: number): Signature | 
   const closeParenthesis = matchingBracket(code, openParenthesis);
   const bodyOpen = bodyStart(code, closeParenthesis + 1);
 
-  if (bodyOpen === undefined) return undefined;
+  if (bodyOpen === undefined) {
+    return undefined;
+  }
 
   const bodyClose = matchingBracket(code, bodyOpen);
 
@@ -43,8 +45,13 @@ function bodyStart(code: string, afterParameters: number): number | undefined {
   while (i < code.length) {
     const char = code.charAt(i);
 
-    if (endsSignature(char, code.charAt(i + 1))) return undefined;
-    if (char === '{' && !opensTypeLiteral(code.slice(afterParameters, i))) return i;
+    if (endsSignature(char, code.charAt(i + 1))) {
+      return undefined;
+    }
+
+    if (char === '{' && !opensTypeLiteral(code.slice(afterParameters, i))) {
+      return i;
+    }
 
     i = BRACKETS.openers.includes(char) ? matchingBracket(code, i) + 1 : i + 1;
   }

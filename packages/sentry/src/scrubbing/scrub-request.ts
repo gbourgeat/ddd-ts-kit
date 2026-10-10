@@ -1,6 +1,7 @@
 import type { RequestEventData } from '@sentry/node';
 
-const CREDENTIAL_HEADER = /auth|cookie|token|secret|password|session|signature|api-?key|csrf|forwarded|real-ip|client-ip/i;
+const CREDENTIAL_HEADER =
+  /auth|cookie|token|secret|password|session|signature|api-?key|csrf|forwarded|real-ip|client-ip/i;
 
 /**
  * Keeps the method, the URL without query string or fragment, and the headers that carry

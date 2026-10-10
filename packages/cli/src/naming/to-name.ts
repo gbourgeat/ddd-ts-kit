@@ -21,7 +21,9 @@ export function toName(input: string): Name {
 }
 
 function pluralize(word: string): string {
-  if (/[^aeiou]y$/.test(word)) return `${word.slice(0, -1)}ies`;
+  if (/[^aeiou]y$/.test(word)) {
+    return `${word.slice(0, -1)}ies`;
+  }
 
   return /(?:s|x|z|ch|sh)$/.test(word) ? `${word}es` : `${word}s`;
 }

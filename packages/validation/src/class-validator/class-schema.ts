@@ -1,10 +1,6 @@
 import 'reflect-metadata';
 import { plainToInstance, type ClassTransformOptions } from 'class-transformer';
-import {
-  validateSync,
-  type ValidationError as ClassValidatorError,
-  type ValidatorOptions,
-} from 'class-validator';
+import { validateSync, type ValidationError as ClassValidatorError, type ValidatorOptions } from 'class-validator';
 import { err, ok } from '@ddd-ts-kit/kernel';
 import type { Schema } from '../schema.js';
 import type { ValidationIssue } from '../validation-issue.js';
@@ -17,10 +13,7 @@ export interface ClassSchemaOptions {
   readonly transform?: ClassTransformOptions;
 }
 
-export function classSchema<T extends object>(
-  dto: DtoClass<T>,
-  options: ClassSchemaOptions = {},
-): Schema<T> {
+export function classSchema<T extends object>(dto: DtoClass<T>, options: ClassSchemaOptions = {}): Schema<T> {
   const validatorOptions: ValidatorOptions = {
     whitelist: true,
     forbidNonWhitelisted: true,

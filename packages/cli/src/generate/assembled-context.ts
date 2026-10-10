@@ -8,8 +8,13 @@ import type { Scope } from './scope.js';
 export function assembledContext(scope: Pick<Scope, 'config' | 'context'>, toContext: string): string {
   const { config, context } = scope;
 
-  if (!isDeclared(config)) return `${context.camel}Module`;
-  if (config.stack.assembly === 'discovery') return `await discoverContext('${context.kebab}', new URL('${toContext}', import.meta.url))`;
+  if (!isDeclared(config)) {
+    return `${context.camel}Module`;
+  }
+
+  if (config.stack.assembly === 'discovery') {
+    return `await discoverContext('${context.kebab}', new URL('${toContext}', import.meta.url))`;
+  }
 
   return `contextModule('${context.kebab}', ${context.camel}Declarations)`;
 }

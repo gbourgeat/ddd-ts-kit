@@ -11,11 +11,11 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-app}
       POSTGRES_DB: ${POSTGRES_DB:-app}
     ports:
-      - "127.0.0.1:${POSTGRES_PORT:-54320}:5432"
+      - '127.0.0.1:${POSTGRES_PORT:-54320}:5432'
     volumes:
       - postgres-data:/var/lib/postgresql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}']
       interval: 2s
       timeout: 3s
       retries: 30
@@ -26,13 +26,13 @@ services:
     image: docker.dragonflydb.io/dragonflydb/dragonfly:v2.0.2
     ulimits:
       memlock: -1
-    command: ["--maxmemory=512mb", "--proactor_threads=2"]
+    command: ['--maxmemory=512mb', '--proactor_threads=2']
     ports:
-      - "127.0.0.1:${REDIS_PORT:-54379}:6379"
+      - '127.0.0.1:${REDIS_PORT:-54379}:6379'
     volumes:
       - cache-data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ['CMD', 'redis-cli', 'ping']
       interval: 2s
       timeout: 3s
       retries: 30
@@ -42,18 +42,22 @@ services:
   keycloak:
     image: quay.io/keycloak/keycloak:26.8.0
     profiles: [identity]
-    command: ["start-dev", "--import-realm"]
+    command: ['start-dev', '--import-realm']
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN:-admin}
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
-      KC_HEALTH_ENABLED: "true"
+      KC_HEALTH_ENABLED: 'true'
     ports:
-      - "127.0.0.1:${KEYCLOAK_PORT:-54080}:8080"
+      - '127.0.0.1:${KEYCLOAK_PORT:-54080}:8080'
     volumes:
       - ./docker/keycloak:/opt/keycloak/data/import:ro
     healthcheck:
       # The image has no HTTP client: the management port is asked through bash.
-      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/9000 && printf 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && grep -q '\"UP\"' <&3"]
+      test:
+        [
+          'CMD-SHELL',
+          "exec 3<>/dev/tcp/127.0.0.1/9000 && printf 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && grep -q '\"UP\"' <&3",
+        ]
       interval: 5s
       timeout: 5s
       retries: 40
@@ -62,8 +66,8 @@ services:
     image: jaegertracing/jaeger:2.22.0
     profiles: [observability]
     ports:
-      - "127.0.0.1:${JAEGER_UI_PORT:-54686}:16686"
-      - "127.0.0.1:${OTLP_HTTP_PORT:-54318}:4318"
+      - '127.0.0.1:${JAEGER_UI_PORT:-54686}:16686'
+      - '127.0.0.1:${OTLP_HTTP_PORT:-54318}:4318'
 
   # GlitchTip 6 in development mode, for local use only: an error tracker that speaks the Sentry protocol.
   # Its first start migrates its database, then creates a user (test@example.com / admin_pass), an organization
@@ -77,7 +81,7 @@ services:
       glitchtip-valkey:
         condition: service_started
     ports:
-      - "127.0.0.1:${GLITCHTIP_PORT:-54800}:8000"
+      - '127.0.0.1:${GLITCHTIP_PORT:-54800}:8000'
     environment:
       # Web and worker in one process.
       SERVER_ROLE: all_in_one
@@ -89,10 +93,10 @@ services:
       EMAIL_URL: consolemail://
       DEFAULT_FROM_EMAIL: glitchtip@localhost
       # Development only: required by the bootstrap below.
-      DEBUG: "true"
-      GLITCHTIP_BOOTSTRAP_DEV: "true"
+      DEBUG: 'true'
+      GLITCHTIP_BOOTSTRAP_DEV: 'true'
     healthcheck:
-      test: ["CMD", "python", "healthcheck.py"]
+      test: ['CMD', 'python', 'healthcheck.py']
       interval: 10s
       timeout: 6s
       retries: 6
@@ -107,7 +111,7 @@ services:
     volumes:
       - glitchtip-postgres:/var/lib/postgresql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d glitchtip"]
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d glitchtip']
       interval: 5s
       retries: 12
 
@@ -124,8 +128,7 @@ services:
     profiles: [services]
     env_file: .env
     environment:
-      RUN_JOBS: "true"
-
+      RUN_JOBS: 'true'
 
 volumes:
   postgres-data:

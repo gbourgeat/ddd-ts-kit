@@ -17,7 +17,10 @@ import { FakeIdentityRelationships } from '../fakes/identity-relationships.fake.
 import { FakePersonRepository } from '../fakes/person.repository.fake.js';
 import { FakePracticeRepository } from '../fakes/practice.repository.fake.js';
 
-const holders = authorizationModule({ authorizer: new RoleBasedAuthorizer({ roles: { holder: [identityPermissions['delegation.expire']] } }) });
+const holders = authorizationModule({
+  authorizer: new RoleBasedAuthorizer({ roles: { holder: [identityPermissions['delegation.expire']] } }),
+});
+
 const holder = anActor().withRole('holder').build();
 
 const grantedAt = new Date('2026-03-01T00:00:00.000Z');
@@ -39,7 +42,9 @@ describe('Expire delegations', () => {
   it('is refused to an actor who does not hold the permission delegation.expire', async () => {
     const { application } = arrange();
 
-    await expect(application.commandBus.execute(new ExpireDelegationsCommand(anActor().build(), end))).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(
+      application.commandBus.execute(new ExpireDelegationsCommand(anActor().build(), end)),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
   });
 
   it('announces each expiry at the instant asked for, takes the desk back, and tells the other contexts', async () => {
@@ -51,7 +56,11 @@ describe('Expire delegations', () => {
     expect(relationships.current).not.toContain('delegate assistant-1 of practitioner-1 in practice-1');
 
     expect(application.eventBus.published.slice(before)).toMatchObject([
-      { type: 'identity.delegation.revoked', occurredAt: end.toISOString(), payload: { delegationId: 'delegation-due', cause: 'expired' } },
+      {
+        type: 'identity.delegation.revoked',
+        occurredAt: end.toISOString(),
+        payload: { delegationId: 'delegation-due', cause: 'expired' },
+      },
     ]);
   });
 
@@ -81,8 +90,18 @@ async function arrangeWithDelegations() {
   const arranged = arrange();
   const granted = aDelegation().bornAt(grantedAt);
 
-  await arranged.delegationRepository.save(granted.identifiedBy('delegation-due').givenTo('assistant-1').endingAt(end).build());
-  await arranged.delegationRepository.save(granted.identifiedBy('delegation-later').givenTo('assistant-2').endingAt(new Date('2026-05-01T00:00:00.000Z')).build());
+  await arranged.delegationRepository.save(
+    granted.identifiedBy('delegation-due').givenTo('assistant-1').endingAt(end).build(),
+  );
+
+  await arranged.delegationRepository.save(
+    granted
+      .identifiedBy('delegation-later')
+      .givenTo('assistant-2')
+      .endingAt(new Date('2026-05-01T00:00:00.000Z'))
+      .build(),
+  );
+
   await arranged.delegationRepository.save(granted.identifiedBy('delegation-open').givenTo('assistant-3').build());
 
   return arranged;

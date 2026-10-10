@@ -42,15 +42,33 @@ function baseForms(word: string): Set<string> {
   const forms = new Set([lower]);
   const irregular = IRREGULAR[lower];
 
-  if (irregular !== undefined) forms.add(irregular);
-  if (lower.endsWith('ies')) forms.add(`${lower.slice(0, -3)}y`);
-  if (lower.endsWith('es')) forms.add(lower.slice(0, -2));
-  if (lower.endsWith('s') && !lower.endsWith('ss')) forms.add(lower.slice(0, -1));
-  if (lower.endsWith('ied')) forms.add(`${lower.slice(0, -3)}y`);
+  if (irregular !== undefined) {
+    forms.add(irregular);
+  }
 
-  for (const stem of verbStems(lower)) forms.add(stem);
+  if (lower.endsWith('ies')) {
+    forms.add(`${lower.slice(0, -3)}y`);
+  }
 
-  if (lower.endsWith('d')) forms.add(lower.slice(0, -1));
+  if (lower.endsWith('es')) {
+    forms.add(lower.slice(0, -2));
+  }
+
+  if (lower.endsWith('s') && !lower.endsWith('ss')) {
+    forms.add(lower.slice(0, -1));
+  }
+
+  if (lower.endsWith('ied')) {
+    forms.add(`${lower.slice(0, -3)}y`);
+  }
+
+  for (const stem of verbStems(lower)) {
+    forms.add(stem);
+  }
+
+  if (lower.endsWith('d')) {
+    forms.add(lower.slice(0, -1));
+  }
 
   return forms;
 }

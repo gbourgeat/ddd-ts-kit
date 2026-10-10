@@ -14,9 +14,15 @@ const body = { assistantId: 'person-3', availabilityIncluded: true, endsAt: '202
 
 describe('POST /practices/:practiceId/desks/:practitionerId/delegations', () => {
   it('answers 201 when the use case succeeds', async () => {
-    const commands = new InMemoryCommandBus().register(GrantDelegationCommand, { execute: async () => 'grant-delegation-1' });
+    const commands = new InMemoryCommandBus().register(GrantDelegationCommand, {
+      execute: async () => 'grant-delegation-1',
+    });
 
-    const response = await executeRoute(grantDelegationRoute(commands), { params, query: {}, headers: {}, body, raw: undefined }, { validateResponses: true });
+    const response = await executeRoute(
+      grantDelegationRoute(commands),
+      { params, query: {}, headers: {}, body, raw: undefined },
+      { validateResponses: true },
+    );
 
     expect(response.status).toBe(201);
     expect(response.body).toEqual({ id: 'grant-delegation-1' });
@@ -35,20 +41,33 @@ describe('POST /practices/:practiceId/desks/:practitionerId/delegations', () => 
 
     await executeRoute(grantDelegationRoute(commands), { params, query: {}, headers: {}, body, raw: undefined });
 
-    expect(sent).toMatchObject([{
+    expect(sent).toMatchObject([
+      {
         desk: { practiceId: 'practice-1', practitionerId: 'person-2' },
         terms: { assistantId: 'person-3', availabilityIncluded: true, endsAt: new Date('2026-06-01T00:00:00.000Z') },
-      }]);
+      },
+    ]);
   });
 
   it.each([
     ['a body without an assistant', { availabilityIncluded: true }],
-    ['an availability that is neither included nor left out', { assistantId: 'person-3', availabilityIncluded: 'maybe' }],
+    [
+      'an availability that is neither included nor left out',
+      { assistantId: 'person-3', availabilityIncluded: 'maybe' },
+    ],
     ['an end that is not a date', { assistantId: 'person-3', availabilityIncluded: true, endsAt: 'tomorrow' }],
   ])('refuses %s with 422', async (_what, malformed) => {
-    const commands = new InMemoryCommandBus().register(GrantDelegationCommand, { execute: async () => 'grant-delegation-1' });
+    const commands = new InMemoryCommandBus().register(GrantDelegationCommand, {
+      execute: async () => 'grant-delegation-1',
+    });
 
-    const response = await executeRoute(grantDelegationRoute(commands), { params, query: {}, headers: {}, body: malformed, raw: undefined });
+    const response = await executeRoute(grantDelegationRoute(commands), {
+      params,
+      query: {},
+      headers: {},
+      body: malformed,
+      raw: undefined,
+    });
 
     expect(response.status).toBe(422);
     expect(response.body).toMatchObject({ code: 'VALIDATION_FAILED' });
@@ -67,7 +86,13 @@ describe('POST /practices/:practiceId/desks/:practitionerId/delegations', () => 
       },
     });
 
-    const response = await executeRoute(grantDelegationRoute(commands), { params, query: {}, headers: {}, body, raw: undefined });
+    const response = await executeRoute(grantDelegationRoute(commands), {
+      params,
+      query: {},
+      headers: {},
+      body,
+      raw: undefined,
+    });
 
     expect(response.status).toBe(422);
     expect(response.body).toMatchObject({ code });

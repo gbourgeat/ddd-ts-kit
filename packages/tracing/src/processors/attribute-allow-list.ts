@@ -32,7 +32,9 @@ export class AttributeAllowList {
     this.prune(span.attributes);
 
     for (const event of span.events) {
-      if (event.attributes !== undefined) this.prune(event.attributes, 'exception.type');
+      if (event.attributes !== undefined) {
+        this.prune(event.attributes, 'exception.type');
+      }
     }
   }
 
@@ -42,7 +44,9 @@ export class AttributeAllowList {
 
   private prune(attributes: Record<string, unknown>, ...kept: readonly string[]): void {
     for (const name of Object.keys(attributes)) {
-      if (!kept.includes(name) && !this.allows(name)) Reflect.deleteProperty(attributes, name);
+      if (!kept.includes(name) && !this.allows(name)) {
+        Reflect.deleteProperty(attributes, name);
+      }
     }
   }
 

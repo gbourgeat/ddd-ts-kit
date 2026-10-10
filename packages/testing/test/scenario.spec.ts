@@ -208,9 +208,7 @@ describe('failure messages', () => {
     expect(failureOf(() => payingTwice().thenEventNames([]))).toContain(`Expected events, ${unexpected}`);
     expect(failureOf(() => payingTwice().thenNoEvent())).toContain(`Expected no event, ${unexpected}`);
 
-    expect(failureOf(() => payingTwice().thenState(() => undefined))).toContain(
-      `Expected a state, ${unexpected}`,
-    );
+    expect(failureOf(() => payingTwice().thenState(() => undefined))).toContain(`Expected a state, ${unexpected}`);
   });
 
   it('lets the assertion library of the runner fail inside thenState', () => {

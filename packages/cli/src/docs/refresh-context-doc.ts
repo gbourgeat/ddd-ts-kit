@@ -20,7 +20,9 @@ export function refreshContextDoc(ws: Workspace, config: Config, context: string
   const file = `${config.contextsDir}/${context}/CONTEXT.md`;
   const original = ws.read(file);
 
-  if (original === undefined) return;
+  if (original === undefined) {
+    return;
+  }
 
   const facts = readContext(ws, config, context);
   let content = original;
@@ -28,27 +30,43 @@ export function refreshContextDoc(ws: Workspace, config: Config, context: string
   for (const [region, lines] of Object.entries(generatedLists(facts))) {
     const next = replaceRegion(content, region, lines);
 
-    if (next !== undefined) content = next;
-    else if (!LATER_REGIONS.includes(region) || facts.jobs.length > 0) ws.note(`${file} has no "ddd-ts-kit:${region}" region: its generated list is not kept up to date.`);
+    if (next !== undefined) {
+      content = next;
+    } else if (!LATER_REGIONS.includes(region) || facts.jobs.length > 0) {
+      ws.note(`${file} has no "ddd-ts-kit:${region}" region: its generated list is not kept up to date.`);
+    }
   }
 
-  ws.update(file, replaceRegion(ensureReferenceRegion(content), 'reference', referenceLines(describeContext(ws, config, facts))) ?? content);
+  ws.update(
+    file,
+    replaceRegion(ensureReferenceRegion(content), 'reference', referenceLines(describeContext(ws, config, facts))) ??
+      content,
+  );
 }
 
 function generatedLists(facts: ContextFacts): Record<string, string[]> {
   return {
     aggregates: facts.aggregates.map((name) => `- \`${name}\``),
     events: facts.publishedEvents.map((event) => `- \`${event.type}\` (version ${event.version})`),
-    permissions: facts.permissions.length > 0 ? facts.permissions.map((name) => `- \`${facts.name}:${name}\``) : ['No permission declared.'],
+    permissions:
+      facts.permissions.length > 0
+        ? facts.permissions.map((name) => `- \`${facts.name}:${name}\``)
+        : ['No permission declared.'],
     jobs: jobLines(facts),
     relationships: relationshipLines(facts),
   };
 }
 
 function jobLines(facts: ContextFacts): string[] {
-  if (facts.jobs.length === 0) return ['No scheduled job.'];
+  if (facts.jobs.length === 0) {
+    return ['No scheduled job.'];
+  }
 
-  return ['| Job | Schedule | Command |', '|---|---|---|', ...facts.jobs.map((job) => `| \`${job.name}\` | \`${job.schedule}\` | \`${job.command}\` |`)];
+  return [
+    '| Job | Schedule | Command |',
+    '|---|---|---|',
+    ...facts.jobs.map((job) => `| \`${job.name}\` | \`${job.schedule}\` | \`${job.command}\` |`),
+  ];
 }
 
 function relationshipLines(facts: ContextFacts): string[] {

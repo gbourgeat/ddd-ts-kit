@@ -23,7 +23,9 @@ export function registerPersonRoute(commands: CommandBus): Route {
       security: ['bearer'],
     },
     async (input) => {
-      const id = await commands.execute(new RegisterPersonCommand(actorOf(input.context.principal), input.body.displayName, input.body.email));
+      const id = await commands.execute(
+        new RegisterPersonCommand(actorOf(input.context.principal), input.body.displayName, input.body.email),
+      );
 
       return { status: 200, body: { id } };
     },

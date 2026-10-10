@@ -15,7 +15,9 @@ const DESCRIPTION = 'RedisConnection [client concealed]';
 
 /** One connection for every adapter of this package: Redis, Dragonfly and Valkey speak the same protocol. */
 export function connectRedis(source: RedisSource): RedisConnection {
-  if (source instanceof Redis) return handedOut(source, async () => undefined);
+  if (source instanceof Redis) {
+    return handedOut(source, async () => undefined);
+  }
 
   const client = typeof source === 'string' ? new Redis(source, FAIL_FAST) : new Redis({ ...FAIL_FAST, ...source });
 

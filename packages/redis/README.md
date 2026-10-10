@@ -162,7 +162,9 @@ interface LockHandle { readonly key: string; readonly fencingToken: number; rele
 
 ```ts
 const handle = await lock.acquire('nightly-export', { ttlMs: 60_000 });
-if (handle === undefined) return;            // another instance is already doing it
+if (handle === undefined) { // another instance is already doing it
+  return;
+}
 try {
   await exportEverything();
 } finally {
@@ -228,7 +230,9 @@ const limiter = new RedisRateLimiter(redis.client, { namespace: 'api', onError: 
 server.addHook('onRequest', async (request, reply) => {
   const decision = await limiter.consume(`ip:${request.ip}`, { limit: 120, windowMs: 60_000 });
   reply.header('RateLimit-Remaining', decision.remaining);
-  if (decision.allowed) return;
+  if (decision.allowed) {
+    return;
+  }
   reply.header('Retry-After', Math.ceil(decision.retryAfterMs / 1000));
   return reply.code(429).send({ type: 'about:blank', title: 'Too Many Requests', status: 429, code: 'RATE_LIMITED' });
 });

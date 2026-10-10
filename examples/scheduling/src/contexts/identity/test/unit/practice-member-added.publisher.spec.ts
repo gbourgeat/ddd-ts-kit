@@ -8,7 +8,14 @@ describe('Publishing "practice member added" to other contexts', () => {
     const bus = new InMemoryEventBus();
     const publisher = new PracticeMemberAddedPublisher(bus, new SequentialIdGenerator('event'));
 
-    await publisher.handle(new PracticeMemberAdded('practice-1', new Date('2026-01-01T00:00:00.000Z'), { personId: 'person-2', role: 'practitioner', displayName: 'Grace Hopper', timeZone: 'Europe/Paris' }));
+    await publisher.handle(
+      new PracticeMemberAdded('practice-1', new Date('2026-01-01T00:00:00.000Z'), {
+        personId: 'person-2',
+        role: 'practitioner',
+        displayName: 'Grace Hopper',
+        timeZone: 'Europe/Paris',
+      }),
+    );
 
     expect(bus.published).toEqual([
       {
@@ -16,7 +23,13 @@ describe('Publishing "practice member added" to other contexts', () => {
         type: 'identity.practice.member-added',
         version: 1,
         occurredAt: '2026-01-01T00:00:00.000Z',
-        payload: { practiceId: 'practice-1', personId: 'person-2', role: 'practitioner', displayName: 'Grace Hopper', timeZone: 'Europe/Paris' },
+        payload: {
+          practiceId: 'practice-1',
+          personId: 'person-2',
+          role: 'practitioner',
+          displayName: 'Grace Hopper',
+          timeZone: 'Europe/Paris',
+        },
       },
     ]);
   });

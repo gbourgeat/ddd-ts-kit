@@ -15,11 +15,15 @@ export class FakeAuthenticator implements SessionAuthenticator {
   }
 
   async authenticateSession(credential: string | undefined): Promise<Session> {
-    if (credential === undefined) return sessionOf(undefined);
+    if (credential === undefined) {
+      return sessionOf(undefined);
+    }
 
     const principal = this.principals[credential];
 
-    if (principal === undefined) throw new InvalidCredentialError('UNKNOWN_CREDENTIAL');
+    if (principal === undefined) {
+      throw new InvalidCredentialError('UNKNOWN_CREDENTIAL');
+    }
 
     return sessionOf(principal);
   }

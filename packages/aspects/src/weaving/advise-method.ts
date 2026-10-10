@@ -11,9 +11,13 @@ import { siteOf } from './site-of.js';
 export function adviseMethod(instance: object, name: string, advise: AdviceFactory): void {
   const method: unknown = Reflect.get(instance, name);
 
-  if (!isWrappable(method)) return;
+  if (!isWrappable(method)) {
+    return;
+  }
 
   const wrapper = advised(method, { ...siteOf(instance, {}), method: name, arity: method.length }, advise);
 
-  if (wrapper !== undefined) shadowed(instance, new Map([[name, wrapper]]));
+  if (wrapper !== undefined) {
+    shadowed(instance, new Map([[name, wrapper]]));
+  }
 }

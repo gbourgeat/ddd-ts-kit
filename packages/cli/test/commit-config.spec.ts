@@ -36,8 +36,19 @@ describe('the commit key of the config', () => {
     const result = cli(root, 'check', '--rule', 'config/valid', '--json');
 
     expect(result.code).toBe(1);
-    expect(configFindings(root)).toEqual(['"commit.maxFiles" is 0: it is read as 20.', '"commit.maxLines" is "300": it is read as 600.', '"commit.maxBytes" is not a limit: it is ignored.']);
-    expect(jsonAt(result.json(), 'violations', '0', 'line')).toBe(read(root, CONFIG).split('\n').findIndex((line) => line.includes('"maxFiles"')) + 1);
+
+    expect(configFindings(root)).toEqual([
+      '"commit.maxFiles" is 0: it is read as 20.',
+      '"commit.maxLines" is "300": it is read as 600.',
+      '"commit.maxBytes" is not a limit: it is ignored.',
+    ]);
+
+    expect(jsonAt(result.json(), 'violations', '0', 'line')).toBe(
+      read(root, CONFIG)
+        .split('\n')
+        .findIndex((line) => line.includes('"maxFiles"')) + 1,
+    );
+
     expect(configFindings(withCommit([20, 600]))).toEqual(['"commit" is not an object: the default limits are used.']);
   });
 });

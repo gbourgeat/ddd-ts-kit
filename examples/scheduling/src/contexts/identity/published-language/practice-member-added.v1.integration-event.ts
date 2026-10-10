@@ -6,7 +6,8 @@ import { PracticeMemberAddedV1Payload } from './practice-member-added.v1.payload
 export const practiceMemberAddedV1 = defineIntegrationEvent({
   type: 'identity.practice.member-added',
   version: 1,
-  description: 'A person became a member of a practice with a role; the time zone of the practice travels with it so that a consumer needs nothing else to place the member.',
+  description:
+    'A person became a member of a practice with a role; the time zone of the practice travels with it so that a consumer needs nothing else to place the member.',
   payload: classSchema(PracticeMemberAddedV1Payload),
 });
 

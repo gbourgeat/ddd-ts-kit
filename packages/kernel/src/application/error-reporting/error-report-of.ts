@@ -11,11 +11,7 @@ export type ErrorReportSource = Pick<ErrorReport, 'origin' | 'operation'> &
  * of the unit of work (origin, correlation, actor and tenant ids) and from the error (its code).
  * The severity defaults to `error`.
  */
-export function errorReportOf(
-  error: unknown,
-  source: ErrorReportSource,
-  execution?: ExecutionContext,
-): ErrorReport {
+export function errorReportOf(error: unknown, source: ErrorReportSource, execution?: ExecutionContext): ErrorReport {
   const errorCode = source.errorCode ?? identifyError(error).errorCode;
 
   return {

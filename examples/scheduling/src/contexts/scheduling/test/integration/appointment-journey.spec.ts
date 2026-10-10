@@ -14,19 +14,43 @@ import { aCalendar } from '../builders/calendar.builder.js';
 
 const DAY = 24 * 60 * 60_000;
 const clock = new SystemClock();
-const seeding = new FixedExecutionScope(executionContext({ correlationId: 'appointment-journey', actor: systemActor('scheduling.spec'), origin: 'test' }));
+
+const seeding = new FixedExecutionScope(
+  executionContext({ correlationId: 'appointment-journey', actor: systemActor('scheduling.spec'), origin: 'test' }),
+);
+
 // Two patients: what each may do to an appointment comes from the relationships the booking recorded, never from a role.
-const authenticator = new FakeAuthenticator({ ada: anActor().named('ada').withRole('patient').build(), bob: anActor().named('bob').withRole('patient').build() });
-const calendar = aCalendar().identifiedBy('calendar-journey').openEveryDay(['08:00', '18:00']).offering('consultation').build();
+const authenticator = new FakeAuthenticator({
+  ada: anActor().named('ada').withRole('patient').build(),
+  bob: anActor().named('bob').withRole('patient').build(),
+});
+
+const calendar = aCalendar()
+  .identifiedBy('calendar-journey')
+  .openEveryDay(['08:00', '18:00'])
+  .offering('consultation')
+  .build();
+
 // Ten in the morning on the wall clock of the practice, a week from now: inside the booking window, and more than the notice of a patient away.
-const startsAt = calendar.timeZone.instantAt(calendar.timeZone.dayOf(new Date(clock.now().getTime() + 7 * DAY)), 10 * 60);
+const startsAt = calendar.timeZone.instantAt(
+  calendar.timeZone.dayOf(new Date(clock.now().getTime() + 7 * DAY)),
+  10 * 60,
+);
 
 let database: TestDatabase;
 let application: Application;
 
 beforeAll(async () => {
   database = await openTestDatabase(process.env['DATABASE_URL'] === '' ? undefined : process.env['DATABASE_URL']);
-  application = composeApplication(database.persistence, { events: inProcessEvents(), authenticator }, { modules: [contextModule('scheduling', { ...schedulingDeclarations, AgendaProjection })], routes: [schedulingRoutes] });
+
+  application = composeApplication(
+    database.persistence,
+    { events: inProcessEvents(), authenticator },
+    {
+      modules: [contextModule('scheduling', { ...schedulingDeclarations, AgendaProjection })],
+      routes: [schedulingRoutes],
+    },
+  );
 
   await application.start();
 });
@@ -38,7 +62,10 @@ afterAll(async () => {
 
 beforeEach(async () => {
   await database.reset();
-  await new KnexCalendarRepository(database.persistence.database, seeding, clock).save(aCalendar().identifiedBy('calendar-journey').openEveryDay(['08:00', '18:00']).offering('consultation').build());
+
+  await new KnexCalendarRepository(database.persistence.database, seeding, clock).save(
+    aCalendar().identifiedBy('calendar-journey').openEveryDay(['08:00', '18:00']).offering('consultation').build(),
+  );
 });
 
 describe('An appointment, from its booking on, through the application', () => {
@@ -48,7 +75,17 @@ describe('An appointment, from its booking on, through the application', () => {
     const detail = await call('ada', 'getAppointment', { params: { appointmentId } });
     const list = await call('ada', 'listAppointments', {});
 
-    expect(detail).toMatchObject({ status: 200, body: { id: appointmentId, calendarId: 'calendar-journey', patientId: 'ada', status: 'booked', startsAt: startsAt.toISOString() } });
+    expect(detail).toMatchObject({
+      status: 200,
+      body: {
+        id: appointmentId,
+        calendarId: 'calendar-journey',
+        patientId: 'ada',
+        status: 'booked',
+        startsAt: startsAt.toISOString(),
+      },
+    });
+
     expect(list).toMatchObject({ status: 200, body: { items: [{ id: appointmentId }], total: 1 } });
   });
 
@@ -67,7 +104,10 @@ describe('An appointment, from its booking on, through the application', () => {
 
     const cancellation = await call('ada', 'cancelAppointment', { params: { appointmentId }, body: {} });
     const detail = await call('ada', 'getAppointment', { params: { appointmentId } });
-    const again = await call('bob', 'bookAppointment', { body: { calendarId: 'calendar-journey', appointmentTypeId: 'consultation', startsAt: startsAt.toISOString() } });
+
+    const again = await call('bob', 'bookAppointment', {
+      body: { calendarId: 'calendar-journey', appointmentTypeId: 'consultation', startsAt: startsAt.toISOString() },
+    });
 
     expect(cancellation.status).toBe(201);
     expect(detail).toMatchObject({ status: 200, body: { status: 'cancelled', cancelledBy: 'patient' } });
@@ -77,8 +117,15 @@ describe('An appointment, from its booking on, through the application', () => {
   it('refuses another patient who tries to cancel or to move the appointment', async () => {
     const appointmentId = await booked('ada');
 
-    const cancellation = await call('bob', 'cancelAppointment', { params: { appointmentId }, body: { reason: 'Mine now.' } });
-    const move = await call('bob', 'rescheduleAppointment', { params: { appointmentId }, body: { startsAt: new Date(startsAt.getTime() + 60 * 60_000).toISOString() } });
+    const cancellation = await call('bob', 'cancelAppointment', {
+      params: { appointmentId },
+      body: { reason: 'Mine now.' },
+    });
+
+    const move = await call('bob', 'rescheduleAppointment', {
+      params: { appointmentId },
+      body: { startsAt: new Date(startsAt.getTime() + 60 * 60_000).toISOString() },
+    });
 
     expect([cancellation.status, move.status]).toEqual([403, 403]);
   });
@@ -87,7 +134,11 @@ describe('An appointment, from its booking on, through the application', () => {
     const appointmentId = await booked('ada');
     const later = new Date(startsAt.getTime() + 2 * 60 * 60_000);
 
-    const move = await call('ada', 'rescheduleAppointment', { params: { appointmentId }, body: { startsAt: later.toISOString() } });
+    const move = await call('ada', 'rescheduleAppointment', {
+      params: { appointmentId },
+      body: { startsAt: later.toISOString() },
+    });
+
     const detail = await call('ada', 'getAppointment', { params: { appointmentId } });
 
     expect(move.status).toBe(201);
@@ -95,28 +146,47 @@ describe('An appointment, from its booking on, through the application', () => {
   });
 
   it('does not say whether an appointment exists to somebody nothing relates to it', async () => {
-    const answer = await call('ada', 'cancelAppointment', { params: { appointmentId: 'appointment-unknown' }, body: {} });
+    const answer = await call('ada', 'cancelAppointment', {
+      params: { appointmentId: 'appointment-unknown' },
+      body: {},
+    });
 
     expect(answer.status).toBe(403);
   });
 });
 
 async function booked(patient: string): Promise<string> {
-  const answer = await call(patient, 'bookAppointment', { body: { calendarId: 'calendar-journey', appointmentTypeId: 'consultation', startsAt: startsAt.toISOString() } });
-  const id: unknown = typeof answer.body === 'object' && answer.body !== null && 'id' in answer.body ? answer.body.id : undefined;
+  const answer = await call(patient, 'bookAppointment', {
+    body: { calendarId: 'calendar-journey', appointmentTypeId: 'consultation', startsAt: startsAt.toISOString() },
+  });
 
-  if (answer.status !== 201 || typeof id !== 'string') throw new Error('The booking was answered ' + String(answer.status) + '.');
+  const id: unknown =
+    typeof answer.body === 'object' && answer.body !== null && 'id' in answer.body ? answer.body.id : undefined;
+
+  if (answer.status !== 201 || typeof id !== 'string') {
+    throw new Error('The booking was answered ' + String(answer.status) + '.');
+  }
 
   return id;
 }
 
 /** A route as the HTTP server runs it: authenticated, in the execution scope, through the buses and their unit of work. */
-function call(patient: string, operationId: string, request: { readonly params?: Record<string, string>; readonly body?: unknown }): Promise<RouteResponse> {
+function call(
+  patient: string,
+  operationId: string,
+  request: { readonly params?: Record<string, string>; readonly body?: unknown },
+): Promise<RouteResponse> {
   const route = application.routes.find((candidate) => candidate.operationId === operationId);
 
-  if (route === undefined) throw new Error('The application does not serve ' + operationId + '.');
+  if (route === undefined) {
+    throw new Error('The application does not serve ' + operationId + '.');
+  }
 
   const headers = { authorization: 'Bearer ' + patient };
 
-  return executeRoute(route, { params: request.params ?? {}, query: {}, headers, body: request.body, raw: { headers } }, application.boundary);
+  return executeRoute(
+    route,
+    { params: request.params ?? {}, query: {}, headers, body: request.body, raw: { headers } },
+    application.boundary,
+  );
 }

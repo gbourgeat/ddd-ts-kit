@@ -12,5 +12,11 @@ import { resourceOf } from './resource-of.js';
  * The authorizer reads the relation tuple store the platform module binds, the one the adapters write to.
  */
 export function authorization(onDecision: OnDecision, authenticator: Authenticator): ContextModule {
-  return authorizationModule({ authorizer: (resolve) => createAuthorizer(resolve(RelationTupleStore)), authenticator, policies: accessPolicies, resourceOf, onDecision });
+  return authorizationModule({
+    authorizer: (resolve) => createAuthorizer(resolve(RelationTupleStore)),
+    authenticator,
+    policies: accessPolicies,
+    resourceOf,
+    onDecision,
+  });
 }

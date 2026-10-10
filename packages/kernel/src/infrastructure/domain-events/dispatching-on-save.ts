@@ -26,11 +26,15 @@ const wrapped = new WeakSet<object>();
  * pulls the events itself leaves nothing to dispatch here.
  */
 export function dispatchingOnSave<T extends object>(repository: T, dispatcher: Dispatching): T {
-  if (wrapped.has(repository)) return repository;
+  if (wrapped.has(repository)) {
+    return repository;
+  }
 
   const wrappers = new Map<string, Method>();
 
-  for (const [name, method] of methodsOf(repository)) wrappers.set(name, announcing(method, dispatcher));
+  for (const [name, method] of methodsOf(repository)) {
+    wrappers.set(name, announcing(method, dispatcher));
+  }
 
   const result = Object.isExtensible(repository) ? shadowed(repository, wrappers) : proxied(repository, wrappers);
 
@@ -43,15 +47,23 @@ export function dispatchingOnSave<T extends object>(repository: T, dispatcher: D
 function methodsOf(instance: object): Map<string, Method> {
   const methods = new Map<string, Method>();
 
-  for (let owner: object | null = instance; owner !== null && owner !== Object.prototype; owner = Reflect.getPrototypeOf(owner)) {
+  for (
+    let owner: object | null = instance;
+    owner !== null && owner !== Object.prototype;
+    owner = Reflect.getPrototypeOf(owner)
+  ) {
     for (const name of Object.getOwnPropertyNames(owner)) {
       const descriptor = Object.getOwnPropertyDescriptor(owner, name);
 
-      if (name === 'constructor' || methods.has(name) || typeof descriptor?.value !== 'function') continue;
+      if (name === 'constructor' || methods.has(name) || typeof descriptor?.value !== 'function') {
+        continue;
+      }
 
       const current: unknown = Reflect.get(instance, name);
 
-      if (isMethod(current)) methods.set(name, current);
+      if (isMethod(current)) {
+        methods.set(name, current);
+      }
     }
   }
 
@@ -67,7 +79,10 @@ function announcing(original: Method, dispatcher: Dispatching): Method {
   const announced = async (args: readonly unknown[], result: unknown): Promise<unknown> => {
     const value = await result;
 
-    await announceDomainEvents(recordedAggregates(args).flatMap((aggregate) => aggregate.pullEvents()), dispatcher());
+    await announceDomainEvents(
+      recordedAggregates(args).flatMap((aggregate) => aggregate.pullEvents()),
+      dispatcher(),
+    );
 
     return value;
   };
@@ -93,7 +108,9 @@ function announcing(original: Method, dispatcher: Dispatching): Method {
 }
 
 function refuseAfterCommit(method: string, args: readonly unknown[]): void {
-  if (unitOfWorkScope.getStore()?.stage === 'after-commit' && recordedAggregates(args).length > 0) throw new SaveAfterCommitError(method);
+  if (unitOfWorkScope.getStore()?.stage === 'after-commit' && recordedAggregates(args).length > 0) {
+    throw new SaveAfterCommitError(method);
+  }
 }
 
 function isThenable(value: unknown): value is PromiseLike<unknown> {

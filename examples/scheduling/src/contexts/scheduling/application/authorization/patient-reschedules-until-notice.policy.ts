@@ -16,7 +16,9 @@ export class PatientReschedulesUntilNoticePolicy {
   }
 
   allows(actor: Actor, appointment: Appointment, { now }: PolicyContext): boolean {
-    if (!isAuthenticated(actor)) return false;
+    if (!isAuthenticated(actor)) {
+      return false;
+    }
 
     return actor.id !== appointment.patientId || appointment.slot.startsAt.getTime() - now.getTime() >= NOTICE * HOUR;
   }

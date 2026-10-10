@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { InMemoryCommandBus, InMemoryQueryBus } from '@ddd-ts-kit/kernel';
-import { AuthorizationMap, ForbiddenError, authorizationMiddleware, definePermissions, requires, type OnDecision } from '@ddd-ts-kit/auth';
+import {
+  AuthorizationMap,
+  ForbiddenError,
+  authorizationMiddleware,
+  definePermissions,
+  requires,
+  type OnDecision,
+} from '@ddd-ts-kit/auth';
 import { AllowAll, DenyAll } from '@ddd-ts-kit/auth/testing';
 import { InMemoryAuditTrail, auditDecisions, verifyChain, type AuditDecisionsOptions } from '../src/index.js';
 import { NOW, aSource, ada, requestOf, support } from './support/fixtures.js';
@@ -18,18 +25,28 @@ const permissions = definePermissions('scheduling', {
 });
 
 const map = AuthorizationMap.of(
-  requires(CancelAppointmentCommand, permissions['appointment.cancel'], { resource: (command) => ({ type: 'appointment', id: command.appointmentId }) }),
+  requires(CancelAppointmentCommand, permissions['appointment.cancel'], {
+    resource: (command) => ({ type: 'appointment', id: command.appointmentId }),
+  }),
   requires(ListAppointmentsQuery, permissions['appointment.read']),
   requires(UpcomingAppointments, permissions['appointment.read']),
   requires(SaveSearchQuery, permissions['search.save']),
-  requires(ReadMedicalFileQuery, permissions['medical-file.read'], { resource: (query) => ({ type: 'patient', id: query.patientId }) }),
+  requires(ReadMedicalFileQuery, permissions['medical-file.read'], {
+    resource: (query) => ({ type: 'patient', id: query.patientId }),
+  }),
 );
 
 function application(authorizer = new AllowAll(), options: Partial<AuditDecisionsOptions> = {}) {
   const trail = new InMemoryAuditTrail();
   const source = aSource();
+
   // Typed as the hook of the middleware: the structural type of this package must fit it.
-  const onDecision: OnDecision = auditDecisions(trail, { ...source, sensitivePermissions: ['scheduling:medical-file.read'], ...options });
+  const onDecision: OnDecision = auditDecisions(trail, {
+    ...source,
+    sensitivePermissions: ['scheduling:medical-file.read'],
+    ...options,
+  });
+
   const guard = authorizationMiddleware({ authorizer, map, onDecision });
 
   const commands = new InMemoryCommandBus()
@@ -115,7 +132,12 @@ describe('auditDecisions, the allowed reads', () => {
     const trail = new InMemoryAuditTrail();
     const onDecision = auditDecisions(trail, aSource());
 
-    await onDecision({ actorId: 'ada', permissionId: 'scheduling:appointment.read', decision: { allowed: true }, useCase: 'ListAppointmentsQuery' });
+    await onDecision({
+      actorId: 'ada',
+      permissionId: 'scheduling:appointment.read',
+      decision: { allowed: true },
+      useCase: 'ListAppointmentsQuery',
+    });
 
     expect(trail.entries.map((entry) => entry.outcome)).toEqual(['allowed']);
   });
@@ -130,15 +152,22 @@ describe('auditDecisions, the allowed reads', () => {
 
   it('records a share of the allowed reads when asked to sample them', async () => {
     const draws = [0.05, 0.5, 0.09, 0.9];
-    const { trail, queries } = application(new AllowAll(), { allowedReads: { sample: 0.1, random: () => draws.shift() ?? 1 } });
 
-    for (let index = 0; index < 4; index += 1) await queries.execute(new ListAppointmentsQuery(ada));
+    const { trail, queries } = application(new AllowAll(), {
+      allowedReads: { sample: 0.1, random: () => draws.shift() ?? 1 },
+    });
+
+    for (let index = 0; index < 4; index += 1) {
+      await queries.execute(new ListAppointmentsQuery(ada));
+    }
 
     expect(trail.entries).toHaveLength(2);
   });
 
   it('takes the word of the application on what a read is', async () => {
-    const { trail, commands } = application(new AllowAll(), { isRead: (decision) => decision.useCase === 'CancelAppointmentCommand' });
+    const { trail, commands } = application(new AllowAll(), {
+      isRead: (decision) => decision.useCase === 'CancelAppointmentCommand',
+    });
 
     await commands.execute(new CancelAppointmentCommand(ada, 'apt-1'));
 
@@ -149,13 +178,26 @@ describe('auditDecisions, the allowed reads', () => {
 describe('auditDecisions, who the entry names', () => {
   it('records the impersonation and the session of the work in progress, in the chain of its tenant', async () => {
     const { trail, source, commands } = application();
-    const session = { id: 'session-4', actor: ada, issuedAt: NOW, authenticationMethod: 'sso', impersonatedBy: 'support-7', extensions: {} } as const;
+
+    const session = {
+      id: 'session-4',
+      actor: ada,
+      issuedAt: NOW,
+      authenticationMethod: 'sso',
+      impersonatedBy: 'support-7',
+      extensions: {},
+    } as const;
 
     source.scope.enter(requestOf(ada, { session }));
 
     await commands.execute(new CancelAppointmentCommand(ada, 'apt-1'));
 
-    expect(trail.entries[0]).toMatchObject({ actor: { id: 'ada' }, impersonatedBy: 'support-7', sessionId: 'session-4', chain: 'tenant:acme' });
+    expect(trail.entries[0]).toMatchObject({
+      actor: { id: 'ada' },
+      impersonatedBy: 'support-7',
+      sessionId: 'session-4',
+      chain: 'tenant:acme',
+    });
   });
 
   it('names the actor the decision was about when it is not the one of the work in progress', async () => {
@@ -165,6 +207,10 @@ describe('auditDecisions, who the entry names', () => {
 
     await expect(commands.execute(new CancelAppointmentCommand(ada, 'apt-1'))).rejects.toThrow(ForbiddenError);
 
-    expect(trail.entries[0]).toMatchObject({ actor: { id: 'ada', type: 'unknown' }, tenantId: 'acme', outcome: 'denied' });
+    expect(trail.entries[0]).toMatchObject({
+      actor: { id: 'ada', type: 'unknown' },
+      tenantId: 'acme',
+      outcome: 'denied',
+    });
   });
 });

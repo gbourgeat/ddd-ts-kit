@@ -13,7 +13,9 @@ export function stampUpdate(stamp: AuditStamp, scope: ExecutionScope, clock: Clo
 export function stampUpdate(
   ...args: [ExecutionScope, Clock] | [AuditStamp, ExecutionScope, Clock]
 ): UpdateStamp | AuditStamp {
-  if (args.length === 2) return updateStamp(...args);
+  if (args.length === 2) {
+    return updateStamp(...args);
+  }
 
   const [stamp, scope, clock] = args;
 

@@ -11,7 +11,11 @@ describe('redaction', () => {
     const sink = new MemorySink();
     const credentials = Object.fromEntries(CREDENTIAL_KEYS.map((key) => [key, `value-of-${key}`]));
 
-    createWinstonLogger({ transports: [memoryTransport(sink)] }).info('signed in', { ...credentials, headers: credentials, userId: 'user-1' });
+    createWinstonLogger({ transports: [memoryTransport(sink)] }).info('signed in', {
+      ...credentials,
+      headers: credentials,
+      userId: 'user-1',
+    });
 
     const [line] = sink.records();
     const hidden = Object.fromEntries(CREDENTIAL_KEYS.map((key) => [key, REDACTED]));
@@ -22,7 +26,11 @@ describe('redaction', () => {
 
   it('hides them in the fields of a child and in the fields read at each line', () => {
     const sink = new MemorySink();
-    const logger = createWinstonLogger({ transports: [memoryTransport(sink)], fields: () => ({ token: 'ambient-secret', correlationId: 'request-1' }) });
+
+    const logger = createWinstonLogger({
+      transports: [memoryTransport(sink)],
+      fields: () => ({ token: 'ambient-secret', correlationId: 'request-1' }),
+    });
 
     logger.child({ session: { cookie: 'bound-secret', id: 'session-1' } }).info('signed in');
 
@@ -36,7 +44,10 @@ describe('redaction', () => {
   it('hides the keys the project adds to the list', () => {
     const sink = new MemorySink();
 
-    createWinstonLogger({ transports: [memoryTransport(sink)], redact: ['iban'] }).info('transfer', { iban: 'FR76', bank: { iban: 'FR76', password: 'p' } });
+    createWinstonLogger({ transports: [memoryTransport(sink)], redact: ['iban'] }).info('transfer', {
+      iban: 'FR76',
+      bank: { iban: 'FR76', password: 'p' },
+    });
 
     expect(sink.records()).toMatchObject([{ iban: REDACTED, bank: { iban: REDACTED, password: REDACTED } }]);
   });
@@ -48,7 +59,10 @@ describe('redaction', () => {
 
     createWinstonLogger({ transports: [memoryTransport(sink)] }).info('received', fields);
 
-    expect(sink.records()).toMatchObject([{ request: { headers: { authorization: 'Bearer abc' } }, headers: { authorization: REDACTED } }]);
+    expect(sink.records()).toMatchObject([
+      { request: { headers: { authorization: 'Bearer abc' } }, headers: { authorization: REDACTED } },
+    ]);
+
     expect(request.headers.authorization).toBe('Bearer abc');
   });
 
@@ -70,7 +84,9 @@ describe('an error passed as a field', () => {
   it('is written as its class, its message and its stack', () => {
     const sink = new MemorySink();
 
-    createWinstonLogger({ transports: [memoryTransport(sink)] }).error('carrier failed', { error: new RangeError('weight out of range') });
+    createWinstonLogger({ transports: [memoryTransport(sink)] }).error('carrier failed', {
+      error: new RangeError('weight out of range'),
+    });
 
     const [line] = sink.records();
 
@@ -82,7 +98,9 @@ describe('an error passed as a field', () => {
   it('carries the code of a DomainError', () => {
     const sink = new MemorySink();
 
-    createWinstonLogger({ transports: [memoryTransport(sink)] }).warn('payment refused', { error: new OrderAlreadyPaid('order-1') });
+    createWinstonLogger({ transports: [memoryTransport(sink)] }).warn('payment refused', {
+      error: new OrderAlreadyPaid('order-1'),
+    });
 
     expect(sink.records()).toMatchObject([
       { error: { type: 'OrderAlreadyPaid', code: 'ORDER_ALREADY_PAID', message: 'Order order-1 is already paid' } },
@@ -91,9 +109,14 @@ describe('an error passed as a field', () => {
 
   it('writes each error of a cause chain once, around an instance of the project too', () => {
     const sink = new MemorySink();
-    const failure = new Error('ledger unavailable', { cause: new TypeError('socket closed', { cause: new Error('ECONNRESET') }) });
 
-    new WinstonLogger(winston.createLogger({ transports: [memoryTransport(sink)] })).error('payment failed', { err: failure });
+    const failure = new Error('ledger unavailable', {
+      cause: new TypeError('socket closed', { cause: new Error('ECONNRESET') }),
+    });
+
+    new WinstonLogger(winston.createLogger({ transports: [memoryTransport(sink)] })).error('payment failed', {
+      err: failure,
+    });
 
     expect(sink.records()).toMatchObject([
       {
@@ -123,7 +146,9 @@ describe('an error passed as a field', () => {
   it('is described in the fields of a child as well', () => {
     const sink = new MemorySink();
 
-    createWinstonLogger({ transports: [memoryTransport(sink)] }).child({ lastFailure: new RangeError('weight out of range') }).info('retrying');
+    createWinstonLogger({ transports: [memoryTransport(sink)] })
+      .child({ lastFailure: new RangeError('weight out of range') })
+      .info('retrying');
 
     expect(sink.records()).toMatchObject([{ lastFailure: { type: 'RangeError', message: 'weight out of range' } }]);
   });
@@ -139,8 +164,17 @@ describe('an error passed as a field', () => {
     expect(sink.text()).not.toContain('ada@example.org');
 
     expect(sink.records()).toMatchObject([
-      { error: { code: 'ORDER_ALREADY_PAID', message: 'Order order-1 is already paid', cause: { type: 'Error', message: SCRUBBED_MESSAGE } } },
-      { error: { type: 'Error', message: SCRUBBED_MESSAGE, stack: expect.stringMatching(/^\s+at /) }, context: 'billing' },
+      {
+        error: {
+          code: 'ORDER_ALREADY_PAID',
+          message: 'Order order-1 is already paid',
+          cause: { type: 'Error', message: SCRUBBED_MESSAGE },
+        },
+      },
+      {
+        error: { type: 'Error', message: SCRUBBED_MESSAGE, stack: expect.stringMatching(/^\s+at /) },
+        context: 'billing',
+      },
     ]);
   });
 });

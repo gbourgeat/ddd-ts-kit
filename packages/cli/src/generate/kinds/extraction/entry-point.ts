@@ -28,7 +28,9 @@ export class EntryPoint {
     editJson(ws, 'knip.json', (knip) => {
       const entries: unknown[] = Array.isArray(knip['entry']) ? knip['entry'] : [];
 
-      if (!entries.includes(pattern)) knip['entry'] = [...entries, pattern];
+      if (!entries.includes(pattern)) {
+        knip['entry'] = [...entries, pattern];
+      }
     });
   }
 }

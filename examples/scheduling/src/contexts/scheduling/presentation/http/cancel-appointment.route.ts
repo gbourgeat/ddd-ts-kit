@@ -25,7 +25,9 @@ export function cancelAppointmentRoute(commands: CommandBus): Route {
       security: ['bearer'],
     },
     async (input) => {
-      const id = await commands.execute(new CancelAppointmentCommand(actorOf(input.context.principal), input.params.appointmentId, input.body.reason));
+      const id = await commands.execute(
+        new CancelAppointmentCommand(actorOf(input.context.principal), input.params.appointmentId, input.body.reason),
+      );
 
       return { status: 201, body: { id } };
     },

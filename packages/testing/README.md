@@ -44,7 +44,9 @@ class OrderBuilder extends Builder<OrderProps, Order> {
 
   protected construct(props: OrderProps): Order {
     const order = Order.place(props.id, props.customer, props.lines);
-    if (props.paid) order.pay();
+    if (props.paid) {
+      order.pay();
+    }
     return order;
   }
 
@@ -327,7 +329,9 @@ export function truncateAllTables(db: { query(sql: string): Promise<{ rows: { na
         `select quote_ident(schemaname) || '.' || quote_ident(tablename) as name
            from pg_tables where schemaname in (${schemas.map((schema) => `'${schema}'`).join(', ')})`,
       );
-      if (rows.length > 0) await db.query(`truncate ${rows.map((row) => row.name).join(', ')} restart identity cascade`);
+      if (rows.length > 0) {
+        await db.query(`truncate ${rows.map((row) => row.name).join(', ')} restart identity cascade`);
+      }
     },
   };
 }

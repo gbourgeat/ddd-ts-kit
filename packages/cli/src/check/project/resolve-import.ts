@@ -9,14 +9,21 @@ const BUILTINS = new Set(builtinModules);
 
 /** Classifies by path alone: the imported file does not have to exist for a rule to judge it. */
 export function resolveImport(config: Config, fromFile: string, specifier: string): ImportTarget {
-  if (specifier.startsWith('.')) return asFile(config, path.posix.join(path.posix.dirname(fromFile), specifier));
+  if (specifier.startsWith('.')) {
+    return asFile(config, path.posix.join(path.posix.dirname(fromFile), specifier));
+  }
 
   if (config.importAlias !== '' && specifier.startsWith(config.importAlias)) {
     return asFile(config, path.posix.join(config.sourceRoot, specifier.slice(config.importAlias.length)));
   }
 
-  if (specifier.startsWith('node:')) return { kind: 'builtin', name: specifier };
-  if (BUILTINS.has(packageName(specifier))) return { kind: 'builtin', name: `node:${specifier}` };
+  if (specifier.startsWith('node:')) {
+    return { kind: 'builtin', name: specifier };
+  }
+
+  if (BUILTINS.has(packageName(specifier))) {
+    return { kind: 'builtin', name: `node:${specifier}` };
+  }
 
   return { kind: 'package', name: packageName(specifier) };
 }

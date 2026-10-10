@@ -26,7 +26,9 @@ export class DecoratedRateGateway {
 
     const failure = this.failures.shift();
 
-    if (failure !== undefined) throw failure;
+    if (failure !== undefined) {
+      throw failure;
+    }
 
     return this.currentRate;
   }

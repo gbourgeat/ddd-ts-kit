@@ -16,11 +16,24 @@ export interface AdrRequest {
 export function writeAdr(ws: Workspace, request: AdrRequest): string {
   const slug = toName(request.title).kebab;
 
-  if (slug === '') throw new CliError('A decision record needs a title.', 'Pass it as the first argument, for example: ddd-ts-kit generate adr "Read the catalog without a gateway".');
+  if (slug === '') {
+    throw new CliError(
+      'A decision record needs a title.',
+      'Pass it as the first argument, for example: ddd-ts-kit generate adr "Read the catalog without a gateway".',
+    );
+  }
 
   const number = nextNumber(ws);
   const { deviation } = request;
-  const adr = { number, title: request.title, date: today(), deviation: deviation !== undefined, what: deviation?.what ?? '', reason: deviation?.reason ?? '' };
+
+  const adr = {
+    number,
+    title: request.title,
+    date: today(),
+    deviation: deviation !== undefined,
+    what: deviation?.what ?? '',
+    reason: deviation?.reason ?? '',
+  };
 
   ws.create(`${ADR_DIRECTORY}/${number}-${slug}.md`, renderTemplate('adr/adr.md.tpl', { adr }));
 

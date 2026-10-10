@@ -16,6 +16,8 @@ export const PatientRegistered: EventContract<PatientRegisteredPayload> = {
       return err({ reason: 'invalid-payload' });
     }
 
-    return typeof payload.patientId === 'string' ? ok({ ...event, payload: { patientId: payload.patientId } }) : err({ reason: 'invalid-payload' });
+    return typeof payload.patientId === 'string'
+      ? ok({ ...event, payload: { patientId: payload.patientId } })
+      : err({ reason: 'invalid-payload' });
   },
 };

@@ -59,7 +59,11 @@ describe.each([
     const invoiceId = await app.resolve(CommandBus).execute(new IssueInvoice(ada, 'customer-1'));
 
     expect(app.resolve(InvoiceRepository)).toBeInstanceOf(InMemoryInvoiceRepository);
-    expect(await app.resolve(InvoiceRepository).findById(invoiceId)).toMatchObject({ customerId: 'customer-1', issuedBy: 'ada' });
+
+    expect(await app.resolve(InvoiceRepository).findById(invoiceId)).toMatchObject({
+      customerId: 'customer-1',
+      issuedBy: 'ada',
+    });
   });
 
   it('runs on the test application, with fakes in place of the declared adapters', async () => {
@@ -95,7 +99,14 @@ describe('a declared context', () => {
 
   it('subscribes its integration event handlers when the application starts, once per consumer name', async () => {
     const app = createTestApplication({ modules: [billingModule] });
-    const placed = { id: 'evt-1', type: 'ordering.order.placed', version: 1, occurredAt: '2026-01-01T00:00:00.000Z', payload: { orderId: 'order-1', customerId: 'customer-9' } };
+
+    const placed = {
+      id: 'evt-1',
+      type: 'ordering.order.placed',
+      version: 1,
+      occurredAt: '2026-01-01T00:00:00.000Z',
+      payload: { orderId: 'order-1', customerId: 'customer-9' },
+    };
 
     await app.start();
 
@@ -115,7 +126,10 @@ describe('a declared context', () => {
     const app = createTestApplication({ modules: [billingModule], fakes: [fake(Mailer, outbox)] });
 
     await app.domainEvents.dispatch([new InvoiceIssued('inv-7', new Date(0), 'customer-7')]);
-    await app.domainEvents.dispatch([{ name: 'billing.invoice.issued', aggregateId: 'inv-8', occurredAt: new Date(0) }]);
+
+    await app.domainEvents.dispatch([
+      { name: 'billing.invoice.issued', aggregateId: 'inv-8', occurredAt: new Date(0) },
+    ]);
 
     expect(outbox.sent).toEqual(['customer-7: Invoice inv-7']);
     expect(app.get(DomainEventDispatcher)).toBe(app.domainEvents);
@@ -167,27 +181,76 @@ describe('what a declared context says of itself', () => {
     });
 
     expect(description.commands).toEqual([
-      { message: 'IssueInvoice', handler: 'IssueInvoiceHandler', module: 'billing', access: 'protected', permission: 'billing:invoice.issue', origin: 'declared', declaredBy: 'IssueInvoiceHandler' },
+      {
+        message: 'IssueInvoice',
+        handler: 'IssueInvoiceHandler',
+        module: 'billing',
+        access: 'protected',
+        permission: 'billing:invoice.issue',
+        origin: 'declared',
+        declaredBy: 'IssueInvoiceHandler',
+      },
     ]);
 
     expect(description.queries).toEqual([
-      { message: 'GetInvoice', handler: 'GetInvoiceHandler', module: 'billing', access: 'public', origin: 'declared', declaredBy: 'GetInvoiceHandler' },
+      {
+        message: 'GetInvoice',
+        handler: 'GetInvoiceHandler',
+        module: 'billing',
+        access: 'public',
+        origin: 'declared',
+        declaredBy: 'GetInvoiceHandler',
+      },
     ]);
 
     expect(description.integrationEventHandlers).toEqual([
-      { event: 'ordering.order.placed', version: 1, consumer: 'billing.invoice-on-order-placed', handler: 'InvoiceOnOrderPlaced', module: 'billing', origin: 'declared', declaredBy: 'InvoiceOnOrderPlaced' },
+      {
+        event: 'ordering.order.placed',
+        version: 1,
+        consumer: 'billing.invoice-on-order-placed',
+        handler: 'InvoiceOnOrderPlaced',
+        module: 'billing',
+        origin: 'declared',
+        declaredBy: 'InvoiceOnOrderPlaced',
+      },
     ]);
 
     expect(description.domainEventHandlers).toEqual([
-      { event: 'InvoiceIssued', name: 'billing.invoice.issued', phase: 'before-commit', handler: 'InvoiceIssuedEventHandler', module: 'billing', origin: 'declared', declaredBy: 'InvoiceIssuedEventHandler' },
-      { event: 'InvoiceIssued', name: 'billing.invoice.issued', phase: 'before-commit', handler: 'InvoiceIssuedPublisher', module: 'billing', origin: 'declared', declaredBy: 'InvoiceIssuedPublisher' },
+      {
+        event: 'InvoiceIssued',
+        name: 'billing.invoice.issued',
+        phase: 'before-commit',
+        handler: 'InvoiceIssuedEventHandler',
+        module: 'billing',
+        origin: 'declared',
+        declaredBy: 'InvoiceIssuedEventHandler',
+      },
+      {
+        event: 'InvoiceIssued',
+        name: 'billing.invoice.issued',
+        phase: 'before-commit',
+        handler: 'InvoiceIssuedPublisher',
+        module: 'billing',
+        origin: 'declared',
+        declaredBy: 'InvoiceIssuedPublisher',
+      },
     ]);
 
     expect(description.policies).toEqual([
-      { name: 'billing.only-issuer-voids', permission: 'billing:invoice.void', policy: 'OnlyIssuerVoids', module: 'billing', origin: 'declared', declaredBy: 'OnlyIssuerVoids' },
+      {
+        name: 'billing.only-issuer-voids',
+        permission: 'billing:invoice.void',
+        policy: 'OnlyIssuerVoids',
+        module: 'billing',
+        origin: 'declared',
+        declaredBy: 'OnlyIssuerVoids',
+      },
     ]);
 
-    expect(description.bindings.find((binding) => binding.token === 'Clock' && binding.module === 'kernel')).not.toHaveProperty('origin');
+    expect(
+      description.bindings.find((binding) => binding.token === 'Clock' && binding.module === 'kernel'),
+    ).not.toHaveProperty('origin');
+
     expect(JSON.parse(JSON.stringify(description))).toEqual(description);
   });
 
@@ -196,7 +259,12 @@ describe('what a declared context says of itself', () => {
 
     const [declared] = app.resolve(DeclaredPolicies).list;
 
-    expect(declared).toMatchObject({ name: 'billing.only-issuer-voids', permission: permissions['invoice.void'], module: 'billing' });
+    expect(declared).toMatchObject({
+      name: 'billing.only-issuer-voids',
+      permission: permissions['invoice.void'],
+      module: 'billing',
+    });
+
     expect(declared === undefined ? undefined : app.resolve(declared.policy)).toBeInstanceOf(OnlyIssuerVoids);
   });
 });

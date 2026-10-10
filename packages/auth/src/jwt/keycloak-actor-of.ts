@@ -11,7 +11,9 @@ const DEFAULT_GROUPS_CLAIM = 'groups';
 export function keycloakActorOf(claims: Claims, options: KeycloakClaimOptions): Actor {
   const id = claims['sub'];
 
-  if (typeof id !== 'string' || id === '') throw new InvalidCredentialError('NO_SUBJECT');
+  if (typeof id !== 'string' || id === '') {
+    throw new InvalidCredentialError('NO_SUBJECT');
+  }
 
   const tenantId = tenantOf(claims[options.tenantClaim ?? DEFAULT_TENANT_CLAIM]);
 
@@ -30,9 +32,13 @@ export function keycloakActorOf(claims: Claims, options: KeycloakClaimOptions): 
  * exactly one, since choosing among several is a decision of the project.
  */
 function tenantOf(claim: unknown): string | undefined {
-  if (typeof claim === 'string') return claim === '' ? undefined : claim;
+  if (typeof claim === 'string') {
+    return claim === '' ? undefined : claim;
+  }
 
-  if (typeof claim !== 'object' || claim === null) return undefined;
+  if (typeof claim !== 'object' || claim === null) {
+    return undefined;
+  }
 
   const candidates: readonly unknown[] = Array.isArray(claim) ? claim : Object.keys(claim);
   const [only] = candidates;

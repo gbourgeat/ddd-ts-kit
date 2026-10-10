@@ -64,16 +64,24 @@ export class ServerLink {
 
     const client = this.connection;
 
-    if (client.status === 'ready') return client;
+    if (client.status === 'ready') {
+      return client;
+    }
 
-    if (client.status === 'wait') void client.connect().catch(ignore);
+    if (client.status === 'wait') {
+      void client.connect().catch(ignore);
+    }
 
-    if (!CONNECTING.has(client.status)) throw new BrokerUnavailableError(this.reason);
+    if (!CONNECTING.has(client.status)) {
+      throw new BrokerUnavailableError(this.reason);
+    }
 
     await connected(client);
     this.refuseOnceClosed();
 
-    if (!this.wasReady) throw new BrokerUnavailableError(this.reason);
+    if (!this.wasReady) {
+      throw new BrokerUnavailableError(this.reason);
+    }
 
     return client;
   }
@@ -111,7 +119,9 @@ export class ServerLink {
   }
 
   private refuseOnceClosed(): void {
-    if (this.closed) throw new EventBusClosedError();
+    if (this.closed) {
+      throw new EventBusClosedError();
+    }
   }
 
   private readonly onReady = (): void => {
@@ -123,14 +133,18 @@ export class ServerLink {
   };
 
   private readonly onClose = (): void => {
-    if (this.wasReady) this.lost('CONNECTION_LOST');
+    if (this.wasReady) {
+      this.lost('CONNECTION_LOST');
+    }
   };
 
   private lost(code: string): void {
     this.wasReady = false;
     this.reason = code;
 
-    if (!this.closed) this.failed(code);
+    if (!this.closed) {
+      this.failed(code);
+    }
   }
 }
 

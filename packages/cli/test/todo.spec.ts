@@ -10,7 +10,20 @@ describe('todo', () => {
 
   beforeAll(() => {
     root = initProject('--context', 'billing:core', '--context', 'shipping:supporting');
-    cli(root, 'generate', 'command', 'billing', 'IssueInvoice', '--public', '--term', 'Invoice=A request for payment', '--term', 'Issue=To make an invoice final');
+
+    cli(
+      root,
+      'generate',
+      'command',
+      'billing',
+      'IssueInvoice',
+      '--public',
+      '--term',
+      'Invoice=A request for payment',
+      '--term',
+      'Issue=To make an invoice final',
+    );
+
     cli(root, 'generate', 'route', 'billing', 'IssueInvoice', '--method', 'POST', '--path', '/invoices');
     cli(root, 'generate', 'e2e', 'billing', 'IssueInvoice');
   });
@@ -28,8 +41,13 @@ describe('todo', () => {
     const title = /\bit\.todo\('([^']+)'/.exec(read(root, HANDLER_SPEC))?.[1] ?? 'no it.todo in the generated spec';
     const remaining = jsonAt(cli(root, 'todo', 'billing', '--json').json(), 'remaining');
 
-    expect(remaining).toContainEqual(expect.objectContaining({ kind: 'test', context: 'billing', file: HANDLER_SPEC, text: title }));
-    expect(remaining).toContainEqual(expect.objectContaining({ context: 'billing', file: 'test/e2e/issue-invoice.e2e.spec.ts' }));
+    expect(remaining).toContainEqual(
+      expect.objectContaining({ kind: 'test', context: 'billing', file: HANDLER_SPEC, text: title }),
+    );
+
+    expect(remaining).toContainEqual(
+      expect.objectContaining({ context: 'billing', file: 'test/e2e/issue-invoice.e2e.spec.ts' }),
+    );
   });
 
   it('lists TODO(platform) too, and without a context the whole project', () => {
@@ -37,8 +55,18 @@ describe('todo', () => {
 
     const all = cli(root, 'todo', '--json').json();
 
-    expect(jsonAt(all, 'remaining')).toContainEqual({ kind: 'platform', context: '', file: 'src/platform/notes.ts', line: 1, text: 'choose the mail provider.' });
-    expect(jsonAt(all, 'remaining')).toContainEqual(expect.objectContaining({ context: 'shipping', file: 'src/contexts/shipping/CONTEXT.md' }));
+    expect(jsonAt(all, 'remaining')).toContainEqual({
+      kind: 'platform',
+      context: '',
+      file: 'src/platform/notes.ts',
+      line: 1,
+      text: 'choose the mail provider.',
+    });
+
+    expect(jsonAt(all, 'remaining')).toContainEqual(
+      expect.objectContaining({ context: 'shipping', file: 'src/contexts/shipping/CONTEXT.md' }),
+    );
+
     expect(jsonAt(all, 'remaining')).toHaveLength(Number(jsonAt(all, 'count')));
   });
 

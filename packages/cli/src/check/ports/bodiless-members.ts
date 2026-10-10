@@ -14,9 +14,14 @@ export interface BodilessMember {
 export function bodilessMembers(file: SourceFile, shape: ClassShape): BodilessMember[] {
   let body = file.scan.code.slice(shape.bodyStart + 1, shape.end);
 
-  for (const method of shape.methods) body = erase(body, method.start - shape.bodyStart - 1, method.end - shape.bodyStart);
+  for (const method of shape.methods) {
+    body = erase(body, method.start - shape.bodyStart - 1, method.end - shape.bodyStart);
+  }
 
-  return statementsOf(emptyBrackets(body)).map(({ text, at }) => ({ text, line: file.scan.lineAt(shape.bodyStart + 1 + at) }));
+  return statementsOf(emptyBrackets(body)).map(({ text, at }) => ({
+    text,
+    line: file.scan.lineAt(shape.bodyStart + 1 + at),
+  }));
 }
 
 function erase(text: string, from: number, to: number): string {
@@ -49,7 +54,9 @@ function statementsOf(text: string): { text: string; at: number }[] {
   for (const part of text.split(';')) {
     const trimmed = part.trim();
 
-    if (trimmed !== '') statements.push({ text: trimmed.replace(/\s+/g, ' '), at: start + part.length - part.trimStart().length });
+    if (trimmed !== '') {
+      statements.push({ text: trimmed.replace(/\s+/g, ' '), at: start + part.length - part.trimStart().length });
+    }
 
     start += part.length + 1;
   }

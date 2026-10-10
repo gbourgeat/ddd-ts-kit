@@ -19,7 +19,9 @@ interface Parts<Row, Extra> {
  * it runs the lookups, all at once, each called once for the page. Immutable: `with` and
  * `orElse` answer a new hydration.
  */
-export class Hydration<Row extends object, Extra extends object = object> implements PromiseLike<HydratedPage<Row & Extra>> {
+export class Hydration<Row extends object, Extra extends object = object>
+  implements PromiseLike<HydratedPage<Row & Extra>>
+{
   static of<Row extends object>(page: Page<Row>): Hydration<Row> {
     return new Hydration<Row>({ page, complete: (rows) => Promise.resolve(rows.map(() => ({}))), policies: new Map() });
   }
@@ -41,7 +43,10 @@ export class Hydration<Row extends object, Extra extends object = object> implem
       page,
       policies,
       complete: async (rows, run) => {
-        const [known, related] = await Promise.all([complete(rows, run), loadRelation({ name, keyOf, lookup }, rows, run)]);
+        const [known, related] = await Promise.all([
+          complete(rows, run),
+          loadRelation({ name, keyOf, lookup }, rows, run),
+        ]);
 
         return known.flatMap((extra, index) => {
           const more = related[index];
@@ -70,7 +75,9 @@ export class Hydration<Row extends object, Extra extends object = object> implem
       complete: async (rows, run) => {
         const known = await complete(rows, run);
 
-        if (policy.onFailure === 'fallback') forgive(run, name);
+        if (policy.onFailure === 'fallback') {
+          forgive(run, name);
+        }
 
         return known.map((extra) => ({ ...extra, ...property(name, extra[name] ?? fallback) }));
       },
@@ -89,7 +96,9 @@ export class Hydration<Row extends object, Extra extends object = object> implem
     const run: HydrationRun = { policies: this.parts.policies, failures: new Map(), warnings: [] };
     const extras = await this.parts.complete(items, run);
 
-    for (const failure of run.failures.values()) throw failure;
+    for (const failure of run.failures.values()) {
+      throw failure;
+    }
 
     const hydrated = extras.flatMap((extra, index) => {
       const row = items[index];
@@ -102,7 +111,9 @@ export class Hydration<Row extends object, Extra extends object = object> implem
 }
 
 function forgive(run: HydrationRun, relation: string): void {
-  if (!run.failures.has(relation)) return;
+  if (!run.failures.has(relation)) {
+    return;
+  }
 
   const code = run.failures.get(relation) instanceof HydrationTimeoutError ? 'lookup_timed_out' : 'lookup_failed';
 

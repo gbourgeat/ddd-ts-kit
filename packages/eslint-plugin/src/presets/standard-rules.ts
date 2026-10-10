@@ -9,7 +9,16 @@ type Rules = TSESLint.FlatConfig.Rules;
 export const ESCAPE_HATCH_RULES: Rules = {
   '@typescript-eslint/no-explicit-any': 'error',
   '@typescript-eslint/no-non-null-assertion': 'error',
-  '@typescript-eslint/ban-ts-comment': ['error', { 'ts-expect-error': 'allow-with-description', 'ts-ignore': true, 'ts-nocheck': true, 'ts-check': false, minimumDescriptionLength: 3 }],
+  '@typescript-eslint/ban-ts-comment': [
+    'error',
+    {
+      'ts-expect-error': 'allow-with-description',
+      'ts-ignore': true,
+      'ts-nocheck': true,
+      'ts-check': false,
+      minimumDescriptionLength: 3,
+    },
+  ],
 };
 
 /** Standard rules backing section 6 of docs/ARCHITECTURE.md that need no type information. */
@@ -19,7 +28,10 @@ export const CLEAN_CODE_RULES: Rules = {
   'no-param-reassign': 'error',
   complexity: ['warn', { max: 10 }],
   'max-depth': ['warn', { max: 3 }],
-  '@typescript-eslint/consistent-type-imports': ['error', { prefer: 'type-imports', fixStyle: 'separate-type-imports' }],
+  '@typescript-eslint/consistent-type-imports': [
+    'error',
+    { prefer: 'type-imports', fixStyle: 'separate-type-imports' },
+  ],
 };
 
 /** The same, for rules that read types: only with `typeChecked`. */
@@ -27,7 +39,10 @@ export const TYPED_CLEAN_CODE_RULES: Rules = {
   '@typescript-eslint/no-floating-promises': 'error',
   '@typescript-eslint/no-misused-promises': 'error',
   '@typescript-eslint/no-unnecessary-condition': 'error',
-  '@typescript-eslint/switch-exhaustiveness-check': ['error', { considerDefaultExhaustiveForUnions: true, requireDefaultForNonUnion: true }],
+  '@typescript-eslint/switch-exhaustiveness-check': [
+    'error',
+    { considerDefaultExhaustiveForUnions: true, requireDefaultForNonUnion: true },
+  ],
   '@typescript-eslint/prefer-readonly': 'error',
 };
 

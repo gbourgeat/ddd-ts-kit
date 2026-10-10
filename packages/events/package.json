@@ -6,10 +6,23 @@
   "type": "module",
   "sideEffects": false,
   "exports": {
-    ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" },
-    "./asyncapi": { "types": "./dist/asyncapi.d.ts", "default": "./dist/asyncapi.js" }
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./asyncapi": {
+      "types": "./dist/asyncapi.d.ts",
+      "default": "./dist/asyncapi.js"
+    }
   },
-  "files": ["dist"],
-  "dependencies": { "@ddd-ts-kit/kernel": "0.1.0", "@ddd-ts-kit/validation": "0.1.0" },
-  "devDependencies": { "zod": "^4.6.5" }
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@ddd-ts-kit/kernel": "0.1.0",
+    "@ddd-ts-kit/validation": "0.1.0"
+  },
+  "devDependencies": {
+    "zod": "^4.6.5"
+  }
 }

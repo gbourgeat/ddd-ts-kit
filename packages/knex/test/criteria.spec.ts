@@ -1,6 +1,11 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { Criteria, cursorPage, pageOfPlan, planCriteria, scoped } from '@ddd-ts-kit/kernel';
-import { criteriaContract, criteriaContractDefinition, criteriaContractRows, type CriteriaContractRow } from '@ddd-ts-kit/testing/contracts';
+import {
+  criteriaContract,
+  criteriaContractDefinition,
+  criteriaContractRows,
+  type CriteriaContractRow,
+} from '@ddd-ts-kit/testing/contracts';
 import { KnexReadModelStore, createKnexUnitOfWork, criteriaToKnex } from '../src/index.js';
 import { createDatabase, type TestDatabase } from './support/database.js';
 import { CONTRACT_TABLE, READ_SIDE, createContractTable } from './support/read-model/criteria-contract-table.js';
@@ -19,26 +24,33 @@ afterAll(async () => {
   await database.close();
 });
 
-const storeOf = () => new KnexReadModelStore<CriteriaContractRow>(createKnexUnitOfWork(database.knex), { ...CONTRACT_TABLE, definition: criteriaContractDefinition });
+const storeOf = () =>
+  new KnexReadModelStore<CriteriaContractRow>(createKnexUnitOfWork(database.knex), {
+    ...CONTRACT_TABLE,
+    definition: criteriaContractDefinition,
+  });
 
 async function load(rows: readonly CriteriaContractRow[]): Promise<void> {
   await database.truncate();
 
-  await database.knex(CONTRACT_TABLE.table).withSchema(READ_SIDE).insert(
-    rows.map((row) => ({
-      ...STAMP,
-      id: row.id,
-      status: row.status,
-      title: row.title,
-      seats: row.seats,
-      price: row.price,
-      starts_at: row.startsAt,
-      cancelled_at: row.cancelledAt,
-      room: row.room,
-      remote: row.remote,
-      tenant_id: row.tenantId,
-    })),
-  );
+  await database
+    .knex(CONTRACT_TABLE.table)
+    .withSchema(READ_SIDE)
+    .insert(
+      rows.map((row) => ({
+        ...STAMP,
+        id: row.id,
+        status: row.status,
+        title: row.title,
+        seats: row.seats,
+        price: row.price,
+        starts_at: row.startsAt,
+        cancelled_at: row.cancelledAt,
+        room: row.room,
+        remote: row.remote,
+        tenant_id: row.tenantId,
+      })),
+    );
 
   database.queries.length = 0;
 }
@@ -55,7 +67,13 @@ criteriaContract(runner, {
 describe('criteriaToKnex', () => {
   const columns = CONTRACT_TABLE.columns;
   const all = Criteria.of<CriteriaContractRow>();
-  const sqlOf = (criteria: Criteria<CriteriaContractRow>) => criteriaToKnex(database.knex('criteria_contract'), planCriteria(criteriaContractDefinition, criteria), columns).toSQL();
+
+  const sqlOf = (criteria: Criteria<CriteriaContractRow>) =>
+    criteriaToKnex(
+      database.knex('criteria_contract'),
+      planCriteria(criteriaContractDefinition, criteria),
+      columns,
+    ).toSQL();
 
   beforeEach(async () => {
     await load(criteriaContractRows());
@@ -63,7 +81,13 @@ describe('criteriaToKnex', () => {
 
   it('binds every value and never writes one into the statement', () => {
     const hostile = "x'; drop table criteria_contract; --";
-    const { sql, bindings } = sqlOf(all.where('title', 'contains', hostile).where('title', 'in', ['booked', hostile]).not((none) => none.where('room', 'eq', hostile)));
+
+    const { sql, bindings } = sqlOf(
+      all
+        .where('title', 'contains', hostile)
+        .where('title', 'in', ['booked', hostile])
+        .not((none) => none.where('room', 'eq', hostile)),
+    );
 
     expect(sql).not.toContain('drop table');
 
@@ -75,8 +99,15 @@ describe('criteriaToKnex', () => {
   });
 
   it('orders a field that may be null as the plan means it, and seeks past a cursor by the same order', async () => {
-    const first = await storeOf().list(scoped(all.orderBy('room', 'desc').page(cursorPage({ limit: 3 })), { kind: 'all' }));
-    const { sql } = sqlOf(all.orderBy('room', 'desc').page(cursorPage({ limit: 3, ...(first.nextCursor === undefined ? {} : { cursor: first.nextCursor }) })));
+    const first = await storeOf().list(
+      scoped(all.orderBy('room', 'desc').page(cursorPage({ limit: 3 })), { kind: 'all' }),
+    );
+
+    const { sql } = sqlOf(
+      all
+        .orderBy('room', 'desc')
+        .page(cursorPage({ limit: 3, ...(first.nextCursor === undefined ? {} : { cursor: first.nextCursor }) })),
+    );
 
     expect(first.items.map(({ id }) => id)).toEqual(['a5', 'a3', 'a7']);
 
@@ -98,7 +129,13 @@ describe('criteriaToKnex', () => {
 
   it('serves a read port that is not a store: the plan, the query, the page', async () => {
     const plan = planCriteria(criteriaContractDefinition, all.where('seats', 'gte', 4).page(cursorPage({ limit: 1 })));
-    const records = await criteriaToKnex(database.knex('criteria_contract').withSchema(READ_SIDE).select('id', 'seats', 'starts_at as startsAt'), plan, columns);
+
+    const records = await criteriaToKnex(
+      database.knex('criteria_contract').withSchema(READ_SIDE).select('id', 'seats', 'starts_at as startsAt'),
+      plan,
+      columns,
+    );
+
     const page = pageOfPlan(plan, records);
 
     expect(page.items).toEqual([{ id: 'a2', seats: 4, startsAt: new Date('2026-10-01T09:00:00.000Z') }]);

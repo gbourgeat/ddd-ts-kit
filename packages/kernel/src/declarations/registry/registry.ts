@@ -17,7 +17,9 @@ const REGISTRY = Symbol.for('@ddd-ts-kit/kernel/declarations/v1');
 export function registry(): Registry {
   const existing: unknown = Reflect.get(globalThis, REGISTRY);
 
-  if (isRegistry(existing)) return existing;
+  if (isRegistry(existing)) {
+    return existing;
+  }
 
   const created: Registry = { byClass: new WeakMap(), classes: new Set() };
 
@@ -27,9 +29,13 @@ export function registry(): Registry {
 }
 
 function isRegistry(value: unknown): value is Registry {
-  if (typeof value !== 'object' || value === null) return false;
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
 
-  if (!('byClass' in value) || !('classes' in value)) return false;
+  if (!('byClass' in value) || !('classes' in value)) {
+    return false;
+  }
 
   return value.byClass instanceof WeakMap && value.classes instanceof Set;
 }

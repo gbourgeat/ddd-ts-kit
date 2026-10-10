@@ -9,7 +9,10 @@ export function topologyOf(settings: TopologySettings, bindings: readonly Consum
   const types = [...new Set(bindings.map((binding) => binding.type))];
 
   return {
-    streams: [...types.map((type) => eventsStreamOf(settings, type)), ...bindings.map((binding) => deadLettersOf(settings, binding))],
+    streams: [
+      ...types.map((type) => eventsStreamOf(settings, type)),
+      ...bindings.map((binding) => deadLettersOf(settings, binding)),
+    ],
     groups: bindings.map((binding) => groupOf(settings, binding)),
   };
 }

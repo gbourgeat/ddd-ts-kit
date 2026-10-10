@@ -78,7 +78,9 @@ function assertFakesAreUsed(wiring: Wiring, fakes: readonly Override[]): void {
   ]);
 
   for (const [target] of fakes) {
-    if (used.has(target)) continue;
+    if (used.has(target)) {
+      continue;
+    }
 
     throw new WiringError(
       'UNKNOWN_FAKE',

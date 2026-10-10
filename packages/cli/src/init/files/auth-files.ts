@@ -8,7 +8,15 @@ import { when } from './when.js';
 const AUTHORIZATION_MODEL: Readonly<Record<string, readonly string[]>> = {
   rbac: ['roles.ts'],
   abac: ['attribute-policies.ts'],
-  rebac: ['relationship-schema.ts', 'create-tuple-store.ts', 'create-tuple-store.contract.spec.ts', 'relation-tuples.ts', 'relate-system-actors.ts', 'permission-mapping.ts', 'permissions.ts'],
+  rebac: [
+    'relationship-schema.ts',
+    'create-tuple-store.ts',
+    'create-tuple-store.contract.spec.ts',
+    'relation-tuples.ts',
+    'relate-system-actors.ts',
+    'permission-mapping.ts',
+    'permissions.ts',
+  ],
   custom: ['custom-authorizer.ts', 'custom-authorizer.contract.spec.ts', 'permissions.ts'],
 };
 
@@ -33,7 +41,9 @@ function authenticationFiles(config: Config): InitFile[] {
   const file = (name: string, variant?: string): InitFile => platformFile(config, `auth/${name}`, variant);
   const credential = authn === 'none' ? 'none' : 'tokens';
 
-  if (http === 'none') return [];
+  if (http === 'none') {
+    return [];
+  }
 
   return [
     file('create-authenticator.ts', authn),

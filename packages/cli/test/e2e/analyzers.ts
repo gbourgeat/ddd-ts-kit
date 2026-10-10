@@ -2,7 +2,10 @@ import { bin, type Invocation } from './run-in.js';
 
 /** The three analyzers of the generated pipeline next to `ddd-ts-kit check`, as its scripts call them. */
 export const ESLINT: Invocation = { command: bin('eslint'), args: ['.'] };
-export const DEPCRUISE: Invocation = { command: bin('depcruise'), args: ['src', '--config', '.dependency-cruiser.cjs'] };
+export const DEPCRUISE: Invocation = {
+  command: bin('depcruise'),
+  args: ['src', '--config', '.dependency-cruiser.cjs'],
+};
 export const KNIP: Invocation = { command: bin('knip'), args: [] };
 
 /** ESLint on some files only: one typed program instead of the whole project. */
@@ -25,6 +28,4 @@ export const NEW_ESLINT_RULES = [
   'ddd-ts-kit/scheduling-job-name',
   '@stylistic/padding-line-between-statements',
   '@stylistic/lines-between-class-members',
-  '@stylistic/padded-blocks',
-  '@stylistic/no-multiple-empty-lines',
 ];

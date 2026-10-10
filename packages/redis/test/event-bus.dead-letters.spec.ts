@@ -95,8 +95,17 @@ describe.skipIf(!REAL_SERVER)('RedisStreamsEventBus, dead letters', { timeout: 3
     const dead = await server.entries(streams.dead);
 
     expect(billing.received).toEqual([]);
-    expect(reported).toEqual(Array.from({ length: 3 }, () => ({ kind: 'poison', stream: streams.events, consumer, code: POISON_ENTRY })));
-    expect(dead[0]?.fields).toMatchObject({ envelope: '{"id": not json', [ERROR_CODE_FIELD]: POISON_ENTRY, [DEAD_REASON_FIELD]: 'poison' });
+
+    expect(reported).toEqual(
+      Array.from({ length: 3 }, () => ({ kind: 'poison', stream: streams.events, consumer, code: POISON_ENTRY })),
+    );
+
+    expect(dead[0]?.fields).toMatchObject({
+      envelope: '{"id": not json',
+      [ERROR_CODE_FIELD]: POISON_ENTRY,
+      [DEAD_REASON_FIELD]: 'poison',
+    });
+
     expect(await server.pending(streams.events, consumer)).toBe(0);
   });
 });

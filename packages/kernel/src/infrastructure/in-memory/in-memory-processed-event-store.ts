@@ -6,7 +6,9 @@ export class InMemoryProcessedEventStore implements ProcessedEventStore {
   async markProcessed(consumer: string, eventId: string): Promise<boolean> {
     const key = keyOf(consumer, eventId);
 
-    if (this.seen.has(key)) return false;
+    if (this.seen.has(key)) {
+      return false;
+    }
 
     this.seen.add(key);
 

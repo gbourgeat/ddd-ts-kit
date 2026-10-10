@@ -28,9 +28,12 @@ export function tracedJob(run: JobRun, options: TracedJobOptions): JobRun {
       ...workAttributes(),
     };
 
-    return inSpan({ name: `job ${options.name}`, options: { kind: SpanKind.INTERNAL, root: true, attributes } }, async (span) => {
-      await run(execution);
-      span.setAttribute(OUTCOME_ATTRIBUTE, 'succeeded');
-    });
+    return inSpan(
+      { name: `job ${options.name}`, options: { kind: SpanKind.INTERNAL, root: true, attributes } },
+      async (span) => {
+        await run(execution);
+        span.setAttribute(OUTCOME_ATTRIBUTE, 'succeeded');
+      },
+    );
   };
 }

@@ -46,7 +46,14 @@ describe('Reminder', () => {
       .when((subject) => {
         subject.send(dayBefore);
       })
-      .thenEvents([{ name: 'notification.reminder.sent', aggregateId: 'reminder-1', occurredAt: dayBefore, about: { recipientId: 'patient-9', appointmentId: 'appointment-4', startsAt } }])
+      .thenEvents([
+        {
+          name: 'notification.reminder.sent',
+          aggregateId: 'reminder-1',
+          occurredAt: dayBefore,
+          about: { recipientId: 'patient-9', appointmentId: 'appointment-4', startsAt },
+        },
+      ])
       .thenState((subject) => {
         expect(subject.status).toBe('sent');
       });

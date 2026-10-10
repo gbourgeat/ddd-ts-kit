@@ -8,7 +8,11 @@ interface Read<Row> {
 }
 
 /** The stamped row of what was read from the model or from the table. */
-export function stampedRowOf<Row>({ key, stamps: [eventId, occurredAt, version, deleted], row }: Read<Row>): StampedRow<Row> {
+export function stampedRowOf<Row>({
+  key,
+  stamps: [eventId, occurredAt, version, deleted],
+  row,
+}: Read<Row>): StampedRow<Row> {
   return {
     key,
     row: deleted === true ? undefined : row(),

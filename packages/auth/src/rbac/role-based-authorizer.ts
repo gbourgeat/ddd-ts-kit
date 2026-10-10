@@ -36,22 +36,28 @@ export class RoleBasedAuthorizer implements Authorizer {
   }
 
   async check(request: CheckRequest): Promise<Decision> {
-    if (isAnonymous(request.actor)) return deny(DenialReason.anonymous);
+    if (isAnonymous(request.actor)) {
+      return deny(DenialReason.anonymous);
+    }
 
-    if (!this.holds(request.actor, request.permission)) return deny(DenialReason.noMatchingRole);
+    if (!this.holds(request.actor, request.permission)) {
+      return deny(DenialReason.noMatchingRole);
+    }
 
     return (await this.targetsAnotherTenant(request)) ? deny(DenialReason.tenantMismatch) : ALLOWED;
   }
 
   /** Constant time: everything, nothing, or the rows of the actor's tenant. */
   async listAccessible({ actor, permission }: ListRequest): Promise<AccessScope> {
-    if (isAnonymous(actor) || !this.holds(actor, permission)) return { kind: 'none' };
+    if (isAnonymous(actor) || !this.holds(actor, permission)) {
+      return { kind: 'none' };
+    }
 
-    if (this.options.tenantOf === undefined || this.crossesTenants(actor)) return { kind: 'all' };
+    if (this.options.tenantOf === undefined || this.crossesTenants(actor)) {
+      return { kind: 'all' };
+    }
 
-    return actor.tenantId === undefined
-      ? { kind: 'none' }
-      : { kind: 'filter', filter: { tenantId: actor.tenantId } };
+    return actor.tenantId === undefined ? { kind: 'none' } : { kind: 'filter', filter: { tenantId: actor.tenantId } };
   }
 
   private holds(actor: Actor, permission: Permission): boolean {
@@ -67,7 +73,9 @@ export class RoleBasedAuthorizer implements Authorizer {
   }
 
   private async targetsAnotherTenant(request: CheckRequest): Promise<boolean> {
-    if (this.options.tenantOf === undefined || this.crossesTenants(request.actor)) return false;
+    if (this.options.tenantOf === undefined || this.crossesTenants(request.actor)) {
+      return false;
+    }
 
     const targeted = await this.options.tenantOf(request);
 
@@ -87,9 +95,13 @@ function effectiveGrants(options: RoleBasedAuthorizerOptions): ReadonlyMap<strin
   const own = new Map([...roles].map((role) => [role, (options.roles[role] ?? []).map(grantPattern)]));
 
   const lineage = (role: string, path: readonly string[]): readonly string[] => {
-    if (!roles.has(role)) throw new AuthorizationSetupError(`Role "${path.at(-1) ?? role}" inherits the unknown role "${role}".`);
+    if (!roles.has(role)) {
+      throw new AuthorizationSetupError(`Role "${path.at(-1) ?? role}" inherits the unknown role "${role}".`);
+    }
 
-    if (path.includes(role)) throw new AuthorizationSetupError(`Role hierarchy cycle: ${[...path, role].join(' -> ')}.`);
+    if (path.includes(role)) {
+      throw new AuthorizationSetupError(`Role hierarchy cycle: ${[...path, role].join(' -> ')}.`);
+    }
 
     return [role, ...(inherits[role] ?? []).flatMap((parent) => lineage(parent, [...path, role]))];
   };

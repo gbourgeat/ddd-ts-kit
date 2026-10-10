@@ -32,7 +32,17 @@ describe('a job that fails', () => {
     expect(reminders.executions).toHaveLength(2);
 
     expect(logger.entries.filter((entry) => entry.level === 'error')).toMatchObject([
-      { message: 'Scheduled job failed', fields: { job: EXPORT, context: 'billing', outcome: 'failed', errorCode: 'LEDGER_CLOSED', errorType: 'LedgerClosed', correlationId: 'run-1' } },
+      {
+        message: 'Scheduled job failed',
+        fields: {
+          job: EXPORT,
+          context: 'billing',
+          outcome: 'failed',
+          errorCode: 'LEDGER_CLOSED',
+          errorType: 'LedgerClosed',
+          correlationId: 'run-1',
+        },
+      },
       { message: 'Scheduled job failed' },
     ]);
 
@@ -74,7 +84,15 @@ describe('a job that fails', () => {
     };
 
     const { scheduler } = aBench({
-      logger: { debug: broken, info: broken, warn: broken, error: broken, child: broken, isLevelEnabled: broken, flush: broken },
+      logger: {
+        debug: broken,
+        info: broken,
+        warn: broken,
+        error: broken,
+        child: broken,
+        isLevelEnabled: broken,
+        flush: broken,
+      },
       metrics: { counter: broken, histogram: broken, gauge: broken },
     });
 
@@ -124,7 +142,14 @@ describe('what a scheduler measures', () => {
       {
         level: 'info',
         message: 'Scheduled job succeeded',
-        fields: { job: REMINDERS, context: 'billing', outcome: 'succeeded', scheduledAt: new Date('2026-03-02T10:00:00.000Z'), durationMs: 1_200, correlationId: 'run-1' },
+        fields: {
+          job: REMINDERS,
+          context: 'billing',
+          outcome: 'succeeded',
+          scheduledAt: new Date('2026-03-02T10:00:00.000Z'),
+          durationMs: 1_200,
+          correlationId: 'run-1',
+        },
       },
     ]);
   });

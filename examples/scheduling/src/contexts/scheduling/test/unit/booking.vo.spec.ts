@@ -28,20 +28,30 @@ describe('Booking', () => {
     expect(first.equals(second)).toBe(false);
   });
 
-  it.each(['calendarId', 'practiceId', 'practitionerId', 'patientId', 'appointmentTypeId'] as const)('refuses a booking whose %s is empty', (field) => {
-    const result = Booking.create({ ...morning, [field]: '  ' });
+  it.each(['calendarId', 'practiceId', 'practitionerId', 'patientId', 'appointmentTypeId'] as const)(
+    'refuses a booking whose %s is empty',
+    (field) => {
+      const result = Booking.create({ ...morning, [field]: '  ' });
 
-    expect(result).toMatchObject({ ok: false, error: { code: 'INVALID_BOOKING' } });
-  });
+      expect(result).toMatchObject({ ok: false, error: { code: 'INVALID_BOOKING' } });
+    },
+  );
 
-  it.each(['', '02/03/2026', '2026-3-2', '2026-03-02T09:00:00Z'])('refuses the day "%s", which is no calendar date', (day) => {
-    const result = Booking.create({ ...morning, day });
+  it.each(['', '02/03/2026', '2026-3-2', '2026-03-02T09:00:00Z'])(
+    'refuses the day "%s", which is no calendar date',
+    (day) => {
+      const result = Booking.create({ ...morning, day });
 
-    expect(result).toMatchObject({ ok: false, error: { code: 'INVALID_BOOKING' } });
-  });
+      expect(result).toMatchObject({ ok: false, error: { code: 'INVALID_BOOKING' } });
+    },
+  );
 
   it('moves to another slot and keeps everything else', () => {
-    const afternoon = Slot.between(at('23:30'), new Date('2026-03-03T00:00:00.000Z'), new Date('2026-03-03T00:10:00.000Z'));
+    const afternoon = Slot.between(
+      at('23:30'),
+      new Date('2026-03-03T00:00:00.000Z'),
+      new Date('2026-03-03T00:10:00.000Z'),
+    );
 
     const moved = unwrap(unwrap(Booking.create(morning)).movedTo(afternoon, '2026-03-03'));
 

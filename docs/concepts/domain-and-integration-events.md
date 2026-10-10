@@ -204,7 +204,9 @@ export class LedgerUnitOfWork implements UnitOfWork {
 
   run<T>(work: () => Promise<T>): Promise<T> {
     return withinUnitOfWork(work, (scoped) => {
-      if (this.current.getStore() !== undefined) return scoped();
+      if (this.current.getStore() !== undefined) {
+        return scoped();
+      }
 
       return this.ledger.transaction((transaction) => this.current.run(transaction, scoped));
     });

@@ -14,7 +14,10 @@ import { anAppointment, type AppointmentBuilder } from '../builders/appointment.
 import { FakeAppointmentRepository } from '../fakes/appointment.repository.fake.js';
 import { FakeCalendarRepository } from '../fakes/calendar.repository.fake.js';
 
-const holders = authorizationModule({ authorizer: new RoleBasedAuthorizer({ roles: { holder: [schedulingPermissions['calendar.add-time-off']] } }) });
+const holders = authorizationModule({
+  authorizer: new RoleBasedAuthorizer({ roles: { holder: [schedulingPermissions['calendar.add-time-off']] } }),
+});
+
 const holder = anActor().withRole('holder').build();
 const now = new Date('2026-07-01T08:00:00.000Z');
 const startsAt = new Date('2026-08-03T00:00:00.000Z');
@@ -29,14 +32,20 @@ describe('Add time off', () => {
     const stored = await calendarRepository.findById('calendar-1');
 
     expect(id).toBe('calendar-1');
-    expect(() => stored?.slotFor('consultation', new Date('2026-08-03T08:00:00.000Z'), now)).toThrow(expect.objectContaining({ code: 'OUTSIDE_AVAILABILITY' }));
+
+    expect(() => stored?.slotFor('consultation', new Date('2026-08-03T08:00:00.000Z'), now)).toThrow(
+      expect.objectContaining({ code: 'OUTSIDE_AVAILABILITY' }),
+    );
+
     expect(stored?.slotFor('consultation', new Date('2026-08-17T08:00:00.000Z'), now)).toBeDefined();
   });
 
   it('is refused to an actor who does not hold the permission calendar.add-time-off', async () => {
     const { application } = await arrange();
 
-    await expect(application.commandBus.execute(new AddTimeOffCommand(anActor().build(), 'calendar-1', startsAt, endsAt))).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(
+      application.commandBus.execute(new AddTimeOffCommand(anActor().build(), 'calendar-1', startsAt, endsAt)),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
   });
 
   it('announces the time off with its period', async () => {
@@ -53,9 +62,13 @@ describe('Add time off', () => {
   });
 
   it('refuses a time off that covers an active appointment of the calendar, and leaves the calendar as it was', async () => {
-    const { application, calendarRepository } = await arrange(anAppointment().onCalendar('calendar-1').startingAt(new Date('2026-08-04T08:00:00.000Z')));
+    const { application, calendarRepository } = await arrange(
+      anAppointment().onCalendar('calendar-1').startingAt(new Date('2026-08-04T08:00:00.000Z')),
+    );
 
-    await expect(application.commandBus.execute(new AddTimeOffCommand(holder, 'calendar-1', startsAt, endsAt))).rejects.toMatchObject({ code: 'TIME_OFF_OVER_APPOINTMENTS' });
+    await expect(
+      application.commandBus.execute(new AddTimeOffCommand(holder, 'calendar-1', startsAt, endsAt)),
+    ).rejects.toMatchObject({ code: 'TIME_OFF_OVER_APPOINTMENTS' });
 
     expect((await calendarRepository.findById('calendar-1'))?.timeOffs).toEqual([]);
   });
@@ -74,13 +87,17 @@ describe('Add time off', () => {
   it('refuses a period that ends before it starts', async () => {
     const { application } = await arrange();
 
-    await expect(application.commandBus.execute(new AddTimeOffCommand(holder, 'calendar-1', endsAt, startsAt))).rejects.toMatchObject({ code: 'INVALID_TIME_OFF' });
+    await expect(
+      application.commandBus.execute(new AddTimeOffCommand(holder, 'calendar-1', endsAt, startsAt)),
+    ).rejects.toMatchObject({ code: 'INVALID_TIME_OFF' });
   });
 
   it('refuses a calendar that does not exist', async () => {
     const { application } = await arrange();
 
-    await expect(application.commandBus.execute(new AddTimeOffCommand(holder, 'calendar-9', startsAt, endsAt))).rejects.toMatchObject({ code: 'UNKNOWN_CALENDAR' });
+    await expect(
+      application.commandBus.execute(new AddTimeOffCommand(holder, 'calendar-9', startsAt, endsAt)),
+    ).rejects.toMatchObject({ code: 'UNKNOWN_CALENDAR' });
   });
 });
 
@@ -91,7 +108,9 @@ async function arrange(...appointments: readonly AppointmentBuilder[]) {
 
   await Promise.all(appointments.map((appointment) => appointmentRepository.save(appointment.build())));
 
-  await calendarRepository.save(aCalendar().identifiedBy('calendar-1').openEveryDay(['08:00', '20:00']).offering('consultation').build());
+  await calendarRepository.save(
+    aCalendar().identifiedBy('calendar-1').openEveryDay(['08:00', '20:00']).offering('consultation').build(),
+  );
 
   const application = createTestApplication({
     modules: [platformTestModule, contextModule('scheduling', schedulingDeclarations), holders],

@@ -1,5 +1,6 @@
 import type { Workspace } from '../workspace/index.js';
 import { isRecord } from './is-record.js';
+import { formatJson } from '../json/format-json.js';
 
 const AGENT_SETTINGS = '.claude/settings.json';
 
@@ -47,6 +48,7 @@ const PERMISSIONS: Permissions = {
     'Bash(npm publish *)',
     'Edit(./ddd-ts-kit.config.json)',
     'Edit(./eslint.config.mjs)',
+    'Edit(./biome.json)',
     'Edit(./.dependency-cruiser.cjs)',
     'Edit(./knip.json)',
     'Edit(./lefthook.yml)',
@@ -78,10 +80,12 @@ export function writeAgentSettings(ws: Workspace): void {
 
   ws.update(AGENT_SETTINGS, serialize(merged.settings));
 
-  if (merged.added.length > 0) ws.note(`${AGENT_SETTINGS} gained ${merged.added.length} permission(s): ${merged.added.join(', ')}.`);
+  if (merged.added.length > 0) {
+    ws.note(`${AGENT_SETTINGS} gained ${merged.added.length} permission(s): ${merged.added.join(', ')}.`);
+  }
 }
 
-const serialize = (settings: unknown): string => `${JSON.stringify(settings, null, 2)}\n`;
+const serialize = (settings: unknown): string => formatJson(settings);
 
 function parse(text: string): Record<string, unknown> | undefined {
   try {

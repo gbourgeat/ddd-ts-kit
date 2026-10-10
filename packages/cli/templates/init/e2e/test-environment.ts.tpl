@@ -19,15 +19,15 @@ export function testEnvironment(overrides: Variables = {}): Variables {
     ...authEnvironment,
     NODE_ENV: 'test',
     PORT: '0',
-{{#if broker.addressed}}
+    {{#if broker.addressed}}
     {{broker.variable}}: (process.env['{{broker.variable}}'] ?? '') || noBroker,
-{{/if}}
-{{#if redis.server}}
+    {{/if}}
+    {{#if redis.server}}
     REDIS_URL: (process.env['REDIS_URL'] ?? '') || noRedis,
-{{/if}}
-{{#if cache.rateLimit}}
+    {{/if}}
+    {{#if cache.rateLimit}}
     RATE_LIMIT_MAX: process.env['RATE_LIMIT_MAX'] ?? '1000000',
-{{/if}}
+    {{/if}}
     ...overrides,
   };
 }

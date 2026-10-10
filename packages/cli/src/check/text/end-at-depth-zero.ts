@@ -7,10 +7,15 @@ export function endAtDepthZero(code: string, from: number, terminator: string): 
   for (let i = from; i < code.length; i += 1) {
     const char = code.charAt(i);
 
-    if (BRACKETS.openers.includes(char)) depth += 1;
-    else if (BRACKETS.closers.includes(char)) depth -= 1;
+    if (BRACKETS.openers.includes(char)) {
+      depth += 1;
+    } else if (BRACKETS.closers.includes(char)) {
+      depth -= 1;
+    }
 
-    if (depth < 0 || (depth === 0 && char === terminator)) return i;
+    if (depth < 0 || (depth === 0 && char === terminator)) {
+      return i;
+    }
   }
 
   return code.length;

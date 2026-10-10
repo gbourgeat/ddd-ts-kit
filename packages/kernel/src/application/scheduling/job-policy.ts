@@ -13,16 +13,22 @@ export function jobPolicy(options: JobOptions): JobPolicy {
   assertOneOf('missed', missed, ['skip', 'run-once']);
 
   if (!Number.isSafeInteger(jitterMs) || jitterMs < 0) {
-    throw new InvalidJobScheduleError(`jitterMs is ${jitterMs}: a whole number of milliseconds, zero or more, is expected.`);
+    throw new InvalidJobScheduleError(
+      `jitterMs is ${jitterMs}: a whole number of milliseconds, zero or more, is expected.`,
+    );
   }
 
-  if (timeoutMs === undefined) return { overlap, missed, jitterMs, enabled, singleInstance };
+  if (timeoutMs === undefined) {
+    return { overlap, missed, jitterMs, enabled, singleInstance };
+  }
 
   return { overlap, missed, jitterMs, enabled, singleInstance, timeoutMs: parseDuration(timeoutMs) };
 }
 
 function assertOneOf(option: string, value: string, allowed: readonly string[]): void {
-  if (allowed.includes(value)) return;
+  if (allowed.includes(value)) {
+    return;
+  }
 
   throw new InvalidJobScheduleError(`${option} is "${value}": one of ${allowed.join(', ')} is expected.`);
 }

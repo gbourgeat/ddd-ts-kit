@@ -16,7 +16,13 @@ import { aCalendar } from '../builders/calendar.builder.js';
 import { FakeAppointmentRepository } from '../fakes/appointment.repository.fake.js';
 import { FakeWaitlistRepository } from '../fakes/waitlist.repository.fake.js';
 
-const holders = authorizationModule({ authorizer: new RoleBasedAuthorizer({ roles: { holder: [schedulingPermissions['appointment.expire']], system: [schedulingPermissions['waitlist.offer']] }, systemRole: 'system' }) });
+const holders = authorizationModule({
+  authorizer: new RoleBasedAuthorizer({
+    roles: { holder: [schedulingPermissions['appointment.expire']], system: [schedulingPermissions['waitlist.offer']] },
+    systemRole: 'system',
+  }),
+});
+
 const holder = anActor().withRole('holder').build();
 // A freed slot is offered to the waitlist of its calendar: every calendar exists here, and nobody waits.
 const calendars = { findById: async (id: string) => aCalendar().identifiedBy(id).build(), save: async () => undefined };
@@ -44,7 +50,10 @@ describe('Expire unconfirmed appointments', () => {
     await application.commandBus.execute(new ExpireUnconfirmedAppointmentsCommand(holder, AT));
 
     expect((await appointmentRepository.findById(due.id))?.changedAt).toEqual(AT);
-    expect(application.eventBus.published).toMatchObject([{ type: 'scheduling.appointment.expired', occurredAt: AT.toISOString(), payload: { appointmentId: due.id } }]);
+
+    expect(application.eventBus.published).toMatchObject([
+      { type: 'scheduling.appointment.expired', occurredAt: AT.toISOString(), payload: { appointmentId: due.id } },
+    ]);
   });
 
   it('leaves the appointments whose deadline is later, and those that are booked', async () => {
@@ -74,7 +83,9 @@ describe('Expire unconfirmed appointments', () => {
   it('is refused to an actor who does not hold the permission appointment.expire', async () => {
     const { application } = await arrange();
 
-    await expect(application.commandBus.execute(new ExpireUnconfirmedAppointmentsCommand(anActor().build(), AT))).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(
+      application.commandBus.execute(new ExpireUnconfirmedAppointmentsCommand(anActor().build(), AT)),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
   });
 });
 
@@ -82,11 +93,18 @@ async function arrange(...stored: readonly Appointment[]) {
   const appointmentRepository = new FakeAppointmentRepository();
   const announced: string[] = [];
 
-  await stored.reduce((saved, appointment) => saved.then(() => appointmentRepository.save(appointment)), Promise.resolve());
+  await stored.reduce(
+    (saved, appointment) => saved.then(() => appointmentRepository.save(appointment)),
+    Promise.resolve(),
+  );
 
   const application = createTestApplication({
     modules: [platformTestModule, contextModule('scheduling', schedulingDeclarations), holders],
-    fakes: [fake(AppointmentRepository, appointmentRepository), fake(CalendarRepository, calendars), fake(WaitlistRepository, new FakeWaitlistRepository())],
+    fakes: [
+      fake(AppointmentRepository, appointmentRepository),
+      fake(CalendarRepository, calendars),
+      fake(WaitlistRepository, new FakeWaitlistRepository()),
+    ],
     now: NOW,
   });
 

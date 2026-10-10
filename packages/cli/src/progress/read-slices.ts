@@ -8,9 +8,17 @@ const COLUMNS = ['#', 'context', 'kind', 'slice', 'start with', 'depends on', 'o
 /** The rows of the slices table; undefined when the project has no slices file or the file has no such table. */
 export function readSlices(ws: Workspace): Slice[] | undefined {
   const lines = (ws.read(SLICES_FILE) ?? '').split('\n');
-  const header = lines.findIndex((line) => cellsOf(line).map((cell) => cell.toLowerCase()).join('|') === COLUMNS.join('|'));
 
-  if (header === -1) return undefined;
+  const header = lines.findIndex(
+    (line) =>
+      cellsOf(line)
+        .map((cell) => cell.toLowerCase())
+        .join('|') === COLUMNS.join('|'),
+  );
+
+  if (header === -1) {
+    return undefined;
+  }
 
   const end = lines.findIndex((line, index) => index > header + 1 && !line.trim().startsWith('|'));
 
@@ -25,7 +33,9 @@ export function readSlices(ws: Workspace): Slice[] | undefined {
 function cellsOf(line: string): string[] {
   const row = line.trim();
 
-  if (!row.startsWith('|') || !row.endsWith('|')) return [];
+  if (!row.startsWith('|') || !row.endsWith('|')) {
+    return [];
+  }
 
   return row
     .slice(1, -1)
@@ -36,5 +46,17 @@ function cellsOf(line: string): string[] {
 function sliceOf(cells: readonly string[]): Slice {
   const [id = '', context = '', kind = '', slice = '', startWith = '', dependsOn = '', owner = '', status = ''] = cells;
 
-  return { id, context, kind, slice, startWith, dependsOn: dependsOn.split(',').map((row) => row.trim()).filter((row) => row !== ''), owner, status: status.toLowerCase() };
+  return {
+    id,
+    context,
+    kind,
+    slice,
+    startWith,
+    dependsOn: dependsOn
+      .split(',')
+      .map((row) => row.trim())
+      .filter((row) => row !== ''),
+    owner,
+    status: status.toLowerCase(),
+  };
 }

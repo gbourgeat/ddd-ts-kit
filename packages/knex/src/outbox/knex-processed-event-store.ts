@@ -32,10 +32,9 @@ export class KnexProcessedEventStore implements ProcessedEventStore {
     const executor = this.context.executor();
     const table = executor(this.tableName);
 
-    return insertIgnoringConflict(
-      executor,
-      this.schemaName === undefined ? table : table.withSchema(this.schemaName),
-      { row: { consumer, event_id: eventId }, conflict: ['consumer', 'event_id'] },
-    );
+    return insertIgnoringConflict(executor, this.schemaName === undefined ? table : table.withSchema(this.schemaName), {
+      row: { consumer, event_id: eventId },
+      conflict: ['consumer', 'event_id'],
+    });
   }
 }

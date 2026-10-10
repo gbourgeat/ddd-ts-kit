@@ -26,7 +26,9 @@ export class Appointment {
 export class CancelAppointmentHandler {
   async execute(command: CancelAppointment): Promise<void> {
     const appointment = await this.appointments.findById(command.appointmentId);
-    if (!appointment) throw new Error('Appointment not found');
+    if (!appointment) {
+      throw new Error('Appointment not found');
+    }
 
     if (appointment.status === 'cancelled') {
       throw new Error('Already cancelled');

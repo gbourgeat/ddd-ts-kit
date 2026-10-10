@@ -3,7 +3,8 @@ import { cli, write } from './helpers.js';
 import { initProject } from './support/init-project.js';
 import { jsonAt } from './support/json-at.js';
 
-const PLAN = '# Architecture plan\n\nNext: 6 plan-slices - cut the first slices of billing\n\nThe `Next:` line above is read by tools.\n';
+const PLAN =
+  '# Architecture plan\n\nNext: 6 plan-slices - cut the first slices of billing\n\nThe `Next:` line above is read by tools.\n';
 
 const SLICES = `# Slices
 
@@ -37,9 +38,17 @@ describe('status', () => {
   it('counts the TODO(domain) and the it.todo left in each context', () => {
     const remaining = jsonAt(cli(root, 'status', '--json').json(), 'remaining');
     const listed = jsonAt(cli(root, 'todo', 'billing', '--json').json(), 'remaining');
-    const count = (kind: string): number => (Array.isArray(listed) ? listed.filter((left) => jsonAt(left, 'kind') === kind).length : -1);
 
-    expect(remaining).toContainEqual({ context: 'billing', domain: count('domain'), platform: count('platform'), test: count('test') });
+    const count = (kind: string): number =>
+      Array.isArray(listed) ? listed.filter((left) => jsonAt(left, 'kind') === kind).length : -1;
+
+    expect(remaining).toContainEqual({
+      context: 'billing',
+      domain: count('domain'),
+      platform: count('platform'),
+      test: count('test'),
+    });
+
     expect(count('domain')).toBeGreaterThan(0);
     expect(count('test')).toBeGreaterThan(0);
     expect(cli(root, 'status').stdout).toMatch(/ {2}billing: \d+ TODO\(domain\), \d+ TODO\(platform\), \d+ it\.todo/);
@@ -49,7 +58,10 @@ describe('status', () => {
     write(root, 'docs/architecture/plan.md', PLAN);
 
     expect(cli(root, 'status').stdout).toContain('Next: 6 plan-slices - cut the first slices of billing\n');
-    expect(jsonAt(cli(root, 'status', '--json').json(), 'next')).toBe('6 plan-slices - cut the first slices of billing');
+
+    expect(jsonAt(cli(root, 'status', '--json').json(), 'next')).toBe(
+      '6 plan-slices - cut the first slices of billing',
+    );
   });
 
   it('groups the rows of the slices table by status and by owner', () => {
@@ -60,7 +72,11 @@ describe('status', () => {
     expect(slices).toMatchObject({
       file: 'docs/architecture/slices.md',
       byStatus: { done: ['1'], 'in progress': ['2'], todo: ['3', '4'] },
-      byOwner: { billing: { todo: ['3'] }, conductor: { done: ['1'], 'in progress': ['2'] }, shipping: { todo: ['4'] } },
+      byOwner: {
+        billing: { todo: ['3'] },
+        conductor: { done: ['1'], 'in progress': ['2'] },
+        shipping: { todo: ['4'] },
+      },
     });
 
     expect(jsonAt(slices, 'rows')).toContainEqual({
@@ -81,7 +97,11 @@ describe('status', () => {
     expect(status).toContain('Slices (docs/architecture/slices.md): 4, 1 in progress, 2 todo, 1 done');
     expect(status).toContain('  in progress\n    #2 billing contract "Invoice issued" (owner conductor, depends on 1)');
     expect(status).toContain('    #3 billing slice "Issue invoice" (owner billing, depends on 1, 2)');
-    expect(status).toContain('  by owner\n    billing: 1 todo\n    conductor: 1 in progress, 1 done\n    shipping: 1 todo');
+
+    expect(status).toContain(
+      '  by owner\n    billing: 1 todo\n    conductor: 1 in progress, 1 done\n    shipping: 1 todo',
+    );
+
     expect(status).not.toContain('#1 billing skeleton');
   });
 

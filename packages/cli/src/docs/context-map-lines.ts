@@ -4,7 +4,9 @@ import type { ContextFacts } from './context-facts.js';
 export function contextMapLines(contexts: readonly ContextFacts[]): string[] {
   const declared = contexts.filter((context) => context.declared);
 
-  if (declared.length === 0) return ['No bounded context declared yet.'];
+  if (declared.length === 0) {
+    return ['No bounded context declared yet.'];
+  }
 
   return ['```mermaid', ...diagram(declared), '```', '', ...table(declared)];
 }
@@ -17,14 +19,24 @@ const STYLES: readonly string[] = [
 
 function diagram(contexts: readonly ContextFacts[]): string[] {
   const node = (name: string): string => name.replaceAll('-', '_');
-  const nodes = contexts.map((context) => `  ${node(context.name)}["${context.name}<br/><small>${context.classification}</small>"]:::${context.classification}`);
-  const arrows = contexts.flatMap((context) => context.upstreams.map((upstream) => `  ${node(upstream.context)} -->|${upstream.relationship}| ${node(context.name)}`));
+
+  const nodes = contexts.map(
+    (context) =>
+      `  ${node(context.name)}["${context.name}<br/><small>${context.classification}</small>"]:::${context.classification}`,
+  );
+
+  const arrows = contexts.flatMap((context) =>
+    context.upstreams.map(
+      (upstream) => `  ${node(upstream.context)} -->|${upstream.relationship}| ${node(context.name)}`,
+    ),
+  );
 
   return ['flowchart LR', ...nodes, ...arrows, ...STYLES.map((style) => `  ${style}`)];
 }
 
 function table(contexts: readonly ContextFacts[]): string[] {
-  const names = (values: readonly string[]): string => (values.length > 0 ? values.map((value) => `\`${value}\``).join(', ') : '');
+  const names = (values: readonly string[]): string =>
+    values.length > 0 ? values.map((value) => `\`${value}\``).join(', ') : '';
 
   const rows = contexts.map((context) =>
     [
@@ -38,5 +50,9 @@ function table(contexts: readonly ContextFacts[]): string[] {
     ].join(' | '),
   );
 
-  return ['| Context | Classification | Purpose | Upstreams | Downstreams | Published events | Deployable alone |', '|---|---|---|---|---|---|---|', ...rows.map((row) => `| ${row} |`)];
+  return [
+    '| Context | Classification | Purpose | Upstreams | Downstreams | Published events | Deployable alone |',
+    '|---|---|---|---|---|---|---|',
+    ...rows.map((row) => `| ${row} |`),
+  ];
 }

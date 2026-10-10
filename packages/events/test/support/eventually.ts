@@ -1,7 +1,4 @@
-export async function eventually(
-  condition: () => boolean | Promise<boolean>,
-  timeoutMs = 2_000,
-): Promise<void> {
+export async function eventually(condition: () => boolean | Promise<boolean>, timeoutMs = 2_000): Promise<void> {
   const deadline = Date.now() + timeoutMs;
 
   while (!(await condition())) {

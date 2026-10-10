@@ -2,7 +2,10 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, onTestFailed } f
 import { collectEvents, expectProblem, expectStatus } from '@ddd-ts-kit/testing/e2e';
 import { reportSeedOnFailure } from '@ddd-ts-kit/testing/faker';
 import { expectSpanTree, installTestTracing } from '@ddd-ts-kit/tracing/testing';
-import { personRegisteredV1, type PersonRegisteredV1Payload } from '../../src/contexts/identity/published-language/index.js';
+import {
+  personRegisteredV1,
+  type PersonRegisteredV1Payload,
+} from '../../src/contexts/identity/published-language/index.js';
 import { startApplication, type RunningApplication } from './support/start-application.js';
 import { storyOf } from './support/story-of.js';
 
@@ -26,7 +29,10 @@ describe('Register person, end to end', () => {
   reportSeedOnFailure({ beforeEach, onTestFailed });
 
   it('answers 401 to a caller who presents no credential', async () => {
-    const response = await application.client.put('/people/me', { displayName: 'Ada Lovelace', email: 'ada@example.com' });
+    const response = await application.client.put('/people/me', {
+      displayName: 'Ada Lovelace',
+      email: 'ada@example.com',
+    });
 
     expectStatus(response, 401);
   });
@@ -44,7 +50,10 @@ describe('Register person, end to end', () => {
   it('answers 200 to PUT /people/me for any signed-in person, with their own identifier', async () => {
     const ada = await application.as({ id: 'ada' });
 
-    const response = await ada.put<{ id: string }>('/people/me', { displayName: 'Ada Lovelace', email: 'ada@example.com' });
+    const response = await ada.put<{ id: string }>('/people/me', {
+      displayName: 'Ada Lovelace',
+      email: 'ada@example.com',
+    });
 
     expectStatus(response, 200);
     expect(response.body.id).toBe('ada');
@@ -55,7 +64,11 @@ describe('Register person, end to end', () => {
     const ada = await application.as({ id: 'ada' });
 
     expectStatus(await ada.put('/people/me', { displayName: 'Ada Lovelace', email: 'ada@example.com' }), 200);
-    await events.waitFor<PersonRegisteredV1Payload>(personRegisteredV1, (event) => event.payload.personId === 'ada' && event.payload.displayName === 'Ada Lovelace');
+
+    await events.waitFor<PersonRegisteredV1Payload>(
+      personRegisteredV1,
+      (event) => event.payload.personId === 'ada' && event.payload.displayName === 'Ada Lovelace',
+    );
 
     expectStatus(await ada.put('/people/me', { displayName: 'Ada King', email: 'ada.king@example.com' }), 200);
     const grace = await application.as({ id: 'grace' });
@@ -63,21 +76,34 @@ describe('Register person, end to end', () => {
     expectStatus(await grace.put('/people/me', { displayName: 'Grace Hopper', email: 'grace@example.com' }), 200);
     await events.waitFor<PersonRegisteredV1Payload>(personRegisteredV1, (event) => event.payload.personId === 'grace');
 
-    expect(events.received<PersonRegisteredV1Payload>(personRegisteredV1).filter((event) => event.payload.personId === 'ada')).toHaveLength(1);
+    expect(
+      events
+        .received<PersonRegisteredV1Payload>(personRegisteredV1)
+        .filter((event) => event.payload.personId === 'ada'),
+    ).toHaveLength(1);
+
     events.stop();
   });
 
   it('answers the documented problem for each business refusal', async () => {
     const ada = await application.as({ id: 'ada' });
 
-    expectProblem(await ada.put('/people/me', { displayName: '   ', email: 'ada@example.com' }), { status: 422, code: 'INVALID_DISPLAY_NAME' });
-    expectProblem(await ada.put('/people/me', { displayName: 'Ada Lovelace' }), { status: 422, code: 'VALIDATION_FAILED' });
+    expectProblem(await ada.put('/people/me', { displayName: '   ', email: 'ada@example.com' }), {
+      status: 422,
+      code: 'INVALID_DISPLAY_NAME',
+    });
+
+    expectProblem(await ada.put('/people/me', { displayName: 'Ada Lovelace' }), {
+      status: 422,
+      code: 'VALIDATION_FAILED',
+    });
   });
 });
 
 const storyOfTheRequest: Parameters<typeof expectSpanTree>[1] = [
   {
-    name: 'PUT /people/me', kind: 'SERVER',
+    name: 'PUT /people/me',
+    kind: 'SERVER',
     children: [
       {
         name: 'command RegisterPersonCommand',
@@ -92,15 +118,11 @@ const storyOfTheRequest: Parameters<typeof expectSpanTree>[1] = [
                 children: [
                   {
                     name: 'handler PersonRegisteredEventHandler',
-                    children: [
-                      { name: 'repository IdentityRelationships.recordPerson' },
-                    ],
+                    children: [{ name: 'repository IdentityRelationships.recordPerson' }],
                   },
                   {
                     name: 'handler PersonRegisteredPublisher',
-                    children: [
-                      { name: 'outbox append identity.person.registered' },
-                    ],
+                    children: [{ name: 'outbox append identity.person.registered' }],
                   },
                 ],
               },

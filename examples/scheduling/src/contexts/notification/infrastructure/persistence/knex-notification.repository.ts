@@ -41,7 +41,9 @@ export class KnexNotificationRepository implements NotificationRepository {
   private async insert(state: VersionedNotification): Promise<number> {
     const row = { ...state, ...auditRow(stampCreation(this.scope, this.clock)) };
 
-    return (await insertIgnoringConflict(this.database.executor(), tableOf(this.database), { row, conflict: 'id' })) ? 1 : 0;
+    return (await insertIgnoringConflict(this.database.executor(), tableOf(this.database), { row, conflict: 'id' }))
+      ? 1
+      : 0;
   }
 
   private async update(state: VersionedNotification, expected: number): Promise<number> {

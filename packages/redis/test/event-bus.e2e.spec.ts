@@ -160,7 +160,13 @@ describe.skipIf(!REAL_SERVER)('outbox, relay, Redis Streams and an idempotent co
       onFailure: (failure) => relayFailures.push(failure),
     });
 
-    const billingBus = server.bus({ prefix, consumer: unique('billing'), batchSize: 1, onFailure: failuresOf(busFailures) });
+    const billingBus = server.bus({
+      prefix,
+      consumer: unique('billing'),
+      batchSize: 1,
+      onFailure: failuresOf(busFailures),
+    });
+
     const database = new BillingDatabase();
     const deliveries: string[] = [];
     let providerOutages = 1;

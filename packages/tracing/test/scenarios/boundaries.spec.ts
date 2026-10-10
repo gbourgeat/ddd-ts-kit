@@ -34,7 +34,9 @@ const failedConfirmation = (attempt: number, outcome: string): ExpectedSpan => (
       name: 'command SendBookingConfirmation',
       status: 'ERROR',
       attributes: { 'app.outcome': 'failed', 'app.error.code': 'MAIL_REFUSED' },
-      children: [{ name: 'external MailGateway.send', status: 'ERROR', attributes: { 'app.error.code': 'MAIL_REFUSED' } }],
+      children: [
+        { name: 'external MailGateway.send', status: 'ERROR', attributes: { 'app.error.code': 'MAIL_REFUSED' } },
+      ],
     },
   ],
 });
@@ -46,12 +48,16 @@ const publication = (consumers: readonly ExpectedSpan[]): ExpectedSpan => ({
   children: consumers,
 });
 
-async function aClinicWhoseMailRefuses(times: number): Promise<Awaited<ReturnType<typeof aClinic>> & { bus: RedeliveringBus }> {
+async function aClinicWhoseMailRefuses(
+  times: number,
+): Promise<Awaited<ReturnType<typeof aClinic>> & { bus: RedeliveringBus }> {
   const bus = new RedeliveringBus(3);
   const clinic = await aClinic({ bus });
   const mail = clinic.app.resolve(MailGateway);
 
-  if (mail instanceof RecordingMailGateway) mail.refusals = times;
+  if (mail instanceof RecordingMailGateway) {
+    mail.refusals = times;
+  }
 
   return { ...clinic, bus };
 }
@@ -65,7 +71,10 @@ describe('a consumer that fails, is delivered the event again, and succeeds', ()
       await clinic.relay.tick();
     });
 
-    expectSpanTree(trace, [bookingTree([publication([failedConfirmation(1, 'failed'), confirmationTree(2), recordingTree()])])]);
+    expectSpanTree(trace, [
+      bookingTree([publication([failedConfirmation(1, 'failed'), confirmationTree(2), recordingTree()])]),
+    ]);
+
     expect(clinic.errors.reports).toEqual([]);
   });
 
@@ -77,7 +86,11 @@ describe('a consumer that fails, is delivered the event again, and succeeds', ()
       await clinic.relay.tick();
     });
 
-    const deliveries = [failedConfirmation(1, 'failed'), failedConfirmation(2, 'failed'), failedConfirmation(3, 'dead-lettered')];
+    const deliveries = [
+      failedConfirmation(1, 'failed'),
+      failedConfirmation(2, 'failed'),
+      failedConfirmation(3, 'dead-lettered'),
+    ];
 
     expectSpanTree(trace, [bookingTree([publication([...deliveries, recordingTree()])])]);
     expect(clinic.bus.dead).toEqual(['id-2 for 0']);
@@ -121,7 +134,10 @@ describe('a scheduled job', () => {
 
   it('does not continue the trace of whatever started it', async () => {
     const clinic = await aClinic();
-    const trace = await tracing.traceOf(() => withSpan('an unrelated request', () => clinic.scheduler.runNow('scheduling.send-reminders')));
+
+    const trace = await tracing.traceOf(() =>
+      withSpan('an unrelated request', () => clinic.scheduler.runNow('scheduling.send-reminders')),
+    );
 
     expect(trace.map((span) => span.name)).toEqual(['an unrelated request', 'job scheduling.send-reminders']);
     expect(trace[0]?.children).toEqual([]);
@@ -138,7 +154,11 @@ describe('a query', () => {
       {
         name: 'GET /appointments/:id',
         kind: 'SERVER',
-        attributes: { 'http.route': '/appointments/:id', 'app.operation': 'getAppointment', 'http.response.status_code': 204 },
+        attributes: {
+          'http.route': '/appointments/:id',
+          'app.operation': 'getAppointment',
+          'http.response.status_code': 204,
+        },
         children: [
           {
             name: 'query GetAppointment',

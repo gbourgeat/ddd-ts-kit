@@ -17,7 +17,9 @@ export function isActor(value: unknown): value is Actor {
 type ActorKeys = Record<'id' | 'type' | 'roles' | 'attributes', unknown>;
 
 function hasActorKeys(value: unknown): value is ActorKeys {
-  if (typeof value !== 'object' || value === null) return false;
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
 
   return 'id' in value && 'type' in value && 'roles' in value && 'attributes' in value;
 }

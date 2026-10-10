@@ -12,7 +12,10 @@ export class FakeAppointmentRepository extends InMemoryRepository<Appointment> i
 
   /** Like the storage, the fake holds a time on a calendar once. */
   override async save(saved: Appointment): Promise<void> {
-    const taken = this.all().some((stored) => stored.id !== saved.id && stored.calendarId === saved.calendarId && saved.isActive && stored.holds(saved.slot));
+    const taken = this.all().some(
+      (stored) =>
+        stored.id !== saved.id && stored.calendarId === saved.calendarId && saved.isActive && stored.holds(saved.slot),
+    );
 
     if (taken) {
       throw new SlotTakenError(saved.calendarId, saved.slot.startsAt);
@@ -28,7 +31,14 @@ export class FakeAppointmentRepository extends InMemoryRepository<Appointment> i
   }
 
   async heldBy(patientId: string, practitionerId: string, instant: Date): Promise<readonly Appointment[]> {
-    return byStart(this.all().filter((stored) => stored.patientId === patientId && stored.booking.practitionerId === practitionerId && stored.isHeldAfter(instant)));
+    return byStart(
+      this.all().filter(
+        (stored) =>
+          stored.patientId === patientId &&
+          stored.booking.practitionerId === practitionerId &&
+          stored.isHeldAfter(instant),
+      ),
+    );
   }
 
   async unconfirmedAt(instant: Date): Promise<readonly Appointment[]> {

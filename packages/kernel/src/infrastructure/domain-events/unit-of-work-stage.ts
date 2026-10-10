@@ -10,7 +10,9 @@ export type UnitOfWorkStage = 'outside' | 'open' | 'before-commit' | 'after-comm
 export function unitOfWorkStage(): UnitOfWorkStage {
   const scope = unitOfWorkScope.getStore();
 
-  if (scope === undefined || scope.kind === 'save' || scope.stage === 'closed') return 'outside';
+  if (scope === undefined || scope.kind === 'save' || scope.stage === 'closed') {
+    return 'outside';
+  }
 
   return scope.stage;
 }

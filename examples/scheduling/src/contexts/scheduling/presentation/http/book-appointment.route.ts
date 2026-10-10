@@ -1,6 +1,6 @@
 import { actorOf } from '@ddd-ts-kit/auth';
 import { defineRoute, type Route } from '@ddd-ts-kit/http';
-import type { CommandBus } from '@ddd-ts-kit/kernel';
+import type { Actor, CommandBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
 import { BookAppointmentCommand } from '../../application/commands/book-appointment/book-appointment.command.js';
 import { BookAppointmentBody } from './book-appointment-body.dto.js';
@@ -19,17 +19,32 @@ export function bookAppointmentRoute(commands: CommandBus): Route {
       tags: ['scheduling'],
       request: { body },
       responses: { 201: { description: 'Done; the body carries the identifier.', body: accepted } },
-      errors: ['UNAUTHORIZED', 'FORBIDDEN', 'UNKNOWN_CALENDAR', 'UNKNOWN_APPOINTMENT_TYPE', 'OUTSIDE_AVAILABILITY', 'OFF_GRID', 'BOOKING_TOO_LATE', 'BOOKING_TOO_FAR', 'SLOT_TAKEN', 'PATIENT_LIMIT_REACHED'],
+      errors: [
+        'UNAUTHORIZED',
+        'FORBIDDEN',
+        'UNKNOWN_CALENDAR',
+        'UNKNOWN_APPOINTMENT_TYPE',
+        'OUTSIDE_AVAILABILITY',
+        'OFF_GRID',
+        'BOOKING_TOO_LATE',
+        'BOOKING_TOO_FAR',
+        'SLOT_TAKEN',
+        'PATIENT_LIMIT_REACHED',
+      ],
       security: ['bearer'],
     },
     async (input) => {
-      const { calendarId, appointmentTypeId, startsAt, patientId } = input.body;
-      const actor = actorOf(input.context.principal);
-      // Without a patient named, the caller books for themselves.
-      const wish = { patientId: patientId ?? actor.id, appointmentTypeId, startsAt: new Date(startsAt) };
-      const id = await commands.execute(new BookAppointmentCommand(actor, calendarId, wish));
+      const id = await commands.execute(bookingOf(actorOf(input.context.principal), input.body));
 
       return { status: 201, body: { id } };
     },
   );
+}
+
+function bookingOf(actor: Actor, body: BookAppointmentBody): BookAppointmentCommand {
+  const { calendarId, appointmentTypeId, startsAt, patientId } = body;
+  // Without a patient named, the caller books for themselves.
+  const wish = { patientId: patientId ?? actor.id, appointmentTypeId, startsAt: new Date(startsAt) };
+
+  return new BookAppointmentCommand(actor, calendarId, wish);
 }

@@ -9,7 +9,9 @@ export class ReleasingProcessedEvents implements ProcessedEventStore {
   async markProcessed(consumer: string, eventId: string): Promise<boolean> {
     const mark = `${consumer} ${eventId}`;
 
-    if (this.marks.has(mark)) return false;
+    if (this.marks.has(mark)) {
+      return false;
+    }
 
     this.marks.add(mark);
 

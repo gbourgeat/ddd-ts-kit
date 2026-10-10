@@ -14,7 +14,13 @@ export interface CompilerSetup {
 }
 
 /** What is taken from the project: the rest is fixed by what a single file needs. */
-const FOLLOWED = ['target', 'useDefineForClassFields', 'verbatimModuleSyntax', 'experimentalDecorators', 'emitDecoratorMetadata'];
+const FOLLOWED = [
+  'target',
+  'useDefineForClassFields',
+  'verbatimModuleSyntax',
+  'experimentalDecorators',
+  'emitDecoratorMetadata',
+];
 
 /** Bumped when what is emitted for the same input changes. */
 const FORMAT = 1;
@@ -81,7 +87,11 @@ export class DecoratorCompiler {
     const extension = path.extname(file);
     const directory = path.join(this.setup.cacheDir, key);
 
-    return { directory, source: `source${extension}`, output: path.join(directory, `source${emittedExtension(extension)}`) };
+    return {
+      directory,
+      source: `source${extension}`,
+      output: path.join(directory, `source${emittedExtension(extension)}`),
+    };
   }
 
   /** Emitted next to the cache, then moved into it in one step: a reader never sees half a file. */
@@ -105,7 +115,10 @@ export class DecoratorCompiler {
 
   private run(args: readonly string[], subject: string): string {
     try {
-      return execFileSync(process.execPath, [this.setup.script, '--pretty', 'false', ...args], { encoding: 'utf8', stdio: 'pipe' });
+      return execFileSync(process.execPath, [this.setup.script, '--pretty', 'false', ...args], {
+        encoding: 'utf8',
+        stdio: 'pipe',
+      });
     } catch (error) {
       throw new Error(`The TypeScript compiler refused ${subject}:\n${saidBy(error)}`, { cause: error });
     }

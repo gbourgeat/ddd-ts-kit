@@ -23,7 +23,11 @@ describe('POST /appointments/:appointmentId/cancellation', () => {
       },
     });
 
-    const response = await executeRoute(cancelAppointmentRoute(commands), request({ reason: 'The practitioner is away.' }), { validateResponses: true });
+    const response = await executeRoute(
+      cancelAppointmentRoute(commands),
+      request({ reason: 'The practitioner is away.' }),
+      { validateResponses: true },
+    );
 
     expect(response).toMatchObject({ status: 201, body: { id: 'appointment-1' } });
     expect(received).toMatchObject([{ appointmentId: 'appointment-1', reason: 'The practitioner is away.' }]);
@@ -33,7 +37,9 @@ describe('POST /appointments/:appointmentId/cancellation', () => {
     ['whose reason is not a text', { reason: 7 }],
     ['whose reason is longer than 500 characters', { reason: 'x'.repeat(501) }],
   ])('refuses a body %s with 422', async (_case, body) => {
-    const commands = new InMemoryCommandBus().register(CancelAppointmentCommand, { execute: async () => 'appointment-1' });
+    const commands = new InMemoryCommandBus().register(CancelAppointmentCommand, {
+      execute: async () => 'appointment-1',
+    });
 
     const response = await executeRoute(cancelAppointmentRoute(commands), request(body), { validateResponses: true });
 
@@ -51,7 +57,11 @@ describe('POST /appointments/:appointmentId/cancellation', () => {
       },
     });
 
-    const response = await executeRoute(cancelAppointmentRoute(commands), request({ reason: 'The practitioner is away.' }), { validateResponses: true, errorMapper });
+    const response = await executeRoute(
+      cancelAppointmentRoute(commands),
+      request({ reason: 'The practitioner is away.' }),
+      { validateResponses: true, errorMapper },
+    );
 
     expect(response).toMatchObject({ status, body: { code } });
   });

@@ -31,7 +31,12 @@ export class KnexReminderRepository implements ReminderRepository {
   }
 
   async findDue(asOf: Date): Promise<readonly Reminder[]> {
-    const rows = await tableOf(this.database).where({ status: 'planned' }).where('due_at', '<=', asOf).where('starts_at', '>', asOf).orderBy('due_at').orderBy('id');
+    const rows = await tableOf(this.database)
+      .where({ status: 'planned' })
+      .where('due_at', '<=', asOf)
+      .where('starts_at', '>', asOf)
+      .orderBy('due_at')
+      .orderBy('id');
 
     return rows.map((row) => ReminderMapper.toDomain(row));
   }
@@ -47,7 +52,9 @@ export class KnexReminderRepository implements ReminderRepository {
   private async insert(state: VersionedReminder): Promise<number> {
     const row = { ...state, ...auditRow(stampCreation(this.scope, this.clock)) };
 
-    return (await insertIgnoringConflict(this.database.executor(), tableOf(this.database), { row, conflict: 'id' })) ? 1 : 0;
+    return (await insertIgnoringConflict(this.database.executor(), tableOf(this.database), { row, conflict: 'id' }))
+      ? 1
+      : 0;
   }
 
   private async update(state: VersionedReminder, expected: number): Promise<number> {

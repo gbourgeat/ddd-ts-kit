@@ -24,7 +24,9 @@ export class QuoteGateway {
 
     const failure = this.failures.shift();
 
-    if (failure !== undefined) throw failure;
+    if (failure !== undefined) {
+      throw failure;
+    }
 
     return { pair, rate: this.currentRate };
   }

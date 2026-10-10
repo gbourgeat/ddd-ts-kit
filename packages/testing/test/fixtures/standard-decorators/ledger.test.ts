@@ -26,5 +26,5 @@ it('reports a failure at the line of the source, not of what was compiled', () =
   })();
 
   expect(failure).toBeInstanceOf(RangeError);
-  expect(failure instanceof Error ? failure.stack : '').toMatch(/in-memory-ledger\.repository\.ts:9:/);
+  expect(failure instanceof Error ? failure.stack : '').toMatch(/in-memory-ledger\.repository\.ts:10:/);
 });

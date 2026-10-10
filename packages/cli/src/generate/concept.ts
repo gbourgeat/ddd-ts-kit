@@ -24,7 +24,9 @@ export function concept(scope: Scope, input: string, role: ConceptRole): Name {
 function refuseTechnicalWords(name: Name): void {
   const technical = splitWords(name.pascal).filter((word) => TECHNICAL_WORDS.includes(word));
 
-  if (technical.length === 0) return;
+  if (technical.length === 0) {
+    return;
+  }
 
   throw new CliError(
     `"${name.pascal}" carries the technical word "${technical.join('", "')}".`,
@@ -37,9 +39,15 @@ function refuseUnknownWords(scope: Scope, name: Name): void {
   const glossary = parseGlossary(scope.ws.read(file) ?? '');
   const unknown = unknownWords(name.pascal, glossary);
 
-  if (unknown.length === 0) return;
+  if (unknown.length === 0) {
+    return;
+  }
 
-  const known = glossary.terms.length > 0 ? `use an existing term (${glossary.terms.join(', ')})` : 'define the ubiquitous language first';
+  const known =
+    glossary.terms.length > 0
+      ? `use an existing term (${glossary.terms.join(', ')})`
+      : 'define the ubiquitous language first';
+
   const flags = unknown.map((word) => `--term "${toName(word).pascal}=<what it means for the business>"`).join(' ');
 
   throw new CliError(

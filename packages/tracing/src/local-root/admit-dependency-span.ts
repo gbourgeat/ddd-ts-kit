@@ -13,7 +13,9 @@ export function admitDependencySpan(name: string): boolean {
   const active = trace.getSpan(context.active());
   const root = active === undefined ? undefined : localRoots.get(active);
 
-  if (root === undefined) return true;
+  if (root === undefined) {
+    return true;
+  }
 
   correlate(root);
 
@@ -23,7 +25,9 @@ export function admitDependencySpan(name: string): boolean {
   if (root.total >= maxSpansPerRoot || sameName >= maxSpansPerName) {
     root.dropped += 1;
 
-    if (root.span.isRecording()) root.span.setAttribute(DROPPED_SPANS_ATTRIBUTE, root.dropped);
+    if (root.span.isRecording()) {
+      root.span.setAttribute(DROPPED_SPANS_ATTRIBUTE, root.dropped);
+    }
 
     return false;
   }

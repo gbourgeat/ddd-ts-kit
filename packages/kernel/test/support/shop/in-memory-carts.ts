@@ -16,7 +16,9 @@ export class InMemoryCarts implements Repository<Cart> {
 
     this.failNextSave = undefined;
 
-    if (failure !== undefined) throw failure;
+    if (failure !== undefined) {
+      throw failure;
+    }
 
     this.saved.push(cart.id);
   }

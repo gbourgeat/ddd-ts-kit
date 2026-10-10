@@ -1,5 +1,12 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { FixedClock, FixedExecutionScope, executionContext, unwrap, type Actor, type ExecutionContext } from '@ddd-ts-kit/kernel';
+import {
+  FixedClock,
+  FixedExecutionScope,
+  executionContext,
+  unwrap,
+  type Actor,
+  type ExecutionContext,
+} from '@ddd-ts-kit/kernel';
 import { repositoryContract } from '@ddd-ts-kit/testing/contracts';
 import type { Appointment } from '../../domain/aggregates/appointment.aggregate.js';
 import type { AppointmentRepository } from '../../domain/repositories/appointment.repository.js';
@@ -14,7 +21,10 @@ const runner = { describe, it, expect, beforeEach, afterEach };
 const expectations = {
   createAggregate: () => anAppointment().build(),
   mutate: (changed: Appointment) => {
-    changed.cancel(unwrap(Cancellation.create('practice', 'The practitioner is away.')), new Date('2026-01-02T00:00:00.000Z'));
+    changed.cancel(
+      unwrap(Cancellation.create('practice', 'The practitioner is away.')),
+      new Date('2026-01-02T00:00:00.000Z'),
+    );
   },
   idOf: (subject: Appointment) => subject.id,
   stateOf: (subject: Appointment) => subject.toState(),
@@ -51,7 +61,14 @@ const REPOSITORIES: readonly (readonly [string, () => Promise<AppointmentReposit
 describe.each(REPOSITORIES)('%s (what a calendar holds)', (_name, create) => {
   it('stores every fact of a requested appointment, buffer and deadline included', async () => {
     const repository = await create();
-    const requested = anAppointment().startingAt(at('09:00')).lasting(30).withBuffer(10).requestedUntil(at('08:00')).onDay('2026-03-02').build();
+
+    const requested = anAppointment()
+      .startingAt(at('09:00'))
+      .lasting(30)
+      .withBuffer(10)
+      .requestedUntil(at('08:00'))
+      .onDay('2026-03-02')
+      .build();
 
     await repository.save(requested);
 
@@ -72,13 +89,18 @@ describe.each(REPOSITORIES)('%s (what a calendar holds)', (_name, create) => {
     const found = await repository.findById(cancelled.id);
 
     expect(found?.status).toBe('cancelled');
-    expect(found?.cancellation?.equals(unwrap(Cancellation.create('practice', 'The practitioner is away.')))).toBe(true);
+
+    expect(found?.cancellation?.equals(unwrap(Cancellation.create('practice', 'The practitioner is away.')))).toBe(
+      true,
+    );
   });
 
   it('refuses a second active appointment on a held time of the same calendar, buffer included', async () => {
     const repository = await create();
 
-    await repository.save(anAppointment().onCalendar('calendar-a').startingAt(at('09:00')).lasting(30).withBuffer(10).build());
+    await repository.save(
+      anAppointment().onCalendar('calendar-a').startingAt(at('09:00')).lasting(30).withBuffer(10).build(),
+    );
 
     const second = repository.save(anAppointment().onCalendar('calendar-a').startingAt(at('09:35')).build());
 
@@ -88,7 +110,9 @@ describe.each(REPOSITORIES)('%s (what a calendar holds)', (_name, create) => {
   it('accepts an appointment that starts when the previous one stops holding, and the same time on another calendar', async () => {
     const repository = await create();
 
-    await repository.save(anAppointment().onCalendar('calendar-a').startingAt(at('09:00')).lasting(30).withBuffer(10).build());
+    await repository.save(
+      anAppointment().onCalendar('calendar-a').startingAt(at('09:00')).lasting(30).withBuffer(10).build(),
+    );
 
     await repository.save(anAppointment().onCalendar('calendar-a').startingAt(at('09:40')).build());
     await repository.save(anAppointment().onCalendar('calendar-b').startingAt(at('09:00')).build());
@@ -99,7 +123,10 @@ describe.each(REPOSITORIES)('%s (what a calendar holds)', (_name, create) => {
   it('gives back the time of an appointment that ended', async () => {
     const repository = await create();
 
-    await repository.save(anAppointment().onCalendar('calendar-a').startingAt(at('09:00')).cancelledByPatient().build());
+    await repository.save(
+      anAppointment().onCalendar('calendar-a').startingAt(at('09:00')).cancelledByPatient().build(),
+    );
+
     await repository.save(anAppointment().onCalendar('calendar-a').startingAt(at('09:00')).expired().build());
 
     await repository.save(anAppointment().onCalendar('calendar-a').startingAt(at('09:00')).build());
@@ -119,15 +146,30 @@ describe.each(REPOSITORIES)('%s (what a calendar holds)', (_name, create) => {
 
     await expect(repository.save(noon)).rejects.toMatchObject({ code: 'SLOT_TAKEN' });
   });
+});
 
+describe.each(REPOSITORIES)('%s (what it finds among the appointments)', (_name, create) => {
   it('finds the active appointments of a calendar that hold an instant of a span', async () => {
     const repository = await create();
     const before = anAppointment().onCalendar('calendar-a').startingAt(at('08:00')).lasting(30).build();
-    const buffered = anAppointment().onCalendar('calendar-a').startingAt(at('08:30')).lasting(25).withBuffer(10).build();
+
+    const buffered = anAppointment()
+      .onCalendar('calendar-a')
+      .startingAt(at('08:30'))
+      .lasting(25)
+      .withBuffer(10)
+      .build();
+
     const inside = anAppointment().onCalendar('calendar-a').startingAt(at('09:30')).build();
     const after = anAppointment().onCalendar('calendar-a').startingAt(at('10:00')).build();
     const elsewhere = anAppointment().onCalendar('calendar-b').startingAt(at('09:30')).build();
-    const ended = anAppointment().onCalendar('calendar-a').startingAt(at('09:05')).lasting(20).cancelledByPatient().build();
+
+    const ended = anAppointment()
+      .onCalendar('calendar-a')
+      .startingAt(at('09:05'))
+      .lasting(20)
+      .cancelledByPatient()
+      .build();
 
     await saveAll(repository, [before, buffered, inside, after, elsewhere, ended]);
 
@@ -138,12 +180,13 @@ describe.each(REPOSITORIES)('%s (what a calendar holds)', (_name, create) => {
 
   it('finds the appointments a patient still holds with a practitioner, whatever the calendar', async () => {
     const repository = await create();
-    const coming = anAppointment().forPatient('patient-a').withPractitioner('practitioner-a').startingAt(at('09:00')).build();
-    const elsewhere = anAppointment().forPatient('patient-a').withPractitioner('practitioner-a').startingAt(at('11:00')).build();
-    const started = anAppointment().forPatient('patient-a').withPractitioner('practitioner-a').startingAt(at('07:00')).build();
-    const cancelled = anAppointment().forPatient('patient-a').withPractitioner('practitioner-a').startingAt(at('13:00')).cancelledByPatient().build();
-    const other = anAppointment().forPatient('patient-a').withPractitioner('practitioner-b').startingAt(at('09:00')).build();
-    const someone = anAppointment().forPatient('patient-b').withPractitioner('practitioner-a').startingAt(at('09:00')).build();
+
+    const coming = visit('patient-a', 'practitioner-a', '09:00').build();
+    const elsewhere = visit('patient-a', 'practitioner-a', '11:00').build();
+    const started = visit('patient-a', 'practitioner-a', '07:00').build();
+    const cancelled = visit('patient-a', 'practitioner-a', '13:00').cancelledByPatient().build();
+    const other = visit('patient-a', 'practitioner-b', '09:00').build();
+    const someone = visit('patient-b', 'practitioner-a', '09:00').build();
 
     await saveAll(repository, [coming, elsewhere, started, cancelled, other, someone]);
 
@@ -167,6 +210,10 @@ describe.each(REPOSITORIES)('%s (what a calendar holds)', (_name, create) => {
     expect(unconfirmed.map((appointment) => appointment.id)).toEqual([due.id, dueNow.id]);
   });
 });
+
+function visit(patientId: string, practitionerId: string, time: string) {
+  return anAppointment().forPatient(patientId).withPractitioner(practitionerId).startingAt(at(time));
+}
 
 async function saveAll(repository: AppointmentRepository, appointments: readonly Appointment[]): Promise<void> {
   await appointments.reduce((saved, appointment) => saved.then(() => repository.save(appointment)), Promise.resolve());

@@ -3,7 +3,9 @@ import { Requires } from '@ddd-ts-kit/kernel/declarations';
 import { schedulingPermissions } from '../../authorization/scheduling.permissions.js';
 import type { Weekday } from '../../../domain/value-objects/opening-hours.vo.js';
 
-@Requires(schedulingPermissions['calendar.set-opening-hours'], { resource: (command: SetOpeningHoursCommand) => ({ type: 'calendar', id: command.calendarId }) })
+@Requires(schedulingPermissions['calendar.set-opening-hours'], {
+  resource: (command: SetOpeningHoursCommand) => ({ type: 'calendar', id: command.calendarId }),
+})
 export class SetOpeningHoursCommand extends AuthorizedCommand<string> {
   constructor(
     actor: Actor,

@@ -1,4 +1,4 @@
-import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
+import { AST_NODE_TYPES, type TSESLint, type TSESTree } from '@typescript-eslint/utils';
 import type { LintedFile } from '../project/linted-file.js';
 import { propertyName } from '../support/globals/property-name.js';
 import { dependencyListListener } from '../support/ports/dependency-list-listener.js';
@@ -7,7 +7,9 @@ import { parameterTypeName } from '../support/types/parameter-type-name.js';
 
 const DISPATCHER = 'DomainEventDispatcher';
 const PULL = 'pullEvents';
-const ON_SAVE = 'events leave with the save: `await repository.save(aggregate)` and nothing else; a removal that announces an event takes the aggregate.';
+
+const ON_SAVE =
+  'events leave with the save: `await repository.save(aggregate)` and nothing else; a removal that announces an event takes the aggregate.';
 
 /** What a file of a context is held to: every judged file calls no `pullEvents()`, some also know no dispatcher. */
 interface Judged {
@@ -15,11 +17,14 @@ interface Judged {
   readonly refusesDispatcher: boolean;
 }
 
+type Refuse = (node: TSESTree.Node, how: string) => void;
+
 export const domainEventsDispatchedOnSave = defineRule<'pulled' | 'dispatcher'>({
   id: 'domain-events/dispatched-on-save',
   type: 'problem',
   recommended: 'error',
-  description: 'Domain events leave with the save: no `pullEvents()` in application/ or infrastructure/, no DomainEventDispatcher in a command, a query or a repository adapter.',
+  description:
+    'Domain events leave with the save: no `pullEvents()` in application/ or infrastructure/, no DomainEventDispatcher in a command, a query or a repository adapter.',
   messages: {
     pulled: `\`${PULL}()\` is called in {{place}}: ${ON_SAVE}`,
     dispatcher: `${DISPATCHER} is {{how}} in {{place}}: ${ON_SAVE}`,
@@ -27,46 +32,74 @@ export const domainEventsDispatchedOnSave = defineRule<'pulled' | 'dispatcher'>(
   create({ file, sourceCode, report }) {
     const judged = judgedAs(file);
 
-    if (judged === undefined) return {};
+    if (judged === undefined) {
+      return {};
+    }
 
     const { place } = judged;
-    const refuse = (node: TSESTree.Node, how: string): void => report({ node, messageId: 'dispatcher', data: { how, place } });
 
-    const lists = dependencyListListener(sourceCode.ast, (dependency) => {
-      if (judged.refusesDispatcher && dependency.name === DISPATCHER) refuse(dependency, 'named in a dependency list');
-    });
+    const refuse: Refuse = (node, how) => report({ node, messageId: 'dispatcher', data: { how, place } });
+    const lists = dependencyLists(sourceCode.ast, judged, refuse);
 
     return {
       ...lists,
       CallExpression(node) {
         lists.CallExpression?.(node);
 
-        if (isPull(node)) report({ node, messageId: 'pulled', data: { place } });
+        if (isPull(node)) {
+          report({ node, messageId: 'pulled', data: { place } });
+        }
       },
       ImportDeclaration(node) {
-        for (const specifier of judged.refusesDispatcher ? node.specifiers.filter(importsDispatcher) : []) refuse(specifier, 'imported');
+        for (const specifier of judged.refusesDispatcher ? node.specifiers.filter(importsDispatcher) : []) {
+          refuse(specifier, 'imported');
+        }
       },
       MethodDefinition(node) {
-        if (!judged.refusesDispatcher || node.kind !== 'constructor') return;
-
-        for (const parameter of node.value.params.filter((candidate) => parameterTypeName(candidate) === DISPATCHER)) refuse(parameter, 'a constructor parameter');
+        for (const parameter of judged.refusesDispatcher ? dispatcherParameters(node) : []) {
+          refuse(parameter, 'a constructor parameter');
+        }
       },
     };
   },
 });
 
+function dependencyLists(program: TSESTree.Program, judged: Judged, refuse: Refuse): TSESLint.RuleListener {
+  return dependencyListListener(program, (dependency) => {
+    if (judged.refusesDispatcher && dependency.name === DISPATCHER) {
+      refuse(dependency, 'named in a dependency list');
+    }
+  });
+}
+
+function dispatcherParameters(node: TSESTree.MethodDefinition): TSESTree.Parameter[] {
+  return node.kind === 'constructor'
+    ? node.value.params.filter((candidate) => parameterTypeName(candidate) === DISPATCHER)
+    : [];
+}
+
 /** Production files of application/ and infrastructure/; the module file, the tests and everything outside a context are not judged. */
 function judgedAs(file: LintedFile): Judged | undefined {
   const { location } = file;
 
-  if (location.area !== 'context' || file.isTest) return undefined;
+  if (location.area !== 'context' || file.isTest) {
+    return undefined;
+  }
 
   const [folder = ''] = location.inside;
 
-  if (location.layer === 'application') return { place: `application/${folder}`, refusesDispatcher: folder === 'commands' || folder === 'queries' };
-  if (location.layer !== 'infrastructure') return undefined;
+  if (location.layer === 'application') {
+    return { place: `application/${folder}`, refusesDispatcher: folder === 'commands' || folder === 'queries' };
+  }
 
-  return { place: `infrastructure/${folder}`, refusesDispatcher: folder === 'persistence' && file.path.endsWith('.repository.ts') };
+  if (location.layer !== 'infrastructure') {
+    return undefined;
+  }
+
+  return {
+    place: `infrastructure/${folder}`,
+    refusesDispatcher: folder === 'persistence' && file.path.endsWith('.repository.ts'),
+  };
 }
 
 function isPull(node: TSESTree.CallExpression): boolean {
@@ -74,7 +107,9 @@ function isPull(node: TSESTree.CallExpression): boolean {
 }
 
 function importsDispatcher(specifier: TSESTree.ImportClause): boolean {
-  if (specifier.type !== AST_NODE_TYPES.ImportSpecifier) return false;
+  if (specifier.type !== AST_NODE_TYPES.ImportSpecifier) {
+    return false;
+  }
 
   const { imported } = specifier;
 

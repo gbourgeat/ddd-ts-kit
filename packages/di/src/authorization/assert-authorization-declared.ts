@@ -19,7 +19,9 @@ export function assertAuthorizationDeclared(wiring: Wiring, overridden: TokenSet
     );
   }
 
-  if (wiring.bindings.has(UseCaseGuard) || overridden.has(UseCaseGuard)) return;
+  if (wiring.bindings.has(UseCaseGuard) || overridden.has(UseCaseGuard)) {
+    return;
+  }
 
   throw new WiringError(
     'AUTHORIZATION_NOT_ENFORCED',

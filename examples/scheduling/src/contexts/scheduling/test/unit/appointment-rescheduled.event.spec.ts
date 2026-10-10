@@ -7,14 +7,20 @@ const before = anAppointment().startingAt(new Date('2026-03-01T23:30:00.000Z')).
 
 describe('AppointmentRescheduled', () => {
   it('is named after the context, the aggregate and the fact', () => {
-    const event = new AppointmentRescheduled('appointment-1', new Date('2026-01-01T00:00:00.000Z'), { booking: held.booking, previous: before.booking });
+    const event = new AppointmentRescheduled('appointment-1', new Date('2026-01-01T00:00:00.000Z'), {
+      booking: held.booking,
+      previous: before.booking,
+    });
 
     expect(event.name).toBe('scheduling.appointment.rescheduled');
     expect(event.aggregateId).toBe('appointment-1');
   });
 
   it('carries what a reaction needs to know', () => {
-    const event = new AppointmentRescheduled('appointment-1', new Date('2026-01-01T00:00:00.000Z'), { booking: held.booking, previous: before.booking });
+    const event = new AppointmentRescheduled('appointment-1', new Date('2026-01-01T00:00:00.000Z'), {
+      booking: held.booking,
+      previous: before.booking,
+    });
 
     expect(event).toMatchObject({ moved: { booking: held.booking, previous: before.booking } });
   });

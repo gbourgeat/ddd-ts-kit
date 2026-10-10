@@ -19,7 +19,11 @@ function main() {
   const destination = fs.mkdtempSync(path.join(os.tmpdir(), 'package-check-'));
   try {
     const failures = publishablePackages().flatMap((entry) => check(entry, destination));
-    console.log(failures.length === 0 ? '\nEvery package passes publint and attw.' : `\n${failures.length} failed check(s):\n${failures.map((failure) => `  ${failure}`).join('\n')}`);
+    console.log(
+      failures.length === 0
+        ? '\nEvery package passes publint and attw.'
+        : `\n${failures.length} failed check(s):\n${failures.map((failure) => `  ${failure}`).join('\n')}`,
+    );
     return failures.length === 0 ? 0 : 1;
   } finally {
     fs.rmSync(destination, { recursive: true, force: true });
@@ -31,25 +35,37 @@ function publishablePackages() {
     .readdirSync(PACKAGES)
     .map((name) => path.join(PACKAGES, name))
     .filter((directory) => fs.existsSync(path.join(directory, 'package.json')))
-    .map((directory) => ({ directory, manifest: JSON.parse(fs.readFileSync(path.join(directory, 'package.json'), 'utf8')) }))
+    .map((directory) => ({
+      directory,
+      manifest: JSON.parse(fs.readFileSync(path.join(directory, 'package.json'), 'utf8')),
+    }))
     .filter(({ manifest }) => manifest.private !== true);
 }
 
 function check({ directory, manifest }, destination) {
   console.log(`\n== ${manifest.name}`);
-  if (!fs.existsSync(path.join(directory, 'dist'))) return [`${manifest.name}: no dist/ directory, run the build first`];
+  if (!fs.existsSync(path.join(directory, 'dist'))) {
+    return [`${manifest.name}: no dist/ directory, run the build first`];
+  }
   const tarball = pack(directory, destination);
-  if (tarball === undefined) return [`${manifest.name}: npm pack failed`];
+  if (tarball === undefined) {
+    return [`${manifest.name}: npm pack failed`];
+  }
   const tools = [
     { name: 'publint', args: ['run', tarball, '--strict'] },
     // A package without typed exports (the CLI: a binary only) has no type resolution to check.
-    ...(hasTypedExports(manifest) ? [{ name: 'attw', args: [tarball, '--profile', 'esm-only', '--format', 'ascii', '--no-emoji', '--no-color'] }] : []),
+    ...(hasTypedExports(manifest)
+      ? [{ name: 'attw', args: [tarball, '--profile', 'esm-only', '--format', 'ascii', '--no-emoji', '--no-color'] }]
+      : []),
   ];
   return tools.filter((tool) => !passes(tool)).map((tool) => `${manifest.name}: ${tool.name}`);
 }
 
 function pack(directory, destination) {
-  const result = spawnSync('npm', ['pack', '--json', '--pack-destination', destination], { cwd: directory, encoding: 'utf8' });
+  const result = spawnSync('npm', ['pack', '--json', '--pack-destination', destination], {
+    cwd: directory,
+    encoding: 'utf8',
+  });
   if (result.status !== 0) {
     console.error(result.stderr);
     return undefined;

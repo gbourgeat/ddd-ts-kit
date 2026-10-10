@@ -16,22 +16,30 @@ export function dependencyListListener(program: TSESTree.Program, visit: Visit):
   const declarationsOf = declarationReader(program);
 
   const visitList = (list: TSESTree.Node | undefined): void => {
-    if (list?.type !== AST_NODE_TYPES.ArrayExpression) return;
+    if (list?.type !== AST_NODE_TYPES.ArrayExpression) {
+      return;
+    }
 
     for (const element of list.elements) {
-      if (element?.type === AST_NODE_TYPES.Identifier) visit(element);
+      if (element?.type === AST_NODE_TYPES.Identifier) {
+        visit(element);
+      }
     }
   };
 
   const judgeClass = (node: ClassNode): void => {
-    for (const declaration of declarationsOf(node)) visitList(declaration.arguments.at(-1));
+    for (const declaration of declarationsOf(node)) {
+      visitList(declaration.arguments.at(-1));
+    }
   };
 
   return {
     ClassDeclaration: judgeClass,
     ClassExpression: judgeClass,
     CallExpression(node) {
-      if (node.callee.type === AST_NODE_TYPES.MemberExpression && LISTING_CALLS.has(calleeName(node) ?? '')) visitList(node.arguments[1]);
+      if (node.callee.type === AST_NODE_TYPES.MemberExpression && LISTING_CALLS.has(calleeName(node) ?? '')) {
+        visitList(node.arguments[1]);
+      }
     },
   };
 }

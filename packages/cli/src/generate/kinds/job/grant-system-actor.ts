@@ -16,6 +16,8 @@ export interface SystemGrant {
 interface Placement {
   readonly file: string;
   readonly line: string;
+  /** What names the grant in the file, however the line was laid out there. */
+  readonly anchor: string;
   readonly check: string;
 }
 
@@ -27,7 +29,11 @@ interface Placement {
  * cannot read it leave the grant to the team, as a `TODO(domain)` in the job.
  */
 export function grantSystemActor(scope: Scope, job: string, command: SentCommand): SystemGrant {
-  const required = command.permission === undefined ? `the permission ${command.name.pascal}Command requires` : `the permission \`${command.permission}\``;
+  const required =
+    command.permission === undefined
+      ? `the permission ${command.name.pascal}Command requires`
+      : `the permission \`${command.permission}\``;
+
   const todo = `grant the system actor \`system:${job}\` ${required} in the authorization model of the platform; until then the command refuses the job with FORBIDDEN.`;
   const placement = command.permission === undefined ? undefined : placementOf(scope, job, command.permission);
 
@@ -40,11 +46,17 @@ function placementOf(scope: Scope, job: string, permission: string): Placement |
 
   switch (scope.config.stack.authz) {
     case 'rbac':
-      return { file: `${auth}/roles.ts`, line: `'${permission}',`, check: `check this grant: the role \`system\`, which every system actor holds, now gives \`${actor}\` the permission \`${permission}\` its command requires.` };
+      return {
+        file: `${auth}/roles.ts`,
+        line: `'${permission}',`,
+        anchor: `'${permission}',`,
+        check: `check this grant: the role \`system\`, which every system actor holds, now gives \`${actor}\` the permission \`${permission}\` its command requires.`,
+      };
     case 'abac':
       return {
         file: `${auth}/attribute-policies.ts`,
         line: `permit('system-${job}', ['${permission}'], ({ actor }) => actor.id === '${actor}'),`,
+        anchor: `'system-${job}',`,
         check: `check this rule: it permits \`${actor}\`, and nobody else, the permission \`${permission}\` its command requires.`,
       };
     case 'rebac':
@@ -59,23 +71,28 @@ function operatorOfContext(scope: Scope, actor: string, permission: string): Pla
   const auth = `${scope.config.platformDir}/auth`;
   const context = scope.context.kebab;
 
-  if (!SYSTEM_OPERATES.test(scope.ws.read(`${auth}/relationship-schema.ts`) ?? '')) return undefined;
+  if (!SYSTEM_OPERATES.test(scope.ws.read(`${auth}/relationship-schema.ts`) ?? '')) {
+    return undefined;
+  }
 
   return {
     file: `${auth}/relate-system-actors.ts`,
     line: `{ object: 'context:${context}', relation: 'operator', subject: 'system:${actor}' },`,
+    anchor: `subject: 'system:${actor}'`,
     check: `check this relationship: \`${actor}\` now operates the context \`${context}\`, which gives it \`${permission}\` and every other permission mapped to \`operate\`.`,
   };
 }
 
-function written(scope: Scope, { file, line, check }: Placement): boolean {
+function written(scope: Scope, { file, line, anchor, check }: Placement): boolean {
   const content = scope.ws.read(file);
   const next = content === undefined ? undefined : insertInRegion(content, REGION, line);
 
-  if (next === undefined) return false;
+  if (next === undefined) {
+    return false;
+  }
 
   scope.ws.update(file, next);
-  scope.ws.step({ file, anchor: line, text: check });
+  scope.ws.step({ file, anchor, text: check });
 
   return true;
 }

@@ -18,9 +18,25 @@ import { FakeMailer } from '../fakes/mailer.fake.js';
 import { FakeNotificationRepository } from '../fakes/notification.repository.fake.js';
 import { FakeReminderRepository } from '../fakes/reminder.repository.fake.js';
 
-const authorization = authorizationModule({ authorizer: new RoleBasedAuthorizer({ roles: { system: Object.values(notificationPermissions) }, systemRole: 'system' }) });
+const authorization = authorizationModule({
+  authorizer: new RoleBasedAuthorizer({
+    roles: { system: Object.values(notificationPermissions) },
+    systemRole: 'system',
+  }),
+});
+
 const startsAt = '2026-01-10T09:00:00.000Z';
-const appointment = { appointmentId: 'appointment-1', calendarId: 'calendar-1', practiceId: 'practice-1', practitionerId: 'practitioner-1', patientId: 'patient-1', startsAt, endsAt: '2026-01-10T09:30:00.000Z', day: '2026-01-10' };
+
+const appointment = {
+  appointmentId: 'appointment-1',
+  calendarId: 'calendar-1',
+  practiceId: 'practice-1',
+  practitionerId: 'practitioner-1',
+  patientId: 'patient-1',
+  startsAt,
+  endsAt: '2026-01-10T09:30:00.000Z',
+  day: '2026-01-10',
+};
 
 describe('When scheduling publishes scheduling.appointment.cancelled', () => {
   it('listens to the type scheduling publishes', () => {
@@ -41,8 +57,13 @@ describe('When scheduling publishes scheduling.appointment.cancelled', () => {
 
     await application.eventBus.publish([cancelled('event-1')]);
 
-    expect(mailer.delivered).toEqual([{ address: 'ada@example.test', recipientId: 'patient-1', kind: 'cancellation', appointmentId: 'appointment-1' }]);
-    expect(notificationRepository.all().map((sent) => sent.toState())).toMatchObject([{ recipientId: 'patient-1', startsAt: new Date(startsAt), cause: 'event-1' }]);
+    expect(mailer.delivered).toEqual([
+      { address: 'ada@example.test', recipientId: 'patient-1', kind: 'cancellation', appointmentId: 'appointment-1' },
+    ]);
+
+    expect(notificationRepository.all().map((sent) => sent.toState())).toMatchObject([
+      { recipientId: 'patient-1', startsAt: new Date(startsAt), cause: 'event-1' },
+    ]);
   });
 
   it('sends one notification when the same event is delivered twice', async () => {
@@ -58,7 +79,10 @@ describe('When scheduling publishes scheduling.appointment.cancelled', () => {
   it('withdraws the reminder of the appointment', async () => {
     const { application, reminderRepository } = await arrange();
 
-    await reminderRepository.save(aReminder().identifiedBy('reminder-1').of('appointment-1').plannedFor(new Date(startsAt)).build());
+    await reminderRepository.save(
+      aReminder().identifiedBy('reminder-1').of('appointment-1').plannedFor(new Date(startsAt)).build(),
+    );
+
     await application.eventBus.publish([cancelled('event-1')]);
 
     expect((await reminderRepository.findById('reminder-1'))?.status).toBe('withdrawn');
@@ -75,7 +99,12 @@ async function arrange() {
 
   const application = createTestApplication({
     modules: [platformTestModule, contextModule('notification', notificationDeclarations), authorization],
-    fakes: [fake(NotificationRepository, notificationRepository), fake(ReminderRepository, reminderRepository), fake(Contacts, contacts), fake(Mailer, mailer)],
+    fakes: [
+      fake(NotificationRepository, notificationRepository),
+      fake(ReminderRepository, reminderRepository),
+      fake(Contacts, contacts),
+      fake(Mailer, mailer),
+    ],
   });
 
   await application.start();
@@ -84,5 +113,8 @@ async function arrange() {
 }
 
 function cancelled(id: string) {
-  return appointmentCancelledV1.create({ ...appointment, cancelledBy: 'practice' as const }, { id, occurredAt: new Date('2026-01-02T08:00:00.000Z') });
+  return appointmentCancelledV1.create(
+    { ...appointment, cancelledBy: 'practice' as const },
+    { id, occurredAt: new Date('2026-01-02T08:00:00.000Z') },
+  );
 }

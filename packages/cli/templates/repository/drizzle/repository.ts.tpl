@@ -46,7 +46,8 @@ export class Drizzle{{aggregate.pascal}}Repository implements {{aggregate.pascal
     const [row] = await this.database.executor().select().from({{aggregate.tableCamel}}).where(mine);
 {{/if}}
 {{#unless tenant.scoped}}
-    const [row] = await this.database.executor().select().from({{aggregate.tableCamel}}).where(eq({{aggregate.tableCamel}}.id, id));
+    const byId = eq({{aggregate.tableCamel}}.id, id);
+    const [row] = await this.database.executor().select().from({{aggregate.tableCamel}}).where(byId);
 {{/unless}}
 
     return row === undefined ? undefined : {{aggregate.pascal}}Mapper.toDomain(row);
@@ -64,15 +65,20 @@ export class Drizzle{{aggregate.pascal}}Repository implements {{aggregate.pascal
   private insert(state: Versioned{{aggregate.pascal}}) {
     const row = { ...state, {{#if tenant.scoped}}...tenantScopeOf(this.scope), {{/if}}...stampCreation(this.scope, this.clock) };
 
-    return this.database.executor().insert({{aggregate.tableCamel}}).values(row).onConflictDoNothing().returning({ id: {{aggregate.tableCamel}}.id });
+    const insertion = this.database.executor().insert({{aggregate.tableCamel}}).values(row);
+
+    return insertion.onConflictDoNothing().returning({ id: {{aggregate.tableCamel}}.id });
   }
 
   private update(state: Versioned{{aggregate.pascal}}, expected: number) {
+    const sameId = eq({{aggregate.tableCamel}}.id, state.id);
+    const sameVersion = eq({{aggregate.tableCamel}}.version, expected);
+
     return this.database
       .executor()
       .update({{aggregate.tableCamel}})
       .set({ ...state, ...stampUpdate(this.scope, this.clock) })
-      .where(and(eq({{aggregate.tableCamel}}.id, state.id), eq({{aggregate.tableCamel}}.version, expected){{#if tenant.scoped}}, this.ownTenant(){{/if}}))
+      .where(and(sameId, sameVersion{{#if tenant.scoped}}, this.ownTenant(){{/if}}))
       .returning({ id: {{aggregate.tableCamel}}.id });
   }
 {{#if tenant.scoped}}

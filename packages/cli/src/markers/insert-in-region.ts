@@ -1,3 +1,4 @@
+import { fitBlock } from '../layout/index.js';
 import { marker } from './marker.js';
 import { mergeImports } from './merge-imports.js';
 
@@ -16,31 +17,58 @@ export function insertInRegion(content: string, region: string, block: string): 
   const open = lines.findIndex((line) => marker(region, false).test(line));
   const close = lines.findIndex((line, index) => index > open && marker(region, true).test(line));
 
-  if (open === -1 || close === -1) return undefined;
+  if (open === -1 || close === -1) {
+    return undefined;
+  }
 
   const indent = /^\s*/.exec(lines[close] ?? '')?.[0] ?? '';
   const indented = (line: string): string => (line.trim() === '' ? '' : `${indent}${line}`);
   const inside = lines.slice(open + 1, close);
-  const wanted = trimBlankEdges(block.split('\n'));
+  const written = trimBlankEdges(block.split('\n'));
 
-  if (wanted.length === 0) return content;
+  if (written.length === 0) {
+    return content;
+  }
 
-  const merged = LINEWISE.has(region) ? mergeImports(inside.map((line) => line.trim()), wanted).map(indented) : [...inside, ...added(region, inside, wanted).map(indented)];
+  const merged = LINEWISE.has(region)
+    ? mergeImports(
+        inside.map((line) => line.trim()),
+        written,
+      ).map(indented)
+    : [...inside, ...added(inside, additionTo(region, written, indent)).map(indented)];
 
   lines.splice(open + 1, close - open - 1, ...merged);
 
   return lines.join('\n');
 }
 
+interface Addition {
+  readonly lines: readonly string[];
+  /** Set apart from what the region already holds by a blank line. */
+  readonly isParagraph: boolean;
+}
+
+/** What a block adds once laid out for the width left at the indentation of the region: a block of statements, or a statement that takes several lines, is a paragraph. */
+function additionTo(region: string, written: readonly string[], indent: string): Addition {
+  const lines = fitBlock(written, indent);
+  const isBrokenStatement = lines.length > 1 && lines.at(-1)?.endsWith(';') === true;
+
+  return { lines, isParagraph: PARAGRAPHS.has(region) || written.length > 1 || isBrokenStatement };
+}
+
 /** The lines a block adds to a region: none when its lines are already there, in order; a blank line first when the block is a paragraph. */
-function added(region: string, inside: readonly string[], wanted: readonly string[]): string[] {
-  const written = (lines: readonly string[]): string => lines.map((line) => line.trim()).filter((line) => line !== '').join('\n');
+function added(inside: readonly string[], { lines, isParagraph }: Addition): string[] {
+  const written = (rows: readonly string[]): string =>
+    rows
+      .map((line) => line.trim())
+      .filter((line) => line !== '')
+      .join('\n');
 
-  if (`\n${written(inside)}\n`.includes(`\n${written(wanted)}\n`)) return [];
+  if (`\n${written(inside)}\n`.includes(`\n${written(lines)}\n`)) {
+    return [];
+  }
 
-  const paragraph = PARAGRAPHS.has(region) || wanted.length > 1;
-
-  return [...(paragraph && inside.some((line) => line.trim() !== '') ? [''] : []), ...wanted];
+  return [...(isParagraph && inside.some((line) => line.trim() !== '') ? [''] : []), ...lines];
 }
 
 function trimBlankEdges(lines: readonly string[]): string[] {

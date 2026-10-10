@@ -20,5 +20,9 @@ const contractWith = (name: string, options: Partial<RedisStreamsEventBusOptions
 
 describe.skipIf(!REAL_SERVER)('against a real server', { timeout: 30_000 }, () => {
   contractWith('with its defaults', {});
-  contractWith('with the publication guard and capped streams', { deduplication: { windowMs: 60_000 }, retention: { maxLength: 10_000 } });
+
+  contractWith('with the publication guard and capped streams', {
+    deduplication: { windowMs: 60_000 },
+    retention: { maxLength: 10_000 },
+  });
 });

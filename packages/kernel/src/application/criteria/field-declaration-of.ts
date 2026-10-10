@@ -8,22 +8,33 @@ const TYPES: readonly FieldType[] = ['string', 'number', 'boolean', 'instant', '
 
 /** The rule of one field as written, checked and completed. */
 export function fieldDeclarationOf(field: string, rule: unknown): FieldDeclaration {
-  if (typeof rule !== 'object' || rule === null) throw unreadable(field, 'has no rule');
+  if (typeof rule !== 'object' || rule === null) {
+    throw unreadable(field, 'has no rule');
+  }
 
   const type = typeOf(field, rule);
   const nullable = 'nullable' in rule && rule.nullable === true;
   const filter = operatorsOf(rule).map((operator) => allowed(field, type, operator));
 
-  if (filter.includes('isNull') && !nullable) throw unreadable(field, 'declares isNull and is not declared nullable');
+  if (filter.includes('isNull') && !nullable) {
+    throw unreadable(field, 'declares isNull and is not declared nullable');
+  }
 
-  return Object.freeze({ type, filter: Object.freeze(filter), sortable: 'sortable' in rule && rule.sortable === true, nullable });
+  return Object.freeze({
+    type,
+    filter: Object.freeze(filter),
+    sortable: 'sortable' in rule && rule.sortable === true,
+    nullable,
+  });
 }
 
 function typeOf(field: string, rule: object): FieldType {
   const declared: unknown = 'type' in rule ? rule.type : undefined;
   const type = TYPES.find((known) => known === declared);
 
-  if (type === undefined) throw unreadable(field, `has a type that is none of ${TYPES.join(', ')}`);
+  if (type === undefined) {
+    throw unreadable(field, `has a type that is none of ${TYPES.join(', ')}`);
+  }
 
   return type;
 }
@@ -37,7 +48,9 @@ function operatorsOf(rule: object): readonly unknown[] {
 function allowed(field: string, type: FieldType, operator: unknown): FilterOperator {
   const known = operatorsOfType(type).find((candidate) => candidate === operator);
 
-  if (known === undefined) throw unreadable(field, `is a ${type} and declares an operator that does not apply to it`);
+  if (known === undefined) {
+    throw unreadable(field, `is a ${type} and declares an operator that does not apply to it`);
+  }
 
   return known;
 }

@@ -12,18 +12,26 @@ export const contextPublishedLanguageOnly: Rule = {
     return perFile(project, this.id, (file) => {
       const here = file.location;
 
-      if (!inContext(here)) return [];
+      if (!inContext(here)) {
+        return [];
+      }
 
       return file.imports.flatMap(({ target, line }) => {
-        if (target.kind !== 'file' || !inContext(target.location)) return [];
+        if (target.kind !== 'file' || !inContext(target.location)) {
+          return [];
+        }
 
         const there = target.location;
 
-        if (there.context === here.context || there.layer === 'published-language') return [];
+        if (there.context === here.context || there.layer === 'published-language') {
+          return [];
+        }
 
         const fix = `Import from ${contextsDir}/${there.context}/published-language only; if the type is missing there, publish it with \`ddd-ts-kit generate integration-event ${there.context} <Aggregate> <Fact>\` or react to an integration event.`;
 
-        return [{ line, message: `"${here.context}" imports the internals of "${there.context}" (${target.path}).`, fix }];
+        return [
+          { line, message: `"${here.context}" imports the internals of "${there.context}" (${target.path}).`, fix },
+        ];
       });
     });
   },

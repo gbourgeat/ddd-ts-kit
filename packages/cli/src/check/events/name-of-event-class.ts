@@ -5,7 +5,10 @@ import { domainEventNames } from './domain-event-names.js';
 export function nameOfEventClass(file: SourceFile, className: string): string | undefined {
   const declared = file.structure.classes.find((candidate) => candidate.name === className);
 
-  if (declared === undefined) return undefined;
+  if (declared === undefined) {
+    return undefined;
+  }
 
-  return domainEventNames(file).find((literal) => literal.start > declared.start && literal.start < declared.end)?.value;
+  return domainEventNames(file).find((literal) => literal.start > declared.start && literal.start < declared.end)
+    ?.value;
 }

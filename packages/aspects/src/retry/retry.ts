@@ -41,7 +41,9 @@ export function retryAdvice(options: RetryOptions): AdviceFactory {
         try {
           return await proceed();
         } catch (error) {
-          if (attempt >= options.attempts || !retryOn(error)) throw error;
+          if (attempt >= options.attempts || !retryOn(error)) {
+            throw error;
+          }
 
           await (options.sleep ?? scheduledSleep)(delayBeforeRetry(attempt, backoff));
         }

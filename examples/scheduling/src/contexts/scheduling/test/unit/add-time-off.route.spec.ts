@@ -22,7 +22,14 @@ describe('POST /calendars/:calendarId/time-off', () => {
     const response = await executeRoute(addTimeOffRoute(commands), request(valid), { validateResponses: true });
 
     expect(response).toMatchObject({ status: 201, body: { id: 'calendar-1' } });
-    expect(received).toMatchObject([{ calendarId: 'calendar-1', startsAt: new Date('2026-08-03T00:00:00.000Z'), endsAt: new Date('2026-08-16T22:00:00.000Z') }]);
+
+    expect(received).toMatchObject([
+      {
+        calendarId: 'calendar-1',
+        startsAt: new Date('2026-08-03T00:00:00.000Z'),
+        endsAt: new Date('2026-08-16T22:00:00.000Z'),
+      },
+    ]);
   });
 
   it.each([

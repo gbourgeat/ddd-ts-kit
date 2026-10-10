@@ -6,6 +6,7 @@ import type { ContextFacts, PublishedEvent } from './context-facts.js';
 import type { DeclaredFacts, DeclaredUseCase } from './declared-facts.js';
 import { readDeclarations } from './read-declarations.js';
 import { readJobs } from './read-jobs.js';
+import { withoutComments } from './without-comments.js';
 
 type RoleNames = Pick<ContextFacts, 'commands' | 'queries' | 'policies' | 'gateways' | 'integrationEventHandlers'>;
 
@@ -32,7 +33,10 @@ export function readContext(ws: Workspace, config: Config, name: string): Contex
   };
 }
 
-type TreeFacts = Pick<ContextFacts, 'aggregates' | 'domainEvents' | 'publishedEvents' | 'builders' | 'permissions' | 'jobs'>;
+type TreeFacts = Pick<
+  ContextFacts,
+  'aggregates' | 'domainEvents' | 'publishedEvents' | 'builders' | 'permissions' | 'jobs'
+>;
 
 /** What the folders of the context hold, whatever the style of the project. */
 function treeFacts(ws: Workspace, directory: string, name: string): TreeFacts {
@@ -53,12 +57,17 @@ function namesByConvention(ws: Workspace, directory: string): RoleNames {
     queries: ws.directories(`${directory}/application/queries`).map((folder) => toName(folder).pascal),
     policies: namesBySuffix(ws, `${directory}/application/authorization`, '.policy.ts'),
     gateways: namesBySuffix(ws, `${directory}/application/ports`, '-gateway.port.ts'),
-    integrationEventHandlers: namesBySuffix(ws, `${directory}/application/integration/handlers`, '.integration-handler.ts'),
+    integrationEventHandlers: namesBySuffix(
+      ws,
+      `${directory}/application/integration/handlers`,
+      '.integration-handler.ts',
+    ),
   };
 }
 
 function namesByDeclaration(declarations: DeclaredFacts): RoleNames {
-  const useCases = (kind: DeclaredUseCase['kind']): string[] => declarations.useCases.filter((useCase) => useCase.kind === kind).map((useCase) => useCase.name);
+  const useCases = (kind: DeclaredUseCase['kind']): string[] =>
+    declarations.useCases.filter((useCase) => useCase.kind === kind).map((useCase) => useCase.name);
 
   return {
     commands: useCases('command'),
@@ -77,25 +86,34 @@ function sectionOf(doc: string, heading: string): string {
   const lines = doc.split('\n');
   const start = lines.findIndex((line) => line.trim().toLowerCase() === heading.toLowerCase());
 
-  if (start === -1) return '';
+  if (start === -1) {
+    return '';
+  }
 
   const end = lines.findIndex((line, index) => index > start && line.startsWith('## '));
 
-  return lines.slice(start + 1, end === -1 ? undefined : end).join('\n').trim();
+  return lines
+    .slice(start + 1, end === -1 ? undefined : end)
+    .join('\n')
+    .trim();
 }
 
 /** The purpose shown in the context map; empty while the section still holds its placeholder. */
 function firstSentence(section: string): string {
-  const text = section.replace(/<!--[\s\S]*?-->/g, '').replace(/\s+/g, ' ').trim();
+  const text = withoutComments(section).replace(/\s+/g, ' ').trim();
 
-  if (text === '' || text.includes('TODO(domain)')) return '';
+  if (text === '' || text.includes('TODO(domain)')) {
+    return '';
+  }
 
   return /^.*?[.!?](?=\s|$)/.exec(text)?.[0] ?? text;
 }
 
 function downstreamsOf(config: Config, name: string): Upstream[] {
   return Object.entries(config.contexts).flatMap(([other, context]) =>
-    context.upstreams.filter((upstream) => upstream.context === name).map((upstream) => ({ context: other, relationship: upstream.relationship })),
+    context.upstreams
+      .filter((upstream) => upstream.context === name)
+      .map((upstream) => ({ context: other, relationship: upstream.relationship })),
   );
 }
 

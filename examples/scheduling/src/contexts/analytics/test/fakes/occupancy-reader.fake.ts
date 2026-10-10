@@ -1,5 +1,9 @@
 import { Criteria, cursorPage, evaluateCriteria, scoped, type Page, type ScopedCriteria } from '@ddd-ts-kit/kernel';
-import { occupancyCriteria, type Occupancy, type OccupancyReader } from '../../application/ports/occupancy-reader.port.js';
+import {
+  occupancyCriteria,
+  type Occupancy,
+  type OccupancyReader,
+} from '../../application/ports/occupancy-reader.port.js';
 import type { Outcome, OutcomeRegister } from '../../application/ports/outcome-register.port.js';
 import { OccupancyMeasureService } from '../../domain/services/occupancy-measure.service.js';
 
@@ -19,7 +23,11 @@ async function everyOutcome(register: OutcomeRegister): Promise<readonly Outcome
   let cursor: string | undefined;
 
   do {
-    const page = await register.list(scoped(Criteria.of<Outcome>().page(cursorPage(cursor === undefined ? { limit: 100 } : { cursor, limit: 100 })), { kind: 'all' }));
+    const page = await register.list(
+      scoped(Criteria.of<Outcome>().page(cursorPage(cursor === undefined ? { limit: 100 } : { cursor, limit: 100 })), {
+        kind: 'all',
+      }),
+    );
 
     outcomes.push(...page.items);
     cursor = page.nextCursor;
@@ -40,7 +48,9 @@ function measured(outcomes: readonly Outcome[]): readonly Occupancy[] {
   return [...lines.values()].flatMap((onTheLine) => {
     const [first] = onTheLine;
 
-    if (first === undefined) return [];
+    if (first === undefined) {
+      return [];
+    }
 
     const { practiceId, calendarId, day } = first;
 

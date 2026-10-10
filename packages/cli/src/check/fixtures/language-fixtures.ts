@@ -17,8 +17,10 @@ export const LANGUAGE_FIXTURES: readonly Fixture[] = [
     files: project({
       ...aggregate('export class Invoice {}\n'),
       [EVENT]: "export class InvoiceIssued {\n  readonly name = 'billing.invoice.issued';\n}\n",
-      [`${BILLING}/application/commands/issue-invoice/issue-invoice.command.ts`]: 'export class IssueInvoiceCommand {}\n',
-      [`${BILLING}/application/queries/invoices-issued-for-money/invoices-issued-for-money.query.ts`]: 'export class InvoicesIssuedForMoneyQuery {}\n',
+      [`${BILLING}/application/commands/issue-invoice/issue-invoice.command.ts`]:
+        'export class IssueInvoiceCommand {}\n',
+      [`${BILLING}/application/queries/invoices-issued-for-money/invoices-issued-for-money.query.ts`]:
+        'export class InvoicesIssuedForMoneyQuery {}\n',
     }),
   },
   {
@@ -35,20 +37,27 @@ export const LANGUAGE_FIXTURES: readonly Fixture[] = [
     ruleId: 'language/glossary-term',
     name: 'a use case whose verb is not in the glossary',
     expect: { file: `${BILLING}/application/commands/dispatch-invoice/dispatch-invoice.command.ts` },
-    files: project({ [`${BILLING}/application/commands/dispatch-invoice/dispatch-invoice.command.ts`]: 'export class DispatchInvoiceCommand {}\n' }),
+    files: project({
+      [`${BILLING}/application/commands/dispatch-invoice/dispatch-invoice.command.ts`]:
+        'export class DispatchInvoiceCommand {}\n',
+    }),
   },
   {
     ruleId: 'language/glossary-term',
     name: 'domain classes in a context whose glossary is empty',
     expect: { file: `${BILLING}/CONTEXT.md` },
-    files: project(aggregate('export class Invoice {}\n'), { [`${BILLING}/CONTEXT.md`]: contextDoc('core', CONTEXT_DOC_HEADINGS, '| Term | Meaning |\n|---|---|') }),
+    files: project(aggregate('export class Invoice {}\n'), {
+      [`${BILLING}/CONTEXT.md`]: contextDoc('core', CONTEXT_DOC_HEADINGS, '| Term | Meaning |\n|---|---|'),
+    }),
   },
   {
     ruleId: 'language/no-technical-name',
     name: 'names of the business',
     expect: 'pass',
     files: project({
-      ...aggregate('export interface InvoiceState {\n  readonly issued: boolean;\n}\n\nexport class Invoice {\n  constructor(readonly state: InvoiceState) {}\n}\n'),
+      ...aggregate(
+        'export interface InvoiceState {\n  readonly issued: boolean;\n}\n\nexport class Invoice {\n  constructor(readonly state: InvoiceState) {}\n}\n',
+      ),
       [`${BILLING}/infrastructure/persistence/invoice-data.mapper.ts`]: 'export class InvoiceDataMapper {}\n',
     }),
   },

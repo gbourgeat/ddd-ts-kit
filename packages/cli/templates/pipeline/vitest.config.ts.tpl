@@ -8,18 +8,25 @@ const INTEGRATION_SPECS = '{{config.contextsDir}}/*/test/integration/**/*.spec.t
 const INTEGRATION_MODE = 'integration';
 
 export default defineConfig(({ mode }) => ({
-{{#if decorators.standard}}
+  {{#if decorators.standard}}
   // Vitest does not lower standard (TC39) decorators, which every class of a declared context carries: the compiler the project builds with does.
   plugins: [decorators({ compiler: '@typescript/native' })],
-{{/if}}
+  {{/if}}
   resolve: { alias: { '{{alias.bare}}': fileURLToPath(new URL('./{{config.sourceRoot}}', import.meta.url)) } },
   test: {
-{{#if assembly.discovery}}
+    {{#if assembly.discovery}}
     // Discovery imports the role files of a context itself: inlined, the package loads them through the runner, which compiles them.
     server: { deps: { inline: ['@ddd-ts-kit/di'] } },
-{{/if}}
+    {{/if}}
     projects: [
-      { extends: true, test: { name: 'unit', include: ['{{config.sourceRoot}}/**/*.spec.ts', 'test/architecture/**/*.spec.ts'], exclude: [INTEGRATION_SPECS] } },
+      {
+        extends: true,
+        test: {
+          name: 'unit',
+          include: ['{{config.sourceRoot}}/**/*.spec.ts', 'test/architecture/**/*.spec.ts'],
+          exclude: [INTEGRATION_SPECS],
+        },
+      },
       { extends: true, test: { name: INTEGRATION_MODE, include: [INTEGRATION_SPECS] } },
     ],
     coverage: {
@@ -43,7 +50,9 @@ export default defineConfig(({ mode }) => ({
  * failed for a layer it does not execute.
  */
 function measuredLayers(mode: string): string[] {
-  return mode === INTEGRATION_MODE ? [layer('infrastructure')] : [layer('domain'), layer('application'), layer('presentation')];
+  return mode === INTEGRATION_MODE
+    ? [layer('infrastructure')]
+    : [layer('domain'), layer('application'), layer('presentation')];
 }
 
 function layer(name: string): string {

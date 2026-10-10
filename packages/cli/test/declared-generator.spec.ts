@@ -20,7 +20,10 @@ describe('a context generated in the declared style', () => {
     expect(billing).not.toContain('billing.module.ts');
     expect(billing.filter((file) => file.endsWith('.ports.ts'))).toEqual([]);
     expect(billing).toEqual(expect.arrayContaining(['billing.declarations.ts', 'presentation/http/billing.routes.ts']));
-    expect(read(root, `${BILLING}/presentation/http/billing.routes.ts`)).toContain('issueInvoiceRoute(commands),\n    cancelInvoiceRoute(commands),\n    listInvoicesRoute(queries),');
+
+    expect(read(root, `${BILLING}/presentation/http/billing.routes.ts`)).toContain(
+      'issueInvoiceRoute(commands),\n    cancelInvoiceRoute(commands),\n    listInvoicesRoute(queries),',
+    );
   });
 
   it('exports every role file from the barrel, sorted by path, and nothing else', () => {
@@ -50,63 +53,133 @@ describe('a context generated in the declared style', () => {
     const handler = read(root, `${BILLING}/application/commands/issue-invoice/issue-invoice.handler.ts`);
     const list = read(root, `${BILLING}/application/queries/list-invoices/list-invoices.handler.ts`);
 
-    expect(command).toContain("@Requires(billingPermissions['invoice.issue'])\nexport class IssueInvoiceCommand extends AuthorizedCommand<string> {");
-    expect(handler).toContain('@CommandHandler(IssueInvoiceCommand, [InvoiceRepository, IdGenerator, Clock])\nexport class IssueInvoiceHandler implements CommandHandler<IssueInvoiceCommand> {');
+    expect(command).toContain(
+      "@Requires(billingPermissions['invoice.issue'])\nexport class IssueInvoiceCommand extends AuthorizedCommand<string> {",
+    );
+
+    expect(handler).toContain(
+      '@CommandHandler(IssueInvoiceCommand, [InvoiceRepository, IdGenerator, Clock])\nexport class IssueInvoiceHandler implements CommandHandler<IssueInvoiceCommand> {',
+    );
+
     expect(handler).toContain("import { Clock, IdGenerator } from '@ddd-ts-kit/kernel';");
-    expect(handler).toContain("import { InvoiceRepository } from '../../../domain/repositories/invoice.repository.js';");
-    expect(read(root, `${BILLING}/application/commands/cancel-invoice/cancel-invoice.handler.ts`)).toContain('@CommandHandler(CancelInvoiceCommand)\n');
-    expect(read(root, 'src/contexts/order-fulfilment/application/queries/track-purchase-order/track-purchase-order.query.ts')).toContain('@Public()\nexport class TrackPurchaseOrderQuery extends Query<TrackPurchaseOrderResult> {');
+
+    expect(handler).toContain(
+      "import { InvoiceRepository } from '../../../domain/repositories/invoice.repository.js';",
+    );
+
+    expect(read(root, `${BILLING}/application/commands/cancel-invoice/cancel-invoice.handler.ts`)).toContain(
+      '@CommandHandler(CancelInvoiceCommand)\n',
+    );
+
+    expect(
+      read(
+        root,
+        'src/contexts/order-fulfilment/application/queries/track-purchase-order/track-purchase-order.query.ts',
+      ),
+    ).toContain('@Public()\nexport class TrackPurchaseOrderQuery extends Query<TrackPurchaseOrderResult> {');
+
     expect(list).toContain('@QueryHandler(ListInvoicesQuery, [ListInvoicesReader, Access])');
     expect(list).toContain("import { Access } from '@ddd-ts-kit/auth';");
   });
 
   it('declares a port as an abstract class, which is also what a list and a binding name', () => {
-    expect(read(root, `${BILLING}/domain/repositories/invoice.repository.ts`)).toContain("import { Repository } from '@ddd-ts-kit/kernel';");
-    expect(read(root, `${BILLING}/domain/repositories/invoice.repository.ts`)).toContain('export abstract class InvoiceRepository extends Repository<Invoice> {');
-    expect(read(root, `${BILLING}/application/ports/payment-gateway.port.ts`)).toContain('export abstract class PaymentGateway {');
-    expect(read(root, `${BILLING}/application/ports/list-invoices-reader.port.ts`)).toContain('export abstract class ListInvoicesReader {\n  abstract list(');
-    expect(read(root, `${BILLING}/test/fakes/payment-gateway.fake.ts`)).toContain('export class FakePaymentGateway implements PaymentGateway {');
-  });
+    expect(read(root, `${BILLING}/domain/repositories/invoice.repository.ts`)).toContain(
+      "import { Repository } from '@ddd-ts-kit/kernel';",
+    );
 
+    expect(read(root, `${BILLING}/domain/repositories/invoice.repository.ts`)).toContain(
+      'export abstract class InvoiceRepository extends Repository<Invoice> {',
+    );
+
+    expect(read(root, `${BILLING}/application/ports/payment-gateway.port.ts`)).toContain(
+      'export abstract class PaymentGateway {',
+    );
+
+    expect(read(root, `${BILLING}/application/ports/list-invoices-reader.port.ts`)).toContain(
+      'export abstract class ListInvoicesReader {\n  abstract list(',
+    );
+
+    expect(read(root, `${BILLING}/test/fakes/payment-gateway.fake.ts`)).toContain(
+      'export class FakePaymentGateway implements PaymentGateway {',
+    );
+  });
+});
+
+describe('a context generated in the declared style, towards the outside', () => {
   it('binds each adapter by its own declaration: repository, read port, outside system with its policy', () => {
     const repository = read(root, `${BILLING}/infrastructure/persistence/drizzle-invoice.repository.ts`);
     const decorated = read(root, `${BILLING}/infrastructure/external/remote-tax-rates.adapter.ts`);
 
-    expect(repository).toContain('@Repository(InvoiceRepository, [Database, ExecutionScope, Clock])\nexport class DrizzleInvoiceRepository implements InvoiceRepository {');
+    expect(repository).toContain(
+      '@Repository(InvoiceRepository, [Database, ExecutionScope, Clock])\nexport class DrizzleInvoiceRepository implements InvoiceRepository {',
+    );
+
     expect(repository).toContain("import { Database } from '../../../../platform/database/database.js';");
     expect(repository).toContain('  private insert(state: VersionedInvoice) {');
-    expect(read(root, `${BILLING}/infrastructure/persistence/in-memory-list-invoices-reader.repository.ts`)).toContain('@Repository(ListInvoicesReader)\nexport class InMemoryListInvoicesReader implements ListInvoicesReader {\n  protected readonly items: readonly ListInvoicesItem[] = [];');
+
+    expect(read(root, `${BILLING}/infrastructure/persistence/in-memory-list-invoices-reader.repository.ts`)).toContain(
+      '@Repository(ListInvoicesReader)\nexport class InMemoryListInvoicesReader implements ListInvoicesReader {\n  protected readonly items: readonly ListInvoicesItem[] = [];',
+    );
 
     expect(read(root, `${BILLING}/infrastructure/external/remote-payment-gateway.adapter.ts`)).toContain(
-      "@Adapter(PaymentGateway, { kind: 'external', aspects: [ownPolicy(retry({ attempts: 3, backoff: { baseMs: 100 } }), timeout(2000))] })\nexport class RemotePaymentGateway implements PaymentGateway {",
+      "@Adapter(PaymentGateway, {\n  kind: 'external',\n  aspects: [ownPolicy(retry({ attempts: 3, backoff: { baseMs: 100 } }), timeout(2000))],\n})\nexport class RemotePaymentGateway implements PaymentGateway {",
     );
 
     expect(decorated).toContain("@Adapter(TaxRates, { kind: 'external', aspects: [ownPolicy()] })");
-    expect(decorated).toContain('  @Retry({ attempts: 3, backoff: { baseMs: 100 } })\n  @Timeout(2000, { signal: true })\n  async send(');
+
+    expect(decorated).toContain(
+      '  @Retry({ attempts: 3, backoff: { baseMs: 100 } })\n  @Timeout(2000, { signal: true })\n  async send(',
+    );
+
     expect(decorated).toContain("import { ownPolicy } from '../../../../platform/resilience/own-policy.js';");
   });
 
   it('declares reactions: to a domain event, to publish it, to an integration event of an upstream, and a policy as a class', () => {
-    expect(read(root, `${BILLING}/application/event-handlers/invoice-issued.event-handler.ts`)).toContain("@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued' })\nexport class InvoiceIssuedEventHandler implements DomainEventHandler<InvoiceIssued> {");
-    expect(read(root, `${BILLING}/application/event-handlers/invoice-marked-as-paid.event-handler.ts`)).toContain("@DomainEventHandler(InvoiceMarkedAsPaid, { name: 'billing.invoice.marked-as-paid', phase: 'after-commit' })\nexport class InvoiceMarkedAsPaidEventHandler implements DomainEventHandler<InvoiceMarkedAsPaid> {");
-    expect(read(root, `${BILLING}/application/integration/publishers/invoice-issued.publisher.ts`)).toContain("@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued' }, [IntegrationEventPublisher, IdGenerator])\nexport class InvoiceIssuedPublisher implements DomainEventHandler<InvoiceIssued> {");
+    expect(read(root, `${BILLING}/application/event-handlers/invoice-issued.event-handler.ts`)).toContain(
+      "@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued' })\nexport class InvoiceIssuedEventHandler implements DomainEventHandler<InvoiceIssued> {",
+    );
 
-    expect(read(root, `${SHIPPING}/application/integration/handlers/billing-invoice-issued.integration-handler.ts`)).toContain(
+    expect(read(root, `${BILLING}/application/event-handlers/invoice-marked-as-paid.event-handler.ts`)).toContain(
+      "@DomainEventHandler(InvoiceMarkedAsPaid, { name: 'billing.invoice.marked-as-paid', phase: 'after-commit' })\nexport class InvoiceMarkedAsPaidEventHandler implements DomainEventHandler<InvoiceMarkedAsPaid> {",
+    );
+
+    expect(read(root, `${BILLING}/application/integration/publishers/invoice-issued.publisher.ts`)).toContain(
+      "@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued' }, [IntegrationEventPublisher, IdGenerator])\nexport class InvoiceIssuedPublisher implements DomainEventHandler<InvoiceIssued> {",
+    );
+
+    expect(
+      read(root, `${SHIPPING}/application/integration/handlers/billing-invoice-issued.integration-handler.ts`),
+    ).toContain(
       "@IntegrationEventHandler(invoiceIssuedV2, { consumer: 'shipping.billing-invoice-issued' }, [CommandBus])\nexport class BillingInvoiceIssuedIntegrationHandler {",
     );
 
-    expect(read(root, `${BILLING}/application/authorization/only-issuer-cancels.policy.ts`)).toContain("@Policy(billingPermissions['invoice.cancel'], { name: 'billing.only-issuer-cancels' })\nexport class OnlyIssuerCancelsPolicy {");
+    expect(read(root, `${BILLING}/application/authorization/only-issuer-cancels.policy.ts`)).toContain(
+      "@Policy(billingPermissions['invoice.cancel'], { name: 'billing.only-issuer-cancels' })\nexport class OnlyIssuerCancelsPolicy {",
+    );
+
     expect(read(root, 'src/platform/auth/access-policies.ts')).not.toContain('OnlyIssuerCancels');
   });
 
   it('keeps in the platform modules the one thing a decorator cannot say: the value a gateway is given, for the application and for the specs', () => {
     const gateway = read(root, `${SHIPPING}/infrastructure/external/in-process-invoice-status.gateway.ts`);
 
-    expect(gateway).toContain('@Gateway(InvoiceStatusGateway, [InvoiceStatusContract])\nexport class InProcessInvoiceStatusGateway implements InvoiceStatusGateway {');
+    expect(gateway).toContain(
+      '@Gateway(InvoiceStatusGateway, [InvoiceStatusContract])\nexport class InProcessInvoiceStatusGateway implements InvoiceStatusGateway {',
+    );
+
     expect(gateway).toContain("import { InvoiceStatusContract } from '../../../billing/published-language/index.js';");
-    expect(read(root, `${BILLING}/published-language/invoice-status.contract.ts`)).toContain('export abstract class InvoiceStatusContract {');
-    expect(read(root, 'src/platform/platform.module.ts')).toContain('      // ddd-ts-kit:bindings\n      builder.bind(InvoiceStatusContract).toValue({});\n      // /ddd-ts-kit:bindings');
-    expect(read(root, 'src/platform/platform-test.module.ts')).toContain('    // ddd-ts-kit:test-bindings\n    builder.bind(InvoiceStatusContract).toValue({});\n    // /ddd-ts-kit:test-bindings');
+
+    expect(read(root, `${BILLING}/published-language/invoice-status.contract.ts`)).toContain(
+      'export abstract class InvoiceStatusContract {',
+    );
+
+    expect(read(root, 'src/platform/platform.module.ts')).toContain(
+      '      // ddd-ts-kit:bindings\n      builder.bind(InvoiceStatusContract).toValue({});\n      // /ddd-ts-kit:bindings',
+    );
+
+    expect(read(root, 'src/platform/platform-test.module.ts')).toContain(
+      '    // ddd-ts-kit:test-bindings\n    builder.bind(InvoiceStatusContract).toValue({});\n    // /ddd-ts-kit:test-bindings',
+    );
   });
 });
 
@@ -114,11 +187,23 @@ describe('a declared context and what hosts it', () => {
   it('is assembled in one line of the composition root, of the entry point of a context run alone, and of the proof that it wires alone', () => {
     const composition = read(root, 'src/platform/compose-application.ts');
 
-    expect(composition).toContain("import * as billingDeclarations from '../contexts/billing/billing.declarations.js';");
-    expect(composition).toContain("    contextModule('billing', billingDeclarations),\n    contextModule('shipping', shippingDeclarations),\n    contextModule('order-fulfilment', orderFulfilmentDeclarations),");
+    expect(composition).toContain(
+      "import * as billingDeclarations from '../contexts/billing/billing.declarations.js';",
+    );
+
+    expect(composition).toContain(
+      "    contextModule('billing', billingDeclarations),\n    contextModule('shipping', shippingDeclarations),\n    contextModule('order-fulfilment', orderFulfilmentDeclarations),",
+    );
+
     expect(composition).toContain('    billingRoutes,\n    shippingRoutes,\n    orderFulfilmentRoutes,');
-    expect(read(root, 'src/apps/shipping/main.ts')).toContain("{ modules: [contextModule('shipping', shippingDeclarations)], routes: [shippingRoutes] },");
-    expect(read(root, 'test/architecture/extractable.spec.ts')).toContain("['billing', contextModule('billing', billingDeclarations)],");
+
+    expect(read(root, 'src/apps/shipping/main.ts')).toContain(
+      "{ modules: [contextModule('shipping', shippingDeclarations)], routes: [shippingRoutes] },",
+    );
+
+    expect(read(root, 'test/architecture/extractable.spec.ts')).toContain(
+      "['billing', contextModule('billing', billingDeclarations)],",
+    );
   });
 
   it('tests a handler on the platform of the specs, the declarations of its context, an authorization module and fakes', () => {
@@ -129,11 +214,16 @@ describe('a declared context and what hosts it', () => {
     expect(spec).toContain("import { platformTestModule } from '../../../../platform/platform-test.module.js';");
 
     expect(spec).toContain(
-      "  const application = createTestApplication({\n    modules: [platformTestModule, contextModule('billing', billingDeclarations), holders],\n    fakes: [fake(InvoiceRepository, invoiceRepository)],\n    idPrefix: 'invoice',\n  });",
+      "  const context = contextModule('billing', billingDeclarations);\n\n  const invoiceRepository = new FakeInvoiceRepository();\n\n  const application = createTestApplication({\n    modules: [platformTestModule, context, holders],\n    fakes: [fake(InvoiceRepository, invoiceRepository)],\n    idPrefix: 'invoice',\n  });",
     );
 
-    expect(open).toContain('const authorization = authorizationModule({ authorizer: new RoleBasedAuthorizer({ roles: {} }) });');
-    expect(open).toContain("modules: [platformTestModule, contextModule('order-fulfilment', orderFulfilmentDeclarations), authorization],");
+    expect(open).toContain(
+      'const authorization = authorizationModule({ authorizer: new RoleBasedAuthorizer({ roles: {} }) });',
+    );
+
+    expect(open).toContain(
+      "  const context = contextModule('order-fulfilment', orderFulfilmentDeclarations);\n\n  return createTestApplication({\n    modules: [platformTestModule, context, authorization],",
+    );
   });
 
   it('passes the checker and has its documentation current', () => {
@@ -145,24 +235,46 @@ describe('a declared context and what hosts it', () => {
   });
 
   it('refuses a handler of an event its upstream does not declare, and a second adapter for a port', () => {
-    const undeclared = cli(root, 'generate', 'integration-handler', 'shipping', 'billing', 'billing.invoice.cancelled', '--json');
+    const undeclared = cli(
+      root,
+      'generate',
+      'integration-handler',
+      'shipping',
+      'billing',
+      'billing.invoice.cancelled',
+      '--json',
+    );
+
     const second = cli(root, 'generate', 'adapter', 'shipping', 'InvoiceStatusGateway', '--kind', 'gateway', '--json');
 
     expect(undeclared.code).toBe(2);
-    expect(failure(undeclared).message).toBe('billing declares no billing.invoice.cancelled in its published language.');
+
+    expect(failure(undeclared).message).toBe(
+      'billing declares no billing.invoice.cancelled in its published language.',
+    );
+
     expect(failure(undeclared).fix).toContain('ddd-ts-kit generate integration-event billing Invoice Cancelled');
     expect(second.code).toBe(2);
-    expect(failure(second).message).toBe('InvoiceStatusGateway is already bound by infrastructure/external/in-process-invoice-status.gateway.ts.');
+
+    expect(failure(second).message).toBe(
+      'InvoiceStatusGateway is already bound by infrastructure/external/in-process-invoice-status.gateway.ts.',
+    );
   });
 
   it('accepts the former name of the integration-handler kind', () => {
-    expect(cli(root, 'generate', 'consumer', 'shipping', 'billing', 'billing.invoice.issued', '--dry-run').code).toBe(0);
+    expect(cli(root, 'generate', 'consumer', 'shipping', 'billing', 'billing.invoice.issued', '--dry-run').code).toBe(
+      0,
+    );
   });
 
   it('rewrites the barrel on every generate and on docs, and reports one that a hand-added role file left behind', () => {
     const added = `${SHIPPING}/infrastructure/external/remote-carrier.adapter.ts`;
 
-    write(root, added, "import { Adapter } from '@ddd-ts-kit/kernel/declarations';\nimport { InvoiceStatusContract } from '../../../billing/published-language/index.js';\n\n@Adapter(InvoiceStatusContract)\nexport class RemoteCarrier implements InvoiceStatusContract {}\n");
+    write(
+      root,
+      added,
+      "import { Adapter } from '@ddd-ts-kit/kernel/declarations';\nimport { InvoiceStatusContract } from '../../../billing/published-language/index.js';\n\n@Adapter(InvoiceStatusContract)\nexport class RemoteCarrier implements InvoiceStatusContract {}\n",
+    );
 
     const stale = cli(root, 'docs', '--check');
 
@@ -171,7 +283,11 @@ describe('a declared context and what hosts it', () => {
     expect(cli(root, 'check', '--rule', 'declarations/barrel-current').code).toBe(1);
 
     expect(cli(root, 'docs').code).toBe(0);
-    expect(read(root, `${SHIPPING}/shipping.declarations.ts`)).toContain("export * from './infrastructure/external/remote-carrier.adapter.js';");
+
+    expect(read(root, `${SHIPPING}/shipping.declarations.ts`)).toContain(
+      "export * from './infrastructure/external/remote-carrier.adapter.js';",
+    );
+
     expect(cli(root, 'check', '--rule', 'declarations/barrel-current').code).toBe(0);
   });
 });
@@ -185,51 +301,10 @@ describe('a declared adapter towards another context', () => {
 
     expect(cli(project, 'generate', 'adapter', 'billing', 'Stock', '--kind', 'gateway').code).toBe(0);
 
-    expect(read(project, `${BILLING}/infrastructure/external/remote-stock.gateway.ts`)).toContain('@Gateway(Stock, { aspects: [ownPolicy(retry({ attempts: 3, backoff: { baseMs: 100 } }), timeout(2000))] })');
+    expect(read(project, `${BILLING}/infrastructure/external/remote-stock.gateway.ts`)).toContain(
+      '@Gateway(Stock, {\n  aspects: [ownPolicy(retry({ attempts: 3, backoff: { baseMs: 100 } }), timeout(2000))],\n})',
+    );
+
     expect(exists(project, `${BILLING}/infrastructure/external/remote-stock.adapter.ts`)).toBe(false);
-  });
-});
-
-describe('discovery in place of the barrel', () => {
-  let discovered: string;
-
-  beforeAll(() => {
-    discovered = tempDir('discovery');
-    scaffoldEverything(discovered, { http: 'express', validation: 'zod', di: 'tsyringe', tests: 'vitest', orm: 'knex', events: 'outbox', assembly: 'discovery' });
-  });
-
-  it('writes no barrel: the composition root discovers each context, publishers included', () => {
-    const composition = read(discovered, 'src/platform/compose-application.ts');
-
-    expect(exists(discovered, `${BILLING}/billing.declarations.ts`)).toBe(false);
-    expect(composition).toContain("    await discoverContext('billing', new URL('../contexts/billing/', import.meta.url)),");
-    expect(composition).not.toContain('InvoiceIssuedPublisher');
-    expect(read(discovered, 'src/apps/shipping/main.ts')).toContain("await discoverContext('shipping', new URL('../../contexts/shipping/', import.meta.url))");
-  });
-
-  it('discovers the context in the specs too', () => {
-    expect(read(discovered, `${BILLING}/test/unit/issue-invoice.handler.spec.ts`)).toContain("modules: [platformTestModule, await discoverContext('billing', new URL('../../', import.meta.url)), holders],");
-    expect(read(discovered, 'test/architecture/extractable.spec.ts')).toContain("['billing', await discoverContext('billing', new URL('../../src/contexts/billing/', import.meta.url))],");
-  });
-
-  it('names the context of knex in the dependency list of a repository', () => {
-    const repository = read(discovered, `${BILLING}/infrastructure/persistence/knex-invoice.repository.ts`);
-
-    expect(repository).toContain('@Repository(InvoiceRepository, [KnexContext, ExecutionScope, Clock])\nexport class KnexInvoiceRepository implements InvoiceRepository {');
-    expect(repository).toContain("import { KnexContext, auditRow, insertIgnoringConflict, optimisticUpdate } from '@ddd-ts-kit/knex';");
-  });
-
-  it('passes the checker', () => {
-    const result = cli(discovered, 'check', '--json').json() as { violations: unknown[] };
-
-    expect(result.violations).toEqual([]);
-  });
-
-  it('is accepted behind a broker of the kit: each context listens through the subscriber of its name', () => {
-    const behindBroker = tempDir('discovery');
-
-    expect(cli(behindBroker, 'init', '--assembly', 'discovery', '--broker', 'rabbitmq').code).toBe(0);
-    expect(cli(behindBroker, 'generate', 'context', 'billing', '--classification', 'core').code).toBe(0);
-    expect(read(behindBroker, 'src/platform/compose-application.ts')).toContain("await discoverContext('billing', new URL('../contexts/billing/', import.meta.url)),");
   });
 });

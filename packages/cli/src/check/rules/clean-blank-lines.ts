@@ -6,8 +6,12 @@ import { perFile } from '../support/per-file.js';
 
 const RETURN = /^return(?![\w$]|\s*:)/;
 const LABEL = /^(?:case\b.*|default\s*):$/;
-const RETURN_FIX = 'Leave a blank line before `return`, unless it is alone in its block: the outcome of a function stands apart from the steps that build it.';
-const PADDING_FIX = 'Remove the blank line: a block starts on the line after its opening brace and ends on the line before its closing one.';
+
+const RETURN_FIX =
+  'Leave a blank line before `return`, unless it is alone in its block: the outcome of a function stands apart from the steps that build it.';
+
+const PADDING_FIX =
+  'Remove the blank line: a block starts on the line after its opening brace and ends on the line before its closing one.';
 
 const NAMED_RETURN = /^return\??\s*\([^()]*\)\s*[:{]/;
 const BRACELESS = /^(?:\}\s*)?(?:else\s+)?(?:if|for|while)\b.*\)$|^(?:\}\s*)?else$/;
@@ -23,7 +27,8 @@ interface Line {
 
 export const cleanBlankLines: Rule = {
   id: 'clean/blank-lines',
-  description: 'A blank line before every `return` that is not alone in its block, and no blank line padding a block of statements (an object, array or type literal is not one). An approximation of the layout ESLint holds in full.',
+  description:
+    'A blank line before every `return` that is not alone in its block, and no blank line padding a block of statements (an object, array or type literal is not one). An approximation of the layout ESLint and the formatter hold in full.',
   scope: 'file',
   run(project) {
     return perFile(project, this.id, (file) => {
@@ -57,11 +62,21 @@ function linesOf(file: SourceFile): Line[] {
 function crampedReturn(lines: readonly Line[], index: number): Finding[] {
   const code = lines[index]?.code ?? '';
 
-  if (!RETURN.test(code) || NAMED_RETURN.test(code)) return [];
+  if (!RETURN.test(code) || NAMED_RETURN.test(code)) {
+    return [];
+  }
 
   const above = lineAbove(lines, index);
 
-  if (above === undefined || above.isBlank || above.code.endsWith('{') || LABEL.test(above.code) || BRACELESS.test(above.code)) return [];
+  if (
+    above === undefined ||
+    above.isBlank ||
+    above.code.endsWith('{') ||
+    LABEL.test(above.code) ||
+    BRACELESS.test(above.code)
+  ) {
+    return [];
+  }
 
   return [{ line: index + 1, message: 'No blank line before this `return`.', fix: RETURN_FIX }];
 }
@@ -71,7 +86,9 @@ function lineAbove(lines: readonly Line[], index: number): Line | undefined {
   for (let at = index - 1; at >= 0; at -= 1) {
     const line = lines[at];
 
-    if (line !== undefined && (line.isBlank || line.code !== '')) return line;
+    if (line !== undefined && (line.isBlank || line.code !== '')) {
+      return line;
+    }
   }
 
   return undefined;
@@ -80,10 +97,20 @@ function lineAbove(lines: readonly Line[], index: number): Line | undefined {
 function paddedBlock(lines: readonly Line[], index: number): Finding[] {
   const line = lines[index];
 
-  if (line?.isBlank !== true) return [];
+  if (line?.isBlank !== true) {
+    return [];
+  }
 
   const afterOpening = lines[index - 1]?.opensBlock === true;
   const beforeClosing = lines[index + 1]?.closesBlock === true;
 
-  return afterOpening || beforeClosing ? [{ line: index + 1, message: `A blank line pads the ${afterOpening ? 'start' : 'end'} of a block.`, fix: PADDING_FIX }] : [];
+  return afterOpening || beforeClosing
+    ? [
+        {
+          line: index + 1,
+          message: `A blank line pads the ${afterOpening ? 'start' : 'end'} of a block.`,
+          fix: PADDING_FIX,
+        },
+      ]
+    : [];
 }

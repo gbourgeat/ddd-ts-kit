@@ -5,26 +5,46 @@ import { initProject } from './support/init-project.js';
 import { jsonAt } from './support/json-at.js';
 
 const platform = (root: string, file: string): string => read(root, `src/platform/${file}`);
-const JOB_LINES = ["'billing.send-reminders': { enabled: environment['JOB_BILLING_SEND_REMINDERS_ENABLED'] !== 'false' },", "'shipping.close-parcels': { timeoutMs: 1000 },"];
+
+const JOB_LINES = [
+  "'billing.send-reminders': { enabled: environment['JOB_BILLING_SEND_REMINDERS_ENABLED'] !== 'false' },",
+  "'shipping.close-parcels': { timeoutMs: 1000 },",
+];
 
 describe('scheduled jobs in the platform', () => {
   it('validates RUN_JOBS with the rest of the configuration, on by default', () => {
     const root = initProject();
 
     expect(platform(root, 'config/app-config.ts')).toContain('readonly runJobs: boolean;');
-    expect(platform(root, 'config/load-config.ts')).toContain("runJobs: readFlag(env, { name: 'RUN_JOBS', fallback: runJobsByDefault }, problems),");
-    expect(platform(root, 'config/load-config.ts')).toContain('// ddd-ts-kit:run-jobs\nconst runJobsByDefault = true;\n// /ddd-ts-kit:run-jobs');
-    expect(platform(root, 'config/load-config.ts')).toContain("problems.push(variable.name + ' must be true or false');");
+
+    expect(platform(root, 'config/load-config.ts')).toContain(
+      "runJobs: readFlag(env, { name: 'RUN_JOBS', fallback: runJobsByDefault }, problems),",
+    );
+
+    expect(platform(root, 'config/load-config.ts')).toContain(
+      '// ddd-ts-kit:run-jobs\nconst runJobsByDefault = true;\n// /ddd-ts-kit:run-jobs',
+    );
+
+    expect(platform(root, 'config/load-config.ts')).toContain(
+      "problems.push(variable.name + ' must be true or false');",
+    );
+
     expect(read(root, '.env.example')).toContain('# RUN_JOBS=true');
     expect(read(root, '.env.example')).toContain('JOB_<CONTEXT>_<JOB>_ENABLED=false');
   });
 
-  it.each([[[]], [['--di', 'manual']], [['--http', 'nest']], [['--http', 'none']]])('tells the application whether this process runs the jobs, and their settings (%j)', (flags) => {
-    const root = initProject(...flags);
+  it.each([[[]], [['--di', 'manual']], [['--http', 'nest']], [['--http', 'none']]])(
+    'tells the application whether this process runs the jobs, and their settings (%j)',
+    (flags) => {
+      const root = initProject(...flags);
 
-    expect(read(root, 'src/main.ts')).toContain('jobs: { start: config.runJobs, settings: jobSettings(process.env) },');
-    expect(read(root, 'src/main.ts')).toContain("import { jobSettings } from './platform/job-settings.js';");
-  });
+      expect(read(root, 'src/main.ts')).toContain(
+        'jobs: { start: config.runJobs, settings: jobSettings(process.env) },',
+      );
+
+      expect(read(root, 'src/main.ts')).toContain("import { jobSettings } from './platform/job-settings.js';");
+    },
+  );
 
   it('starts no job by time where nothing asks for it: the tools and the tests', () => {
     const root = initProject();
@@ -37,8 +57,14 @@ describe('scheduled jobs in the platform', () => {
   it('keeps one marker region for the settings of the jobs, in a file that needs no helper', () => {
     const settings = platform(initProject(), 'job-settings.ts');
 
-    expect(settings).toContain('export function jobSettings(environment: Environment, context?: string): Readonly<Record<string, JobSettings>> {');
-    expect(settings).toContain('  const settings: Readonly<Record<string, JobSettings>> = {\n    // ddd-ts-kit:jobs\n    // /ddd-ts-kit:jobs\n  };');
+    expect(settings).toContain(
+      'export function jobSettings(environment: Environment, context?: string): Readonly<Record<string, JobSettings>> {',
+    );
+
+    expect(settings).toContain(
+      '  const settings: Readonly<Record<string, JobSettings>> = {\n    // ddd-ts-kit:jobs\n    // /ddd-ts-kit:jobs\n  };',
+    );
+
     expect(settings.match(/^import /gm)).toHaveLength(1);
     expect(settings).toContain("import type { JobSettings } from '@ddd-ts-kit/kernel';");
   });
@@ -46,8 +72,14 @@ describe('scheduled jobs in the platform', () => {
   it('switches one job off by its variable, and leaves the others as they were declared', async () => {
     const root = initProject();
 
-    expect(await settingsOf(root, {})).toEqual({ 'billing.send-reminders': { enabled: true }, 'shipping.close-parcels': { timeoutMs: 1000 } });
-    expect(jsonAt(await settingsOf(root, { JOB_BILLING_SEND_REMINDERS_ENABLED: 'false' }), 'billing.send-reminders')).toEqual({ enabled: false });
+    expect(await settingsOf(root, {})).toEqual({
+      'billing.send-reminders': { enabled: true },
+      'shipping.close-parcels': { timeoutMs: 1000 },
+    });
+
+    expect(
+      jsonAt(await settingsOf(root, { JOB_BILLING_SEND_REMINDERS_ENABLED: 'false' }), 'billing.send-reminders'),
+    ).toEqual({ enabled: false });
   });
 
   it('gives a context run alone the settings of its own jobs only', async () => {
@@ -62,7 +94,10 @@ describe('the lock that keeps a job to one instance', () => {
   it('is the Redis lock with --cache redis, bound to the port of the kernel', () => {
     const root = initProject('--cache', 'redis');
 
-    expect(platform(root, 'redis/open-redis.ts')).toContain("lock: new RedisLock(connection.client, { namespace: serviceName + ':lock' }),");
+    expect(platform(root, 'redis/open-redis.ts')).toContain(
+      "lock: new RedisLock(connection.client, { namespace: serviceName + ':lock' }),",
+    );
+
     expect(platform(root, 'platform.module.ts')).toContain('builder.rebind(Lock).toValue(redis.lock);');
     expect(read(root, 'README.md')).toContain('the kernel `Lock` is bound to `RedisLock`');
     expect(read(root, 'README.md')).not.toContain('Limitation: one instance runs the jobs');
@@ -79,8 +114,13 @@ describe('the lock that keeps a job to one instance', () => {
   it('reaches the scheduler of a hand-wired platform the same way', () => {
     const byHand = initProject('--di', 'manual', '--cache', 'redis');
 
-    expect(platform(byHand, 'create-platform.ts')).toContain('const lock = options.redis?.lock ?? new InMemoryLock(clock);');
-    expect(platform(initProject('--di', 'manual'), 'create-platform.ts')).toContain('// TODO(platform): this lock excludes inside one process only.');
+    expect(platform(byHand, 'create-platform.ts')).toContain(
+      'const lock = options.redis?.lock ?? new InMemoryLock(clock);',
+    );
+
+    expect(platform(initProject('--di', 'manual'), 'create-platform.ts')).toContain(
+      '// TODO(platform): this lock excludes inside one process only.',
+    );
   });
 });
 
@@ -103,7 +143,9 @@ describe('the proof that a context is extractable', () => {
 async function settingsOf(root: string, ...parameters: readonly unknown[]): Promise<unknown> {
   const jobSettings: unknown = jsonAt(await importGenerated(root, withJobs(root)), 'jobSettings');
 
-  if (typeof jobSettings !== 'function') throw new Error('job-settings.ts exports no jobSettings function.');
+  if (typeof jobSettings !== 'function') {
+    throw new Error('job-settings.ts exports no jobSettings function.');
+  }
 
   const settings: unknown = Reflect.apply(jobSettings, undefined, parameters);
 
@@ -114,7 +156,14 @@ async function settingsOf(root: string, ...parameters: readonly unknown[]): Prom
 function withJobs(root: string): string {
   const file = 'src/platform/job-settings.ts';
 
-  write(root, file, read(root, file).replace('    // /ddd-ts-kit:jobs', `${JOB_LINES.map((line) => `    ${line}`).join('\n')}\n    // /ddd-ts-kit:jobs`));
+  write(
+    root,
+    file,
+    read(root, file).replace(
+      '    // /ddd-ts-kit:jobs',
+      `${JOB_LINES.map((line) => `    ${line}`).join('\n')}\n    // /ddd-ts-kit:jobs`,
+    ),
+  );
 
   return file;
 }

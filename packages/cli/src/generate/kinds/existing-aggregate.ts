@@ -5,7 +5,10 @@ import type { Scope } from '../scope.js';
 
 /** The name of an aggregate other kinds build on: it has to exist, its vocabulary was judged when it was created. */
 export function existingAggregate(scope: Scope, input: string): Name {
-  const aggregate = concept({ ...scope, flags: { ...scope.flags, allowName: true } }, input, { what: 'aggregate', strip: ['repository', 'builder'] });
+  const aggregate = concept({ ...scope, flags: { ...scope.flags, allowName: true } }, input, {
+    what: 'aggregate',
+    strip: ['repository', 'builder'],
+  });
 
   requireFile(scope, {
     file: `domain/aggregates/${aggregate.kebab}.aggregate.ts`,

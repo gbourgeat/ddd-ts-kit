@@ -14,22 +14,31 @@ export const AUTHZ_FIXTURES: readonly Fixture[] = [
     name: 'a route that builds the actor, a handler asking the access port, an adapter scoped by tenant',
     expect: 'pass',
     files: project({
-      [ROUTE]: "import { actorOf } from '@ddd-ts-kit/auth';\nimport type { Actor } from '@ddd-ts-kit/kernel';\n\nexport const issueInvoiceRoute = (principal: unknown): Actor => actorOf(principal);\n",
-      ...handler('export class IssueInvoiceHandler {\n  async execute(command: IssueInvoiceCommand): Promise<void> {\n    await this.access.authorize(command.actor, permission, command);\n  }\n}\n'),
-      [ADAPTER]: 'export class InMemoryInvoiceRepository {\n  tenant(): string | undefined {\n    return this.actors.require().tenantId;\n  }\n}\n',
+      [ROUTE]:
+        "import { actorOf } from '@ddd-ts-kit/auth';\nimport type { Actor } from '@ddd-ts-kit/kernel';\n\nexport const issueInvoiceRoute = (principal: unknown): Actor => actorOf(principal);\n",
+      ...handler(
+        'export class IssueInvoiceHandler {\n  async execute(command: IssueInvoiceCommand): Promise<void> {\n    await this.access.authorize(command.actor, permission, command);\n  }\n}\n',
+      ),
+      [ADAPTER]:
+        'export class InMemoryInvoiceRepository {\n  tenant(): string | undefined {\n    return this.actors.require().tenantId;\n  }\n}\n',
     }),
   },
   {
     ruleId: 'authz/in-application',
     name: 'a role test in a route',
     expect: { file: ROUTE },
-    files: project({ [ROUTE]: "export const issueInvoiceRoute = (context: Context): boolean => !context.principal.roles.includes('admin');\n" }),
+    files: project({
+      [ROUTE]:
+        "export const issueInvoiceRoute = (context: Context): boolean => !context.principal.roles.includes('admin');\n",
+    }),
   },
   {
     ruleId: 'authz/in-application',
     name: 'an authorizer imported by a route',
     expect: { file: ROUTE },
-    files: project({ [ROUTE]: "import type { Authorizer } from '@ddd-ts-kit/auth';\n\nexport type IssueInvoiceRoute = Authorizer;\n" }),
+    files: project({
+      [ROUTE]: "import type { Authorizer } from '@ddd-ts-kit/auth';\n\nexport type IssueInvoiceRoute = Authorizer;\n",
+    }),
   },
   {
     ruleId: 'authz/in-application',
@@ -37,14 +46,18 @@ export const AUTHZ_FIXTURES: readonly Fixture[] = [
     expect: { file: ADAPTER },
     files: project({
       [ADAPTER]:
-        'export class InMemoryInvoiceRepository {\n  async find(request: Request): Promise<void> {\n    const decision = await this.authorizer.check(request);\n    if (!decision.allowed) throw new ForbiddenError(decision.reason);\n  }\n}\n',
+        'export class InMemoryInvoiceRepository {\n  async find(request: Request): Promise<void> {\n    const decision = await this.authorizer.check(request);\n    if (!decision.allowed) {\n      throw new ForbiddenError(decision.reason);\n    }\n  }\n}\n',
     }),
   },
   {
     ruleId: 'authz/in-application',
     name: 'an aggregate that tests the roles of the actor',
     expect: { file: AGGREGATE },
-    files: project(aggregate("import type { Actor } from '@ddd-ts-kit/kernel';\nexport class Invoice {\n  issue(actor: Actor): boolean {\n    return actor.roles.includes('accountant');\n  }\n}\n")),
+    files: project(
+      aggregate(
+        "import type { Actor } from '@ddd-ts-kit/kernel';\nexport class Invoice {\n  issue(actor: Actor): boolean {\n    return actor.roles.includes('accountant');\n  }\n}\n",
+      ),
+    ),
   },
   {
     ruleId: 'authz/in-application',
@@ -59,21 +72,32 @@ export const AUTHZ_FIXTURES: readonly Fixture[] = [
     ruleId: 'authz/in-application',
     name: 'an aggregate handed the session',
     expect: { file: AGGREGATE },
-    files: project(aggregate("import type { Session } from '@ddd-ts-kit/kernel';\nexport class Invoice {\n  issue(session: Session): string {\n    return session.id;\n  }\n}\n")),
+    files: project(
+      aggregate(
+        "import type { Session } from '@ddd-ts-kit/kernel';\nexport class Invoice {\n  issue(session: Session): string {\n    return session.id;\n  }\n}\n",
+      ),
+    ),
   },
   {
     ruleId: 'authz/in-application',
     name: 'an aggregate handed the execution context',
     expect: { file: AGGREGATE },
-    files: project(aggregate("import type { ExecutionContext } from '@ddd-ts-kit/kernel';\nexport class Invoice {\n  issue(context: ExecutionContext): string {\n    return context.correlationId;\n  }\n}\n")),
+    files: project(
+      aggregate(
+        "import type { ExecutionContext } from '@ddd-ts-kit/kernel';\nexport class Invoice {\n  issue(context: ExecutionContext): string {\n    return context.correlationId;\n  }\n}\n",
+      ),
+    ),
   },
   {
     ruleId: 'authz/actor-explicit',
     name: 'the actor carried by the command, the ambient actor read by an adapter only',
     expect: 'pass',
     files: project({
-      [COMMAND]: "import { AuthorizedCommand, type Actor } from '@ddd-ts-kit/kernel';\nexport class IssueInvoiceCommand extends AuthorizedCommand {\n  constructor(actor: Actor) {\n    super(actor);\n  }\n}\n",
-      ...handler('export class IssueInvoiceHandler {\n  async execute(command: IssueInvoiceCommand): Promise<string> {\n    return command.actor.id;\n  }\n}\n'),
+      [COMMAND]:
+        "import { AuthorizedCommand, type Actor } from '@ddd-ts-kit/kernel';\nexport class IssueInvoiceCommand extends AuthorizedCommand {\n  constructor(actor: Actor) {\n    super(actor);\n  }\n}\n",
+      ...handler(
+        'export class IssueInvoiceHandler {\n  async execute(command: IssueInvoiceCommand): Promise<string> {\n    return command.actor.id;\n  }\n}\n',
+      ),
       [ADAPTER]:
         "import type { ActorContext } from '@ddd-ts-kit/kernel';\nexport class InMemoryInvoiceRepository {\n  constructor(private readonly actors: ActorContext) {}\n\n  tenant(): string | undefined {\n    return this.actors.require().tenantId;\n  }\n}\n",
     }),
@@ -93,7 +117,11 @@ export const AUTHZ_FIXTURES: readonly Fixture[] = [
     name: 'an aggregate handed the actor context',
     expect: { file: AGGREGATE },
     also: ['authz/in-application'],
-    files: project(aggregate("import type { ActorContext } from '@ddd-ts-kit/kernel';\nexport class Invoice {\n  issue(actors: ActorContext): string | undefined {\n    return actors.current()?.id;\n  }\n}\n")),
+    files: project(
+      aggregate(
+        "import type { ActorContext } from '@ddd-ts-kit/kernel';\nexport class Invoice {\n  issue(actors: ActorContext): string | undefined {\n    return actors.current()?.id;\n  }\n}\n",
+      ),
+    ),
   },
   {
     ruleId: 'authz/actor-explicit',
@@ -121,14 +149,20 @@ export const AUTHZ_FIXTURES: readonly Fixture[] = [
     ruleId: 'authz/actor-explicit',
     name: 'a handler reading a scope whose type is declared elsewhere',
     expect: { file: HANDLER },
-    files: project(handler('export class IssueInvoiceHandler {\n  async execute(): Promise<string | undefined> {\n    return this.dependencies.scope.current()?.correlationId;\n  }\n}\n')),
+    files: project(
+      handler(
+        'export class IssueInvoiceHandler {\n  async execute(): Promise<string | undefined> {\n    return this.dependencies.scope.current()?.correlationId;\n  }\n}\n',
+      ),
+    ),
   },
   {
     ruleId: 'authz/actor-explicit',
     name: 'a handler stamping the audit columns itself',
     expect: { file: HANDLER },
     files: project(
-      handler("import { stampCreation } from '@ddd-ts-kit/kernel';\nexport class IssueInvoiceHandler {\n  async execute(command: IssueInvoiceCommand): Promise<object> {\n    return stampCreation(command.context, this.clock);\n  }\n}\n"),
+      handler(
+        "import { stampCreation } from '@ddd-ts-kit/kernel';\nexport class IssueInvoiceHandler {\n  async execute(command: IssueInvoiceCommand): Promise<object> {\n    return stampCreation(command.context, this.clock);\n  }\n}\n",
+      ),
     ),
   },
   {
@@ -147,13 +181,19 @@ export const AUTHZ_FIXTURES: readonly Fixture[] = [
     ruleId: 'authz/in-application',
     name: 'an access decorator imported by a route',
     expect: { file: ROUTE },
-    files: project({ [ROUTE]: "import { Requires } from '@ddd-ts-kit/kernel/declarations';\n\nexport const issueInvoiceRoute = Requires;\n" }),
+    files: project({
+      [ROUTE]:
+        "import { Requires } from '@ddd-ts-kit/kernel/declarations';\n\nexport const issueInvoiceRoute = Requires;\n",
+    }),
   },
   {
     ruleId: 'authz/in-application',
     name: 'the access port imported by an adapter',
     expect: { file: ADAPTER },
-    files: project({ [ADAPTER]: "import type { Access } from '@ddd-ts-kit/auth';\n\nexport class InMemoryInvoiceRepository {\n  constructor(private readonly access: Access) {}\n}\n" }),
+    files: project({
+      [ADAPTER]:
+        "import type { Access } from '@ddd-ts-kit/auth';\n\nexport class InMemoryInvoiceRepository {\n  constructor(private readonly access: Access) {}\n}\n",
+    }),
   },
   {
     ruleId: 'authz/actor-explicit',

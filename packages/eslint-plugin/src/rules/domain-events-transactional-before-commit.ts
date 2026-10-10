@@ -42,7 +42,9 @@ export const domainEventsTransactionalBeforeCommit = defineRule<MessageId>({
   create({ file, sourceCode, report }) {
     const context = inContext(file)?.context;
 
-    if (context === undefined || file.isTest) return {};
+    if (context === undefined || file.isTest) {
+      return {};
+    }
 
     const declarationsOf = declarationReader(sourceCode.ast);
     const imported = importedBindings(file, sourceCode.ast);
@@ -50,7 +52,9 @@ export const domainEventsTransactionalBeforeCommit = defineRule<MessageId>({
     const judgeClass = (node: ClassNode): void => {
       const declaration = declarationsOf(node).find((candidate) => candidate.name === DECORATOR);
 
-      if (declaration === undefined) return;
+      if (declaration === undefined) {
+        return;
+      }
 
       const handler = className(node);
       const isAfterCommit = runsAfterCommit(declaration);
@@ -58,13 +62,19 @@ export const domainEventsTransactionalBeforeCommit = defineRule<MessageId>({
       for (const { name, node: where } of dependenciesOf(node, declaration)) {
         const origin = originOf(imported.get(name));
 
-        if (origin === undefined) continue;
+        if (origin === undefined) {
+          continue;
+        }
 
-        if (isAfterCommit && isKernel(origin, PUBLISHER)) report({ node: where, messageId: 'afterCommit', data: { handler, name } });
+        if (isAfterCommit && isKernel(origin, PUBLISHER)) {
+          report({ node: where, messageId: 'afterCommit', data: { handler, name } });
+        }
 
         const why = isAfterCommit ? undefined : refusedBeforeCommit(context, origin);
 
-        if (why !== undefined) report({ node: where, messageId: 'beforeCommit', data: { handler, name, why } });
+        if (why !== undefined) {
+          report({ node: where, messageId: 'beforeCommit', data: { handler, name, why } });
+        }
       }
     };
 
@@ -82,7 +92,13 @@ function runsAfterCommit(declaration: Declaration): boolean {
 /** Each name once: the dependency list of the decorator first, then the types of the constructor parameters. */
 function dependenciesOf(node: ClassNode, declaration: Declaration): Dependency[] {
   const list = declaration.arguments.at(-1);
-  const listed = list?.type === AST_NODE_TYPES.ArrayExpression ? list.elements.flatMap((element) => (element?.type === AST_NODE_TYPES.Identifier ? [{ name: element.name, node: element }] : [])) : [];
+
+  const listed =
+    list?.type === AST_NODE_TYPES.ArrayExpression
+      ? list.elements.flatMap((element) =>
+          element?.type === AST_NODE_TYPES.Identifier ? [{ name: element.name, node: element }] : [],
+        )
+      : [];
 
   const received = (constructorOf(node.body)?.value.params ?? []).flatMap((parameter) => {
     const name = parameterTypeName(parameter);
@@ -102,13 +118,21 @@ interface Origin {
 }
 
 function originOf(binding: ImportedBinding | undefined): Origin | undefined {
-  if (binding === undefined) return undefined;
+  if (binding === undefined) {
+    return undefined;
+  }
 
   const { specifier, target } = binding;
 
-  if (specifier.type !== AST_NODE_TYPES.ImportSpecifier) return { exported: specifier.local.name, target };
+  if (specifier.type !== AST_NODE_TYPES.ImportSpecifier) {
+    return { exported: specifier.local.name, target };
+  }
 
-  return { exported: specifier.imported.type === AST_NODE_TYPES.Identifier ? specifier.imported.name : specifier.imported.value, target };
+  return {
+    exported:
+      specifier.imported.type === AST_NODE_TYPES.Identifier ? specifier.imported.name : specifier.imported.value,
+    target,
+  };
 }
 
 function isKernel({ exported, target }: Origin, name: string): boolean {
@@ -119,20 +143,37 @@ function isKernel({ exported, target }: Origin, name: string): boolean {
 function refusedBeforeCommit(context: string, origin: Origin): string | undefined {
   const { target } = origin;
 
-  if (target.kind === 'builtin') return `which comes from ${target.name}`;
-  if (target.kind === 'package') return fromPackage(origin, target.name);
+  if (target.kind === 'builtin') {
+    return `which comes from ${target.name}`;
+  }
+
+  if (target.kind === 'package') {
+    return fromPackage(origin, target.name);
+  }
 
   const { location } = target;
 
-  if (location.area === 'platform') return 'which comes from the platform';
-  if (location.area !== 'context') return undefined;
-  if (location.context !== context) return `which belongs to the context ${location.context}`;
+  if (location.area === 'platform') {
+    return 'which comes from the platform';
+  }
+
+  if (location.area !== 'context') {
+    return undefined;
+  }
+
+  if (location.context !== context) {
+    return `which belongs to the context ${location.context}`;
+  }
 
   return location.layer === 'infrastructure' ? 'which is imported from infrastructure/' : undefined;
 }
 
 function fromPackage({ exported }: Origin, packageName: string): string | undefined {
-  if (!TRUSTED_PACKAGES.has(packageName)) return `which comes from the package ${packageName}`;
+  if (!TRUSTED_PACKAGES.has(packageName)) {
+    return `which comes from the package ${packageName}`;
+  }
 
-  return packageName === KERNEL && OUTSIDE_THE_TRANSACTION.has(exported) ? 'a port of the kernel no transaction covers' : undefined;
+  return packageName === KERNEL && OUTSIDE_THE_TRANSACTION.has(exported)
+    ? 'a port of the kernel no transaction covers'
+    : undefined;
 }

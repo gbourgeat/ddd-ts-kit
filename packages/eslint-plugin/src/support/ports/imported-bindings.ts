@@ -10,12 +10,18 @@ export function importedBindings(file: LintedFile, program: TSESTree.Program): R
   const bindings = imports.flatMap((declaration) => {
     const target = resolveImport(file.config, file.path, declaration.source.value);
 
-    return declaration.specifiers.map((specifier): [string, ImportedBinding] => [specifier.local.name, { specifier, declaration, target, typeOnly: isTypeOnly(declaration, specifier) }]);
+    return declaration.specifiers.map((specifier): [string, ImportedBinding] => [
+      specifier.local.name,
+      { specifier, declaration, target, typeOnly: isTypeOnly(declaration, specifier) },
+    ]);
   });
 
   return new Map(bindings);
 }
 
 function isTypeOnly(declaration: TSESTree.ImportDeclaration, specifier: TSESTree.ImportClause): boolean {
-  return declaration.importKind === 'type' || (specifier.type === AST_NODE_TYPES.ImportSpecifier && specifier.importKind === 'type');
+  return (
+    declaration.importKind === 'type' ||
+    (specifier.type === AST_NODE_TYPES.ImportSpecifier && specifier.importKind === 'type')
+  );
 }

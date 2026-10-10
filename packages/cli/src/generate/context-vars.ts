@@ -14,7 +14,10 @@ export function contextVars(config: Config, context: Name): RenderContext {
     ...stackVars(config),
     context: { ...named(context), schema: context.kebab.replaceAll('-', '_') },
     storage: storageVars(config, dir),
-    paths: { ...pathVars(config, dir), appToSource: relativeTo(`${config.sourceRoot}/apps/${context.kebab}`, config.sourceRoot) },
+    paths: {
+      ...pathVars(config, dir),
+      appToSource: relativeTo(`${config.sourceRoot}/apps/${context.kebab}`, config.sourceRoot),
+    },
   };
 }
 

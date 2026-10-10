@@ -7,9 +7,18 @@ export interface Wish {
   readonly patientId?: string;
 }
 
-export function bookAppointment(caller: HttpClient, practice: StaffedPractice, wish: Wish): Promise<HttpResponse<{ id: string }>> {
+export function bookAppointment(
+  caller: HttpClient,
+  practice: StaffedPractice,
+  wish: Wish,
+): Promise<HttpResponse<{ id: string }>> {
   const { calendarId, appointmentTypeId } = practice;
   const patient = wish.patientId === undefined ? {} : { patientId: wish.patientId };
 
-  return caller.post<{ id: string }>('/appointments', { calendarId, appointmentTypeId, startsAt: wish.startsAt.toISOString(), ...patient });
+  return caller.post<{ id: string }>('/appointments', {
+    calendarId,
+    appointmentTypeId,
+    startsAt: wish.startsAt.toISOString(),
+    ...patient,
+  });
 }

@@ -94,7 +94,11 @@ export class Settlement {
     await this.bury(delivery, { [ERROR_CODE_FIELD]: POISON_ENTRY, [DEAD_REASON_FIELD]: 'poison' });
   }
 
-  private async handle(delivery: Delivery, event: IntegrationEvent, handlers: ReadonlySet<IntegrationEventCallback>): Promise<void> {
+  private async handle(
+    delivery: Delivery,
+    event: IntegrationEvent,
+    handlers: ReadonlySet<IntegrationEventCallback>,
+  ): Promise<void> {
     const code = await failureOf(handlers, event, this.deliveryOf(delivery));
 
     if (code === undefined) {
@@ -116,7 +120,17 @@ export class Settlement {
     const { consumer, retry } = this.settings;
     const dead = attempt >= retry.maxAttempts;
 
-    this.settings.onFailure({ kind: 'handler', stream, consumer, eventId: event.id, eventType: event.type, code, attempt, dead });
+    this.settings.onFailure({
+      kind: 'handler',
+      stream,
+      consumer,
+      eventId: event.id,
+      eventType: event.type,
+      code,
+      attempt,
+      dead,
+    });
+
     this.settled(delivery, dead ? 'dead' : 'retried');
 
     if (dead) {
@@ -133,9 +147,21 @@ export class Settlement {
   private async bury(delivery: Delivery, reason: Readonly<Record<string, string>>): Promise<void> {
     const { stream, entry, attempt } = delivery;
     const { consumer } = this.settings;
-    const annotations = { ...reason, [ATTEMPT_FIELD]: String(attempt), [CONSUMER_FIELD]: consumer, [ENTRY_ID_FIELD]: entry.id };
 
-    await bury(this.client, { stream, group: consumer, deadStream: deadStreamOf(stream, consumer), entry, annotations });
+    const annotations = {
+      ...reason,
+      [ATTEMPT_FIELD]: String(attempt),
+      [CONSUMER_FIELD]: consumer,
+      [ENTRY_ID_FIELD]: entry.id,
+    };
+
+    await bury(this.client, {
+      stream,
+      group: consumer,
+      deadStream: deadStreamOf(stream, consumer),
+      entry,
+      annotations,
+    });
   }
 
   /**

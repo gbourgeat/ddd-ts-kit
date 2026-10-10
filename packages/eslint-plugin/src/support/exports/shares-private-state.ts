@@ -11,21 +11,30 @@ type Source = Readonly<TSESLint.SourceCode>;
 export function sharesPrivateState(shape: ModuleShape, sourceCode: Source): boolean {
   const states = shape.declarations.flatMap((declaration) => (declaration.exported ? [] : stateOf(declaration.node)));
   const functions = shape.exports.filter((declaration) => declaration.node.type === AST_NODE_TYPES.FunctionDeclaration);
-  const touched = functions.map((declaration) => states.filter((state) => isUsedIn(sourceCode, state, declaration.node)));
+
+  const touched = functions.map((declaration) =>
+    states.filter((state) => isUsedIn(sourceCode, state, declaration.node)),
+  );
 
   return touched.length > 1 && touched.every((states) => states.length > 0) && isOneGroup(touched);
 }
 
 function stateOf(node: TSESTree.Node): TSESTree.VariableDeclarator[] {
-  if (node.type !== AST_NODE_TYPES.VariableDeclarator) return [];
+  if (node.type !== AST_NODE_TYPES.VariableDeclarator) {
+    return [];
+  }
 
-  return node.parent.kind === 'let' || node.parent.kind === 'var' || node.init?.type === AST_NODE_TYPES.NewExpression ? [node] : [];
+  return node.parent.kind === 'let' || node.parent.kind === 'var' || node.init?.type === AST_NODE_TYPES.NewExpression
+    ? [node]
+    : [];
 }
 
 function isUsedIn(sourceCode: Source, state: TSESTree.VariableDeclarator, user: TSESTree.Node): boolean {
   const references = sourceCode.getDeclaredVariables(state).flatMap((variable) => variable.references);
 
-  return references.some(({ identifier }) => identifier.range[0] >= user.range[0] && identifier.range[1] <= user.range[1]);
+  return references.some(
+    ({ identifier }) => identifier.range[0] >= user.range[0] && identifier.range[1] <= user.range[1],
+  );
 }
 
 function isOneGroup(touched: readonly (readonly TSESTree.Node[])[]): boolean {

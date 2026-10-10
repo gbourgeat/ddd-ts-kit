@@ -34,9 +34,7 @@ export function outboxTable(schemaName?: string) {
     },
     (table) => [
       // Partial: the relay only ever scans what is pending, and published rows dominate.
-      index('outbox_pending_idx')
-        .on(table.nextAttemptAt, table.sequence)
-        .where(sql`${table.status} = 'pending'`),
+      index('outbox_pending_idx').on(table.nextAttemptAt, table.sequence).where(sql`${table.status} = 'pending'`),
     ],
   );
 }

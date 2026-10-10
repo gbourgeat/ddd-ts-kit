@@ -7,9 +7,7 @@ import { show } from './show.js';
 /** Why the event is not the one the matcher describes, one line per difference; none when it is. */
 export function eventMismatches(event: DomainEvent, matcher: EventMatcher, where: string): string[] {
   if (typeof matcher === 'string') {
-    return matcher === event.name
-      ? []
-      : [`${where}: expected name ${show(matcher)}, recorded ${show(event.name)}`];
+    return matcher === event.name ? [] : [`${where}: expected name ${show(matcher)}, recorded ${show(event.name)}`];
   }
 
   if (typeof matcher === 'function') {
@@ -31,9 +29,7 @@ function subsetDifferences(actual: unknown, expected: unknown, path: string): st
     });
   }
 
-  return isDeepStrictEqual(actual, expected)
-    ? []
-    : [`${path}: expected ${show(expected)}, recorded ${show(actual)}`];
+  return isDeepStrictEqual(actual, expected) ? [] : [`${path}: expected ${show(expected)}, recorded ${show(actual)}`];
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {

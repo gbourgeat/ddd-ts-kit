@@ -22,7 +22,10 @@ export function resolveStyle(options: StackOptions, di: string): { style: string
   const assembly = choose(ASSEMBLIES, options.assembly, 'assembly');
 
   if (assembly !== undefined && style !== 'declared') {
-    throw new CliError(`--assembly ${assembly} cannot be combined with --style explicit.`, 'An explicit context is assembled by its module file: drop --assembly, or use --style declared.');
+    throw new CliError(
+      `--assembly ${assembly} cannot be combined with --style explicit.`,
+      'An explicit context is assembled by its module file: drop --assembly, or use --style declared.',
+    );
   }
 
   return { style, assembly: assembly ?? 'barrel' };

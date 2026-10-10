@@ -85,8 +85,15 @@ describe('redaction', () => {
 
     const entry = await changesRecordedWith(fields, perTenant);
 
-    expect(subjects).toEqual([{ field: 'patientEmail', actorId: 'ada', tenantId: 'acme', resource: { type: 'appointment', id: 'apt-1' } }]);
-    expect(entry).toMatchObject({ resource: { type: 'appointment', id: 'apt-1' }, context: 'scheduling', changes: { patientEmail: { masked: 'acme:15' } } });
+    expect(subjects).toEqual([
+      { field: 'patientEmail', actorId: 'ada', tenantId: 'acme', resource: { type: 'appointment', id: 'apt-1' } },
+    ]);
+
+    expect(entry).toMatchObject({
+      resource: { type: 'appointment', id: 'apt-1' },
+      context: 'scheduling',
+      changes: { patientEmail: { masked: 'acme:15' } },
+    });
   });
 
   it('refuses at wiring time a masked field without a masker', () => {

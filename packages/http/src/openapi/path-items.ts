@@ -14,15 +14,17 @@ export function pathItems(
   mapper: ErrorMapper,
   definitions: Definitions,
 ): Record<string, Record<string, JsonSchema>> {
-  const paths: Record<string, Record<string, JsonSchema>> = {};
+  const paths = new Map<string, Map<string, JsonSchema>>();
 
   for (const route of routes) {
-    const item = (paths[openApiPath(route.path)] ??= {});
+    const path = openApiPath(route.path);
+    const item = paths.get(path) ?? new Map<string, JsonSchema>();
 
-    item[route.method.toLowerCase()] = operation(route, mapper, definitions);
+    item.set(route.method.toLowerCase(), operation(route, mapper, definitions));
+    paths.set(path, item);
   }
 
-  return paths;
+  return Object.fromEntries([...paths].map(([path, item]) => [path, Object.fromEntries(item)]));
 }
 
 function operation(route: Route, mapper: ErrorMapper, definitions: Definitions): JsonSchema {

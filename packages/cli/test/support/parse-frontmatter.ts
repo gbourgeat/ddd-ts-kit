@@ -2,7 +2,9 @@
 export function parseFrontmatter(text: string): Record<string, string[]> {
   const [, block] = /^---\n([\s\S]*?)\n---\n/.exec(text) ?? [];
 
-  if (block === undefined) throw new Error('The file does not start with a frontmatter block.');
+  if (block === undefined) {
+    throw new Error('The file does not start with a frontmatter block.');
+  }
 
   const keys: Record<string, string[]> = {};
   let current: string[] | undefined;

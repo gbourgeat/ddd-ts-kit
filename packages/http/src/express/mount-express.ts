@@ -16,11 +16,7 @@ type Registrar = Record<HttpMethod, (path: string, handler: ExpressHandler) => v
  * Registers the routes on an Express 5 application or router. A JSON body parser
  * (`express.json()`) must be installed before, otherwise bodies reach validation as `undefined`.
  */
-export function mountExpress(
-  target: IRouter,
-  routes: readonly Route[],
-  options: ExpressMountOptions = {},
-): void {
+export function mountExpress(target: IRouter, routes: readonly Route[], options: ExpressMountOptions = {}): void {
   assertUniqueRoutes(routes);
 
   const register = registrarOf(target);

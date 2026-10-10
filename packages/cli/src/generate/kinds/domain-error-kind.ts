@@ -17,11 +17,19 @@ export const domainErrorKind: Kind = {
   writesShared: false,
   run: (request) => {
     const scope = openScope(request);
-    const name = concept({ ...scope, flags: { ...scope.flags, allowName: true } }, request.args[1] ?? '', { what: 'domain error', strip: ['error'] });
+
+    const name = concept({ ...scope, flags: { ...scope.flags, allowName: true } }, request.args[1] ?? '', {
+      what: 'domain error',
+      strip: ['error'],
+    });
+
     const code = request.flags.code ?? name.constant;
 
     if (!ERROR_CODE.test(code)) {
-      throw new CliError(`"${code}" is not a valid error code.`, 'Use upper-case words separated by underscores, for example INVOICE_ALREADY_ISSUED.');
+      throw new CliError(
+        `"${code}" is not a valid error code.`,
+        'Use upper-case words separated by underscores, for example INVOICE_ALREADY_ISSUED.',
+      );
     }
 
     emit(scope, vars(scope, { name: named(name), error: { code } }), [

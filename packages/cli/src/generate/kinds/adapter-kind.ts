@@ -19,18 +19,25 @@ export const adapterKind: Kind = {
   name: 'adapter',
   aliases: [],
   usage: 'adapter <context> <Port> [--kind external|gateway] [--decorators]',
-  summary: 'An infrastructure adapter of an existing port towards an outside system, its spec and its registration with a retry and timeout policy; with --decorators its outbound method carries the policy itself.',
+  summary:
+    'An infrastructure adapter of an existing port towards an outside system, its spec and its registration with a retry and timeout policy; with --decorators its outbound method carries the policy itself.',
   positionals: ['context', 'Port'],
   writesShared: false,
   run: (request) => {
     const scope = openScope(request);
     const name = label(scope, request.args[1] ?? '', { what: 'port', strip: ['port'] });
 
-    requireFile(scope, { file: `application/ports/${name.kebab}.port.ts`, what: `The port ${name.pascal}`, createdBy: `ddd-ts-kit generate port ${scope.context.kebab} ${name.pascal}` });
+    requireFile(scope, {
+      file: `application/ports/${name.kebab}.port.ts`,
+      what: `The port ${name.pascal}`,
+      createdBy: `ddd-ts-kit generate port ${scope.context.kebab} ${name.pascal}`,
+    });
 
     const adapter = adapterVars(scope, name);
 
-    if (isDeclared(scope.config)) refuseSecondAdapter(scope, name);
+    if (isDeclared(scope.config)) {
+      refuseSecondAdapter(scope, name);
+    }
 
     const context = vars(scope, { name: named(name), adapter });
 
@@ -63,6 +70,7 @@ function adapterVars(scope: Scope, name: Name): AdapterVars {
     decorated: scope.flags.decorators,
     file: `remote-${name.kebab}.${towardsContext ? 'gateway' : 'adapter'}`,
     decorator: towardsContext ? 'Gateway' : 'Adapter',
+    hasKind: !towardsContext,
     kindOption: towardsContext ? '' : `kind: '${kind}', `,
   };
 }
@@ -70,17 +78,27 @@ function adapterVars(scope: Scope, name: Name): AdapterVars {
 function bindingKind(scope: Scope): string {
   const kind = scope.flags.kind ?? 'external';
 
-  if (ADAPTER_KINDS.includes(kind)) return kind;
+  if (ADAPTER_KINDS.includes(kind)) {
+    return kind;
+  }
 
-  throw new CliError(`Unknown value "${kind}" for --kind.`, `Use one of: ${ADAPTER_KINDS.join(', ')} (external: a system outside the application; gateway: another bounded context).`);
+  throw new CliError(
+    `Unknown value "${kind}" for --kind.`,
+    `Use one of: ${ADAPTER_KINDS.join(', ')} (external: a system outside the application; gateway: another bounded context).`,
+  );
 }
 
 /** A port has one adapter: a second class declaring itself for it would stop the application at startup. */
 function refuseSecondAdapter(scope: Scope, name: Name): void {
   const declaration = new RegExp(`@(?:Repository|Gateway|Adapter)\\(\\s*${name.pascal}\\b`);
-  const bound = filesUnder(scope.ws, `${scope.dir}/infrastructure`).find((file) => declaration.test(scope.ws.read(`${scope.dir}/infrastructure/${file}`) ?? ''));
 
-  if (bound === undefined) return;
+  const bound = filesUnder(scope.ws, `${scope.dir}/infrastructure`).find((file) =>
+    declaration.test(scope.ws.read(`${scope.dir}/infrastructure/${file}`) ?? ''),
+  );
+
+  if (bound === undefined) {
+    return;
+  }
 
   throw new CliError(
     `${name.pascal} is already bound by infrastructure/${bound}.`,
@@ -103,14 +121,20 @@ function register(scope: Scope, context: RenderContext, { port, kind, decorated 
   const module = `${scope.context.kebab}.module.ts`;
   const about = `{ kind: '${kind}', context: '${scope.context.kebab}' }`;
 
-  if (isDeclared(scope.config)) return;
+  if (isDeclared(scope.config)) {
+    return;
+  }
 
   if (isBound(scope, port)) {
-    scope.ws.note(`${port} is already bound in ${module}: bind Remote${port} in its place when the outside system is ready, with .as('${kind}').`);
+    scope.ws.note(
+      `${port} is already bound in ${module}: bind Remote${port} in its place when the outside system is ready, with .as('${kind}').`,
+    );
   } else if (scope.config.stack.di === 'tsyringe') {
     wire(scope, 'adapter', context);
   } else {
-    const wrapped = decorated ? `platform.selfGoverned(new Remote${port}(), ${about})` : `platform.adapter(ownPolicy(retry({ attempts: 3 }), timeout(2000))(new Remote${port}(), ${about}), ${about})`;
+    const wrapped = decorated
+      ? `platform.selfGoverned(new Remote${port}(), ${about})`
+      : `platform.adapter(ownPolicy(retry({ attempts: 3 }), timeout(2000))(new Remote${port}(), ${about}), ${about})`;
 
     scope.ws.note(`Instantiate Remote${port} in ${module} and give it to the handlers that need it: ${wrapped}.`);
   }

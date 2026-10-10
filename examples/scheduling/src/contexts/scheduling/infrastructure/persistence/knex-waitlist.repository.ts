@@ -35,7 +35,9 @@ export class KnexWaitlistRepository implements WaitlistRepository {
   private async insert(state: VersionedWaitlist): Promise<number> {
     const row = { ...state, ...auditRow(stampCreation(this.scope, this.clock)) };
 
-    return (await insertIgnoringConflict(this.database.executor(), tableOf(this.database), { row, conflict: 'id' })) ? 1 : 0;
+    return (await insertIgnoringConflict(this.database.executor(), tableOf(this.database), { row, conflict: 'id' }))
+      ? 1
+      : 0;
   }
 
   private async update(state: VersionedWaitlist, expected: number): Promise<number> {

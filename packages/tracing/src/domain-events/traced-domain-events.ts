@@ -1,5 +1,10 @@
 import { SpanKind } from '@opentelemetry/api';
-import { unitOfWorkStage, type DomainEvent, type DomainEventDispatcher, type DomainEventPhase } from '@ddd-ts-kit/kernel';
+import {
+  unitOfWorkStage,
+  type DomainEvent,
+  type DomainEventDispatcher,
+  type DomainEventPhase,
+} from '@ddd-ts-kit/kernel';
 import { admitDependencySpan } from '../local-root/admit-dependency-span.js';
 import { inSpan } from '../span/in-span.js';
 
@@ -19,7 +24,9 @@ export function tracedDomainEvents(dispatcher: DomainEventDispatcher): DomainEve
 
   return {
     on: (name, handler, subscription) => {
-      if (subscription?.phase === 'after-commit') handledAfterCommit.add(name);
+      if (subscription?.phase === 'after-commit') {
+        handledAfterCommit.add(name);
+      }
 
       dispatcher.on(name, handler, subscription);
     },
@@ -46,13 +53,17 @@ function underThePhase(phase: DomainEventPhase, work: () => Promise<void>): Prom
 }
 
 async function dispatchedEach(events: readonly DomainEvent[], dispatch: Dispatch): Promise<void> {
-  for (const event of events) await dispatched(event, dispatch);
+  for (const event of events) {
+    await dispatched(event, dispatch);
+  }
 }
 
 function dispatched(event: DomainEvent, { dispatcher, phase, shown }: Dispatch): Promise<void> {
   const name = `domain-event ${event.name}`;
 
-  if (!shown.includes(event) || !admitDependencySpan(name)) return dispatcher.dispatch([event], phase);
+  if (!shown.includes(event) || !admitDependencySpan(name)) {
+    return dispatcher.dispatch([event], phase);
+  }
 
   const options = { kind: SpanKind.INTERNAL, attributes: { 'app.domain_event.name': event.name } };
 

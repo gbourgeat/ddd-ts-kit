@@ -1,4 +1,20 @@
-import { and, between, eq, gt, gte, inArray, isNotNull, isNull, lt, lte, ne, not, or, sql, type SQL } from 'drizzle-orm';
+import {
+  and,
+  between,
+  eq,
+  gt,
+  gte,
+  inArray,
+  isNotNull,
+  isNull,
+  lt,
+  lte,
+  ne,
+  not,
+  or,
+  sql,
+  type SQL,
+} from 'drizzle-orm';
 import type { PgColumn } from 'drizzle-orm/pg-core';
 import type { FieldValue, Predicate, PredicateTest } from '@ddd-ts-kit/kernel';
 import { columnOf } from './column-of.js';
@@ -14,9 +30,13 @@ const COMPARISONS = { eq, ne, gt, gte, lt, lte } as const;
  * wrote is ever part of the statement.
  */
 export function predicateToDrizzle(predicate: Predicate | undefined, columns: Columns): SQL | undefined {
-  if (predicate === undefined) return undefined;
+  if (predicate === undefined) {
+    return undefined;
+  }
 
-  if (predicate.kind === 'test') return tested(predicate, columnOf(columns, predicate.field));
+  if (predicate.kind === 'test') {
+    return tested(predicate, columnOf(columns, predicate.field));
+  }
 
   const parts = predicate.parts.map((part) => predicateToDrizzle(part, columns));
 
@@ -24,7 +44,9 @@ export function predicateToDrizzle(predicate: Predicate | undefined, columns: Co
 }
 
 function tested(test: PredicateTest, column: PgColumn): SQL {
-  if (test.operator === 'isNull') return test.value === true ? isNull(column) : isNotNull(column);
+  if (test.operator === 'isNull') {
+    return test.value === true ? isNull(column) : isNotNull(column);
+  }
 
   return test.negated ? not(compared(test, column)) : compared(test, column);
 }

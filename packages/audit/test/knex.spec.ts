@@ -24,7 +24,9 @@ beforeAll(async () => {
 afterAll(async () => {
   await db.destroy();
 
-  if (elsewhere !== db) await elsewhere.destroy();
+  if (elsewhere !== db) {
+    await elsewhere.destroy();
+  }
 
   await postgres.stop();
 });
@@ -91,7 +93,10 @@ describe('createAuditTables', () => {
   it('creates the two tables, the indexes of the reader and the guard, in the given schema', async () => {
     const schema = await freshSchema();
 
-    const { rows: indexes } = await db.raw<{ rows: { indexname: string }[] }>('select indexname from pg_indexes where schemaname = ? order by indexname', [schema]);
+    const { rows: indexes } = await db.raw<{ rows: { indexname: string }[] }>(
+      'select indexname from pg_indexes where schemaname = ? order by indexname',
+      [schema],
+    );
 
     const { rows: triggers } = await db.raw<{ rows: { tgname: string }[] }>(
       `select tgname from pg_trigger where tgrelid = '"${schema}"."audit_entries"'::regclass and not tgisinternal order by tgname`,
@@ -119,7 +124,11 @@ describe('createAuditTables', () => {
 
     expect(await db.schema.withSchema(schema).hasTable('audit_entries')).toBe(false);
     expect(await db.schema.withSchema(schema).hasTable('audit_chains')).toBe(false);
-    const { rows } = await db.raw<{ rows: unknown[] }>(`select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = ? and p.proname = 'audit_entries_append_only'`, [schema]);
+
+    const { rows } = await db.raw<{ rows: unknown[] }>(
+      `select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = ? and p.proname = 'audit_entries_append_only'`,
+      [schema],
+    );
 
     expect(rows).toEqual([]);
   });

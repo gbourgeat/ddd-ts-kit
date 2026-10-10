@@ -6,7 +6,9 @@ import { writeDomainEvent } from './write-domain-event.js';
 export function ensureDomainEvent(scope: Scope, aggregateInput: string, factInput: string): EventNames {
   const names = eventNames(scope, aggregateInput, factInput);
 
-  if (!scope.ws.exists(`${scope.dir}/domain/events/${names.event.kebab}.event.ts`)) writeDomainEvent(scope, names);
+  if (!scope.ws.exists(`${scope.dir}/domain/events/${names.event.kebab}.event.ts`)) {
+    writeDomainEvent(scope, names);
+  }
 
   return names;
 }

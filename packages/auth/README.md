@@ -160,7 +160,9 @@ export class VoidInvoiceHandler {
 
   async execute(command: VoidInvoice): Promise<void> {
     const invoice = await this.invoices.findById(command.invoiceId);
-    if (invoice === undefined) throw new NotFoundError('Invoice not found');
+    if (invoice === undefined) {
+      throw new NotFoundError('Invoice not found');
+    }
     await this.access.authorize(command.actor, billingPermissions['invoice.void'], invoice);
     invoice.void(this.clock.now());
     await this.invoices.save(invoice);
@@ -620,10 +622,16 @@ export class OpenFgaAuthorizer implements Authorizer {
   ) {}
 
   async check({ actor, permission, resource }: CheckRequest): Promise<Decision> {
-    if (isAnonymous(actor)) return deny(DenialReason.anonymous);
-    if (resource === undefined) return deny(DenialReason.resourceRequired);
+    if (isAnonymous(actor)) {
+      return deny(DenialReason.anonymous);
+    }
+    if (resource === undefined) {
+      return deny(DenialReason.resourceRequired);
+    }
     const relation = this.mapping[resource.type]?.[permission.id];
-    if (relation === undefined) return deny(DenialReason.unmappedPermission);
+    if (relation === undefined) {
+      return deny(DenialReason.unmappedPermission);
+    }
     const { allowed } = await this.client.check({
       user: `${actor.type}:${actor.id}`,
       relation,
@@ -634,7 +642,9 @@ export class OpenFgaAuthorizer implements Authorizer {
 
   async listAccessible({ actor, permission, resourceType }: ListRequest): Promise<AccessScope> {
     const relation = this.mapping[resourceType]?.[permission.id];
-    if (isAnonymous(actor) || relation === undefined) return { kind: 'none' };
+    if (isAnonymous(actor) || relation === undefined) {
+      return { kind: 'none' };
+    }
     const { objects } = await this.client.listObjects({ user: `${actor.type}:${actor.id}`, relation, type: resourceType });
     return { kind: 'ids', ids: objects.map((object) => object.slice(resourceType.length + 1)) };
   }

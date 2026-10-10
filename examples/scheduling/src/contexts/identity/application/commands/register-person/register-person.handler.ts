@@ -14,7 +14,11 @@ export class RegisterPersonHandler implements CommandHandler<RegisterPersonComma
   ) {}
 
   async execute(command: RegisterPersonCommand): Promise<string> {
-    const contact = { displayName: unwrap(DisplayName.create(command.displayName)), email: unwrap(Email.create(command.email)) };
+    const contact = {
+      displayName: unwrap(DisplayName.create(command.displayName)),
+      email: unwrap(Email.create(command.email)),
+    };
+
     const known = await this.personRepository.findById(command.actor.id);
     const target = known ?? Person.create(command.actor.id, contact, this.clock.now());
 

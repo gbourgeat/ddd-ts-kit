@@ -17,7 +17,10 @@ describe.each(STANDINGS)('an aspect and the calls an instance makes on itself: %
   const wrap = (aspect: Aspect, ledger = new LedgerGateway()): LedgerGateway => aspect(prepared(ledger));
 
   it('makes the attempts it was asked for when a public method goes through a private step', async () => {
-    const ledger = wrap(retry({ attempts: 3, sleep: async () => undefined }), new LedgerGateway().failNext(...always(() => new Unreachable())));
+    const ledger = wrap(
+      retry({ attempts: 3, sleep: async () => undefined }),
+      new LedgerGateway().failNext(...always(() => new Unreachable())),
+    );
 
     await expect(ledger.post('rent', 900)).rejects.toBeInstanceOf(Unreachable);
 
@@ -25,7 +28,10 @@ describe.each(STANDINGS)('an aspect and the calls an instance makes on itself: %
   });
 
   it('makes them once for a public method that calls another public method', async () => {
-    const ledger = wrap(retry({ attempts: 3, sleep: async () => undefined }), new LedgerGateway().failNext(...always(() => new Unreachable())));
+    const ledger = wrap(
+      retry({ attempts: 3, sleep: async () => undefined }),
+      new LedgerGateway().failNext(...always(() => new Unreachable())),
+    );
 
     await expect(ledger.postAll([['rent', 900]])).rejects.toBeInstanceOf(Unreachable);
 
@@ -43,7 +49,10 @@ describe.each(STANDINGS)('an aspect and the calls an instance makes on itself: %
       ]),
     );
 
-    expect(fakes.logger.entries.map((entry) => entry.message)).toEqual(['LedgerGateway.postAll started', 'LedgerGateway.postAll succeeded']);
+    expect(fakes.logger.entries.map((entry) => entry.message)).toEqual([
+      'LedgerGateway.postAll started',
+      'LedgerGateway.postAll succeeded',
+    ]);
   });
 
   it('times one call per call from outside', async () => {
@@ -55,7 +64,9 @@ describe.each(STANDINGS)('an aspect and the calls an instance makes on itself: %
       await ledger.post('power', 80);
     });
 
-    expect(fakes.metrics.samples.filter((sample) => sample.kind === 'counter').map((sample) => sample.labels?.['method'])).toEqual(['postAll', 'post']);
+    expect(
+      fakes.metrics.samples.filter((sample) => sample.kind === 'counter').map((sample) => sample.labels?.['method']),
+    ).toEqual(['postAll', 'post']);
   });
 
   it('advises each of two calls made from outside at the same time', async () => {
@@ -76,7 +87,9 @@ describe.each(STANDINGS)('an aspect and the calls an instance makes on itself: %
 
       override async postAll(postings: readonly (readonly [account: string, amount: number])[]): Promise<void> {
         setImmediate(() => {
-          for (const [account, amount] of postings) this.deferred.push(this.post(account, amount));
+          for (const [account, amount] of postings) {
+            this.deferred.push(this.post(account, amount));
+          }
         });
       }
     }
@@ -97,7 +110,11 @@ describe.each(STANDINGS)('an aspect and the calls an instance makes on itself: %
 
   it('keeps one application apart from another: two aspects on one instance each advise the call from outside once', async () => {
     const journal: string[] = [];
-    const ledger = wrap(compose(recording(journal, 'outer'), retry({ attempts: 2, sleep: async () => undefined })), new LedgerGateway().failNext(new Unreachable()));
+
+    const ledger = wrap(
+      compose(recording(journal, 'outer'), retry({ attempts: 2, sleep: async () => undefined })),
+      new LedgerGateway().failNext(new Unreachable()),
+    );
 
     await ledger.postAll([['rent', 900]]);
 

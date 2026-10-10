@@ -83,7 +83,9 @@ export class PinoLogger implements Logger {
   }
 
   private write(level: LogLevel, message: string, fields: LogFields = {}): void {
-    if (!this.isLevelEnabled(level)) return;
+    if (!this.isLevelEnabled(level)) {
+      return;
+    }
 
     try {
       this.pino[level](lineFields(fields, this.options), message);

@@ -18,7 +18,9 @@ export function typeClosure(shape: ModuleShape, roots: readonly TSESTree.Node[])
 }
 
 function typesNamed(shape: ModuleShape, name: string): TSESTree.Node[] {
-  const types = shape.declarations.filter((declaration) => declaration.name === name && (declaration.kind === 'interface' || declaration.kind === 'type'));
+  const types = shape.declarations.filter(
+    (declaration) => declaration.name === name && (declaration.kind === 'interface' || declaration.kind === 'type'),
+  );
 
   return types.map((declaration) => declaration.node);
 }

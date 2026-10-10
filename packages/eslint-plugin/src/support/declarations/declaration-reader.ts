@@ -24,14 +24,34 @@ export type DeclarationReader = (node: ClassNode) => Declaration[];
  * `{ Repository as Repo }` or a namespace `declarations.Repository`.
  */
 export function declarationReader(program: TSESTree.Program): DeclarationReader {
-  const imports = program.body.filter((statement) => statement.type === AST_NODE_TYPES.ImportDeclaration && statement.source.value === DECLARATIONS_ENTRY);
-  const specifiers = imports.flatMap((statement) => (statement.type === AST_NODE_TYPES.ImportDeclaration ? statement.specifiers : []));
+  const imports = program.body.filter(
+    (statement) => statement.type === AST_NODE_TYPES.ImportDeclaration && statement.source.value === DECLARATIONS_ENTRY,
+  );
+
+  const specifiers = imports.flatMap((statement) =>
+    statement.type === AST_NODE_TYPES.ImportDeclaration ? statement.specifiers : [],
+  );
+
   const named = new Map(specifiers.flatMap(namedDeclaration));
-  const namespaces = new Set(specifiers.filter((specifier) => specifier.type === AST_NODE_TYPES.ImportNamespaceSpecifier).map((specifier) => specifier.local.name));
+
+  const namespaces = new Set(
+    specifiers
+      .filter((specifier) => specifier.type === AST_NODE_TYPES.ImportNamespaceSpecifier)
+      .map((specifier) => specifier.local.name),
+  );
 
   const nameOf = (callee: TSESTree.Expression): string | undefined => {
-    if (callee.type === AST_NODE_TYPES.Identifier) return named.get(callee.name);
-    if (callee.type !== AST_NODE_TYPES.MemberExpression || callee.object.type !== AST_NODE_TYPES.Identifier || !namespaces.has(callee.object.name)) return undefined;
+    if (callee.type === AST_NODE_TYPES.Identifier) {
+      return named.get(callee.name);
+    }
+
+    if (
+      callee.type !== AST_NODE_TYPES.MemberExpression ||
+      callee.object.type !== AST_NODE_TYPES.Identifier ||
+      !namespaces.has(callee.object.name)
+    ) {
+      return undefined;
+    }
 
     const exported = propertyName(callee);
 
@@ -42,14 +62,20 @@ export function declarationReader(program: TSESTree.Program): DeclarationReader 
 }
 
 function namedDeclaration(specifier: TSESTree.ImportClause): [string, string][] {
-  if (specifier.type !== AST_NODE_TYPES.ImportSpecifier) return [];
+  if (specifier.type !== AST_NODE_TYPES.ImportSpecifier) {
+    return [];
+  }
 
-  const exported = specifier.imported.type === AST_NODE_TYPES.Identifier ? specifier.imported.name : specifier.imported.value;
+  const exported =
+    specifier.imported.type === AST_NODE_TYPES.Identifier ? specifier.imported.name : specifier.imported.value;
 
   return DECLARATION_DECORATORS.has(exported) ? [[specifier.local.name, exported]] : [];
 }
 
-function declarationOf(decorator: TSESTree.Decorator, nameOf: (callee: TSESTree.Expression) => string | undefined): Declaration[] {
+function declarationOf(
+  decorator: TSESTree.Decorator,
+  nameOf: (callee: TSESTree.Expression) => string | undefined,
+): Declaration[] {
   const { expression } = decorator;
   const called = expression.type === AST_NODE_TYPES.CallExpression;
   const name = nameOf(called ? expression.callee : expression);

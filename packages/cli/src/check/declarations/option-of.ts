@@ -16,7 +16,9 @@ export function optionOf(scan: Scan, decoration: Decoration, key: string): Optio
   pattern.lastIndex = decoration.open;
 
   for (let match = pattern.exec(code); match !== null && match.index < decoration.close; match = pattern.exec(code)) {
-    if (!isDirectOption(code.slice(decoration.open + 1, match.index))) continue;
+    if (!isDirectOption(code.slice(decoration.open + 1, match.index))) {
+      continue;
+    }
 
     const valueStart = match.index + match[0].length;
     const literal = scan.strings.find((candidate) => candidate.start === valueStart);

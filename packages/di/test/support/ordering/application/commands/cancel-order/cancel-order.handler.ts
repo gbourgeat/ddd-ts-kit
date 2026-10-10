@@ -7,6 +7,8 @@ export class CancelOrderHandler {
   async execute(command: CancelOrder): Promise<void> {
     const order = await this.orders.findById(command.orderId);
 
-    if (order !== undefined) await this.orders.save({ ...order, cancelled: true });
+    if (order !== undefined) {
+      await this.orders.save({ ...order, cancelled: true });
+    }
   }
 }

@@ -37,7 +37,9 @@ const invoices = () =>
     'invoice:inv-2': { department: 'legal', amount: 90_000, status: 'issued' },
   });
 
-const sameDepartment: Condition = ({ actor, attributes }) => actor.attributes['department'] === attributes['department'];
+const sameDepartment: Condition = ({ actor, attributes }) =>
+  actor.attributes['department'] === attributes['department'];
+
 const isManager: Condition = ({ actor }) => actor.attributes['manager'] === true;
 const officeHours: Condition = ({ now }) => now.getUTCHours() >= 8 && now.getUTCHours() < 18;
 const isLarge: Condition = ({ attributes }) => Number(attributes['amount']) > 10_000;
@@ -46,7 +48,14 @@ const policies = [
   permit('invoice.read-own-department', [read], anyOf(sameDepartment, isManager)),
   permit('invoice.issue-in-office-hours', [issue], allOf(sameDepartment, officeHours)),
   permit('invoice.managers-void', ['billing:invoice.void'], isManager),
-  forbid('invoice.no-large-void', [voiding], allOf(isLarge, not(({ context }) => context['secondApproval'] === true))),
+  forbid(
+    'invoice.no-large-void',
+    [voiding],
+    allOf(
+      isLarge,
+      not(({ context }) => context['secondApproval'] === true),
+    ),
+  ),
 ];
 
 const MORNING = new Date('2026-05-04T09:00:00.000Z');
@@ -79,7 +88,9 @@ describe('PolicyBasedAuthorizer', () => {
       reason: 'NO_MATCHING_POLICY',
     });
 
-    expect(await authorizer.check({ actor: legalManager, permission: read, resource: first })).toEqual({ allowed: true });
+    expect(await authorizer.check({ actor: legalManager, permission: read, resource: first })).toEqual({
+      allowed: true,
+    });
   });
 
   it('decides on the moment, read from the clock', async () => {

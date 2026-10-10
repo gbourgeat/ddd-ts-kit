@@ -21,7 +21,9 @@ export class OpeningHours extends ValueObject<OpeningHoursProps> {
     const whole = wholeWeek((weekday) => sorted(week[weekday] ?? []));
     const crowded = WEEK.find((weekday) => !Range.disjoint(whole[weekday]));
 
-    return crowded === undefined ? ok(new OpeningHours({ week: whole })) : err(new InvalidRangeError(`shares no minute with another range of ${crowded}`));
+    return crowded === undefined
+      ? ok(new OpeningHours({ week: whole }))
+      : err(new InvalidRangeError(`shares no minute with another range of ${crowded}`));
   }
 
   /** Hours that open nothing: what a calendar has before its hours are set. */

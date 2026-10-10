@@ -2,7 +2,12 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from
 import { sql } from 'drizzle-orm';
 import { PgDialect } from 'drizzle-orm/pg-core';
 import { Criteria, cursorPage, pageOfPlan, planCriteria, scoped } from '@ddd-ts-kit/kernel';
-import { criteriaContract, criteriaContractDefinition, criteriaContractRows, type CriteriaContractRow } from '@ddd-ts-kit/testing/contracts';
+import {
+  criteriaContract,
+  criteriaContractDefinition,
+  criteriaContractRows,
+  type CriteriaContractRow,
+} from '@ddd-ts-kit/testing/contracts';
 import { DrizzleReadModelStore, createDrizzleUnitOfWork, criteriaToDrizzle } from '../src/postgres.js';
 import { createContractDatabase, type ContractDatabase } from './support/read-model/contract-database.js';
 import { CONTRACT_TABLE, contractRows } from './support/read-model/criteria-contract-table.js';
@@ -20,7 +25,11 @@ afterAll(async () => {
   await database.close();
 });
 
-const storeOf = () => new DrizzleReadModelStore(createDrizzleUnitOfWork(database.db), { ...CONTRACT_TABLE, definition: criteriaContractDefinition });
+const storeOf = () =>
+  new DrizzleReadModelStore(createDrizzleUnitOfWork(database.db), {
+    ...CONTRACT_TABLE,
+    definition: criteriaContractDefinition,
+  });
 
 async function load(rows: readonly CriteriaContractRow[]): Promise<void> {
   await database.db.execute(sql`truncate table ${contractRows}`);
@@ -40,7 +49,9 @@ criteriaContract(runner, {
 describe('criteriaToDrizzle', () => {
   const all = Criteria.of<CriteriaContractRow>();
   const dialect = new PgDialect();
-  const partsOf = (criteria: Criteria<CriteriaContractRow>) => criteriaToDrizzle(planCriteria(criteriaContractDefinition, criteria), CONTRACT_TABLE.columns);
+
+  const partsOf = (criteria: Criteria<CriteriaContractRow>) =>
+    criteriaToDrizzle(planCriteria(criteriaContractDefinition, criteria), CONTRACT_TABLE.columns);
 
   beforeEach(async () => {
     await load(criteriaContractRows());
@@ -48,7 +59,14 @@ describe('criteriaToDrizzle', () => {
 
   it('binds every value and never writes one into the statement', () => {
     const hostile = "x'; drop table criteria_contract; --";
-    const { where } = partsOf(all.where('title', 'contains', hostile).where('title', 'in', ['booked', hostile]).not((none) => none.where('room', 'eq', hostile)));
+
+    const { where } = partsOf(
+      all
+        .where('title', 'contains', hostile)
+        .where('title', 'in', ['booked', hostile])
+        .not((none) => none.where('room', 'eq', hostile)),
+    );
+
     const query = dialect.sqlToQuery(where ?? sql``);
 
     expect(query.sql).not.toContain('drop table');
@@ -61,13 +79,28 @@ describe('criteriaToDrizzle', () => {
   });
 
   it('orders a field that may be null as the plan means it, and seeks past a cursor by the same order', async () => {
-    const first = await storeOf().list(scoped(all.orderBy('room', 'desc').page(cursorPage({ limit: 3 })), { kind: 'all' }));
-    const { where, orderBy } = partsOf(all.orderBy('room', 'desc').page(cursorPage({ limit: 3, ...(first.nextCursor === undefined ? {} : { cursor: first.nextCursor }) })));
+    const first = await storeOf().list(
+      scoped(all.orderBy('room', 'desc').page(cursorPage({ limit: 3 })), { kind: 'all' }),
+    );
+
+    const { where, orderBy } = partsOf(
+      all
+        .orderBy('room', 'desc')
+        .page(cursorPage({ limit: 3, ...(first.nextCursor === undefined ? {} : { cursor: first.nextCursor }) })),
+    );
+
     const column = '"read_side"."criteria_contract"';
 
     expect(first.items.map(({ id }) => id)).toEqual(['a5', 'a3', 'a7']);
-    expect(dialect.sqlToQuery(where ?? sql``).sql).toBe(`(${column}."room" < $1 or (${column}."room" = $2 and ${column}."id" < $3))`);
-    expect(orderBy.map((order) => dialect.sqlToQuery(order).sql)).toEqual([`${column}."room" desc nulls first`, `${column}."id" desc`]);
+
+    expect(dialect.sqlToQuery(where ?? sql``).sql).toBe(
+      `(${column}."room" < $1 or (${column}."room" = $2 and ${column}."id" < $3))`,
+    );
+
+    expect(orderBy.map((order) => dialect.sqlToQuery(order).sql)).toEqual([
+      `${column}."room" desc nulls first`,
+      `${column}."id" desc`,
+    ]);
   });
 
   it('reads a page with one statement for a cursor page, two for an offset page, and none for an empty scope', async () => {
@@ -85,7 +118,16 @@ describe('criteriaToDrizzle', () => {
     const plan = planCriteria(criteriaContractDefinition, all.where('seats', 'gte', 4).page(cursorPage({ limit: 1 })));
     const { where, orderBy, limit } = criteriaToDrizzle(plan, CONTRACT_TABLE.columns);
     const selected = { id: contractRows.id, seats: contractRows.seats, startsAt: contractRows.startsAt };
-    const page = pageOfPlan(plan, await database.db.select(selected).from(contractRows).where(where).orderBy(...orderBy).limit(limit));
+
+    const page = pageOfPlan(
+      plan,
+      await database.db
+        .select(selected)
+        .from(contractRows)
+        .where(where)
+        .orderBy(...orderBy)
+        .limit(limit),
+    );
 
     expect(page.items).toEqual([{ id: 'a2', seats: 4, startsAt: new Date('2026-10-01T09:00:00.000Z') }]);
     expect(page.nextCursor).toBeTypeOf('string');

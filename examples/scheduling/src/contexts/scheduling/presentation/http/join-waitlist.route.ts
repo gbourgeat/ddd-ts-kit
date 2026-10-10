@@ -21,14 +21,26 @@ export function joinWaitlistRoute(commands: CommandBus): Route {
       tags: ['scheduling'],
       request: { params, body },
       responses: { 201: { description: 'Done; the body carries the identifier.', body: accepted } },
-      errors: ['UNAUTHORIZED', 'FORBIDDEN', 'UNKNOWN_CALENDAR', 'UNKNOWN_APPOINTMENT_TYPE', 'INVALID_DAY', 'ALREADY_WAITING'],
+      errors: [
+        'UNAUTHORIZED',
+        'FORBIDDEN',
+        'UNKNOWN_CALENDAR',
+        'UNKNOWN_APPOINTMENT_TYPE',
+        'INVALID_DAY',
+        'ALREADY_WAITING',
+      ],
       security: ['bearer'],
     },
     async (input) => {
-      const { patientId, appointmentTypeId, day } = input.body;
-      const id = await commands.execute(new JoinWaitlistCommand(actorOf(input.context.principal), input.params.calendarId, { patientId, appointmentTypeId, day }));
+      const id = await commands.execute(
+        new JoinWaitlistCommand(actorOf(input.context.principal), input.params.calendarId, waitOf(input.body)),
+      );
 
       return { status: 201, body: { id } };
     },
   );
+}
+
+function waitOf({ patientId, appointmentTypeId, day }: JoinWaitlistBody): JoinWaitlistCommand['wait'] {
+  return { patientId, appointmentTypeId, day };
 }

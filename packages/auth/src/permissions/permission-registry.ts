@@ -8,7 +8,9 @@ export class PermissionRegistry {
   static of(...sets: readonly Readonly<Record<string, Permission>>[]): PermissionRegistry {
     const registry = new PermissionRegistry();
 
-    for (const permission of sets.flatMap((set) => Object.values(set))) registry.add(permission);
+    for (const permission of sets.flatMap((set) => Object.values(set))) {
+      registry.add(permission);
+    }
 
     return registry;
   }

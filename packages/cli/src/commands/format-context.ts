@@ -1,7 +1,8 @@
 import type { ContextFacts } from '../docs/context-facts.js';
 import type { DeclaredFacts, DeclaredUseCase } from '../docs/declared-facts.js';
 
-export interface ContextSummary extends Omit<ContextFacts, 'publishedEvents' | 'glossaryTerms' | 'purpose' | 'downstreams'> {
+export interface ContextSummary
+  extends Omit<ContextFacts, 'publishedEvents' | 'glossaryTerms' | 'purpose' | 'downstreams'> {
   /** Number of terms in the glossary: 0 means the language is still to be defined. */
   readonly glossary: number;
   readonly publishedEvents: readonly string[];
@@ -9,20 +10,28 @@ export interface ContextSummary extends Omit<ContextFacts, 'publishedEvents' | '
 
 /** One context as `list` prints it: a heading, then one line per kind of element. */
 export function formatContext(context: ContextSummary): string {
-  const list = (label: string, values: readonly string[]): string => `  ${label}: ${values.length > 0 ? values.join(', ') : 'none'}`;
+  const list = (label: string, values: readonly string[]): string =>
+    `  ${label}: ${values.length > 0 ? values.join(', ') : 'none'}`;
+
   const lists = context.declarations === undefined ? context : declaredLists(context.declarations);
 
   return [
     heading(context),
     `  glossary: ${context.glossary === 0 ? 'empty (define the ubiquitous language first)' : `${context.glossary} term${context.glossary === 1 ? '' : 's'}`}`,
-    list('upstreams', context.upstreams.map((upstream) => `${upstream.context} (${upstream.relationship})`)),
+    list(
+      'upstreams',
+      context.upstreams.map((upstream) => `${upstream.context} (${upstream.relationship})`),
+    ),
     list('aggregates', context.aggregates),
     list('commands', lists.commands),
     list('queries', lists.queries),
     list('domain events', context.domainEvents),
     list('published events', context.publishedEvents),
     list('integration event handlers', lists.integrationEventHandlers),
-    list('scheduled jobs', context.jobs.map((job) => `${job.name} (${job.schedule}, sends ${job.command})`)),
+    list(
+      'scheduled jobs',
+      context.jobs.map((job) => `${job.name} (${job.schedule}, sends ${job.command})`),
+    ),
     list('builders', context.builders),
     list('permissions', context.permissions),
     list('policies', lists.policies),
@@ -33,7 +42,10 @@ export function formatContext(context: ContextSummary): string {
 }
 
 function heading(context: ContextSummary): string {
-  const flags = [...(context.declared ? [] : ['missing from the config']), ...(context.onDisk ? [] : ['missing on disk'])];
+  const flags = [
+    ...(context.declared ? [] : ['missing from the config']),
+    ...(context.onDisk ? [] : ['missing on disk']),
+  ];
 
   return `${context.name} [${context.classification}]${flags.length > 0 ? ` (${flags.join(', ')})` : ''}`;
 }
@@ -50,12 +62,16 @@ interface DeclaredLists {
 /** The lists of a declared context, each element followed by what its declaration says. */
 function declaredLists(declarations: DeclaredFacts): DeclaredLists {
   const useCases = (kind: DeclaredUseCase['kind']): string[] =>
-    declarations.useCases.filter((useCase) => useCase.kind === kind).map(({ name, requires }) => `${name} (${requires === 'public' ? 'public' : `requires ${requires}`})`);
+    declarations.useCases
+      .filter((useCase) => useCase.kind === kind)
+      .map(({ name, requires }) => `${name} (${requires === 'public' ? 'public' : `requires ${requires}`})`);
 
   return {
     commands: useCases('command'),
     queries: useCases('query'),
-    integrationEventHandlers: declarations.integrationEventHandlers.map(({ name, consumer, event }) => `${name} (consumer ${consumer === '' ? 'not written' : consumer}, on ${event})`),
+    integrationEventHandlers: declarations.integrationEventHandlers.map(
+      ({ name, consumer, event }) => `${name} (consumer ${consumer === '' ? 'not written' : consumer}, on ${event})`,
+    ),
     policies: declarations.policies.map(({ name, permission }) => `${name} (on ${permission})`),
     gateways: declarations.gateways.map(({ name, token }) => `${name} (${token})`),
     adapters: declarations.adapters.map(({ name, token }) => `${name} (${token})`),

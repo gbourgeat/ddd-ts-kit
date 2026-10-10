@@ -91,9 +91,7 @@
           }
         }
       ],
-      "redirectUris": [
-        "http://127.0.0.1/*"
-      ]
+      "redirectUris": ["http://127.0.0.1/*"]
     }
   ],
   "components": {
@@ -124,9 +122,7 @@
           "temporary": false
         }
       ],
-      "realmRoles": [
-        "platform-admin"
-      ]
+      "realmRoles": ["platform-admin"]
     },
     {
       "id": "00000000-0000-4000-8000-00000000a002",
@@ -194,9 +190,7 @@
           "temporary": false
         }
       ],
-      "realmRoles": [
-        "patient"
-      ]
+      "realmRoles": ["patient"]
     },
     {
       "id": "00000000-0000-4000-8000-00000000a006",
@@ -213,9 +207,7 @@
           "temporary": false
         }
       ],
-      "realmRoles": [
-        "patient"
-      ]
+      "realmRoles": ["patient"]
     },
     {
       "id": "00000000-0000-4000-8000-00000000a007",
@@ -249,15 +241,9 @@
           "temporary": false
         }
       ],
-      "realmRoles": [
-        "support"
-      ],
+      "realmRoles": ["support"],
       "clientRoles": {
-        "realm-management": [
-          "impersonation",
-          "view-users",
-          "query-users"
-        ]
+        "realm-management": ["impersonation", "view-users", "query-users"]
       }
     }
   ]

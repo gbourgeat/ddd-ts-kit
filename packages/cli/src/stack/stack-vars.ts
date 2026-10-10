@@ -13,14 +13,14 @@ import { usesLegacyDecorators } from './uses-legacy-decorators.js';
 
 /** The choices of the stack as template variables: what every template of `init` and of `generate` reads. */
 export function stackVars(config: Config): RenderContext {
-  const { http, validation, di, tests, orm, authz, style, assembly, logger } = config.stack;
+  const { validation, di, tests, orm, authz, style, logger } = config.stack;
   const legacy = usesLegacyDecorators(config);
 
   return {
     style: one(style, ['declared', 'explicit']),
-    assembly: { barrel: style === 'declared' && assembly === 'barrel', discovery: style === 'declared' && assembly === 'discovery' },
+    assembly: assemblyVars(config),
     decorators: { legacy, standard: !legacy },
-    http: { ...one(http, ['express', 'fastify', 'nest', 'none']), any: http !== 'none', plain: http === 'express' || http === 'fastify' },
+    http: httpVars(config),
     validation: one(validation, ['zod', 'class-validator', 'standard-schema', 'none']),
     di: one(di, ['tsyringe', 'nest', 'manual']),
     orm: { ...one(orm, ['drizzle', 'knex', 'prisma', 'typeorm', 'custom', 'none']), any: orm !== 'none' },
@@ -38,6 +38,25 @@ export function stackVars(config: Config): RenderContext {
     config: platformPaths(config),
     alias: { bare: config.importAlias.replace(/\/$/, '') },
     persistence: persistenceVars(config),
+  };
+}
+
+function assemblyVars(config: Config): RenderContext {
+  const { style, assembly } = config.stack;
+
+  return {
+    barrel: style === 'declared' && assembly === 'barrel',
+    discovery: style === 'declared' && assembly === 'discovery',
+  };
+}
+
+function httpVars(config: Config): RenderContext {
+  const { http } = config.stack;
+
+  return {
+    ...one(http, ['express', 'fastify', 'nest', 'none']),
+    any: http !== 'none',
+    plain: http === 'express' || http === 'fastify',
   };
 }
 

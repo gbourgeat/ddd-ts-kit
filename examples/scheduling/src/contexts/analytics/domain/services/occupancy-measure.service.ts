@@ -1,5 +1,11 @@
 /** How an appointment stands for measurement. */
-export type OutcomeState = 'held' | 'completed' | 'no-show' | 'cancelled-by-patient' | 'cancelled-by-practice' | 'expired';
+export type OutcomeState =
+  | 'held'
+  | 'completed'
+  | 'no-show'
+  | 'cancelled-by-patient'
+  | 'cancelled-by-practice'
+  | 'expired';
 
 /** What the measure reads of the outcome of one appointment. */
 export type MeasuredOutcome = {

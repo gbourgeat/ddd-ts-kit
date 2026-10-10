@@ -22,7 +22,9 @@ export class ShippingBench {
 
   readonly logger = new InMemoryLogger();
 
-  readonly dispatcher = new InMemoryDomainEventDispatcher(reportAfterCommitFailures({ reporter: this.reporter, logger: this.logger }));
+  readonly dispatcher = new InMemoryDomainEventDispatcher(
+    reportAfterCommitFailures({ reporter: this.reporter, logger: this.logger }),
+  );
 
   readonly parcels: Parcels;
 
@@ -69,7 +71,13 @@ export class ShippingBench {
   }
 }
 
-function published(event: DomainEvent): { id: string; type: string; version: number; occurredAt: string; payload: unknown } {
+function published(event: DomainEvent): {
+  id: string;
+  type: string;
+  version: number;
+  occurredAt: string;
+  payload: unknown;
+} {
   return {
     id: `evt-${event.aggregateId}`,
     type: event.name,

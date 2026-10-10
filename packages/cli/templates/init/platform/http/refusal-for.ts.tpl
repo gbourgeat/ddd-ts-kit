@@ -13,13 +13,27 @@ export interface Refusal {
  * address. Answers nothing when the request may pass. Behind a proxy, make the HTTP server
  * trust it, or every caller shares the address of the proxy.
  */
-export async function refusalFor(limiter: RateLimiter, limit: RateLimit, address: string | undefined): Promise<Refusal | undefined> {
+export async function refusalFor(
+  limiter: RateLimiter,
+  limit: RateLimit,
+  address: string | undefined,
+): Promise<Refusal | undefined> {
   const decision = await limiter.consume('ip:' + (address ?? 'unknown'), limit);
 
-  if (decision.allowed) return undefined;
+  if (decision.allowed) {
+    return undefined;
+  }
 
   return {
-    headers: { 'content-type': 'application/problem+json', 'retry-after': String(Math.max(1, Math.ceil(decision.retryAfterMs / 1000))) },
-    problem: { type: 'urn:problem:rate-limited', title: 'Too Many Requests', status: tooManyRequests, code: 'RATE_LIMITED' },
+    headers: {
+      'content-type': 'application/problem+json',
+      'retry-after': String(Math.max(1, Math.ceil(decision.retryAfterMs / 1000))),
+    },
+    problem: {
+      type: 'urn:problem:rate-limited',
+      title: 'Too Many Requests',
+      status: tooManyRequests,
+      code: 'RATE_LIMITED',
+    },
   };
 }

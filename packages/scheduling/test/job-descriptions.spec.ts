@@ -24,7 +24,14 @@ describe('what a scheduler says of its jobs', () => {
     await scheduler.start();
     job.gate();
     await scheduler.advance(2 * MINUTE);
-    expect(scheduler.describe()[0]).toEqual({ name: REMINDERS, schedule: 'every 15m', enabled: true, running: true, nextRunAt: new Date('2026-03-02T10:15:00.000Z') });
+
+    expect(scheduler.describe()[0]).toEqual({
+      name: REMINDERS,
+      schedule: 'every 15m',
+      enabled: true,
+      running: true,
+      nextRunAt: new Date('2026-03-02T10:15:00.000Z'),
+    });
 
     job.open();
     await scheduler.advance(MINUTE);
@@ -37,6 +44,11 @@ describe('what a scheduler says of its jobs', () => {
       durationMs: 30_000,
     });
 
-    expect(scheduler.describe()[1]).toEqual({ name: EXPORT, schedule: 'cron 0 3 * * * (UTC)', enabled: false, running: false });
+    expect(scheduler.describe()[1]).toEqual({
+      name: EXPORT,
+      schedule: 'cron 0 3 * * * (UTC)',
+      enabled: false,
+      running: false,
+    });
   });
 });

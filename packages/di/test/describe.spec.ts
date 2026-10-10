@@ -56,9 +56,7 @@ describe('application.describe', () => {
       { message: 'IssueInvoice', handler: 'IssueInvoiceHandler', module: 'billing' },
     ]);
 
-    expect(description.queries).toEqual([
-      { message: 'GetOrder', handler: 'GetOrderHandler', module: 'ordering' },
-    ]);
+    expect(description.queries).toEqual([{ message: 'GetOrder', handler: 'GetOrderHandler', module: 'ordering' }]);
 
     expect(description.integrationEventHandlers).toEqual([
       {

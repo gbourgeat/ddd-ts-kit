@@ -20,14 +20,28 @@ export interface JobName {
 /** The job names a source writes; `.job(..)` is read in a module file and in a file that imports `@ddd-ts-kit/di`. */
 export function jobNames(file: SourceFile): JobName[] {
   const { scan } = file;
-  const declared = classesOf(scan).flatMap(({ decorations }) => decorations.filter(({ name }) => name === 'Scheduled').map((decoration) => ({ owner: '@Scheduled', line: decoration.line, name: argumentsOf(scan, decoration)[0] })));
-  const registered = registersJobs(file) ? [...scan.code.matchAll(JOB_CALL)].map((match) => ({ owner: 'job(...)', line: scan.lineAt(match.index), name: callArguments(scan.code, match.index + match[0].length - 1)[0] })) : [];
+
+  const declared = classesOf(scan).flatMap(({ decorations }) =>
+    decorations
+      .filter(({ name }) => name === 'Scheduled')
+      .map((decoration) => ({ owner: '@Scheduled', line: decoration.line, name: argumentsOf(scan, decoration)[0] })),
+  );
+
+  const registered = registersJobs(file)
+    ? [...scan.code.matchAll(JOB_CALL)].map((match) => ({
+        owner: 'job(...)',
+        line: scan.lineAt(match.index),
+        name: callArguments(scan.code, match.index + match[0].length - 1)[0],
+      }))
+    : [];
 
   return [...declared, ...registered].map(({ owner, line, name }) => ({ owner, line, literal: literalOf(file, name) }));
 }
 
 function registersJobs(file: SourceFile): boolean {
-  return (file.location.area === 'context' && file.location.layer === 'module') || importsPackage(file, '@ddd-ts-kit/di');
+  return (
+    (file.location.area === 'context' && file.location.layer === 'module') || importsPackage(file, '@ddd-ts-kit/di')
+  );
 }
 
 function literalOf(file: SourceFile, name: ListPart | undefined): string | undefined {

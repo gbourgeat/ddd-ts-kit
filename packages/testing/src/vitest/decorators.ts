@@ -51,7 +51,7 @@ export function decorators(options: DecoratorsOptions = {}): DecoratorsPlugin {
       });
     },
     transform(code, id) {
-      const file = id.replace(/[?#].*$/, '');
+      const file = withoutQuery(id);
 
       if (compiler === undefined || !holdsADecorator(file, code)) {
         return undefined;
@@ -62,10 +62,18 @@ export function decorators(options: DecoratorsOptions = {}): DecoratorsPlugin {
   };
 }
 
+const QUERY = /[?#]/;
 const SOURCE = /\.[cm]?ts$/;
 const DECLARATION = /\.d\.[cm]?ts$/;
 /** A line that starts with a decorator, after `export` or `export default` at most. */
 const DECORATOR = /^[ \t]*(?:export\s+(?:default\s+)?)?@[A-Za-z_$]/m;
+
+/** The file of a module id, without the query or the fragment a plugin added to it. */
+function withoutQuery(id: string): string {
+  const end = id.search(QUERY);
+
+  return end === -1 ? id : id.slice(0, end);
+}
 
 function holdsADecorator(file: string, code: string): boolean {
   return SOURCE.test(file) && !DECLARATION.test(file) && DECORATOR.test(code);

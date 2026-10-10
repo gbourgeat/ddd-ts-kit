@@ -12,6 +12,8 @@ export class AppointmentExpiredEventHandler implements DomainEventHandler<Appoin
     const { calendarId, slot } = event.booking;
     const freed = { startsAt: slot.startsAt, endsAt: slot.endsAt, heldUntil: slot.heldUntil };
 
-    await this.commands.execute(new OfferFreedSlotCommand(systemActor('scheduling.offer-freed-slot'), calendarId, freed));
+    await this.commands.execute(
+      new OfferFreedSlotCommand(systemActor('scheduling.offer-freed-slot'), calendarId, freed),
+    );
   }
 }

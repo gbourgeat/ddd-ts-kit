@@ -1,5 +1,11 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { FixedClock, FixedExecutionScope, executionContext, type Actor, type ExecutionContext } from '@ddd-ts-kit/kernel';
+import {
+  FixedClock,
+  FixedExecutionScope,
+  executionContext,
+  type Actor,
+  type ExecutionContext,
+} from '@ddd-ts-kit/kernel';
 import { repositoryContract } from '@ddd-ts-kit/testing/contracts';
 import type { Delegation } from '../../domain/aggregates/delegation.aggregate.js';
 import type { DelegationRepository } from '../../domain/repositories/delegation.repository.js';
@@ -79,10 +85,20 @@ describe.each([
     const repository = await createRepository();
 
     await repository.save(onDesk.identifiedBy('given').givenTo('linus').build());
-    await repository.save(aDelegation().identifiedBy('received').onDesk('practice-1', 'marie').givenTo('grace').build());
+
+    await repository.save(
+      aDelegation().identifiedBy('received').onDesk('practice-1', 'marie').givenTo('grace').build(),
+    );
+
     await repository.save(onDesk.identifiedBy('given-ended').givenTo('alan').revokedAt(end).build());
-    await repository.save(aDelegation().identifiedBy('elsewhere').onDesk('practice-2', 'grace').givenTo('linus').build());
-    await repository.save(aDelegation().identifiedBy('of-others').onDesk('practice-1', 'marie').givenTo('linus').build());
+
+    await repository.save(
+      aDelegation().identifiedBy('elsewhere').onDesk('practice-2', 'grace').givenTo('linus').build(),
+    );
+
+    await repository.save(
+      aDelegation().identifiedBy('of-others').onDesk('practice-1', 'marie').givenTo('linus').build(),
+    );
 
     const found = await repository.findActiveOfMember('practice-1', 'grace');
 
@@ -93,9 +109,21 @@ describe.each([
     const repository = await createRepository();
 
     await repository.save(onDesk.identifiedBy('due').givenTo('linus').endingAt(end).build());
-    await repository.save(onDesk.identifiedBy('later').givenTo('marie').endingAt(new Date('2026-04-01T00:00:01.000Z')).build());
+
+    await repository.save(
+      onDesk.identifiedBy('later').givenTo('marie').endingAt(new Date('2026-04-01T00:00:01.000Z')).build(),
+    );
+
     await repository.save(onDesk.identifiedBy('open').givenTo('alan').build());
-    await repository.save(onDesk.identifiedBy('due-ended').givenTo('rosalind').endingAt(end).revokedAt(new Date('2026-02-01T00:00:00.000Z')).build());
+
+    await repository.save(
+      onDesk
+        .identifiedBy('due-ended')
+        .givenTo('rosalind')
+        .endingAt(end)
+        .revokedAt(new Date('2026-02-01T00:00:00.000Z'))
+        .build(),
+    );
 
     const due = await repository.findDueAt(end);
 
@@ -104,7 +132,14 @@ describe.each([
 
   it('stores every term of a delegation and the way it ended', async () => {
     const repository = await createRepository();
-    const saved = onDesk.identifiedBy('whole').givenTo('linus').includingAvailability().endingAt(end).revokedAt(new Date('2026-02-01T00:00:00.000Z')).build();
+
+    const saved = onDesk
+      .identifiedBy('whole')
+      .givenTo('linus')
+      .includingAvailability()
+      .endingAt(end)
+      .revokedAt(new Date('2026-02-01T00:00:00.000Z'))
+      .build();
 
     await repository.save(saved);
 

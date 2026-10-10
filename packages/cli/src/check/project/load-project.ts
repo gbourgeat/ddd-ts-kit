@@ -33,9 +33,17 @@ function walkTree(root: string, config: Config): Tree {
   const contextsOnDisk: string[] = [];
 
   walkDirectory(root, config.sourceRoot, (file, isDirectory) => {
-    if (isUnder(file, config.contextsDir)) contextEntries.push(isDirectory ? `${file}/` : file);
-    if (isDirectory && path.posix.dirname(file) === config.contextsDir) contextsOnDisk.push(path.posix.basename(file));
-    if (!isDirectory && isSource(file)) files.push(readSource(root, config, file));
+    if (isUnder(file, config.contextsDir)) {
+      contextEntries.push(isDirectory ? `${file}/` : file);
+    }
+
+    if (isDirectory && path.posix.dirname(file) === config.contextsDir) {
+      contextsOnDisk.push(path.posix.basename(file));
+    }
+
+    if (!isDirectory && isSource(file)) {
+      files.push(readSource(root, config, file));
+    }
   });
 
   return { files, contextEntries, contextsOnDisk };

@@ -12,7 +12,9 @@ import type { Foundations } from '../lay-foundations.js';
 export function createQueryBus(resolve: Resolve, foundations: Foundations): InMemoryQueryBus {
   return new InMemoryQueryBus()
 {{#if errors.sentry}}
-    .use((message, next, info) => errorReportingMiddleware(resolve(ErrorReporter), foundations.scope)(message, next, info))
+    .use((message, next, info) =>
+      errorReportingMiddleware(resolve(ErrorReporter), foundations.scope)(message, next, info),
+    )
 {{/if}}
     .use(loggingMiddleware(foundations.logger))
     .use(metricsMiddleware(foundations.metrics))

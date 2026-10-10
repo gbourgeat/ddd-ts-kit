@@ -17,7 +17,7 @@ import {
   type ExecutionContext,
 } from '@ddd-ts-kit/kernel';
 import { reportFailedRuns } from '@ddd-ts-kit/scheduling';
-import { ManualJobScheduler } from '@ddd-ts-kit/scheduling/testing';
+import { ManualJobScheduler, type ManualJobSchedulerOptions } from '@ddd-ts-kit/scheduling/testing';
 import { guardedQueryBus } from '../kernel/guarded-query-bus.js';
 import { transactionalCommandBus } from '../kernel/transactional-command-bus.js';
 import type { Resolve } from '../wiring/resolve.js';
@@ -36,15 +36,14 @@ export function createTestKernel(options: TestApplicationOptions, resolve: Resol
   const executionScope = new FixedExecutionScope(context, actorContext);
   const observability = { logger: new InMemoryLogger(), metrics: new InMemoryMetrics(), lock: new InMemoryLock(clock) };
   const errors = new InMemoryErrorReporter();
-  const afterCommitFailed = reportAfterCommitFailures({ reporter: errors, logger: observability.logger, scope: executionScope });
 
-  const scheduler = new ManualJobScheduler({
-    clock,
+  const afterCommitFailed = reportAfterCommitFailures({
+    reporter: errors,
+    logger: observability.logger,
     scope: executionScope,
-    ids: new SequentialIdGenerator('job-run'),
-    ...observability,
-    onRun: reportFailedRuns(errors),
   });
+
+  const scheduler = manualScheduler({ clock, scope: executionScope, ...observability }, errors);
 
   return {
     commandBus: transactionalCommandBus(resolve),
@@ -72,13 +71,25 @@ function defaultExecutionContext({ session, actor }: TestApplicationOptions): Ex
   });
 }
 
+type SchedulerParts = Omit<ManualJobSchedulerOptions, 'ids' | 'onRun'>;
+
+function manualScheduler(parts: SchedulerParts, errors: InMemoryErrorReporter): ManualJobScheduler {
+  return new ManualJobScheduler({
+    ...parts,
+    ids: new SequentialIdGenerator('job-run'),
+    onRun: reportFailedRuns(errors),
+  });
+}
+
 function testJobs(scheduler: ManualJobScheduler): TestJobs {
   return {
     scheduler,
     async runNow(name) {
       const run = await scheduler.runNow(name);
 
-      if (run.outcome === 'failed') throw scheduler.failures.at(-1);
+      if (run.outcome === 'failed') {
+        throw scheduler.failures.at(-1);
+      }
 
       return run;
     },

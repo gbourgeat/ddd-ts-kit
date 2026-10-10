@@ -7,7 +7,7 @@ TypeScript. Public repository.
 - `docs/ARCHITECTURE.md` is normative: rule ids, canonical tree. Checker, templates and skills
   implement it and change together. A test of the CLI fails when its section 3 lists a rule id
   the checker does not know. `docs/README.md` indexes the rest of the documentation.
-- Commands: `npm run build`, `npm test`, `npm run check:self`, `npm run check:dashes`, `node --test plugin/hooks/guard.test.mjs`.
+- Commands: `npm run build`, `npm test`, `npm run lint`, `npm run format` (Biome, width 120), `npm run check:self`, `npm run check:dashes`, `node --test plugin/hooks/guard.test.mjs`.
 - `tsc` is TypeScript 7 (native). Do not use the TypeScript compiler JS API.
 - Optional peers (zod, class-validator, express, fastify, nest, OpenTelemetry SDK) are imported
   only from their subpath entry file.

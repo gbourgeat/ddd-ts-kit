@@ -43,9 +43,7 @@ describe('InMemoryCommandBus', () => {
 
     await expect(bus.execute(new PlaceOrder('x'))).rejects.toBeInstanceOf(HandlerNotFoundError);
 
-    expect(() => bus.register(CancelOrder, { execute: async () => undefined })).toThrow(
-      DuplicateHandlerError,
-    );
+    expect(() => bus.register(CancelOrder, { execute: async () => undefined })).toThrow(DuplicateHandlerError);
   });
 
   it('runs middlewares outside in, around the handler', async () => {

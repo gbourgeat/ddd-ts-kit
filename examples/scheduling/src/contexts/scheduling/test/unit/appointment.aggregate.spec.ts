@@ -45,7 +45,15 @@ describe('Appointment', () => {
 
     expect(booked.status).toBe('booked');
     expect(booked.confirmBefore).toBeUndefined();
-    expect(booked.pullEvents()).toMatchObject([{ name: 'scheduling.appointment.booked', aggregateId: 'appointment-9', occurredAt: bornAt, held: { booking: template.booking } }]);
+
+    expect(booked.pullEvents()).toMatchObject([
+      {
+        name: 'scheduling.appointment.booked',
+        aggregateId: 'appointment-9',
+        occurredAt: bornAt,
+        held: { booking: template.booking },
+      },
+    ]);
   });
 
   it('records that it was booked as a request, with the deadline of its confirmation', () => {
@@ -55,7 +63,10 @@ describe('Appointment', () => {
 
     expect(requested.status).toBe('requested');
     expect(requested.confirmBefore).toEqual(deadline);
-    expect(requested.pullEvents()).toMatchObject([{ name: 'scheduling.appointment.booked', held: { confirmBefore: deadline } }]);
+
+    expect(requested.pullEvents()).toMatchObject([
+      { name: 'scheduling.appointment.booked', held: { confirmBefore: deadline } },
+    ]);
   });
 
   it('holds its slot, buffer included, while it is requested or booked', () => {
@@ -104,7 +115,9 @@ describe('Appointment, from confirmation to its end', () => {
   it('is cancelled by its patient without a reason', () => {
     given(anAppointment())
       .when((appointment) => appointment.cancel(byPatient, at('08:00')))
-      .thenEvents([{ name: 'scheduling.appointment.cancelled', occurredAt: at('08:00'), ended: { cancellation: byPatient } }])
+      .thenEvents([
+        { name: 'scheduling.appointment.cancelled', occurredAt: at('08:00'), ended: { cancellation: byPatient } },
+      ])
       .thenState((appointment) => {
         expect(appointment.status).toBe('cancelled');
         expect(appointment.cancellation?.by).toBe('patient');
@@ -214,11 +227,25 @@ describe('Appointment, expiry and what follows an end', () => {
     const now = new Date('2026-03-03T00:00:00.000Z');
     const elsewhere = Slot.between(at('14:00'), at('14:30'), at('14:30'));
 
-    given(builder).when((appointment) => appointment.confirm(now)).thenError(AppointmentEndedError, 'APPOINTMENT_ENDED');
-    given(builder).when((appointment) => appointment.cancel(byPatient, now)).thenError(AppointmentEndedError, 'APPOINTMENT_ENDED');
-    given(builder).when((appointment) => appointment.reschedule(elsewhere, '2026-03-02', now)).thenError(AppointmentEndedError, 'APPOINTMENT_ENDED');
-    given(builder).when((appointment) => appointment.complete(now)).thenError(AppointmentEndedError, 'APPOINTMENT_ENDED');
-    given(builder).when((appointment) => appointment.markNoShow(now)).thenError(AppointmentEndedError, 'APPOINTMENT_ENDED');
+    given(builder)
+      .when((appointment) => appointment.confirm(now))
+      .thenError(AppointmentEndedError, 'APPOINTMENT_ENDED');
+
+    given(builder)
+      .when((appointment) => appointment.cancel(byPatient, now))
+      .thenError(AppointmentEndedError, 'APPOINTMENT_ENDED');
+
+    given(builder)
+      .when((appointment) => appointment.reschedule(elsewhere, '2026-03-02', now))
+      .thenError(AppointmentEndedError, 'APPOINTMENT_ENDED');
+
+    given(builder)
+      .when((appointment) => appointment.complete(now))
+      .thenError(AppointmentEndedError, 'APPOINTMENT_ENDED');
+
+    given(builder)
+      .when((appointment) => appointment.markNoShow(now))
+      .thenError(AppointmentEndedError, 'APPOINTMENT_ENDED');
   });
 });
 

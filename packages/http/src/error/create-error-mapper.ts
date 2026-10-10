@@ -9,15 +9,11 @@ export interface ErrorMapperOptions {
   readonly typeOf?: (code: string) => string;
 }
 
-export function createErrorMapper(
-  overrides: ErrorMapping = {},
-  options: ErrorMapperOptions = {},
-): ErrorMapper {
+export function createErrorMapper(overrides: ErrorMapping = {}, options: ErrorMapperOptions = {}): ErrorMapper {
   const mapping: ErrorMapping = { ...DEFAULT_ERROR_MAPPING, ...overrides };
   const fallbackStatus = options.fallbackStatus ?? 422;
 
-  const typeOf =
-    options.typeOf ?? ((code: string) => `urn:problem:${code.toLowerCase().replaceAll('_', '-')}`);
+  const typeOf = options.typeOf ?? ((code: string) => `urn:problem:${code.toLowerCase().replaceAll('_', '-')}`);
 
   return {
     mapping,

@@ -13,7 +13,9 @@ export function typeClosure(texts: readonly string[], types: readonly LocalType[
     const text = pending[at] ?? '';
 
     for (const type of types) {
-      if (reached.has(type.name) || !identifier(type.name).test(text)) continue;
+      if (reached.has(type.name) || !identifier(type.name).test(text)) {
+        continue;
+      }
 
       reached.add(type.name);
       pending.push(type.text);

@@ -72,7 +72,9 @@ export class StdoutLogger implements Logger {
    * of the project, which is called before each log call returns. The logger stays usable.
    */
   flush(): Promise<void> {
-    if (this.options.write !== undefined) return Promise.resolve();
+    if (this.options.write !== undefined) {
+      return Promise.resolve();
+    }
 
     return new Promise((resolve) => {
       try {
@@ -86,7 +88,9 @@ export class StdoutLogger implements Logger {
   }
 
   private writeEntry(level: LogLevel, message: string, fields: LogFields = {}): void {
-    if (!this.isLevelEnabled(level)) return;
+    if (!this.isLevelEnabled(level)) {
+      return;
+    }
 
     const header = { time: clockOr(this.options.clock).now().toISOString(), level, message };
 

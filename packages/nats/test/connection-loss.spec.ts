@@ -40,7 +40,14 @@ describe.skipIf(NATS_URL === undefined)('NatsEventBus: when the connection is lo
     });
 
     network.restore();
-    await eventually(() => bus.publish([anEvent('evt-2')]).then(() => true, () => false));
+
+    await eventually(() =>
+      bus.publish([anEvent('evt-2')]).then(
+        () => true,
+        () => false,
+      ),
+    );
+
     await broker.settled(bus);
 
     expect(billing.ids()).toEqual(['evt-1', 'evt-2']);

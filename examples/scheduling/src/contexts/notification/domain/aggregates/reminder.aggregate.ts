@@ -23,8 +23,17 @@ export class Reminder extends AggregateRoot<string> {
     super(id);
   }
 
-  static create(id: string, appointment: Pick<ReminderState, 'appointmentId' | 'recipientId' | 'startsAt'>, now: Date): Reminder {
-    return new Reminder(id, { ...appointment, registeredAt: now, dueAt: dueFor(appointment.startsAt), status: 'planned' });
+  static create(
+    id: string,
+    appointment: Pick<ReminderState, 'appointmentId' | 'recipientId' | 'startsAt'>,
+    now: Date,
+  ): Reminder {
+    return new Reminder(id, {
+      ...appointment,
+      registeredAt: now,
+      dueAt: dueFor(appointment.startsAt),
+      status: 'planned',
+    });
   }
 
   static rehydrate(id: string, state: ReminderState): Reminder {
@@ -33,28 +42,45 @@ export class Reminder extends AggregateRoot<string> {
 
   /** Plans the reminder for a start: the same start changes nothing, another one makes it due again, 24 hours before. */
   planFor(startsAt: Date): void {
-    if (this.state.status !== 'withdrawn' && this.state.startsAt.getTime() === startsAt.getTime()) return;
+    if (this.state.status !== 'withdrawn' && this.state.startsAt.getTime() === startsAt.getTime()) {
+      return;
+    }
 
     this.state = { ...this.state, startsAt, dueAt: dueFor(startsAt), status: 'planned' };
   }
 
   /** Drops the reminder while it is still planned; one already sent stays sent. */
   withdraw(): void {
-    if (this.state.status !== 'planned') return;
+    if (this.state.status !== 'planned') {
+      return;
+    }
 
     this.state = { ...this.state, status: 'withdrawn' };
   }
 
   /** Whether the reminder is to be sent at this instant: planned, 24 hours or less before a start still to come. */
   isDue(asOf: Date): boolean {
-    return this.state.status === 'planned' && this.state.dueAt.getTime() <= asOf.getTime() && asOf.getTime() < this.state.startsAt.getTime();
+    return (
+      this.state.status === 'planned' &&
+      this.state.dueAt.getTime() <= asOf.getTime() &&
+      asOf.getTime() < this.state.startsAt.getTime()
+    );
   }
 
   send(asOf: Date): void {
-    if (!this.isDue(asOf)) throw new ReminderNotDueError(this.id);
+    if (!this.isDue(asOf)) {
+      throw new ReminderNotDueError(this.id);
+    }
 
     this.state = { ...this.state, status: 'sent' };
-    this.record(new ReminderSent(this.id, asOf, { recipientId: this.state.recipientId, appointmentId: this.state.appointmentId, startsAt: this.state.startsAt }));
+
+    this.record(
+      new ReminderSent(this.id, asOf, {
+        recipientId: this.state.recipientId,
+        appointmentId: this.state.appointmentId,
+        startsAt: this.state.startsAt,
+      }),
+    );
   }
 
   get registeredAt(): Date {

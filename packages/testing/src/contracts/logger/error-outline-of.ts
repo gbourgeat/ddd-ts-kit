@@ -12,7 +12,9 @@ const FIRST_FRAME = /^\s+at /;
 
 /** The outline of a written field, or `undefined` when it is not the description of an error. */
 export function errorOutlineOf(written: unknown): ErrorOutline | undefined {
-  if (!isRecord(written) || typeof written.type !== 'string') return undefined;
+  if (!isRecord(written) || typeof written.type !== 'string') {
+    return undefined;
+  }
 
   return {
     type: written.type,
@@ -28,9 +30,13 @@ function isRecord(value: unknown): value is Readonly<Record<string, unknown>> {
 }
 
 function stackKind({ type, message, stack }: Readonly<Record<string, unknown>>): ErrorOutline['stack'] {
-  if (typeof stack !== 'string') return 'none';
+  if (typeof stack !== 'string') {
+    return 'none';
+  }
 
-  if (FIRST_FRAME.test(stack)) return 'frames';
+  if (FIRST_FRAME.test(stack)) {
+    return 'frames';
+  }
 
   return stack.startsWith(`${String(type)}: ${String(message)}\n`) ? 'titled' : 'none';
 }

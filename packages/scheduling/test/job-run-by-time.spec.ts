@@ -24,7 +24,13 @@ describe('a job run by time', () => {
     expect(job.executions[0]).toMatchObject({ startedAt: new Date('2026-03-02T10:00:00.000Z'), attempt: 1 });
 
     await scheduler.advance(30 * MINUTE);
-    expect(job.scheduledAt).toEqual(['2026-03-02T10:00:00.000Z', '2026-03-02T10:15:00.000Z', '2026-03-02T10:30:00.000Z']);
+
+    expect(job.scheduledAt).toEqual([
+      '2026-03-02T10:00:00.000Z',
+      '2026-03-02T10:15:00.000Z',
+      '2026-03-02T10:30:00.000Z',
+    ]);
+
     expect(scheduler.runs.map((run) => run.outcome)).toEqual(['succeeded', 'succeeded', 'succeeded']);
   });
 
@@ -50,7 +56,9 @@ describe('a job run by time', () => {
 
     await scheduler.advance(15 * HOUR);
 
-    expect(job.executions).toMatchObject([{ scheduledAt: new Date('2026-03-03T00:00:00.000Z'), startedAt: new Date('2026-03-03T00:00:00.000Z') }]);
+    expect(job.executions).toMatchObject([
+      { scheduledAt: new Date('2026-03-03T00:00:00.000Z'), startedAt: new Date('2026-03-03T00:00:00.000Z') },
+    ]);
   });
 
   it('follows a job registered after it started, and starting twice changes nothing', async () => {
@@ -70,7 +78,16 @@ describe('a job run by time', () => {
     const clock = new FixedClock(new Date('2026-03-02T09:58:30.000Z'));
     const timers = new ManualJobTimers(clock);
     const { scope, lock } = aBench({ clock });
-    const scheduler = new InProcessJobScheduler({ clock, lock, scope, ids: new SequentialIdGenerator(), timers, random: () => 0.5 });
+
+    const scheduler = new InProcessJobScheduler({
+      clock,
+      lock,
+      scope,
+      ids: new SequentialIdGenerator(),
+      timers,
+      random: () => 0.5,
+    });
+
     const job = new RecordingJob();
 
     scheduler.register({ name: REMINDERS, schedule: QUARTERLY, jitterMs: 10_000, run: job.run });
@@ -78,7 +95,9 @@ describe('a job run by time', () => {
 
     await timers.advance(2 * MINUTE);
 
-    expect(job.executions).toMatchObject([{ scheduledAt: new Date('2026-03-02T10:00:00.000Z'), startedAt: new Date('2026-03-02T10:00:05.000Z') }]);
+    expect(job.executions).toMatchObject([
+      { scheduledAt: new Date('2026-03-02T10:00:00.000Z'), startedAt: new Date('2026-03-02T10:00:05.000Z') },
+    ]);
   });
 });
 
@@ -87,7 +106,13 @@ describe('the execution scope of a run', () => {
     const { scheduler, scope } = aBench();
     const seen: (ExecutionContext | undefined)[] = [];
 
-    scheduler.register({ name: REMINDERS, schedule: QUARTERLY, timeoutMs: 5 * MINUTE, run: async () => void seen.push(scope.current()) });
+    scheduler.register({
+      name: REMINDERS,
+      schedule: QUARTERLY,
+      timeoutMs: 5 * MINUTE,
+      run: async () => void seen.push(scope.current()),
+    });
+
     await scheduler.start();
 
     await scheduler.advance(20 * MINUTE);

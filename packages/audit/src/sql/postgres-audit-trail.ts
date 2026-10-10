@@ -82,10 +82,15 @@ export class PostgresAuditTrail implements AuditTrail, AuditReader {
       sql`insert into ${chains} ("chain", "sequence", "hash") values (${chain}, 0, ${GENESIS_HASH}) on conflict ("chain") do nothing`,
     );
 
-    const [head] = await transaction.query(sql`select "sequence", "hash" from ${chains} where "chain" = ${chain} for update`);
+    const [head] = await transaction.query(
+      sql`select "sequence", "hash" from ${chains} where "chain" = ${chain} for update`,
+    );
+
     const hash = head?.['hash'];
 
-    if (typeof hash !== 'string') throw new TypeError(`The head of audit chain "${chain}" could not be read`);
+    if (typeof hash !== 'string') {
+      throw new TypeError(`The head of audit chain "${chain}" could not be read`);
+    }
 
     return { chain, sequence: Number(head?.['sequence']), hash };
   }
@@ -97,7 +102,9 @@ export class PostgresAuditTrail implements AuditTrail, AuditReader {
   }
 
   private async count(conditions: readonly Sql[]): Promise<number> {
-    const [row] = await this.session().query(sql`select count(*) as "total" from ${this.tables.entries} ${where(conditions)}`);
+    const [row] = await this.session().query(
+      sql`select count(*) as "total" from ${this.tables.entries} ${where(conditions)}`,
+    );
 
     return Number(row?.['total']);
   }
@@ -135,7 +142,9 @@ function afterCursor(cursor: string, order: ListOrder): Sql {
   const { occurredAt, chain, sequence } = decodeCursor(cursor);
   const beyond = order.direction === 'asc' ? sql`>` : sql`<`;
 
-  if (order.field === 'sequence') return sql`("chain", "sequence") ${beyond} (${chain}, ${sequence}::bigint)`;
+  if (order.field === 'sequence') {
+    return sql`("chain", "sequence") ${beyond} (${chain}, ${sequence}::bigint)`;
+  }
 
   return sql`("occurred_at", "chain", "sequence") ${beyond} (${occurredAt.toISOString()}::timestamptz, ${chain}, ${sequence}::bigint)`;
 }
@@ -146,7 +155,12 @@ function where(conditions: readonly Sql[]): Sql {
 
 function orderBy(order: ListOrder): Sql {
   const direction = order.direction === 'asc' ? sql`asc` : sql`desc`;
-  const columns = order.field === 'sequence' ? [sql`"chain"`, sql`"sequence"`] : [sql`"occurred_at"`, sql`"chain"`, sql`"sequence"`];
 
-  return joined(columns.map((column) => sql`${column} ${direction}`), ', ');
+  const columns =
+    order.field === 'sequence' ? [sql`"chain"`, sql`"sequence"`] : [sql`"occurred_at"`, sql`"chain"`, sql`"sequence"`];
+
+  return joined(
+    columns.map((column) => sql`${column} ${direction}`),
+    ', ',
+  );
 }

@@ -7,16 +7,28 @@ import { staticString } from '../imports/static-string.js';
 type NameProblem = 'missing' | 'empty' | 'not a string literal';
 
 /** The name an options argument writes under `key`: a non-empty string literal, or what stands in its place. */
-export function writtenName(options: TSESTree.Node | undefined, key: string): { readonly value: string } | { readonly problem: NameProblem } {
-  if (options === undefined) return { problem: 'missing' };
+export function writtenName(
+  options: TSESTree.Node | undefined,
+  key: string,
+): { readonly value: string } | { readonly problem: NameProblem } {
+  if (options === undefined) {
+    return { problem: 'missing' };
+  }
 
   const property = options.type === AST_NODE_TYPES.ObjectExpression ? propertyOf(options, key) : undefined;
 
-  if (property === undefined) return { problem: options.type === AST_NODE_TYPES.ObjectExpression && !hasSpread(options) ? 'missing' : 'not a string literal' };
+  if (property === undefined) {
+    return {
+      problem:
+        options.type === AST_NODE_TYPES.ObjectExpression && !hasSpread(options) ? 'missing' : 'not a string literal',
+    };
+  }
 
   const value = staticString(property.value);
 
-  if (value === undefined) return { problem: 'not a string literal' };
+  if (value === undefined) {
+    return { problem: 'not a string literal' };
+  }
 
   return value === '' ? { problem: 'empty' } : { value };
 }

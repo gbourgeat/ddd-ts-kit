@@ -73,8 +73,7 @@ model CriteriaContractRow {
 }
 `;
 
-const inSchema = (models: string, schema: string): string =>
-  models.replaceAll(/^}$/gm, `  @@schema("${schema}")\n}`);
+const inSchema = (models: string, schema: string): string => models.replaceAll(/^}$/gm, `  @@schema("${schema}")\n}`);
 
 /**
  * The schema the tests run on, built from the fragment the package ships, the way a consuming
@@ -134,7 +133,12 @@ async function acquireLock(): Promise<void> {
 
       return;
     } catch {
-      const age = Date.now() - (await stat(lock).then((entry) => entry.mtimeMs, () => Date.now()));
+      const age =
+        Date.now() -
+        (await stat(lock).then(
+          (entry) => entry.mtimeMs,
+          () => Date.now(),
+        ));
 
       if (age > 120_000) {
         // Left behind by a run that was killed.
@@ -154,7 +158,10 @@ async function acquireLock(): Promise<void> {
 export async function ensureGeneratedClient(): Promise<void> {
   const schema = await composeSchema();
   const version: unknown = require('prisma/package.json').version;
-  const stamp = createHash('sha256').update(`${String(version)}\n${schema}`).digest('hex');
+
+  const stamp = createHash('sha256')
+    .update(`${String(version)}\n${schema}`)
+    .digest('hex');
 
   if (await isUpToDate(stamp)) {
     return;

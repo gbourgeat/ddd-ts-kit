@@ -16,7 +16,9 @@ describe('events recorded while events are dispatched', () => {
     const journal: string[] = [];
 
     dispatcher.on('shop.cart.opened', async (event) => {
-      if (event.aggregateId !== 'c1') return;
+      if (event.aggregateId !== 'c1') {
+        return;
+      }
 
       await carts.save(Cart.open('c2'));
       journal.push(`saved c2 after hearing ${heard.length} event(s)`);
@@ -37,8 +39,11 @@ describe('events recorded while events are dispatched', () => {
     const { carts, dispatcher } = aBench();
 
     dispatcher.on('shop.cart.opened', async (event) => {
-      if (event.aggregateId === 'c1') await carts.save(Cart.open('c2'));
-      else throw new Error('second link failed');
+      if (event.aggregateId === 'c1') {
+        await carts.save(Cart.open('c2'));
+      } else {
+        throw new Error('second link failed');
+      }
     });
 
     await expect(carts.save(Cart.open('c1'))).rejects.toThrow('second link failed');
@@ -62,7 +67,9 @@ describe('events recorded while events are dispatched', () => {
     let later: Promise<void> = Promise.resolve();
 
     dispatcher.on('shop.cart.opened', async (event) => {
-      if (event.aggregateId !== 'c1') return;
+      if (event.aggregateId !== 'c1') {
+        return;
+      }
 
       later = new Promise((resolve) => setTimeout(resolve, 5)).then(() => carts.save(Cart.open('c2')));
     });
@@ -121,12 +128,23 @@ describe('the dispatch and the unit of work', () => {
     bench.dispatcher.on('shop.cart.opened', async (event) => {
       journal.push(`handling ${event.aggregateId}`);
 
-      if (event.aggregateId === 'c1') await bus.execute(new OpenCart('c2'));
+      if (event.aggregateId === 'c1') {
+        await bus.execute(new OpenCart('c2'));
+      }
     });
 
     await bus.execute(new OpenCart('c1'));
 
-    expect(journal).toEqual(['begin', 'saved c1', 'handling c1', 'begin', 'saved c2', 'commit', 'handling c2', 'commit']);
+    expect(journal).toEqual([
+      'begin',
+      'saved c1',
+      'handling c1',
+      'begin',
+      'saved c2',
+      'commit',
+      'handling c2',
+      'commit',
+    ]);
   });
 
   it('still dispatches outside of any unit of work: the state is written, then the handlers run', async () => {

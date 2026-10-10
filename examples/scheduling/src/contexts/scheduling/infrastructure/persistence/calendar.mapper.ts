@@ -22,9 +22,15 @@ export const CalendarMapper = {
       practitionerId: row.practitioner_id,
       timeZone: unwrap(TimeZone.create(row.time_zone)),
       openingHours: openingHoursOf(JSON.parse(row.opening_hours) as StoredWeek),
-      exceptions: (JSON.parse(row.exceptions) as StoredException[]).map(({ day, ranges }) => unwrap(Exception.create(day, ranges.map(rangeOf)))),
-      timeOffs: (JSON.parse(row.time_offs) as StoredTimeOff[]).map(({ startsAt, endsAt }) => unwrap(TimeOff.create(new Date(startsAt), new Date(endsAt)))),
-      appointmentTypes: (JSON.parse(row.appointment_types) as AppointmentTypeProps[]).map((facts) => unwrap(AppointmentType.create(facts))),
+      exceptions: (JSON.parse(row.exceptions) as StoredException[]).map(({ day, ranges }) =>
+        unwrap(Exception.create(day, ranges.map(rangeOf))),
+      ),
+      timeOffs: (JSON.parse(row.time_offs) as StoredTimeOff[]).map(({ startsAt, endsAt }) =>
+        unwrap(TimeOff.create(new Date(startsAt), new Date(endsAt))),
+      ),
+      appointmentTypes: (JSON.parse(row.appointment_types) as AppointmentTypeProps[]).map((facts) =>
+        unwrap(AppointmentType.create(facts)),
+      ),
       bookingWindow: unwrap(BookingWindow.create(row.notice, row.horizon)),
       limit: row.patient_limit,
     });
@@ -44,8 +50,17 @@ export const CalendarMapper = {
       practitioner_id: state.practitionerId,
       time_zone: state.timeZone.name,
       opening_hours: JSON.stringify(storedWeekOf(state.openingHours)),
-      exceptions: JSON.stringify(state.exceptions.map(({ day, ranges }): StoredException => ({ day, ranges: ranges.map(storedRangeOf) }))),
-      time_offs: JSON.stringify(state.timeOffs.map(({ startsAt, endsAt }): StoredTimeOff => ({ startsAt: startsAt.toISOString(), endsAt: endsAt.toISOString() }))),
+      exceptions: JSON.stringify(
+        state.exceptions.map(({ day, ranges }): StoredException => ({ day, ranges: ranges.map(storedRangeOf) })),
+      ),
+      time_offs: JSON.stringify(
+        state.timeOffs.map(
+          ({ startsAt, endsAt }): StoredTimeOff => ({
+            startsAt: startsAt.toISOString(),
+            endsAt: endsAt.toISOString(),
+          }),
+        ),
+      ),
       appointment_types: JSON.stringify(state.appointmentTypes),
       notice: state.bookingWindow.notice,
       horizon: state.bookingWindow.horizon,

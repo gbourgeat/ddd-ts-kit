@@ -2,7 +2,20 @@ import type { FieldDeclaration, FieldValue, FilterNode, FilterOperator } from '@
 import { coerceValue } from './coerce-value.js';
 import { splitList } from './split-list.js';
 
-const OPERATORS: readonly FilterOperator[] = ['eq', 'ne', 'in', 'gt', 'gte', 'lt', 'lte', 'contains', 'startsWith', 'isNull', 'between'];
+const OPERATORS: readonly FilterOperator[] = [
+  'eq',
+  'ne',
+  'in',
+  'gt',
+  'gte',
+  'lt',
+  'lte',
+  'contains',
+  'startsWith',
+  'isNull',
+  'between',
+];
+
 const WRITTEN = /^([A-Za-z]+)(?::(.*))?$/s;
 
 interface Written {
@@ -25,12 +38,18 @@ function writtenOf(text: string): Written {
   const [, name, rest] = WRITTEN.exec(text) ?? [];
   const operator = OPERATORS.find((known) => known === name);
 
-  if (operator === undefined || (rest === undefined && operator !== 'isNull')) return { operator: 'eq', text };
+  if (operator === undefined || (rest === undefined && operator !== 'isNull')) {
+    return { operator: 'eq', text };
+  }
 
   return { operator, text: rest ?? 'true' };
 }
 
-function operandOf(declared: FieldDeclaration, operator: FilterOperator, text: string): FieldValue | FieldValue[] | undefined {
+function operandOf(
+  declared: FieldDeclaration,
+  operator: FilterOperator,
+  text: string,
+): FieldValue | FieldValue[] | undefined {
   switch (operator) {
     case 'isNull':
       return coerceValue('boolean', text);

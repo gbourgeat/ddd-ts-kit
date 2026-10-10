@@ -10,7 +10,14 @@ export interface FailedRequest {
 }
 
 const shipOrder = defineRoute(
-  { method: 'POST', path: '/orders/ship', operationId: 'shipOrder', summary: 'Ships', security: false, responses: { 204: { description: 'Shipped' } } },
+  {
+    method: 'POST',
+    path: '/orders/ship',
+    operationId: 'shipOrder',
+    summary: 'Ships',
+    security: false,
+    responses: { 204: { description: 'Shipped' } },
+  },
   () => {
     throw new Error('connection reset');
   },

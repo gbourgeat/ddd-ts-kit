@@ -44,7 +44,9 @@ export function reportProcessFailures(reporter: ErrorReporter, options: ProcessF
   });
 
   return () => {
-    for (const { operation, crash } of listeners) target.off(operation, crash);
+    for (const { operation, crash } of listeners) {
+      target.off(operation, crash);
+    }
   };
 }
 

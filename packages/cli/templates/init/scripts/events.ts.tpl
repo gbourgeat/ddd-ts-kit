@@ -12,7 +12,15 @@ const target = path.resolve('docs/integration');
 const registry = createEventRegistry(await declaredEvents());
 
 const generated: Readonly<Record<string, string>> = {
-  'asyncapi.json': stringifyAsyncApi(generateAsyncApi({ info: { title: manifestField('name', '{{project.name}}'), version: manifestField('version', '0.0.0') }, registry })),
+  'asyncapi.json': stringifyAsyncApi(
+    generateAsyncApi({
+      info: {
+        title: manifestField('name', '{{project.name}}'),
+        version: manifestField('version', '0.0.0'),
+      },
+      registry,
+    }),
+  ),
   'event-catalog.md': generateEventCatalog(registry, { consumers: consumersByEventType() }),
 };
 
@@ -21,7 +29,9 @@ if (process.argv.includes('--check')) {
 } else {
   fs.mkdirSync(target, { recursive: true });
 
-  for (const [file, content] of Object.entries(generated)) fs.writeFileSync(path.join(target, file), content);
+  for (const [file, content] of Object.entries(generated)) {
+    fs.writeFileSync(path.join(target, file), content);
+  }
 }
 
 function reportStale(): void {
@@ -51,16 +61,28 @@ async function declaredEvents(): Promise<AnyIntegrationEventDefinition[]> {
 }
 
 function contextNames(): string[] {
-  if (!fs.existsSync(path.resolve(contextsDirectory))) return [];
+  if (!fs.existsSync(path.resolve(contextsDirectory))) {
+    return [];
+  }
 
   return fs
     .readdirSync(path.resolve(contextsDirectory), { withFileTypes: true })
-    .filter((entry) => entry.isDirectory() && fs.existsSync(path.resolve(contextsDirectory, entry.name, 'published-language')))
+    .filter(
+      (entry) =>
+        entry.isDirectory() && fs.existsSync(path.resolve(contextsDirectory, entry.name, 'published-language')),
+    )
     .map((entry) => entry.name);
 }
 
 function isDeclaration(value: unknown): value is AnyIntegrationEventDefinition {
-  return typeof value === 'object' && value !== null && 'type' in value && 'version' in value && 'payload' in value && 'create' in value;
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'type' in value &&
+    'version' in value &&
+    'payload' in value &&
+    'create' in value
+  );
 }
 
 /** Who consumes what, read from the sources: an integration event handler names the type it handles in `eventType`. */
@@ -68,7 +90,9 @@ function consumersByEventType(): Record<string, string[]> {
   const consumers: Record<string, string[]> = {};
 
   for (const context of contextNames()) {
-    for (const type of consumedBy(context)) consumers[type] = [...new Set([...(consumers[type] ?? []), context])];
+    for (const type of consumedBy(context)) {
+      consumers[type] = [...new Set([...(consumers[type] ?? []), context])];
+    }
   }
 
   return consumers;
@@ -88,7 +112,9 @@ function consumedBy(context: string): string[] {
 function manifestField(name: string, fallback: string): string {
   const manifest: unknown = JSON.parse(fs.readFileSync(path.resolve('package.json'), 'utf8'));
 
-  if (typeof manifest !== 'object' || manifest === null) return fallback;
+  if (typeof manifest !== 'object' || manifest === null) {
+    return fallback;
+  }
 
   const value: unknown = Reflect.get(manifest, name);
 

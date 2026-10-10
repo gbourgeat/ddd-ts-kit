@@ -18,7 +18,12 @@ import { perFile } from '../support/per-file.js';
 import { sourceDeclaring } from '../support/source-declaring.js';
 
 /** The option of each decorator that names what it declares, written once and never derived. */
-const WRITTEN_NAMES: Readonly<Record<string, string>> = { IntegrationEventHandler: 'consumer', DomainEventHandler: 'name', Policy: 'name' };
+const WRITTEN_NAMES: Readonly<Record<string, string>> = {
+  IntegrationEventHandler: 'consumer',
+  DomainEventHandler: 'name',
+  Policy: 'name',
+};
+
 /** `authz/declared` holds the messages: a command or a query says who may send it, or is reported there. */
 const MESSAGE_SUFFIXES = ['command', 'query'];
 const IDENTIFIER = /^[A-Za-z_$][\w$]*$/;
@@ -30,13 +35,18 @@ interface Decorated {
 
 export const declarationsRoleDeclared: Rule = {
   id: 'declarations/role-declared',
-  description: 'In the declared style, a role file exports a class carrying the decorator of its role, with its names written as string literals, and domain/ declares nothing.',
+  description:
+    'In the declared style, a role file exports a class carrying the decorator of its role, with its names written as string literals, and domain/ declares nothing.',
   scope: 'file',
   run(project) {
-    if (!isDeclaredStyle(project)) return [];
+    if (!isDeclaredStyle(project)) {
+      return [];
+    }
 
     return perFile(project, this.id, (file) => {
-      if (!inContext(file.location) || file.isTest) return [];
+      if (!inContext(file.location) || file.isTest) {
+        return [];
+      }
 
       return file.location.layer === 'domain' ? declaredInTheDomain(file) : outsideTheDomain(file, project);
     });
@@ -52,7 +62,9 @@ function declaredInTheDomain(file: SourceFile): Finding[] {
 }
 
 function decorated(file: SourceFile): Decorated[] {
-  return classesOf(file.scan).flatMap((declared) => declared.decorations.map((decoration) => ({ declared, decoration })));
+  return classesOf(file.scan).flatMap((declared) =>
+    declared.decorations.map((decoration) => ({ declared, decoration })),
+  );
 }
 
 function outsideTheDomain(file: SourceFile, project: Project): Finding[] {
@@ -65,7 +77,9 @@ function outsideTheDomain(file: SourceFile, project: Project): Finding[] {
 
 /** A declared class outside a role file is read by neither the barrel nor discovery; the module file may hold what it wants. */
 function misplaced(file: SourceFile): Finding[] {
-  if (inContext(file.location) && file.location.layer === 'module') return [];
+  if (inContext(file.location) && file.location.layer === 'module') {
+    return [];
+  }
 
   return decorated(file).map(({ declared, decoration }) => ({
     line: decoration.line,
@@ -81,16 +95,22 @@ function roleFilesOf(decorator: string): string {
 }
 
 function undeclaredRole(file: SourceFile, role: DeclaredRole, inside: string): Finding[] {
-  if (MESSAGE_SUFFIXES.includes(role.suffix)) return [];
+  if (MESSAGE_SUFFIXES.includes(role.suffix)) {
+    return [];
+  }
 
   const exported = classesOf(file.scan).filter((declared) => declared.exported);
 
-  if (exported.some((declared) => declared.decorations.some(({ name }) => role.decorators.includes(name)))) return [];
+  if (exported.some((declared) => declared.decorations.some(({ name }) => role.decorators.includes(name)))) {
+    return [];
+  }
 
   const expected = role.decorators.map((name) => `@${name}`).join(' or ');
   const [other] = decorated(file);
 
-  if (other !== undefined) return [otherRole(other, role, { expected, inside })];
+  if (other !== undefined) {
+    return [otherRole(other, role, { expected, inside })];
+  }
 
   return [
     {
@@ -101,7 +121,11 @@ function undeclaredRole(file: SourceFile, role: DeclaredRole, inside: string): F
   ];
 }
 
-function otherRole({ declared, decoration }: Decorated, role: DeclaredRole, { expected, inside }: { expected: string; inside: string }): Finding {
+function otherRole(
+  { declared, decoration }: Decorated,
+  role: DeclaredRole,
+  { expected, inside }: { expected: string; inside: string },
+): Finding {
   const folder = role.folders.find((candidate) => inside.startsWith(`${candidate}/`)) ?? '';
 
   return {
@@ -118,7 +142,9 @@ function unwrittenNames(file: SourceFile): Finding[] {
     const key = WRITTEN_NAMES[decoration.name];
     const value = key === undefined ? undefined : optionOf(file.scan, decoration, key);
 
-    if (key === undefined || (value?.literal !== undefined && value.literal !== '')) return [];
+    if (key === undefined || (value?.literal !== undefined && value.literal !== '')) {
+      return [];
+    }
 
     return [
       {
@@ -135,7 +161,9 @@ function renamedEvents(file: SourceFile, project: Project): Finding[] {
   return declaredEventHandlers(file.scan, 'DomainEventHandler').flatMap(({ event, name }) => {
     const carried = IDENTIFIER.test(event) ? nameOfEventClass(sourceDeclaring(project, file, event), event) : undefined;
 
-    if (carried === undefined || name?.literal === undefined || name.literal === '' || name.literal === carried) return [];
+    if (carried === undefined || name?.literal === undefined || name.literal === '' || name.literal === carried) {
+      return [];
+    }
 
     return [
       {

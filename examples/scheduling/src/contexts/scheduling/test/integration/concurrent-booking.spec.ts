@@ -14,12 +14,28 @@ import { aCalendar } from '../builders/calendar.builder.js';
 
 const DAY = 24 * 60 * 60_000;
 const clock = new SystemClock();
-const seeding = new FixedExecutionScope(executionContext({ correlationId: 'concurrent-booking', actor: systemActor('scheduling.spec'), origin: 'test' }));
+
+const seeding = new FixedExecutionScope(
+  executionContext({ correlationId: 'concurrent-booking', actor: systemActor('scheduling.spec'), origin: 'test' }),
+);
+
 // Two patients, each booking for themselves: what the role of a patient allows on any calendar.
-const authenticator = new FakeAuthenticator({ ada: anActor().named('ada').withRole('patient').build(), bob: anActor().named('bob').withRole('patient').build() });
-const calendar = aCalendar().identifiedBy('calendar-contended').openEveryDay(['08:00', '18:00']).offering('consultation', { buffer: 10 }).build();
+const authenticator = new FakeAuthenticator({
+  ada: anActor().named('ada').withRole('patient').build(),
+  bob: anActor().named('bob').withRole('patient').build(),
+});
+
+const calendar = aCalendar()
+  .identifiedBy('calendar-contended')
+  .openEveryDay(['08:00', '18:00'])
+  .offering('consultation', { buffer: 10 })
+  .build();
+
 // Ten in the morning on the wall clock of the practice, a week from now: inside the booking window whenever the spec runs.
-const startsAt = calendar.timeZone.instantAt(calendar.timeZone.dayOf(new Date(clock.now().getTime() + 7 * DAY)), 10 * 60);
+const startsAt = calendar.timeZone.instantAt(
+  calendar.timeZone.dayOf(new Date(clock.now().getTime() + 7 * DAY)),
+  10 * 60,
+);
 
 let database: TestDatabase;
 let application: Application;
@@ -27,7 +43,12 @@ let application: Application;
 beforeAll(async () => {
   // With DATABASE_URL the two bookings are two transactions of a real server, truly concurrent; in process one session serialises them.
   database = await openTestDatabase(process.env['DATABASE_URL'] === '' ? undefined : process.env['DATABASE_URL']);
-  application = composeApplication(database.persistence, { events: inProcessEvents(), authenticator }, { modules: [contextModule('scheduling', schedulingDeclarations)], routes: [schedulingRoutes] });
+
+  application = composeApplication(
+    database.persistence,
+    { events: inProcessEvents(), authenticator },
+    { modules: [contextModule('scheduling', schedulingDeclarations)], routes: [schedulingRoutes] },
+  );
 
   await application.start();
 });
@@ -39,7 +60,14 @@ afterAll(async () => {
 
 beforeEach(async () => {
   await database.reset();
-  await new KnexCalendarRepository(database.persistence.database, seeding, clock).save(aCalendar().identifiedBy('calendar-contended').openEveryDay(['08:00', '18:00']).offering('consultation', { buffer: 10 }).build());
+
+  await new KnexCalendarRepository(database.persistence.database, seeding, clock).save(
+    aCalendar()
+      .identifiedBy('calendar-contended')
+      .openEveryDay(['08:00', '18:00'])
+      .offering('consultation', { buffer: 10 })
+      .build(),
+  );
 });
 
 describe('Two bookings of one slot at once', () => {
@@ -64,7 +92,11 @@ describe('Two bookings of one slot at once', () => {
   it('holds the slot once, whoever won', async () => {
     await Promise.all([book('ada', startsAt), book('bob', startsAt)]);
 
-    const held = await new KnexAppointmentRepository(database.persistence.database, seeding, clock).heldOn('calendar-contended', startsAt, new Date(startsAt.getTime() + 1));
+    const held = await new KnexAppointmentRepository(database.persistence.database, seeding, clock).heldOn(
+      'calendar-contended',
+      startsAt,
+      new Date(startsAt.getTime() + 1),
+    );
 
     expect(held).toHaveLength(1);
     expect(held[0]?.status).toBe('booked');
@@ -75,7 +107,11 @@ describe('Two bookings of one slot at once', () => {
     // Clear of both contenders, whichever wins: the one in the buffer, had it won, would hold its own buffer after it.
     const apart = new Date(startsAt.getTime() + 120 * 60_000);
 
-    const [first, second, third] = await Promise.all([book('ada', startsAt), book('bob', inTheBuffer), book('bob', apart)]);
+    const [first, second, third] = await Promise.all([
+      book('ada', startsAt),
+      book('bob', inTheBuffer),
+      book('bob', apart),
+    ]);
 
     expect([first.status, second.status].filter((status) => status === 201)).toHaveLength(1);
     expect([first.body, second.body].filter((body) => codeOf(body) === 'SLOT_TAKEN')).toHaveLength(1);
@@ -83,7 +119,9 @@ describe('Two bookings of one slot at once', () => {
   });
 
   it('answers many bookings of one slot with one success and refusals of a taken slot only, never a failure', async () => {
-    const answers = await Promise.all(['ada', 'bob', 'ada', 'bob', 'ada', 'bob'].map((patient) => book(patient, startsAt)));
+    const answers = await Promise.all(
+      ['ada', 'bob', 'ada', 'bob', 'ada', 'bob'].map((patient) => book(patient, startsAt)),
+    );
 
     expect(answers.filter((answer) => answer.status === 201)).toHaveLength(1);
     expect(answers.filter((answer) => codeOf(answer.body) === 'SLOT_TAKEN')).toHaveLength(5);
@@ -98,7 +136,9 @@ function codeOf(body: unknown): unknown {
 function book(patient: string, start: Date): Promise<RouteResponse> {
   const route = application.routes.find((candidate) => candidate.operationId === 'bookAppointment');
 
-  if (route === undefined) throw new Error('The application does not serve bookAppointment.');
+  if (route === undefined) {
+    throw new Error('The application does not serve bookAppointment.');
+  }
 
   const headers = { authorization: 'Bearer ' + patient };
   const body = { calendarId: 'calendar-contended', appointmentTypeId: 'consultation', startsAt: start.toISOString() };

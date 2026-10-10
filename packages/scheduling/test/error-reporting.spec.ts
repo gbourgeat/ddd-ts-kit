@@ -40,7 +40,13 @@ describe('reportFailedRuns', () => {
     const errors = new InMemoryErrorReporter();
     const { scheduler } = aBench({ onRun: reportFailedRuns(errors) });
 
-    scheduler.register({ name: EXPORT, schedule: QUARTERLY, timeoutMs: MINUTE, run: () => new Promise(() => undefined) });
+    scheduler.register({
+      name: EXPORT,
+      schedule: QUARTERLY,
+      timeoutMs: MINUTE,
+      run: () => new Promise(() => undefined),
+    });
+
     await scheduler.start();
     await scheduler.advance(3 * MINUTE);
 
@@ -51,8 +57,19 @@ describe('reportFailedRuns', () => {
     const errors = new InMemoryErrorReporter();
     const { scheduler } = aBench({ onRun: reportFailedRuns(errors) });
 
-    scheduler.register({ name: EXPORT, schedule: QUARTERLY, run: () => Promise.reject(new LedgerClosed('The ledger is closed')) });
-    scheduler.register({ name: REMINDERS, schedule: QUARTERLY, enabled: true, run: () => new Promise(() => undefined) });
+    scheduler.register({
+      name: EXPORT,
+      schedule: QUARTERLY,
+      run: () => Promise.reject(new LedgerClosed('The ledger is closed')),
+    });
+
+    scheduler.register({
+      name: REMINDERS,
+      schedule: QUARTERLY,
+      enabled: true,
+      run: () => new Promise(() => undefined),
+    });
+
     await scheduler.start();
     await scheduler.advance(40 * MINUTE);
 

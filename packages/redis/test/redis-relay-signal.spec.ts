@@ -8,12 +8,24 @@ afterAll(closeAll);
 
 class IssueInvoice extends Command {}
 
-const issued = (id: string): IntegrationEvent => ({ id, type: 'billing.invoice.issued', version: 1, occurredAt: '2026-03-01T10:00:00.000Z', payload: {} });
+const issued = (id: string): IntegrationEvent => ({
+  id,
+  type: 'billing.invoice.issued',
+  version: 1,
+  occurredAt: '2026-03-01T10:00:00.000Z',
+  payload: {},
+});
 
 describe.skipIf(!REAL_SERVER)('RedisRelaySignal on a server', () => {
   it('wakes the listeners of another process, and only those of its channel', async () => {
     const channel = aNamespace();
-    const [here, there, elsewhere] = [new RedisRelaySignal(connect(), { channel }), new RedisRelaySignal(connect(), { channel }), new RedisRelaySignal(connect(), { channel: aNamespace() })];
+
+    const [here, there, elsewhere] = [
+      new RedisRelaySignal(connect(), { channel }),
+      new RedisRelaySignal(connect(), { channel }),
+      new RedisRelaySignal(connect(), { channel: aNamespace() }),
+    ];
+
     const woken: string[] = [];
 
     there.subscribe(() => void woken.push('there'));
@@ -49,7 +61,12 @@ describe.skipIf(!REAL_SERVER)('RedisRelaySignal on a server', () => {
 
   it('makes an outbox relay of another process publish at once, although its interval is long', async () => {
     const channel = aNamespace();
-    const [inTheApi, inTheWorker] = [new RedisRelaySignal(connect(), { channel }), new RedisRelaySignal(connect(), { channel })];
+
+    const [inTheApi, inTheWorker] = [
+      new RedisRelaySignal(connect(), { channel }),
+      new RedisRelaySignal(connect(), { channel }),
+    ];
+
     // Typed as the port of the events package: the structural type of this package must fit it.
     const wakeOn: RelaySignal = inTheWorker;
     const store = new InMemoryOutboxStore();

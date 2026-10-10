@@ -26,7 +26,9 @@ export class Compartment {
       return;
     }
 
-    if (this.waiting.length >= (this.options.maxQueued ?? 0)) throw new BulkheadFullError(operation);
+    if (this.waiting.length >= (this.options.maxQueued ?? 0)) {
+      throw new BulkheadFullError(operation);
+    }
 
     await new Promise<void>((resolve) => this.waiting.push(resolve));
   }
@@ -35,7 +37,10 @@ export class Compartment {
   private leave(): void {
     const next = this.waiting.shift();
 
-    if (next === undefined) this.running -= 1;
-    else next();
+    if (next === undefined) {
+      this.running -= 1;
+    } else {
+      next();
+    }
   }
 }

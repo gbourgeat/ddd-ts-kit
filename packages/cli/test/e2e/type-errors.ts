@@ -15,10 +15,23 @@ const TOOLS = ['cli', 'eslint-plugin'];
  */
 export function typeErrors(root: string): string {
   fs.symlinkSync(path.join(REPO_ROOT, 'node_modules'), path.join(root, 'node_modules'), 'dir');
-  write(root, 'tsconfig.e2e.json', JSON.stringify({ extends: './tsconfig.json', compilerOptions: { noEmit: true, rootDir: '/', paths: sourcePaths() }, include: ['src', 'scripts', 'test', path.join(PACKAGES, 'validation/src/*.d.ts')] }));
+
+  write(
+    root,
+    'tsconfig.e2e.json',
+    JSON.stringify({
+      extends: './tsconfig.json',
+      compilerOptions: { noEmit: true, rootDir: '/', paths: sourcePaths() },
+      include: ['src', 'scripts', 'test', path.join(PACKAGES, 'validation/src/*.d.ts')],
+    }),
+  );
 
   try {
-    execFileSync(process.execPath, [NATIVE_COMPILER, '-p', 'tsconfig.e2e.json'], { cwd: root, encoding: 'utf8', stdio: 'pipe' });
+    execFileSync(process.execPath, [NATIVE_COMPILER, '-p', 'tsconfig.e2e.json'], {
+      cwd: root,
+      encoding: 'utf8',
+      stdio: 'pipe',
+    });
 
     return '';
   } catch (error) {
@@ -33,7 +46,9 @@ function sourcePaths(): Record<string, string[]> {
   for (const name of fs.readdirSync(PACKAGES).filter((entry) => !TOOLS.includes(entry))) {
     const source = (entry: string): string => path.join(PACKAGES, name, 'src', `${entry}.ts`);
 
-    if (fs.existsSync(source('index'))) paths[`@ddd-ts-kit/${name}`] = [source('index')];
+    if (fs.existsSync(source('index'))) {
+      paths[`@ddd-ts-kit/${name}`] = [source('index')];
+    }
 
     paths[`@ddd-ts-kit/${name}/*`] = [source('*')];
   }

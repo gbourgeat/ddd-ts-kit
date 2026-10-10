@@ -17,7 +17,8 @@ import { generateRepository } from './generate-repository.js';
 export const commandKind: Kind = {
   name: 'command',
   aliases: [],
-  usage: 'command <context> <UseCaseName> (--permission <aggregate>.<action> | --public) [--aggregate <Name>] [--term "<Term>=<meaning>"]...',
+  usage:
+    'command <context> <UseCaseName> (--permission <aggregate>.<action> | --public) [--aggregate <Name>] [--term "<Term>=<meaning>"]...',
   summary: 'A command, its handler with injected ports, its spec and its registration on the command bus.',
   positionals: ['context', 'UseCaseName'],
   writesShared: true,
@@ -27,12 +28,24 @@ export const commandKind: Kind = {
     learnTerms(scope);
 
     const name = concept(scope, request.args[1] ?? '', { what: 'use case', strip: ['command', 'handler'] });
-    const aggregate = request.flags.aggregate === undefined ? undefined : existingAggregate(scope, request.flags.aggregate);
+
+    const aggregate =
+      request.flags.aggregate === undefined ? undefined : existingAggregate(scope, request.flags.aggregate);
+
     const access = accessVars(scope, { name, kind: 'Command' });
 
-    if (aggregate !== undefined && !scope.ws.exists(`${scope.dir}/domain/repositories/${aggregate.kebab}.repository.ts`)) generateRepository(scope, aggregate);
+    if (
+      aggregate !== undefined &&
+      !scope.ws.exists(`${scope.dir}/domain/repositories/${aggregate.kebab}.repository.ts`)
+    ) {
+      generateRepository(scope, aggregate);
+    }
 
-    writeCommand(scope, name, vars(scope, { name: named(name), access, spec: specVars(scope, access), ...commandVars(aggregate) }));
+    writeCommand(
+      scope,
+      name,
+      vars(scope, { name: named(name), access, spec: specVars(scope, access), ...commandVars(aggregate) }),
+    );
   },
 };
 
@@ -49,7 +62,10 @@ function writeCommand(scope: Scope, name: Name, context: RenderContext): void {
   emit(scope, context, [
     ['command/command.ts.tpl', `${folder}/${name.kebab}.command.ts`],
     ['command/handler.ts.tpl', `${folder}/${name.kebab}.handler.ts`],
-    [`command/handler.spec.${scope.config.stack.di === 'tsyringe' ? 'tsyringe' : 'buses'}.ts.tpl`, `test/unit/${name.kebab}.handler.spec.ts`],
+    [
+      `command/handler.spec.${scope.config.stack.di === 'tsyringe' ? 'tsyringe' : 'buses'}.ts.tpl`,
+      `test/unit/${name.kebab}.handler.spec.ts`,
+    ],
   ]);
 
   wire(scope, 'command', context);

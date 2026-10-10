@@ -17,7 +17,9 @@ export class AddTimeOffHandler implements CommandHandler<AddTimeOffCommand> {
   async execute(command: AddTimeOffCommand): Promise<string> {
     const target = await this.calendarRepository.findById(command.calendarId);
 
-    if (target === undefined) throw new UnknownCalendarError(command.calendarId);
+    if (target === undefined) {
+      throw new UnknownCalendarError(command.calendarId);
+    }
 
     const timeOff = unwrap(TimeOff.create(command.startsAt, command.endsAt));
     const held = await this.appointmentRepository.heldOn(target.id, timeOff.startsAt, timeOff.endsAt);

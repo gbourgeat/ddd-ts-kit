@@ -11,7 +11,9 @@ export class MemberUses {
     const name = node.computed ? undefined : keyName(node.property);
     const site = enclosingMember(node);
 
-    if (name === undefined || site === undefined || !isOwnReceiver(node.object, site.body)) return;
+    if (name === undefined || site === undefined || !isOwnReceiver(node.object, site.body)) {
+      return;
+    }
 
     const uses = this.byClass.get(site.body) ?? [];
 
@@ -25,7 +27,9 @@ export class MemberUses {
 }
 
 function isOwnReceiver(receiver: TSESTree.Node, body: TSESTree.ClassBody): boolean {
-  if (receiver.type === AST_NODE_TYPES.ThisExpression) return true;
+  if (receiver.type === AST_NODE_TYPES.ThisExpression) {
+    return true;
+  }
 
   return receiver.type === AST_NODE_TYPES.Identifier && receiver.name === body.parent.id?.name;
 }

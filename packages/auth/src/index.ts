@@ -23,10 +23,7 @@ export type { ListRequest } from './authorization/list-request.js';
 export type { OnDecision } from './authorization/on-decision.js';
 export type { ResourceRef } from './authorization/resource-ref.js';
 export { AuthorizationMap } from './use-cases/authorization-map.js';
-export {
-  authorizationMiddleware,
-  type AuthorizationMiddlewareOptions,
-} from './use-cases/authorization-middleware.js';
+export { authorizationMiddleware, type AuthorizationMiddlewareOptions } from './use-cases/authorization-middleware.js';
 export { publicUseCase } from './use-cases/public-use-case.js';
 export { requires, type RequirementOptions } from './use-cases/requires.js';
 export type { ProtectedUseCase, PublicUseCase, UseCaseDeclaration } from './use-cases/use-case-declaration.js';

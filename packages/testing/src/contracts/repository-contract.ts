@@ -26,10 +26,9 @@ export function repositoryContract<A extends AggregateRoot<Id>, Id extends strin
   new RepositorySuite(runner, options).describe(`${options.name} (repository contract)`);
 }
 
-class RepositorySuite<
-  A extends AggregateRoot<Id>,
-  Id extends string | number,
-> extends ContractSuite<Repository<A, Id>> {
+class RepositorySuite<A extends AggregateRoot<Id>, Id extends string | number> extends ContractSuite<
+  Repository<A, Id>
+> {
   constructor(
     runner: ContractRunner,
     private readonly options: RepositoryContractOptions<A, Id>,

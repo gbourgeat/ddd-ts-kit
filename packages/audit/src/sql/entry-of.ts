@@ -43,7 +43,9 @@ export function entryOf(row: SqlRow): AuditEntry {
 function text(row: SqlRow, column: string): string {
   const value = row[column];
 
-  if (typeof value !== 'string') throw new TypeError(`Column ${column} of an audit entry is not a text`);
+  if (typeof value !== 'string') {
+    throw new TypeError(`Column ${column} of an audit entry is not a text`);
+  }
 
   return value;
 }
@@ -51,15 +53,21 @@ function text(row: SqlRow, column: string): string {
 function optional<Key extends string>(key: Key, value: unknown): { readonly [K in Key]?: string } {
   const present: { [K in Key]?: string } = {};
 
-  if (typeof value === 'string') present[key] = value;
+  if (typeof value === 'string') {
+    present[key] = value;
+  }
 
   return present;
 }
 
 function instant(value: unknown): Date {
-  if (value instanceof Date) return value;
+  if (value instanceof Date) {
+    return value;
+  }
 
-  if (typeof value === 'string' || typeof value === 'number') return new Date(value);
+  if (typeof value === 'string' || typeof value === 'number') {
+    return new Date(value);
+  }
 
   throw new TypeError('Column occurred_at of an audit entry is not an instant');
 }
@@ -72,7 +80,9 @@ function json(value: unknown): unknown {
 const OUTCOMES: readonly string[] = ['allowed', 'denied', 'succeeded', 'failed'] satisfies readonly AuditOutcome[];
 
 function outcomeOf(value: string): AuditOutcome {
-  if (isOutcome(value)) return value;
+  if (isOutcome(value)) {
+    return value;
+  }
 
   throw new TypeError(`"${value}" is not an audit outcome`);
 }
@@ -81,12 +91,20 @@ function isOutcome(value: string): value is AuditOutcome {
   return OUTCOMES.includes(value);
 }
 
-const ACTOR_TYPES: readonly string[] = ['user', 'service', 'system', 'anonymous', 'unknown'] satisfies readonly AuditActor['type'][];
+const ACTOR_TYPES: readonly string[] = [
+  'user',
+  'service',
+  'system',
+  'anonymous',
+  'unknown',
+] satisfies readonly AuditActor['type'][];
 
 function actorOf(row: SqlRow): AuditActor {
   const type = text(row, 'actor_type');
 
-  if (!isActorType(type)) throw new TypeError(`"${type}" is not an actor type`);
+  if (!isActorType(type)) {
+    throw new TypeError(`"${type}" is not an actor type`);
+  }
 
   return { id: text(row, 'actor_id'), type, ...optional('tenantId', row['actor_tenant_id']) };
 }
@@ -103,19 +121,25 @@ function resourceOf(row: SqlRow): AuditResource | undefined {
 }
 
 function changesOf(value: unknown): AuditChanges | undefined {
-  if (typeof value !== 'object' || value === null) return undefined;
+  if (typeof value !== 'object' || value === null) {
+    return undefined;
+  }
 
   const changes: Record<string, AuditChange> = {};
 
   for (const [field, change] of Object.entries(value)) {
-    if (isChange(change)) changes[field] = change;
+    if (isChange(change)) {
+      changes[field] = change;
+    }
   }
 
   return changes;
 }
 
 function isChange(value: unknown): value is AuditChange {
-  if (value === null || typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return true;
+  if (value === null || typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    return true;
+  }
 
   return typeof value === 'object' && 'masked' in value && typeof value.masked === 'string';
 }

@@ -28,7 +28,9 @@ export class PrismaTableRows<Row extends object, Tx extends PrismaRawQueries> im
     const { path, mapper } = this.target;
     const [record] = await this.run(`select * from ${path} where ${this.column(this.target.key)} = $1 limit 1`, [key]);
 
-    if (record === undefined) return undefined;
+    if (record === undefined) {
+      return undefined;
+    }
 
     return stampedRowOf({
       key,
@@ -38,7 +40,9 @@ export class PrismaTableRows<Row extends object, Tx extends PrismaRawQueries> im
   }
 
   async insert(entry: StampedRow<Row>): Promise<boolean> {
-    if (entry.row === undefined) return false;
+    if (entry.row === undefined) {
+      return false;
+    }
 
     const record = Object.entries(this.target.mapper.toRecord(writtenOf(entry, this.target.key)));
     const columns = record.map(([column]) => quoted(column)).join(', ');
@@ -74,7 +78,9 @@ export class PrismaTableRows<Row extends object, Tx extends PrismaRawQueries> im
   private async run(statement: string, values: readonly unknown[]): Promise<Readonly<Record<string, unknown>>[]> {
     const rows: unknown = await this.context.client().$queryRawUnsafe(statement, ...values);
 
-    return Array.isArray(rows) ? rows.filter((row): row is Readonly<Record<string, unknown>> => typeof row === 'object' && row !== null) : [];
+    return Array.isArray(rows)
+      ? rows.filter((row): row is Readonly<Record<string, unknown>> => typeof row === 'object' && row !== null)
+      : [];
   }
 }
 

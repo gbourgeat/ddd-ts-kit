@@ -5,7 +5,9 @@ export function lineOfSequence(text: string, needles: readonly string[]): number
   for (const needle of needles) {
     const found = text.indexOf(needle, at);
 
-    if (found === -1) break;
+    if (found === -1) {
+      break;
+    }
 
     at = found;
   }

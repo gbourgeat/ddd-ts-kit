@@ -32,7 +32,14 @@ const request: RawRequest = {
 
 function shipOrderRoute(handle: () => Promise<void>) {
   return defineRoute(
-    { method: 'POST', path: '/orders/ship', operationId: 'shipOrder', summary: 'Ships', security: false, responses: { 204: { description: 'Shipped' } } },
+    {
+      method: 'POST',
+      path: '/orders/ship',
+      operationId: 'shipOrder',
+      summary: 'Ships',
+      security: false,
+      responses: { 204: { description: 'Shipped' } },
+    },
     async () => {
       await handle();
 
@@ -65,7 +72,14 @@ describe('reportHttpErrors', () => {
     expect(errors.reports).toEqual([
       {
         error: failure,
-        report: { origin: 'http', operation: 'shipOrder', correlationId: 'corr-1', actorId: 'ada', tenantId: 'acme', severity: 'error' },
+        report: {
+          origin: 'http',
+          operation: 'shipOrder',
+          correlationId: 'corr-1',
+          actorId: 'ada',
+          tenantId: 'acme',
+          severity: 'error',
+        },
       },
     ]);
   });
@@ -91,15 +105,22 @@ describe('reportHttpErrors', () => {
   it('reports a request refused before its execution context existed, by its correlation alone', async () => {
     const errors = new InMemoryErrorReporter();
 
-    const response = await executeRoute(shipOrderRoute(() => Promise.resolve()), request, {
-      onError: reportHttpErrors(errors),
-      resolvePrincipal: () => {
-        throw new Error('identity provider down');
+    const response = await executeRoute(
+      shipOrderRoute(() => Promise.resolve()),
+      request,
+      {
+        onError: reportHttpErrors(errors),
+        resolvePrincipal: () => {
+          throw new Error('identity provider down');
+        },
       },
-    });
+    );
 
     expect(response.status).toBe(500);
-    expect(errors.reports.map(({ report }) => report)).toEqual([{ origin: 'http', operation: 'shipOrder', correlationId: 'corr-1', severity: 'error' }]);
+
+    expect(errors.reports.map(({ report }) => report)).toEqual([
+      { origin: 'http', operation: 'shipOrder', correlationId: 'corr-1', severity: 'error' },
+    ]);
   });
 
   it('does not report again the failure of a command its bus already reported', async () => {
@@ -109,16 +130,27 @@ describe('reportHttpErrors', () => {
 
     bus.register(ShipOrder, { execute: () => Promise.reject(new Error('socket closed')) });
 
-    const response = await executeRoute(shipOrderRoute(() => bus.execute(new ShipOrder())), request, {
-      onError: reportHttpErrors(errors),
-      executionScope,
-      resolvePrincipal: () => ada,
-    });
+    const response = await executeRoute(
+      shipOrderRoute(() => bus.execute(new ShipOrder())),
+      request,
+      {
+        onError: reportHttpErrors(errors),
+        executionScope,
+        resolvePrincipal: () => ada,
+      },
+    );
 
     expect(response.status).toBe(500);
 
     expect(errors.reports.map(({ report }) => report)).toEqual([
-      { origin: 'http', operation: 'ShipOrder', correlationId: 'corr-1', actorId: 'ada', tenantId: 'acme', severity: 'error' },
+      {
+        origin: 'http',
+        operation: 'ShipOrder',
+        correlationId: 'corr-1',
+        actorId: 'ada',
+        tenantId: 'acme',
+        severity: 'error',
+      },
     ]);
   });
 });

@@ -38,7 +38,14 @@ describe('KafkaEventBus: what it shows of its credentials', () => {
   });
 
   it('shows none of them through its link to the cluster either', async () => {
-    const settings = { createTopics: true, startFromEarliest: true, publishTimeoutMs: 1_000, connectTimeoutMs: 1_000, maxHandlingMs: 1_000 };
+    const settings = {
+      createTopics: true,
+      startFromEarliest: true,
+      publishTimeoutMs: 1_000,
+      connectTimeoutMs: 1_000,
+      maxHandlingMs: 1_000,
+    };
+
     const link = new BrokerLink(clusterOf({ brokers: '127.0.0.1:1', client: CREDENTIALS }), settings);
 
     expectNoSecret(link, SECRETS);
@@ -52,23 +59,36 @@ describe('KafkaEventBus: what it shows of its credentials', () => {
     const subscriber = bus.forConsumer('billing');
 
     expectNoSecret(subscriber, SECRETS);
-    expectNoSecret(subscriber.subscribe('ordering.order.placed', async () => undefined), SECRETS);
+
+    expectNoSecret(
+      subscriber.subscribe('ordering.order.placed', async () => undefined),
+      SECRETS,
+    );
 
     await bus.close();
   });
 
-  it.skipIf(KAFKA_BROKERS === undefined)('shows no client property once connected, when it holds live clients', { timeout: 60_000 }, async () => {
-    const clientId = unique('client-id-standing-for-a-secret');
-    const type = unique('ordering.order.placed');
-    const bus = new KafkaEventBus({ brokers: KAFKA_BROKERS ?? '', client: { 'client.id': clientId }, consumer: unique('billing') });
+  it.skipIf(KAFKA_BROKERS === undefined)(
+    'shows no client property once connected, when it holds live clients',
+    { timeout: 60_000 },
+    async () => {
+      const clientId = unique('client-id-standing-for-a-secret');
+      const type = unique('ordering.order.placed');
 
-    bus.subscribe(type, async () => undefined);
-    await bus.assertTopology();
-    await bus.publish([{ id: unique('evt'), type, version: 1, occurredAt: new Date(0).toISOString(), payload: {} }]);
+      const bus = new KafkaEventBus({
+        brokers: KAFKA_BROKERS ?? '',
+        client: { 'client.id': clientId },
+        consumer: unique('billing'),
+      });
 
-    expectNoSecret(bus, [clientId]);
-    expect(Object.keys(bus)).toEqual([]);
+      bus.subscribe(type, async () => undefined);
+      await bus.assertTopology();
+      await bus.publish([{ id: unique('evt'), type, version: 1, occurredAt: new Date(0).toISOString(), payload: {} }]);
 
-    await bus.close();
-  });
+      expectNoSecret(bus, [clientId]);
+      expect(Object.keys(bus)).toEqual([]);
+
+      await bus.close();
+    },
+  );
 });

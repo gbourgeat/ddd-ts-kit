@@ -88,7 +88,11 @@ export function run(argv: readonly string[], io: Io = processIo): number {
       return 0;
     }
 
-    if (command === undefined || command === 'help' || [command, ...rest].some((argument) => argument === '--help' || argument === '-h')) {
+    if (
+      command === undefined ||
+      command === 'help' ||
+      [command, ...rest].some((argument) => argument === '--help' || argument === '-h')
+    ) {
       io.out(helpFor(argv));
 
       return 0;
@@ -96,10 +100,15 @@ export function run(argv: readonly string[], io: Io = processIo): number {
 
     return commandNamed(command)(rest, io);
   } catch (error) {
-    if (!(error instanceof CliError)) throw error;
+    if (!(error instanceof CliError)) {
+      throw error;
+    }
 
-    if (argv.includes('--json')) io.out(JSON.stringify({ error: { message: error.message, fix: error.fix } }, null, 2));
-    else io.err(`error: ${error.message}\n  fix: ${error.fix}`);
+    if (argv.includes('--json')) {
+      io.out(JSON.stringify({ error: { message: error.message, fix: error.fix } }, null, 2));
+    } else {
+      io.err(`error: ${error.message}\n  fix: ${error.fix}`);
+    }
 
     return error.exitCode;
   }
@@ -108,7 +117,9 @@ export function run(argv: readonly string[], io: Io = processIo): number {
 function commandNamed(name: string): Command {
   const command = COMMANDS[name];
 
-  if (command !== undefined) return command;
+  if (command !== undefined) {
+    return command;
+  }
 
   throw new CliError(`Unknown command "${name}".`, `Use one of: ${Object.keys(COMMANDS).join(', ')}.`);
 }
@@ -121,7 +132,9 @@ function helpFor(argv: readonly string[]): string {
 }
 
 function help(): string {
-  const kinds = KINDS.map((kind) => `  ${kind.usage}${kind.aliases.length > 0 ? `   (alias: ${kind.aliases.join(', ')})` : ''}`);
+  const kinds = KINDS.map(
+    (kind) => `  ${kind.usage}${kind.aliases.length > 0 ? `   (alias: ${kind.aliases.join(', ')})` : ''}`,
+  );
 
   return `ddd-ts-kit ${VERSION}: bootstrap, scaffold and verify DDD and Clean Architecture TypeScript projects.
 

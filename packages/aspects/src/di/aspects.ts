@@ -22,7 +22,9 @@ export function aspects(...list: readonly Aspect[]): <T>(instance: T, binding: D
   const composed = compose(...list);
 
   return (instance, binding) => {
-    if (typeof instance !== 'object' || instance === null) return instance;
+    if (typeof instance !== 'object' || instance === null) {
+      return instance;
+    }
 
     return composed(instance, {
       context: binding.context,

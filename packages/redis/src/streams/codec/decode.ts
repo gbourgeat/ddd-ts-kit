@@ -16,7 +16,9 @@ interface Envelope {
 export function decode(entry: Entry): IntegrationEvent | undefined {
   const body = parsed(entry.fields.get(ENVELOPE_FIELD));
 
-  if (!isEnvelope(body)) return undefined;
+  if (!isEnvelope(body)) {
+    return undefined;
+  }
 
   return {
     id: body.id,
@@ -38,9 +40,17 @@ function parsed(envelope: string | undefined): unknown {
 }
 
 function isEnvelope(body: unknown): body is Envelope {
-  if (typeof body !== 'object' || body === null) return false;
+  if (typeof body !== 'object' || body === null) {
+    return false;
+  }
 
-  return hasText(body, 'id') && hasText(body, 'type') && hasText(body, 'occurredAt') && 'version' in body && typeof body.version === 'number';
+  return (
+    hasText(body, 'id') &&
+    hasText(body, 'type') &&
+    hasText(body, 'occurredAt') &&
+    'version' in body &&
+    typeof body.version === 'number'
+  );
 }
 
 function hasText(body: object, field: string): boolean {

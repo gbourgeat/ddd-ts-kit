@@ -87,7 +87,10 @@ describe('cached, what it keeps and what it shares', () => {
 
   it('does not cache a failure', async () => {
     const { cache } = createCache();
-    const gateway = cached({ key: byFirstArgument, ttlMs: 60_000, cache })(new QuoteGateway().failNext(new Unreachable()));
+
+    const gateway = cached({ key: byFirstArgument, ttlMs: 60_000, cache })(
+      new QuoteGateway().failNext(new Unreachable()),
+    );
 
     await expect(gateway.quote('EUR-USD')).rejects.toBeInstanceOf(Unreachable);
 
@@ -128,7 +131,11 @@ describe('cached, where it is allowed and what it falls back on', () => {
 
   it('skips what a selector leaves out without refusing it', async () => {
     const { cache } = createCache();
-    const reads = when(forKinds('gateway', 'external'), when(forMethods('quote'), cached({ key: byFirstArgument, ttlMs: 1000, cache })));
+
+    const reads = when(
+      forKinds('gateway', 'external'),
+      when(forMethods('quote'), cached({ key: byFirstArgument, ttlMs: 1000, cache })),
+    );
 
     const repository = reads(new QuoteGateway(), { kind: 'repository' });
 

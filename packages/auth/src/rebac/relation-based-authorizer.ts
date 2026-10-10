@@ -41,18 +41,26 @@ export class RelationBasedAuthorizer implements Authorizer {
   }
 
   async check(request: CheckRequest): Promise<Decision> {
-    if (isAnonymous(request.actor)) return deny(DenialReason.anonymous);
+    if (isAnonymous(request.actor)) {
+      return deny(DenialReason.anonymous);
+    }
 
-    if (request.resource === undefined) return deny(DenialReason.resourceRequired);
+    if (request.resource === undefined) {
+      return deny(DenialReason.resourceRequired);
+    }
 
     const name = this.mapped(request.resource.type, request.permission);
 
-    if (name === undefined) return deny(DenialReason.unmappedPermission);
+    if (name === undefined) {
+      return deny(DenialReason.unmappedPermission);
+    }
 
     const evaluation = this.evaluation(request.actor, { exhaustive: false });
     const { allowed } = await evaluation.evaluate(objectOf(request.resource), name);
 
-    if (evaluation.depthExceeded) return deny(DenialReason.depthExceeded);
+    if (evaluation.depthExceeded) {
+      return deny(DenialReason.depthExceeded);
+    }
 
     return allowed ? ALLOWED : deny(DenialReason.noRelation);
   }
@@ -65,7 +73,9 @@ export class RelationBasedAuthorizer implements Authorizer {
   async listAccessible({ actor, permission, resourceType }: ListRequest): Promise<AccessScope> {
     const name = this.mapped(resourceType, permission);
 
-    if (isAnonymous(actor) || name === undefined) return { kind: 'none' };
+    if (isAnonymous(actor) || name === undefined) {
+      return { kind: 'none' };
+    }
 
     const ids: string[] = [];
 
@@ -73,7 +83,9 @@ export class RelationBasedAuthorizer implements Authorizer {
       const evaluation = this.evaluation(actor, { exhaustive: false });
       const { allowed } = await evaluation.evaluate(object, name);
 
-      if (allowed && !evaluation.depthExceeded) ids.push(parseObject(object).id);
+      if (allowed && !evaluation.depthExceeded) {
+        ids.push(parseObject(object).id);
+      }
     }
 
     return { kind: 'ids', ids: ids.sort() };
@@ -84,7 +96,9 @@ export class RelationBasedAuthorizer implements Authorizer {
     const name = this.mapped(request.resource.type, request.permission);
 
     if (name === undefined) {
-      throw new SchemaError(`No schema permission is mapped to "${request.permission.id}" for "${request.resource.type}".`);
+      throw new SchemaError(
+        `No schema permission is mapped to "${request.permission.id}" for "${request.resource.type}".`,
+      );
     }
 
     return this.evaluation(request.actor, { exhaustive: true }).evaluate(objectOf(request.resource), name);
@@ -111,12 +125,18 @@ export class RelationBasedAuthorizer implements Authorizer {
 
     // A set also iterates over what is added while iterating: `seen` is the queue of the walk.
     for (const current of seen) {
-      if (seen.size > listLimit) throw new ReverseExpansionLimitError(listLimit);
+      if (seen.size > listLimit) {
+        throw new ReverseExpansionLimitError(listLimit);
+      }
 
       for (const { object } of await store.readBySubject(current)) {
-        if (parseObject(object).type === resourceType) candidates.add(object);
+        if (parseObject(object).type === resourceType) {
+          candidates.add(object);
+        }
 
-        for (const next of this.subjectFormsOf(object)) seen.add(next);
+        for (const next of this.subjectFormsOf(object)) {
+          seen.add(next);
+        }
       }
     }
 
@@ -134,7 +154,9 @@ export class RelationBasedAuthorizer implements Authorizer {
 function assertMappingResolves({ schema, mapping }: RelationBasedAuthorizerOptions): void {
   for (const [type, names] of Object.entries(mapping)) {
     for (const [permissionId, name] of Object.entries(names)) {
-      if (schema.resolve(type, name) !== undefined) continue;
+      if (schema.resolve(type, name) !== undefined) {
+        continue;
+      }
 
       throw new SchemaError(`"${permissionId}" is mapped to "${type}#${name}", which the schema does not declare.`);
     }

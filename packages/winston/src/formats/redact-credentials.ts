@@ -10,8 +10,11 @@ export function redactCredentials(keys: readonly string[] = CREDENTIAL_KEYS): wi
 
   return winston.format((info) => {
     for (const [key, value] of Object.entries(info)) {
-      if (hidden.has(key)) info[key] = REDACTED;
-      else if (isRecord(value)) info[key] = withoutCredentials(value, hidden);
+      if (hidden.has(key)) {
+        info[key] = REDACTED;
+      } else if (isRecord(value)) {
+        info[key] = withoutCredentials(value, hidden);
+      }
     }
 
     return info;
@@ -23,10 +26,15 @@ function isRecord(value: unknown): value is Readonly<Record<string, unknown>> {
 }
 
 /** A nested object belongs to the caller: it is copied when a key has to be hidden, never written to. */
-function withoutCredentials(nested: Readonly<Record<string, unknown>>, hidden: ReadonlySet<string>): Readonly<Record<string, unknown>> {
+function withoutCredentials(
+  nested: Readonly<Record<string, unknown>>,
+  hidden: ReadonlySet<string>,
+): Readonly<Record<string, unknown>> {
   const credentials = Object.keys(nested).filter((key) => hidden.has(key));
 
-  if (credentials.length === 0) return nested;
+  if (credentials.length === 0) {
+    return nested;
+  }
 
   return { ...nested, ...Object.fromEntries(credentials.map((key) => [key, REDACTED])) };
 }

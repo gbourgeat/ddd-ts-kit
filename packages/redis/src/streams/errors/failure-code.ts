@@ -9,13 +9,21 @@ const REPLY_KIND = /^[A-Z][A-Z0-9]{1,31}(?= |$)/;
  * name. Never the message, which may quote a key, a URL or payload data.
  */
 export function failureCode(error: unknown): string {
-  if (typeof error !== 'object' || error === null) return 'UNKNOWN_ERROR';
+  if (typeof error !== 'object' || error === null) {
+    return 'UNKNOWN_ERROR';
+  }
 
-  if ('code' in error && typeof error.code === 'string' && IDENTIFIER.test(error.code)) return error.code;
+  if ('code' in error && typeof error.code === 'string' && IDENTIFIER.test(error.code)) {
+    return error.code;
+  }
 
-  if (!(error instanceof Error)) return 'UNKNOWN_ERROR';
+  if (!(error instanceof Error)) {
+    return 'UNKNOWN_ERROR';
+  }
 
-  if (error.name === 'ReplyError') return replyKind(error.message);
+  if (error.name === 'ReplyError') {
+    return replyKind(error.message);
+  }
 
   return IDENTIFIER.test(error.constructor.name) ? error.constructor.name : 'UNKNOWN_ERROR';
 }

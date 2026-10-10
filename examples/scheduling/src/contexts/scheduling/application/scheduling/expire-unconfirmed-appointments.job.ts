@@ -7,6 +7,11 @@ export class ExpireUnconfirmedAppointmentsJob implements ScheduledJob {
   constructor(private readonly commands: CommandBus) {}
 
   async run(execution: JobExecution): Promise<void> {
-    await this.commands.execute(new ExpireUnconfirmedAppointmentsCommand(systemActor('scheduling.expire-unconfirmed-appointments'), execution.scheduledAt));
+    await this.commands.execute(
+      new ExpireUnconfirmedAppointmentsCommand(
+        systemActor('scheduling.expire-unconfirmed-appointments'),
+        execution.scheduledAt,
+      ),
+    );
   }
 }

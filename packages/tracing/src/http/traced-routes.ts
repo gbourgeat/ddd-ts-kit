@@ -40,7 +40,9 @@ export function tracedRoutes(options: TracedRoutesOptions = {}): Around {
   const ignored = options.ignore ?? isNoiseRoute;
 
   return async (route, respond) => {
-    if (ignored(route)) return respond();
+    if (ignored(route)) {
+      return respond();
+    }
 
     const existing = serverSpanInProgress();
     const span = existing ?? started(route);
@@ -59,7 +61,9 @@ export function tracedRoutes(options: TracedRoutesOptions = {}): Around {
 
       throw error;
     } finally {
-      if (existing === undefined) span.end();
+      if (existing === undefined) {
+        span.end();
+      }
     }
   };
 }
@@ -68,7 +72,9 @@ export function tracedRoutes(options: TracedRoutesOptions = {}): Around {
 function serverSpanInProgress(): Span | undefined {
   const active = trace.getActiveSpan();
 
-  if (active === undefined || !active.isRecording() || localRoots.get(active)?.span !== active) return undefined;
+  if (active === undefined || !active.isRecording() || localRoots.get(active)?.span !== active) {
+    return undefined;
+  }
 
   // The API of a span does not say its kind; the span of the SDK does.
   return Reflect.get(active, 'kind') === SpanKind.SERVER ? active : undefined;
@@ -92,11 +98,15 @@ function answered(span: Span, { status, headers, body }: TracedResponse): void {
     ...(status >= 400 ? refusalCode(body) : {}),
   });
 
-  if (status >= 500) span.setStatus({ code: SpanStatusCode.ERROR });
+  if (status >= 500) {
+    span.setStatus({ code: SpanStatusCode.ERROR });
+  }
 }
 
 function outcomeOf(status: number): string {
-  if (status >= 500) return 'failed';
+  if (status >= 500) {
+    return 'failed';
+  }
 
   return status >= 400 ? 'refused' : 'succeeded';
 }

@@ -8,8 +8,11 @@ export function restoring<T>(work: () => T, restore: () => void): T {
     throw error;
   }
 
-  if (outcome instanceof Promise) outcome.then(restore, restore);
-  else restore();
+  if (outcome instanceof Promise) {
+    outcome.then(restore, restore);
+  } else {
+    restore();
+  }
 
   return outcome;
 }

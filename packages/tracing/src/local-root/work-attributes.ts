@@ -6,7 +6,9 @@ import { CORRELATION_ID_ATTRIBUTE, ORIGIN_ATTRIBUTE } from './correlate.js';
 export function workAttributes(): Attributes {
   const execution = tracingConfiguration().executionScope?.current();
 
-  if (execution === undefined) return {};
+  if (execution === undefined) {
+    return {};
+  }
 
   return { [CORRELATION_ID_ATTRIBUTE]: execution.correlationId, [ORIGIN_ATTRIBUTE]: execution.origin };
 }

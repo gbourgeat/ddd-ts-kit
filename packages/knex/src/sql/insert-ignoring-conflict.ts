@@ -40,10 +40,5 @@ async function wroteOnMySql(executor: Knex, insert: Knex.QueryBuilder): Promise<
   const result: unknown = await executor.raw(sql, bindings);
   const header: unknown = Array.isArray(result) ? result[0] : result;
 
-  return (
-    typeof header === 'object' &&
-    header !== null &&
-    'affectedRows' in header &&
-    header.affectedRows === 1
-  );
+  return typeof header === 'object' && header !== null && 'affectedRows' in header && header.affectedRows === 1;
 }

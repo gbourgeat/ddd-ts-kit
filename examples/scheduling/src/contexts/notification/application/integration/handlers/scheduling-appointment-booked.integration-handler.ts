@@ -15,6 +15,14 @@ export class SchedulingAppointmentBookedIntegrationHandler {
     const { patientId, appointmentId, startsAt, status } = event.payload;
     const kind = status === 'requested' ? 'request' : 'confirmation';
 
-    await this.commands.execute(new SendNotificationCommand(this.actor, { recipientId: patientId, kind, appointmentId, startsAt: new Date(startsAt), cause: event.id }));
+    await this.commands.execute(
+      new SendNotificationCommand(this.actor, {
+        recipientId: patientId,
+        kind,
+        appointmentId,
+        startsAt: new Date(startsAt),
+        cause: event.id,
+      }),
+    );
   }
 }

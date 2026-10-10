@@ -29,7 +29,8 @@ export const cleanNoEscapeHatch = defineRule<'assertion' | 'undescribedDisable',
   messages: {
     assertion:
       'The assertion to {{type}} overrules the compiler. Narrow with a type guard, parse the value with a schema, or annotate with `satisfies`; an assertion belongs in a *.mapper.ts or an infrastructure adapter, where foreign data enters.',
-    undescribedDisable: '{{directive}} gives no reason. Fix the diagnostic; if it cannot be fixed, name the rule and add the reason after `--`.',
+    undescribedDisable:
+      '{{directive}} gives no reason. Fix the diagnostic; if it cannot be fixed, name the rule and add the reason after `--`.',
   },
   schema: [
     {
@@ -44,11 +45,16 @@ export const cleanNoEscapeHatch = defineRule<'assertion' | 'undescribedDisable',
   ],
   defaultOptions: [{}],
   create({ file, sourceCode, options: [options], report }) {
-    const judgesAssertions = options.typeAssertions !== false && !mayAssert(file) && !globMatcher(options.adapterGlobs ?? [])(file.path);
-    const isClaimed = (node: Assertion): boolean => options.allowCallerClaimedGenerics === true && isCallerClaimed(node, sourceCode);
+    const judgesAssertions =
+      options.typeAssertions !== false && !mayAssert(file) && !globMatcher(options.adapterGlobs ?? [])(file.path);
+
+    const isClaimed = (node: Assertion): boolean =>
+      options.allowCallerClaimedGenerics === true && isCallerClaimed(node, sourceCode);
 
     const judge = (node: Assertion): void => {
-      if (judgesAssertions && isEscape(node) && !isClaimed(node)) report({ node, messageId: 'assertion', data: { type: sourceCode.getText(node.typeAnnotation) } });
+      if (judgesAssertions && isEscape(node) && !isClaimed(node)) {
+        report({ node, messageId: 'assertion', data: { type: sourceCode.getText(node.typeAnnotation) } });
+      }
     };
 
     return {
@@ -58,7 +64,9 @@ export const cleanNoEscapeHatch = defineRule<'assertion' | 'undescribedDisable',
         for (const comment of sourceCode.getAllComments()) {
           const directive = undescribedDisable(comment.value);
 
-          if (directive !== undefined) report({ loc: comment.loc, messageId: 'undescribedDisable', data: { directive } });
+          if (directive !== undefined) {
+            report({ loc: comment.loc, messageId: 'undescribedDisable', data: { directive } });
+          }
         }
       },
     };
@@ -67,19 +75,29 @@ export const cleanNoEscapeHatch = defineRule<'assertion' | 'undescribedDisable',
 
 /** Mappers and infrastructure adapters translate rows and payloads the compiler knows nothing about. */
 function mayAssert(file: LintedFile): boolean {
-  if (file.path.endsWith('.mapper.ts')) return true;
+  if (file.path.endsWith('.mapper.ts')) {
+    return true;
+  }
 
   return file.location.area === 'context' && file.location.layer === 'infrastructure';
 }
 
 function isEscape(node: Assertion): boolean {
-  if (isAssertion(node.parent)) return false;
+  if (isAssertion(node.parent)) {
+    return false;
+  }
 
   const type = node.typeAnnotation;
 
-  if (type.type === AST_NODE_TYPES.TSUnknownKeyword) return false;
+  if (type.type === AST_NODE_TYPES.TSUnknownKeyword) {
+    return false;
+  }
 
-  return !(type.type === AST_NODE_TYPES.TSTypeReference && type.typeName.type === AST_NODE_TYPES.Identifier && type.typeName.name === 'const');
+  return !(
+    type.type === AST_NODE_TYPES.TSTypeReference &&
+    type.typeName.type === AST_NODE_TYPES.Identifier &&
+    type.typeName.name === 'const'
+  );
 }
 
 function isAssertion(node: TSESTree.Node): node is Assertion {
@@ -93,19 +111,33 @@ function isAssertion(node: TSESTree.Node): node is Assertion {
 function isCallerClaimed(node: Assertion, sourceCode: Readonly<TSESLint.SourceCode>): boolean {
   const type = node.typeAnnotation;
 
-  if (type.type !== AST_NODE_TYPES.TSTypeReference || type.typeName.type !== AST_NODE_TYPES.Identifier || type.typeArguments !== undefined) return false;
+  if (
+    type.type !== AST_NODE_TYPES.TSTypeReference ||
+    type.typeName.type !== AST_NODE_TYPES.Identifier ||
+    type.typeArguments !== undefined
+  ) {
+    return false;
+  }
 
   const { name } = type.typeName;
   const returned = declaringFunction(node, name)?.returnType;
 
-  return returned !== undefined && sourceCode.getTokens(returned).some((token) => token.type === AST_TOKEN_TYPES.Identifier && token.value === name);
+  return (
+    returned !== undefined &&
+    sourceCode.getTokens(returned).some((token) => token.type === AST_TOKEN_TYPES.Identifier && token.value === name)
+  );
 }
 
 /** The nearest function that declares `<name>`; a class declaring the same name in between hides it. */
 function declaringFunction(node: TSESTree.Node, name: string): Generic | undefined {
   for (const parent of ancestors(node)) {
-    if (!('typeParameters' in parent) || parent.typeParameters?.type !== AST_NODE_TYPES.TSTypeParameterDeclaration) continue;
-    if (!parent.typeParameters.params.some((parameter) => parameter.name.name === name)) continue;
+    if (!('typeParameters' in parent) || parent.typeParameters?.type !== AST_NODE_TYPES.TSTypeParameterDeclaration) {
+      continue;
+    }
+
+    if (!parent.typeParameters.params.some((parameter) => parameter.name.name === name)) {
+      continue;
+    }
 
     return isGeneric(parent) ? parent : undefined;
   }
@@ -114,13 +146,19 @@ function declaringFunction(node: TSESTree.Node, name: string): Generic | undefin
 }
 
 function isGeneric(node: TSESTree.Node): node is Generic {
-  return node.type === AST_NODE_TYPES.FunctionDeclaration || node.type === AST_NODE_TYPES.FunctionExpression || node.type === AST_NODE_TYPES.ArrowFunctionExpression;
+  return (
+    node.type === AST_NODE_TYPES.FunctionDeclaration ||
+    node.type === AST_NODE_TYPES.FunctionExpression ||
+    node.type === AST_NODE_TYPES.ArrowFunctionExpression
+  );
 }
 
 function undescribedDisable(comment: string): string | undefined {
   const match = DISABLE.exec(comment);
 
-  if (match === null || /--\s*\S/.test(match[2] ?? '')) return undefined;
+  if (match === null || /--\s*\S/.test(match[2] ?? '')) {
+    return undefined;
+  }
 
   return match[1];
 }

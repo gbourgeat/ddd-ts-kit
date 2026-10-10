@@ -36,8 +36,8 @@ export interface TestTracing {
 export function installTestTracing(options: TestTracingOptions = {}): TestTracing {
   const exporter = new InMemorySpanExporter();
   const order = new StartOrder();
-  const spanProcessors = [new LocalRootTracker(), order, ...(options.processors ?? []), new SimpleSpanProcessor(exporter)];
-  const provider = new BasicTracerProvider({ spanProcessors, ...(options.sampler === undefined ? {} : { sampler: options.sampler }) });
+
+  const provider = collectingProvider(options, order, exporter);
   const spans = (): SpanNode[] => spanTreeOf(exporter.getFinishedSpans(), (spanId) => order.positionOf(spanId));
 
   const clear = (): void => {
@@ -62,4 +62,22 @@ export function installTestTracing(options: TestTracingOptions = {}): TestTracin
       context.disable();
     },
   };
+}
+
+function collectingProvider(
+  options: TestTracingOptions,
+  order: StartOrder,
+  exporter: InMemorySpanExporter,
+): BasicTracerProvider {
+  const spanProcessors = [
+    new LocalRootTracker(),
+    order,
+    ...(options.processors ?? []),
+    new SimpleSpanProcessor(exporter),
+  ];
+
+  return new BasicTracerProvider({
+    spanProcessors,
+    ...(options.sampler === undefined ? {} : { sampler: options.sampler }),
+  });
 }

@@ -19,7 +19,13 @@ const GITLAB: readonly InitFile[] = [
 export function pipelineFiles(config: Config): InitFile[] {
   const { ci } = config.stack;
 
-  if (ci === 'none') return [];
+  if (ci === 'none') {
+    return [];
+  }
 
-  return [['renovate.json', 'pipeline/renovate.json'], ...when(ci !== 'gitlab', GITHUB), ...when(ci !== 'github', GITLAB)];
+  return [
+    ['renovate.json', 'pipeline/renovate.json'],
+    ...when(ci !== 'gitlab', GITHUB),
+    ...when(ci !== 'github', GITLAB),
+  ];
 }

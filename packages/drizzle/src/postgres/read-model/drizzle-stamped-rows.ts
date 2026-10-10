@@ -19,8 +19,12 @@ export interface StampedTable {
  * table is named, since the copy has no drizzle definition of its own. Identifiers are quoted
  * by drizzle and every value is a parameter.
  */
-export class DrizzleStampedRows<Row extends object, Q extends PgQueryResultHKT, F extends Record<string, unknown>, S extends TablesRelationalConfig>
-  implements ReadModelRows<Row>
+export class DrizzleStampedRows<
+  Row extends object,
+  Q extends PgQueryResultHKT,
+  F extends Record<string, unknown>,
+  S extends TablesRelationalConfig,
+> implements ReadModelRows<Row>
 {
   private readonly mapper: RowMapper<Row>;
 
@@ -33,9 +37,16 @@ export class DrizzleStampedRows<Row extends object, Q extends PgQueryResultHKT, 
 
   async find(key: string): Promise<StampedRow<Row> | undefined> {
     const { stamps } = this.target;
-    const [record] = rowsOf(await this.context.executor().execute(sql`select * from ${this.table()} where ${named(this.target.key)} = ${key} limit 1`));
 
-    if (record === undefined) return undefined;
+    const [record] = rowsOf(
+      await this.context
+        .executor()
+        .execute(sql`select * from ${this.table()} where ${named(this.target.key)} = ${key} limit 1`),
+    );
+
+    if (record === undefined) {
+      return undefined;
+    }
 
     const version = record[stamps.lastEventVersion.name];
 
@@ -51,28 +62,48 @@ export class DrizzleStampedRows<Row extends object, Q extends PgQueryResultHKT, 
   }
 
   async insert(entry: StampedRow<Row>): Promise<boolean> {
-    if (entry.row === undefined) return false;
+    if (entry.row === undefined) {
+      return false;
+    }
 
     const values = this.valuesOf(entry);
-    const columns = sql.join(values.map(([column]) => named(column)), sql`, `);
-    const written = sql.join(values.map(([, value]) => sql`${value}`), sql`, `);
+
+    const columns = sql.join(
+      values.map(([column]) => named(column)),
+      sql`, `,
+    );
+
+    const written = sql.join(
+      values.map(([, value]) => sql`${value}`),
+      sql`, `,
+    );
+
     const key = named(this.target.key);
 
     const inserted = await this.context
       .executor()
-      .execute(sql`insert into ${this.table()} (${columns}) values (${written}) on conflict (${key}) do nothing returning ${key}`);
+      .execute(
+        sql`insert into ${this.table()} (${columns}) values (${written}) on conflict (${key}) do nothing returning ${key}`,
+      );
 
     return rowsOf(inserted).length === 1;
   }
 
   async replace(entry: StampedRow<Row>, held: EventStamp): Promise<boolean> {
     const { stamps } = this.target;
-    const changes = sql.join(this.valuesOf(entry).map(([column, value]) => sql`${named(column)} = ${value}`), sql`, `);
+
+    const changes = sql.join(
+      this.valuesOf(entry).map(([column, value]) => sql`${named(column)} = ${value}`),
+      sql`, `,
+    );
+
     const key = named(this.target.key);
 
-    const replaced = await this.context.executor().execute(
-      sql`update ${this.table()} set ${changes} where ${key} = ${entry.key} and ${named(stamps.lastEventId)} = ${held.eventId} and ${named(stamps.lastEventAt)} = ${held.occurredAt.toISOString()} returning ${key}`,
-    );
+    const replaced = await this.context
+      .executor()
+      .execute(
+        sql`update ${this.table()} set ${changes} where ${key} = ${entry.key} and ${named(stamps.lastEventId)} = ${held.eventId} and ${named(stamps.lastEventAt)} = ${held.occurredAt.toISOString()} returning ${key}`,
+      );
 
     return rowsOf(replaced).length === 1;
   }

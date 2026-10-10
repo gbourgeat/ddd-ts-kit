@@ -28,7 +28,7 @@ npx ddd-ts-kit init --http express --validation zod --di tsyringe --orm drizzle 
 npm install
 npm run infra:up      # PostgreSQL (and a tracing backend with the observability profile)
 npm run dev           # auto reload; API documentation on /docs
-npm run verify        # types, lint, tests, e2e, architecture, import graph, dead code, documentation drift
+npm run verify        # types, lint, format, tests, e2e, architecture, import graph, dead code, documentation drift
 ```
 
 Then, the ubiquitous language first, code second:

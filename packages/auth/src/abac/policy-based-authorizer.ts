@@ -23,7 +23,9 @@ export class PolicyBasedAuthorizer implements Authorizer {
   constructor(private readonly options: PolicyBasedAuthorizerOptions) {}
 
   async check(request: CheckRequest): Promise<Decision> {
-    if (isAnonymous(request.actor)) return deny(DenialReason.anonymous);
+    if (isAnonymous(request.actor)) {
+      return deny(DenialReason.anonymous);
+    }
 
     const input = await this.inputOf(request);
 
@@ -31,7 +33,9 @@ export class PolicyBasedAuthorizer implements Authorizer {
       (policy) => policy.grants.some((pattern) => grantCovers(pattern, request.permission)) && policy.when(input),
     );
 
-    if (applying.some((policy) => policy.effect === 'forbid')) return deny(DenialReason.explicitDeny);
+    if (applying.some((policy) => policy.effect === 'forbid')) {
+      return deny(DenialReason.explicitDeny);
+    }
 
     return applying.length > 0 ? ALLOWED : deny(DenialReason.noMatchingPolicy);
   }

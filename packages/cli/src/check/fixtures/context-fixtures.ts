@@ -23,7 +23,8 @@ export const CONTEXT_FIXTURES: readonly Fixture[] = [
     name: 'another context imported through its domain',
     expect: { file: ADAPTER },
     files: project({
-      [ADAPTER]: "import { Product } from '../../../catalog/domain/aggregates/product.aggregate.js';\n\nexport const inMemoryInvoiceRepository = Product;\n",
+      [ADAPTER]:
+        "import { Product } from '../../../catalog/domain/aggregates/product.aggregate.js';\n\nexport const inMemoryInvoiceRepository = Product;\n",
     }),
   },
   {
@@ -31,7 +32,8 @@ export const CONTEXT_FIXTURES: readonly Fixture[] = [
     name: 'another context imported through the alias',
     expect: { file: ROUTE },
     files: project({
-      [ROUTE]: "import type { ListProductsHandler } from '@/contexts/catalog/application/queries/list-products/list-products.handler.js';\n\nexport type IssueInvoiceRoute = ListProductsHandler;\n",
+      [ROUTE]:
+        "import type { ListProductsHandler } from '@/contexts/catalog/application/queries/list-products/list-products.handler.js';\n\nexport type IssueInvoiceRoute = ListProductsHandler;\n",
     }),
   },
   {
@@ -39,7 +41,8 @@ export const CONTEXT_FIXTURES: readonly Fixture[] = [
     name: 'an upstream that is declared',
     expect: 'pass',
     files: project({
-      [ROUTE]: "import type { ProductListedV1 } from '../../../catalog/published-language/index.js';\n\nexport type IssueInvoiceRoute = ProductListedV1;\n",
+      [ROUTE]:
+        "import type { ProductListedV1 } from '../../../catalog/published-language/index.js';\n\nexport type IssueInvoiceRoute = ProductListedV1;\n",
     }),
   },
   {
@@ -71,7 +74,8 @@ export const CONTEXT_FIXTURES: readonly Fixture[] = [
     name: 'a contract re-exporting the domain',
     expect: { file: `${BILLING}/published-language/index.ts` },
     files: project({
-      [`${BILLING}/published-language/index.ts`]: "export { Invoice } from '../domain/aggregates/invoice.aggregate.js';\n",
+      [`${BILLING}/published-language/index.ts`]:
+        "export { Invoice } from '../domain/aggregates/invoice.aggregate.js';\n",
     }),
   },
   {

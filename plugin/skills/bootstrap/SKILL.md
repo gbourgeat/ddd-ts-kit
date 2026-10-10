@@ -73,7 +73,7 @@ would drift.
 ## 5. Prove it and commit
 
 ```bash
-npm run verify          # types, lint, tests, end to end, architecture, import graph, dead code, docs drift
+npm run verify          # types, lint, format, tests, end to end, architecture, import graph, dead code, docs drift
 npm run hooks:install   # pre-commit checks and conventional commit messages
 ```
 

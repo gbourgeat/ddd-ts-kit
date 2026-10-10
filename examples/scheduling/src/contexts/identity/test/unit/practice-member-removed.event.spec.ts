@@ -3,7 +3,10 @@ import { PracticeMemberRemoved } from '../../domain/events/practice-member-remov
 
 describe('PracticeMemberRemoved', () => {
   it('is named after the context, the aggregate and the fact', () => {
-    const event = new PracticeMemberRemoved('practice-1', new Date('2026-01-01T00:00:00.000Z'), { personId: 'person-2', role: 'practitioner' });
+    const event = new PracticeMemberRemoved('practice-1', new Date('2026-01-01T00:00:00.000Z'), {
+      personId: 'person-2',
+      role: 'practitioner',
+    });
 
     expect(event.name).toBe('identity.practice.member-removed');
     expect(event.aggregateId).toBe('practice-1');

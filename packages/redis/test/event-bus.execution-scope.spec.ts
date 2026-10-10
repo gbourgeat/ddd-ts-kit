@@ -39,11 +39,26 @@ describe.skipIf(!REAL_SERVER)('RedisStreamsEventBus, the execution scope of a ha
     await scopedPublisher(bus, scope).publish([anEvent('evt-2')]);
     await server.settled(bus);
 
-    expect((await server.entries(`${prefix}:${PLACED}`))[0]?.fields).toMatchObject({ id: 'evt-1', 'correlation-id': 'corr-7' });
+    expect((await server.entries(`${prefix}:${PLACED}`))[0]?.fields).toMatchObject({
+      id: 'evt-1',
+      'correlation-id': 'corr-7',
+    });
 
     expect(seen).toEqual([
-      { correlationId: 'corr-7', causationId: 'evt-1', actor: systemActor('billing.invoice-on-order-placed'), origin: 'event', extensions: {} },
-      { correlationId: 'evt-2', causationId: 'evt-2', actor: systemActor('billing.invoice-on-order-placed'), origin: 'event', extensions: {} },
+      {
+        correlationId: 'corr-7',
+        causationId: 'evt-1',
+        actor: systemActor('billing.invoice-on-order-placed'),
+        origin: 'event',
+        extensions: {},
+      },
+      {
+        correlationId: 'evt-2',
+        causationId: 'evt-2',
+        actor: systemActor('billing.invoice-on-order-placed'),
+        origin: 'event',
+        extensions: {},
+      },
     ]);
 
     expect(scope.current()).toBeUndefined();
@@ -59,7 +74,9 @@ describe.skipIf(!REAL_SERVER)('RedisStreamsEventBus, the execution scope of a ha
     await bus.publish([{ ...anEvent('evt-1'), correlationId: 'corr-7' }]);
     await server.settled(bus);
 
-    expect(seen).toEqual([{ correlationId: 'corr-7', causationId: 'evt-1', actor: systemActor('billing'), origin: 'event', extensions: {} }]);
+    expect(seen).toEqual([
+      { correlationId: 'corr-7', causationId: 'evt-1', actor: systemActor('billing'), origin: 'event', extensions: {} },
+    ]);
   });
 
   it('keeps the correlation across a retry: the redelivery runs in the same context', async () => {

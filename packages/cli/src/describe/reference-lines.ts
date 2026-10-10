@@ -22,33 +22,117 @@ export function referenceLines(context: ContextDescription): string[] {
 }
 
 function relations(contexts: readonly Upstream[]): string {
-  return contexts.length > 0 ? contexts.map((other) => `\`${other.context}\` (${other.relationship})`).join(', ') : 'none';
+  return contexts.length > 0
+    ? contexts.map((other) => `\`${other.context}\` (${other.relationship})`).join(', ')
+    : 'none';
 }
 
 function tablesOf(context: ContextDescription): Table[] {
   return [
-    { title: 'Use cases', columns: ['Use case', 'Kind', 'Permission'], rows: context.useCases.map((useCase) => [code(useCase.name), useCase.kind, code(useCase.permission)]) },
-    { title: 'Routes', columns: ['Method', 'Path', 'Operation', 'Use case', 'Permission', 'Request', 'Responses', 'Errors'], rows: context.routes.map(routeRow) },
-    { title: 'Consumed events', columns: ['Event', 'Version', 'From', 'Handler', 'Consumer'], rows: context.consumedEvents.map((event) => [code(event.type), event.version === null ? 'not declared' : String(event.version), code(event.from), code(event.handler), code(event.consumer)]) },
-    { title: 'Publishers', columns: ['Event', 'Versions', 'Publisher'], rows: context.publishedEvents.map((event) => [code(event.type), event.versions.join(', '), codes(event.publishers)]) },
-    { title: 'Ports', columns: ['Port', 'Kind', 'Adapters'], rows: context.ports.map((port) => [code(port.name), port.kind === '' ? 'not bound' : port.kind, codes(port.adapters)]) },
-    { title: 'Policies', columns: ['Policy', 'Permission'], rows: context.policies.map((policy) => [code(policy.name), code(policy.permission)]) },
-    { title: 'Gateways', columns: ['Gateway', 'Upstream', 'Adapters'], rows: context.gateways.map((gateway) => [code(gateway.name), gateway.upstream === '' ? 'outside the repository' : code(gateway.upstream), codes(gateway.adapters)]) },
+    {
+      title: 'Use cases',
+      columns: ['Use case', 'Kind', 'Permission'],
+      rows: context.useCases.map((useCase) => [code(useCase.name), useCase.kind, code(useCase.permission)]),
+    },
+    {
+      title: 'Routes',
+      columns: ['Method', 'Path', 'Operation', 'Use case', 'Permission', 'Request', 'Responses', 'Errors'],
+      rows: context.routes.map(routeRow),
+    },
+    ...eventTables(context),
+    ...adapterTables(context),
+  ];
+}
+
+function eventTables(context: ContextDescription): Table[] {
+  return [
+    {
+      title: 'Consumed events',
+      columns: ['Event', 'Version', 'From', 'Handler', 'Consumer'],
+      rows: context.consumedEvents.map((event) => [
+        code(event.type),
+        event.version === null ? 'not declared' : String(event.version),
+        code(event.from),
+        code(event.handler),
+        code(event.consumer),
+      ]),
+    },
+    {
+      title: 'Publishers',
+      columns: ['Event', 'Versions', 'Publisher'],
+      rows: context.publishedEvents.map((event) => [
+        code(event.type),
+        event.versions.join(', '),
+        codes(event.publishers),
+      ]),
+    },
+  ];
+}
+
+/** The tables of what the context binds: its ports, its policies and its gateways. */
+function adapterTables(context: ContextDescription): Table[] {
+  return [
+    {
+      title: 'Ports',
+      columns: ['Port', 'Kind', 'Adapters'],
+      rows: context.ports.map((port) => [
+        code(port.name),
+        port.kind === '' ? 'not bound' : port.kind,
+        codes(port.adapters),
+      ]),
+    },
+    {
+      title: 'Policies',
+      columns: ['Policy', 'Permission'],
+      rows: context.policies.map((policy) => [code(policy.name), code(policy.permission)]),
+    },
+    {
+      title: 'Gateways',
+      columns: ['Gateway', 'Upstream', 'Adapters'],
+      rows: context.gateways.map((gateway) => [
+        code(gateway.name),
+        gateway.upstream === '' ? 'outside the repository' : code(gateway.upstream),
+        codes(gateway.adapters),
+      ]),
+    },
   ];
 }
 
 function routeRow(route: RouteFact): string[] {
-  const request = route.request.map(({ part, schema }) => (schema === part ? part : `${part}: \`${schema}\``)).join(', ');
-  const responses = route.responses.map(({ status, schema }) => (schema === '' ? String(status) : `${status}: \`${schema}\``)).join(', ');
+  const request = route.request
+    .map(({ part, schema }) => (schema === part ? part : `${part}: \`${schema}\``))
+    .join(', ');
 
-  return [route.method, code(route.path), code(route.operationId), code(route.useCase), code(route.permission), request, responses, codes(route.errors)];
+  const responses = route.responses
+    .map(({ status, schema }) => (schema === '' ? String(status) : `${status}: \`${schema}\``))
+    .join(', ');
+
+  return [
+    route.method,
+    code(route.path),
+    code(route.operationId),
+    code(route.useCase),
+    code(route.permission),
+    request,
+    responses,
+    codes(route.errors),
+  ];
 }
 
 /** A table is written only when it has rows: an absent table says the context has none. */
 function tableLines({ title, columns, rows }: Table): string[] {
-  if (rows.length === 0) return [];
+  if (rows.length === 0) {
+    return [];
+  }
 
-  return ['', `### ${title}`, '', `| ${columns.join(' | ')} |`, `|${columns.map(() => '---').join('|')}|`, ...rows.map((row) => `| ${row.join(' | ')} |`)];
+  return [
+    '',
+    `### ${title}`,
+    '',
+    `| ${columns.join(' | ')} |`,
+    `|${columns.map(() => '---').join('|')}|`,
+    ...rows.map((row) => `| ${row.join(' | ')} |`),
+  ];
 }
 
 function code(value: string): string {

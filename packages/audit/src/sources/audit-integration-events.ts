@@ -48,7 +48,11 @@ export function auditIntegrationEvents(trail: AuditTrail, options: AuditIntegrat
 
 const WITHOUT_TRANSACTION: UnitOfWork = { run: (work) => work() };
 
-async function recordOnce(trail: AuditTrail, options: AuditIntegrationEventsOptions, event: IntegrationEvent): Promise<void> {
+async function recordOnce(
+  trail: AuditTrail,
+  options: AuditIntegrationEventsOptions,
+  event: IntegrationEvent,
+): Promise<void> {
   const { processed, consumer = 'audit' } = options;
   const mark = { taken: false };
 
@@ -56,18 +60,27 @@ async function recordOnce(trail: AuditTrail, options: AuditIntegrationEventsOpti
     await (options.unitOfWork ?? WITHOUT_TRANSACTION).run(async () => {
       mark.taken = await processed.markProcessed(consumer, event.id);
 
-      if (mark.taken) await trail.record(recordOfEvent(event, options));
+      if (mark.taken) {
+        await trail.record(recordOfEvent(event, options));
+      }
     });
   } catch (error) {
     // Only a mark taken by this delivery, and only where no rollback already removed it.
-    if (mark.taken) await processed.release?.(consumer, event.id);
+    if (mark.taken) {
+      await processed.release?.(consumer, event.id);
+    }
 
     throw error;
   }
 }
 
 function recordOfEvent(event: IntegrationEvent, options: AuditIntegrationEventsOptions): AuditRecord {
-  const fact = { category: 'integration-event', action: event.type, outcome: 'succeeded', ...contextOf(event.type) } as const;
+  const fact = {
+    category: 'integration-event',
+    action: event.type,
+    outcome: 'succeeded',
+    ...contextOf(event.type),
+  } as const;
 
   return recordIn(contextOfDelivery(event, options), options, fact);
 }
@@ -76,9 +89,16 @@ function contextOfDelivery(event: IntegrationEvent, options: AuditIntegrationEve
   const current = options.scope?.current();
   const correlationId = event.correlationId ?? current?.correlationId ?? event.id;
 
-  if (current !== undefined) return { ...current, correlationId, causationId: event.id };
+  if (current !== undefined) {
+    return { ...current, correlationId, causationId: event.id };
+  }
 
-  return executionContext({ correlationId, causationId: event.id, actor: systemActor(options.consumer ?? 'audit'), origin: 'event' });
+  return executionContext({
+    correlationId,
+    causationId: event.id,
+    actor: systemActor(options.consumer ?? 'audit'),
+    origin: 'event',
+  });
 }
 
 /** An event type is `<context>.<aggregate>.<fact>`. */

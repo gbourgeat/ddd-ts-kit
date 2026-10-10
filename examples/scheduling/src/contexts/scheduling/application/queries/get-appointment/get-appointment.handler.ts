@@ -23,15 +23,24 @@ export class GetAppointmentHandler implements QueryHandler<GetAppointmentQuery> 
   /** The appointment is read inside the scope of the actor, then completed with the name of its patient; identity being silent hides the name, never the appointment. */
   async execute(query: GetAppointmentQuery): Promise<GetAppointmentResult> {
     const scope = await this.access.scope(query.actor, schedulingPermissions['appointment.read'], 'appointment');
-    const found = await this.agenda.list(scoped(Criteria.of<AgendaEntry>().where('id', 'eq', query.appointmentId), scope, { ids: 'id' }));
+
+    const found = await this.agenda.list(
+      scoped(Criteria.of<AgendaEntry>().where('id', 'eq', query.appointmentId), scope, { ids: 'id' }),
+    );
 
     const named = await hydrate(found)
-      .with('patient', (entry) => entry.patientId, (personIds) => this.people.namesOf(personIds))
+      .with(
+        'patient',
+        (entry) => entry.patientId,
+        (personIds) => this.people.namesOf(personIds),
+      )
       .orElse('patient', UNNAMED, { onFailure: 'fallback', timeoutMs: NAME_TIMEOUT_MS });
 
     const [first] = named.items;
 
-    if (first === undefined) throw new AppointmentNotFoundError(query.appointmentId);
+    if (first === undefined) {
+      throw new AppointmentNotFoundError(query.appointmentId);
+    }
 
     const { patient, ...entry } = first;
 

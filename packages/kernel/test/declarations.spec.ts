@@ -1,13 +1,7 @@
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { Clock, CommandBus, type Actor } from '../src/index.js';
-import {
-  declarationOf,
-  listDeclarations,
-  tokenIdentity,
-  type Declaration,
-  type Token,
-} from '../src/declarations.js';
+import { declarationOf, listDeclarations, tokenIdentity, type Declaration, type Token } from '../src/declarations.js';
 import type { HandlerOfAnotherMessage } from './fixtures/declarations/declaration-mistakes.js';
 import { decoratorModes, removeCompiled } from './support/decorator-modes.js';
 
@@ -19,12 +13,18 @@ const FIXTURES = path.join(import.meta.dirname, 'fixtures/declarations');
 const ada: Actor = { id: 'ada', type: 'user', roles: [], attributes: {} };
 
 /** The declarations a role may come with: three roles share the one of a port. */
-type Playing<Role, D = Declaration> = D extends { readonly role: infer Roles } ? (Role extends Roles ? D : never) : never;
+type Playing<Role, D = Declaration> = D extends { readonly role: infer Roles }
+  ? Role extends Roles
+    ? D
+    : never
+  : never;
 
 function declared<Role extends Declaration['role']>(target: unknown, role: Role): Playing<Role> {
   const declaration = declarationOf(target);
 
-  if (declaration?.role !== role) throw new Error(`Expected a ${role}, got ${declaration?.role ?? 'no declaration'}`);
+  if (declaration?.role !== role) {
+    throw new Error(`Expected a ${role}, got ${declaration?.role ?? 'no declaration'}`);
+  }
 
   return declaration as Playing<Role>;
 }
@@ -77,7 +77,9 @@ function messagesAndTheirHandlers(clinic: () => Clinic): void {
     });
 
     it('a handler names its message and the tokens of its constructor, in order', () => {
-      const { ScheduleVisit, ScheduleVisitHandler, ListOpeningHours, ListOpeningHoursHandler, VisitRepository } = clinic();
+      const { ScheduleVisit, ScheduleVisitHandler, ListOpeningHours, ListOpeningHoursHandler, VisitRepository } =
+        clinic();
+
       const declaration = declared(ScheduleVisitHandler, 'command-handler');
 
       expect(declaration).toMatchObject({
@@ -115,7 +117,11 @@ function messagesAndTheirHandlers(clinic: () => Clinic): void {
       const { RemindOnVisitScheduled, VisitScheduled, Reminders } = clinic();
       const declaration = declared(RemindOnVisitScheduled, 'domain-event-handler');
 
-      expect(declaration).toMatchObject({ name: 'clinic.visit.scheduled', event: VisitScheduled, dependencies: [Reminders] });
+      expect(declaration).toMatchObject({
+        name: 'clinic.visit.scheduled',
+        event: VisitScheduled,
+        dependencies: [Reminders],
+      });
 
       expect(declaration.pair((event, implementation): unknown[] => [event, implementation])).toEqual([
         VisitScheduled,
@@ -128,7 +134,16 @@ function messagesAndTheirHandlers(clinic: () => Clinic): void {
 function adaptersJobsAndPolicies(clinic: () => Clinic): void {
   describe('adapters, jobs and policies', () => {
     it('a repository, an adapter and a gateway name their port, with a role, a lifetime and aspects', () => {
-      const { InMemoryVisitRepository, SmsReminders, AlwaysFreeRooms, VisitRepository, Reminders, ReminderSettings, Rooms } = clinic();
+      const {
+        InMemoryVisitRepository,
+        SmsReminders,
+        AlwaysFreeRooms,
+        VisitRepository,
+        Reminders,
+        ReminderSettings,
+        Rooms,
+      } = clinic();
+
       const reminders = declared(SmsReminders, 'adapter');
 
       expect(declared(InMemoryVisitRepository, 'repository')).toEqual({
@@ -161,16 +176,33 @@ function adaptersJobsAndPolicies(clinic: () => Clinic): void {
       });
 
       expect(identities(declaration.dependencies)).toEqual(identities([CommandBus]));
-      expect(declared(PurgeExpiredCallbacks, 'job')).toMatchObject({ schedule: { every: '6h' }, options: {}, dependencies: [] });
+
+      expect(declared(PurgeExpiredCallbacks, 'job')).toMatchObject({
+        schedule: { every: '6h' },
+        options: {},
+        dependencies: [],
+      });
+
       expect(RemindTomorrowVisits.built).toBe(0);
     });
 
     it('a job is refused where it is written: a name, a cron or a time zone that cannot be read', () => {
-      const declare = (name: `${string}.${string}`, cron = '0 7 * * *', timeZone = 'UTC') => () => clinic().declareAJob(name, cron, timeZone);
+      const declare =
+        (name: `${string}.${string}`, cron = '0 7 * * *', timeZone = 'UTC') =>
+        () =>
+          clinic().declareAJob(name, cron, timeZone);
 
-      expect(declare('Clinic.PurgeCallbacks')).toThrow(/"Clinic.PurgeCallbacks" is not a job name: write <context>.<job-name>/);
-      expect(declare('clinic.purge', '0 7 * *')).toThrow(/Job "clinic.purge": Cron "0 7 \* \*" has 4 field\(s\): five are expected/);
-      expect(declare('clinic.purge', '0 7 * * *', 'Europe/Lutece')).toThrow(/Job "clinic.purge": "Europe\/Lutece" is not a time zone/);
+      expect(declare('Clinic.PurgeCallbacks')).toThrow(
+        /"Clinic.PurgeCallbacks" is not a job name: write <context>.<job-name>/,
+      );
+
+      expect(declare('clinic.purge', '0 7 * *')).toThrow(
+        /Job "clinic.purge": Cron "0 7 \* \*" has 4 field\(s\): five are expected/,
+      );
+
+      expect(declare('clinic.purge', '0 7 * * *', 'Europe/Lutece')).toThrow(
+        /Job "clinic.purge": "Europe\/Lutece" is not a time zone/,
+      );
     });
 
     it('a projection names itself, its read model and the method that applies each event', () => {
@@ -190,8 +222,14 @@ function adaptersJobsAndPolicies(clinic: () => Clinic): void {
 
     it('a projection is refused where it is written: no event, a name that is none, an @On left alone', () => {
       expect(() => clinic().declareAProjectionOfNothing()).toThrow(/Projection OfNothing applies no event/);
-      expect(() => clinic().declareAProjection('Clinic.Patients')).toThrow(/"Clinic.Patients" is not a projection name/);
-      expect(() => clinic().declareAnOnWithoutItsProjection()).toThrow(/@On is written on the method "registered" of a class that carries no @Projection/);
+
+      expect(() => clinic().declareAProjection('Clinic.Patients')).toThrow(
+        /"Clinic.Patients" is not a projection name/,
+      );
+
+      expect(() => clinic().declareAnOnWithoutItsProjection()).toThrow(
+        /@On is written on the method "registered" of a class that carries no @Projection/,
+      );
     });
 
     it('a policy names its permission and the reason it gives', () => {
@@ -240,8 +278,9 @@ function whatDeclaringLeavesAndRefuses(clinic: () => Clinic): void {
   });
 }
 
-describeTheClinic('as the test runner transforms it (experimentalDecorators, no plugin)', () =>
-  import('./fixtures/declarations/declared-clinic.js'),
+describeTheClinic(
+  'as the test runner transforms it (experimentalDecorators, no plugin)',
+  () => import('./fixtures/declarations/declared-clinic.js'),
 );
 
 for (const mode of decoratorModes(FIXTURES)) {

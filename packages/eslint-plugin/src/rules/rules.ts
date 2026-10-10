@@ -16,7 +16,11 @@ import { cleanNoNoiseComment } from './clean-no-noise-comment.js';
 import { cleanOneExportPerFile } from './clean-one-export-per-file.js';
 import { cleanStepdown } from './clean-stepdown.js';
 import { contextExtractable } from './context-extractable.js';
-import { contextDeclaredRelationship, contextPublishedLanguageIsAContract, contextPublishedLanguageOnly } from './context-boundaries.js';
+import {
+  contextDeclaredRelationship,
+  contextPublishedLanguageIsAContract,
+  contextPublishedLanguageOnly,
+} from './context-boundaries.js';
 import { declarationsRoleDeclared } from './declarations-role-declared.js';
 import { domainAggregateEncapsulation } from './domain-aggregate-encapsulation.js';
 import { domainEventsDispatchedOnSave } from './domain-events-dispatched-on-save.js';
@@ -93,4 +97,6 @@ const ALL = [
 ];
 
 /** Keyed by ESLint name: the id of docs/ARCHITECTURE.md with its slash replaced by a dash, or the name of a companion rule. */
-export const rules: Readonly<Record<string, DddRule>> = Object.fromEntries(ALL.map((rule) => [docsOf(rule).name, rule]));
+export const rules: Readonly<Record<string, DddRule>> = Object.fromEntries(
+  ALL.map((rule) => [docsOf(rule).name, rule]),
+);

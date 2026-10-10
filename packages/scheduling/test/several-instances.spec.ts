@@ -18,7 +18,12 @@ describe('several instances of an application', () => {
     const jobs = [new RecordingJob(), new RecordingJob()] as const;
 
     instances.forEach(({ scheduler }, index) => {
-      scheduler.register({ name: REMINDERS, schedule: QUARTERLY, ...options, run: (execution: JobExecution) => (jobs[index] ?? jobs[0]).run(execution) });
+      scheduler.register({
+        name: REMINDERS,
+        schedule: QUARTERLY,
+        ...options,
+        run: (execution: JobExecution) => (jobs[index] ?? jobs[0]).run(execution),
+      });
     });
 
     return { lock, instances, jobs, executions: () => jobs.flatMap((job) => job.scheduledAt) };
@@ -33,7 +38,10 @@ describe('several instances of an application', () => {
     await first.scheduler.advance(2 * MINUTE);
     await second.scheduler.advance(0);
     expect(executions()).toEqual(['2026-03-02T10:00:00.000Z']);
-    expect(second.scheduler.runs).toEqual([{ job: REMINDERS, outcome: 'skipped-locked', scheduledAt: new Date('2026-03-02T10:00:00.000Z') }]);
+
+    expect(second.scheduler.runs).toEqual([
+      { job: REMINDERS, outcome: 'skipped-locked', scheduledAt: new Date('2026-03-02T10:00:00.000Z') },
+    ]);
 
     await second.scheduler.advance(15 * MINUTE);
     await first.scheduler.advance(0);
@@ -81,7 +89,12 @@ describe('several instances of an application', () => {
     let down = true;
     const clock = new FixedClock(new Date('2026-03-02T09:58:30.000Z'));
     const memory = new InMemoryLock(clock);
-    const lock: Lock = { acquire: (key, options) => (down ? Promise.reject(new Error('redis://secret@host is down')) : memory.acquire(key, options)) };
+
+    const lock: Lock = {
+      acquire: (key, options) =>
+        down ? Promise.reject(new Error('redis://secret@host is down')) : memory.acquire(key, options),
+    };
+
     const { scheduler, logger } = aBench({ clock, lock });
     const job = new RecordingJob();
 
@@ -92,7 +105,11 @@ describe('several instances of an application', () => {
     down = false;
     await scheduler.advance(15 * MINUTE);
 
-    expect(scheduler.runs).toMatchObject([{ outcome: 'failed', errorCode: 'JOB_LOCK_UNAVAILABLE' }, { outcome: 'succeeded' }]);
+    expect(scheduler.runs).toMatchObject([
+      { outcome: 'failed', errorCode: 'JOB_LOCK_UNAVAILABLE' },
+      { outcome: 'succeeded' },
+    ]);
+
     expect(job.scheduledAt).toEqual(['2026-03-02T10:15:00.000Z']);
     expect(JSON.stringify(logger.entries)).not.toContain('secret');
   });

@@ -21,9 +21,19 @@ const WRITTEN: Readonly<Record<FieldDeclaration['type'], string>> = {
 export function criteriaParameters<Row>(definition: CriteriaDefinition<Row>): JsonSchema {
   const { defaultPageSize, maxPageSize } = definition.limits;
   const page: unknown = pageRequestParameters({ defaultSize: defaultPageSize, maxSize: maxPageSize })['properties'];
-  const filters = Object.entries(definition.fields).flatMap(([field, declared]) => (declared.filter.length === 0 ? [] : [[`filter[${field}]`, filterParameter(field, declared)]]));
 
-  return { type: 'object', properties: { ...Object.fromEntries(filters), sort: sortParameter(sortableFields(definition)), ...(isRecord(page) ? page : {}) } };
+  const filters = Object.entries(definition.fields).flatMap(([field, declared]) =>
+    declared.filter.length === 0 ? [] : [[`filter[${field}]`, filterParameter(field, declared)]],
+  );
+
+  return {
+    type: 'object',
+    properties: {
+      ...Object.fromEntries(filters),
+      sort: sortParameter(sortableFields(definition)),
+      ...(isRecord(page) ? page : {}),
+    },
+  };
 }
 
 function filterParameter(field: string, { type, filter }: FieldDeclaration): JsonSchema {

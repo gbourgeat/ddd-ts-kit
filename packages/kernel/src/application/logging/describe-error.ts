@@ -39,7 +39,9 @@ function described(error: Error, scrubbing: boolean, depth: number): ErrorDescri
 
 /** The first line of a stack repeats the message: a scrubbed error keeps its frames only. */
 function stackOf(error: Error, scrubbed: boolean): string | undefined {
-  if (error.stack === undefined || !scrubbed) return error.stack;
+  if (error.stack === undefined || !scrubbed) {
+    return error.stack;
+  }
 
   const firstFrame = error.stack.search(FIRST_FRAME);
 

@@ -62,12 +62,17 @@ export class InMemoryReadModelTable<Row extends object> implements ReadModelTabl
   }
 
   async touched(limit: number): Promise<readonly TouchedKey[]> {
-    return [...this.marks].sort(([left], [right]) => (left < right ? -1 : 1)).slice(0, limit).map(([key, mark]) => ({ key, mark }));
+    return [...this.marks]
+      .sort(([left], [right]) => (left < right ? -1 : 1))
+      .slice(0, limit)
+      .map(([key, mark]) => ({ key, mark }));
   }
 
   async settle(keys: readonly TouchedKey[]): Promise<void> {
     for (const { key, mark } of keys) {
-      if (this.marks.get(key) === mark) this.marks.delete(key);
+      if (this.marks.get(key) === mark) {
+        this.marks.delete(key);
+      }
     }
   }
 
@@ -94,7 +99,9 @@ function found<Row>(rows: Rows<Row>, key: string): StampedRow<Row> | undefined {
 }
 
 function inserted<Row>(rows: Rows<Row>, entry: StampedRow<Row>): boolean {
-  if (rows.has(entry.key)) return false;
+  if (rows.has(entry.key)) {
+    return false;
+  }
 
   rows.set(entry.key, structuredClone(entry));
 
@@ -104,7 +111,9 @@ function inserted<Row>(rows: Rows<Row>, entry: StampedRow<Row>): boolean {
 function replaced<Row>(rows: Rows<Row>, entry: StampedRow<Row>, held: EventStamp): boolean {
   const current = rows.get(entry.key);
 
-  if (current === undefined || !sameStamp(current.stamp, held)) return false;
+  if (current === undefined || !sameStamp(current.stamp, held)) {
+    return false;
+  }
 
   rows.set(entry.key, structuredClone({ ...entry, row: entry.row ?? undefined }));
 
@@ -112,5 +121,9 @@ function replaced<Row>(rows: Rows<Row>, entry: StampedRow<Row>, held: EventStamp
 }
 
 function sameStamp(left: EventStamp, right: EventStamp): boolean {
-  return left.eventId === right.eventId && left.occurredAt.getTime() === right.occurredAt.getTime() && left.version === right.version;
+  return (
+    left.eventId === right.eventId &&
+    left.occurredAt.getTime() === right.occurredAt.getTime() &&
+    left.version === right.version
+  );
 }

@@ -7,9 +7,13 @@ type Fields = Readonly<Record<string, FieldDeclaration>>;
 
 /** Whether a row satisfies a predicate: the reference every translator is held to. */
 export function holds(predicate: Predicate | undefined, row: object, fields: Fields): boolean {
-  if (predicate === undefined) return true;
+  if (predicate === undefined) {
+    return true;
+  }
 
-  if (predicate.kind === 'test') return passes(predicate, row, fields[predicate.field]?.type ?? 'string');
+  if (predicate.kind === 'test') {
+    return passes(predicate, row, fields[predicate.field]?.type ?? 'string');
+  }
 
   return predicate.kind === 'and'
     ? predicate.parts.every((part) => holds(part, row, fields))
@@ -19,9 +23,13 @@ export function holds(predicate: Predicate | undefined, row: object, fields: Fie
 function passes(test: PredicateTest, row: object, type: FieldType): boolean {
   const value: unknown = Reflect.get(row, test.field) ?? null;
 
-  if (test.operator === 'isNull') return (value === null) === test.value;
+  if (test.operator === 'isNull') {
+    return (value === null) === test.value;
+  }
 
-  if (value === null) return false;
+  if (value === null) {
+    return false;
+  }
 
   return compares(test, value, type) !== test.negated;
 }

@@ -6,7 +6,9 @@ export function loggedLine(record: Record<string, unknown>): LoggedLine {
   const { level, message, time: _time, ...fields } = record;
   const known = LOG_LEVELS.find((one) => one === level);
 
-  if (known === undefined) throw new Error(`Not a level of the port: ${String(level)}`);
+  if (known === undefined) {
+    throw new Error(`Not a level of the port: ${String(level)}`);
+  }
 
   return { level: known, message: String(message), fields };
 }

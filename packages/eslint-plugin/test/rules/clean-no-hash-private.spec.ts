@@ -23,7 +23,8 @@ ruleTester.run('clean-no-hash-private', cleanNoHashPrivate, {
     },
     {
       code: 'class Invoice { get #paid(): boolean { return true; } set #paid(value: boolean) {} isPaid(): boolean { return this.#paid; } }',
-      output: 'class Invoice { private get paid(): boolean { return true; } private set paid(value: boolean) {} isPaid(): boolean { return this.paid; } }',
+      output:
+        'class Invoice { private get paid(): boolean { return true; } private set paid(value: boolean) {} isPaid(): boolean { return this.paid; } }',
       errors: [{ messageId: 'hash' }, { messageId: 'hash' }],
     },
     {
@@ -31,11 +32,35 @@ ruleTester.run('clean-no-hash-private', cleanNoHashPrivate, {
       output: 'class Invoice { @observed() private total = 0; }',
       errors: [{ messageId: 'hash' }],
     },
-    { code: 'class Invoice { #total = 0; total(): number { return this.#total; } }', output: null, errors: [{ messageId: 'hash' }] },
-    { code: 'class Invoice { #total = 0; constructor(readonly total: number) {} }', output: null, errors: [{ messageId: 'hash' }] },
-    { code: 'class Invoice { #brand = true; static is(value: object): boolean { return #brand in value; } }', output: null, errors: [{ messageId: 'hash' }] },
-    { code: 'class Invoice { #lines = []; first(): unknown { return this.lines().#lines[0]; } lines(): Invoice { return this; } }', output: null, errors: [{ messageId: 'hash' }] },
-    { code: 'class A { #id = 1; } class B { #id = 2; }', output: null, errors: [{ messageId: 'hash' }, { messageId: 'hash' }] },
-    { code: 'const Invoice = class { #total = 0; };', output: 'const Invoice = class { private total = 0; };', errors: [{ messageId: 'hash', data: { className: 'the class', name: 'total' } }] },
+    {
+      code: 'class Invoice { #total = 0; total(): number { return this.#total; } }',
+      output: null,
+      errors: [{ messageId: 'hash' }],
+    },
+    {
+      code: 'class Invoice { #total = 0; constructor(readonly total: number) {} }',
+      output: null,
+      errors: [{ messageId: 'hash' }],
+    },
+    {
+      code: 'class Invoice { #brand = true; static is(value: object): boolean { return #brand in value; } }',
+      output: null,
+      errors: [{ messageId: 'hash' }],
+    },
+    {
+      code: 'class Invoice { #lines = []; first(): unknown { return this.lines().#lines[0]; } lines(): Invoice { return this; } }',
+      output: null,
+      errors: [{ messageId: 'hash' }],
+    },
+    {
+      code: 'class A { #id = 1; } class B { #id = 2; }',
+      output: null,
+      errors: [{ messageId: 'hash' }, { messageId: 'hash' }],
+    },
+    {
+      code: 'const Invoice = class { #total = 0; };',
+      output: 'const Invoice = class { private total = 0; };',
+      errors: [{ messageId: 'hash', data: { className: 'the class', name: 'total' } }],
+    },
   ],
 });

@@ -3,7 +3,14 @@ import { OutboxRelay, type OutboxStore{{#if events.wakeable}}, type RelaySignal{
 import { SystemClock, type IntegrationEventPublisher, type Logger } from '@ddd-ts-kit/kernel';
 {{/if}}
 {{#if errors.sentry}}
-import { DeadLetterReports, NoopErrorReporter, SystemClock, type ErrorReporter, type IntegrationEventPublisher, type Logger } from '@ddd-ts-kit/kernel';
+import {
+  DeadLetterReports,
+  NoopErrorReporter,
+  SystemClock,
+  type ErrorReporter,
+  type IntegrationEventPublisher,
+  type Logger,
+} from '@ddd-ts-kit/kernel';
 {{/if}}
 {{#if broker.kafka}}
 import { aggregateKeyOf } from './aggregate-key-of.js';

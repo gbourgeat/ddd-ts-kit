@@ -11,7 +11,9 @@ export function splitAtCommas(text: string, depthChange: (char: string, previous
 
     depth += char === '' ? 0 : depthChange(char, text.charAt(i - 1));
 
-    if (i < text.length && (char !== ',' || depth !== 0)) continue;
+    if (i < text.length && (char !== ',' || depth !== 0)) {
+      continue;
+    }
 
     parts.push(partOf(text, start, i));
     start = i + 1;

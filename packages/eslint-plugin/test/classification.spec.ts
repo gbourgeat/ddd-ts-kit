@@ -14,17 +14,40 @@ const RAW_CONFIGS: readonly Record<string, unknown>[] = [
   {},
   { sourceRoot: 'app', importAlias: '~/' },
   { contextsDir: './modules/', sharedKernelDir: 'libs\\shared', platformDir: 'src/infra-platform', importAlias: '' },
-  { stack: { validation: 'class-validator' }, domainAllowedPackages: ['@ddd-ts-kit/kernel', 'decimal.js'], limits: { maxParameters: 4, maxFunctionLines: 0 } },
+  {
+    stack: { validation: 'class-validator' },
+    domainAllowedPackages: ['@ddd-ts-kit/kernel', 'decimal.js'],
+    limits: { maxParameters: 4, maxFunctionLines: 0 },
+  },
   { stack: { validation: 'none' }, publishedLanguageAllowedPackages: ['valibot'], rules: { 'clean/stepdown': 'warn' } },
   { standardInterfaces: { TenantInfo: 'TenantScoped', CurrentUser: false, Empty: '', Wrong: true, Count: 3 } },
   { standardInterfaces: ['ILogger'] },
   { limits: { maxParameters: 2, maxFunctionLines: 500 } },
-  { onePerFile: { allow: [{ file: './src/platform/collaborators.ts', reason: ' the defaults of one runtime ' }, { file: 'src/**/x.ts', reason: ' ' }, { file: 'src/a.ts' }, { reason: 'no file' }, 'src/b.ts', 7] } },
+  {
+    onePerFile: {
+      allow: [
+        { file: './src/platform/collaborators.ts', reason: ' the defaults of one runtime ' },
+        { file: 'src/**/x.ts', reason: ' ' },
+        { file: 'src/a.ts' },
+        { reason: 'no file' },
+        'src/b.ts',
+        7,
+      ],
+    },
+  },
   { onePerFile: ['src/a.ts'] },
   { stack: { style: 'declared' } },
   { stack: { style: 'declared', assembly: 'discovery' } },
   { stack: { style: 'explicit', orm: 'none' } },
-  { contexts: { billing: { classification: 'core', upstreams: ['catalog', { context: 'identity', relationship: 'conformist' }, 42], extraDirectories: ['jobs', { path: './sagas/', reason: 'long flows' }] } } },
+  {
+    contexts: {
+      billing: {
+        classification: 'core',
+        upstreams: ['catalog', { context: 'identity', relationship: 'conformist' }, 42],
+        extraDirectories: ['jobs', { path: './sagas/', reason: 'long flows' }],
+      },
+    },
+  },
 ];
 
 const PATHS = [
@@ -94,14 +117,19 @@ describe('the plugin classifies files exactly like the CLI checker', () => {
   it.each(RAW_CONFIGS)('locates every sample path the same way under %j', (raw) => {
     for (const file of PATHS) {
       expect(locate(parseConfig(raw), file), file).toEqual(cliLocate(cliParseConfig(raw), file));
-      expect(isTestFile(file, locate(parseConfig(raw), file)), file).toBe(cliIsTestFile(file, cliLocate(cliParseConfig(raw), file)));
+
+      expect(isTestFile(file, locate(parseConfig(raw), file)), file).toBe(
+        cliIsTestFile(file, cliLocate(cliParseConfig(raw), file)),
+      );
     }
   });
 
   it.each(RAW_CONFIGS)('resolves every sample import the same way under %j', (raw) => {
     for (const from of PATHS.filter((file) => file.endsWith('.ts'))) {
       for (const specifier of SPECIFIERS) {
-        expect(resolveImport(parseConfig(raw), from, specifier), `${specifier} from ${from}`).toEqual(cliResolveImport(cliParseConfig(raw), from, specifier));
+        expect(resolveImport(parseConfig(raw), from, specifier), `${specifier} from ${from}`).toEqual(
+          cliResolveImport(cliParseConfig(raw), from, specifier),
+        );
       }
     }
   });
@@ -112,8 +140,13 @@ describe('the plugin classifies files exactly like the CLI checker', () => {
  * (stack choices, deployment, deviations) that a linter has no use for, at any depth.
  */
 function keysReadByThePlugin(cli: unknown, plugin: unknown): unknown {
-  if (Array.isArray(cli) && Array.isArray(plugin)) return cli.map((item: unknown, index) => keysReadByThePlugin(item, plugin[index]));
-  if (!isPlainObject(cli) || !isPlainObject(plugin)) return cli;
+  if (Array.isArray(cli) && Array.isArray(plugin)) {
+    return cli.map((item: unknown, index) => keysReadByThePlugin(item, plugin[index]));
+  }
+
+  if (!isPlainObject(cli) || !isPlainObject(plugin)) {
+    return cli;
+  }
 
   return Object.fromEntries(Object.keys(plugin).map((key) => [key, keysReadByThePlugin(cli[key], plugin[key])]));
 }

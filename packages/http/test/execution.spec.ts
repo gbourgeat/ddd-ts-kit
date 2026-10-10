@@ -188,8 +188,15 @@ describe('the execution context around the handler', () => {
 describe('defineRoute security', () => {
   const declare = (security: unknown) => () =>
     defineRoute(
-      // @ts-expect-error the cases below are what the compiler refuses, sent by a JavaScript caller
-      { method: 'GET', path: '/x', operationId: 'x', summary: 'x', responses: { 204: { description: 'ok' } }, security },
+      {
+        method: 'GET',
+        path: '/x',
+        operationId: 'x',
+        summary: 'x',
+        responses: { 204: { description: 'ok' } },
+        // @ts-expect-error the cases below are what the compiler refuses, sent by a JavaScript caller
+        security,
+      },
       () => ({ status: 204 }),
     );
 
@@ -208,7 +215,13 @@ describe('RouteSpec', () => {
     const undeclared = () =>
       defineRoute(
         // @ts-expect-error security is required: deny by default at the type level
-        { method: 'GET', path: '/typed', operationId: 'typed', summary: 'Typing', responses: { 204: { description: 'ok' } } },
+        {
+          method: 'GET',
+          path: '/typed',
+          operationId: 'typed',
+          summary: 'Typing',
+          responses: { 204: { description: 'ok' } },
+        },
         () => ({ status: 204 }),
       );
 
@@ -218,7 +231,14 @@ describe('RouteSpec', () => {
 
 describe('what observes a request from outside', () => {
   const ping = defineRoute(
-    { method: 'GET', path: '/orders/:orderId', operationId: 'getOrder', summary: 'Read', responses: { 204: { description: 'Found.' } }, security: false },
+    {
+      method: 'GET',
+      path: '/orders/:orderId',
+      operationId: 'getOrder',
+      summary: 'Read',
+      responses: { 204: { description: 'Found.' } },
+      security: false,
+    },
     async () => ({ status: 204 }),
   );
 

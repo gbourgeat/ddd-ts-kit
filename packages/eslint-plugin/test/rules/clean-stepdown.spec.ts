@@ -63,7 +63,12 @@ ruleTester.run('clean-stepdown', cleanStepdown, {
         private guard(): void {}
         issue(): void { this.guard(); }
       }`,
-      errors: [{ messageId: 'nonPublicBeforePublic', data: { visibility: 'private', name: 'guard', className: 'Invoice', publicName: 'issue' } }],
+      errors: [
+        {
+          messageId: 'nonPublicBeforePublic',
+          data: { visibility: 'private', name: 'guard', className: 'Invoice', publicName: 'issue' },
+        },
+      ],
     },
     {
       code: `class Invoice {
@@ -71,7 +76,16 @@ ruleTester.run('clean-stepdown', cleanStepdown, {
         protected hook(): void {}
         issue(): void { this.#guard(); }
       }`,
-      errors: [{ messageId: 'nonPublicBeforePublic', data: { visibility: 'private', name: '#guard', className: 'Invoice', publicName: 'issue' } }, { messageId: 'nonPublicBeforePublic', data: { visibility: 'protected', name: 'hook', className: 'Invoice', publicName: 'issue' } }],
+      errors: [
+        {
+          messageId: 'nonPublicBeforePublic',
+          data: { visibility: 'private', name: '#guard', className: 'Invoice', publicName: 'issue' },
+        },
+        {
+          messageId: 'nonPublicBeforePublic',
+          data: { visibility: 'protected', name: 'hook', className: 'Invoice', publicName: 'issue' },
+        },
+      ],
     },
     {
       code: `class Invoice {
@@ -79,7 +93,9 @@ ruleTester.run('clean-stepdown', cleanStepdown, {
         static create(): Invoice { return new Invoice(); }
         private record(): void {}
       }`,
-      errors: [{ messageId: 'staticAfterInstance', data: { name: 'create', className: 'Invoice', instanceName: 'issue' } }],
+      errors: [
+        { messageId: 'staticAfterInstance', data: { name: 'create', className: 'Invoice', instanceName: 'issue' } },
+      ],
     },
     {
       code: `class Invoice {

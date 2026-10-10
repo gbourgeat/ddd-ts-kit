@@ -13,7 +13,12 @@ export interface Reported {
 /** A project of two contexts, shipping downstream of billing, holding the files given. */
 export function projectWith(files: Readonly<Record<string, string>>, config: Record<string, unknown> = {}): string {
   const root = tempDir('rules');
-  const contexts = { billing: { classification: 'core', upstreams: [] }, shipping: { classification: 'supporting', upstreams: ['billing'] } };
+
+  const contexts = {
+    billing: { classification: 'core', upstreams: [] },
+    shipping: { classification: 'supporting', upstreams: ['billing'] },
+  };
+
   const written = { 'ddd-ts-kit.config.json': JSON.stringify({ contexts, ...config }, null, 2), ...files };
 
   for (const [file, content] of Object.entries(written)) {

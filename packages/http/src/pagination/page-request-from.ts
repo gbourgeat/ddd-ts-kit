@@ -14,7 +14,9 @@ export function pageRequestFrom<Field extends string = never>(
 ): PageRequest<Field> {
   const parsed = parsePageQuery(query, options);
 
-  if (parsed.ok) return parsed.value;
+  if (parsed.ok) {
+    return parsed.value;
+  }
 
   const issues = parsed.error.map((issue) => ({ ...issue, path: `query.${issue.path}` }));
 

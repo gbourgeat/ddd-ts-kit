@@ -6,10 +6,7 @@ export { objectOf } from './rebac/object-of.js';
 export { parseObject } from './rebac/parse-object.js';
 export { parseSubject } from './rebac/parse-subject.js';
 export type { PermissionMapping } from './rebac/permission-mapping.js';
-export {
-  RelationBasedAuthorizer,
-  type RelationBasedAuthorizerOptions,
-} from './rebac/relation-based-authorizer.js';
+export { RelationBasedAuthorizer, type RelationBasedAuthorizerOptions } from './rebac/relation-based-authorizer.js';
 export type { RelationTuple } from './rebac/relation-tuple.js';
 export { RelationTupleStore } from './rebac/relation-tuple-store.js';
 export type { Resolution } from './rebac/resolution.js';

@@ -32,19 +32,31 @@ export class KnexAppointmentRepository implements AppointmentRepository {
   }
 
   async heldOn(calendarId: string, from: Date, until: Date): Promise<readonly Appointment[]> {
-    const rows = await tableOf(this.database).where({ calendar_id: calendarId }).whereIn('status', ACTIVE).where('starts_at', '<', until).where('held_until', '>', from).orderBy('starts_at');
+    const rows = await tableOf(this.database)
+      .where({ calendar_id: calendarId })
+      .whereIn('status', ACTIVE)
+      .where('starts_at', '<', until)
+      .where('held_until', '>', from)
+      .orderBy('starts_at');
 
     return rows.map((row) => AppointmentMapper.toDomain(row));
   }
 
   async heldBy(patientId: string, practitionerId: string, instant: Date): Promise<readonly Appointment[]> {
-    const rows = await tableOf(this.database).where({ patient_id: patientId, practitioner_id: practitionerId }).whereIn('status', ACTIVE).where('starts_at', '>', instant).orderBy('starts_at');
+    const rows = await tableOf(this.database)
+      .where({ patient_id: patientId, practitioner_id: practitionerId })
+      .whereIn('status', ACTIVE)
+      .where('starts_at', '>', instant)
+      .orderBy('starts_at');
 
     return rows.map((row) => AppointmentMapper.toDomain(row));
   }
 
   async unconfirmedAt(instant: Date): Promise<readonly Appointment[]> {
-    const rows = await tableOf(this.database).where({ status: 'requested' }).where('confirm_before', '<=', instant).orderBy('confirm_before');
+    const rows = await tableOf(this.database)
+      .where({ status: 'requested' })
+      .where('confirm_before', '<=', instant)
+      .orderBy('confirm_before');
 
     return rows.map((row) => AppointmentMapper.toDomain(row));
   }
@@ -69,7 +81,9 @@ export class KnexAppointmentRepository implements AppointmentRepository {
   private async insert(state: VersionedAppointment): Promise<number> {
     const row = { ...state, ...auditRow(stampCreation(this.scope, this.clock)) };
 
-    return (await insertIgnoringConflict(this.database.executor(), tableOf(this.database), { row, conflict: 'id' })) ? 1 : 0;
+    return (await insertIgnoringConflict(this.database.executor(), tableOf(this.database), { row, conflict: 'id' }))
+      ? 1
+      : 0;
   }
 
   private async update(state: VersionedAppointment, expected: number): Promise<number> {
@@ -85,7 +99,13 @@ function tableOf(database: KnexContext): Knex.QueryBuilder<AppointmentRow, Appoi
 }
 
 function isSlotHeldTwice(error: unknown): boolean {
-  return sqlStateOf(error) === EXCLUSION_VIOLATION && typeof error === 'object' && error !== null && 'constraint' in error && error.constraint === APPOINTMENT_SLOT_HELD_ONCE;
+  return (
+    sqlStateOf(error) === EXCLUSION_VIOLATION &&
+    typeof error === 'object' &&
+    error !== null &&
+    'constraint' in error &&
+    error.constraint === APPOINTMENT_SLOT_HELD_ONCE
+  );
 }
 
 /**

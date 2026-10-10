@@ -7,6 +7,11 @@ export class NotificationSent implements DomainEvent {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
-    readonly about: { readonly recipientId: string; readonly kind: NotificationKind; readonly appointmentId: string; readonly startsAt: Date },
+    readonly about: {
+      readonly recipientId: string;
+      readonly kind: NotificationKind;
+      readonly appointmentId: string;
+      readonly startsAt: Date;
+    },
   ) {}
 }

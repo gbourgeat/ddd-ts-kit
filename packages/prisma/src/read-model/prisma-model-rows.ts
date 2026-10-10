@@ -20,17 +20,28 @@ export class PrismaModelRows<Row extends object, Tx> implements ReadModelRows<Ro
   async find(key: string): Promise<StampedRow<Row> | undefined> {
     const [found] = await this.model().findMany({ where: { [this.keyField()]: key }, take: 1 });
 
-    if (found === undefined) return undefined;
+    if (found === undefined) {
+      return undefined;
+    }
 
     const read = (field: string): unknown => Reflect.get(found, field);
 
-    return stampedRowOf({ key, stamps: [read('lastEventId'), read('lastEventAt'), read('lastEventVersion'), read('deleted')], row: () => this.mapper.toRow(found) });
+    return stampedRowOf({
+      key,
+      stamps: [read('lastEventId'), read('lastEventAt'), read('lastEventVersion'), read('deleted')],
+      row: () => this.mapper.toRow(found),
+    });
   }
 
   async insert(entry: StampedRow<Row>): Promise<boolean> {
-    if (entry.row === undefined) return false;
+    if (entry.row === undefined) {
+      return false;
+    }
 
-    const { count } = await this.model().createMany({ data: [writtenOf(entry, this.keyField())], skipDuplicates: true });
+    const { count } = await this.model().createMany({
+      data: [writtenOf(entry, this.keyField())],
+      skipDuplicates: true,
+    });
 
     return count === 1;
   }

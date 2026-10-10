@@ -107,17 +107,32 @@ const everyContext: ContextSelection = {
 };
 
 /** Wires the bounded contexts on the kernel and the platform. Also used to generate the contracts and by the end-to-end tests. */
-export function composeApplication(persistence: Persistence, options: ApplicationOptions, contexts: ContextSelection = everyContext): Application {
+export function composeApplication(
+  persistence: Persistence,
+  options: ApplicationOptions,
+  contexts: ContextSelection = everyContext,
+): Application {
   const foundations = layFoundations(persistence, options);
   const guard = authorization(foundations.audit.decisions, options.authenticator);
 
   const container = createApplication({
-    modules: [kernel(foundations, persistence, options), platformModule(persistence, options), guard, auditModule(foundations.audit), ...contexts.modules],
+    modules: [
+      kernel(foundations, persistence, options),
+      platformModule(persistence, options),
+      guard,
+      auditModule(foundations.audit),
+      ...contexts.modules,
+    ],
     authorization: 'required',
     jobs: options.jobs ?? { start: false },
   });
 
-  installAspectRuntime({ logger: container.resolve(Logger), metrics: container.resolve(Metrics), cache: container.resolve(Cache), clock: container.resolve(Clock) });
+  installAspectRuntime({
+    logger: container.resolve(Logger),
+    metrics: container.resolve(Metrics),
+    cache: container.resolve(Cache),
+    clock: container.resolve(Clock),
+  });
 
   return running(container, options, contexts);
 }
@@ -172,7 +187,10 @@ function running(container: Container, options: ApplicationOptions, contexts: Co
     rateLimiter: container.resolve(RateLimiter),
     ready: () => options.redis?.ready() ?? Promise.resolve(true),
     container,
-    start: () => relateSystemActors(container.resolve(RelationTupleStore)).then(() => container.start()).then(() => options.events.start()),
+    start: () =>
+      relateSystemActors(container.resolve(RelationTupleStore))
+        .then(() => container.start())
+        .then(() => options.events.start()),
     // The jobs, the consumers, the event provider (`onStop` of the platform module), then the error reporter and, last, the logger: whatever logs has closed before its final flush.
     stop: () => container.stop(),
   };

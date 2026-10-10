@@ -12,7 +12,13 @@ const API = "import { trace } from '@opentelemetry/api';";
 
 describe('tracing/platform-only', () => {
   it('accepts the tracing package and OpenTelemetry in the platform, main.ts and apps/', () => {
-    const files = { 'src/platform/tracing.ts': lines(TRACING, NODE, API), 'src/platform/observability/create-logger.ts': lines(API), 'src/main.ts': lines(NODE), 'src/apps/billing/main.ts': lines(TRACING), 'src/apps/worker/main.ts': lines(API) };
+    const files = {
+      'src/platform/tracing.ts': lines(TRACING, NODE, API),
+      'src/platform/observability/create-logger.ts': lines(API),
+      'src/main.ts': lines(NODE),
+      'src/apps/billing/main.ts': lines(TRACING),
+      'src/apps/worker/main.ts': lines(API),
+    };
 
     expect(found(files)).toEqual([]);
   });
@@ -21,10 +27,18 @@ describe('tracing/platform-only', () => {
     const files = {
       [`${BILLING}/domain/aggregates/invoice.aggregate.ts`]: lines(API),
       [`${BILLING}/application/commands/issue-invoice/issue-invoice.handler.ts`]: lines(NODE),
-      [`${BILLING}/infrastructure/external/stripe-payment.gateway.ts`]: lines('', TRACING, "import type { Span } from '@opentelemetry/sdk-trace-base';"),
-      [`${BILLING}/presentation/http/issue-invoice.route.ts`]: lines("const { trace } = await import('@opentelemetry/api');"),
+      [`${BILLING}/infrastructure/external/stripe-payment.gateway.ts`]: lines(
+        '',
+        TRACING,
+        "import type { Span } from '@opentelemetry/sdk-trace-base';",
+      ),
+      [`${BILLING}/presentation/http/issue-invoice.route.ts`]: lines(
+        "const { trace } = await import('@opentelemetry/api');",
+      ),
       [`${BILLING}/billing.module.ts`]: lines("export { traceBindings } from '@ddd-ts-kit/tracing';"),
-      [`${BILLING}/test/integration/stripe-payment.gateway.spec.ts`]: lines("import { installTestTracing } from '@ddd-ts-kit/tracing/testing';"),
+      [`${BILLING}/test/integration/stripe-payment.gateway.spec.ts`]: lines(
+        "import { installTestTracing } from '@ddd-ts-kit/tracing/testing';",
+      ),
       'src/shared-kernel/money.vo.ts': lines(API),
       'src/telemetry/setup.ts': lines("const sdk = require('@opentelemetry/sdk-node');"),
     };
@@ -43,7 +57,11 @@ describe('tracing/platform-only', () => {
   });
 
   it('follows platformDir of the config, and names it in the fix', () => {
-    const root = projectWith({ 'src/infra-platform/tracing.ts': lines(API), 'src/platform/tracing.ts': lines(API) }, { platformDir: 'src/infra-platform' });
+    const root = projectWith(
+      { 'src/infra-platform/tracing.ts': lines(API), 'src/platform/tracing.ts': lines(API) },
+      { platformDir: 'src/infra-platform' },
+    );
+
     const { violations } = runOn(root);
 
     expect(violations.map(({ file }) => file)).toEqual(['src/platform/tracing.ts']);
@@ -51,7 +69,11 @@ describe('tracing/platform-only', () => {
   });
 
   it('does not judge a file outside the source root, read alone as the editor hook reads it', () => {
-    const root = projectWith({ 'test/e2e/tracing.e2e.spec.ts': lines(API), 'scripts/probe.ts': lines(API), [`${BILLING}/infrastructure/external/stripe-payment.gateway.ts`]: lines(API) });
+    const root = projectWith({
+      'test/e2e/tracing.e2e.spec.ts': lines(API),
+      'scripts/probe.ts': lines(API),
+      [`${BILLING}/infrastructure/external/stripe-payment.gateway.ts`]: lines(API),
+    });
 
     expect(reported(root, RULE, 'test/e2e/tracing.e2e.spec.ts')).toEqual([]);
     expect(reported(root, RULE, 'scripts/probe.ts')).toEqual([]);
@@ -59,7 +81,13 @@ describe('tracing/platform-only', () => {
   });
 
   it('reads import specifiers only, and obeys the config', () => {
-    const adapter = lines("// import { trace } from '@opentelemetry/api';", "import { retry } from '@ddd-ts-kit/aspects';", "import { opentelemetry } from './opentelemetry.js';", "const name = '@ddd-ts-kit/tracing';");
+    const adapter = lines(
+      "// import { trace } from '@opentelemetry/api';",
+      "import { retry } from '@ddd-ts-kit/aspects';",
+      "import { opentelemetry } from './opentelemetry.js';",
+      "const name = '@ddd-ts-kit/tracing';",
+    );
+
     const files = { [`${BILLING}/infrastructure/external/stripe-payment.gateway.ts`]: adapter };
 
     expect(found(files)).toEqual([]);
@@ -68,7 +96,9 @@ describe('tracing/platform-only', () => {
 });
 
 function found(files: Readonly<Record<string, string>>, config: Record<string, unknown> = {}): string[] {
-  return reported(projectWith(files, config), RULE).map(({ file, line, message }) => `${file}:${line} ${message.slice(0, message.indexOf(':'))}`);
+  return reported(projectWith(files, config), RULE).map(
+    ({ file, line, message }) => `${file}:${line} ${message.slice(0, message.indexOf(':'))}`,
+  );
 }
 
 function runOn(root: string): CheckResult {

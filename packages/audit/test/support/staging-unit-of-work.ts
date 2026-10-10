@@ -10,7 +10,9 @@ export class StagingUnitOfWork implements UnitOfWork {
   private staged: (() => Promise<void>)[] | undefined;
 
   async run<T>(work: () => Promise<T>): Promise<T> {
-    if (this.staged !== undefined) return work();
+    if (this.staged !== undefined) {
+      return work();
+    }
 
     const staged: (() => Promise<void>)[] = [];
 
@@ -19,11 +21,15 @@ export class StagingUnitOfWork implements UnitOfWork {
     try {
       const result = await work();
 
-      if (this.failOnCommit) throw new Error('The commit was refused by the database');
+      if (this.failOnCommit) {
+        throw new Error('The commit was refused by the database');
+      }
 
       this.staged = undefined;
 
-      for (const apply of staged) await apply();
+      for (const apply of staged) {
+        await apply();
+      }
 
       return result;
     } finally {
@@ -32,7 +38,10 @@ export class StagingUnitOfWork implements UnitOfWork {
   }
 
   async write(apply: () => Promise<void>): Promise<void> {
-    if (this.staged === undefined) await apply();
-    else this.staged.push(apply);
+    if (this.staged === undefined) {
+      await apply();
+    } else {
+      this.staged.push(apply);
+    }
   }
 }

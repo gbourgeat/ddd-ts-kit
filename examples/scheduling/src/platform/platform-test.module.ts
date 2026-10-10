@@ -16,11 +16,16 @@ export const platformTestModule = defineContextModule({
     });
 
     // In memory, and still held to the schema: a spec that writes a tuple the model does not know fails as the application would.
-    builder.bind(RelationTupleStore).toFactory(() => new SchemaCheckedTupleStore(relationshipSchema, new InMemoryRelationTupleStore()));
+    builder
+      .bind(RelationTupleStore)
+      .toFactory(() => new SchemaCheckedTupleStore(relationshipSchema, new InMemoryRelationTupleStore()));
 
     // ddd-ts-kit:test-bindings
     builder.bind(PersonDirectoryContract).toValue({ byIds: () => Promise.resolve([]) });
-    builder.bind(AppointmentExportContract).toValue({ export: () => Promise.resolve({ appointments: [] }), lookup: () => Promise.resolve([]) });
+
+    builder
+      .bind(AppointmentExportContract)
+      .toValue({ export: () => Promise.resolve({ appointments: [] }), lookup: () => Promise.resolve([]) });
     // /ddd-ts-kit:test-bindings
   },
 });

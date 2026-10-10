@@ -1,4 +1,5 @@
 import { CliError } from '../cli-error.js';
+import { fitStatement } from '../layout/index.js';
 import type { RenderContext } from '../templating/index.js';
 import { declarePermission } from './declare-permission.js';
 import { permissionNamed } from './permission-named.js';
@@ -14,7 +15,9 @@ import type { UseCaseMessage } from './use-case-message.js';
 export function accessVars(scope: Scope, useCase: UseCaseMessage): RenderContext {
   const permission = requestedPermission(scope, useCase);
 
-  if (permission === undefined) return publicAccess(useCase);
+  if (permission === undefined) {
+    return publicAccess(useCase);
+  }
 
   declarePermission(scope, permission, useCase.name);
 
@@ -25,10 +28,15 @@ function requestedPermission(scope: Scope, useCase: UseCaseMessage): string | un
   const { permission, public: isPublic } = scope.flags;
 
   if (permission !== undefined && isPublic) {
-    throw new CliError('--permission and --public exclude each other.', 'Keep --permission for a use case with a right to hold, or --public for one anybody may reach.');
+    throw new CliError(
+      '--permission and --public exclude each other.',
+      'Keep --permission for a use case with a right to hold, or --public for one anybody may reach.',
+    );
   }
 
-  if (permission === undefined && !isPublic) throw undeclared(scope, useCase);
+  if (permission === undefined && !isPublic) {
+    throw undeclared(scope, useCase);
+  }
 
   return permission === undefined ? undefined : permissionNamed(scope, permission);
 }
@@ -77,7 +85,7 @@ function protectedAccess(scope: Scope, useCase: UseCaseMessage, permission: stri
     requirement,
     useCasePermissionsImport: `import { ${set} } from '../../authorization/${scope.context.kebab}.permissions.js';`,
     decorator: 'Requires',
-    decoration: `Requires(${requirement})`,
+    decoration: fitStatement(`@Requires(${requirement})`, '').join('\n').slice(1),
     queryBase: 'AuthorizedQuery',
     constructorSample: 'constructor(actor: Actor, readonly customerId: string) { super(actor); }',
   };
@@ -85,7 +93,9 @@ function protectedAccess(scope: Scope, useCase: UseCaseMessage, permission: stri
 
 /** A relationship is always to something: until the elements are modelled, a use case names its context. */
 function resourceOption(scope: Scope): string {
-  if (scope.config.stack.authz !== 'rebac') return '';
+  if (scope.config.stack.authz !== 'rebac') {
+    return '';
+  }
 
   return `, { resource: () => ({ type: 'context', id: '${scope.context.kebab}' }) }`;
 }

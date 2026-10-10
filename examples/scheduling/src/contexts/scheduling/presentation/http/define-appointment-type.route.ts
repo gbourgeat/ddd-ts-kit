@@ -27,7 +27,10 @@ export function defineAppointmentTypeRoute(commands: CommandBus): Route {
     async (input) => {
       const { name, duration, grid, buffer, needsConfirmation } = input.body;
       const facts = { name, duration, grid, buffer, needsConfirmation };
-      const id = await commands.execute(new DefineAppointmentTypeCommand(actorOf(input.context.principal), input.params.calendarId, facts));
+
+      const id = await commands.execute(
+        new DefineAppointmentTypeCommand(actorOf(input.context.principal), input.params.calendarId, facts),
+      );
 
       return { status: 201, body: { id } };
     },

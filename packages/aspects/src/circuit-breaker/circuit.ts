@@ -34,19 +34,26 @@ export class Circuit {
 
       return result;
     } catch (error) {
-      if ((this.options.isFailure ?? isFault)(error)) this.failed(clock);
-      else this.answered();
+      if ((this.options.isFailure ?? isFault)(error)) {
+        this.failed(clock);
+      } else {
+        this.answered();
+      }
 
       throw error;
     }
   }
 
   private admit(clock: Clock): void {
-    if (this.state === 'closed') return;
+    if (this.state === 'closed') {
+      return;
+    }
 
     const retryAt = this.openedAt + this.options.resetAfterMs;
 
-    if (this.state === 'open' && clock.now().getTime() >= retryAt) this.become('half-open');
+    if (this.state === 'open' && clock.now().getTime() >= retryAt) {
+      this.become('half-open');
+    }
 
     if (this.state === 'open' || this.trials >= (this.options.halfOpenMax ?? 1)) {
       throw new CircuitOpenError(this.operation(), new Date(retryAt));
@@ -61,7 +68,9 @@ export class Circuit {
     this.state = state;
     this.trials = 0;
 
-    if (state === 'closed') this.failures = 0;
+    if (state === 'closed') {
+      this.failures = 0;
+    }
 
     safely(() => this.options.onStateChange?.(change));
   }
@@ -75,11 +84,15 @@ export class Circuit {
   private answered(): void {
     this.failures = 0;
 
-    if (this.state === 'half-open') this.become('closed');
+    if (this.state === 'half-open') {
+      this.become('closed');
+    }
   }
 
   private failed(clock: Clock): void {
-    if (this.state === 'open') return;
+    if (this.state === 'open') {
+      return;
+    }
 
     this.failures += 1;
 

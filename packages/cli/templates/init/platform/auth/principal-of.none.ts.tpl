@@ -8,10 +8,14 @@ export function principalOf(authenticator: Authenticator): (raw: unknown) => Pro
 }
 
 function developmentActorOf(raw: unknown): string | undefined {
-  if (typeof raw !== 'object' || raw === null || !('headers' in raw)) return undefined;
+  if (typeof raw !== 'object' || raw === null || !('headers' in raw)) {
+    return undefined;
+  }
 
   const { headers } = raw;
-  const value: unknown = typeof headers === 'object' && headers !== null ? Reflect.get(headers, developmentActorHeader) : undefined;
+
+  const value: unknown =
+    typeof headers === 'object' && headers !== null ? Reflect.get(headers, developmentActorHeader) : undefined;
 
   return typeof value === 'string' ? value : undefined;
 }

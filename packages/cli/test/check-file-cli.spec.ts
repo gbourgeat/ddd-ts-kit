@@ -14,15 +14,25 @@ describe('check-file', () => {
   });
 
   it('runs the per-file rules on one file', () => {
-    const adapter = "import { InMemoryInvoiceRepository } from '../../../infrastructure/persistence/in-memory-invoice.repository.js';";
+    const adapter =
+      "import { InMemoryInvoiceRepository } from '../../../infrastructure/persistence/in-memory-invoice.repository.js';";
 
-    write(root, HANDLER, `${adapter}\n${read(root, HANDLER)}\nexport const repository = new InMemoryInvoiceRepository();\n`);
+    write(
+      root,
+      HANDLER,
+      `${adapter}\n${read(root, HANDLER)}\nexport const repository = new InMemoryInvoiceRepository();\n`,
+    );
 
     const result = cli(root, 'check-file', HANDLER, '--json');
     const { violations } = checkJsonOf(result);
 
     expect(result.code).toBe(1);
-    expect(violations.map((violation) => violation.ruleId).sort()).toEqual(['composition/only-in-module', 'layer/application-inward']);
+
+    expect(violations.map((violation) => violation.ruleId).sort()).toEqual([
+      'composition/only-in-module',
+      'layer/application-inward',
+    ]);
+
     expect(violations.every((violation) => violation.file === HANDLER && violation.fix !== '')).toBe(true);
   });
 
@@ -49,7 +59,9 @@ describe('check-file', () => {
   it('answers well under 200 ms', () => {
     const started = performance.now();
 
-    for (let i = 0; i < 20; i += 1) cli(root, 'check-file', AGGREGATE);
+    for (let i = 0; i < 20; i += 1) {
+      cli(root, 'check-file', AGGREGATE);
+    }
 
     expect((performance.now() - started) / 20).toBeLessThan(50);
   });

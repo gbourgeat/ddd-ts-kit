@@ -48,11 +48,15 @@ export function tracedPublisher(
         // One call for the whole batch: the provider keeps its atomicity and ordering.
         await publisher.publish(publications.map(({ event }) => event));
       } catch (error) {
-        for (const span of spans) markSpanFailed(span, error);
+        for (const span of spans) {
+          markSpanFailed(span, error);
+        }
 
         throw error;
       } finally {
-        for (const span of spans) span.end();
+        for (const span of spans) {
+          span.end();
+        }
       }
     },
   };
@@ -63,10 +67,19 @@ function publicationOf(event: IntegrationEvent, active: Context, system: string 
   const stored = system === OUTBOX;
   const name = stored ? `outbox append ${event.type}` : `publish ${event.type}`;
 
-  if (!admitDependencySpan(name)) return { event: stamped(event, parent) };
+  if (!admitDependencySpan(name)) {
+    return { event: stamped(event, parent) };
+  }
 
-  const operation: MessagingOperation = stored ? { name: 'append', type: 'create', system } : { name: 'publish', type: 'send', system };
-  const options = { kind: stored ? SpanKind.INTERNAL : SpanKind.PRODUCER, attributes: messagingAttributes(operation, event) };
+  const operation: MessagingOperation = stored
+    ? { name: 'append', type: 'create', system }
+    : { name: 'publish', type: 'send', system };
+
+  const options = {
+    kind: stored ? SpanKind.INTERNAL : SpanKind.PRODUCER,
+    attributes: messagingAttributes(operation, event),
+  };
+
   const span = tracer().startSpan(name, options, parent);
 
   return { event: stamped(event, trace.setSpan(parent, span)), span };

@@ -48,9 +48,13 @@ export class Publications {
     events.forEach((event, index) => {
       const [error, entryId] = answers[index] ?? [new Error('no answer'), undefined];
 
-      if (error !== null) throw new PublishNotConfirmedError(event.id, failureCode(error));
+      if (error !== null) {
+        throw new PublishNotConfirmedError(event.id, failureCode(error));
+      }
 
-      if (typeof entryId !== 'string') throw new PublishNotConfirmedError(event.id, 'NO_ENTRY_ID');
+      if (typeof entryId !== 'string') {
+        throw new PublishNotConfirmedError(event.id, 'NO_ENTRY_ID');
+      }
     });
   }
 
@@ -79,9 +83,13 @@ async function executed(transaction: ChainableCommander, events: readonly Integr
 }
 
 function trimming(retention: RetentionOptions | undefined): string[] {
-  if (retention === undefined) return [];
+  if (retention === undefined) {
+    return [];
+  }
 
-  if ('maxLength' in retention) return ['MAXLEN', '~', String(retention.maxLength)];
+  if ('maxLength' in retention) {
+    return ['MAXLEN', '~', String(retention.maxLength)];
+  }
 
   return ['MINID', '~', `${String(Date.now() - retention.maxAgeMs)}-0`];
 }

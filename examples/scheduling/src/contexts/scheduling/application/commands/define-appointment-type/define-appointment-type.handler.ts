@@ -17,7 +17,9 @@ export class DefineAppointmentTypeHandler implements CommandHandler<DefineAppoin
   async execute(command: DefineAppointmentTypeCommand): Promise<string> {
     const target = await this.calendarRepository.findById(command.calendarId);
 
-    if (target === undefined) throw new UnknownCalendarError(command.calendarId);
+    if (target === undefined) {
+      throw new UnknownCalendarError(command.calendarId);
+    }
 
     const appointmentType = unwrap(AppointmentType.create({ ...command.facts, id: this.ids.next() }));
 

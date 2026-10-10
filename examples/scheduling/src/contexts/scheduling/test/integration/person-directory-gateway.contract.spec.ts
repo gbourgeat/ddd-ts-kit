@@ -6,7 +6,10 @@ import { FakePersonDirectoryGateway } from '../fakes/person-directory-gateway.fa
 const KNOWN = { 'person-1': 'Ada Martin', 'person-2': 'Zoe Bernard' };
 
 const identity = {
-  byIds: async (personIds: readonly string[]) => Object.entries(KNOWN).flatMap(([personId, displayName]) => (personIds.includes(personId) ? [{ personId, displayName }] : [])),
+  byIds: async (personIds: readonly string[]) =>
+    Object.entries(KNOWN).flatMap(([personId, displayName]) =>
+      personIds.includes(personId) ? [{ personId, displayName }] : [],
+    ),
 };
 
 const ADAPTERS: readonly (readonly [string, () => PersonDirectoryGateway])[] = [

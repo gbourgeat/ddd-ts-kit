@@ -29,18 +29,26 @@ type Visit = (site: ImportSite) => void;
 /** Every way a module names another one: static, type-only, re-export, dynamic, `require`, `import()` types. */
 export function importListener(file: LintedFile, visit: Visit): TSESLint.RuleListener {
   const see = (source: TSESTree.Node | null | undefined, taken: Taken = WHOLE): void => {
-    if (source === null || source === undefined) return;
+    if (source === null || source === undefined) {
+      return;
+    }
 
     const specifier = staticString(source);
 
-    if (specifier === undefined) return;
+    if (specifier === undefined) {
+      return;
+    }
 
     visit({ specifier, node: source, target: resolveImport(file.config, file.path, specifier), ...taken });
   };
 
   return {
     ImportDeclaration: (node) => see(node.source, importedNames(node)),
-    ExportNamedDeclaration: (node) => see(node.source, { names: node.specifiers.map((specifier) => ({ name: moduleExportName(specifier.local), node: specifier })), whole: false }),
+    ExportNamedDeclaration: (node) =>
+      see(node.source, {
+        names: node.specifiers.map((specifier) => ({ name: moduleExportName(specifier.local), node: specifier })),
+        whole: false,
+      }),
     ExportAllDeclaration: (node) => see(node.source),
     ImportExpression: (node) => see(node.source),
     TSImportType: (node) => see(node.source),
@@ -52,7 +60,10 @@ export function importListener(file: LintedFile, visit: Visit): TSESLint.RuleLis
 function importedNames(node: TSESTree.ImportDeclaration): Taken {
   const named = node.specifiers.filter((specifier) => specifier.type === AST_NODE_TYPES.ImportSpecifier);
 
-  return { names: named.map((specifier) => ({ name: moduleExportName(specifier.imported), node: specifier })), whole: named.length < node.specifiers.length };
+  return {
+    names: named.map((specifier) => ({ name: moduleExportName(specifier.imported), node: specifier })),
+    whole: named.length < node.specifiers.length,
+  };
 }
 
 function moduleExportName(name: TSESTree.Identifier | TSESTree.StringLiteral): string {
@@ -60,5 +71,7 @@ function moduleExportName(name: TSESTree.Identifier | TSESTree.StringLiteral): s
 }
 
 function isRequireCall(node: TSESTree.CallExpression): boolean {
-  return node.callee.type === AST_NODE_TYPES.Identifier && node.callee.name === 'require' && node.arguments.length === 1;
+  return (
+    node.callee.type === AST_NODE_TYPES.Identifier && node.callee.name === 'require' && node.arguments.length === 1
+  );
 }

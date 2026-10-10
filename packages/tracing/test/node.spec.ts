@@ -46,10 +46,7 @@ describe('initTracing', () => {
 
     configureTracing({ maxSpansPerName: 1 });
 
-    const gateway = traceDependency(
-      { ping: async (): Promise<void> => {} },
-      { kind: 'gateway', className: 'Ping' },
-    );
+    const gateway = traceDependency({ ping: async (): Promise<void> => {} }, { kind: 'gateway', className: 'Ping' });
 
     await withSpan(
       'request',
@@ -99,7 +96,11 @@ describe('the instrumentations on by default', () => {
   it('record a statement as written and only inside a trace, and no connection span', () => {
     const pg = defaultInstrumentations().find((instrumentation) => instrumentation.instrumentationName.endsWith('-pg'));
 
-    expect(pg?.getConfig()).toMatchObject({ requireParentSpan: true, ignoreConnectSpans: true, enhancedDatabaseReporting: false });
+    expect(pg?.getConfig()).toMatchObject({
+      requireParentSpan: true,
+      ignoreConnectSpans: true,
+      enhancedDatabaseReporting: false,
+    });
   });
 
   it('ignore the incoming requests of the noise paths, the given ones when given', () => {
@@ -121,8 +122,21 @@ describe('the instrumentations on by default', () => {
   });
 
   it('change one by one when the application says so', () => {
-    const settings = { '@opentelemetry/instrumentation-fs': { enabled: true }, '@opentelemetry/instrumentation-grpc': { enabled: false } };
+    const settings = {
+      '@opentelemetry/instrumentation-fs': { enabled: true },
+      '@opentelemetry/instrumentation-grpc': { enabled: false },
+    };
 
-    expect(names({ settings })).toEqual(['fs', 'http', 'ioredis', 'mongodb', 'mysql', 'mysql2', 'pg', 'redis', 'undici']);
+    expect(names({ settings })).toEqual([
+      'fs',
+      'http',
+      'ioredis',
+      'mongodb',
+      'mysql',
+      'mysql2',
+      'pg',
+      'redis',
+      'undici',
+    ]);
   });
 });

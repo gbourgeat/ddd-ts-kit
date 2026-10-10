@@ -20,9 +20,25 @@ export function templateVars(config: Config, projectName: string): RenderContext
     ci: { github: ci === 'github' || ci === 'both', gitlab: ci === 'gitlab' || ci === 'both', any: ci !== 'none' },
     needs: { url: readsUrl(config), text: readsText(config) },
     keycloak: { version: KEYCLOAK_VERSION },
-    compose: { volumes: database === 'postgres' || database === 'mysql' || cache === 'redis' || ['redis', 'nats'].includes(broker) || errors === 'sentry' },
-    database: { postgres: database === 'postgres', mysql: database === 'mysql', sqlite: database === 'sqlite', server: database === 'postgres' || database === 'mysql' },
-    paths: { databaseToGenerated: path.posix.relative(`${config.platformDir}/database`, 'generated'), scriptsToSource: `../${config.sourceRoot}`, e2eToPlatform: `../../../${config.platformDir}` },
+    compose: {
+      volumes:
+        database === 'postgres' ||
+        database === 'mysql' ||
+        cache === 'redis' ||
+        ['redis', 'nats'].includes(broker) ||
+        errors === 'sentry',
+    },
+    database: {
+      postgres: database === 'postgres',
+      mysql: database === 'mysql',
+      sqlite: database === 'sqlite',
+      server: database === 'postgres' || database === 'mysql',
+    },
+    paths: {
+      databaseToGenerated: path.posix.relative(`${config.platformDir}/database`, 'generated'),
+      scriptsToSource: `../${config.sourceRoot}`,
+      e2eToPlatform: `../../../${config.platformDir}`,
+    },
   };
 }
 
@@ -30,7 +46,12 @@ export function templateVars(config: Config, projectName: string): RenderContext
 function readsUrl(config: Config): boolean {
   const { orm, broker, cache } = config.stack;
 
-  return WITH_DATABASE.includes(orm) || verifiesTokens(config) || ['rabbitmq', 'nats', 'redis'].includes(broker) || cache === 'redis';
+  return (
+    WITH_DATABASE.includes(orm) ||
+    verifiesTokens(config) ||
+    ['rabbitmq', 'nats', 'redis'].includes(broker) ||
+    cache === 'redis'
+  );
 }
 
 /** Whether the validated configuration holds a required text that is not a URL: the names a token is checked against, a list of brokers. */

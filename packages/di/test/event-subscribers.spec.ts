@@ -18,7 +18,10 @@ function twoContexts() {
 
 describe('the subscriber of each context, when a broker gives one per context', () => {
   const brokerModule = (subscribers: EventSubscribers) =>
-    defineContextModule({ name: 'broker', register: (builder) => void builder.rebind(EventSubscribers).toValue(subscribers) });
+    defineContextModule({
+      name: 'broker',
+      register: (builder) => void builder.rebind(EventSubscribers).toValue(subscribers),
+    });
 
   it('receives the declared and the written handlers of its own context, and none of the other', async () => {
     const { journal, modules } = twoContexts();

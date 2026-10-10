@@ -5,7 +5,9 @@ import { propertyName } from '../globals/property-name.js';
 export function calleeName(node: TSESTree.CallExpression | TSESTree.NewExpression): string | undefined {
   const { callee } = node;
 
-  if (callee.type === AST_NODE_TYPES.Identifier) return callee.name;
+  if (callee.type === AST_NODE_TYPES.Identifier) {
+    return callee.name;
+  }
 
   return callee.type === AST_NODE_TYPES.MemberExpression ? propertyName(callee) : undefined;
 }

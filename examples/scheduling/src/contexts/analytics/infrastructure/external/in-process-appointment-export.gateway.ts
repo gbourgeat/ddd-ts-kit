@@ -17,7 +17,9 @@ export class InProcessAppointmentExportGateway implements AppointmentExportGatew
   }
 
   async lookup(appointmentIds: readonly string[]): Promise<ReadonlyMap<string, StampedRow<Outcome>>> {
-    if (appointmentIds.length === 0) return new Map();
+    if (appointmentIds.length === 0) {
+      return new Map();
+    }
 
     const appointments = await this.upstream.lookup(appointmentIds);
 
@@ -29,7 +31,17 @@ export class InProcessAppointmentExportGateway implements AppointmentExportGatew
 function toOutcome(appointment: ExportedAppointment): StampedRow<Outcome> {
   const { appointmentId, practiceId, calendarId, day, outcome } = appointment;
   const changedAt = new Date(appointment.changedAt);
-  const row = { id: appointmentId, practiceId, calendarId, day, startsAt: new Date(appointment.startsAt), endsAt: new Date(appointment.endsAt), state: outcome, changedAt };
+
+  const row = {
+    id: appointmentId,
+    practiceId,
+    calendarId,
+    day,
+    startsAt: new Date(appointment.startsAt),
+    endsAt: new Date(appointment.endsAt),
+    state: outcome,
+    changedAt,
+  };
 
   return { key: appointmentId, row, stamp: { eventId: '', occurredAt: changedAt } };
 }

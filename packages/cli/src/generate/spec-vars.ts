@@ -13,13 +13,18 @@ export function specVars(scope: Scope, access: RenderContext): RenderContext {
   const isProtected = access['protected'] === true;
   const discovered = isDeclared(scope.config) && scope.config.stack.assembly === 'discovery';
   const listed = isDeclared(scope.config) && !discovered;
-  const hosted = ['platformTestModule', assembledContext(scope, '../../')];
-  const fromDi = (names: readonly string[]): string => `import { ${[...(listed ? ['contextModule'] : []), ...names].join(', ')} } from '@ddd-ts-kit/di';`;
+  const declared = isDeclared(scope.config);
+  const hosted = ['platformTestModule', declared ? 'context' : assembledContext(scope, '../../')];
+
+  const fromDi = (names: readonly string[]): string =>
+    `import { ${[...(listed ? ['contextModule'] : []), ...names].join(', ')} } from '@ddd-ts-kit/di';`;
 
   return {
     diWithFake: fromDi(['createTestApplication', 'fake']),
     diPlain: fromDi(['createTestApplication']),
     contextImports: contextImports(scope),
+    assembles: declared,
+    context: assembledContext(scope, '../../'),
     modules: [...hosted, isProtected ? 'holders' : 'authorization'].join(', '),
     guard: isProtected ? '.use(holders)' : '',
     // Discovery reads the disk: the arrangement of a spec waits for it.
@@ -31,8 +36,13 @@ export function specVars(scope: Scope, access: RenderContext): RenderContext {
 function contextImports(scope: Scope): string {
   const { config, context } = scope;
 
-  if (!isDeclared(config)) return `import { ${context.camel}Module } from '../../${context.kebab}.module.js';`;
-  if (config.stack.assembly === 'discovery') return "import { discoverContext } from '@ddd-ts-kit/di/discovery';";
+  if (!isDeclared(config)) {
+    return `import { ${context.camel}Module } from '../../${context.kebab}.module.js';`;
+  }
+
+  if (config.stack.assembly === 'discovery') {
+    return "import { discoverContext } from '@ddd-ts-kit/di/discovery';";
+  }
 
   return `import * as ${context.camel}Declarations from '../../${context.kebab}.declarations.js';`;
 }

@@ -26,24 +26,54 @@ export async function openStaffedPractice(application: RunningApplication, staff
   await registerPeople(application, managerId, practitionerId, assistantId);
 
   const root = await application.as({ id: 'root', roles: ['platform-admin'] });
-  const practiceId = expectStatus(await root.post<{ id: string }>('/practices', { name, timeZone: 'Europe/Paris', managerId }), 201).body.id;
+
+  const practiceId = expectStatus(
+    await root.post<{ id: string }>('/practices', { name, timeZone: 'Europe/Paris', managerId }),
+    201,
+  ).body.id;
+
   const manager = await application.as({ id: managerId });
 
-  expectStatus(await manager.post('/practices/' + practiceId + '/members', { personId: practitionerId, role: 'practitioner' }), 201);
-  expectStatus(await manager.post('/practices/' + practiceId + '/members', { personId: assistantId, role: 'assistant' }), 201);
+  expectStatus(
+    await manager.post('/practices/' + practiceId + '/members', { personId: practitionerId, role: 'practitioner' }),
+    201,
+  );
 
-  return { practiceId, managerId, practitionerId, assistantId, ...(await openCalendar(application, practiceId, practitionerId)) };
+  expectStatus(
+    await manager.post('/practices/' + practiceId + '/members', { personId: assistantId, role: 'assistant' }),
+    201,
+  );
+
+  return {
+    practiceId,
+    managerId,
+    practitionerId,
+    assistantId,
+    ...(await openCalendar(application, practiceId, practitionerId)),
+  };
 }
 
-async function openCalendar(application: RunningApplication, practiceId: string, practitionerId: string): Promise<Pick<StaffedPractice, 'calendarId' | 'appointmentTypeId'>> {
+async function openCalendar(
+  application: RunningApplication,
+  practiceId: string,
+  practitionerId: string,
+): Promise<Pick<StaffedPractice, 'calendarId' | 'appointmentTypeId'>> {
   const practitioner = await application.as({ id: practitionerId });
+
   // Scheduling learns its practitioners from the events of identity: the calendar is refused until the membership has arrived.
-  const calendar = await eventually(async () => expectStatus(await practitioner.post<{ id: string }>('/calendars', { practiceId, practitionerId }), 201));
+  const calendar = await eventually(async () =>
+    expectStatus(await practitioner.post<{ id: string }>('/calendars', { practiceId, practitionerId }), 201),
+  );
+
   const calendarId = calendar.body.id;
   const ranges = weekdays.map((weekday) => ({ weekday, start: '00:00', end: '24:00' }));
 
   expectStatus(await practitioner.put('/calendars/' + calendarId + '/opening-hours', { ranges }), 200);
-  const type = expectStatus(await practitioner.post<{ id: string }>('/calendars/' + calendarId + '/appointment-types', consultation), 201);
+
+  const type = expectStatus(
+    await practitioner.post<{ id: string }>('/calendars/' + calendarId + '/appointment-types', consultation),
+    201,
+  );
 
   return { calendarId, appointmentTypeId: type.body.id };
 }

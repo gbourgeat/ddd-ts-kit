@@ -8,6 +8,10 @@ export class CalendarCreatedEventHandler implements DomainEventHandler<CalendarC
   constructor(private readonly relationships: SchedulingRelationships) {}
 
   async handle(event: CalendarCreated): Promise<void> {
-    await this.relationships.recordCalendar({ calendarId: event.aggregateId, practiceId: event.practiceId, practitionerId: event.practitionerId });
+    await this.relationships.recordCalendar({
+      calendarId: event.aggregateId,
+      practiceId: event.practiceId,
+      practitionerId: event.practitionerId,
+    });
   }
 }

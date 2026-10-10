@@ -46,12 +46,16 @@ export function cachedAdvice(options: CachedOptions): AdviceFactory {
     return async ({ args, proceed }) => {
       const id = options.key(joinPoint.method, args);
 
-      if (id === undefined) return proceed();
+      if (id === undefined) {
+        return proceed();
+      }
 
       const entry: Entry = { cache: cacheOr(options.cache), key: keyOf(joinPoint, id), ttlMs: options.ttlMs };
       const hit = await read(entry);
 
-      if (hit !== undefined) return hit.value;
+      if (hit !== undefined) {
+        return hit.value;
+      }
 
       const pending = inFlight.get(id) ?? loading(entry, proceed).finally(() => inFlight.delete(id));
 
@@ -65,7 +69,9 @@ export function cachedAdvice(options: CachedOptions): AdviceFactory {
 function assertAllowed(joinPoint: JoinPoint, options: CachedOptions): void {
   const { kind } = joinPoint;
 
-  if (kind === undefined || !REFUSED_KINDS.includes(kind) || options.allowKinds?.includes(kind) === true) return;
+  if (kind === undefined || !REFUSED_KINDS.includes(kind) || options.allowKinds?.includes(kind) === true) {
+    return;
+  }
 
   throw new AspectNotAllowedError(
     `cached refuses to wrap ${joinPoint.className}.${joinPoint.method}, bound as ${kind}: what it would serve may be stale. Select gateways and external adapters with when(forKinds(...)), or pass allowKinds: ['${kind}'] to take the decision.`,

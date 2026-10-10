@@ -42,10 +42,7 @@ const text = customSchema<string>((input) => ok(String(input)), { type: 'string'
  * Two routes serving the generated contract and an interactive page for it. Mount them next
  * to the application routes; they are deliberately not part of the contract they display.
  */
-export function openApiDocsRoutes(
-  document: OpenApiDocument,
-  options: DocsRoutesOptions = {},
-): readonly Route[] {
+export function openApiDocsRoutes(document: OpenApiDocument, options: DocsRoutesOptions = {}): readonly Route[] {
   const jsonPath = options.jsonPath ?? '/openapi.json';
   const ui = options.ui ?? 'swagger';
 

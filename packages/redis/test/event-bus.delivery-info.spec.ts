@@ -25,7 +25,9 @@ describe.skipIf(!REAL_SERVER)('RedisStreamsEventBus, what a handler is told of a
       deliveries.push(delivery);
       contexts.push(event.traceparent);
 
-      if (deliveries.length === 1) throw new InvoicingFailed();
+      if (deliveries.length === 1) {
+        throw new InvoicingFailed();
+      }
     });
 
     await bus.publish([{ ...anEvent('evt-1'), traceparent: TRACEPARENT }]);
@@ -33,7 +35,11 @@ describe.skipIf(!REAL_SERVER)('RedisStreamsEventBus, what a handler is told of a
 
     const told = { maxAttempts: MAX_ATTEMPTS, system: 'redis', destination: `${prefix}:${PLACED}`, consumer };
 
-    expect(deliveries).toEqual([{ attempt: 1, ...told }, { attempt: 2, ...told }]);
+    expect(deliveries).toEqual([
+      { attempt: 1, ...told },
+      { attempt: 2, ...told },
+    ]);
+
     expect(contexts).toEqual([TRACEPARENT, TRACEPARENT]);
     expect(bus.messagingSystem).toBe('redis');
   });

@@ -18,10 +18,9 @@ const orderBody = zodSchema(
   }),
 );
 
-const order = zodSchema(
-  z.object({ id: z.string(), customerId: z.string(), lines: z.number().int() }),
-  { io: 'output' },
-);
+const order = zodSchema(z.object({ id: z.string(), customerId: z.string(), lines: z.number().int() }), {
+  io: 'output',
+});
 
 export const KNOWN_ORDER = '0b8f6e0e-2f4b-4c58-9c0e-6f1d2a3b4c5d';
 export const SHIPPED_ORDER = '11111111-1111-4111-8111-111111111111';

@@ -6,7 +6,9 @@ import type { Requirement } from './requirement.js';
 export function declaredRequirement(type: MessageType<Message>): Requirement {
   const declaration = declarationOf(type);
 
-  if (declaration?.role !== 'message') return {};
+  if (declaration?.role !== 'message') {
+    return {};
+  }
 
   const { access, permission, resourceOf, contextOf } = declaration;
 

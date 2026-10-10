@@ -35,7 +35,11 @@ export class AgendaProjection {
   async booked(event: AppointmentBooked): Promise<ReadModelWrite> {
     const { booking, confirmBefore } = event.held;
 
-    return this.stands(event, booking, confirmBefore === undefined ? { status: 'booked' } : { status: 'requested', confirmBefore });
+    return this.stands(
+      event,
+      booking,
+      confirmBefore === undefined ? { status: 'booked' } : { status: 'requested', confirmBefore },
+    );
   }
 
   @On(AppointmentConfirmed, { name: 'scheduling.appointment.confirmed' })
@@ -71,7 +75,14 @@ export class AgendaProjection {
   }
 
   private async stands(event: DomainEvent, booking: Booking, standing: Standing): Promise<ReadModelWrite> {
-    const entry: AgendaEntry = { ...placeOf(booking), id: event.aggregateId, confirmBefore: null, cancelledBy: null, ...standing, changedAt: event.occurredAt };
+    const entry: AgendaEntry = {
+      ...placeOf(booking),
+      id: event.aggregateId,
+      confirmBefore: null,
+      cancelledBy: null,
+      ...standing,
+      changedAt: event.occurredAt,
+    };
 
     return this.agenda.upsertIfNewer(event.aggregateId, stampOfFact(event), () => entry);
   }

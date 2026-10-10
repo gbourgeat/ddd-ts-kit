@@ -10,8 +10,13 @@ export function declarePermission(scope: Scope, permission: string, useCase: Nam
   const file = `${scope.dir}/${permissionsFile(scope.context)}`;
   const context = vars(scope, { access: { permission, description: useCase.title } });
 
-  if (!scope.ws.exists(file)) scope.ws.create(file, renderTemplate('context/permissions.ts.tpl', context));
-  if ((scope.ws.read(file) ?? '').includes(`'${permission}':`)) return;
+  if (!scope.ws.exists(file)) {
+    scope.ws.create(file, renderTemplate('context/permissions.ts.tpl', context));
+  }
+
+  if ((scope.ws.read(file) ?? '').includes(`'${permission}':`)) {
+    return;
+  }
 
   applyWiring(scope.ws, file, renderTemplate('context/permission.tpl', context));
 }

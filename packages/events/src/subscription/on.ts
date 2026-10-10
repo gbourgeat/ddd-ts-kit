@@ -56,11 +56,7 @@ export function on<P>(
   };
 }
 
-function inScope(
-  event: IntegrationEvent,
-  options: OnOptions | undefined,
-  work: () => Promise<void>,
-): Promise<void> {
+function inScope(event: IntegrationEvent, options: OnOptions | undefined, work: () => Promise<void>): Promise<void> {
   if (options?.scope === undefined) {
     return work();
   }
@@ -68,11 +64,7 @@ function inScope(
   return options.scope.run(executionContextOfEvent(event, options), work);
 }
 
-async function handleOnce(
-  eventId: string,
-  options: OnOptions | undefined,
-  handle: () => Promise<void>,
-): Promise<void> {
+async function handleOnce(eventId: string, options: OnOptions | undefined, handle: () => Promise<void>): Promise<void> {
   const processed = options?.processed;
 
   if (options === undefined || processed === undefined) {

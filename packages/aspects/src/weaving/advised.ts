@@ -8,7 +8,9 @@ import { named } from './named.js';
 export function advised(original: Method, joinPoint: JoinPoint, advise: AdviceFactory): Method | undefined {
   const advice = advise(joinPoint);
 
-  if (advice === undefined) return undefined;
+  if (advice === undefined) {
+    return undefined;
+  }
 
   // Async so that an advice failing before its first await rejects the call instead of throwing.
   const wrapper: Method = async function (this: unknown, ...args: unknown[]): Promise<unknown> {

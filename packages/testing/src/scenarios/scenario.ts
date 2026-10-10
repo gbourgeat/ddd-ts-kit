@@ -22,9 +22,7 @@ export interface Scenario<A> {
 export function scenario<A extends EventSource>(arrange: () => Promise<A>): AsyncScenario<A>;
 export function scenario<A extends EventSource>(arrange: () => A): Scenario<A>;
 
-export function scenario<A extends EventSource>(
-  arrange: () => A | Promise<A>,
-): Scenario<A> | AsyncScenario<A> {
+export function scenario<A extends EventSource>(arrange: () => A | Promise<A>): Scenario<A> | AsyncScenario<A> {
   const when = (action: (aggregate: A) => unknown): Outcome<A> => {
     const arranged = arrange();
 

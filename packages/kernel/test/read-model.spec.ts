@@ -19,13 +19,32 @@ interface PatientRow {
   readonly name: string;
 }
 
-const patients = defineCriteria<PatientRow>({ fields: { id: { type: 'string' }, name: { type: 'string', sortable: true } }, tieBreaker: 'id' });
-const at = (eventId: string, second: number, version?: number): EventStamp => ({ eventId, occurredAt: new Date(Date.UTC(2026, 9, 10, 12, 0, second)), ...(version === undefined ? {} : { version }) });
+const patients = defineCriteria<PatientRow>({
+  fields: { id: { type: 'string' }, name: { type: 'string', sortable: true } },
+  tieBreaker: 'id',
+});
+
+const at = (eventId: string, second: number, version?: number): EventStamp => ({
+  eventId,
+  occurredAt: new Date(Date.UTC(2026, 9, 10, 12, 0, second)),
+  ...(version === undefined ? {} : { version }),
+});
 
 describe('event stamps', () => {
   it('reads the stamp of an integration event and of a domain event', () => {
-    const integration: IntegrationEvent = { id: 'evt-1', type: 'registry.patient.registered', version: 1, occurredAt: '2026-10-10T12:00:01.000Z', payload: {} };
-    const domain: DomainEvent = { name: 'clinic.visit.scheduled', aggregateId: 'visit-7', occurredAt: new Date('2026-10-10T12:00:02.000Z') };
+    const integration: IntegrationEvent = {
+      id: 'evt-1',
+      type: 'registry.patient.registered',
+      version: 1,
+      occurredAt: '2026-10-10T12:00:01.000Z',
+      payload: {},
+    };
+
+    const domain: DomainEvent = {
+      name: 'clinic.visit.scheduled',
+      aggregateId: 'visit-7',
+      occurredAt: new Date('2026-10-10T12:00:02.000Z'),
+    };
 
     expect(stampOf(integration)).toEqual(at('evt-1', 1));
     expect(stampOf(domain)).toEqual(at('clinic.visit.scheduled:visit-7', 2));
@@ -69,7 +88,10 @@ describe('writeIfNewer', () => {
   it('reads again when another write got there first, and gives up after five times', async () => {
     const rows = new ContendedRows();
 
-    await expect(writeIfNewer(rows, { key: 'p1', stamp: at('evt-1', 1), next: () => ({ id: 'p1', name: 'new' }) })).rejects.toThrow(ConcurrencyError);
+    await expect(
+      writeIfNewer(rows, { key: 'p1', stamp: at('evt-1', 1), next: () => ({ id: 'p1', name: 'new' }) }),
+    ).rejects.toThrow(ConcurrencyError);
+
     expect(rows.reads).toBe(5);
   });
 });

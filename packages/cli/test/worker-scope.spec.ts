@@ -16,16 +16,16 @@ const SLICES = `# Slices
 | 4 | shipping | slice | Ship | \`generate command shipping Ship --public\` | | shipping | todo |
 `;
 
+let root: string;
+let worktree: string;
+
+beforeAll(() => {
+  root = committedProject('shop', '--context', 'billing:core', '--context', 'shipping:supporting');
+  worktree = fs.realpathSync(path.dirname(root)) + path.sep + 'shop-billing';
+  write(root, 'docs/architecture/slices.md', SLICES);
+});
+
 describe('worker-scope', () => {
-  let root: string;
-  let worktree: string;
-
-  beforeAll(() => {
-    root = committedProject('shop', '--context', 'billing:core', '--context', 'shipping:supporting');
-    worktree = fs.realpathSync(path.dirname(root)) + path.sep + 'shop-billing';
-    write(root, 'docs/architecture/slices.md', SLICES);
-  });
-
   it('refuses a context the config does not know', () => {
     const unknown = cli(root, 'worker-scope', 'catalog');
 
@@ -36,7 +36,15 @@ describe('worker-scope', () => {
   it('with --dry-run says what it would do and creates nothing', () => {
     const planned = cli(root, 'worker-scope', 'billing', '--dry-run', '--json').json();
 
-    expect(planned).toMatchObject({ dryRun: true, context: 'billing', project: 'shop', branch: 'build/billing', trunk: 'main', created: true });
+    expect(planned).toMatchObject({
+      dryRun: true,
+      context: 'billing',
+      project: 'shop',
+      branch: 'build/billing',
+      trunk: 'main',
+      created: true,
+    });
+
     expect(fs.existsSync(worktree)).toBe(false);
     expect(git(root, 'branch', '--list', 'build/billing').trim()).toBe('');
   });
@@ -46,7 +54,14 @@ describe('worker-scope', () => {
 
     expect(scope.code).toBe(0);
     expect(fs.realpathSync(String(jsonAt(scope.json(), 'worktree')))).toBe(worktree);
-    expect(scope.json()).toMatchObject({ created: true, branch: 'build/billing', trunk: 'main', scopeFile: path.join(String(jsonAt(scope.json(), 'root')), '.ddd-ts-kit/worker.json') });
+
+    expect(scope.json()).toMatchObject({
+      created: true,
+      branch: 'build/billing',
+      trunk: 'main',
+      scopeFile: path.join(String(jsonAt(scope.json(), 'root')), '.ddd-ts-kit/worker.json'),
+    });
+
     expect(JSON.parse(read(worktree, '.ddd-ts-kit/worker.json'))).toEqual({ context: 'billing' });
     expect(git(worktree, 'branch', '--show-current').trim()).toBe('build/billing');
     expect(exists(worktree, 'ddd-ts-kit.config.json')).toBe(true);
@@ -62,7 +77,11 @@ describe('worker-scope', () => {
 
     expect(briefing).toContain('You build the bounded context billing of shop.');
     expect(briefing).toMatch(/^Worktree: \/.*shop-billing {3}Branch: build\/billing {3}Trunk: main$/m);
-    expect(briefing).toContain('- You may write: src/contexts/billing/** and test/e2e/<use-case>.e2e.spec.ts of your slices.');
+
+    expect(briefing).toContain(
+      '- You may write: src/contexts/billing/** and test/e2e/<use-case>.e2e.spec.ts of your slices.',
+    );
+
     expect(briefing).toContain('`npx ddd-ts-kit check --changed-since main`');
     expect(briefing).toContain('commit: `feat(billing): <slice in business words>`.');
   });
@@ -71,15 +90,43 @@ describe('worker-scope', () => {
     const scope = cli(root, 'worker-scope', 'billing', '--json').json();
     const generators = jsonAt(scope, 'generators');
 
-    expect(generators).toEqual(['aggregate', 'builder', 'entity', 'value-object', 'domain-event', 'domain-error', 'domain-service', 'command (on an aggregate that has its repository)', 'query', 'port', 'route', 'integration-handler', 'event-handler', 'acl', 'e2e', 'adapter']);
-    expect(String(jsonAt(scope, 'briefing'))).toContain('- Generators you may run: aggregate, builder, entity, value-object, domain-event');
-  });
+    expect(generators).toEqual([
+      'aggregate',
+      'builder',
+      'entity',
+      'value-object',
+      'domain-event',
+      'domain-error',
+      'domain-service',
+      'command (on an aggregate that has its repository)',
+      'query',
+      'port',
+      'route',
+      'integration-handler',
+      'event-handler',
+      'acl',
+      'e2e',
+      'adapter',
+    ]);
 
+    expect(String(jsonAt(scope, 'briefing'))).toContain(
+      '- Generators you may run: aggregate, builder, entity, value-object, domain-event',
+    );
+  });
+});
+
+describe('worker-scope, on slices, an existing worktree and other places', () => {
   it('lists the slices of the context that are still to do', () => {
     const scope = cli(root, 'worker-scope', 'billing', '--json').json();
 
-    expect(jsonAt(scope, 'slices')).toEqual([expect.objectContaining({ id: '2', slice: 'Issue invoice', owner: 'billing', status: 'todo' })]);
-    expect(String(jsonAt(scope, 'briefing'))).toContain('- #2 Issue invoice: `generate command billing IssueInvoice --aggregate Invoice --permission invoice.issue` ; rules: <invariants and failures by name>');
+    expect(jsonAt(scope, 'slices')).toEqual([
+      expect.objectContaining({ id: '2', slice: 'Issue invoice', owner: 'billing', status: 'todo' }),
+    ]);
+
+    expect(String(jsonAt(scope, 'briefing'))).toContain(
+      '- #2 Issue invoice: `generate command billing IssueInvoice --aggregate Invoice --permission invoice.issue` ; rules: <invariants and failures by name>',
+    );
+
     expect(String(jsonAt(scope, 'briefing'))).not.toContain('Cancel invoice');
   });
 
@@ -97,13 +144,29 @@ describe('worker-scope', () => {
   it('takes another directory and another branch, and names the upstream contracts', () => {
     const config = 'ddd-ts-kit.config.json';
 
-    write(root, config, read(root, config).replace('"upstreams": []\n    }\n  }', '"upstreams": ["billing"]\n    }\n  }'));
+    write(
+      root,
+      config,
+      read(root, config).replace('"upstreams": []\n    }\n  }', '"upstreams": ["billing"]\n    }\n  }'),
+    );
 
-    const scope = cli(root, 'worker-scope', 'shipping', '--worktree', '../elsewhere', '--branch', 'feature/shipping', '--json').json();
+    const scope = cli(
+      root,
+      'worker-scope',
+      'shipping',
+      '--worktree',
+      '../elsewhere',
+      '--branch',
+      'feature/shipping',
+      '--json',
+    ).json();
 
     expect(git(path.join(path.dirname(root), 'elsewhere'), 'branch', '--show-current').trim()).toBe('feature/shipping');
     expect(scope).toMatchObject({ branch: 'feature/shipping', created: true });
-    expect(String(jsonAt(scope, 'briefing'))).toContain('Contracts you consume (read-only): src/contexts/billing/published-language/');
+
+    expect(String(jsonAt(scope, 'briefing'))).toContain(
+      'Contracts you consume (read-only): src/contexts/billing/published-language/',
+    );
   });
 
   it('says what to do outside a git repository', () => {

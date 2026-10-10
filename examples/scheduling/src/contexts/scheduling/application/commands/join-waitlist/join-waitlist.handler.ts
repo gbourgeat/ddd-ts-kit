@@ -18,11 +18,16 @@ export class JoinWaitlistHandler implements CommandHandler<JoinWaitlistCommand> 
   async execute({ calendarId, wait }: JoinWaitlistCommand): Promise<string> {
     const calendar = await this.calendarRepository.findById(calendarId);
 
-    if (calendar === undefined) throw new UnknownCalendarError(calendarId);
+    if (calendar === undefined) {
+      throw new UnknownCalendarError(calendarId);
+    }
 
     const now = this.clock.now();
     const waiter = calendar.admit(wait.patientId, wait.appointmentTypeId, now);
-    const target = (await this.waitlistRepository.findById(Waitlist.idOf(calendarId, wait.day))) ?? Waitlist.create({ calendarId, day: wait.day }, now);
+
+    const target =
+      (await this.waitlistRepository.findById(Waitlist.idOf(calendarId, wait.day))) ??
+      Waitlist.create({ calendarId, day: wait.day }, now);
 
     target.join(waiter, now);
 

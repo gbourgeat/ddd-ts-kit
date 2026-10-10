@@ -73,9 +73,13 @@ export class RedisStreamsEventBus implements EventBus {
    * for later, so the caller (the outbox relay) knows what to retry.
    */
   async publish(events: readonly IntegrationEvent[]): Promise<void> {
-    if (events.length === 0) return;
+    if (events.length === 0) {
+      return;
+    }
 
-    if (this.closed) throw new EventBusClosedError();
+    if (this.closed) {
+      throw new EventBusClosedError();
+    }
 
     const client = await this.link.ready();
 
@@ -86,14 +90,18 @@ export class RedisStreamsEventBus implements EventBus {
 
   /** Subscribes the consumer named by the `consumer` option. */
   subscribe(type: string, handler: IntegrationEventCallback): Subscription {
-    if (this.settings.consumer === undefined) throw new ConsumerNameRequiredError();
+    if (this.settings.consumer === undefined) {
+      throw new ConsumerNameRequiredError();
+    }
 
     return this.bind({ consumer: this.settings.consumer, type }, handler);
   }
 
   /** A subscriber for one consuming context, with a reading connection of its own. */
   forConsumer(consumer: string): IntegrationEventSubscriber {
-    if (consumer.length === 0) throw new ConsumerNameRequiredError();
+    if (consumer.length === 0) {
+      throw new ConsumerNameRequiredError();
+    }
 
     return { subscribe: (type, handler) => this.bind({ consumer, type }, handler) };
   }
@@ -123,7 +131,9 @@ export class RedisStreamsEventBus implements EventBus {
 
   /** Stops reading, waits for the handlers in progress to settle, disconnects what it opened. */
   async close(): Promise<void> {
-    if (this.closed) return;
+    if (this.closed) {
+      return;
+    }
 
     this.closed = true;
     await this.consumption.drain();
@@ -141,7 +151,9 @@ export class RedisStreamsEventBus implements EventBus {
   }
 
   private bind(binding: ConsumerBinding, handler: IntegrationEventCallback): Subscription {
-    if (this.closed) throw new EventBusClosedError();
+    if (this.closed) {
+      throw new EventBusClosedError();
+    }
 
     return this.consumption.add(binding, handler);
   }

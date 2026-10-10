@@ -108,7 +108,9 @@ given, commits when it resolved and rolls back when it rejected:
 ```ts
 run<T>(work: () => Promise<T>): Promise<T> {
   return withinUnitOfWork(work, (scoped) => {
-    if (this.current.getStore() !== undefined) return scoped(); // nested: join the transaction
+    if (this.current.getStore() !== undefined) { // nested: join the transaction
+      return scoped();
+    }
 
     return this.database.transaction((transaction) => this.current.run(transaction, scoped));
   });
@@ -583,7 +585,9 @@ The key carries the type of its value. `InMemoryCache(clock, { maxEntries? })` e
 
 ```ts
 const handle = await lock.acquire('nightly-export', { ttlMs: 60_000, waitMs: 0 });
-if (handle === undefined) return;            // somebody else holds the key
+if (handle === undefined) { // somebody else holds the key
+  return;
+}
 try {
   await exportEverything();
 } finally {
@@ -637,7 +641,9 @@ port is `jobSchedulerContract` of `@ddd-ts-kit/testing/contracts`.
 
 ```ts
 const decision = await limiter.consume(`password-reset:${accountId}`, { limit: 3, windowMs: 3_600_000 });
-if (!decision.allowed) throw new TooManyAttempts(decision.retryAfterMs);
+if (!decision.allowed) {
+  throw new TooManyAttempts(decision.retryAfterMs);
+}
 ```
 
 A sliding window: at any instant, at most `limit` allowed calls in the `windowMs` before it. A

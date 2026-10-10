@@ -12,9 +12,16 @@ const shown: GetCalendarDayResult = {
   timeZone: 'Europe/Paris',
   open: [{ startsAt: at('08:00'), endsAt: at('11:00') }],
   timeOff: [{ startsAt: at('10:00'), endsAt: at('11:00') }],
-  appointmentTypes: [{ id: 'consultation', name: 'Consultation', duration: 30, grid: 30, buffer: 10, needsConfirmation: false }],
+  appointmentTypes: [
+    { id: 'consultation', name: 'Consultation', duration: 30, grid: 30, buffer: 10, needsConfirmation: false },
+  ],
   busy: [
-    { startsAt: at('08:00'), endsAt: at('08:30'), heldUntil: at('08:40'), appointment: { id: 'appointment-1', patientId: 'patient-1', appointmentTypeId: 'consultation', status: 'booked' } },
+    {
+      startsAt: at('08:00'),
+      endsAt: at('08:30'),
+      heldUntil: at('08:40'),
+      appointment: { id: 'appointment-1', patientId: 'patient-1', appointmentTypeId: 'consultation', status: 'booked' },
+    },
     { startsAt: at('09:00'), endsAt: at('09:30'), heldUntil: at('09:40') },
   ],
 };
@@ -23,15 +30,9 @@ describe('GET /calendars/:calendarId/days/:day', () => {
   it('answers 200 with the day as the use case shows it, instants written in ISO 8601', async () => {
     const received: GetCalendarDayQuery[] = [];
 
-    const queries = new InMemoryQueryBus().register(GetCalendarDayQuery, {
-      execute: async (query) => {
-        received.push(query);
-
-        return shown;
-      },
+    const response = await executeRoute(getCalendarDayRoute(showingAndKeeping(received)), request('2026-03-02'), {
+      validateResponses: true,
     });
-
-    const response = await executeRoute(getCalendarDayRoute(queries), request('2026-03-02'), { validateResponses: true });
 
     expect(response.status).toBe(200);
 
@@ -43,8 +44,17 @@ describe('GET /calendars/:calendarId/days/:day', () => {
       timeOff: [{ startsAt: '2026-03-02T10:00:00.000Z', endsAt: '2026-03-02T11:00:00.000Z' }],
       appointmentTypes: shown.appointmentTypes,
       busy: [
-        { startsAt: '2026-03-02T08:00:00.000Z', endsAt: '2026-03-02T08:30:00.000Z', heldUntil: '2026-03-02T08:40:00.000Z', appointment: shown.busy[0]?.appointment },
-        { startsAt: '2026-03-02T09:00:00.000Z', endsAt: '2026-03-02T09:30:00.000Z', heldUntil: '2026-03-02T09:40:00.000Z' },
+        {
+          startsAt: '2026-03-02T08:00:00.000Z',
+          endsAt: '2026-03-02T08:30:00.000Z',
+          heldUntil: '2026-03-02T08:40:00.000Z',
+          appointment: shown.busy[0]?.appointment,
+        },
+        {
+          startsAt: '2026-03-02T09:00:00.000Z',
+          endsAt: '2026-03-02T09:30:00.000Z',
+          heldUntil: '2026-03-02T09:40:00.000Z',
+        },
       ],
     });
 
@@ -54,10 +64,15 @@ describe('GET /calendars/:calendarId/days/:day', () => {
   it('never names the patient of a slot the use case shows as busy only', async () => {
     const queries = new InMemoryQueryBus().register(GetCalendarDayQuery, { execute: async () => shown });
 
-    const response = await executeRoute(getCalendarDayRoute(queries), request('2026-03-02'), { validateResponses: true });
+    const response = await executeRoute(getCalendarDayRoute(queries), request('2026-03-02'), {
+      validateResponses: true,
+    });
 
     expect(JSON.stringify(response.body)).not.toContain('patient-2');
-    expect(response.body).toMatchObject({ busy: [{}, expect.not.objectContaining({ appointment: expect.anything() })] });
+
+    expect(response.body).toMatchObject({
+      busy: [{}, expect.not.objectContaining({ appointment: expect.anything() })],
+    });
   });
 
   it('refuses a day that is not written YYYY-MM-DD with 422', async () => {
@@ -75,11 +90,24 @@ describe('GET /calendars/:calendarId/days/:day', () => {
       },
     });
 
-    const response = await executeRoute(getCalendarDayRoute(queries), request('2026-03-02'), { validateResponses: true });
+    const response = await executeRoute(getCalendarDayRoute(queries), request('2026-03-02'), {
+      validateResponses: true,
+    });
 
     expect(response).toMatchObject({ status: 422, body: { code: 'UNKNOWN_CALENDAR' } });
   });
 });
+
+/** The use case, replaced by one that shows the day and keeps the queries it received. */
+function showingAndKeeping(received: GetCalendarDayQuery[]) {
+  return new InMemoryQueryBus().register(GetCalendarDayQuery, {
+    execute: async (query) => {
+      received.push(query);
+
+      return shown;
+    },
+  });
+}
 
 function request(day: string) {
   return { params: { calendarId: 'calendar-1', day }, query: {}, headers: {}, body: undefined, raw: undefined };

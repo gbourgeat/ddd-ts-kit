@@ -9,7 +9,8 @@ import { toViolations } from '../support/to-violations.js';
 
 export const treeContextDoc: Rule = {
   id: 'tree/context-doc',
-  description: 'Every context has a CONTEXT.md with the required sections and the classification declared in the config.',
+  description:
+    'Every context has a CONTEXT.md with the required sections and the classification declared in the config.',
   scope: 'project',
   run(project) {
     const report = reporter(project, this.id);
@@ -19,13 +20,22 @@ export const treeContextDoc: Rule = {
       const text = readIfPresent(path.join(project.root, file));
 
       if (text === undefined) {
-        return [report({ file, line: 1 }, `The context "${context}" has no CONTEXT.md.`, `Create ${file} with the sections ${CONTEXT_DOC_HEADINGS.join(', ')}.`)];
+        return [
+          report(
+            { file, line: 1 },
+            `The context "${context}" has no CONTEXT.md.`,
+            `Create ${file} with the sections ${CONTEXT_DOC_HEADINGS.join(', ')}.`,
+          ),
+        ];
       }
 
       const lines = text.split('\n').map((line) => line.trim());
       const expected = project.config.contexts[context]?.classification;
 
-      return toViolations(report, file, [...missingSections(lines), ...(expected === undefined ? [] : otherClassification(lines, context, expected))]);
+      return toViolations(report, file, [
+        ...missingSections(lines),
+        ...(expected === undefined ? [] : otherClassification(lines, context, expected)),
+      ]);
     });
   },
 };
@@ -39,7 +49,9 @@ function readIfPresent(file: string): string | undefined {
 }
 
 function missingSections(lines: readonly string[]): Finding[] {
-  return CONTEXT_DOC_HEADINGS.filter((heading) => !lines.some((line) => line.toLowerCase() === heading.toLowerCase())).map((heading) => ({
+  return CONTEXT_DOC_HEADINGS.filter(
+    (heading) => !lines.some((line) => line.toLowerCase() === heading.toLowerCase()),
+  ).map((heading) => ({
     line: 1,
     message: `CONTEXT.md lacks the section "${heading}".`,
     fix: `Add a "${heading}" section and fill it in with the domain expert's words.`,
@@ -49,7 +61,9 @@ function missingSections(lines: readonly string[]): Finding[] {
 function otherClassification(lines: readonly string[], context: string, expected: string): Finding[] {
   const at = lines.findIndex((line) => line.toLowerCase() === '## classification');
 
-  if (at === -1) return [];
+  if (at === -1) {
+    return [];
+  }
 
   const end = lines.findIndex((line, index) => index > at && line.startsWith('## '));
 
@@ -60,7 +74,9 @@ function otherClassification(lines: readonly string[], context: string, expected
 
   const stated = CLASSIFICATIONS.filter((candidate) => new RegExp(`\\b${candidate}\\b`).test(section));
 
-  if (stated.length === 1 && stated[0] === expected) return [];
+  if (stated.length === 1 && stated[0] === expected) {
+    return [];
+  }
 
   return [
     {

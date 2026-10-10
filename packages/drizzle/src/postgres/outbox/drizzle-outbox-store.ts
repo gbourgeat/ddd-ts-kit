@@ -110,11 +110,7 @@ export class DrizzleOutboxStore<
       .where(inArray(this.outbox.id, [...ids]));
   }
 
-  async markFailed(
-    id: string,
-    error: { readonly code: string },
-    nextAttemptAt: Date | null,
-  ): Promise<void> {
+  async markFailed(id: string, error: { readonly code: string }, nextAttemptAt: Date | null): Promise<void> {
     await this.context
       .executor()
       .update(this.outbox)

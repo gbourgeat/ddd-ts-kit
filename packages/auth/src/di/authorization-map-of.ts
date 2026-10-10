@@ -11,9 +11,13 @@ export function authorizationMapOf(declared: readonly DeclaredUseCase[]): Author
 }
 
 function declarationOf(declared: DeclaredUseCase): UseCaseDeclaration[] {
-  if (declared.access === undefined) return [];
+  if (declared.access === undefined) {
+    return [];
+  }
 
-  if (declared.access === 'public') return [publicUseCase(declared.message)];
+  if (declared.access === 'public') {
+    return [publicUseCase(declared.message)];
+  }
 
   const { permission } = declared;
 

@@ -15,7 +15,10 @@ export interface ScopeRestriction {
  */
 export class ScopedCriteria<Row> {
   static within<Row>(criteria: Criteria<Row>, restriction: ScopeRestriction): ScopedCriteria<Row> {
-    return new ScopedCriteria<Row>(criteria, Object.freeze({ ...restriction, conditions: Object.freeze([...restriction.conditions]) }));
+    return new ScopedCriteria<Row>(
+      criteria,
+      Object.freeze({ ...restriction, conditions: Object.freeze([...restriction.conditions]) }),
+    );
   }
 
   private constructor(

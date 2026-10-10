@@ -8,7 +8,8 @@ const DATABASE_SCRIPTS: Readonly<Record<string, Record<string, string>>> = {
   knex: { 'db:generate': 'knex migrate:make', 'db:migrate': 'npm run build && knex migrate:latest' },
   // The client and the schema of the tests are build products of prisma/schema.prisma: every entry point refreshes them.
   prisma: {
-    'db:client': 'prisma generate && prisma migrate diff --from-empty --to-schema prisma/schema.prisma --script -o generated/schema.sql',
+    'db:client':
+      'prisma generate && prisma migrate diff --from-empty --to-schema prisma/schema.prisma --script -o generated/schema.sql',
     'db:generate': 'prisma migrate dev --create-only',
     'db:migrate': 'prisma migrate deploy',
     pretypecheck: 'npm run db:client',
@@ -32,7 +33,9 @@ function scriptsOf(config: Config): Record<string, string> {
   const { orm } = config.stack;
   const dataSource = `dist/${config.platformDir}/database/data-source.js`;
 
-  if (orm !== 'typeorm') return DATABASE_SCRIPTS[orm] ?? {};
+  if (orm !== 'typeorm') {
+    return DATABASE_SCRIPTS[orm] ?? {};
+  }
 
   return {
     'db:generate': `typeorm migration:generate -d ${dataSource} migrations/change`,

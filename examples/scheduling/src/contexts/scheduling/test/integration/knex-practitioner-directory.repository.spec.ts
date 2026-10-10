@@ -23,7 +23,9 @@ beforeEach(async () => {
 
 describe('KnexPractitionerDirectory', () => {
   it('reads back every fact of a practitioner it was given', async () => {
-    await practitioners.upsertIfNewer('practice-1.ada', stamp('event-1', '08:00'), () => entry('practice-1', 'ada', 'Ada Martin'));
+    await practitioners.upsertIfNewer('practice-1.ada', stamp('event-1', '08:00'), () =>
+      entry('practice-1', 'ada', 'Ada Martin'),
+    );
 
     expect(await practitioners.get('practice-1.ada')).toEqual({
       id: 'practice-1.ada',
@@ -35,20 +37,35 @@ describe('KnexPractitionerDirectory', () => {
   });
 
   it('lists the practitioners of one practice, by name', async () => {
-    await practitioners.upsertIfNewer('practice-1.zoe', stamp('event-1', '08:00'), () => entry('practice-1', 'zoe', 'Zoe Bernard'));
-    await practitioners.upsertIfNewer('practice-1.ada', stamp('event-2', '08:00'), () => entry('practice-1', 'ada', 'Ada Martin'));
-    await practitioners.upsertIfNewer('practice-2.ada', stamp('event-3', '08:00'), () => entry('practice-2', 'ada', 'Ada Martin'));
+    await practitioners.upsertIfNewer('practice-1.zoe', stamp('event-1', '08:00'), () =>
+      entry('practice-1', 'zoe', 'Zoe Bernard'),
+    );
 
-    const page = await practitioners.list(scoped(Criteria.of<PractitionerEntry>().where('practiceId', 'eq', 'practice-1'), { kind: 'all' }, {}));
+    await practitioners.upsertIfNewer('practice-1.ada', stamp('event-2', '08:00'), () =>
+      entry('practice-1', 'ada', 'Ada Martin'),
+    );
+
+    await practitioners.upsertIfNewer('practice-2.ada', stamp('event-3', '08:00'), () =>
+      entry('practice-2', 'ada', 'Ada Martin'),
+    );
+
+    const page = await practitioners.list(
+      scoped(Criteria.of<PractitionerEntry>().where('practiceId', 'eq', 'practice-1'), { kind: 'all' }, {}),
+    );
 
     expect(page.items.map((listed) => listed.practitionerId)).toEqual(['ada', 'zoe']);
   });
 
   it('forgets a removed practitioner, and an older fact delivered late does not bring them back', async () => {
-    await practitioners.upsertIfNewer('practice-1.ada', stamp('event-1', '08:00'), () => entry('practice-1', 'ada', 'Ada Martin'));
+    await practitioners.upsertIfNewer('practice-1.ada', stamp('event-1', '08:00'), () =>
+      entry('practice-1', 'ada', 'Ada Martin'),
+    );
 
     await practitioners.delete('practice-1.ada', stamp('event-3', '10:00'));
-    const late = await practitioners.upsertIfNewer('practice-1.ada', stamp('event-2', '09:00'), () => entry('practice-1', 'ada', 'Ada Martin'));
+
+    const late = await practitioners.upsertIfNewer('practice-1.ada', stamp('event-2', '09:00'), () =>
+      entry('practice-1', 'ada', 'Ada Martin'),
+    );
 
     expect(late).toBe('stale');
     expect(await practitioners.get('practice-1.ada')).toBeUndefined();
@@ -57,10 +74,16 @@ describe('KnexPractitionerDirectory', () => {
   // The stamps of real facts carry milliseconds, which the SQL store reads back to the second: the projections stamp with `storableStamp`.
   it('follows the facts of a practitioner milliseconds apart, as the projection stamps them', async () => {
     const writes = [
-      await practitioners.upsertIfNewer('practice-1.ada', storableStamp(precise('event-1', 123)), () => entry('practice-1', 'ada', 'Ada Martin')),
-      await practitioners.upsertIfNewer('practice-1.ada', storableStamp(precise('event-2', 456)), () => entry('practice-1', 'ada', 'Ada Lovelace')),
+      await practitioners.upsertIfNewer('practice-1.ada', storableStamp(precise('event-1', 123)), () =>
+        entry('practice-1', 'ada', 'Ada Martin'),
+      ),
+      await practitioners.upsertIfNewer('practice-1.ada', storableStamp(precise('event-2', 456)), () =>
+        entry('practice-1', 'ada', 'Ada Lovelace'),
+      ),
       await practitioners.delete('practice-1.ada', storableStamp(precise('event-3', 789))),
-      await practitioners.upsertIfNewer('practice-1.ada', storableStamp(precise('event-2', 456)), () => entry('practice-1', 'ada', 'Ada Lovelace')),
+      await practitioners.upsertIfNewer('practice-1.ada', storableStamp(precise('event-2', 456)), () =>
+        entry('practice-1', 'ada', 'Ada Lovelace'),
+      ),
     ];
 
     expect(writes).toEqual(['applied', 'applied', 'applied', 'stale']);

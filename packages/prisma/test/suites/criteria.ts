@@ -1,6 +1,11 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { Criteria, cursorPage, pageOfPlan, planCriteria, scoped } from '@ddd-ts-kit/kernel';
-import { criteriaContract, criteriaContractDefinition, criteriaContractRows, type CriteriaContractRow } from '@ddd-ts-kit/testing/contracts';
+import {
+  criteriaContract,
+  criteriaContractDefinition,
+  criteriaContractRows,
+  type CriteriaContractRow,
+} from '@ddd-ts-kit/testing/contracts';
 import { PrismaReadModelStore, createPrismaUnitOfWork, criteriaToPrisma } from '../../src/index.js';
 import { createDatabase, type TestDatabase } from '../support/database.js';
 import { CONTRACT_MODEL } from '../support/read-model/contract-model.js';
@@ -18,7 +23,11 @@ afterAll(async () => {
   await database.close();
 });
 
-const storeOf = () => new PrismaReadModelStore(createPrismaUnitOfWork(database.prisma), { ...CONTRACT_MODEL, definition: criteriaContractDefinition });
+const storeOf = () =>
+  new PrismaReadModelStore(createPrismaUnitOfWork(database.prisma), {
+    ...CONTRACT_MODEL,
+    definition: criteriaContractDefinition,
+  });
 
 async function load(rows: readonly CriteriaContractRow[]): Promise<void> {
   await database.truncate();
@@ -37,7 +46,9 @@ criteriaContract(runner, {
 
 describe('criteriaToPrisma', () => {
   const all = Criteria.of<CriteriaContractRow>();
-  const argumentsOf = (criteria: Criteria<CriteriaContractRow>) => criteriaToPrisma(planCriteria(criteriaContractDefinition, criteria));
+
+  const argumentsOf = (criteria: Criteria<CriteriaContractRow>) =>
+    criteriaToPrisma(planCriteria(criteriaContractDefinition, criteria));
 
   beforeEach(async () => {
     await load(criteriaContractRows());
@@ -45,7 +56,11 @@ describe('criteriaToPrisma', () => {
 
   it('hands every value to Prisma as data, and never writes one into a statement', async () => {
     const hostile = "x'; drop table criteria_contract; --";
-    const asked = all.where('title', 'contains', hostile).where('title', 'in', ['booked', hostile]).not((none) => none.where('room', 'eq', hostile));
+
+    const asked = all
+      .where('title', 'contains', hostile)
+      .where('title', 'in', ['booked', hostile])
+      .not((none) => none.where('room', 'eq', hostile));
 
     expect(argumentsOf(asked).where).toEqual({
       AND: [
@@ -62,11 +77,22 @@ describe('criteriaToPrisma', () => {
   });
 
   it('orders a field that may be null as the plan means it, and seeks past a cursor by the same order', async () => {
-    const first = await storeOf().list(scoped(all.orderBy('room', 'desc').page(cursorPage({ limit: 3 })), { kind: 'all' }));
-    const { where, orderBy, take } = argumentsOf(all.orderBy('room', 'desc').page(cursorPage({ limit: 3, ...(first.nextCursor === undefined ? {} : { cursor: first.nextCursor }) })));
+    const first = await storeOf().list(
+      scoped(all.orderBy('room', 'desc').page(cursorPage({ limit: 3 })), { kind: 'all' }),
+    );
+
+    const { where, orderBy, take } = argumentsOf(
+      all
+        .orderBy('room', 'desc')
+        .page(cursorPage({ limit: 3, ...(first.nextCursor === undefined ? {} : { cursor: first.nextCursor }) })),
+    );
 
     expect(first.items.map(({ id }) => id)).toEqual(['a5', 'a3', 'a7']);
-    expect(where).toEqual({ AND: [{}, { OR: [{ room: { lt: 'É' } }, { AND: [{ room: { equals: 'É' } }, { id: { lt: 'a7' } }] }] }] });
+
+    expect(where).toEqual({
+      AND: [{}, { OR: [{ room: { lt: 'É' } }, { AND: [{ room: { equals: 'É' } }, { id: { lt: 'a7' } }] }] }],
+    });
+
     expect(orderBy).toEqual([{ room: { sort: 'desc', nulls: 'first' } }, { id: 'desc' }]);
     expect(take).toBe(4);
   });
@@ -85,7 +111,14 @@ describe('criteriaToPrisma', () => {
   it('serves a read port that is not a store: the plan, the query, the page', async () => {
     const plan = planCriteria(criteriaContractDefinition, all.where('seats', 'gte', 4).page(cursorPage({ limit: 1 })));
     const { where, orderBy, take } = criteriaToPrisma(plan);
-    const found = await database.prisma.criteriaContractRow.findMany({ where, orderBy, take, select: { id: true, seats: true, startsAt: true } });
+
+    const found = await database.prisma.criteriaContractRow.findMany({
+      where,
+      orderBy,
+      take,
+      select: { id: true, seats: true, startsAt: true },
+    });
+
     const page = pageOfPlan(plan, found);
 
     expect(page.items).toEqual([{ id: 'a2', seats: 4, startsAt: new Date('2026-10-01T09:00:00.000Z') }]);

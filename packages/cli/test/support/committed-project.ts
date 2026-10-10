@@ -7,7 +7,9 @@ export function committedProject(name: string, ...flags: readonly string[]): str
   const root = path.join(tempDir('repository'), name);
   const result = cli(root, 'init', ...flags);
 
-  if (result.code !== 0) throw new Error(`init failed (${result.code}): ${result.stderr || result.stdout}`);
+  if (result.code !== 0) {
+    throw new Error(`init failed (${result.code}): ${result.stderr || result.stdout}`);
+  }
 
   git(root, 'init', '--quiet', '--initial-branch', 'main');
   git(root, 'add', '--all');

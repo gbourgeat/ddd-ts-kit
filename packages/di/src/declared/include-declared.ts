@@ -41,16 +41,22 @@ export function includeDeclared(inclusion: Inclusion, source: DeclaredSource): v
   for (const target of new Set(classesOf(source))) {
     const declaration = declarationOf(target);
 
-    if (declaration === undefined) throw undeclaredClass(target, inclusion.module);
+    if (declaration === undefined) {
+      throw undeclaredClass(target, inclusion.module);
+    }
 
     register({ ...inclusion, declaredBy: declarerOf(target) }, declaration);
   }
 }
 
 function classesOf(source: DeclaredSource): DeclaredClass[] {
-  if (typeof source === 'function') return [source];
+  if (typeof source === 'function') {
+    return [source];
+  }
 
-  if (isList(source)) return source.flatMap((part) => classesOf(part));
+  if (isList(source)) {
+    return source.flatMap((part) => classesOf(part));
+  }
 
   return Object.values(source).filter(isDeclaredClass);
 }
@@ -145,34 +151,41 @@ function underItself({ module, declaredBy }: Registration, { implementation, dep
   };
 }
 
-function registerIntegrationEventHandler(registration: Registration, declaration: IntegrationEventHandlerDeclaration): void {
+function registerIntegrationEventHandler(
+  registration: Registration,
+  declaration: IntegrationEventHandlerDeclaration,
+): void {
   const { draft, module, declaredBy } = registration;
   const { consumer, actorOf, dependencies } = declaration;
   const options: ConsumerOptions = { consumer, ...(actorOf === undefined ? {} : { actorOf }) };
 
-  declaration.pair(<Payload>(contract: EventContract<Payload>, implementation: ClassOf<IntegrationEventHandler<Payload>>) => {
-    draft.addConsumption(consumptionOf({ contract, options, handler: implementation, module, declaredBy }));
-    draft.addBinding(underItself(registration, { implementation, dependencies, kind: 'consumer' }));
-  });
+  declaration.pair(
+    <Payload>(contract: EventContract<Payload>, implementation: ClassOf<IntegrationEventHandler<Payload>>) => {
+      draft.addConsumption(consumptionOf({ contract, options, handler: implementation, module, declaredBy }));
+      draft.addBinding(underItself(registration, { implementation, dependencies, kind: 'consumer' }));
+    },
+  );
 }
 
 function registerDomainEventHandler(registration: Registration, declaration: DomainEventHandlerDeclaration): void {
   const { draft, module, declaredBy } = registration;
   const { name, phase, dependencies } = declaration;
 
-  declaration.pair(<E extends DomainEvent>(event: DomainEventType<E>, implementation: ClassOf<DomainEventHandler<E>>) => {
-    draft.addBinding(underItself(registration, { implementation, dependencies, kind: 'domain-event-handler' }));
+  declaration.pair(
+    <E extends DomainEvent>(event: DomainEventType<E>, implementation: ClassOf<DomainEventHandler<E>>) => {
+      draft.addBinding(underItself(registration, { implementation, dependencies, kind: 'domain-event-handler' }));
 
-    draft.addDomainEventHandler({
-      name,
-      phase,
-      event: event.name,
-      handler: implementation,
-      module,
-      declaredBy,
-      attach: attaching({ name, phase }, event, implementation),
-    });
-  });
+      draft.addDomainEventHandler({
+        name,
+        phase,
+        event: event.name,
+        handler: implementation,
+        module,
+        declaredBy,
+        attach: attaching({ name, phase }, event, implementation),
+      });
+    },
+  );
 }
 
 /*
@@ -186,7 +199,9 @@ function attaching<E extends DomainEvent>(
 ): DomainEventHandling['attach'] {
   return (resolve, dispatcher) => {
     const handle = async (occurred: DomainEvent): Promise<void> => {
-      if (occurred instanceof event) await resolve(handler).handle(occurred);
+      if (occurred instanceof event) {
+        await resolve(handler).handle(occurred);
+      }
     };
 
     dispatcher.on(name, handle, { phase });
@@ -217,9 +232,13 @@ function registerProjection(registration: Registration, declaration: ProjectionD
   draft.addProjection(wired.registration);
   draft.addBinding(underItself(registration, { implementation, dependencies, kind: 'consumer' }));
 
-  for (const consumption of wired.consumptions) draft.addConsumption(consumption);
+  for (const consumption of wired.consumptions) {
+    draft.addConsumption(consumption);
+  }
 
-  for (const handling of wired.domainEventHandlers) draft.addDomainEventHandler(handling);
+  for (const handling of wired.domainEventHandlers) {
+    draft.addDomainEventHandler(handling);
+  }
 }
 
 function registerPort(registration: Registration, declaration: PortDeclaration): void {
@@ -238,6 +257,9 @@ function registerPort(registration: Registration, declaration: PortDeclaration):
 
   assertPort(declaration.token, implementation, module);
 
-  if (declaration.replaces) draft.replaceBinding(binding);
-  else draft.addBinding(binding);
+  if (declaration.replaces) {
+    draft.replaceBinding(binding);
+  } else {
+    draft.addBinding(binding);
+  }
 }

@@ -10,7 +10,9 @@ import type { JobRunObserver } from './job-run-observer.js';
  */
 export function reportFailedRuns(reporter: ErrorReporter): JobRunObserver {
   return (run, error, detail) => {
-    if (run.outcome !== 'failed' || !isUnexpectedError(error)) return;
+    if (run.outcome !== 'failed' || !isUnexpectedError(error)) {
+      return;
+    }
 
     reportOnce(
       reporter,

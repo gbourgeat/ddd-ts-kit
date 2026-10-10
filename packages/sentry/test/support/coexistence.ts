@@ -18,18 +18,31 @@ export async function expectCoexistence(order: readonly [Setup, Setup]): Promise
   let tracing: ReturnType<typeof initTracing> | undefined;
 
   for (const setup of order) {
-    if (setup === 'sentry') tracker = await aTracker();
-    else tracing = initTracing({ serviceName: 'shop', sampleRatio: 1, instrumentations: [], extraSpanProcessors: [processor] });
+    if (setup === 'sentry') {
+      tracker = await aTracker();
+    } else {
+      tracing = initTracing({
+        serviceName: 'shop',
+        sampleRatio: 1,
+        instrumentations: [],
+        extraSpanProcessors: [processor],
+      });
+    }
   }
 
-  if (tracker === undefined || tracing === undefined) throw new Error('Both must be started.');
+  if (tracker === undefined || tracing === undefined) {
+    throw new Error('Both must be started.');
+  }
 
   const { status, span } = await failingRequest(tracker.errors);
 
   await tracker.errors.flush(2_000);
   await processor.forceFlush();
 
-  const spans = exporter.getFinishedSpans().map((finished) => ({ name: finished.name, traceId: finished.spanContext().traceId }));
+  const spans = exporter
+    .getFinishedSpans()
+    .map((finished) => ({ name: finished.name, traceId: finished.spanContext().traceId }));
+
   const [event] = tracker.server.events;
 
   await tracker.stop();

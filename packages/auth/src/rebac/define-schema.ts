@@ -55,7 +55,9 @@ interface Named {
 
 function assertResolves(schema: Schema, at: Named, rewrite: Rewrite): void {
   if (typeof rewrite === 'string') {
-    if (schema.resolve(at.type, rewrite) !== undefined) return;
+    if (schema.resolve(at.type, rewrite) !== undefined) {
+      return;
+    }
 
     throw new SchemaError(`"${at.type}#${at.name}" refers to "${rewrite}", which "${at.type}" does not declare.`);
   }
@@ -68,9 +70,13 @@ function assertResolves(schema: Schema, at: Named, rewrite: Rewrite): void {
 
   const children = rewrite.kind === 'exclusion' ? [rewrite.base, rewrite.subtract] : rewrite.children;
 
-  if (children.length === 0) throw new SchemaError(`"${at.type}#${at.name}" has an empty ${rewrite.kind}.`);
+  if (children.length === 0) {
+    throw new SchemaError(`"${at.type}#${at.name}" has an empty ${rewrite.kind}.`);
+  }
 
-  for (const child of children) assertResolves(schema, at, child);
+  for (const child of children) {
+    assertResolves(schema, at, child);
+  }
 }
 
 function assertFollows(schema: Schema, at: Named, { relation, permission }: FromRewrite): void {
@@ -82,7 +88,9 @@ function assertFollows(schema: Schema, at: Named, { relation, permission }: From
 
   for (const target of followed.subjects) {
     if (target.includes('#')) {
-      throw new SchemaError(`"${at.type}#${at.name}" follows "${relation}", which accepts the userset "${target}": only objects can be followed.`);
+      throw new SchemaError(
+        `"${at.type}#${at.name}" follows "${relation}", which accepts the userset "${target}": only objects can be followed.`,
+      );
     }
 
     if (schema.resolve(target, permission) === undefined) {
@@ -99,7 +107,9 @@ function assertFollows(schema: Schema, at: Named, { relation, permission }: From
 function assertTerminates(schema: Schema, type: string, path: readonly string[]): void {
   const rewrite = schema.permissions(type)[path.at(-1) ?? ''];
 
-  if (rewrite === undefined) return;
+  if (rewrite === undefined) {
+    return;
+  }
 
   for (const name of namesIn(rewrite)) {
     if (path.includes(name)) {
@@ -111,9 +121,13 @@ function assertTerminates(schema: Schema, type: string, path: readonly string[])
 }
 
 function namesIn(rewrite: Rewrite): readonly string[] {
-  if (typeof rewrite === 'string') return [rewrite];
+  if (typeof rewrite === 'string') {
+    return [rewrite];
+  }
 
-  if (rewrite.kind === 'from') return [];
+  if (rewrite.kind === 'from') {
+    return [];
+  }
 
   const children = rewrite.kind === 'exclusion' ? [rewrite.base, rewrite.subtract] : rewrite.children;
 

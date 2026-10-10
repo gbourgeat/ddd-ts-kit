@@ -26,9 +26,17 @@ export function looksLikeCode(text: string): boolean {
   // Code quoted in backticks inside a sentence is documentation, not a leftover.
   const trimmed = text.replace(/`[^`]*`/g, '').trim();
 
-  if (PROSE.test(trimmed) || isDirective(trimmed)) return false;
-  if (trimmed.length < 3) return /^[)}\]]+;?$/.test(trimmed);
-  if (readsAsProse(trimmed)) return false;
+  if (PROSE.test(trimmed) || isDirective(trimmed)) {
+    return false;
+  }
+
+  if (trimmed.length < 3) {
+    return /^[)}\]]+;?$/.test(trimmed);
+  }
+
+  if (readsAsProse(trimmed)) {
+    return false;
+  }
 
   return CODE_SHAPES.some((shape) => shape.test(trimmed));
 }

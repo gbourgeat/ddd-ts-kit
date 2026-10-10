@@ -5,7 +5,16 @@ import type { RenderContext } from '../templating/index.js';
 export function redisVars(config: Config): RenderContext {
   const { cache, broker } = config.stack;
   const streams = broker === 'redis';
-  const uses = [...(cache === 'redis' ? ['cache, lock of the scheduled jobs, rate limiter, wake-up of the outbox relay'] : []), ...(streams ? ['streams of the integration events'] : [])];
 
-  return { server: cache === 'redis' || streams, streams, service: cache === 'redis' ? 'cache' : 'streams', uses: uses.join(', ') };
+  const uses = [
+    ...(cache === 'redis' ? ['cache, lock of the scheduled jobs, rate limiter, wake-up of the outbox relay'] : []),
+    ...(streams ? ['streams of the integration events'] : []),
+  ];
+
+  return {
+    server: cache === 'redis' || streams,
+    streams,
+    service: cache === 'redis' ? 'cache' : 'streams',
+    uses: uses.join(', '),
+  };
 }

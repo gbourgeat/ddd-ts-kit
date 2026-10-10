@@ -6,10 +6,7 @@ import type { KafkaTopology } from './kafka-topology.js';
 import type { TopicDescription } from './topic-description.js';
 import type { TopologySettings } from './topology-settings.js';
 
-export function topologyOf(
-  settings: TopologySettings,
-  bindings: readonly ConsumerBinding[],
-): KafkaTopology {
+export function topologyOf(settings: TopologySettings, bindings: readonly ConsumerBinding[]): KafkaTopology {
   const consumed = bindings.map(({ consumer, type }) => ({ consumer, topic: settings.topicOf(type) }));
   const names = new Map<string, TopicDescription['role']>();
 

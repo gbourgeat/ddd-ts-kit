@@ -27,7 +27,9 @@ describe('traceDependency, the per-root cap', () => {
     let lastBalance: number | undefined;
 
     await withSpan('request', async () => {
-      for (let call = 0; call < 5; call += 1) lastBalance = await wrapped.findBalance('acc-1');
+      for (let call = 0; call < 5; call += 1) {
+        lastBalance = await wrapped.findBalance('acc-1');
+      }
 
       await wrapped.warmUp();
     });
@@ -58,7 +60,9 @@ describe('traceDependency, the per-root cap', () => {
     const wrapped = repository();
 
     await withSpan('request', async () => {
-      for (let call = 0; call < 30; call += 1) await wrapped.findBalance('acc-1');
+      for (let call = 0; call < 30; call += 1) {
+        await wrapped.findBalance('acc-1');
+      }
     });
 
     expect(tracing.spans()).toHaveLength(26);
@@ -82,7 +86,9 @@ describe('traceDependency, the per-root cap', () => {
     const wrapped = repository();
 
     await withSpan('request', async () => {
-      for (let call = 0; call < 4; call += 1) await wrapped.findBalance('acc-1');
+      for (let call = 0; call < 4; call += 1) {
+        await wrapped.findBalance('acc-1');
+      }
     });
 
     expect(tracing.spans()).toHaveLength(5);

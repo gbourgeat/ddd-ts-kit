@@ -23,14 +23,20 @@ describe('POST /appointments/:appointmentId/no-show', () => {
       },
     });
 
-    const response = await executeRoute(markAppointmentNoShowRoute(commands), request(undefined), { validateResponses: true });
+    const response = await executeRoute(markAppointmentNoShowRoute(commands), request(undefined), {
+      validateResponses: true,
+    });
 
     expect(response).toMatchObject({ status: 201, body: { id: 'appointment-1' } });
     expect(received).toMatchObject([{ appointmentId: 'appointment-1' }]);
   });
 
   it.each([
-    [new AppointmentNotStartedError('appointment-1', new Date('2026-03-02T08:00:00.000Z')), 422, 'APPOINTMENT_NOT_STARTED'],
+    [
+      new AppointmentNotStartedError('appointment-1', new Date('2026-03-02T08:00:00.000Z')),
+      422,
+      'APPOINTMENT_NOT_STARTED',
+    ],
     [new AppointmentEndedError('appointment-1', 'cancelled'), 409, 'APPOINTMENT_ENDED'],
     [new AppointmentNotFoundError('appointment-1'), 404, 'APPOINTMENT_NOT_FOUND'],
   ])('answers the refusal %o with the status %i and the code %s', async (refusal, status, code) => {
@@ -40,7 +46,10 @@ describe('POST /appointments/:appointmentId/no-show', () => {
       },
     });
 
-    const response = await executeRoute(markAppointmentNoShowRoute(commands), request(undefined), { validateResponses: true, errorMapper });
+    const response = await executeRoute(markAppointmentNoShowRoute(commands), request(undefined), {
+      validateResponses: true,
+      errorMapper,
+    });
 
     expect(response).toMatchObject({ status, body: { code } });
   });

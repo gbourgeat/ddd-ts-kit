@@ -54,7 +54,10 @@ describe.each(STANDINGS)('an aspect around a class with private members: %s', (_
   });
 
   it('keeps the private state right across the attempts of a retry', async () => {
-    const ledger = wrap(retry({ attempts: 3, sleep: async () => undefined }), new LedgerGateway().failNext(new Unreachable()));
+    const ledger = wrap(
+      retry({ attempts: 3, sleep: async () => undefined }),
+      new LedgerGateway().failNext(new Unreachable()),
+    );
 
     await ledger.post('rent', 900);
 

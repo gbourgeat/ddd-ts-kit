@@ -2,7 +2,10 @@ export { type AdapterOptions, Adapter } from './declarations/decorators/adapter.
 export { CommandHandler } from './declarations/decorators/command-handler.js';
 export { type DomainEventHandlerOptions, DomainEventHandler } from './declarations/decorators/domain-event-handler.js';
 export { Gateway } from './declarations/decorators/gateway.js';
-export { type IntegrationEventHandlerOptions, IntegrationEventHandler } from './declarations/decorators/integration-event-handler.js';
+export {
+  type IntegrationEventHandlerOptions,
+  IntegrationEventHandler,
+} from './declarations/decorators/integration-event-handler.js';
 export type { MessageDeclarator } from './declarations/decorators/message-declarator.js';
 export { On } from './declarations/decorators/on.js';
 export { type PolicyOptions, Policy } from './declarations/decorators/policy.js';

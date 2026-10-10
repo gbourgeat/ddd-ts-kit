@@ -5,7 +5,9 @@ import { parseJobSchedule } from './parse-job-schedule.js';
 export function describeJobSchedule(schedule: JobSchedule): string {
   const parsed = parseJobSchedule(schedule);
 
-  if (parsed.kind === 'cron') return `cron ${parsed.expression} (${parsed.timeZone})`;
+  if (parsed.kind === 'cron') {
+    return `cron ${parsed.expression} (${parsed.timeZone})`;
+  }
 
   return `every ${typeof schedule.every === 'string' ? schedule.every : `${parsed.everyMs}ms`}`;
 }

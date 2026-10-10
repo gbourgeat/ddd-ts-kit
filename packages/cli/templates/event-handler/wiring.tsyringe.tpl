@@ -5,6 +5,21 @@ import { {{event.pascal}} } from './domain/events/{{event.kebab}}.event.js';
 @@registrations
 builder.bind({{event.pascal}}EventHandler).toClass({{event.pascal}}EventHandler).as('domain-event-handler');
 @@start
+{{#if handler.afterCommit}}
+resolve(DomainEventDispatcher).on(
+  '{{event.name}}',
+  async (event) => {
+    if (event instanceof {{event.pascal}}) {
+      await resolve({{event.pascal}}EventHandler).handle(event);
+    }
+  },
+  { phase: 'after-commit' },
+);
+{{/if}}
+{{#unless handler.afterCommit}}
 resolve(DomainEventDispatcher).on('{{event.name}}', async (event) => {
-  if (event instanceof {{event.pascal}}) await resolve({{event.pascal}}EventHandler).handle(event);
-}{{#if handler.afterCommit}}, { phase: 'after-commit' }{{/if}});
+  if (event instanceof {{event.pascal}}) {
+    await resolve({{event.pascal}}EventHandler).handle(event);
+  }
+});
+{{/unless}}

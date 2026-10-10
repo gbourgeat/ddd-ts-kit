@@ -17,9 +17,10 @@ const CLEAN_RULES = {
 /** Files whose several exports are one thing that the general allowances of the rule cannot see. */
 const ONE_PER_FILE_ALLOW = [];
 
-/** Holds everywhere, tests included: private members, file and function ceilings, blank lines. */
+/** Holds everywhere, tests included: private members, file and function ceilings, blank lines, braces. */
 const SHAPE_RULES = {
   ...standardRules.layout,
+  ...standardRules.braces,
   'ddd-ts-kit/clean-no-hash-private': 'error',
   'ddd-ts-kit/clean-file-size': 'error',
   'ddd-ts-kit/clean-function-ceiling': 'error',
@@ -28,7 +29,16 @@ const SHAPE_RULES = {
 export default defineConfig(
   {
     name: 'workspace/ignores',
-    ignores: ['**/dist/**', '**/node_modules/**', 'examples/**', 'coverage/**', 'reports/**', 'packages/cli/templates/**', 'packages/prisma/test/generated/**', '**/*.d.ts'],
+    ignores: [
+      '**/dist/**',
+      '**/node_modules/**',
+      'examples/**',
+      'coverage/**',
+      'reports/**',
+      'packages/cli/templates/**',
+      'packages/prisma/test/generated/**',
+      '**/*.d.ts',
+    ],
   },
   {
     name: 'workspace/sources',
@@ -67,7 +77,12 @@ export default defineConfig(
     extends: [js.configs.recommended],
     plugins: { 'ddd-ts-kit': dddTsKit },
     languageOptions: { globals: globals.node },
-    rules: { 'ddd-ts-kit/clean-stepdown': 'error', 'ddd-ts-kit/clean-no-commented-out-code': 'error', 'ddd-ts-kit/clean-function-size': 'warn' },
+    rules: {
+      ...standardRules.braces,
+      'ddd-ts-kit/clean-stepdown': 'error',
+      'ddd-ts-kit/clean-no-commented-out-code': 'error',
+      'ddd-ts-kit/clean-function-size': 'warn',
+    },
   },
 );
 
@@ -81,7 +96,9 @@ function subpathEntries() {
 }
 
 function builtFiles(exported) {
-  if (typeof exported === 'string') return [...exported.matchAll(/^\.\/dist\/(.+)\.js$/g)].map((match) => match[1]);
+  if (typeof exported === 'string') {
+    return [...exported.matchAll(/^\.\/dist\/(.+)\.js$/g)].map((match) => match[1]);
+  }
 
   return [...new Set(Object.values(exported ?? {}).flatMap(builtFiles))];
 }

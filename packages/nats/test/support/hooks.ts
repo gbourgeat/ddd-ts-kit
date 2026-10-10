@@ -1,7 +1,5 @@
 import type { NatsDelivery, NatsFailure } from '../../src/index.js';
 
-export const deliveriesOf = (settled: NatsDelivery[]) => (delivery: NatsDelivery) =>
-  void settled.push(delivery);
+export const deliveriesOf = (settled: NatsDelivery[]) => (delivery: NatsDelivery) => void settled.push(delivery);
 
-export const failuresOf = (reported: NatsFailure[]) => (failure: NatsFailure) =>
-  void reported.push(failure);
+export const failuresOf = (reported: NatsFailure[]) => (failure: NatsFailure) => void reported.push(failure);

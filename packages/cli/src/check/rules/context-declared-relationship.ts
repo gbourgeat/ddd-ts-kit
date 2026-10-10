@@ -5,11 +5,14 @@ import { perFile } from '../support/per-file.js';
 
 export const contextDeclaredRelationship: Rule = {
   id: 'context/declared-relationship',
-  description: 'Importing the published language of another context requires the relationship to be declared in the config.',
+  description:
+    'Importing the published language of another context requires the relationship to be declared in the config.',
   scope: 'file',
   run(project) {
     return perFile(project, this.id, (file) => {
-      if (!inContext(file.location)) return [];
+      if (!inContext(file.location)) {
+        return [];
+      }
 
       const here = file.location.context;
       const upstreams = project.config.contexts[here]?.upstreams.map((upstream) => upstream.context) ?? [];
@@ -28,7 +31,9 @@ export const contextDeclaredRelationship: Rule = {
 /** The published languages of other contexts that the file imports. */
 function importedLanguages(file: SourceFile, here: string): { context: string; line: number }[] {
   return file.imports.flatMap(({ target, line }) => {
-    if (target.kind !== 'file' || !inContext(target.location)) return [];
+    if (target.kind !== 'file' || !inContext(target.location)) {
+      return [];
+    }
 
     const there = target.location;
 

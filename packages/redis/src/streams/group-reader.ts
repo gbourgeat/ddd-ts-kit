@@ -111,7 +111,9 @@ export class GroupReader {
 
     subscription?.handlers.delete(handler);
 
-    if (subscription?.handlers.size === 0) this.subscriptions.delete(stream);
+    if (subscription?.handlers.size === 0) {
+      this.subscriptions.delete(stream);
+    }
   }
 
   private async run(): Promise<void> {
@@ -148,7 +150,9 @@ export class GroupReader {
   private sweepIsDue(): boolean {
     const { blockMs, retry } = this.settings;
 
-    if (Date.now() - this.sweptAt < Math.min(blockMs, retry.delayMs)) return false;
+    if (Date.now() - this.sweptAt < Math.min(blockMs, retry.delayMs)) {
+      return false;
+    }
 
     this.sweptAt = Date.now();
 
@@ -168,7 +172,9 @@ export class GroupReader {
 
     const streams = [...new Set(deliveries.map((delivery) => delivery.stream))];
 
-    await Promise.all(streams.map((stream) => this.inOrder(deliveries.filter((delivery) => delivery.stream === stream))));
+    await Promise.all(
+      streams.map((stream) => this.inOrder(deliveries.filter((delivery) => delivery.stream === stream))),
+    );
   }
 
   private async inOrder(deliveries: readonly Delivery[]): Promise<void> {
@@ -183,10 +189,24 @@ export class GroupReader {
   private async read(reader: Redis, streams: readonly string[]): Promise<Delivery[]> {
     const { instance, batchSize, blockMs } = this.settings;
     const ids = streams.map(() => '>');
-    // The named command, not `call`: ioredis maps the reply of the commands it knows to its classic shape.
-    const reply = await reader.xreadgroup('GROUP', this.consumer, instance, 'COUNT', batchSize, 'BLOCK', blockMs, 'STREAMS', ...streams, ...ids);
 
-    return [...entriesByStream(reply)].flatMap(([stream, entries]) => entries.map((entry) => ({ stream, entry, attempt: 1 })));
+    // The named command, not `call`: ioredis maps the reply of the commands it knows to its classic shape.
+    const reply = await reader.xreadgroup(
+      'GROUP',
+      this.consumer,
+      instance,
+      'COUNT',
+      batchSize,
+      'BLOCK',
+      blockMs,
+      'STREAMS',
+      ...streams,
+      ...ids,
+    );
+
+    return [...entriesByStream(reply)].flatMap(([stream, entries]) =>
+      entries.map((entry) => ({ stream, entry, attempt: 1 })),
+    );
   }
 
   /**
@@ -205,7 +225,9 @@ export class GroupReader {
   }
 
   private rest(ms: number): Promise<void> {
-    if (this.stopping) return Promise.resolve();
+    if (this.stopping) {
+      return Promise.resolve();
+    }
 
     return new Promise((resolve) => {
       const timer = setTimeout(resolve, ms);
@@ -233,7 +255,9 @@ export class GroupReader {
     for (const stream of this.declared) {
       const pending = await client.xpending(stream, this.consumer, '-', '+', 1, instance);
 
-      if (pending.length === 0) await client.xgroup('DELCONSUMER', stream, this.consumer, instance);
+      if (pending.length === 0) {
+        await client.xgroup('DELCONSUMER', stream, this.consumer, instance);
+      }
     }
   }
 }

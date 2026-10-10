@@ -125,14 +125,24 @@ describe('tracedPublisher', () => {
 
   it('names the span of a publisher that only stores after the outbox, as the creation of the message', async () => {
     const stored: IntegrationEvent[] = [];
-    const outbox = { messagingSystem: 'outbox', publish: async (events: readonly IntegrationEvent[]) => void stored.push(...events) };
+
+    const outbox = {
+      messagingSystem: 'outbox',
+      publish: async (events: readonly IntegrationEvent[]) => void stored.push(...events),
+    };
 
     await withSpan('request', () => tracedPublisher(outbox).publish([orderPlaced()]));
 
     const span = tracing.span('outbox append ordering.order.placed');
 
     expect(span.kind).toBe(SpanKind.INTERNAL);
-    expect(span.attributes).toMatchObject({ 'messaging.system': 'outbox', 'messaging.operation.name': 'append', 'messaging.operation.type': 'create' });
+
+    expect(span.attributes).toMatchObject({
+      'messaging.system': 'outbox',
+      'messaging.operation.name': 'append',
+      'messaging.operation.type': 'create',
+    });
+
     expect(stored[0]?.traceparent).toBe(`00-${span.spanContext().traceId}-${span.spanContext().spanId}-01`);
   });
 

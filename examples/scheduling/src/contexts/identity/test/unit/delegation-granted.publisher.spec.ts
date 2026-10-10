@@ -8,7 +8,15 @@ describe('Publishing "delegation granted" to other contexts', () => {
     const bus = new InMemoryEventBus();
     const publisher = new DelegationGrantedPublisher(bus, new SequentialIdGenerator('event'));
 
-    await publisher.handle(new DelegationGranted('delegation-1', new Date('2026-01-01T00:00:00.000Z'), { practiceId: 'practice-1', practitionerId: 'person-2', assistantId: 'person-3', availabilityIncluded: true, endsAt: new Date('2026-06-01T00:00:00.000Z') }));
+    await publisher.handle(
+      new DelegationGranted('delegation-1', new Date('2026-01-01T00:00:00.000Z'), {
+        practiceId: 'practice-1',
+        practitionerId: 'person-2',
+        assistantId: 'person-3',
+        availabilityIncluded: true,
+        endsAt: new Date('2026-06-01T00:00:00.000Z'),
+      }),
+    );
 
     expect(bus.published).toEqual([
       {
@@ -31,7 +39,14 @@ describe('Publishing "delegation granted" to other contexts', () => {
   it('publishes no end for a delegation without an end', async () => {
     const bus = new InMemoryEventBus();
     const publisher = new DelegationGrantedPublisher(bus, new SequentialIdGenerator('event'));
-    const facts = { practiceId: 'practice-1', practitionerId: 'person-2', assistantId: 'person-3', availabilityIncluded: false, endsAt: undefined };
+
+    const facts = {
+      practiceId: 'practice-1',
+      practitionerId: 'person-2',
+      assistantId: 'person-3',
+      availabilityIncluded: false,
+      endsAt: undefined,
+    };
 
     await publisher.handle(new DelegationGranted('delegation-1', new Date('2026-01-01T00:00:00.000Z'), facts));
 

@@ -40,5 +40,7 @@ export function declaring<T, D extends Dependencies>(
 function assertImplements(port: Token<unknown>, adapter: Token<unknown>): void {
   const defect = portDefect(port, adapter);
 
-  if (defect !== undefined) throw new DeclarationError(defect);
+  if (defect !== undefined) {
+    throw new DeclarationError(defect);
+  }
 }

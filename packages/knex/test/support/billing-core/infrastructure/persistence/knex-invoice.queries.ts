@@ -46,7 +46,11 @@ export class KnexInvoiceQueries implements InvoiceQueries {
   /** One row more than asked tells whether a page follows, without counting. */
   private async byCursor(request: CursorPageRequest<InvoiceSort>): Promise<Page<InvoiceSummary>> {
     const direction = directionOf(request);
-    const query = this.ownInvoices().orderBy(totalOrder(direction)).limit(request.limit + 1);
+
+    const query = this.ownInvoices()
+      .orderBy(totalOrder(direction))
+      .limit(request.limit + 1);
+
     const rows = await (request.cursor === undefined ? query : beyond(query, positionOf(request.cursor), direction));
     const items = rows.slice(0, request.limit);
     const last = items.at(-1);

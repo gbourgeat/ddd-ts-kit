@@ -32,7 +32,8 @@ describe('an event definition, given to the integration event handler declaratio
     IntegrationEventHandler(orderPlacedV1, { consumer: 'reporting.audit-on-order-placed' })(AuditOnOrderPlaced);
     const declaration = declarationOf(AuditOnOrderPlaced);
 
-    const contract = declaration?.role === 'integration-event-handler' ? declaration.pair((definition) => definition) : undefined;
+    const contract =
+      declaration?.role === 'integration-event-handler' ? declaration.pair((definition) => definition) : undefined;
 
     expect(contract).toBe(orderPlacedV1);
   });

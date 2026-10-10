@@ -17,17 +17,25 @@ const DEEPEST_CAUSE = 8;
  * come from drivers and libraries and quote the data they choked on.
  */
 export function scrubEvent(event: ErrorEvent, hint: EventHint, options: ScrubOptions): ErrorEvent {
-  if (event.request !== undefined) event.request = scrubRequest(event.request);
+  if (event.request !== undefined) {
+    event.request = scrubRequest(event.request);
+  }
 
-  if (event.user !== undefined) event.user = event.user.id === undefined ? {} : { id: event.user.id };
+  if (event.user !== undefined) {
+    event.user = event.user.id === undefined ? {} : { id: event.user.id };
+  }
 
-  if (options.scrubMessages) scrubMessages(event, domainErrorNames(hint.originalException, DEEPEST_CAUSE));
+  if (options.scrubMessages) {
+    scrubMessages(event, domainErrorNames(hint.originalException, DEEPEST_CAUSE));
+  }
 
   return event;
 }
 
 function domainErrorNames(error: unknown, depth: number): string[] {
-  if (typeof error !== 'object' || error === null || depth === 0) return [];
+  if (typeof error !== 'object' || error === null || depth === 0) {
+    return [];
+  }
 
   return [
     ...(error instanceof DomainError ? [error.name, error.constructor.name] : []),
@@ -43,8 +51,12 @@ function innerErrors(error: object): unknown[] {
 
 function scrubMessages(event: ErrorEvent, kept: readonly string[]): void {
   for (const exception of event.exception?.values ?? []) {
-    if (exception.type === undefined || !kept.includes(exception.type)) exception.value = SCRUBBED_MESSAGE;
+    if (exception.type === undefined || !kept.includes(exception.type)) {
+      exception.value = SCRUBBED_MESSAGE;
+    }
   }
 
-  if (event.message !== undefined) event.message = SCRUBBED_MESSAGE;
+  if (event.message !== undefined) {
+    event.message = SCRUBBED_MESSAGE;
+  }
 }

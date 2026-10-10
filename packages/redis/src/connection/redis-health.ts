@@ -15,9 +15,14 @@ export async function redisHealth(client: Redis, options: RedisHealthOptions = {
   const timer = new AbortController();
 
   try {
-    const answered = await Promise.race([client.ping().then(() => true), expiry(options.timeoutMs ?? 1_000, timer.signal)]);
+    const answered = await Promise.race([
+      client.ping().then(() => true),
+      expiry(options.timeoutMs ?? 1_000, timer.signal),
+    ]);
 
-    return answered ? { status: 'up', latencyMs: Math.round(performance.now() - started) } : { status: 'down', reason: 'timeout' };
+    return answered
+      ? { status: 'up', latencyMs: Math.round(performance.now() - started) }
+      : { status: 'down', reason: 'timeout' };
   } catch {
     return { status: 'down', reason: 'unreachable' };
   } finally {

@@ -15,12 +15,19 @@ export function printReport(io: Io, args: Arguments, report: WorkspaceReport): v
   const lines = fileLines(report, dryRun);
 
   if (report.todos.length > 0) {
-    lines.push('', 'Next, in this order: the language of the context first, then the business decisions only you can make');
+    lines.push(
+      '',
+      'Next, in this order: the language of the context first, then the business decisions only you can make',
+    );
 
-    for (const todo of report.todos) lines.push(`  ${todo.file}:${todo.line}  ${todo.text}`);
+    for (const todo of report.todos) {
+      lines.push(`  ${todo.file}:${todo.line}  ${todo.text}`);
+    }
   }
 
-  if (report.notes.length > 0) lines.push('', ...report.notes.map((note) => `note: ${note}`));
+  if (report.notes.length > 0) {
+    lines.push('', ...report.notes.map((note) => `note: ${note}`));
+  }
 
   io.out(lines.join('\n'));
 }

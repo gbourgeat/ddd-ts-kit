@@ -11,9 +11,13 @@ export const OrderPlaced: EventContract<OrderPlacedPayload> = {
   type: 'ordering.order.placed',
   version: 1,
   parse(event) {
-    if (event.type !== 'ordering.order.placed') return err({ reason: 'type-mismatch' });
+    if (event.type !== 'ordering.order.placed') {
+      return err({ reason: 'type-mismatch' });
+    }
 
-    if (event.version !== 1) return err({ reason: 'version-mismatch' });
+    if (event.version !== 1) {
+      return err({ reason: 'version-mismatch' });
+    }
 
     const { payload } = event;
 
@@ -23,7 +27,9 @@ export const OrderPlaced: EventContract<OrderPlacedPayload> = {
 
     const { orderId, customerId } = payload;
 
-    if (typeof orderId !== 'string' || typeof customerId !== 'string') return err({ reason: 'invalid-payload' });
+    if (typeof orderId !== 'string' || typeof customerId !== 'string') {
+      return err({ reason: 'invalid-payload' });
+    }
 
     return ok({ ...event, payload: { orderId, customerId } });
   },

@@ -7,17 +7,13 @@ import {
   tenantScopeOf,
   type Actor,
 } from '@ddd-ts-kit/kernel';
-import {
-  aSession,
-  anExecutionContext,
-  createTestBuses,
-  defineBuilder,
-  resetSequences,
-  scoped,
-} from '../src/index.js';
+import { aSession, anExecutionContext, createTestBuses, defineBuilder, resetSequences, scoped } from '../src/index.js';
 
 const ada: Actor = { id: 'ada', type: 'user', tenantId: 'acme', roles: ['accountant'], attributes: {} };
-const anAccountant = defineBuilder<Actor>({ defaults: { id: 'grace', type: 'user', roles: ['accountant'], attributes: {} } });
+
+const anAccountant = defineBuilder<Actor>({
+  defaults: { id: 'grace', type: 'user', roles: ['accountant'], attributes: {} },
+});
 
 beforeEach(() => {
   resetSequences();
@@ -165,10 +161,16 @@ describe('createTestBuses', () => {
   });
 
   it('starts in the execution context it is given, and follows a block run in another one', () => {
-    const { executionScope, actorContext } = createTestBuses({ executionContext: anExecutionContext().as(ada).build() });
+    const { executionScope, actorContext } = createTestBuses({
+      executionContext: anExecutionContext().as(ada).build(),
+    });
 
     expect(tenantScopeOf(executionScope)).toEqual({ tenantId: 'acme' });
-    expect(scoped(executionScope, anExecutionContext().as(anAccountant()), () => actorContext.require().id)).toBe('grace');
+
+    expect(scoped(executionScope, anExecutionContext().as(anAccountant()), () => actorContext.require().id)).toBe(
+      'grace',
+    );
+
     expect(actorContext.require()).toBe(ada);
   });
 

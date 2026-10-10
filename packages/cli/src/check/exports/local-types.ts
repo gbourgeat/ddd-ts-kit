@@ -18,13 +18,17 @@ export function localTypes(code: string): LocalType[] {
   return [...code.matchAll(TYPE)].flatMap((match) => {
     const opening = afterTypeParameters(code, match.index + match[0].length);
 
-    if (braceDepthAt(code, match.index) !== 0 || !OPENING.test(code.slice(opening, opening + 200))) return [];
+    if (braceDepthAt(code, match.index) !== 0 || !OPENING.test(code.slice(opening, opening + 200))) {
+      return [];
+    }
 
     const isAlias = match[1] === 'type';
     const end = isAlias ? endAtDepthZero(code, opening, ';') : matchingBracket(code, code.indexOf('{', opening)) + 1;
     const aliased = code.slice(code.indexOf('=', opening) + 1, end);
 
-    return [{ name: match[2] ?? '', text: code.slice(match.index, end), members: isAlias ? unionMembers(aliased) : [] }];
+    return [
+      { name: match[2] ?? '', text: code.slice(match.index, end), members: isAlias ? unionMembers(aliased) : [] },
+    ];
   });
 }
 

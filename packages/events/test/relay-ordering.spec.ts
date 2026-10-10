@@ -13,10 +13,7 @@ import { RecoveringPublisher } from './support/recovering-publisher.js';
 
 /** `a-1` is the first event of order `a`: the id says the key and the position. */
 const event = (id: string): IntegrationEvent =>
-  invoiceIssued.create(
-    { invoiceId: `inv-${id}`, orderId: id.slice(0, id.indexOf('-')) },
-    { id, occurredAt: at },
-  );
+  invoiceIssued.create({ invoiceId: `inv-${id}`, orderId: id.slice(0, id.indexOf('-')) }, { id, occurredAt: at });
 
 const orderIdOf = (published: IntegrationEvent): string | undefined =>
   invoiceIssued.is(published) ? published.payload.orderId : undefined;
@@ -58,11 +55,7 @@ class StoreUnavailable extends Error {
 class ForgetfulStore extends InMemoryOutboxStore {
   private outages = 1;
 
-  override async markFailed(
-    id: string,
-    error: { readonly code: string },
-    nextAttemptAt: Date | null,
-  ): Promise<void> {
+  override async markFailed(id: string, error: { readonly code: string }, nextAttemptAt: Date | null): Promise<void> {
     if (this.outages > 0) {
       this.outages -= 1;
       throw new StoreUnavailable();

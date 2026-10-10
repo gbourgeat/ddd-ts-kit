@@ -15,14 +15,18 @@ export const adrKind: Kind = {
     const { deviation: what, reason = title } = flags;
     const number = writeAdr(ws, { title, ...(what === undefined ? {} : { deviation: { what, reason } }) });
 
-    if (what !== undefined) declareDeviation(ws, { what, adr: number, reason });
+    if (what !== undefined) {
+      declareDeviation(ws, { what, adr: number, reason });
+    }
   },
 };
 
 function declareDeviation(ws: Workspace, deviation: Deviation): void {
   const text = ws.read(CONFIG_FILE);
 
-  if (text === undefined) return;
+  if (text === undefined) {
+    return;
+  }
 
   ws.update(
     CONFIG_FILE,

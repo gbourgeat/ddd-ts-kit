@@ -1,11 +1,6 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 import type { ExtractTablesWithRelations, TablesRelationalConfig } from 'drizzle-orm';
-import type {
-  PgDatabase,
-  PgQueryResultHKT,
-  PgTransaction,
-  PgTransactionConfig,
-} from 'drizzle-orm/pg-core';
+import type { PgDatabase, PgQueryResultHKT, PgTransaction, PgTransactionConfig } from 'drizzle-orm/pg-core';
 import { withinUnitOfWork, type UnitOfWork } from '@ddd-ts-kit/kernel';
 import type { DrizzleContext } from './drizzle-context.js';
 
@@ -34,7 +29,9 @@ export function createDrizzleUnitOfWork<
   return {
     run<T>(work: () => Promise<T>): Promise<T> {
       return withinUnitOfWork(work, (scoped) => {
-        if (current.getStore() !== undefined) return scoped();
+        if (current.getStore() !== undefined) {
+          return scoped();
+        }
 
         return db.transaction((transaction) => current.run(transaction, scoped), config);
       });

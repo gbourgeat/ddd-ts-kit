@@ -21,7 +21,11 @@ export class RemoteMailer implements Mailer {
   async deliver(address: string, notification: Notification): Promise<void> {
     await this.send({
       operation: 'deliver',
-      payload: { recipientId: notification.recipientId, kind: notification.kind.value, appointmentId: notification.appointmentId },
+      payload: {
+        recipientId: notification.recipientId,
+        kind: notification.kind.value,
+        appointmentId: notification.appointmentId,
+      },
     });
   }
 
@@ -34,7 +38,11 @@ export class RemoteMailer implements Mailer {
   protected async transport(call: OutboundCall, signal?: AbortSignal): Promise<unknown> {
     signal?.throwIfAborted();
 
-    this.logger.info('mail handed to the development mailer', { context: 'notification', operation: call.operation, ...call.payload });
+    this.logger.info('mail handed to the development mailer', {
+      context: 'notification',
+      operation: call.operation,
+      ...call.payload,
+    });
 
     return undefined;
   }

@@ -6,6 +6,9 @@ export async function registerPeople(application: RunningApplication, ...personI
   for (const personId of personIds) {
     const person = await application.as({ id: personId });
 
-    expectStatus(await person.put('/people/me', { displayName: 'Name of ' + personId, email: personId + '@example.com' }), 200);
+    expectStatus(
+      await person.put('/people/me', { displayName: 'Name of ' + personId, email: personId + '@example.com' }),
+      200,
+    );
   }
 }

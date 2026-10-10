@@ -131,86 +131,90 @@ class PaymentProviderDown extends Error {
   readonly code = 'PAYMENT_PROVIDER_DOWN';
 }
 
-describe.skipIf(NATS_URL === undefined)('outbox, relay, NATS JetStream and an idempotent consumer', { timeout: 30_000 }, () => {
-  let broker: Broker;
+describe.skipIf(NATS_URL === undefined)(
+  'outbox, relay, NATS JetStream and an idempotent consumer',
+  { timeout: 30_000 },
+  () => {
+    let broker: Broker;
 
-  beforeEach(async () => {
-    broker = await Broker.connect(NATS_URL ?? '');
-  });
-
-  afterEach(async () => {
-    await broker.dispose();
-  });
-
-  it('has each order invoiced exactly once despite a relay retry and a redelivery', async () => {
-    const relayFailures: OutboxRelayFailure[] = [];
-    const busFailures: NatsFailure[] = [];
-    const signal = new InMemoryRelaySignal();
-    const outbox = new InMemoryOutboxStore({ signal });
-    const ordering = new Ordering(new OutboxPublisher(outbox));
-    const producerBus = broker.bus();
-
-    const relay = new OutboxRelay({
-      store: outbox,
-      publisher: new LosingTheFirstConfirmation(producerBus),
-      clock: new SystemClock(),
-      backoff: { baseMs: 20 },
-      wakeOn: signal,
-      onFailure: (failure) => relayFailures.push(failure),
+    beforeEach(async () => {
+      broker = await Broker.connect(NATS_URL ?? '');
     });
 
-    const billingBus = broker.bus({ prefetch: 1, onFailure: failuresOf(busFailures) });
-    const database = new BillingDatabase();
-    const deliveries: string[] = [];
-    let providerOutages = 1;
+    afterEach(async () => {
+      await broker.dispose();
+    });
 
-    const subscriptions = subscribeAll(billingBus, [
-      consume(orderPlaced, { consumer: 'billing', processed: database, unitOfWork: database }, async (event) => {
-        deliveries.push(event.id);
-        database.invoice(event.payload.orderId);
+    it('has each order invoiced exactly once despite a relay retry and a redelivery', async () => {
+      const relayFailures: OutboxRelayFailure[] = [];
+      const busFailures: NatsFailure[] = [];
+      const signal = new InMemoryRelaySignal();
+      const outbox = new InMemoryOutboxStore({ signal });
+      const ordering = new Ordering(new OutboxPublisher(outbox));
+      const producerBus = broker.bus();
 
-        if (providerOutages > 0) {
-          providerOutages -= 1;
-          throw new PaymentProviderDown();
-        }
-      }),
-    ]);
+      const relay = new OutboxRelay({
+        store: outbox,
+        publisher: new LosingTheFirstConfirmation(producerBus),
+        clock: new SystemClock(),
+        backoff: { baseMs: 20 },
+        wakeOn: signal,
+        onFailure: (failure) => relayFailures.push(failure),
+      });
 
-    const everyDelivery: string[] = [];
+      const billingBus = broker.bus({ prefetch: 1, onFailure: failuresOf(busFailures) });
+      const database = new BillingDatabase();
+      const deliveries: string[] = [];
+      let providerOutages = 1;
 
-    billingBus.subscribe(orderPlaced.type, async (event) => void everyDelivery.push(event.id));
-    await billingBus.assertTopology();
+      const subscriptions = subscribeAll(billingBus, [
+        consume(orderPlaced, { consumer: 'billing', processed: database, unitOfWork: database }, async (event) => {
+          deliveries.push(event.id);
+          database.invoice(event.payload.orderId);
 
-    relay.start({ intervalMs: 25 });
-    await ordering.placeOrder('order-1');
-    await ordering.placeOrder('order-2');
-    await ordering.placeOrder('order-3');
-    await eventually(async () => (await outbox.stats()).pending === 0);
-    await relay.stop();
-    await broker.settled(billingBus);
-    subscriptions.unsubscribe();
+          if (providerOutages > 0) {
+            providerOutages -= 1;
+            throw new PaymentProviderDown();
+          }
+        }),
+      ]);
 
-    expect(ordering.orders).toEqual(['order-1', 'order-2', 'order-3']);
-    expect(database.invoicedOrders().sort()).toEqual(['order-1', 'order-2', 'order-3']);
-    expect(await outbox.stats()).toEqual({ pending: 0, failed: 0, dead: 0 });
+      const everyDelivery: string[] = [];
 
-    expect(relayFailures).toEqual([
-      expect.objectContaining({ kind: 'publish', eventId: 'evt-1', code: 'CONFIRMATION_LOST', dead: false }),
-    ]);
+      billingBus.subscribe(orderPlaced.type, async (event) => void everyDelivery.push(event.id));
+      await billingBus.assertTopology();
 
-    expect(busFailures).toEqual([
-      expect.objectContaining({ kind: 'handler', code: 'PAYMENT_PROVIDER_DOWN', attempt: 1, dead: false }),
-    ]);
+      relay.start({ intervalMs: 25 });
+      await ordering.placeOrder('order-1');
+      await ordering.placeOrder('order-2');
+      await ordering.placeOrder('order-3');
+      await eventually(async () => (await outbox.stats()).pending === 0);
+      await relay.stop();
+      await broker.settled(billingBus);
+      subscriptions.unsubscribe();
 
-    // Three events, one published twice by the relay and dropped by the stream as a
-    // duplicate, one delivered again after the failure.
-    expect((await broker.published()).map((message) => message.headers['Nats-Msg-Id'])).toEqual([
-      'evt-1',
-      'evt-2',
-      'evt-3',
-    ]);
+      expect(ordering.orders).toEqual(['order-1', 'order-2', 'order-3']);
+      expect(database.invoicedOrders().sort()).toEqual(['order-1', 'order-2', 'order-3']);
+      expect(await outbox.stats()).toEqual({ pending: 0, failed: 0, dead: 0 });
 
-    expect(everyDelivery.length).toBe(4);
-    expect(deliveries.length).toBe(4);
-  });
-});
+      expect(relayFailures).toEqual([
+        expect.objectContaining({ kind: 'publish', eventId: 'evt-1', code: 'CONFIRMATION_LOST', dead: false }),
+      ]);
+
+      expect(busFailures).toEqual([
+        expect.objectContaining({ kind: 'handler', code: 'PAYMENT_PROVIDER_DOWN', attempt: 1, dead: false }),
+      ]);
+
+      // Three events, one published twice by the relay and dropped by the stream as a
+      // duplicate, one delivered again after the failure.
+      expect((await broker.published()).map((message) => message.headers['Nats-Msg-Id'])).toEqual([
+        'evt-1',
+        'evt-2',
+        'evt-3',
+      ]);
+
+      expect(everyDelivery.length).toBe(4);
+      expect(deliveries.length).toBe(4);
+    });
+  },
+);

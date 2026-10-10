@@ -39,7 +39,9 @@ const ABSTRACT_CLASS: readonly Fixture[] = [
     ruleId: 'ports/abstract-class',
     name: 'a port declared as an interface',
     expect: { file: PORT },
-    files: project({ [PORT]: source('export interface PaymentGateway {', '  charge(invoiceId: string): Promise<void>;', '}') }),
+    files: project({
+      [PORT]: source('export interface PaymentGateway {', '  charge(invoiceId: string): Promise<void>;', '}'),
+    }),
   },
   {
     ruleId: 'ports/abstract-class',
@@ -75,7 +77,12 @@ const IMPLEMENTS: readonly Fixture[] = [
     ruleId: 'ports/implements-never-extends',
     name: 'declared adapters implementing their ports',
     expect: 'pass',
-    files: declaredProject({ [REPOSITORY_PORT]: DECLARED.repositoryPort, [PORT]: DECLARED.port, [ADAPTER]: DECLARED.repository, [PAYMENT_ADAPTER]: DECLARED.adapter }),
+    files: declaredProject({
+      [REPOSITORY_PORT]: DECLARED.repositoryPort,
+      [PORT]: DECLARED.port,
+      [ADAPTER]: DECLARED.repository,
+      [PAYMENT_ADAPTER]: DECLARED.adapter,
+    }),
   },
   {
     ruleId: 'ports/implements-never-extends',
@@ -84,26 +91,39 @@ const IMPLEMENTS: readonly Fixture[] = [
     files: project({
       [REPOSITORY_PORT]: DECLARED.repositoryPort,
       [ADAPTER]: IMPLEMENTING,
-      [MODULE]: moduleBinding("builder.bind(InvoiceRepository).toClass(InMemoryInvoiceRepository, [Clock]).as('repository');", 'builder.bind(InvoiceNumbering).toClass(InvoiceNumbering, []);'),
+      [MODULE]: moduleBinding(
+        "builder.bind(InvoiceRepository).toClass(InMemoryInvoiceRepository, [Clock]).as('repository');",
+        'builder.bind(InvoiceNumbering).toClass(InvoiceNumbering, []);',
+      ),
     }),
   },
   {
     ruleId: 'ports/implements-never-extends',
     name: 'a declared repository that extends its port',
     expect: { file: ADAPTER },
-    files: declaredProject({ [REPOSITORY_PORT]: DECLARED.repositoryPort, [ADAPTER]: DECLARED.repository.replace('implements InvoiceRepository', 'extends InvoiceRepository') }),
+    files: declaredProject({
+      [REPOSITORY_PORT]: DECLARED.repositoryPort,
+      [ADAPTER]: DECLARED.repository.replace('implements InvoiceRepository', 'extends InvoiceRepository'),
+    }),
   },
   {
     ruleId: 'ports/implements-never-extends',
     name: 'a declared adapter that does not implement its port',
     expect: { file: PAYMENT_ADAPTER },
-    files: declaredProject({ [PORT]: DECLARED.port, [PAYMENT_ADAPTER]: DECLARED.adapter.replace(' implements PaymentGateway', '') }),
+    files: declaredProject({
+      [PORT]: DECLARED.port,
+      [PAYMENT_ADAPTER]: DECLARED.adapter.replace(' implements PaymentGateway', ''),
+    }),
   },
   {
     ruleId: 'ports/implements-never-extends',
     name: 'explicit style: a module binding a port to a class that extends it, read in the file of the class',
     expect: { file: MODULE },
-    files: project({ [REPOSITORY_PORT]: DECLARED.repositoryPort, [ADAPTER]: EXTENDING, [MODULE]: moduleBinding('builder.rebind(InvoiceRepository).toClass(InMemoryInvoiceRepository, [Clock]);') }),
+    files: project({
+      [REPOSITORY_PORT]: DECLARED.repositoryPort,
+      [ADAPTER]: EXTENDING,
+      [MODULE]: moduleBinding('builder.rebind(InvoiceRepository).toClass(InMemoryInvoiceRepository, [Clock]);'),
+    }),
   },
   {
     ruleId: 'ports/implements-never-extends',
@@ -136,13 +156,22 @@ const TOKEN_CONSTANT: readonly Fixture[] = [
     ruleId: 'ports/no-token-constant',
     name: 'a token declared with token()',
     expect: { file: PORT },
-    files: project({ [PORT]: source("import { token } from '@ddd-ts-kit/kernel';", '', "export const PAYMENT_GATEWAY = token<PaymentGateway>('billing.PaymentGateway');") }),
+    files: project({
+      [PORT]: source(
+        "import { token } from '@ddd-ts-kit/kernel';",
+        '',
+        "export const PAYMENT_GATEWAY = token<PaymentGateway>('billing.PaymentGateway');",
+      ),
+    }),
   },
   {
     ruleId: 'ports/no-token-constant',
     name: 'UPPER_SNAKE_CASE names in a dependency list',
     expect: { file: HANDLER },
-    files: declaredProject({ [COMMAND]: DECLARED.command, ...handler(handlerNaming([], '[INVOICE_REPOSITORY, CLOCK]')) }),
+    files: declaredProject({
+      [COMMAND]: DECLARED.command,
+      ...handler(handlerNaming([], '[INVOICE_REPOSITORY, CLOCK]')),
+    }),
   },
   {
     ruleId: 'ports/no-token-constant',
@@ -192,7 +221,14 @@ const CONCRETE_DEPENDENCY: readonly Fixture[] = [
     also: ['layer/application-inward'],
     files: declaredProject({
       [COMMAND]: DECLARED.command,
-      ...handler(handlerNaming(["import { InMemoryInvoiceRepository } from '../../../infrastructure/persistence/in-memory-invoice.repository.js';"], '[InMemoryInvoiceRepository]')),
+      ...handler(
+        handlerNaming(
+          [
+            "import { InMemoryInvoiceRepository } from '../../../infrastructure/persistence/in-memory-invoice.repository.js';",
+          ],
+          '[InMemoryInvoiceRepository]',
+        ),
+      ),
     }),
   },
   {
@@ -219,7 +255,14 @@ const VALUE_IMPORT: readonly Fixture[] = [
     expect: 'pass',
     files: declaredProject({
       [COMMAND]: DECLARED.command,
-      ...handler(DECLARED.handler.replace("import { Clock } from '@ddd-ts-kit/kernel';", "import { Clock, type Logger } from '@ddd-ts-kit/kernel';").replace('{}', '{\n  constructor(private readonly logger: Logger) {}\n}')),
+      ...handler(
+        DECLARED.handler
+          .replace(
+            "import { Clock } from '@ddd-ts-kit/kernel';",
+            "import { Clock, type Logger } from '@ddd-ts-kit/kernel';",
+          )
+          .replace('{}', '{\n  constructor(private readonly logger: Logger) {}\n}'),
+      ),
     }),
   },
   {
@@ -228,7 +271,12 @@ const VALUE_IMPORT: readonly Fixture[] = [
     expect: { file: HANDLER },
     files: declaredProject({
       [COMMAND]: DECLARED.command,
-      ...handler(handlerNaming(["import type { InvoiceRepository } from '../../../domain/repositories/invoice.repository.js';"], '[InvoiceRepository]')),
+      ...handler(
+        handlerNaming(
+          ["import type { InvoiceRepository } from '../../../domain/repositories/invoice.repository.js';"],
+          '[InvoiceRepository]',
+        ),
+      ),
     }),
   },
   {
@@ -236,13 +284,28 @@ const VALUE_IMPORT: readonly Fixture[] = [
     name: 'a port imported with an inline type and given to bind',
     expect: { file: MODULE },
     files: project(
-      { [MODULE]: source("import { defineModule } from '@ddd-ts-kit/di';", "import { type Clock } from '@ddd-ts-kit/kernel';", '', "export const billingModule = defineModule('billing', (builder) => {", '  builder.bind(Clock).toValue(clock);', '});') },
+      {
+        [MODULE]: source(
+          "import { defineModule } from '@ddd-ts-kit/di';",
+          "import { type Clock } from '@ddd-ts-kit/kernel';",
+          '',
+          "export const billingModule = defineModule('billing', (builder) => {",
+          '  builder.bind(Clock).toValue(clock);',
+          '});',
+        ),
+      },
       { [CONFIG_FILE]: config() },
     ),
   },
 ];
 
-export const PORTS_FIXTURES: readonly Fixture[] = [...ABSTRACT_CLASS, ...IMPLEMENTS, ...TOKEN_CONSTANT, ...CONCRETE_DEPENDENCY, ...VALUE_IMPORT];
+export const PORTS_FIXTURES: readonly Fixture[] = [
+  ...ABSTRACT_CLASS,
+  ...IMPLEMENTS,
+  ...TOKEN_CONSTANT,
+  ...CONCRETE_DEPENDENCY,
+  ...VALUE_IMPORT,
+];
 
 function moduleBinding(...statements: string[]): string {
   return source(
@@ -258,5 +321,12 @@ function moduleBinding(...statements: string[]): string {
 }
 
 function handlerNaming(imports: readonly string[], list: string): string {
-  return source(`import { CommandHandler } from ${DECLARATIONS};`, ...imports, "import { IssueInvoiceCommand } from './issue-invoice.command.js';", '', `@CommandHandler(IssueInvoiceCommand, ${list})`, 'export class IssueInvoiceHandler {}');
+  return source(
+    `import { CommandHandler } from ${DECLARATIONS};`,
+    ...imports,
+    "import { IssueInvoiceCommand } from './issue-invoice.command.js';",
+    '',
+    `@CommandHandler(IssueInvoiceCommand, ${list})`,
+    'export class IssueInvoiceHandler {}',
+  );
 }

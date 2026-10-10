@@ -35,13 +35,13 @@ const wrapped = new WeakSet<object>();
  * held in a field, `private` or not, is a method like any other.
  */
 export function traceDependency<T extends object>(instance: T, options: TraceDependencyOptions): T {
-  if (wrapped.has(instance)) return instance;
+  if (wrapped.has(instance)) {
+    return instance;
+  }
 
   const wrappers = tracedMethods(instance, options);
 
-  const result = Object.isExtensible(instance)
-    ? shadowed(instance, wrappers)
-    : proxied(instance, wrappers);
+  const result = Object.isExtensible(instance) ? shadowed(instance, wrappers) : proxied(instance, wrappers);
 
   wrapped.add(result);
 

@@ -18,7 +18,11 @@ export abstract class ReadModelStore<Row> {
    * Writes what `next` answers for the current row (`undefined` when there is none), unless
    * the row already holds this event or a later one. `next` answering `undefined` writes nothing.
    */
-  abstract upsertIfNewer(key: string, stamp: EventStamp, next: (current: Row | undefined) => Row | undefined): Promise<ReadModelWrite>;
+  abstract upsertIfNewer(
+    key: string,
+    stamp: EventStamp,
+    next: (current: Row | undefined) => Row | undefined,
+  ): Promise<ReadModelWrite>;
 
   /** Removes the row, keeping its stamp: an older event delivered late does not bring it back. */
   abstract delete(key: string, stamp: EventStamp): Promise<ReadModelWrite>;

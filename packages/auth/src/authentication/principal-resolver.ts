@@ -17,11 +17,15 @@ export function principalResolver(
 }
 
 function headersOf(raw: unknown): HeaderValues {
-  if (typeof raw !== 'object' || raw === null || !('headers' in raw)) return {};
+  if (typeof raw !== 'object' || raw === null || !('headers' in raw)) {
+    return {};
+  }
 
   const { headers } = raw;
 
-  if (typeof headers !== 'object' || headers === null) return {};
+  if (typeof headers !== 'object' || headers === null) {
+    return {};
+  }
 
   return Object.fromEntries(Object.entries(headers).filter(isHeader));
 }

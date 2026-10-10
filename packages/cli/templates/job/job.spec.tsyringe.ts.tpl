@@ -8,7 +8,12 @@ import { platformTestModule } from '{{paths.integrationToPlatform}}/platform-tes
 {{job.permissionsImport}}
 import { {{job.command}}Command } from '../../application/commands/{{job.commandKebab}}/{{job.commandKebab}}.command.js';
 
-const authorization = authorizationModule({ authorizer: new RoleBasedAuthorizer({ roles: { scheduler: [{{job.granted}}] }, systemRole: 'scheduler' }) });
+const authorization = authorizationModule({
+  authorizer: new RoleBasedAuthorizer({
+    roles: { scheduler: [{{job.granted}}] },
+    systemRole: 'scheduler',
+  }),
+});
 
 describe('{{name.title}}, when its time comes', () => {
   it('sends {{job.commandWords}}{{job.asActor}}', async () => {
@@ -29,7 +34,14 @@ describe('{{name.title}}, when its time comes', () => {
 });
 
 {{spec.async}}function arrange() {
-  const application = createTestApplication({ modules: [{{spec.modules}}] });
+{{#if spec.assembles}}
+  const context = {{spec.context}};
+
+{{/if}}
+  const application = createTestApplication({
+    modules: [{{spec.modules}}],
+  });
+
   const sent: Message[] = [];
 
   application.commandBus.use(async (message) => {

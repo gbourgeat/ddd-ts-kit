@@ -1,5 +1,12 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { FixedClock, FixedExecutionScope, executionContext, unwrap, type Actor, type ExecutionContext } from '@ddd-ts-kit/kernel';
+import {
+  FixedClock,
+  FixedExecutionScope,
+  executionContext,
+  unwrap,
+  type Actor,
+  type ExecutionContext,
+} from '@ddd-ts-kit/kernel';
 import { repositoryContract } from '@ddd-ts-kit/testing/contracts';
 import type { Person } from '../../domain/aggregates/person.aggregate.js';
 import { DisplayName } from '../../domain/value-objects/display-name.vo.js';
@@ -14,7 +21,10 @@ const runner = { describe, it, expect, beforeEach, afterEach };
 const expectations = {
   createAggregate: () => aPerson().build(),
   mutate: (changed: Person) => {
-    changed.registerAgain({ displayName: unwrap(DisplayName.create('Renamed Person')), email: unwrap(Email.create('renamed@example.com')) });
+    changed.registerAgain({
+      displayName: unwrap(DisplayName.create('Renamed Person')),
+      email: unwrap(Email.create('renamed@example.com')),
+    });
   },
   idOf: (subject: Person) => subject.id,
   stateOf: (subject: Person) => subject.toState(),

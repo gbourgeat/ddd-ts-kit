@@ -15,9 +15,13 @@ export function traced(original: Method, spanName: string, attributes: Attribute
   const wrapper: Method = function (this: unknown, ...args: unknown[]): unknown {
     const call = (): unknown => original.apply(this, args);
 
-    if (!declaredAsync && !learnedAsync.has(original)) return learningAsync(original, call);
+    if (!declaredAsync && !learnedAsync.has(original)) {
+      return learningAsync(original, call);
+    }
 
-    if (!admitDependencySpan(spanName)) return call();
+    if (!admitDependencySpan(spanName)) {
+      return call();
+    }
 
     return inSpan(call, spanName, attributes);
   };
@@ -30,7 +34,9 @@ export function traced(original: Method, spanName: string, attributes: Attribute
 function learningAsync(original: Method, call: () => unknown): unknown {
   const result = call();
 
-  if (isThenable(result)) learnedAsync.add(original);
+  if (isThenable(result)) {
+    learnedAsync.add(original);
+  }
 
   return result;
 }

@@ -8,8 +8,10 @@ import { generateContext } from './generate-context.js';
 export const contextKind: Kind = {
   name: 'context',
   aliases: [],
-  usage: 'context <name> --classification <core|supporting|generic> [--purpose "<two sentences>"] [--term "<Term>=<meaning>"]... [--upstream <ctx>[:relationship]]...',
-  summary: 'A bounded context: CONTEXT.md with its glossary, published language, config entry, and what assembles it (its declarations, or its module file).',
+  usage:
+    'context <name> --classification <core|supporting|generic> [--purpose "<two sentences>"] [--term "<Term>=<meaning>"]... [--upstream <ctx>[:relationship]]...',
+  summary:
+    'A bounded context: CONTEXT.md with its glossary, published language, config entry, and what assembles it (its declarations, or its module file).',
   positionals: ['name'],
   writesShared: true,
   run: ({ ws, config, args, flags }) => {
@@ -27,7 +29,10 @@ function parseUpstreamFlag(value: string): Upstream {
   const [context = '', relationship = 'published-language'] = value.split(':');
 
   if (!isOneOf(RELATIONSHIPS, relationship)) {
-    throw new CliError(`Unknown relationship "${relationship}" in --upstream ${value}.`, `Use one of: ${RELATIONSHIPS.join(', ')}.`);
+    throw new CliError(
+      `Unknown relationship "${relationship}" in --upstream ${value}.`,
+      `Use one of: ${RELATIONSHIPS.join(', ')}.`,
+    );
   }
 
   return { context: parseContextName(context).kebab, relationship };

@@ -13,7 +13,12 @@ export function stampColumns(table: PgTable): StampColumns {
   const columns: Readonly<Record<string, PgColumn>> = getTableColumns(table);
   const { lastEventId, lastEventAt, lastEventVersion, deleted } = columns;
 
-  if (lastEventId === undefined || lastEventAt === undefined || lastEventVersion === undefined || deleted === undefined) {
+  if (
+    lastEventId === undefined ||
+    lastEventAt === undefined ||
+    lastEventVersion === undefined ||
+    deleted === undefined
+  ) {
     throw new Error('The table of a read model is declared with ...readModelColumns()');
   }
 

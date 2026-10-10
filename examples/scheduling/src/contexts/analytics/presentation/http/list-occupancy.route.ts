@@ -25,7 +25,9 @@ export function listOccupancyRoute(queries: QueryBus): Route {
       security: ['bearer'],
     },
     async (input) => {
-      const page = await queries.execute(new ListOccupancyQuery(actorOf(input.context.principal), input.params.practiceId, input.query));
+      const page = await queries.execute(
+        new ListOccupancyQuery(actorOf(input.context.principal), input.params.practiceId, input.query),
+      );
 
       return { status: 200, body: pageResponse(page, toLine) };
     },
@@ -33,7 +35,27 @@ export function listOccupancyRoute(queries: QueryBus): Route {
 }
 
 function toLine(occupancy: Occupancy): ListOccupancyLine {
-  const { id, calendarId, day, heldMinutes, appointmentsHeld, completed, noShows, cancelledByPatient, cancelledByPractice } = occupancy;
+  const {
+    id,
+    calendarId,
+    day,
+    heldMinutes,
+    appointmentsHeld,
+    completed,
+    noShows,
+    cancelledByPatient,
+    cancelledByPractice,
+  } = occupancy;
 
-  return { id, calendarId, day, heldMinutes, appointmentsHeld, completed, noShows, cancelledByPatient, cancelledByPractice };
+  return {
+    id,
+    calendarId,
+    day,
+    heldMinutes,
+    appointmentsHeld,
+    completed,
+    noShows,
+    cancelledByPatient,
+    cancelledByPractice,
+  };
 }

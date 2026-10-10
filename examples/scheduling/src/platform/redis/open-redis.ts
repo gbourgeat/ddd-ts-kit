@@ -1,5 +1,12 @@
 import type { Cache, Lock, Metrics, RateLimiter } from '@ddd-ts-kit/kernel';
-import { RedisCache, RedisLock, RedisRateLimiter, RedisRelaySignal, connectRedis, redisHealth } from '@ddd-ts-kit/redis';
+import {
+  RedisCache,
+  RedisLock,
+  RedisRateLimiter,
+  RedisRelaySignal,
+  connectRedis,
+  redisHealth,
+} from '@ddd-ts-kit/redis';
 
 /**
  * What the platform puts on one connection to a Redis protocol server. The adapters use a common

@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { createApplication, createTestApplication, defineContextModule, kernelModule, type Decorate } from '@ddd-ts-kit/di';
+import {
+  createApplication,
+  createTestApplication,
+  defineContextModule,
+  kernelModule,
+  type Decorate,
+} from '@ddd-ts-kit/di';
 import { Cache, Clock, InMemoryLogger, InMemoryMetrics, Logger, Metrics } from '@ddd-ts-kit/kernel';
 import {
   aspects,
@@ -92,7 +98,10 @@ describe('aspects on every binding, as the decorate hook', () => {
       modules: [kernelModule({ logger, metrics }), pricing],
       decorate: aspects(
         when(forKinds('external', 'repository'), logged(), timed()),
-        when(forKinds('external'), when(forMethods('quote'), cached({ key: (_method, [pair]) => String(pair), ttlMs: 1000 }))),
+        when(
+          forKinds('external'),
+          when(forMethods('quote'), cached({ key: (_method, [pair]) => String(pair), ttlMs: 1000 })),
+        ),
       ),
     });
 
@@ -133,13 +142,11 @@ describe('aspects on every binding, as the decorate hook', () => {
       },
     });
 
-    await createApplication({ modules: [module], decorate }).resolve(Quotes).quote('EUR-USD');
+    await createApplication({ modules: [module], decorate })
+      .resolve(Quotes)
+      .quote('EUR-USD');
 
-    expect(journal).toEqual([
-      'traced gateway',
-      'global gateway pricing Quotes',
-      'binding gateway pricing Quotes',
-    ]);
+    expect(journal).toEqual(['traced gateway', 'global gateway pricing Quotes', 'binding gateway pricing Quotes']);
   });
 
   it('leave alone what is not an object', () => {

@@ -8,7 +8,9 @@ const SEVERITIES = { error: 'major', warn: 'minor' };
 main(process.argv.slice(2));
 
 function main([input, output]) {
-  if (input === undefined || output === undefined) fail(USAGE);
+  if (input === undefined || output === undefined) {
+    fail(USAGE);
+  }
   const result = readCheckResult(input);
   const issues = result.violations.map(toIssue);
   writeFileSync(output, `${JSON.stringify(issues, null, 2)}\n`);
@@ -44,7 +46,9 @@ function occurrence(violation, index, all) {
 }
 
 function fingerprint(violation, rank) {
-  return createHash('sha256').update(`${identity(violation)}\n${rank}`).digest('hex');
+  return createHash('sha256')
+    .update(`${identity(violation)}\n${rank}`)
+    .digest('hex');
 }
 
 function identity(violation) {
@@ -53,8 +57,12 @@ function identity(violation) {
 
 function summary(result, output) {
   const errors = result.violations.filter((violation) => violation.severity === 'error');
-  const lines = errors.map((violation) => `${violation.file}:${violation.line}  ${violation.ruleId}  ${violation.message}`);
-  return [...lines, `${result.violations.length} violation(s), ${errors.length} error(s), written to ${output}.`].join('\n');
+  const lines = errors.map(
+    (violation) => `${violation.file}:${violation.line}  ${violation.ruleId}  ${violation.message}`,
+  );
+  return [...lines, `${result.violations.length} violation(s), ${errors.length} error(s), written to ${output}.`].join(
+    '\n',
+  );
 }
 
 function fail(message) {

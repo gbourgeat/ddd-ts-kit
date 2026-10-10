@@ -41,7 +41,13 @@ const OUTCOMES: readonly Outcome[] = [
 ];
 
 const LINES: readonly Occupancy[] = OUTCOMES.map(({ practiceId, calendarId, day, startsAt, endsAt }) =>
-  anOccupancy({ practiceId, calendarId, day, heldMinutes: (endsAt.getTime() - startsAt.getTime()) / 60_000, appointmentsHeld: 1 }),
+  anOccupancy({
+    practiceId,
+    calendarId,
+    day,
+    heldMinutes: (endsAt.getTime() - startsAt.getTime()) / 60_000,
+    appointmentsHeld: 1,
+  }),
 );
 
 const manager = anActor().named('manager-1').build();
@@ -52,7 +58,9 @@ describe('List occupancy', () => {
   it('answers one page of what the actor may see, with the total', async () => {
     const application = await arrange();
 
-    const page = await application.queryBus.execute(new ListOccupancyQuery(manager, 'practice-1', everything.page(offsetPage({ limit: 2 }))));
+    const page = await application.queryBus.execute(
+      new ListOccupancyQuery(manager, 'practice-1', everything.page(offsetPage({ limit: 2 }))),
+    );
 
     expect(page).toEqual({ items: [LINES[0], LINES[2]], total: 4 });
   });
@@ -60,7 +68,9 @@ describe('List occupancy', () => {
   it('is refused to an actor who does not hold the permission occupancy.read', async () => {
     const application = await arrange();
 
-    await expect(application.queryBus.execute(new ListOccupancyQuery(anActor().build(), 'practice-1', everything))).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(
+      application.queryBus.execute(new ListOccupancyQuery(anActor().build(), 'practice-1', everything)),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
   });
 
   it('shows the manager of a practice every calendar of it, and nothing of another practice', async () => {
@@ -68,13 +78,20 @@ describe('List occupancy', () => {
 
     const page = await application.queryBus.execute(new ListOccupancyQuery(manager, 'practice-1', everything));
 
-    expect(page.items.map((line) => line.id)).toEqual(['calendar-1.2026-10-12', 'calendar-2.2026-10-12', 'calendar-1.2026-10-13', 'calendar-2.2026-10-14']);
+    expect(page.items.map((line) => line.id)).toEqual([
+      'calendar-1.2026-10-12',
+      'calendar-2.2026-10-12',
+      'calendar-1.2026-10-13',
+      'calendar-2.2026-10-14',
+    ]);
   });
 
   it('shows a practitioner their own calendars only', async () => {
     const application = await arrange();
 
-    const page = await application.queryBus.execute(new ListOccupancyQuery(practitioner, 'practice-1', everything.page(offsetPage())));
+    const page = await application.queryBus.execute(
+      new ListOccupancyQuery(practitioner, 'practice-1', everything.page(offsetPage())),
+    );
 
     expect(page.items.map((line) => line.calendarId)).toEqual(['calendar-1', 'calendar-1']);
     expect(page.total).toBe(2);
@@ -83,7 +100,11 @@ describe('List occupancy', () => {
   it('refuses the occupancy of a practice to the manager of another one', async () => {
     const application = await arrange();
 
-    await expect(application.queryBus.execute(new ListOccupancyQuery(anActor().named('manager-2').build(), 'practice-1', everything))).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(
+      application.queryBus.execute(
+        new ListOccupancyQuery(anActor().named('manager-2').build(), 'practice-1', everything),
+      ),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
   });
 
   it('keeps the days and the calendar asked for, in the order asked', async () => {
@@ -115,7 +136,13 @@ async function arrange() {
 
   await application.get(RelationTupleStore).write(TUPLES);
 
-  for (const outcome of OUTCOMES) await outcomes.upsertIfNewer(outcome.id, { eventId: `fact-of-${outcome.id}`, occurredAt: new Date('2026-10-01T10:00:00.000Z') }, () => outcome);
+  for (const outcome of OUTCOMES) {
+    await outcomes.upsertIfNewer(
+      outcome.id,
+      { eventId: `fact-of-${outcome.id}`, occurredAt: new Date('2026-10-01T10:00:00.000Z') },
+      () => outcome,
+    );
+  }
 
   return application;
 }

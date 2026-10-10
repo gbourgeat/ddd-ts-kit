@@ -13,9 +13,17 @@ export interface WrittenSchedule {
 /** The schedule among the written keys, validated: an interval or a cron, never both, never neither. */
 export function jobScheduleOf({ every, cron, timeZone }: WrittenSchedule): JobSchedule {
   const schedule: JobSchedule | undefined =
-    cron === undefined ? (every === undefined ? undefined : { every }) : { cron, ...(timeZone === undefined ? {} : { timeZone }) };
+    cron === undefined
+      ? every === undefined
+        ? undefined
+        : { every }
+      : { cron, ...(timeZone === undefined ? {} : { timeZone }) };
 
-  if (schedule === undefined || (cron !== undefined && every !== undefined) || (cron === undefined && timeZone !== undefined)) {
+  if (
+    schedule === undefined ||
+    (cron !== undefined && every !== undefined) ||
+    (cron === undefined && timeZone !== undefined)
+  ) {
     throw new InvalidJobScheduleError('A schedule is either { every } or { cron, timeZone? }.');
   }
 

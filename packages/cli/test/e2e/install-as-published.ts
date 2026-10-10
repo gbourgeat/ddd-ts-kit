@@ -17,12 +17,18 @@ export function installAsPublished(root: string): void {
   fs.mkdirSync(path.join(installed, '@ddd-ts-kit'), { recursive: true });
 
   for (const entry of fs.readdirSync(WORKSPACE_MODULES)) {
-    if (entry !== '@ddd-ts-kit' && entry !== 'ddd-ts-kit') fs.symlinkSync(path.join(WORKSPACE_MODULES, entry), path.join(installed, entry));
+    if (entry !== '@ddd-ts-kit' && entry !== 'ddd-ts-kit') {
+      fs.symlinkSync(path.join(WORKSPACE_MODULES, entry), path.join(installed, entry));
+    }
   }
 
-  for (const directory of fs.readdirSync(path.join(REPO_ROOT, 'packages'))) copyPackage(path.join(REPO_ROOT, 'packages', directory), installed);
+  for (const directory of fs.readdirSync(path.join(REPO_ROOT, 'packages'))) {
+    copyPackage(path.join(REPO_ROOT, 'packages', directory), installed);
+  }
 
-  for (const runner of ABSENT_RUNNERS) stubRunner(installed, runner);
+  for (const runner of ABSENT_RUNNERS) {
+    stubRunner(installed, runner);
+  }
 }
 
 function copyPackage(source: string, installed: string): void {
@@ -31,7 +37,9 @@ function copyPackage(source: string, installed: string): void {
   const { name } = JSON.parse(fs.readFileSync(path.join(source, 'package.json'), 'utf8')) as { name: string };
 
   for (const part of PUBLISHED_PARTS) {
-    if (fs.existsSync(path.join(source, part))) fs.cpSync(path.join(source, part), path.join(installed, name, part), { recursive: true });
+    if (fs.existsSync(path.join(source, part))) {
+      fs.cpSync(path.join(source, part), path.join(installed, name, part), { recursive: true });
+    }
   }
 }
 
@@ -40,15 +48,24 @@ function linkOwnDependencies(source: string, installed: string): void {
   const own = path.join(source, 'node_modules');
 
   for (const entry of fs.existsSync(own) ? fs.readdirSync(own) : []) {
-    if (entry.startsWith('.') || fs.existsSync(path.join(installed, entry))) continue;
+    if (entry.startsWith('.') || fs.existsSync(path.join(installed, entry))) {
+      continue;
+    }
 
     fs.symlinkSync(path.join(own, entry), path.join(installed, entry));
   }
 }
 
 function stubRunner(installed: string, runner: string): void {
-  if (fs.existsSync(path.join(installed, runner))) return;
+  if (fs.existsSync(path.join(installed, runner))) {
+    return;
+  }
 
-  write(installed, `${runner}/package.json`, JSON.stringify({ name: runner, version: '0.0.0', bin: { [runner]: 'bin.js' } }));
+  write(
+    installed,
+    `${runner}/package.json`,
+    JSON.stringify({ name: runner, version: '0.0.0', bin: { [runner]: 'bin.js' } }),
+  );
+
   write(installed, `${runner}/bin.js`, '');
 }

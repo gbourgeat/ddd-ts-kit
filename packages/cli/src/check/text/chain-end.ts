@@ -9,7 +9,9 @@ export function chainEnd(code: string, open: number): number {
   for (;;) {
     const next = CHAINED_CALL.exec(code.slice(end, end + 200));
 
-    if (next === null) return end;
+    if (next === null) {
+      return end;
+    }
 
     end = callEnd(code, end + next[0].length);
   }

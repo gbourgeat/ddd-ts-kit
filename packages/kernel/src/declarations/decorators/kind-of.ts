@@ -8,9 +8,13 @@ import { DeclarationError } from '../registry/declaration-error.js';
 export function kindOf(target: MessageType<Message>): MessageInfo['kind'] {
   const prototype: unknown = target.prototype;
 
-  if (prototype instanceof Command) return 'command';
+  if (prototype instanceof Command) {
+    return 'command';
+  }
 
-  if (prototype instanceof Query) return 'query';
+  if (prototype instanceof Query) {
+    return 'query';
+  }
 
   throw new DeclarationError(
     `${target.name} declares who may send it and is neither a Command nor a Query of the kernel.`,

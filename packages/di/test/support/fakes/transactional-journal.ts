@@ -22,7 +22,9 @@ export class TransactionalJournal implements Transactional {
   }
 
   write(line: string): void {
-    if (this.pending === undefined) throw new Error(`${this.what} written outside a unit of work: ${line}`);
+    if (this.pending === undefined) {
+      throw new Error(`${this.what} written outside a unit of work: ${line}`);
+    }
 
     this.pending.push(line);
   }

@@ -21,16 +21,25 @@ export function topLevelDeclarations(program: TSESTree.Program): TopLevelDeclara
     const inline = isInlineExport(statement);
     const declared = inline ? statement.declaration : statement;
 
-    return declared === null ? [] : declarationsOf(declared).map((found) => ({ ...found, exported: inline || later.has(found.name) }));
+    return declared === null
+      ? []
+      : declarationsOf(declared).map((found) => ({ ...found, exported: inline || later.has(found.name) }));
   });
 }
 
-function isInlineExport(statement: TSESTree.ProgramStatement): statement is TSESTree.ExportNamedDeclaration | TSESTree.ExportDefaultDeclaration {
-  return statement.type === AST_NODE_TYPES.ExportNamedDeclaration || statement.type === AST_NODE_TYPES.ExportDefaultDeclaration;
+function isInlineExport(
+  statement: TSESTree.ProgramStatement,
+): statement is TSESTree.ExportNamedDeclaration | TSESTree.ExportDefaultDeclaration {
+  return (
+    statement.type === AST_NODE_TYPES.ExportNamedDeclaration ||
+    statement.type === AST_NODE_TYPES.ExportDefaultDeclaration
+  );
 }
 
 function declarationsOf(node: TSESTree.Node): Found[] {
-  if (node.type === AST_NODE_TYPES.VariableDeclaration) return node.declarations.flatMap(variableOf);
+  if (node.type === AST_NODE_TYPES.VariableDeclaration) {
+    return node.declarations.flatMap(variableOf);
+  }
 
   const kind = KINDS[node.type];
   const name = 'id' in node && node.id?.type === AST_NODE_TYPES.Identifier ? node.id.name : 'default';
@@ -39,12 +48,19 @@ function declarationsOf(node: TSESTree.Node): Found[] {
 }
 
 function variableOf(declarator: TSESTree.VariableDeclarator): Found[] {
-  return declarator.id.type === AST_NODE_TYPES.Identifier ? [{ name: declarator.id.name, kind: 'variable', node: declarator }] : [];
+  return declarator.id.type === AST_NODE_TYPES.Identifier
+    ? [{ name: declarator.id.name, kind: 'variable', node: declarator }]
+    : [];
 }
 
 function namesExportedLater(statement: TSESTree.ProgramStatement): string[] {
-  if (statement.type === AST_NODE_TYPES.ExportDefaultDeclaration) return statement.declaration.type === AST_NODE_TYPES.Identifier ? [statement.declaration.name] : [];
-  if (statement.type !== AST_NODE_TYPES.ExportNamedDeclaration || statement.source !== null) return [];
+  if (statement.type === AST_NODE_TYPES.ExportDefaultDeclaration) {
+    return statement.declaration.type === AST_NODE_TYPES.Identifier ? [statement.declaration.name] : [];
+  }
+
+  if (statement.type !== AST_NODE_TYPES.ExportNamedDeclaration || statement.source !== null) {
+    return [];
+  }
 
   return statement.specifiers.map((specifier) => specifier.local.name);
 }

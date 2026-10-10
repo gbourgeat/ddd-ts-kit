@@ -2,21 +2,21 @@ import { describe, expect, it } from 'vitest';
 import { scan } from '../src/check/scan/scan.js';
 
 const EVERY_FORM = [
-    "import a from 'a';",
-    "import { b, c as d } from 'b';",
-    "import * as e from 'e';",
-    "import type { F } from 'f';",
-    "import g, { type H } from 'g';",
-    "import 'side-effect';",
-    "export { i } from 'i';",
-    "export * from 'j';",
-    "export type { K } from 'k';",
-    "const l = await import('l');",
-    "const m = require('m');",
-    "import n = require('n');",
-    "type O = import('o').O;",
-    'import p from "p";',
-    'import q from `q`;',
+  "import a from 'a';",
+  "import { b, c as d } from 'b';",
+  "import * as e from 'e';",
+  "import type { F } from 'f';",
+  "import g, { type H } from 'g';",
+  "import 'side-effect';",
+  "export { i } from 'i';",
+  "export * from 'j';",
+  "export type { K } from 'k';",
+  "const l = await import('l');",
+  "const m = require('m');",
+  "import n = require('n');",
+  "type O = import('o').O;",
+  'import p from "p";',
+  'import q from `q`;',
 ].join('\n');
 
 describe('import scanner', () => {
@@ -41,14 +41,18 @@ describe('import scanner', () => {
   });
 
   it('reports the line of the statement, the local names and type-only imports', () => {
-    const [first, second] = scan("\n\nimport type {\n  A,\n  B as C,\n} from './x.js';\nimport D, * as E from 'y';\n").imports;
+    const [first, second] = scan(
+      "\n\nimport type {\n  A,\n  B as C,\n} from './x.js';\nimport D, * as E from 'y';\n",
+    ).imports;
 
     expect(first).toMatchObject({ line: 3, typeOnly: true, names: ['A', 'C'] });
     expect(second).toMatchObject({ line: 7, typeOnly: false, names: ['D', 'E'] });
   });
 
   it('tells the names imported as types from the ones imported as values', () => {
-    const [whole, inline, plain] = scan("import type { A, B } from 'a';\nimport { type C, D, type E as F } from 'c';\nimport G, { H } from 'g';\n").imports;
+    const [whole, inline, plain] = scan(
+      "import type { A, B } from 'a';\nimport { type C, D, type E as F } from 'c';\nimport G, { H } from 'g';\n",
+    ).imports;
 
     expect(whole?.typeNames).toEqual(['A', 'B']);
     expect(inline).toMatchObject({ typeOnly: false, names: ['C', 'D', 'F'], typeNames: ['C', 'F'] });
@@ -60,8 +64,8 @@ describe('import scanner', () => {
       "// import a from 'a';",
       "/* import b from 'b';",
       "   require('c') */",
-      "const d = \"import d from 'd'\";",
-      "const e = 'require(\"e\")';",
+      'const d = "import d from \'d\'";',
+      'const e = \'require("e")\';',
       "const f = `import('f') ${g ? `require('h')` : ''} from 'i'`;",
       "const j = /import 'j'/;",
       "const k = x / 2; const l = y / 3; // import('m')",
@@ -76,7 +80,9 @@ describe('import scanner', () => {
   });
 
   it('does not take a property or a longer identifier for an import', () => {
-    expect(specifiers("loader.import('a'); myrequire('b'); x.require('c'); const from = 'd'; Array.from('e');")).toEqual([]);
+    expect(
+      specifiers("loader.import('a'); myrequire('b'); x.require('c'); const from = 'd'; Array.from('e');"),
+    ).toEqual([]);
   });
 
   it('attributes each specifier to its own statement when semicolons are missing', () => {
@@ -92,7 +98,7 @@ describe('import scanner', () => {
   });
 
   it('collects comments with their line and whether they stand alone', () => {
-    const { comments } = scan("const a = 1; // trailing\n// alone\n");
+    const { comments } = scan('const a = 1; // trailing\n// alone\n');
 
     expect(comments).toMatchObject([
       { line: 1, text: 'trailing', ownLine: false },

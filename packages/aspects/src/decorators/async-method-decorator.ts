@@ -7,6 +7,13 @@ type AsyncMethod<This, Args extends unknown[], Result> = (this: This, ...args: A
  * they read: the one written first is outermost.
  */
 export interface AsyncMethodDecorator {
-  <This extends object, Args extends unknown[], Result>(target: AsyncMethod<This, Args, Result>, context: ClassMethodDecoratorContext<This, AsyncMethod<This, Args, Result>>): void;
-  <Method extends (...args: never[]) => Promise<unknown>>(prototype: object, name: string | symbol, descriptor: TypedPropertyDescriptor<Method>): TypedPropertyDescriptor<Method> | undefined;
+  <This extends object, Args extends unknown[], Result>(
+    target: AsyncMethod<This, Args, Result>,
+    context: ClassMethodDecoratorContext<This, AsyncMethod<This, Args, Result>>,
+  ): void;
+  <Method extends (...args: never[]) => Promise<unknown>>(
+    prototype: object,
+    name: string | symbol,
+    descriptor: TypedPropertyDescriptor<Method>,
+  ): TypedPropertyDescriptor<Method> | undefined;
 }

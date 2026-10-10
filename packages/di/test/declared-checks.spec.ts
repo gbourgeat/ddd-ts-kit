@@ -15,7 +15,15 @@ import { permissions } from './fixtures/contexts/billing/application/authorizati
 import { Outbox } from './support/fakes/outbox.js';
 import { wiringFailure } from './support/failure.js';
 
-const { GetInvoice, InMemoryInvoiceRepository, InvoiceIssuedEventHandler, IssueInvoice, IssueInvoiceHandler, Mailer, OutboxMailer } = billing;
+const {
+  GetInvoice,
+  InMemoryInvoiceRepository,
+  InvoiceIssuedEventHandler,
+  IssueInvoice,
+  IssueInvoiceHandler,
+  Mailer,
+  OutboxMailer,
+} = billing;
 
 const ada: Actor = { id: 'ada', type: 'user', roles: [], attributes: {} };
 
@@ -44,7 +52,13 @@ describe('access declared on the message', () => {
     const app = createApplication({ modules: [kernelModule(), billingModule, guarded], authorization: 'required' });
     const [issuing] = app.resolve(UseCaseDeclarations).list;
 
-    expect(issuing).toMatchObject({ kind: 'command', message: IssueInvoice, access: 'protected', permission: permissions['invoice.issue'] });
+    expect(issuing).toMatchObject({
+      kind: 'command',
+      message: IssueInvoice,
+      access: 'protected',
+      permission: permissions['invoice.issue'],
+    });
+
     expect(issuing?.resourceOf?.(new IssueInvoice(ada, 'customer-4'))).toEqual({ type: 'customer', id: 'customer-4' });
   });
 
@@ -60,7 +74,13 @@ describe('access declared on the message', () => {
     const app = createApplication({ modules: [kernelModule(), explicit, guarded], authorization: 'required' });
 
     expect(app.describe().commands).toEqual([
-      { message: 'IssueInvoice', handler: 'command(IssueInvoice) handler', module: 'billing', access: 'protected', permission: 'billing:invoice.issue' },
+      {
+        message: 'IssueInvoice',
+        handler: 'command(IssueInvoice) handler',
+        module: 'billing',
+        access: 'protected',
+        permission: 'billing:invoice.issue',
+      },
     ]);
 
     expect(app.describe().queries).toMatchObject([{ access: 'public' }]);
@@ -78,7 +98,11 @@ describe('access declared on the message', () => {
     );
 
     expect(failure.code).toBe('UNDECLARED_AUTHORIZATION');
-    expect(failure.message).toContain('the command "VoidInvoice" (module "voiding" (declared by class VoidInvoiceHandler))');
+
+    expect(failure.message).toContain(
+      'the command "VoidInvoice" (module "voiding" (declared by class VoidInvoiceHandler))',
+    );
+
     expect(failure.message).toContain('Decorate the message class with @Requires(permission) or @Public().');
   });
 });
@@ -89,15 +113,22 @@ describe('the checks, on declared classes', () => {
   it('refuses a class listed without a declaration', () => {
     class Forgotten {}
 
-    const failure = wiringFailure(() => createApplication({ modules: [kernelModule(), contextModule('billing', [Forgotten])] }));
+    const failure = wiringFailure(() =>
+      createApplication({ modules: [kernelModule(), contextModule('billing', [Forgotten])] }),
+    );
 
     expect(failure.code).toBe('UNDECLARED_CLASS');
-    expect(failure.message).toContain('Class Forgotten is listed in module "billing" and carries no declaration decorator');
+
+    expect(failure.message).toContain(
+      'Class Forgotten is listed in module "billing" and carries no declaration decorator',
+    );
   });
 
   it('refuses a port bound twice, naming both classes', () => {
     const failure = wiringFailure(() =>
-      createApplication({ modules: [kernelModule(), billingModule, contextModule('invoicing', [InMemoryInvoiceRepository])] }),
+      createApplication({
+        modules: [kernelModule(), billingModule, contextModule('invoicing', [InMemoryInvoiceRepository])],
+      }),
     );
 
     expect(failure.code).toBe('DUPLICATE_BINDING');
@@ -136,7 +167,9 @@ describe('the checks, on declared classes', () => {
 
   it('refuses a cycle between declared classes', () => {
     const failure = wiringFailure(() =>
-      createApplication({ modules: [kernelModule(), contextModule('loop', [mistakes.HatchedChicken, mistakes.LaidEgg])] }),
+      createApplication({
+        modules: [kernelModule(), contextModule('loop', [mistakes.HatchedChicken, mistakes.LaidEgg])],
+      }),
     );
 
     expect(failure.code).toBe('DEPENDENCY_CYCLE');
@@ -144,13 +177,17 @@ describe('the checks, on declared classes', () => {
   });
 
   it('refuses event handlers without the kernel they attach to', () => {
-    const failure = wiringFailure(() => createApplication({ modules: [contextModule('billing', [InvoiceIssuedEventHandler, OutboxMailer])] }));
+    const failure = wiringFailure(() =>
+      createApplication({ modules: [contextModule('billing', [InvoiceIssuedEventHandler, OutboxMailer])] }),
+    );
 
     expect(failure.code).toBe('UNBOUND_DEPENDENCY');
   });
 
   it('refuses a class that replaces a binding nobody made', () => {
-    const failure = wiringFailure(() => createApplication({ modules: [contextModule('platform', [mistakes.FrozenClock])] }));
+    const failure = wiringFailure(() =>
+      createApplication({ modules: [contextModule('platform', [mistakes.FrozenClock])] }),
+    );
 
     expect(failure.code).toBe('NOTHING_TO_REBIND');
     expect(failure.message).toContain('Module "platform" (declared by class FrozenClock) rebinds "Clock"');
@@ -164,7 +201,10 @@ describe('declared and explicit styles together', () => {
     const app = createApplication({ modules: [kernelModule(), contextModule('platform', [mistakes.FrozenClock])] });
 
     expect(app.resolve(Clock).now()).toEqual(new Date(0));
-    expect(app.describe().bindings).toContainEqual(expect.objectContaining({ token: 'Clock', module: 'platform', origin: 'declared' }));
+
+    expect(app.describe().bindings).toContainEqual(
+      expect.objectContaining({ token: 'Clock', module: 'platform', origin: 'declared' }),
+    );
   });
 
   it('an explicit module rebinds a declared port', async () => {

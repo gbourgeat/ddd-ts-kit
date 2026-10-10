@@ -34,7 +34,9 @@ export function traceBindings(): <T>(instance: T, binding: TracedBinding) => T {
   return (instance, binding) => {
     const { context, kind, className } = binding;
 
-    if (kind === undefined || TRACED_ELSEWHERE.has(kind) || typeof instance !== 'object' || instance === null) return instance;
+    if (kind === undefined || TRACED_ELSEWHERE.has(kind) || typeof instance !== 'object' || instance === null) {
+      return instance;
+    }
 
     const port = NAMED_BY_CLASS.has(kind) ? undefined : portOf(binding.token);
 
@@ -48,7 +50,9 @@ export function traceBindings(): <T>(instance: T, binding: TracedBinding) => T {
 }
 
 function portOf(token: TracedBinding['token']): string | undefined {
-  if (token === undefined) return undefined;
+  if (token === undefined) {
+    return undefined;
+  }
 
   return typeof token === 'string' ? token : describeToken(token);
 }

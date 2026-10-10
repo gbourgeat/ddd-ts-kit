@@ -5,10 +5,7 @@ export interface RunningServer {
   close(): Promise<void>;
 }
 
-export type StartServer = (
-  routes: readonly Route[],
-  options: ExecuteOptions,
-) => Promise<RunningServer>;
+export type StartServer = (routes: readonly Route[], options: ExecuteOptions) => Promise<RunningServer>;
 
 /** How each adapter reads the test credential out of its own request object. */
 export type ReadAuthorization = (raw: unknown) => string | undefined;

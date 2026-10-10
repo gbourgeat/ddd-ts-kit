@@ -11,12 +11,22 @@ import { FakeAppointmentExportGateway } from '../fakes/appointment-export-gatewa
 /** What scheduling states: three appointments, exported two a page. */
 const TRUTH: readonly Outcome[] = [
   anOutcome({ id: 'appointment-1', state: 'completed', changedAt: new Date('2026-10-12T09:00:00.000Z') }),
-  anOutcome({ id: 'appointment-2', day: '2026-10-14', startsAt: new Date('2026-10-14T09:00:00.000Z'), endsAt: new Date('2026-10-14T09:30:00.000Z') }),
+  anOutcome({
+    id: 'appointment-2',
+    day: '2026-10-14',
+    startsAt: new Date('2026-10-14T09:00:00.000Z'),
+    endsAt: new Date('2026-10-14T09:30:00.000Z'),
+  }),
   anOutcome({ id: 'appointment-3', state: 'cancelled-by-patient' }),
 ];
 
 /** What the projection got wrong: a fact it missed, a day it kept, an appointment scheduling never had, and one it never saw. */
-const WRONG: readonly Outcome[] = [anOutcome({ id: 'appointment-1', state: 'held' }), anOutcome({ id: 'appointment-2', day: '2026-10-12' }), anOutcome({ id: 'appointment-ghost' })];
+const WRONG: readonly Outcome[] = [
+  anOutcome({ id: 'appointment-1', state: 'held' }),
+  anOutcome({ id: 'appointment-2', day: '2026-10-12' }),
+  anOutcome({ id: 'appointment-ghost' }),
+];
+
 const seen = { eventId: 'fact-seen', occurredAt: new Date('2026-10-01T10:00:00.000Z') };
 
 let database: TestDatabase;
@@ -27,14 +37,18 @@ beforeAll(async () => {
 
   const knex = database.persistence.database.executor();
 
-  if (!(await knex.schema.withSchema(ANALYTICS_SCHEMA).hasTable('outcomes'))) await createAnalyticsTables(knex);
+  if (!(await knex.schema.withSchema(ANALYTICS_SCHEMA).hasTable('outcomes'))) {
+    await createAnalyticsTables(knex);
+  }
 });
 
 beforeEach(async () => {
   await database.reset();
   outcomes = new KnexOutcomeRegister(database.persistence.database);
 
-  for (const outcome of WRONG) await outcomes.upsertIfNewer(outcome.id, seen, () => outcome);
+  for (const outcome of WRONG) {
+    await outcomes.upsertIfNewer(outcome.id, seen, () => outcome);
+  }
 });
 
 afterAll(async () => {
@@ -66,8 +80,17 @@ describe('The outcomes, rebuilt from what scheduling states', () => {
   it('still take a fact later than what scheduling stated, and refuse an earlier one', async () => {
     await rebuild();
 
-    const earlier = await outcomes.upsertIfNewer('appointment-1', { eventId: 'fact-early', occurredAt: new Date('2026-10-12T08:00:00.000Z') }, () => anOutcome({ state: 'held' }));
-    const later = await outcomes.upsertIfNewer('appointment-1', { eventId: 'fact-late', occurredAt: new Date('2026-10-12T10:00:00.000Z') }, () => anOutcome({ state: 'no-show' }));
+    const earlier = await outcomes.upsertIfNewer(
+      'appointment-1',
+      { eventId: 'fact-early', occurredAt: new Date('2026-10-12T08:00:00.000Z') },
+      () => anOutcome({ state: 'held' }),
+    );
+
+    const later = await outcomes.upsertIfNewer(
+      'appointment-1',
+      { eventId: 'fact-late', occurredAt: new Date('2026-10-12T10:00:00.000Z') },
+      () => anOutcome({ state: 'no-show' }),
+    );
 
     expect([earlier, later]).toEqual(['stale', 'applied']);
     expect(await outcomes.get('appointment-1')).toMatchObject({ state: 'no-show' });
@@ -82,5 +105,9 @@ describe('The outcomes, rebuilt from what scheduling states', () => {
 });
 
 function rebuild() {
-  return new ProjectionRebuild({ table: outcomes.table, source: new FakeAppointmentExportGateway(TRUTH), unitOfWork: database.persistence.unitOfWork }).run();
+  return new ProjectionRebuild({
+    table: outcomes.table,
+    source: new FakeAppointmentExportGateway(TRUTH),
+    unitOfWork: database.persistence.unitOfWork,
+  }).run();
 }

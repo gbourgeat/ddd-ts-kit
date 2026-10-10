@@ -18,10 +18,24 @@ export function readPorts(sources: ContextSources, adapters: readonly AdapterFac
       .filter((file) => file.endsWith(suffix))
       .map((file) => {
         const path = `${directory}/${folder}/${file}`;
-        const name = /\bexport (?:abstract class|interface) (\w+)/.exec(ws.read(path) ?? '')?.[1] ?? toName(file.slice(0, -'.ts'.length).replaceAll('.', '-').replace(/-port$/, '')).pascal;
+
+        const name =
+          /\bexport (?:abstract class|interface) (\w+)/.exec(ws.read(path) ?? '')?.[1] ??
+          toName(
+            file
+              .slice(0, -'.ts'.length)
+              .replaceAll('.', '-')
+              .replace(/-port$/, ''),
+          ).pascal;
+
         const bound = adapters.filter((adapter) => adapter.ports.includes(name));
 
-        return { name, kind: bound[0]?.kind ?? (suffix === '.repository.ts' ? 'repository' : ''), adapters: bound.map((adapter) => adapter.name), file: path };
+        return {
+          name,
+          kind: bound[0]?.kind ?? (suffix === '.repository.ts' ? 'repository' : ''),
+          adapters: bound.map((adapter) => adapter.name),
+          file: path,
+        };
       }),
   ).sort((left, right) => left.name.localeCompare(right.name));
 }

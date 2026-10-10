@@ -27,7 +27,9 @@ export const PURITY_FIXTURES: readonly Fixture[] = [
     ruleId: 'purity/no-system-clock',
     name: 'Date.now() in a handler',
     expect: { file: HANDLER },
-    files: project(handler('export class IssueInvoiceHandler {\n  stamp(): number {\n    return Date.now();\n  }\n}\n')),
+    files: project(
+      handler('export class IssueInvoiceHandler {\n  stamp(): number {\n    return Date.now();\n  }\n}\n'),
+    ),
   },
   {
     ruleId: 'purity/no-ambient-randomness',
@@ -46,25 +48,37 @@ export const PURITY_FIXTURES: readonly Fixture[] = [
     name: 'an id library in a handler',
     expect: { file: HANDLER },
     also: ['layer/application-inward'],
-    files: project(handler("import { nanoid } from 'nanoid';\nexport class IssueInvoiceHandler {\n  readonly id = nanoid();\n}\n")),
+    files: project(
+      handler("import { nanoid } from 'nanoid';\nexport class IssueInvoiceHandler {\n  readonly id = nanoid();\n}\n"),
+    ),
   },
   {
     ruleId: 'purity/no-environment',
     name: 'configuration received through the constructor',
     expect: 'pass',
-    files: project(handler('export class IssueInvoiceHandler {\n  constructor(private readonly currency: string) {}\n}\n')),
+    files: project(
+      handler('export class IssueInvoiceHandler {\n  constructor(private readonly currency: string) {}\n}\n'),
+    ),
   },
   {
     ruleId: 'purity/no-environment',
     name: 'process.env and console in a handler',
     expect: { file: HANDLER },
-    files: project(handler("export class IssueInvoiceHandler {\n  readonly currency = process.env['CURRENCY'];\n  log(): void {\n    console.log(this.currency);\n  }\n}\n")),
+    files: project(
+      handler(
+        "export class IssueInvoiceHandler {\n  readonly currency = process.env['CURRENCY'];\n  log(): void {\n    console.log(this.currency);\n  }\n}\n",
+      ),
+    ),
   },
   {
     ruleId: 'purity/no-environment',
     name: 'the file system in the domain',
     expect: { file: AGGREGATE },
     also: ['layer/domain-purity'],
-    files: project(aggregate("import { readFileSync } from 'node:fs';\nexport class Invoice {\n  readonly template = readFileSync;\n}\n")),
+    files: project(
+      aggregate(
+        "import { readFileSync } from 'node:fs';\nexport class Invoice {\n  readonly template = readFileSync;\n}\n",
+      ),
+    ),
   },
 ];

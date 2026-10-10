@@ -9,7 +9,10 @@ describe('Exception', () => {
   it('is equal to another exception of the same day with the same ranges', () => {
     const first = unwrap(Exception.create('2026-05-01', [range('14:00', '16:00'), range('09:00', '10:00')]));
 
-    expect(first.equals(unwrap(Exception.create('2026-05-01', [range('09:00', '10:00'), range('14:00', '16:00')])))).toBe(true);
+    expect(
+      first.equals(unwrap(Exception.create('2026-05-01', [range('09:00', '10:00'), range('14:00', '16:00')]))),
+    ).toBe(true);
+
     expect(first.equals(unwrap(Exception.create('2026-05-01', [])))).toBe(false);
   });
 

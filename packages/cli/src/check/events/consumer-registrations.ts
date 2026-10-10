@@ -38,7 +38,9 @@ export function consumerRegistrations(file: SourceFile): ConsumerRegistration[] 
     const registered = code.slice(span.start, span.end);
     const literal = match[2] === 'idempotent' ? firstLiteral(file, span) : optionLiteral(file, span);
 
-    if (literal === undefined && (match[2] === 'idempotent' || !CONSUMER_OPTION.test(registered))) return [];
+    if (literal === undefined && (match[2] === 'idempotent' || !CONSUMER_OPTION.test(registered))) {
+      return [];
+    }
 
     const line = file.scan.lineAt(span.start);
     const deduplicates = match[1] !== undefined || match[2] === 'idempotent' || STORE_OPTION.test(registered);
@@ -48,11 +50,19 @@ export function consumerRegistrations(file: SourceFile): ConsumerRegistration[] 
 }
 
 function firstLiteral(file: SourceFile, { open, end }: Span): StringRecord | undefined {
-  return file.scan.strings.find((literal) => literal.start >= open && literal.start < end && file.scan.code.slice(open, literal.start).trim() === '');
+  return file.scan.strings.find(
+    (literal) =>
+      literal.start >= open && literal.start < end && file.scan.code.slice(open, literal.start).trim() === '',
+  );
 }
 
 function optionLiteral(file: SourceFile, { open, end }: Span): StringRecord | undefined {
   const { code, strings } = file.scan;
 
-  return strings.find((literal) => literal.start > open && literal.start < end && CONSUMER_KEY.test(code.slice(Math.max(open, literal.start - 40), literal.start)));
+  return strings.find(
+    (literal) =>
+      literal.start > open &&
+      literal.start < end &&
+      CONSUMER_KEY.test(code.slice(Math.max(open, literal.start - 40), literal.start)),
+  );
 }

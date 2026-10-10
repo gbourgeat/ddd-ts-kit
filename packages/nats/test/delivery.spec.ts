@@ -6,38 +6,52 @@ import { PLACED, TRACEPARENT, anEvent } from './support/events.js';
 import { InvoicingFailed } from './support/invoicing-failed.js';
 import { unique } from './support/unique.js';
 
-describe.skipIf(NATS_URL === undefined)('NatsEventBus: what a handler is told of a delivery', { timeout: 30_000 }, () => {
-  let broker: Broker;
+describe.skipIf(NATS_URL === undefined)(
+  'NatsEventBus: what a handler is told of a delivery',
+  { timeout: 30_000 },
+  () => {
+    let broker: Broker;
 
-  beforeEach(async () => {
-    broker = await Broker.connect(NATS_URL ?? '');
-  });
-
-  afterEach(async () => {
-    await broker.dispose();
-  });
-
-  it('says which attempt it is, of how many, on which subject, and hands the trace context over again at the redelivery', async () => {
-    const consumer = unique('billing');
-    const bus = broker.bus({ consumer });
-    const deliveries: (EventDelivery | undefined)[] = [];
-    const contexts: (string | undefined)[] = [];
-
-    bus.subscribe(PLACED, async (event, delivery) => {
-      deliveries.push(delivery);
-      contexts.push(event.traceparent);
-
-      if (deliveries.length === 1) throw new InvoicingFailed();
+    beforeEach(async () => {
+      broker = await Broker.connect(NATS_URL ?? '');
     });
 
-    await bus.publish([{ ...anEvent('evt-1'), traceparent: TRACEPARENT }]);
-    await broker.settled(bus);
+    afterEach(async () => {
+      await broker.dispose();
+    });
 
-    const told = { maxAttempts: MAX_ATTEMPTS, system: 'nats', consumer: broker.namesOf({ consumer, type: PLACED }).durable };
+    it('says which attempt it is, of how many, on which subject, and hands the trace context over again at the redelivery', async () => {
+      const consumer = unique('billing');
+      const bus = broker.bus({ consumer });
+      const deliveries: (EventDelivery | undefined)[] = [];
+      const contexts: (string | undefined)[] = [];
 
-    expect(deliveries).toMatchObject([{ attempt: 1, ...told }, { attempt: 2, ...told }]);
-    expect(deliveries[0]?.destination).toContain(PLACED);
-    expect(contexts).toEqual([TRACEPARENT, TRACEPARENT]);
-    expect(bus.messagingSystem).toBe('nats');
-  });
-});
+      bus.subscribe(PLACED, async (event, delivery) => {
+        deliveries.push(delivery);
+        contexts.push(event.traceparent);
+
+        if (deliveries.length === 1) {
+          throw new InvoicingFailed();
+        }
+      });
+
+      await bus.publish([{ ...anEvent('evt-1'), traceparent: TRACEPARENT }]);
+      await broker.settled(bus);
+
+      const told = {
+        maxAttempts: MAX_ATTEMPTS,
+        system: 'nats',
+        consumer: broker.namesOf({ consumer, type: PLACED }).durable,
+      };
+
+      expect(deliveries).toMatchObject([
+        { attempt: 1, ...told },
+        { attempt: 2, ...told },
+      ]);
+
+      expect(deliveries[0]?.destination).toContain(PLACED);
+      expect(contexts).toEqual([TRACEPARENT, TRACEPARENT]);
+      expect(bus.messagingSystem).toBe('nats');
+    });
+  },
+);

@@ -1,0 +1,47 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
+  "files": {
+    "includes": [
+      "**/*.ts",
+      "**/*.mts",
+      "**/*.cts",
+      "**/*.js",
+      "**/*.mjs",
+      "**/*.cjs",
+      "**/*.json",
+      "**/*.jsonc",
+      "!**/dist",
+      "!**/coverage",
+      "!**/reports",
+      "!**/generated",
+      "!**/package-lock.json",
+      "!**/.dependency-cruiser.cjs",
+      "!**/openapi/*.json",
+      "!**/asyncapi.json"
+    ]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 120,
+    "lineEnding": "lf"
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "trailingCommas": "all",
+      "semicolons": "always",
+      "arrowParentheses": "always"
+    },
+    "parser": {
+      "unsafeParameterDecoratorsEnabled": true
+    }
+  },
+  "linter": {
+    "enabled": false
+  },
+  "assist": {
+    "enabled": false
+  }
+}

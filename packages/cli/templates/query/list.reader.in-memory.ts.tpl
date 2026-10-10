@@ -7,7 +7,11 @@ import { {{name.pascal}}Reader } from '../../application/ports/{{name.kebab}}-re
 {{#unless style.declared}}
 import type { {{name.pascal}}Reader } from '../../application/ports/{{name.kebab}}-reader.port.js';
 {{/unless}}
-import type { {{name.pascal}}Item, {{name.pascal}}Result, {{name.pascal}}Sort } from '../../application/queries/{{name.kebab}}/{{name.kebab}}.result.js';
+import type {
+  {{name.pascal}}Item,
+  {{name.pascal}}Result,
+  {{name.pascal}}Sort,
+} from '../../application/queries/{{name.kebab}}/{{name.kebab}}.result.js';
 
 {{#if style.declared}}
 @Repository({{name.pascal}}Reader)
@@ -21,11 +25,16 @@ export class InMemory{{name.pascal}}Reader implements {{name.pascal}}Reader {
     const start = page.kind === 'offset' ? page.offset : positionAfter(visible, page.cursor);
     const items = visible.slice(start, start + page.limit);
 
-    if (page.kind === 'offset') return pageOf(items, { total: visible.length });
+    if (page.kind === 'offset') {
+      return pageOf(items, { total: visible.length });
+    }
 
     const last = items.at(-1);
 
-    return pageOf(items, last !== undefined && start + page.limit < visible.length ? { nextCursor: encodeCursor({ id: last.id }) } : {});
+    return pageOf(
+      items,
+      last !== undefined && start + page.limit < visible.length ? { nextCursor: encodeCursor({ id: last.id }) } : {},
+    );
   }
 }
 
@@ -49,11 +58,15 @@ function inOrder(page: PageRequest<{{name.pascal}}Sort>): (left: {{name.pascal}}
 }
 
 function positionAfter(visible: readonly {{name.pascal}}Item[], cursor: string | undefined): number {
-  if (cursor === undefined) return 0;
+  if (cursor === undefined) {
+    return 0;
+  }
 
   const { id } = decodeCursor(cursor);
 
-  if (typeof id !== 'string') throw new InvalidPageRequestError('The cursor of a page is the nextCursor of a previous page');
+  if (typeof id !== 'string') {
+    throw new InvalidPageRequestError('The cursor of a page is the nextCursor of a previous page');
+  }
 
   return visible.findIndex((item) => item.id === id) + 1;
 }

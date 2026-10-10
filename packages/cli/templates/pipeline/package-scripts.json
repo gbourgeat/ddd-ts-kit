@@ -3,8 +3,11 @@
     "typecheck": "node node_modules/@typescript/native/bin/tsc -p tsconfig.json --noEmit",
     "build": "node node_modules/@typescript/native/bin/tsc -p tsconfig.build.json",
     "lint": "eslint .",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
     "ci:typecheck": "npm run typecheck",
     "ci:lint": "eslint .",
+    "ci:format": "npm run format:check",
     "ci:arch": "npm run ci:arch:check && npm run ci:arch:graph",
     "ci:arch:check": "ddd-ts-kit check",
     "ci:arch:graph": "depcruise src --config depcruise-config.mjs",
@@ -17,6 +20,7 @@
     "ci:build": "npm run build"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.5.15",
     "@commitlint/cli": "^21.2.3",
     "@commitlint/config-conventional": "^21.2.3",
     "@ddd-ts-kit/eslint-plugin": "^0.1.0",

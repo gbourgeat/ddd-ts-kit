@@ -13,7 +13,10 @@ const URL_WITH_PASSWORD = `nats://ordering:${PASSWORD}@127.0.0.1:1`;
 describe('NatsEventBus: what it shows of its credentials', () => {
   it('shows neither the URL nor the options it connects with when it is serialised, spread, listed or inspected', async () => {
     const byUrl = new NatsEventBus({ connection: URL_WITH_PASSWORD, consumer: 'billing' });
-    const byOptions = new NatsEventBus({ connection: { servers: ['127.0.0.1:1'], user: 'ordering', pass: PASSWORD, token: TOKEN } });
+
+    const byOptions = new NatsEventBus({
+      connection: { servers: ['127.0.0.1:1'], user: 'ordering', pass: PASSWORD, token: TOKEN },
+    });
 
     byUrl.subscribe(PLACED, async () => undefined);
 
@@ -33,25 +36,33 @@ describe('NatsEventBus: what it shows of its credentials', () => {
     const subscriber = bus.forConsumer('billing');
 
     expectNoSecret(subscriber, [PASSWORD]);
-    expectNoSecret(subscriber.subscribe(PLACED, async () => undefined), [PASSWORD]);
+
+    expectNoSecret(
+      subscriber.subscribe(PLACED, async () => undefined),
+      [PASSWORD],
+    );
 
     await bus.close();
   });
 
-  it.skipIf(NATS_URL === undefined)('shows none of them once connected, when it holds a live connection', { timeout: 30_000 }, async () => {
-    const bus = new NatsEventBus({
-      connection: { servers: [NATS_URL ?? ''], user: 'ordering', pass: PASSWORD },
-      stream: unique('TEST'),
-      subjectPrefix: unique('test'),
-      consumer: unique('billing'),
-    });
+  it.skipIf(NATS_URL === undefined)(
+    'shows none of them once connected, when it holds a live connection',
+    { timeout: 30_000 },
+    async () => {
+      const bus = new NatsEventBus({
+        connection: { servers: [NATS_URL ?? ''], user: 'ordering', pass: PASSWORD },
+        stream: unique('TEST'),
+        subjectPrefix: unique('test'),
+        consumer: unique('billing'),
+      });
 
-    bus.subscribe(PLACED, async () => undefined);
-    await bus.assertTopology();
+      bus.subscribe(PLACED, async () => undefined);
+      await bus.assertTopology();
 
-    expectNoSecret(bus, [PASSWORD]);
-    expect(Object.keys(bus)).toEqual([]);
+      expectNoSecret(bus, [PASSWORD]);
+      expect(Object.keys(bus)).toEqual([]);
 
-    await bus.close();
-  });
+      await bus.close();
+    },
+  );
 });

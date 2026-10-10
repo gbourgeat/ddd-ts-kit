@@ -1,6 +1,8 @@
 import type { SourceFile } from '../model/source-file.js';
 
-const DIRECTIVE = /^ddd-ts-kit-disable-next-line\b\s*(.*)$/;
+const DIRECTIVE = 'ddd-ts-kit-disable-next-line';
+const DIRECTIVE_END = /^(?:\W|$)/;
+const LINE_BREAK = /[\n\r\u2028\u2029]/;
 
 export interface Suppression {
   readonly file: string;
@@ -12,12 +14,26 @@ export interface Suppression {
 
 export function findSuppressions(file: SourceFile): Suppression[] {
   return file.scan.comments.flatMap((comment) => {
-    const match = DIRECTIVE.exec(comment.text);
+    const written = directiveText(comment.text);
 
-    if (match === null || !comment.ownLine) return [];
+    if (written === undefined || !comment.ownLine) {
+      return [];
+    }
 
-    const [head = '', ...reason] = (match[1] ?? '').split('--');
+    const [head = '', ...reason] = written.split('--');
 
     return [{ file: file.path, line: comment.line, ruleId: head.trim(), reason: reason.join('--').trim() }];
   });
+}
+
+/** What follows the directive on its line; undefined when the comment is not one, or runs over several lines. */
+function directiveText(comment: string): string | undefined {
+  if (!comment.startsWith(DIRECTIVE)) {
+    return undefined;
+  }
+
+  const after = comment.slice(DIRECTIVE.length);
+  const written = after.trimStart();
+
+  return DIRECTIVE_END.test(after) && !LINE_BREAK.test(written) ? written : undefined;
 }

@@ -65,7 +65,9 @@ await this.invoices.remove(invoice);`,
 @DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued', phase: 'after-commit' }, [Cache])
 // explicit style, in billing.module.ts
 platform.domainEvents.on('billing.invoice.issued', async (event) => {
-  if (event instanceof InvoiceIssued) await invoiceIssuedEventHandler.handle(event);
+  if (event instanceof InvoiceIssued) {
+    await invoiceIssuedEventHandler.handle(event);
+  }
 }, { phase: 'after-commit' });
 // an effect that must not be lost: a publisher writes to the outbox, the handler of that event does the work
 @DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued' }, [IntegrationEventPublisher, IdGenerator])

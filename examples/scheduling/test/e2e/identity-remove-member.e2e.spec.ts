@@ -2,7 +2,12 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, onTestFailed } f
 import { collectEvents, expectProblem, expectStatus } from '@ddd-ts-kit/testing/e2e';
 import { reportSeedOnFailure } from '@ddd-ts-kit/testing/faker';
 import { expectSpanTree, installTestTracing } from '@ddd-ts-kit/tracing/testing';
-import { delegationRevokedV1, type DelegationRevokedV1Payload, practiceMemberRemovedV1, type PracticeMemberRemovedV1Payload } from '../../src/contexts/identity/published-language/index.js';
+import {
+  delegationRevokedV1,
+  type DelegationRevokedV1Payload,
+  practiceMemberRemovedV1,
+  type PracticeMemberRemovedV1Payload,
+} from '../../src/contexts/identity/published-language/index.js';
 import { startApplication, type RunningApplication } from './support/start-application.js';
 import { storyOf } from './support/story-of.js';
 
@@ -44,7 +49,14 @@ describe('Remove member, end to end', () => {
     const practiceId = await openPracticeWithMembers(application);
     const grace = await application.as({ id: 'grace' });
 
-    expectStatus(await grace.post('/practices/' + practiceId + '/desks/grace/delegations', { assistantId: 'linus', availabilityIncluded: false }), 201);
+    expectStatus(
+      await grace.post('/practices/' + practiceId + '/desks/grace/delegations', {
+        assistantId: 'linus',
+        availabilityIncluded: false,
+      }),
+      201,
+    );
+
     const ada = await application.as({ id: 'ada' });
 
     const trace = await tracing.traceOf(async () => {
@@ -52,7 +64,10 @@ describe('Remove member, end to end', () => {
     });
 
     // The relay is still publishing what the arrangement announced: only the trace of the request is told here.
-    expectSpanTree(storyOf(trace).filter((span) => span.kind === 'SERVER'), storyOfTheRequest);
+    expectSpanTree(
+      storyOf(trace).filter((span) => span.kind === 'SERVER'),
+      storyOfTheRequest,
+    );
   });
 
   it('answers 200 to DELETE /practices/:practiceId/members/:personId for a manager, and the practitioner removed no longer holds their desk', async () => {
@@ -64,7 +79,14 @@ describe('Remove member, end to end', () => {
     const grace = await application.as({ id: 'grace' });
 
     expect(removed.body.id).toBe('grace');
-    expectStatus(await grace.post('/practices/' + practiceId + '/desks/grace/delegations', { assistantId: 'linus', availabilityIncluded: false }), 403);
+
+    expectStatus(
+      await grace.post('/practices/' + practiceId + '/desks/grace/delegations', {
+        assistantId: 'linus',
+        availabilityIncluded: false,
+      }),
+      403,
+    );
   });
 
   it('publishes that the member is removed and that their delegations are revoked for that cause', async () => {
@@ -73,7 +95,10 @@ describe('Remove member, end to end', () => {
     const grace = await application.as({ id: 'grace' });
 
     const granted = expectStatus(
-      await grace.post<{ id: string }>('/practices/' + practiceId + '/desks/grace/delegations', { assistantId: 'linus', availabilityIncluded: true }),
+      await grace.post<{ id: string }>('/practices/' + practiceId + '/desks/grace/delegations', {
+        assistantId: 'linus',
+        availabilityIncluded: true,
+      }),
       201,
     );
 
@@ -81,8 +106,15 @@ describe('Remove member, end to end', () => {
 
     expectStatus(await ada.delete('/practices/' + practiceId + '/members/linus'), 200);
 
-    const left = await events.waitFor<PracticeMemberRemovedV1Payload>(practiceMemberRemovedV1, (event) => event.payload.personId === 'linus');
-    const revoked = await events.waitFor<DelegationRevokedV1Payload>(delegationRevokedV1, (event) => event.payload.delegationId === granted.body.id);
+    const left = await events.waitFor<PracticeMemberRemovedV1Payload>(
+      practiceMemberRemovedV1,
+      (event) => event.payload.personId === 'linus',
+    );
+
+    const revoked = await events.waitFor<DelegationRevokedV1Payload>(
+      delegationRevokedV1,
+      (event) => event.payload.delegationId === granted.body.id,
+    );
 
     expect(left.payload).toEqual({ practiceId, personId: 'linus', role: 'assistant' });
     expect(revoked.payload).toMatchObject({ practitionerId: 'grace', assistantId: 'linus', cause: 'member-removed' });
@@ -94,7 +126,11 @@ describe('Remove member, end to end', () => {
     const ada = await application.as({ id: 'ada' });
 
     expectProblem(await ada.delete('/practices/' + practiceId + '/members/ada'), { status: 409, code: 'LAST_MANAGER' });
-    expectProblem(await ada.delete('/practices/' + practiceId + '/members/nobody'), { status: 422, code: 'NOT_A_MEMBER' });
+
+    expectProblem(await ada.delete('/practices/' + practiceId + '/members/nobody'), {
+      status: 422,
+      code: 'NOT_A_MEMBER',
+    });
   });
 });
 
@@ -103,11 +139,23 @@ async function openPracticeWithMembers(application: RunningApplication): Promise
   await register(application, 'ada', 'grace', 'linus');
 
   const root = await application.as({ id: 'root', roles: ['platform-admin'] });
-  const opened = expectStatus(await root.post<{ id: string }>('/practices', { name: 'Riverside', timeZone: 'Europe/Paris', managerId: 'ada' }), 201);
+
+  const opened = expectStatus(
+    await root.post<{ id: string }>('/practices', { name: 'Riverside', timeZone: 'Europe/Paris', managerId: 'ada' }),
+    201,
+  );
+
   const ada = await application.as({ id: 'ada' });
 
-  expectStatus(await ada.post('/practices/' + opened.body.id + '/members', { personId: 'grace', role: 'practitioner' }), 201);
-  expectStatus(await ada.post('/practices/' + opened.body.id + '/members', { personId: 'linus', role: 'assistant' }), 201);
+  expectStatus(
+    await ada.post('/practices/' + opened.body.id + '/members', { personId: 'grace', role: 'practitioner' }),
+    201,
+  );
+
+  expectStatus(
+    await ada.post('/practices/' + opened.body.id + '/members', { personId: 'linus', role: 'assistant' }),
+    201,
+  );
 
   return opened.body.id;
 }
@@ -117,13 +165,17 @@ async function register(application: RunningApplication, ...personIds: readonly 
   for (const personId of personIds) {
     const person = await application.as({ id: personId });
 
-    expectStatus(await person.put('/people/me', { displayName: 'Name of ' + personId, email: personId + '@example.com' }), 200);
+    expectStatus(
+      await person.put('/people/me', { displayName: 'Name of ' + personId, email: personId + '@example.com' }),
+      200,
+    );
   }
 }
 
 const storyOfTheRequest: Parameters<typeof expectSpanTree>[1] = [
   {
-    name: 'DELETE /practices/:practiceId/members/:personId', kind: 'SERVER',
+    name: 'DELETE /practices/:practiceId/members/:personId',
+    kind: 'SERVER',
     children: [
       {
         name: 'command RemoveMemberCommand',
@@ -146,9 +198,7 @@ const storyOfTheRequest: Parameters<typeof expectSpanTree>[1] = [
                   },
                   {
                     name: 'handler PracticeMemberRemovedPublisher',
-                    children: [
-                      { name: 'outbox append identity.practice.member-removed' },
-                    ],
+                    children: [{ name: 'outbox append identity.practice.member-removed' }],
                   },
                 ],
               },
@@ -162,15 +212,11 @@ const storyOfTheRequest: Parameters<typeof expectSpanTree>[1] = [
                 children: [
                   {
                     name: 'handler DelegationRevokedEventHandler',
-                    children: [
-                      { name: 'repository IdentityRelationships.forgetDelegation' },
-                    ],
+                    children: [{ name: 'repository IdentityRelationships.forgetDelegation' }],
                   },
                   {
                     name: 'handler DelegationRevokedPublisher',
-                    children: [
-                      { name: 'outbox append identity.delegation.revoked' },
-                    ],
+                    children: [{ name: 'outbox append identity.delegation.revoked' }],
                   },
                 ],
               },

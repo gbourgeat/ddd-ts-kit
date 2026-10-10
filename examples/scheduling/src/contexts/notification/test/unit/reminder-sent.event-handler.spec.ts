@@ -16,7 +16,13 @@ import { FakeNotificationRepository } from '../fakes/notification.repository.fak
 import { FakeReminderRepository } from '../fakes/reminder.repository.fake.js';
 import { ReminderSent } from '../../domain/events/reminder-sent.event.js';
 
-const authorization = authorizationModule({ authorizer: new RoleBasedAuthorizer({ roles: { system: Object.values(notificationPermissions) }, systemRole: 'system' }) });
+const authorization = authorizationModule({
+  authorizer: new RoleBasedAuthorizer({
+    roles: { system: Object.values(notificationPermissions) },
+    systemRole: 'system',
+  }),
+});
+
 const startsAt = new Date('2026-01-10T09:00:00.000Z');
 
 describe('When reminder sent', () => {
@@ -25,8 +31,13 @@ describe('When reminder sent', () => {
 
     await application.domainEvents.dispatch([sent()]);
 
-    expect(mailer.delivered).toEqual([{ address: 'ada@example.test', recipientId: 'patient-1', kind: 'reminder', appointmentId: 'appointment-1' }]);
-    expect(notificationRepository.all().map((kept) => kept.toState())).toMatchObject([{ recipientId: 'patient-1', appointmentId: 'appointment-1', startsAt }]);
+    expect(mailer.delivered).toEqual([
+      { address: 'ada@example.test', recipientId: 'patient-1', kind: 'reminder', appointmentId: 'appointment-1' },
+    ]);
+
+    expect(notificationRepository.all().map((kept) => kept.toState())).toMatchObject([
+      { recipientId: 'patient-1', appointmentId: 'appointment-1', startsAt },
+    ]);
   });
 
   it('notifies once per reminder and start, however many times the fact is told', async () => {
@@ -41,7 +52,15 @@ describe('When reminder sent', () => {
   it('plans no further reminder for the reminder it sent', async () => {
     const { application, reminderRepository } = await arrange();
 
-    await reminderRepository.save(aReminder().identifiedBy('reminder-1').of('appointment-1').plannedFor(startsAt).sent(new Date('2026-01-09T09:00:00.000Z')).build());
+    await reminderRepository.save(
+      aReminder()
+        .identifiedBy('reminder-1')
+        .of('appointment-1')
+        .plannedFor(startsAt)
+        .sent(new Date('2026-01-09T09:00:00.000Z'))
+        .build(),
+    );
+
     await application.domainEvents.dispatch([sent()]);
 
     expect(reminderRepository.count()).toBe(1);
@@ -50,7 +69,9 @@ describe('When reminder sent', () => {
   it('fails when the contact of the recipient is unknown, so that the reminder is not kept as sent', async () => {
     const { application, notificationRepository } = await arrange();
 
-    await expect(application.domainEvents.dispatch([sent('stranger')])).rejects.toMatchObject({ code: 'CONTACT_UNKNOWN' });
+    await expect(application.domainEvents.dispatch([sent('stranger')])).rejects.toMatchObject({
+      code: 'CONTACT_UNKNOWN',
+    });
 
     expect(notificationRepository.count()).toBe(0);
   });
@@ -66,12 +87,21 @@ async function arrange() {
 
   const application = createTestApplication({
     modules: [platformTestModule, contextModule('notification', notificationDeclarations), authorization],
-    fakes: [fake(NotificationRepository, notificationRepository), fake(ReminderRepository, reminderRepository), fake(Contacts, contacts), fake(Mailer, mailer)],
+    fakes: [
+      fake(NotificationRepository, notificationRepository),
+      fake(ReminderRepository, reminderRepository),
+      fake(Contacts, contacts),
+      fake(Mailer, mailer),
+    ],
   });
 
   return { application, notificationRepository, reminderRepository, mailer };
 }
 
 function sent(recipientId = 'patient-1'): ReminderSent {
-  return new ReminderSent('reminder-1', new Date('2026-01-09T09:00:00.000Z'), { recipientId, appointmentId: 'appointment-1', startsAt });
+  return new ReminderSent('reminder-1', new Date('2026-01-09T09:00:00.000Z'), {
+    recipientId,
+    appointmentId: 'appointment-1',
+    startsAt,
+  });
 }

@@ -15,7 +15,9 @@ export function cronFieldValues(text: string, field: CronField): number[] | unde
 function partValues(part: string, field: CronField): number[] | undefined {
   const every = EVERY_VALUE.exec(part);
 
-  if (every !== null) return stepping(field.min, field.max, every[1]);
+  if (every !== null) {
+    return stepping(field.min, field.max, every[1]);
+  }
 
   const [, start, end, step] = VALUE_OR_RANGE.exec(part) ?? [];
   const from = start === undefined ? undefined : valueOf(start, field);
@@ -27,14 +29,18 @@ function partValues(part: string, field: CronField): number[] | undefined {
 function stepping(from: number, to: number, step: string | undefined): number[] | undefined {
   const stride = Number(step ?? 1);
 
-  if (from > to || stride < 1) return undefined;
+  if (from > to || stride < 1) {
+    return undefined;
+  }
 
   return Array.from({ length: Math.floor((to - from) / stride) + 1 }, (_, index) => from + index * stride);
 }
 
 function valueOf(text: string, field: CronField): number | undefined {
   const named = field.names.indexOf(text);
-  const value = named === -1 ? Number(/^\d+$/.test(text) ? text : Number.NaN) : named + (field.label === 'month' ? 1 : 0);
+
+  const value =
+    named === -1 ? Number(/^\d+$/.test(text) ? text : Number.NaN) : named + (field.label === 'month' ? 1 : 0);
 
   return Number.isNaN(value) || value < field.min || value > field.max ? undefined : value;
 }

@@ -6,7 +6,11 @@ export const DECLARED_ROLES: readonly DeclaredRole[] = [
   { suffix: 'query', folders: ['application/queries'], decorators: ['Requires', 'Public'] },
   { suffix: 'handler', folders: ['application/commands'], decorators: ['CommandHandler'] },
   { suffix: 'handler', folders: ['application/queries'], decorators: ['QueryHandler'] },
-  { suffix: 'integration-handler', folders: ['application/integration/handlers'], decorators: ['IntegrationEventHandler'] },
+  {
+    suffix: 'integration-handler',
+    folders: ['application/integration/handlers'],
+    decorators: ['IntegrationEventHandler'],
+  },
   { suffix: 'event-handler', folders: ['application/event-handlers'], decorators: ['DomainEventHandler'] },
   { suffix: 'publisher', folders: ['application/integration/publishers'], decorators: ['DomainEventHandler'] },
   { suffix: 'policy', folders: ['application/authorization'], decorators: ['Policy'] },

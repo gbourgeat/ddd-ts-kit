@@ -33,7 +33,10 @@ loggerContract(runner, {
 
     return {
       logger: new PinoLogger(pino({ level, mixin: correlationMixin(fields) }, sink.stream), { scrubMessages }),
-      lines: () => sink.records().map(({ msg, ...record }) => loggedLine({ ...record, level: levelName(record.level), message: msg })),
+      lines: () =>
+        sink
+          .records()
+          .map(({ msg, ...record }) => loggedLine({ ...record, level: levelName(record.level), message: msg })),
     };
   },
 });

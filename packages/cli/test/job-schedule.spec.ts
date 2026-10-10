@@ -75,7 +75,10 @@ describe('the schedule validation of the CLI, held to parseJobSchedule of the ke
     expect(writtenSchedule({ every: '15m' })).toBe("{ every: '15m' }");
     expect(writtenSchedule({ every: '900000' })).toBe('{ every: 900000 }');
     expect(writtenSchedule({ cron: ' 0  7 * * 1-5 ' })).toBe("{ cron: '0 7 * * 1-5' }");
-    expect(writtenSchedule({ cron: '0 7 * * 1-5', timeZone: 'Europe/Paris' })).toBe("{ cron: '0 7 * * 1-5', timeZone: 'Europe/Paris' }");
+
+    expect(writtenSchedule({ cron: '0 7 * * 1-5', timeZone: 'Europe/Paris' })).toBe(
+      "{ cron: '0 7 * * 1-5', timeZone: 'Europe/Paris' }",
+    );
   });
 });
 
@@ -91,7 +94,9 @@ function kernelAccepts(schedule: JobSchedule): boolean {
 
 /** The schedule as the kernel receives it from the generated source: digits alone are milliseconds. */
 function asWritten({ every, cron, timeZone }: JobSchedule): KernelSchedule {
-  if (every !== undefined) return /^\d+$/.test(every.trim()) ? { every: Number(every) } : ({ every: every.trim() } as KernelSchedule);
+  if (every !== undefined) {
+    return /^\d+$/.test(every.trim()) ? { every: Number(every) } : ({ every: every.trim() } as KernelSchedule);
+  }
 
   return { cron: cron ?? '', ...(timeZone === undefined ? {} : { timeZone }) };
 }

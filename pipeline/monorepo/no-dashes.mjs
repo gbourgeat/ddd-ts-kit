@@ -14,24 +14,36 @@ process.exit(main());
 
 function main() {
   const findings = filesUnder(ROOT).flatMap(dashesIn);
-  for (const finding of findings) console.log(finding);
-  console.log(findings.length === 0 ? 'No em dash or en dash.' : `\n${findings.length} line(s) hold an em dash or an en dash: write a colon, a comma, parentheses or a hyphen.`);
+  for (const finding of findings) {
+    console.log(finding);
+  }
+  console.log(
+    findings.length === 0
+      ? 'No em dash or en dash.'
+      : `\n${findings.length} line(s) hold an em dash or an en dash: write a colon, a comma, parentheses or a hyphen.`,
+  );
   return findings.length === 0 ? 0 : 1;
 }
 
 function filesUnder(directory) {
   return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
     const file = path.join(directory, entry.name);
-    if (entry.isDirectory()) return SKIPPED_DIRECTORIES.has(entry.name) ? [] : filesUnder(file);
+    if (entry.isDirectory()) {
+      return SKIPPED_DIRECTORIES.has(entry.name) ? [] : filesUnder(file);
+    }
     return entry.isFile() ? [file] : [];
   });
 }
 
 function dashesIn(file) {
   const content = fs.readFileSync(file);
-  if (content.includes(0)) return [];
+  if (content.includes(0)) {
+    return [];
+  }
   return content
     .toString('utf8')
     .split('\n')
-    .flatMap((line, index) => (DASH.test(line) ? [`${path.relative(ROOT, file)}:${index + 1}: ${line.trim().slice(0, 120)}`] : []));
+    .flatMap((line, index) =>
+      DASH.test(line) ? [`${path.relative(ROOT, file)}:${index + 1}: ${line.trim().slice(0, 120)}`] : [],
+    );
 }

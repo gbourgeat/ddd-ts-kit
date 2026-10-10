@@ -40,7 +40,10 @@ describe('an occurrence that comes while the previous run is in progress', () =>
     job.gate();
 
     await scheduler.advance(32 * MINUTE);
-    expect(scheduler.runs).toMatchObject([{ outcome: 'skipped-overlap', scheduledAt: new Date('2026-03-02T10:30:00.000Z') }]);
+
+    expect(scheduler.runs).toMatchObject([
+      { outcome: 'skipped-overlap', scheduledAt: new Date('2026-03-02T10:30:00.000Z') },
+    ]);
 
     job.open();
     await scheduler.advance(MINUTE);

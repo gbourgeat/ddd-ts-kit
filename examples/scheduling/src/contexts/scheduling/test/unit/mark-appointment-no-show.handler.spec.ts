@@ -12,7 +12,10 @@ import type { Appointment } from '../../domain/aggregates/appointment.aggregate.
 import { anAppointment } from '../builders/appointment.builder.js';
 import { FakeAppointmentRepository } from '../fakes/appointment.repository.fake.js';
 
-const holders = authorizationModule({ authorizer: new RoleBasedAuthorizer({ roles: { holder: [schedulingPermissions['appointment.mark-no-show']] } }) });
+const holders = authorizationModule({
+  authorizer: new RoleBasedAuthorizer({ roles: { holder: [schedulingPermissions['appointment.mark-no-show']] } }),
+});
+
 const holder = anActor().withRole('holder').build();
 const NOW = new Date('2026-03-02T09:10:00.000Z');
 const FACTS = ['scheduling.appointment.marked-no-show'] as const;
@@ -27,34 +30,49 @@ describe('Mark appointment no show', () => {
     expect(id).toBe(appointment.id);
     expect((await appointmentRepository.findById(id))?.status).toBe('no-show');
     expect(announced).toEqual(['scheduling.appointment.marked-no-show']);
-    expect(application.eventBus.published).toMatchObject([{ type: 'scheduling.appointment.marked-no-show', occurredAt: NOW.toISOString(), payload: { appointmentId: appointment.id } }]);
+
+    expect(application.eventBus.published).toMatchObject([
+      {
+        type: 'scheduling.appointment.marked-no-show',
+        occurredAt: NOW.toISOString(),
+        payload: { appointmentId: appointment.id },
+      },
+    ]);
   });
 
   it('is refused to an actor who does not hold the permission appointment.mark-no-show', async () => {
     const appointment = started().build();
     const { application } = await arrange(appointment);
 
-    await expect(application.commandBus.execute(new MarkAppointmentNoShowCommand(anActor().build(), appointment.id))).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(
+      application.commandBus.execute(new MarkAppointmentNoShowCommand(anActor().build(), appointment.id)),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
   });
 
   it('refuses an appointment that does not exist', async () => {
     const { application } = await arrange();
 
-    await expect(application.commandBus.execute(new MarkAppointmentNoShowCommand(holder, 'appointment-unknown'))).rejects.toMatchObject({ code: 'APPOINTMENT_NOT_FOUND' });
+    await expect(
+      application.commandBus.execute(new MarkAppointmentNoShowCommand(holder, 'appointment-unknown')),
+    ).rejects.toMatchObject({ code: 'APPOINTMENT_NOT_FOUND' });
   });
 
   it('refuses an appointment that has already ended', async () => {
     const cancelled = started().cancelledByPatient().build();
     const { application } = await arrange(cancelled);
 
-    await expect(application.commandBus.execute(new MarkAppointmentNoShowCommand(holder, cancelled.id))).rejects.toMatchObject({ code: 'APPOINTMENT_ENDED' });
+    await expect(
+      application.commandBus.execute(new MarkAppointmentNoShowCommand(holder, cancelled.id)),
+    ).rejects.toMatchObject({ code: 'APPOINTMENT_ENDED' });
   });
 
   it('saves and publishes nothing before the start of the appointment', async () => {
     const later = anAppointment().startingAt(new Date('2026-03-02T09:30:00.000Z')).build();
     const { application, appointmentRepository, announced } = await arrange(later);
 
-    await expect(application.commandBus.execute(new MarkAppointmentNoShowCommand(holder, later.id))).rejects.toMatchObject({ code: 'APPOINTMENT_NOT_STARTED' });
+    await expect(
+      application.commandBus.execute(new MarkAppointmentNoShowCommand(holder, later.id)),
+    ).rejects.toMatchObject({ code: 'APPOINTMENT_NOT_STARTED' });
 
     expect((await appointmentRepository.findById(later.id))?.status).toBe('booked');
     expect(announced).toEqual([]);
@@ -66,7 +84,10 @@ async function arrange(...stored: readonly Appointment[]) {
   const appointmentRepository = new FakeAppointmentRepository();
   const announced: string[] = [];
 
-  await stored.reduce((saved, appointment) => saved.then(() => appointmentRepository.save(appointment)), Promise.resolve());
+  await stored.reduce(
+    (saved, appointment) => saved.then(() => appointmentRepository.save(appointment)),
+    Promise.resolve(),
+  );
 
   const application = createTestApplication({
     modules: [platformTestModule, contextModule('scheduling', schedulingDeclarations), holders],

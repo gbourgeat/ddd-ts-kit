@@ -10,11 +10,15 @@ const SECTION = ['', '## Reference', '', '<!-- ddd-ts-kit:reference -->', '<!-- 
 export function ensureReferenceRegion(content: string): string {
   const lines = content.split('\n');
 
-  if (lines.some((line) => marker('reference', false).test(line))) return content;
+  if (lines.some((line) => marker('reference', false).test(line))) {
+    return content;
+  }
 
   const last = lines.findLastIndex((line) => CLOSING_MARKER.test(line));
 
-  if (last === -1) return `${content.replace(/\n*$/, '\n')}${SECTION.join('\n')}\n`;
+  if (last === -1) {
+    return `${content.replace(/\n*$/, '\n')}${SECTION.join('\n')}\n`;
+  }
 
   lines.splice(last + 1, 0, ...SECTION);
 

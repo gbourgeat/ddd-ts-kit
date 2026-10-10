@@ -16,7 +16,8 @@ export const layerPresentationNoInfrastructure = sidewaysRule({
   from: 'presentation',
   to: 'infrastructure',
   description: 'presentation/ imports application/ (and domain types for mapping), never infrastructure/.',
-  instead: 'Send a command or a query through the bus of application/ instead; the adapter is bound to its port in {{context}}.module.ts.',
+  instead:
+    'Send a command or a query through the bus of application/ instead; the adapter is bound to its port in {{context}}.module.ts.',
 });
 
 export const layerInfrastructureNoPresentation = sidewaysRule({
@@ -24,7 +25,8 @@ export const layerInfrastructureNoPresentation = sidewaysRule({
   from: 'infrastructure',
   to: 'presentation',
   description: 'infrastructure/ implements ports of application/ and domain/, never imports presentation/.',
-  instead: 'Move the shared type to application/ (a port or a use case result) and let both sides import it from there.',
+  instead:
+    'Move the shared type to application/ (a port or a use case result) and let both sides import it from there.',
 });
 
 function sidewaysRule(rule: Sideways) {
@@ -37,11 +39,18 @@ function sidewaysRule(rule: Sideways) {
     create({ file, report }) {
       const here = inLayer(file, rule.from);
 
-      if (here === undefined) return {};
+      if (here === undefined) {
+        return {};
+      }
 
       return importListener(file, ({ node, target }) => {
-        if (target.kind !== 'file' || target.location.area !== 'context') return;
-        if (target.location.layer !== rule.to || target.location.context !== here.context) return;
+        if (target.kind !== 'file' || target.location.area !== 'context') {
+          return;
+        }
+
+        if (target.location.layer !== rule.to || target.location.context !== here.context) {
+          return;
+        }
 
         report({ node, messageId: 'forbidden', data: { path: target.path, context: here.context } });
       });

@@ -34,7 +34,13 @@ function cancelled(id: string, more: Partial<IntegrationEvent> = {}): Integratio
 }
 
 function wiring(trail: AuditTrail = new InMemoryAuditTrail()) {
-  return { trail, clock: new FixedClock(NOW), ids: new SequentialIdGenerator('audit'), processed: new InMemoryProcessedEventStore(), bus: new InMemoryEventBus() };
+  return {
+    trail,
+    clock: new FixedClock(NOW),
+    ids: new SequentialIdGenerator('audit'),
+    processed: new InMemoryProcessedEventStore(),
+    bus: new InMemoryEventBus(),
+  };
 }
 
 describe('auditIntegrationEvents', () => {
@@ -43,7 +49,10 @@ describe('auditIntegrationEvents', () => {
 
     const subscriptions = auditIntegrationEvents(trail, { ...options, registry });
 
-    expect(subscriptions.map((subscription) => subscription.type)).toEqual(['billing.invoice.issued', 'scheduling.appointment.cancelled']);
+    expect(subscriptions.map((subscription) => subscription.type)).toEqual([
+      'billing.invoice.issued',
+      'scheduling.appointment.cancelled',
+    ]);
   });
 
   it('records that the event happened from its envelope alone, never its payload', async () => {

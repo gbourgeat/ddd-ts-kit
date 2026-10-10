@@ -84,10 +84,18 @@ export class LoanOpenedPublisher implements DomainEventHandler<LoanOpened> {
   constructor(private readonly publisher: IntegrationEventPublisher) {}
 
   async handle(event: LoanOpened): Promise<void> {
-    if (LoanOpenedPublisher.failure !== undefined) throw LoanOpenedPublisher.failure;
+    if (LoanOpenedPublisher.failure !== undefined) {
+      throw LoanOpenedPublisher.failure;
+    }
 
     await this.publisher.publish([
-      { id: `evt-${event.aggregateId}`, type: event.name, version: 1, occurredAt: event.occurredAt.toISOString(), payload: {} },
+      {
+        id: `evt-${event.aggregateId}`,
+        type: event.name,
+        version: 1,
+        occurredAt: event.occurredAt.toISOString(),
+        payload: {},
+      },
     ]);
   }
 }
@@ -102,7 +110,9 @@ export class LoanOpenedNotice implements DomainEventHandler<LoanOpened> {
   static failure: Error | undefined;
 
   async handle(event: LoanOpened): Promise<void> {
-    if (LoanOpenedNotice.failure !== undefined) throw LoanOpenedNotice.failure;
+    if (LoanOpenedNotice.failure !== undefined) {
+      throw LoanOpenedNotice.failure;
+    }
 
     LoanOpenedNotice.sent.push(`${event.aggregateId} with ${LoanOpenedNotice.committed().join(',')} committed`);
   }

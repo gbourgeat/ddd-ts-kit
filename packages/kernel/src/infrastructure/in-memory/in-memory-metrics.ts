@@ -73,7 +73,9 @@ function definedLabels(labels: MetricLabels): Record<string, string> {
   const defined: Record<string, string> = {};
 
   for (const [label, value] of Object.entries(labels)) {
-    if (value !== undefined) defined[label] = value;
+    if (value !== undefined) {
+      defined[label] = value;
+    }
   }
 
   return defined;

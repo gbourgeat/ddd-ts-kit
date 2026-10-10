@@ -64,7 +64,9 @@ export class Range extends ValueObject<RangeProps> {
 function minuteOf(time: string): number | undefined {
   const match = TIME_PATTERN.exec(time.trim());
 
-  if (match === null) return undefined;
+  if (match === null) {
+    return undefined;
+  }
 
   const minute = Number(match[1]) * 60 + Number(match[2]);
 

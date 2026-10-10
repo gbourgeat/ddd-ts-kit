@@ -8,7 +8,9 @@ export class SubscribersByContext implements EventSubscribers {
   forContext(name: string): RecordingSubscriber {
     const known = this.subscribers.get(name);
 
-    if (known !== undefined) return known;
+    if (known !== undefined) {
+      return known;
+    }
 
     const created = new RecordingSubscriber();
 

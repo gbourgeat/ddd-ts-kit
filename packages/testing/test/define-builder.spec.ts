@@ -88,7 +88,12 @@ describe('defineBuilder', () => {
 
 describe('sequence and lazy, the defaults drawn at each build', () => {
   it('draws a fresh sequence value at each build, and none when the value is given', () => {
-    expect(aParcel().buildMany(2).map((parcel) => parcel.id)).toEqual(['parcel-1', 'parcel-2']);
+    expect(
+      aParcel()
+        .buildMany(2)
+        .map((parcel) => parcel.id),
+    ).toEqual(['parcel-1', 'parcel-2']);
+
     expect(aParcel().with('id', 'fixed').build().id).toBe('fixed');
     expect(aParcel().build().id).toBe('parcel-3');
   });

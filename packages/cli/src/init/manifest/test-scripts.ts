@@ -6,9 +6,14 @@ const NO_END_TO_END = { 'ci:test:e2e': 'echo "No HTTP stack: nothing to drive en
 export function testScripts(config: Config): Record<string, string> {
   const { http, tests } = config.stack;
 
-  if (tests === 'jest') return jestScripts(http !== 'none');
+  if (tests === 'jest') {
+    return jestScripts(http !== 'none');
+  }
 
-  return { test: 'vitest run', ...(http === 'none' ? NO_END_TO_END : { 'test:e2e': 'vitest run --config vitest.e2e.config.ts --passWithNoTests' }) };
+  return {
+    test: 'vitest run',
+    ...(http === 'none' ? NO_END_TO_END : { 'test:e2e': 'vitest run --config vitest.e2e.config.ts --passWithNoTests' }),
+  };
 }
 
 function jestScripts(endToEnd: boolean): Record<string, string> {

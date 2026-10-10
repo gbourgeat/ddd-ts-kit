@@ -6,10 +6,7 @@ import type { Route } from './route.js';
 
 const PATH_PATTERN = /^\/$|^(\/(:[A-Za-z_][A-Za-z0-9_]*|[A-Za-z0-9._~-]+))+$/;
 
-export function defineRoute<
-  const Request extends RequestSchemas,
-  const Responses extends ResponsesSpec,
->(
+export function defineRoute<const Request extends RequestSchemas, const Responses extends ResponsesSpec>(
   spec: RouteSpec<Request, Responses>,
   handler: RouteHandler<Request, Responses>,
 ): Route {
@@ -28,7 +25,9 @@ export function defineRoute<
 function assertSecurityDeclared(spec: Pick<RouteSpec, 'operationId'> & { readonly security?: unknown }): void {
   const { security } = spec;
 
-  if (security === false || (Array.isArray(security) && security.length > 0)) return;
+  if (security === false || (Array.isArray(security) && security.length > 0)) {
+    return;
+  }
 
   throw new Error(
     `Route "${spec.operationId}": declare "security" with the names of its security schemes, or false for a public route.`,

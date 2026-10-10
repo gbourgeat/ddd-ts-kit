@@ -7,10 +7,7 @@ import type { IntegrationEvent } from './integration-event.js';
  * The execution context of a consumed event: origin `event`, the correlation of the event (its
  * own id when it names none, which starts a new chain), and the event as the direct cause.
  */
-export function executionContextOfEvent(
-  event: IntegrationEvent,
-  options: EventExecutionOptions,
-): ExecutionContext {
+export function executionContextOfEvent(event: IntegrationEvent, options: EventExecutionOptions): ExecutionContext {
   return executionContext({
     correlationId: event.correlationId ?? event.id,
     causationId: event.id,

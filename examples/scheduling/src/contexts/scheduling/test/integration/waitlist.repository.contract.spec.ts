@@ -1,5 +1,12 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { FixedClock, FixedExecutionScope, executionContext, unwrap, type Actor, type ExecutionContext } from '@ddd-ts-kit/kernel';
+import {
+  FixedClock,
+  FixedExecutionScope,
+  executionContext,
+  unwrap,
+  type Actor,
+  type ExecutionContext,
+} from '@ddd-ts-kit/kernel';
 import { repositoryContract } from '@ddd-ts-kit/testing/contracts';
 import type { Waitlist } from '../../domain/aggregates/waitlist.aggregate.js';
 import { Waiter } from '../../domain/value-objects/waiter.vo.js';
@@ -13,7 +20,16 @@ const runner = { describe, it, expect, beforeEach, afterEach };
 const expectations = {
   createAggregate: () => aWaitlist().joinedBy('patient-1').joinedBy('patient-2', 'surgery').build(),
   mutate: (changed: Waitlist) => {
-    changed.join(unwrap(Waiter.create({ patientId: 'patient-9', appointmentTypeId: 'consultation', joinedAt: new Date('2026-01-02T00:00:00.000Z') })), new Date('2026-01-02T00:00:00.000Z'));
+    changed.join(
+      unwrap(
+        Waiter.create({
+          patientId: 'patient-9',
+          appointmentTypeId: 'consultation',
+          joinedAt: new Date('2026-01-02T00:00:00.000Z'),
+        }),
+      ),
+      new Date('2026-01-02T00:00:00.000Z'),
+    );
   },
   idOf: (subject: Waitlist) => subject.id,
   stateOf: (subject: Waitlist) => subject.toState(),

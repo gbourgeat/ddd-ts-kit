@@ -15,7 +15,8 @@ export const layerDomainPurity = defineRule<MessageId>({
   id: 'layer/domain-purity',
   type: 'problem',
   recommended: 'error',
-  description: 'domain/ imports only its own domain/, the shared kernel and the allowed kernel packages: no framework, ORM, validation library or Node built-in.',
+  description:
+    'domain/ imports only its own domain/, the shared kernel and the allowed kernel packages: no framework, ORM, validation library or Node built-in.',
   messages: {
     outsideConcern: OUTSIDE_CONCERN_MESSAGE,
     package:
@@ -31,7 +32,9 @@ export const layerDomainPurity = defineRule<MessageId>({
   create({ file, report }) {
     const here = inLayer(file, 'domain');
 
-    if (here === undefined) return {};
+    if (here === undefined) {
+      return {};
+    }
 
     const allowed = file.config.domainAllowedPackages;
     const declares = isDeclaredStyle(file);
@@ -42,14 +45,23 @@ export const layerDomainPurity = defineRule<MessageId>({
       } else if (target.kind === 'package') {
         const concern = outsideConcern(target.name);
 
-        if (concern !== undefined) report({ node, messageId: 'outsideConcern', data: { importer: 'The domain', specifier, ...concern } });
-        else if (!allowed.includes(target.name)) report({ node, messageId: 'package', data: { name: target.name } });
+        if (concern !== undefined) {
+          report({ node, messageId: 'outsideConcern', data: { importer: 'The domain', specifier, ...concern } });
+        } else if (!allowed.includes(target.name)) {
+          report({ node, messageId: 'package', data: { name: target.name } });
+        }
       } else if (target.kind === 'builtin') {
         report({ node, messageId: 'builtin', data: { name: specifier } });
       } else {
         const messageId = judgeFile(here, target);
 
-        if (messageId !== undefined) report({ node, messageId, data: { here: here.context, there: contextOf(target), target: describeTarget(target) } });
+        if (messageId !== undefined) {
+          report({
+            node,
+            messageId,
+            data: { here: here.context, there: contextOf(target), target: describeTarget(target) },
+          });
+        }
       }
     });
   },
@@ -58,9 +70,17 @@ export const layerDomainPurity = defineRule<MessageId>({
 function judgeFile(here: ContextLocation, target: Extract<ImportTarget, { kind: 'file' }>): MessageId | undefined {
   const there = target.location;
 
-  if (there.area === 'shared-kernel') return undefined;
-  if (there.area !== 'context') return 'outerLayer';
-  if (there.context === here.context) return there.layer === 'domain' ? undefined : 'outerLayer';
+  if (there.area === 'shared-kernel') {
+    return undefined;
+  }
+
+  if (there.area !== 'context') {
+    return 'outerLayer';
+  }
+
+  if (there.context === here.context) {
+    return there.layer === 'domain' ? undefined : 'outerLayer';
+  }
 
   // The internals of another context are reported once, by context/published-language-only.
   return there.layer === 'published-language' ? 'upstreamContract' : undefined;

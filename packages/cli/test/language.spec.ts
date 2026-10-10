@@ -42,7 +42,11 @@ describe('glossary', () => {
   });
 
   it('appends rows with as many cells as the table has, once', () => {
-    const next = addGlossaryRows(DOC, [{ term: 'Pay', meaning: 'To settle' }, { term: 'invoice', meaning: 'again' }]) ?? '';
+    const next =
+      addGlossaryRows(DOC, [
+        { term: 'Pay', meaning: 'To settle' },
+        { term: 'invoice', meaning: 'again' },
+      ]) ?? '';
 
     expect(next).toContain('| **Issue** | To make final |  |\n| Pay | To settle |  |\n\n## Aggregates');
     expect(next.match(/\| invoice \|/gi)).toHaveLength(1);
@@ -152,7 +156,9 @@ describe('structure reader', () => {
   const structure = readStructure(scan(source));
 
   it('reads top-level functions with their parameters, across generics and object types', () => {
-    expect(structure.functions.map((shape) => [shape.name, shape.exported, shape.parameters.length, shape.bodyLines])).toEqual([
+    expect(
+      structure.functions.map((shape) => [shape.name, shape.exported, shape.parameters.length, shape.bodyLines]),
+    ).toEqual([
       ['load', true, 2, 1],
       ['parse', false, 2, 1],
     ]);
@@ -164,7 +170,15 @@ describe('structure reader', () => {
     expect(basket?.name).toBe('Basket');
     expect(basket?.superclass).toBe('Base');
 
-    expect(basket?.methods.map((method) => [method.name, method.visibility, method.isStatic, method.parameters.length, method.bodyLines])).toEqual([
+    expect(
+      basket?.methods.map((method) => [
+        method.name,
+        method.visibility,
+        method.isStatic,
+        method.parameters.length,
+        method.bodyLines,
+      ]),
+    ).toEqual([
       ['constructor', 'private', false, 2, 1],
       ['empty', 'public', true, 1, 1],
       ['add', 'public', false, 2, 3],

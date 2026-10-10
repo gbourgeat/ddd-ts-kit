@@ -66,14 +66,20 @@ describe('the span of a request', () => {
     const route = { method: 'GET', path: '/orders/:orderId', operationId: 'getOrder' };
 
     const traced = await tracing.traceOf(async () => {
-      const server = trace.getTracer('http').startSpan('GET', { kind: SpanKind.SERVER, attributes: { 'url.path': '/orders/42' } });
+      const server = trace
+        .getTracer('http')
+        .startSpan('GET', { kind: SpanKind.SERVER, attributes: { 'url.path': '/orders/42' } });
 
       await context.with(trace.setSpan(context.active(), server), () => around(route, ok));
       server.end();
     });
 
     expectSpanTree(traced, [
-      { name: 'GET /orders/:orderId', kind: 'SERVER', attributes: { 'http.route': '/orders/:orderId', 'app.operation': 'getOrder', 'http.response.status_code': 200 } },
+      {
+        name: 'GET /orders/:orderId',
+        kind: 'SERVER',
+        attributes: { 'http.route': '/orders/:orderId', 'app.operation': 'getOrder', 'http.response.status_code': 200 },
+      },
     ]);
   });
 
@@ -83,7 +89,9 @@ describe('the span of a request', () => {
     const route = { method: 'GET', path: '/orders/:orderId', operationId: 'getOrder' };
     const traced = await tracing.traceOf(() => withSpan('a batch of calls', () => tracedRoutes()(route, ok)));
 
-    expectSpanTree(traced, [{ name: 'a batch of calls', children: [{ name: 'GET /orders/:orderId', kind: 'SERVER' }] }]);
+    expectSpanTree(traced, [
+      { name: 'a batch of calls', children: [{ name: 'GET /orders/:orderId', kind: 'SERVER' }] },
+    ]);
   });
 });
 
@@ -131,7 +139,9 @@ describe('the caps of a local root, with the new spans', () => {
     const dispatcher = tracedDomainEvents(new InMemoryDomainEventDispatcher());
     const event = { name: 'shop.cart.opened', aggregateId: 'c1', occurredAt: new Date(0) };
 
-    const traced = await tracing.traceOf(() => withSpan('import', () => dispatcher.dispatch(Array.from({ length: 50 }, () => event))));
+    const traced = await tracing.traceOf(() =>
+      withSpan('import', () => dispatcher.dispatch(Array.from({ length: 50 }, () => event))),
+    );
 
     expect(traced[0]?.children).toHaveLength(3);
     expect(traced[0]?.attributes['app.dependency_spans.dropped']).toBe(47);
@@ -145,12 +155,26 @@ describe('the caps of a local root, with a bulk publication', () => {
 
     const sent: IntegrationEvent[] = [];
     const publisher = tracedPublisher({ publish: async (events) => void sent.push(...events) });
-    const events = Array.from({ length: 5 }, (_unused, index): IntegrationEvent => ({ id: `evt-${index}`, type: 'shop.cart.opened', version: 1, occurredAt: '2026-01-01T00:00:00.000Z', payload: {} }));
+
+    const events = Array.from(
+      { length: 5 },
+      (_unused, index): IntegrationEvent => ({
+        id: `evt-${index}`,
+        type: 'shop.cart.opened',
+        version: 1,
+        occurredAt: '2026-01-01T00:00:00.000Z',
+        payload: {},
+      }),
+    );
 
     const [request] = await tracing.traceOf(() => withSpan('import', () => publisher.publish(events)));
 
     expect(request?.children).toHaveLength(2);
-    expect(sent.map((event) => event.traceparent?.slice(3, 35))).toEqual(Array.from({ length: 5 }, () => request?.traceId));
+
+    expect(sent.map((event) => event.traceparent?.slice(3, 35))).toEqual(
+      Array.from({ length: 5 }, () => request?.traceId),
+    );
+
     expect(sent[4]?.traceparent).toContain(request?.spanId);
   });
 });

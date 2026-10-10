@@ -34,9 +34,7 @@ describe('defineIntegrationEvent', () => {
     'ordering.order.-placed',
     '',
   ])('refuses the type "%s"', (type) => {
-    expect(() => defineIntegrationEvent({ type, version: 1, payload })).toThrow(
-      InvalidEventDefinitionError,
-    );
+    expect(() => defineIntegrationEvent({ type, version: 1, payload })).toThrow(InvalidEventDefinitionError);
   });
 
   it('accepts kebab-case segments', () => {
@@ -50,24 +48,19 @@ describe('defineIntegrationEvent', () => {
   });
 
   it.each([0, -1, 1.5, Number.NaN])('refuses the version %s', (version) => {
-    expect(() => defineIntegrationEvent({ type: 'a.b.c', version, payload })).toThrow(
-      InvalidEventDefinitionError,
-    );
+    expect(() => defineIntegrationEvent({ type: 'a.b.c', version, payload })).toThrow(InvalidEventDefinitionError);
   });
 
   it('refuses a producer that is not a context name', () => {
-    expect(() =>
-      defineIntegrationEvent({ type: 'a.b.c', version: 1, payload, producer: 'Billing Team' }),
-    ).toThrow(InvalidEventDefinitionError);
+    expect(() => defineIntegrationEvent({ type: 'a.b.c', version: 1, payload, producer: 'Billing Team' })).toThrow(
+      InvalidEventDefinitionError,
+    );
   });
 });
 
 describe('create', () => {
   it('builds the envelope from a valid payload', () => {
-    const event = invoiceIssued.create(
-      { invoiceId: 'inv-1', orderId: 'order-1' },
-      { id: 'evt-1', occurredAt: at },
-    );
+    const event = invoiceIssued.create({ invoiceId: 'inv-1', orderId: 'order-1' }, { id: 'evt-1', occurredAt: at });
 
     expect(event).toEqual({
       id: 'evt-1',
@@ -118,9 +111,9 @@ describe('create', () => {
   });
 
   it('refuses an occurredAt that is not a date', () => {
-    expect(() =>
-      invoiceIssued.create({ invoiceId: 'i', orderId: 'o' }, { id: 'e', occurredAt: 'yesterday' }),
-    ).toThrow(InvalidEventDefinitionError);
+    expect(() => invoiceIssued.create({ invoiceId: 'i', orderId: 'o' }, { id: 'e', occurredAt: 'yesterday' })).toThrow(
+      InvalidEventDefinitionError,
+    );
   });
 });
 

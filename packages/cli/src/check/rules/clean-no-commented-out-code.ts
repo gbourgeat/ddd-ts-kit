@@ -12,12 +12,18 @@ export const cleanNoCommentedOutCode: Rule = {
   run(project) {
     return perFile(project, this.id, (file) => {
       // A JSDoc block documents: the code it shows, fenced, under `@example` or simply indented, is a sample.
-      const code = commentLines(file).filter((comment) => !comment.jsdoc && !comment.sample && looksLikeCode(comment.text));
+      const code = commentLines(file).filter(
+        (comment) => !comment.jsdoc && !comment.sample && looksLikeCode(comment.text),
+      );
 
       // One report per run of consecutive lines: a commented-out block is one finding.
       return code
         .filter((comment, index) => comment.line !== (code[index - 1]?.line ?? -1) + 1)
-        .map((comment) => ({ line: comment.line, message: `The comment holds code: "${comment.text.trim().slice(0, 60)}".`, fix: FIX }));
+        .map((comment) => ({
+          line: comment.line,
+          message: `The comment holds code: "${comment.text.trim().slice(0, 60)}".`,
+          fix: FIX,
+        }));
     });
   },
 };

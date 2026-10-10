@@ -11,8 +11,10 @@ import { eventVars } from './event-vars.js';
 export const eventHandlerKind: Kind = {
   name: 'event-handler',
   aliases: [],
-  usage: 'event-handler <context> <Aggregate> <Fact> [--phase before-commit|after-commit] [--term "<Term>=<meaning>"]...',
-  summary: 'A reaction to a domain event of the same context, its spec and its subscription: before the commit of the unit of work by default, after it with --phase after-commit, for an effect no transaction covers.',
+  usage:
+    'event-handler <context> <Aggregate> <Fact> [--phase before-commit|after-commit] [--term "<Term>=<meaning>"]...',
+  summary:
+    'A reaction to a domain event of the same context, its spec and its subscription: before the commit of the unit of work by default, after it with --phase after-commit, for an effect no transaction covers.',
   positionals: ['context', 'Aggregate', 'Fact'],
   writesShared: false,
   run: (request) => {

@@ -8,7 +8,9 @@ import { kebabCaseOf } from './kebab-case-of.js';
 export function namedAfter(stem: string, name: string): boolean {
   const kebab = kebabCaseOf(name);
 
-  if (stem.replaceAll('.', '-') === kebab) return true;
+  if (stem.replaceAll('.', '-') === kebab) {
+    return true;
+  }
 
   const parts = stem.split('.');
 

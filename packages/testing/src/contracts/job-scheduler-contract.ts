@@ -45,6 +45,7 @@ class JobSchedulerSuite extends ContractSuite<JobSchedulerUnderContract> {
 
     this.registers();
     this.runsOnDemand();
+    this.runsOnDemandOnly();
     this.runsByTime();
     this.doesNotOverlap();
     this.isolatesFailures();
@@ -57,7 +58,11 @@ class JobSchedulerSuite extends ContractSuite<JobSchedulerUnderContract> {
 
   private registers(): void {
     this.it('describes a registered job by its name and its schedule, before any run', async () => {
-      this.scheduler.register({ name: REMINDERS, schedule: { cron: '0 7 * * 1-5', timeZone: 'Europe/Paris' }, run: async () => undefined });
+      this.scheduler.register({
+        name: REMINDERS,
+        schedule: { cron: '0 7 * * 1-5', timeZone: 'Europe/Paris' },
+        run: async () => undefined,
+      });
 
       this.expect(this.scheduler.describe()).toEqual([
         { name: REMINDERS, schedule: 'cron 0 7 * * 1-5 (Europe/Paris)', enabled: true, running: false },
@@ -67,11 +72,17 @@ class JobSchedulerSuite extends ContractSuite<JobSchedulerUnderContract> {
     this.it('refuses a second job under a name already registered', async () => {
       this.scheduler.register({ name: REMINDERS, schedule: EVERY_SECOND, run: async () => undefined });
 
-      this.expect(codeOf(() => this.scheduler.register({ name: REMINDERS, schedule: EVERY_SECOND, run: async () => undefined }))).toBe('DUPLICATE_JOB');
+      this.expect(
+        codeOf(() => this.scheduler.register({ name: REMINDERS, schedule: EVERY_SECOND, run: async () => undefined })),
+      ).toBe('DUPLICATE_JOB');
     });
 
     this.it('refuses a schedule it cannot read', async () => {
-      this.expect(codeOf(() => this.scheduler.register({ name: REMINDERS, schedule: { cron: 'every day' }, run: async () => undefined }))).toBe('INVALID_JOB_SCHEDULE');
+      this.expect(
+        codeOf(() =>
+          this.scheduler.register({ name: REMINDERS, schedule: { cron: 'every day' }, run: async () => undefined }),
+        ),
+      ).toBe('INVALID_JOB_SCHEDULE');
     });
   }
 
@@ -79,7 +90,11 @@ class JobSchedulerSuite extends ContractSuite<JobSchedulerUnderContract> {
     this.it('runs a job at once when asked, started or not, and says what became of it', async () => {
       const executions: JobExecution[] = [];
 
-      this.scheduler.register({ name: REMINDERS, schedule: EVERY_SECOND, run: async (execution) => void executions.push(execution) });
+      this.scheduler.register({
+        name: REMINDERS,
+        schedule: EVERY_SECOND,
+        run: async (execution) => void executions.push(execution),
+      });
 
       const run = await this.scheduler.runNow(REMINDERS);
 
@@ -88,11 +103,19 @@ class JobSchedulerSuite extends ContractSuite<JobSchedulerUnderContract> {
       this.expect([executions[0]?.attempt, executions[0]?.signal.aborted]).toEqual([1, false]);
       this.expect(this.scheduler.describe()[0]?.lastRun?.outcome).toBe('succeeded');
     });
+  }
 
+  private runsOnDemandOnly(): void {
     this.it('runs a disabled job when asked, and never by time', async () => {
       let runs = 0;
 
-      this.scheduler.register({ name: REMINDERS, schedule: EVERY_SECOND, enabled: false, run: async () => void (runs += 1) });
+      this.scheduler.register({
+        name: REMINDERS,
+        schedule: EVERY_SECOND,
+        enabled: false,
+        run: async () => void (runs += 1),
+      });
+
       await this.scheduler.start();
 
       await this.subject.elapse(2_500);
@@ -163,20 +186,28 @@ class JobSchedulerSuite extends ContractSuite<JobSchedulerUnderContract> {
   }
 
   private isolatesFailures(): void {
-    this.it('answers failed with the code of the error, never rejecting, and keeps running the other jobs', async () => {
-      let runs = 0;
+    this.it(
+      'answers failed with the code of the error, never rejecting, and keeps running the other jobs',
+      async () => {
+        let runs = 0;
 
-      this.scheduler.register({ name: EXPORT, schedule: EVERY_SECOND, run: () => Promise.reject(new CodedFailure('the ledger of ACME is closed')) });
-      this.scheduler.register({ name: REMINDERS, schedule: EVERY_SECOND, run: async () => void (runs += 1) });
-      await this.scheduler.start();
+        this.scheduler.register({
+          name: EXPORT,
+          schedule: EVERY_SECOND,
+          run: () => Promise.reject(new CodedFailure('the ledger of ACME is closed')),
+        });
 
-      await this.subject.elapse(2_500);
-      const run = await this.scheduler.runNow(EXPORT);
+        this.scheduler.register({ name: REMINDERS, schedule: EVERY_SECOND, run: async () => void (runs += 1) });
+        await this.scheduler.start();
 
-      this.expect([run.outcome, run.errorCode]).toEqual(['failed', 'LEDGER_CLOSED']);
-      this.expect(JSON.stringify(this.scheduler.describe()).includes('ACME')).toBe(false);
-      this.expect(runs >= 2).toBe(true);
-    });
+        await this.subject.elapse(2_500);
+        const run = await this.scheduler.runNow(EXPORT);
+
+        this.expect([run.outcome, run.errorCode]).toEqual(['failed', 'LEDGER_CLOSED']);
+        this.expect(JSON.stringify(this.scheduler.describe()).includes('ACME')).toBe(false);
+        this.expect(runs >= 2).toBe(true);
+      },
+    );
 
     this.it('answers failed for a job that throws before it answers a promise', async () => {
       this.scheduler.register({
@@ -192,21 +223,36 @@ class JobSchedulerSuite extends ContractSuite<JobSchedulerUnderContract> {
   }
 
   private opensAScope(): void {
-    this.it('runs each job in an execution context of its own: origin schedule, the system actor of the job', async () => {
-      const seen: (ExecutionContext | undefined)[] = [];
+    this.it(
+      'runs each job in an execution context of its own: origin schedule, the system actor of the job',
+      async () => {
+        const seen: (ExecutionContext | undefined)[] = [];
 
-      this.scheduler.register({ name: REMINDERS, schedule: EVERY_SECOND, run: async () => void seen.push(this.subject.scope.current()) });
+        this.scheduler.register({
+          name: REMINDERS,
+          schedule: EVERY_SECOND,
+          run: async () => void seen.push(this.subject.scope.current()),
+        });
 
-      const first = await this.scheduler.runNow(REMINDERS);
+        const first = await this.scheduler.runNow(REMINDERS);
 
-      await this.scheduler.runNow(REMINDERS);
+        await this.scheduler.runNow(REMINDERS);
 
-      const [context, next] = seen;
+        const [context, next] = seen;
 
-      this.expect([context?.origin, context?.actor.id, context?.actor.type]).toEqual(['schedule', `system:${REMINDERS}`, 'system']);
-      this.expect(context?.scheduledAt?.getTime()).toBe(first.scheduledAt.getTime());
-      this.expect(typeof context?.correlationId === 'string' && context.correlationId !== next?.correlationId).toBe(true);
-    });
+        this.expect([context?.origin, context?.actor.id, context?.actor.type]).toEqual([
+          'schedule',
+          `system:${REMINDERS}`,
+          'system',
+        ]);
+
+        this.expect(context?.scheduledAt?.getTime()).toBe(first.scheduledAt.getTime());
+
+        this.expect(typeof context?.correlationId === 'string' && context.correlationId !== next?.correlationId).toBe(
+          true,
+        );
+      },
+    );
   }
 }
 

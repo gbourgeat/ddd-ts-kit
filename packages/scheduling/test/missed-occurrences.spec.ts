@@ -24,7 +24,10 @@ describe('occurrences that passed without being reached', () => {
 
     await asleepFor(bench, 50 * MINUTE);
     expect(job.executions).toEqual([]);
-    expect(bench.scheduler.runs).toEqual([{ job: REMINDERS, outcome: 'missed', scheduledAt: new Date('2026-03-02T10:00:00.000Z') }]);
+
+    expect(bench.scheduler.runs).toEqual([
+      { job: REMINDERS, outcome: 'missed', scheduledAt: new Date('2026-03-02T10:00:00.000Z') },
+    ]);
 
     await bench.scheduler.advance(15 * MINUTE);
     expect(job.scheduledAt).toEqual(['2026-03-02T11:00:00.000Z']);
@@ -39,7 +42,10 @@ describe('occurrences that passed without being reached', () => {
 
     await asleepFor(bench, 50 * MINUTE);
 
-    expect(job.executions).toMatchObject([{ scheduledAt: new Date('2026-03-02T10:45:00.000Z'), startedAt: new Date('2026-03-02T10:48:30.000Z') }]);
+    expect(job.executions).toMatchObject([
+      { scheduledAt: new Date('2026-03-02T10:45:00.000Z'), startedAt: new Date('2026-03-02T10:48:30.000Z') },
+    ]);
+
     expect(bench.scheduler.runs.map((run) => run.outcome)).toEqual(['missed', 'succeeded']);
   });
 

@@ -19,7 +19,9 @@ describe('POST /calendars/:calendarId/appointment-types', () => {
       },
     });
 
-    const response = await executeRoute(defineAppointmentTypeRoute(commands), request(valid), { validateResponses: true });
+    const response = await executeRoute(defineAppointmentTypeRoute(commands), request(valid), {
+      validateResponses: true,
+    });
 
     expect(response).toMatchObject({ status: 201, body: { id: 'type-1' } });
     expect(received).toMatchObject([{ calendarId: 'calendar-1', facts: valid }]);
@@ -32,7 +34,9 @@ describe('POST /calendars/:calendarId/appointment-types', () => {
   ])('refuses %s with 422', async (_case, body) => {
     const commands = new InMemoryCommandBus().register(DefineAppointmentTypeCommand, { execute: async () => 'type-1' });
 
-    const response = await executeRoute(defineAppointmentTypeRoute(commands), request(body), { validateResponses: true });
+    const response = await executeRoute(defineAppointmentTypeRoute(commands), request(body), {
+      validateResponses: true,
+    });
 
     expect(response.status).toBe(422);
   });
@@ -44,7 +48,9 @@ describe('POST /calendars/:calendarId/appointment-types', () => {
       },
     });
 
-    const response = await executeRoute(defineAppointmentTypeRoute(commands), request(valid), { validateResponses: true });
+    const response = await executeRoute(defineAppointmentTypeRoute(commands), request(valid), {
+      validateResponses: true,
+    });
 
     expect(response).toMatchObject({ status: 422, body: { code: 'INVALID_APPOINTMENT_TYPE' } });
   });

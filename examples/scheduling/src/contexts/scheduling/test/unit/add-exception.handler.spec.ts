@@ -11,14 +11,19 @@ import { CalendarRepository } from '../../domain/repositories/calendar.repositor
 import { aCalendar } from '../builders/calendar.builder.js';
 import { FakeCalendarRepository } from '../fakes/calendar.repository.fake.js';
 
-const holders = authorizationModule({ authorizer: new RoleBasedAuthorizer({ roles: { holder: [schedulingPermissions['calendar.add-exception']] } }) });
+const holders = authorizationModule({
+  authorizer: new RoleBasedAuthorizer({ roles: { holder: [schedulingPermissions['calendar.add-exception']] } }),
+});
+
 const holder = anActor().withRole('holder').build();
 
 describe('Add exception', () => {
   it('opens the day on the ranges of its exception and answers the identifier of the calendar', async () => {
     const { application, calendarRepository } = await arrange();
 
-    const id = await application.commandBus.execute(new AddExceptionCommand(holder, 'calendar-1', '2026-05-01', [{ start: '10:00', end: '12:00' }]));
+    const id = await application.commandBus.execute(
+      new AddExceptionCommand(holder, 'calendar-1', '2026-05-01', [{ start: '10:00', end: '12:00' }]),
+    );
 
     const stored = await calendarRepository.findById('calendar-1');
 
@@ -30,7 +35,9 @@ describe('Add exception', () => {
   it('is refused to an actor who does not hold the permission calendar.add-exception', async () => {
     const { application } = await arrange();
 
-    await expect(application.commandBus.execute(new AddExceptionCommand(anActor().build(), 'calendar-1', '2026-05-01', []))).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(
+      application.commandBus.execute(new AddExceptionCommand(anActor().build(), 'calendar-1', '2026-05-01', [])),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
   });
 
   it('closes the day when the exception has no range', async () => {
@@ -57,19 +64,33 @@ describe('Add exception', () => {
   it.each([
     ['a day that does not exist', '2026-02-30', [], 'INVALID_DAY'],
     ['a range that ends before it starts', '2026-05-01', [{ start: '12:00', end: '10:00' }], 'INVALID_RANGE'],
-    ['ranges that overlap', '2026-05-01', [{ start: '10:00', end: '12:00' }, { start: '11:00', end: '13:00' }], 'INVALID_RANGE'],
+    [
+      'ranges that overlap',
+      '2026-05-01',
+      [
+        { start: '10:00', end: '12:00' },
+        { start: '11:00', end: '13:00' },
+      ],
+      'INVALID_RANGE',
+    ],
   ])('refuses %s and leaves the calendar as it was', async (...[, day, ranges, code]) => {
     const { application, calendarRepository } = await arrange();
 
-    await expect(application.commandBus.execute(new AddExceptionCommand(holder, 'calendar-1', day, ranges))).rejects.toMatchObject({ code });
+    await expect(
+      application.commandBus.execute(new AddExceptionCommand(holder, 'calendar-1', day, ranges)),
+    ).rejects.toMatchObject({ code });
 
-    expect((await calendarRepository.findById('calendar-1'))?.rangesOn('2026-05-01').map((range) => range.start)).toEqual(['08:00']);
+    expect(
+      (await calendarRepository.findById('calendar-1'))?.rangesOn('2026-05-01').map((range) => range.start),
+    ).toEqual(['08:00']);
   });
 
   it('refuses a calendar that does not exist', async () => {
     const { application } = await arrange();
 
-    await expect(application.commandBus.execute(new AddExceptionCommand(holder, 'calendar-9', '2026-05-01', []))).rejects.toMatchObject({ code: 'UNKNOWN_CALENDAR' });
+    await expect(
+      application.commandBus.execute(new AddExceptionCommand(holder, 'calendar-9', '2026-05-01', [])),
+    ).rejects.toMatchObject({ code: 'UNKNOWN_CALENDAR' });
   });
 });
 

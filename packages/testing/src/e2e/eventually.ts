@@ -13,10 +13,7 @@ export interface EventuallyOptions {
  * are eventually consistent: integration events, projections. When the time is up, the
  * failure quotes the last error and carries it as `cause`.
  */
-export async function eventually<T>(
-  assertion: () => T | Promise<T>,
-  options: EventuallyOptions = {},
-): Promise<T> {
+export async function eventually<T>(assertion: () => T | Promise<T>, options: EventuallyOptions = {}): Promise<T> {
   const { timeoutMs = 2000, intervalMs = 20 } = options;
   const deadline = performance.now() + timeoutMs;
 

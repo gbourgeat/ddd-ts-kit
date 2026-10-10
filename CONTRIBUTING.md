@@ -4,6 +4,8 @@
 npm ci
 npm run build
 npm test
+npm run lint
+npm run format:check
 node packages/cli/dist/bin.js check --self
 npm run check:dashes
 node --test plugin/hooks/guard.test.mjs

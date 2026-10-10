@@ -10,7 +10,9 @@ export function relayWakeUpMiddleware(signal: { notify(): Promise<void> }): BusM
   return async (_message, next, info) => {
     const result = await next();
 
-    if (info.kind === 'command') void signal.notify().catch(() => undefined);
+    if (info.kind === 'command') {
+      void signal.notify().catch(() => undefined);
+    }
 
     return result;
   };

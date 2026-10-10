@@ -138,7 +138,12 @@ describe('a paginated route', () => {
     const operation = document.paths['/orders']?.['get'];
 
     expect(operation?.['parameters']).toMatchObject([
-      { name: 'limit', in: 'query', required: false, schema: { type: 'integer', minimum: 1, maximum: 50, default: 20 } },
+      {
+        name: 'limit',
+        in: 'query',
+        required: false,
+        schema: { type: 'integer', minimum: 1, maximum: 50, default: 20 },
+      },
       { name: 'offset', in: 'query', required: false, schema: { type: 'integer', minimum: 0 } },
       { name: 'cursor', in: 'query', required: false, schema: { type: 'string' } },
       { name: 'sort', in: 'query', required: false, schema: { type: 'string' } },
@@ -171,7 +176,13 @@ describe('pageSchemaOf', () => {
   const page = pageSchemaOf(zodSchema(z.object({ id: z.string(), total: money })));
 
   it('locates the issues of an item in the page', () => {
-    const parsed = page.parse({ items: [{ id: 'o-1', total: { amount: 1 } }, { id: 2, total: { amount: 1 } }], total: -1 });
+    const parsed = page.parse({
+      items: [
+        { id: 'o-1', total: { amount: 1 } },
+        { id: 2, total: { amount: 1 } },
+      ],
+      total: -1,
+    });
 
     expect(parsed).toMatchObject({ ok: false, error: [{ path: 'items.1.id' }, { path: 'total' }] });
     expect(page.parse({ items: 'none' })).toMatchObject({ ok: false, error: [{ path: 'items' }] });

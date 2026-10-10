@@ -37,6 +37,10 @@ function lineOfMembership({ practiceId, personId, role }: Membership): string {
   return `${role} ${personId} of ${practiceId}`;
 }
 
-function lineOfDelegation({ practiceId, practitionerId, assistantId }: Omit<Delegation, 'availabilityIncluded'>): string {
+function lineOfDelegation({
+  practiceId,
+  practitionerId,
+  assistantId,
+}: Omit<Delegation, 'availabilityIncluded'>): string {
   return `delegate ${assistantId} of ${practitionerId} in ${practiceId}`;
 }

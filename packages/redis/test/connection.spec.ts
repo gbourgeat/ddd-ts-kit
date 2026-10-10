@@ -50,7 +50,13 @@ describe('redisHealth while the server is away', () => {
   });
 
   it('reports a server that does not answer in time as down', async () => {
-    const silent = new Redis({ host: '192.0.2.1', port: 6379, lazyConnect: true, retryStrategy: () => null, connectTimeout: 5_000 });
+    const silent = new Redis({
+      host: '192.0.2.1',
+      port: 6379,
+      lazyConnect: true,
+      retryStrategy: () => null,
+      connectTimeout: 5_000,
+    });
 
     silent.on('error', () => undefined);
 

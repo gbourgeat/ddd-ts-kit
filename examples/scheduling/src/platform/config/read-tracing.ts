@@ -17,7 +17,9 @@ export function readTracing(env: Variables, problems: string[]): TracingConfig {
   const endpoint = (env['OTEL_EXPORTER_OTLP_ENDPOINT'] ?? '').trim();
   const sampleRatio = readRatio(env['TRACE_SAMPLE_RATIO'], problems);
 
-  if (endpoint !== '' && !URL.canParse(endpoint)) problems.push('OTEL_EXPORTER_OTLP_ENDPOINT must be a URL, or empty to export nothing');
+  if (endpoint !== '' && !URL.canParse(endpoint)) {
+    problems.push('OTEL_EXPORTER_OTLP_ENDPOINT must be a URL, or empty to export nothing');
+  }
 
   return {
     ...(endpoint === '' ? {} : { endpoint }),
@@ -27,11 +29,15 @@ export function readTracing(env: Variables, problems: string[]): TracingConfig {
 }
 
 function readRatio(raw: string | undefined, problems: string[]): number | undefined {
-  if (raw === undefined || raw.trim() === '') return undefined;
+  if (raw === undefined || raw.trim() === '') {
+    return undefined;
+  }
 
   const ratio = Number(raw);
 
-  if (Number.isNaN(ratio) || ratio < 0 || ratio > 1) problems.push('TRACE_SAMPLE_RATIO must be a number between 0 and 1');
+  if (Number.isNaN(ratio) || ratio < 0 || ratio > 1) {
+    problems.push('TRACE_SAMPLE_RATIO must be a number between 0 and 1');
+  }
 
   return ratio;
 }
@@ -39,7 +45,9 @@ function readRatio(raw: string | undefined, problems: string[]): number | undefi
 function readConsumers(raw: string | undefined, problems: string[]): TracingConfig['consumers'] {
   const mode = consumerModes.find((candidate) => candidate === (raw ?? 'continue'));
 
-  if (mode === undefined) problems.push('TRACE_CONSUMERS must be one of ' + consumerModes.join(', '));
+  if (mode === undefined) {
+    problems.push('TRACE_CONSUMERS must be one of ' + consumerModes.join(', '));
+  }
 
   return mode ?? 'continue';
 }

@@ -1,11 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { FixedClock, InMemoryEventBus } from '@ddd-ts-kit/kernel';
-import {
-  InMemoryOutboxStore,
-  InMemoryRelaySignal,
-  OutboxRelay,
-  type OutboxRecord,
-} from '../src/index.js';
+import { InMemoryOutboxStore, InMemoryRelaySignal, OutboxRelay, type OutboxRecord } from '../src/index.js';
 import { at } from './support/events.js';
 import { eventually } from './support/eventually.js';
 import { GatedPublisher } from './support/gated-publisher.js';

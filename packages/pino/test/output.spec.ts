@@ -9,27 +9,49 @@ import pretty from 'pino-pretty';
 import { PinoLogger, createPinoLogger } from '../src/index.js';
 import { MemorySink } from './support/memory-sink.js';
 
+let directory: string;
+
+beforeEach(() => {
+  directory = mkdtempSync(join(tmpdir(), 'ddd-ts-kit-pino-'));
+});
+
+afterEach(() => {
+  rmSync(directory, { recursive: true, force: true });
+});
+
 describe('createPinoLogger', () => {
-  let directory: string;
-
-  beforeEach(() => {
-    directory = mkdtempSync(join(tmpdir(), 'ddd-ts-kit-pino-'));
-  });
-
-  afterEach(() => {
-    rmSync(directory, { recursive: true, force: true });
-  });
-
   it('writes one JSON line per entry: level by name, ISO time, base fields, fields, message', () => {
     const sink = new MemorySink();
-    const logger = createPinoLogger({ service: 'shop', environment: 'production', base: { version: '1.4.0' }, destination: sink.stream });
+
+    const logger = createPinoLogger({
+      service: 'shop',
+      environment: 'production',
+      base: { version: '1.4.0' },
+      destination: sink.stream,
+    });
 
     logger.info('order shipped', { context: 'shipping', shippedAt: new Date('2026-03-01T09:59:00.000Z') });
 
     const [line] = sink.records();
 
-    expect(Object.keys(line ?? {})).toEqual(['level', 'time', 'service', 'environment', 'version', 'context', 'shippedAt', 'message']);
-    expect(line).toMatchObject({ level: 'info', service: 'shop', environment: 'production', shippedAt: '2026-03-01T09:59:00.000Z' });
+    expect(Object.keys(line ?? {})).toEqual([
+      'level',
+      'time',
+      'service',
+      'environment',
+      'version',
+      'context',
+      'shippedAt',
+      'message',
+    ]);
+
+    expect(line).toMatchObject({
+      level: 'info',
+      service: 'shop',
+      environment: 'production',
+      shippedAt: '2026-03-01T09:59:00.000Z',
+    });
+
     expect(line?.time).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
     expect(sink.text().endsWith('\n')).toBe(true);
   });
@@ -38,7 +60,10 @@ describe('createPinoLogger', () => {
     const quiet = new MemorySink();
     const verbose = new MemorySink();
 
-    for (const logger of [createPinoLogger({ destination: quiet.stream }), createPinoLogger({ level: 'debug', destination: verbose.stream })]) {
+    for (const logger of [
+      createPinoLogger({ destination: quiet.stream }),
+      createPinoLogger({ level: 'debug', destination: verbose.stream }),
+    ]) {
       logger.debug('cache missed');
       logger.info('order shipped');
     }
@@ -50,7 +75,11 @@ describe('createPinoLogger', () => {
   it('does not let a field forge the level or the time of the line', () => {
     const sink = new MemorySink();
 
-    createPinoLogger({ destination: sink.stream }).warn('carrier slow', { level: 'debug', time: 'yesterday', carrier: 'post' });
+    createPinoLogger({ destination: sink.stream }).warn('carrier slow', {
+      level: 'debug',
+      time: 'yesterday',
+      carrier: 'post',
+    });
 
     expect(sink.text().match(/"level"/g)).toHaveLength(1);
     expect(sink.text().match(/"time"/g)).toHaveLength(1);
@@ -61,15 +90,28 @@ describe('createPinoLogger', () => {
     const sink = new MemorySink();
     const logger = createPinoLogger({ destination: sink.stream });
 
-    logger.info('order shipped', { get total(): number { throw new Error('unreadable'); } });
-    logger.child({ get total(): number { throw new Error('unreadable'); } }).info('parcel handed over');
+    logger.info('order shipped', {
+      get total(): number {
+        throw new Error('unreadable');
+      },
+    });
+
+    logger
+      .child({
+        get total(): number {
+          throw new Error('unreadable');
+        },
+      })
+      .info('parcel handed over');
 
     expect(sink.records()).toMatchObject([
       { message: 'order shipped', logError: 'unserializable fields' },
       { message: 'parcel handed over', logError: 'unserializable fields' },
     ]);
   });
+});
 
+describe('createPinoLogger, asynchronous and pretty destinations', () => {
   it('keeps buffered lines until the flush when it writes asynchronously', async () => {
     const file = join(directory, 'app.log');
     const logger = createPinoLogger({ asynchronous: true, destination: file });
@@ -78,7 +120,12 @@ describe('createPinoLogger', () => {
     logger.child({ context: 'shipping' }).warn('carrier slow');
     await logger.flush();
 
-    expect(readFileSync(file, 'utf8').split('\n').filter(Boolean).map((line) => JSON.parse(line) as unknown)).toMatchObject([
+    expect(
+      readFileSync(file, 'utf8')
+        .split('\n')
+        .filter(Boolean)
+        .map((line) => JSON.parse(line) as unknown),
+    ).toMatchObject([
       { level: 'info', message: 'order shipped' },
       { level: 'warn', message: 'carrier slow', context: 'shipping' },
     ]);
@@ -86,7 +133,13 @@ describe('createPinoLogger', () => {
 
   it('writes lines a human reads in the pretty format, through the pino-pretty transport', async () => {
     const file = join(directory, 'pretty.log');
-    const logger = createPinoLogger({ format: 'pretty', service: 'shop', fields: () => ({ trace_id: 'trace-1' }), destination: file });
+
+    const logger = createPinoLogger({
+      format: 'pretty',
+      service: 'shop',
+      fields: () => ({ trace_id: 'trace-1' }),
+      destination: file,
+    });
 
     logger.warn('carrier slow', { carrier: 'post', token: 'never-shown' });
     await logger.flush();
@@ -130,7 +183,10 @@ describe('PinoLogger', () => {
     logger.info('invoice drafted');
     logger.error('transfer refused', { iban: 'FR76 3000 6000 0112 3456 7890 189' });
 
-    expect(sink.records()).toMatchObject([{ app: 'shop', context: 'billing', iban: '[Redacted]', msg: 'transfer refused' }]);
+    expect(sink.records()).toMatchObject([
+      { app: 'shop', context: 'billing', iban: '[Redacted]', msg: 'transfer refused' },
+    ]);
+
     expect(sink.records()).toHaveLength(1);
   });
 

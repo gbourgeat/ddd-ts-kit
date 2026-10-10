@@ -37,6 +37,9 @@ it('is one option of the kernel module: the failed command is an event once the 
   expect(app.resolve(ErrorReporter)).toBeInstanceOf(SentryErrorReporter);
 
   expect(tracker.server.events).toMatchObject([
-    { tags: { origin: 'command', operation: 'CloseLedger' }, exception: { values: [{ type: 'Error', value: 'connection reset' }] } },
+    {
+      tags: { origin: 'command', operation: 'CloseLedger' },
+      exception: { values: [{ type: 'Error', value: 'connection reset' }] },
+    },
   ]);
 });

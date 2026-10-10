@@ -45,7 +45,10 @@ export function parseStack(stack: Record<string, unknown>): Stack {
   };
 }
 
-type Choices = Pick<Stack, 'authn' | 'authz' | 'broker' | 'cache' | 'audit' | 'errors' | 'logger' | 'style' | 'assembly'>;
+type Choices = Pick<
+  Stack,
+  'authn' | 'authz' | 'broker' | 'cache' | 'audit' | 'errors' | 'logger' | 'style' | 'assembly'
+>;
 
 function parseChoices(choose: Choose, orm: Stack['orm']): Choices {
   return {
@@ -67,8 +70,16 @@ interface Setting<T> {
 }
 
 function pick<T extends string>(values: readonly T[], value: unknown, setting: Setting<T>): T {
-  if (value === undefined) return setting.fallback;
-  if (isOneOf(values, value)) return value;
+  if (value === undefined) {
+    return setting.fallback;
+  }
 
-  throw new CliError(`${CONFIG_FILE}: "${setting.key}" is ${JSON.stringify(value)}.`, `Set "${setting.key}" to one of: ${values.join(', ')}.`);
+  if (isOneOf(values, value)) {
+    return value;
+  }
+
+  throw new CliError(
+    `${CONFIG_FILE}: "${setting.key}" is ${JSON.stringify(value)}.`,
+    `Set "${setting.key}" to one of: ${values.join(', ')}.`,
+  );
 }

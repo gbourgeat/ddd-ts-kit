@@ -43,7 +43,9 @@ describe('RelationBasedAuthorizer.listAccessible', () => {
     const checked: string[] = [];
 
     for (const id of ids) {
-      if ((await authorizer.check({ actor: ada, permission: view, resource: document(id) })).allowed) checked.push(id);
+      if ((await authorizer.check({ actor: ada, permission: view, resource: document(id) })).allowed) {
+        checked.push(id);
+      }
     }
 
     expect(await list(ada, view)).toEqual({ kind: 'ids', ids: checked.sort() });
@@ -63,8 +65,8 @@ describe('RelationBasedAuthorizer.listAccessible', () => {
     const many = Array.from({ length: 30 }, (_, index) => fact(`document:${index}`, 'owner', 'user:ada'));
     const authorizer = await authorizerWith(many, { listLimit: 10 });
 
-    await expect(authorizer.listAccessible({ actor: ada, permission: edit, resourceType: 'document' })).rejects.toBeInstanceOf(
-      ReverseExpansionLimitError,
-    );
+    await expect(
+      authorizer.listAccessible({ actor: ada, permission: edit, resourceType: 'document' }),
+    ).rejects.toBeInstanceOf(ReverseExpansionLimitError);
   });
 });

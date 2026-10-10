@@ -10,20 +10,29 @@ import { predicateToKnex } from './predicate-to-knex.js';
  * `pageOfPlan(plan, rows)`. A field that may be null is ordered as the plan means it, on every
  * dialect: nulls last ascending, first descending.
  */
-export function criteriaToKnex<Builder extends Knex.QueryBuilder>(builder: Builder, plan: CriteriaPlan, columns: Readonly<Record<string, string>>): Builder {
+export function criteriaToKnex<Builder extends Knex.QueryBuilder>(
+  builder: Builder,
+  plan: CriteriaPlan,
+  columns: Readonly<Record<string, string>>,
+): Builder {
   predicateToKnex(builder, plan.filter, columns);
   predicateToKnex(builder, plan.seek, columns);
 
   for (const { field, direction } of plan.sort) {
     const column = columnOf(columns, field);
 
-    if (plan.fields[field]?.nullable === true) void builder.orderBy(column, direction, direction === 'asc' ? 'last' : 'first');
-    else void builder.orderBy(column, direction);
+    if (plan.fields[field]?.nullable === true) {
+      void builder.orderBy(column, direction, direction === 'asc' ? 'last' : 'first');
+    } else {
+      void builder.orderBy(column, direction);
+    }
   }
 
   void builder.limit(plan.fetch);
 
-  if (plan.offset > 0) void builder.offset(plan.offset);
+  if (plan.offset > 0) {
+    void builder.offset(plan.offset);
+  }
 
   return builder;
 }

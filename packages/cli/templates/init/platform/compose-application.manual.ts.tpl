@@ -92,7 +92,11 @@ export interface Application {
 }
 
 /** Wires every bounded context on the shared platform. Also used to generate the contracts and by the end-to-end tests. */
-export function composeApplication(persistence: Persistence, options: ApplicationOptions, selection: readonly ContextModule[] = everyContext): Application {
+export function composeApplication(
+  persistence: Persistence,
+  options: ApplicationOptions,
+  selection: readonly ContextModule[] = everyContext,
+): Application {
   const platform = createPlatform(persistence, options);
   const { logger, metrics, cache, clock } = platform;
 
@@ -110,7 +114,16 @@ export function composeApplication(persistence: Persistence, options: Applicatio
   return {
 {{#if http.any}}
     routes: defineRoutes(...contexts.map((context) => context.routes)),
-    boundary: httpBoundary({ authenticator: options.authenticator, executionScope: platform.scope, errorMapper: createErrorMapper(), clock, logger{{#if errors.sentry}}, errors: platform.errors{{/if}} }),
+    boundary: httpBoundary({
+      authenticator: options.authenticator,
+      executionScope: platform.scope,
+      errorMapper: createErrorMapper(),
+      clock,
+      logger,
+{{#if errors.sentry}}
+      errors: platform.errors,
+{{/if}}
+    }),
 {{/if}}
 {{#unless http.any}}
     routes: [],
@@ -154,7 +167,9 @@ async function start(platform: Platform, options: ApplicationOptions): Promise<v
 {{/if}}
   await options.events.start();
 
-  if (options.jobs?.start === true) await platform.jobs.start();
+  if (options.jobs?.start === true) {
+    await platform.jobs.start();
+  }
 }
 
 /**

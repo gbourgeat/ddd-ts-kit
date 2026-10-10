@@ -22,19 +22,37 @@ export function readProgress(ws: Workspace, config: Config): Progress {
 function slicesProgress(rows: readonly Slice[]): SlicesProgress {
   const owners = [...new Set(rows.map((row) => row.owner))].sort();
 
-  return { file: SLICES_FILE, rows, byStatus: idsByStatus(rows), byOwner: Object.fromEntries(owners.map((owner) => [owner, idsByStatus(rows.filter((row) => row.owner === owner))])) };
+  return {
+    file: SLICES_FILE,
+    rows,
+    byStatus: idsByStatus(rows),
+    byOwner: Object.fromEntries(owners.map((owner) => [owner, idsByStatus(rows.filter((row) => row.owner === owner))])),
+  };
 }
 
 function idsByStatus(rows: readonly Slice[]): Record<string, string[]> {
   const statuses = [...new Set(rows.map((row) => row.status))].sort();
 
-  return Object.fromEntries(statuses.map((status) => [status, rows.filter((row) => row.status === status).map((row) => row.id)]));
+  return Object.fromEntries(
+    statuses.map((status) => [status, rows.filter((row) => row.status === status).map((row) => row.id)]),
+  );
 }
 
 function countsOf(remaining: readonly Remaining[], declared: readonly string[]): RemainingCount[] {
-  const names = [...new Set([...declared, ...remaining.map((left) => left.context)])].filter((name) => name !== '').sort();
-  const count = (context: string, kind: Remaining['kind']): number => remaining.filter((left) => left.context === context && left.kind === kind).length;
-  const counted = (context: string): RemainingCount => ({ context, domain: count(context, 'domain'), platform: count(context, 'platform'), test: count(context, 'test') });
+  const names = [...new Set([...declared, ...remaining.map((left) => left.context)])]
+    .filter((name) => name !== '')
+    .sort();
+
+  const count = (context: string, kind: Remaining['kind']): number =>
+    remaining.filter((left) => left.context === context && left.kind === kind).length;
+
+  const counted = (context: string): RemainingCount => ({
+    context,
+    domain: count(context, 'domain'),
+    platform: count(context, 'platform'),
+    test: count(context, 'test'),
+  });
+
   const elsewhere = counted('');
 
   return [...names.map(counted), ...(elsewhere.domain + elsewhere.platform + elsewhere.test > 0 ? [elsewhere] : [])];

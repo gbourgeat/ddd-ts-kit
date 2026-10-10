@@ -58,7 +58,15 @@ export class CalendarBuilder extends Builder<CalendarIngredients, Calendar> {
 
   /** Offers a type of thirty minutes on a grid of thirty, without buffer nor confirmation, changed by what the test states. */
   offering(id: string, facts: Partial<Omit<AppointmentTypeProps, 'id'>> = {}): this {
-    return this.adding('appointmentTypes', { id, name: id, duration: 30, grid: 30, buffer: 0, needsConfirmation: false, ...facts });
+    return this.adding('appointmentTypes', {
+      id,
+      name: id,
+      duration: 30,
+      grid: 30,
+      buffer: 0,
+      needsConfirmation: false,
+      ...facts,
+    });
   }
 
   protected defaults(): Defaults<CalendarIngredients> {
@@ -77,7 +85,12 @@ export class CalendarBuilder extends Builder<CalendarIngredients, Calendar> {
 
   protected construct(ingredients: CalendarIngredients): Calendar {
     const { id, bornAt, practiceId, practitionerId } = ingredients;
-    const built = Calendar.create(id, { practiceId, practitionerId, timeZone: unwrap(TimeZone.create(ingredients.timeZone)) }, bornAt);
+
+    const built = Calendar.create(
+      id,
+      { practiceId, practitionerId, timeZone: unwrap(TimeZone.create(ingredients.timeZone)) },
+      bornAt,
+    );
 
     furnish(built, ingredients);
     built.pullEvents();
@@ -88,7 +101,14 @@ export class CalendarBuilder extends Builder<CalendarIngredients, Calendar> {
 
 function furnish(built: Calendar, { bornAt, week, exceptions, timeOffs, appointmentTypes }: CalendarIngredients): void {
   if (Object.keys(week).length > 0) {
-    built.setOpeningHours(unwrap(OpeningHours.create(Object.fromEntries(Object.entries(week).map(([weekday, hours]) => [weekday, rangesOf(hours)])))), bornAt);
+    built.setOpeningHours(
+      unwrap(
+        OpeningHours.create(
+          Object.fromEntries(Object.entries(week).map(([weekday, hours]) => [weekday, rangesOf(hours)])),
+        ),
+      ),
+      bornAt,
+    );
   }
 
   exceptions.forEach(([day, hours]) => built.addException(unwrap(Exception.create(day, rangesOf(hours))), bornAt));

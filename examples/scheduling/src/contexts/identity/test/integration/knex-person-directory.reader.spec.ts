@@ -18,7 +18,11 @@ beforeAll(async () => {
 beforeEach(async () => {
   await database.reset();
 
-  const persons = new KnexPersonRepository(database.persistence.database, scope, new FixedClock(new Date('2026-01-01T00:00:00.000Z')));
+  const persons = new KnexPersonRepository(
+    database.persistence.database,
+    scope,
+    new FixedClock(new Date('2026-01-01T00:00:00.000Z')),
+  );
 
   await persons.save(aPerson().identifiedBy('ada').named('Ada Lovelace').build());
   await persons.save(aPerson().identifiedBy('grace').named('Grace Hopper').build());

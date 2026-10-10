@@ -27,8 +27,11 @@ export class InMemoryDomainEventDispatcher implements DomainEventDispatcher {
   async dispatch(events: readonly DomainEvent[], phase: DomainEventPhase = 'before-commit'): Promise<void> {
     for (const event of events) {
       for (const handler of this.handlers.get(keyOf(phase, event.name)) ?? []) {
-        if (phase === 'before-commit') await handler(event);
-        else await this.attempted(handler, event);
+        if (phase === 'before-commit') {
+          await handler(event);
+        } else {
+          await this.attempted(handler, event);
+        }
       }
     }
   }
@@ -39,7 +42,9 @@ export class InMemoryDomainEventDispatcher implements DomainEventDispatcher {
     } catch (error) {
       this.afterCommitFailures.push({ error, event });
 
-      if (this.afterCommitFailures.length > KEPT_FAILURES) this.afterCommitFailures.shift();
+      if (this.afterCommitFailures.length > KEPT_FAILURES) {
+        this.afterCommitFailures.shift();
+      }
 
       this.tell(error, event);
     }

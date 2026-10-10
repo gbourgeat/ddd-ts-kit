@@ -96,7 +96,10 @@ describe('authorizationModule', () => {
     const { resolve } = app;
 
     expect(await resolve(CommandBus).execute(new IssueInvoice(ada, 'customer-1'))).toBe('invoice for customer-1');
-    await expect(resolve(CommandBus).execute(new IssueInvoice(bob, 'customer-1'))).rejects.toBeInstanceOf(ForbiddenError);
+
+    await expect(resolve(CommandBus).execute(new IssueInvoice(bob, 'customer-1'))).rejects.toBeInstanceOf(
+      ForbiddenError,
+    );
 
     await expect(resolve(QueryBus).execute(new ListInvoices(anonymousActor()))).rejects.toBeInstanceOf(
       UnauthenticatedError,
@@ -197,7 +200,10 @@ describe('what authorizationModule binds', () => {
 
   it('accepts factories resolving other bindings', async () => {
     const app = createApplication({
-      modules: [kernelModule(), authorizationModule({ authorizer: () => new AllowAll(), authenticator: () => new FakeAuthenticator({}) })],
+      modules: [
+        kernelModule(),
+        authorizationModule({ authorizer: () => new AllowAll(), authenticator: () => new FakeAuthenticator({}) }),
+      ],
     });
 
     expect(app.resolve(Authorizer)).toBeInstanceOf(AllowAll);
@@ -215,7 +221,10 @@ describe('what authorizationModule binds', () => {
     const published = new Article('article-1', 'ada', new Date('2026-04-01T00:00:00.000Z'));
 
     await expect(access.authorize(author, edit, new Article('article-2', 'ada'))).resolves.toBeUndefined();
-    await expect(access.authorize(reader, edit, new Article('article-2', 'ada'))).rejects.toBeInstanceOf(ForbiddenError);
+
+    await expect(access.authorize(reader, edit, new Article('article-2', 'ada'))).rejects.toBeInstanceOf(
+      ForbiddenError,
+    );
 
     await expect(access.authorize(author, edit, published)).rejects.toMatchObject({
       reason: 'article.only-author-edits-draft',

@@ -6,7 +6,9 @@ export function workerGenerators(kinds: readonly Kind[]): string[] {
   return kinds
     .filter((kind) => kind.positionals[0] === 'context')
     .flatMap((kind) => {
-      if (!kind.writesShared) return [kind.name];
+      if (!kind.writesShared) {
+        return [kind.name];
+      }
 
       const allowed = SHARED_WRITES[kind.name]?.worker;
 

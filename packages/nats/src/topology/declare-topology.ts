@@ -1,10 +1,4 @@
-import {
-  AckPolicy,
-  DeliverPolicy,
-  RetentionPolicy,
-  StorageType,
-  type JetStreamManager,
-} from '@nats-io/jetstream';
+import { AckPolicy, DeliverPolicy, RetentionPolicy, StorageType, type JetStreamManager } from '@nats-io/jetstream';
 import { failureCode } from '../errors/failure-code.js';
 import type { ConsumerDescription } from './consumer-description.js';
 import type { NatsTopology } from './nats-topology.js';

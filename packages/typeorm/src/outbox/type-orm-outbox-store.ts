@@ -27,13 +27,7 @@ export interface TypeOrmOutboxStoreOptions {
 // A fresh record is due at once, whatever clock the relay runs on.
 const DUE_IMMEDIATELY = new Date(0);
 
-const SKIP_LOCKED_DRIVERS: readonly string[] = [
-  'postgres',
-  'aurora-postgres',
-  'cockroachdb',
-  'mysql',
-  'aurora-mysql',
-];
+const SKIP_LOCKED_DRIVERS: readonly string[] = ['postgres', 'aurora-postgres', 'cockroachdb', 'mysql', 'aurora-mysql'];
 
 /**
  * The outbox in a SQL database. `append` runs on the manager of the context: called inside a
@@ -108,16 +102,10 @@ export class TypeOrmOutboxStore implements OutboxStore {
       return;
     }
 
-    await this.context
-      .manager()
-      .update(this.outbox, { id: In([...ids]) }, { status: 'published', publishedAt: at });
+    await this.context.manager().update(this.outbox, { id: In([...ids]) }, { status: 'published', publishedAt: at });
   }
 
-  async markFailed(
-    id: string,
-    error: { readonly code: string },
-    nextAttemptAt: Date | null,
-  ): Promise<void> {
+  async markFailed(id: string, error: { readonly code: string }, nextAttemptAt: Date | null): Promise<void> {
     await this.context
       .manager()
       .update(

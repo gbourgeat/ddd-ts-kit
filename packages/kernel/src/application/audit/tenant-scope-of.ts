@@ -6,7 +6,9 @@ import type { TenantScoped } from './tenant-scoped.js';
 export function tenantScopeOf(scope: ExecutionScope): TenantScoped {
   const { tenantId } = scope.require();
 
-  if (tenantId === undefined) throw new NoCurrentTenantError();
+  if (tenantId === undefined) {
+    throw new NoCurrentTenantError();
+  }
 
   return { tenantId };
 }

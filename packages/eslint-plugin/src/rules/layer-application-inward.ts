@@ -30,20 +30,31 @@ export const layerApplicationInward = defineRule<'package' | 'outsideConcern' | 
   create({ file, report }) {
     const here = inLayer(file, 'application');
 
-    if (here === undefined) return {};
+    if (here === undefined) {
+      return {};
+    }
 
     const allowed = file.config.applicationAllowedPackages;
     const declares = isDeclaredStyle(file);
 
     return importListener(file, ({ node, target, specifier }) => {
       // Declarations are pure metadata: a declared use case imports them whatever the allow-list says.
-      if (declares && specifier === DECLARATIONS_ENTRY) return;
+      if (declares && specifier === DECLARATIONS_ENTRY) {
+        return;
+      }
 
       if (target.kind === 'package') {
         const concern = outsideConcern(target.name);
 
-        if (concern !== undefined) report({ node, messageId: 'outsideConcern', data: { importer: 'The application layer', specifier, ...concern } });
-        else if (!allowed.includes(target.name)) report({ node, messageId: 'package', data: { name: target.name, context: here.context } });
+        if (concern !== undefined) {
+          report({
+            node,
+            messageId: 'outsideConcern',
+            data: { importer: 'The application layer', specifier, ...concern },
+          });
+        } else if (!allowed.includes(target.name)) {
+          report({ node, messageId: 'package', data: { name: target.name, context: here.context } });
+        }
       } else if (target.kind === 'builtin') {
         report({ node, messageId: 'builtin', data: { name: specifier } });
       } else if (pointsOutward(here, target)) {
@@ -56,8 +67,13 @@ export const layerApplicationInward = defineRule<'package' | 'outsideConcern' | 
 function pointsOutward(here: ContextLocation, target: Extract<ImportTarget, { kind: 'file' }>): boolean {
   const there = target.location;
 
-  if (there.area === 'shared-kernel') return false;
-  if (there.area !== 'context') return true;
+  if (there.area === 'shared-kernel') {
+    return false;
+  }
+
+  if (there.area !== 'context') {
+    return true;
+  }
 
   // Another context: the context/* rules decide.
   return there.context === here.context && !INWARD.includes(there.layer);

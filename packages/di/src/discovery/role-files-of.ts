@@ -31,11 +31,15 @@ export async function roleFilesOf(root: string, selection: Selection): Promise<R
   for (const relative of await sourcesOf(root)) {
     const candidate = candidateOf(root, relative, selection.extensions);
 
-    if (candidate === undefined || selection.ignore?.(relative) === true) continue;
+    if (candidate === undefined || selection.ignore?.(relative) === true) {
+      continue;
+    }
 
     const known = byStem.get(candidate.stem);
 
-    if (known === undefined || candidate.rank < known.rank) byStem.set(candidate.stem, candidate);
+    if (known === undefined || candidate.rank < known.rank) {
+      byStem.set(candidate.stem, candidate);
+    }
   }
 
   return [...byStem.values()].sort((left, right) => compare(left.relative, right.relative));
@@ -62,7 +66,9 @@ async function filesUnder(root: string, layer: string): Promise<string[] | undef
       .filter((entry) => entry.isFile())
       .map((entry) => path.relative(root, path.join(entry.parentPath, entry.name)).split(path.sep).join('/'));
   } catch (error) {
-    if (isMissing(error)) return undefined;
+    if (isMissing(error)) {
+      return undefined;
+    }
 
     throw error;
   }
@@ -75,18 +81,24 @@ function isMissing(error: unknown): boolean {
 function candidateOf(root: string, relative: string, extensions: readonly string[]): Candidate | undefined {
   const rank = extensions.findIndex((extension) => relative.endsWith(extension));
 
-  if (rank === -1 || /\.d\.[cm]?ts$/.test(relative)) return undefined;
+  if (rank === -1 || /\.d\.[cm]?ts$/.test(relative)) {
+    return undefined;
+  }
 
   const stem = relative.slice(0, -String(extensions[rank]).length);
   const rule = ROLE_RULES.find(({ suffix }) => stem.endsWith(`.${suffix}`));
 
-  if (rule === undefined) return undefined;
+  if (rule === undefined) {
+    return undefined;
+  }
 
   return { absolute: path.join(root, relative), relative, rule, stem, rank };
 }
 
 function compare(left: string, right: string): number {
-  if (left === right) return 0;
+  if (left === right) {
+    return 0;
+  }
 
   return left < right ? -1 : 1;
 }

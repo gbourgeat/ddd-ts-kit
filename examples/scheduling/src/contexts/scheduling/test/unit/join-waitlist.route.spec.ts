@@ -30,7 +30,9 @@ describe('POST /calendars/:calendarId/waitlist', () => {
     ['an empty appointment type', { ...valid, appointmentTypeId: '' }],
     ['a day that is not written YYYY-MM-DD', { ...valid, day: 'Monday' }],
   ])('refuses %s with 422', async (_case, body) => {
-    const commands = new InMemoryCommandBus().register(JoinWaitlistCommand, { execute: async () => 'calendar-1.2026-03-02' });
+    const commands = new InMemoryCommandBus().register(JoinWaitlistCommand, {
+      execute: async () => 'calendar-1.2026-03-02',
+    });
 
     const response = await executeRoute(joinWaitlistRoute(commands), request(body), { validateResponses: true });
 

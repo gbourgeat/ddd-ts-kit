@@ -5,7 +5,5 @@ export function unwrap<T, E>(result: Result<T, E>): T {
     return result.value;
   }
 
-  throw result.error instanceof Error
-    ? result.error
-    : new Error('unwrap() called on an Err result');
+  throw result.error instanceof Error ? result.error : new Error('unwrap() called on an Err result');
 }

@@ -16,7 +16,10 @@ describe('BookingWindow', () => {
     ['a notice that is not whole minutes', 1.5, 60],
     ['a horizon that does not come after the notice', 60, 60],
   ])('refuses %s', (_case, notice, horizon) => {
-    expect(BookingWindow.create(notice, horizon)).toMatchObject({ ok: false, error: expect.any(InvalidBookingWindowError) });
+    expect(BookingWindow.create(notice, horizon)).toMatchObject({
+      ok: false,
+      error: expect.any(InvalidBookingWindowError),
+    });
   });
 
   it('is by default a notice of two hours and a horizon of ninety days', () => {

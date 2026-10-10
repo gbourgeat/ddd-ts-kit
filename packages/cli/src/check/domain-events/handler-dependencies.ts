@@ -22,7 +22,9 @@ export function handlerDependencies(file: SourceFile, className: string): Handle
   const named = [...listed(file, className), ...received(file, className)];
   const resolved = named.flatMap((dependency) => resolve(file, dependency));
 
-  return resolved.filter((dependency, index) => resolved.findIndex((other) => other.name === dependency.name) === index);
+  return resolved.filter(
+    (dependency, index) => resolved.findIndex((other) => other.name === dependency.name) === index,
+  );
 }
 
 function listed(file: SourceFile, className: string): Named[] {
@@ -36,7 +38,9 @@ function declarationLines(file: SourceFile, className: string): number[] {
   const declared = classesOf(file.scan).find(({ name }) => name === className);
   const first = declared?.decorations[0]?.line;
 
-  if (declared === undefined || first === undefined) return [];
+  if (declared === undefined || first === undefined) {
+    return [];
+  }
 
   return Array.from({ length: declared.line - first + 1 }, (_, index) => first + index);
 }
@@ -55,7 +59,11 @@ function received(file: SourceFile, className: string): Named[] {
   const shape = file.structure.classes.find((candidate) => candidate.name === className && candidate.depth === 0);
   const constructors = (shape?.methods ?? []).filter((method) => method.isConstructor);
 
-  return constructors.flatMap(({ line, parameters }) => parameters.flatMap((parameter) => TYPE.exec(parameter)?.[1] ?? []).map((name) => ({ name: name.replace(/\s+/g, ''), line })));
+  return constructors.flatMap(({ line, parameters }) =>
+    parameters
+      .flatMap((parameter) => TYPE.exec(parameter)?.[1] ?? [])
+      .map((name) => ({ name: name.replace(/\s+/g, ''), line })),
+  );
 }
 
 /** `kernel.Cache` is bound by the import of `kernel` and named `Cache`. */

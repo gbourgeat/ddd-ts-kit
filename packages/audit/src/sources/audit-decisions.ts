@@ -25,7 +25,9 @@ export function auditDecisions(
   options: AuditDecisionsOptions,
 ): (decision: AuthorizationDecision) => Promise<void> {
   return async (decision) => {
-    if (!isRecorded(decision, options)) return;
+    if (!isRecorded(decision, options)) {
+      return;
+    }
 
     const record = auditRecordOf(options, {
       category: 'authorization',
@@ -43,15 +45,23 @@ export function auditDecisions(
 }
 
 function isRecorded(decision: AuthorizationDecision, options: AuditDecisionsOptions): boolean {
-  if (!decision.decision.allowed) return true;
+  if (!decision.decision.allowed) {
+    return true;
+  }
 
-  if (!(options.isRead ?? isAboutAQuery)(decision)) return true;
+  if (!(options.isRead ?? isAboutAQuery)(decision)) {
+    return true;
+  }
 
-  if (options.sensitivePermissions?.includes(decision.permissionId) === true) return true;
+  if (options.sensitivePermissions?.includes(decision.permissionId) === true) {
+    return true;
+  }
 
   const allowedReads = options.allowedReads ?? 'sensitive';
 
-  if (typeof allowedReads === 'string') return allowedReads === 'all';
+  if (typeof allowedReads === 'string') {
+    return allowedReads === 'all';
+  }
 
   return (allowedReads.random ?? Math.random)() < allowedReads.sample;
 }

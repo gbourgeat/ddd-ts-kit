@@ -12,7 +12,9 @@ type Source = Readonly<TSESLint.SourceCode>;
 
 /** Read from the declaration, without type information: a parameter, a variable, a property or a parameter property. */
 export function declaredTypeName(sourceCode: Source, node: TSESTree.Node): string | undefined {
-  if (node.type === AST_NODE_TYPES.Identifier) return variableTypeName(sourceCode, node);
+  if (node.type === AST_NODE_TYPES.Identifier) {
+    return variableTypeName(sourceCode, node);
+  }
 
   const name = startsAtThis(node) ? accessedName(node) : undefined;
   const body = enclosingMember(node)?.body;
@@ -27,11 +29,17 @@ function variableTypeName(sourceCode: Source, node: TSESTree.Identifier): string
 }
 
 function propertyTypeName(body: TSESTree.ClassBody, name: string): string | undefined {
-  const property = body.body.find((member) => member.type === AST_NODE_TYPES.PropertyDefinition && memberName(member) === name);
+  const property = body.body.find(
+    (member) => member.type === AST_NODE_TYPES.PropertyDefinition && memberName(member) === name,
+  );
 
-  if (property?.type === AST_NODE_TYPES.PropertyDefinition) return typeReferenceName(property.typeAnnotation);
+  if (property?.type === AST_NODE_TYPES.PropertyDefinition) {
+    return typeReferenceName(property.typeAnnotation);
+  }
 
   const parameter = parameterProperties(constructorOf(body)).find((candidate) => parameterName(candidate) === name);
 
-  return parameter?.parameter.type === AST_NODE_TYPES.Identifier ? typeReferenceName(parameter.parameter.typeAnnotation) : undefined;
+  return parameter?.parameter.type === AST_NODE_TYPES.Identifier
+    ? typeReferenceName(parameter.parameter.typeAnnotation)
+    : undefined;
 }

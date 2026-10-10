@@ -25,7 +25,9 @@ export function setOpeningHoursRoute(commands: CommandBus): Route {
       security: ['bearer'],
     },
     async (input) => {
-      const id = await commands.execute(new SetOpeningHoursCommand(actorOf(input.context.principal), input.params.calendarId, input.body.ranges));
+      const id = await commands.execute(
+        new SetOpeningHoursCommand(actorOf(input.context.principal), input.params.calendarId, input.body.ranges),
+      );
 
       return { status: 200, body: { id } };
     },

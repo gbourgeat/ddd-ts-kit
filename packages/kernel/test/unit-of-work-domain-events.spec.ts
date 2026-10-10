@@ -42,14 +42,18 @@ function aShop() {
         journal.push(`saved ${id}`);
       }
 
-      if (then !== undefined) throw then;
+      if (then !== undefined) {
+        throw then;
+      }
 
       return undefined;
     },
   });
 
   const note = (label: string, phase: 'before-commit' | 'after-commit' = 'before-commit'): void => {
-    bench.dispatcher.on('shop.cart.opened', async (event) => void journal.push(`${label} ${event.aggregateId}`), { phase });
+    bench.dispatcher.on('shop.cart.opened', async (event) => void journal.push(`${label} ${event.aggregateId}`), {
+      phase,
+    });
   };
 
   return { ...bench, journal, unitOfWork, bus, note };
@@ -74,7 +78,9 @@ describe('domain events of a command wait for the end of its unit of work', () =
     dispatcher.on('shop.cart.opened', async (event) => {
       journal.push(`handling ${event.aggregateId}`);
 
-      if (event.aggregateId === 'c1') await carts.save(Cart.open('c3'));
+      if (event.aggregateId === 'c1') {
+        await carts.save(Cart.open('c3'));
+      }
     });
 
     await bus.execute(new OpenCarts(['c1', 'c2']));
@@ -107,7 +113,10 @@ describe('domain events of a command wait for the end of its unit of work', () =
     const second = Cart.open('c2');
 
     hear('shop.cart.opened');
-    dispatcher.on('shop.cart.opened', async (event) => void heard.push(`after ${event.aggregateId}`), { phase: 'after-commit' });
+
+    dispatcher.on('shop.cart.opened', async (event) => void heard.push(`after ${event.aggregateId}`), {
+      phase: 'after-commit',
+    });
 
     const failing = new InMemoryUnitOfWork().run(async () => {
       await carts.save(Cart.open('c1'));
@@ -126,7 +135,9 @@ describe('domain events of a command wait for the end of its unit of work', () =
     note('handling');
 
     dispatcher.on('shop.cart.opened', async (event) => {
-      if (event.aggregateId === 'c2') throw new Error('stock unreachable');
+      if (event.aggregateId === 'c2') {
+        throw new Error('stock unreachable');
+      }
     });
 
     note('committed', 'after-commit');
@@ -155,7 +166,16 @@ describe('the after-commit phase', () => {
     note('handling');
     await bus.execute(new OpenCarts(['c1', 'c2']));
 
-    expect(journal).toEqual(['begin', 'saved c1', 'saved c2', 'handling c1', 'handling c2', 'commit', 'committed c1', 'committed c2']);
+    expect(journal).toEqual([
+      'begin',
+      'saved c1',
+      'saved c2',
+      'handling c1',
+      'handling c2',
+      'commit',
+      'committed c1',
+      'committed c2',
+    ]);
   });
 
   it('reports the handler that fails, runs the others and lets the command succeed', async () => {
@@ -173,27 +193,62 @@ describe('the after-commit phase', () => {
 
     expect(heard).toEqual(['c1']);
     expect(dispatcher.afterCommitFailures.map(({ error }) => error)).toEqual([failure]);
-    expect(reporter.reports).toEqual([{ error: failure, report: { severity: 'error', origin: 'domain-event', operation: 'after-commit shop.cart.opened' } }]);
-    expect(logger.entries).toEqual([{ level: 'error', message: 'A domain event handler failed after the commit', fields: { domainEvent: 'shop.cart.opened', errorType: 'Error' } }]);
+
+    expect(reporter.reports).toEqual([
+      {
+        error: failure,
+        report: { severity: 'error', origin: 'domain-event', operation: 'after-commit shop.cart.opened' },
+      },
+    ]);
+
+    expect(logger.entries).toEqual([
+      {
+        level: 'error',
+        message: 'A domain event handler failed after the commit',
+        fields: { domainEvent: 'shop.cart.opened', errorType: 'Error' },
+      },
+    ]);
   });
 
   it('refuses a save made by an after-commit handler before it writes, and lets it send a command', async () => {
     const { bus, carts, dispatcher, journal, note } = aShop();
 
-    dispatcher.on('shop.cart.opened', async (event) => {
-      if (event.aggregateId === 'c1') await carts.save(Cart.open('c9'));
-    }, { phase: 'after-commit' });
+    dispatcher.on(
+      'shop.cart.opened',
+      async (event) => {
+        if (event.aggregateId === 'c1') {
+          await carts.save(Cart.open('c9'));
+        }
+      },
+      { phase: 'after-commit' },
+    );
 
-    dispatcher.on('shop.cart.opened', async (event) => {
-      if (event.aggregateId === 'c1') await bus.execute(new OpenCarts(['c2']));
-    }, { phase: 'after-commit' });
+    dispatcher.on(
+      'shop.cart.opened',
+      async (event) => {
+        if (event.aggregateId === 'c1') {
+          await bus.execute(new OpenCarts(['c2']));
+        }
+      },
+      { phase: 'after-commit' },
+    );
 
     note('handling');
     await bus.execute(new OpenCarts(['c1']));
 
     expect(dispatcher.afterCommitFailures.map(({ error }) => error)).toEqual([new SaveAfterCommitError('save')]);
     expect(carts.saved).toEqual(['c1', 'c2']);
-    expect(journal).toEqual(['begin', 'saved c1', 'handling c1', 'commit', 'begin', 'saved c2', 'handling c2', 'commit']);
+
+    expect(journal).toEqual([
+      'begin',
+      'saved c1',
+      'handling c1',
+      'commit',
+      'begin',
+      'saved c2',
+      'handling c2',
+      'commit',
+    ]);
   });
 
   it('tells where the caller stands in the unit of work', async () => {
@@ -225,7 +280,9 @@ describe('the scope of a unit of work', () => {
 
       await unitOfWork.run(async () => {
         dispatcher.on('shop.cart.opened', async (event) => {
-          if (unitOfWorkStage() === 'before-commit' && event.aggregateId.startsWith(name)) mine.push(`${event.aggregateId} after ${carts.saved.length} saves`);
+          if (unitOfWorkStage() === 'before-commit' && event.aggregateId.startsWith(name)) {
+            mine.push(`${event.aggregateId} after ${carts.saved.length} saves`);
+          }
         });
 
         await carts.save(Cart.open(`${name}1`));

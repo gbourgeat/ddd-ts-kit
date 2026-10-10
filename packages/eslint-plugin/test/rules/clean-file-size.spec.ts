@@ -30,11 +30,20 @@ ruleTester.run('clean-function-ceiling', cleanFunctionCeiling, {
     at('src/a.ts', `function steps(): void {\n${body(120)}\n}`, { rules: { 'clean/function-size': 'off' } }),
   ],
   invalid: [
-    { code: `function steps(): void {\n${body(101)}\n}`, errors: [{ messageId: 'ceiling', data: { name: "Function 'steps'", count: 101, limit: 100 } }] },
+    {
+      code: `function steps(): void {\n${body(101)}\n}`,
+      errors: [{ messageId: 'ceiling', data: { name: "Function 'steps'", count: 101, limit: 100 } }],
+    },
     { code: `describe('an invoice', () => {\n${body(101)}\n});`, errors: [{ messageId: 'ceiling' }] },
     { code: `runner.describe('a contract', () => {\n${body(101)}\n});`, errors: [{ messageId: 'ceiling' }] },
-    { ...at(`${BILLING}/billing.module.ts`, `export function register(): void {\n${body(101)}\n}`), errors: [{ messageId: 'ceiling' }] },
-    { ...at('src/a.ts', `function steps(): void {\n${body(101)}\n}`, { limits: { maxFunctionLines: 500 } }), errors: [{ messageId: 'ceiling' }] },
+    {
+      ...at(`${BILLING}/billing.module.ts`, `export function register(): void {\n${body(101)}\n}`),
+      errors: [{ messageId: 'ceiling' }],
+    },
+    {
+      ...at('src/a.ts', `function steps(): void {\n${body(101)}\n}`, { limits: { maxFunctionLines: 500 } }),
+      errors: [{ messageId: 'ceiling' }],
+    },
   ],
 });
 
@@ -44,7 +53,14 @@ ruleTester.run('clean-function-size, clamped at the ceiling', cleanFunctionSize,
     at('src/a.ts', `function steps(): void {\n${body(100)}\n}`, { limits: { maxFunctionLines: 500 } }),
   ],
   invalid: [
-    { code: `function steps(): void {\n${body(101)}\n}`, options: [{ maxLines: 500 }], errors: [{ messageId: 'lines', data: { name: "Function 'steps'", count: 101, limit: 100 } }] },
-    { ...at('src/a.ts', `function steps(): void {\n${body(101)}\n}`, { limits: { maxFunctionLines: 500 } }), errors: [{ messageId: 'lines', data: { name: "Function 'steps'", count: 101, limit: 100 } }] },
+    {
+      code: `function steps(): void {\n${body(101)}\n}`,
+      options: [{ maxLines: 500 }],
+      errors: [{ messageId: 'lines', data: { name: "Function 'steps'", count: 101, limit: 100 } }],
+    },
+    {
+      ...at('src/a.ts', `function steps(): void {\n${body(101)}\n}`, { limits: { maxFunctionLines: 500 } }),
+      errors: [{ messageId: 'lines', data: { name: "Function 'steps'", count: 101, limit: 100 } }],
+    },
   ],
 });

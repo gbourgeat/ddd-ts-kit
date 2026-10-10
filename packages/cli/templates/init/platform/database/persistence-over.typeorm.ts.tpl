@@ -13,7 +13,9 @@ export function persistenceOver(dataSource: DataSource): Persistence {
     outbox: new TypeOrmOutboxStore(unitOfWork, { entity: outbox }),
     processedEvents: new TypeOrmProcessedEventStore(unitOfWork, { entity: processedEvents }),
     close: async () => {
-      if (dataSource.isInitialized) await dataSource.destroy();
+      if (dataSource.isInitialized) {
+        await dataSource.destroy();
+      }
     },
   };
 }

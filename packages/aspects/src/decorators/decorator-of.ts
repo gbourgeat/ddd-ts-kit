@@ -10,8 +10,11 @@ import type { AsyncMethodDecorator } from './async-method-decorator.js';
  */
 export function decoratorOf(advise: AdviceFactory): AsyncMethodDecorator {
   return (target: unknown, second: unknown, descriptor?: unknown): undefined => {
-    if (isStandardContext(second)) adviseAtConstruction(second, advise);
-    else adviseOnThePrototype({ prototype: target, name: second, descriptor }, advise);
+    if (isStandardContext(second)) {
+      adviseAtConstruction(second, advise);
+    } else {
+      adviseOnThePrototype({ prototype: target, name: second, descriptor }, advise);
+    }
   };
 }
 
@@ -31,7 +34,9 @@ function isStandardContext(value: unknown): value is StandardContext {
 function adviseAtConstruction(context: StandardContext, advise: AdviceFactory): void {
   const { name } = context;
 
-  if (context.static === true || context.private === true || typeof name !== 'string') throw misplaced();
+  if (context.static === true || context.private === true || typeof name !== 'string') {
+    throw misplaced();
+  }
 
   context.addInitializer(function (this: object) {
     adviseMethod(this, name, advise);
@@ -45,9 +50,13 @@ interface LegacyCall {
 }
 
 function adviseOnThePrototype({ prototype, name, descriptor }: LegacyCall, advise: AdviceFactory): void {
-  if (typeof prototype !== 'object' || typeof name !== 'string') throw misplaced();
+  if (typeof prototype !== 'object' || typeof name !== 'string') {
+    throw misplaced();
+  }
 
-  if (typeof descriptor !== 'object' || descriptor === null || !('value' in descriptor)) throw misplaced();
+  if (typeof descriptor !== 'object' || descriptor === null || !('value' in descriptor)) {
+    throw misplaced();
+  }
 
   descriptor.value = advisePrototypeMethod(name, descriptor.value, advise);
 }

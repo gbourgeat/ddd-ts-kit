@@ -25,10 +25,18 @@ export function typeFamily(shapes: FileShapes): TypeFamily | undefined {
   const returned = functions.map(returnedType);
   const [first] = returned;
 
-  if (first === undefined) return undefined;
+  if (first === undefined) {
+    return undefined;
+  }
 
-  const declaring = shapes.exported.filter((candidate) => candidate.kind === 'class' || candidate.kind === 'interface' || candidate.kind === 'type');
-  const candidates = [...declaring.map((candidate) => candidate.name), ...(shapes.imported.includes(first) ? [first] : [])];
+  const declaring = shapes.exported.filter(
+    (candidate) => candidate.kind === 'class' || candidate.kind === 'interface' || candidate.kind === 'type',
+  );
+
+  const candidates = [
+    ...declaring.map((candidate) => candidate.name),
+    ...(shapes.imported.includes(first) ? [first] : []),
+  ];
 
   const type = candidates.find((name) => {
     const accepted = [name, ...(shapes.types.find((candidate) => candidate.name === name)?.members ?? [])];
@@ -36,13 +44,22 @@ export function typeFamily(shapes: FileShapes): TypeFamily | undefined {
     return returned.every((reference) => reference !== undefined && accepted.includes(reference));
   });
 
-  if (type === undefined) return undefined;
+  if (type === undefined) {
+    return undefined;
+  }
 
   const declaredBy = declaring.find((candidate) => candidate.name === type);
-  const closure = typeClosure([...(declaredBy === undefined ? [] : [declaredBy.signature]), ...functions.map((made) => made.signature)], shapes.types);
+
+  const closure = typeClosure(
+    [...(declaredBy === undefined ? [] : [declaredBy.signature]), ...functions.map((made) => made.signature)],
+    shapes.types,
+  );
+
   const others = shapes.counted.filter((candidate) => candidate.kind !== 'function' && candidate.name !== type);
 
-  return others.every((other) => other.kind === 'interface' && closure.has(other.name)) ? { type, declaredBy } : undefined;
+  return others.every((other) => other.kind === 'interface' && closure.has(other.name))
+    ? { type, declaredBy }
+    : undefined;
 }
 
 /** The name the return type annotation of a function refers to: `T` for `T` and for `T<..>`. */

@@ -27,7 +27,9 @@ export function routeVars(scope: Scope, { name, endpoint, useCase }: RouteParts)
     hasBody,
     usesAnyObject: hasBody || useCase.isQuery,
     usesSchema: hasBody || useCase.isQuery || useCase.returnsId,
-    dtoImports: dtoClasses(endpoint, useCase).map((role) => `import { ${name.pascal}${toName(role).pascal} } from './${name.kebab}-${role}.dto.js';`).join('\n'),
+    dtoImports: dtoClasses(endpoint, useCase)
+      .map((role) => `import { ${name.pascal}${toName(role).pascal} } from './${name.kebab}-${role}.dto.js';`)
+      .join('\n'),
     ...requestVars(scope, endpoint, hasBody),
     ...busVars(useCase),
     ...securityVars(scope, useCase),
@@ -48,8 +50,13 @@ function requestVars(scope: Scope, { parameters }: Endpoint, hasBody: boolean): 
 }
 
 function successStatus(endpoint: Endpoint, useCase: UseCase): number {
-  if (useCase.isQuery) return 200;
-  if (!useCase.returnsId) return 204;
+  if (useCase.isQuery) {
+    return 200;
+  }
+
+  if (!useCase.returnsId) {
+    return 204;
+  }
 
   return endpoint.method === 'POST' ? 201 : 200;
 }
@@ -82,7 +89,7 @@ function parameterVars(parameters: readonly string[]): RenderContext {
 
   return {
     zodParams: parameters.map((parameter) => `${parameter}: z.string().min(1)`).join(', '),
-    dtoParams: parameters.map((parameter) => `  @IsString()\n  ${parameter} = '';`).join('\n\n'),
+    dtoParams: parameters.map((parameter) => `@IsString()\n  ${parameter} = '';`).join('\n\n  '),
     sampleParams: parameters.length > 0 ? `{ ${sample} }` : '{}',
   };
 }

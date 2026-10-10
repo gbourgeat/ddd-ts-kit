@@ -23,7 +23,9 @@ export class SourceOfTruth<Row> implements ReadModelSource<Row> {
   }
 
   async export(cursor: string | undefined): Promise<Page<StampedRow<Row>>> {
-    if (cursor !== undefined) await this.duringExport(this.exportedPages);
+    if (cursor !== undefined) {
+      await this.duringExport(this.exportedPages);
+    }
 
     const after = [...this.rows.keys()].sort().filter((key) => cursor === undefined || key > cursor);
     const keys = after.slice(0, 2);
@@ -31,16 +33,21 @@ export class SourceOfTruth<Row> implements ReadModelSource<Row> {
 
     this.exportedPages += 1;
 
-    return pageOf(keys.flatMap((key) => this.rows.get(key) ?? []), after.length > 2 && last !== undefined ? { nextCursor: last } : {});
+    return pageOf(
+      keys.flatMap((key) => this.rows.get(key) ?? []),
+      after.length > 2 && last !== undefined ? { nextCursor: last } : {},
+    );
   }
 
   async lookup(keys: readonly string[]): Promise<ReadonlyMap<string, StampedRow<Row>>> {
     this.lookups.push([...keys]);
 
-    return new Map(keys.flatMap((key) => {
-      const entry = this.rows.get(key);
+    return new Map(
+      keys.flatMap((key) => {
+        const entry = this.rows.get(key);
 
-      return entry === undefined ? [] : [[key, entry]];
-    }));
+        return entry === undefined ? [] : [[key, entry]];
+      }),
+    );
   }
 }

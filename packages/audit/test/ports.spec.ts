@@ -19,7 +19,15 @@ describe('the ports of the audit trail', () => {
     const masker: AuditMasker = hmacMasker('secret');
 
     expect(describeToken(AuditMasker)).toBe('AuditMasker');
-    expect(tokenIdentity(AuditMasker)).toBe(tokenIdentity(class AuditMasker { static readonly tokenKey = 'audit.AuditMasker' }));
+
+    expect(tokenIdentity(AuditMasker)).toBe(
+      tokenIdentity(
+        class AuditMasker {
+          static readonly tokenKey = 'audit.AuditMasker';
+        },
+      ),
+    );
+
     expect(masker.mask('lin@example.org', { field: 'patientEmail', actorId: 'ada' })).toMatch(/^[0-9a-f]{64}$/);
   });
 });

@@ -7,7 +7,9 @@ export async function wiringRejection(work: Promise<unknown>): Promise<WiringErr
     (error: unknown) => error,
   );
 
-  if (!(outcome instanceof WiringError)) throw new Error(`Expected a WiringError, got ${String(outcome)}`);
+  if (!(outcome instanceof WiringError)) {
+    throw new Error(`Expected a WiringError, got ${String(outcome)}`);
+  }
 
   return outcome;
 }

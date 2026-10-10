@@ -37,10 +37,7 @@ export interface OutboxStoreContractOptions {
   readonly leaseMs: number;
 }
 
-export function outboxStoreContract(
-  runner: ContractRunner,
-  options: OutboxStoreContractOptions,
-): void {
+export function outboxStoreContract(runner: ContractRunner, options: OutboxStoreContractOptions): void {
   new OutboxStoreSuite(runner, options).describe(`${options.name} (outbox store contract)`);
 }
 

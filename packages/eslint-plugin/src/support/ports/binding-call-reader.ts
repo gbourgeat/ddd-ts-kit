@@ -14,7 +14,9 @@ const OTHER_RESOLVERS = new Set(['Promise', 'path', 'require', 'meta']);
  * program that imports something from `@ddd-ts-kit/di`: elsewhere `resolve('x')` is another call.
  */
 export function bindingCallReader(program: TSESTree.Program): BindingCallReader {
-  const wires = program.body.some((statement) => statement.type === AST_NODE_TYPES.ImportDeclaration && DI.test(statement.source.value));
+  const wires = program.body.some(
+    (statement) => statement.type === AST_NODE_TYPES.ImportDeclaration && DI.test(statement.source.value),
+  );
 
   return (node) => {
     const name = calleeName(node);
@@ -24,7 +26,9 @@ export function bindingCallReader(program: TSESTree.Program): BindingCallReader 
 }
 
 function isOtherResolver(callee: TSESTree.Expression): boolean {
-  if (callee.type !== AST_NODE_TYPES.MemberExpression) return false;
+  if (callee.type !== AST_NODE_TYPES.MemberExpression) {
+    return false;
+  }
 
   const receiver = callee.object.type === AST_NODE_TYPES.MetaProperty ? callee.object.property : callee.object;
 

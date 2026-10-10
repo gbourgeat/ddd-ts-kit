@@ -21,7 +21,9 @@ export async function withinUnitOfWork<T>(
   work: () => Promise<T>,
   transaction: (work: () => Promise<T>) => Promise<T>,
 ): Promise<T> {
-  if (isRunning(unitOfWorkScope.getStore())) return transaction(work);
+  if (isRunning(unitOfWorkScope.getStore())) {
+    return transaction(work);
+  }
 
   const scope: UnitOfWorkScope = { kind: 'unit-of-work', stage: 'open', queue: [], dispatched: [] };
 

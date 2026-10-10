@@ -21,7 +21,9 @@ export const cleanNoCommentedOutCode = defineRule<'code'>({
         for (const paragraph of paragraphs(sourceCode)) {
           const culprit = firstCodeLine(paragraph, parser);
 
-          if (culprit !== undefined) report({ loc: culprit.loc, messageId: 'code', data: { excerpt: culprit.text.slice(0, 60) } });
+          if (culprit !== undefined) {
+            report({ loc: culprit.loc, messageId: 'code', data: { excerpt: culprit.text.slice(0, 60) } });
+          }
         }
       },
     };
@@ -34,12 +36,17 @@ function paragraphs(sourceCode: Readonly<TSESLint.SourceCode>): CommentLine[][] 
   let previous: CommentLine | undefined;
 
   for (const line of commentLines(sourceCode)) {
-    if (line.jsdoc || line.sample || line.text === '' || isDirective(line.text)) continue;
+    if (line.jsdoc || line.sample || line.text === '' || isDirective(line.text)) {
+      continue;
+    }
 
     const current = previous !== undefined && continues(previous, line) ? groups.at(-1) : undefined;
 
-    if (current === undefined) groups.push([line]);
-    else current.push(line);
+    if (current === undefined) {
+      groups.push([line]);
+    } else {
+      current.push(line);
+    }
 
     previous = line;
   }
@@ -48,15 +55,24 @@ function paragraphs(sourceCode: Readonly<TSESLint.SourceCode>): CommentLine[][] 
 }
 
 function continues(previous: CommentLine, line: CommentLine): boolean {
-  if (previous.trailing || line.trailing || line.loc.start.line !== previous.loc.start.line + 1) return false;
+  if (previous.trailing || line.trailing || line.loc.start.line !== previous.loc.start.line + 1) {
+    return false;
+  }
 
   return previous.comment === line.comment || (!previous.block && !line.block);
 }
 
-function firstCodeLine(paragraph: readonly CommentLine[], parser: TSESLint.Parser.LooseParserModule | undefined): CommentLine | undefined {
+function firstCodeLine(
+  paragraph: readonly CommentLine[],
+  parser: TSESLint.Parser.LooseParserModule | undefined,
+): CommentLine | undefined {
   const whole = paragraph.map((line) => line.text).join('\n');
 
-  if (paragraph.length > 1 && isCommentedOutCode(whole, parser)) return paragraph[0];
+  if (paragraph.length > 1 && isCommentedOutCode(whole, parser)) {
+    return paragraph[0];
+  }
 
-  return paragraph.find((line) => isCommentedOutCode(line.text, parser)) ?? paragraph.find((line) => isFragment(line.text));
+  return (
+    paragraph.find((line) => isCommentedOutCode(line.text, parser)) ?? paragraph.find((line) => isFragment(line.text))
+  );
 }

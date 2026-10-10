@@ -12,11 +12,22 @@ describe('JwtAuthenticator', () => {
   });
 
   it('turns a valid token into an actor that keeps nothing of the token', async () => {
-    const credential = await token({ realm_access: { roles: ['accountant', 'clerk'] }, tenant_id: 'acme', email: 'ada@example.test' });
+    const credential = await token({
+      realm_access: { roles: ['accountant', 'clerk'] },
+      tenant_id: 'acme',
+      email: 'ada@example.test',
+    });
 
     const actor = await authenticator().authenticate(credential);
 
-    expect(actor).toEqual({ id: 'ada', type: 'user', tenantId: 'acme', roles: ['accountant', 'clerk'], attributes: {} });
+    expect(actor).toEqual({
+      id: 'ada',
+      type: 'user',
+      tenantId: 'acme',
+      roles: ['accountant', 'clerk'],
+      attributes: {},
+    });
+
     expect(JSON.stringify(actor)).not.toContain(credential);
   });
 
@@ -63,7 +74,10 @@ describe('JwtAuthenticator', () => {
 describe('JwtAuthenticator, signature, key and shape of the token', () => {
   it('refuses a token altered after it was signed', async () => {
     const [header = '', , signature = ''] = (await token({ roles: ['clerk'] })).split('.');
-    const forged = Buffer.from(JSON.stringify({ sub: 'ada', iss: ISSUER, aud: AUDIENCE, roles: ['admin'] })).toString('base64url');
+
+    const forged = Buffer.from(JSON.stringify({ sub: 'ada', iss: ISSUER, aud: AUDIENCE, roles: ['admin'] })).toString(
+      'base64url',
+    );
 
     expect(await refusalOf(`${header}.${forged}.${signature}`)).toMatchObject({ reason: 'BAD_SIGNATURE' });
   });
@@ -94,7 +108,12 @@ describe('JwtAuthenticator, signature, key and shape of the token', () => {
     expect(await refusalOf(symmetric)).toMatchObject({ reason: 'ALGORITHM_NOT_ALLOWED' });
 
     expect(
-      await new JwtAuthenticator({ key: secret, issuer: ISSUER, audience: AUDIENCE, algorithms: ['HS256'] }).authenticate(symmetric),
+      await new JwtAuthenticator({
+        key: secret,
+        issuer: ISSUER,
+        audience: AUDIENCE,
+        algorithms: ['HS256'],
+      }).authenticate(symmetric),
     ).toMatchObject({ id: 'ada' });
   });
 
@@ -104,7 +123,10 @@ describe('JwtAuthenticator, signature, key and shape of the token', () => {
 
     expect(JSON.stringify(subject)).toBe('{}');
     expect(Object.values({ ...subject }).every((value) => typeof value === 'function')).toBe(true);
-    expect(inspect(subject, { depth: null, showHidden: true }).replace(/\s+/g, '')).not.toContain(secret.slice(0, 8).join(','));
+
+    expect(inspect(subject, { depth: null, showHidden: true }).replace(/\s+/g, '')).not.toContain(
+      secret.slice(0, 8).join(','),
+    );
   });
 
   it.each(['', 'not-a-token', 'a.b.c'])('refuses the malformed credential %j', async (credential) => {
@@ -134,7 +156,9 @@ describe('JwtAuthenticator default claim mapping', () => {
   const rolesOf = async (claims: JWTPayload) => (await authenticator().authenticate(await token(claims))).roles;
 
   it('reads the realm roles first', async () => {
-    expect(await rolesOf({ realm_access: { roles: ['accountant'] }, roles: ['clerk'], scope: 'openid' })).toEqual(['accountant']);
+    expect(await rolesOf({ realm_access: { roles: ['accountant'] }, roles: ['clerk'], scope: 'openid' })).toEqual([
+      'accountant',
+    ]);
   });
 
   it('reads a roles claim otherwise, as a list or as words', async () => {
@@ -153,7 +177,13 @@ describe('JwtAuthenticator default claim mapping', () => {
   });
 
   it('reads the tenant from the claim it is told', async () => {
-    const perOrganization = new JwtAuthenticator({ key: verifying, issuer: ISSUER, audience: AUDIENCE, tenantClaim: 'org' });
+    const perOrganization = new JwtAuthenticator({
+      key: verifying,
+      issuer: ISSUER,
+      audience: AUDIENCE,
+      tenantClaim: 'org',
+    });
+
     const credential = await token({ org: 'globex', tenant_id: 'acme' });
 
     expect((await perOrganization.authenticate(credential)).tenantId).toBe('globex');

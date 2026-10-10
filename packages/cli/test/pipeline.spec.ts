@@ -45,12 +45,17 @@ describe('pipeline templates', () => {
   it('the vitest config differs by the placeholders of the source root, the contexts directory and the alias, by the architecture specs it runs, by the decorators plugin, which is written for the standard decorator mode only, and by the inlined package under discovery', () => {
     // The proof that each context wires alone lives in test/architecture, outside the source root.
     const rendered = template('vitest.config.ts.tpl')
-      .replace(/^\{\{#if assembly\.discovery\}\}\n[\s\S]*?^\{\{\/if\}\}\n/m, '')
-      .replaceAll(/^\{\{(?:#if decorators\.standard|\/if)\}\}\n/gm, '')
+      .replace(/^[ \t]*\{\{#if assembly\.discovery\}\}\n[\s\S]*?^[ \t]*\{\{\/if\}\}\n/m, '')
+      .replaceAll(/^[ \t]*\{\{(?:#if decorators\.standard|\/if)\}\}\n/gm, '')
       .replace(", 'test/architecture/**/*.spec.ts'", '')
       .replaceAll('{{config.contextsDir}}', 'src/contexts')
       .replaceAll('{{config.sourceRoot}}', 'src')
-      .replaceAll('{{alias.bare}}', '@');
+      .replaceAll('{{alias.bare}}', '@')
+      // With the architecture specs the unit project no longer fits one line: the formatter gives it several.
+      .replace(
+        "{\n        extends: true,\n        test: {\n          name: 'unit',\n          include: ['src/**/*.spec.ts'],\n          exclude: [INTEGRATION_SPECS],\n        },\n      },",
+        "{ extends: true, test: { name: 'unit', include: ['src/**/*.spec.ts'], exclude: [INTEGRATION_SPECS] } },",
+      );
 
     expect(rendered).toBe(source('vitest.config.ts'));
   });
@@ -78,7 +83,11 @@ describe('pipeline templates', () => {
     const shipped: unknown = JSON.parse(source('package-scripts.json'));
 
     // The import graph is cruised with the file the CLI generates from the config, after checking that it is current.
-    expect(textsAt(manifest, 'scripts')).toMatchObject({ ...textsAt(shipped, 'scripts'), 'ci:arch:graph': 'npm run depcruise' });
+    expect(textsAt(manifest, 'scripts')).toMatchObject({
+      ...textsAt(shipped, 'scripts'),
+      'ci:arch:graph': 'npm run depcruise',
+    });
+
     expect(textsAt(manifest, 'devDependencies')).toMatchObject(textsAt(shipped, 'devDependencies'));
   });
 });
@@ -93,10 +102,15 @@ describe('the knip config init writes', () => {
 
     // A fake is test support kept ready for the specs to come: with it, the port it implements is in use.
     expect(stringsAt(generated, 'entry')).toEqual(stringsAt(expected, 'entry').toSpliced(2, 0, fakes));
-    // The proof that each context wires alone is a spec outside the source root.
-    expect(stringsAt(generated, 'vitest', 'entry')).toEqual(stringsAt(expected, 'vitest', 'entry').toSpliced(1, 0, 'test/architecture/**/*.spec.ts'));
 
-    for (const key of ['$schema', 'project', 'ignoreDependencies', 'ignoreExportsUsedInFile']) expect(jsonAt(generated, key), key).toEqual(jsonAt(expected, key));
+    // The proof that each context wires alone is a spec outside the source root.
+    expect(stringsAt(generated, 'vitest', 'entry')).toEqual(
+      stringsAt(expected, 'vitest', 'entry').toSpliced(1, 0, 'test/architecture/**/*.spec.ts'),
+    );
+
+    for (const key of ['$schema', 'project', 'ignoreDependencies', 'ignoreExportsUsedInFile']) {
+      expect(jsonAt(generated, key), key).toEqual(jsonAt(expected, key));
+    }
 
     expect(jsonAt(generated, 'vitest', 'config')).toEqual(jsonAt(expected, 'vitest', 'config'));
     expect(keysAt(generated)).toEqual(keysAt(expected));
@@ -110,7 +124,8 @@ describe('the knip config init writes', () => {
   });
 
   it('enters by the role files under discovery, jobs and publishers included, with or without a broker', () => {
-    const discovered = 'src/contexts/*/{application,infrastructure}/**/*.{command,query,handler,integration-handler,event-handler,publisher,policy,job,repository,gateway,adapter}.ts';
+    const discovered =
+      'src/contexts/*/{application,infrastructure}/**/*.{command,query,handler,integration-handler,event-handler,publisher,policy,job,repository,gateway,adapter}.ts';
 
     expect(entries(initProject('--assembly', 'discovery'))).toContain(discovered);
     expect(entries(initProject('--assembly', 'discovery', '--broker', 'kafka'))).toContain(discovered);
@@ -119,9 +134,24 @@ describe('the knip config init writes', () => {
 });
 
 describe('init --ci', () => {
-  const GITHUB = ['.github/workflows/ci.yml', '.github/workflows/codeql.yml', '.github/workflows/pr-title.yml', '.github/dependabot.yml', '.github/branch-protection.md'];
+  const GITHUB = [
+    '.github/workflows/ci.yml',
+    '.github/workflows/codeql.yml',
+    '.github/workflows/pr-title.yml',
+    '.github/dependabot.yml',
+    '.github/branch-protection.md',
+  ];
+
   const GITLAB = ['.gitlab-ci.yml', '.gitlab/merge-request-settings.md'];
-  const ALWAYS = ['eslint.config.mjs', '.dependency-cruiser.cjs', 'knip.json', 'lefthook.yml', 'commitlint.config.mjs', 'vitest.config.ts'];
+
+  const ALWAYS = [
+    'eslint.config.mjs',
+    '.dependency-cruiser.cjs',
+    'knip.json',
+    'lefthook.yml',
+    'commitlint.config.mjs',
+    'vitest.config.ts',
+  ];
 
   it.each([
     ['github', GITHUB, GITLAB],
@@ -132,9 +162,13 @@ describe('init --ci', () => {
     const root = initProject('--ci', ci);
     const usesGitlab = ci === 'gitlab' || ci === 'both';
 
-    for (const file of [...ALWAYS, ...present]) expect(exists(root, file), file).toBe(true);
+    for (const file of [...ALWAYS, ...present]) {
+      expect(exists(root, file), file).toBe(true);
+    }
 
-    for (const file of absent) expect(exists(root, file), file).toBe(false);
+    for (const file of absent) {
+      expect(exists(root, file), file).toBe(false);
+    }
 
     expect(exists(root, 'renovate.json')).toBe(ci !== 'none');
     expect('eslint-formatter-gitlab' in textsAt(readJson(root, 'package.json'), 'devDependencies')).toBe(usesGitlab);

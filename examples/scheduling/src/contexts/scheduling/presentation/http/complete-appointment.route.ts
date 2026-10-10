@@ -23,7 +23,9 @@ export function completeAppointmentRoute(commands: CommandBus): Route {
       security: ['bearer'],
     },
     async (input) => {
-      const id = await commands.execute(new CompleteAppointmentCommand(actorOf(input.context.principal), input.params.appointmentId));
+      const id = await commands.execute(
+        new CompleteAppointmentCommand(actorOf(input.context.principal), input.params.appointmentId),
+      );
 
       return { status: 201, body: { id } };
     },

@@ -20,21 +20,40 @@ interface OtlpSpan {
 }
 
 interface OtlpChunk {
-  readonly result?: { readonly resourceSpans?: readonly { readonly scopeSpans?: readonly { readonly spans?: readonly OtlpSpan[] }[] }[] };
+  readonly result?: {
+    readonly resourceSpans?: readonly { readonly scopeSpans?: readonly { readonly spans?: readonly OtlpSpan[] }[] }[];
+  };
 }
 
 const KINDS: readonly SpanNode['kind'][] = ['INTERNAL', 'INTERNAL', 'SERVER', 'CLIENT', 'PRODUCER', 'CONSUMER'];
-const KIND_NAMES = ['SPAN_KIND_UNSPECIFIED', 'SPAN_KIND_INTERNAL', 'SPAN_KIND_SERVER', 'SPAN_KIND_CLIENT', 'SPAN_KIND_PRODUCER', 'SPAN_KIND_CONSUMER'];
+
+const KIND_NAMES = [
+  'SPAN_KIND_UNSPECIFIED',
+  'SPAN_KIND_INTERNAL',
+  'SPAN_KIND_SERVER',
+  'SPAN_KIND_CLIENT',
+  'SPAN_KIND_PRODUCER',
+  'SPAN_KIND_CONSUMER',
+];
 
 /**
  * The traces Jaeger holds for a service, read through its HTTP API (`/api/v3/traces`, which
  * answers OTLP as JSON) and turned into the trees the harness compares, one per trace.
  */
 export async function tracesOfService(queryUrl: string, service: string): Promise<SpanNode[][]> {
-  const window = { from: new Date(Date.now() - 3_600_000).toISOString(), to: new Date(Date.now() + 60_000).toISOString() };
+  const window = {
+    from: new Date(Date.now() - 3_600_000).toISOString(),
+    to: new Date(Date.now() + 60_000).toISOString(),
+  };
+
   const query = `query.service_name=${service}&query.start_time_min=${window.from}&query.start_time_max=${window.to}`;
   const text = await (await fetch(`${queryUrl}/api/v3/traces?${query}`)).text();
-  const spans = text.split('\n').filter((line) => line.trim() !== '').flatMap(spansOf);
+
+  const spans = text
+    .split('\n')
+    .filter((line) => line.trim() !== '')
+    .flatMap(spansOf);
+
   const traceIds = [...new Set(spans.map((span) => span.traceId))];
 
   return traceIds.map((traceId) => treeOf(spans.filter((span) => span.traceId === traceId)));
@@ -43,7 +62,9 @@ export async function tracesOfService(queryUrl: string, service: string): Promis
 function spansOf(line: string): OtlpSpan[] {
   const chunk: OtlpChunk = JSON.parse(line);
 
-  return (chunk.result?.resourceSpans ?? []).flatMap((resource) => (resource.scopeSpans ?? []).flatMap((scope) => scope.spans ?? []));
+  return (chunk.result?.resourceSpans ?? []).flatMap((resource) =>
+    (resource.scopeSpans ?? []).flatMap((scope) => scope.spans ?? []),
+  );
 }
 
 function treeOf(spans: readonly OtlpSpan[]): SpanNode[] {
@@ -71,7 +92,9 @@ function kindOf(kind: number | string | undefined): SpanNode['kind'] {
 }
 
 function plain(value: OtlpValue): unknown {
-  if (value.intValue !== undefined) return Number(value.intValue);
+  if (value.intValue !== undefined) {
+    return Number(value.intValue);
+  }
 
   return value.stringValue ?? value.doubleValue ?? value.boolValue;
 }

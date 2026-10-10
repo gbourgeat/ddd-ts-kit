@@ -8,6 +8,9 @@ describe('AppointmentNotStartedError', () => {
 
     expect(error).toBeInstanceOf(DomainError);
     expect(error.code).toBe('APPOINTMENT_NOT_STARTED');
-    expect(error.message).toBe('Appointment appointment-1 starts at 2026-03-02T09:00:00.000Z: its outcome is not known before.');
+
+    expect(error.message).toBe(
+      'Appointment appointment-1 starts at 2026-03-02T09:00:00.000Z: its outcome is not known before.',
+    );
   });
 });

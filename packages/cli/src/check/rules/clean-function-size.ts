@@ -19,7 +19,8 @@ interface Measured {
   readonly isComposition: boolean;
 }
 
-const SPLIT_FIX = 'Extract each step into a function named after what it does, placed below this one, until the body reads as a list of intentions; a test suite is split into one `describe` or one spec file per behaviour.';
+const SPLIT_FIX =
+  'Extract each step into a function named after what it does, placed below this one, until the body reads as a list of intentions; a test suite is split into one `describe` or one spec file per behaviour.';
 
 export const cleanFunctionSize: Rule = {
   id: 'clean/function-size',
@@ -34,27 +35,58 @@ export const cleanFunctionSize: Rule = {
         const at = { file: file.path, line: shape.line };
         const ceiling = overTheCeiling(shape);
 
-        if (ceiling !== undefined) return [{ ...report(at, ceiling.message, ceiling.fix), severity: 'error' }];
+        if (ceiling !== undefined) {
+          return [{ ...report(at, ceiling.message, ceiling.fix), severity: 'error' }];
+        }
 
-        return [...tooManyParameters(shape, limits), ...tooLong(shape, limits)].map(({ message, fix }) => report(at, message, fix));
+        return [...tooManyParameters(shape, limits), ...tooLong(shape, limits)].map(({ message, fix }) =>
+          report(at, message, fix),
+        );
       });
 
-      return [...declared, ...inline(file).map(({ line, message, fix }): Violation => ({ ...report({ file: file.path, line }, message, fix), severity: 'error' }))];
+      return [
+        ...declared,
+        ...inline(file).map(
+          ({ line, message, fix }): Violation => ({
+            ...report({ file: file.path, line }, message, fix),
+            severity: 'error',
+          }),
+        ),
+      ];
     });
   },
 };
 
 function measured(file: SourceFile): Measured[] {
   const isComposition = file.location.area === 'context' && file.location.layer === 'module';
-  const measure = (shape: FunctionShape, label: string): Omit<Measured, 'isInjected'> => ({ label, line: shape.line, parameters: shape.parameters.length, bodyLines: shape.bodyLines, isComposition });
-  const methods = file.structure.classes.flatMap((shape) => shape.methods.map((method) => ({ ...measure(method, `${shape.name}.${method.name}`), isInjected: method.isConstructor })));
 
-  return [...methods, ...file.structure.functions.map((shape) => ({ ...measure(shape, shape.name), isInjected: false }))];
+  const measure = (shape: FunctionShape, label: string): Omit<Measured, 'isInjected'> => ({
+    label,
+    line: shape.line,
+    parameters: shape.parameters.length,
+    bodyLines: shape.bodyLines,
+    isComposition,
+  });
+
+  const methods = file.structure.classes.flatMap((shape) =>
+    shape.methods.map((method) => ({
+      ...measure(method, `${shape.name}.${method.name}`),
+      isInjected: method.isConstructor,
+    })),
+  );
+
+  return [
+    ...methods,
+    ...file.structure.functions.map((shape) => ({ ...measure(shape, shape.name), isInjected: false })),
+  ];
 }
 
 /** Arrows, function expressions and nested functions are held to the ceiling only: a callback of `describe` or `it` as any other. */
 function inline(file: SourceFile): Finding[] {
-  return inlineFunctions(file.scan, FUNCTION_LINES_CEILING).map(({ label, line, bodyLines }) => ({ line, ...ceilingFlaw(label, bodyLines) }));
+  return inlineFunctions(file.scan, FUNCTION_LINES_CEILING).map(({ label, line, bodyLines }) => ({
+    line,
+    ...ceilingFlaw(label, bodyLines),
+  }));
 }
 
 /** The ceiling holds everywhere, module files and tests included, and is not configurable. */
@@ -63,11 +95,16 @@ function overTheCeiling(shape: Measured): Flaw | undefined {
 }
 
 function ceilingFlaw(label: string, bodyLines: number): Flaw {
-  return { message: `${label} is ${bodyLines} lines long: no function is longer than ${FUNCTION_LINES_CEILING} lines.`, fix: SPLIT_FIX };
+  return {
+    message: `${label} is ${bodyLines} lines long: no function is longer than ${FUNCTION_LINES_CEILING} lines.`,
+    fix: SPLIT_FIX,
+  };
 }
 
 function tooManyParameters(shape: Measured, limits: Limits): Flaw[] {
-  if (shape.isInjected || shape.parameters <= limits.maxParameters) return [];
+  if (shape.isInjected || shape.parameters <= limits.maxParameters) {
+    return [];
+  }
 
   return [
     {
@@ -78,7 +115,11 @@ function tooManyParameters(shape: Measured, limits: Limits): Flaw[] {
 }
 
 function tooLong(shape: Measured, limits: Limits): Flaw[] {
-  if (shape.isComposition || shape.bodyLines <= limits.maxFunctionLines) return [];
+  if (shape.isComposition || shape.bodyLines <= limits.maxFunctionLines) {
+    return [];
+  }
 
-  return [{ message: `${shape.label} is ${shape.bodyLines} lines long (limit ${limits.maxFunctionLines}).`, fix: SPLIT_FIX }];
+  return [
+    { message: `${shape.label} is ${shape.bodyLines} lines long (limit ${limits.maxFunctionLines}).`, fix: SPLIT_FIX },
+  ];
 }

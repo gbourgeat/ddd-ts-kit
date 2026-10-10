@@ -35,12 +35,23 @@ describe('Practice', () => {
   it('opens in its time zone with its first manager as a member', () => {
     const bornAt = new Date('2026-03-01T00:00:00.000Z');
 
-    const opened = aPractice().identifiedBy('practice-7').named('Riverside').inTimeZone('Europe/Paris').managedBy('person-1').bornAt(bornAt).build();
+    const opened = aPractice()
+      .identifiedBy('practice-7')
+      .named('Riverside')
+      .inTimeZone('Europe/Paris')
+      .managedBy('person-1')
+      .bornAt(bornAt)
+      .build();
 
     expect(opened.members.map((member) => [member.personId, member.role])).toEqual([['person-1', 'manager']]);
 
     expect(opened.pullEvents()).toEqual([
-      { name: 'identity.practice.opened', aggregateId: 'practice-7', occurredAt: bornAt, facts: { name: 'Riverside', timeZone: 'Europe/Paris', managerId: 'person-1' } },
+      {
+        name: 'identity.practice.opened',
+        aggregateId: 'practice-7',
+        occurredAt: bornAt,
+        facts: { name: 'Riverside', timeZone: 'Europe/Paris', managerId: 'person-1' },
+      },
       {
         name: 'identity.practice.member-added',
         aggregateId: 'practice-7',
@@ -73,7 +84,14 @@ describe('Practice', () => {
   it('removes a member and announces it with the role they had', () => {
     given(aPractice().identifiedBy('practice-7').withAssistant('person-3'))
       .when((practice) => practice.removeMember('person-3', later))
-      .thenEvents([{ name: 'identity.practice.member-removed', aggregateId: 'practice-7', occurredAt: later, facts: { personId: 'person-3', role: 'assistant' } }])
+      .thenEvents([
+        {
+          name: 'identity.practice.member-removed',
+          aggregateId: 'practice-7',
+          occurredAt: later,
+          facts: { personId: 'person-3', role: 'assistant' },
+        },
+      ])
       .thenState((practice) => expect(practice.members).toHaveLength(1));
   });
 
@@ -94,7 +112,9 @@ describe('Practice', () => {
       .when((practice) => practice.removeMember('person-1', later))
       .thenEventNames(['identity.practice.member-removed']);
   });
+});
 
+describe('Practice, by the role of its members', () => {
   it('names the desk of one of its practitioners', () => {
     const practice = aPractice().identifiedBy('practice-7').withPractitioner('person-2').build();
 
@@ -103,11 +123,14 @@ describe('Practice', () => {
     expect([desk.practiceId, desk.practitionerId]).toEqual(['practice-7', 'person-2']);
   });
 
-  it.each(['person-1', 'person-3', 'stranger'])('has no desk for %s, who is not one of its practitioners', (personId) => {
-    given(aPractice().managedBy('person-1').withAssistant('person-3'))
-      .when((practice) => practice.deskOf(personId))
-      .thenError(NotAPractitionerError, 'NOT_A_PRACTITIONER');
-  });
+  it.each(['person-1', 'person-3', 'stranger'])(
+    'has no desk for %s, who is not one of its practitioners',
+    (personId) => {
+      given(aPractice().managedBy('person-1').withAssistant('person-3'))
+        .when((practice) => practice.deskOf(personId))
+        .thenError(NotAPractitionerError, 'NOT_A_PRACTITIONER');
+    },
+  );
 
   it('knows its assistants', () => {
     const practice = aPractice().withAssistant('person-3').build();

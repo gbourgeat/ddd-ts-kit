@@ -51,7 +51,9 @@ function scopeLines({ config, generators }: WorkerPlace, directory: string): str
 }
 
 function sliceLines(slices: readonly Slice[]): string[] {
-  if (slices.length === 0) return ['- #<n> <slice>: <generator commands of the row> ; rules: <invariants and failures by name>'];
+  if (slices.length === 0) {
+    return ['- #<n> <slice>: <generator commands of the row> ; rules: <invariants and failures by name>'];
+  }
 
   return slices.map((row) => `- #${row.id} ${row.slice}: ${row.startWith} ; rules: <invariants and failures by name>`);
 }
@@ -59,5 +61,7 @@ function sliceLines(slices: readonly Slice[]): string[] {
 function contractsOf({ config, context }: WorkerPlace): string {
   const upstreams = config.contexts[context]?.upstreams ?? [];
 
-  return upstreams.length > 0 ? upstreams.map((upstream) => `${config.contextsDir}/${upstream.context}/published-language/`).join(', ') : 'none';
+  return upstreams.length > 0
+    ? upstreams.map((upstream) => `${config.contextsDir}/${upstream.context}/published-language/`).join(', ')
+    : 'none';
 }

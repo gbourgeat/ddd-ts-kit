@@ -8,11 +8,15 @@ const TRACEPARENT = /^00-([0-9a-f]{32})-([0-9a-f]{16})-([0-9a-f]{2})$/;
 export function spanContextFromTraceparent(traceparent: string): SpanContext | undefined {
   const match = TRACEPARENT.exec(traceparent);
 
-  if (match === null) return undefined;
+  if (match === null) {
+    return undefined;
+  }
 
   const [, traceId, spanId, flags] = match;
 
-  if (traceId === undefined || spanId === undefined || flags === undefined) return undefined;
+  if (traceId === undefined || spanId === undefined || flags === undefined) {
+    return undefined;
+  }
 
   const spanContext: SpanContext = {
     traceId,

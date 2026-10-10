@@ -7,7 +7,5 @@ import { isSpanContextValid, trace } from '@opentelemetry/api';
 export function correlationIdFromActiveSpan(): string | undefined {
   const spanContext = trace.getActiveSpan()?.spanContext();
 
-  return spanContext !== undefined && isSpanContextValid(spanContext)
-    ? spanContext.traceId
-    : undefined;
+  return spanContext !== undefined && isSpanContextValid(spanContext) ? spanContext.traceId : undefined;
 }

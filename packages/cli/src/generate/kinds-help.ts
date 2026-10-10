@@ -20,6 +20,14 @@ export function kindsHelp(kinds: readonly Kind[]): KindHelp[] {
   return kinds.map(({ name, aliases, usage, summary, writesShared }) => {
     const shared = writesShared ? SHARED_WRITES[name] : undefined;
 
-    return { name, aliases, usage, summary, writesShared, shared: shared?.files ?? [], sharedWhen: shared?.when ?? null };
+    return {
+      name,
+      aliases,
+      usage,
+      summary,
+      writesShared,
+      shared: shared?.files ?? [],
+      sharedWhen: shared?.when ?? null,
+    };
   });
 }

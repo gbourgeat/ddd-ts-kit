@@ -16,13 +16,20 @@ export const namingSuffix: Rule = {
   scope: 'file',
   run(project) {
     return perFile(project, this.id, (file) => {
-      if (!inContext(file.location) || file.location.layer === 'module') return [];
+      if (!inContext(file.location) || file.location.layer === 'module') {
+        return [];
+      }
 
       const name = path.posix.basename(file.path);
 
-      if (name === 'index.ts') return [];
+      if (name === 'index.ts') {
+        return [];
+      }
+
       // The routes of a context are one list named after it instead of a role, in either style.
-      if (pathInContext(project, file) === routesFile(file.location.context)) return [];
+      if (pathInContext(project, file) === routesFile(file.location.context)) {
+        return [];
+      }
 
       const flaw = notKebab(name) ?? withoutSuffix(name, file.location);
 
@@ -32,19 +39,31 @@ export const namingSuffix: Rule = {
 };
 
 function notKebab(name: string): Flaw | undefined {
-  if (name.split('.').every((segment) => KEBAB_SEGMENT.test(segment))) return undefined;
+  if (name.split('.').every((segment) => KEBAB_SEGMENT.test(segment))) {
+    return undefined;
+  }
 
-  return { message: `"${name}" is not in kebab-case.`, fix: 'Rename the file in lower-case words separated by hyphens, for example invoice-line.entity.ts.' };
+  return {
+    message: `"${name}" is not in kebab-case.`,
+    fix: 'Rename the file in lower-case words separated by hyphens, for example invoice-line.entity.ts.',
+  };
 }
 
 function withoutSuffix(name: string, location: ContextLocation): Flaw | undefined {
-  if (location.layer === 'root') return undefined;
+  if (location.layer === 'root') {
+    return undefined;
+  }
 
   const directory = roleDirectory(location);
   const role = roleOf(directory);
 
-  if (role === undefined || role.suffixes.length === 0) return undefined;
-  if (role.suffixes.some((suffix) => name.endsWith(suffix) && name.length > suffix.length)) return undefined;
+  if (role === undefined || role.suffixes.length === 0) {
+    return undefined;
+  }
+
+  if (role.suffixes.some((suffix) => name.endsWith(suffix) && name.length > suffix.length)) {
+    return undefined;
+  }
 
   return {
     message: `"${name}" sits in ${directory}/ without the suffix of that role.`,

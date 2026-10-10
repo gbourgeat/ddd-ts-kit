@@ -24,9 +24,15 @@ const command = args[0] === 'g' ? 'generate' : args[0];
 main();
 
 function main() {
-  if (command !== 'generate' && command !== 'docs') return passThrough();
-  if (args.includes('--dry-run') || args.includes('--help') || args.includes('--check')) return passThrough();
-  if (process.env.KIT_LOCKED !== '1') return underLock();
+  if (command !== 'generate' && command !== 'docs') {
+    return passThrough();
+  }
+  if (args.includes('--dry-run') || args.includes('--help') || args.includes('--check')) {
+    return passThrough();
+  }
+  if (process.env.KIT_LOCKED !== '1') {
+    return underLock();
+  }
 
   fs.mkdirSync(snapshotDir, { recursive: true });
 
@@ -41,9 +47,23 @@ function main() {
   const result = parse(run.stdout);
   const touched = result === undefined ? planned : [...(result.created ?? []), ...(result.updated ?? [])];
 
-  for (const file of new Set([...touched, ...planned])) accumulate(file, before.get(file));
+  for (const file of new Set([...touched, ...planned])) {
+    accumulate(file, before.get(file));
+  }
 
-  log({ at: new Date().toISOString(), worker: process.env.KIT_WORKER ?? 'conductor', command, kind: command === 'generate' ? args[1] : 'docs', args: args.slice(1).filter((arg) => arg !== '--json'), ms: Date.now() - started, exit: run.status, created: result?.created?.length ?? 0, updated: result?.updated?.length ?? 0, todos: result?.todos?.length ?? 0, notes: result?.notes ?? [] });
+  log({
+    at: new Date().toISOString(),
+    worker: process.env.KIT_WORKER ?? 'conductor',
+    command,
+    kind: command === 'generate' ? args[1] : 'docs',
+    args: args.slice(1).filter((arg) => arg !== '--json'),
+    ms: Date.now() - started,
+    exit: run.status,
+    created: result?.created?.length ?? 0,
+    updated: result?.updated?.length ?? 0,
+    todos: result?.todos?.length ?? 0,
+    notes: result?.notes ?? [],
+  });
   process.exit(run.status ?? 1);
 }
 
@@ -54,14 +74,21 @@ function passThrough() {
 }
 
 function underLock() {
-  const run = spawnSync('flock', [lockFile, process.execPath, fileURLToPath(import.meta.url), ...args], { stdio: 'inherit', env: { ...process.env, KIT_LOCKED: '1' } });
+  const run = spawnSync('flock', [lockFile, process.execPath, fileURLToPath(import.meta.url), ...args], {
+    stdio: 'inherit',
+    env: { ...process.env, KIT_LOCKED: '1' },
+  });
 
   process.exit(run.status ?? 1);
 }
 
 /** What a generator is about to create or update, asked with a dry run. */
 function plannedFiles() {
-  const dry = spawnSync(process.execPath, [cli, ...args.filter((arg) => arg !== '--json'), '--dry-run', '--json', '--cwd', root], { encoding: 'utf8' });
+  const dry = spawnSync(
+    process.execPath,
+    [cli, ...args.filter((arg) => arg !== '--json'), '--dry-run', '--json', '--cwd', root],
+    { encoding: 'utf8' },
+  );
   const result = parse(dry.stdout);
 
   return result === undefined ? [] : [...(result.created ?? []), ...(result.updated ?? [])];
@@ -72,7 +99,10 @@ function regeneratedByDocs() {
   const contexts = path.join(root, 'src/contexts');
   const names = fs.existsSync(contexts) ? fs.readdirSync(contexts) : [];
 
-  return ['docs/context-map.md', ...names.flatMap((name) => [`src/contexts/${name}/CONTEXT.md`, `src/contexts/${name}/${name}.declarations.ts`])];
+  return [
+    'docs/context-map.md',
+    ...names.flatMap((name) => [`src/contexts/${name}/CONTEXT.md`, `src/contexts/${name}/${name}.declarations.ts`]),
+  ];
 }
 
 /** Keeps the copy equal to what generators wrote: a new file is copied, an updated one takes the generator's change only. */
@@ -80,12 +110,16 @@ function accumulate(file, previous) {
   const current = read(file);
   const copy = path.join(snapshotDir, file);
 
-  if (current === undefined || current === previous) return;
+  if (current === undefined || current === previous) {
+    return;
+  }
 
   fs.mkdirSync(path.dirname(copy), { recursive: true });
 
   if (previous === undefined || !fs.existsSync(copy)) {
-    if (previous === undefined) fs.writeFileSync(copy, current);
+    if (previous === undefined) {
+      fs.writeFileSync(copy, current);
+    }
 
     return;
   }
@@ -95,17 +129,35 @@ function accumulate(file, previous) {
   fs.writeFileSync(beforeFile, previous);
 
   const diff = spawnSync('diff', ['-u', beforeFile, path.join(root, file)], { encoding: 'utf8' });
-  const patch = spawnSync('patch', ['--quiet', '--no-backup-if-mismatch', '-r', '-', copy], { input: diff.stdout, encoding: 'utf8' });
+  const patch = spawnSync('patch', ['--quiet', '--no-backup-if-mismatch', '-r', '-', copy], {
+    input: diff.stdout,
+    encoding: 'utf8',
+  });
 
-  if (patch.status !== 0) log({ at: new Date().toISOString(), command: 'snapshot', file, note: 'the generator change did not apply to the copy; left as it was' });
+  if (patch.status !== 0) {
+    log({
+      at: new Date().toISOString(),
+      command: 'snapshot',
+      file,
+      note: 'the generator change did not apply to the copy; left as it was',
+    });
+  }
 
   fs.rmSync(beforeFile, { force: true });
 }
 
-function read(file) {
-  const absolute = path.join(root, file);
+const NOT_A_FILE = ['ENOENT', 'ENOTDIR', 'EISDIR'];
 
-  return fs.existsSync(absolute) && fs.statSync(absolute).isFile() ? fs.readFileSync(absolute, 'utf8') : undefined;
+function read(file) {
+  try {
+    return fs.readFileSync(path.join(root, file), 'utf8');
+  } catch (error) {
+    if (NOT_A_FILE.includes(error?.code)) {
+      return undefined;
+    }
+
+    throw error;
+  }
 }
 
 function parse(text) {

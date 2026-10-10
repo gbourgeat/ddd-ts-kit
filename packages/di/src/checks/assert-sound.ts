@@ -24,7 +24,9 @@ export function assertSound(wiring: Wiring, overridden: TokenSet): void {
 function assertDependenciesBound({ bindings }: Wiring, overridden: TokenSet): void {
   for (const binding of bindings.values()) {
     for (const dependency of binding.dependencies) {
-      if (bindings.has(dependency) || overridden.has(dependency)) continue;
+      if (bindings.has(dependency) || overridden.has(dependency)) {
+        continue;
+      }
 
       throw new WiringError(
         'UNBOUND_DEPENDENCY',
@@ -36,7 +38,9 @@ function assertDependenciesBound({ bindings }: Wiring, overridden: TokenSet): vo
 
 function assertBusesBound(wiring: Wiring, overridden: TokenSet): void {
   for (const { ports, user, module } of needsOf(wiring)) {
-    if (ports.some((port) => wiring.bindings.has(port) || overridden.has(port))) continue;
+    if (ports.some((port) => wiring.bindings.has(port) || overridden.has(port))) {
+      continue;
+    }
 
     throw new WiringError(
       'UNBOUND_DEPENDENCY',
@@ -78,19 +82,27 @@ function assertNoCycle({ bindings }: Wiring, overridden: TokenSet): void {
   const path: Token<unknown>[] = [];
 
   const visit = (target: Token<unknown>): void => {
-    if (done.has(target) || overridden.has(target)) return;
+    if (done.has(target) || overridden.has(target)) {
+      return;
+    }
 
     const loopStart = path.findIndex((step) => sameToken(step, target));
 
-    if (loopStart !== -1) throw cycleError([...path.slice(loopStart), target]);
+    if (loopStart !== -1) {
+      throw cycleError([...path.slice(loopStart), target]);
+    }
 
     path.push(target);
 
-    for (const dependency of bindings.get(target)?.dependencies ?? []) visit(dependency);
+    for (const dependency of bindings.get(target)?.dependencies ?? []) {
+      visit(dependency);
+    }
 
     path.pop();
     done.add(target);
   };
 
-  for (const target of bindings.keys()) visit(target);
+  for (const target of bindings.keys()) {
+    visit(target);
+  }
 }

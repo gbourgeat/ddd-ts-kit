@@ -12,7 +12,13 @@ import { REPOSITORY_ADAPTERS } from './repository-adapter.js';
 /** The port of the repository of an aggregate, the adapter of the ORM of the stack, the fake and the contract both pass. */
 export function generateRepository(scope: Scope, aggregate: Name): void {
   const adapter = REPOSITORY_ADAPTERS[scope.config.stack.orm];
-  const prefix = { pascal: adapter.prefix, kebab: adapter.prefix.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase(), needsDatabase: adapter.prefix !== 'InMemory' };
+
+  const prefix = {
+    pascal: adapter.prefix,
+    kebab: adapter.prefix.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase(),
+    needsDatabase: adapter.prefix !== 'InMemory',
+  };
+
   const context = vars(scope, { aggregate: named(aggregate), adapter: prefix, tenant: tenantVars(scope) });
 
   emit(scope, context, [
@@ -42,7 +48,9 @@ function tenantVars(scope: Scope): RenderContext {
   const scoped = asked && TENANT_AWARE.includes(scope.config.stack.orm);
 
   if (asked && !scoped) {
-    scope.ws.note(`--tenant-scoped is generated for drizzle and knex only: with ${scope.config.stack.orm}, add the tenant column to the storage (\`tenant_id\`), write \`tenantScopeOf(this.scope)\` on insert and put it in the condition of every read and every update.`);
+    scope.ws.note(
+      `--tenant-scoped is generated for drizzle and knex only: with ${scope.config.stack.orm}, add the tenant column to the storage (\`tenant_id\`), write \`tenantScopeOf(this.scope)\` on insert and put it in the condition of every read and every update.`,
+    );
   }
 
   return { scoped };

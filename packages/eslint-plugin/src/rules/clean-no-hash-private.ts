@@ -8,7 +8,8 @@ export const cleanNoHashPrivate = defineRule<'hash'>({
   type: 'suggestion',
   recommended: 'error',
   fixable: 'code',
-  description: 'A class member is `private`, never `#name`: one way to say private, the one the compiler checks and the tools of the kit read.',
+  description:
+    'A class member is `private`, never `#name`: one way to say private, the one the compiler checks and the tools of the kit read.',
   messages: {
     hash: '{{className}} declares #{{name}}. Write `private {{name}}`: a member is hidden with the `private` keyword, which reads the same on a field, a method, an accessor and a constructor parameter.',
   },
@@ -18,12 +19,22 @@ export const cleanNoHashPrivate = defineRule<'hash'>({
         const member = node.parent;
         const owner = member.parent?.parent;
 
-        if (member.type === AST_NODE_TYPES.MemberExpression || member.type === AST_NODE_TYPES.BinaryExpression) return;
-        if (owner?.type !== AST_NODE_TYPES.ClassDeclaration && owner?.type !== AST_NODE_TYPES.ClassExpression) return;
+        if (member.type === AST_NODE_TYPES.MemberExpression || member.type === AST_NODE_TYPES.BinaryExpression) {
+          return;
+        }
+
+        if (owner?.type !== AST_NODE_TYPES.ClassDeclaration && owner?.type !== AST_NODE_TYPES.ClassExpression) {
+          return;
+        }
 
         const fix = hashPrivateFix(sourceCode, owner, node.name);
 
-        report({ node, messageId: 'hash', data: { className: className(owner), name: node.name }, ...(fix === undefined ? {} : { fix }) });
+        report({
+          node,
+          messageId: 'hash',
+          data: { className: className(owner), name: node.name },
+          ...(fix === undefined ? {} : { fix }),
+        });
       },
     };
   },

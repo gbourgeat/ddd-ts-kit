@@ -71,9 +71,13 @@ export class ContainerApplication implements Application {
     this.provide(UseCaseDeclarations, { list: declarationsOf(wiring) });
     this.provide(DeclaredPolicies, { list: wiring.policies });
 
-    for (const binding of wiring.bindings.values()) this.register(binding);
+    for (const binding of wiring.bindings.values()) {
+      this.register(binding);
+    }
 
-    for (const [target, value] of options.overrides ?? []) this.registerValue(target, value);
+    for (const [target, value] of options.overrides ?? []) {
+      this.registerValue(target, value);
+    }
 
     this.registerHandlers('command');
     this.registerHandlers('query');
@@ -83,11 +87,15 @@ export class ContainerApplication implements Application {
 
   // Arrow properties, here and below: callers destructure them and pass them around.
   readonly resolve: Resolve = <T>(target: Token<T>): T => {
-    if (!this.isBound(target)) throw this.unboundError(target);
+    if (!this.isBound(target)) {
+      throw this.unboundError(target);
+    }
 
     const loopStart = this.resolving.findIndex((step) => sameToken(step, target));
 
-    if (loopStart !== -1) throw cycleError([...this.resolving.slice(loopStart), target]);
+    if (loopStart !== -1) {
+      throw cycleError([...this.resolving.slice(loopStart), target]);
+    }
 
     this.resolving.push(target);
 
@@ -101,7 +109,9 @@ export class ContainerApplication implements Application {
   /** The jobs come after the consumers: a job sends commands whose events must find their handlers subscribed. */
   readonly start = async (): Promise<void> => {
     for (const module of this.options.modules) {
-      if (this.started.includes(module)) continue;
+      if (this.started.includes(module)) {
+        continue;
+      }
 
       // Recorded first: a module whose start failed half-way still gets its onStop.
       this.started.push(module);
@@ -132,19 +142,26 @@ export class ContainerApplication implements Application {
     }
   };
 
-  readonly describe = (): WiringDescription =>
-    describeWiring(this.wiring, this.overridden, this.jobLifecycle.jobs);
+  readonly describe = (): WiringDescription => describeWiring(this.wiring, this.overridden, this.jobLifecycle.jobs);
 
   replace(target: Token<unknown>, value: unknown): void {
     this.registerValue(target, value);
 
-    if (sameToken(target, CommandBus)) this.registerHandlers('command');
+    if (sameToken(target, CommandBus)) {
+      this.registerHandlers('command');
+    }
 
-    if (sameToken(target, QueryBus)) this.registerHandlers('query');
+    if (sameToken(target, QueryBus)) {
+      this.registerHandlers('query');
+    }
 
-    if (sameToken(target, DomainEventDispatcher)) this.attachDomainEventHandlers();
+    if (sameToken(target, DomainEventDispatcher)) {
+      this.attachDomainEventHandlers();
+    }
 
-    if (sameToken(target, JobScheduler)) this.jobLifecycle.register();
+    if (sameToken(target, JobScheduler)) {
+      this.jobLifecycle.register();
+    }
   }
 
   private isBound(target: Token<unknown>): boolean {
@@ -185,7 +202,9 @@ export class ContainerApplication implements Application {
   }
 
   private aspectsAround({ kind }: Binding): BindingAspect[] {
-    if (kind === undefined) return [];
+    if (kind === undefined) {
+      return [];
+    }
 
     return this.wiring.kindAspects
       .filter((around) => around.kinds.includes(kind))
@@ -201,7 +220,9 @@ export class ContainerApplication implements Application {
   private registerHandlers(kind: MessageInfo['kind']): void {
     const handlings = this.wiring.handlings.filter((handling) => handling.kind === kind);
 
-    if (handlings.length === 0) return;
+    if (handlings.length === 0) {
+      return;
+    }
 
     const bus = this.resolve(BUS_OF[kind]);
 
@@ -212,7 +233,9 @@ export class ContainerApplication implements Application {
       );
     }
 
-    for (const handling of handlings) bus.register(handling.message, this.lazily(handling), { context: handling.module });
+    for (const handling of handlings) {
+      bus.register(handling.message, this.lazily(handling), { context: handling.module });
+    }
   }
 
   // Async so that a handler failing to be built rejects the execution instead of throwing
@@ -224,11 +247,15 @@ export class ContainerApplication implements Application {
   private attachDomainEventHandlers(): void {
     const { domainEventHandlers } = this.wiring;
 
-    if (domainEventHandlers.length === 0) return;
+    if (domainEventHandlers.length === 0) {
+      return;
+    }
 
     const dispatcher = this.resolve(DomainEventDispatcher);
 
-    for (const handling of domainEventHandlers) handling.attach(this.resolve, dispatcher);
+    for (const handling of domainEventHandlers) {
+      handling.attach(this.resolve, dispatcher);
+    }
   }
 
   private async stopModules(): Promise<unknown[]> {
@@ -247,7 +274,9 @@ export class ContainerApplication implements Application {
 
   /** Left alone, unbuilt, in an application without the kernel module. A reporter that cannot send keeps the stop going. */
   private async flushErrorReports(): Promise<void> {
-    if (!this.isBound(ErrorReporter)) return;
+    if (!this.isBound(ErrorReporter)) {
+      return;
+    }
 
     try {
       await this.resolve(ErrorReporter).flush(ERROR_FLUSH_TIMEOUT_MS);
@@ -258,7 +287,9 @@ export class ContainerApplication implements Application {
 
   /** A logger that cannot be built or flushed keeps the stop going. */
   private async flushLogs(): Promise<void> {
-    if (!this.isBound(Logger)) return;
+    if (!this.isBound(Logger)) {
+      return;
+    }
 
     try {
       await this.resolve(Logger).flush();

@@ -2,18 +2,18 @@ import { RelationTupleStore, type RelationTuple } from '@ddd-ts-kit/auth/rebac';
 import type { ErrorReporter, IntegrationEventSubscriber } from '@ddd-ts-kit/kernel';
 import { createHttpClient, type HttpClient } from '@ddd-ts-kit/testing/e2e';
 import { relateSystemActors } from '../../../src/platform/auth/relate-system-actors.js';
-import { composeApplication } from '../../../src/platform/compose-application.js';
+import { composeApplication, type Application } from '../../../src/platform/compose-application.js';
 import type { AppConfig } from '../../../src/platform/config/app-config.js';
 import { loadConfig } from '../../../src/platform/config/load-config.js';
 import type { Persistence } from '../../../src/platform/database/persistence.js';
-import { openTestDatabase } from '../../../src/platform/database/open-test-database.js';
+import { openTestDatabase, type TestDatabase } from '../../../src/platform/database/open-test-database.js';
 import { createEventProvider } from '../../../src/platform/events/create-event-provider.js';
 import type { EventProvider } from '../../../src/platform/events/event-provider.js';
 import { inProcessEvents } from '../../../src/platform/events/in-process-events.js';
 import { startOutboxRelay, type RunningRelay } from '../../../src/platform/events/start-outbox-relay.js';
 import type { LogSettings } from '../../../src/platform/observability/create-logger.js';
-import { startHttpServer } from '../../../src/platform/http/start-http-server.js';
-import { openRedis } from '../../../src/platform/redis/open-redis.js';
+import { startHttpServer, type HttpServer } from '../../../src/platform/http/start-http-server.js';
+import { openRedis, type RedisServices } from '../../../src/platform/redis/open-redis.js';
 import { createCredentials, type TestActor } from './create-credentials.js';
 import { noRedis, testEnvironment } from './test-environment.js';
 
@@ -57,12 +57,17 @@ export async function startApplication(options: StartOptions = {}): Promise<Runn
   const credentials = await createCredentials();
   const redis = config.redisUrl === noRedis ? undefined : openRedis(config);
   const persistence = options.storage?.(database.persistence) ?? database.persistence;
-  const observed = { ...(options.log === undefined ? {} : { log: options.log }), ...(options.errors === undefined ? {} : { errors: options.errors }) };
-  const application = composeApplication(persistence, { events: eventsOf(config), authenticator: credentials.authenticator, ...observed, ...(redis === undefined ? {} : { redis }) });
+
+  const application = composeApplication(persistence, {
+    events: eventsOf(config),
+    authenticator: credentials.authenticator,
+    ...observedOf(options),
+    ...(redis === undefined ? {} : { redis }),
+  });
 
   await application.start();
 
-  const relay = pausableRelay(() => startOutboxRelay({ store: persistence.outbox, publisher: application.eventBus, intervalMs: 20, logger: application.logger }));
+  const relay = relayOf(persistence, application);
   const server = await startHttpServer(application, config);
   const client = createHttpClient('http://127.0.0.1:' + server.port);
   // The store of the running application: what a test relates is what its authorizer reads.
@@ -74,8 +79,30 @@ export async function startApplication(options: StartOptions = {}): Promise<Runn
     as: async (actor) => client.withHeaders(await credentials.headersOf(actor)),
     relate: (tuple) => tuples.write([tuple]),
     reset: () => relay.whileStopped(() => database.reset().then(() => relateSystemActors(tuples))),
-    close: () => inOrder([() => server.close(), () => relay.stop(), () => application.stop(), () => redis?.close(), () => database.close()]),
+    close: () => closeInOrder({ server, relay, application, redis, database }),
   };
+}
+
+function eventsOf(config: AppConfig): EventProvider {
+  return config.redisUrl === noRedis ? inProcessEvents() : createEventProvider(config);
+}
+
+function observedOf(options: StartOptions): Pick<StartOptions, 'log' | 'errors'> {
+  return {
+    ...(options.log === undefined ? {} : { log: options.log }),
+    ...(options.errors === undefined ? {} : { errors: options.errors }),
+  };
+}
+
+function relayOf(persistence: Persistence, application: Application): PausableRelay {
+  return pausableRelay(() =>
+    startOutboxRelay({
+      store: persistence.outbox,
+      publisher: application.eventBus,
+      intervalMs: 20,
+      logger: application.logger,
+    }),
+  );
 }
 
 interface PausableRelay extends RunningRelay {
@@ -99,10 +126,26 @@ function pausableRelay(start: () => RunningRelay): PausableRelay {
   };
 }
 
-function eventsOf(config: AppConfig): EventProvider {
-  return config.redisUrl === noRedis ? inProcessEvents() : createEventProvider(config);
+interface Started {
+  readonly server: HttpServer;
+  readonly relay: RunningRelay;
+  readonly application: Application;
+  readonly redis: RedisServices | undefined;
+  readonly database: TestDatabase;
+}
+
+function closeInOrder({ server, relay, application, redis, database }: Started): Promise<void> {
+  return inOrder([
+    () => server.close(),
+    () => relay.stop(),
+    () => application.stop(),
+    () => redis?.close(),
+    () => database.close(),
+  ]);
 }
 
 async function inOrder(steps: readonly (() => Promise<void> | undefined)[]): Promise<void> {
-  for (const step of steps) await step();
+  for (const step of steps) {
+    await step();
+  }
 }

@@ -105,7 +105,10 @@ class LockSuite extends ContractSuite<Lock> {
     this.it('waits for a key that is released within the time it was told to wait', async () => {
       const first = await this.held('report:2026-03');
 
-      const [, second] = await Promise.all([first.release(), this.subject.acquire('report:2026-03', { ...HELD, waitMs: 2_000 })]);
+      const [, second] = await Promise.all([
+        first.release(),
+        this.subject.acquire('report:2026-03', { ...HELD, waitMs: 2_000 }),
+      ]);
 
       this.expect(second !== undefined).toBe(true);
       this.expect((second?.fencingToken ?? 0) > first.fencingToken).toBe(true);
@@ -121,7 +124,9 @@ class LockSuite extends ContractSuite<Lock> {
   private async held(key: string): Promise<LockHandle> {
     const handle = await this.subject.acquire(key, HELD);
 
-    if (handle === undefined) throw new Error(`The lock ${key} was expected to be free`);
+    if (handle === undefined) {
+      throw new Error(`The lock ${key} was expected to be free`);
+    }
 
     return handle;
   }

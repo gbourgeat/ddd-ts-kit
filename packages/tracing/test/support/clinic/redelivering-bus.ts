@@ -18,7 +18,9 @@ export class RedeliveringBus implements EventBus {
   async publish(events: readonly IntegrationEvent[]): Promise<void> {
     for (const event of events) {
       for (const [position, handler] of (this.handlers.get(event.type) ?? []).entries()) {
-        if (!(await this.delivered(event, handler))) this.dead.push(`${event.id} for ${position}`);
+        if (!(await this.delivered(event, handler))) {
+          this.dead.push(`${event.id} for ${position}`);
+        }
       }
     }
   }

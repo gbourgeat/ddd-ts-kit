@@ -10,7 +10,9 @@ export class ErrorMessageScrubber {
 
   onEnd(span: EndedSpan): void {
     for (const event of span.events) {
-      if (event.attributes === undefined) continue;
+      if (event.attributes === undefined) {
+        continue;
+      }
 
       delete event.attributes['exception.message'];
       delete event.attributes['exception.stacktrace'];

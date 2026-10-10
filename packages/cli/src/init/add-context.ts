@@ -8,7 +8,10 @@ export function addContext(ws: Workspace, config: Config, entry: string): Config
   const [name = '', classification] = entry.split(':');
 
   if (classification === undefined) {
-    throw new CliError(`--context ${entry} has no classification.`, 'Write it as <name>:<core|supporting|generic>, for example --context billing:core.');
+    throw new CliError(
+      `--context ${entry} has no classification.`,
+      'Write it as <name>:<core|supporting|generic>, for example --context billing:core.',
+    );
   }
 
   return generateContext(ws, config, { name, classification, upstreams: [] });

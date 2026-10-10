@@ -16,7 +16,11 @@ export function pageRequestParameters(options: PageQueryOptions<string> = {}): J
     properties: {
       limit: { type: 'integer', minimum: 1, maximum: maxSize, default: defaultSize, description: 'Size of the page.' },
       offset: { type: 'integer', minimum: 0, description: 'Items to skip. Not with `cursor`.' },
-      cursor: { type: 'string', minLength: 1, description: 'The `nextCursor` of the previous page. Not with `offset`.' },
+      cursor: {
+        type: 'string',
+        minLength: 1,
+        description: 'The `nextCursor` of the previous page. Not with `offset`.',
+      },
       ...(sortable.length === 0 ? {} : { sort: sortParameter(sortable) }),
     },
   };

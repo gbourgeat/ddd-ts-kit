@@ -16,7 +16,9 @@ export class AddExceptionHandler implements CommandHandler<AddExceptionCommand> 
   async execute(command: AddExceptionCommand): Promise<string> {
     const target = await this.calendarRepository.findById(command.calendarId);
 
-    if (target === undefined) throw new UnknownCalendarError(command.calendarId);
+    if (target === undefined) {
+      throw new UnknownCalendarError(command.calendarId);
+    }
 
     const ranges = command.ranges.map(({ start, end }) => unwrap(Range.create(start, end)));
 

@@ -15,13 +15,25 @@ describe.skipIf(!REAL_SERVER)('RedisLock on a server', () => {
     client ??= connect();
   });
 
-  lockContract(runner, { name: 'RedisLock', createLock: () => new RedisLock(client, { namespace: aNamespace() }), elapse: sleep });
+  lockContract(runner, {
+    name: 'RedisLock',
+    createLock: () => new RedisLock(client, { namespace: aNamespace() }),
+    elapse: sleep,
+  });
 
   it('excludes the holders of other connections, as other processes are', async () => {
     const namespace = aNamespace();
-    const processes = [connect(), connect(), connect(), connect()].map((connection) => new RedisLock(connection, { namespace }));
 
-    const handles = await Promise.all(processes.flatMap((lock) => [lock.acquire('nightly-export', { ttlMs: 30_000 }), lock.acquire('nightly-export', { ttlMs: 30_000 })]));
+    const processes = [connect(), connect(), connect(), connect()].map(
+      (connection) => new RedisLock(connection, { namespace }),
+    );
+
+    const handles = await Promise.all(
+      processes.flatMap((lock) => [
+        lock.acquire('nightly-export', { ttlMs: 30_000 }),
+        lock.acquire('nightly-export', { ttlMs: 30_000 }),
+      ]),
+    );
 
     expect(handles.filter((handle) => handle !== undefined)).toHaveLength(1);
   });
@@ -56,7 +68,9 @@ describe.skipIf(!REAL_SERVER)('RedisLock on a server', () => {
     const work = async (lock: RedisLock) => {
       const handle = await lock.acquire('nightly-export', { ttlMs: 30_000, waitMs: 5_000 });
 
-      if (handle === undefined) return 'gave up';
+      if (handle === undefined) {
+        return 'gave up';
+      }
 
       running.now += 1;
       running.most = Math.max(running.most, running.now);
@@ -67,7 +81,12 @@ describe.skipIf(!REAL_SERVER)('RedisLock on a server', () => {
       return 'done';
     };
 
-    const outcomes = await Promise.all([connect(), connect(), connect()].flatMap((connection) => [work(new RedisLock(connection, { namespace })), work(new RedisLock(connection, { namespace }))]));
+    const outcomes = await Promise.all(
+      [connect(), connect(), connect()].flatMap((connection) => [
+        work(new RedisLock(connection, { namespace })),
+        work(new RedisLock(connection, { namespace })),
+      ]),
+    );
 
     expect(outcomes).toEqual(Array.from({ length: 6 }, () => 'done'));
     expect(running.most).toBe(1);

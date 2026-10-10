@@ -26,9 +26,17 @@ export function bin(name: string): string {
 /** Runs a command in a generated project and answers what it printed; a failure carries both streams. */
 export function runIn(root: string, { command, args, env = {} }: Invocation): string {
   try {
-    return execFileSync(command, [...args], { cwd: root, encoding: 'utf8', stdio: 'pipe', env: { ...process.env, ...QUIET, ...SERVICES, ...env } });
+    return execFileSync(command, [...args], {
+      cwd: root,
+      encoding: 'utf8',
+      stdio: 'pipe',
+      env: { ...process.env, ...QUIET, ...SERVICES, ...env },
+    });
   } catch (error) {
-    const output = error instanceof Error && 'stdout' in error ? `${String(error.stdout)}\n${String(Reflect.get(error, 'stderr'))}` : String(error);
+    const output =
+      error instanceof Error && 'stdout' in error
+        ? `${String(error.stdout)}\n${String(Reflect.get(error, 'stderr'))}`
+        : String(error);
 
     throw new Error(`${command} ${args.join(' ')} failed:\n${output}`, { cause: error });
   }

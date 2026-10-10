@@ -32,16 +32,23 @@ export const TEST_FIXTURES: readonly Fixture[] = [
     ruleId: 'test/spec-required',
     name: 'a handler whose spec lives in another context',
     expect: { file: HANDLER },
-    files: project({ [HANDLER]: 'export class IssueInvoiceHandler {}\n', [`${CATALOG}/test/unit/issue-invoice.handler.spec.ts`]: SPEC }),
+    files: project({
+      [HANDLER]: 'export class IssueInvoiceHandler {}\n',
+      [`${CATALOG}/test/unit/issue-invoice.handler.spec.ts`]: SPEC,
+    }),
   },
   {
     ruleId: 'test/no-mocks',
     name: 'a test built on a fake',
     expect: 'pass',
-    files: project({
-      [HANDLER]: 'export class IssueInvoiceHandler {}\n',
-      [HANDLER_SPEC]: "import { it } from 'vitest';\nconst note = 'no vi.fn() here';\n// jest.mock('x')\nit.todo(note);\n",
-    }, { [CONFIG_FILE]: config({ rules: { 'clean/no-commented-out-code': 'off' } }) }),
+    files: project(
+      {
+        [HANDLER]: 'export class IssueInvoiceHandler {}\n',
+        [HANDLER_SPEC]:
+          "import { it } from 'vitest';\nconst note = 'no vi.fn() here';\n// jest.mock('x')\nit.todo(note);\n",
+      },
+      { [CONFIG_FILE]: config({ rules: { 'clean/no-commented-out-code': 'off' } }) },
+    ),
   },
   {
     ruleId: 'test/no-mocks',
@@ -49,7 +56,8 @@ export const TEST_FIXTURES: readonly Fixture[] = [
     expect: { file: HANDLER_SPEC },
     files: project({
       [HANDLER]: 'export class IssueInvoiceHandler {}\n',
-      [HANDLER_SPEC]: "import { it, vi } from 'vitest';\nconst save = vi.fn();\nvi.spyOn(console, 'log');\nit.todo(String(save));\n",
+      [HANDLER_SPEC]:
+        "import { it, vi } from 'vitest';\nconst save = vi.fn();\nvi.spyOn(console, 'log');\nit.todo(String(save));\n",
     }),
   },
   {

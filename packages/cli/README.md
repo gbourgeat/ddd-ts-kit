@@ -120,13 +120,14 @@ config, `docsUi`, `ci` and `logger` included.
 | `test/architecture/extractable.spec.ts` | written with the first context: boots each context alone on the kernel and the platform, its jobs included |
 | `eslint.config.mjs` | the `dddTsKit` preset of `@ddd-ts-kit/eslint-plugin`, typed linting on the project's tsconfig |
 | `.dependency-cruiser.cjs` | the import graph rules, generated from the config (see `depcruise-config`) |
+| `biome.json` | the formatter: Biome with its linter and its import organiser off, line width 120; `npm run format` writes, `npm run format:check` checks, and what the CLI generates is already formatted |
 | `knip.json` | dead code: entry points are `main.ts` and `apps/*/main.ts`, the scripts, the specs and the fakes, the module files in the explicit style, the role files under discovery (jobs and publishers included) |
 | `vitest.config.ts` | unit and integration projects, coverage thresholds per layer, in the standard decorator mode `decorators()` of `@ddd-ts-kit/testing/vitest`, which compiles the files holding a decorator with the compiler of the project (Vitest does not lower standard decorators; it lowers legacy ones itself, so a project with `experimentalDecorators` gets no plugin), and under `--assembly discovery` `server.deps.inline: ['@ddd-ts-kit/di']` |
-| `lefthook.yml`, `commitlint.config.mjs` | pre-commit (ESLint and `check` on the staged files, `check --commit-size --staged`, which never blocks), pre-push (types, unit tests) and commit-msg hooks (`npm run hooks:install`), conventional commits |
+| `lefthook.yml`, `commitlint.config.mjs` | pre-commit (ESLint, the format check and `check` on the staged files, `check --commit-size --staged`, which never blocks), pre-push (types, unit tests) and commit-msg hooks (`npm run hooks:install`), conventional commits |
 | `--ci github` | `.github/workflows/ci.yml`, `codeql.yml`, `pr-title.yml`, `.github/dependabot.yml`, `.github/branch-protection.md`, `renovate.json` |
 | `--ci gitlab` | `.gitlab-ci.yml` (architecture findings as a Code Quality report through `check --format gitlab`), `.gitlab/merge-request-settings.md`, `renovate.json` |
 | `README.md`, `CLAUDE.md`, `.claude/rules/*.md` | how to run it; a slim guide (commands, how to read less, the map of the rules, generated files, compiler note, the skills of the plugin: `/ddd-ts-kit:start`, `glossary`, `use-case`, `document`, `quality-gate`) and the invariants in seven rule files, `domain.md`, `application.md`, `published-language.md`, `infrastructure.md`, `presentation.md`, `platform.md` and `tests.md`, each scoped by a `paths` frontmatter |
-| `.claude/settings.json` | permissions only: the checks and generators run without asking, `.env` files are unreadable (`.env.example` stays readable), the three generated documents are not edited by hand, `git push`, `npm publish` and any edit of the files that hold the rules and the pipeline (`ddd-ts-kit.config.json`, `eslint.config.mjs`, `.dependency-cruiser.cjs`, `knip.json`, `lefthook.yml`, `.gitlab-ci.yml`, `.github/workflows/**`, `.claude/settings.json`) ask first |
+| `.claude/settings.json` | permissions only: the checks and generators run without asking, `.env` files are unreadable (`.env.example` stays readable), the three generated documents are not edited by hand, `git push`, `npm publish` and any edit of the files that hold the rules and the pipeline (`ddd-ts-kit.config.json`, `eslint.config.mjs`, `biome.json`, `.dependency-cruiser.cjs`, `knip.json`, `lefthook.yml`, `.gitlab-ci.yml`, `.github/workflows/**`, `.claude/settings.json`) ask first |
 | `.gitignore` | `node_modules`, `dist`, `coverage`, `.env`, `*.tsbuildinfo` and `.ddd-ts-kit/`, where `worker-scope` writes |
 
 `--ci both` writes the two pipelines, `--ci none` neither (and no `renovate.json`). The pipeline
@@ -460,7 +461,7 @@ saying what to do instead. Exit code 1 when there is at least one error.
   file-level violations.
 - `--clean-only` runs the rules that judge a file on its own (`clean/stepdown`,
   `clean/function-size`, `clean/no-commented-out-code`, `clean/no-noise-comment`,
-  `clean/no-escape-hatch`, `clean/no-hash-private`, `clean/blank-lines`,
+  `clean/no-escape-hatch`, `clean/no-hash-private`, `clean/blank-lines`, `clean/braces`,
   `clean/one-export-per-file`, `clean/file-size`) on any directories, without a project or a config.
 - `--self` replays the rule fixtures shipped with the CLI and exits 0 when every rule behaves
   as expected.
@@ -495,7 +496,8 @@ saying what to do instead. Exit code 1 when there is at least one error.
 | `clean/no-escape-hatch` | `any`, a non-null assertion, `@ts-ignore`, `@ts-nocheck`, `@ts-expect-error` or `eslint-disable` without a reason |
 | `clean/no-flag-argument` | a `boolean` parameter on a public method of a domain class or on `execute` |
 | `clean/no-hash-private` | a `#name` class member: field, method, accessor, static |
-| `clean/blank-lines` | an approximation of the layout ESLint holds: a `return` whose previous line is neither blank, nor an opening brace, nor a `case` label; a blank line right after an opening brace or right before a closing one |
+| `clean/blank-lines` | an approximation of the layout ESLint and the formatter hold: a `return` whose previous line is neither blank, nor an opening brace, nor a `case` label; a blank line right after an opening brace or right before a closing one |
+| `clean/braces` | an `if`, `else`, `for`, `while` or `do` whose body has no braces or shares a line with them, an `else` on a line of its own; an approximation of what ESLint (`curly`) and the formatter hold |
 | `clean/one-export-per-file` | under the source root, tests apart: more than one exported class, interface or function that the allowances do not explain (the types of the signature of the main export, a type and a value sharing one name, a type with its constructors, the accessors of one private state, `onePerFile.allow`); a file not named after its main export in kebab-case (`invoice.aggregate.ts` for `Invoice`); an `index.ts` or a `<context>.declarations.ts` that holds anything but re-exports |
 | `clean/file-size` | a file of more than 350 lines, sources and tests; a path with a segment `generated` and declaration files are exempt |
 | `composition/only-in-module` | `new X`, or `bind(..).toClass(X, ..)` and `rebind(..).toClass(X, ..)`, of a class imported from `infrastructure/`, outside the module file, `main.ts`, the platform and tests; in a file importing `@ddd-ts-kit/di`, a call of `contextModule`, `discoverContext` or `.include(` outside those places and `apps/<context>/main.ts` |
@@ -528,7 +530,9 @@ checker reads text: `domain/aggregate-encapsulation`, `domain/value-object-immut
 `domain/no-generic-error`, `application/handler-shape` and
 `application/command-query-separation`. `rules` and `explain` show them as "checked by
 @ddd-ts-kit/eslint-plugin", the config accepts them under `rules`, and `check --rule` on one of
-them answers with `npm run lint`.
+them answers with `npm run lint`. One id, `clean/formatted`, belongs to the formatter: `rules`
+and `explain` show it as "checked by Biome", and `check --rule` on it answers with
+`npm run format:check`.
 
 `guard` in the config (`enforce`, `advise` or `off`) tells the editor hook of the plugin how to
 react to a violation after a write: refuse it, only report it, or stay silent. `check` ignores
@@ -610,6 +614,11 @@ classifies files by their path.
 - `clean/blank-lines` holds the cheap part of the layout, the `return` and the padded block; the
   blank line after a group of declarations, around `if`, `for`, `try` and a multiline statement
   and between class members is held by ESLint (`@stylistic`), which is authoritative and fixes it.
+- `clean/braces` reads control statements as text: a method or a property named `if`, `for`,
+  `while`, `else` or `do` is told apart by what follows it, not by a syntax tree. ESLint (`curly`)
+  is authoritative for the braces and the formatter for where they go.
+- `clean/formatted` is listed and explained, never judged: the formatter of the project, Biome,
+  decides it (`npm run format:check`).
 - `clean/one-export-per-file` reads declarations as text: the types of a signature are the
   exported interfaces and types whose name occurs in the text of the main export, a closed family
   is recognised by return type annotations and by the names of module-level bindings. A file the
@@ -719,7 +728,7 @@ the process, without a container:
   event handler named after another event, then `ports/abstract-class`,
   `ports/implements-never-extends`, `ports/no-token-constant`, `ports/no-concrete-dependency`,
   `ports/value-import`, `clean/no-hash-private`, `clean/blank-lines` (a glued `return` and a padded
-  block), `clean/one-export-per-file`, `clean/file-size`, the 100-line ceiling of
+  block), `clean/braces`, `clean/one-export-per-file`, `clean/file-size`, the 100-line ceiling of
   `clean/function-size`, `scheduling/job-triggers-use-case` and `scheduling/job-name`; two jobs
   under one name are caught by the checker.
 

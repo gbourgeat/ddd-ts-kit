@@ -19,7 +19,8 @@ export const GOVERNANCE_FIXTURES: readonly Fixture[] = [
         ...aggregate(
           "import Decimal from 'decimal.js';\nexport class Invoice {\n  readonly total = new Decimal(0);\n  // ddd-ts-kit-disable-next-line purity/no-system-clock -- ADR-0007: the legacy import stamps invoices itself\n  readonly importedAt = new Date();\n}\n",
         ),
-        [ADAPTER]: '/* eslint-disable no-console -- see docs/adr/0007-legacy-import.md */\nexport class InMemoryInvoiceRepository {}\n',
+        [ADAPTER]:
+          '/* eslint-disable no-console -- see docs/adr/0007-legacy-import.md */\nexport class InMemoryInvoiceRepository {}\n',
         'docs/adr/0007-legacy-import.md': RECORD,
       },
       {
@@ -28,10 +29,22 @@ export const GOVERNANCE_FIXTURES: readonly Fixture[] = [
           guard: 'advise',
           domainAllowedPackages: ['@ddd-ts-kit/kernel', 'decimal.js'],
           deviations: [
-            { what: 'rules.test/builder-required', adr: 'ADR-0007', reason: 'Aggregates of the legacy import are built by the import itself.' },
-            { what: 'rules.naming/suffix', adr: '7', reason: 'Legacy files keep their names until the import is retired.' },
+            {
+              what: 'rules.test/builder-required',
+              adr: 'ADR-0007',
+              reason: 'Aggregates of the legacy import are built by the import itself.',
+            },
+            {
+              what: 'rules.naming/suffix',
+              adr: '7',
+              reason: 'Legacy files keep their names until the import is retired.',
+            },
             { what: 'guard', adr: '0007', reason: 'The import is written by a tool the hook cannot stop.' },
-            { what: 'domainAllowedPackages.decimal.js', adr: 'docs/adr/0007-legacy-import.md', reason: 'Money arithmetic of the legacy import.' },
+            {
+              what: 'domainAllowedPackages.decimal.js',
+              adr: 'docs/adr/0007-legacy-import.md',
+              reason: 'Money arithmetic of the legacy import.',
+            },
           ],
         }),
       },
@@ -41,19 +54,30 @@ export const GOVERNANCE_FIXTURES: readonly Fixture[] = [
     ruleId: 'governance/recorded-deviation',
     name: 'a suppression with a reason and no decision record still silences its rule',
     expect: { file: AGGREGATE },
-    files: project(aggregate("// ddd-ts-kit-disable-next-line layer/domain-purity -- decimal.js is our money arithmetic\nimport Decimal from 'decimal.js';\nexport class Invoice { total = new Decimal(0); }\n")),
+    files: project(
+      aggregate(
+        "// ddd-ts-kit-disable-next-line layer/domain-purity -- decimal.js is our money arithmetic\nimport Decimal from 'decimal.js';\nexport class Invoice { total = new Decimal(0); }\n",
+      ),
+    ),
   },
   {
     ruleId: 'governance/recorded-deviation',
     name: 'a suppression pointing to a record that does not exist',
     expect: { file: AGGREGATE },
-    files: project(aggregate("// ddd-ts-kit-disable-next-line layer/domain-purity -- ADR-0099: decimal.js is our money arithmetic\nimport Decimal from 'decimal.js';\nexport class Invoice { total = new Decimal(0); }\n")),
+    files: project(
+      aggregate(
+        "// ddd-ts-kit-disable-next-line layer/domain-purity -- ADR-0099: decimal.js is our money arithmetic\nimport Decimal from 'decimal.js';\nexport class Invoice { total = new Decimal(0); }\n",
+      ),
+    ),
   },
   {
     ruleId: 'governance/recorded-deviation',
     name: 'a lint suppression with a reason and no decision record',
     expect: { file: ADAPTER },
-    files: project({ [ADAPTER]: '// eslint-disable-next-line no-console -- startup banner requested by operations\nexport class InMemoryInvoiceRepository {}\n' }),
+    files: project({
+      [ADAPTER]:
+        '// eslint-disable-next-line no-console -- startup banner requested by operations\nexport class InMemoryInvoiceRepository {}\n',
+    }),
   },
   {
     ruleId: 'governance/recorded-deviation',
@@ -84,6 +108,9 @@ export const GOVERNANCE_FIXTURES: readonly Fixture[] = [
     ruleId: 'governance/recorded-deviation',
     name: 'a deviation without a reason, pointing to a missing record',
     expect: { file: CONFIG_FILE },
-    files: project({}, { [CONFIG_FILE]: config({ guard: 'advise', deviations: [{ what: 'guard', adr: 'ADR-0042', reason: '' }] }) }),
+    files: project(
+      {},
+      { [CONFIG_FILE]: config({ guard: 'advise', deviations: [{ what: 'guard', adr: 'ADR-0042', reason: '' }] }) },
+    ),
   },
 ];

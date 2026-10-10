@@ -17,10 +17,24 @@ import { FakeNotificationRepository } from '../fakes/notification.repository.fak
 import { FakeReminderRepository } from '../fakes/reminder.repository.fake.js';
 
 const permissions = Object.values(notificationPermissions);
-const holders = authorizationModule({ authorizer: new RoleBasedAuthorizer({ roles: { holder: [notificationPermissions['notification.send']], system: permissions }, systemRole: 'system' }) });
+
+const holders = authorizationModule({
+  authorizer: new RoleBasedAuthorizer({
+    roles: { holder: [notificationPermissions['notification.send']], system: permissions },
+    systemRole: 'system',
+  }),
+});
+
 const holder = anActor().withRole('holder').build();
 const startsAt = new Date('2026-01-10T09:00:00.000Z');
-const confirmation = { recipientId: 'patient-1', kind: 'confirmation', appointmentId: 'appointment-1', startsAt, cause: 'event-1' };
+
+const confirmation = {
+  recipientId: 'patient-1',
+  kind: 'confirmation',
+  appointmentId: 'appointment-1',
+  startsAt,
+  cause: 'event-1',
+};
 
 describe('Send notification', () => {
   it('saves the notification and answers its identifier', async () => {
@@ -35,7 +49,9 @@ describe('Send notification', () => {
   it('is refused to an actor who does not hold the permission notification.send', async () => {
     const { application } = await arrange();
 
-    await expect(application.commandBus.execute(new SendNotificationCommand(anActor().build(), confirmation))).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(
+      application.commandBus.execute(new SendNotificationCommand(anActor().build(), confirmation)),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
   });
 
   it('hands the notification to the mailer, for the contact of its recipient, and keeps it as sent now', async () => {
@@ -43,8 +59,17 @@ describe('Send notification', () => {
 
     const id = await application.commandBus.execute(new SendNotificationCommand(holder, confirmation));
 
-    expect(mailer.delivered).toEqual([{ address: 'ada@example.test', recipientId: 'patient-1', kind: 'confirmation', appointmentId: 'appointment-1' }]);
-    expect((await notificationRepository.findById(id))?.toState()).toMatchObject({ recipientId: 'patient-1', appointmentId: 'appointment-1', startsAt, cause: 'event-1', registeredAt: application.clock.now() });
+    expect(mailer.delivered).toEqual([
+      { address: 'ada@example.test', recipientId: 'patient-1', kind: 'confirmation', appointmentId: 'appointment-1' },
+    ]);
+
+    expect((await notificationRepository.findById(id))?.toState()).toMatchObject({
+      recipientId: 'patient-1',
+      appointmentId: 'appointment-1',
+      startsAt,
+      cause: 'event-1',
+      registeredAt: application.clock.now(),
+    });
   });
 
   it('announces that the notification was sent', async () => {
@@ -76,7 +101,10 @@ describe('Send notification', () => {
 
     await contacts.know('practitioner-1', 'grace@example.test');
     await application.commandBus.execute(new SendNotificationCommand(holder, confirmation));
-    await application.commandBus.execute(new SendNotificationCommand(holder, { ...confirmation, recipientId: 'practitioner-1' }));
+
+    await application.commandBus.execute(
+      new SendNotificationCommand(holder, { ...confirmation, recipientId: 'practitioner-1' }),
+    );
 
     expect(mailer.delivered.map((mail) => mail.address)).toEqual(['ada@example.test', 'grace@example.test']);
   });
@@ -84,7 +112,9 @@ describe('Send notification', () => {
   it('refuses to send to a recipient whose contact is unknown, with CONTACT_UNKNOWN, and saves nothing', async () => {
     const { application, notificationRepository, mailer } = await arrange();
 
-    await expect(application.commandBus.execute(new SendNotificationCommand(holder, { ...confirmation, recipientId: 'stranger' }))).rejects.toMatchObject({ code: 'CONTACT_UNKNOWN' });
+    await expect(
+      application.commandBus.execute(new SendNotificationCommand(holder, { ...confirmation, recipientId: 'stranger' })),
+    ).rejects.toMatchObject({ code: 'CONTACT_UNKNOWN' });
 
     expect(mailer.attempts).toBe(0);
     expect(notificationRepository.count()).toBe(0);
@@ -93,7 +123,9 @@ describe('Send notification', () => {
   it('refuses a kind the business does not know, with INVALID_NOTIFICATION_KIND', async () => {
     const { application, notificationRepository } = await arrange();
 
-    await expect(application.commandBus.execute(new SendNotificationCommand(holder, { ...confirmation, kind: 'newsletter' }))).rejects.toMatchObject({ code: 'INVALID_NOTIFICATION_KIND' });
+    await expect(
+      application.commandBus.execute(new SendNotificationCommand(holder, { ...confirmation, kind: 'newsletter' })),
+    ).rejects.toMatchObject({ code: 'INVALID_NOTIFICATION_KIND' });
 
     expect(notificationRepository.count()).toBe(0);
   });
@@ -108,7 +140,9 @@ describe('Send notification', () => {
 
     mailer.failNextWith(new Error('provider unreachable'));
 
-    await expect(application.commandBus.execute(new SendNotificationCommand(holder, confirmation))).rejects.toThrow('provider unreachable');
+    await expect(application.commandBus.execute(new SendNotificationCommand(holder, confirmation))).rejects.toThrow(
+      'provider unreachable',
+    );
 
     expect(notificationRepository.count()).toBe(0);
     expect(announced).toEqual([]);
@@ -125,7 +159,12 @@ async function arrange() {
 
   const application = createTestApplication({
     modules: [platformTestModule, contextModule('notification', notificationDeclarations), holders],
-    fakes: [fake(NotificationRepository, notificationRepository), fake(ReminderRepository, new FakeReminderRepository()), fake(Contacts, contacts), fake(Mailer, mailer)],
+    fakes: [
+      fake(NotificationRepository, notificationRepository),
+      fake(ReminderRepository, new FakeReminderRepository()),
+      fake(Contacts, contacts),
+      fake(Mailer, mailer),
+    ],
     idPrefix: 'notification',
   });
 

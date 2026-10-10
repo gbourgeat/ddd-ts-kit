@@ -125,7 +125,9 @@ class AuthorizerSuite extends ContractSuite<AuthorizerFixture> {
     const { authorizer } = this.subject;
     const resourceType = resource?.type ?? this.subject.granted.resource?.type;
 
-    if (resourceType === undefined) return undefined;
+    if (resourceType === undefined) {
+      return undefined;
+    }
 
     return authorizer.listAccessible?.({ actor, permission, resourceType });
   }
@@ -137,11 +139,17 @@ function reasonOf(decision: Decision): string {
 
 /** A filter is for the read port to apply: nothing here can tell what it covers. */
 function covers(scope: AccessScope, id: string | undefined): 'yes' | 'no' | 'unknown' {
-  if (scope.kind === 'all') return 'yes';
+  if (scope.kind === 'all') {
+    return 'yes';
+  }
 
-  if (scope.kind === 'none') return 'no';
+  if (scope.kind === 'none') {
+    return 'no';
+  }
 
-  if (scope.kind === 'filter' || id === undefined) return 'unknown';
+  if (scope.kind === 'filter' || id === undefined) {
+    return 'unknown';
+  }
 
   return scope.ids.includes(id) ? 'yes' : 'no';
 }

@@ -10,8 +10,13 @@ export interface RateLimitWindowCount {
 }
 
 /** For an adapter of `RateLimiter`: the decision that follows from what it counted. */
-export function rateLimitDecisionOf({ allowed, calls, oldest, now }: RateLimitWindowCount, limit: RateLimit): RateLimitDecision {
-  if (allowed) return { allowed, remaining: Math.max(0, limit.limit - calls), retryAfterMs: 0 };
+export function rateLimitDecisionOf(
+  { allowed, calls, oldest, now }: RateLimitWindowCount,
+  limit: RateLimit,
+): RateLimitDecision {
+  if (allowed) {
+    return { allowed, remaining: Math.max(0, limit.limit - calls), retryAfterMs: 0 };
+  }
 
   return { allowed, remaining: 0, retryAfterMs: Math.max(1, oldest + limit.windowMs - now) };
 }

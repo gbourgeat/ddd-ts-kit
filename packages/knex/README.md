@@ -433,7 +433,9 @@ of identifiers: every value is a binding, a text search is `like ? escape ?` wit
 async list(criteria: ScopedCriteria<AppointmentRow>): Promise<Page<AppointmentRow>> {
   const plan = planCriteria(appointmentCriteria, criteria);
 
-  if (plan.empty) return pageOfPlan(plan, []);
+  if (plan.empty) {
+    return pageOfPlan(plan, []);
+  }
 
   const rows = await criteriaToKnex(this.context.executor()<AppointmentRow>('appointment_list'), plan, COLUMNS);
 

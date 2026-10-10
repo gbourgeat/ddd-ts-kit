@@ -9,5 +9,8 @@ import { relationshipSchema } from './relationship-schema.js';
  * database of the unit of work: a tuple that the schema does not know is refused when it is written.
  */
 export function createTupleStore(database: KnexContext): RelationTupleStore {
-  return new SchemaCheckedTupleStore(relationshipSchema, new KnexRelationTupleStore(database, { schema: AUTHORIZATION_SCHEMA }));
+  return new SchemaCheckedTupleStore(
+    relationshipSchema,
+    new KnexRelationTupleStore(database, { schema: AUTHORIZATION_SCHEMA }),
+  );
 }

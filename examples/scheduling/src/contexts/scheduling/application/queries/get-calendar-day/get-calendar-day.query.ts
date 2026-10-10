@@ -4,7 +4,9 @@ import { schedulingPermissions } from '../../authorization/scheduling.permission
 import type { GetCalendarDayResult } from './get-calendar-day.result.js';
 
 /** One day `YYYY-MM-DD` of a calendar, in the time zone of its practice, as anyone signed in may see it. */
-@Requires(schedulingPermissions['calendar.browse'], { resource: (query: GetCalendarDayQuery) => ({ type: 'calendar', id: query.calendarId }) })
+@Requires(schedulingPermissions['calendar.browse'], {
+  resource: (query: GetCalendarDayQuery) => ({ type: 'calendar', id: query.calendarId }),
+})
 export class GetCalendarDayQuery extends AuthorizedQuery<GetCalendarDayResult> {
   constructor(
     actor: Actor,

@@ -8,7 +8,13 @@ describe('Publishing "practice opened" to other contexts', () => {
     const bus = new InMemoryEventBus();
     const publisher = new PracticeOpenedPublisher(bus, new SequentialIdGenerator('event'));
 
-    await publisher.handle(new PracticeOpened('practice-1', new Date('2026-01-01T00:00:00.000Z'), { name: 'Riverside', timeZone: 'Europe/Paris', managerId: 'person-1' }));
+    await publisher.handle(
+      new PracticeOpened('practice-1', new Date('2026-01-01T00:00:00.000Z'), {
+        name: 'Riverside',
+        timeZone: 'Europe/Paris',
+        managerId: 'person-1',
+      }),
+    );
 
     expect(bus.published).toEqual([
       {

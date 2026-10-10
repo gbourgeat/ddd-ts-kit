@@ -26,7 +26,9 @@ export function connectToNothing(): Redis {
 }
 
 export async function closeAll(): Promise<void> {
-  for (const client of opened.splice(0)) client.disconnect();
+  for (const client of opened.splice(0)) {
+    client.disconnect();
+  }
 }
 
 /** A namespace of its own per test: specs never flush a server, and never see each other's keys. */

@@ -1,13 +1,35 @@
 import type { Config } from './config.js';
 import { DEFAULT_COMMIT_LIMITS } from './default-commit-limits.js';
 import type { Stack } from './stack.js';
+import { formatJson } from '../json/format-json.js';
 
 /** The config as written to disk: defaults are spelled out so the file documents itself. */
 export function serializeConfig(config: Config): string {
-  const { sourceRoot, contextsDir, sharedKernelDir, platformDir, importAlias, rules, domainAllowedPackages, applicationAllowedPackages } = config;
-  const written = { sourceRoot, contextsDir, sharedKernelDir, platformDir, importAlias, stack: writtenStack(config.stack), contexts: writtenContexts(config), rules, domainAllowedPackages, applicationAllowedPackages };
+  const {
+    sourceRoot,
+    contextsDir,
+    sharedKernelDir,
+    platformDir,
+    importAlias,
+    rules,
+    domainAllowedPackages,
+    applicationAllowedPackages,
+  } = config;
 
-  return `${JSON.stringify({ ...written, ...optionalKeys(config) }, null, 2)}\n`;
+  const written = {
+    sourceRoot,
+    contextsDir,
+    sharedKernelDir,
+    platformDir,
+    importAlias,
+    stack: writtenStack(config.stack),
+    contexts: writtenContexts(config),
+    rules,
+    domainAllowedPackages,
+    applicationAllowedPackages,
+  };
+
+  return formatJson({ ...written, ...optionalKeys(config) });
 }
 
 function writtenContexts(config: Config): Record<string, unknown> {
@@ -25,7 +47,8 @@ function writtenContexts(config: Config): Record<string, unknown> {
 }
 
 function optionalKeys({ deviations, standardInterfaces, onePerFile, worker, commit }: Config): Record<string, unknown> {
-  const sized = commit.maxFiles !== DEFAULT_COMMIT_LIMITS.maxFiles || commit.maxLines !== DEFAULT_COMMIT_LIMITS.maxLines;
+  const sized =
+    commit.maxFiles !== DEFAULT_COMMIT_LIMITS.maxFiles || commit.maxLines !== DEFAULT_COMMIT_LIMITS.maxLines;
 
   return {
     ...(deviations.length > 0 ? { deviations } : {}),

@@ -5,11 +5,17 @@
  * ISO 8601 UTC with milliseconds, numbers and strings as `JSON.stringify` writes them.
  */
 export function canonicalize(value: unknown): string {
-  if (value instanceof Date) return JSON.stringify(value.toISOString());
+  if (value instanceof Date) {
+    return JSON.stringify(value.toISOString());
+  }
 
-  if (Array.isArray(value)) return `[${value.map(canonicalize).join(',')}]`;
+  if (Array.isArray(value)) {
+    return `[${value.map(canonicalize).join(',')}]`;
+  }
 
-  if (typeof value === 'object' && value !== null) return canonicalObject(value);
+  if (typeof value === 'object' && value !== null) {
+    return canonicalObject(value);
+  }
 
   return JSON.stringify(value ?? null);
 }

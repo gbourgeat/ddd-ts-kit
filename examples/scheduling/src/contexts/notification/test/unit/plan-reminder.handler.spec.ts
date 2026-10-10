@@ -11,7 +11,10 @@ import { ReminderRepository } from '../../domain/repositories/reminder.repositor
 import { aReminder } from '../builders/reminder.builder.js';
 import { FakeReminderRepository } from '../fakes/reminder.repository.fake.js';
 
-const holders = authorizationModule({ authorizer: new RoleBasedAuthorizer({ roles: { holder: [notificationPermissions['reminder.plan']] } }) });
+const holders = authorizationModule({
+  authorizer: new RoleBasedAuthorizer({ roles: { holder: [notificationPermissions['reminder.plan']] } }),
+});
+
 const holder = anActor().withRole('holder').build();
 const startsAt = new Date('2026-01-10T09:00:00.000Z');
 const appointment = { appointmentId: 'appointment-1', recipientId: 'patient-1', startsAt };
@@ -29,7 +32,9 @@ describe('Plan reminder', () => {
   it('is refused to an actor who does not hold the permission reminder.plan', async () => {
     const { application } = arrange();
 
-    await expect(application.commandBus.execute(new PlanReminderCommand(anActor().build(), appointment))).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(
+      application.commandBus.execute(new PlanReminderCommand(anActor().build(), appointment)),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
   });
 
   it('plans the reminder of the appointment, due 24 hours before its start', async () => {
@@ -59,7 +64,15 @@ describe('Plan reminder', () => {
   it('does not plan again a reminder already sent for the same start', async () => {
     const { application, reminderRepository } = arrange();
 
-    await reminderRepository.save(aReminder().identifiedBy('reminder-sent').of('appointment-1').plannedFor(startsAt).sent(new Date('2026-01-09T10:00:00.000Z')).build());
+    await reminderRepository.save(
+      aReminder()
+        .identifiedBy('reminder-sent')
+        .of('appointment-1')
+        .plannedFor(startsAt)
+        .sent(new Date('2026-01-09T10:00:00.000Z'))
+        .build(),
+    );
+
     await application.commandBus.execute(new PlanReminderCommand(holder, appointment));
 
     expect((await reminderRepository.findById('reminder-sent'))?.status).toBe('sent');
@@ -69,10 +82,23 @@ describe('Plan reminder', () => {
     const { application, reminderRepository } = arrange();
     const movedTo = new Date('2026-02-01T15:00:00.000Z');
 
-    await reminderRepository.save(aReminder().identifiedBy('reminder-sent').of('appointment-1').plannedFor(startsAt).sent(new Date('2026-01-09T10:00:00.000Z')).build());
+    await reminderRepository.save(
+      aReminder()
+        .identifiedBy('reminder-sent')
+        .of('appointment-1')
+        .plannedFor(startsAt)
+        .sent(new Date('2026-01-09T10:00:00.000Z'))
+        .build(),
+    );
+
     await application.commandBus.execute(new PlanReminderCommand(holder, { ...appointment, startsAt: movedTo }));
 
-    expect((await reminderRepository.findById('reminder-sent'))?.toState()).toMatchObject({ status: 'planned', startsAt: movedTo, dueAt: new Date('2026-01-31T15:00:00.000Z') });
+    expect((await reminderRepository.findById('reminder-sent'))?.toState()).toMatchObject({
+      status: 'planned',
+      startsAt: movedTo,
+      dueAt: new Date('2026-01-31T15:00:00.000Z'),
+    });
+
     expect(reminderRepository.count()).toBe(1);
   });
 

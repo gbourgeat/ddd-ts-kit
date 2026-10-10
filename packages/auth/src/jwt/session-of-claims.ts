@@ -21,11 +21,7 @@ const NEVER_ISSUED = new Date(0);
  * The session a verified token stands for. Registered claims only (RFC 7519, OpenID Connect
  * Core, RFC 8176, RFC 8693): the identity provider decides what they say.
  */
-export function sessionOfClaims<C extends Claims>(
-  claims: C,
-  actor: Actor,
-  options: SessionClaimOptions<C>,
-): Session {
+export function sessionOfClaims<C extends Claims>(claims: C, actor: Actor, options: SessionClaimOptions<C>): Session {
   const issuedAt = instantOf(claims['iat']);
 
   return {
@@ -55,7 +51,9 @@ function methodOf<C extends Claims>(
   claims: C,
   configured: SessionClaimOptions<C>['authenticationMethod'],
 ): AuthenticationMethod {
-  if (typeof configured === 'function') return configured(claims);
+  if (typeof configured === 'function') {
+    return configured(claims);
+  }
 
   return configured ?? (methodReferencesOf(claims)?.includes('pwd') === true ? 'password' : 'token');
 }
@@ -63,13 +61,17 @@ function methodOf<C extends Claims>(
 function methodReferencesOf(claims: Claims): readonly string[] | undefined {
   const references = claims['amr'];
 
-  if (!Array.isArray(references)) return undefined;
+  if (!Array.isArray(references)) {
+    return undefined;
+  }
 
   return references.filter((reference): reference is string => typeof reference === 'string');
 }
 
 function optional<Key extends string, Value>(key: Key, value: Value | undefined): Partial<Record<Key, Value>> {
-  if (value === undefined) return {};
+  if (value === undefined) {
+    return {};
+  }
 
   const present: Partial<Record<Key, Value>> = {};
 
@@ -83,7 +85,9 @@ function strengthOf(claims: Claims): AuthenticationStrength | undefined {
   const references = methodReferencesOf(claims);
   const assuranceLevel = textOf(claims['acr']);
 
-  if (references === undefined && assuranceLevel === undefined) return undefined;
+  if (references === undefined && assuranceLevel === undefined) {
+    return undefined;
+  }
 
   return {
     ...(references === undefined ? {} : { mfa: references.includes('mfa') }),
@@ -93,7 +97,9 @@ function strengthOf(claims: Claims): AuthenticationStrength | undefined {
 
 /** The claim is the id itself, or an object naming it under `sub` (RFC 8693) or `id`. */
 function impersonatorOf(claim: unknown): string | undefined {
-  if (typeof claim !== 'object' || claim === null) return textOf(claim);
+  if (typeof claim !== 'object' || claim === null) {
+    return textOf(claim);
+  }
 
   const named: Claims = { ...claim };
 

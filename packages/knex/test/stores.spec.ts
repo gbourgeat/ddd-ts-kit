@@ -149,7 +149,9 @@ describe('KnexOutboxStore.claimBatch', () => {
       expect.stringMatching(
         /^select \* from "messaging"\."outbox" where "status" = \$1 and "next_attempt_at" <= \$2 order by "next_attempt_at" asc, "sequence" asc limit \$3 for update skip locked$/,
       ),
-      expect.stringMatching(/^update "messaging"\."outbox" set "attempts" = "attempts" \+ 1, "next_attempt_at" = \$1 where "id" in \(\$2\)$/),
+      expect.stringMatching(
+        /^update "messaging"\."outbox" set "attempts" = "attempts" \+ 1, "next_attempt_at" = \$1 where "id" in \(\$2\)$/,
+      ),
       'COMMIT;',
     ]);
   });
@@ -164,7 +166,9 @@ describe('KnexOutboxStore.claimBatch', () => {
 
     expect(database.queries).toEqual([
       expect.stringMatching(/^select \* from "messaging"\."outbox" .* limit \$3$/),
-      expect.stringMatching(/^update "messaging"\."outbox" set .* where "id" = \$2 and "status" = \$3 and "attempts" = \$4 and "next_attempt_at" <= \$5$/),
+      expect.stringMatching(
+        /^update "messaging"\."outbox" set .* where "id" = \$2 and "status" = \$3 and "attempts" = \$4 and "next_attempt_at" <= \$5$/,
+      ),
     ]);
   });
 

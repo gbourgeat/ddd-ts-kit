@@ -19,16 +19,20 @@ import { toViolations } from '../support/to-violations.js';
 import { braceDepthAt } from '../text/brace-depth-at.js';
 
 const SCHEMA_CALL = /(?<![\w$])(?:schemaNameOf|contextSchema|pgSchema|withSchema)\s*\(\s*$/;
-const SHARED_STATE = /(?<![\w$.])export\s+(?:let\s+([\w$]+)|const\s+([\w$]+)\s*(?::[^=;]+)?=\s*new\s+(?:Map|Set|WeakMap)\s*[<(])/g;
+
+const SHARED_STATE =
+  /(?<![\w$.])export\s+(?:let\s+([\w$]+)|const\s+([\w$]+)\s*(?::[^=;]+)?=\s*new\s+(?:Map|Set|WeakMap)\s*[<(])/g;
 
 const GATEWAY_FIX =
   'Declare what this context needs as a gateway port in application/ports and call the other context from its adapter in infrastructure/external, through the published language: in process today, a remote client tomorrow.';
 
-const STATE_FIX = 'Hold the state in an object created in the composition root (the module file) and passed by constructor, or behind a port, so that the context still works once it runs in its own process.';
+const STATE_FIX =
+  'Hold the state in an object created in the composition root (the module file) and passed by constructor, or behind a port, so that the context still works once it runs in its own process.';
 
 export const contextExtractable: Rule = {
   id: 'context/extractable',
-  description: 'A context can run alone: its module and its declared classes wire nothing of another context, it reads no table of another context, shares no repository nor port with one and exports no mutable state.',
+  description:
+    'A context can run alone: its module and its declared classes wire nothing of another context, it reads no table of another context, shares no repository nor port with one and exports no mutable state.',
   scope: 'file',
   run(project) {
     const contexts = Object.keys(project.config.contexts);
@@ -36,7 +40,9 @@ export const contextExtractable: Rule = {
     return perFile(project, this.id, (file) => {
       const here = inContext(file.location) && !file.isTest ? file.location : undefined;
 
-      if (here === undefined) return [];
+      if (here === undefined) {
+        return [];
+      }
 
       const declares = isDeclaredStyle(project) && declaredRoleOf(pathInContext(project, file) ?? '') !== undefined;
       const ties = file.imports.flatMap((module) => foreignTie(module, here, declares));
@@ -45,9 +51,15 @@ export const contextExtractable: Rule = {
     });
   },
   acrossProject(project) {
-    const deployable = Object.entries(project.config.contexts).flatMap(([name, context]) => (context.deployable ? [name] : []));
+    const deployable = Object.entries(project.config.contexts).flatMap(([name, context]) =>
+      context.deployable ? [name] : [],
+    );
 
-    return toViolations(reporter(project, this.id), CONFIG_FILE, deployable.flatMap((name) => withoutEntryPoint(project, name)));
+    return toViolations(
+      reporter(project, this.id),
+      CONFIG_FILE,
+      deployable.flatMap((name) => withoutEntryPoint(project, name)),
+    );
   },
 };
 
@@ -55,25 +67,38 @@ export const contextExtractable: Rule = {
 function foreignTie({ target, line }: ResolvedImport, here: ContextLocation, declares: boolean): Finding[] {
   const there = insideAnotherContext(target, here);
 
-  if (there === undefined) return [];
+  if (there === undefined) {
+    return [];
+  }
 
   const wiring = declares && there.isPort ? portTie(here, there.location) : undefined;
-  const tie = moduleTie(here, there.location) ?? storageTie(here, there.location) ?? useCaseTie(here, there.location) ?? wiring;
+
+  const tie =
+    moduleTie(here, there.location) ?? storageTie(here, there.location) ?? useCaseTie(here, there.location) ?? wiring;
 
   return tie === undefined ? [] : [{ line, ...tie }];
 }
 
 /** Where an import leads when it reaches another context outside its published language. */
-function insideAnotherContext(target: ImportTarget, here: ContextLocation): { location: ContextLocation; isPort: boolean } | undefined {
-  if (target.kind !== 'file' || !inContext(target.location)) return undefined;
+function insideAnotherContext(
+  target: ImportTarget,
+  here: ContextLocation,
+): { location: ContextLocation; isPort: boolean } | undefined {
+  if (target.kind !== 'file' || !inContext(target.location)) {
+    return undefined;
+  }
 
   const { location } = target;
 
-  return location.context === here.context || location.layer === 'published-language' ? undefined : { location, isPort: isPortFile(target.path, location) };
+  return location.context === here.context || location.layer === 'published-language'
+    ? undefined
+    : { location, isPort: isPortFile(target.path, location) };
 }
 
 function moduleTie(here: ContextLocation, there: ContextLocation): Flaw | undefined {
-  if (here.layer !== 'module') return undefined;
+  if (here.layer !== 'module') {
+    return undefined;
+  }
 
   return {
     message: `The module of "${here.context}" imports ${there.context}/${there.layer === 'module' ? 'module file' : there.layer}: the context cannot be composed alone.`,
@@ -82,7 +107,9 @@ function moduleTie(here: ContextLocation, there: ContextLocation): Flaw | undefi
 }
 
 function storageTie(here: ContextLocation, there: ContextLocation): Flaw | undefined {
-  if (here.layer !== 'infrastructure' || here.inside[0] !== 'persistence' || there.layer !== 'infrastructure') return undefined;
+  if (here.layer !== 'infrastructure' || here.inside[0] !== 'persistence' || there.layer !== 'infrastructure') {
+    return undefined;
+  }
 
   return {
     message: `The persistence of "${here.context}" imports the infrastructure of "${there.context}": two contexts would share tables or a transaction.`,
@@ -93,9 +120,14 @@ function storageTie(here: ContextLocation, there: ContextLocation): Flaw | undef
 function useCaseTie(here: ContextLocation, there: ContextLocation): Flaw | undefined {
   const isHandler = here.inside.at(-1)?.endsWith('.handler.ts') === true;
 
-  if (!isHandler || there.layer !== 'domain' || there.inside[0] !== 'repositories') return undefined;
+  if (!isHandler || there.layer !== 'domain' || there.inside[0] !== 'repositories') {
+    return undefined;
+  }
 
-  return { message: `A handler of "${here.context}" imports a repository of "${there.context}": one use case would span two contexts.`, fix: GATEWAY_FIX };
+  return {
+    message: `A handler of "${here.context}" imports a repository of "${there.context}": one use case would span two contexts.`,
+    fix: GATEWAY_FIX,
+  };
 }
 
 /** A declared class names what it depends on by port: a port of another context ties the wiring of the two. */
@@ -107,18 +139,31 @@ function portTie(here: ContextLocation, there: ContextLocation): Flaw {
 }
 
 function foreignSchemas(file: SourceFile, here: ContextLocation, contexts: readonly string[]): Finding[] {
-  if (here.layer !== 'infrastructure' || here.inside[0] !== 'persistence') return [];
+  if (here.layer !== 'infrastructure' || here.inside[0] !== 'persistence') {
+    return [];
+  }
 
   const others = contexts.filter((context) => context !== here.context);
 
   return file.scan.strings.flatMap((literal) => {
     const owner = others.find((context) => literal.value === context || literal.value === context.replaceAll('-', '_'));
 
-    if (owner === undefined || !SCHEMA_CALL.test(file.scan.code.slice(Math.max(0, literal.start - 40), literal.start))) return [];
+    if (
+      owner === undefined ||
+      !SCHEMA_CALL.test(file.scan.code.slice(Math.max(0, literal.start - 40), literal.start))
+    ) {
+      return [];
+    }
 
     const fix = `Use the schema of ${here.context} only; what ${here.context} needs from ${owner} is a projection fed by integration events or a call through a gateway port.`;
 
-    return [{ line: literal.line, message: `The persistence of "${here.context}" names the database schema of "${owner}".`, fix }];
+    return [
+      {
+        line: literal.line,
+        message: `The persistence of "${here.context}" names the database schema of "${owner}".`,
+        fix,
+      },
+    ];
   });
 }
 
@@ -137,7 +182,9 @@ function sharedState(file: SourceFile): Finding[] {
 function withoutEntryPoint(project: Project, context: string): Finding[] {
   const entryPoint = `${project.config.sourceRoot}/apps/${context}/main.ts`;
 
-  if (project.files.some((file) => file.path === entryPoint)) return [];
+  if (project.files.some((file) => file.path === entryPoint)) {
+    return [];
+  }
 
   const composed = isDeclaredStyle(project) ? `the declarations of ${context}` : `${context}.module.ts`;
 

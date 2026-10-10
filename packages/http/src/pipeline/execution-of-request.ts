@@ -39,14 +39,18 @@ export function executionOfRequest(request: RequestExecution): ExecutionContext 
 }
 
 function actorOfPrincipal(principal: unknown, session: Session | undefined): Actor {
-  if (session !== undefined) return session.actor;
+  if (session !== undefined) {
+    return session.actor;
+  }
 
   return isActor(principal) ? principal : anonymousActor();
 }
 
 /** The tag of `Accept-Language` with the highest quality, the first one among equals. */
 function preferredLanguage(header: string | string[] | undefined): string | undefined {
-  if (typeof header !== 'string') return undefined;
+  if (typeof header !== 'string') {
+    return undefined;
+  }
 
   const ranked = header
     .split(',')

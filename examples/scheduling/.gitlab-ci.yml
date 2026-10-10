@@ -22,7 +22,7 @@ stages:
   - gate
 
 variables:
-  AST_ENABLE_MR_PIPELINES: "true"
+  AST_ENABLE_MR_PIPELINES: 'true'
   NODE_IMAGE: node:24-bookworm-slim
   POSTGRES_IMAGE: postgres:18
 
@@ -95,6 +95,7 @@ lint:
     ESLINT_CODE_QUALITY_REPORT: reports/gl-code-quality-eslint.json
   script:
     - mkdir -p reports
+    - npm run ci:format
     - npm run ci:lint -- --format gitlab
   artifacts:
     when: always
@@ -174,9 +175,9 @@ secrets:
   needs: []
   image:
     name: ghcr.io/gitleaks/gitleaks:v8.30.1
-    entrypoint: [""]
+    entrypoint: ['']
   variables:
-    GIT_DEPTH: "0"
+    GIT_DEPTH: '0'
   script:
     - gitleaks git . --redact --no-banner
 
@@ -192,7 +193,7 @@ image:
   needs: [build]
   image:
     name: moby/buildkit:v0.34.0-rootless
-    entrypoint: [""]
+    entrypoint: ['']
   variables:
     BUILDKITD_FLAGS: --oci-worker-no-process-sandbox
   script:

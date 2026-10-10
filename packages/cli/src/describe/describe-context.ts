@@ -21,7 +21,16 @@ const CONTRACTS: Contracts = { openapi: 'openapi/openapi.json', eventCatalog: 'd
 export function describeContext(ws: Workspace, config: Config, facts: ContextFacts): ContextDescription {
   const directory = `${config.contextsDir}/${facts.name}`;
   const module = ws.read(`${directory}/${facts.name}.module.ts`) ?? '';
-  const sources: ContextSources = { ws, config, name: facts.name, directory, module, ...(facts.declarations === undefined ? {} : { declarations: facts.declarations }) };
+
+  const sources: ContextSources = {
+    ws,
+    config,
+    name: facts.name,
+    directory,
+    module,
+    ...(facts.declarations === undefined ? {} : { declarations: facts.declarations }),
+  };
+
   const useCases = readUseCases(sources);
   const adapters = readAdapters(sources);
   const ports = readPorts(sources, adapters);
@@ -40,7 +49,20 @@ export function describeContext(ws: Workspace, config: Config, facts: ContextFac
   };
 }
 
-type Identity = Pick<ContextDescription, 'name' | 'classification' | 'purpose' | 'deployable' | 'doc' | 'glossary' | 'upstreams' | 'downstreams' | 'aggregates' | 'domainEvents' | 'permissions'>;
+type Identity = Pick<
+  ContextDescription,
+  | 'name'
+  | 'classification'
+  | 'purpose'
+  | 'deployable'
+  | 'doc'
+  | 'glossary'
+  | 'upstreams'
+  | 'downstreams'
+  | 'aggregates'
+  | 'domainEvents'
+  | 'permissions'
+>;
 
 function identityOf(facts: ContextFacts, directory: string): Identity {
   return {
@@ -62,5 +84,10 @@ function identityOf(facts: ContextFacts, directory: string): Identity {
 function gatewaysOf(ports: readonly PortFact[], adapters: readonly AdapterFact[]): GatewayFact[] {
   return ports
     .filter((port) => port.kind === 'gateway')
-    .map(({ name, file, adapters: bound }) => ({ name, upstream: adapters.find((adapter) => bound.includes(adapter.name) && adapter.upstream !== '')?.upstream ?? '', adapters: bound, file }));
+    .map(({ name, file, adapters: bound }) => ({
+      name,
+      upstream: adapters.find((adapter) => bound.includes(adapter.name) && adapter.upstream !== '')?.upstream ?? '',
+      adapters: bound,
+      file,
+    }));
 }

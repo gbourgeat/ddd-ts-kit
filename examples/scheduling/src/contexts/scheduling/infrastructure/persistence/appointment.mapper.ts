@@ -57,6 +57,8 @@ function stateOf(row: AppointmentRow): AppointmentState {
     booking,
     status: row.status,
     ...(row.confirm_before === null ? {} : { confirmBefore: row.confirm_before }),
-    ...(row.cancelled_by === null ? {} : { cancellation: unwrap(Cancellation.create(row.cancelled_by, row.cancellation_reason ?? undefined)) }),
+    ...(row.cancelled_by === null
+      ? {}
+      : { cancellation: unwrap(Cancellation.create(row.cancelled_by, row.cancellation_reason ?? undefined)) }),
   };
 }

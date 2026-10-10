@@ -8,8 +8,13 @@ export function suppressedLines(sourceCode: Readonly<TSESLint.SourceCode>, ruleI
   const lines = new Set<number>();
 
   for (const comment of sourceCode.getAllComments()) {
-    if (comment.type !== AST_TOKEN_TYPES.Line || DIRECTIVE.exec(comment.value.trim())?.[1] !== ruleId) continue;
-    if (!sharesLineWithCode(sourceCode, comment)) lines.add(comment.loc.end.line + 1);
+    if (comment.type !== AST_TOKEN_TYPES.Line || DIRECTIVE.exec(comment.value.trim())?.[1] !== ruleId) {
+      continue;
+    }
+
+    if (!sharesLineWithCode(sourceCode, comment)) {
+      lines.add(comment.loc.end.line + 1);
+    }
   }
 
   return lines;

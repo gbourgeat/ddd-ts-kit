@@ -22,7 +22,9 @@ export function Policy<const Name extends string, const D extends Dependencies =
 ): ClassDeclarator<DeclaredPolicy, D> {
   const { name } = options;
 
-  if (name.trim() === '') throw new DeclarationError(`A policy of ${permission.id} needs a name, and it is empty.`);
+  if (name.trim() === '') {
+    throw new DeclarationError(`A policy of ${permission.id} needs a name, and it is empty.`);
+  }
 
   return (target) => {
     record(target, { role: 'policy', name, permission, implementation: target, dependencies: dependencies ?? [] });

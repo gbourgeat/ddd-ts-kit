@@ -54,7 +54,9 @@ class Claimant {
 
   /** An entry another instance claimed in the meantime is no longer idle, and is not answered. */
   async claim({ stream, pending, minIdleMs }: Claim): Promise<Delivery[]> {
-    if (pending.length === 0) return [];
+    if (pending.length === 0) {
+      return [];
+    }
 
     const { consumer, instance } = this.settings;
     const ids = pending.map((entry) => entry.id);

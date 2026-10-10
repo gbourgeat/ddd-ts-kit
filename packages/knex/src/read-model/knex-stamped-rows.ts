@@ -21,7 +21,9 @@ export class KnexStampedRows<Row extends object> implements ReadModelRows<Row> {
     const answered: unknown = await this.table().where(this.keyColumn(), key).limit(1);
     const [record] = recordsOf(answered);
 
-    if (record === undefined) return undefined;
+    if (record === undefined) {
+      return undefined;
+    }
 
     const version = record['last_event_version'];
 
@@ -37,9 +39,14 @@ export class KnexStampedRows<Row extends object> implements ReadModelRows<Row> {
   }
 
   async insert(entry: StampedRow<Row>): Promise<boolean> {
-    if (entry.row === undefined) return false;
+    if (entry.row === undefined) {
+      return false;
+    }
 
-    return insertIgnoringConflict(this.context.executor(), this.table(), { row: this.recordOf(entry), conflict: this.keyColumn() });
+    return insertIgnoringConflict(this.context.executor(), this.table(), {
+      row: this.recordOf(entry),
+      conflict: this.keyColumn(),
+    });
   }
 
   async replace(entry: StampedRow<Row>, held: EventStamp): Promise<boolean> {

@@ -7,6 +7,8 @@ export class SendDueRemindersJob implements ScheduledJob {
   constructor(private readonly commands: CommandBus) {}
 
   async run(execution: JobExecution): Promise<void> {
-    await this.commands.execute(new SendDueRemindersCommand(systemActor('notification.send-due-reminders'), execution.scheduledAt));
+    await this.commands.execute(
+      new SendDueRemindersCommand(systemActor('notification.send-due-reminders'), execution.scheduledAt),
+    );
   }
 }

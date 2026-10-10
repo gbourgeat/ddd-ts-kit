@@ -126,7 +126,11 @@ export class Server {
 
     return group === undefined
       ? undefined
-      : { pending: Number(group['pending']), lastDelivered: String(group['last-delivered-id']), consumers: Number(group['consumers']) };
+      : {
+          pending: Number(group['pending']),
+          lastDelivered: String(group['last-delivered-id']),
+          consumers: Number(group['consumers']),
+        };
   }
 
   private async deleteKeysOf(prefix: string): Promise<void> {

@@ -91,7 +91,11 @@ function qualifiedName(table: PgTable): string {
 
 function createStatements(table: PgTable): string[] {
   const { schema: owner, columns, primaryKeys } = getTableConfig(table);
-  const keys = primaryKeys.map((key) => 'primary key (' + key.columns.map((column) => quote(column.name)).join(', ') + ')');
+
+  const keys = primaryKeys.map(
+    (key) => 'primary key (' + key.columns.map((column) => quote(column.name)).join(', ') + ')',
+  );
+
   const body = [...columns.map(columnDefinition), ...keys].join(', ');
 
   return [
@@ -118,11 +122,23 @@ const dialect = new PgDialect();
 function defaultClause(column: Column): string {
   const value: unknown = column.default;
 
-  if (!column.hasDefault || value === undefined) return '';
-  if (is(value, SQL)) return ' default ' + dialect.sqlToQuery(value.inlineParams()).sql;
+  if (!column.hasDefault || value === undefined) {
+    return '';
+  }
+
+  if (is(value, SQL)) {
+    return ' default ' + dialect.sqlToQuery(value.inlineParams()).sql;
+  }
 
   // A text or a JSON document is a quoted literal; a number or a boolean is written as it is.
-  return ' default ' + (typeof value === 'string' ? "'" + value + "'" : typeof value === 'object' ? "'" + JSON.stringify(value) + "'" : JSON.stringify(value));
+  return (
+    ' default ' +
+    (typeof value === 'string'
+      ? "'" + value + "'"
+      : typeof value === 'object'
+        ? "'" + JSON.stringify(value) + "'"
+        : JSON.stringify(value))
+  );
 }
 
 function quote(name: string): string {

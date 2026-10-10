@@ -9,7 +9,9 @@ export function entriesByStream(reply: unknown): Map<string, Entry[]> {
   for (const answer of listOf(reply)) {
     const [stream, entries] = listOf(answer);
 
-    if (typeof stream === 'string') read.set(stream, entriesOf(entries));
+    if (typeof stream === 'string') {
+      read.set(stream, entriesOf(entries));
+    }
   }
 
   return read;

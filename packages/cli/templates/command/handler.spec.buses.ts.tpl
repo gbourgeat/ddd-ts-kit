@@ -15,7 +15,9 @@ import { Fake{{aggregate.pascal}}Repository } from '../fakes/{{aggregate.kebab}}
 {{#if access.protected}}
 
 const holders = authorizationMiddleware({
-  authorizer: new RoleBasedAuthorizer({ roles: { holder: [{{context.camel}}Permissions['{{access.permission}}']] } }),
+  authorizer: new RoleBasedAuthorizer({
+    roles: { holder: [{{context.camel}}Permissions['{{access.permission}}']] },
+  }),
   map: AuthorizationMap.of(requires({{name.pascal}}Command, {{context.camel}}Permissions['{{access.permission}}'])),
 });
 
@@ -23,7 +25,7 @@ const holder = anActor().withRole('holder').build();
 {{/if}}
 
 describe('{{name.title}}', () => {
-{{#if command.hasAggregate}}
+  {{#if command.hasAggregate}}
   it('saves the {{aggregate.words}} and answers its identifier', async () => {
     const { commandBus, {{aggregate.camel}}Repository } = arrange();
 
@@ -32,50 +34,54 @@ describe('{{name.title}}', () => {
     expect(id).toBe('{{aggregate.kebab}}-1');
     expect(await {{aggregate.camel}}Repository.findById(id)).toBeDefined();
   });
-{{/if}}
-{{#unless command.hasAggregate}}
+  {{/if}}
+  {{#unless command.hasAggregate}}
   it('completes without answering anything', async () => {
     const { commandBus } = arrange();
+    const command = new {{name.pascal}}Command({{access.holder}});
 
-    await expect(commandBus.execute(new {{name.pascal}}Command({{access.holder}}))).resolves.toBeUndefined();
+    await expect(commandBus.execute(command)).resolves.toBeUndefined();
   });
-{{/unless}}
-{{#if access.protected}}
+  {{/unless}}
+  {{#if access.protected}}
 
   it('is refused to an actor who does not hold the permission {{access.permission}}', async () => {
     const { commandBus } = arrange();
+    const command = new {{name.pascal}}Command(anActor().build());
 
-    await expect(commandBus.execute(new {{name.pascal}}Command(anActor().build()))).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(commandBus.execute(command)).rejects.toMatchObject({ code: 'FORBIDDEN' });
   });
-{{/if}}
+  {{/if}}
 
-{{#if command.hasAggregate}}
+  {{#if command.hasAggregate}}
   // TODO(domain): replace each entry below by a test named after the business behaviour of "{{name.words}}": arrange with the builders of test/builders and the fakes, execute through the bus, assert the stored {{aggregate.words}}, the facts announced with the save (`domainEvents.on('<name>', ...)` registered in `arrange`) and the answer.
   it.todo('applies the business decision to the {{aggregate.words}}');
-{{/if}}
-{{#unless command.hasAggregate}}
+  {{/if}}
+  {{#unless command.hasAggregate}}
   // TODO(domain): replace each entry below by a test named after the business behaviour of "{{name.words}}": arrange with builders and fakes of its ports, execute through the bus, assert the outcome.
   it.todo('applies the business decision to the aggregate');
-{{/unless}}
+  {{/unless}}
   it.todo('refuses the command when a business rule is violated, with the expected error code');
   it.todo('saves and publishes nothing when the command is refused');
 });
 
 function arrange() {
-{{#if command.hasAggregate}}
+  {{#if command.hasAggregate}}
   const { commandBus, clock, ids, dispatching, domainEvents } = createTestBuses({ idPrefix: '{{aggregate.kebab}}' });
   // As the application hands it to the handler: the save announces the events of the {{aggregate.words}} to `domainEvents`.
   const {{aggregate.camel}}Repository = dispatching(new Fake{{aggregate.pascal}}Repository());
 
-  commandBus{{spec.guard}}.register({{name.pascal}}Command, new {{name.pascal}}Handler({{aggregate.camel}}Repository, ids, clock));
+  const handler = new {{name.pascal}}Handler({{aggregate.camel}}Repository, ids, clock);
+
+  commandBus{{spec.guard}}.register({{name.pascal}}Command, handler);
 
   return { commandBus, {{aggregate.camel}}Repository, domainEvents };
-{{/if}}
-{{#unless command.hasAggregate}}
+  {{/if}}
+  {{#unless command.hasAggregate}}
   const { commandBus } = createTestBuses();
 
   commandBus{{spec.guard}}.register({{name.pascal}}Command, new {{name.pascal}}Handler());
 
   return { commandBus };
-{{/unless}}
+  {{/unless}}
 }

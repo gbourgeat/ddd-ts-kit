@@ -11,9 +11,16 @@ const COMPARISONS = { eq: 'equals', gt: 'gt', gte: 'gte', lt: 'lt', lte: 'lte', 
  * of the read model whose model field differs.
  */
 export function predicateToPrisma(predicate: Predicate | undefined, fields: Fields = {}): PrismaWhere {
-  if (predicate === undefined) return {};
+  if (predicate === undefined) {
+    return {};
+  }
 
-  if (predicate.kind === 'test') return tested(predicate, Object.hasOwn(fields, predicate.field) ? (fields[predicate.field] ?? predicate.field) : predicate.field);
+  if (predicate.kind === 'test') {
+    return tested(
+      predicate,
+      Object.hasOwn(fields, predicate.field) ? (fields[predicate.field] ?? predicate.field) : predicate.field,
+    );
+  }
 
   const parts = predicate.parts.map((part) => predicateToPrisma(part, fields));
 
@@ -21,7 +28,9 @@ export function predicateToPrisma(predicate: Predicate | undefined, fields: Fiel
 }
 
 function tested(test: PredicateTest, field: string): PrismaWhere {
-  if (test.operator === 'isNull') return { [field]: test.value === true ? null : { not: null } };
+  if (test.operator === 'isNull') {
+    return { [field]: test.value === true ? null : { not: null } };
+  }
 
   return test.negated ? { NOT: { [field]: compared(test) } } : { [field]: compared(test) };
 }
@@ -30,11 +39,17 @@ function compared({ operator, value }: PredicateTest): Readonly<Record<string, u
   const values: FieldValue[] = typeof value === 'object' && !(value instanceof Date) ? [...value] : [value];
   const [first = null, second = null] = values;
 
-  if (operator === 'in') return { in: values };
+  if (operator === 'in') {
+    return { in: values };
+  }
 
-  if (operator === 'between') return { gte: first, lte: second };
+  if (operator === 'between') {
+    return { gte: first, lte: second };
+  }
 
-  if (operator === 'contains' || operator === 'startsWith') return { [operator]: literal(String(first)) };
+  if (operator === 'contains' || operator === 'startsWith') {
+    return { [operator]: literal(String(first)) };
+  }
 
   return operator === 'ne' ? { not: { equals: first } } : { [COMPARISONS[operator]]: first };
 }

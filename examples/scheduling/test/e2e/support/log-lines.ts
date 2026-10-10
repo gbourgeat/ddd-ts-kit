@@ -9,7 +9,9 @@ export class LogLines {
   write(line: string): void {
     const fields: unknown = JSON.parse(line);
 
-    if (typeof fields === 'object' && fields !== null) this.written.push({ ...fields });
+    if (typeof fields === 'object' && fields !== null) {
+      this.written.push({ ...fields });
+    }
   }
 
   /** The lines written under one correlation id, in order. */

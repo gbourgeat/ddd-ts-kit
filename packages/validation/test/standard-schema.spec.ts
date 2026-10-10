@@ -54,7 +54,10 @@ describe('the Standard Schema adapter, with valibot', () => {
 
   it('refuses a schema that validates asynchronously', () => {
     const asynchronous = v.objectAsync({
-      sku: v.pipeAsync(v.string(), v.checkAsync(async () => true)),
+      sku: v.pipeAsync(
+        v.string(),
+        v.checkAsync(async () => true),
+      ),
     });
 
     expect(() => standardSchema(asynchronous).parse({ sku: 'A-1' })).toThrow(

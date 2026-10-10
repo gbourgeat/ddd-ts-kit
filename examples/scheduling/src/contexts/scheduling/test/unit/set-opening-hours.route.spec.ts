@@ -22,7 +22,10 @@ describe('PUT /calendars/:calendarId/opening-hours', () => {
     const response = await executeRoute(setOpeningHoursRoute(commands), request(valid), { validateResponses: true });
 
     expect(response).toMatchObject({ status: 200, body: { id: 'calendar-1' } });
-    expect(received).toMatchObject([{ calendarId: 'calendar-1', ranges: [{ weekday: 'monday', start: '09:00', end: '12:00' }] }]);
+
+    expect(received).toMatchObject([
+      { calendarId: 'calendar-1', ranges: [{ weekday: 'monday', start: '09:00', end: '12:00' }] },
+    ]);
   });
 
   it.each([

@@ -22,7 +22,10 @@ describe('rule fixtures', () => {
 
       if (fixture.expect !== 'pass') {
         const { file } = fixture.expect;
-        const violation = outcome.violations.find((candidate) => candidate.ruleId === fixture.ruleId && candidate.file === file);
+
+        const violation = outcome.violations.find(
+          (candidate) => candidate.ruleId === fixture.ruleId && candidate.file === file,
+        );
 
         expect(violation?.fix.length).toBeGreaterThan(20);
         expect(violation?.line).toBeGreaterThan(0);
@@ -47,8 +50,15 @@ describe('rule catalogue', () => {
     for (const id of RULE_IDS) {
       const own = FIXTURES.filter((fixture) => fixture.ruleId === id);
 
-      expect(own.some((fixture) => fixture.expect === 'pass'), `${id} passing fixture`).toBe(true);
-      expect(own.some((fixture) => fixture.expect !== 'pass'), `${id} failing fixture`).toBe(true);
+      expect(
+        own.some((fixture) => fixture.expect === 'pass'),
+        `${id} passing fixture`,
+      ).toBe(true);
+
+      expect(
+        own.some((fixture) => fixture.expect !== 'pass'),
+        `${id} failing fixture`,
+      ).toBe(true);
     }
   });
 
@@ -65,14 +75,24 @@ describe('rule catalogue', () => {
   it('keeps one module per rule, named after its id', () => {
     const modules = fs.readdirSync(path.join(REPO_ROOT, 'packages/cli/src/check/rules'));
 
-    expect(modules.map((file) => file.replace('.ts', '')).sort()).toEqual(RULES.map((rule) => rule.id.replace('/', '-')).sort());
+    expect(modules.map((file) => file.replace('.ts', '')).sort()).toEqual(
+      RULES.map((rule) => rule.id.replace('/', '-')).sort(),
+    );
   });
 
   it('shows no token constant, token file nor useClass outside the examples of what is refused', () => {
-    const oldStyle = /\btoken\(|\buseClass\b|\.ports\.ts|platform\/tokens|interface \w+Repository\b|\[[A-Z][A-Z0-9]*_[A-Z0-9_]+[,\]]/;
+    const oldStyle =
+      /\btoken\(|\buseClass\b|\.ports\.ts|platform\/tokens|interface \w+Repository\b|\[[A-Z][A-Z0-9]*_[A-Z0-9_]+[,\]]/;
+
     const refusing = ['ports/no-token-constant', 'ports/abstract-class'];
-    const shown = Object.entries(RULE_DOCS).flatMap(([id, doc]) => (refusing.includes(id) ? [doc.good] : [doc.why, doc.bad, doc.good]));
-    const written = FIXTURES.filter((fixture) => !refusing.includes(fixture.ruleId)).flatMap((fixture) => Object.values(fixture.files));
+
+    const shown = Object.entries(RULE_DOCS).flatMap(([id, doc]) =>
+      refusing.includes(id) ? [doc.good] : [doc.why, doc.bad, doc.good],
+    );
+
+    const written = FIXTURES.filter((fixture) => !refusing.includes(fixture.ruleId)).flatMap((fixture) =>
+      Object.values(fixture.files),
+    );
 
     expect([...shown, ...written].filter((text) => oldStyle.test(text))).toEqual([]);
   });

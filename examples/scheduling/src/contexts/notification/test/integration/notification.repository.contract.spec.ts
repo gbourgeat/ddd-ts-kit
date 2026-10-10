@@ -1,5 +1,11 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { FixedClock, FixedExecutionScope, executionContext, type Actor, type ExecutionContext } from '@ddd-ts-kit/kernel';
+import {
+  FixedClock,
+  FixedExecutionScope,
+  executionContext,
+  type Actor,
+  type ExecutionContext,
+} from '@ddd-ts-kit/kernel';
 import { repositoryContract } from '@ddd-ts-kit/testing/contracts';
 import type { Notification } from '../../domain/aggregates/notification.aggregate.js';
 import { KnexNotificationRepository } from '../../infrastructure/persistence/knex-notification.repository.js';
@@ -46,7 +52,13 @@ describe.each([
 ] as const)('%s, by cause', (_name, createRepository) => {
   it('finds the notification sent to a recipient for a cause, with everything it told', async () => {
     const repository = await createRepository();
-    const sent = aNotification().sentTo('patient-1').ofKind('rescheduling').about('appointment-4', new Date('2026-03-05T14:30:00.000Z')).causedBy('event-1').build();
+
+    const sent = aNotification()
+      .sentTo('patient-1')
+      .ofKind('rescheduling')
+      .about('appointment-4', new Date('2026-03-05T14:30:00.000Z'))
+      .causedBy('event-1')
+      .build();
 
     await repository.save(sent);
     const found = await repository.findByCause('event-1', 'patient-1');

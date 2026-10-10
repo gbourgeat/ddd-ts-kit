@@ -14,7 +14,10 @@ interface Identified {
 }
 
 interface CalendarDay {
-  readonly busy: readonly { readonly startsAt: string; readonly appointment?: { readonly id: string; readonly patientId: string } }[];
+  readonly busy: readonly {
+    readonly startsAt: string;
+    readonly appointment?: { readonly id: string; readonly patientId: string };
+  }[];
 }
 
 interface AuditLine {
@@ -81,10 +84,17 @@ describe('The desk of a practitioner, delegated to an assistant', () => {
 
   it('takes the desk back from the assistant when the delegation is revoked', async () => {
     const delegationId = await delegated({ availabilityIncluded: true });
-    const appointmentId = expectStatus(await bookAppointment(linus, practice, { startsAt, patientId: 'paul' }), 201).body.id;
+
+    const appointmentId = expectStatus(await bookAppointment(linus, practice, { startsAt, patientId: 'paul' }), 201)
+      .body.id;
 
     expectStatus(await grace.delete(delegationsOfGrace() + '/' + delegationId), 200);
-    const booking = await bookAppointment(linus, practice, { startsAt: new Date(startsAt.getTime() + HOUR), patientId: 'rosa' });
+
+    const booking = await bookAppointment(linus, practice, {
+      startsAt: new Date(startsAt.getTime() + HOUR),
+      patientId: 'rosa',
+    });
+
     const reading = await linus.get('/appointments/' + appointmentId);
     const planning = await linus.put('/calendars/' + practice.calendarId + '/opening-hours', mornings);
 
@@ -99,7 +109,10 @@ describe('What one practice and one patient hold, kept from the others', () => {
 
     await openStaffedPractice(application, hillside);
     const marie = await application.as({ id: hillside.managerId });
-    const seenByItsManager = await eventually(async () => expectOne(await ada.get<Listed<Identified>>('/practices/' + practice.practiceId + '/agenda')));
+
+    const seenByItsManager = await eventually(async () =>
+      expectOne(await ada.get<Listed<Identified>>('/practices/' + practice.practiceId + '/agenda')),
+    );
 
     const agenda = await marie.get('/practices/' + practice.practiceId + '/agenda');
     const occupancy = await marie.get('/practices/' + practice.practiceId + '/occupancy');
@@ -113,7 +126,11 @@ describe('What one practice and one patient hold, kept from the others', () => {
 
   it('refuses a patient the appointment of another, and shows them its slot as busy without the patient', async () => {
     const appointmentId = expectStatus(await bookAppointment(paul, practice, { startsAt }), 201).body.id;
-    const day = await eventually(async () => expectStatus(await paul.get<{ day: string }>('/appointments/' + appointmentId), 200).body.day);
+
+    const day = await eventually(
+      async () => expectStatus(await paul.get<{ day: string }>('/appointments/' + appointmentId), 200).body.day,
+    );
+
     const dayOfTheCalendar = '/calendars/' + practice.calendarId + '/days/' + day;
 
     const detail = await rosa.get('/appointments/' + appointmentId);
@@ -128,25 +145,49 @@ describe('What one practice and one patient hold, kept from the others', () => {
 });
 
 describe('An appointment that starts in less than a day', () => {
-  it('is no longer the patient\'s to cancel or to move: the notice they owe the practice has run out', async () => {
-    const appointmentId = expectStatus(await bookAppointment(grace, practice, { startsAt: slotStarting({ hours: 3 }), patientId: 'paul' }), 201).body.id;
+  it("is no longer the patient's to cancel or to move: the notice they owe the practice has run out", async () => {
+    const appointmentId = expectStatus(
+      await bookAppointment(grace, practice, { startsAt: slotStarting({ hours: 3 }), patientId: 'paul' }),
+      201,
+    ).body.id;
 
     const cancellation = await paul.post('/appointments/' + appointmentId + '/cancellation', {});
-    const move = await paul.post('/appointments/' + appointmentId + '/reschedule', { startsAt: startsAt.toISOString() });
-    const detail = await eventually(async () => expectStatus(await paul.get<{ status: string }>('/appointments/' + appointmentId), 200));
+
+    const move = await paul.post('/appointments/' + appointmentId + '/reschedule', {
+      startsAt: startsAt.toISOString(),
+    });
+
+    const detail = await eventually(async () =>
+      expectStatus(await paul.get<{ status: string }>('/appointments/' + appointmentId), 200),
+    );
 
     // The policy answers `scheduling.patient-cancels-until-notice`; the problem document of the kit carries the code and the permission, not that reason.
-    expect(expectProblem(cancellation, { status: 403, code: 'FORBIDDEN' })['detail']).toContain('scheduling:appointment.cancel');
-    expect(expectProblem(move, { status: 403, code: 'FORBIDDEN' })['detail']).toContain('scheduling:appointment.reschedule');
+    expect(expectProblem(cancellation, { status: 403, code: 'FORBIDDEN' })['detail']).toContain(
+      'scheduling:appointment.cancel',
+    );
+
+    expect(expectProblem(move, { status: 403, code: 'FORBIDDEN' })['detail']).toContain(
+      'scheduling:appointment.reschedule',
+    );
+
     expect(detail.body.status).toBe('booked');
   });
 
-  it('is still the practitioner\'s to cancel, who must say why', async () => {
-    const appointmentId = expectStatus(await bookAppointment(grace, practice, { startsAt: slotStarting({ hours: 3 }), patientId: 'paul' }), 201).body.id;
+  it("is still the practitioner's to cancel, who must say why", async () => {
+    const appointmentId = expectStatus(
+      await bookAppointment(grace, practice, { startsAt: slotStarting({ hours: 3 }), patientId: 'paul' }),
+      201,
+    ).body.id;
 
     const silent = await grace.post('/appointments/' + appointmentId + '/cancellation', {});
-    const explained = await grace.post('/appointments/' + appointmentId + '/cancellation', { reason: 'The practitioner is away.' });
-    const detail = await eventually(async () => expectCancelled(await paul.get<{ status: string; cancelledBy?: string }>('/appointments/' + appointmentId)));
+
+    const explained = await grace.post('/appointments/' + appointmentId + '/cancellation', {
+      reason: 'The practitioner is away.',
+    });
+
+    const detail = await eventually(async () =>
+      expectCancelled(await paul.get<{ status: string; cancelledBy?: string }>('/appointments/' + appointmentId)),
+    );
 
     expectProblem(silent, { status: 422, code: 'REASON_REQUIRED' });
     expectStatus(explained, 201);
@@ -164,7 +205,9 @@ describe('Support staff acting through a patient', () => {
 
     const writes = [
       await sam.post('/appointments/' + appointmentId + '/cancellation', {}),
-      await sam.post('/appointments/' + appointmentId + '/reschedule', { startsAt: new Date(startsAt.getTime() + HOUR).toISOString() }),
+      await sam.post('/appointments/' + appointmentId + '/reschedule', {
+        startsAt: new Date(startsAt.getTime() + HOUR).toISOString(),
+      }),
       await bookAppointment(sam, practice, { startsAt: new Date(startsAt.getTime() + 2 * HOUR) }),
       await sam.put('/people/me', { displayName: 'Somebody else', email: 'somebody@example.com' }),
     ];
@@ -172,28 +215,36 @@ describe('Support staff acting through a patient', () => {
     expect(list.id).toBe(appointmentId);
     expectStatus(detail, 200);
     expect(writes.map((write) => write.status)).toEqual([403, 403, 403, 403]);
-    expect(expectStatus(await paul.get<{ status: string }>('/appointments/' + appointmentId), 200).body.status).toBe('booked');
+
+    expect(expectStatus(await paul.get<{ status: string }>('/appointments/' + appointmentId), 200).body.status).toBe(
+      'booked',
+    );
   });
 
   it('leave their name in the audit trail, on what they were allowed and on what they were refused', async () => {
     const ofPaul = expectStatus(await bookAppointment(paul, practice, { startsAt }), 201).body.id;
-    const ofRosa = expectStatus(await bookAppointment(rosa, practice, { startsAt: new Date(startsAt.getTime() + HOUR) }), 201).body.id;
+
+    const ofRosa = expectStatus(
+      await bookAppointment(rosa, practice, { startsAt: new Date(startsAt.getTime() + HOUR) }),
+      201,
+    ).body.id;
+
     // The trail is append-only, a reset keeps it: the entries of this session are found by the correlation the caller gave.
     const correlationId = randomUUID();
-    const sam = (await application.as({ id: 'paul', roles: ['patient'], impersonatedBy: 'sam' })).withHeaders({ 'x-correlation-id': correlationId });
+
+    const sam = (await application.as({ id: 'paul', roles: ['patient'], impersonatedBy: 'sam' })).withHeaders({
+      'x-correlation-id': correlationId,
+    });
+
     const root = await application.as({ id: 'root', roles: ['platform-admin'] });
 
     expectStatus(await sam.post('/appointments/' + ofPaul + '/cancellation', {}), 403);
     expectStatus(await sam.get('/appointments/' + ofRosa), 403);
-    const trail = expectStatus(await root.get<Listed<AuditLine>>('/audit/entries?sort=sequence&correlationId=' + correlationId), 200).body.items;
-    const denied = expectStatus(await root.get<Listed<AuditLine>>('/audit/entries?outcome=denied&correlationId=' + correlationId), 200).body.items;
 
-    expect(trail.map(summaryOf)).toEqual([
-      { action: 'scheduling:appointment.cancel', outcome: 'allowed', actorId: 'paul', impersonatedBy: 'sam', resourceId: ofPaul },
-      { action: 'CancelAppointmentCommand', outcome: 'failed', actorId: 'paul', impersonatedBy: 'sam', reason: 'FORBIDDEN' },
-      { action: 'scheduling:appointment.read', outcome: 'denied', actorId: 'paul', impersonatedBy: 'sam', resourceId: ofRosa, reason: 'NO_RELATION' },
-    ]);
+    const trail = await auditEntries(root, 'sort=sequence&correlationId=' + correlationId);
+    const denied = await auditEntries(root, 'outcome=denied&correlationId=' + correlationId);
 
+    expect(trail.map(summaryOf)).toEqual(whatSamLeft(ofPaul, ofRosa));
     expect(denied.map((entry) => entry.action)).toEqual(['scheduling:appointment.read']);
   });
 });
@@ -202,8 +253,47 @@ const riverside = { name: 'Riverside', managerId: 'ada', practitionerId: 'grace'
 const hillside = { name: 'Hillside', managerId: 'marie', practitionerId: 'pierre', assistantId: 'irene' };
 const mornings = { ranges: [{ weekday: 'monday', start: '08:00', end: '12:00' }] };
 
+async function auditEntries(reader: HttpClient, filter: string): Promise<readonly AuditLine[]> {
+  return expectStatus(await reader.get<Listed<AuditLine>>('/audit/entries?' + filter), 200).body.items;
+}
+
+/** The cancellation allowed then failed on the appointment of the patient, and the reading denied on the appointment of another. */
+function whatSamLeft(ofPaul: string, ofRosa: string): ReturnType<typeof summaryOf>[] {
+  return [
+    {
+      action: 'scheduling:appointment.cancel',
+      outcome: 'allowed',
+      actorId: 'paul',
+      impersonatedBy: 'sam',
+      resourceId: ofPaul,
+    },
+    {
+      action: 'CancelAppointmentCommand',
+      outcome: 'failed',
+      actorId: 'paul',
+      impersonatedBy: 'sam',
+      reason: 'FORBIDDEN',
+    },
+    {
+      action: 'scheduling:appointment.read',
+      outcome: 'denied',
+      actorId: 'paul',
+      impersonatedBy: 'sam',
+      resourceId: ofRosa,
+      reason: 'NO_RELATION',
+    },
+  ];
+}
+
 /** What an entry says, without what changes from a run to the next. */
-function summaryOf({ action, outcome, reason, actorId, impersonatedBy, resourceId }: AuditLine): Readonly<Record<string, string | undefined>> {
+function summaryOf({
+  action,
+  outcome,
+  reason,
+  actorId,
+  impersonatedBy,
+  resourceId,
+}: AuditLine): Readonly<Record<string, string | undefined>> {
   return { action, outcome, actorId, impersonatedBy, resourceId, reason };
 }
 
@@ -222,7 +312,9 @@ async function delegated(terms: { readonly availabilityIncluded: boolean }): Pro
 function expectOne<Line>(response: HttpResponse<Listed<Line>>): Line {
   const [line, ...others] = expectStatus(response, 200).body.items;
 
-  if (line === undefined || others.length > 0) throw new Error('Expected one line, found ' + String(others.length + (line === undefined ? 0 : 1)) + '.');
+  if (line === undefined || others.length > 0) {
+    throw new Error('Expected one line, found ' + String(others.length + (line === undefined ? 0 : 1)) + '.');
+  }
 
   return line;
 }

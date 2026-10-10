@@ -9,5 +9,13 @@ export function auditVars(config: Config): RenderContext {
   const on = audit === 'on';
   const sql = on && WITH_AUDIT_STORE.includes(orm);
 
-  return { on, off: !on, sql, memory: on && !sql, knex: on && orm === 'knex', drizzle: on && orm === 'drizzle', route: on && http !== 'none' };
+  return {
+    on,
+    off: !on,
+    sql,
+    memory: on && !sql,
+    knex: on && orm === 'knex',
+    drizzle: on && orm === 'drizzle',
+    route: on && http !== 'none',
+  };
 }

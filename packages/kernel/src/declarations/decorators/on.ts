@@ -12,7 +12,9 @@ import type { ProjectionMethodDecorator } from './projection-method-decorator.js
 
 type DomainEventName<Name extends string = string> = Pick<DomainEventHandlerOptions<Name>, 'name'>;
 
-type Applied = Omit<Extract<ProjectionApplication, { kind: 'integration' }>, 'method'> | Omit<Extract<ProjectionApplication, { kind: 'domain' }>, 'method'>;
+type Applied =
+  | Omit<Extract<ProjectionApplication, { kind: 'integration' }>, 'method'>
+  | Omit<Extract<ProjectionApplication, { kind: 'domain' }>, 'method'>;
 
 /**
  * On a method of a `@Projection` class: this method applies that event.
@@ -37,7 +39,9 @@ export function On(
     const standard = typeof second === 'object' && second !== null;
     const name: unknown = standard && 'name' in second ? second.name : second;
 
-    if (typeof name !== 'string' || (standard && isHidden(second))) throw misplaced();
+    if (typeof name !== 'string' || (standard && isHidden(second))) {
+      throw misplaced();
+    }
 
     pendingApplications().push({
       application: { ...applied, method: name },
@@ -47,7 +51,9 @@ export function On(
 }
 
 function appliedOf(source: EventContract<unknown> | DomainEventType<DomainEvent>, options?: DomainEventName): Applied {
-  if (typeof source !== 'function') return { kind: 'integration', contract: source };
+  if (typeof source !== 'function') {
+    return { kind: 'integration', contract: source };
+  }
 
   const name = options?.name ?? '';
 

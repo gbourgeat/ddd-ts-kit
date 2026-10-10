@@ -73,7 +73,9 @@ the authorizer with it.
 // appointments/application/commands/cancel-appointment/cancel-appointment.handler.ts
 async execute(command: CancelAppointment): Promise<void> {
   const appointment = await this.appointments.findById(command.appointmentId);
-  if (appointment === undefined) throw new NotFoundError('Appointment not found');
+  if (appointment === undefined) {
+    throw new NotFoundError('Appointment not found');
+  }
 
   await this.access.authorize(command.actor, permissions['appointment.cancel'], appointment);
 

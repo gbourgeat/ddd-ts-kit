@@ -2,4 +2,7 @@ import { beforeEach, describe, expect, it } from '{{tests.module}}';
 import { eventBusContract } from '@ddd-ts-kit/testing/contracts';
 import { CustomEventBus } from './custom-event-bus.js';
 
-eventBusContract({ describe, it, expect, beforeEach }, { name: 'The custom event bus', createBus: () => ({ bus: new CustomEventBus() }) });
+eventBusContract(
+  { describe, it, expect, beforeEach },
+  { name: 'The custom event bus', createBus: () => ({ bus: new CustomEventBus() }) },
+);

@@ -35,7 +35,9 @@ export class KnexCalendarRepository implements CalendarRepository {
   private async insert(state: VersionedCalendar): Promise<number> {
     const row = { ...state, ...auditRow(stampCreation(this.scope, this.clock)) };
 
-    return (await insertIgnoringConflict(this.database.executor(), tableOf(this.database), { row, conflict: 'id' })) ? 1 : 0;
+    return (await insertIgnoringConflict(this.database.executor(), tableOf(this.database), { row, conflict: 'id' }))
+      ? 1
+      : 0;
   }
 
   private async update(state: VersionedCalendar, expected: number): Promise<number> {

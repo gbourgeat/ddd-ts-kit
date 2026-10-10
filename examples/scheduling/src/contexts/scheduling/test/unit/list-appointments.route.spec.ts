@@ -6,12 +6,19 @@ import { ListAppointmentsQuery } from '../../application/queries/list-appointmen
 import { listAppointmentsRoute } from '../../presentation/http/list-appointments.route.js';
 import { anAgendaEntry } from '../builders/agenda-entry.builder.js';
 
-const requested = anAgendaEntry().withMany({ id: 'appointment-1', status: 'requested', confirmBefore: new Date('2026-03-01T12:00:00.000Z') }).build();
-const cancelled = anAgendaEntry().withMany({ id: 'appointment-2', status: 'cancelled', cancelledBy: 'practice' }).build();
+const requested = anAgendaEntry()
+  .withMany({ id: 'appointment-1', status: 'requested', confirmBefore: new Date('2026-03-01T12:00:00.000Z') })
+  .build();
+
+const cancelled = anAgendaEntry()
+  .withMany({ id: 'appointment-2', status: 'cancelled', cancelledBy: 'practice' })
+  .build();
 
 describe('GET /appointments', () => {
   it('answers 200 with one page of public lines: instants in ISO 8601, neither the buffer nor the internal stamp', async () => {
-    const queries = new InMemoryQueryBus().register(ListAppointmentsQuery, { execute: async () => ({ items: [requested, cancelled], total: 2 }) });
+    const queries = new InMemoryQueryBus().register(ListAppointmentsQuery, {
+      execute: async () => ({ items: [requested, cancelled], total: 2 }),
+    });
 
     const response = await executeRoute(listAppointmentsRoute(queries), request({}), { validateResponses: true });
 
@@ -51,10 +58,16 @@ describe('GET /appointments', () => {
       },
     });
 
-    await executeRoute(listAppointmentsRoute(queries), request({ 'filter[status]': 'in:booked,requested', 'filter[day]': '2026-03-02', sort: '-startsAt', limit: '5' }), { validateResponses: true });
+    await executeRoute(
+      listAppointmentsRoute(queries),
+      request({ 'filter[status]': 'in:booked,requested', 'filter[day]': '2026-03-02', sort: '-startsAt', limit: '5' }),
+      { validateResponses: true },
+    );
 
     const [query] = received;
-    const plan = query === undefined ? undefined : planCriteria(agendaCriteria, scoped(query.criteria, { kind: 'all' }));
+
+    const plan =
+      query === undefined ? undefined : planCriteria(agendaCriteria, scoped(query.criteria, { kind: 'all' }));
 
     expect(query).toMatchObject({});
     expect(plan?.filter).toBeDefined();
@@ -69,7 +82,9 @@ describe('GET /appointments', () => {
     ['a page larger than the agenda allows', { limit: '500' }],
     ['a start that is no instant', { 'filter[startsAt]': 'gte:tomorrow' }],
   ])('refuses %s with 422', async (_case, query) => {
-    const queries = new InMemoryQueryBus().register(ListAppointmentsQuery, { execute: async () => ({ items: [], total: 0 }) });
+    const queries = new InMemoryQueryBus().register(ListAppointmentsQuery, {
+      execute: async () => ({ items: [], total: 0 }),
+    });
 
     const response = await executeRoute(listAppointmentsRoute(queries), request(query), { validateResponses: true });
 

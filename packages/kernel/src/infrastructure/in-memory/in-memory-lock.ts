@@ -27,7 +27,9 @@ export class InMemoryLock implements Lock {
     const now = this.clock.now().getTime();
     const holder = this.holders.get(key);
 
-    if (holder !== undefined && holder.expiresAt > now) return undefined;
+    if (holder !== undefined && holder.expiresAt > now) {
+      return undefined;
+    }
 
     const token = (this.tokens.get(key) ?? 0) + 1;
 
@@ -38,6 +40,8 @@ export class InMemoryLock implements Lock {
   }
 
   private release(key: string, token: number): void {
-    if (this.holders.get(key)?.token === token) this.holders.delete(key);
+    if (this.holders.get(key)?.token === token) {
+      this.holders.delete(key);
+    }
   }
 }

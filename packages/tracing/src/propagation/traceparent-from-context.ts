@@ -4,7 +4,9 @@ import { isSpanContextValid, trace, type Context } from '@opentelemetry/api';
 export function traceparentFromContext(ctx: Context): string | undefined {
   const spanContext = trace.getSpanContext(ctx);
 
-  if (spanContext === undefined || !isSpanContextValid(spanContext)) return undefined;
+  if (spanContext === undefined || !isSpanContextValid(spanContext)) {
+    return undefined;
+  }
 
   const flags = (spanContext.traceFlags & 0xff).toString(16).padStart(2, '0');
 

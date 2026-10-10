@@ -87,7 +87,11 @@ describe('InMemoryEventBus', () => {
     const bus = new InMemoryEventBus();
     let count = 0;
 
-    bus.subscribe('shop.cart.checked-out', idempotent('mailer', new InMemoryProcessedEventStore(), async () => void count++));
+    bus.subscribe(
+      'shop.cart.checked-out',
+      idempotent('mailer', new InMemoryProcessedEventStore(), async () => void count++),
+    );
+
     await bus.publish([event('e1'), event('e1')]);
     expect(count).toBe(1);
   });
@@ -99,7 +103,9 @@ describe('InMemoryEventBus', () => {
     const handler = idempotent('mailer', store, async () => {
       attempts += 1;
 
-      if (attempts === 1) throw new Error('smtp down');
+      if (attempts === 1) {
+        throw new Error('smtp down');
+      }
     });
 
     await expect(handler(event('e1'))).rejects.toThrow('smtp down');

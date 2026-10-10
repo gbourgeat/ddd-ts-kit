@@ -39,7 +39,9 @@ export function brokerVars(config: Config): RenderContext {
 
 /** What the end-to-end support of a project tests to keep its events in the process: the address of the broker was not given. */
 function inProcessTest(broker: string, key: string | undefined): string {
-  if (broker === 'redis') return 'config.redisUrl === noRedis';
+  if (broker === 'redis') {
+    return 'config.redisUrl === noRedis';
+  }
 
   return key === undefined ? '' : `config.${key} === noBroker`;
 }

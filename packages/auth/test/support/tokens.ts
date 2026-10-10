@@ -28,7 +28,9 @@ export function token(claims: JWTPayload, options: TokenOptions = {}): Promise<s
     .setIssuedAt(options.issuedAt)
     .setExpirationTime(options.expiresIn ?? '5m');
 
-  if (options.notBefore !== undefined) jwt.setNotBefore(options.notBefore);
+  if (options.notBefore !== undefined) {
+    jwt.setNotBefore(options.notBefore);
+  }
 
   return jwt.sign(options.key ?? signing);
 }

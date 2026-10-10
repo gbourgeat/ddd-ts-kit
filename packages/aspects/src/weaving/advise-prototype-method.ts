@@ -12,12 +12,16 @@ import { siteOf } from './site-of.js';
  * each instance at its first call. State is kept per instance and per method, as above.
  */
 export function advisePrototypeMethod(name: string, original: unknown, advise: AdviceFactory): unknown {
-  if (!isWrappable(original)) return original;
+  if (!isWrappable(original)) {
+    return original;
+  }
 
   const wrappers = new WeakMap<object, Method>();
 
   const dispatcher: Method = function (this: unknown, ...args: unknown[]): unknown {
-    if (typeof this !== 'object' || this === null) return original.apply(this, args);
+    if (typeof this !== 'object' || this === null) {
+      return original.apply(this, args);
+    }
 
     const wrapper = wrappers.get(this) ?? adviceOf(this, original, { name, advise });
 

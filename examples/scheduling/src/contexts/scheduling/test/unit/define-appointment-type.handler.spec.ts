@@ -11,7 +11,12 @@ import { CalendarRepository } from '../../domain/repositories/calendar.repositor
 import { aCalendar } from '../builders/calendar.builder.js';
 import { FakeCalendarRepository } from '../fakes/calendar.repository.fake.js';
 
-const holders = authorizationModule({ authorizer: new RoleBasedAuthorizer({ roles: { holder: [schedulingPermissions['calendar.define-appointment-type']] } }) });
+const holders = authorizationModule({
+  authorizer: new RoleBasedAuthorizer({
+    roles: { holder: [schedulingPermissions['calendar.define-appointment-type']] },
+  }),
+});
+
 const holder = anActor().withRole('holder').build();
 const consultation = { name: 'Consultation', duration: 30, grid: 15, buffer: 10, needsConfirmation: true };
 
@@ -19,7 +24,9 @@ describe('Define appointment type', () => {
   it('makes the calendar offer the type and answers the identifier of the type', async () => {
     const { application, calendarRepository } = await arrange();
 
-    const id = await application.commandBus.execute(new DefineAppointmentTypeCommand(holder, 'calendar-1', consultation));
+    const id = await application.commandBus.execute(
+      new DefineAppointmentTypeCommand(holder, 'calendar-1', consultation),
+    );
 
     const stored = await calendarRepository.findById('calendar-1');
 
@@ -30,16 +37,24 @@ describe('Define appointment type', () => {
   it('is refused to an actor who does not hold the permission calendar.define-appointment-type', async () => {
     const { application } = await arrange();
 
-    await expect(application.commandBus.execute(new DefineAppointmentTypeCommand(anActor().build(), 'calendar-1', consultation))).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(
+      application.commandBus.execute(new DefineAppointmentTypeCommand(anActor().build(), 'calendar-1', consultation)),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
   });
 
   it('keeps the types the calendar already offers', async () => {
     const { application, calendarRepository } = await arrange();
 
     await application.commandBus.execute(new DefineAppointmentTypeCommand(holder, 'calendar-1', consultation));
-    await application.commandBus.execute(new DefineAppointmentTypeCommand(holder, 'calendar-1', { ...consultation, name: 'Surgery' }));
 
-    expect((await calendarRepository.findById('calendar-1'))?.appointmentTypes.map((type) => type.name)).toEqual(['Consultation', 'Surgery']);
+    await application.commandBus.execute(
+      new DefineAppointmentTypeCommand(holder, 'calendar-1', { ...consultation, name: 'Surgery' }),
+    );
+
+    expect((await calendarRepository.findById('calendar-1'))?.appointmentTypes.map((type) => type.name)).toEqual([
+      'Consultation',
+      'Surgery',
+    ]);
   });
 
   it('announces the type that was defined', async () => {
@@ -62,7 +77,11 @@ describe('Define appointment type', () => {
   ])('refuses %s and leaves the calendar as it was', async (_case, facts) => {
     const { application, calendarRepository } = await arrange();
 
-    await expect(application.commandBus.execute(new DefineAppointmentTypeCommand(holder, 'calendar-1', { ...consultation, ...facts }))).rejects.toMatchObject({ code: 'INVALID_APPOINTMENT_TYPE' });
+    await expect(
+      application.commandBus.execute(
+        new DefineAppointmentTypeCommand(holder, 'calendar-1', { ...consultation, ...facts }),
+      ),
+    ).rejects.toMatchObject({ code: 'INVALID_APPOINTMENT_TYPE' });
 
     expect((await calendarRepository.findById('calendar-1'))?.appointmentTypes).toEqual([]);
   });
@@ -70,7 +89,9 @@ describe('Define appointment type', () => {
   it('refuses a calendar that does not exist', async () => {
     const { application } = await arrange();
 
-    await expect(application.commandBus.execute(new DefineAppointmentTypeCommand(holder, 'calendar-9', consultation))).rejects.toMatchObject({ code: 'UNKNOWN_CALENDAR' });
+    await expect(
+      application.commandBus.execute(new DefineAppointmentTypeCommand(holder, 'calendar-9', consultation)),
+    ).rejects.toMatchObject({ code: 'UNKNOWN_CALENDAR' });
   });
 });
 

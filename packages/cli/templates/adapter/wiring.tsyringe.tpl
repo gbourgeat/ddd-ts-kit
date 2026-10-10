@@ -10,5 +10,9 @@ import { Remote{{name.pascal}} } from './infrastructure/external/remote-{{name.k
 builder.bind({{name.pascal}}).toClass(Remote{{name.pascal}}).as('{{adapter.kind}}').with(ownPolicy());
 {{/if}}
 {{#unless adapter.decorated}}
-builder.bind({{name.pascal}}).toClass(Remote{{name.pascal}}).as('{{adapter.kind}}').with(ownPolicy(retry({ attempts: 3, backoff: { baseMs: 100 } }), timeout(2000)));
+builder
+  .bind({{name.pascal}})
+  .toClass(Remote{{name.pascal}})
+  .as('{{adapter.kind}}')
+  .with(ownPolicy(retry({ attempts: 3, backoff: { baseMs: 100 } }), timeout(2000)));
 {{/unless}}

@@ -13,9 +13,11 @@ export const EVENTS_FIXTURES: readonly Fixture[] = [
     name: 'context.aggregate.fact names',
     expect: 'pass',
     files: project({
-      [EVENT]: "export class InvoiceIssued {\n  readonly name = 'billing.invoice.issued';\n  readonly label: string = 'Invoice issued';\n}\n",
+      [EVENT]:
+        "export class InvoiceIssued {\n  readonly name = 'billing.invoice.issued';\n  readonly label: string = 'Invoice issued';\n}\n",
       [PUBLISHED]: `${DECLARE}${declaration('billing.invoice.marked-as-paid')}`,
-      [`${BILLING}/published-language/invoice-summary.ts`]: "export interface InvoiceSummary { readonly type: 'standard' | 'credit-note' }\n",
+      [`${BILLING}/published-language/invoice-summary.ts`]:
+        "export interface InvoiceSummary { readonly type: 'standard' | 'credit-note' }\n",
     }),
   },
   {
@@ -54,7 +56,9 @@ export const EVENTS_FIXTURES: readonly Fixture[] = [
     ruleId: 'events/defined-in-published-language',
     name: 'a declaration without a payload schema',
     expect: { file: PUBLISHED },
-    files: project({ [PUBLISHED]: `${DECLARE}${declaration('billing.invoice.issued', 1, "description: 'payload: later'")}` }),
+    files: project({
+      [PUBLISHED]: `${DECLARE}${declaration('billing.invoice.issued', 1, "description: 'payload: later'")}`,
+    }),
   },
   {
     ruleId: 'events/defined-in-published-language',
@@ -69,6 +73,8 @@ export const EVENTS_FIXTURES: readonly Fixture[] = [
     ruleId: 'events/defined-in-published-language',
     name: 'an event described by hand in the published language',
     expect: { file: PUBLISHED },
-    files: project({ [PUBLISHED]: "export type InvoiceIssuedV1 = Readonly<{ type: 'billing.invoice.issued'; version: 1 }>;\n" }),
+    files: project({
+      [PUBLISHED]: "export type InvoiceIssuedV1 = Readonly<{ type: 'billing.invoice.issued'; version: 1 }>;\n",
+    }),
   },
 ];

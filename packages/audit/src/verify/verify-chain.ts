@@ -1,4 +1,10 @@
-import { DEFAULT_PAGE_LIMITS, cursorPage, type AuditEntry, type AuditReader, type AuditSortField } from '@ddd-ts-kit/kernel';
+import {
+  DEFAULT_PAGE_LIMITS,
+  cursorPage,
+  type AuditEntry,
+  type AuditReader,
+  type AuditSortField,
+} from '@ddd-ts-kit/kernel';
 import type { AuditCheckpoint } from '../chain/audit-checkpoint.js';
 import { GENESIS_HASH } from '../chain/genesis-hash.js';
 import { hashOf } from '../chain/hash-of.js';
@@ -36,7 +42,9 @@ export async function verifyChain(
 
     checked += outcome.checked;
 
-    if (!outcome.valid) return { ...outcome, checked };
+    if (!outcome.valid) {
+      return { ...outcome, checked };
+    }
   }
 
   return { valid: true, checked };
@@ -47,7 +55,9 @@ function isReader(source: readonly AuditEntry[] | AuditReader): source is AuditR
 }
 
 async function readChain(reader: AuditReader, options: VerifyChainOptions): Promise<AuditEntry[]> {
-  if (options.chain === undefined) throw new TypeError('verifyChain needs the chain to read from a reader');
+  if (options.chain === undefined) {
+    throw new TypeError('verifyChain needs the chain to read from a reader');
+  }
 
   const filter = {
     chain: options.chain,
@@ -60,7 +70,12 @@ async function readChain(reader: AuditReader, options: VerifyChainOptions): Prom
   let cursor: string | undefined;
 
   do {
-    const request = cursorPage<AuditSortField>({ limit: DEFAULT_PAGE_LIMITS.maxSize, sort, ...(cursor === undefined ? {} : { cursor }) });
+    const request = cursorPage<AuditSortField>({
+      limit: DEFAULT_PAGE_LIMITS.maxSize,
+      sort,
+      ...(cursor === undefined ? {} : { cursor }),
+    });
+
     const page = await reader.list(filter, request);
 
     entries.push(...page.items);
@@ -76,7 +91,10 @@ function chainsOf(entries: readonly AuditEntry[], options: VerifyChainOptions): 
 
 function inRange(entries: readonly AuditEntry[], chain: string, { from, to }: VerifyChainOptions): AuditEntry[] {
   return entries.filter(
-    (entry) => entry.chain === chain && (from === undefined || entry.sequence >= from) && (to === undefined || entry.sequence <= to),
+    (entry) =>
+      entry.chain === chain &&
+      (from === undefined || entry.sequence >= from) &&
+      (to === undefined || entry.sequence <= to),
   );
 }
 
@@ -88,16 +106,29 @@ function verifyOne(entries: readonly AuditEntry[], options: OneChain): ChainVeri
   for (const [position, entry] of entries.entries()) {
     const kind = breakAt(entries, position, options);
 
-    if (kind === undefined) continue;
+    if (kind === undefined) {
+      continue;
+    }
 
-    return { valid: false, checked: position, break: { kind, chain: options.chain, position, sequence: first + position, entryId: entry.id } };
+    return {
+      valid: false,
+      checked: position,
+      break: { kind, chain: options.chain, position, sequence: first + position, entryId: entry.id },
+    };
   }
 
   const expected = first + entries.length;
 
-  if (options.to === undefined || expected > options.to) return { valid: true, checked: entries.length };
+  if (options.to === undefined || expected > options.to) {
+    return { valid: true, checked: entries.length };
+  }
 
-  const missing = { kind: 'missing-entry', chain: options.chain, position: entries.length, sequence: expected } as const;
+  const missing = {
+    kind: 'missing-entry',
+    chain: options.chain,
+    position: entries.length,
+    sequence: expected,
+  } as const;
 
   return { valid: false, checked: entries.length, break: missing };
 }
@@ -105,13 +136,19 @@ function verifyOne(entries: readonly AuditEntry[], options: OneChain): ChainVeri
 function breakAt(entries: readonly AuditEntry[], position: number, options: OneChain): ChainBreakKind | undefined {
   const entry = entries[position];
 
-  if (entry === undefined) return undefined;
+  if (entry === undefined) {
+    return undefined;
+  }
 
   const expected = (options.from ?? 1) + position;
 
-  if (entry.sequence !== expected) return misplacement(entries.slice(position + 1), entry.sequence, expected);
+  if (entry.sequence !== expected) {
+    return misplacement(entries.slice(position + 1), entry.sequence, expected);
+  }
 
-  if (hashOf(entry) !== entry.hash || !linksTo(entry, entries[position - 1])) return 'altered-content';
+  if (hashOf(entry) !== entry.hash || !linksTo(entry, entries[position - 1])) {
+    return 'altered-content';
+  }
 
   return agreesWith(entry, options.checkpoints ?? []) ? undefined : 'altered-content';
 }
@@ -121,7 +158,9 @@ function misplacement(rest: readonly AuditEntry[], found: number, expected: numb
 }
 
 function linksTo(entry: AuditEntry, previous: AuditEntry | undefined): boolean {
-  if (previous !== undefined) return entry.previousHash === previous.hash;
+  if (previous !== undefined) {
+    return entry.previousHash === previous.hash;
+  }
 
   return entry.sequence !== 1 || entry.previousHash === GENESIS_HASH;
 }

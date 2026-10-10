@@ -49,9 +49,7 @@ describe('traceDependency', () => {
 
     await twice.findBalance('acc-1');
 
-    expect(tracing.spans().map((span) => span.name)).toEqual([
-      'repository AccountRepository.findBalance',
-    ]);
+    expect(tracing.spans().map((span) => span.name)).toEqual(['repository AccountRepository.findBalance']);
   });
 
   it('uses the given class name when the constructor name cannot be trusted', async () => {
@@ -78,9 +76,7 @@ describe('traceDependency', () => {
 
     await expect(wrapped.lazyCount()).resolves.toBe(1);
 
-    expect(tracing.spans().map((span) => span.name)).toEqual([
-      'repository AccountRepository.lazyCount',
-    ]);
+    expect(tracing.spans().map((span) => span.name)).toEqual(['repository AccountRepository.lazyCount']);
   });
 
   it('nests dependency spans under the active span', async () => {
@@ -113,7 +109,9 @@ describe('traceDependency, what it wraps', () => {
     expect(wrapped.size).toBe(1);
     expect([...wrapped.ids()]).toEqual(['acc-1']);
 
-    for await (const id of wrapped.stream()) expect(id).toBe('acc-1');
+    for await (const id of wrapped.stream()) {
+      expect(id).toBe('acc-1');
+    }
 
     await wrapped.onModuleInit();
     await wrapped[Symbol.asyncDispose]();
@@ -129,9 +127,7 @@ describe('traceDependency, what it wraps', () => {
     await wrapped.warmUp();
     await wrapped.onModuleInit();
 
-    expect(tracing.spans().map((span) => span.name)).toEqual([
-      'repository AccountRepository.onModuleInit',
-    ]);
+    expect(tracing.spans().map((span) => span.name)).toEqual(['repository AccountRepository.onModuleInit']);
   });
 
   it('traces arrow-function properties and inherited methods', async () => {
@@ -146,10 +142,7 @@ describe('traceDependency, what it wraps', () => {
     await gateway.inherited();
     await gateway.send();
 
-    expect(tracing.spans().map((span) => span.name)).toEqual([
-      'gateway Gateway.inherited',
-      'gateway Gateway.send',
-    ]);
+    expect(tracing.spans().map((span) => span.name)).toEqual(['gateway Gateway.inherited', 'gateway Gateway.send']);
   });
 
   it('fronts a frozen instance with a proxy that keeps instanceof and private members', async () => {
