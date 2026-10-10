@@ -24,7 +24,9 @@ export function getAppointmentRoute(queries: QueryBus): Route {
       security: ['bearer'],
     },
     async (input) => {
-      const found = await queries.execute(new GetAppointmentQuery(actorOf(input.context.principal), input.params.appointmentId));
+      const found = await queries.execute(
+        new GetAppointmentQuery(actorOf(input.context.principal), input.params.appointmentId),
+      );
 
       return { status: 200, body: answerOf(found) };
     },

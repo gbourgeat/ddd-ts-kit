@@ -140,15 +140,14 @@ describe('AsyncLocalStorageExecutionScope', () => {
 
     const correlationAfter = (context: ExecutionContext, turns: number): Promise<string> =>
       scope.run(context, async () => {
-        for (let turn = 0; turn < turns; turn += 1) await Promise.resolve();
+        for (let turn = 0; turn < turns; turn += 1) {
+          await Promise.resolve();
+        }
 
         return scope.require().correlationId;
       });
 
-    expect(await Promise.all([correlationAfter(request, 5), correlationAfter(job, 1)])).toEqual([
-      'corr-1',
-      'corr-2',
-    ]);
+    expect(await Promise.all([correlationAfter(request, 5), correlationAfter(job, 1)])).toEqual(['corr-1', 'corr-2']);
   });
 });
 

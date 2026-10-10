@@ -6,7 +6,11 @@ import { {{name.pascal}}Policy } from '../../application/authorization/{{name.ke
 
 describe('{{name.title}}', () => {
   it('bears on the permission {{access.permission}}, under a name of its own', () => {
-    expect(declarationOf({{name.pascal}}Policy)).toMatchObject({ role: 'policy', name: '{{context.kebab}}.{{name.kebab}}', permission: { id: '{{context.kebab}}:{{access.permission}}' } });
+    expect(declarationOf({{name.pascal}}Policy)).toMatchObject({
+      role: 'policy',
+      name: '{{context.kebab}}.{{name.kebab}}',
+      permission: { id: '{{context.kebab}}:{{access.permission}}' },
+    });
   });
 
   it('refuses a caller nobody identified', () => {

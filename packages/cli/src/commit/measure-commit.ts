@@ -17,14 +17,21 @@ export function measureCommit(root: string, config: Config, staged: boolean): Co
     lines,
     limits: config.commit,
     over: counted.length > config.commit.maxFiles || lines > config.commit.maxLines,
-    slices: slicesOf(config, counted.map((change) => change.path)),
+    slices: slicesOf(
+      config,
+      counted.map((change) => change.path),
+    ),
   };
 }
 
 function slicesOf(config: Config, files: readonly string[]): SliceSize[] {
   const sizes = new Map<string, number>();
 
-  for (const file of files) sizes.set(sliceOf(config, file), (sizes.get(sliceOf(config, file)) ?? 0) + 1);
+  for (const file of files) {
+    sizes.set(sliceOf(config, file), (sizes.get(sliceOf(config, file)) ?? 0) + 1);
+  }
 
-  return [...sizes].map(([slice, count]) => ({ slice, files: count })).sort((left, right) => right.files - left.files || left.slice.localeCompare(right.slice));
+  return [...sizes]
+    .map(([slice, count]) => ({ slice, files: count }))
+    .sort((left, right) => right.files - left.files || left.slice.localeCompare(right.slice));
 }

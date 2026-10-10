@@ -6,7 +6,9 @@ const known = new Map<string, boolean>();
 export function templateExists(name: string): boolean {
   const cached = known.get(name);
 
-  if (cached !== undefined) return cached;
+  if (cached !== undefined) {
+    return cached;
+  }
 
   const exists = fs.existsSync(`${TEMPLATES_ROOT}${name}`);
 

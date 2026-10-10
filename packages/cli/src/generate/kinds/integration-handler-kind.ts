@@ -17,7 +17,8 @@ export const integrationHandlerKind: Kind = {
   name: 'integration-handler',
   aliases: ['consumer'],
   usage: 'integration-handler <context> <upstreamContext> <eventType>',
-  summary: 'An idempotent handler of an integration event of a declared upstream, its spec and its subscription under a consumer name.',
+  summary:
+    'An idempotent handler of an integration event of a declared upstream, its spec and its subscription under a consumer name.',
   positionals: ['context', 'upstreamContext', 'eventType'],
   writesShared: false,
   run: (request) => {
@@ -27,18 +28,31 @@ export const integrationHandlerKind: Kind = {
     const name = toName(eventType.split('.').join(' '));
     const declaration = findEventDeclaration(scope, upstream.kebab, eventType);
 
-    if (declaration === undefined && isDeclared(scope.config)) throw undeclaredEvent(upstream, eventType);
+    if (declaration === undefined && isDeclared(scope.config)) {
+      throw undeclaredEvent(upstream, eventType);
+    }
 
-    const context = vars(scope, { name: named(name), upstream: upstreamVars(upstream, eventType, declaration), consumer: subscriptionVars(scope, declaration !== undefined) });
+    const context = vars(scope, {
+      name: named(name),
+      upstream: upstreamVars(upstream, eventType, declaration),
+      consumer: subscriptionVars(scope, declaration !== undefined),
+    });
 
     emit(scope, context, [
-      ['integration-handler/integration-handler.ts.tpl', `application/integration/handlers/${name.kebab}.integration-handler.ts`],
+      [
+        'integration-handler/integration-handler.ts.tpl',
+        `application/integration/handlers/${name.kebab}.integration-handler.ts`,
+      ],
       ['integration-handler/integration-handler.spec.ts.tpl', `test/unit/${name.kebab}.integration-handler.spec.ts`],
     ]);
 
     wire(scope, 'integration-handler', context);
 
-    if (declaration === undefined) scope.ws.note(`No declaration of ${eventType} was found in ${upstream.kebab}/published-language: the handler receives an untyped payload.`);
+    if (declaration === undefined) {
+      scope.ws.note(
+        `No declaration of ${eventType} was found in ${upstream.kebab}/published-language: the handler receives an untyped payload.`,
+      );
+    }
   },
 };
 
@@ -69,9 +83,14 @@ function subscriptionVars(scope: Scope, isTyped: boolean): RenderContext {
 
 function declaredUpstream(scope: Scope, input: string): Name {
   const upstream = parseContextName(input);
-  const declared = scope.config.contexts[scope.context.kebab]?.upstreams.some((candidate) => candidate.context === upstream.kebab) === true;
 
-  if (declared) return upstream;
+  const declared =
+    scope.config.contexts[scope.context.kebab]?.upstreams.some((candidate) => candidate.context === upstream.kebab) ===
+    true;
+
+  if (declared) {
+    return upstream;
+  }
 
   throw new CliError(
     `"${scope.context.kebab}" does not declare "${upstream.kebab}" as an upstream.`,
@@ -81,9 +100,13 @@ function declaredUpstream(scope: Scope, input: string): Name {
 
 function eventTypeOf(upstream: Name, input: string): string {
   const parts = input.split('.');
-  const wellFormed = parts.length === 3 && parts.every((part) => /^[a-z0-9]+(-[a-z0-9]+)*$/.test(part)) && parts[0] === upstream.kebab;
 
-  if (wellFormed) return input;
+  const wellFormed =
+    parts.length === 3 && parts.every((part) => /^[a-z0-9]+(-[a-z0-9]+)*$/.test(part)) && parts[0] === upstream.kebab;
+
+  if (wellFormed) {
+    return input;
+  }
 
   throw new CliError(
     `"${input}" is not an event type of "${upstream.kebab}".`,

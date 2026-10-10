@@ -26,7 +26,14 @@ export class Notification extends AggregateRoot<string> {
   static create(id: string, facts: Omit<NotificationState, 'registeredAt'>, now: Date): Notification {
     const created = new Notification(id, { ...facts, registeredAt: now });
 
-    created.record(new NotificationSent(id, now, { recipientId: facts.recipientId, kind: facts.kind, appointmentId: facts.appointmentId, startsAt: facts.startsAt }));
+    created.record(
+      new NotificationSent(id, now, {
+        recipientId: facts.recipientId,
+        kind: facts.kind,
+        appointmentId: facts.appointmentId,
+        startsAt: facts.startsAt,
+      }),
+    );
 
     return created;
   }

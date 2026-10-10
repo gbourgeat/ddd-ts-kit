@@ -1,12 +1,23 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { Criteria, cursorPage, pageOfPlan, planCriteria, scoped } from '@ddd-ts-kit/kernel';
-import { criteriaContract, criteriaContractDefinition, criteriaContractRows, type CriteriaContractRow } from '@ddd-ts-kit/testing/contracts';
+import {
+  criteriaContract,
+  criteriaContractDefinition,
+  criteriaContractRows,
+  type CriteriaContractRow,
+} from '@ddd-ts-kit/testing/contracts';
 import { TypeOrmReadModelStore, createTypeOrmUnitOfWork, criteriaToTypeOrm } from '../src/index.js';
 import { createDatabase, type TestDatabase } from './support/database.js';
 import { contractRows } from './support/read-model/criteria-contract-rows.js';
 
 const runner = { describe, it, expect, beforeEach, afterEach };
-const STAMP = { lastEventId: 'evt-1', lastEventAt: new Date('2026-10-10T12:00:00Z'), lastEventVersion: null, deleted: false };
+
+const STAMP = {
+  lastEventId: 'evt-1',
+  lastEventAt: new Date('2026-10-10T12:00:00Z'),
+  lastEventVersion: null,
+  deleted: false,
+};
 
 let database: TestDatabase;
 
@@ -18,11 +29,20 @@ afterAll(async () => {
   await database.close();
 });
 
-const storeOf = () => new TypeOrmReadModelStore(createTypeOrmUnitOfWork(database.dataSource), { entity: contractRows, definition: criteriaContractDefinition });
+const storeOf = () =>
+  new TypeOrmReadModelStore(createTypeOrmUnitOfWork(database.dataSource), {
+    entity: contractRows,
+    definition: criteriaContractDefinition,
+  });
 
 async function load(rows: readonly CriteriaContractRow[]): Promise<void> {
   await database.truncate();
-  await database.dataSource.manager.insert(contractRows, rows.map((row) => ({ ...row, ...STAMP })));
+
+  await database.dataSource.manager.insert(
+    contractRows,
+    rows.map((row) => ({ ...row, ...STAMP })),
+  );
+
   database.queries.length = 0;
 }
 
@@ -39,7 +59,11 @@ describe('criteriaToTypeOrm', () => {
   const all = Criteria.of<CriteriaContractRow>();
 
   const queryOf = (criteria: Criteria<CriteriaContractRow>) =>
-    criteriaToTypeOrm(database.dataSource.manager.createQueryBuilder(contractRows, 'row').select('row.id'), planCriteria(criteriaContractDefinition, criteria), { alias: 'row' });
+    criteriaToTypeOrm(
+      database.dataSource.manager.createQueryBuilder(contractRows, 'row').select('row.id'),
+      planCriteria(criteriaContractDefinition, criteria),
+      { alias: 'row' },
+    );
 
   beforeEach(async () => {
     await load(criteriaContractRows());
@@ -47,7 +71,13 @@ describe('criteriaToTypeOrm', () => {
 
   it('binds every value and never writes one into the statement', () => {
     const hostile = "x'; drop table criteria_contract; --";
-    const [statement, parameters] = queryOf(all.where('title', 'contains', hostile).where('title', 'in', ['booked', hostile]).not((none) => none.where('room', 'eq', hostile))).getQueryAndParameters();
+
+    const [statement, parameters] = queryOf(
+      all
+        .where('title', 'contains', hostile)
+        .where('title', 'in', ['booked', hostile])
+        .not((none) => none.where('room', 'eq', hostile)),
+    ).getQueryAndParameters();
 
     expect(statement).not.toContain('drop table');
 
@@ -59,8 +89,15 @@ describe('criteriaToTypeOrm', () => {
   });
 
   it('orders a field that may be null as the plan means it, and seeks past a cursor by the same order', async () => {
-    const first = await storeOf().list(scoped(all.orderBy('room', 'desc').page(cursorPage({ limit: 3 })), { kind: 'all' }));
-    const next = all.where('seats', 'gte', 1).orderBy('room', 'desc').page(cursorPage({ limit: 3, ...(first.nextCursor === undefined ? {} : { cursor: first.nextCursor }) }));
+    const first = await storeOf().list(
+      scoped(all.orderBy('room', 'desc').page(cursorPage({ limit: 3 })), { kind: 'all' }),
+    );
+
+    const next = all
+      .where('seats', 'gte', 1)
+      .orderBy('room', 'desc')
+      .page(cursorPage({ limit: 3, ...(first.nextCursor === undefined ? {} : { cursor: first.nextCursor }) }));
+
     const [statement, parameters] = queryOf(next).getQueryAndParameters();
 
     expect(first.items.map(({ id }) => id)).toEqual(['a5', 'a3', 'a7']);
@@ -85,8 +122,15 @@ describe('criteriaToTypeOrm', () => {
 
   it('serves a read port that is not a store: the plan, the query, the page', async () => {
     const plan = planCriteria(criteriaContractDefinition, all.where('seats', 'gte', 4).page(cursorPage({ limit: 1 })));
-    const entities = await criteriaToTypeOrm(database.dataSource.manager.createQueryBuilder(contractRows, 'r'), plan, { alias: 'r' }).getMany();
-    const page = pageOfPlan(plan, entities.map(({ id, seats, startsAt }) => ({ id, seats, startsAt })));
+
+    const entities = await criteriaToTypeOrm(database.dataSource.manager.createQueryBuilder(contractRows, 'r'), plan, {
+      alias: 'r',
+    }).getMany();
+
+    const page = pageOfPlan(
+      plan,
+      entities.map(({ id, seats, startsAt }) => ({ id, seats, startsAt })),
+    );
 
     expect(page.items).toEqual([{ id: 'a2', seats: 4, startsAt: new Date('2026-10-01T09:00:00.000Z') }]);
     expect(page.nextCursor).toBeTypeOf('string');

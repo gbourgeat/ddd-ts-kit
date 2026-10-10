@@ -7,9 +7,7 @@ import { withinUnitOfWork } from '../domain-events/within-unit-of-work.js';
  * commit, whatever the unit of work given: one that does not call `withinUnitOfWork` itself is
  * covered here. A command sent from inside a unit of work joins it.
  */
-export function unitOfWorkMiddleware(unitOfWork: {
-  run<T>(work: () => Promise<T>): Promise<T>;
-}): BusMiddleware {
+export function unitOfWorkMiddleware(unitOfWork: { run<T>(work: () => Promise<T>): Promise<T> }): BusMiddleware {
   return (_message, next, info) =>
     info.kind === 'command' ? withinUnitOfWork(next, (scoped) => unitOfWork.run(scoped)) : next();
 }

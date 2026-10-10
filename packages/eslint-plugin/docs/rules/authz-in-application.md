@@ -33,14 +33,18 @@ Incorrect:
 
 ```ts
 // presentation/http/void-invoice.route.ts
-if (!context.principal.roles.includes('controller')) return { status: 403 };
+if (!context.principal.roles.includes('controller')) {
+  return { status: 403 };
+}
 
 // infrastructure/persistence/drizzle-invoice.repository.ts
 await this.access.authorize(actor, billingPermissions['invoice.read'], row);
 
 // domain/aggregates/invoice.aggregate.ts
 void(by: Actor): void {
-  if (!by.roles.includes('controller')) throw new NotAllowedError();
+  if (!by.roles.includes('controller')) {
+    throw new NotAllowedError();
+  }
 }
 ```
 

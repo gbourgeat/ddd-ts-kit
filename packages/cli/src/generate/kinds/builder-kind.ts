@@ -16,6 +16,8 @@ export const builderKind: Kind = {
     const scope = openScope(request);
     const aggregate = existingAggregate(scope, request.args[1] ?? '');
 
-    emit(scope, vars(scope, { aggregate: named(aggregate) }), [['builder/builder.ts.tpl', `test/builders/${aggregate.kebab}.builder.ts`]]);
+    emit(scope, vars(scope, { aggregate: named(aggregate) }), [
+      ['builder/builder.ts.tpl', `test/builders/${aggregate.kebab}.builder.ts`],
+    ]);
   },
 };

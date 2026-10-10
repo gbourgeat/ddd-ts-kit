@@ -14,7 +14,16 @@ import { say, section, show } from './demo/transcript.mjs';
 
 const api = 'http://127.0.0.1:' + (process.env.PORT ?? '54300');
 const jaeger = 'http://127.0.0.1:' + (process.env.JAEGER_UI_PORT ?? '54686');
-const USERS = ['demo-admin', 'demo-manager', 'demo-manager-b', 'demo-practitioner', 'demo-assistant', 'demo-patient', 'demo-patient-2', 'demo-support'];
+const USERS = [
+  'demo-admin',
+  'demo-manager',
+  'demo-manager-b',
+  'demo-practitioner',
+  'demo-assistant',
+  'demo-patient',
+  'demo-patient-2',
+  'demo-support',
+];
 const EVERY_DAY = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 const HALF_HOUR = 30 * 60_000;
 
@@ -44,14 +53,52 @@ async function main() {
 async function openPractices() {
   section('1. People register, the platform admin opens two practices');
 
-  for (const name of USERS) await call(name, 'PUT', '/people/me', { displayName: people[name].displayName, email: name + '@example.test' }, 200);
+  for (const name of USERS) {
+    await call(
+      name,
+      'PUT',
+      '/people/me',
+      { displayName: people[name].displayName, email: name + '@example.test' },
+      200,
+    );
+  }
 
-  const first = await call('demo-admin', 'POST', '/practices', { name: 'Riverside practice', timeZone: 'Europe/Paris', managerId: people['demo-manager'].id }, 201);
+  const first = await call(
+    'demo-admin',
+    'POST',
+    '/practices',
+    { name: 'Riverside practice', timeZone: 'Europe/Paris', managerId: people['demo-manager'].id },
+    201,
+  );
 
-  await call('demo-admin', 'POST', '/practices', { name: 'Hillside practice', timeZone: 'Europe/Lisbon', managerId: people['demo-manager-b'].id }, 201);
-  await call('demo-patient', 'POST', '/practices', { name: 'Mine', timeZone: 'Europe/Paris', managerId: people['demo-patient'].id }, 403);
-  await call('demo-manager', 'POST', `/practices/${first.id}/members`, { personId: people['demo-practitioner'].id, role: 'practitioner' }, 201);
-  await call('demo-manager', 'POST', `/practices/${first.id}/members`, { personId: people['demo-assistant'].id, role: 'assistant' }, 201);
+  await call(
+    'demo-admin',
+    'POST',
+    '/practices',
+    { name: 'Hillside practice', timeZone: 'Europe/Lisbon', managerId: people['demo-manager-b'].id },
+    201,
+  );
+  await call(
+    'demo-patient',
+    'POST',
+    '/practices',
+    { name: 'Mine', timeZone: 'Europe/Paris', managerId: people['demo-patient'].id },
+    403,
+  );
+  await call(
+    'demo-manager',
+    'POST',
+    `/practices/${first.id}/members`,
+    { personId: people['demo-practitioner'].id, role: 'practitioner' },
+    201,
+  );
+  await call(
+    'demo-manager',
+    'POST',
+    `/practices/${first.id}/members`,
+    { personId: people['demo-assistant'].id, role: 'assistant' },
+    201,
+  );
 
   return first.id;
 }
@@ -66,9 +113,21 @@ async function openCalendar(practiceId) {
 
   show('demo-practitioner', 'POST', '/calendars', created);
   // Open around the clock, so that the run does not depend on the hour it is played at.
-  await call('demo-practitioner', 'PUT', `/calendars/${calendarId}/opening-hours`, { ranges: EVERY_DAY.map((weekday) => ({ weekday, start: '00:00', end: '23:30' })) }, 200);
+  await call(
+    'demo-practitioner',
+    'PUT',
+    `/calendars/${calendarId}/opening-hours`,
+    { ranges: EVERY_DAY.map((weekday) => ({ weekday, start: '00:00', end: '23:30' })) },
+    200,
+  );
 
-  const type = await call('demo-practitioner', 'POST', `/calendars/${calendarId}/appointment-types`, { name: 'Consultation', duration: 30, grid: 30, buffer: 0, needsConfirmation: false }, 201);
+  const type = await call(
+    'demo-practitioner',
+    'POST',
+    `/calendars/${calendarId}/appointment-types`,
+    { name: 'Consultation', duration: 30, grid: 30, buffer: 0, needsConfirmation: false },
+    201,
+  );
 
   return { id: calendarId, typeId: type.id };
 }
@@ -77,10 +136,21 @@ async function delegate(practiceId, calendar, startsAt) {
   section('3. Delegation: the assistant manages the calendars delegated to them, and only what was delegated');
 
   const desk = `/practices/${practiceId}/desks/${people['demo-practitioner'].id}/delegations`;
-  const forSomeone = { calendarId: calendar.id, appointmentTypeId: calendar.typeId, patientId: people['demo-patient-2'].id, startsAt: later(startsAt, 2) };
+  const forSomeone = {
+    calendarId: calendar.id,
+    appointmentTypeId: calendar.typeId,
+    patientId: people['demo-patient-2'].id,
+    startsAt: later(startsAt, 2),
+  };
 
   await call('demo-assistant', 'POST', '/appointments', forSomeone, 403);
-  await call('demo-practitioner', 'POST', desk, { assistantId: people['demo-assistant'].id, availabilityIncluded: false }, 201);
+  await call(
+    'demo-practitioner',
+    'POST',
+    desk,
+    { assistantId: people['demo-assistant'].id, availabilityIncluded: false },
+    201,
+  );
   await call('demo-assistant', 'POST', '/appointments', forSomeone, 201);
   await call('demo-assistant', 'PUT', `/calendars/${calendar.id}/opening-hours`, { ranges: [] }, 403);
 }
@@ -90,7 +160,9 @@ async function bookTwice(calendar, startsAt) {
 
   const traceId = randomBytes(16).toString('hex');
   const request = { calendarId: calendar.id, appointmentTypeId: calendar.typeId, startsAt: startsAt.toISOString() };
-  const booked = await call('demo-patient', 'POST', '/appointments', request, 201, { traceparent: `00-${traceId}-${randomBytes(8).toString('hex')}-01` });
+  const booked = await call('demo-patient', 'POST', '/appointments', request, 201, {
+    traceparent: `00-${traceId}-${randomBytes(8).toString('hex')}-01`,
+  });
 
   await call('demo-patient-2', 'POST', '/appointments', request, 409);
   await call('demo-patient', 'GET', '/appointments?filter[status]=booked&sort=-startsAt', undefined, 200);
@@ -111,19 +183,38 @@ async function isolation(practiceId, booking) {
 async function lateCancellation(calendar) {
   section('6. Less than 24 hours before: the patient may not cancel any more, the practitioner may, with a reason');
 
-  const soon = { calendarId: calendar.id, appointmentTypeId: calendar.typeId, patientId: people['demo-patient'].id, startsAt: slotAt(3 * 60).toISOString() };
+  const soon = {
+    calendarId: calendar.id,
+    appointmentTypeId: calendar.typeId,
+    patientId: people['demo-patient'].id,
+    startsAt: slotAt(3 * 60).toISOString(),
+  };
   const booked = await call('demo-practitioner', 'POST', '/appointments', soon, 201);
 
   await call('demo-patient', 'POST', `/appointments/${booked.id}/cancellation`, {}, 403);
   await call('demo-practitioner', 'POST', `/appointments/${booked.id}/cancellation`, {}, 422);
-  await call('demo-practitioner', 'POST', `/appointments/${booked.id}/cancellation`, { reason: 'The practitioner is called away.' }, 201);
+  await call(
+    'demo-practitioner',
+    'POST',
+    `/appointments/${booked.id}/cancellation`,
+    { reason: 'The practitioner is called away.' },
+    201,
+  );
 }
 
 async function consumers(practiceId) {
   section('7. The other contexts followed: notifications sent, figures measured from the outcomes');
 
-  const sent = await eventually('notification consumed the bookings', () => quietly('demo-patient', 'GET', '/notifications'), (answer) => answer.body.items.length >= 3);
-  const figures = await eventually('analytics recorded the outcomes of the appointments', () => quietly('demo-manager', 'GET', `/practices/${practiceId}/occupancy`), (answer) => answer.body.items.some((line) => line.cancelledByPractice === 1));
+  const sent = await eventually(
+    'notification consumed the bookings',
+    () => quietly('demo-patient', 'GET', '/notifications'),
+    (answer) => answer.body.items.length >= 3,
+  );
+  const figures = await eventually(
+    'analytics recorded the outcomes of the appointments',
+    () => quietly('demo-manager', 'GET', `/practices/${practiceId}/occupancy`),
+    (answer) => answer.body.items.some((line) => line.cancelledByPractice === 1),
+  );
 
   show('demo-patient', 'GET', '/notifications', sent);
   show('demo-manager', 'GET', `/practices/${practiceId}/occupancy`, figures);
@@ -132,7 +223,9 @@ async function consumers(practiceId) {
 async function support(booking) {
   section('8. Support looks on behalf of the patient, and cannot write');
   people['support-as-patient'] = await impersonate('demo-support', people['demo-patient'].id);
-  say(`\`demo-support\` impersonates \`demo-patient\` in Keycloak: the token is the patient's, with \`impersonator_id\` = ${people['support-as-patient'].impersonatedBy}.\n`);
+  say(
+    `\`demo-support\` impersonates \`demo-patient\` in Keycloak: the token is the patient's, with \`impersonator_id\` = ${people['support-as-patient'].impersonatedBy}.\n`,
+  );
   await call('support-as-patient', 'GET', `/appointments/${booking.id}`, undefined, 200);
   await call('support-as-patient', 'POST', `/appointments/${booking.id}/cancellation`, {}, 403);
 }
@@ -141,25 +234,54 @@ async function audit() {
   section('9. The audit trail: who was allowed, who was refused, who looked on whose behalf');
   await call('demo-manager', 'GET', '/audit/entries', undefined, 403);
 
-  const denied = await call('demo-admin', 'GET', `/audit/entries?outcome=denied&actorId=${people['demo-manager-b'].id}&limit=3`, undefined, 200);
-  const looked = await call('demo-admin', 'GET', `/audit/entries?actorId=${people['demo-patient'].id}&limit=100`, undefined, 200);
+  const denied = await call(
+    'demo-admin',
+    'GET',
+    `/audit/entries?outcome=denied&actorId=${people['demo-manager-b'].id}&limit=3`,
+    undefined,
+    200,
+  );
+  const looked = await call(
+    'demo-admin',
+    'GET',
+    `/audit/entries?actorId=${people['demo-patient'].id}&limit=100`,
+    undefined,
+    200,
+  );
   const onBehalf = looked.items.filter((entry) => JSON.stringify(entry).includes(people['demo-support'].id));
 
   must(denied.items.length > 0, 'a denied decision is recorded');
   must(onBehalf.length > 0, 'entries carry the impersonator');
-  say(`Entries of the patient that carry the impersonator ${people['demo-support'].id}: ${onBehalf.length}, for example:\n\n\`\`\`json\n${JSON.stringify(onBehalf[0], null, 2)}\n\`\`\`\n`);
+  say(
+    `Entries of the patient that carry the impersonator ${people['demo-support'].id}: ${onBehalf.length}, for example:\n\n\`\`\`json\n${JSON.stringify(onBehalf[0], null, 2)}\n\`\`\`\n`,
+  );
 }
 
 async function trace(traceId) {
   section('10. One booking, one trace, read back from Jaeger');
 
-  const { body: spans } = await eventually('Jaeger received the spans of the consumers', () => spansOf(traceId), (found) => found.body.filter((span) => span.name.startsWith('process ')).length >= 2);
+  const { body: spans } = await eventually(
+    'Jaeger received the spans of the consumers',
+    () => spansOf(traceId),
+    (found) => found.body.filter((span) => span.name.startsWith('process ')).length >= 2,
+  );
   const names = [...new Set(spans.map((span) => span.name))];
 
-  must(names.some((name) => name.startsWith('POST /appointments')), 'the trace holds the HTTP request');
-  must(names.some((name) => name.includes('notification')), 'the trace holds the consumer of notification');
-  must(names.some((name) => name.includes('analytics')), 'the trace holds the consumer of analytics');
-  say(`\`GET ${jaeger}/api/v3/traces/${traceId}\`: ${spans.length} spans in one trace, from the processes ${[...new Set(spans.map((span) => span.service))].join(' and ')} (the API and the worker are one consumer group: either may take a delivery). Distinct names:\n\n\`\`\`text\n${names.join('\n')}\n\`\`\`\n`);
+  must(
+    names.some((name) => name.startsWith('POST /appointments')),
+    'the trace holds the HTTP request',
+  );
+  must(
+    names.some((name) => name.includes('notification')),
+    'the trace holds the consumer of notification',
+  );
+  must(
+    names.some((name) => name.includes('analytics')),
+    'the trace holds the consumer of analytics',
+  );
+  say(
+    `\`GET ${jaeger}/api/v3/traces/${traceId}\`: ${spans.length} spans in one trace, from the processes ${[...new Set(spans.map((span) => span.service))].join(' and ')} (the API and the worker are one consumer group: either may take a delivery). Distinct names:\n\n\`\`\`text\n${names.join('\n')}\n\`\`\`\n`,
+  );
 }
 
 async function spansOf(traceId) {
@@ -167,34 +289,67 @@ async function spansOf(traceId) {
   const body = response.ok ? await response.json() : {};
   const resources = body.result?.resourceSpans ?? [];
 
-  return { status: response.status, body: resources.flatMap((resource) => resource.scopeSpans.flatMap((scope) => scope.spans.map((span) => ({ name: span.name, service: serviceOf(resource) })))) };
+  return {
+    status: response.status,
+    body: resources.flatMap((resource) =>
+      resource.scopeSpans.flatMap((scope) =>
+        scope.spans.map((span) => ({ name: span.name, service: serviceOf(resource) })),
+      ),
+    ),
+  };
 }
 
 function serviceOf(resource) {
-  return resource.resource.attributes.find((attribute) => attribute.key === 'service.name')?.value.stringValue ?? 'unknown';
+  return (
+    resource.resource.attributes.find((attribute) => attribute.key === 'service.name')?.value.stringValue ?? 'unknown'
+  );
 }
 
 /** An infrastructure fault, not a business refusal: a table goes away for one request. Skipped without SENTRY_DSN. */
 async function incident() {
   section('11. An unexpected failure reaches the error tracker with the trace id of its request');
 
-  if ((process.env.SENTRY_DSN ?? '') === '') return say('SENTRY_DSN is not set: skipped.');
+  if ((process.env.SENTRY_DSN ?? '') === '') {
+    return say('SENTRY_DSN is not set: skipped.');
+  }
 
   const traceId = randomBytes(16).toString('hex');
 
   sql('alter table notification.notifications rename to notifications_away');
-  await call('demo-patient', 'GET', '/notifications', undefined, 500, { traceparent: `00-${traceId}-${randomBytes(8).toString('hex')}-01` });
+  await call('demo-patient', 'GET', '/notifications', undefined, 500, {
+    traceparent: `00-${traceId}-${randomBytes(8).toString('hex')}-01`,
+  });
   sql('alter table notification.notifications_away rename to notifications');
 
-  const { body: reports } = await eventually('GlitchTip received the report', async () => ({ status: 200, body: await reportsOf(traceId) }), (found) => found.body.length > 0);
+  const { body: reports } = await eventually(
+    'GlitchTip received the report',
+    async () => ({ status: 200, body: await reportsOf(traceId) }),
+    (found) => found.body.length > 0,
+  );
 
-  say(`GlitchTip holds ${reports.length} event of the trace ${traceId}:\n\n\`\`\`json\n${JSON.stringify(reports[0], null, 2)}\n\`\`\`\n`);
+  say(
+    `GlitchTip holds ${reports.length} event of the trace ${traceId}:\n\n\`\`\`json\n${JSON.stringify(reports[0], null, 2)}\n\`\`\`\n`,
+  );
   await call('demo-patient', 'GET', '/notifications?limit=1', undefined, 200);
 }
 
 /** Runs one statement in the PostgreSQL container this example started. */
 function sql(statement) {
-  execFileSync('docker', ['exec', 'ddd-ts-kit-example-postgres-1', 'psql', '-U', process.env.POSTGRES_USER ?? 'app', '-d', process.env.POSTGRES_DB ?? 'app', '-c', statement], { stdio: 'ignore' });
+  execFileSync(
+    'docker',
+    [
+      'exec',
+      'ddd-ts-kit-example-postgres-1',
+      'psql',
+      '-U',
+      process.env.POSTGRES_USER ?? 'app',
+      '-d',
+      process.env.POSTGRES_DB ?? 'app',
+      '-c',
+      statement,
+    ],
+    { stdio: 'ignore' },
+  );
 }
 
 /** A start on the half-hour grid, at least this many minutes from now. */
@@ -231,7 +386,9 @@ async function eventually(what, ask, satisfied = () => true) {
   for (let attempt = 0; attempt < 80; attempt += 1) {
     const answer = await ask();
 
-    if (answer.status < 300 && satisfied(answer)) return answer;
+    if (answer.status < 300 && satisfied(answer)) {
+      return answer;
+    }
 
     await pause(250);
   }
@@ -240,7 +397,9 @@ async function eventually(what, ask, satisfied = () => true) {
 }
 
 function must(condition, what) {
-  if (!condition) fail('NOT AS DESIGNED: ' + what);
+  if (!condition) {
+    fail('NOT AS DESIGNED: ' + what);
+  }
 }
 
 function fail(message) {

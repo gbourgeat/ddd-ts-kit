@@ -5,5 +5,11 @@ export function sourceMapOf(emitted: string, file: string, code: string): string
   const map: unknown = JSON.parse(emitted);
   const { mappings, names } = isRecord(map) ? map : {};
 
-  return JSON.stringify({ version: 3, sources: [file], sourcesContent: [code], names: names ?? [], mappings: mappings ?? '' });
+  return JSON.stringify({
+    version: 3,
+    sources: [file],
+    sourcesContent: [code],
+    names: names ?? [],
+    mappings: mappings ?? '',
+  });
 }

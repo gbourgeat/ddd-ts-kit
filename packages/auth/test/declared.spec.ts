@@ -40,7 +40,11 @@ describe('a context whose classes declare their access', () => {
 
     expect(await app.commandBus.execute(new PostEntry(ada, 'cash'))).toBe('entry-1');
     await expect(app.commandBus.execute(new PostEntry(bob, 'cash'))).rejects.toBeInstanceOf(ForbiddenError);
-    await expect(app.commandBus.execute(new PostEntry(anonymousActor(), 'cash'))).rejects.toBeInstanceOf(UnauthenticatedError);
+
+    await expect(app.commandBus.execute(new PostEntry(anonymousActor(), 'cash'))).rejects.toBeInstanceOf(
+      UnauthenticatedError,
+    );
+
     expect(await app.queryBus.execute(new CountEntries())).toBe(1);
   });
 
@@ -78,7 +82,11 @@ describe('a context whose classes declare their access', () => {
 
     expect(await access.decide(ada, ledgerPermissions['entry.reverse'], entry)).toEqual({ allowed: true });
     expect(await access.decide(bob, ledgerPermissions['entry.reverse'], entry)).toMatchObject({ allowed: false });
-    expect(await access.decide(ada, ledgerPermissions['entry.reverse'], 'not an entry')).toMatchObject({ allowed: false });
+
+    expect(await access.decide(ada, ledgerPermissions['entry.reverse'], 'not an entry')).toMatchObject({
+      allowed: false,
+    });
+
     expect(OnlyPosterReverses.built).toBe(built + 1);
   });
 

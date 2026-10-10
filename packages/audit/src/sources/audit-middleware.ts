@@ -50,14 +50,22 @@ export interface AuditMiddlewareOptions extends AuditSource {
  * the declarations of `auditedFields`.
  */
 export function auditMiddleware(trail: AuditTrail, options: AuditMiddlewareOptions): BusMiddleware {
-  const declarations = new Map<unknown, AuditedMessage>((options.fields ?? []).map((declaration) => [declaration.type, declaration]));
+  const declarations = new Map<unknown, AuditedMessage>(
+    (options.fields ?? []).map((declaration) => [declaration.type, declaration]),
+  );
 
   assertMaskerGiven(options);
 
   return (message, next, info) => {
-    if (!isRecorded(message, info, options)) return next();
+    if (!isRecorded(message, info, options)) {
+      return next();
+    }
 
-    const audit = new MessageAudit(trail, options, { message, info, declaration: declarations.get(message.constructor) });
+    const audit = new MessageAudit(trail, options, {
+      message,
+      info,
+      declaration: declarations.get(message.constructor),
+    });
 
     return audit.around(next);
   };
@@ -66,11 +74,15 @@ export function auditMiddleware(trail: AuditTrail, options: AuditMiddlewareOptio
 function assertMaskerGiven(options: AuditMiddlewareOptions): void {
   const masking = options.masker === undefined ? options.fields?.find((declaration) => declaration.masks) : undefined;
 
-  if (masking !== undefined) throw new MissingMaskerError(masking.type.name);
+  if (masking !== undefined) {
+    throw new MissingMaskerError(masking.type.name);
+  }
 }
 
 function isRecorded(message: Message, info: MessageInfo, { queries = 'none' }: AuditMiddlewareOptions): boolean {
-  if (info.kind === 'command') return true;
+  if (info.kind === 'command') {
+    return true;
+  }
 
   return typeof queries === 'string' ? queries === 'all' : queries.some((type) => message instanceof type);
 }
@@ -91,7 +103,9 @@ class MessageAudit {
   around(next: () => Promise<unknown>): Promise<unknown> {
     const { unitOfWork } = this.options;
 
-    if (unitOfWork === undefined || this.sending.info.kind === 'query') return this.afterwards(next);
+    if (unitOfWork === undefined || this.sending.info.kind === 'query') {
+      return this.afterwards(next);
+    }
 
     return this.orRecordFailure(() => unitOfWork.run(() => this.thenRecordSuccess(next)));
   }
@@ -143,8 +157,17 @@ class MessageAudit {
     const projection = declaration?.project(message) ?? {};
     const { resource, context } = projection;
     const who = this.options.scope.require();
-    const subject = { actorId: who.actor.id, ...(who.tenantId === undefined ? {} : { tenantId: who.tenantId }), ...(resource === undefined ? {} : { resource }) };
-    const changes = await changesOf(projection, { subject, ...(this.options.masker === undefined ? {} : { masker: this.options.masker }) });
+
+    const subject = {
+      actorId: who.actor.id,
+      ...(who.tenantId === undefined ? {} : { tenantId: who.tenantId }),
+      ...(resource === undefined ? {} : { resource }),
+    };
+
+    const changes = await changesOf(projection, {
+      subject,
+      ...(this.options.masker === undefined ? {} : { masker: this.options.masker }),
+    });
 
     return auditRecordOf(this.options, {
       category: info.kind,

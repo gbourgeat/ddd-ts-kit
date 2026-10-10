@@ -19,7 +19,12 @@ function readProjectConfig() {
     upstreams: upstreamsByContext(raw.contexts ?? {}),
     domainPackages: raw.domainAllowedPackages ?? kernel,
     applicationPackages: raw.applicationAllowedPackages ?? kernel,
-    contractPackages: raw.publishedLanguageAllowedPackages ?? [...kernel, '@ddd-ts-kit/events', '@ddd-ts-kit/validation', ...schemaLibraries(raw.stack?.validation ?? 'zod')],
+    contractPackages: raw.publishedLanguageAllowedPackages ?? [
+      ...kernel,
+      '@ddd-ts-kit/events',
+      '@ddd-ts-kit/validation',
+      ...schemaLibraries(raw.stack?.validation ?? 'zod'),
+    ],
   };
 }
 
@@ -28,7 +33,12 @@ function posix(value) {
 }
 
 function upstreamsByContext(contexts) {
-  return Object.fromEntries(Object.entries(contexts).map(([name, context]) => [name, (context.upstreams ?? []).map(upstreamName).filter(Boolean)]));
+  return Object.fromEntries(
+    Object.entries(contexts).map(([name, context]) => [
+      name,
+      (context.upstreams ?? []).map(upstreamName).filter(Boolean),
+    ]),
+  );
 }
 
 function upstreamName(upstream) {
@@ -36,7 +46,9 @@ function upstreamName(upstream) {
 }
 
 function schemaLibraries(validation) {
-  if (validation === 'zod') return ['zod'];
+  if (validation === 'zod') {
+    return ['zod'];
+  }
   return validation === 'class-validator' ? ['class-validator', 'class-transformer'] : [];
 }
 
@@ -55,9 +67,15 @@ function buildConfiguration(project) {
  */
 function chooseParser() {
   const require = createRequire(path.join(import.meta.dirname, 'package.json'));
-  if (installedMajor(require, 'typescript') < 7) return 'tsc';
-  if (installedMajor(require, '@swc/core') < Infinity) return 'swc';
-  throw new Error('dependency-cruiser cannot read TypeScript here. Install `typescript@6` (the version typescript-eslint needs too) or `@swc/core` as a dev dependency.');
+  if (installedMajor(require, 'typescript') < 7) {
+    return 'tsc';
+  }
+  if (installedMajor(require, '@swc/core') < Infinity) {
+    return 'swc';
+  }
+  throw new Error(
+    'dependency-cruiser cannot read TypeScript here. Install `typescript@6` (the version typescript-eslint needs too) or `@swc/core` as a dev dependency.',
+  );
 }
 
 function installedMajor(require, name) {
@@ -69,28 +87,67 @@ function installedMajor(require, name) {
 }
 
 function layerRules(project) {
-  const context = `^${escape(project.contextsDir)}/([^/]+)`;
-  const own = (layer) => `^${escape(project.contextsDir)}/$1/${layer}(/|\\.ts$)`;
-  const sharedKernel = `^${escape(project.sharedKernelDir)}/`;
-  const otherContexts = `^${escape(project.contextsDir)}/(?!$1/)[^/]+/`;
   return [
-    {
-      name: 'layer-domain-purity',
-      severity: 'error',
-      comment: 'domain/ imports only its own domain/, the shared kernel and the allowed kernel packages. Invert the dependency: declare the need as a port, an abstract class in domain/repositories or application/ports.',
-      from: { path: `${context}/domain/`, pathNot: testFiles(project) },
-      to: { pathNot: [own('domain'), sharedKernel, internalsOf(project), ...packages(project.domainPackages)] },
-    },
-    {
-      name: 'layer-application-inward',
-      severity: 'error',
-      comment: 'application/ imports domain/, application/, published languages and the allowed kernel packages. Depend on a port and let the composition root bind the adapter.',
-      from: { path: `${context}/application/`, pathNot: testFiles(project) },
-      to: { pathNot: [own('domain'), own('application'), own('published-language'), sharedKernel, otherContexts, ...packages(project.applicationPackages)] },
-    },
-    sideways({ project, from: 'presentation', to: 'infrastructure', instead: 'Go through the command or query bus; the adapter is bound in the module file.' }),
-    sideways({ project, from: 'infrastructure', to: 'presentation', instead: 'Move the shared type to application/ and let both sides import it from there.' }),
+    domainPurity(project),
+    applicationInward(project),
+    sideways({
+      project,
+      from: 'presentation',
+      to: 'infrastructure',
+      instead: 'Go through the command or query bus; the adapter is bound in the module file.',
+    }),
+    sideways({
+      project,
+      from: 'infrastructure',
+      to: 'presentation',
+      instead: 'Move the shared type to application/ and let both sides import it from there.',
+    }),
   ];
+}
+
+function domainPurity(project) {
+  const own = ownLayers(project);
+  return {
+    name: 'layer-domain-purity',
+    severity: 'error',
+    comment:
+      'domain/ imports only its own domain/, the shared kernel and the allowed kernel packages. Invert the dependency: declare the need as a port, an abstract class in domain/repositories or application/ports.',
+    from: { path: `${own.context}/domain/`, pathNot: testFiles(project) },
+    to: {
+      pathNot: [own.layer('domain'), own.sharedKernel, internalsOf(project), ...packages(project.domainPackages)],
+    },
+  };
+}
+
+function applicationInward(project) {
+  const own = ownLayers(project);
+  const otherContexts = `^${escape(project.contextsDir)}/(?!$1/)[^/]+/`;
+  return {
+    name: 'layer-application-inward',
+    severity: 'error',
+    comment:
+      'application/ imports domain/, application/, published languages and the allowed kernel packages. Depend on a port and let the composition root bind the adapter.',
+    from: { path: `${own.context}/application/`, pathNot: testFiles(project) },
+    to: {
+      pathNot: [
+        own.layer('domain'),
+        own.layer('application'),
+        own.layer('published-language'),
+        own.sharedKernel,
+        otherContexts,
+        ...packages(project.applicationPackages),
+      ],
+    },
+  };
+}
+
+/** The patterns a rule of a layer is written with: `$1` is the context of the importing file. */
+function ownLayers(project) {
+  return {
+    context: `^${escape(project.contextsDir)}/([^/]+)`,
+    layer: (layer) => `^${escape(project.contextsDir)}/$1/${layer}(/|\\.ts$)`,
+    sharedKernel: `^${escape(project.sharedKernelDir)}/`,
+  };
 }
 
 function sideways({ project, from, to, instead }) {
@@ -116,22 +173,20 @@ function contextRules(project) {
     {
       name: 'context-published-language-only',
       severity: 'error',
-      comment: "A file imports from another context only through that context's published-language/. Publish the missing contract there or react to an integration event.",
+      comment:
+        "A file imports from another context only through that context's published-language/. Publish the missing contract there or react to an integration event.",
       from: { path: `${contexts}/([^/]+)/` },
       to: { path: `${contexts}/[^/]+/`, pathNot: [`${contexts}/$1/`, publishedLanguage] },
     },
-    ...Object.entries(project.upstreams).map(([name, upstreams]) => declaredRelationship({ contexts, name, upstreams })),
-    {
-      name: 'context-declared-relationship',
-      severity: 'error',
-      comment: `A context missing from ${PROJECT_CONFIG} declares no upstream. Add it to "contexts" with its upstreams.`,
-      from: { path: `${contexts}/([^/]+)/`, pathNot: Object.keys(project.upstreams).map((name) => `${contexts}/${escape(name)}/`) },
-      to: { path: publishedLanguage, pathNot: `${contexts}/$1/` },
-    },
+    ...Object.entries(project.upstreams).map(([name, upstreams]) =>
+      declaredRelationship({ contexts, name, upstreams }),
+    ),
+    undeclaredContext({ contexts, publishedLanguage, declared: Object.keys(project.upstreams) }),
     {
       name: 'context-published-language-is-a-contract',
       severity: 'error',
-      comment: 'published-language/ imports only its allowed packages and other published languages. Declare the contract with plain serializable types written in that folder.',
+      comment:
+        'published-language/ imports only its allowed packages and other published languages. Declare the contract with plain serializable types written in that folder.',
       from: { path: publishedLanguage, pathNot: testFiles(project) },
       to: { pathNot: [publishedLanguage, ...packages(project.contractPackages)] },
     },
@@ -149,12 +204,23 @@ function declaredRelationship({ contexts, name, upstreams }) {
   };
 }
 
+function undeclaredContext({ contexts, publishedLanguage, declared }) {
+  return {
+    name: 'context-declared-relationship',
+    severity: 'error',
+    comment: `A context missing from ${PROJECT_CONFIG} declares no upstream. Add it to "contexts" with its upstreams.`,
+    from: { path: `${contexts}/([^/]+)/`, pathNot: declared.map((name) => `${contexts}/${escape(name)}/`) },
+    to: { path: publishedLanguage, pathNot: `${contexts}/$1/` },
+  };
+}
+
 function hygieneRules(project) {
   return [
     {
       name: 'no-circular',
       severity: 'error',
-      comment: 'Two modules that need each other are one module, or hide a third concept. Extract what both use, or invert one direction with a port.',
+      comment:
+        'Two modules that need each other are one module, or hide a third concept. Extract what both use, or invert one direction with a port.',
       from: {},
       to: { circular: true },
     },
@@ -182,14 +248,16 @@ function productionRules(project) {
     {
       name: 'not-to-dev-dependency',
       severity: 'error',
-      comment: 'Production code imports a package listed under devDependencies: it is absent from the production image. Move it to dependencies, or keep the import in a test.',
+      comment:
+        'Production code imports a package listed under devDependencies: it is absent from the production image. Move it to dependencies, or keep the import in a test.',
       from: production,
       to: { dependencyTypes: ['npm-dev'], dependencyTypesNot: ['type-only'], pathNot: ['node_modules/@types/'] },
     },
     {
       name: 'not-to-test',
       severity: 'error',
-      comment: 'Production code imports a test file (spec, fake, builder, test support). Move what is shared to the layer that owns it.',
+      comment:
+        'Production code imports a test file (spec, fake, builder, test support). Move what is shared to the layer that owns it.',
       from: production,
       to: { path: testFiles(project) },
     },
@@ -197,7 +265,12 @@ function productionRules(project) {
 }
 
 function testFiles(project) {
-  return [`^${escape(project.contextsDir)}/[^/]+/test/`, '\\.(spec|test)\\.[cm]?ts$', '(^|/)open-test-database\\.ts$', '^test/'];
+  return [
+    `^${escape(project.contextsDir)}/[^/]+/test/`,
+    '\\.(spec|test)\\.[cm]?ts$',
+    '(^|/)open-test-database\\.ts$',
+    '^test/',
+  ];
 }
 
 /** Entry points and files loaded by a tool instead of an import. */

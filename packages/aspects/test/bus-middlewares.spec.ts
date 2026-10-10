@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { Command, FixedClock, InMemoryCommandBus, InMemoryLogger, InMemoryMetrics, Query, InMemoryQueryBus } from '@ddd-ts-kit/kernel';
+import {
+  Command,
+  FixedClock,
+  InMemoryCommandBus,
+  InMemoryLogger,
+  InMemoryMetrics,
+  Query,
+  InMemoryQueryBus,
+} from '@ddd-ts-kit/kernel';
 import { loggingMiddleware, metricsMiddleware } from '../src/index.js';
 import { PairNotQuoted } from './support/pair-not-quoted.js';
 

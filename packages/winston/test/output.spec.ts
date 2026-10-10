@@ -10,27 +10,49 @@ import { memoryTransport } from './support/memory-transport.js';
 
 const ANSI_COLOURS = new RegExp(`${String.fromCharCode(27)}\\[\\d+m`, 'g');
 
+let directory: string;
+
+beforeEach(() => {
+  directory = mkdtempSync(join(tmpdir(), 'ddd-ts-kit-winston-'));
+});
+
+afterEach(() => {
+  rmSync(directory, { recursive: true, force: true });
+});
+
 describe('createWinstonLogger', () => {
-  let directory: string;
-
-  beforeEach(() => {
-    directory = mkdtempSync(join(tmpdir(), 'ddd-ts-kit-winston-'));
-  });
-
-  afterEach(() => {
-    rmSync(directory, { recursive: true, force: true });
-  });
-
   it('writes one JSON line per entry: fields, level by name, message, base fields, ISO time', () => {
     const sink = new MemorySink();
-    const logger = createWinstonLogger({ service: 'shop', environment: 'production', base: { version: '1.4.0' }, transports: [memoryTransport(sink)] });
+
+    const logger = createWinstonLogger({
+      service: 'shop',
+      environment: 'production',
+      base: { version: '1.4.0' },
+      transports: [memoryTransport(sink)],
+    });
 
     logger.info('order shipped', { context: 'shipping', shippedAt: new Date('2026-03-01T09:59:00.000Z') });
 
     const [line] = sink.records();
 
-    expect(Object.keys(line ?? {}).sort()).toEqual(['context', 'environment', 'level', 'message', 'service', 'shippedAt', 'time', 'version']);
-    expect(line).toMatchObject({ level: 'info', message: 'order shipped', service: 'shop', shippedAt: '2026-03-01T09:59:00.000Z' });
+    expect(Object.keys(line ?? {}).sort()).toEqual([
+      'context',
+      'environment',
+      'level',
+      'message',
+      'service',
+      'shippedAt',
+      'time',
+      'version',
+    ]);
+
+    expect(line).toMatchObject({
+      level: 'info',
+      message: 'order shipped',
+      service: 'shop',
+      shippedAt: '2026-03-01T09:59:00.000Z',
+    });
+
     expect(line?.time).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
     expect(sink.text().endsWith('\n')).toBe(true);
   });
@@ -71,9 +93,27 @@ describe('createWinstonLogger', () => {
     const sink = new MemorySink();
     const logger = createWinstonLogger({ transports: [memoryTransport(sink)] });
 
-    logger.info('order shipped', { get total(): number { throw new Error('unreadable'); } });
-    logger.child({ get total(): number { throw new Error('unreadable'); } }).info('parcel handed over');
-    logger.warn('carrier slow', { quote: { get total(): number { throw new Error('unreadable'); } } });
+    logger.info('order shipped', {
+      get total(): number {
+        throw new Error('unreadable');
+      },
+    });
+
+    logger
+      .child({
+        get total(): number {
+          throw new Error('unreadable');
+        },
+      })
+      .info('parcel handed over');
+
+    logger.warn('carrier slow', {
+      quote: {
+        get total(): number {
+          throw new Error('unreadable');
+        },
+      },
+    });
 
     expect(sink.records()).toMatchObject([
       { message: 'order shipped', logError: 'unserializable fields' },
@@ -81,13 +121,17 @@ describe('createWinstonLogger', () => {
       { level: 'warn', message: 'carrier slow', logError: 'unserializable fields', time: expect.any(String) },
     ]);
   });
+});
 
+describe('createWinstonLogger, the flush and the pretty format', () => {
   it('has written every line to its transports once the flush resolves, and drops what follows', async () => {
     const file = join(directory, 'app.log');
     const logger = createWinstonLogger({ transports: [new winston.transports.File({ filename: file })] });
     const child = logger.child({ context: 'shipping' });
 
-    for (let line = 0; line < 500; line += 1) child.info(`parcel ${String(line)} handed over`);
+    for (let line = 0; line < 500; line += 1) {
+      child.info(`parcel ${String(line)} handed over`);
+    }
 
     await logger.flush();
     child.error('logged after the end');
@@ -102,14 +146,23 @@ describe('createWinstonLogger', () => {
 
   it('writes one line a human reads in the pretty format', () => {
     const sink = new MemorySink();
-    const logger = createWinstonLogger({ format: 'pretty', service: 'shop', fields: () => ({ trace_id: 'trace-1' }), transports: [memoryTransport(sink)] });
+
+    const logger = createWinstonLogger({
+      format: 'pretty',
+      service: 'shop',
+      fields: () => ({ trace_id: 'trace-1' }),
+      transports: [memoryTransport(sink)],
+    });
 
     logger.warn('carrier slow', { carrier: 'post', token: 'never-shown' });
     logger.info('order shipped');
 
     const [first, second] = sink.text().replace(ANSI_COLOURS, '').split('\n');
 
-    expect(first).toMatch(/^\d{2}:\d{2}:\d{2}\.\d{3} warn carrier slow \{ carrier: 'post', token: '\[redacted\]', service: 'shop', trace_id: 'trace-1' \}$/);
+    expect(first).toMatch(
+      /^\d{2}:\d{2}:\d{2}\.\d{3} warn carrier slow \{ carrier: 'post', token: '\[redacted\]', service: 'shop', trace_id: 'trace-1' \}$/,
+    );
+
     expect(second).toMatch(/^\d{2}:\d{2}:\d{2}\.\d{3} info order shipped \{ service: 'shop', trace_id: 'trace-1' \}$/);
     expect(sink.text()).toMatch(ANSI_COLOURS);
   });
@@ -130,7 +183,13 @@ describe('WinstonLogger', () => {
 
   it('writes at the levels the project maps, for an instance on other levels', () => {
     const sink = new MemorySink();
-    const instance = winston.createLogger({ levels: winston.config.syslog.levels, level: 'info', transports: [memoryTransport(sink)] });
+
+    const instance = winston.createLogger({
+      levels: winston.config.syslog.levels,
+      level: 'info',
+      transports: [memoryTransport(sink)],
+    });
+
     const logger = new WinstonLogger(instance, { levels: { warn: 'warning' } });
 
     logger.debug('a');
@@ -155,7 +214,10 @@ describe('WinstonLogger', () => {
     logger.info('invoice drafted');
     logger.error('transfer refused');
 
-    expect(sink.records()).toMatchObject([{ app: 'shop', context: 'billing', message: 'transfer refused', timestamp: expect.any(String) }]);
+    expect(sink.records()).toMatchObject([
+      { app: 'shop', context: 'billing', message: 'transfer refused', timestamp: expect.any(String) },
+    ]);
+
     expect(sink.records()).toHaveLength(1);
   });
 
@@ -179,7 +241,10 @@ describe('WinstonLogger', () => {
 
   it('says which levels it writes, for a child too', () => {
     const sink = new MemorySink();
-    const child = createWinstonLogger({ level: 'warn', transports: [memoryTransport(sink)] }).child({ context: 'shipping' });
+
+    const child = createWinstonLogger({ level: 'warn', transports: [memoryTransport(sink)] }).child({
+      context: 'shipping',
+    });
 
     expect(LOG_LEVELS.filter((level) => child.isLevelEnabled(level))).toEqual(['warn', 'error']);
   });
@@ -199,7 +264,12 @@ describe('WinstonLogger', () => {
   });
 
   it('asks the levels the project maps', () => {
-    const instance = winston.createLogger({ levels: winston.config.syslog.levels, level: 'warning', transports: [memoryTransport(new MemorySink())] });
+    const instance = winston.createLogger({
+      levels: winston.config.syslog.levels,
+      level: 'warning',
+      transports: [memoryTransport(new MemorySink())],
+    });
+
     const logger = new WinstonLogger(instance, { levels: { warn: 'warning' } });
 
     expect(LOG_LEVELS.filter((level) => logger.isLevelEnabled(level))).toEqual(['warn', 'error']);

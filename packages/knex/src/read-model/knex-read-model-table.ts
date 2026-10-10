@@ -36,7 +36,11 @@ export class KnexReadModelTable<Row extends object> implements ReadModelTable<Ro
 
     this.rows = new KnexStampedRows(context, options);
     this.copy = new KnexStampedRows(context, { ...options, table: PostgresReadModelRebuild.shadowOf(table) });
-    this.rebuild = new PostgresReadModelRebuild((statement, parameters) => this.run(statement, parameters), { table, ...(schema === undefined ? {} : { schema }) });
+
+    this.rebuild = new PostgresReadModelRebuild((statement, parameters) => this.run(statement, parameters), {
+      table,
+      ...(schema === undefined ? {} : { schema }),
+    });
   }
 
   find(key: string): Promise<StampedRow<Row> | undefined> {
@@ -58,7 +62,9 @@ export class KnexReadModelTable<Row extends object> implements ReadModelTable<Ro
     const answered: unknown = await criteriaToKnex(kept().select(Object.values<string>(columns)), plan, columns);
     const rows = recordsOf(answered).map((record) => mapper.toRow(record));
 
-    if (plan.kind === 'cursor') return { rows };
+    if (plan.kind === 'cursor') {
+      return { rows };
+    }
 
     const counted: unknown = await predicateToKnex(kept(), plan.filter, columns).count({ total: '*' });
 
@@ -102,7 +108,10 @@ export class KnexReadModelTable<Row extends object> implements ReadModelTable<Ro
   }
 
   /** knex writes its bindings `?`: the statements of the rebuild name each of theirs once, in order. */
-  private async run(statement: string, parameters: readonly (string | number)[]): Promise<readonly Readonly<Record<string, unknown>>[]> {
+  private async run(
+    statement: string,
+    parameters: readonly (string | number)[],
+  ): Promise<readonly Readonly<Record<string, unknown>>[]> {
     const result: unknown = await this.context.executor().raw(statement.replace(/\$\d+/g, '?'), [...parameters]);
 
     return recordsOf(typeof result === 'object' && result !== null && 'rows' in result ? result.rows : []);

@@ -15,7 +15,10 @@ export const aclKind: Kind = {
   run: (request) => {
     const scope = openScope(request);
     const name = label(scope, request.args[1] ?? '', { what: 'upstream', strip: ['translator'] });
-    const relationship = scope.config.contexts[scope.context.kebab]?.upstreams.find((candidate) => candidate.context === name.kebab)?.relationship;
+
+    const relationship = scope.config.contexts[scope.context.kebab]?.upstreams.find(
+      (candidate) => candidate.context === name.kebab,
+    )?.relationship;
 
     emit(scope, vars(scope, { name: named(name) }), [
       ['acl/translator.ts.tpl', `infrastructure/anti-corruption/${name.kebab}.translator.ts`],
@@ -23,7 +26,9 @@ export const aclKind: Kind = {
     ]);
 
     if (scope.config.contexts[name.kebab] !== undefined && relationship !== 'anti-corruption-layer') {
-      scope.ws.note(`"${name.kebab}" is a context of this project: declare it in contexts.${scope.context.kebab}.upstreams with the relationship "anti-corruption-layer".`);
+      scope.ws.note(
+        `"${name.kebab}" is a context of this project: declare it in contexts.${scope.context.kebab}.upstreams with the relationship "anti-corruption-layer".`,
+      );
     }
   },
 };

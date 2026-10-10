@@ -91,7 +91,9 @@ function describeDecoratedAdapter(label: string, load: () => Promise<Loaded>): v
       const fakes = testing.createAspectFakes();
       const gateway = createGateway().failNext(new PairNotQuoted());
 
-      await expect(testing.withAspectRuntime(fakes, () => gateway.rate('EUR-USD'))).rejects.toBeInstanceOf(PairNotQuoted);
+      await expect(testing.withAspectRuntime(fakes, () => gateway.rate('EUR-USD'))).rejects.toBeInstanceOf(
+        PairNotQuoted,
+      );
 
       expect(gateway.calls).toHaveLength(1);
       expect(fakes.logger.entries.at(-1)).toMatchObject({ level: 'warn', fields: { errorCode: 'PAIR_NOT_QUOTED' } });
@@ -203,7 +205,14 @@ describe('decoratorOf', () => {
   const decorate = decoratorOf(() => undefined);
 
   const contextOf = (overrides: object) =>
-    ({ kind: 'method', name: 'find', static: false, private: false, addInitializer: () => undefined, ...overrides }) as never;
+    ({
+      kind: 'method',
+      name: 'find',
+      static: false,
+      private: false,
+      addInitializer: () => undefined,
+      ...overrides,
+    }) as never;
 
   it('refuses a static method, a private method and a symbol name', () => {
     expect(() => decorate(async () => undefined, contextOf({ static: true }))).toThrow(TypeError);

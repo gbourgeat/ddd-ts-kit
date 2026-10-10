@@ -10,8 +10,11 @@
     "typecheck": "node scripts/tsc.mjs -p tsconfig.json --noEmit",
     "build": "node scripts/tsc.mjs -p tsconfig.build.json",
     "lint": "eslint .",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
     "ci:typecheck": "npm run typecheck",
     "ci:lint": "eslint .",
+    "ci:format": "npm run format:check",
     "ci:arch": "npm run ci:arch:check && npm run ci:arch:graph",
     "ci:arch:check": "node scripts/kit.mjs check",
     "ci:arch:graph": "npm run depcruise",
@@ -29,7 +32,7 @@
     "check:arch": "node scripts/kit.mjs check",
     "depcruise": "node scripts/kit.mjs depcruise-config --check && depcruise src --config .dependency-cruiser.workspace.mjs",
     "deadcode": "knip",
-    "quality": "npm run lint && npm run check:arch && npm run depcruise && npm run deadcode",
+    "quality": "npm run format:check && npm run lint && npm run check:arch && npm run depcruise && npm run deadcode",
     "test": "vitest run",
     "test:postgres": "vitest run --project integration --no-file-parallelism",
     "test:e2e": "vitest run --config vitest.e2e.config.ts --passWithNoTests",
@@ -43,7 +46,7 @@
     "db:migrate": "npm run build && knex migrate:latest",
     "infra:up": "docker compose up -d --wait",
     "infra:down": "docker compose down",
-    "verify": "npm run typecheck && npm run lint && npm run test && npm run test:e2e && npm run check:arch && npm run depcruise && npm run deadcode && npm run docs:check",
+    "verify": "npm run typecheck && npm run lint && npm run format:check && npm run test && npm run test:e2e && npm run check:arch && npm run depcruise && npm run deadcode && npm run docs:check",
     "start:worker": "node dist/src/apps/worker/main.js"
   },
   "dependencies": {
@@ -79,6 +82,7 @@
     "tsyringe": "^4.10.0"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.5.15",
     "@commitlint/cli": "^21.2.3",
     "@commitlint/config-conventional": "^21.2.3",
     "@ddd-ts-kit/eslint-plugin": "^0.1.0",

@@ -1,6 +1,14 @@
 {
   "extends": "../../tsconfig.base.json",
-  "compilerOptions": { "noEmit": true, "composite": false, "declaration": false, "declarationMap": false, "sourceMap": false, "experimentalDecorators": true, "emitDecoratorMetadata": true },
+  "compilerOptions": {
+    "noEmit": true,
+    "composite": false,
+    "declaration": false,
+    "declarationMap": false,
+    "sourceMap": false,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
+  },
   "include": ["src", "test"],
   "exclude": ["dist", "test/fixtures", "test/generated", "test/**/dist"]
 }

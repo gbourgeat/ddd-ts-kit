@@ -3,9 +3,7 @@ export interface StandardSchemaV1<Input = unknown, Output = Input> {
   readonly '~standard': {
     readonly version: 1;
     readonly vendor: string;
-    readonly validate: (
-      value: unknown,
-    ) => StandardSchemaResult<Output> | Promise<StandardSchemaResult<Output>>;
+    readonly validate: (value: unknown) => StandardSchemaResult<Output> | Promise<StandardSchemaResult<Output>>;
     readonly types?: { readonly input: Input; readonly output: Output } | undefined;
   };
 }

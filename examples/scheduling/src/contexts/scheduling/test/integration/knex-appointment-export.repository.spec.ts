@@ -6,7 +6,10 @@ import { KnexAppointmentRepository } from '../../infrastructure/persistence/knex
 import { openTestDatabase, type TestDatabase } from '../../../../platform/database/open-test-database.js';
 import { anAppointment } from '../builders/appointment.builder.js';
 
-const scope = new FixedExecutionScope(executionContext({ correlationId: 'export-spec', actor: systemActor('scheduling.spec'), origin: 'test' }));
+const scope = new FixedExecutionScope(
+  executionContext({ correlationId: 'export-spec', actor: systemActor('scheduling.spec'), origin: 'test' }),
+);
+
 const clock = new FixedClock(new Date('2026-01-01T00:00:00.000Z'));
 const bornAt = new Date('2026-03-01T08:00:00.000Z');
 
@@ -93,7 +96,13 @@ describe('KnexAppointmentExport', () => {
     const third = await exported.export(second.nextCursor);
 
     expect([first, second, third].map((page) => page.appointments.length)).toEqual([100, 100, 5]);
-    expect([...first.appointments, ...second.appointments, ...third.appointments].map((appointment) => appointment.appointmentId)).toEqual(ids);
+
+    expect(
+      [...first.appointments, ...second.appointments, ...third.appointments].map(
+        (appointment) => appointment.appointmentId,
+      ),
+    ).toEqual(ids);
+
     expect(third.nextCursor).toBeUndefined();
   });
 
@@ -109,5 +118,13 @@ async function store(...appointments: readonly Appointment[]): Promise<void> {
 }
 
 function planned(id: string) {
-  return anAppointment().identifiedBy(id).bornAt(bornAt).onCalendar('calendar-of-' + id).inPractice('practice-2').startingAt(new Date('2026-03-02T23:30:00.000Z')).onDay('2026-03-03').lasting(30).withBuffer(10);
+  return anAppointment()
+    .identifiedBy(id)
+    .bornAt(bornAt)
+    .onCalendar('calendar-of-' + id)
+    .inPractice('practice-2')
+    .startingAt(new Date('2026-03-02T23:30:00.000Z'))
+    .onDay('2026-03-03')
+    .lasting(30)
+    .withBuffer(10);
 }

@@ -27,7 +27,10 @@ async function session() {
 }
 
 function cookiesOf(response) {
-  return response.headers.getSetCookie().map((cookie) => cookie.split(';')[0]).join('; ');
+  return response.headers
+    .getSetCookie()
+    .map((cookie) => cookie.split(';')[0])
+    .join('; ');
 }
 
 async function read(path, cookie) {
@@ -40,5 +43,13 @@ async function read(path, cookie) {
 function summaryOf(event) {
   const tags = Object.fromEntries((event.tags ?? []).map((tag) => [tag.key, tag.value]));
 
-  return { type: event.metadata?.type, traceId: event.contexts.trace.trace_id, operation: tags.operation, origin: tags.origin, errorCode: tags.error_code, correlationId: tags.correlation_id, actorId: tags['user.id'] };
+  return {
+    type: event.metadata?.type,
+    traceId: event.contexts.trace.trace_id,
+    operation: tags.operation,
+    origin: tags.origin,
+    errorCode: tags.error_code,
+    correlationId: tags.correlation_id,
+    actorId: tags['user.id'],
+  };
 }

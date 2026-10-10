@@ -32,11 +32,7 @@ export class UnstableStore implements OutboxStore {
     return this.inner.markPublished(ids, at);
   }
 
-  markFailed(
-    id: string,
-    error: { readonly code: string },
-    nextAttemptAt: Date | null,
-  ): Promise<void> {
+  markFailed(id: string, error: { readonly code: string }, nextAttemptAt: Date | null): Promise<void> {
     return this.inner.markFailed(id, error, nextAttemptAt);
   }
 

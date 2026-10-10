@@ -39,7 +39,9 @@ export class Evaluation {
     const key = `${object}#${relation}`;
     const here: Position = { object, relation, path: [...path, key] };
 
-    if (path.includes(key)) return node(here, { via: 'cycle', allowed: false });
+    if (path.includes(key)) {
+      return node(here, { via: 'cycle', allowed: false });
+    }
 
     if (path.length >= this.options.maxDepth) {
       this.cutByDepthLimit = true;
@@ -49,14 +51,20 @@ export class Evaluation {
 
     const resolution = this.options.schema.resolve(parseObject(object).type, relation);
 
-    if (resolution === undefined) return node(here, { via: 'unknown', allowed: false });
+    if (resolution === undefined) {
+      return node(here, { via: 'unknown', allowed: false });
+    }
 
     return resolution.kind === 'relation' ? this.relation(here) : this.rewrite(here, resolution.rewrite);
   }
 
   private async relation(here: Position): Promise<ExpandNode> {
     const tuples = await this.options.store.readByObject(here.object, here.relation);
-    const children = await this.until(true, tuples.map((tuple) => () => this.tuple(here, tuple)));
+
+    const children = await this.until(
+      true,
+      tuples.map((tuple) => () => this.tuple(here, tuple)),
+    );
 
     return node(here, { via: 'relation', allowed: children.some(isAllowed), children });
   }
@@ -70,7 +78,9 @@ export class Evaluation {
 
       visited.push(outcome);
 
-      if (!this.options.exhaustive && outcome.allowed === settling) break;
+      if (!this.options.exhaustive && outcome.allowed === settling) {
+        break;
+      }
     }
 
     return visited;
@@ -89,9 +99,13 @@ export class Evaluation {
   }
 
   private rewrite(here: Position, rewrite: Rewrite): Promise<ExpandNode> {
-    if (typeof rewrite === 'string') return this.computed(here, rewrite);
+    if (typeof rewrite === 'string') {
+      return this.computed(here, rewrite);
+    }
 
-    if (rewrite.kind === 'from') return this.from(here, rewrite);
+    if (rewrite.kind === 'from') {
+      return this.from(here, rewrite);
+    }
 
     return rewrite.kind === 'exclusion' ? this.exclusion(here, rewrite) : this.set(here, rewrite);
   }
@@ -128,7 +142,12 @@ export class Evaluation {
 
   private async set(here: Position, { kind, children }: SetRewrite): Promise<ExpandNode> {
     const settles = kind === 'union';
-    const visited = await this.until(settles, children.map((child) => () => this.rewrite(here, child)));
+
+    const visited = await this.until(
+      settles,
+      children.map((child) => () => this.rewrite(here, child)),
+    );
+
     const allowed = settles ? visited.some(isAllowed) : visited.every(isAllowed);
 
     return node(here, { via: kind, allowed, children: visited });

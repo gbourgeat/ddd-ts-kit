@@ -77,9 +77,14 @@ describe('discovery', () => {
   });
 
   it('leaves out what the project ignores', async () => {
-    const directory = contextWith({ [HANDLER]: 'export class Plain {}', 'infrastructure/external/legacy.adapter.mjs': 'export class Plain {}' });
+    const directory = contextWith({
+      [HANDLER]: 'export class Plain {}',
+      'infrastructure/external/legacy.adapter.mjs': 'export class Plain {}',
+    });
 
-    const module = await discoverContext('billing', directory, { ignore: (file) => file.includes('legacy') || file.endsWith('.handler.mjs') });
+    const module = await discoverContext('billing', directory, {
+      ignore: (file) => file.includes('legacy') || file.endsWith('.handler.mjs'),
+    });
 
     expect(createApplication({ modules: [module] }).describe().bindings).toEqual([]);
   });
@@ -90,7 +95,11 @@ describe('discovery', () => {
     const failure = await wiringRejection(discoverContext('billing', directory));
 
     expect(failure.code).toBe('DISCOVERY_FAILED');
-    expect(failure.message).toBe(`${path.join(directory, HANDLER)} could not be loaded: the database driver is missing`);
+
+    expect(failure.message).toBe(
+      `${path.join(directory, HANDLER)} could not be loaded: the database driver is missing`,
+    );
+
     expect(failure.cause).toBeInstanceOf(Error);
   });
 
@@ -100,11 +109,16 @@ describe('discovery', () => {
     const failure = await wiringRejection(discoverContext('billing', directory));
 
     expect(failure.code).toBe('NOTHING_DECLARED');
-    expect(failure.message).toContain(`${path.join(directory, HANDLER)} of context "billing" is a *.handler file and exports no class that declares itself.`);
+
+    expect(failure.message).toContain(
+      `${path.join(directory, HANDLER)} of context "billing" is a *.handler file and exports no class that declares itself.`,
+    );
   });
 
   it('refuses a role file outside its canonical folder, before loading it', async () => {
-    const directory = contextWith({ 'infrastructure/external/issue-invoice.handler.mjs': "throw new Error('never loaded');" });
+    const directory = contextWith({
+      'infrastructure/external/issue-invoice.handler.mjs': "throw new Error('never loaded');",
+    });
 
     const failure = await wiringRejection(discoverContext('billing', directory));
 
@@ -156,7 +170,8 @@ describe('a discovered job', () => {
 
     expect(misplaced).toMatchObject({
       code: 'MISPLACED_DECLARATION',
-      message: 'application/commands/issue-monthly-invoices.job.mjs of context "billing" is outside its canonical folder: a *.job file belongs in application/scheduling/.',
+      message:
+        'application/commands/issue-monthly-invoices.job.mjs of context "billing" is outside its canonical folder: a *.job file belongs in application/scheduling/.',
     });
 
     expect(wrongRole.code).toBe('MISPLACED_DECLARATION');

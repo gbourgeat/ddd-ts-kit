@@ -22,14 +22,32 @@ describe('GET /practices/:practiceId/occupancy', () => {
     const response = await executeRoute(listOccupancyRoute(queries), requestOf({}), { validateResponses: true });
 
     expect(response.body).toEqual({
-      items: [{ id: 'calendar-1.2026-10-12', calendarId: 'calendar-1', day: '2026-10-12', heldMinutes: 30, appointmentsHeld: 1, completed: 0, noShows: 0, cancelledByPatient: 0, cancelledByPractice: 0 }],
+      items: [
+        {
+          id: 'calendar-1.2026-10-12',
+          calendarId: 'calendar-1',
+          day: '2026-10-12',
+          heldMinutes: 30,
+          appointmentsHeld: 1,
+          completed: 0,
+          noShows: 0,
+          cancelledByPatient: 0,
+          cancelledByPractice: 0,
+        },
+      ],
       total: 1,
     });
   });
 
   it('asks for the practice of the path, with the calendar, the range of days, the order and the page of the query', async () => {
     const { queries, asked } = arrange();
-    const query = { 'filter[calendarId]': 'calendar-1', 'filter[day]': 'between:2026-10-12,2026-10-18', sort: '-day', limit: '7' };
+
+    const query = {
+      'filter[calendarId]': 'calendar-1',
+      'filter[day]': 'between:2026-10-12,2026-10-18',
+      sort: '-day',
+      limit: '7',
+    };
 
     await executeRoute(listOccupancyRoute(queries), requestOf(query), { validateResponses: true });
 
@@ -44,16 +62,18 @@ describe('GET /practices/:practiceId/occupancy', () => {
     expect(asked[0]?.criteria.pageRequest).toMatchObject({ limit: 7 });
   });
 
-  it.each([{ 'filter[noShows]': 'gte:1' }, { 'filter[day]': 'contains:2026' }, { sort: 'completed' }, { limit: '1000' }])(
-    'refuses %o, which the occupancy cannot be read by, with 422',
-    async (query) => {
-      const { queries } = arrange();
+  it.each([
+    { 'filter[noShows]': 'gte:1' },
+    { 'filter[day]': 'contains:2026' },
+    { sort: 'completed' },
+    { limit: '1000' },
+  ])('refuses %o, which the occupancy cannot be read by, with 422', async (query) => {
+    const { queries } = arrange();
 
-      const response = await executeRoute(listOccupancyRoute(queries), requestOf(query), { validateResponses: true });
+    const response = await executeRoute(listOccupancyRoute(queries), requestOf(query), { validateResponses: true });
 
-      expect(response.status).toBe(422);
-    },
-  );
+    expect(response.status).toBe(422);
+  });
 });
 
 function requestOf(query: Readonly<Record<string, string>>) {

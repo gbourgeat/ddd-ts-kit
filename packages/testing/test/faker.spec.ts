@@ -79,7 +79,11 @@ describe('generated', () => {
   });
 
   it('is accepted as a `with` value and by the builder of an aggregate', () => {
-    const anonymous = aCustomer().with('name', generated((faker) => faker.string.alpha(12)));
+    const anonymous = aCustomer().with(
+      'name',
+      generated((faker) => faker.string.alpha(12)),
+    );
+
     const order = anOrder().placedBy(generated((faker) => ({ id: faker.string.uuid(), name: 'Ada' })));
 
     expect(anonymous.build().name).toMatch(/^[A-Za-z]{12}$/);
@@ -92,8 +96,11 @@ describe('createDataGenerator', () => {
   const inherited = process.env.TEST_SEED;
 
   afterEach(() => {
-    if (inherited === undefined) delete process.env.TEST_SEED;
-    else process.env.TEST_SEED = inherited;
+    if (inherited === undefined) {
+      delete process.env.TEST_SEED;
+    } else {
+      process.env.TEST_SEED = inherited;
+    }
   });
 
   it('takes its seed from TEST_SEED when none is given', () => {
@@ -156,8 +163,14 @@ class RecordingRunner {
   runTest({ fails }: { fails: boolean }): void {
     this.reports = [];
 
-    for (const setup of this.setups) setup();
+    for (const setup of this.setups) {
+      setup();
+    }
 
-    if (fails) for (const report of this.reports) report();
+    if (fails) {
+      for (const report of this.reports) {
+        report();
+      }
+    }
   }
 }

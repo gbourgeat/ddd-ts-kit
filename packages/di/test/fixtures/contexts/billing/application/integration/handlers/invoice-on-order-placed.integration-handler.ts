@@ -8,6 +8,8 @@ export class InvoiceOnOrderPlaced implements IntegrationEventHandler<OrderPlaced
   constructor(private readonly commands: CommandBus) {}
 
   readonly handle = async (event: IntegrationEvent<OrderPlacedPayload>): Promise<void> => {
-    await this.commands.execute(new IssueInvoice(systemActor('billing.invoice-on-order-placed'), event.payload.customerId));
+    await this.commands.execute(
+      new IssueInvoice(systemActor('billing.invoice-on-order-placed'), event.payload.customerId),
+    );
   };
 }

@@ -17,7 +17,26 @@ import { stampCreation, stampUpdate, type Clock, type ExecutionScope } from '@dd
 {{/unless}}
 {{/unless}}
 {{#if tenant.scoped}}
-import { {{storage.knexImport}}, auditRow, insertIgnoringConflict, optimisticUpdate, tenantRow, type TenantRow } from '@ddd-ts-kit/knex';
+{{#if style.declared}}
+import {
+  KnexContext,
+  auditRow,
+  insertIgnoringConflict,
+  optimisticUpdate,
+  tenantRow,
+  type TenantRow,
+} from '@ddd-ts-kit/knex';
+{{/if}}
+{{#unless style.declared}}
+import {
+  type KnexContext,
+  auditRow,
+  insertIgnoringConflict,
+  optimisticUpdate,
+  tenantRow,
+  type TenantRow,
+} from '@ddd-ts-kit/knex';
+{{/unless}}
 {{/if}}
 {{#unless tenant.scoped}}
 import { {{storage.knexImport}}, auditRow, insertIgnoringConflict, optimisticUpdate } from '@ddd-ts-kit/knex';
@@ -46,7 +65,14 @@ export class Knex{{aggregate.pascal}}Repository implements {{aggregate.pascal}}R
   ) {}
 
   async findById(id: string): Promise<{{aggregate.pascal}} | undefined> {
-    const row = await tableOf(this.database).where({ id{{#if tenant.scoped}}, ...this.ownTenant(){{/if}} }).first();
+{{#if tenant.scoped}}
+    const row = await tableOf(this.database)
+      .where({ id, ...this.ownTenant() })
+      .first();
+{{/if}}
+{{#unless tenant.scoped}}
+    const row = await tableOf(this.database).where({ id }).first();
+{{/unless}}
 
     return row === undefined ? undefined : {{aggregate.pascal}}Mapper.toDomain(row);
   }
@@ -62,7 +88,12 @@ export class Knex{{aggregate.pascal}}Repository implements {{aggregate.pascal}}R
   private async insert(state: Versioned{{aggregate.pascal}}): Promise<number> {
     const row = { ...state, {{#if tenant.scoped}}...this.ownTenant(), {{/if}}...auditRow(stampCreation(this.scope, this.clock)) };
 
-    return (await insertIgnoringConflict(this.database.executor(), tableOf(this.database), { row, conflict: 'id' })) ? 1 : 0;
+    const inserted = await insertIgnoringConflict(this.database.executor(), tableOf(this.database), {
+      row,
+      conflict: 'id',
+    });
+
+    return inserted ? 1 : 0;
   }
 
   private async update(state: Versioned{{aggregate.pascal}}, expected: number): Promise<number> {
@@ -80,5 +111,7 @@ export class Knex{{aggregate.pascal}}Repository implements {{aggregate.pascal}}R
 
 /** A function and not a method: a query builder is thenable, and a method that answers one is read as asynchronous by whatever wraps the adapter (tracing), which then answers a promise. */
 function tableOf(database: KnexContext): Knex.QueryBuilder<{{aggregate.pascal}}Row, {{aggregate.pascal}}Row[]> {
-  return database.executor()<{{aggregate.pascal}}Row, {{aggregate.pascal}}Row[]>('{{aggregate.table}}').withSchema({{context.constant}}_SCHEMA);
+  const table = database.executor()<{{aggregate.pascal}}Row, {{aggregate.pascal}}Row[]>('{{aggregate.table}}');
+
+  return table.withSchema({{context.constant}}_SCHEMA);
 }

@@ -33,7 +33,9 @@ class TupleStoreSuite extends ContractSuite<RelationTupleStore> {
     this.it('reads what was written, by object and relation', async () => {
       await this.subject.write([adaEdits, teamEdits]);
 
-      this.expect(sorted(await this.subject.readByObject('document:1', 'editor'))).toEqual(sorted([adaEdits, teamEdits]));
+      this.expect(sorted(await this.subject.readByObject('document:1', 'editor'))).toEqual(
+        sorted([adaEdits, teamEdits]),
+      );
     });
 
     this.it('keeps objects and relations apart', async () => {
@@ -49,7 +51,9 @@ class TupleStoreSuite extends ContractSuite<RelationTupleStore> {
     this.it('reads by subject across objects and relations', async () => {
       await this.subject.write([adaEdits, adaViews, adaEditsAnother, adamEdits]);
 
-      this.expect(sorted(await this.subject.readBySubject('user:ada'))).toEqual(sorted([adaEdits, adaViews, adaEditsAnother]));
+      this.expect(sorted(await this.subject.readBySubject('user:ada'))).toEqual(
+        sorted([adaEdits, adaViews, adaEditsAnother]),
+      );
     });
 
     this.it('matches the subject exactly, a userset being another subject than its object', async () => {

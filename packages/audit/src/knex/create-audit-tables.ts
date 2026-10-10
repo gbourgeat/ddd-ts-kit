@@ -8,5 +8,7 @@ import { auditTablesSql } from '../sql/audit-tables-sql.js';
  * `export const up = (knex) => createAuditTables(knex, { schema: 'audit' })`.
  */
 export async function createAuditTables(knex: Knex, options: AuditTablesOptions = {}): Promise<void> {
-  for (const statement of auditTablesSql(options)) await knex.raw(statement);
+  for (const statement of auditTablesSql(options)) {
+    await knex.raw(statement);
+  }
 }

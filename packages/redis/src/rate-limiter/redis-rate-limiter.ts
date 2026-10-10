@@ -1,7 +1,14 @@
 import { randomBytes } from 'node:crypto';
 import { inspect } from 'node:util';
 import type { Redis } from 'ioredis';
-import { SystemClock, rateLimitDecisionOf, type Clock, type RateLimit, type RateLimitDecision, type RateLimiter } from '@ddd-ts-kit/kernel';
+import {
+  SystemClock,
+  rateLimitDecisionOf,
+  type Clock,
+  type RateLimit,
+  type RateLimitDecision,
+  type RateLimiter,
+} from '@ddd-ts-kit/kernel';
 import { namespaced } from '../keys/namespaced.js';
 import { listOf } from '../replies/list-of.js';
 import { conceal } from '../secrecy/conceal.js';
@@ -73,9 +80,14 @@ export class RedisRateLimiter implements RateLimiter {
       const answer = await this.client.eval(CONSUME, 1, namespaced(this.namespace, key), ...argumentsOf(now, limit));
       const [allowed, calls, oldest] = listOf(answer);
 
-      return rateLimitDecisionOf({ allowed: Number(allowed) === 1, calls: Number(calls), oldest: Number(oldest ?? now), now }, limit);
+      return rateLimitDecisionOf(
+        { allowed: Number(allowed) === 1, calls: Number(calls), oldest: Number(oldest ?? now), now },
+        limit,
+      );
     } catch (error) {
-      if (this.onError === 'throw') throw error;
+      if (this.onError === 'throw') {
+        throw error;
+      }
 
       const allowed = this.onError === 'allow';
 
@@ -97,5 +109,11 @@ export class RedisRateLimiter implements RateLimiter {
 function argumentsOf(now: number, limit: RateLimit): string[] {
   const member = `${now}-${randomBytes(8).toString('hex')}`;
 
-  return [String(now - limit.windowMs), String(limit.limit), String(now), member, String(Math.max(1, Math.ceil(limit.windowMs)))];
+  return [
+    String(now - limit.windowMs),
+    String(limit.limit),
+    String(now),
+    member,
+    String(Math.max(1, Math.ceil(limit.windowMs))),
+  ];
 }

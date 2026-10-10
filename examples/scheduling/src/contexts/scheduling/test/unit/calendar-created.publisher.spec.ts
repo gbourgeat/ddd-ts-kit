@@ -8,7 +8,15 @@ describe('Publishing "calendar created" to other contexts', () => {
     const bus = new InMemoryEventBus();
     const publisher = new CalendarCreatedPublisher(bus, new SequentialIdGenerator('event'));
 
-    await publisher.handle(new CalendarCreated('calendar-1', new Date('2026-01-01T00:00:00.000Z'), 'practice-1', 'practitioner-1', 'Europe/Paris'));
+    await publisher.handle(
+      new CalendarCreated(
+        'calendar-1',
+        new Date('2026-01-01T00:00:00.000Z'),
+        'practice-1',
+        'practitioner-1',
+        'Europe/Paris',
+      ),
+    );
 
     expect(bus.published).toEqual([
       {
@@ -16,7 +24,12 @@ describe('Publishing "calendar created" to other contexts', () => {
         type: 'scheduling.calendar.created',
         version: 1,
         occurredAt: '2026-01-01T00:00:00.000Z',
-        payload: { calendarId: 'calendar-1', practiceId: 'practice-1', practitionerId: 'practitioner-1', timeZone: 'Europe/Paris' },
+        payload: {
+          calendarId: 'calendar-1',
+          practiceId: 'practice-1',
+          practitionerId: 'practitioner-1',
+          timeZone: 'Europe/Paris',
+        },
       },
     ]);
   });

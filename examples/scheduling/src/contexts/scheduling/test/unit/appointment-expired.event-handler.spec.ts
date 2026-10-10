@@ -6,7 +6,14 @@ import { AppointmentExpired } from '../../domain/events/appointment-expired.even
 import { anAppointment } from '../builders/appointment.builder.js';
 
 const occurredAt = new Date('2026-03-01T00:00:00.000Z');
-const held = anAppointment().identifiedBy('appointment-1').onCalendar('calendar-4').startingAt(at('09:00')).lasting(30).withBuffer(10).build();
+
+const held = anAppointment()
+  .identifiedBy('appointment-1')
+  .onCalendar('calendar-4')
+  .startingAt(at('09:00'))
+  .lasting(30)
+  .withBuffer(10)
+  .build();
 
 describe('When appointment expired', () => {
   it('offers the slot the appointment held, buffer included, to the waitlist of its calendar', async () => {
@@ -14,7 +21,9 @@ describe('When appointment expired', () => {
 
     await handler.handle(new AppointmentExpired('appointment-1', occurredAt, held.booking));
 
-    expect(sent).toMatchObject([{ calendarId: 'calendar-4', freed: { startsAt: at('09:00'), endsAt: at('09:30'), heldUntil: at('09:40') } }]);
+    expect(sent).toMatchObject([
+      { calendarId: 'calendar-4', freed: { startsAt: at('09:00'), endsAt: at('09:30'), heldUntil: at('09:40') } },
+    ]);
   });
 
   it('acts as the context itself, not as whoever caused the fact', async () => {

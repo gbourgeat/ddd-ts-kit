@@ -26,7 +26,9 @@ export function createPrismaUnitOfWork<Tx, Options>(
   return {
     run<T>(work: () => Promise<T>): Promise<T> {
       return withinUnitOfWork(work, (scoped) => {
-        if (current.getStore() !== undefined) return scoped();
+        if (current.getStore() !== undefined) {
+          return scoped();
+        }
 
         return client.$transaction((transaction) => current.run({ transaction }, scoped), options);
       });

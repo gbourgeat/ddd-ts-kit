@@ -14,7 +14,9 @@ export class CompleteAppointmentHandler implements CommandHandler<CompleteAppoin
   async execute(command: CompleteAppointmentCommand): Promise<string> {
     const target = await this.appointmentRepository.findById(command.appointmentId);
 
-    if (target === undefined) throw new AppointmentNotFoundError(command.appointmentId);
+    if (target === undefined) {
+      throw new AppointmentNotFoundError(command.appointmentId);
+    }
 
     target.complete(this.clock.now());
 

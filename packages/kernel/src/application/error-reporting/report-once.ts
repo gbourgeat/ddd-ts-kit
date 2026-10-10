@@ -12,9 +12,13 @@ const DEEPEST_CAUSE = 8;
  * marked. Never throws: a failing reporter must not turn into a second failure.
  */
 export function reportOnce(reporter: ErrorReporter, error: unknown, report: ErrorReport): void {
-  if (wasReported(error, DEEPEST_CAUSE)) return;
+  if (wasReported(error, DEEPEST_CAUSE)) {
+    return;
+  }
 
-  if (typeof error === 'object' && error !== null) REPORTED.add(error);
+  if (typeof error === 'object' && error !== null) {
+    REPORTED.add(error);
+  }
 
   try {
     reporter.report(error, report);
@@ -24,9 +28,13 @@ export function reportOnce(reporter: ErrorReporter, error: unknown, report: Erro
 }
 
 function wasReported(error: unknown, depth: number): boolean {
-  if (typeof error !== 'object' || error === null || depth === 0) return false;
+  if (typeof error !== 'object' || error === null || depth === 0) {
+    return false;
+  }
 
-  if (REPORTED.has(error)) return true;
+  if (REPORTED.has(error)) {
+    return true;
+  }
 
   const inner = innerErrors(error);
 

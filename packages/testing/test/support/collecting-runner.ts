@@ -31,7 +31,9 @@ export class CollectingRunner implements ContractRunner {
 
     for (const { setups, tests } of this.groups) {
       for (const { name, test } of tests) {
-        for (const setup of setups) await setup();
+        for (const setup of setups) {
+          await setup();
+        }
 
         await test().then(
           () => outcome.passed.push(name),

@@ -15,7 +15,9 @@ const OTHER_RESOLVERS = ['Promise', 'path', 'require', 'import.meta'];
  * `path.resolve('x')` elsewhere is never taken for one.
  */
 export function bindingCalls(file: SourceFile): BindingCall[] {
-  if (!importsPackage(file, DI_PACKAGE)) return [];
+  if (!importsPackage(file, DI_PACKAGE)) {
+    return [];
+  }
 
   const { code } = file.scan;
 
@@ -23,8 +25,21 @@ export function bindingCalls(file: SourceFile): BindingCall[] {
     const receiver = (match[1] ?? '').replace(/\s+/g, '');
     const open = match.index + match[0].length - 1;
 
-    if (match[2] === 'resolve' && OTHER_RESOLVERS.some((other) => receiver === other || receiver.endsWith(`.${other}`))) return [];
+    if (
+      match[2] === 'resolve' &&
+      OTHER_RESOLVERS.some((other) => receiver === other || receiver.endsWith(`.${other}`))
+    ) {
+      return [];
+    }
 
-    return [{ method: match[2] ?? '', line: file.scan.lineAt(open), open, close: matchingBracket(code, open), token: callArguments(code, open)[0] }];
+    return [
+      {
+        method: match[2] ?? '',
+        line: file.scan.lineAt(open),
+        open,
+        close: matchingBracket(code, open),
+        token: callArguments(code, open)[0],
+      },
+    ];
   });
 }

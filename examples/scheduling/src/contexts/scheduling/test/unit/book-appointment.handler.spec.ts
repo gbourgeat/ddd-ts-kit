@@ -17,7 +17,10 @@ import { FakeAppointmentRepository } from '../fakes/appointment.repository.fake.
 import { FakeCalendarRepository } from '../fakes/calendar.repository.fake.js';
 import { FakeSchedulingRelationships } from '../fakes/scheduling-relationships.fake.js';
 
-const holders = authorizationModule({ authorizer: new RoleBasedAuthorizer({ roles: { holder: [schedulingPermissions['appointment.book']] } }) });
+const holders = authorizationModule({
+  authorizer: new RoleBasedAuthorizer({ roles: { holder: [schedulingPermissions['appointment.book']] } }),
+});
+
 const holder = anActor().withRole('holder').build();
 // Monday 2 March 2026 in Europe/Paris is UTC+1: 09:00 on the wall clock is 08:00Z.
 const NOW = new Date('2026-03-01T08:00:00.000Z');
@@ -32,7 +35,15 @@ describe('Book appointment', () => {
 
     expect(id).toBe('appointment-1');
     expect(stored?.status).toBe('booked');
-    expect(stored?.booking).toMatchObject({ calendarId: 'calendar-a', practiceId: 'practice-a', practitionerId: 'practitioner-a', patientId: 'patient-1', day: '2026-03-02' });
+
+    expect(stored?.booking).toMatchObject({
+      calendarId: 'calendar-a',
+      practiceId: 'practice-a',
+      practitionerId: 'practitioner-a',
+      patientId: 'patient-1',
+      day: '2026-03-02',
+    });
+
     expect(stored?.slot.heldUntil).toEqual(at('08:40'));
   });
 
@@ -44,7 +55,16 @@ describe('Book appointment', () => {
     expect(announced).toEqual(['scheduling.appointment.booked']);
 
     expect(application.eventBus.published).toMatchObject([
-      { type: 'scheduling.appointment.booked', occurredAt: NOW.toISOString(), payload: { appointmentId: 'appointment-1', startsAt: '2026-03-02T08:00:00.000Z', endsAt: '2026-03-02T08:30:00.000Z', status: 'booked' } },
+      {
+        type: 'scheduling.appointment.booked',
+        occurredAt: NOW.toISOString(),
+        payload: {
+          appointmentId: 'appointment-1',
+          startsAt: '2026-03-02T08:00:00.000Z',
+          endsAt: '2026-03-02T08:30:00.000Z',
+          status: 'booked',
+        },
+      },
     ]);
   });
 
@@ -53,48 +73,76 @@ describe('Book appointment', () => {
 
     await application.commandBus.execute(new BookAppointmentCommand(holder, 'calendar-a', wish('08:00')));
 
-    expect(relationships.current).toEqual(['appointment appointment-1 of patient patient-1', 'appointment appointment-1 on calendar calendar-a']);
+    expect(relationships.current).toEqual([
+      'appointment appointment-1 of patient patient-1',
+      'appointment appointment-1 on calendar calendar-a',
+    ]);
   });
 
   it('requests the appointment, with its deadline, when its type needs a confirmation', async () => {
     const { application, appointmentRepository } = await arrange();
 
-    const id = await application.commandBus.execute(new BookAppointmentCommand(holder, 'calendar-a', wish('08:00', 'first-visit')));
+    const id = await application.commandBus.execute(
+      new BookAppointmentCommand(holder, 'calendar-a', wish('08:00', 'first-visit')),
+    );
 
     const stored = await appointmentRepository.findById(id);
 
     expect(stored?.status).toBe('requested');
     expect(stored?.confirmBefore?.getTime()).toBeGreaterThan(NOW.getTime());
-    expect(application.eventBus.published).toMatchObject([{ payload: { status: 'requested', confirmBefore: stored?.confirmBefore?.toISOString() } }]);
+
+    expect(application.eventBus.published).toMatchObject([
+      { payload: { status: 'requested', confirmBefore: stored?.confirmBefore?.toISOString() } },
+    ]);
   });
 
   it('is refused to an actor who does not hold the permission appointment.book', async () => {
     const { application } = await arrange();
 
-    await expect(application.commandBus.execute(new BookAppointmentCommand(anActor().build(), 'calendar-a', wish('08:00')))).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(
+      application.commandBus.execute(new BookAppointmentCommand(anActor().build(), 'calendar-a', wish('08:00'))),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
   });
+});
 
+describe('Book appointment, within what the calendar allows', () => {
   it('refuses a calendar that does not exist', async () => {
     const { application } = await arrange();
 
-    await expect(application.commandBus.execute(new BookAppointmentCommand(holder, 'calendar-unknown', wish('08:00')))).rejects.toMatchObject({ code: 'UNKNOWN_CALENDAR' });
+    await expect(
+      application.commandBus.execute(new BookAppointmentCommand(holder, 'calendar-unknown', wish('08:00'))),
+    ).rejects.toMatchObject({ code: 'UNKNOWN_CALENDAR' });
   });
 
   it.each([
     ['outside the opening hours', wish('12:00'), 'OUTSIDE_AVAILABILITY'],
     ['off the grid of its type', wish('08:10'), 'OFF_GRID'],
-    ['sooner than the notice of the calendar', { ...wish('08:00'), startsAt: new Date('2026-03-01T08:30:00.000Z') }, 'BOOKING_TOO_LATE'],
-    ['further than the horizon of the calendar', { ...wish('08:00'), startsAt: new Date('2026-09-07T07:00:00.000Z') }, 'BOOKING_TOO_FAR'],
+    [
+      'sooner than the notice of the calendar',
+      { ...wish('08:00'), startsAt: new Date('2026-03-01T08:30:00.000Z') },
+      'BOOKING_TOO_LATE',
+    ],
+    [
+      'further than the horizon of the calendar',
+      { ...wish('08:00'), startsAt: new Date('2026-09-07T07:00:00.000Z') },
+      'BOOKING_TOO_FAR',
+    ],
   ])('refuses a slot %s', async (_rule, wished, code) => {
     const { application } = await arrange();
 
-    await expect(application.commandBus.execute(new BookAppointmentCommand(holder, 'calendar-a', wished))).rejects.toMatchObject({ code });
+    await expect(
+      application.commandBus.execute(new BookAppointmentCommand(holder, 'calendar-a', wished)),
+    ).rejects.toMatchObject({ code });
   });
 
   it('refuses a slot that runs into the buffer of an active appointment, and saves and publishes nothing', async () => {
-    const { application, appointmentRepository, announced, relationships } = await arrange(heldAt('08:00').lasting(30).withBuffer(10).build());
+    const { application, appointmentRepository, announced, relationships } = await arrange(
+      heldAt('08:00').lasting(30).withBuffer(10).build(),
+    );
 
-    await expect(application.commandBus.execute(new BookAppointmentCommand(holder, 'calendar-a', wish('08:30')))).rejects.toMatchObject({ code: 'SLOT_TAKEN' });
+    await expect(
+      application.commandBus.execute(new BookAppointmentCommand(holder, 'calendar-a', wish('08:30'))),
+    ).rejects.toMatchObject({ code: 'SLOT_TAKEN' });
 
     expect(appointmentRepository.count()).toBe(1);
     expect(announced).toEqual([]);
@@ -105,14 +153,21 @@ describe('Book appointment', () => {
   it('books a slot that a cancelled appointment gave back', async () => {
     const { application } = await arrange(heldAt('08:00').cancelledByPatient().build());
 
-    await expect(application.commandBus.execute(new BookAppointmentCommand(holder, 'calendar-a', wish('08:00')))).resolves.toBe('appointment-1');
+    await expect(
+      application.commandBus.execute(new BookAppointmentCommand(holder, 'calendar-a', wish('08:00'))),
+    ).resolves.toBe('appointment-1');
   });
 
   it('refuses a patient who already holds as many future appointments with the practitioner as the calendar allows', async () => {
-    const coming = ['13:00', '14:00', '15:00'].map((time) => anAppointment().withPractitioner('practitioner-a').forPatient('patient-1').startingAt(at(time)).build());
+    const coming = ['13:00', '14:00', '15:00'].map((time) =>
+      anAppointment().withPractitioner('practitioner-a').forPatient('patient-1').startingAt(at(time)).build(),
+    );
+
     const { application } = await arrange(...coming);
 
-    await expect(application.commandBus.execute(new BookAppointmentCommand(holder, 'calendar-a', wish('08:00')))).rejects.toMatchObject({ code: 'PATIENT_LIMIT_REACHED' });
+    await expect(
+      application.commandBus.execute(new BookAppointmentCommand(holder, 'calendar-a', wish('08:00'))),
+    ).rejects.toMatchObject({ code: 'PATIENT_LIMIT_REACHED' });
   });
 });
 
@@ -122,27 +177,40 @@ async function arrange(...stored: readonly Appointment[]) {
   const relationships = new FakeSchedulingRelationships();
   const announced: string[] = [];
 
-  const calendar = aCalendar()
+  await calendarRepository.save(openCalendar());
+
+  await stored.reduce(
+    (saved, appointment) => saved.then(() => appointmentRepository.save(appointment)),
+    Promise.resolve(),
+  );
+
+  const application = createTestApplication({
+    modules: [platformTestModule, contextModule('scheduling', schedulingDeclarations), holders],
+    fakes: [
+      fake(AppointmentRepository, appointmentRepository),
+      fake(CalendarRepository, calendarRepository),
+      fake(SchedulingRelationships, relationships),
+    ],
+    idPrefix: 'appointment',
+    now: NOW,
+  });
+
+  application.domainEvents.on(
+    'scheduling.appointment.booked',
+    async () => void announced.push('scheduling.appointment.booked'),
+  );
+
+  return { application, appointmentRepository, relationships, announced };
+}
+
+function openCalendar() {
+  return aCalendar()
     .identifiedBy('calendar-a')
     .ofPractitioner('practitioner-a', 'practice-a')
     .openEveryDay(['09:00', '12:00'], ['14:00', '18:00'])
     .offering('consultation', { buffer: 10 })
     .offering('first-visit', { needsConfirmation: true })
     .build();
-
-  await calendarRepository.save(calendar);
-  await stored.reduce((saved, appointment) => saved.then(() => appointmentRepository.save(appointment)), Promise.resolve());
-
-  const application = createTestApplication({
-    modules: [platformTestModule, contextModule('scheduling', schedulingDeclarations), holders],
-    fakes: [fake(AppointmentRepository, appointmentRepository), fake(CalendarRepository, calendarRepository), fake(SchedulingRelationships, relationships)],
-    idPrefix: 'appointment',
-    now: NOW,
-  });
-
-  application.domainEvents.on('scheduling.appointment.booked', async () => void announced.push('scheduling.appointment.booked'));
-
-  return { application, appointmentRepository, relationships, announced };
 }
 
 function at(time: string): Date {
@@ -150,7 +218,7 @@ function at(time: string): Date {
 }
 
 function wish(time: string, appointmentTypeId = 'consultation') {
-  return ({ patientId: 'patient-1', appointmentTypeId, startsAt: at(time) });
+  return { patientId: 'patient-1', appointmentTypeId, startsAt: at(time) };
 }
 
 function heldAt(time: string) {

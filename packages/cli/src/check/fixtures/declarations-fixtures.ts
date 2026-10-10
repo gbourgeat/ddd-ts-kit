@@ -11,7 +11,24 @@ import { project } from './project.js';
 import { SAMPLES } from './samples.js';
 import { withoutFile } from './without-file.js';
 
-const { ADAPTER, AGGREGATE, BARREL, BILLING, COMMAND, EVENT, EVENT_HANDLER, EVENT_HANDLER_SPEC, HANDLER, INTEGRATION_HANDLER, INTEGRATION_HANDLER_SPEC, JOB, JOB_SPEC, MODULE, POLICY } = PATHS;
+const {
+  ADAPTER,
+  AGGREGATE,
+  BARREL,
+  BILLING,
+  COMMAND,
+  EVENT,
+  EVENT_HANDLER,
+  EVENT_HANDLER_SPEC,
+  HANDLER,
+  INTEGRATION_HANDLER,
+  INTEGRATION_HANDLER_SPEC,
+  JOB,
+  JOB_SPEC,
+  MODULE,
+  POLICY,
+} = PATHS;
+
 const { SPEC } = SAMPLES;
 
 export const DECLARATIONS_FIXTURES: readonly Fixture[] = [
@@ -25,7 +42,11 @@ export const DECLARATIONS_FIXTURES: readonly Fixture[] = [
     ruleId: 'declarations/role-declared',
     name: 'explicit style: role files without a decorator, wired by the module file',
     expect: 'pass',
-    files: project({ ...handler('export class IssueInvoiceHandler {}\n'), [POLICY]: 'export class OnlyIssuerVoidsPolicy {}\n', [ADAPTER]: 'export class InMemoryInvoiceRepository {}\n' }),
+    files: project({
+      ...handler('export class IssueInvoiceHandler {}\n'),
+      [POLICY]: 'export class OnlyIssuerVoidsPolicy {}\n',
+      [ADAPTER]: 'export class InMemoryInvoiceRepository {}\n',
+    }),
   },
   {
     ruleId: 'declarations/role-declared',
@@ -39,21 +60,27 @@ export const DECLARATIONS_FIXTURES: readonly Fixture[] = [
     expect: { file: HANDLER },
     files: declaredProject({
       [COMMAND]: DECLARED.command,
-      ...handler("import { QueryHandler } from '@ddd-ts-kit/kernel/declarations';\n\n@QueryHandler(IssueInvoiceCommand, [])\nexport class IssueInvoiceHandler {}\n"),
+      ...handler(
+        "import { QueryHandler } from '@ddd-ts-kit/kernel/declarations';\n\n@QueryHandler(IssueInvoiceCommand, [])\nexport class IssueInvoiceHandler {}\n",
+      ),
     }),
   },
   {
     ruleId: 'declarations/role-declared',
     name: 'a policy named by a variable',
     expect: { file: POLICY },
-    files: declaredProject({ [POLICY]: "import { Policy } from '@ddd-ts-kit/kernel/declarations';\n\n@Policy(billingPermissions['invoice.void'], { name: POLICY_NAME })\nexport class OnlyIssuerVoidsPolicy {}\n" }),
+    files: declaredProject({
+      [POLICY]:
+        "import { Policy } from '@ddd-ts-kit/kernel/declarations';\n\n@Policy(billingPermissions['invoice.void'], { name: POLICY_NAME })\nexport class OnlyIssuerVoidsPolicy {}\n",
+    }),
   },
   {
     ruleId: 'declarations/role-declared',
     name: 'a domain event handler named by a template with a substitution',
     expect: { file: EVENT_HANDLER },
     files: declaredProject({
-      [EVENT_HANDLER]: "import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';\n\n@DomainEventHandler(InvoiceIssued, { name: `${CONTEXT}.invoice.issued` })\nexport class InvoiceIssuedEventHandler {}\n",
+      [EVENT_HANDLER]:
+        "import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';\n\n@DomainEventHandler(InvoiceIssued, { name: `${CONTEXT}.invoice.issued` })\nexport class InvoiceIssuedEventHandler {}\n",
       [EVENT_HANDLER_SPEC]: SPEC,
     }),
   },
@@ -63,7 +90,8 @@ export const DECLARATIONS_FIXTURES: readonly Fixture[] = [
     expect: { file: INTEGRATION_HANDLER },
     also: ['events/consumer-idempotent'],
     files: declaredProject({
-      [INTEGRATION_HANDLER]: "import { IntegrationEventHandler } from '@ddd-ts-kit/kernel/declarations';\n\n@IntegrationEventHandler(productListedV1, options, [])\nexport class ProductListedIntegrationHandler {}\n",
+      [INTEGRATION_HANDLER]:
+        "import { IntegrationEventHandler } from '@ddd-ts-kit/kernel/declarations';\n\n@IntegrationEventHandler(productListedV1, options, [])\nexport class ProductListedIntegrationHandler {}\n",
       [INTEGRATION_HANDLER_SPEC]: SPEC,
     }),
   },
@@ -82,14 +110,19 @@ export const DECLARATIONS_FIXTURES: readonly Fixture[] = [
     name: 'a declaration decorator on a class of the domain',
     expect: { file: AGGREGATE },
     also: ['layer/domain-purity'],
-    files: declaredProject(aggregate("import { Policy } from '@ddd-ts-kit/kernel/declarations';\n\n@Policy(billingPermissions['invoice.void'], { name: 'billing.only-issuer-voids' })\nexport class Invoice {}\n")),
+    files: declaredProject(
+      aggregate(
+        "import { Policy } from '@ddd-ts-kit/kernel/declarations';\n\n@Policy(billingPermissions['invoice.void'], { name: 'billing.only-issuer-voids' })\nexport class Invoice {}\n",
+      ),
+    ),
   },
   {
     ruleId: 'declarations/role-declared',
     name: 'a declared class in a file that is not a role file',
     expect: { file: `${BILLING}/infrastructure/persistence/in-memory-invoices.reader.ts` },
     files: declaredProject({
-      [`${BILLING}/infrastructure/persistence/in-memory-invoices.reader.ts`]: "import { Adapter } from '@ddd-ts-kit/kernel/declarations';\n\n@Adapter(InvoicesReader)\nexport class InMemoryInvoicesReader implements InvoicesReader {}\n",
+      [`${BILLING}/infrastructure/persistence/in-memory-invoices.reader.ts`]:
+        "import { Adapter } from '@ddd-ts-kit/kernel/declarations';\n\n@Adapter(InvoicesReader)\nexport class InMemoryInvoicesReader implements InvoicesReader {}\n",
     }),
   },
   {
@@ -108,7 +141,10 @@ export const DECLARATIONS_FIXTURES: readonly Fixture[] = [
     ruleId: 'declarations/barrel-current',
     name: 'explicit style: no barrel is expected',
     expect: 'pass',
-    files: project({ ...handler('export class IssueInvoiceHandler {}\n'), [MODULE]: 'export const billingModule = {};\n' }),
+    files: project({
+      ...handler('export class IssueInvoiceHandler {}\n'),
+      [MODULE]: 'export const billingModule = {};\n',
+    }),
   },
   {
     ruleId: 'declarations/barrel-current',
@@ -120,7 +156,12 @@ export const DECLARATIONS_FIXTURES: readonly Fixture[] = [
     ruleId: 'declarations/barrel-current',
     name: 'a role file added by hand that the barrel does not list',
     expect: { file: BARREL },
-    files: declaredProject(DECLARED_CONTEXT, { [BARREL]: DECLARED_BARREL.replace("export * from './application/authorization/only-issuer-voids.policy.js';\n", '') }),
+    files: declaredProject(DECLARED_CONTEXT, {
+      [BARREL]: DECLARED_BARREL.replace(
+        "export * from './application/authorization/only-issuer-voids.policy.js';\n",
+        '',
+      ),
+    }),
   },
   {
     ruleId: 'declarations/barrel-current',
@@ -132,6 +173,9 @@ export const DECLARATIONS_FIXTURES: readonly Fixture[] = [
     ruleId: 'declarations/role-declared',
     name: 'a job file whose class carries no @Scheduled',
     expect: { file: JOB },
-    files: declaredProject({ [JOB]: DECLARED.job.replace("@Scheduled('billing.send-reminders', { every: '15m' }, [CommandBus])\n", ''), [JOB_SPEC]: SPEC }),
+    files: declaredProject({
+      [JOB]: DECLARED.job.replace("@Scheduled('billing.send-reminders', { every: '15m' }, [CommandBus])\n", ''),
+      [JOB_SPEC]: SPEC,
+    }),
   },
 ];

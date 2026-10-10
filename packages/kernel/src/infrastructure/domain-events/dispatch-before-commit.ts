@@ -10,7 +10,9 @@ export async function dispatchBeforeCommit(scope: UnitOfWorkScope): Promise<void
   scope.stage = 'before-commit';
 
   for (let round = scope.queue.splice(0); round.length > 0; round = scope.queue.splice(0)) {
-    for (const run of domainEventRuns(round)) await run.dispatch(scope, 'before-commit');
+    for (const run of domainEventRuns(round)) {
+      await run.dispatch(scope, 'before-commit');
+    }
 
     scope.dispatched.push(...round);
   }

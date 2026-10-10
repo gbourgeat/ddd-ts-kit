@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  InMemoryEventBus,
-  InMemoryProcessedEventStore,
-  type IntegrationEvent,
-} from '@ddd-ts-kit/kernel';
+import { InMemoryEventBus, InMemoryProcessedEventStore, type IntegrationEvent } from '@ddd-ts-kit/kernel';
 import {
   DuplicateEventDefinitionError,
   EventRegistry,
@@ -63,9 +59,7 @@ describe('EventRegistry', () => {
 
     expect(() => registry.register(orderPlacedV1)).toThrow(DuplicateEventDefinitionError);
 
-    expect(() => createEventRegistry([invoiceIssued, invoiceIssued])).toThrow(
-      'billing.invoice.issued v1',
-    );
+    expect(() => createEventRegistry([invoiceIssued, invoiceIssued])).toThrow('billing.invoice.issued v1');
   });
 });
 
@@ -111,9 +105,7 @@ describe('on', () => {
       handled.push(event.id);
     });
 
-    await expect(handler(rawEvent({ payload: { orderId: 7 } }))).rejects.toBeInstanceOf(
-      InvalidEventPayloadError,
-    );
+    await expect(handler(rawEvent({ payload: { orderId: 7 } }))).rejects.toBeInstanceOf(InvalidEventPayloadError);
 
     expect(handled).toEqual([]);
   });
@@ -158,10 +150,7 @@ describe('subscribeAll', () => {
       on(invoiceIssued, async (event) => void handled.push(event.id)),
     ]);
 
-    const invoice = invoiceIssued.create(
-      { invoiceId: 'inv-1', orderId: 'order-1' },
-      { id: 'evt-2', occurredAt: at },
-    );
+    const invoice = invoiceIssued.create({ invoiceId: 'inv-1', orderId: 'order-1' }, { id: 'evt-2', occurredAt: at });
 
     await bus.publish([placedV1('evt-1'), invoice]);
     subscription.unsubscribe();
@@ -187,9 +176,9 @@ describe('validatingPublisher', () => {
     const bus = new InMemoryEventBus();
     const publisher = validatingPublisher(bus, registry);
 
-    await expect(
-      publisher.publish([placedV1('evt-1'), rawEvent({ version: 2 })]),
-    ).rejects.toBeInstanceOf(UnknownEventError);
+    await expect(publisher.publish([placedV1('evt-1'), rawEvent({ version: 2 })])).rejects.toBeInstanceOf(
+      UnknownEventError,
+    );
 
     expect(bus.published).toEqual([]);
   });

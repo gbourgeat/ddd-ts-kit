@@ -7,8 +7,13 @@ import type { JobSchedule } from './job-schedule.js';
  * the judgement of `parseJobSchedule` of the kernel written again; a test holds the two together.
  */
 export function jobScheduleProblem({ every, cron, timeZone }: JobSchedule): string | undefined {
-  if (every !== undefined) return durationProblem(every);
-  if (cron === undefined) return 'A schedule is an interval or a cron expression.';
+  if (every !== undefined) {
+    return durationProblem(every);
+  }
+
+  if (cron === undefined) {
+    return 'A schedule is an interval or a cron expression.';
+  }
 
   return cronProblem(cron) ?? timeZoneProblem(timeZone ?? 'UTC');
 }

@@ -28,7 +28,9 @@ export const checkCommand: Command = (argv, io) => {
     'clean-only': { type: 'boolean', default: false },
   });
 
-  if (args.flag('self')) return selfCheck(args, io);
+  if (args.flag('self')) {
+    return selfCheck(args, io);
+  }
 
   const format = formatOf(args);
   const rules = knownRules(args.many('rule'));
@@ -42,7 +44,9 @@ export const checkCommand: Command = (argv, io) => {
 function formatOf(args: Arguments): CheckFormat {
   const format = args.json ? 'json' : (args.text('format') ?? 'text');
 
-  if (isOneOf(FORMATS, format)) return format;
+  if (isOneOf(FORMATS, format)) {
+    return format;
+  }
 
   throw new CliError(`Unknown format "${format}".`, `Use one of: ${FORMATS.join(', ')}.`);
 }
@@ -64,14 +68,24 @@ function checkProject(args: Arguments, rules: readonly string[]): CheckResult {
   const cwd = args.workingDirectory;
   const root = findRoot(cwd);
   const result = runCheck(loadProject(root), { rules });
-  const scopes = args.positionals.map((entry) => toPosix(path.relative(root, path.resolve(cwd, entry))).replace(/\/$/, ''));
+
+  const scopes = args.positionals.map((entry) =>
+    toPosix(path.relative(root, path.resolve(cwd, entry))).replace(/\/$/, ''),
+  );
+
   const ref = args.text('changed-since');
   const changed = ref === undefined ? undefined : changedFiles(root, ref);
-  const reported = result.violations.filter((violation) => isInScope(violation, scopes) && (changed === undefined || changed.has(violation.file)));
+
+  const reported = result.violations.filter(
+    (violation) => isInScope(violation, scopes) && (changed === undefined || changed.has(violation.file)),
+  );
 
   return summarize(reported, result);
 }
 
 function isInScope(violation: Violation, scopes: readonly string[]): boolean {
-  return scopes.length === 0 || scopes.some((scope) => scope === '' || violation.file === scope || violation.file.startsWith(`${scope}/`));
+  return (
+    scopes.length === 0 ||
+    scopes.some((scope) => scope === '' || violation.file === scope || violation.file.startsWith(`${scope}/`))
+  );
 }

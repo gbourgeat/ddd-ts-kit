@@ -16,7 +16,9 @@ export function readPublishedEvents(sources: ContextSources): PublishedEventFact
     return {
       type,
       versions: declared.map((definition) => definition.version).sort((left, right) => left - right),
-      publishers: publishers.filter((publisher) => declared.some((definition) => mentions(publisher.source, definition))).map((publisher) => publisher.name),
+      publishers: publishers
+        .filter((publisher) => declared.some((definition) => mentions(publisher.source, definition)))
+        .map((publisher) => publisher.name),
     };
   });
 }

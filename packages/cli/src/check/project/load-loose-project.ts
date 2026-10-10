@@ -15,7 +15,9 @@ export function loadLooseProject(root: string, directories: readonly string[]): 
 
   for (const directory of directories) {
     walkDirectory(root, directory, (file, isDirectory) => {
-      if (isDirectory || !isSource(file)) return;
+      if (isDirectory || !isSource(file)) {
+        return;
+      }
 
       files.push(loadSourceFile(config, file, fs.readFileSync(path.join(root, file), 'utf8')));
     });

@@ -17,9 +17,25 @@ import { FakeMailer } from '../fakes/mailer.fake.js';
 import { FakeNotificationRepository } from '../fakes/notification.repository.fake.js';
 import { FakeReminderRepository } from '../fakes/reminder.repository.fake.js';
 
-const authorization = authorizationModule({ authorizer: new RoleBasedAuthorizer({ roles: { system: Object.values(notificationPermissions) }, systemRole: 'system' }) });
+const authorization = authorizationModule({
+  authorizer: new RoleBasedAuthorizer({
+    roles: { system: Object.values(notificationPermissions) },
+    systemRole: 'system',
+  }),
+});
+
 const startsAt = '2026-01-10T09:00:00.000Z';
-const appointment = { appointmentId: 'appointment-1', calendarId: 'calendar-1', practiceId: 'practice-1', practitionerId: 'practitioner-1', patientId: 'patient-1', startsAt, endsAt: '2026-01-10T09:30:00.000Z', day: '2026-01-10' };
+
+const appointment = {
+  appointmentId: 'appointment-1',
+  calendarId: 'calendar-1',
+  practiceId: 'practice-1',
+  practitionerId: 'practitioner-1',
+  patientId: 'patient-1',
+  startsAt,
+  endsAt: '2026-01-10T09:30:00.000Z',
+  day: '2026-01-10',
+};
 
 describe('When scheduling publishes scheduling.appointment.booked', () => {
   it('listens to the type scheduling publishes', () => {
@@ -40,8 +56,13 @@ describe('When scheduling publishes scheduling.appointment.booked', () => {
 
     await application.eventBus.publish([booked('event-1')]);
 
-    expect(mailer.delivered).toEqual([{ address: 'ada@example.test', recipientId: 'patient-1', kind: 'confirmation', appointmentId: 'appointment-1' }]);
-    expect(notificationRepository.all().map((sent) => sent.toState())).toMatchObject([{ recipientId: 'patient-1', startsAt: new Date(startsAt), cause: 'event-1' }]);
+    expect(mailer.delivered).toEqual([
+      { address: 'ada@example.test', recipientId: 'patient-1', kind: 'confirmation', appointmentId: 'appointment-1' },
+    ]);
+
+    expect(notificationRepository.all().map((sent) => sent.toState())).toMatchObject([
+      { recipientId: 'patient-1', startsAt: new Date(startsAt), cause: 'event-1' },
+    ]);
   });
 
   it('sends one notification when the same event is delivered twice', async () => {
@@ -68,14 +89,27 @@ describe('When scheduling publishes scheduling.appointment.booked', () => {
     await application.eventBus.publish([booked('event-1')]);
 
     expect(reminderRepository.all().map((planned) => planned.toState())).toMatchObject([
-      { appointmentId: 'appointment-1', recipientId: 'patient-1', startsAt: new Date(startsAt), dueAt: new Date('2026-01-09T09:00:00.000Z'), status: 'planned' },
+      {
+        appointmentId: 'appointment-1',
+        recipientId: 'patient-1',
+        startsAt: new Date(startsAt),
+        dueAt: new Date('2026-01-09T09:00:00.000Z'),
+        status: 'planned',
+      },
     ]);
   });
 
   it('lets the event fail, for its provider to deliver it again, while the contact of the patient is unknown', async () => {
     const { application, notificationRepository } = await arrange();
 
-    await expect(application.eventBus.publish([appointmentBookedV1.create({ ...appointment, patientId: 'stranger', status: 'booked' }, { id: 'event-2', occurredAt: new Date('2026-01-02T08:00:00.000Z') })])).rejects.toMatchObject({ errors: [{ code: 'CONTACT_UNKNOWN' }] });
+    await expect(
+      application.eventBus.publish([
+        appointmentBookedV1.create(
+          { ...appointment, patientId: 'stranger', status: 'booked' },
+          { id: 'event-2', occurredAt: new Date('2026-01-02T08:00:00.000Z') },
+        ),
+      ]),
+    ).rejects.toMatchObject({ errors: [{ code: 'CONTACT_UNKNOWN' }] });
 
     expect(notificationRepository.count()).toBe(0);
   });
@@ -91,7 +125,12 @@ async function arrange() {
 
   const application = createTestApplication({
     modules: [platformTestModule, contextModule('notification', notificationDeclarations), authorization],
-    fakes: [fake(NotificationRepository, notificationRepository), fake(ReminderRepository, reminderRepository), fake(Contacts, contacts), fake(Mailer, mailer)],
+    fakes: [
+      fake(NotificationRepository, notificationRepository),
+      fake(ReminderRepository, reminderRepository),
+      fake(Contacts, contacts),
+      fake(Mailer, mailer),
+    ],
   });
 
   await application.start();
@@ -100,5 +139,8 @@ async function arrange() {
 }
 
 function booked(id: string, status: 'booked' | 'requested' = 'booked') {
-  return appointmentBookedV1.create({ ...appointment, status }, { id, occurredAt: new Date('2026-01-02T08:00:00.000Z') });
+  return appointmentBookedV1.create(
+    { ...appointment, status },
+    { id, occurredAt: new Date('2026-01-02T08:00:00.000Z') },
+  );
 }

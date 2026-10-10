@@ -19,31 +19,47 @@ interface Declared {
 }
 
 /** Non-exported top-level functions declared above their first caller. */
-export function misplacedFunctions(program: TSESTree.Program, sourceCode: Readonly<TSESLint.SourceCode>): ModuleFinding[] {
+export function misplacedFunctions(
+  program: TSESTree.Program,
+  sourceCode: Readonly<TSESLint.SourceCode>,
+): ModuleFinding[] {
   const declared = program.body.flatMap((statement) => declaredIn(statement, sourceCode));
   const graph = callGraph(declared);
 
   return declared.flatMap((helper) => {
-    if (helper.exported || helper.uses.some(isExport) || (!helper.hoisted && helper.uses.some(runsAtLoad))) return [];
+    if (helper.exported || helper.uses.some(isExport) || (!helper.hoisted && helper.uses.some(runsAtLoad))) {
+      return [];
+    }
 
     const callers = helper.uses.filter((use) => !isRecursive({ helper, use, declared, graph }));
-    const first = callers.reduce<TSESTree.Node | undefined>((earliest, use) => (earliest === undefined || use.range[0] < earliest.range[0] ? use : earliest), undefined);
 
-    if (first === undefined || first.range[0] < helper.extent.range[0]) return [];
+    const first = callers.reduce<TSESTree.Node | undefined>(
+      (earliest, use) => (earliest === undefined || use.range[0] < earliest.range[0] ? use : earliest),
+      undefined,
+    );
+
+    if (first === undefined || first.range[0] < helper.extent.range[0]) {
+      return [];
+    }
 
     return [{ node: helper.id, data: { name: helper.id.name, line: first.loc.start.line } }];
   });
 }
 
 function declaredIn(statement: TSESTree.ProgramStatement, sourceCode: Readonly<TSESLint.SourceCode>): Declared[] {
-  const exported = statement.type === AST_NODE_TYPES.ExportNamedDeclaration || statement.type === AST_NODE_TYPES.ExportDefaultDeclaration;
+  const exported =
+    statement.type === AST_NODE_TYPES.ExportNamedDeclaration ||
+    statement.type === AST_NODE_TYPES.ExportDefaultDeclaration;
+
   const declaration = exported ? statement.declaration : statement;
 
   if (declaration?.type === AST_NODE_TYPES.FunctionDeclaration && declaration.id !== null) {
     return [describe({ id: declaration.id, extent: declaration, exported, hoisted: true }, sourceCode)];
   }
 
-  if (declaration?.type !== AST_NODE_TYPES.VariableDeclaration) return [];
+  if (declaration?.type !== AST_NODE_TYPES.VariableDeclaration) {
+    return [];
+  }
 
   return declaration.declarations.flatMap((declarator) =>
     declarator.id.type === AST_NODE_TYPES.Identifier && declarator.init !== null && isFunction(declarator.init)
@@ -53,10 +69,16 @@ function declaredIn(statement: TSESTree.ProgramStatement, sourceCode: Readonly<T
 }
 
 function describe(declared: Omit<Declared, 'uses'>, sourceCode: Readonly<TSESLint.SourceCode>): Declared {
-  const variable = sourceCode.getDeclaredVariables(declared.extent).find((candidate) => candidate.identifiers.includes(declared.id));
+  const variable = sourceCode
+    .getDeclaredVariables(declared.extent)
+    .find((candidate) => candidate.identifiers.includes(declared.id));
+
   const references = variable?.references.filter((reference) => !reference.init && reference.isValueReference) ?? [];
 
-  return { ...declared, uses: references.map((reference) => reference.identifier).filter((use) => !isInside(use, declared.extent)) };
+  return {
+    ...declared,
+    uses: references.map((reference) => reference.identifier).filter((use) => !isInside(use, declared.extent)),
+  };
 }
 
 function callGraph(declared: readonly Declared[]): CallGraph<Declared> {
@@ -66,7 +88,9 @@ function callGraph(declared: readonly Declared[]): CallGraph<Declared> {
     for (const use of callee.uses) {
       const caller = declared.find((candidate) => isInside(use, candidate.extent));
 
-      if (caller !== undefined) graph.add(caller, callee);
+      if (caller !== undefined) {
+        graph.add(caller, callee);
+      }
     }
   }
 
@@ -88,14 +112,21 @@ function isRecursive({ helper, use, declared, graph }: Call): boolean {
 }
 
 function isExport(use: TSESTree.Node): boolean {
-  return use.parent?.type === AST_NODE_TYPES.ExportSpecifier || use.parent?.type === AST_NODE_TYPES.ExportDefaultDeclaration;
+  return (
+    use.parent?.type === AST_NODE_TYPES.ExportSpecifier || use.parent?.type === AST_NODE_TYPES.ExportDefaultDeclaration
+  );
 }
 
 /** Evaluated while the module loads: such a use needs a constant to be initialised above it. */
 function runsAtLoad(use: TSESTree.Node): boolean {
   for (const ancestor of ancestors(use)) {
-    if (isFunction(ancestor) || ancestor.type === AST_NODE_TYPES.FunctionDeclaration) return false;
-    if (ancestor.type === AST_NODE_TYPES.PropertyDefinition && !ancestor.static) return false;
+    if (isFunction(ancestor) || ancestor.type === AST_NODE_TYPES.FunctionDeclaration) {
+      return false;
+    }
+
+    if (ancestor.type === AST_NODE_TYPES.PropertyDefinition && !ancestor.static) {
+      return false;
+    }
   }
 
   return true;

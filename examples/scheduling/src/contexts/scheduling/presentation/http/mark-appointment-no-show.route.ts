@@ -23,7 +23,9 @@ export function markAppointmentNoShowRoute(commands: CommandBus): Route {
       security: ['bearer'],
     },
     async (input) => {
-      const id = await commands.execute(new MarkAppointmentNoShowCommand(actorOf(input.context.principal), input.params.appointmentId));
+      const id = await commands.execute(
+        new MarkAppointmentNoShowCommand(actorOf(input.context.principal), input.params.appointmentId),
+      );
 
       return { status: 201, body: { id } };
     },

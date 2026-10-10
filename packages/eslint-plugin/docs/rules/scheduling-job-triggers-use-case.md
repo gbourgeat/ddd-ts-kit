@@ -29,7 +29,9 @@ Incorrect:
 @Scheduled('billing.send-reminders', { every: '15m' }, [InvoiceRepository, Mailer])
 export class SendRemindersJob implements ScheduledJob {
   async run(): Promise<void> {
-    for (const invoice of await this.invoices.overdue()) await this.mailer.remind(invoice);
+    for (const invoice of await this.invoices.overdue()) {
+      await this.mailer.remind(invoice);
+    }
   }
 }
 ```

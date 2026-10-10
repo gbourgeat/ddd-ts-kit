@@ -410,7 +410,9 @@ operator of a closed list, both from the adapter. A text search is `LIKE :p ESCA
 async list(criteria: ScopedCriteria<AppointmentRow>): Promise<Page<AppointmentRow>> {
   const plan = planCriteria(appointmentCriteria, criteria);
 
-  if (plan.empty) return pageOfPlan(plan, []);
+  if (plan.empty) {
+    return pageOfPlan(plan, []);
+  }
 
   const builder = this.context.manager().createQueryBuilder(appointmentList, 'row');
 

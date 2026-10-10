@@ -19,13 +19,18 @@ const UNRESTRICTED: ScopeRestriction = { conditions: [], empty: false };
  * criteria that its definition refuses never reaches a statement. A criteria given without a
  * scope is read whole, which is right for a read nobody is refused.
  */
-export function planCriteria<Row>(definition: CriteriaDefinition<Row>, read: Criteria<Row> | ScopedCriteria<Row>): CriteriaPlan {
+export function planCriteria<Row>(
+  definition: CriteriaDefinition<Row>,
+  read: Criteria<Row> | ScopedCriteria<Row>,
+): CriteriaPlan {
   // Told apart by shape: a criteria built with another copy of this package is still one.
   const criteria = 'restriction' in read ? read.criteria : read;
   const restriction = 'restriction' in read ? read.restriction : UNRESTRICTED;
   const violations = validateCriteria(definition, criteria);
 
-  if (violations.length > 0) throw new InvalidCriteriaError(violations);
+  if (violations.length > 0) {
+    throw new InvalidCriteriaError(violations);
+  }
 
   assertDeclared(definition, restriction);
 
@@ -41,8 +46,13 @@ export function planCriteria<Row>(definition: CriteriaDefinition<Row>, read: Cri
   };
 }
 
-function windowOf(page: PageRequest | undefined, defaultSize: number): Pick<CriteriaPlan, 'kind' | 'limit' | 'fetch' | 'offset'> {
-  if (page === undefined) return { kind: 'offset', limit: defaultSize, fetch: defaultSize, offset: 0 };
+function windowOf(
+  page: PageRequest | undefined,
+  defaultSize: number,
+): Pick<CriteriaPlan, 'kind' | 'limit' | 'fetch' | 'offset'> {
+  if (page === undefined) {
+    return { kind: 'offset', limit: defaultSize, fetch: defaultSize, offset: 0 };
+  }
 
   return page.kind === 'cursor'
     ? { kind: 'cursor', limit: page.limit, fetch: page.limit + 1, offset: 0 }
@@ -51,12 +61,20 @@ function windowOf(page: PageRequest | undefined, defaultSize: number): Pick<Crit
 
 function assertDeclared<Row>(definition: CriteriaDefinition<Row>, restriction: ScopeRestriction): void {
   for (const { field } of restriction.conditions) {
-    if (!Object.hasOwn(definition.fields, field)) throw new UnmappedReadScopeError(`the field "${field}"`);
+    if (!Object.hasOwn(definition.fields, field)) {
+      throw new UnmappedReadScopeError(`the field "${field}"`);
+    }
   }
 }
 
-function seekOf<Row>(definition: CriteriaDefinition<Row>, page: PageRequest | undefined, sort: CriteriaPlan['sort']): Predicate | undefined {
-  if (page?.kind !== 'cursor' || page.cursor === undefined) return undefined;
+function seekOf<Row>(
+  definition: CriteriaDefinition<Row>,
+  page: PageRequest | undefined,
+  sort: CriteriaPlan['sort'],
+): Predicate | undefined {
+  if (page?.kind !== 'cursor' || page.cursor === undefined) {
+    return undefined;
+  }
 
   const position = readCursor(page.cursor, sort, definition.fields);
 

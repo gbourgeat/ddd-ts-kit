@@ -49,9 +49,7 @@ export class PrismaOutboxStore<Tx> implements OutboxStore {
     this.modelOf = options.delegate;
 
     this.lockingClaim =
-      options.claim === 'compare-and-set'
-        ? undefined
-        : { sql: lockingSelect(options.claim), raw: options.claim.raw };
+      options.claim === 'compare-and-set' ? undefined : { sql: lockingSelect(options.claim), raw: options.claim.raw };
 
     this.leaseDurationMs = options.leaseMs ?? 30_000;
   }
@@ -101,11 +99,7 @@ export class PrismaOutboxStore<Tx> implements OutboxStore {
     });
   }
 
-  async markFailed(
-    id: string,
-    error: { readonly code: string },
-    nextAttemptAt: Date | null,
-  ): Promise<void> {
+  async markFailed(id: string, error: { readonly code: string }, nextAttemptAt: Date | null): Promise<void> {
     await this.outbox().updateMany({
       where: { id, status: { not: 'published' } },
       data:

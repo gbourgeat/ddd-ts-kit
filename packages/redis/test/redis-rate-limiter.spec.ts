@@ -31,20 +31,34 @@ describe.skipIf(!REAL_SERVER)('RedisRateLimiter on a server', () => {
   it('shares one window between the instances of an application', async () => {
     const namespace = aNamespace();
     const shared = new FixedClock(NOW);
-    const instances = [connect(), connect(), connect()].map((connection) => new RedisRateLimiter(connection, { namespace, clock: shared }));
+
+    const instances = [connect(), connect(), connect()].map(
+      (connection) => new RedisRateLimiter(connection, { namespace, clock: shared }),
+    );
 
     const calls = Array.from({ length: 10 }, () => instances).flat();
-    const decisions = await Promise.all(calls.map((instance) => instance.consume('tenant-acme', { limit: 7, windowMs: 60_000 })));
+
+    const decisions = await Promise.all(
+      calls.map((instance) => instance.consume('tenant-acme', { limit: 7, windowMs: 60_000 })),
+    );
 
     expect(decisions.filter((decision) => decision.allowed)).toHaveLength(7);
-    expect(decisions.filter((decision) => decision.allowed).map((decision) => decision.remaining).sort()).toEqual([0, 1, 2, 3, 4, 5, 6]);
+
+    expect(
+      decisions
+        .filter((decision) => decision.allowed)
+        .map((decision) => decision.remaining)
+        .sort(),
+    ).toEqual([0, 1, 2, 3, 4, 5, 6]);
   });
 
   it('keeps one member per allowed call and lets the server forget the key after the window', async () => {
     const namespace = aNamespace();
     const limiter = new RedisRateLimiter(client, { namespace, clock: new FixedClock(NOW) });
 
-    for (let call = 0; call < 5; call += 1) await limiter.consume('tenant-acme', { limit: 3, windowMs: 45_000 });
+    for (let call = 0; call < 5; call += 1) {
+      await limiter.consume('tenant-acme', { limit: 3, windowMs: 45_000 });
+    }
 
     expect(await client.zcard(`${namespace}:tenant-acme`)).toBe(3);
     expect(await client.pttl(`${namespace}:tenant-acme`)).toBeGreaterThan(40_000);

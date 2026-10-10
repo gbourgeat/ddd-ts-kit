@@ -9,7 +9,10 @@ export function parseLimits(value: unknown): Limits {
 
   return {
     maxParameters: positive(raw['maxParameters'], DEFAULT_LIMITS.maxParameters),
-    maxFunctionLines: Math.min(positive(raw['maxFunctionLines'], DEFAULT_LIMITS.maxFunctionLines), FUNCTION_LINES_CEILING),
+    maxFunctionLines: Math.min(
+      positive(raw['maxFunctionLines'], DEFAULT_LIMITS.maxFunctionLines),
+      FUNCTION_LINES_CEILING,
+    ),
   };
 }
 

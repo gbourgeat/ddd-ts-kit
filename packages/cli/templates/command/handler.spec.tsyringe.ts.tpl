@@ -22,7 +22,12 @@ import { Fake{{aggregate.pascal}}Repository } from '../fakes/{{aggregate.kebab}}
 {{/if}}
 {{#if access.protected}}
 
-const holders = authorizationModule({ authorizer: new RoleBasedAuthorizer({ roles: { holder: [{{context.camel}}Permissions['{{access.permission}}']] } }) });
+const holders = authorizationModule({
+  authorizer: new RoleBasedAuthorizer({
+    roles: { holder: [{{context.camel}}Permissions['{{access.permission}}']] },
+  }),
+});
+
 const holder = anActor().withRole('holder').build();
 {{/if}}
 {{#if access.public}}
@@ -44,16 +49,18 @@ describe('{{name.title}}', () => {
 {{#unless command.hasAggregate}}
   it('completes without answering anything', async () => {
     const { application } = {{spec.await}}arrange();
+    const command = new {{name.pascal}}Command({{access.holder}});
 
-    await expect(application.commandBus.execute(new {{name.pascal}}Command({{access.holder}}))).resolves.toBeUndefined();
+    await expect(application.commandBus.execute(command)).resolves.toBeUndefined();
   });
 {{/unless}}
 {{#if access.protected}}
 
   it('is refused to an actor who does not hold the permission {{access.permission}}', async () => {
     const { application } = {{spec.await}}arrange();
+    const command = new {{name.pascal}}Command(anActor().build());
 
-    await expect(application.commandBus.execute(new {{name.pascal}}Command(anActor().build()))).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(application.commandBus.execute(command)).rejects.toMatchObject({ code: 'FORBIDDEN' });
   });
 {{/if}}
 
@@ -70,6 +77,10 @@ describe('{{name.title}}', () => {
 });
 
 {{spec.async}}function arrange() {
+{{#if spec.assembles}}
+  const context = {{spec.context}};
+
+{{/if}}
 {{#if command.hasAggregate}}
   const {{aggregate.camel}}Repository = new Fake{{aggregate.pascal}}Repository();
 
@@ -82,6 +93,10 @@ describe('{{name.title}}', () => {
   return { application, {{aggregate.camel}}Repository };
 {{/if}}
 {{#unless command.hasAggregate}}
-  return { application: createTestApplication({ modules: [{{spec.modules}}] }) };
+  const application = createTestApplication({
+    modules: [{{spec.modules}}],
+  });
+
+  return { application };
 {{/unless}}
 }

@@ -8,7 +8,9 @@ import type { Token } from './token.js';
  * it: both are checked here, where the compiler cannot. A class bound to itself is no port.
  */
 export function portDefect(port: Token<unknown>, implementation: Token<unknown>): string | undefined {
-  if (port === implementation) return undefined;
+  if (port === implementation) {
+    return undefined;
+  }
 
   const contract = prototypeOf(port);
   const implemented = implementedMembers(contract);
@@ -26,7 +28,9 @@ export function portDefect(port: Token<unknown>, implementation: Token<unknown>)
 
 /** The members with a body, the inherited ones included: a port may extend a port. */
 function implementedMembers(prototype: object | undefined): string[] {
-  if (prototype === undefined || prototype === Object.prototype) return [];
+  if (prototype === undefined || prototype === Object.prototype) {
+    return [];
+  }
 
   const own = Object.getOwnPropertyNames(prototype).filter((name) => name !== 'constructor');
   const inherited: unknown = Object.getPrototypeOf(prototype);

@@ -7,7 +7,13 @@ export class SendNotificationCommand extends AuthorizedCommand<string> {
   /** `cause` names what made the notification necessary: the same cause is told once to each recipient. */
   constructor(
     actor: Actor,
-    readonly notice: { readonly recipientId: string; readonly kind: string; readonly appointmentId: string; readonly startsAt: Date; readonly cause: string },
+    readonly notice: {
+      readonly recipientId: string;
+      readonly kind: string;
+      readonly appointmentId: string;
+      readonly startsAt: Date;
+      readonly cause: string;
+    },
   ) {
     super(actor);
   }

@@ -322,7 +322,9 @@ await writeFile(
 );
 
 // In CI: fail when the committed file is stale.
-if (checkAsyncApiDrift(document, await readFile('docs/integration/asyncapi.json', 'utf8')).drift) process.exit(1);
+if (checkAsyncApiDrift(document, await readFile('docs/integration/asyncapi.json', 'utf8')).drift) {
+  process.exit(1);
+}
 ```
 
 The AsyncAPI 3.0.0 document has one channel per event type (its address is the type), one

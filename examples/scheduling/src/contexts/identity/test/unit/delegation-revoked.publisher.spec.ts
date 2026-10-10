@@ -8,7 +8,14 @@ describe('Publishing "delegation revoked" to other contexts', () => {
     const bus = new InMemoryEventBus();
     const publisher = new DelegationRevokedPublisher(bus, new SequentialIdGenerator('event'));
 
-    await publisher.handle(new DelegationRevoked('delegation-1', new Date('2026-01-01T00:00:00.000Z'), { practiceId: 'practice-1', practitionerId: 'person-2', assistantId: 'person-3', cause: 'expired' }));
+    await publisher.handle(
+      new DelegationRevoked('delegation-1', new Date('2026-01-01T00:00:00.000Z'), {
+        practiceId: 'practice-1',
+        practitionerId: 'person-2',
+        assistantId: 'person-3',
+        cause: 'expired',
+      }),
+    );
 
     expect(bus.published).toEqual([
       {
@@ -16,7 +23,13 @@ describe('Publishing "delegation revoked" to other contexts', () => {
         type: 'identity.delegation.revoked',
         version: 1,
         occurredAt: '2026-01-01T00:00:00.000Z',
-        payload: { delegationId: 'delegation-1', practiceId: 'practice-1', practitionerId: 'person-2', assistantId: 'person-3', cause: 'expired' },
+        payload: {
+          delegationId: 'delegation-1',
+          practiceId: 'practice-1',
+          practitionerId: 'person-2',
+          assistantId: 'person-3',
+          cause: 'expired',
+        },
       },
     ]);
   });

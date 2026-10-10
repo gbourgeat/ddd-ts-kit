@@ -10,14 +10,25 @@ import {
   type IntegrationEvent,
   type ReadModelStore,
 } from '@ddd-ts-kit/kernel';
-import { contextModule, createApplication, createTestApplication, fake, kernelModule, override, type Instrumentation, type WiringError } from '../src/index.js';
+import {
+  contextModule,
+  createApplication,
+  createTestApplication,
+  fake,
+  kernelModule,
+  override,
+  type Instrumentation,
+  type WiringError,
+} from '../src/index.js';
 import { Twice, Twin } from './fixtures/contexts/projection-mistakes.js';
 import * as reporting from './fixtures/contexts/reporting/reporting.declarations.js';
 import { TransactionalJournal } from './support/fakes/transactional-journal.js';
 import { TransactionalProcessedEvents } from './support/fakes/transactional-processed-events.js';
 import { TransactionalUnitOfWork, type Transactional } from './support/fakes/transactional-unit-of-work.js';
 
-const { CustomerForgotten, CustomerOrders, CustomerOrdersProjection, InMemoryCustomerOrders, customerOrdersCriteria } = reporting;
+const { CustomerForgotten, CustomerOrders, CustomerOrdersProjection, InMemoryCustomerOrders, customerOrdersCriteria } =
+  reporting;
+
 const NAME = 'reporting.customer-orders';
 
 const placed = (id: string, second: number, customerId = 'customer-1'): IntegrationEvent => ({
@@ -37,7 +48,9 @@ describe('a declared projection', () => {
     await app.start();
     await app.eventBus.publish([placed('evt-1', 1), placed('evt-2', 2), placed('evt-3', 3, 'customer-2')]);
 
-    const page = await app.get(CustomerOrders).list(scoped(Criteria.of<reporting.CustomerOrdersRow>(), { kind: 'all' }));
+    const page = await app
+      .get(CustomerOrders)
+      .list(scoped(Criteria.of<reporting.CustomerOrdersRow>(), { kind: 'all' }));
 
     expect(page.items).toEqual([
       { customerId: 'customer-1', orders: 2, lastOrderId: 'order-evt-2' },
@@ -51,7 +64,11 @@ describe('a declared projection', () => {
     await app.start();
     await app.eventBus.publish([placed('evt-2', 2), placed('evt-2', 2), placed('evt-1', 1), placed('evt-3', 3)]);
 
-    expect(await app.get(CustomerOrders).get('customer-1')).toEqual({ customerId: 'customer-1', orders: 2, lastOrderId: 'order-evt-3' });
+    expect(await app.get(CustomerOrders).get('customer-1')).toEqual({
+      customerId: 'customer-1',
+      orders: 2,
+      lastOrderId: 'order-evt-3',
+    });
   });
 
   it('applies the domain events of its own context where they are dispatched', async () => {
@@ -59,7 +76,11 @@ describe('a declared projection', () => {
 
     await app.start();
     await app.eventBus.publish([placed('evt-1', 1)]);
-    await app.get(DomainEventDispatcher).dispatch([new CustomerForgotten('customer-1', new Date('2026-10-10T12:00:05Z'))]);
+
+    await app
+      .get(DomainEventDispatcher)
+      .dispatch([new CustomerForgotten('customer-1', new Date('2026-10-10T12:00:05Z'))]);
+
     await app.eventBus.publish([placed('evt-2', 2)]);
 
     expect(await app.get(CustomerOrders).get('customer-1')).toBeUndefined();
@@ -87,7 +108,9 @@ class TransactionalCustomerOrders extends InMemoryCustomerOrders implements Tran
   override async upsertIfNewer(...written: Parameters<ReadModelStore<reporting.CustomerOrdersRow>['upsertIfNewer']>) {
     this.journal.write(written[0]);
 
-    if (this.failing) throw new RangeError('the table is locked');
+    if (this.failing) {
+      throw new RangeError('the table is locked');
+    }
 
     return super.upsertIfNewer(...written);
   }
@@ -140,7 +163,10 @@ describe('a declared projection, seen from outside', () => {
     const clock = new FixedClock(new Date('2026-10-10T12:00:10.000Z'));
 
     const app = createApplication({
-      modules: [kernelModule({ metrics, clock, unitOfWork: new TransactionalUnitOfWork([rows]) }), contextModule('reporting', [CustomerOrdersProjection])],
+      modules: [
+        kernelModule({ metrics, clock, unitOfWork: new TransactionalUnitOfWork([rows]) }),
+        contextModule('reporting', [CustomerOrdersProjection]),
+      ],
       overrides: [override(CustomerOrders, rows)],
     });
 
@@ -173,7 +199,10 @@ describe('a declared projection, seen from outside', () => {
     await app.start();
 
     expect(seen).toEqual([`${NAME} of reporting on ordering.order.placed`]);
-    expect(app.describe().bindings).toContainEqual(expect.objectContaining({ token: 'CustomerOrdersProjection', kind: 'consumer' }));
+
+    expect(app.describe().bindings).toContainEqual(
+      expect.objectContaining({ token: 'CustomerOrdersProjection', kind: 'consumer' }),
+    );
   });
 
   it('is described apart from the handlers of integration and domain events', () => {
@@ -210,20 +239,29 @@ describe('a projection that cannot be wired', () => {
   };
 
   it('is refused when another projection carries its name', () => {
-    const refused = failure(() => createApplication({ modules: [kernelModule(), reportingModule(), contextModule('analytics', [Twin])] }));
+    const refused = failure(() =>
+      createApplication({ modules: [kernelModule(), reportingModule(), contextModule('analytics', [Twin])] }),
+    );
 
     expect(refused.code).toBe('DUPLICATE_PROJECTION');
-    expect(refused.message).toContain('Projection "reporting.customer-orders" is declared twice: in module "reporting" (declared by class CustomerOrdersProjection) and in module "analytics" (declared by class Twin)');
+
+    expect(refused.message).toContain(
+      'Projection "reporting.customer-orders" is declared twice: in module "reporting" (declared by class CustomerOrdersProjection) and in module "analytics" (declared by class Twin)',
+    );
   });
 
   it('is refused when two of its methods apply the same event', () => {
     const bound = [Twice, InMemoryCustomerOrders];
 
-    expect(failure(() => createApplication({ modules: [kernelModule(), contextModule('reporting', bound)] })).code).toBe('DUPLICATE_CONSUMER');
+    expect(
+      failure(() => createApplication({ modules: [kernelModule(), contextModule('reporting', bound)] })).code,
+    ).toBe('DUPLICATE_CONSUMER');
   });
 
   it('is refused without its read model', () => {
-    const refused = failure(() => createApplication({ modules: [kernelModule(), contextModule('reporting', [CustomerOrdersProjection])] }));
+    const refused = failure(() =>
+      createApplication({ modules: [kernelModule(), contextModule('reporting', [CustomerOrdersProjection])] }),
+    );
 
     expect(refused.code).toBe('UNBOUND_DEPENDENCY');
     expect(refused.message).toContain('CustomerOrders');
@@ -231,7 +269,11 @@ describe('a projection that cannot be wired', () => {
 
   it('keeps the fake of its read model a plain in-memory store', async () => {
     const rows = new InMemoryReadModelStore(customerOrdersCriteria);
-    const app = createTestApplication({ modules: [contextModule('reporting', [CustomerOrdersProjection])], fakes: [fake(CustomerOrders, rows)] });
+
+    const app = createTestApplication({
+      modules: [contextModule('reporting', [CustomerOrdersProjection])],
+      fakes: [fake(CustomerOrders, rows)],
+    });
 
     await app.start();
     await app.eventBus.publish([placed('evt-1', 1)]);

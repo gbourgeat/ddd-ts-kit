@@ -30,10 +30,14 @@ export function adviseMethods<T extends object>(instance: T, info: AspectInfo, a
   for (const [name, method] of wrappableMethods(instance)) {
     const wrapper = advised(method, { ...site, method: name, arity: method.length }, advise);
 
-    if (wrapper !== undefined) wrappers.set(name, learning(method, fromOutside(method, wrapper, application)));
+    if (wrapper !== undefined) {
+      wrappers.set(name, learning(method, fromOutside(method, wrapper, application)));
+    }
   }
 
-  if (wrappers.size === 0) return instance;
+  if (wrappers.size === 0) {
+    return instance;
+  }
 
   return Object.isExtensible(instance) ? shadowed(instance, wrappers) : proxied(instance, wrappers);
 }
@@ -45,16 +49,22 @@ function wrappableMethods(instance: object): Map<string, Method> {
 
   for (const owner of prototypeChain(instance)) {
     for (const name of Object.getOwnPropertyNames(owner)) {
-      if (seen.has(name)) continue;
+      if (seen.has(name)) {
+        continue;
+      }
 
       seen.add(name);
 
-      if (!holdsShadowableMethod(owner, name, instance)) continue;
+      if (!holdsShadowableMethod(owner, name, instance)) {
+        continue;
+      }
 
       // Read through the instance: a proxy put by another aspect answers its own wrapper.
       const current: unknown = Reflect.get(instance, name);
 
-      if (isWrappable(current)) methods.set(name, current);
+      if (isWrappable(current)) {
+        methods.set(name, current);
+      }
     }
   }
 
@@ -64,7 +74,11 @@ function wrappableMethods(instance: object): Map<string, Method> {
 function prototypeChain(instance: object): object[] {
   const chain: object[] = [];
 
-  for (let owner: object | null = instance; owner !== null && owner !== Object.prototype && owner !== Function.prototype; owner = Reflect.getPrototypeOf(owner)) {
+  for (
+    let owner: object | null = instance;
+    owner !== null && owner !== Object.prototype && owner !== Function.prototype;
+    owner = Reflect.getPrototypeOf(owner)
+  ) {
     chain.push(owner);
   }
 
@@ -75,7 +89,9 @@ function prototypeChain(instance: object): object[] {
 function holdsShadowableMethod(owner: object, name: string, instance: object): boolean {
   const descriptor = Object.getOwnPropertyDescriptor(owner, name);
 
-  if (descriptor === undefined || (owner === instance && isReadOnly(descriptor))) return false;
+  if (descriptor === undefined || (owner === instance && isReadOnly(descriptor))) {
+    return false;
+  }
 
   return typeof descriptor.value === 'function';
 }
@@ -85,14 +101,20 @@ function isReadOnly(descriptor: PropertyDescriptor): boolean {
 }
 
 function learning(original: Method, wrapper: Method): Method {
-  if (isAsync(original)) return wrapper;
+  if (isAsync(original)) {
+    return wrapper;
+  }
 
   const learner: Method = function (this: unknown, ...args: unknown[]): unknown {
-    if (isAsync(original)) return wrapper.apply(this, args);
+    if (isAsync(original)) {
+      return wrapper.apply(this, args);
+    }
 
     const result = original.apply(this, args);
 
-    if (isThenable(result)) knownAsync.add(original);
+    if (isThenable(result)) {
+      knownAsync.add(original);
+    }
 
     return result;
   };
@@ -103,7 +125,9 @@ function learning(original: Method, wrapper: Method): Method {
 }
 
 function isAsync(method: Method): boolean {
-  if (method.constructor.name === 'AsyncFunction' || knownAsync.has(method)) return true;
+  if (method.constructor.name === 'AsyncFunction' || knownAsync.has(method)) {
+    return true;
+  }
 
   const other = standsFor.get(method);
 
@@ -111,7 +135,12 @@ function isAsync(method: Method): boolean {
 }
 
 function isThenable(value: unknown): boolean {
-  return (typeof value === 'object' || typeof value === 'function') && value !== null && 'then' in value && typeof value.then === 'function';
+  return (
+    (typeof value === 'object' || typeof value === 'function') &&
+    value !== null &&
+    'then' in value &&
+    typeof value.then === 'function'
+  );
 }
 
 /**

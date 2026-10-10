@@ -19,9 +19,7 @@ export function selfContainedSchema(className: string): JsonSchema {
   return {
     $schema: 'https://json-schema.org/draft/2020-12/schema',
     ...own,
-    ...(names.length > 0
-      ? { $defs: Object.fromEntries(names.map((name) => [name, defs[name]])) }
-      : {}),
+    ...(names.length > 0 ? { $defs: Object.fromEntries(names.map((name) => [name, defs[name]])) } : {}),
   };
 }
 
@@ -31,9 +29,7 @@ function generatedSchemas(): SchemasByName {
     refPointerPrefix: DEFS_POINTER,
   });
 
-  return Object.fromEntries(
-    Object.entries(generated).map(([name, schema]) => [name, { ...schema }]),
-  );
+  return Object.fromEntries(Object.entries(generated).map(([name, schema]) => [name, { ...schema }]));
 }
 
 function collectDefs(node: unknown, all: SchemasByName, defs: SchemasByName): void {

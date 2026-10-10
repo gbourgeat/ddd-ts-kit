@@ -7,6 +7,7 @@ export const CLEAN_RULE_IDS: readonly string[] = [
   'clean/no-escape-hatch',
   'clean/no-hash-private',
   'clean/blank-lines',
+  'clean/braces',
   'clean/one-export-per-file',
   'clean/file-size',
 ];

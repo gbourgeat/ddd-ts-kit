@@ -15,10 +15,19 @@ const IDENTIFIER = /^[A-Za-z_$][\w$]*$/;
  */
 export function dependencyLists(file: SourceFile): DependencyList[] {
   const { scan } = file;
-  const declared = classesOf(scan).flatMap(({ decorations }) => decorations.map((decoration) => ({ owner: `@${decoration.name}`, list: argumentsOf(scan, decoration).at(-1) })));
-  const wired = [...scan.code.matchAll(WIRING_CALL)].map((match) => ({ owner: match[1] ?? '', list: callArguments(scan.code, match.index + match[0].length - 1)[1] }));
 
-  return [...declared, ...wired].flatMap(({ owner, list }) => (list?.code.startsWith('[') === true ? [listOf(file, owner, list)] : []));
+  const declared = classesOf(scan).flatMap(({ decorations }) =>
+    decorations.map((decoration) => ({ owner: `@${decoration.name}`, list: argumentsOf(scan, decoration).at(-1) })),
+  );
+
+  const wired = [...scan.code.matchAll(WIRING_CALL)].map((match) => ({
+    owner: match[1] ?? '',
+    list: callArguments(scan.code, match.index + match[0].length - 1)[1],
+  }));
+
+  return [...declared, ...wired].flatMap(({ owner, list }) =>
+    list?.code.startsWith('[') === true ? [listOf(file, owner, list)] : [],
+  );
 }
 
 function listOf(file: SourceFile, owner: string, list: ListPart): DependencyList {

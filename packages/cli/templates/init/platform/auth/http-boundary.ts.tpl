@@ -40,7 +40,14 @@ interface Edge {
 export function httpBoundary({ authenticator, executionScope, errorMapper, clock, logger }: Edge): HttpBoundary {
 {{/if}}
 {{#if errors.sentry}}
-export function httpBoundary({ authenticator, executionScope, errorMapper, clock, logger, errors }: Edge): HttpBoundary {
+export function httpBoundary({
+  authenticator,
+  executionScope,
+  errorMapper,
+  clock,
+  logger,
+  errors,
+}: Edge): HttpBoundary {
   const report = reportHttpErrors(errors);
 
 {{/if}}
@@ -53,16 +60,31 @@ export function httpBoundary({ authenticator, executionScope, errorMapper, clock
     // The message of the error may quote data: only the code and the route are logged.
 {{#if errors.none}}
     onError: (_error, context) => {
-      if (context.problem.status < 500) return;
+      if (context.problem.status < 500) {
+        return;
+      }
 
-      logger.error('request failed', { requestId: context.requestId, correlationId: context.correlationId, operationId: context.operationId, errorCode: context.problem.code });
+      logger.error('request failed', {
+        requestId: context.requestId,
+        correlationId: context.correlationId,
+        operationId: context.operationId,
+        errorCode: context.problem.code,
+      });
     },
 {{/if}}
 {{#if errors.sentry}}
     onError: (error, context) => {
-      if (context.problem.status < 500) return;
+      if (context.problem.status < 500) {
+        return;
+      }
 
-      logger.error('request failed', { requestId: context.requestId, correlationId: context.correlationId, operationId: context.operationId, errorCode: context.problem.code });
+      logger.error('request failed', {
+        requestId: context.requestId,
+        correlationId: context.correlationId,
+        operationId: context.operationId,
+        errorCode: context.problem.code,
+      });
+
       report(error, context);
     },
 {{/if}}

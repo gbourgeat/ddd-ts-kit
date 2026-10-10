@@ -26,7 +26,15 @@ export function addTimeOffRoute(commands: CommandBus): Route {
     },
     async (input) => {
       const { startsAt, endsAt } = input.body;
-      const id = await commands.execute(new AddTimeOffCommand(actorOf(input.context.principal), input.params.calendarId, new Date(startsAt), new Date(endsAt)));
+
+      const id = await commands.execute(
+        new AddTimeOffCommand(
+          actorOf(input.context.principal),
+          input.params.calendarId,
+          new Date(startsAt),
+          new Date(endsAt),
+        ),
+      );
 
       return { status: 201, body: { id } };
     },

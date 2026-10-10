@@ -19,12 +19,25 @@ export function parseCriteriaQuery<Row>(
   const { defaultPageSize, maxPageSize } = definition.limits;
   const issues: ValidationIssue[] = [];
   const filters = parseFilters(filterEntries(query), { definition, issues });
-  const page = parsePageQuery(query, { ...options, sortable: sortableFields(definition), defaultSize: defaultPageSize, maxSize: maxPageSize });
 
-  if (!page.ok) return err([...issues, ...page.error]);
+  const page = parsePageQuery(query, {
+    ...options,
+    sortable: sortableFields(definition),
+    defaultSize: defaultPageSize,
+    maxSize: maxPageSize,
+  });
+
+  if (!page.ok) {
+    return err([...issues, ...page.error]);
+  }
 
   const criteria = Criteria.from<Row>({ filters, page: page.value });
-  const refused = validateCriteria(definition, criteria).map(({ path, code, message }) => ({ path: PARAMETERS[path] ?? path, code, message }));
+
+  const refused = validateCriteria(definition, criteria).map(({ path, code, message }) => ({
+    path: PARAMETERS[path] ?? path,
+    code,
+    message,
+  }));
 
   return issues.length + refused.length > 0 ? err([...issues, ...refused]) : ok(criteria);
 }

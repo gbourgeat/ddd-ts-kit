@@ -12,8 +12,14 @@ const COMPARISONS = { eq: '=', ne: '<>', gt: '>', gte: '>=', lt: '<', lte: '<=' 
  * value is a binding and every column comes from the mapping of the adapter: nothing a caller
  * wrote is ever part of the statement.
  */
-export function predicateToKnex<Builder extends Knex.QueryBuilder>(builder: Builder, predicate: Predicate | undefined, columns: Columns): Builder {
-  if (predicate === undefined) return builder;
+export function predicateToKnex<Builder extends Knex.QueryBuilder>(
+  builder: Builder,
+  predicate: Predicate | undefined,
+  columns: Columns,
+): Builder {
+  if (predicate === undefined) {
+    return builder;
+  }
 
   void builder.where((group) => {
     held(group, predicate, columns);

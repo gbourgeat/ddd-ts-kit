@@ -17,14 +17,18 @@ export interface CheckOptions {
 }
 
 export function runCheck(project: Project, options: CheckOptions = {}): CheckResult {
-  const selected = (id: string): boolean => options.rules === undefined || options.rules.length === 0 || options.rules.includes(id);
+  const selected = (id: string): boolean =>
+    options.rules === undefined || options.rules.length === 0 || options.rules.includes(id);
+
   const suppressions = project.files.flatMap(findSuppressions);
   const active = RULES.filter((rule) => selected(rule.id) && project.severity(rule.id) !== 'off');
   const raw = active.flatMap((rule) => violationsOf(rule, project, options.fileScopeOnly === true));
   const kept = raw.filter((violation) => !isSuppressed(violation, suppressions));
   const suppressedCount = raw.length - kept.length;
 
-  if (selected(SUPPRESSION_RULE_ID)) kept.push(...suppressionViolations(project, suppressions));
+  if (selected(SUPPRESSION_RULE_ID)) {
+    kept.push(...suppressionViolations(project, suppressions));
+  }
 
   kept.sort((a, b) => a.file.localeCompare(b.file) || a.line - b.line || a.ruleId.localeCompare(b.ruleId));
 
@@ -32,7 +36,9 @@ export function runCheck(project: Project, options: CheckOptions = {}): CheckRes
 }
 
 function violationsOf(rule: Rule, project: Project, oneFileOnly: boolean): Violation[] {
-  if (!oneFileOnly) return [...rule.run(project), ...(rule.acrossProject?.(project) ?? [])];
+  if (!oneFileOnly) {
+    return [...rule.run(project), ...(rule.acrossProject?.(project) ?? [])];
+  }
 
   return rule.scope === 'project' ? [] : rule.run(project);
 }

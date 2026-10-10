@@ -31,7 +31,13 @@ export class GrantDelegationHandler implements CommandHandler<GrantDelegationCom
       throw new DelegationAlreadyActiveError(active.id);
     }
 
-    const terms = { desk, assistantId, availabilityIncluded: command.terms.availabilityIncluded, endsAt: command.terms.endsAt };
+    const terms = {
+      desk,
+      assistantId,
+      availabilityIncluded: command.terms.availabilityIncluded,
+      endsAt: command.terms.endsAt,
+    };
+
     const target = Delegation.create(this.ids.next(), terms, this.clock.now());
 
     await this.delegationRepository.save(target);

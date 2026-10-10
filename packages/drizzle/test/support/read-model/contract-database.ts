@@ -28,7 +28,9 @@ export async function createContractDatabase(tables: readonly PgTable[]): Promis
   const logger = new RecordingLogger();
   const database = serverUrl === undefined || serverUrl === '' ? inProcess(logger) : await onServer(serverUrl, logger);
 
-  for (const statement of tables.flatMap(createTableSql)) await database.db.execute(sql.raw(statement));
+  for (const statement of tables.flatMap(createTableSql)) {
+    await database.db.execute(sql.raw(statement));
+  }
 
   return database;
 }
@@ -36,7 +38,12 @@ export async function createContractDatabase(tables: readonly PgTable[]): Promis
 function inProcess(logger: RecordingLogger): ContractDatabase {
   const client = new PGlite();
 
-  return { db: drizzleOverPglite(client, { logger }) as unknown as ContractDb, real: false, logger, close: () => client.close() };
+  return {
+    db: drizzleOverPglite(client, { logger }) as unknown as ContractDb,
+    real: false,
+    logger,
+    close: () => client.close(),
+  };
 }
 
 async function onServer(serverUrl: string, logger: RecordingLogger): Promise<ContractDatabase> {

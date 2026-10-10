@@ -16,11 +16,23 @@ export interface CommentLine {
 }
 
 export function commentLines(sourceCode: Readonly<TSESLint.SourceCode>): CommentLine[] {
-  return sourceCode.getAllComments().flatMap((comment) => (comment.type === AST_TOKEN_TYPES.Line ? [lineOf(sourceCode, comment)] : blockLines(sourceCode, comment)));
+  return sourceCode
+    .getAllComments()
+    .flatMap((comment) =>
+      comment.type === AST_TOKEN_TYPES.Line ? [lineOf(sourceCode, comment)] : blockLines(sourceCode, comment),
+    );
 }
 
 function lineOf(sourceCode: Readonly<TSESLint.SourceCode>, comment: TSESTree.Comment): CommentLine {
-  return { text: comment.value.trim(), loc: comment.loc, comment, block: false, jsdoc: false, trailing: sharesLineWithCode(sourceCode, comment), sample: false };
+  return {
+    text: comment.value.trim(),
+    loc: comment.loc,
+    comment,
+    block: false,
+    jsdoc: false,
+    trailing: sharesLineWithCode(sourceCode, comment),
+    sample: false,
+  };
 }
 
 function blockLines(sourceCode: Readonly<TSESLint.SourceCode>, comment: TSESTree.Comment): CommentLine[] {
@@ -32,10 +44,21 @@ function blockLines(sourceCode: Readonly<TSESLint.SourceCode>, comment: TSESTree
     const text = raw.replace(/^\s*\*+ ?/, '').trim();
     const fence = text.startsWith('```');
 
-    if (fence) fenced = !fenced;
-    else if (text.startsWith('@')) inExample = text.startsWith('@example');
+    if (fence) {
+      fenced = !fenced;
+    } else if (text.startsWith('@')) {
+      inExample = text.startsWith('@example');
+    }
 
-    return { text, loc: lineLocation(sourceCode, comment.loc.start.line + index), comment, block: true, jsdoc, trailing: false, sample: inExample || fenced || fence };
+    return {
+      text,
+      loc: lineLocation(sourceCode, comment.loc.start.line + index),
+      comment,
+      block: true,
+      jsdoc,
+      trailing: false,
+      sample: inExample || fenced || fence,
+    };
   });
 }
 

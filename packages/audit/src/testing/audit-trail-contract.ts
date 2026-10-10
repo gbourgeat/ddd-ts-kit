@@ -1,9 +1,22 @@
-import { cursorPage, offsetPage, type AuditEntry, type AuditFilter, type AuditRecord, type AuditSortField, type Sort } from '@ddd-ts-kit/kernel';
+import {
+  cursorPage,
+  offsetPage,
+  type AuditEntry,
+  type AuditFilter,
+  type AuditRecord,
+  type AuditSortField,
+  type Sort,
+} from '@ddd-ts-kit/kernel';
 import { ContractSuite, type Awaitable, type ContractRunner } from '@ddd-ts-kit/testing/contracts';
 import { GENESIS_HASH } from '../chain/genesis-hash.js';
 import { hashOf } from '../chain/hash-of.js';
 import { verifyChain } from '../verify/verify-chain.js';
 import type { AuditTrailUnderContract } from './audit-trail-under-contract.js';
+import { aRecord } from './records/a-record.js';
+import { fullRecord } from './records/full-record.js';
+import { inTenant } from './records/in-tenant.js';
+import { JOURNAL } from './records/journal.js';
+import { later } from './records/later.js';
 
 export interface AuditTrailContractOptions {
   readonly name: string;
@@ -21,7 +34,6 @@ export function auditTrailContract(runner: ContractRunner, options: AuditTrailCo
   new AuditTrailSuite(runner, options).describe(`${options.name} (audit trail contract)`);
 }
 
-const NOW = new Date('2026-03-01T10:00:00.000Z');
 const ALPHA = 'tenant:alpha';
 const BY_SEQUENCE: readonly Sort<AuditSortField>[] = [{ field: 'sequence', direction: 'asc' }];
 
@@ -55,7 +67,14 @@ class AuditTrailSuite extends ContractSuite<AuditTrailUnderContract> {
 
       const [entry] = await this.all();
 
-      this.expect(entry).toEqual({ ...record, chain: ALPHA, sequence: 1, previousHash: GENESIS_HASH, hash: entry?.hash });
+      this.expect(entry).toEqual({
+        ...record,
+        chain: ALPHA,
+        sequence: 1,
+        previousHash: GENESIS_HASH,
+        hash: entry?.hash,
+      });
+
       this.expect(entry === undefined ? undefined : hashOf(entry)).toBe(entry?.hash);
     });
 
@@ -64,13 +83,26 @@ class AuditTrailSuite extends ContractSuite<AuditTrailUnderContract> {
 
       const [entry] = await this.all();
 
-      this.expect(entry).toEqual({ ...aRecord('entry-1'), extensions: {}, chain: 'global', sequence: 1, previousHash: GENESIS_HASH, hash: entry?.hash });
+      this.expect(entry).toEqual({
+        ...aRecord('entry-1'),
+        extensions: {},
+        chain: 'global',
+        sequence: 1,
+        previousHash: GENESIS_HASH,
+        hash: entry?.hash,
+      });
     });
   }
 
   private numbersEachChain(): void {
     this.it('numbers the entries of each chain from 1, without a gap', async () => {
-      await this.recordAll([inTenant('a-1', 'alpha'), inTenant('b-1', 'beta'), inTenant('a-2', 'alpha'), aRecord('g-1'), inTenant('a-3', 'alpha')]);
+      await this.recordAll([
+        inTenant('a-1', 'alpha'),
+        inTenant('b-1', 'beta'),
+        inTenant('a-2', 'alpha'),
+        aRecord('g-1'),
+        inTenant('a-3', 'alpha'),
+      ]);
 
       this.expect(await this.sequencesOf(ALPHA)).toEqual([1, 2, 3]);
       this.expect(await this.sequencesOf('tenant:beta')).toEqual([1]);
@@ -84,7 +116,12 @@ class AuditTrailSuite extends ContractSuite<AuditTrailUnderContract> {
 
       const entries = await this.entriesOf(ALPHA);
 
-      this.expect(entries.map((entry) => entry.previousHash)).toEqual([GENESIS_HASH, entries[0]?.hash, entries[1]?.hash]);
+      this.expect(entries.map((entry) => entry.previousHash)).toEqual([
+        GENESIS_HASH,
+        entries[0]?.hash,
+        entries[1]?.hash,
+      ]);
+
       this.expect(await verifyChain(this.subject, { chain: ALPHA })).toEqual({ valid: true, checked: 3 });
       this.expect(await verifyChain(entries)).toEqual({ valid: true, checked: 3 });
     });
@@ -92,10 +129,18 @@ class AuditTrailSuite extends ContractSuite<AuditTrailUnderContract> {
     this.it('verifies a range of a chain read page by page', async () => {
       await this.recordAll(Array.from({ length: 7 }, (_, index) => inTenant(`a-${index}`, 'alpha')));
 
-      this.expect(await verifyChain(this.subject, { chain: ALPHA, from: 3, to: 6 })).toEqual({ valid: true, checked: 4 });
+      this.expect(await verifyChain(this.subject, { chain: ALPHA, from: 3, to: 6 })).toEqual({
+        valid: true,
+        checked: 4,
+      });
+
       const beyond = await verifyChain(this.subject, { chain: ALPHA, to: 9 });
 
-      this.expect(beyond).toEqual({ valid: false, checked: 7, break: { kind: 'missing-entry', chain: ALPHA, position: 7, sequence: 8 } });
+      this.expect(beyond).toEqual({
+        valid: false,
+        checked: 7,
+        break: { kind: 'missing-entry', chain: ALPHA, position: 7, sequence: 8 },
+      });
     });
   }
 
@@ -104,7 +149,9 @@ class AuditTrailSuite extends ContractSuite<AuditTrailUnderContract> {
       await this.recordAll([inTenant('a-1', 'alpha'), inTenant('a-2', 'alpha'), inTenant('a-3', 'alpha')]);
       const entries = await this.entriesOf(ALPHA);
 
-      const altered: AuditEntry[] = entries.map((entry) => (entry.sequence === 2 ? { ...entry, outcome: 'failed' } : entry));
+      const altered: AuditEntry[] = entries.map((entry) =>
+        entry.sequence === 2 ? { ...entry, outcome: 'failed' } : entry,
+      );
 
       const altering = { kind: 'altered-content', chain: ALPHA, position: 1, sequence: 2, entryId: 'a-2' };
 
@@ -113,19 +160,27 @@ class AuditTrailSuite extends ContractSuite<AuditTrailUnderContract> {
 
     const { tamper } = this.options;
 
-    if (tamper === undefined) return;
+    if (tamper === undefined) {
+      return;
+    }
 
     this.it('shows an entry rewritten in the storage itself', async () => {
       await this.recordAll([inTenant('a-1', 'alpha'), inTenant('a-2', 'alpha'), inTenant('a-3', 'alpha')]);
       const [, second] = await this.entriesOf(ALPHA);
 
-      if (second === undefined) throw new Error('The second entry of the chain was not listed');
+      if (second === undefined) {
+        throw new Error('The second entry of the chain was not listed');
+      }
 
       await tamper(second, 'contract.thing.forged');
 
       const altering = { kind: 'altered-content', chain: ALPHA, position: 1, sequence: 2, entryId: 'a-2' };
 
-      this.expect(await verifyChain(this.subject, { chain: ALPHA })).toEqual({ valid: false, checked: 1, break: altering });
+      this.expect(await verifyChain(this.subject, { chain: ALPHA })).toEqual({
+        valid: false,
+        checked: 1,
+        break: altering,
+      });
     });
   }
 
@@ -201,7 +256,9 @@ class AuditTrailSuite extends ContractSuite<AuditTrailUnderContract> {
   }
 
   private async recordAll(records: readonly AuditRecord[]): Promise<void> {
-    for (const record of records) await this.subject.record(record);
+    for (const record of records) {
+      await this.subject.record(record);
+    }
   }
 
   private async all(): Promise<readonly AuditEntry[]> {
@@ -221,7 +278,10 @@ class AuditTrailSuite extends ContractSuite<AuditTrailUnderContract> {
     let cursor: string | undefined;
 
     do {
-      const page = await this.subject.list({}, cursorPage({ limit: 3, sort, ...(cursor === undefined ? {} : { cursor }) }));
+      const page = await this.subject.list(
+        {},
+        cursorPage({ limit: 3, sort, ...(cursor === undefined ? {} : { cursor }) }),
+      );
 
       ids.push(...page.items.map((entry) => entry.id));
       cursor = page.nextCursor;
@@ -230,68 +290,3 @@ class AuditTrailSuite extends ContractSuite<AuditTrailUnderContract> {
     return ids;
   }
 }
-
-function later(seconds: number): Date {
-  return new Date(NOW.getTime() + seconds * 1000);
-}
-
-function aRecord(id: string): AuditRecord {
-  return {
-    id,
-    occurredAt: NOW,
-    category: 'command',
-    action: 'ContractThingCommand',
-    outcome: 'succeeded',
-    actor: { id: 'ada', type: 'user' },
-    correlationId: 'correlation-1',
-    origin: 'http',
-  };
-}
-
-function inTenant(id: string, tenantId: string): AuditRecord {
-  return { ...aRecord(id), actor: { id: 'ada', type: 'user', tenantId }, tenantId };
-}
-
-function fullRecord(id: string): AuditRecord {
-  return {
-    ...inTenant(id, 'alpha'),
-    outcome: 'failed',
-    reason: 'APPOINTMENT_ALREADY_CANCELLED',
-    impersonatedBy: 'support-7',
-    sessionId: 'session-1',
-    resource: { type: 'appointment', id: 'apt-1' },
-    context: 'scheduling',
-    causationId: 'request-1',
-    changes: { status: 'cancelled', seats: 2, urgent: false, note: null, email: { masked: 'k1:9f2c' } },
-    extensions: {},
-  };
-}
-
-const JOURNAL: readonly AuditRecord[] = [
-  { ...inTenant('e-1', 'alpha'), occurredAt: later(0), resource: { type: 'appointment', id: 'apt-1' } },
-  {
-    ...inTenant('e-2', 'alpha'),
-    occurredAt: later(1),
-    actor: { id: 'grace', type: 'user', tenantId: 'alpha' },
-    category: 'authorization',
-    action: 'scheduling:appointment.read',
-    outcome: 'allowed',
-  },
-  {
-    ...inTenant('e-3', 'alpha'),
-    occurredAt: later(2),
-    category: 'authorization',
-    action: 'scheduling:appointment.cancel',
-    outcome: 'denied',
-    reason: 'NO_MATCHING_ROLE',
-    resource: { type: 'appointment', id: 'apt-2' },
-    correlationId: 'correlation-2',
-  },
-  {
-    ...inTenant('e-4', 'beta'),
-    occurredAt: later(3),
-    actor: { id: 'grace', type: 'user', tenantId: 'beta' },
-    resource: { type: 'appointment', id: 'apt-1' },
-    correlationId: 'correlation-2',
-  },
-];

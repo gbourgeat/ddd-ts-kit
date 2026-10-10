@@ -40,12 +40,16 @@ export function classFinder(file: LintedFile, program: TSESTree.Program, parser:
   return (name) => {
     const local = classNamed(program, name);
 
-    if (local !== undefined) return { program, node: local };
+    if (local !== undefined) {
+      return { program, node: local };
+    }
 
     const origin = importOrigin(program, name);
     const target = origin === undefined ? undefined : resolveImport(file.config, file.path, origin.specifier);
 
-    if (origin === undefined || target?.kind !== 'file' || parser === undefined) return undefined;
+    if (origin === undefined || target?.kind !== 'file' || parser === undefined) {
+      return undefined;
+    }
 
     const foreign = readProgram(path.resolve(file.root, target.path), parser);
     const node = foreign === undefined ? undefined : classNamed(foreign, origin.exported);
@@ -60,13 +64,20 @@ function classNamed(program: TSESTree.Program, name: string): TSESTree.ClassDecl
 
 function importOrigin(program: TSESTree.Program, local: string): Origin | undefined {
   for (const statement of program.body) {
-    if (statement.type !== AST_NODE_TYPES.ImportDeclaration) continue;
+    if (statement.type !== AST_NODE_TYPES.ImportDeclaration) {
+      continue;
+    }
 
-    const specifier = statement.specifiers.find((candidate) => candidate.type === AST_NODE_TYPES.ImportSpecifier && candidate.local.name === local);
+    const specifier = statement.specifiers.find(
+      (candidate) => candidate.type === AST_NODE_TYPES.ImportSpecifier && candidate.local.name === local,
+    );
 
-    if (specifier?.type !== AST_NODE_TYPES.ImportSpecifier) continue;
+    if (specifier?.type !== AST_NODE_TYPES.ImportSpecifier) {
+      continue;
+    }
 
-    const exported = specifier.imported.type === AST_NODE_TYPES.Identifier ? specifier.imported.name : specifier.imported.value;
+    const exported =
+      specifier.imported.type === AST_NODE_TYPES.Identifier ? specifier.imported.name : specifier.imported.value;
 
     return { specifier: statement.source.value, exported };
   }
@@ -78,11 +89,15 @@ function importOrigin(program: TSESTree.Program, local: string): Origin | undefi
 function readProgram(absolute: string, parser: Parser): TSESTree.Program | undefined {
   const modifiedAt = fs.statSync(absolute, { throwIfNoEntry: false })?.mtimeMs;
 
-  if (modifiedAt === undefined) return undefined;
+  if (modifiedAt === undefined) {
+    return undefined;
+  }
 
   const known = sources.get(absolute);
 
-  if (known?.modifiedAt === modifiedAt) return known.program;
+  if (known?.modifiedAt === modifiedAt) {
+    return known.program;
+  }
 
   const program = parseFile(absolute, parser);
 
@@ -95,7 +110,9 @@ function parseFile(absolute: string, parser: Parser): TSESTree.Program | undefin
   try {
     const text = fs.readFileSync(absolute, 'utf8');
     const options = { ...PARSER_OPTIONS, filePath: absolute };
-    const parsed: unknown = 'parseForESLint' in parser ? parser.parseForESLint(text, options).ast : parser.parse(text, options);
+
+    const parsed: unknown =
+      'parseForESLint' in parser ? parser.parseForESLint(text, options).ast : parser.parse(text, options);
 
     return isProgram(parsed) ? parsed : undefined;
   } catch {

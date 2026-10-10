@@ -71,7 +71,8 @@ function noting(journal: string[]): Instrumentation {
 
 const jobs = defineContextModule({
   name: 'housekeeping',
-  register: (builder) => void builder.job('housekeeping.sweep', { every: '1h' }).handledByFactory(() => ({ run: async () => undefined })),
+  register: (builder) =>
+    void builder.job('housekeeping.sweep', { every: '1h' }).handledByFactory(() => ({ run: async () => undefined })),
 });
 
 describe('the instrumentation given to the kernel module', () => {
@@ -105,10 +106,13 @@ describe('the instrumentation given to the kernel module', () => {
 
     const refusing = defineContextModule({
       name: 'access',
-      register: (builder) => void builder.bind(UseCaseGuard).toValue({ check: async () => Promise.reject(new Error('refused')) }),
+      register: (builder) =>
+        void builder.bind(UseCaseGuard).toValue({ check: async () => Promise.reject(new Error('refused')) }),
     });
 
-    const app = createApplication({ modules: [kernelModule({ instrumentation: noting(journal) }), refusing, orderingModule] });
+    const app = createApplication({
+      modules: [kernelModule({ instrumentation: noting(journal) }), refusing, orderingModule],
+    });
 
     await expect(app.resolve(CommandBus).execute(new PlaceOrder('book'))).rejects.toThrow('refused');
     expect(journal.filter((line) => line.startsWith('command'))).toEqual([]);
@@ -116,8 +120,18 @@ describe('the instrumentation given to the kernel module', () => {
 
   it('wraps what each consumer is subscribed with, and is told the delivery', async () => {
     const journal: string[] = [];
-    const app = createApplication({ modules: [kernelModule({ instrumentation: noting(journal) }), orderingModule, billingModule] });
-    const event: IntegrationEvent = { id: 'evt-1', type: 'ordering.order.placed', version: 1, occurredAt: '2026-01-01T00:00:00.000Z', payload: { orderId: 'o1', sku: 'book' } };
+
+    const app = createApplication({
+      modules: [kernelModule({ instrumentation: noting(journal) }), orderingModule, billingModule],
+    });
+
+    const event: IntegrationEvent = {
+      id: 'evt-1',
+      type: 'ordering.order.placed',
+      version: 1,
+      occurredAt: '2026-01-01T00:00:00.000Z',
+      payload: { orderId: 'o1', sku: 'book' },
+    };
 
     await app.start();
     await app.resolve(IntegrationEventPublisher).publish([event]);
@@ -129,14 +143,28 @@ describe('the instrumentation given to the kernel module', () => {
   it('wraps the dispatcher, the error reporter, the jobs, and is told the execution scope', () => {
     const journal: string[] = [];
     const errorReporter = new InMemoryErrorReporter();
-    const app = createApplication({ modules: [kernelModule({ instrumentation: noting(journal), errorReporter }), jobs] });
+
+    const app = createApplication({
+      modules: [kernelModule({ instrumentation: noting(journal), errorReporter }), jobs],
+    });
 
     app.resolve(DomainEventDispatcher);
     app.resolve(ErrorReporter);
     app.resolve(ExecutionScope);
 
-    expect(app.resolve(JobScheduler).describe().map((job) => job.name)).toEqual(['housekeeping.sweep']);
-    expect(journal.filter((line) => !line.startsWith('binding'))).toEqual(['execution scope', 'job housekeeping.sweep of housekeeping', 'domain events', 'error reporter']);
+    expect(
+      app
+        .resolve(JobScheduler)
+        .describe()
+        .map((job) => job.name),
+    ).toEqual(['housekeeping.sweep']);
+
+    expect(journal.filter((line) => !line.startsWith('binding'))).toEqual([
+      'execution scope',
+      'job housekeeping.sweep of housekeeping',
+      'domain events',
+      'error reporter',
+    ]);
   });
 
   it('is nothing at all by default', async () => {

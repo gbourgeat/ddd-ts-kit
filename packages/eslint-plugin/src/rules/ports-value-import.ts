@@ -14,7 +14,8 @@ export const portsValueImport = defineRule<'typeImport'>({
   type: 'problem',
   recommended: 'error',
   fixable: 'code',
-  description: 'A port named in a dependency list or given to bind is imported as a value: the class is the injection token, and a type import erases it.',
+  description:
+    'A port named in a dependency list or given to bind is imported as a value: the class is the injection token, and a type import erases it.',
   messages: {
     typeImport:
       '{{name}} is used as an injection token but is imported with `import type`. Import it as a value (`import { {{name}} } from ..`): the abstract class is the token, and a type-only import leaves nothing to bind or to resolve when the file runs.',
@@ -26,7 +27,9 @@ export const portsValueImport = defineRule<'typeImport'>({
     const judge = (node: TSESTree.Node | undefined): void => {
       const binding = node?.type === AST_NODE_TYPES.Identifier ? imported.get(node.name) : undefined;
 
-      if (node?.type === AST_NODE_TYPES.Identifier && binding?.typeOnly === true) report({ node, messageId: 'typeImport', data: { name: node.name }, fix: asValueImport(sourceCode, binding) });
+      if (node?.type === AST_NODE_TYPES.Identifier && binding?.typeOnly === true) {
+        report({ node, messageId: 'typeImport', data: { name: node.name }, fix: asValueImport(sourceCode, binding) });
+      }
     };
 
     const lists = dependencyListListener(sourceCode.ast, judge);
@@ -36,7 +39,9 @@ export const portsValueImport = defineRule<'typeImport'>({
       CallExpression(node) {
         lists.CallExpression?.(node);
 
-        if (BINDERS.has(bindingCall(node) ?? '')) judge(node.arguments[0]);
+        if (BINDERS.has(bindingCall(node) ?? '')) {
+          judge(node.arguments[0]);
+        }
       },
     };
   },
@@ -45,12 +50,27 @@ export const portsValueImport = defineRule<'typeImport'>({
 /** `import { type X }` loses its keyword; `import type { X, Y }` becomes `import { X, type Y }`. */
 function asValueImport(sourceCode: Source, { declaration, specifier }: ImportedBinding): TSESLint.ReportFixFunction {
   return (fixer) => {
-    if (declaration.importKind !== 'type') return typeKeywordOf(sourceCode, specifier).map((keyword) => fixer.removeRange([keyword.range[0], specifier.local.range[0] > keyword.range[1] ? keyword.range[1] + 1 : keyword.range[1]]));
+    if (declaration.importKind !== 'type') {
+      return typeKeywordOf(sourceCode, specifier).map((keyword) =>
+        fixer.removeRange([
+          keyword.range[0],
+          specifier.local.range[0] > keyword.range[1] ? keyword.range[1] + 1 : keyword.range[1],
+        ]),
+      );
+    }
 
-    const others = declaration.specifiers.filter((other) => other !== specifier && other.type === AST_NODE_TYPES.ImportSpecifier);
+    const others = declaration.specifiers.filter(
+      (other) => other !== specifier && other.type === AST_NODE_TYPES.ImportSpecifier,
+    );
+
     const keyword = sourceCode.getFirstToken(declaration, { skip: 1 });
 
-    return keyword === null ? [] : [fixer.removeRange([keyword.range[0], keyword.range[1] + 1]), ...others.map((other) => fixer.insertTextBefore(other, 'type '))];
+    return keyword === null
+      ? []
+      : [
+          fixer.removeRange([keyword.range[0], keyword.range[1] + 1]),
+          ...others.map((other) => fixer.insertTextBefore(other, 'type ')),
+        ];
   };
 }
 

@@ -5,7 +5,14 @@ import { Offer } from '../../domain/value-objects/offer.vo.js';
 import { Slot } from '../../domain/value-objects/slot.vo.js';
 import { Waiter } from '../../domain/value-objects/waiter.vo.js';
 
-const waiter = unwrap(Waiter.create({ patientId: 'patient-1', appointmentTypeId: 'consultation', joinedAt: new Date('2026-03-01T08:00:00.000Z') }));
+const waiter = unwrap(
+  Waiter.create({
+    patientId: 'patient-1',
+    appointmentTypeId: 'consultation',
+    joinedAt: new Date('2026-03-01T08:00:00.000Z'),
+  }),
+);
+
 const slot = Slot.between(at('09:00'), at('09:30'), at('09:40'));
 
 describe('Offer', () => {
@@ -18,11 +25,18 @@ describe('Offer', () => {
 
   it('may wait until its slot starts, and no longer', () => {
     expect(Offer.create({ waiter, slot, expiresAt: at('09:00') }).ok).toBe(true);
-    expect(Offer.create({ waiter, slot, expiresAt: at('09:01') })).toMatchObject({ ok: false, error: expect.any(InvalidOfferError) });
+
+    expect(Offer.create({ waiter, slot, expiresAt: at('09:01') })).toMatchObject({
+      ok: false,
+      error: expect.any(InvalidOfferError),
+    });
   });
 
   it('refuses a hold that ends at no real instant', () => {
-    expect(Offer.create({ waiter, slot, expiresAt: new Date('never') })).toMatchObject({ ok: false, error: expect.any(InvalidOfferError) });
+    expect(Offer.create({ waiter, slot, expiresAt: new Date('never') })).toMatchObject({
+      ok: false,
+      error: expect.any(InvalidOfferError),
+    });
   });
 
   it('keeps who it is for, what it holds and until when it waits', () => {

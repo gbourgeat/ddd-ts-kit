@@ -4,7 +4,9 @@
  * the parameter asks for (a configuration class) is not one of them.
  */
 export type StandIns<Args extends readonly unknown[], List> = {
-  [Index in keyof List]: List[Index] extends new (...args: never) => infer Instance
+  [Index in keyof List]: List[Index] extends new (
+    ...args: never
+  ) => infer Instance
     ? Index extends keyof Args
       ? Args[Index] extends Instance
         ? never

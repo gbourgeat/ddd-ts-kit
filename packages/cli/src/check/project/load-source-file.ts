@@ -23,6 +23,12 @@ export function loadSourceFile(config: Config, file: string, text: string): Sour
     isTest: isTestFile(file, location),
     text,
     scan: scanned,
-    imports: scanned.imports.map(({ specifier, line, names, typeNames }) => ({ specifier, line, names, typeNames, target: resolveImport(config, file, specifier) })),
+    imports: scanned.imports.map(({ specifier, line, names, typeNames }) => ({
+      specifier,
+      line,
+      names,
+      typeNames,
+      target: resolveImport(config, file, specifier),
+    })),
   };
 }

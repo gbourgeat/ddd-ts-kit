@@ -6,9 +6,7 @@ export function assertDeclaredResponse(route: Route, { status, body }: RouteOutp
   const declared = route.responses[status];
 
   if (declared === undefined) {
-    throw new ResponseContractError(
-      `Route "${route.operationId}" answered ${status}, which it does not declare.`,
-    );
+    throw new ResponseContractError(`Route "${route.operationId}" answered ${status}, which it does not declare.`);
   }
 
   if (declared.body === undefined) {

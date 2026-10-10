@@ -22,14 +22,41 @@ ruleTester.run('clean-no-noise-comment', cleanNoNoiseComment, {
     { code: 'function run(): void {\n} // function run', errors: [{ messageId: 'closingBrace' }] },
     { code: '/**\n * @author Jane\n */\nconst total = 1;', errors: [{ messageId: 'journal' }] },
     { code: '// 2024-03-01 changed the rounding\nconst total = 1;', errors: [{ messageId: 'journal' }] },
-    { code: '/**\n * Adds the tax of the country.\n * @param amount\n * @returns\n */\nfunction addTax(amount: number): number { return amount; }', errors: [{ messageId: 'emptyTag', line: 3 }, { messageId: 'emptyTag', line: 4 }] },
+    {
+      code: '/**\n * Adds the tax of the country.\n * @param amount\n * @returns\n */\nfunction addTax(amount: number): number { return amount; }',
+      errors: [
+        { messageId: 'emptyTag', line: 3 },
+        { messageId: 'emptyTag', line: 4 },
+      ],
+    },
     { code: '// TODO fix this\nconst total = 1;', errors: [{ messageId: 'ownerlessTodo' }] },
-    { code: '/** The invoice repository. */\nexport class InvoiceRepository {}', errors: [{ messageId: 'restatesName', data: { name: 'InvoiceRepository', excerpt: 'The invoice repository.' } }] },
-    { code: 'class Invoice {\n  // the total\n  private readonly total = 0;\n}', errors: [{ messageId: 'restatesName', data: { name: 'total', excerpt: 'the total' } }] },
-    { code: 'class Invoice {\n  /** Gets the id. */\n  get id(): string { return ""; }\n}', errors: [{ messageId: 'restatesName', data: { name: 'id', excerpt: 'Gets the id.' } }] },
-    { code: 'class Invoice {\n  /**\n   * Issues the invoice.\n   */\n  issueInvoice(): void {}\n}', errors: [{ messageId: 'restatesName', data: { name: 'issueInvoice', excerpt: 'Issues the invoice.' } }] },
-    { code: '// creates\n// an invoice\nexport function createInvoice(): void {}', errors: [{ messageId: 'restatesName', line: 1 }] },
-    { code: 'class Invoice {\n  // the secret\n  #secret = 1;\n}', errors: [{ messageId: 'restatesName', data: { name: '#secret', excerpt: 'the secret' } }] },
-    { code: 'class Cache {\n  /** Gets the value. */\n  get(): void {}\n}', errors: [{ messageId: 'restatesName', data: { name: 'get', excerpt: 'Gets the value.' } }] },
+    {
+      code: '/** The invoice repository. */\nexport class InvoiceRepository {}',
+      errors: [{ messageId: 'restatesName', data: { name: 'InvoiceRepository', excerpt: 'The invoice repository.' } }],
+    },
+    {
+      code: 'class Invoice {\n  // the total\n  private readonly total = 0;\n}',
+      errors: [{ messageId: 'restatesName', data: { name: 'total', excerpt: 'the total' } }],
+    },
+    {
+      code: 'class Invoice {\n  /** Gets the id. */\n  get id(): string { return ""; }\n}',
+      errors: [{ messageId: 'restatesName', data: { name: 'id', excerpt: 'Gets the id.' } }],
+    },
+    {
+      code: 'class Invoice {\n  /**\n   * Issues the invoice.\n   */\n  issueInvoice(): void {}\n}',
+      errors: [{ messageId: 'restatesName', data: { name: 'issueInvoice', excerpt: 'Issues the invoice.' } }],
+    },
+    {
+      code: '// creates\n// an invoice\nexport function createInvoice(): void {}',
+      errors: [{ messageId: 'restatesName', line: 1 }],
+    },
+    {
+      code: 'class Invoice {\n  // the secret\n  #secret = 1;\n}',
+      errors: [{ messageId: 'restatesName', data: { name: '#secret', excerpt: 'the secret' } }],
+    },
+    {
+      code: 'class Cache {\n  /** Gets the value. */\n  get(): void {}\n}',
+      errors: [{ messageId: 'restatesName', data: { name: 'get', excerpt: 'Gets the value.' } }],
+    },
   ],
 });

@@ -32,7 +32,9 @@ export class TimeZone extends ValueObject<TimeZoneProps> {
   static isDay(day: string): boolean {
     const match = DAY_PATTERN.exec(day);
 
-    if (match === null) return false;
+    if (match === null) {
+      return false;
+    }
 
     const date = new Date(`${day}T00:00:00.000Z`);
 
@@ -89,8 +91,15 @@ export class TimeZone extends ValueObject<TimeZoneProps> {
       minute: '2-digit',
     });
 
-    const read = (type: Intl.DateTimeFormatPartTypes): string => format.formatToParts(instant).find((part) => part.type === type)?.value ?? '';
+    const read = (type: Intl.DateTimeFormatPartTypes): string =>
+      format.formatToParts(instant).find((part) => part.type === type)?.value ?? '';
 
-    return { year: read('year').padStart(4, '0'), month: read('month'), day: read('day'), hour: read('hour'), minute: read('minute') };
+    return {
+      year: read('year').padStart(4, '0'),
+      month: read('month'),
+      day: read('day'),
+      hour: read('hour'),
+      minute: read('minute'),
+    };
   }
 }

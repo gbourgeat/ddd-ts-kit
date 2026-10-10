@@ -155,10 +155,7 @@ function count(n: number): string {
 }
 
 function section(title: string, lines: readonly string[]): string[] {
-  return [
-    `${title}:`,
-    ...(lines.length === 0 ? ['  (none)'] : lines.map((line, index) => `  ${index + 1}. ${line}`)),
-  ];
+  return [`${title}:`, ...(lines.length === 0 ? ['  (none)'] : lines.map((line, index) => `  ${index + 1}. ${line}`))];
 }
 
 function describeMatcher(matcher: EventMatcher): string {

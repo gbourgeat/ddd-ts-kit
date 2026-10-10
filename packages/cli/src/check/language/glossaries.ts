@@ -19,7 +19,9 @@ export class Glossaries {
   of(context: string): Glossary {
     const known = this.read.get(context);
 
-    if (known !== undefined) return known;
+    if (known !== undefined) {
+      return known;
+    }
 
     const glossary = parseGlossary(this.text(context));
 
@@ -30,7 +32,9 @@ export class Glossaries {
 
   /** True the first time only: an empty glossary is one finding, not one per class. */
   reportsEmptyOnce(context: string): boolean {
-    if (this.reportedEmpty.has(context)) return false;
+    if (this.reportedEmpty.has(context)) {
+      return false;
+    }
 
     this.reportedEmpty.add(context);
 

@@ -1,6 +1,13 @@
 import { ForbiddenError } from '@ddd-ts-kit/auth';
 import { UseCaseGuard, type Resolve } from '@ddd-ts-kit/di';
-import { Command, ErrorReporter, NoopErrorReporter, UnitOfWork, executionContext, type Session } from '@ddd-ts-kit/kernel';
+import {
+  Command,
+  ErrorReporter,
+  NoopErrorReporter,
+  UnitOfWork,
+  executionContext,
+  type Session,
+} from '@ddd-ts-kit/kernel';
 import { anActor } from '@ddd-ts-kit/auth/testing';
 import { aSession } from '@ddd-ts-kit/testing';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
@@ -36,7 +43,10 @@ describe('The command bus, for a session that impersonates', () => {
       },
     });
 
-    return foundations.scope.run(executionContext({ correlationId, actor: session.actor, session, origin: 'http' }), () => bus.execute(new RenamePractice()));
+    return foundations.scope.run(
+      executionContext({ correlationId, actor: session.actor, session, origin: 'http' }),
+      () => bus.execute(new RenamePractice()),
+    );
   }
 
   it('refuses every command with a stable reason, and the trail names the impersonator', async () => {
@@ -48,7 +58,16 @@ describe('The command bus, for a session that impersonates', () => {
 
     const { items } = await foundations.audit.trail.list({ correlationId: 'impersonated' }, firstPage);
 
-    expect(items).toMatchObject([{ category: 'command', action: 'RenamePractice', outcome: 'failed', reason: 'FORBIDDEN', actor: { id: 'ada' }, impersonatedBy: 'support-7' }]);
+    expect(items).toMatchObject([
+      {
+        category: 'command',
+        action: 'RenamePractice',
+        outcome: 'failed',
+        reason: 'FORBIDDEN',
+        actor: { id: 'ada' },
+        impersonatedBy: 'support-7',
+      },
+    ]);
   });
 
   it('lets the command of an ordinary session through', async () => {

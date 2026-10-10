@@ -14,7 +14,9 @@ export function assemble(wiring: Wiring, options: ApplicationOptions): Applicati
 
   assertSound(wiring, overridden);
 
-  if (options.authorization === 'required') assertAuthorizationDeclared(wiring, overridden);
+  if (options.authorization === 'required') {
+    assertAuthorizationDeclared(wiring, overridden);
+  }
 
   return new ContainerApplication(wiring, options, effectiveJobs(wiring, options.jobs));
 }

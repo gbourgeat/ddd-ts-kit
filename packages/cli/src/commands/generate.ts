@@ -27,7 +27,9 @@ export const generateCommand: Command = (argv, io) => {
   kind.run({ ws, config, args: rest, flags: flagsOf(args) });
   refreshDocs(ws);
 
-  if (args.flag('local-only')) refuseSharedWrites(ws, config, kind.positionals[0] === 'context' ? toName(rest[0] ?? '').kebab : undefined);
+  if (args.flag('local-only')) {
+    refuseSharedWrites(ws, config, kind.positionals[0] === 'context' ? toName(rest[0] ?? '').kebab : undefined);
+  }
 
   printReport(io, args, ws.commit(args.flag('dry-run')));
 
@@ -78,26 +80,39 @@ function optionsOf(kind: Kind | undefined): Record<string, typeof TEXT | typeof 
 function refreshDocs(ws: Workspace): void {
   const config = ws.read(CONFIG_FILE);
 
-  if (config === undefined) return;
+  if (config === undefined) {
+    return;
+  }
 
   const current = parseConfig(JSON.parse(config));
 
   refreshBarrels(ws, current);
 
-  if (ws.exists(CONTEXT_MAP)) writeDocs(ws, current);
+  if (ws.exists(CONTEXT_MAP)) {
+    writeDocs(ws, current);
+  }
+
   // The import graph rules are derived from the config: a new context or upstream changes them.
-  if (ws.exists(DEPCRUISE_FILE)) ws.update(DEPCRUISE_FILE, renderCruiseFile(current));
+  if (ws.exists(DEPCRUISE_FILE)) {
+    ws.update(DEPCRUISE_FILE, renderCruiseFile(current));
+  }
 }
 
 function requestedKind(name: string | undefined, rest: readonly string[]): Kind {
   const kind = name === undefined ? undefined : findKind(name);
 
   if (kind === undefined) {
-    throw new CliError(name === undefined ? 'generate needs a kind.' : `Unknown kind "${name}".`, `Use one of: ${KINDS.map((candidate) => candidate.name).join(', ')}.`);
+    throw new CliError(
+      name === undefined ? 'generate needs a kind.' : `Unknown kind "${name}".`,
+      `Use one of: ${KINDS.map((candidate) => candidate.name).join(', ')}.`,
+    );
   }
 
   if (rest.length !== kind.positionals.length) {
-    throw new CliError(`${kind.name} expects ${kind.positionals.length} argument(s): ${kind.positionals.join(', ')}.`, `Usage: ddd-ts-kit generate ${kind.usage}`);
+    throw new CliError(
+      `${kind.name} expects ${kind.positionals.length} argument(s): ${kind.positionals.join(', ')}.`,
+      `Usage: ddd-ts-kit generate ${kind.usage}`,
+    );
   }
 
   return kind;
@@ -108,11 +123,34 @@ function flagsOf(args: Arguments): KindFlags {
   const commandName = args.text('command');
 
   return {
-    ...args.texts(['classification', 'purpose', 'code', 'aggregate', 'method', 'path', 'version', 'permission', 'deviation', 'reason', 'kind', 'every', 'cron', 'phase']),
+    ...args.texts([
+      'classification',
+      'purpose',
+      'code',
+      'aggregate',
+      'method',
+      'path',
+      'version',
+      'permission',
+      'deviation',
+      'reason',
+      'kind',
+      'every',
+      'cron',
+      'phase',
+    ]),
     ...(timeZone === undefined ? {} : { timeZone }),
     ...(commandName === undefined ? {} : { commandName }),
     upstream: args.many('upstream'),
     term: args.many('term'),
+    ...switchesOf(args),
+  };
+}
+
+type Switch = 'command' | 'query' | 'allowName' | 'public' | 'tenantScoped' | 'list' | 'decorators';
+
+function switchesOf(args: Arguments): Pick<KindFlags, Switch> {
+  return {
     command: args.flag('command'),
     query: args.flag('query'),
     allowName: args.flag('allow-name'),

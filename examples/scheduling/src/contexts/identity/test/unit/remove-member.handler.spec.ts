@@ -18,7 +18,10 @@ import { FakeIdentityRelationships } from '../fakes/identity-relationships.fake.
 import { FakePersonRepository } from '../fakes/person.repository.fake.js';
 import { FakePracticeRepository } from '../fakes/practice.repository.fake.js';
 
-const holders = authorizationModule({ authorizer: new RoleBasedAuthorizer({ roles: { holder: [identityPermissions['member.remove']] } }) });
+const holders = authorizationModule({
+  authorizer: new RoleBasedAuthorizer({ roles: { holder: [identityPermissions['member.remove']] } }),
+});
+
 const holder = anActor().withRole('holder').build();
 
 describe('Remove member', () => {
@@ -34,7 +37,9 @@ describe('Remove member', () => {
   it('is refused to an actor who does not hold the permission member.remove', async () => {
     const { application } = arrange();
 
-    await expect(application.commandBus.execute(new RemoveMemberCommand(anActor().build(), 'practice-7', 'person-grace'))).rejects.toMatchObject({
+    await expect(
+      application.commandBus.execute(new RemoveMemberCommand(anActor().build(), 'practice-7', 'person-grace')),
+    ).rejects.toMatchObject({
       code: 'FORBIDDEN',
     });
   });
@@ -48,7 +53,10 @@ describe('Remove member', () => {
     expect(relationships.current).not.toContain('assistant person-linus of practice-7');
 
     expect(application.eventBus.published.slice(before)).toMatchObject([
-      { type: 'identity.practice.member-removed', payload: { practiceId: 'practice-7', personId: 'person-linus', role: 'assistant' } },
+      {
+        type: 'identity.practice.member-removed',
+        payload: { practiceId: 'practice-7', personId: 'person-linus', role: 'assistant' },
+      },
     ]);
   });
 
@@ -58,7 +66,10 @@ describe('Remove member', () => {
   ])('revokes a delegation when %s is removed, with the cause member-removed', async (_who, personId) => {
     const { application, delegationRepository, relationships } = await arrangeWithPractice();
 
-    await delegationRepository.save(aDelegation().identifiedBy('delegation-1').onDesk('practice-7', 'person-grace').givenTo('person-linus').build());
+    await delegationRepository.save(
+      aDelegation().identifiedBy('delegation-1').onDesk('practice-7', 'person-grace').givenTo('person-linus').build(),
+    );
+
     const before = application.eventBus.published.length;
 
     await application.commandBus.execute(new RemoveMemberCommand(holder, 'practice-7', personId));
@@ -75,7 +86,9 @@ describe('Remove member', () => {
   it('leaves alone the delegations of the same people in another practice', async () => {
     const { application, delegationRepository } = await arrangeWithPractice();
 
-    await delegationRepository.save(aDelegation().identifiedBy('delegation-2').onDesk('practice-8', 'person-grace').givenTo('person-linus').build());
+    await delegationRepository.save(
+      aDelegation().identifiedBy('delegation-2').onDesk('practice-8', 'person-grace').givenTo('person-linus').build(),
+    );
 
     await application.commandBus.execute(new RemoveMemberCommand(holder, 'practice-7', 'person-grace'));
 
@@ -83,14 +96,26 @@ describe('Remove member', () => {
   });
 
   it.each([
-    { whom: 'the last manager of the practice', practiceId: 'practice-7', personId: 'person-ada', code: 'LAST_MANAGER' },
+    {
+      whom: 'the last manager of the practice',
+      practiceId: 'practice-7',
+      personId: 'person-ada',
+      code: 'LAST_MANAGER',
+    },
     { whom: 'someone who is not a member', practiceId: 'practice-7', personId: 'stranger', code: 'NOT_A_MEMBER' },
-    { whom: 'a member of a practice that does not exist', practiceId: 'practice-9', personId: 'person-grace', code: 'PRACTICE_NOT_FOUND' },
+    {
+      whom: 'a member of a practice that does not exist',
+      practiceId: 'practice-9',
+      personId: 'person-grace',
+      code: 'PRACTICE_NOT_FOUND',
+    },
   ])('refuses to remove $whom, and saves and publishes nothing', async ({ practiceId, personId, code }) => {
     const { application, practiceRepository } = await arrangeWithPractice();
     const before = application.eventBus.published.length;
 
-    await expect(application.commandBus.execute(new RemoveMemberCommand(holder, practiceId, personId))).rejects.toMatchObject({ code });
+    await expect(
+      application.commandBus.execute(new RemoveMemberCommand(holder, practiceId, personId)),
+    ).rejects.toMatchObject({ code });
 
     expect((await practiceRepository.findById('practice-7'))?.members).toHaveLength(3);
     expect(application.eventBus.published).toHaveLength(before);
@@ -99,7 +124,12 @@ describe('Remove member', () => {
 
 async function arrangeWithPractice() {
   const arranged = arrange();
-  const practice = aPractice().identifiedBy('practice-7').managedBy('person-ada').withPractitioner('person-grace').withAssistant('person-linus');
+
+  const practice = aPractice()
+    .identifiedBy('practice-7')
+    .managedBy('person-ada')
+    .withPractitioner('person-grace')
+    .withAssistant('person-linus');
 
   await arranged.practiceRepository.save(practice.build());
 

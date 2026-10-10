@@ -10,7 +10,9 @@ export class StagingUnitOfWork implements UnitOfWork {
     try {
       const result = await work();
 
-      for (const apply of this.staged) await apply();
+      for (const apply of this.staged) {
+        await apply();
+      }
 
       return result;
     } finally {
@@ -19,7 +21,9 @@ export class StagingUnitOfWork implements UnitOfWork {
   }
 
   enlist(apply: () => Promise<void>): void {
-    if (this.staged === undefined) throw new Error('Written outside of a unit of work');
+    if (this.staged === undefined) {
+      throw new Error('Written outside of a unit of work');
+    }
 
     this.staged.push(apply);
   }

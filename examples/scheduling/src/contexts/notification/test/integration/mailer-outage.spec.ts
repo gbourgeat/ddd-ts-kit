@@ -18,13 +18,29 @@ import { NotificationRepository } from '../../domain/repositories/notification.r
 import { ReminderRepository } from '../../domain/repositories/reminder.repository.js';
 import { FakeMailer } from '../fakes/mailer.fake.js';
 
-const authorization = authorizationModule({ authorizer: new RoleBasedAuthorizer({ roles: { system: Object.values(notificationPermissions) }, systemRole: 'system' }) });
+const authorization = authorizationModule({
+  authorizer: new RoleBasedAuthorizer({
+    roles: { system: Object.values(notificationPermissions) },
+    systemRole: 'system',
+  }),
+});
+
 const operator = systemActor('notification.spec');
 const NOW = new Date('2026-01-09T09:00:00.000Z');
 const startsAt = '2026-01-10T09:00:00.000Z';
 
 const booked = appointmentBookedV1.create(
-  { appointmentId: 'appointment-1', calendarId: 'calendar-1', practiceId: 'practice-1', practitionerId: 'practitioner-1', patientId: 'patient-1', startsAt, endsAt: '2026-01-10T09:30:00.000Z', day: '2026-01-10', status: 'booked' },
+  {
+    appointmentId: 'appointment-1',
+    calendarId: 'calendar-1',
+    practiceId: 'practice-1',
+    practitionerId: 'practitioner-1',
+    patientId: 'patient-1',
+    startsAt,
+    endsAt: '2026-01-10T09:30:00.000Z',
+    day: '2026-01-10',
+    status: 'booked',
+  },
   { id: 'event-booked', occurredAt: new Date('2026-01-02T08:00:00.000Z') },
 );
 
@@ -63,7 +79,11 @@ describe('When the mailer fails on every attempt', () => {
 
     expect(mailer.attempts).toBe(3);
     expect(await database.persistence.outbox.stats()).toMatchObject({ dead: 1 });
-    expect(application.errors.reports.filter((reported) => reported.report.origin === 'event')).toMatchObject([{ report: { operation: 'scheduling.appointment.booked', correlationId: 'event-booked', severity: 'error' } }]);
+
+    expect(application.errors.reports.filter((reported) => reported.report.origin === 'event')).toMatchObject([
+      { report: { operation: 'scheduling.appointment.booked', correlationId: 'event-booked', severity: 'error' } },
+    ]);
+
     expect(await application.get(NotificationRepository).findByCause('event-booked', 'patient-1')).toBeUndefined();
     expect(await application.get(ReminderRepository).findByAppointment('appointment-1')).toBeUndefined();
   });
@@ -77,7 +97,10 @@ describe('When the mailer fails on every attempt', () => {
     application.clock.advance(60 * 60 * 1000);
     await relay.tick();
 
-    expect(mailer.delivered).toEqual([{ address: 'ada@example.test', recipientId: 'patient-1', kind: 'confirmation', appointmentId: 'appointment-1' }]);
+    expect(mailer.delivered).toEqual([
+      { address: 'ada@example.test', recipientId: 'patient-1', kind: 'confirmation', appointmentId: 'appointment-1' },
+    ]);
+
     expect(await database.persistence.outbox.stats()).toMatchObject({ dead: 0 });
     expect(application.errors.reports.filter((reported) => reported.report.origin === 'event')).toEqual([]);
     expect((await application.get(ReminderRepository).findByAppointment('appointment-1'))?.status).toBe('planned');
@@ -86,16 +109,30 @@ describe('When the mailer fails on every attempt', () => {
   it('leaves a due reminder planned, so that the next occurrence of the job sends it', async () => {
     const { application, mailer } = await arrange();
 
-    await application.commandBus.execute(new PlanReminderCommand(operator, { appointmentId: 'appointment-1', recipientId: 'patient-1', startsAt: new Date(startsAt) }));
+    await application.commandBus.execute(
+      new PlanReminderCommand(operator, {
+        appointmentId: 'appointment-1',
+        recipientId: 'patient-1',
+        startsAt: new Date(startsAt),
+      }),
+    );
+
     mailer.failNextWith(new Error('provider unreachable'));
 
-    await expect(application.commandBus.execute(new SendDueRemindersCommand(operator, NOW))).rejects.toThrow('provider unreachable');
+    await expect(application.commandBus.execute(new SendDueRemindersCommand(operator, NOW))).rejects.toThrow(
+      'provider unreachable',
+    );
+
     const afterTheOutage = (await application.get(ReminderRepository).findByAppointment('appointment-1'))?.status;
 
     await application.commandBus.execute(new SendDueRemindersCommand(operator, new Date('2026-01-09T09:15:00.000Z')));
 
     expect(afterTheOutage).toBe('planned');
-    expect(mailer.delivered).toEqual([{ address: 'ada@example.test', recipientId: 'patient-1', kind: 'reminder', appointmentId: 'appointment-1' }]);
+
+    expect(mailer.delivered).toEqual([
+      { address: 'ada@example.test', recipientId: 'patient-1', kind: 'reminder', appointmentId: 'appointment-1' },
+    ]);
+
     expect((await application.get(ReminderRepository).findByAppointment('appointment-1'))?.status).toBe('sent');
   });
 });
@@ -106,7 +143,11 @@ async function arrange() {
 
   const application = createTestApplication({
     modules: [storage(), contextModule('notification', notificationDeclarations), projections, authorization],
-    fakes: [fake(Mailer, mailer), fake(UnitOfWork, database.persistence.unitOfWork), fake(ProcessedEventStore, database.persistence.processedEvents)],
+    fakes: [
+      fake(Mailer, mailer),
+      fake(UnitOfWork, database.persistence.unitOfWork),
+      fake(ProcessedEventStore, database.persistence.processedEvents),
+    ],
     now: NOW,
   });
 
@@ -123,7 +164,13 @@ async function arrange() {
   });
 
   await application.start();
-  await application.eventBus.publish([personRegisteredV1.create({ personId: 'patient-1', displayName: 'Ada Lovelace', email: 'ada@example.test' }, { id: 'event-registered', occurredAt: new Date('2026-01-01T08:00:00.000Z') })]);
+
+  await application.eventBus.publish([
+    personRegisteredV1.create(
+      { personId: 'patient-1', displayName: 'Ada Lovelace', email: 'ada@example.test' },
+      { id: 'event-registered', occurredAt: new Date('2026-01-01T08:00:00.000Z') },
+    ),
+  ]);
 
   return { application, mailer, relay };
 }

@@ -16,7 +16,13 @@ const PULLED = 'const events = invoice.pullEvents();';
 
 describe('domain-events/dispatched-on-save', () => {
   it('reports every call to pullEvents under application/ and infrastructure/', () => {
-    const files = { [HANDLER]: lines(PULLED), [EVENT_HANDLER]: lines('', 'await dispatch(this.invoice?.pullEvents());'), [INTEGRATION_HANDLER]: lines(PULLED), [ADAPTER]: lines(PULLED), [GATEWAY]: lines(PULLED, PULLED) };
+    const files = {
+      [HANDLER]: lines(PULLED),
+      [EVENT_HANDLER]: lines('', 'await dispatch(this.invoice?.pullEvents());'),
+      [INTEGRATION_HANDLER]: lines(PULLED),
+      [ADAPTER]: lines(PULLED),
+      [GATEWAY]: lines(PULLED, PULLED),
+    };
 
     expect(found(files)).toEqual([
       'application/commands/issue-invoice/issue-invoice.handler.ts:1 `pullEvents()` is called',
@@ -29,8 +35,27 @@ describe('domain-events/dispatched-on-save', () => {
   });
 
   it('reports the dispatcher imported, listed and received in a command, a query and a repository adapter', () => {
-    const handler = lines(IMPORTED, DECLARATIONS, '', '@CommandHandler(IssueInvoice, [InvoiceRepository, DomainEventDispatcher])', 'export class IssueInvoiceHandler {', '  constructor(', '    private readonly dispatcher: DomainEventDispatcher,', '  ) {}', '}');
-    const adapter = lines(DECLARATIONS, '', '@Repository(InvoiceRepository, [DomainEventDispatcher])', 'export class PgInvoiceRepository {', '  constructor(dispatcher: kernel.DomainEventDispatcher) {}', '}');
+    const handler = lines(
+      IMPORTED,
+      DECLARATIONS,
+      '',
+      '@CommandHandler(IssueInvoice, [InvoiceRepository, DomainEventDispatcher])',
+      'export class IssueInvoiceHandler {',
+      '  constructor(',
+      '    private readonly dispatcher: DomainEventDispatcher,',
+      '  ) {}',
+      '}',
+    );
+
+    const adapter = lines(
+      DECLARATIONS,
+      '',
+      '@Repository(InvoiceRepository, [DomainEventDispatcher])',
+      'export class PgInvoiceRepository {',
+      '  constructor(dispatcher: kernel.DomainEventDispatcher) {}',
+      '}',
+    );
+
     const query = lines('import type {', '  DomainEventDispatcher as Dispatcher,', "} from '@ddd-ts-kit/kernel';");
 
     expect(found({ [HANDLER]: handler, [ADAPTER]: adapter, [QUERY_HANDLER]: query })).toEqual([
@@ -44,14 +69,29 @@ describe('domain-events/dispatched-on-save', () => {
   });
 
   it('leaves the dispatcher to event handlers, integration handlers and what is not a repository adapter', () => {
-    expect(found({ [EVENT_HANDLER]: lines(IMPORTED), [INTEGRATION_HANDLER]: lines(IMPORTED), [MAPPER]: lines(IMPORTED), [GATEWAY]: lines(IMPORTED) })).toEqual([]);
+    expect(
+      found({
+        [EVENT_HANDLER]: lines(IMPORTED),
+        [INTEGRATION_HANDLER]: lines(IMPORTED),
+        [MAPPER]: lines(IMPORTED),
+        [GATEWAY]: lines(IMPORTED),
+      }),
+    ).toEqual([]);
   });
+});
 
+describe('domain-events/dispatched-on-save, what it does not judge and what it says', () => {
   it('does not judge the domain, the tests, the module file, the platform, main.ts nor apps/', () => {
     const both = lines(IMPORTED, PULLED);
 
     const files = {
-      [`${BILLING}/domain/aggregates/invoice.aggregate.ts`]: lines('export class Invoice {', '  drain(): void {', '    this.pullEvents();', '  }', '}'),
+      [`${BILLING}/domain/aggregates/invoice.aggregate.ts`]: lines(
+        'export class Invoice {',
+        '  drain(): void {',
+        '    this.pullEvents();',
+        '  }',
+        '}',
+      ),
       [`${BILLING}/test/unit/issue-invoice.handler.spec.ts`]: both,
       [`${BILLING}/application/commands/issue-invoice/issue-invoice.handler.spec.ts`]: both,
       [`${BILLING}/billing.module.ts`]: both,
@@ -64,22 +104,44 @@ describe('domain-events/dispatched-on-save', () => {
   });
 
   it('reads code only: a name in a comment, in a string or as a declaration is not a call', () => {
-    const handler = lines('// invoice.pullEvents() used to be here, with a DomainEventDispatcher', "const hint = 'aggregate.pullEvents()';", 'class Outbox {', '  pullEvents(): void {}', '}');
+    const handler = lines(
+      '// invoice.pullEvents() used to be here, with a DomainEventDispatcher',
+      "const hint = 'aggregate.pullEvents()';",
+      'class Outbox {',
+      '  pullEvents(): void {}',
+      '}',
+    );
 
     expect(found({ [HANDLER]: handler })).toEqual([]);
   });
 
   it('says what to write instead, and obeys the config and a suppression', () => {
-    const suppressed = lines('// ddd-ts-kit-disable-next-line domain-events/dispatched-on-save -- ADR-0014: the import of legacy invoices replays their events', PULLED);
-    const root = projectWith({ [HANDLER]: lines(PULLED), [GATEWAY]: suppressed, 'docs/adr/0014-legacy-import.md': '# Decision\n' });
+    const suppressed = lines(
+      '// ddd-ts-kit-disable-next-line domain-events/dispatched-on-save -- ADR-0014: the import of legacy invoices replays their events',
+      PULLED,
+    );
+
+    const root = projectWith({
+      [HANDLER]: lines(PULLED),
+      [GATEWAY]: suppressed,
+      'docs/adr/0014-legacy-import.md': '# Decision\n',
+    });
+
     const [violation] = reported(root, RULE);
 
     expect(reported(root, RULE)).toHaveLength(1);
-    expect(violation?.message).toBe('`pullEvents()` is called in application/commands: the events an aggregate recorded are dispatched when its repository saves it.');
+
+    expect(violation?.message).toBe(
+      '`pullEvents()` is called in application/commands: the events an aggregate recorded are dispatched when its repository saves it.',
+    );
+
     expect(reported(projectWith({ [HANDLER]: lines(PULLED) }, { rules: { [RULE]: 'off' } }), RULE)).toEqual([]);
   });
 });
 
 function found(files: Readonly<Record<string, string>>): string[] {
-  return reported(projectWith(files), RULE).map(({ file, line, message }) => `${file.slice(BILLING.length + 1)}:${line} ${message.slice(0, message.indexOf(' in '))}`);
+  return reported(projectWith(files), RULE).map(
+    ({ file, line, message }) =>
+      `${file.slice(BILLING.length + 1)}:${line} ${message.slice(0, message.indexOf(' in '))}`,
+  );
 }

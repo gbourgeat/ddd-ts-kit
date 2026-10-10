@@ -77,7 +77,11 @@ describe('an unexpected error', () => {
             attributes: { 'app.outcome': 'failed', 'error.type': 'TypeError' },
             children: [
               { name: 'repository AppointmentRepository.findOverlapping' },
-              { name: 'repository AppointmentRepository.save', status: 'ERROR', attributes: { 'error.type': 'TypeError' } },
+              {
+                name: 'repository AppointmentRepository.save',
+                status: 'ERROR',
+                attributes: { 'error.type': 'TypeError' },
+              },
             ],
           },
         ],
@@ -106,7 +110,9 @@ describe('an unexpected error', () => {
 
     const appointments = clinic.app.resolve(AppointmentRepository);
 
-    if (appointments instanceof InMemoryAppointmentRepository) appointments.unreachable = true;
+    if (appointments instanceof InMemoryAppointmentRepository) {
+      appointments.unreachable = true;
+    }
 
     const [run] = await tracing.traceOf(() => clinic.scheduler.runNow('scheduling.send-reminders'));
 

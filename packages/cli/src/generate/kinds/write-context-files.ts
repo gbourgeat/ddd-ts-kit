@@ -12,8 +12,12 @@ import { relativeTo } from '../relative-to.js';
 import { wiringFamily } from '../wiring-family.js';
 import type { ContextRequest } from './context-request.js';
 
-const GLOSSARY_TODO = 'TODO(domain): define the ubiquitous language first: one row per term the domain experts use here, with the meaning it has in this context only. Every class, method and event is then named after these terms.';
-const PURPOSE_TODO = 'TODO(domain): say in two sentences which business capability this context owns and for whom; the first sentence is reused in the context map.';
+const GLOSSARY_TODO =
+  'TODO(domain): define the ubiquitous language first: one row per term the domain experts use here, with the meaning it has in this context only. Every class, method and event is then named after these terms.';
+
+const PURPOSE_TODO =
+  'TODO(domain): say in two sentences which business capability this context owns and for whom; the first sentence is reused in the context map.';
+
 const PROOF = 'test/architecture/extractable.spec.ts';
 const COMPOSITION = 'compose-application.ts';
 
@@ -35,7 +39,9 @@ export function writeContextFiles(ws: Workspace, plan: ContextPlan): void {
   ws.create(`${dir}/published-language/index.ts`, renderTemplate('context/published-language-index.ts.tpl', vars));
   registerPermissions(ws, plan, vars);
 
-  if (!ws.exists(PROOF)) ws.create(PROOF, renderTemplate(`architecture/extractable.${family}.spec.ts.tpl`, vars));
+  if (!ws.exists(PROOF)) {
+    ws.create(PROOF, renderTemplate(`architecture/extractable.${family}.spec.ts.tpl`, vars));
+  }
 
   applyWiring(ws, PROOF, renderTemplate(`architecture/wiring.${family}.tpl`, vars));
   applyWiring(ws, `${config.platformDir}/${COMPOSITION}`, renderTemplate(`context/wiring.${family}.tpl`, vars));
@@ -69,8 +75,13 @@ function writeAssembly(ws: Workspace, { config, context }: ContextPlan, vars: Re
   const dir = `${config.contextsDir}/${context.kebab}`;
   const family = wiringFamily(config);
 
-  if (family !== 'declared') ws.create(`${dir}/${context.kebab}.module.ts`, renderTemplate(`context/module.${family}.ts.tpl`, vars));
-  if (family !== 'manual' && config.stack.http !== 'none') ws.create(`${dir}/${routesFile(context.kebab)}`, renderTemplate('context/routes.ts.tpl', vars));
+  if (family !== 'declared') {
+    ws.create(`${dir}/${context.kebab}.module.ts`, renderTemplate(`context/module.${family}.ts.tpl`, vars));
+  }
+
+  if (family !== 'manual' && config.stack.http !== 'none') {
+    ws.create(`${dir}/${routesFile(context.kebab)}`, renderTemplate('context/routes.ts.tpl', vars));
+  }
 }
 
 /**
@@ -81,8 +92,14 @@ function writeAssembly(ws: Workspace, { config, context }: ContextPlan, vars: Re
 function registerPermissions(ws: Workspace, { config, context }: ContextPlan, vars: RenderContext): void {
   const registry = `${config.platformDir}/auth/permissions.ts`;
 
-  if (!ws.exists(registry)) return;
+  if (!ws.exists(registry)) {
+    return;
+  }
 
-  ws.create(`${config.contextsDir}/${context.kebab}/${permissionsFile(context)}`, renderTemplate('context/permissions.ts.tpl', vars));
+  ws.create(
+    `${config.contextsDir}/${context.kebab}/${permissionsFile(context)}`,
+    renderTemplate('context/permissions.ts.tpl', vars),
+  );
+
   applyWiring(ws, registry, renderTemplate('context/permission-set.tpl', vars));
 }

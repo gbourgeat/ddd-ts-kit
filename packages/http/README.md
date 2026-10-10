@@ -86,7 +86,9 @@ const options: ExecuteOptions = {
   errorMapper,
   resolvePrincipal: (raw) => authenticate(raw), // throw UnauthorizedError to refuse
   onError: (error, { requestId, correlationId, operationId, problem }) => {
-    if (problem.status >= 500) logger.error({ requestId, correlationId, operationId, error });
+    if (problem.status >= 500) {
+      logger.error({ requestId, correlationId, operationId, error });
+    }
   },
   validateResponses: process.env.NODE_ENV === 'test', // checks answers against the declaration
   around: tracedRoutes(), // of @ddd-ts-kit/tracing: the span of the request, named by its route template
@@ -349,7 +351,9 @@ const document = generateOpenApi({
 writeFileSync('openapi.json', stringifyOpenApi(document));
 
 // In CI: regenerate and fail on a difference.
-if (checkOpenApiDrift(document, readFileSync('openapi.json', 'utf8')).drift) process.exit(1);
+if (checkOpenApiDrift(document, readFileSync('openapi.json', 'utf8')).drift) {
+  process.exit(1);
+}
 ```
 
 What is generated: `{param}` paths, one parameter per property of the params, query and headers

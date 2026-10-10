@@ -139,20 +139,25 @@ function bornFrom(ingredients: AppointmentIngredients): Appointment {
     }),
   );
 
-  const confirmBefore = ingredients.confirmBefore ?? (ingredients.end === 'expired' ? new Date(bornAt.getTime() + 60 * MINUTE) : undefined);
+  const confirmBefore =
+    ingredients.confirmBefore ?? (ingredients.end === 'expired' ? new Date(bornAt.getTime() + 60 * MINUTE) : undefined);
 
-  return confirmBefore === undefined ? Appointment.create(id, booking, bornAt) : Appointment.request(id, booking, { now: bornAt, confirmBefore });
+  return confirmBefore === undefined
+    ? Appointment.create(id, booking, bornAt)
+    : Appointment.request(id, booking, { now: bornAt, confirmBefore });
 }
 
 /** Each end is reached through the public API, at the earliest instant the rules allow. */
-const ENDINGS: Record<AppointmentIngredients['end'], (born: Appointment, ingredients: AppointmentIngredients) => void> = {
-  none: () => undefined,
-  'cancelled-by-patient': (born, { bornAt }) => born.cancel(unwrap(Cancellation.create('patient')), bornAt),
-  'cancelled-by-practice': (born, { bornAt }) => born.cancel(unwrap(Cancellation.create('practice', 'The practitioner is away.')), bornAt),
-  expired: (born) => born.expire(born.confirmBefore ?? born.registeredAt),
-  completed: (born, { startsAt }) => born.complete(startsAt),
-  'no-show': (born, { startsAt }) => born.markNoShow(startsAt),
-};
+const ENDINGS: Record<AppointmentIngredients['end'], (born: Appointment, ingredients: AppointmentIngredients) => void> =
+  {
+    none: () => undefined,
+    'cancelled-by-patient': (born, { bornAt }) => born.cancel(unwrap(Cancellation.create('patient')), bornAt),
+    'cancelled-by-practice': (born, { bornAt }) =>
+      born.cancel(unwrap(Cancellation.create('practice', 'The practitioner is away.')), bornAt),
+    expired: (born) => born.expire(born.confirmBefore ?? born.registeredAt),
+    completed: (born, { startsAt }) => born.complete(startsAt),
+    'no-show': (born, { startsAt }) => born.markNoShow(startsAt),
+  };
 
 export function anAppointment(): AppointmentBuilder {
   return new AppointmentBuilder();

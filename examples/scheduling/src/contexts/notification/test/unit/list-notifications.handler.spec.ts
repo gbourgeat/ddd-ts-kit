@@ -39,10 +39,12 @@ describe('List notifications', () => {
   it('is refused to an actor who does not hold the permission notification.read', async () => {
     const application = arrange(LINES);
 
-    await expect(application.queryBus.execute(new ListNotificationsQuery(anActor().build(), offsetPage()))).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(
+      application.queryBus.execute(new ListNotificationsQuery(anActor().build(), offsetPage())),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
   });
 
-  it('shows a person the notifications sent to themselves, and no one else\'s', async () => {
+  it("shows a person the notifications sent to themselves, and no one else's", async () => {
     const application = arrange(LINES, themselves);
     const patient = anActor().named('patient-1').withRole('holder').build();
 
@@ -64,7 +66,9 @@ describe('List notifications', () => {
   it('lists the oldest first when the client asks for it', async () => {
     const application = arrange(LINES);
 
-    const page = await application.queryBus.execute(new ListNotificationsQuery(holder, offsetPage({ sort: [{ field: 'sentAt', direction: 'asc' }] })));
+    const page = await application.queryBus.execute(
+      new ListNotificationsQuery(holder, offsetPage({ sort: [{ field: 'sentAt', direction: 'asc' }] })),
+    );
 
     expect(page.items.map((item) => item.id)).toEqual(['notification-1', 'notification-2', 'notification-3']);
   });
@@ -73,7 +77,12 @@ describe('List notifications', () => {
     const application = arrange(LINES);
     const first = await application.queryBus.execute(new ListNotificationsQuery(holder, cursorPage({ limit: 2 })));
 
-    const second = await application.queryBus.execute(new ListNotificationsQuery(holder, cursorPage({ limit: 2, ...(first.nextCursor === undefined ? {} : { cursor: first.nextCursor }) })));
+    const second = await application.queryBus.execute(
+      new ListNotificationsQuery(
+        holder,
+        cursorPage({ limit: 2, ...(first.nextCursor === undefined ? {} : { cursor: first.nextCursor }) }),
+      ),
+    );
 
     expect(first.items.map((item) => item.id)).toEqual(['notification-3', 'notification-2']);
     expect(second.items.map((item) => item.id)).toEqual(['notification-1']);
@@ -83,11 +92,22 @@ describe('List notifications', () => {
 
 function arrange(lines: readonly ListNotificationsItem[], authorizer: Authorizer = roles) {
   return createTestApplication({
-    modules: [platformTestModule, contextModule('notification', notificationDeclarations), authorizationModule({ authorizer })],
+    modules: [
+      platformTestModule,
+      contextModule('notification', notificationDeclarations),
+      authorizationModule({ authorizer }),
+    ],
     fakes: [fake(ListNotificationsReader, new FakeListNotificationsReader(lines))],
   });
 }
 
 function line(id: string, recipientId: string, sentAt: string): ListNotificationsItem {
-  return { id, recipientId, kind: 'confirmation', appointmentId: 'appointment-' + id, startsAt: new Date('2026-02-01T09:00:00.000Z'), sentAt: new Date(sentAt) };
+  return {
+    id,
+    recipientId,
+    kind: 'confirmation',
+    appointmentId: 'appointment-' + id,
+    startsAt: new Date('2026-02-01T09:00:00.000Z'),
+    sentAt: new Date(sentAt),
+  };
 }

@@ -20,7 +20,9 @@ const failure = (definition: SchemaDefinition): string => {
   try {
     defineSchema(definition);
   } catch (error) {
-    if (error instanceof SchemaError) return error.message;
+    if (error instanceof SchemaError) {
+      return error.message;
+    }
 
     throw error;
   }
@@ -31,7 +33,12 @@ const failure = (definition: SchemaDefinition): string => {
 describe('defineSchema', () => {
   it('resolves a name to a relation or to a permission', () => {
     expect(schema.resolve('document', 'editor')).toEqual({ kind: 'relation', subjects: ['user', 'group#member'] });
-    expect(schema.resolve('document', 'sign')).toEqual({ kind: 'permission', rewrite: intersection('approver', 'edit') });
+
+    expect(schema.resolve('document', 'sign')).toEqual({
+      kind: 'permission',
+      rewrite: intersection('approver', 'edit'),
+    });
+
     expect(schema.resolve('document', 'publish')).toBeUndefined();
     expect(schema.resolve('invoice', 'edit')).toBeUndefined();
   });
@@ -55,7 +62,10 @@ describe('defineSchema', () => {
 
   it('refuses a permission referring to an unknown relation', () => {
     expect(
-      failure({ user: {}, document: { relations: { owner: ['user'] }, permissions: { edit: union('owner', 'editor') } } }),
+      failure({
+        user: {},
+        document: { relations: { owner: ['user'] }, permissions: { edit: union('owner', 'editor') } },
+      }),
     ).toBe('"document#edit" refers to "editor", which "document" does not declare.');
   });
 
@@ -92,9 +102,11 @@ describe('defineSchema', () => {
   });
 
   it('refuses a rewrite that reads no tuple and could never terminate', () => {
-    expect(failure({ document: { permissions: { edit: union('view'), view: exclusion('comment', 'edit'), comment: 'edit' } } })).toBe(
-      '"document" has a rewrite that cannot terminate: edit -> view -> comment -> edit.',
-    );
+    expect(
+      failure({
+        document: { permissions: { edit: union('view'), view: exclusion('comment', 'edit'), comment: 'edit' } },
+      }),
+    ).toBe('"document" has a rewrite that cannot terminate: edit -> view -> comment -> edit.');
 
     expect(failure({ document: { permissions: { edit: 'edit' } } })).toContain('edit -> edit');
   });
@@ -122,13 +134,19 @@ describe('tuples', () => {
     expect(objectOf({ type: 'document', id: '1' })).toBe('document:1');
   });
 
-  it.each(['document', ':1', 'Document:1', 'document:', 'document:a b', 'document:1@x'])('refuses the object %j', (object) => {
-    expect(() => parseObject(object)).toThrow(InvalidTupleError);
-  });
+  it.each(['document', ':1', 'Document:1', 'document:', 'document:a b', 'document:1@x'])(
+    'refuses the object %j',
+    (object) => {
+      expect(() => parseObject(object)).toThrow(InvalidTupleError);
+    },
+  );
 
-  it.each(['group:eng#', 'group:eng#member#x', 'group#member', 'group:eng#Member'])('refuses the subject %j', (subject) => {
-    expect(() => parseSubject(subject)).toThrow(InvalidTupleError);
-  });
+  it.each(['group:eng#', 'group:eng#member#x', 'group#member', 'group:eng#Member'])(
+    'refuses the subject %j',
+    (subject) => {
+      expect(() => parseSubject(subject)).toThrow(InvalidTupleError);
+    },
+  );
 });
 
 describe('SchemaCheckedTupleStore', () => {
@@ -151,8 +169,14 @@ describe('SchemaCheckedTupleStore', () => {
 
   it.each([
     [fact('document:1', 'edit', 'user:ada'), '"edit" is not a relation of "document": only relations are written.'],
-    [fact('document:1', 'publisher', 'user:ada'), '"publisher" is not a relation of "document": only relations are written.'],
-    [fact('document:1', 'owner', 'group:eng#member'), '"document#owner" does not accept a subject of kind "group#member".'],
+    [
+      fact('document:1', 'publisher', 'user:ada'),
+      '"publisher" is not a relation of "document": only relations are written.',
+    ],
+    [
+      fact('document:1', 'owner', 'group:eng#member'),
+      '"document#owner" does not accept a subject of kind "group#member".',
+    ],
     [fact('document:1', 'parent', 'user:ada'), '"document#parent" does not accept a subject of kind "user".'],
     [fact('invoice:1', 'owner', 'user:ada'), '"owner" is not a relation of "invoice": only relations are written.'],
   ])('refuses %j', async (tuple, message) => {

@@ -6,7 +6,9 @@ import type { ExecutionContext } from './execution-context.js';
  * The tenant follows the new actor when it has one.
  */
 export function withActor(context: ExecutionContext, actor: Actor): ExecutionContext {
-  if (context.actor === actor) return context;
+  if (context.actor === actor) {
+    return context;
+  }
 
   const { session: _session, tenantId: _tenantId, ...rest } = context;
   const tenantId = actor.tenantId ?? context.tenantId;

@@ -11,7 +11,9 @@ class FlakyMailer extends RemoteMailer {
   protected override async transport(): Promise<unknown> {
     this.calls += 1;
 
-    if (this.calls === 1) throw new Error('unreachable');
+    if (this.calls === 1) {
+      throw new Error('unreachable');
+    }
 
     return 'answered';
   }
@@ -27,7 +29,10 @@ class UnreachableMailer extends RemoteMailer {
   }
 }
 
-const reminder = aNotification().sentTo('patient-9').ofKind('reminder').about('appointment-4', new Date('2026-03-05T14:30:00.000Z'));
+const reminder = aNotification()
+  .sentTo('patient-9')
+  .ofKind('reminder')
+  .about('appointment-4', new Date('2026-03-05T14:30:00.000Z'));
 
 describe('RemoteMailer', () => {
   it('sends again a call the outside system failed, and answers once it succeeds', async () => {
@@ -48,7 +53,13 @@ describe('RemoteMailer', () => {
 
     await withAspectRuntime(createAspectFakes(), () => adapter.deliver('ada@example.test', reminder.build()));
 
-    expect(logger.entries).toMatchObject([{ level: 'info', fields: { operation: 'deliver', recipientId: 'patient-9', kind: 'reminder', appointmentId: 'appointment-4' } }]);
+    expect(logger.entries).toMatchObject([
+      {
+        level: 'info',
+        fields: { operation: 'deliver', recipientId: 'patient-9', kind: 'reminder', appointmentId: 'appointment-4' },
+      },
+    ]);
+
     expect(JSON.stringify(logger.entries)).not.toContain('ada@example.test');
   });
 
@@ -57,11 +68,17 @@ describe('RemoteMailer', () => {
     const fake = new FakeMailer();
     const notification = reminder.build();
 
-    await withAspectRuntime(createAspectFakes(), () => new RemoteMailer(logger).deliver('ada@example.test', notification));
+    await withAspectRuntime(createAspectFakes(), () =>
+      new RemoteMailer(logger).deliver('ada@example.test', notification),
+    );
+
     await fake.deliver('ada@example.test', notification);
 
     expect(logger.entries).toHaveLength(1);
-    expect(fake.delivered).toEqual([{ address: 'ada@example.test', recipientId: 'patient-9', kind: 'reminder', appointmentId: 'appointment-4' }]);
+
+    expect(fake.delivered).toEqual([
+      { address: 'ada@example.test', recipientId: 'patient-9', kind: 'reminder', appointmentId: 'appointment-4' },
+    ]);
   });
 
   it('gives up after three attempts when the outside system stays unreachable, as the fake does on demand', async () => {

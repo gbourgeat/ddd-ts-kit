@@ -19,7 +19,8 @@ export const CLEAN_FIXTURES: readonly Fixture[] = [
     name: 'factories, public methods, then each private method after its caller',
     expect: 'pass',
     files: project({
-      'src/platform/load.ts': 'export function load(text: string): string[] {\n  return text.split(",").map(clean);\n}\n\nfunction clean(part: string): string {\n  return part.trim();\n}\n',
+      'src/platform/load.ts':
+        'export function load(text: string): string[] {\n  return text.split(",").map(clean);\n}\n\nfunction clean(part: string): string {\n  return part.trim();\n}\n',
       [ADAPTER]: [
         'export class InMemoryInvoiceRepository {',
         '  private readonly rows = new Map<string, string>();',
@@ -55,7 +56,8 @@ export const CLEAN_FIXTURES: readonly Fixture[] = [
     name: 'a private method declared before a public one',
     expect: { file: ADAPTER },
     files: project({
-      [ADAPTER]: 'export class InMemoryInvoiceRepository {\n  private trim(id: string): string {\n    return id.trim();\n  }\n\n  save(id: string): string {\n    return this.trim(id);\n  }\n}\n',
+      [ADAPTER]:
+        'export class InMemoryInvoiceRepository {\n  private trim(id: string): string {\n    return id.trim();\n  }\n\n  save(id: string): string {\n    return this.trim(id);\n  }\n}\n',
     }),
   },
   {
@@ -63,7 +65,8 @@ export const CLEAN_FIXTURES: readonly Fixture[] = [
     name: 'a helper function declared above its caller',
     expect: { file: 'src/platform/load.ts' },
     files: project({
-      'src/platform/load.ts': 'function clean(part: string): string {\n  return part.trim();\n}\n\nexport function load(text: string): string[] {\n  return text.split(",").map(clean);\n}\n',
+      'src/platform/load.ts':
+        'function clean(part: string): string {\n  return part.trim();\n}\n\nexport function load(text: string): string[] {\n  return text.split(",").map(clean);\n}\n',
     }),
   },
   {
@@ -88,7 +91,10 @@ export const CLEAN_FIXTURES: readonly Fixture[] = [
     ruleId: 'clean/function-size',
     name: 'a function with four parameters',
     expect: { file: ISSUE },
-    files: project({ [ISSUE]: 'export function issue(id: string, customer: string, amount: number, currency: string): string {\n  return id + customer + amount + currency;\n}\n' }),
+    files: project({
+      [ISSUE]:
+        'export function issue(id: string, customer: string, amount: number, currency: string): string {\n  return id + customer + amount + currency;\n}\n',
+    }),
   },
   {
     ruleId: 'clean/function-size',
@@ -132,13 +138,18 @@ export const CLEAN_FIXTURES: readonly Fixture[] = [
     ruleId: 'clean/no-commented-out-code',
     name: 'a statement left in a comment',
     expect: { file: ADAPTER },
-    files: project({ [ADAPTER]: '// const total = lines.reduce((sum, line) => sum + line.amount, 0);\nexport class InMemoryInvoiceRepository {}\n' }),
+    files: project({
+      [ADAPTER]:
+        '// const total = lines.reduce((sum, line) => sum + line.amount, 0);\nexport class InMemoryInvoiceRepository {}\n',
+    }),
   },
   {
     ruleId: 'clean/no-commented-out-code',
     name: 'a block of code in a block comment',
     expect: { file: ADAPTER },
-    files: project({ [ADAPTER]: '/*\nif (invoice.issued) {\n  return invoice;\n}\n*/\nexport class InMemoryInvoiceRepository {}\n' }),
+    files: project({
+      [ADAPTER]: '/*\nif (invoice.issued) {\n  return invoice;\n}\n*/\nexport class InMemoryInvoiceRepository {}\n',
+    }),
   },
   {
     ruleId: 'clean/no-noise-comment',
@@ -163,7 +174,10 @@ export const CLEAN_FIXTURES: readonly Fixture[] = [
     ruleId: 'clean/no-noise-comment',
     name: 'a JSDoc that repeats the member name',
     expect: { file: ADAPTER },
-    files: project({ [ADAPTER]: 'export class InMemoryInvoiceRepository {\n  /** Gets the order. */\n  getOrder(): string {\n    return "";\n  }\n}\n' }),
+    files: project({
+      [ADAPTER]:
+        'export class InMemoryInvoiceRepository {\n  /** Gets the order. */\n  getOrder(): string {\n    return "";\n  }\n}\n',
+    }),
   },
   {
     ruleId: 'clean/no-noise-comment',
@@ -198,7 +212,9 @@ export const CLEAN_FIXTURES: readonly Fixture[] = [
       [FIRST]: [
         'export function first(values: readonly string[], many: unknown): string {',
         '  const [head] = values;',
-        '  if (head === undefined || !many) throw new Error("empty");',
+        '  if (head === undefined || !many) {',
+        '    throw new Error("empty");',
+        '  }',
         '  // @ts-expect-error the vendor typings miss this overload, see #77',
         '  const company = head !== "" ? head : "any";',
         '',
@@ -213,34 +229,49 @@ export const CLEAN_FIXTURES: readonly Fixture[] = [
     ruleId: 'clean/no-escape-hatch',
     name: 'any and a non-null assertion',
     expect: { file: FIRST },
-    files: project({ [FIRST]: 'export function first(values: any, map: Map<string, string>): string {\n  return (values as any)[0] + map.get("a")!.length;\n}\n' }),
+    files: project({
+      [FIRST]:
+        'export function first(values: any, map: Map<string, string>): string {\n  return (values as any)[0] + map.get("a")!.length;\n}\n',
+    }),
   },
   {
     ruleId: 'clean/no-escape-hatch',
     name: 'suppressed diagnostics without a reason',
     expect: { file: 'src/platform/a.ts' },
-    files: project({ 'src/platform/a.ts': '// @ts-ignore\nexport const a: number = "a";\n// @ts-expect-error\nexport const b: number = "b";\n// eslint-disable-next-line no-console\nexport const c = 1;\n' }),
+    files: project({
+      'src/platform/a.ts':
+        '// @ts-ignore\nexport const a: number = "a";\n// @ts-expect-error\nexport const b: number = "b";\n// eslint-disable-next-line no-console\nexport const c = 1;\n',
+    }),
   },
   {
     ruleId: 'clean/no-flag-argument',
     name: 'two intentions as two methods, a boolean carried by a command',
     expect: 'pass',
     files: project({
-      ...aggregate('export class Invoice {\n  issue(): void {}\n\n  issueMoney(): void {}\n\n  private apply(issued: boolean): boolean {\n    return issued;\n  }\n}\n'),
-      [`${BILLING}/application/commands/issue-invoice/issue-invoice.command.ts`]: 'export class IssueInvoiceCommand {\n  constructor(readonly issue: boolean) {}\n}\n',
+      ...aggregate(
+        'export class Invoice {\n  issue(): void {}\n\n  issueMoney(): void {}\n\n  private apply(issued: boolean): boolean {\n    return issued;\n  }\n}\n',
+      ),
+      [`${BILLING}/application/commands/issue-invoice/issue-invoice.command.ts`]:
+        'export class IssueInvoiceCommand {\n  constructor(readonly issue: boolean) {}\n}\n',
     }),
   },
   {
     ruleId: 'clean/no-flag-argument',
     name: 'a boolean parameter on a public method of an aggregate',
     expect: { file: AGGREGATE },
-    files: project(aggregate('export class Invoice {\n  issue(money: boolean): boolean {\n    return money;\n  }\n}\n')),
+    files: project(
+      aggregate('export class Invoice {\n  issue(money: boolean): boolean {\n    return money;\n  }\n}\n'),
+    ),
   },
   {
     ruleId: 'clean/no-flag-argument',
     name: 'a defaulted flag on execute',
     expect: { file: HANDLER },
-    files: project(handler('export class IssueInvoiceHandler {\n  async execute(command: object, issue = false): Promise<boolean> {\n    return issue && command !== undefined;\n  }\n}\n')),
+    files: project(
+      handler(
+        'export class IssueInvoiceHandler {\n  async execute(command: object, issue = false): Promise<boolean> {\n    return issue && command !== undefined;\n  }\n}\n',
+      ),
+    ),
   },
 ];
 

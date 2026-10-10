@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { InMemoryCommandBus, unitOfWorkMiddleware, type UnitOfWork } from '@ddd-ts-kit/kernel';
-import { auditMiddleware, verifyChain, type AuditCheckpoint, type AuditRecord, type AuditTrailOptions } from '../../src/index.js';
+import {
+  auditMiddleware,
+  verifyChain,
+  type AuditCheckpoint,
+  type AuditRecord,
+  type AuditTrailOptions,
+} from '../../src/index.js';
 import type { AuditTrailUnderContract } from '../../src/testing.js';
 import { NOW, aSource, ada } from './fixtures.js';
 import { CancelAppointmentCommand } from './scheduling/application/commands/cancel-appointment.command.js';
@@ -123,19 +129,29 @@ function unitOfWorkSpecs(specs: SqlTrailSpecs): void {
           execute: async (command) => {
             await trail.record(aRecord(`export-before-${command.appointmentId}`));
 
-            if (command.appointmentId === 'apt-gone') throw new AppointmentAlreadyCancelled('Already cancelled');
+            if (command.appointmentId === 'apt-gone') {
+              throw new AppointmentAlreadyCancelled('Already cancelled');
+            }
           },
         });
 
       await commands.execute(new CancelAppointmentCommand(ada, 'apt-1'));
-      await expect(commands.execute(new CancelAppointmentCommand(ada, 'apt-gone'))).rejects.toThrow(AppointmentAlreadyCancelled);
+
+      await expect(commands.execute(new CancelAppointmentCommand(ada, 'apt-gone'))).rejects.toThrow(
+        AppointmentAlreadyCancelled,
+      );
 
       const rows = (await run('select "id", "action", "outcome", "reason" from $table order by "sequence"')).rows;
 
       expect(rows).toEqual([
         { id: 'export-before-apt-1', action: 'scheduling.appointments.export', outcome: 'succeeded', reason: null },
         { id: 'audit-1', action: 'CancelAppointmentCommand', outcome: 'succeeded', reason: null },
-        { id: 'audit-2', action: 'CancelAppointmentCommand', outcome: 'failed', reason: 'APPOINTMENT_ALREADY_CANCELLED' },
+        {
+          id: 'audit-2',
+          action: 'CancelAppointmentCommand',
+          outcome: 'failed',
+          reason: 'APPOINTMENT_ALREADY_CANCELLED',
+        },
       ]);
 
       expect(await verifyChain(trail, { chain: CHAIN })).toEqual({ valid: true, checked: 3 });
@@ -158,7 +174,9 @@ function unitOfWorkSpecs(specs: SqlTrailSpecs): void {
       const { trail, unitOfWork } = fixture;
 
       await unitOfWork.run(async () => {
-        for (const id of ['entry-1', 'entry-2', 'entry-3']) await trail.record(aRecord(id));
+        for (const id of ['entry-1', 'entry-2', 'entry-3']) {
+          await trail.record(aRecord(id));
+        }
       });
 
       const { items } = await trail.list({ chain: CHAIN }, { kind: 'offset', offset: 0, limit: 10, sort: [] });
@@ -177,7 +195,10 @@ function concurrencySpecs(specs: SqlTrailSpecs): void {
 
       await Promise.all(records.map((record, index) => (index % 2 === 0 ? here.trail : there.trail).record(record)));
 
-      const { items } = await here.trail.list({ chain: CHAIN }, { kind: 'offset', offset: 0, limit: 100, sort: [{ field: 'sequence', direction: 'asc' }] });
+      const { items } = await here.trail.list(
+        { chain: CHAIN },
+        { kind: 'offset', offset: 0, limit: 100, sort: [{ field: 'sequence', direction: 'asc' }] },
+      );
 
       expect(items.map((entry) => entry.sequence)).toEqual(records.map((_, index) => index + 1));
       expect(await verifyChain(here.trail, { chain: CHAIN })).toEqual({ valid: true, checked: 60 });
@@ -195,7 +216,9 @@ function concurrencySpecs(specs: SqlTrailSpecs): void {
             await trail.record(aRecord(`entry-${index}`));
             await trail.record(aRecord(`entry-${index}-bis`));
 
-            if (index % 3 === 0) throw new Error('rolled back on purpose');
+            if (index % 3 === 0) {
+              throw new Error('rolled back on purpose');
+            }
           })
           .then(
             () => 'committed',
@@ -209,36 +232,43 @@ function concurrencySpecs(specs: SqlTrailSpecs): void {
 
       expect(committed).toBe(40);
       expect(await verifyChain(here.trail, { chain: CHAIN })).toEqual({ valid: true, checked: committed });
-      expect(await verifyChain(here.trail, { chain: CHAIN, to: committed + 1 })).toMatchObject({ valid: false, break: { kind: 'missing-entry' } });
+
+      expect(await verifyChain(here.trail, { chain: CHAIN, to: committed + 1 })).toMatchObject({
+        valid: false,
+        break: { kind: 'missing-entry' },
+      });
     });
 
-    it.skipIf(!specs.real)('makes a second append wait for the transaction that holds the head of the chain', async () => {
-      const here = await specs.create();
-      const there = here.elsewhere();
-      const order: string[] = [];
-      let release: () => void = () => undefined;
+    it.skipIf(!specs.real)(
+      'makes a second append wait for the transaction that holds the head of the chain',
+      async () => {
+        const here = await specs.create();
+        const there = here.elsewhere();
+        const order: string[] = [];
+        let release: () => void = () => undefined;
 
-      const held = new Promise<void>((resolve) => {
-        release = resolve;
-      });
+        const held = new Promise<void>((resolve) => {
+          release = resolve;
+        });
 
-      const first = here.unitOfWork.run(async () => {
-        await here.trail.record(aRecord('entry-first'));
-        order.push('first wrote');
-        await held;
-        order.push('first commits');
-      });
+        const first = here.unitOfWork.run(async () => {
+          await here.trail.record(aRecord('entry-first'));
+          order.push('first wrote');
+          await held;
+          order.push('first commits');
+        });
 
-      await expect.poll(() => order).toEqual(['first wrote']);
-      const second = there.trail.record(aRecord('entry-second')).then(() => order.push('second wrote'));
-      const other = there.trail.record(aRecord('entry-other', 'other')).then(() => order.push('other tenant wrote'));
+        await expect.poll(() => order).toEqual(['first wrote']);
+        const second = there.trail.record(aRecord('entry-second')).then(() => order.push('second wrote'));
+        const other = there.trail.record(aRecord('entry-other', 'other')).then(() => order.push('other tenant wrote'));
 
-      await other;
-      release();
-      await Promise.all([first, second]);
+        await other;
+        release();
+        await Promise.all([first, second]);
 
-      expect(order).toEqual(['first wrote', 'other tenant wrote', 'first commits', 'second wrote']);
-      expect(await verifyChain(here.trail, { chain: CHAIN })).toEqual({ valid: true, checked: 2 });
-    });
+        expect(order).toEqual(['first wrote', 'other tenant wrote', 'first commits', 'second wrote']);
+        expect(await verifyChain(here.trail, { chain: CHAIN })).toEqual({ valid: true, checked: 2 });
+      },
+    );
   });
 }

@@ -39,7 +39,11 @@ describe('occurrences that passed while the process was down', () => {
 
     expect(reminders.scheduledAt).toEqual(['2026-03-02T09:00:00.000Z']);
     expect(ledger.executions).toEqual([]);
-    expect(scheduler.runsOf(EXPORT)).toEqual([{ job: EXPORT, outcome: 'missed', scheduledAt: new Date('2026-03-02T08:00:00.000Z') }]);
+
+    expect(scheduler.runsOf(EXPORT)).toEqual([
+      { job: EXPORT, outcome: 'missed', scheduledAt: new Date('2026-03-02T08:00:00.000Z') },
+    ]);
+
     expect(checkpoints.handled.get(EXPORT)).toEqual(new Date('2026-03-02T09:00:00.000Z'));
 
     await scheduler.advance(2 * MINUTE);
@@ -47,7 +51,11 @@ describe('occurrences that passed while the process was down', () => {
   });
 
   it('survive a checkpoint store that fails: the job starts from now, and runs although nothing is remembered', async () => {
-    const failing = { read: () => Promise.reject(new Error('store down')), write: () => Promise.reject(new Error('store down')) };
+    const failing = {
+      read: () => Promise.reject(new Error('store down')),
+      write: () => Promise.reject(new Error('store down')),
+    };
+
     const { scheduler, logger } = aBench({ checkpoints: failing });
     const job = new RecordingJob();
 

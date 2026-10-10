@@ -7,6 +7,11 @@ export class PracticeMemberAdded implements DomainEvent {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
-    readonly facts: { readonly personId: string; readonly role: RoleName; readonly displayName: string; readonly timeZone: string },
+    readonly facts: {
+      readonly personId: string;
+      readonly role: RoleName;
+      readonly displayName: string;
+      readonly timeZone: string;
+    },
   ) {}
 }

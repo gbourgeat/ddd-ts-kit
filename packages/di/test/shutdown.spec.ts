@@ -49,7 +49,10 @@ describe('an application that stops', () => {
     const journal: Journal = [];
 
     const app = createApplication({
-      modules: [kernelModule({ logger: new JournalledLogger(journal), errorReporter: new JournalledReporter(journal) }), closing],
+      modules: [
+        kernelModule({ logger: new JournalledLogger(journal), errorReporter: new JournalledReporter(journal) }),
+        closing,
+      ],
     });
 
     await app.start();

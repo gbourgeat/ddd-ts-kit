@@ -20,11 +20,19 @@ export class Arguments {
 
   static parse(args: readonly string[], options: Options): Arguments {
     try {
-      const { values, positionals } = parseArgs({ args: [...args], options: { ...COMMON, ...options }, allowPositionals: true, strict: true });
+      const { values, positionals } = parseArgs({
+        args: [...args],
+        options: { ...COMMON, ...options },
+        allowPositionals: true,
+        strict: true,
+      });
 
       return new Arguments(values, positionals);
     } catch (error) {
-      throw new CliError(error instanceof Error ? error.message : 'Invalid arguments.', 'Run `ddd-ts-kit --help` for the accepted options.');
+      throw new CliError(
+        error instanceof Error ? error.message : 'Invalid arguments.',
+        'Run `ddd-ts-kit --help` for the accepted options.',
+      );
     }
   }
 
@@ -51,7 +59,9 @@ export class Arguments {
     for (const key of keys) {
       const value = this.text(key);
 
-      if (value !== undefined) picked[key] = value;
+      if (value !== undefined) {
+        picked[key] = value;
+      }
     }
 
     return picked;

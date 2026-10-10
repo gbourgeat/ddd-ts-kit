@@ -12,6 +12,9 @@ export class ContactsProjection {
   registered(event: PersonRegisteredV1) {
     const { personId, email } = event.payload;
 
-    return this.contacts.upsertIfNewer(personId, storableStamp(stampOf(event)), () => ({ recipientId: personId, address: email }));
+    return this.contacts.upsertIfNewer(personId, storableStamp(stampOf(event)), () => ({
+      recipientId: personId,
+      address: email,
+    }));
   }
 }

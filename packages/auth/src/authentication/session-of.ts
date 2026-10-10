@@ -9,15 +9,21 @@ const NEVER_ISSUED = new Date(0);
  * expiry, authenticated by `token`.
  */
 export function sessionOf(source: unknown): Session {
-  if (isSession(source)) return source;
+  if (isSession(source)) {
+    return source;
+  }
 
-  if (isActor(source)) return sessionOfActor(source);
+  if (isActor(source)) {
+    return sessionOfActor(source);
+  }
 
   return hasPrincipal(source) ? sessionOf(source.principal) : anonymousSession();
 }
 
 function sessionOfActor(actor: Actor): Session {
-  if (isAnonymous(actor)) return anonymousSession();
+  if (isAnonymous(actor)) {
+    return anonymousSession();
+  }
 
   return { id: actor.id, actor, issuedAt: NEVER_ISSUED, authenticationMethod: 'token', extensions: {} };
 }

@@ -6,9 +6,19 @@
   "type": "module",
   "sideEffects": false,
   "exports": {
-    ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" },
-    "./declarations": { "types": "./dist/declarations.d.ts", "default": "./dist/declarations.js" }
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./declarations": {
+      "types": "./dist/declarations.d.ts",
+      "default": "./dist/declarations.js"
+    }
   },
-  "files": ["dist"],
-  "scripts": { "build": "tsc -b" }
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b"
+  }
 }

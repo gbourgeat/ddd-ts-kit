@@ -28,7 +28,14 @@ describe('Delegation', () => {
   });
 
   it('is granted on a desk to an assistant, active, and announces its terms', () => {
-    const granted = aDelegation().identifiedBy('delegation-7').onDesk('practice-1', 'person-2').givenTo('person-3').includingAvailability().endingAt(end).bornAt(grantedAt).build();
+    const granted = aDelegation()
+      .identifiedBy('delegation-7')
+      .onDesk('practice-1', 'person-2')
+      .givenTo('person-3')
+      .includingAvailability()
+      .endingAt(end)
+      .bornAt(grantedAt)
+      .build();
 
     expect(granted.isActive).toBe(true);
 
@@ -37,17 +44,33 @@ describe('Delegation', () => {
         name: 'identity.delegation.granted',
         aggregateId: 'delegation-7',
         occurredAt: grantedAt,
-        facts: { practiceId: 'practice-1', practitionerId: 'person-2', assistantId: 'person-3', availabilityIncluded: true, endsAt: end },
+        facts: {
+          practiceId: 'practice-1',
+          practitionerId: 'person-2',
+          assistantId: 'person-3',
+          availabilityIncluded: true,
+          endsAt: end,
+        },
       },
     ]);
   });
 
-  it.each([new Date('2026-02-28T23:59:59.000Z'), grantedAt])('refuses to be granted until %s, which is not after the moment it is granted', (endsAt) => {
-    const terms = { desk: Desk.create('practice-1', 'person-2'), assistantId: 'person-3', availabilityIncluded: false, endsAt };
+  it.each([new Date('2026-02-28T23:59:59.000Z'), grantedAt])(
+    'refuses to be granted until %s, which is not after the moment it is granted',
+    (endsAt) => {
+      const terms = {
+        desk: Desk.create('practice-1', 'person-2'),
+        assistantId: 'person-3',
+        availabilityIncluded: false,
+        endsAt,
+      };
 
-    expect(() => Delegation.create('delegation-7', terms, grantedAt)).toThrow(DelegationEndsInThePastError);
-  });
+      expect(() => Delegation.create('delegation-7', terms, grantedAt)).toThrow(DelegationEndsInThePastError);
+    },
+  );
+});
 
+describe('A granted delegation', () => {
   it('is revoked before its end and announces why it ended', () => {
     given(aDelegation().identifiedBy('delegation-7').onDesk('practice-1', 'person-2').givenTo('person-3'))
       .when((delegation) => delegation.revoke(later))

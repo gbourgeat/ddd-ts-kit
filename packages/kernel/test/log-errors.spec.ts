@@ -62,10 +62,17 @@ describe('describeError', () => {
   });
 
   it('replaces the message of an unexpected error when it scrubs, and drops the line of the stack that repeats it', () => {
-    const refusal = new OrderAlreadyPaid('Order order-1 is already paid', { cause: new Error('duplicate key (ada@example.org)') });
+    const refusal = new OrderAlreadyPaid('Order order-1 is already paid', {
+      cause: new Error('duplicate key (ada@example.org)'),
+    });
+
     const description = describeError(refusal, { scrubMessages: true });
 
-    expect(description).toMatchObject({ message: 'Order order-1 is already paid', cause: { type: 'Error', message: SCRUBBED_MESSAGE } });
+    expect(description).toMatchObject({
+      message: 'Order order-1 is already paid',
+      cause: { type: 'Error', message: SCRUBBED_MESSAGE },
+    });
+
     expect(description.cause?.stack).toMatch(/^\s+at /);
     expect(JSON.stringify(description)).not.toContain('ada@example.org');
   });
@@ -85,7 +92,11 @@ describe('describeErrorFields', () => {
     const fields: LogFields = { error: failure, orderId: 'order-1', attempt: { last: failure } };
     const written = describeErrorFields(fields);
 
-    expect(written).toMatchObject({ error: { type: 'RangeError', message: 'weight out of range' }, orderId: 'order-1' });
+    expect(written).toMatchObject({
+      error: { type: 'RangeError', message: 'weight out of range' },
+      orderId: 'order-1',
+    });
+
     expect(written.attempt).toBe(fields.attempt);
     expect(fields.error).toBe(failure);
   });
@@ -93,14 +104,27 @@ describe('describeErrorFields', () => {
 
 describe('identifyError', () => {
   it('names the class and the short code, never the message', () => {
-    expect(identifyError(new OrderAlreadyPaid('Order order-1 is already paid'))).toEqual({ errorType: 'OrderAlreadyPaid', errorCode: 'ORDER_ALREADY_PAID' });
-    expect(identifyError(Object.assign(new Error('socket closed'), { code: 'ECONNRESET' }))).toEqual({ errorType: 'Error', errorCode: 'ECONNRESET' });
-    expect(identifyError(Object.assign(new Error('refused'), { code: 'a code that quotes ada@example.org' }))).toEqual({ errorType: 'Error' });
+    expect(identifyError(new OrderAlreadyPaid('Order order-1 is already paid'))).toEqual({
+      errorType: 'OrderAlreadyPaid',
+      errorCode: 'ORDER_ALREADY_PAID',
+    });
+
+    expect(identifyError(Object.assign(new Error('socket closed'), { code: 'ECONNRESET' }))).toEqual({
+      errorType: 'Error',
+      errorCode: 'ECONNRESET',
+    });
+
+    expect(identifyError(Object.assign(new Error('refused'), { code: 'a code that quotes ada@example.org' }))).toEqual({
+      errorType: 'Error',
+    });
+
     expect(identifyError('thrown string')).toEqual({ errorType: 'string' });
   });
 
   it('gives its code to the report of the error', () => {
-    expect(errorReportOf(new OrderAlreadyPaid('paid'), { origin: 'command', operation: 'PayOrder' }).errorCode).toBe('ORDER_ALREADY_PAID');
+    expect(errorReportOf(new OrderAlreadyPaid('paid'), { origin: 'command', operation: 'PayOrder' }).errorCode).toBe(
+      'ORDER_ALREADY_PAID',
+    );
   });
 });
 
@@ -114,7 +138,11 @@ describe('InMemoryLogger', () => {
     scrubbing.child({ context: 'billing' }).error('payment failed', { error });
 
     expect(logger.entries[0]?.fields.error).toMatchObject({ type: 'Error', message: 'row (ada@example.org) refused' });
-    expect(scrubbing.entries[0]?.fields).toMatchObject({ context: 'billing', error: { type: 'Error', message: SCRUBBED_MESSAGE } });
+
+    expect(scrubbing.entries[0]?.fields).toMatchObject({
+      context: 'billing',
+      error: { type: 'Error', message: SCRUBBED_MESSAGE },
+    });
   });
 
   it('records from the level it is given, and says so', () => {
@@ -144,10 +172,24 @@ describe('InMemoryLogger', () => {
   it('records the entry without its fields when one of them cannot be read, for a child too', () => {
     const logger = new InMemoryLogger({ base: { service: 'shop' } });
 
-    logger.info('order shipped', { get total(): number { throw new Error('unreadable'); } });
-    logger.child({ get total(): number { throw new Error('unreadable'); } }).warn('carrier slow');
+    logger.info('order shipped', {
+      get total(): number {
+        throw new Error('unreadable');
+      },
+    });
 
-    expect(logger.entries.map((entry) => entry.fields)).toEqual([UNWRITABLE_FIELDS, { service: 'shop', ...UNWRITABLE_FIELDS }]);
+    logger
+      .child({
+        get total(): number {
+          throw new Error('unreadable');
+        },
+      })
+      .warn('carrier slow');
+
+    expect(logger.entries.map((entry) => entry.fields)).toEqual([
+      UNWRITABLE_FIELDS,
+      { service: 'shop', ...UNWRITABLE_FIELDS },
+    ]);
   });
 
   it('resolves its flush and keeps recording', async () => {

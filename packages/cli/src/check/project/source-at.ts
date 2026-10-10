@@ -13,13 +13,17 @@ const readFromDisk = new WeakMap<Project, Map<string, SourceFile | undefined>>()
 export function sourceAt(project: Project, file: string): SourceFile | undefined {
   const loaded = project.files.find((candidate) => candidate.path === file);
 
-  if (loaded !== undefined) return loaded;
+  if (loaded !== undefined) {
+    return loaded;
+  }
 
   const cache = readFromDisk.get(project) ?? new Map<string, SourceFile | undefined>();
 
   readFromDisk.set(project, cache);
 
-  if (!cache.has(file)) cache.set(file, readSource(project, file));
+  if (!cache.has(file)) {
+    cache.set(file, readSource(project, file));
+  }
 
   return cache.get(file);
 }

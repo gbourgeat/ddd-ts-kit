@@ -19,7 +19,10 @@ import { FakeAppointmentRepository } from '../fakes/appointment.repository.fake.
 import { FakeCalendarRepository } from '../fakes/calendar.repository.fake.js';
 import { FakeWaitlistRepository } from '../fakes/waitlist.repository.fake.js';
 
-const holders = authorizationModule({ authorizer: new RoleBasedAuthorizer({ roles: { holder: [schedulingPermissions['waitlist.offer']] } }) });
+const holders = authorizationModule({
+  authorizer: new RoleBasedAuthorizer({ roles: { holder: [schedulingPermissions['waitlist.offer']] } }),
+});
+
 const holder = anActor().withRole('holder').build();
 /** Friday 27 February 2026, 11:00 in Paris: the test clock. The slots are on Monday 2 March. */
 const now = new Date('2026-02-27T10:00:00.000Z');
@@ -34,15 +37,30 @@ describe('Offer freed slot', () => {
     const requested = await appointmentRepository.findById('appointment-1');
 
     expect(id).toBe('appointment-1');
-    expect(requested).toMatchObject({ status: 'requested', patientId: 'patient-1', calendarId: 'calendar-1', confirmBefore: new Date('2026-02-27T10:30:00.000Z') });
-    expect(requested?.booking).toMatchObject({ practiceId: 'practice-1', practitionerId: 'practitioner-1', appointmentTypeId: 'consultation', day: '2026-03-02' });
+
+    expect(requested).toMatchObject({
+      status: 'requested',
+      patientId: 'patient-1',
+      calendarId: 'calendar-1',
+      confirmBefore: new Date('2026-02-27T10:30:00.000Z'),
+    });
+
+    expect(requested?.booking).toMatchObject({
+      practiceId: 'practice-1',
+      practitionerId: 'practitioner-1',
+      appointmentTypeId: 'consultation',
+      day: '2026-03-02',
+    });
+
     expect(requested?.slot).toMatchObject(nine);
   });
 
   it('is refused to an actor who does not hold the permission waitlist.offer', async () => {
     const { application } = await arrange();
 
-    await expect(application.commandBus.execute(new OfferFreedSlotCommand(anActor().build(), 'calendar-1', nine))).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(
+      application.commandBus.execute(new OfferFreedSlotCommand(anActor().build(), 'calendar-1', nine)),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
   });
 
   it('takes the waiter off the waitlist with the offer', async () => {
@@ -50,7 +68,9 @@ describe('Offer freed slot', () => {
 
     await application.commandBus.execute(new OfferFreedSlotCommand(holder, 'calendar-1', nine));
 
-    expect((await waitlistRepository.findById('calendar-1.2026-03-02'))?.waiters.map((waiter) => waiter.patientId)).toEqual(['patient-2']);
+    expect(
+      (await waitlistRepository.findById('calendar-1.2026-03-02'))?.waiters.map((waiter) => waiter.patientId),
+    ).toEqual(['patient-2']);
   });
 
   it('announces the offer and the appointment it requests, to the context and to the others', async () => {
@@ -69,18 +89,37 @@ describe('Offer freed slot', () => {
 
   it('looks for the waitlist of the day of the slot on the wall clock of the practice', async () => {
     const { application } = await arrange();
-    const lateEvening = { startsAt: new Date('2026-03-01T23:00:00.000Z'), endsAt: new Date('2026-03-01T23:30:00.000Z'), heldUntil: new Date('2026-03-01T23:30:00.000Z') };
 
-    expect(await application.commandBus.execute(new OfferFreedSlotCommand(holder, 'calendar-1', lateEvening))).toBe('appointment-1');
+    const lateEvening = {
+      startsAt: new Date('2026-03-01T23:00:00.000Z'),
+      endsAt: new Date('2026-03-01T23:30:00.000Z'),
+      heldUntil: new Date('2026-03-01T23:30:00.000Z'),
+    };
+
+    expect(await application.commandBus.execute(new OfferFreedSlotCommand(holder, 'calendar-1', lateEvening))).toBe(
+      'appointment-1',
+    );
   });
 
   it.each([
-    ['nobody waits for that day', { startsAt: new Date('2026-03-03T08:00:00.000Z'), endsAt: new Date('2026-03-03T08:30:00.000Z'), heldUntil: new Date('2026-03-03T08:30:00.000Z') }],
-    ['the slot is shorter than what any waiter asks for', { startsAt: paris('09:00'), endsAt: paris('09:15'), heldUntil: paris('09:15') }],
+    [
+      'nobody waits for that day',
+      {
+        startsAt: new Date('2026-03-03T08:00:00.000Z'),
+        endsAt: new Date('2026-03-03T08:30:00.000Z'),
+        heldUntil: new Date('2026-03-03T08:30:00.000Z'),
+      },
+    ],
+    [
+      'the slot is shorter than what any waiter asks for',
+      { startsAt: paris('09:00'), endsAt: paris('09:15'), heldUntil: paris('09:15') },
+    ],
   ])('requests nothing and leaves the waitlist as it was when %s', async (_case, freed) => {
     const { application, appointmentRepository, waitlistRepository } = await arrange();
 
-    expect(await application.commandBus.execute(new OfferFreedSlotCommand(holder, 'calendar-1', freed))).toBeUndefined();
+    expect(
+      await application.commandBus.execute(new OfferFreedSlotCommand(holder, 'calendar-1', freed)),
+    ).toBeUndefined();
 
     expect(appointmentRepository.all()).toEqual([]);
     expect((await waitlistRepository.findById('calendar-1.2026-03-02'))?.waiters).toHaveLength(2);
@@ -90,7 +129,9 @@ describe('Offer freed slot', () => {
   it('requests nothing over a part of the slot that another appointment still holds', async () => {
     const { application, appointmentRepository } = await arrange();
 
-    await appointmentRepository.save(anAppointment().identifiedBy('moved').onCalendar('calendar-1').startingAt(paris('09:15')).build());
+    await appointmentRepository.save(
+      anAppointment().identifiedBy('moved').onCalendar('calendar-1').startingAt(paris('09:15')).build(),
+    );
 
     expect(await application.commandBus.execute(new OfferFreedSlotCommand(holder, 'calendar-1', nine))).toBeUndefined();
     expect(appointmentRepository.all().map((appointment) => appointment.id)).toEqual(['moved']);
@@ -99,7 +140,9 @@ describe('Offer freed slot', () => {
   it('refuses a calendar that does not exist', async () => {
     const { application } = await arrange();
 
-    await expect(application.commandBus.execute(new OfferFreedSlotCommand(holder, 'calendar-9', nine))).rejects.toMatchObject({ code: 'UNKNOWN_CALENDAR' });
+    await expect(
+      application.commandBus.execute(new OfferFreedSlotCommand(holder, 'calendar-9', nine)),
+    ).rejects.toMatchObject({ code: 'UNKNOWN_CALENDAR' });
   });
 });
 
@@ -113,13 +156,21 @@ describe('Offer freed slot, when an appointment frees what it held', () => {
     booked.cancel(unwrap(Cancellation.create('patient')), now);
     await appointments.save(booked);
 
-    expect(appointmentRepository.all().filter((appointment) => appointment.isActive)).toMatchObject([{ status: 'requested', patientId: 'patient-1' }]);
+    expect(appointmentRepository.all().filter((appointment) => appointment.isActive)).toMatchObject([
+      { status: 'requested', patientId: 'patient-1' },
+    ]);
   });
 
   it('offers the slot to the next waiter when the hold of the first offer expires', async () => {
-    const { application, appointmentRepository, waitlistRepository } = await arrange(authorizationModule({ authorizer: new AllowAll() }));
+    const { application, appointmentRepository, waitlistRepository } = await arrange(
+      authorizationModule({ authorizer: new AllowAll() }),
+    );
+
     const appointments = application.get(AppointmentRepository);
-    const offered = await appointments.findById((await application.commandBus.execute(new OfferFreedSlotCommand(holder, 'calendar-1', nine))) ?? 'none');
+
+    const offered = await appointments.findById(
+      (await application.commandBus.execute(new OfferFreedSlotCommand(holder, 'calendar-1', nine))) ?? 'none',
+    );
 
     offered?.expire(new Date('2026-02-27T10:30:00.000Z'));
     await appointments.save(offered ?? anAppointment().build());
@@ -138,12 +189,21 @@ async function arrange(authorization = holders) {
   const calendarRepository = new FakeCalendarRepository();
   const appointmentRepository = new FakeAppointmentRepository();
 
-  await calendarRepository.save(aCalendar().identifiedBy('calendar-1').openEveryDay(['00:00', '24:00']).offering('consultation').build());
-  await waitlistRepository.save(aWaitlist().forCalendar('calendar-1').onDay('2026-03-02').joinedBy('patient-1').joinedBy('patient-2').build());
+  await calendarRepository.save(
+    aCalendar().identifiedBy('calendar-1').openEveryDay(['00:00', '24:00']).offering('consultation').build(),
+  );
+
+  await waitlistRepository.save(
+    aWaitlist().forCalendar('calendar-1').onDay('2026-03-02').joinedBy('patient-1').joinedBy('patient-2').build(),
+  );
 
   const application = createTestApplication({
     modules: [platformTestModule, contextModule('scheduling', schedulingDeclarations), authorization],
-    fakes: [fake(WaitlistRepository, waitlistRepository), fake(CalendarRepository, calendarRepository), fake(AppointmentRepository, appointmentRepository)],
+    fakes: [
+      fake(WaitlistRepository, waitlistRepository),
+      fake(CalendarRepository, calendarRepository),
+      fake(AppointmentRepository, appointmentRepository),
+    ],
     idPrefix: 'appointment',
     now,
   });

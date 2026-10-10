@@ -17,15 +17,23 @@ type Fields = Readonly<Record<string, FieldDeclaration>>;
 export function readCursor(cursor: string, sort: readonly Sort[], fields: Fields): CursorValues | undefined {
   const position = decoded(cursor);
 
-  if (position === undefined || Object.keys(position).length !== sort.length) return undefined;
+  if (position === undefined || Object.keys(position).length !== sort.length) {
+    return undefined;
+  }
 
   const values: Record<string, FieldValue | null> = {};
 
   for (const { field } of sort) {
     const declared = Object.hasOwn(fields, field) ? fields[field] : undefined;
-    const value = declared === undefined ? undefined : valueOf(declared, Object.hasOwn(position, field) ? position[field] : undefined);
 
-    if (value === undefined) return undefined;
+    const value =
+      declared === undefined
+        ? undefined
+        : valueOf(declared, Object.hasOwn(position, field) ? position[field] : undefined);
+
+    if (value === undefined) {
+      return undefined;
+    }
 
     values[field] = value;
   }
@@ -37,16 +45,25 @@ function decoded(cursor: string): CursorPosition | undefined {
   try {
     return decodeCursor(cursor);
   } catch (error) {
-    if (error instanceof InvalidPageRequestError) return undefined;
+    if (error instanceof InvalidPageRequestError) {
+      return undefined;
+    }
 
     throw error;
   }
 }
 
-function valueOf(declared: FieldDeclaration, written: CursorPosition[string] | undefined): FieldValue | null | undefined {
-  if (written === undefined) return undefined;
+function valueOf(
+  declared: FieldDeclaration,
+  written: CursorPosition[string] | undefined,
+): FieldValue | null | undefined {
+  if (written === undefined) {
+    return undefined;
+  }
 
-  if (written === null) return declared.nullable ? null : undefined;
+  if (written === null) {
+    return declared.nullable ? null : undefined;
+  }
 
   const value = declared.type === 'instant' && typeof written === 'string' ? new Date(written) : written;
 

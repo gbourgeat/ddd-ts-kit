@@ -6,7 +6,9 @@ export class InMemoryLedger implements Ledger {
   private readonly amounts: number[] = [];
 
   record(amount: number): void {
-    if (!Number.isFinite(amount)) throw new RangeError('An amount is a finite number');
+    if (!Number.isFinite(amount)) {
+      throw new RangeError('An amount is a finite number');
+    }
 
     this.amounts.push(amount);
   }

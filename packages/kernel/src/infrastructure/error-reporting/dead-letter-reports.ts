@@ -70,11 +70,15 @@ export class DeadLetterReports {
 
   /** The `onFailure` hook of the provider: `onFailure: (failure) => deadLetters.onFailure(failure)`. */
   onFailure(failure: DeliveryFailure): void {
-    if (failure.dead !== true && failure.kind !== 'poison') return;
+    if (failure.dead !== true && failure.kind !== 'poison') {
+      return;
+    }
 
     const thrown = failure.eventId === undefined ? undefined : this.thrown.get(failure.eventId);
 
-    if (failure.eventId !== undefined) this.thrown.delete(failure.eventId);
+    if (failure.eventId !== undefined) {
+      this.thrown.delete(failure.eventId);
+    }
 
     const error = thrown?.error ?? new DeadLetterError(failure.kind, failure.code);
 
@@ -103,7 +107,9 @@ export class DeadLetterReports {
     });
 
     for (const oldest of this.thrown.keys()) {
-      if (this.thrown.size <= this.capacity) break;
+      if (this.thrown.size <= this.capacity) {
+        break;
+      }
 
       this.thrown.delete(oldest);
     }

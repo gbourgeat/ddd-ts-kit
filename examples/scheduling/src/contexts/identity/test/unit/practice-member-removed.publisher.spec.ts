@@ -8,7 +8,12 @@ describe('Publishing "practice member removed" to other contexts', () => {
     const bus = new InMemoryEventBus();
     const publisher = new PracticeMemberRemovedPublisher(bus, new SequentialIdGenerator('event'));
 
-    await publisher.handle(new PracticeMemberRemoved('practice-1', new Date('2026-01-01T00:00:00.000Z'), { personId: 'person-2', role: 'practitioner' }));
+    await publisher.handle(
+      new PracticeMemberRemoved('practice-1', new Date('2026-01-01T00:00:00.000Z'), {
+        personId: 'person-2',
+        role: 'practitioner',
+      }),
+    );
 
     expect(bus.published).toEqual([
       {

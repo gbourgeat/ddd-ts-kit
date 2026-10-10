@@ -35,7 +35,9 @@ export function logCall<T>(call: LoggedCall, proceed: () => Promise<T>): Promise
 }
 
 function write(call: LoggedCall, level: LogLevel, outcome: Outcome): void {
-  if (!call.logger.isLevelEnabled(level)) return;
+  if (!call.logger.isLevelEnabled(level)) {
+    return;
+  }
 
   call.logger[level](`${call.operation} ${outcome.word}`, { ...call.fields(), ...outcome.fields });
 }

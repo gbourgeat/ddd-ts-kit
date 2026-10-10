@@ -41,8 +41,17 @@ export class PrismaReadModelTable<Row extends object, Tx extends PrismaRawQuerie
 
     this.mapper = new RowMapper<Row>(options.columns);
     this.rows = new PrismaModelRows(context, options);
-    this.copy = new PrismaTableRows(context, { path: schema === undefined ? shadow : `"${schema.replaceAll('"', '""')}".${shadow}`, key: options.key ?? 'id', mapper: this.mapper });
-    this.rebuild = new PostgresReadModelRebuild((statement, parameters) => this.run(statement, parameters), { table, ...(schema === undefined ? {} : { schema }) });
+
+    this.copy = new PrismaTableRows(context, {
+      path: schema === undefined ? shadow : `"${schema.replaceAll('"', '""')}".${shadow}`,
+      key: options.key ?? 'id',
+      mapper: this.mapper,
+    });
+
+    this.rebuild = new PostgresReadModelRebuild((statement, parameters) => this.run(statement, parameters), {
+      table,
+      ...(schema === undefined ? {} : { schema }),
+    });
   }
 
   find(key: string): Promise<StampedRow<Row> | undefined> {
@@ -102,9 +111,14 @@ export class PrismaReadModelTable<Row extends object, Tx extends PrismaRawQuerie
     return this.rebuild.abandon();
   }
 
-  private async run(statement: string, parameters: readonly (string | number)[]): Promise<readonly Readonly<Record<string, unknown>>[]> {
+  private async run(
+    statement: string,
+    parameters: readonly (string | number)[],
+  ): Promise<readonly Readonly<Record<string, unknown>>[]> {
     const rows: unknown = await this.context.client().$queryRawUnsafe(statement, ...parameters);
 
-    return Array.isArray(rows) ? rows.filter((row): row is Readonly<Record<string, unknown>> => typeof row === 'object' && row !== null) : [];
+    return Array.isArray(rows)
+      ? rows.filter((row): row is Readonly<Record<string, unknown>> => typeof row === 'object' && row !== null)
+      : [];
   }
 }

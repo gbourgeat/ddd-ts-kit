@@ -9,6 +9,9 @@ import { parseCriteriaQuery } from './parse-criteria-query.js';
  * hands the handler a `Criteria` the read port accepts, and documents every filter, the sort
  * and the page in the contract.
  */
-export function criteriaQuerySchema<Row>(definition: CriteriaDefinition<Row>, options: CriteriaQueryOptions = {}): Schema<Criteria<Row>> {
+export function criteriaQuerySchema<Row>(
+  definition: CriteriaDefinition<Row>,
+  options: CriteriaQueryOptions = {},
+): Schema<Criteria<Row>> {
   return customSchema((query) => parseCriteriaQuery(query, definition, options), criteriaParameters(definition));
 }

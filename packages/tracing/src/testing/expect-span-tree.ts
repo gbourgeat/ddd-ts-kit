@@ -12,7 +12,9 @@ import type { SpanNode } from './span-node.js';
 export function expectSpanTree(actual: readonly SpanNode[], expected: readonly ExpectedSpan[]): void {
   const mismatches = spanMismatches(actual, expected);
 
-  if (mismatches.length === 0) return;
+  if (mismatches.length === 0) {
+    return;
+  }
 
   const keys = [...new Set(attributeKeys(expected))];
 

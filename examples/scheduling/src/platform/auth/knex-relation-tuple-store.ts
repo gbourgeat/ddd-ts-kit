@@ -22,29 +22,47 @@ export class KnexRelationTupleStore implements RelationTupleStore {
   ) {}
 
   async write(tuples: readonly RelationTuple[]): Promise<void> {
-    if (tuples.length === 0) return;
+    if (tuples.length === 0) {
+      return;
+    }
 
-    await this.table().insert(tuples.map(rowOf)).onConflict([...COLUMNS]).ignore();
+    await this.table()
+      .insert(tuples.map(rowOf))
+      .onConflict([...COLUMNS])
+      .ignore();
   }
 
   async delete(tuples: readonly RelationTuple[]): Promise<void> {
-    if (tuples.length === 0) return;
+    if (tuples.length === 0) {
+      return;
+    }
 
     await this.table()
-      .whereIn([...COLUMNS], tuples.map((tuple) => [tuple.object, tuple.relation, tuple.subject]))
+      .whereIn(
+        [...COLUMNS],
+        tuples.map((tuple) => [tuple.object, tuple.relation, tuple.subject]),
+      )
       .delete();
   }
 
   readByObject(object: string, relation: string): Promise<readonly RelationTuple[]> {
-    return this.table().select(...COLUMNS).where({ object, relation }).orderBy('subject');
+    return this.table()
+      .select(...COLUMNS)
+      .where({ object, relation })
+      .orderBy('subject');
   }
 
   readBySubject(subject: string): Promise<readonly RelationTuple[]> {
-    return this.table().select(...COLUMNS).where({ subject }).orderBy(['object', 'relation']);
+    return this.table()
+      .select(...COLUMNS)
+      .where({ subject })
+      .orderBy(['object', 'relation']);
   }
 
   private table(): Knex.QueryBuilder<RelationTuple, RelationTuple[]> {
-    return this.context.executor()<RelationTuple, RelationTuple[]>(RELATION_TUPLES_TABLE).withSchema(this.placed.schema);
+    return this.context
+      .executor()<RelationTuple, RelationTuple[]>(RELATION_TUPLES_TABLE)
+      .withSchema(this.placed.schema);
   }
 }
 

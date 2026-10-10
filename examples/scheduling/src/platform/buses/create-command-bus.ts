@@ -1,6 +1,13 @@
 import { loggingMiddleware, metricsMiddleware } from '@ddd-ts-kit/aspects';
 import { UseCaseGuard, type Resolve } from '@ddd-ts-kit/di';
-import { ErrorReporter, InMemoryCommandBus, UnitOfWork, errorReportingMiddleware, unitOfWorkMiddleware, type BusMiddleware } from '@ddd-ts-kit/kernel';
+import {
+  ErrorReporter,
+  InMemoryCommandBus,
+  UnitOfWork,
+  errorReportingMiddleware,
+  unitOfWorkMiddleware,
+  type BusMiddleware,
+} from '@ddd-ts-kit/kernel';
 import { relayWakeUpMiddleware } from '@ddd-ts-kit/redis';
 import type { Foundations } from '../lay-foundations.js';
 import type { RedisServices } from '../redis/open-redis.js';
@@ -21,7 +28,9 @@ interface Signalled {
  */
 export function createCommandBus(resolve: Resolve, foundations: Foundations, options: Signalled): InMemoryCommandBus {
   return new InMemoryCommandBus()
-    .use((message, next, info) => errorReportingMiddleware(resolve(ErrorReporter), foundations.scope)(message, next, info))
+    .use((message, next, info) =>
+      errorReportingMiddleware(resolve(ErrorReporter), foundations.scope)(message, next, info),
+    )
     .use(loggingMiddleware(foundations.logger))
     .use(metricsMiddleware(foundations.metrics))
     .use((message, next, info) => resolve(UseCaseGuard).check(message, next, info))

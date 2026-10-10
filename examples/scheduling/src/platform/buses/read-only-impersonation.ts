@@ -14,7 +14,9 @@ export function readOnlyImpersonation(scope: ExecutionScope): BusMiddleware {
   return (_message, next, info) => {
     const session = scope.current()?.session;
 
-    if (session !== undefined && isImpersonated(session)) return Promise.reject(new ForbiddenError(info.name, IMPERSONATION_READ_ONLY));
+    if (session !== undefined && isImpersonated(session)) {
+      return Promise.reject(new ForbiddenError(info.name, IMPERSONATION_READ_ONLY));
+    }
 
     return next();
   };

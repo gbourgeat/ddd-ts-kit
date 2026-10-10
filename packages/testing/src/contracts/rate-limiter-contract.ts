@@ -55,11 +55,15 @@ class RateLimiterSuite extends ContractSuite<RateLimiter> {
     });
 
     this.it('does not count a refused call', async () => {
-      for (let call = 0; call < 3; call += 1) await this.consume();
+      for (let call = 0; call < 3; call += 1) {
+        await this.consume();
+      }
 
       await this.options.elapse(500);
 
-      for (let call = 0; call < 5; call += 1) await this.consume();
+      for (let call = 0; call < 5; call += 1) {
+        await this.consume();
+      }
 
       await this.options.elapse(500);
 
@@ -83,7 +87,9 @@ class RateLimiterSuite extends ContractSuite<RateLimiter> {
     });
 
     this.it('starts afresh once the whole window has passed without a call', async () => {
-      for (let call = 0; call < 3; call += 1) await this.consume();
+      for (let call = 0; call < 3; call += 1) {
+        await this.consume();
+      }
 
       await this.options.elapse(1_000);
 
@@ -93,7 +99,9 @@ class RateLimiterSuite extends ContractSuite<RateLimiter> {
 
   private isolates(): void {
     this.it('keeps keys apart', async () => {
-      for (let call = 0; call < 3; call += 1) await this.consume('client-a');
+      for (let call = 0; call < 3; call += 1) {
+        await this.consume('client-a');
+      }
 
       this.expect((await this.consume('client-a')).allowed).toBe(false);
       this.expect(await this.consume('client-b')).toEqual({ allowed: true, remaining: 2, retryAfterMs: 0 });
@@ -103,7 +111,10 @@ class RateLimiterSuite extends ContractSuite<RateLimiter> {
       const decisions = await Promise.all(Array.from({ length: 10 }, () => this.consume()));
 
       this.expect(decisions.filter((decision) => decision.allowed).length).toBe(3);
-      this.expect(decisions.filter((decision) => !decision.allowed).every((decision) => decision.retryAfterMs === 1_000)).toBe(true);
+
+      this.expect(
+        decisions.filter((decision) => !decision.allowed).every((decision) => decision.retryAfterMs === 1_000),
+      ).toBe(true);
     });
   }
 

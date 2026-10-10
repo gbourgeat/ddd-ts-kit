@@ -24,7 +24,9 @@ export class BookAppointmentHandler implements CommandHandler<BookAppointmentCom
   async execute({ calendarId, wish }: BookAppointmentCommand): Promise<string> {
     const calendar = await this.calendarRepository.findById(calendarId);
 
-    if (calendar === undefined) throw new UnknownCalendarError(calendarId);
+    if (calendar === undefined) {
+      throw new UnknownCalendarError(calendarId);
+    }
 
     const now = this.clock.now();
     const start = wish.startsAt.getTime();

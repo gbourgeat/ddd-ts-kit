@@ -27,7 +27,9 @@ export function listPracticeAgendaRoute(queries: QueryBus): Route {
       security: ['bearer'],
     },
     async (input) => {
-      const page = await queries.execute(new ListPracticeAgendaQuery(actorOf(input.context.principal), input.params.practiceId, input.query));
+      const page = await queries.execute(
+        new ListPracticeAgendaQuery(actorOf(input.context.principal), input.params.practiceId, input.query),
+      );
 
       return { status: 200, body: pageResponse(page, lineOf) };
     },

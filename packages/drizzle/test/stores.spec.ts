@@ -98,9 +98,7 @@ describe('table definitions', () => {
       sql`select indexdef from pg_indexes where schemaname = 'messaging' and tablename = 'processed_events'`,
     );
 
-    expect(rows.map((row) => row.indexdef)).toEqual([
-      expect.stringMatching(/UNIQUE INDEX .* \(consumer, event_id\)/),
-    ]);
+    expect(rows.map((row) => row.indexdef)).toEqual([expect.stringMatching(/UNIQUE INDEX .* \(consumer, event_id\)/)]);
   });
 });
 

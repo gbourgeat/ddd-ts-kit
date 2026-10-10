@@ -8,7 +8,9 @@ export function defineAspect(advise: AdviceFactory): Aspect {
   const applied = new WeakSet<object>();
 
   const aspect: Aspect = (instance, info = {}) => {
-    if (applied.has(instance)) return instance;
+    if (applied.has(instance)) {
+      return instance;
+    }
 
     const result = adviseMethods(instance, info, advise);
 

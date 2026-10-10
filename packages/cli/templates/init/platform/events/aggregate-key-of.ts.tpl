@@ -11,9 +11,14 @@ import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
  * provider and the two lines of the relay: the key is then the event id.
  */
 export function aggregateKeyOf(event: IntegrationEvent): string | undefined {
-  const aggregate = (event.type.split('.')[1] ?? '').replace(/-([a-z0-9])/g, (_match, letter: string) => letter.toUpperCase());
+  const aggregate = (event.type.split('.')[1] ?? '').replace(/-([a-z0-9])/g, (_match, letter: string) =>
+    letter.toUpperCase(),
+  );
+
   const payload: unknown = event.payload;
-  const id: unknown = typeof payload === 'object' && payload !== null ? Reflect.get(payload, aggregate + 'Id') : undefined;
+
+  const id: unknown =
+    typeof payload === 'object' && payload !== null ? Reflect.get(payload, aggregate + 'Id') : undefined;
 
   return typeof id === 'string' ? id : undefined;
 }

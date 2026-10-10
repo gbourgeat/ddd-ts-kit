@@ -36,19 +36,43 @@ const PROSE = [
 ruleTester.run('clean-no-commented-out-code', cleanNoCommentedOutCode, {
   valid: PROSE.map((comment) => `${comment}\nexport const value = 1;`),
   invalid: [
-    { code: '// const total = lines.reduce(add, 0);\nexport const value = 1;', errors: [{ messageId: 'code', line: 1 }] },
-    { code: '// const total = lines\n//   .map(price)\n//   .reduce(add, 0);\nexport const value = 1;', errors: [{ messageId: 'code', line: 1 }] },
-    { code: '// the previous version:\n// await repository.save(invoice);\nexport const value = 1;', errors: [{ messageId: 'code', line: 2 }] },
-    { code: '// if (invoice.isPaid()) {\n//   return;\n// }\nexport const value = 1;', errors: [{ messageId: 'code', line: 1 }] },
+    {
+      code: '// const total = lines.reduce(add, 0);\nexport const value = 1;',
+      errors: [{ messageId: 'code', line: 1 }],
+    },
+    {
+      code: '// const total = lines\n//   .map(price)\n//   .reduce(add, 0);\nexport const value = 1;',
+      errors: [{ messageId: 'code', line: 1 }],
+    },
+    {
+      code: '// the previous version:\n// await repository.save(invoice);\nexport const value = 1;',
+      errors: [{ messageId: 'code', line: 2 }],
+    },
+    {
+      code: '// if (invoice.isPaid()) {\n//   return;\n// }\nexport const value = 1;',
+      errors: [{ messageId: 'code', line: 1 }],
+    },
     { code: '// if (invoice.isPaid()) {\nexport const value = 1;', errors: [{ messageId: 'code', line: 1 }] },
     { code: "// import { z } from 'zod';\nexport const value = 1;", errors: [{ messageId: 'code' }] },
     { code: '// return this.total;\nexport const value = 1;', errors: [{ messageId: 'code' }] },
     { code: '// private guard(): void { this.check(); }\nexport const value = 1;', errors: [{ messageId: 'code' }] },
-    { code: '/*\nexport function old(): void {\n  run();\n}\n*/\nexport const value = 1;', errors: [{ messageId: 'code', line: 2 }] },
+    {
+      code: '/*\nexport function old(): void {\n  run();\n}\n*/\nexport const value = 1;',
+      errors: [{ messageId: 'code', line: 2 }],
+    },
     { code: 'export const value = 1; // counter += 1;', errors: [{ messageId: 'code' }] },
     { code: '// validate(input);\nexport const value = 1;', errors: [{ messageId: 'code' }] },
-    { code: '// first();\n\n// second();\nexport const value = 1;', errors: [{ messageId: 'code', line: 1 }, { messageId: 'code', line: 3 }] },
-    { code: '// export class Invoice extends AggregateRoot<string> {\nexport const value = 1;', errors: [{ messageId: 'code' }] },
+    {
+      code: '// first();\n\n// second();\nexport const value = 1;',
+      errors: [
+        { messageId: 'code', line: 1 },
+        { messageId: 'code', line: 3 },
+      ],
+    },
+    {
+      code: '// export class Invoice extends AggregateRoot<string> {\nexport const value = 1;',
+      errors: [{ messageId: 'code' }],
+    },
     { code: '// items.forEach((item) => {\nexport const value = 1;', errors: [{ messageId: 'code' }] },
   ],
 });

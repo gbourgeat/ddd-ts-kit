@@ -1,10 +1,5 @@
 import { err, ok, type Result } from '@ddd-ts-kit/kernel';
-import {
-  customSchema,
-  type JsonSchema,
-  type Schema,
-  type ValidationIssue,
-} from '@ddd-ts-kit/validation';
+import { customSchema, type JsonSchema, type Schema, type ValidationIssue } from '@ddd-ts-kit/validation';
 import { isRecord } from '../support/is-record.js';
 import { issue } from './issue.js';
 import type { PageBody } from './page-body.js';
@@ -34,7 +29,9 @@ function itemsOf<T>(inputs: readonly unknown[], item: Schema<T>, issues: Validat
   return inputs.flatMap((input, index) => {
     const parsed = item.parse(input);
 
-    if (parsed.ok) return [parsed.value];
+    if (parsed.ok) {
+      return [parsed.value];
+    }
 
     for (const found of parsed.error) {
       const path = found.path === '' ? `items.${String(index)}` : `items.${String(index)}.${found.path}`;

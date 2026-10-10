@@ -7,8 +7,20 @@ export const EXPLICIT_REBAC_ON_RABBITMQ: StackFlags = { ...REBAC_ON_RABBITMQ, st
 export const DISCOVERED_ON_KNEX: StackFlags = { ...DEFAULT_STACK, orm: 'knex', assembly: 'discovery' };
 /** Discovery behind a broker: each context listens on queues of its own, with no helper written for it. */
 export const DISCOVERED_BEHIND_NATS: StackFlags = { ...DISCOVERED_ON_KNEX, broker: 'nats' };
+
 /** Unexpected failures reported to Sentry or GlitchTip, wired by hand: the buses, the jobs, the HTTP boundary, the events RabbitMQ gives up. */
-const REPORTED_BY_HAND: StackFlags = { http: 'fastify', validation: 'zod', di: 'manual', tests: 'vitest', orm: 'knex', events: 'outbox', broker: 'rabbitmq', cache: 'redis', errors: 'sentry' };
+const REPORTED_BY_HAND: StackFlags = {
+  http: 'fastify',
+  validation: 'zod',
+  di: 'manual',
+  tests: 'vitest',
+  orm: 'knex',
+  events: 'outbox',
+  broker: 'rabbitmq',
+  cache: 'redis',
+  errors: 'sentry',
+};
+
 /** The same on the declared style, held to the whole pipeline: no DSN is configured, so the proof stays in the process. */
 const REPORTED_BEHIND_NATS: StackFlags = { ...DISCOVERED_BEHIND_NATS, errors: 'sentry' };
 
@@ -18,7 +30,22 @@ const REPORTED_BEHIND_NATS: StackFlags = { ...DISCOVERED_BEHIND_NATS, errors: 's
  * protocol server for the cache and the event bus, or another broker next to the cache,
  * failures reported to Sentry or GlitchTip and pino for the logs.
  */
-export const FIRST_CLASS: StackFlags = { http: 'express', validation: 'class-validator', di: 'tsyringe', tests: 'vitest', orm: 'knex', events: 'outbox', authn: 'keycloak', authz: 'rebac', broker: 'redis', cache: 'redis', audit: 'on', errors: 'sentry', logger: 'pino', style: 'declared' };
+export const FIRST_CLASS: StackFlags = {
+  http: 'express',
+  validation: 'class-validator',
+  di: 'tsyringe',
+  tests: 'vitest',
+  orm: 'knex',
+  events: 'outbox',
+  authn: 'keycloak',
+  authz: 'rebac',
+  broker: 'redis',
+  cache: 'redis',
+  audit: 'on',
+  errors: 'sentry',
+  logger: 'pino',
+  style: 'declared',
+};
 
 export const FIRST_CLASS_BROKERS = ['redis', 'nats', 'kafka'] as const;
 
@@ -38,8 +65,28 @@ export const STACKS: readonly StackFlags[] = [
   { http: 'none', validation: 'none', di: 'manual', tests: 'vitest', orm: 'none', events: 'in-memory' },
   REBAC_ON_RABBITMQ,
   ABAC_ON_KNEX_BY_HAND,
-  { http: 'fastify', validation: 'zod', di: 'tsyringe', tests: 'vitest', orm: 'drizzle', events: 'outbox', authn: 'none', authz: 'custom', broker: 'custom' },
-  { http: 'express', validation: 'zod', di: 'manual', tests: 'vitest', orm: 'custom', events: 'outbox', authn: 'none', authz: 'rebac', broker: 'rabbitmq' },
+  {
+    http: 'fastify',
+    validation: 'zod',
+    di: 'tsyringe',
+    tests: 'vitest',
+    orm: 'drizzle',
+    events: 'outbox',
+    authn: 'none',
+    authz: 'custom',
+    broker: 'custom',
+  },
+  {
+    http: 'express',
+    validation: 'zod',
+    di: 'manual',
+    tests: 'vitest',
+    orm: 'custom',
+    events: 'outbox',
+    authn: 'none',
+    authz: 'rebac',
+    broker: 'rabbitmq',
+  },
   ...FIRST_CLASS_BROKERS.map((broker) => ({ ...FIRST_CLASS, broker })),
   { ...FIRST_CLASS, broker: 'none' },
   { ...FIRST_CLASS, broker: 'rabbitmq', style: 'explicit' },
@@ -51,16 +98,60 @@ export const STACKS: readonly StackFlags[] = [
   { ...DEFAULT_STACK, broker: 'kafka', orm: 'knex' },
   { ...DEFAULT_STACK, broker: 'nats', style: 'explicit' },
   { ...DEFAULT_STACK, broker: 'kafka', style: 'explicit', cache: 'redis' },
-  { http: 'fastify', validation: 'zod', di: 'manual', tests: 'vitest', orm: 'drizzle', events: 'outbox', authn: 'keycloak', cache: 'redis' },
-  { http: 'nest', validation: 'standard-schema', di: 'nest', tests: 'vitest', orm: 'knex', events: 'outbox', cache: 'redis', broker: 'rabbitmq' },
-  { http: 'express', validation: 'zod', di: 'tsyringe', tests: 'vitest', orm: 'drizzle', events: 'outbox', audit: 'off' },
+  {
+    http: 'fastify',
+    validation: 'zod',
+    di: 'manual',
+    tests: 'vitest',
+    orm: 'drizzle',
+    events: 'outbox',
+    authn: 'keycloak',
+    cache: 'redis',
+  },
+  {
+    http: 'nest',
+    validation: 'standard-schema',
+    di: 'nest',
+    tests: 'vitest',
+    orm: 'knex',
+    events: 'outbox',
+    cache: 'redis',
+    broker: 'rabbitmq',
+  },
+  {
+    http: 'express',
+    validation: 'zod',
+    di: 'tsyringe',
+    tests: 'vitest',
+    orm: 'drizzle',
+    events: 'outbox',
+    audit: 'off',
+  },
   { http: 'none', validation: 'zod', di: 'tsyringe', tests: 'vitest', orm: 'knex', events: 'outbox', cache: 'redis' },
-  { http: 'fastify', validation: 'zod', di: 'tsyringe', tests: 'vitest', orm: 'none', events: 'in-memory', audit: 'on', cache: 'redis' },
+  {
+    http: 'fastify',
+    validation: 'zod',
+    di: 'tsyringe',
+    tests: 'vitest',
+    orm: 'none',
+    events: 'in-memory',
+    audit: 'on',
+    cache: 'redis',
+  },
   REPORTED_BY_HAND,
   { ...REPORTED_BY_HAND, logger: 'winston' },
   { ...DEFAULT_STACK, logger: 'winston' },
   { ...ABAC_ON_KNEX_BY_HAND, logger: 'pino' },
-  { http: 'nest', validation: 'standard-schema', di: 'nest', tests: 'vitest', orm: 'drizzle', events: 'outbox', logger: 'pino', errors: 'sentry' },
+  {
+    http: 'nest',
+    validation: 'standard-schema',
+    di: 'nest',
+    tests: 'vitest',
+    orm: 'drizzle',
+    events: 'outbox',
+    logger: 'pino',
+    errors: 'sentry',
+  },
 ];
 
 /** The stacks held to everything a project runs in its pipeline, as generated. */
@@ -72,7 +163,10 @@ export const PROVEN: readonly (readonly [string, StackFlags])[] = [
   ['the default stack in the explicit style', EXPLICIT_STACK],
   ['explicit, relationships and RabbitMQ, GitLab pipeline', EXPLICIT_REBAC_ON_RABBITMQ],
   ['explicit, attribute policies on knex, wired by hand', ABAC_ON_KNEX_BY_HAND],
-  ['wired by hand behind RabbitMQ, failures reported, winston for the logs', { ...REPORTED_BY_HAND, logger: 'winston' }],
+  [
+    'wired by hand behind RabbitMQ, failures reported, winston for the logs',
+    { ...REPORTED_BY_HAND, logger: 'winston' },
+  ],
 ];
 
 export function label(stack: StackFlags): string {

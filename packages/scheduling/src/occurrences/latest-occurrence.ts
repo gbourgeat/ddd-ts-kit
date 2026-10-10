@@ -13,7 +13,11 @@ export interface OccurrenceRange {
 export function latestOccurrence(schedule: ParsedJobSchedule, range: OccurrenceRange): Date | undefined {
   const from = range.after.getTime();
   const until = range.notAfter.getTime();
-  const latest = schedule.kind === 'interval' ? Math.floor(until / schedule.everyMs) * schedule.everyMs : latestOfCron(schedule, until, from);
+
+  const latest =
+    schedule.kind === 'interval'
+      ? Math.floor(until / schedule.everyMs) * schedule.everyMs
+      : latestOfCron(schedule, until, from);
 
   return latest === undefined || latest <= from ? undefined : new Date(latest);
 }
@@ -24,7 +28,9 @@ function latestOfCron(cron: ParsedCron, until: number, from: number): number | u
   for (let day = localDayOf(cron, until) + 1; day >= lastDay; day -= 1) {
     const found = occurrencesOfDay(cron, day).findLast((occurrence) => occurrence <= until);
 
-    if (found !== undefined) return found;
+    if (found !== undefined) {
+      return found;
+    }
   }
 
   return undefined;

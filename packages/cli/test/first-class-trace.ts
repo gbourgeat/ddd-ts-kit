@@ -18,7 +18,11 @@ const AWAITED_ACTION = `    const trace = await tracing.traceOf(async () => {
       }, { timeoutMs: 10_000 });
     });`;
 
-const GENERATED_TREE = `      { name: 'POST /invoices', kind: 'SERVER', children: [{ name: 'command IssueInvoiceCommand', children: [{ name: 'repository InvoiceRepository.save' }] }] },`;
+const GENERATED_TREE = `      {
+        name: 'POST /invoices',
+        kind: 'SERVER',
+        children: [{ name: 'command IssueInvoiceCommand', children: [{ name: 'repository InvoiceRepository.save' }] }],
+      },`;
 
 /** One action, one trace: the save records the fact, at the end of the unit of work each publisher appends to the outbox, the relay publishes later and shipping consumes, in the same trace. */
 const WHOLE_TREE = `      {
@@ -60,15 +64,26 @@ export function assertTheWholeTrace(root: string): void {
   const spec = read(root, SPEC);
 
   const edited = spec
-    .replace("import { afterAll, beforeAll, beforeEach, describe, it, onTestFailed } from 'vitest';", "import { afterAll, beforeAll, beforeEach, describe, expect, it, onTestFailed } from 'vitest';")
-    .replace("import { expectStatus } from '@ddd-ts-kit/testing/e2e';", "import { eventually, expectStatus } from '@ddd-ts-kit/testing/e2e';")
-    .replace("import { expectSpanTree, installTestTracing } from '@ddd-ts-kit/tracing/testing';", "import { expectSpanTree, installTestTracing, type ExpectedSpan } from '@ddd-ts-kit/tracing/testing';")
+    .replace(
+      "import { afterAll, beforeAll, beforeEach, describe, it, onTestFailed } from 'vitest';",
+      "import { afterAll, beforeAll, beforeEach, describe, expect, it, onTestFailed } from 'vitest';",
+    )
+    .replace(
+      "import { expectStatus } from '@ddd-ts-kit/testing/e2e';",
+      "import { eventually, expectStatus } from '@ddd-ts-kit/testing/e2e';",
+    )
+    .replace(
+      "import { expectSpanTree, installTestTracing } from '@ddd-ts-kit/tracing/testing';",
+      "import { expectSpanTree, installTestTracing, type ExpectedSpan } from '@ddd-ts-kit/tracing/testing';",
+    )
     .replace(GENERATED_ACTION, AWAITED_ACTION)
     .replace(GENERATED_TREE, WHOLE_TREE)
     .replace("\ndescribe('", `${HELPERS}\ndescribe('`);
 
   for (const expected of [AWAITED_ACTION, WHOLE_TREE, HELPERS, 'type ExpectedSpan']) {
-    if (!edited.includes(expected)) throw new Error(`${SPEC} no longer holds what the proof extends: update test/first-class-trace.ts.`);
+    if (!edited.includes(expected)) {
+      throw new Error(`${SPEC} no longer holds what the proof extends: update test/first-class-trace.ts.`);
+    }
   }
 
   write(root, SPEC, edited);

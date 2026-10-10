@@ -15,7 +15,10 @@ const OUTCOMES: readonly Outcome[] = [
 
 const ADAPTERS: readonly (readonly [string, () => AppointmentExportGateway])[] = [
   ['the fake', () => new FakeAppointmentExportGateway(OUTCOMES)],
-  ['the in-process adapter', () => new InProcessAppointmentExportGateway(new FakeAppointmentExportContract(OUTCOMES.map(asScheduling)))],
+  [
+    'the in-process adapter',
+    () => new InProcessAppointmentExportGateway(new FakeAppointmentExportContract(OUTCOMES.map(asScheduling))),
+  ],
 ];
 
 describe.each(ADAPTERS)('AppointmentExportGateway, %s', (_name, create) => {
@@ -36,7 +39,10 @@ describe.each(ADAPTERS)('AppointmentExportGateway, %s', (_name, create) => {
   it('stamps each outcome with the instant scheduling last changed the appointment', async () => {
     const page = await create().export(undefined);
 
-    expect(page.items[0]).toMatchObject({ key: 'appointment-1', stamp: { occurredAt: new Date('2026-10-12T09:00:00.000Z') } });
+    expect(page.items[0]).toMatchObject({
+      key: 'appointment-1',
+      stamp: { occurredAt: new Date('2026-10-12T09:00:00.000Z') },
+    });
   });
 
   it('answers the outcomes of the appointments asked for, as they are now', async () => {

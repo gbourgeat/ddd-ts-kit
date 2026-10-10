@@ -1,5 +1,12 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { FixedClock, FixedExecutionScope, executionContext, unwrap, type Actor, type ExecutionContext } from '@ddd-ts-kit/kernel';
+import {
+  FixedClock,
+  FixedExecutionScope,
+  executionContext,
+  unwrap,
+  type Actor,
+  type ExecutionContext,
+} from '@ddd-ts-kit/kernel';
 import { repositoryContract } from '@ddd-ts-kit/testing/contracts';
 import type { Practice } from '../../domain/aggregates/practice.aggregate.js';
 import { DisplayName } from '../../domain/value-objects/display-name.vo.js';
@@ -14,7 +21,14 @@ const runner = { describe, it, expect, beforeEach, afterEach };
 const expectations = {
   createAggregate: () => aPractice().build(),
   mutate: (changed: Practice) => {
-    changed.addMember({ personId: 'person-joining', role: unwrap(Role.create('assistant')), displayName: unwrap(DisplayName.create('Joining Person')) }, new Date('2026-02-01T00:00:00.000Z'));
+    changed.addMember(
+      {
+        personId: 'person-joining',
+        role: unwrap(Role.create('assistant')),
+        displayName: unwrap(DisplayName.create('Joining Person')),
+      },
+      new Date('2026-02-01T00:00:00.000Z'),
+    );
   },
   idOf: (subject: Practice) => subject.id,
   stateOf: (subject: Practice) => subject.toState(),

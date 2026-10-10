@@ -1,10 +1,23 @@
 import type { Knex } from 'knex';
 import type { AccessScope } from '@ddd-ts-kit/auth';
-import { InvalidPageRequestError, decodeCursor, encodeCursor, pageOf, type CursorPageRequest, type OffsetPageRequest, type PageRequest, type SortDirection } from '@ddd-ts-kit/kernel';
+import {
+  InvalidPageRequestError,
+  decodeCursor,
+  encodeCursor,
+  pageOf,
+  type CursorPageRequest,
+  type OffsetPageRequest,
+  type PageRequest,
+  type SortDirection,
+} from '@ddd-ts-kit/kernel';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
 import { KnexContext } from '@ddd-ts-kit/knex';
 import { ListNotificationsReader } from '../../application/ports/list-notifications-reader.port.js';
-import type { ListNotificationsItem, ListNotificationsResult, ListNotificationsSort } from '../../application/queries/list-notifications/list-notifications.result.js';
+import type {
+  ListNotificationsItem,
+  ListNotificationsResult,
+  ListNotificationsSort,
+} from '../../application/queries/list-notifications/list-notifications.result.js';
 import { NOTIFICATION_SCHEMA } from './notification.schema.js';
 import type { NotificationRow } from './notification-row.schema.js';
 
@@ -18,22 +31,38 @@ export class KnexListNotificationsReader implements ListNotificationsReader {
   constructor(private readonly database: KnexContext) {}
 
   async list(scope: AccessScope, page: PageRequest<ListNotificationsSort>): Promise<ListNotificationsResult> {
-    if (scope.kind === 'none' || (scope.kind === 'ids' && scope.ids.length === 0)) return pageOf([], page.kind === 'offset' ? { total: 0 } : {});
+    if (scope.kind === 'none' || (scope.kind === 'ids' && scope.ids.length === 0)) {
+      return pageOf([], page.kind === 'offset' ? { total: 0 } : {});
+    }
 
     return page.kind === 'offset' ? this.byOffset(scope, page) : this.byCursor(scope, page);
   }
 
-  private async byOffset(scope: AccessScope, page: OffsetPageRequest<ListNotificationsSort>): Promise<ListNotificationsResult> {
-    const rows = await inOrder(visibleTo(this.database, scope), directionOf(page)).limit(page.limit).offset(page.offset);
+  private async byOffset(
+    scope: AccessScope,
+    page: OffsetPageRequest<ListNotificationsSort>,
+  ): Promise<ListNotificationsResult> {
+    const rows = await inOrder(visibleTo(this.database, scope), directionOf(page))
+      .limit(page.limit)
+      .offset(page.offset);
+
     const counted = await visibleTo(this.database, scope).count<{ total: string | number }[]>({ total: '*' }).first();
 
     return pageOf(rows.map(toItem), { total: Number(counted?.total ?? 0) });
   }
 
-  private async byCursor(scope: AccessScope, page: CursorPageRequest<ListNotificationsSort>): Promise<ListNotificationsResult> {
+  private async byCursor(
+    scope: AccessScope,
+    page: CursorPageRequest<ListNotificationsSort>,
+  ): Promise<ListNotificationsResult> {
     const direction = directionOf(page);
     const ordered = inOrder(visibleTo(this.database, scope), direction);
-    const rows = await (page.cursor === undefined ? ordered : beyond(ordered, positionOf(page.cursor), direction)).limit(page.limit + 1);
+
+    const rows = await (page.cursor === undefined
+      ? ordered
+      : beyond(ordered, positionOf(page.cursor), direction)
+    ).limit(page.limit + 1);
+
     const items = rows.slice(0, page.limit).map(toItem);
     const last = items.at(-1);
     const more = rows.length > page.limit && last !== undefined;
@@ -59,11 +88,17 @@ function inOrder(notifications: Notifications, direction: SortDirection): Notifi
 
 /** The notifications of the recipients the scope names: the restriction is part of the statement, never applied after loading. */
 function visibleTo(database: KnexContext, scope: AccessScope): Notifications {
-  const notifications = database.executor()<NotificationRow, NotificationRow[]>('notifications').withSchema(NOTIFICATION_SCHEMA);
+  const notifications = database
+    .executor()<NotificationRow, NotificationRow[]>('notifications')
+    .withSchema(NOTIFICATION_SCHEMA);
 
-  if (scope.kind === 'ids') return notifications.whereIn('recipient_id', [...scope.ids]);
+  if (scope.kind === 'ids') {
+    return notifications.whereIn('recipient_id', [...scope.ids]);
+  }
 
-  if (scope.kind === 'filter') throw new Error('The notifications of a person are narrowed by recipients: a scope by attributes is not mapped.');
+  if (scope.kind === 'filter') {
+    throw new Error('The notifications of a person are narrowed by recipients: a scope by attributes is not mapped.');
+  }
 
   return notifications;
 }
@@ -91,5 +126,12 @@ function positionOf(cursor: string): Position {
 }
 
 function toItem(row: NotificationRow): ListNotificationsItem {
-  return { id: row.id, recipientId: row.recipient_id, kind: row.kind, appointmentId: row.appointment_id, startsAt: row.starts_at, sentAt: row.registered_at };
+  return {
+    id: row.id,
+    recipientId: row.recipient_id,
+    kind: row.kind,
+    appointmentId: row.appointment_id,
+    startsAt: row.starts_at,
+    sentAt: row.registered_at,
+  };
 }

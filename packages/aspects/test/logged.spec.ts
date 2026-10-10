@@ -37,7 +37,13 @@ describe('logged', () => {
     expect(fakes.logger.entries.at(-1)).toEqual({
       level: 'error',
       message: 'QuoteGateway.quote failed',
-      fields: { class: 'QuoteGateway', method: 'quote', durationMs: 0, errorType: 'Unreachable', errorCode: 'ECONNRESET' },
+      fields: {
+        class: 'QuoteGateway',
+        method: 'quote',
+        durationMs: 0,
+        errorType: 'Unreachable',
+        errorCode: 'ECONNRESET',
+      },
     });
   });
 
@@ -68,7 +74,10 @@ describe('logged', () => {
     await expect(withAspectRuntime(fakes, () => gateway.quote('EUR-USD'))).rejects.toBeInstanceOf(Unreachable);
 
     expect(read).toBe(1);
-    expect(logger.entries).toMatchObject([{ level: 'error', message: 'QuoteGateway.quote failed', fields: { region: 'eu-1' } }]);
+
+    expect(logger.entries).toMatchObject([
+      { level: 'error', message: 'QuoteGateway.quote failed', fields: { region: 'eu-1' } },
+    ]);
   });
 
   it('never records arguments, results or error messages', async () => {
@@ -77,8 +86,16 @@ describe('logged', () => {
 
     await withAspectRuntime(fakes, async () => {
       await gateway.quote('EUR-USD');
-      await gateway.failNext(new Unreachable()).quote('EUR-USD').catch(() => undefined);
-      await gateway.failNext(new PairNotQuoted()).quote('EUR-USD').catch(() => undefined);
+
+      await gateway
+        .failNext(new Unreachable())
+        .quote('EUR-USD')
+        .catch(() => undefined);
+
+      await gateway
+        .failNext(new PairNotQuoted())
+        .quote('EUR-USD')
+        .catch(() => undefined);
     });
 
     expect(JSON.stringify(fakes.logger.entries)).not.toMatch(SECRETS);
@@ -119,6 +136,9 @@ describe('logged, its options and what it survives', () => {
     const gateway = logged()(new QuoteGateway());
 
     await expect(withAspectRuntime({}, () => gateway.quote('EUR-USD'))).rejects.toBeInstanceOf(AspectRuntimeError);
-    await expect(withAspectRuntime({}, () => gateway.quote('EUR-USD'))).rejects.toThrow(/installAspectRuntime\(\{ logger \}\)/);
+
+    await expect(withAspectRuntime({}, () => gateway.quote('EUR-USD'))).rejects.toThrow(
+      /installAspectRuntime\(\{ logger \}\)/,
+    );
   });
 });

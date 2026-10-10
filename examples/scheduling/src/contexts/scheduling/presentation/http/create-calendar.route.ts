@@ -24,7 +24,10 @@ export function createCalendarRoute(commands: CommandBus): Route {
     },
     async (input) => {
       const { practiceId, practitionerId } = input.body;
-      const id = await commands.execute(new CreateCalendarCommand(actorOf(input.context.principal), practiceId, practitionerId));
+
+      const id = await commands.execute(
+        new CreateCalendarCommand(actorOf(input.context.principal), practiceId, practitionerId),
+      );
 
       return { status: 201, body: { id } };
     },

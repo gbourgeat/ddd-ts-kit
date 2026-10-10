@@ -20,7 +20,9 @@ export class Person extends AggregateRoot<string> {
   static create(id: string, contact: Pick<PersonState, 'displayName' | 'email'>, now: Date): Person {
     const created = new Person(id, { registeredAt: now, displayName: contact.displayName, email: contact.email });
 
-    created.record(new PersonRegistered(id, now, { displayName: contact.displayName.value, email: contact.email.value }));
+    created.record(
+      new PersonRegistered(id, now, { displayName: contact.displayName.value, email: contact.email.value }),
+    );
 
     return created;
   }

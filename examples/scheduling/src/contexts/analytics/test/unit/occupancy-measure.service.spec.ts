@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { OccupancyMeasureService, type MeasuredOutcome, type OutcomeState } from '../../domain/services/occupancy-measure.service.js';
+import {
+  OccupancyMeasureService,
+  type MeasuredOutcome,
+  type OutcomeState,
+} from '../../domain/services/occupancy-measure.service.js';
 
 const measure = new OccupancyMeasureService();
 
@@ -9,7 +13,14 @@ describe('OccupancyMeasureService', () => {
   });
 
   it('measures an empty day as nothing held and nothing counted', () => {
-    expect(measure.measure([])).toEqual({ heldMinutes: 0, appointmentsHeld: 0, completed: 0, noShows: 0, cancelledByPatient: 0, cancelledByPractice: 0 });
+    expect(measure.measure([])).toEqual({
+      heldMinutes: 0,
+      appointmentsHeld: 0,
+      completed: 0,
+      noShows: 0,
+      cancelledByPatient: 0,
+      cancelledByPractice: 0,
+    });
   });
 
   it('holds the time of the appointments held, completed and missed by the patient', () => {
@@ -33,7 +44,14 @@ describe('OccupancyMeasureService', () => {
       anOutcome('expired', 30),
     ]);
 
-    expect(figures).toEqual({ heldMinutes: 30, appointmentsHeld: 1, completed: 0, noShows: 0, cancelledByPatient: 2, cancelledByPractice: 1 });
+    expect(figures).toEqual({
+      heldMinutes: 30,
+      appointmentsHeld: 1,
+      completed: 0,
+      noShows: 0,
+      cancelledByPatient: 2,
+      cancelledByPractice: 1,
+    });
   });
 });
 

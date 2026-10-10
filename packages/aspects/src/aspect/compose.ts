@@ -6,7 +6,8 @@ import type { Aspect } from './aspect.js';
  * each attempt, the other order bounds them all together.
  */
 export function compose(...aspects: readonly Aspect[]): Aspect {
-  const composed: Aspect = (instance, info = {}) => aspects.reduceRight((wrapped, aspect) => aspect(wrapped, info), instance);
+  const composed: Aspect = (instance, info = {}) =>
+    aspects.reduceRight((wrapped, aspect) => aspect(wrapped, info), instance);
 
   aspectOrigins.set(composed, { parts: aspects });
 

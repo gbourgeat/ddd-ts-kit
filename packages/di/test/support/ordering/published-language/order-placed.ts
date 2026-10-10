@@ -11,13 +11,19 @@ export const OrderPlaced: EventContract<OrderPlacedPayload> = {
   type: 'ordering.order.placed',
   version: 1,
   parse(event) {
-    if (event.type !== this.type) return err({ reason: 'type-mismatch' });
+    if (event.type !== this.type) {
+      return err({ reason: 'type-mismatch' });
+    }
 
-    if (event.version !== this.version) return err({ reason: 'version-mismatch' });
+    if (event.version !== this.version) {
+      return err({ reason: 'version-mismatch' });
+    }
 
     const { payload } = event;
 
-    if (!isOrderPlacedPayload(payload)) return err({ reason: 'invalid-payload' });
+    if (!isOrderPlacedPayload(payload)) {
+      return err({ reason: 'invalid-payload' });
+    }
 
     return ok({ ...event, payload });
   },

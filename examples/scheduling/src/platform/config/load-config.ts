@@ -30,7 +30,11 @@ export function loadConfig(env: Variables): AppConfig {
     resilience: readResilience(env, problems),
     runJobs: readFlag(env, { name: 'RUN_JOBS', fallback: runJobsByDefault }, problems),
     databaseUrl: readUrl(env, 'DATABASE_URL', problems),
-    outboxRelayIntervalMs: readInteger(env, { name: 'OUTBOX_RELAY_INTERVAL_MS', fallback: 500, min: 10, max: 60000 }, problems),
+    outboxRelayIntervalMs: readInteger(
+      env,
+      { name: 'OUTBOX_RELAY_INTERVAL_MS', fallback: 500, min: 10, max: 60000 },
+      problems,
+    ),
     docsEnabled: readFlag(env, { name: 'API_DOCS', fallback: environment !== 'production' }, problems),
     keycloak: readKeycloak(env, problems),
     redisUrl: readUrl(env, 'REDIS_URL', problems),
@@ -38,7 +42,9 @@ export function loadConfig(env: Variables): AppConfig {
     errorReporting: readErrorReporting(env, environment, problems),
   };
 
-  if (problems.length > 0) throw new ConfigError(problems);
+  if (problems.length > 0) {
+    throw new ConfigError(problems);
+  }
 
   return config;
 }
@@ -47,7 +53,9 @@ function readEnvironment(env: Variables, problems: string[]): AppConfig['environ
   const raw = env['NODE_ENV'] ?? 'development';
   const environment = environments.find((candidate) => candidate === raw);
 
-  if (environment === undefined) problems.push('NODE_ENV must be one of ' + environments.join(', '));
+  if (environment === undefined) {
+    problems.push('NODE_ENV must be one of ' + environments.join(', '));
+  }
 
   return environment ?? 'development';
 }
@@ -64,7 +72,9 @@ function readLogLevel(env: Variables, problems: string[]): LogLevel {
   const raw = env['LOG_LEVEL'] ?? 'info';
   const level = LOG_LEVELS.find((candidate) => candidate === raw);
 
-  if (level === undefined) problems.push('LOG_LEVEL must be one of ' + LOG_LEVELS.join(', '));
+  if (level === undefined) {
+    problems.push('LOG_LEVEL must be one of ' + LOG_LEVELS.join(', '));
+  }
 
   return level ?? 'info';
 }
@@ -72,7 +82,9 @@ function readLogLevel(env: Variables, problems: string[]): LogLevel {
 function readLogFormat(env: Variables, problems: string[]): AppConfig['log']['format'] {
   const raw = env['LOG_FORMAT'] ?? 'json';
 
-  if (raw !== 'json' && raw !== 'pretty') problems.push('LOG_FORMAT must be json or pretty');
+  if (raw !== 'json' && raw !== 'pretty') {
+    problems.push('LOG_FORMAT must be json or pretty');
+  }
 
   return raw === 'pretty' ? 'pretty' : 'json';
 }
@@ -80,7 +92,11 @@ function readLogFormat(env: Variables, problems: string[]): AppConfig['log']['fo
 function readResilience(env: Variables, problems: string[]): AppConfig['resilience'] {
   return {
     retryAttempts: readInteger(env, { name: 'OUTBOUND_RETRY_ATTEMPTS', fallback: 3, min: 1, max: 10 }, problems),
-    retryBaseDelayMs: readInteger(env, { name: 'OUTBOUND_RETRY_BASE_DELAY_MS', fallback: 100, min: 1, max: 60000 }, problems),
+    retryBaseDelayMs: readInteger(
+      env,
+      { name: 'OUTBOUND_RETRY_BASE_DELAY_MS', fallback: 100, min: 1, max: 60000 },
+      problems,
+    ),
     timeoutMs: readInteger(env, { name: 'OUTBOUND_TIMEOUT_MS', fallback: 2000, min: 1, max: 600000 }, problems),
   };
 }
@@ -98,7 +114,9 @@ function readErrorReporting(env: Variables, environment: string, problems: strin
   const named = (env['SENTRY_ENVIRONMENT'] ?? '').trim();
   const release = (env['SENTRY_RELEASE'] ?? '').trim();
 
-  if (dsn !== '' && !URL.canParse(dsn)) problems.push('SENTRY_DSN must be a URL, or empty to report nothing');
+  if (dsn !== '' && !URL.canParse(dsn)) {
+    problems.push('SENTRY_DSN must be a URL, or empty to report nothing');
+  }
 
   return {
     ...(dsn === '' ? {} : { dsn }),
@@ -147,11 +165,15 @@ const flags: Readonly<Record<string, boolean>> = { true: true, '1': true, false:
 function readFlag(env: Variables, variable: FlagVariable, problems: string[]): boolean {
   const raw = env[variable.name];
 
-  if (raw === undefined || raw === '') return variable.fallback;
+  if (raw === undefined || raw === '') {
+    return variable.fallback;
+  }
 
   const value = flags[raw];
 
-  if (value === undefined) problems.push(variable.name + ' must be true or false');
+  if (value === undefined) {
+    problems.push(variable.name + ' must be true or false');
+  }
 
   return value ?? variable.fallback;
 }
@@ -159,7 +181,9 @@ function readFlag(env: Variables, variable: FlagVariable, problems: string[]): b
 function readUrl(env: Variables, name: string, problems: string[]): string {
   const raw = env[name] ?? '';
 
-  if (!URL.canParse(raw)) problems.push(name + ' must be a URL');
+  if (!URL.canParse(raw)) {
+    problems.push(name + ' must be a URL');
+  }
 
   return raw;
 }
@@ -167,7 +191,9 @@ function readUrl(env: Variables, name: string, problems: string[]): string {
 function readText(env: Variables, name: string, problems: string[]): string {
   const raw = env[name] ?? '';
 
-  if (raw.trim() === '') problems.push(name + ' must be set');
+  if (raw.trim() === '') {
+    problems.push(name + ' must be set');
+  }
 
   return raw;
 }

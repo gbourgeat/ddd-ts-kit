@@ -47,7 +47,11 @@ export class DrizzleReadModelTable<
     this.target = { schema, name, key: options.key, columns: options.columns, stamps: stampColumns(options.table) };
     this.rows = new DrizzleStampedRows(context, this.target);
     this.copy = new DrizzleStampedRows(context, { ...this.target, name: PostgresReadModelRebuild.shadowOf(name) });
-    this.rebuild = new PostgresReadModelRebuild((statement, parameters) => this.run(statement, parameters), { table: name, ...(schema === undefined ? {} : { schema }) });
+
+    this.rebuild = new PostgresReadModelRebuild((statement, parameters) => this.run(statement, parameters), {
+      table: name,
+      ...(schema === undefined ? {} : { schema }),
+    });
   }
 
   find(key: string): Promise<StampedRow<Row> | undefined> {
@@ -68,7 +72,15 @@ export class DrizzleReadModelTable<
     const kept = eq(this.target.stamps.deleted, false);
     const db = this.context.executor();
     const mapper = new RowMapper<Row>(columns);
-    const records = await db.select(columns).from(table).where(and(kept, where)).orderBy(...orderBy).limit(limit).offset(offset);
+
+    const records = await db
+      .select(columns)
+      .from(table)
+      .where(and(kept, where))
+      .orderBy(...orderBy)
+      .limit(limit)
+      .offset(offset);
+
     const rows = records.map((record) => mapper.fromSelected(record));
 
     return plan.kind === 'cursor' ? { rows } : { rows, total: await db.$count(table, and(kept, counted)) };
@@ -111,11 +123,16 @@ export class DrizzleReadModelTable<
   }
 
   /** The text between the `$n` of a statement is raw SQL written by the kernel; each `$n` becomes a parameter. */
-  private async run(statement: string, parameters: readonly (string | number)[]): Promise<readonly Readonly<Record<string, unknown>>[]> {
+  private async run(
+    statement: string,
+    parameters: readonly (string | number)[],
+  ): Promise<readonly Readonly<Record<string, unknown>>[]> {
     const pieces = statement.split(/\$\d+/);
 
     const query = sql.join(
-      pieces.flatMap((piece, index) => (index < parameters.length ? [sql.raw(piece), sql`${parameters[index]}`] : [sql.raw(piece)])),
+      pieces.flatMap((piece, index) =>
+        index < parameters.length ? [sql.raw(piece), sql`${parameters[index]}`] : [sql.raw(piece)],
+      ),
       sql.raw(''),
     );
 

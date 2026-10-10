@@ -6,5 +6,7 @@ import { {{event.pascal}} } from './domain/events/{{event.kebab}}.event.js';
 builder.bind({{publisher.pascal}}Publisher).toClass({{publisher.pascal}}Publisher, [IntegrationEventPublisher, IdGenerator]).as('domain-event-handler');
 @@start
 resolve(DomainEventDispatcher).on('{{event.name}}', async (event) => {
-  if (event instanceof {{event.pascal}}) await resolve({{publisher.pascal}}Publisher).handle(event);
+  if (event instanceof {{event.pascal}}) {
+    await resolve({{publisher.pascal}}Publisher).handle(event);
+  }
 });

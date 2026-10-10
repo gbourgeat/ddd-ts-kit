@@ -6,10 +6,7 @@ import { queueNamesOf } from './queue-names-of.js';
 import type { RabbitMqTopology } from './rabbit-mq-topology.js';
 import type { TopologySettings } from './topology-settings.js';
 
-export function topologyOf(
-  settings: TopologySettings,
-  bindings: readonly ConsumerBinding[],
-): RabbitMqTopology {
+export function topologyOf(settings: TopologySettings, bindings: readonly ConsumerBinding[]): RabbitMqTopology {
   return {
     exchanges: [{ name: settings.exchange, type: 'topic', durable: true }],
     queues: bindings.flatMap((binding) => queuesOf(settings, queueNamesOf(binding))),
@@ -60,7 +57,5 @@ function deadLetteringTo(queue: string): Record<string, string> {
 // A quorum queue dead-letters at most once unless told otherwise: an expired retry must not
 // be lost on its way back. The strategy requires the overflow policy that goes with it.
 function lossless(queueType: QueueType): Record<string, string> {
-  return queueType === 'quorum'
-    ? { 'x-dead-letter-strategy': 'at-least-once', 'x-overflow': 'reject-publish' }
-    : {};
+  return queueType === 'quorum' ? { 'x-dead-letter-strategy': 'at-least-once', 'x-overflow': 'reject-publish' } : {};
 }

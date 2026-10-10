@@ -6,7 +6,9 @@ export function readable<T>(job: string, read: () => T): T {
   try {
     return read();
   } catch (error) {
-    if (!(error instanceof InvalidJobScheduleError)) throw error;
+    if (!(error instanceof InvalidJobScheduleError)) {
+      throw error;
+    }
 
     throw new WiringError('INVALID_JOB_SETTINGS', `Job "${job}": ${error.message}`, { cause: error });
   }

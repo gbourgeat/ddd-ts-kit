@@ -14,7 +14,10 @@ describe('generate event-handler and the phase of the reaction', () => {
   it('writes a spec that runs the reaction before the commit of a unit of work, by default', () => {
     const spec = read(root, `${UNIT}/invoice-issued.event-handler.spec.ts`);
 
-    expect(spec).toContain("it('reacts at the end of the unit of work, before the commit, without failing', async () => {");
+    expect(spec).toContain(
+      "it('reacts at the end of the unit of work, before the commit, without failing', async () => {",
+    );
+
     expect(spec).toContain("domainEvents.on('billing.invoice.issued', asSubscribed, { phase: 'before-commit' });");
     expect(spec).toContain("expect(reactedAt).toEqual(['before-commit']);");
   });
@@ -23,7 +26,11 @@ describe('generate event-handler and the phase of the reaction', () => {
     const spec = read(root, `${UNIT}/invoice-marked-as-paid.event-handler.spec.ts`);
 
     expect(spec).toContain("it('reacts once the unit of work has committed, without failing', async () => {");
-    expect(spec).toContain("domainEvents.on('billing.invoice.marked-as-paid', asSubscribed, { phase: 'after-commit' });");
+
+    expect(spec).toContain(
+      "domainEvents.on('billing.invoice.marked-as-paid', asSubscribed, { phase: 'after-commit' });",
+    );
+
     expect(spec).toContain("expect(reactedAt).toEqual(['after-commit']);");
     expect(spec).toContain('expect(domainEvents.afterCommitFailures).toEqual([]);');
   });

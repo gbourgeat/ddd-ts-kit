@@ -21,18 +21,18 @@ import type {
   WiringDescription,
 } from './wiring-description.js';
 
-export function describeWiring(
-  wiring: Wiring,
-  overridden: TokenSet,
-  jobs: readonly EffectiveJob[],
-): WiringDescription {
+export function describeWiring(wiring: Wiring, overridden: TokenSet, jobs: readonly EffectiveJob[]): WiringDescription {
   return {
     modules: wiring.modules,
     bindings: wiring.bindings.values().map((binding) => describeBinding(binding, overridden)),
     commands: describeHandlers(wiring, 'command'),
     queries: describeHandlers(wiring, 'query'),
-    integrationEventHandlers: wiring.consumptions.filter(({ projection }) => projection === undefined).map(describeConsumption),
-    domainEventHandlers: wiring.domainEventHandlers.filter(({ projection }) => projection === undefined).map(describeDomainEventHandler),
+    integrationEventHandlers: wiring.consumptions
+      .filter(({ projection }) => projection === undefined)
+      .map(describeConsumption),
+    domainEventHandlers: wiring.domainEventHandlers
+      .filter(({ projection }) => projection === undefined)
+      .map(describeDomainEventHandler),
     policies: wiring.policies.map(describePolicy),
     jobs: jobs.map(describeJob),
     projections: wiring.projections.map(describeProjection),
@@ -55,7 +55,9 @@ function describeBinding(binding: Binding, overridden: TokenSet): BindingDescrip
 }
 
 function originOf(declaredBy: Declarer | undefined): OriginDescription {
-  if (declaredBy === undefined) return {};
+  if (declaredBy === undefined) {
+    return {};
+  }
 
   const { className, file } = declaredBy;
 
@@ -102,6 +104,12 @@ function describeJob({ name, schedule, policy, job, module, declaredBy }: Effect
   };
 }
 
-function describeProjection({ name, projection, module, applies, declaredBy }: ProjectionRegistration): ProjectionDescription {
+function describeProjection({
+  name,
+  projection,
+  module,
+  applies,
+  declaredBy,
+}: ProjectionRegistration): ProjectionDescription {
   return { name, projection: describeToken(projection), module, applies, ...originOf(declaredBy) };
 }

@@ -1,4 +1,13 @@
-import { AuthorizedCommand, Clock, Command, IdGenerator, Query, type Actor, type CommandBus, type IntegrationEvent } from '../../../src/index.js';
+import {
+  AuthorizedCommand,
+  Clock,
+  Command,
+  IdGenerator,
+  Query,
+  type Actor,
+  type CommandBus,
+  type IntegrationEvent,
+} from '../../../src/index.js';
 import {
   Adapter,
   CommandHandler,

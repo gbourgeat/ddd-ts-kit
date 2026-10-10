@@ -5,5 +5,7 @@ import { WiringError } from '../errors/wiring-error.js';
 export function assertPort(port: Token<unknown>, implementation: Token<unknown>, module: string): void {
   const defect = portDefect(port, implementation);
 
-  if (defect !== undefined) throw new WiringError('INVALID_PORT', `Module "${module}": ${defect}`);
+  if (defect !== undefined) {
+    throw new WiringError('INVALID_PORT', `Module "${module}": ${defect}`);
+  }
 }

@@ -173,21 +173,14 @@ export class OutboxRelay {
     let hold = this.order.holdOf(group, tick);
 
     for (const record of group.records) {
-      hold =
-        hold === undefined
-          ? await this.relayRecord(record, group.key, tick)
-          : await this.holdBack(record, hold);
+      hold = hold === undefined ? await this.relayRecord(record, group.key, tick) : await this.holdBack(record, hold);
 
       tick.settled.add(record.event.id);
     }
   }
 
   /** Publishes one record; when it fails and has a key, says until when its successors wait. */
-  private async relayRecord(
-    record: OutboxRecord,
-    key: string | undefined,
-    tick: Tick,
-  ): Promise<HoldUntil | undefined> {
+  private async relayRecord(record: OutboxRecord, key: string | undefined, tick: Tick): Promise<HoldUntil | undefined> {
     try {
       // One by one: a batch publication would make one poisoned event fail its neighbours.
       await this.publisher.publish([record.event]);
@@ -205,17 +198,11 @@ export class OutboxRelay {
     return undefined;
   }
 
-  private async recordFailure(
-    record: OutboxRecord,
-    key: string | undefined,
-    code: string,
-  ): Promise<Date | undefined> {
+  private async recordFailure(record: OutboxRecord, key: string | undefined, code: string): Promise<Date | undefined> {
     const attempts = this.order.attemptsOf(record);
     const dead = attempts >= this.maxAttempts;
 
-    const nextAttemptAt = dead
-      ? null
-      : new Date(this.clock.now().getTime() + this.delayAfter(attempts));
+    const nextAttemptAt = dead ? null : new Date(this.clock.now().getTime() + this.delayAfter(attempts));
 
     if (nextAttemptAt === null) {
       this.order.settle(key, record.event.id);

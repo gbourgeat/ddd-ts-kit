@@ -6,9 +6,17 @@
 export abstract class IdentityRelationships {
   abstract recordPerson(personId: string): Promise<void>;
 
-  abstract recordMembership(membership: { readonly practiceId: string; readonly personId: string; readonly role: string }): Promise<void>;
+  abstract recordMembership(membership: {
+    readonly practiceId: string;
+    readonly personId: string;
+    readonly role: string;
+  }): Promise<void>;
 
-  abstract forgetMembership(membership: { readonly practiceId: string; readonly personId: string; readonly role: string }): Promise<void>;
+  abstract forgetMembership(membership: {
+    readonly practiceId: string;
+    readonly personId: string;
+    readonly role: string;
+  }): Promise<void>;
 
   abstract recordDelegation(delegation: {
     readonly practiceId: string;
@@ -17,5 +25,9 @@ export abstract class IdentityRelationships {
     readonly availabilityIncluded: boolean;
   }): Promise<void>;
 
-  abstract forgetDelegation(delegation: { readonly practiceId: string; readonly practitionerId: string; readonly assistantId: string }): Promise<void>;
+  abstract forgetDelegation(delegation: {
+    readonly practiceId: string;
+    readonly practitionerId: string;
+    readonly assistantId: string;
+  }): Promise<void>;
 }

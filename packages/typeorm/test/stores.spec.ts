@@ -154,7 +154,9 @@ describe('TypeOrmOutboxStore.claimBatch', () => {
       expect.stringMatching(
         /^SELECT .* FROM "messaging"\."outbox" "outbox" WHERE "outbox"\."status" = \$1 AND "outbox"\."next_attempt_at" <= \$2 ORDER BY "outbox"\."next_attempt_at" ASC, "outbox"\."sequence" ASC LIMIT 10 FOR UPDATE SKIP LOCKED$/,
       ),
-      expect.stringMatching(/^UPDATE "messaging"\."outbox" SET "attempts" = "attempts" \+ 1, "next_attempt_at" = \$1 WHERE "id" IN \(\$2\)$/),
+      expect.stringMatching(
+        /^UPDATE "messaging"\."outbox" SET "attempts" = "attempts" \+ 1, "next_attempt_at" = \$1 WHERE "id" IN \(\$2\)$/,
+      ),
       'COMMIT',
     ]);
   });

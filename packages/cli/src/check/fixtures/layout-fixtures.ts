@@ -60,7 +60,9 @@ const BLANK_LINES: readonly Fixture[] = [
     files: project({
       'src/platform/label.ts': source(
         'export function label(status: string, issued: boolean): string {',
-        '  if (!issued) return status;',
+        '  if (!issued) {',
+        '    return status;',
+        '  }',
         '',
         '  switch (status) {',
         "    case 'paid':",
@@ -86,13 +88,108 @@ const BLANK_LINES: readonly Fixture[] = [
     ruleId: 'clean/blank-lines',
     name: 'a return right after a statement',
     expect: { file: TOTAL },
-    files: project({ [TOTAL]: source('export function total(amounts: readonly number[]): number {', '  const sum = amounts.reduce((left, right) => left + right, 0);', '  return Math.round(sum);', '}') }),
+    files: project({
+      [TOTAL]: source(
+        'export function total(amounts: readonly number[]): number {',
+        '  const sum = amounts.reduce((left, right) => left + right, 0);',
+        '  return Math.round(sum);',
+        '}',
+      ),
+    }),
   },
   {
     ruleId: 'clean/blank-lines',
     name: 'a block padded with blank lines',
     expect: { file: TOTAL },
-    files: project({ [TOTAL]: source('export function total(amounts: readonly number[]): number {', '', '  return amounts.length;', '', '}') }),
+    files: project({
+      [TOTAL]: source(
+        'export function total(amounts: readonly number[]): number {',
+        '',
+        '  return amounts.length;',
+        '',
+        '}',
+      ),
+    }),
+  },
+];
+
+const BRACES: readonly Fixture[] = [
+  {
+    ruleId: 'clean/braces',
+    name: 'braces around every branch and loop, an empty body, a ternary, an arrow returning an expression, a method named do',
+    expect: 'pass',
+    files: project({
+      [TOTAL]: source(
+        'export async function total(amounts: readonly number[], steps: readonly (() => Promise<void>)[]): Promise<number> {',
+        '  if (amounts.length === 0) {',
+        '    return 0;',
+        '  } else if (amounts.length === 1) {',
+        '    return amounts[0] ?? 0;',
+        '  }',
+        '',
+        '  for (const step of steps) {',
+        '    await step();',
+        '  }',
+        '',
+        '  for (;;) {}',
+        '',
+        '  do {',
+        '    amounts.keys();',
+        '  } while (amounts.length < 0);',
+        '',
+        '  return amounts.map((amount) => (amount > 0 ? amount : 0)).reduce((left, right) => left + right, 0);',
+        '}',
+        '',
+        'export const task = { do(): void {}, else: 1 };',
+      ),
+    }),
+  },
+  {
+    ruleId: 'clean/braces',
+    name: 'an if without braces',
+    expect: { file: TOTAL },
+    files: project({
+      [TOTAL]: source(
+        'export function total(amounts: readonly number[]): number {',
+        '  if (amounts.length === 0) return 0;',
+        '',
+        '  return amounts.length;',
+        '}',
+      ),
+    }),
+  },
+  {
+    ruleId: 'clean/braces',
+    name: 'a loop whose body shares the line of its braces',
+    expect: { file: TOTAL },
+    files: project({
+      [TOTAL]: source(
+        'export function total(amounts: readonly number[]): number {',
+        '  let sum = 0;',
+        '',
+        '  for (const amount of amounts) { sum += amount; }',
+        '',
+        '  return sum;',
+        '}',
+      ),
+    }),
+  },
+  {
+    ruleId: 'clean/braces',
+    name: 'an else on a line of its own',
+    expect: { file: TOTAL },
+    files: project({
+      [TOTAL]: source(
+        'export function total(amounts: readonly number[]): number {',
+        '  if (amounts.length === 0) {',
+        '    return 0;',
+        '  }',
+        '  else {',
+        '    return amounts.length;',
+        '  }',
+        '}',
+      ),
+    }),
   },
 ];
 
@@ -146,7 +243,10 @@ const ONE_EXPORT: readonly Fixture[] = [
         '  return counters.get(name) ?? 0;',
         '}',
       ),
-      'src/platform/index.ts': source("export { countOf, increment } from './counters.js';", "export type { Outcome } from '../shared-kernel/outcome.js';"),
+      'src/platform/index.ts': source(
+        "export { countOf, increment } from './counters.js';",
+        "export type { Outcome } from '../shared-kernel/outcome.js';",
+      ),
     }),
   },
   {
@@ -154,15 +254,29 @@ const ONE_EXPORT: readonly Fixture[] = [
     name: 'several exports that are one thing, allowed in the config with their reason',
     expect: 'pass',
     files: project(
-      { 'src/platform/http-server.ts': source('export class HttpServer {}', '', 'export class HttpServerError extends Error {}') },
-      { [CONFIG_FILE]: config({ onePerFile: { allow: [{ file: 'src/platform/http-*.ts', reason: 'The server and the error it raises are one boundary.' }] } }) },
+      {
+        'src/platform/http-server.ts': source(
+          'export class HttpServer {}',
+          '',
+          'export class HttpServerError extends Error {}',
+        ),
+      },
+      {
+        [CONFIG_FILE]: config({
+          onePerFile: {
+            allow: [{ file: 'src/platform/http-*.ts', reason: 'The server and the error it raises are one boundary.' }],
+          },
+        }),
+      },
     ),
   },
   {
     ruleId: 'clean/one-export-per-file',
     name: 'two ports in one file',
     expect: { file: GATEWAYS },
-    files: project({ [GATEWAYS]: source('export abstract class PaymentGateway {}', '', 'export abstract class TaxGateway {}') }),
+    files: project({
+      [GATEWAYS]: source('export abstract class PaymentGateway {}', '', 'export abstract class TaxGateway {}'),
+    }),
   },
   {
     ruleId: 'clean/one-export-per-file',
@@ -174,7 +288,9 @@ const ONE_EXPORT: readonly Fixture[] = [
     ruleId: 'clean/one-export-per-file',
     name: 'an index file that declares something',
     expect: { file: 'src/platform/index.ts' },
-    files: project({ 'src/platform/index.ts': source("export * from './counters.js';", '', 'export const platformName = 1;') }),
+    files: project({
+      'src/platform/index.ts': source("export * from './counters.js';", '', 'export const platformName = 1;'),
+    }),
   },
 ];
 
@@ -193,7 +309,13 @@ const FILE_SIZE: readonly Fixture[] = [
   },
 ];
 
-export const LAYOUT_FIXTURES: readonly Fixture[] = [...HASH_PRIVATE, ...BLANK_LINES, ...ONE_EXPORT, ...FILE_SIZE];
+export const LAYOUT_FIXTURES: readonly Fixture[] = [
+  ...HASH_PRIVATE,
+  ...BLANK_LINES,
+  ...BRACES,
+  ...ONE_EXPORT,
+  ...FILE_SIZE,
+];
 
 /** A source of exactly `count` lines: a list written one entry per line. */
 function listOfLines(count: number): string {

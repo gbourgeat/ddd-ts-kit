@@ -9,7 +9,9 @@ import winston from 'winston';
 export function correlationFields(fields: () => LogFields): winston.Logform.Format {
   return winston.format((info) => {
     for (const [key, value] of Object.entries(fieldsOrNone(fields))) {
-      if (info[key] === undefined) info[key] = value;
+      if (info[key] === undefined) {
+        info[key] = value;
+      }
     }
 
     return info;

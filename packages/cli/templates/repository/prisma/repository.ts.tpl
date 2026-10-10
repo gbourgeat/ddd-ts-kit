@@ -40,8 +40,14 @@ export class Prisma{{aggregate.pascal}}Repository implements {{aggregate.pascal}
 
       const written =
         expected === 0
-          ? await table.createMany({ data: [{ ...state, ...stampCreation(this.scope, this.clock) }], skipDuplicates: true })
-          : await table.updateMany({ where: { id: saved.id, version: expected }, data: { ...state, ...stampUpdate(this.scope, this.clock) } });
+          ? await table.createMany({
+              data: [{ ...state, ...stampCreation(this.scope, this.clock) }],
+              skipDuplicates: true,
+            })
+          : await table.updateMany({
+              where: { id: saved.id, version: expected },
+              data: { ...state, ...stampUpdate(this.scope, this.clock) },
+            });
 
       return written.count;
     });

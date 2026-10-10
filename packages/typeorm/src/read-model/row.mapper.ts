@@ -20,19 +20,26 @@ export class RowMapper<Row extends object> {
   }
 
   toRow(record: Readonly<Record<string, unknown>>): Row {
-    return Object.fromEntries(this.fields.map((column) => [column.propertyName, this.read(record, column.propertyName)])) as Row;
+    return Object.fromEntries(
+      this.fields.map((column) => [column.propertyName, this.read(record, column.propertyName)]),
+    ) as Row;
   }
 
   /** The row of an entity the query builder hydrated: its fields, without the stamps. */
   fromEntity(entity: object): Row {
-    return Object.fromEntries(this.fields.map((column) => [column.propertyName, (Reflect.get(entity, column.propertyName) as unknown) ?? null])) as Row;
+    return Object.fromEntries(
+      this.fields.map((column) => [column.propertyName, (Reflect.get(entity, column.propertyName) as unknown) ?? null]),
+    ) as Row;
   }
 
   toRecord(properties: Readonly<Record<string, unknown>>): Record<string, unknown> {
     const written = this.columns.filter((column) => Object.hasOwn(properties, column.propertyName));
 
     return Object.fromEntries(
-      written.map((column) => [column.databaseName, this.driver.preparePersistentValue(properties[column.propertyName] ?? null, column) as unknown]),
+      written.map((column) => [
+        column.databaseName,
+        this.driver.preparePersistentValue(properties[column.propertyName] ?? null, column) as unknown,
+      ]),
     );
   }
 
@@ -41,13 +48,17 @@ export class RowMapper<Row extends object> {
     const column = this.columns.find((candidate) => candidate.propertyName === property);
     const value = column === undefined ? undefined : record[column.databaseName];
 
-    return column === undefined || value === null || value === undefined ? null : (this.driver.prepareHydratedValue(value, column) as unknown);
+    return column === undefined || value === null || value === undefined
+      ? null
+      : (this.driver.prepareHydratedValue(value, column) as unknown);
   }
 
   columnOf(property: string): string {
     const column = this.columns.find((candidate) => candidate.propertyName === property);
 
-    if (column === undefined) throw new Error(`The entity of the read model has no property "${property}"`);
+    if (column === undefined) {
+      throw new Error(`The entity of the read model has no property "${property}"`);
+    }
 
     return column.databaseName;
   }

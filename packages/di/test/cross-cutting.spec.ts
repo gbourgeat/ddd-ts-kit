@@ -51,7 +51,11 @@ describe('kernelModule', () => {
     expect(app.resolve(Lock)).toBeInstanceOf(InMemoryLock);
     expect(app.resolve(RateLimiter)).toBeInstanceOf(InMemoryRateLimiter);
     expect((await app.resolve(Lock).acquire('report', { ttlMs: 1_000 }))?.fencingToken).toBe(1);
-    expect(await app.resolve(RateLimiter).consume('client-a', { limit: 1, windowMs: 1_000 })).toMatchObject({ allowed: true });
+
+    expect(await app.resolve(RateLimiter).consume('client-a', { limit: 1, windowMs: 1_000 })).toMatchObject({
+      allowed: true,
+    });
+
     expect(createApplication({ modules: [kernelModule({ lock })] }).resolve(Lock)).toBe(lock);
   });
 
@@ -150,9 +154,15 @@ function marking(mark: string, seen: BindingAspectInfo[] = []): BindingAspect {
 
     const greet: unknown = Reflect.get(instance, 'greet');
 
-    if (typeof greet !== 'function') return instance;
+    if (typeof greet !== 'function') {
+      return instance;
+    }
 
-    Reflect.set(instance, 'greet', async (name: string) => `${mark}(${String(await Reflect.apply(greet, instance, [name]))})`);
+    Reflect.set(
+      instance,
+      'greet',
+      async (name: string) => `${mark}(${String(await Reflect.apply(greet, instance, [name]))})`,
+    );
 
     return instance;
   };
@@ -180,7 +190,11 @@ describe('binding.with(...aspects)', () => {
     const greeting = defineContextModule({
       name: 'greeting',
       register(builder) {
-        builder.bind(Greeter).toFactory(() => new PoliteGreeter()).with(marking('m', seen)).as('external');
+        builder
+          .bind(Greeter)
+          .toFactory(() => new PoliteGreeter())
+          .with(marking('m', seen))
+          .as('external');
       },
     });
 
@@ -199,7 +213,10 @@ describe('binding.with(...aspects)', () => {
 
     const app = createApplication({
       modules: [greeting],
-      decorate: (instance) => (instance instanceof PoliteGreeter ? marking('application')(instance, { className: '', context: '', token: '' }) : instance),
+      decorate: (instance) =>
+        instance instanceof PoliteGreeter
+          ? marking('application')(instance, { className: '', context: '', token: '' })
+          : instance,
     });
 
     expect(await app.resolve(Greeter).greet('ada')).toBe('application(binding(hello ada))');

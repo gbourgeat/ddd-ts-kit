@@ -19,7 +19,11 @@ export async function createDatabase(tables: readonly PgTable[]) {
   const truncate = async (): Promise<void> => {
     for (const table of tables) {
       const { schema, name } = getTableConfig(table);
-      const target = [schema, name].filter((part) => part !== undefined).map(quote).join('.');
+
+      const target = [schema, name]
+        .filter((part) => part !== undefined)
+        .map(quote)
+        .join('.');
 
       await client.exec(`truncate table ${target} restart identity`);
     }

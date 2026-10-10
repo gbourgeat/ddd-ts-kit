@@ -23,19 +23,30 @@ describe('POST /appointments/:appointmentId/reschedule', () => {
       },
     });
 
-    const response = await executeRoute(rescheduleAppointmentRoute(commands), request({ startsAt: '2026-03-02T14:00:00+01:00' }), { validateResponses: true });
+    const response = await executeRoute(
+      rescheduleAppointmentRoute(commands),
+      request({ startsAt: '2026-03-02T14:00:00+01:00' }),
+      { validateResponses: true },
+    );
 
     expect(response).toMatchObject({ status: 201, body: { id: 'appointment-1' } });
-    expect(received).toMatchObject([{ appointmentId: 'appointment-1', startsAt: new Date('2026-03-02T13:00:00.000Z') }]);
+
+    expect(received).toMatchObject([
+      { appointmentId: 'appointment-1', startsAt: new Date('2026-03-02T13:00:00.000Z') },
+    ]);
   });
 
   it.each([
     ['without a start', {}],
     ['whose start is no instant', { startsAt: 'later' }],
   ])('refuses a body %s with 422', async (_case, body) => {
-    const commands = new InMemoryCommandBus().register(RescheduleAppointmentCommand, { execute: async () => 'appointment-1' });
+    const commands = new InMemoryCommandBus().register(RescheduleAppointmentCommand, {
+      execute: async () => 'appointment-1',
+    });
 
-    const response = await executeRoute(rescheduleAppointmentRoute(commands), request(body), { validateResponses: true });
+    const response = await executeRoute(rescheduleAppointmentRoute(commands), request(body), {
+      validateResponses: true,
+    });
 
     expect(response.status).toBe(422);
   });
@@ -51,7 +62,11 @@ describe('POST /appointments/:appointmentId/reschedule', () => {
       },
     });
 
-    const response = await executeRoute(rescheduleAppointmentRoute(commands), request({ startsAt: '2026-03-02T14:00:00+01:00' }), { validateResponses: true, errorMapper });
+    const response = await executeRoute(
+      rescheduleAppointmentRoute(commands),
+      request({ startsAt: '2026-03-02T14:00:00+01:00' }),
+      { validateResponses: true, errorMapper },
+    );
 
     expect(response).toMatchObject({ status, body: { code } });
   });

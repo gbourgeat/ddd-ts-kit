@@ -30,7 +30,9 @@ export class InProcessBus {
 
     this.handlers.set(type, handler);
 
-    if (registration.context !== undefined) this.contexts.set(type, registration.context);
+    if (registration.context !== undefined) {
+      this.contexts.set(type, registration.context);
+    }
   }
 
   protected dispatch<M extends Message>(message: M): Promise<ResultOf<M>> {

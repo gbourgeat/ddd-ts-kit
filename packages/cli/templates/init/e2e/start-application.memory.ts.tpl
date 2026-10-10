@@ -99,23 +99,43 @@ async function start(credentials: Credentials): Promise<Started> {
   const config = loadConfig(testEnvironment());
 {{#if cache.redis}}
   const redis = config.redisUrl === noRedis ? undefined : openRedis(config);
-  const application = composeApplication(persistence, { events: {{#if broker.provided}}eventsOf(config){{/if}}{{#unless broker.provided}}inProcessEvents(){{/unless}}, authenticator: credentials.authenticator, ...(redis === undefined ? {} : { redis }) });
 {{/if}}
-{{#unless cache.redis}}
-  const application = composeApplication(persistence, { events: {{#if broker.provided}}eventsOf(config){{/if}}{{#unless broker.provided}}inProcessEvents(){{/unless}}, authenticator: credentials.authenticator });
-{{/unless}}
+
+  const application = composeApplication(persistence, {
+    events: {{#if broker.provided}}eventsOf(config){{/if}}{{#unless broker.provided}}inProcessEvents(){{/unless}},
+    authenticator: credentials.authenticator,
+{{#if cache.redis}}
+    ...(redis === undefined ? {} : { redis }),
+{{/if}}
+  });
 
   await application.start();
 
 {{#if events.outbox}}
-  const relay = startOutboxRelay({ store: persistence.outbox, publisher: application.eventBus, intervalMs: 20, logger: application.logger });
+  const relay = startOutboxRelay({
+    store: persistence.outbox,
+    publisher: application.eventBus,
+    intervalMs: 20,
+    logger: application.logger,
+  });
+
 {{/if}}
   const server = await startHttpServer(application, config);
 
   return {
     client: createHttpClient('http://127.0.0.1:' + server.port),
     events: application.eventSubscriber,
-    close: () => inOrder([() => server.close(), {{#if events.outbox}}() => relay.stop(), {{/if}}() => application.stop(), {{#if cache.redis}}() => redis?.close(), {{/if}}() => persistence.close()]),
+    close: async () => {
+      await server.close();
+{{#if events.outbox}}
+      await relay.stop();
+{{/if}}
+      await application.stop();
+{{#if cache.redis}}
+      await redis?.close();
+{{/if}}
+      await persistence.close();
+    },
   };
 }
 {{#if broker.provided}}
@@ -124,7 +144,3 @@ function eventsOf(config: AppConfig): EventProvider {
   return {{broker.inProcessWhen}} ? inProcessEvents() : createEventProvider(config);
 }
 {{/if}}
-
-async function inOrder(steps: readonly (() => Promise<void> | undefined)[]): Promise<void> {
-  for (const step of steps) await step();
-}

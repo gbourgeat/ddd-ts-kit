@@ -35,10 +35,10 @@ allowed-tools:
 |---|---|---|
 | after each write | nothing: the guard runs `check-file` and returns the violations | none |
 | while iterating | `npx ddd-ts-kit check --changed-since <base>` and `npm test -- <context>` | seconds |
-| before the commit that closes a slice | the two above, `npm run typecheck`, `npm run lint`, `npx ddd-ts-kit todo <context>` (nothing left), `npx ddd-ts-kit check --commit-size` | under a minute |
+| before the commit that closes a slice | the two above, `npm run typecheck`, `npm run lint`, `npm run format:check` (`npm run format` settles it), `npx ddd-ts-kit todo <context>` (nothing left), `npx ddd-ts-kit check --commit-size` | under a minute |
 | before a merge or a pull request | `npm run verify` | everything |
 
-`npm run verify` chains types, lint, tests, end-to-end tests, the architecture rules, the
+`npm run verify` chains types, lint, format, tests, end-to-end tests, the architecture rules, the
 import graph (dependency-cruiser), dead code (knip) and documentation drift. Use
 `npm run typecheck`, never `npx tsc`: the project compiles with the native compiler.
 `npx ddd-ts-kit status` counts the `TODO(domain)`, `TODO(platform)` and `it.todo` left in

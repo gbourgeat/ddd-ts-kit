@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { BulkheadFullError, CircuitOpenError, TimeoutError, delayBeforeRetry, fullJitter, isTransient, noJitter, retry } from '../src/index.js';
+import {
+  BulkheadFullError,
+  CircuitOpenError,
+  TimeoutError,
+  delayBeforeRetry,
+  fullJitter,
+  isTransient,
+  noJitter,
+  retry,
+} from '../src/index.js';
 import { createAspectFakes, withAspectRuntime } from '../src/testing.js';
 import { PairNotQuoted } from './support/pair-not-quoted.js';
 import { QuoteGateway } from './support/quote-gateway.js';

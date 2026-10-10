@@ -22,10 +22,22 @@ const completed = appointmentCompletedV1.create(fact, at('30'));
 
 const FACTS: readonly (readonly [string, IntegrationEvent, string])[] = [
   ['booked', booked, 'held'],
-  ['requested, still to confirm', appointmentBookedV1.create({ ...fact, status: 'requested', confirmBefore: '2026-10-02T10:00:00.000Z' }, at('00')), 'held'],
+  [
+    'requested, still to confirm',
+    appointmentBookedV1.create({ ...fact, status: 'requested', confirmBefore: '2026-10-02T10:00:00.000Z' }, at('00')),
+    'held',
+  ],
   ['confirmed', appointmentConfirmedV1.create(fact, at('05')), 'held'],
-  ['cancelled by the patient', appointmentCancelledV1.create({ ...fact, cancelledBy: 'patient' }, at('10')), 'cancelled-by-patient'],
-  ['cancelled by the practice', appointmentCancelledV1.create({ ...fact, cancelledBy: 'practice' }, at('10')), 'cancelled-by-practice'],
+  [
+    'cancelled by the patient',
+    appointmentCancelledV1.create({ ...fact, cancelledBy: 'patient' }, at('10')),
+    'cancelled-by-patient',
+  ],
+  [
+    'cancelled by the practice',
+    appointmentCancelledV1.create({ ...fact, cancelledBy: 'practice' }, at('10')),
+    'cancelled-by-practice',
+  ],
   ['expired', appointmentExpiredV1.create(fact, at('15')), 'expired'],
   ['completed', completed, 'completed'],
   ['marked as a no-show', appointmentMarkedNoShowV1.create(fact, at('30')), 'no-show'],
@@ -37,7 +49,12 @@ describe('The outcomes of appointments', () => {
 
     await application.eventBus.publish([event]);
 
-    expect(await outcomes.get('appointment-1')).toMatchObject({ calendarId: 'calendar-1', practiceId: 'practice-1', day: '2026-10-12', state });
+    expect(await outcomes.get('appointment-1')).toMatchObject({
+      calendarId: 'calendar-1',
+      practiceId: 'practice-1',
+      day: '2026-10-12',
+      state,
+    });
   });
 
   it('keep the time the appointment holds and the instant it last changed', async () => {
@@ -54,12 +71,25 @@ describe('The outcomes of appointments', () => {
 
   it('follow a rescheduled appointment to its new day and time', async () => {
     const { application, outcomes } = await arrange();
-    const moved = anAppointmentFact({ startsAt: '2026-10-14T09:00:00.000Z', endsAt: '2026-10-14T09:30:00.000Z', day: '2026-10-14' });
-    const rescheduled = appointmentRescheduledV1.create({ ...moved, previousStartsAt: fact.startsAt, previousDay: fact.day }, at('20'));
+
+    const moved = anAppointmentFact({
+      startsAt: '2026-10-14T09:00:00.000Z',
+      endsAt: '2026-10-14T09:30:00.000Z',
+      day: '2026-10-14',
+    });
+
+    const rescheduled = appointmentRescheduledV1.create(
+      { ...moved, previousStartsAt: fact.startsAt, previousDay: fact.day },
+      at('20'),
+    );
 
     await application.eventBus.publish([booked, rescheduled]);
 
-    expect(await outcomes.get('appointment-1')).toMatchObject({ day: '2026-10-14', startsAt: new Date('2026-10-14T09:00:00.000Z'), state: 'held' });
+    expect(await outcomes.get('appointment-1')).toMatchObject({
+      day: '2026-10-14',
+      startsAt: new Date('2026-10-14T09:00:00.000Z'),
+      state: 'held',
+    });
   });
 
   it('end on the same line when a fact is delivered twice', async () => {
@@ -67,7 +97,10 @@ describe('The outcomes of appointments', () => {
 
     await application.eventBus.publish([booked, completed, completed]);
 
-    expect(await outcomes.get('appointment-1')).toMatchObject({ state: 'completed', changedAt: new Date('2026-10-01T10:30:00.000Z') });
+    expect(await outcomes.get('appointment-1')).toMatchObject({
+      state: 'completed',
+      changedAt: new Date('2026-10-01T10:30:00.000Z'),
+    });
   });
 
   it('end on the latest fact when an earlier one is delivered after it', async () => {

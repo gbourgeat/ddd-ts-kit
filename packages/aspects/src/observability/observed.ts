@@ -14,7 +14,11 @@ export interface CallOutcome {
  * Runs the call and reports how it went, once. The result and the error pass through
  * untouched; a report that throws never changes the outcome of the call.
  */
-export async function observed<T>(clock: Clock, call: () => Promise<T>, report: (outcome: CallOutcome) => void): Promise<T> {
+export async function observed<T>(
+  clock: Clock,
+  call: () => Promise<T>,
+  report: (outcome: CallOutcome) => void,
+): Promise<T> {
   const startedAt = clock.now().getTime();
   const elapsed = (): number => clock.now().getTime() - startedAt;
   let result: T;

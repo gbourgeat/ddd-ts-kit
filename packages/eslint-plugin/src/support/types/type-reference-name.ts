@@ -4,11 +4,15 @@ import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
 export function typeReferenceName(annotation: TSESTree.TSTypeAnnotation | undefined): string | undefined {
   const type = annotation?.typeAnnotation;
 
-  if (type?.type !== AST_NODE_TYPES.TSTypeReference) return undefined;
+  if (type?.type !== AST_NODE_TYPES.TSTypeReference) {
+    return undefined;
+  }
 
   const { typeName } = type;
 
-  if (typeName.type === AST_NODE_TYPES.Identifier) return typeName.name;
+  if (typeName.type === AST_NODE_TYPES.Identifier) {
+    return typeName.name;
+  }
 
   return typeName.type === AST_NODE_TYPES.TSQualifiedName ? typeName.right.name : undefined;
 }

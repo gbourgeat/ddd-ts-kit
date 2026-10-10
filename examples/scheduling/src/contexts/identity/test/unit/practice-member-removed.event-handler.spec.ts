@@ -22,7 +22,9 @@ describe('When practice member removed', () => {
   ])('ends, at the instant of the removal, the delegation the member %s', async (_which, personId) => {
     const { handler, delegations } = await arrange();
 
-    await delegations.save(aDelegation().identifiedBy('delegation-1').onDesk('practice-1', 'person-2').givenTo('person-3').build());
+    await delegations.save(
+      aDelegation().identifiedBy('delegation-1').onDesk('practice-1', 'person-2').givenTo('person-3').build(),
+    );
 
     await handler.handle(new PracticeMemberRemoved('practice-1', at, { personId, role: 'practitioner' }));
 
@@ -32,9 +34,22 @@ describe('When practice member removed', () => {
   it('does nothing to the delegations of other members, of other practices, or already ended', async () => {
     const { handler, delegations } = await arrange();
 
-    await delegations.save(aDelegation().identifiedBy('delegation-others').onDesk('practice-1', 'person-8').givenTo('person-9').build());
-    await delegations.save(aDelegation().identifiedBy('delegation-elsewhere').onDesk('practice-2', 'person-2').givenTo('person-3').build());
-    await delegations.save(aDelegation().identifiedBy('delegation-ended').onDesk('practice-1', 'person-2').givenTo('person-3').revokedAt(at).build());
+    await delegations.save(
+      aDelegation().identifiedBy('delegation-others').onDesk('practice-1', 'person-8').givenTo('person-9').build(),
+    );
+
+    await delegations.save(
+      aDelegation().identifiedBy('delegation-elsewhere').onDesk('practice-2', 'person-2').givenTo('person-3').build(),
+    );
+
+    await delegations.save(
+      aDelegation()
+        .identifiedBy('delegation-ended')
+        .onDesk('practice-1', 'person-2')
+        .givenTo('person-3')
+        .revokedAt(at)
+        .build(),
+    );
 
     await handler.handle(new PracticeMemberRemoved('practice-1', at, { personId: 'person-2', role: 'practitioner' }));
 

@@ -12,10 +12,7 @@ export interface ZodSchemaOptions {
   readonly io?: 'input' | 'output';
 }
 
-export function zodSchema<Z extends z.ZodType>(
-  type: Z,
-  options: ZodSchemaOptions = {},
-): Schema<z.output<Z>> {
+export function zodSchema<Z extends z.ZodType>(type: Z, options: ZodSchemaOptions = {}): Schema<z.output<Z>> {
   return {
     parse(input) {
       const result = type.safeParse(input);

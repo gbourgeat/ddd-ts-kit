@@ -12,18 +12,24 @@ export function fingerprintOf(error: unknown, report: ErrorReport): string[] {
   const type = error instanceof Error ? error.constructor.name : typeof error;
   const code = report.errorCode === undefined ? [] : [report.errorCode];
 
-  if (error instanceof DomainError) return [type, ...code];
+  if (error instanceof DomainError) {
+    return [type, ...code];
+  }
 
   return [type, ...code, ...raisedAt(error)];
 }
 
 function raisedAt(error: unknown): string[] {
-  if (!(error instanceof Error) || error.stack === undefined) return [];
+  if (!(error instanceof Error) || error.stack === undefined) {
+    return [];
+  }
 
   for (const line of error.stack.split('\n')) {
     const frame = FRAME.exec(line);
 
-    if (frame !== null) return [[frame[1], frame[2]].filter((part) => part !== undefined).join(' ')];
+    if (frame !== null) {
+      return [[frame[1], frame[2]].filter((part) => part !== undefined).join(' ')];
+    }
   }
 
   return [];

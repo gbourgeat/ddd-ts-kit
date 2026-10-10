@@ -33,7 +33,9 @@ export class LedgerGateway {
   }
 
   async postAll(postings: readonly (readonly [account: string, amount: number])[]): Promise<void> {
-    for (const [account, amount] of postings) await this.post(account, amount);
+    for (const [account, amount] of postings) {
+      await this.post(account, amount);
+    }
   }
 
   async balance(): Promise<number> {
@@ -44,7 +46,9 @@ export class LedgerGateway {
     this.attempted.push(account);
     const failure = this.failures.shift();
 
-    if (failure !== undefined) throw failure;
+    if (failure !== undefined) {
+      throw failure;
+    }
 
     this.sent.push(account);
   }

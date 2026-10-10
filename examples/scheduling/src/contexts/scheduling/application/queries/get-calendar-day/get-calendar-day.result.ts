@@ -10,13 +10,25 @@ export interface GetCalendarDayResult {
   readonly open: readonly { readonly startsAt: Date; readonly endsAt: Date }[];
   /** The time off that crosses the day: nothing can be booked during it. */
   readonly timeOff: readonly { readonly startsAt: Date; readonly endsAt: Date }[];
-  readonly appointmentTypes: readonly { readonly id: string; readonly name: string; readonly duration: number; readonly grid: number; readonly buffer: number; readonly needsConfirmation: boolean }[];
+  readonly appointmentTypes: readonly {
+    readonly id: string;
+    readonly name: string;
+    readonly duration: number;
+    readonly grid: number;
+    readonly buffer: number;
+    readonly needsConfirmation: boolean;
+  }[];
   /** What the active appointments hold, by start; `heldUntil` counts the buffer. */
   readonly busy: readonly {
     readonly startsAt: Date;
     readonly endsAt: Date;
     readonly heldUntil: Date;
     /** Only for an appointment the asker may read. */
-    readonly appointment?: { readonly id: string; readonly patientId: string; readonly appointmentTypeId: string; readonly status: 'requested' | 'booked' };
+    readonly appointment?: {
+      readonly id: string;
+      readonly patientId: string;
+      readonly appointmentTypeId: string;
+      readonly status: 'requested' | 'booked';
+    };
   }[];
 }

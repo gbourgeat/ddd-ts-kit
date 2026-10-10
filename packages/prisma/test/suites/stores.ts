@@ -127,9 +127,7 @@ describe('the shipped schema fragment', () => {
   });
 
   it('indexes the records by status and next attempt for the relay', async () => {
-    expect(await indexes('outbox')).toContainEqual(
-      expect.stringMatching(/\(status, next_attempt_at, sequence\)$/),
-    );
+    expect(await indexes('outbox')).toContainEqual(expect.stringMatching(/\(status, next_attempt_at, sequence\)$/));
   });
 
   it('makes (consumer, event_id) unique', async () => {
@@ -172,8 +170,12 @@ describe('PrismaOutboxStore.claimBatch', () => {
     await store.claimBatch(10, now);
 
     expect(database.queries).toEqual([
-      expect.stringMatching(/^SELECT .* FROM "messaging"\."outbox" WHERE .* ORDER BY .*"next_attempt_at" ASC, .*"sequence" ASC LIMIT \$3/),
-      expect.stringMatching(/^UPDATE "messaging"\."outbox" SET .* WHERE \(.*"id" = \$3 AND .*"status" = \$4 AND .*"attempts" = \$5 AND .*"next_attempt_at" <= \$6\)/),
+      expect.stringMatching(
+        /^SELECT .* FROM "messaging"\."outbox" WHERE .* ORDER BY .*"next_attempt_at" ASC, .*"sequence" ASC LIMIT \$3/,
+      ),
+      expect.stringMatching(
+        /^UPDATE "messaging"\."outbox" SET .* WHERE \(.*"id" = \$3 AND .*"status" = \$4 AND .*"attempts" = \$5 AND .*"next_attempt_at" <= \$6\)/,
+      ),
     ]);
   });
 

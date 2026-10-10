@@ -35,7 +35,12 @@ function projectWith(compilerOptions: object, options: DecoratorsOptions = {}) {
 
   writeFileSync(path.join(root, 'package.json'), '{}');
   writeFileSync(path.join(root, 'tsconfig.json'), JSON.stringify({ compilerOptions }));
-  const plugin: DecoratorsPlugin = decorators({ compiler: path.join(ROOT, 'node_modules/@typescript/native/bin/tsc'), ...options });
+
+  const plugin: DecoratorsPlugin = decorators({
+    compiler: path.join(ROOT, 'node_modules/@typescript/native/bin/tsc'),
+    ...options,
+  });
+
   const cacheDir = path.join(root, 'cache');
 
   plugin.configResolved({ root, cacheDir });
@@ -51,7 +56,7 @@ describe('decorators(), the Vitest plugin', () => {
 
     expect(result?.code).not.toMatch(/^@Noted/m);
     expect(result?.code).toContain('__esDecorate');
-    expect(result?.code).not.toContain("./clock.js");
+    expect(result?.code).not.toContain('./clock.js');
     expect(result?.code).not.toContain('sourceMappingURL');
   });
 
@@ -84,7 +89,11 @@ describe('decorators(), the Vitest plugin', () => {
     const { root, plugin } = projectWith({ target: 'es2023' });
 
     mkdirSync(path.join(root, 'legacy'));
-    writeFileSync(path.join(root, 'legacy/tsconfig.json'), JSON.stringify({ compilerOptions: { experimentalDecorators: true } }));
+
+    writeFileSync(
+      path.join(root, 'legacy/tsconfig.json'),
+      JSON.stringify({ compilerOptions: { experimentalDecorators: true } }),
+    );
 
     expect(plugin.transform(DECORATED, path.join(root, 'legacy/calendar.ts'))).toBeUndefined();
     expect(plugin.transform(DECORATED, path.join(root, 'calendar.ts'))).toBeDefined();
@@ -95,8 +104,14 @@ describe('decorators(), the Vitest plugin', () => {
     const assigned = projectWith({ target: 'es2022', useDefineForClassFields: false });
     const newest = projectWith({ target: 'esnext' });
 
-    expect(defined.plugin.transform(DECORATED, path.join(defined.root, 'calendar.ts'))?.code).toMatch(/^\s*today = 1;/m);
-    expect(assigned.plugin.transform(DECORATED, path.join(assigned.root, 'calendar.ts'))?.code).toMatch(/this\.today = 1;/);
+    expect(defined.plugin.transform(DECORATED, path.join(defined.root, 'calendar.ts'))?.code).toMatch(
+      /^\s*today = 1;/m,
+    );
+
+    expect(assigned.plugin.transform(DECORATED, path.join(assigned.root, 'calendar.ts'))?.code).toMatch(
+      /this\.today = 1;/,
+    );
+
     expect(newest.plugin.transform(DECORATED, path.join(newest.root, 'calendar.ts'))?.code).toContain('__esDecorate');
   });
 
@@ -116,7 +131,11 @@ describe('decorators(), the Vitest plugin', () => {
   it('compiles .mts as well, and takes a tsconfig named in its options', () => {
     const named = mkdtempSync(path.join(workspace, 'named-'));
 
-    writeFileSync(path.join(named, 'tsconfig.test.json'), JSON.stringify({ compilerOptions: { target: 'es2022', useDefineForClassFields: false } }));
+    writeFileSync(
+      path.join(named, 'tsconfig.test.json'),
+      JSON.stringify({ compilerOptions: { target: 'es2022', useDefineForClassFields: false } }),
+    );
+
     const { root, plugin } = projectWith({ target: 'es2023' }, { tsconfig: path.join(named, 'tsconfig.test.json') });
 
     expect(plugin.transform(DECORATED, path.join(root, 'calendar.mts'))?.code).toMatch(/this\.today = 1;/);
@@ -125,9 +144,9 @@ describe('decorators(), the Vitest plugin', () => {
   it('says which file the compiler refuses, and why', () => {
     const { root, plugin } = projectWith({ target: 'es2023' });
 
-    expect(() => plugin.transform('@Noted\nexport class Calendar { today = ; }\n', path.join(root, 'calendar.ts'))).toThrow(
-      /refused .*calendar\.ts:\n[^]*error TS\d+/,
-    );
+    expect(() =>
+      plugin.transform('@Noted\nexport class Calendar { today = ; }\n', path.join(root, 'calendar.ts')),
+    ).toThrow(/refused .*calendar\.ts:\n[^]*error TS\d+/);
   });
 
   it('refuses a compiler package that ships no tsc', () => {
@@ -139,17 +158,31 @@ describe('decorators(), the Vitest plugin', () => {
 
 describe('a project with standard decorators, run by the installed Vitest', () => {
   const run = (environment: Record<string, string>) =>
-    spawnSync(process.execPath, [VITEST, 'run', '--root', PROJECT, '--config', path.join(PROJECT, 'vitest.config.ts')], {
-      encoding: 'utf8',
-      env: { ...process.env, NO_COLOR: '1', FORCE_COLOR: '0', DECORATORS_CACHE: mkdtempSync(path.join(workspace, 'vite-')), ...environment },
-    });
+    spawnSync(
+      process.execPath,
+      [VITEST, 'run', '--root', PROJECT, '--config', path.join(PROJECT, 'vitest.config.ts')],
+      {
+        encoding: 'utf8',
+        env: {
+          ...process.env,
+          NO_COLOR: '1',
+          FORCE_COLOR: '0',
+          DECORATORS_CACHE: mkdtempSync(path.join(workspace, 'vite-')),
+          ...environment,
+        },
+      },
+    );
 
-  it.each(Object.entries(COMPILERS))('passes with the plugin, compiling with %s', (_label, compiler) => {
-    const outcome = run({ DECORATORS_COMPILER: compiler });
+  it.each(Object.entries(COMPILERS))(
+    'passes with the plugin, compiling with %s',
+    (_label, compiler) => {
+      const outcome = run({ DECORATORS_COMPILER: compiler });
 
-    expect(outcome.stdout + outcome.stderr).toMatch(/Tests\s+2 passed \(2\)/);
-    expect(outcome.status).toBe(0);
-  }, 60_000);
+      expect(outcome.stdout + outcome.stderr).toMatch(/Tests\s+2 passed \(2\)/);
+      expect(outcome.status).toBe(0);
+    },
+    60_000,
+  );
 
   it('cannot even be read without it', () => {
     const outcome = run({ DECORATORS_PLUGIN: 'off' });

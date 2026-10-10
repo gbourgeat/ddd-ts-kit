@@ -32,7 +32,9 @@ export class ManualJobScheduler extends InProcessJobScheduler {
       onRun: (run, error, detail) => {
         runs.push(run);
 
-        if (run.outcome === 'failed') failures.push(error);
+        if (run.outcome === 'failed') {
+          failures.push(error);
+        }
 
         options.onRun?.(run, error, detail);
       },

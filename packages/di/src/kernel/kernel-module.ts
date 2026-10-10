@@ -97,15 +97,20 @@ function bindBuses(builder: ModuleBuilder, { commandBus, queryBus, instrumentati
 
 /** Declared in this order: what observes a binding is outside the dispatch, so it sees the save and what the save announced. */
 function wrapBindings(builder: ModuleBuilder, { binding }: Instrumentation): void {
-  if (binding !== undefined) builder.around(EVERY_KIND, () => binding);
+  if (binding !== undefined) {
+    builder.around(EVERY_KIND, () => binding);
+  }
 
-  builder.around(['repository'], (resolve) => (repository) =>
-    dispatchingOnSave(repository, () => resolve(DomainEventDispatcher)),
+  builder.around(
+    ['repository'],
+    (resolve) => (repository) => dispatchingOnSave(repository, () => resolve(DomainEventDispatcher)),
   );
 }
 
 function either<T>(provided: Provided<T> | undefined, fallback: (resolve: Resolve) => T): (resolve: Resolve) => T {
-  if (provided === undefined) return fallback;
+  if (provided === undefined) {
+    return fallback;
+  }
 
   return isFactory(provided) ? provided : () => provided;
 }
@@ -117,16 +122,17 @@ function isFactory<T>(provided: Provided<T>): provided is (resolve: Resolve) => 
 function bindEventPorts(builder: ModuleBuilder, options: KernelModuleOptions): void {
   builder.bind(EventBus).toFactory(either(options.eventBus, () => new InMemoryEventBus()));
 
-  builder
-    .bind(IntegrationEventPublisher)
-    .toFactory(wrapped(either(options.eventPublisher, (resolve) => resolve(EventBus)), options.instrumentation?.publisher));
+  builder.bind(IntegrationEventPublisher).toFactory(
+    wrapped(
+      either(options.eventPublisher, (resolve) => resolve(EventBus)),
+      options.instrumentation?.publisher,
+    ),
+  );
 
   builder.bind(IntegrationEventSubscriber).toFactory(either(options.eventSubscriber, (resolve) => resolve(EventBus)));
   builder.bind(EventSubscribers).toFactory(either(options.eventSubscribers, oneSubscriberForAll));
 
-  builder
-    .bind(ProcessedEventStore)
-    .toFactory(either(options.processedEvents, () => new InMemoryProcessedEventStore()));
+  builder.bind(ProcessedEventStore).toFactory(either(options.processedEvents, () => new InMemoryProcessedEventStore()));
 }
 
 /** The port as the options or the default give it, inside what the instrumentation puts around it. */
@@ -141,9 +147,12 @@ function oneSubscriberForAll(resolve: Resolve): EventSubscribers {
 function bindCrossCuttingPorts(builder: ModuleBuilder, options: KernelModuleOptions): void {
   const { instrumentation = {} } = options;
 
-  builder
-    .bind(ExecutionScope)
-    .toFactory(wrapped(either(options.executionScope, () => new AsyncLocalStorageExecutionScope()), told(instrumentation)));
+  builder.bind(ExecutionScope).toFactory(
+    wrapped(
+      either(options.executionScope, () => new AsyncLocalStorageExecutionScope()),
+      told(instrumentation),
+    ),
+  );
 
   builder.bind(ActorContext).toFactory(either(options.actorContext, scopedActorContext));
 
@@ -154,9 +163,12 @@ function bindCrossCuttingPorts(builder: ModuleBuilder, options: KernelModuleOpti
   builder.bind(Logger).toFactory(either(options.logger, () => new NoopLogger()));
   builder.bind(Metrics).toFactory(either(options.metrics, () => new NoopMetrics()));
 
-  builder
-    .bind(ErrorReporter)
-    .toFactory(wrapped(either(options.errorReporter, () => new NoopErrorReporter()), instrumentation.errorReporter));
+  builder.bind(ErrorReporter).toFactory(
+    wrapped(
+      either(options.errorReporter, () => new NoopErrorReporter()),
+      instrumentation.errorReporter,
+    ),
+  );
 
   builder.bind(Cache).toFactory(either(options.cache, (resolve) => new InMemoryCache(resolve(Clock))));
   builder.bind(Lock).toFactory(either(options.lock, (resolve) => new InMemoryLock(resolve(Clock))));
@@ -180,7 +192,9 @@ function inProcessDomainEvents(resolve: Resolve): DomainEventDispatcher {
 }
 
 function told({ executionScope }: Instrumentation): ((scope: ExecutionScope) => ExecutionScope) | undefined {
-  if (executionScope === undefined) return undefined;
+  if (executionScope === undefined) {
+    return undefined;
+  }
 
   return (scope) => {
     executionScope(scope);

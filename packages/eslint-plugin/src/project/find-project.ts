@@ -8,7 +8,9 @@ const projectsByDirectory = new Map<string, Project | undefined>();
 
 /** Walks up from `directory` to the nearest `ddd-ts-kit.config.json`; every directory visited is remembered. */
 export function findProject(directory: string): Project | undefined {
-  if (projectsByDirectory.has(directory)) return projectsByDirectory.get(directory);
+  if (projectsByDirectory.has(directory)) {
+    return projectsByDirectory.get(directory);
+  }
 
   const found = readProject(directory) ?? findInParent(directory);
 

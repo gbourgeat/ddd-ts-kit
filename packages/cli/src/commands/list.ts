@@ -30,7 +30,9 @@ function mapProject(root: string, only: string | undefined): ProjectMap {
   const { config } = readConfig(root);
   const ws = new Workspace(root, false);
 
-  if (only === undefined) return { stack: config.stack, contexts: readContexts(ws, config).map(summarize), e2e: e2eSpecs(ws) };
+  if (only === undefined) {
+    return { stack: config.stack, contexts: readContexts(ws, config).map(summarize), e2e: e2eSpecs(ws) };
+  }
 
   const context = summarize(readContext(ws, config, knownContext(config, only)));
   const useCases = [...context.commands, ...context.queries].map((useCase) => toName(useCase).kebab);
@@ -41,7 +43,11 @@ function mapProject(root: string, only: string | undefined): ProjectMap {
 function summarize(facts: ContextFacts): ContextSummary {
   const { publishedEvents, glossaryTerms, purpose: _purpose, downstreams: _downstreams, ...rest } = facts;
 
-  return { ...rest, glossary: glossaryTerms.length, publishedEvents: publishedEvents.map((event) => `${event.type}@v${event.version}`) };
+  return {
+    ...rest,
+    glossary: glossaryTerms.length,
+    publishedEvents: publishedEvents.map((event) => `${event.type}@v${event.version}`),
+  };
 }
 
 function formatProjectMap(map: ProjectMap): string {

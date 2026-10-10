@@ -70,7 +70,9 @@ export function platformModule(persistence: Persistence, options: PlatformOption
       // Cross-cutting behaviour stays out of the contexts. Inside the span and the dispatch the kernel module puts around a binding, outside the aspects a binding states for itself (`ownPolicy`).
       builder.around(['external', 'gateway'], () => adapterAspects(options.resilience ?? defaultResilience));
 
-      if (options.redis !== undefined) bindRedis(builder, options.redis);
+      if (options.redis !== undefined) {
+        bindRedis(builder, options.redis);
+      }
 
       // ddd-ts-kit:bindings
       builder.bind(PersonDirectoryContract).toValue(new KnexPersonDirectory(persistence.database));

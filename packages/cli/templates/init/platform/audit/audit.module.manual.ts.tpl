@@ -18,16 +18,22 @@ interface AuditWiring {
  * use case so that reading the trail is authorized and recorded.
  */
 export function auditModule(platform: Platform): AuditWiring {
-  platform.queries.register(ListAuditEntriesQuery, new ListAuditEntriesHandler(platform.audit.trail), { context: 'audit' });
+  platform.queries.register(ListAuditEntriesQuery, new ListAuditEntriesHandler(platform.audit.trail), {
+    context: 'audit',
+  });
 
   return {
     name: 'audit',
-{{#if authz.rebac}}
-    useCases: [requires(ListAuditEntriesQuery, auditPermissions['trail.read'], { resource: () => ({ type: 'context', id: 'audit' }) })],
-{{/if}}
-{{#unless authz.rebac}}
+    {{#if authz.rebac}}
+    useCases: [
+      requires(ListAuditEntriesQuery, auditPermissions['trail.read'], {
+        resource: () => ({ type: 'context', id: 'audit' }),
+      }),
+    ],
+    {{/if}}
+    {{#unless authz.rebac}}
     useCases: [requires(ListAuditEntriesQuery, auditPermissions['trail.read'])],
-{{/unless}}
+    {{/unless}}
     routes: [listAuditEntriesRoute(platform.queries)],
   };
 }

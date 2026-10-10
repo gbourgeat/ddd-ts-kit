@@ -38,8 +38,15 @@ export class FakeMailer implements Mailer {
 
     const failure = this.outage ?? this.failures.shift();
 
-    if (failure !== undefined) throw failure;
+    if (failure !== undefined) {
+      throw failure;
+    }
 
-    this.delivered.push({ address, recipientId: notification.recipientId, kind: notification.kind.value, appointmentId: notification.appointmentId });
+    this.delivered.push({
+      address,
+      recipientId: notification.recipientId,
+      kind: notification.kind.value,
+      appointmentId: notification.appointmentId,
+    });
   }
 }

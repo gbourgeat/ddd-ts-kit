@@ -22,7 +22,10 @@ beforeAll(async () => {
 
   signing = pair.privateKey;
   ({ privateKey: foreign } = await generateKeyPair('RS256'));
-  const keys = JSON.stringify({ keys: [{ ...(await exportJWK(pair.publicKey)), kid: KEY_ID, alg: 'RS256', use: 'sig' }] });
+
+  const keys = JSON.stringify({
+    keys: [{ ...(await exportJWK(pair.publicKey)), kid: KEY_ID, alg: 'RS256', use: 'sig' }],
+  });
 
   keycloak = createServer((request, response) => {
     requested.push(request.url ?? '');
@@ -135,7 +138,9 @@ describe('keycloakAuthenticator', () => {
   });
 
   it('sees the service account of a client as a service, identified by its token', async () => {
-    const session = await authenticator({ clientId: 'shop-api' }).authenticateSession(await signed(serviceAccountClaims()));
+    const session = await authenticator({ clientId: 'shop-api' }).authenticateSession(
+      await signed(serviceAccountClaims()),
+    );
 
     expect(session).toMatchObject({
       id: 'trrtcc:0d2b6c1e-6c0a-4a1b-b0b7-2c9f7a1d5e02',
@@ -178,7 +183,9 @@ describe('keycloakAuthenticator', () => {
       email: 'ada@example.test',
     });
 
-    expect((await renamed.authenticate(await signed({ ...withoutGroups, memberships: ['/finance'] }))).attributes['groups']).toEqual(['/finance']);
+    expect(
+      (await renamed.authenticate(await signed({ ...withoutGroups, memberships: ['/finance'] }))).attributes['groups'],
+    ).toEqual(['/finance']);
   });
 });
 
@@ -195,7 +202,9 @@ describe('keycloakAuthenticator at the boundary', () => {
   it('refuses a token of another realm, and one signed by a key the realm does not publish', async () => {
     const otherRealm = { ...userClaims(), iss: `${baseUrl}/realms/other` };
 
-    await expect(authenticator().authenticate(await signed(otherRealm))).rejects.toMatchObject({ reason: 'CLAIM_MISMATCH' });
+    await expect(authenticator().authenticate(await signed(otherRealm))).rejects.toMatchObject({
+      reason: 'CLAIM_MISMATCH',
+    });
 
     await expect(authenticator().authenticate(await signed(userClaims(), foreign))).rejects.toMatchObject({
       reason: 'BAD_SIGNATURE',
@@ -205,7 +214,9 @@ describe('keycloakAuthenticator at the boundary', () => {
   it('refuses a token without subject', async () => {
     const { sub: _sub, ...withoutSubject } = userClaims();
 
-    await expect(authenticator().authenticate(await signed(withoutSubject))).rejects.toMatchObject({ reason: 'NO_SUBJECT' });
+    await expect(authenticator().authenticate(await signed(withoutSubject))).rejects.toMatchObject({
+      reason: 'NO_SUBJECT',
+    });
   });
 
   it('plugs into the HTTP boundary as it is', async () => {

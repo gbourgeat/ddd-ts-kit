@@ -55,9 +55,17 @@ export function defineRule<MessageIds extends string, Options extends readonly u
     create(context, options) {
       const file = describeLintedFile(context);
 
-      if (configuredSeverity(file.config, definition.id) === 'off') return {};
+      if (configuredSeverity(file.config, definition.id) === 'off') {
+        return {};
+      }
 
-      return definition.create({ context, sourceCode: context.sourceCode, file, options, report: reporter(context, definition.id) });
+      return definition.create({
+        context,
+        sourceCode: context.sourceCode,
+        file,
+        options,
+        report: reporter(context, definition.id),
+      });
     },
   });
 }
@@ -71,14 +79,18 @@ function reporter<MessageIds extends string, Options extends readonly unknown[]>
   return (descriptor) => {
     suppressed ??= suppressedLines(context.sourceCode, ruleId);
 
-    if (!suppressed.has(lineOf(descriptor))) context.report(descriptor);
+    if (!suppressed.has(lineOf(descriptor))) {
+      context.report(descriptor);
+    }
   };
 }
 
 function lineOf(descriptor: TSESLint.ReportDescriptor<string>): number {
   const position = descriptor.loc ?? ('node' in descriptor ? descriptor.node.loc : undefined);
 
-  if (position === undefined) return 1;
+  if (position === undefined) {
+    return 1;
+  }
 
   return 'start' in position ? position.start.line : position.line;
 }

@@ -38,6 +38,8 @@ describe('The relation tuple store of the platform, in a unit of work', () => {
   });
 
   it('refuses a tuple the relationship schema does not describe', async () => {
-    await expect(store.write([{ object: 'practice:p1', relation: 'owner', subject: 'user:doc' }])).rejects.toThrow('owner');
+    await expect(store.write([{ object: 'practice:p1', relation: 'owner', subject: 'user:doc' }])).rejects.toThrow(
+      'owner',
+    );
   });
 });

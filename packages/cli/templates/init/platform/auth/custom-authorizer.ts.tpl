@@ -1,4 +1,13 @@
-import { ALLOWED, DenialReason, deny, type AccessScope, type Authorizer, type CheckRequest, type Decision, type ListRequest } from '@ddd-ts-kit/auth';
+import {
+  ALLOWED,
+  DenialReason,
+  deny,
+  type AccessScope,
+  type Authorizer,
+  type CheckRequest,
+  type Decision,
+  type ListRequest,
+} from '@ddd-ts-kit/auth';
 import { isAnonymous, type Actor } from '@ddd-ts-kit/kernel';
 
 const notGranted = 'NOT_GRANTED';
@@ -14,7 +23,9 @@ export class CustomAuthorizer implements Authorizer {
   constructor(private readonly grants: Readonly<Record<string, readonly string[]>>) {}
 
   async check({ actor, permission }: CheckRequest): Promise<Decision> {
-    if (isAnonymous(actor)) return deny(DenialReason.anonymous);
+    if (isAnonymous(actor)) {
+      return deny(DenialReason.anonymous);
+    }
 
     return this.granted(actor, permission.id) ? ALLOWED : deny(notGranted);
   }

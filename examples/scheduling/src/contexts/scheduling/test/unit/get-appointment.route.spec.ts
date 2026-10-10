@@ -21,7 +21,9 @@ describe('GET /appointments/:appointmentId', () => {
       },
     });
 
-    const response = await executeRoute(getAppointmentRoute(queries), request('appointment-1'), { validateResponses: true });
+    const response = await executeRoute(getAppointmentRoute(queries), request('appointment-1'), {
+      validateResponses: true,
+    });
 
     expect(received).toMatchObject([{ appointmentId: 'appointment-1' }]);
     expect(response.status).toBe(200);
@@ -45,7 +47,9 @@ describe('GET /appointments/:appointmentId', () => {
   it('leaves the name out when the use case could not learn it', async () => {
     const queries = new InMemoryQueryBus().register(GetAppointmentQuery, { execute: async () => entry });
 
-    const response = await executeRoute(getAppointmentRoute(queries), request('appointment-1'), { validateResponses: true });
+    const response = await executeRoute(getAppointmentRoute(queries), request('appointment-1'), {
+      validateResponses: true,
+    });
 
     expect(response.status).toBe(200);
     expect(response.body).not.toHaveProperty('patientName');
@@ -58,7 +62,10 @@ describe('GET /appointments/:appointmentId', () => {
       },
     });
 
-    const response = await executeRoute(getAppointmentRoute(queries), request('appointment-1'), { validateResponses: true, errorMapper: createErrorMapper(errorStatuses) });
+    const response = await executeRoute(getAppointmentRoute(queries), request('appointment-1'), {
+      validateResponses: true,
+      errorMapper: createErrorMapper(errorStatuses),
+    });
 
     expect(response).toMatchObject({ status: 404, body: { code: 'APPOINTMENT_NOT_FOUND' } });
   });

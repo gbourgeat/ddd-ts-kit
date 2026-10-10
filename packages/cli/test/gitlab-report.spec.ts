@@ -36,7 +36,13 @@ function brokenProject(): string {
   const root = tempDir('gitlab');
 
   scaffoldEverything(root);
-  write(root, AGGREGATE, `import { z } from 'zod';\nimport { v4 } from 'uuid';\n${read(root, AGGREGATE)}\nexport const shapes = [z, v4, z];\n// const old = 1;\n`);
+
+  write(
+    root,
+    AGGREGATE,
+    `import { z } from 'zod';\nimport { v4 } from 'uuid';\n${read(root, AGGREGATE)}\nexport const shapes = [z, v4, z];\n// const old = 1;\n`,
+  );
+
   write(root, 'src/contexts/billing/domain/aggregates/Wrong.ts', 'export class Wrong {}\n');
 
   return root;
@@ -47,7 +53,10 @@ function converted(root: string): unknown {
   write(root, 'reports/arch.json', cli(root, 'check', '--format', 'json').stdout);
 
   try {
-    execFileSync(process.execPath, [CONVERTER, 'reports/arch.json', 'reports/converted.json'], { cwd: root, stdio: 'pipe' });
+    execFileSync(process.execPath, [CONVERTER, 'reports/arch.json', 'reports/converted.json'], {
+      cwd: root,
+      stdio: 'pipe',
+    });
   } catch {
     // The converter exits 1 while errors remain; the report is written all the same.
   }

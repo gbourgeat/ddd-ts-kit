@@ -14,7 +14,9 @@ export function findSuppressions(file: SourceFile): Suppression[] {
   return file.scan.comments.flatMap((comment) => {
     const match = DIRECTIVE.exec(comment.text);
 
-    if (match === null || !comment.ownLine) return [];
+    if (match === null || !comment.ownLine) {
+      return [];
+    }
 
     const [head = '', ...reason] = (match[1] ?? '').split('--');
 

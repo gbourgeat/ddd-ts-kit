@@ -120,19 +120,28 @@ describe('the scheduler of a declared job', () => {
     const run = await app.resolve(JobScheduler).runNow(MONTHLY);
 
     expect(run).toMatchObject({ job: MONTHLY, outcome: 'succeeded', scheduledAt: clock.now() });
-    expect(app.resolve(JobScheduler).describe()).toMatchObject([{ name: MONTHLY, schedule: 'cron 0 6 1 * * (Europe/Paris)', enabled: true }]);
+
+    expect(app.resolve(JobScheduler).describe()).toMatchObject([
+      { name: MONTHLY, schedule: 'cron 0 6 1 * * (Europe/Paris)', enabled: true },
+    ]);
   });
 
   it('needs a job scheduler: a context listed without the kernel module says so', () => {
     const reminders = defineContextModule({
       name: 'billing',
-      register: (builder) => builder.job('billing.send-reminders', { every: '15m' }).handledByFactory(() => ({ run: async () => undefined })),
+      register: (builder) =>
+        builder
+          .job('billing.send-reminders', { every: '15m' })
+          .handledByFactory(() => ({ run: async () => undefined })),
     });
 
     const failure = wiringFailure(() => createApplication({ modules: [reminders] }));
 
     expect(failure.code).toBe('UNBOUND_DEPENDENCY');
-    expect(failure.message).toBe('Module "billing" declares the job "billing.send-reminders", but no module binds "JobScheduler". Add kernelModule() to the modules.');
+
+    expect(failure.message).toBe(
+      'Module "billing" declares the job "billing.send-reminders", but no module binds "JobScheduler". Add kernelModule() to the modules.',
+    );
   });
 });
 
@@ -145,17 +154,26 @@ describe('the settings of the application', () => {
       jobs: { settings: { [MONTHLY]: { enabled: false, schedule: { every: '6h' }, overlap: 'queue' } } },
     });
 
-    expect(scheduler.registered).toMatchObject([{ name: MONTHLY, schedule: { every: '6h' }, enabled: false, overlap: 'queue', timeoutMs: 600_000 }]);
+    expect(scheduler.registered).toMatchObject([
+      { name: MONTHLY, schedule: { every: '6h' }, enabled: false, overlap: 'queue', timeoutMs: 600_000 },
+    ]);
+
     expect(app.describe().jobs).toMatchObject([{ name: MONTHLY, schedule: 'every 6h', enabled: false }]);
   });
 
   it('refuse settings for a job nobody declares: a stale key would leave a renamed job switched on', () => {
     const failure = wiringFailure(() =>
-      createApplication({ modules: [kernelModule(), billingModule], jobs: { settings: { 'billing.issue-invoices': { enabled: false } } } }),
+      createApplication({
+        modules: [kernelModule(), billingModule],
+        jobs: { settings: { 'billing.issue-invoices': { enabled: false } } },
+      }),
     );
 
     expect(failure.code).toBe('UNKNOWN_JOB');
-    expect(failure.message).toBe(`Settings are given for the job "billing.issue-invoices", which no module declares. Declared jobs: "${MONTHLY}".`);
+
+    expect(failure.message).toBe(
+      `Settings are given for the job "billing.issue-invoices", which no module declares. Declared jobs: "${MONTHLY}".`,
+    );
   });
 
   it.each([
@@ -164,7 +182,9 @@ describe('the settings of the application', () => {
     [{ schedule: { every: 0 } }, '"0" is not a duration'],
     [{ timeoutMs: -1 }, '"-1" is not a duration'],
   ])('refuse settings that cannot be read: %j', (settings, complaint) => {
-    const failure = wiringFailure(() => createApplication({ modules: [kernelModule(), billingModule], jobs: { settings: { [MONTHLY]: settings } } }));
+    const failure = wiringFailure(() =>
+      createApplication({ modules: [kernelModule(), billingModule], jobs: { settings: { [MONTHLY]: settings } } }),
+    );
 
     expect(failure.code).toBe('INVALID_JOB_SETTINGS');
     expect(failure.message).toContain(`Job "${MONTHLY}": ${complaint}`);
@@ -182,7 +202,9 @@ describe('job names', () => {
     }
     Scheduled('billing.issue-monthly-invoices', { every: '1d' })(IssueThemAgain);
 
-    const failure = wiringFailure(() => createApplication({ modules: [kernelModule(), billingModule, contextModule('invoicing', [IssueThemAgain])] }));
+    const failure = wiringFailure(() =>
+      createApplication({ modules: [kernelModule(), billingModule, contextModule('invoicing', [IssueThemAgain])] }),
+    );
 
     expect(failure.code).toBe('DUPLICATE_JOB');
 
@@ -195,7 +217,9 @@ describe('job names', () => {
     const { IssueMonthlyInvoicesJob } = billing;
 
     const failure = wiringFailure(() =>
-      createApplication({ modules: [kernelModule(), billingModule, contextModule('invoicing', [IssueMonthlyInvoicesJob])] }),
+      createApplication({
+        modules: [kernelModule(), billingModule, contextModule('invoicing', [IssueMonthlyInvoicesJob])],
+      }),
     );
 
     expect(failure.code).toBe('DUPLICATE_JOB');
@@ -203,14 +227,23 @@ describe('job names', () => {
 
   it('are checked in an explicit module too, with the schedule', () => {
     const named = (name: string, settings: ScheduledOptions) =>
-      defineContextModule({ name: 'billing', register: (builder) => builder.job(name, settings).handledBy(SendReminders) });
+      defineContextModule({
+        name: 'billing',
+        register: (builder) => builder.job(name, settings).handledBy(SendReminders),
+      });
 
-    expect(wiringFailure(() => createApplication({ modules: [kernelModule(), named('SendReminders', { every: '15m' })] }))).toMatchObject({
+    expect(
+      wiringFailure(() => createApplication({ modules: [kernelModule(), named('SendReminders', { every: '15m' })] })),
+    ).toMatchObject({
       code: 'INVALID_JOB_SETTINGS',
       message: expect.stringContaining('"SendReminders", declared in module "billing", is not a job name'),
     });
 
-    expect(wiringFailure(() => createApplication({ modules: [kernelModule(), named('billing.send-reminders', { cron: '* * *' })] }))).toMatchObject({
+    expect(
+      wiringFailure(() =>
+        createApplication({ modules: [kernelModule(), named('billing.send-reminders', { cron: '* * *' })] }),
+      ),
+    ).toMatchObject({
       code: 'INVALID_JOB_SETTINGS',
       message: expect.stringContaining('Cron "* * *" has 3 field(s)'),
     });
@@ -224,7 +257,9 @@ describe('a job of an explicit module', () => {
     const reminders = defineContextModule({
       name: 'billing',
       register(builder) {
-        builder.job('billing.send-reminders', { every: '15m', missed: 'run-once' }).handledByFactory(() => ({ run: async () => void (runs += 1) }));
+        builder
+          .job('billing.send-reminders', { every: '15m', missed: 'run-once' })
+          .handledByFactory(() => ({ run: async () => void (runs += 1) }));
       },
     });
 
@@ -233,11 +268,25 @@ describe('a job of an explicit module', () => {
     await app.jobs.runNow('billing.send-reminders');
 
     expect(runs).toBe(1);
-    expect(app.describe().jobs).toMatchObject([{ name: 'billing.send-reminders', schedule: 'every 15m', missed: 'run-once', module: 'billing' }]);
+
+    expect(app.describe().jobs).toMatchObject([
+      { name: 'billing.send-reminders', schedule: 'every 15m', missed: 'run-once', module: 'billing' },
+    ]);
+
     expect(app.describe().jobs[0]).not.toHaveProperty('origin');
 
     expect(
-      wiringFailure(() => createApplication({ modules: [kernelModule(), defineContextModule({ name: 'billing', register: (builder) => void builder.job('billing.send-reminders', { every: '15m' }) })] })).message,
+      wiringFailure(() =>
+        createApplication({
+          modules: [
+            kernelModule(),
+            defineContextModule({
+              name: 'billing',
+              register: (builder) => void builder.job('billing.send-reminders', { every: '15m' }),
+            }),
+          ],
+        }),
+      ).message,
     ).toBe('Module "billing" calls job(billing.send-reminders) without handledBy or handledByFactory.');
   });
 });

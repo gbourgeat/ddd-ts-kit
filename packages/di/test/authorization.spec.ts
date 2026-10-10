@@ -127,10 +127,18 @@ describe('declaring the access to a use case next to its handler', () => {
   });
 
   it('shows the access in the description of the wiring', () => {
-    const { commands, queries } = createApplication({ modules: [kernelModule(), billingModule, archivingModule] }).describe();
+    const { commands, queries } = createApplication({
+      modules: [kernelModule(), billingModule, archivingModule],
+    }).describe();
 
     expect(commands).toEqual([
-      { message: 'IssueInvoice', handler: 'IssueInvoiceHandler', module: 'billing', access: 'protected', permission: 'billing:invoice.issue' },
+      {
+        message: 'IssueInvoice',
+        handler: 'IssueInvoiceHandler',
+        module: 'billing',
+        access: 'protected',
+        permission: 'billing:invoice.issue',
+      },
       { message: 'ArchiveInvoices', handler: 'command(ArchiveInvoices) handler', module: 'archiving' },
       { message: 'PurgeInvoices', handler: 'command(PurgeInvoices) handler', module: 'archiving' },
     ]);
@@ -254,14 +262,22 @@ describe('the use case guard', () => {
       modules: [kernelModule({ unitOfWork }), billingModule, guardModule],
     });
 
-    await expect(app.resolve(CommandBus).execute(new IssueInvoice(ada, 'customer-1'))).rejects.toBeInstanceOf(RangeError);
+    await expect(app.resolve(CommandBus).execute(new IssueInvoice(ada, 'customer-1'))).rejects.toBeInstanceOf(
+      RangeError,
+    );
+
     await expect(app.resolve(QueryBus).execute(new GetCatalog())).rejects.toBeInstanceOf(RangeError);
     expect(unitOfWork.opened).toBe(0);
   });
 
   it('guards a test application as well when a module binds it, and allows everything otherwise', async () => {
     const unitOfWork = new CountingUnitOfWork();
-    const guarded = createTestApplication({ modules: [billingModule, guardModule], fakes: [fake(UnitOfWork, unitOfWork)] });
+
+    const guarded = createTestApplication({
+      modules: [billingModule, guardModule],
+      fakes: [fake(UnitOfWork, unitOfWork)],
+    });
+
     const open = createTestApplication({ modules: [billingModule] });
 
     await expect(guarded.commandBus.execute(new IssueInvoice(ada, 'customer-1'))).rejects.toBeInstanceOf(RangeError);

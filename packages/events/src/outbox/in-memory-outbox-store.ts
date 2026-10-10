@@ -66,10 +66,7 @@ export class InMemoryOutboxStore implements OutboxStore {
   async claimBatch(limit: number, now: Date): Promise<OutboxRecord[]> {
     const due = [...this.storedRecords.values()]
       .filter((record) => record.status === 'pending' && record.nextAttemptAt <= now)
-      .sort(
-        (a, b) =>
-          a.nextAttemptAt.getTime() - b.nextAttemptAt.getTime() || a.sequence - b.sequence,
-      )
+      .sort((a, b) => a.nextAttemptAt.getTime() - b.nextAttemptAt.getTime() || a.sequence - b.sequence)
       .slice(0, Math.max(0, limit));
 
     for (const record of due) {
@@ -91,11 +88,7 @@ export class InMemoryOutboxStore implements OutboxStore {
     }
   }
 
-  async markFailed(
-    id: string,
-    error: { readonly code: string },
-    nextAttemptAt: Date | null,
-  ): Promise<void> {
+  async markFailed(id: string, error: { readonly code: string }, nextAttemptAt: Date | null): Promise<void> {
     const record = this.storedRecords.get(id);
 
     if (record === undefined || record.status === 'published') {

@@ -20,17 +20,31 @@ export function readConsumedEvents(sources: ContextSources): ConsumedEventFact[]
 function consumedBy(sources: ContextSources, file: string): ConsumedEventFact {
   const path = `${sources.directory}/${FOLDER}/${file}`;
   const source = sources.ws.read(path) ?? '';
-  const handler = /\bexport class (\w+)/.exec(source)?.[1] ?? `${toName(file.slice(0, -SUFFIX.length)).pascal}IntegrationHandler`;
+
+  const handler =
+    /\bexport class (\w+)/.exec(source)?.[1] ?? `${toName(file.slice(0, -SUFFIX.length)).pascal}IntegrationHandler`;
+
   const text = `${source}\n${wiringOf(sources.module, handler)}`;
 
-  return { ...eventOf(sources, source, text), handler, consumer: /\bconsumer:\s*'([^']+)'/.exec(text)?.[1] ?? '', file: path };
+  return {
+    ...eventOf(sources, source, text),
+    handler,
+    consumer: /\bconsumer:\s*'([^']+)'/.exec(text)?.[1] ?? '',
+    file: path,
+  };
 }
 
 /** The event a handler reacts to: the declaration it is given, or the type it names itself when the event has none here. */
-function eventOf(sources: ContextSources, source: string, text: string): Pick<ConsumedEventFact, 'type' | 'version' | 'from'> {
+function eventOf(
+  sources: ContextSources,
+  source: string,
+  text: string,
+): Pick<ConsumedEventFact, 'type' | 'version' | 'from'> {
   const given = givenDefinition(sources, text);
 
-  if (given !== undefined) return { type: given.definition.type, version: given.definition.version, from: given.context };
+  if (given !== undefined) {
+    return { type: given.definition.type, version: given.definition.version, from: given.context };
+  }
 
   const type = /\bstatic readonly eventType = '([^']+)'/.exec(source)?.[1] ?? '';
 
@@ -57,12 +71,19 @@ interface GivenDefinition {
 function givenDefinition({ ws, config }: ContextSources, text: string): GivenDefinition | undefined {
   const local = /(?:@IntegrationEventHandler|\bon)\(\s*(\w+)\s*,/.exec(text)?.[1];
 
-  for (const [, names = '', from = ''] of text.matchAll(/\bimport \{([^}]*)\} from '([^']*\/published-language\/[^']*)'/g)) {
+  for (const [, names = '', from = ''] of text.matchAll(
+    /\bimport \{([^}]*)\} from '([^']*\/published-language\/[^']*)'/g,
+  )) {
     const context = /([a-z0-9-]+)\/published-language\//.exec(from)?.[1] ?? '';
     const original = originalName(names, local);
-    const definition = readEventDefinitions(ws, `${config.contextsDir}/${context}`).find((candidate) => candidate.name === original);
 
-    if (definition !== undefined) return { context, definition };
+    const definition = readEventDefinitions(ws, `${config.contextsDir}/${context}`).find(
+      (candidate) => candidate.name === original,
+    );
+
+    if (definition !== undefined) {
+      return { context, definition };
+    }
   }
 
   return undefined;

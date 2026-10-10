@@ -17,7 +17,8 @@ export const governanceRecordedDeviation = defineRule<'unrecorded' | 'blanket'>(
   id: 'governance/recorded-deviation',
   type: 'problem',
   recommended: 'error',
-  description: 'A suppression carries a reason that points to a decision record of docs/adr/, and names the rules it silences.',
+  description:
+    'A suppression carries a reason that points to a decision record of docs/adr/, and names the rules it silences.',
   messages: {
     unrecorded:
       '`{{directive}}` on line {{line}} silences a rule without pointing to a decision. Fix the diagnostic; if the deviation is deliberate, record it with `ddd-ts-kit generate adr` (reason, scope, condition for removing it) and end the comment with `-- ADR-<number>: <reason>`.',
@@ -31,9 +32,15 @@ export const governanceRecordedDeviation = defineRule<'unrecorded' | 'blanket'>(
           const directive = parseDirective(comment.value);
           const messageId = directive === undefined ? undefined : judge(directive);
 
-          if (directive === undefined || messageId === undefined) continue;
+          if (directive === undefined || messageId === undefined) {
+            continue;
+          }
 
-          report({ loc: reportedAt(comment, directive), messageId, data: { directive: `${directive.keyword} ${directive.rules}`.trim(), line: comment.loc.start.line } });
+          report({
+            loc: reportedAt(comment, directive),
+            messageId,
+            data: { directive: `${directive.keyword} ${directive.rules}`.trim(), line: comment.loc.start.line },
+          });
         }
       },
     };
@@ -43,18 +50,28 @@ export const governanceRecordedDeviation = defineRule<'unrecorded' | 'blanket'>(
 function parseDirective(comment: string): Directive | undefined {
   const match = DIRECTIVE.exec(comment.trim());
 
-  if (match === null) return undefined;
+  if (match === null) {
+    return undefined;
+  }
 
   const [, keyword = '', rest = ''] = match;
   const separator = REASON.exec(rest);
 
-  if (separator === null) return { keyword, rules: rest.trim(), reason: '' };
+  if (separator === null) {
+    return { keyword, rules: rest.trim(), reason: '' };
+  }
 
-  return { keyword, rules: rest.slice(0, separator.index).trim(), reason: rest.slice(separator.index + separator[0].length) };
+  return {
+    keyword,
+    rules: rest.slice(0, separator.index).trim(),
+    reason: rest.slice(separator.index + separator[0].length),
+  };
 }
 
 function judge(directive: Directive): 'unrecorded' | 'blanket' | undefined {
-  if (directive.rules === '') return 'blanket';
+  if (directive.rules === '') {
+    return 'blanket';
+  }
 
   return DECISION_RECORD.test(directive.reason) ? undefined : 'unrecorded';
 }
@@ -65,8 +82,13 @@ function judge(directive: Directive): 'unrecorded' | 'blanket' | undefined {
  * first character of the file for `eslint-disable`, on the line above for `eslint-disable-line`.
  */
 function reportedAt(comment: TSESTree.Comment, directive: Directive): TSESTree.SourceLocation | TSESTree.Position {
-  if (!silencesThisRule(directive)) return comment.loc;
-  if (directive.keyword === 'eslint-disable') return { line: 1, column: -1 };
+  if (!silencesThisRule(directive)) {
+    return comment.loc;
+  }
+
+  if (directive.keyword === 'eslint-disable') {
+    return { line: 1, column: -1 };
+  }
 
   return directive.keyword === 'eslint-disable-line' ? { line: comment.loc.start.line - 1, column: 0 } : comment.loc;
 }

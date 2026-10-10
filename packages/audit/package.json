@@ -6,14 +6,56 @@
   "type": "module",
   "sideEffects": false,
   "exports": {
-    ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" },
-    "./knex": { "types": "./dist/knex.d.ts", "default": "./dist/knex.js" },
-    "./drizzle": { "types": "./dist/drizzle.d.ts", "default": "./dist/drizzle.js" },
-    "./testing": { "types": "./dist/testing.d.ts", "default": "./dist/testing.js" }
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./knex": {
+      "types": "./dist/knex.d.ts",
+      "default": "./dist/knex.js"
+    },
+    "./drizzle": {
+      "types": "./dist/drizzle.d.ts",
+      "default": "./dist/drizzle.js"
+    },
+    "./testing": {
+      "types": "./dist/testing.d.ts",
+      "default": "./dist/testing.js"
+    }
   },
-  "files": ["dist"],
-  "dependencies": { "@ddd-ts-kit/kernel": "0.1.0" },
-  "peerDependencies": { "knex": "^3.0.0", "drizzle-orm": ">=0.40.0", "@ddd-ts-kit/testing": "0.1.0" },
-  "peerDependenciesMeta": { "knex": { "optional": true }, "drizzle-orm": { "optional": true }, "@ddd-ts-kit/testing": { "optional": true } },
-  "devDependencies": { "knex": "^3.3.0", "drizzle-orm": "^0.45.4", "pg": "^8.23.1", "@types/pg": "^8.11.0", "@electric-sql/pglite": "^0.5.8", "@electric-sql/pglite-socket": "^0.2.11", "@ddd-ts-kit/auth": "0.1.0", "@ddd-ts-kit/events": "0.1.0", "@ddd-ts-kit/knex": "0.1.0", "@ddd-ts-kit/drizzle": "0.1.0", "@ddd-ts-kit/testing": "0.1.0" }
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@ddd-ts-kit/kernel": "0.1.0"
+  },
+  "peerDependencies": {
+    "knex": "^3.0.0",
+    "drizzle-orm": ">=0.40.0",
+    "@ddd-ts-kit/testing": "0.1.0"
+  },
+  "peerDependenciesMeta": {
+    "knex": {
+      "optional": true
+    },
+    "drizzle-orm": {
+      "optional": true
+    },
+    "@ddd-ts-kit/testing": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "knex": "^3.3.0",
+    "drizzle-orm": "^0.45.4",
+    "pg": "^8.23.1",
+    "@types/pg": "^8.11.0",
+    "@electric-sql/pglite": "^0.5.8",
+    "@electric-sql/pglite-socket": "^0.2.11",
+    "@ddd-ts-kit/auth": "0.1.0",
+    "@ddd-ts-kit/events": "0.1.0",
+    "@ddd-ts-kit/knex": "0.1.0",
+    "@ddd-ts-kit/drizzle": "0.1.0",
+    "@ddd-ts-kit/testing": "0.1.0"
+  }
 }

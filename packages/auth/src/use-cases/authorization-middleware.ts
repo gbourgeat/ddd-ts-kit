@@ -28,9 +28,13 @@ export function authorizationMiddleware(options: AuthorizationMiddlewareOptions)
   return async (message, next, info) => {
     const declaration = options.map.find(message);
 
-    if (declaration === undefined) throw new UndeclaredUseCaseError(info);
+    if (declaration === undefined) {
+      throw new UndeclaredUseCaseError(info);
+    }
 
-    if (declaration.access === 'protected') await assertAllowed(options, declaration, { message, info });
+    if (declaration.access === 'protected') {
+      await assertAllowed(options, declaration, { message, info });
+    }
 
     return next();
   };
@@ -52,13 +56,17 @@ async function assertAllowed(
 
   await onDecision?.(decisionRecordOf(request, decision, info));
 
-  if (decision.allowed) return;
+  if (decision.allowed) {
+    return;
+  }
 
   throw anonymous ? new UnauthenticatedError() : new ForbiddenError(request.permission.id, decision.reason);
 }
 
 function requestOf(declaration: ProtectedUseCase, message: Message, info: MessageInfo): CheckRequest {
-  if (!isActored(message)) throw new MissingActorError(info);
+  if (!isActored(message)) {
+    throw new MissingActorError(info);
+  }
 
   const resource = declaration.resourceOf(message);
   const context = declaration.contextOf(message);

@@ -37,7 +37,9 @@ export class ConsumerSubscriptions {
   }
 
   private subscribed(): Subscription[] {
-    if (this.consumptions.length === 0) return [];
+    if (this.consumptions.length === 0) {
+      return [];
+    }
 
     const runtime = this.runtime();
     const instrument = this.resolveIfBound(Instrumentation)?.consumer;
@@ -72,9 +74,7 @@ export class ConsumerSubscriptions {
   private subscriberOf(context: string): IntegrationEventSubscriber {
     const subscribers = this.resolveIfBound(EventSubscribers);
 
-    return subscribers === undefined
-      ? this.ports.resolve(IntegrationEventSubscriber)
-      : subscribers.forContext(context);
+    return subscribers === undefined ? this.ports.resolve(IntegrationEventSubscriber) : subscribers.forContext(context);
   }
 
   private resolveIfBound<T>(target: Token<T>): T | undefined {

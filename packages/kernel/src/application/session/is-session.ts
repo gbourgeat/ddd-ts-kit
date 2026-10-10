@@ -17,7 +17,9 @@ export function isSession(value: unknown): value is Session {
 }
 
 function hasSessionKeys(value: unknown): value is SessionKeys {
-  if (typeof value !== 'object' || value === null) return false;
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
 
   return ['id', 'actor', 'issuedAt', 'authenticationMethod', 'extensions'].every((key) => key in value);
 }

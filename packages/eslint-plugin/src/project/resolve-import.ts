@@ -14,14 +14,21 @@ const SOURCE = /\.(?:ts|mts|cts)$/;
 const BUILTINS = new Set(builtinModules);
 
 export function resolveImport(config: Config, fromFile: string, specifier: string): ImportTarget {
-  if (specifier.startsWith('.')) return fileTarget(config, path.posix.join(path.posix.dirname(fromFile), specifier));
+  if (specifier.startsWith('.')) {
+    return fileTarget(config, path.posix.join(path.posix.dirname(fromFile), specifier));
+  }
 
   if (config.importAlias !== '' && specifier.startsWith(config.importAlias)) {
     return fileTarget(config, path.posix.join(config.sourceRoot, specifier.slice(config.importAlias.length)));
   }
 
-  if (specifier.startsWith('node:')) return { kind: 'builtin', name: specifier };
-  if (BUILTINS.has(packageName(specifier))) return { kind: 'builtin', name: `node:${specifier}` };
+  if (specifier.startsWith('node:')) {
+    return { kind: 'builtin', name: specifier };
+  }
+
+  if (BUILTINS.has(packageName(specifier))) {
+    return { kind: 'builtin', name: `node:${specifier}` };
+  }
 
   return { kind: 'package', name: packageName(specifier) };
 }

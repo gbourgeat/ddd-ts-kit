@@ -21,7 +21,11 @@ export function reportAfterCommitFailures({ reporter, logger, scope }: AfterComm
   return (error, event) => {
     const operation = `after-commit ${event.name}`;
 
-    logger.error('A domain event handler failed after the commit', { domainEvent: event.name, ...identifyError(error) });
+    logger.error('A domain event handler failed after the commit', {
+      domainEvent: event.name,
+      ...identifyError(error),
+    });
+
     reportOnce(reporter, error, errorReportOf(error, { origin: 'domain-event', operation }, scope?.current()));
   };
 }

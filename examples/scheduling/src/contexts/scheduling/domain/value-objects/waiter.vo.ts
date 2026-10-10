@@ -26,7 +26,13 @@ export class Waiter extends ValueObject<WaiterProps> {
       return err(new InvalidWaiterError('joined at a real instant'));
     }
 
-    return ok(new Waiter({ patientId: props.patientId.trim(), appointmentTypeId: props.appointmentTypeId.trim(), joinedAt: new Date(props.joinedAt) }));
+    return ok(
+      new Waiter({
+        patientId: props.patientId.trim(),
+        appointmentTypeId: props.appointmentTypeId.trim(),
+        joinedAt: new Date(props.joinedAt),
+      }),
+    );
   }
 
   get patientId(): string {

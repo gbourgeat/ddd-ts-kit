@@ -2,7 +2,10 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, onTestFailed } f
 import { collectEvents, expectProblem, expectStatus } from '@ddd-ts-kit/testing/e2e';
 import { reportSeedOnFailure } from '@ddd-ts-kit/testing/faker';
 import { expectSpanTree, installTestTracing } from '@ddd-ts-kit/tracing/testing';
-import { delegationRevokedV1, type DelegationRevokedV1Payload } from '../../src/contexts/identity/published-language/index.js';
+import {
+  delegationRevokedV1,
+  type DelegationRevokedV1Payload,
+} from '../../src/contexts/identity/published-language/index.js';
 import { startApplication, type RunningApplication } from './support/start-application.js';
 import { storyOf } from './support/story-of.js';
 
@@ -26,7 +29,9 @@ describe('Revoke delegation, end to end', () => {
   reportSeedOnFailure({ beforeEach, onTestFailed });
 
   it('answers 401 to a caller who presents no credential', async () => {
-    const response = await application.client.delete('/practices/practice-id-1/desks/practitioner-id-1/delegations/delegation-id-1');
+    const response = await application.client.delete(
+      '/practices/practice-id-1/desks/practitioner-id-1/delegations/delegation-id-1',
+    );
 
     expectStatus(response, 401);
   });
@@ -49,17 +54,30 @@ describe('Revoke delegation, end to end', () => {
     });
 
     // The relay is still publishing what the arrangement announced: only the trace of the request is told here.
-    expectSpanTree(storyOf(trace).filter((span) => span.kind === 'SERVER'), storyOfTheRequest);
+    expectSpanTree(
+      storyOf(trace).filter((span) => span.kind === 'SERVER'),
+      storyOfTheRequest,
+    );
   });
 
   it('answers 200 to DELETE /practices/:practiceId/desks/:practitionerId/delegations/:delegationId, and the pair may be granted a delegation again', async () => {
     const { practiceId, delegationId } = await grantDelegation(application);
     const grace = await application.as({ id: 'grace' });
 
-    const revoked = expectStatus(await grace.delete<{ id: string }>('/practices/' + practiceId + '/desks/grace/delegations/' + delegationId), 200);
+    const revoked = expectStatus(
+      await grace.delete<{ id: string }>('/practices/' + practiceId + '/desks/grace/delegations/' + delegationId),
+      200,
+    );
 
     expect(revoked.body.id).toBe(delegationId);
-    expectStatus(await grace.post('/practices/' + practiceId + '/desks/grace/delegations', { assistantId: 'linus', availabilityIncluded: false }), 201);
+
+    expectStatus(
+      await grace.post('/practices/' + practiceId + '/desks/grace/delegations', {
+        assistantId: 'linus',
+        availabilityIncluded: false,
+      }),
+      201,
+    );
   });
 
   it('publishes that the delegation is revoked, with its cause', async () => {
@@ -69,9 +87,19 @@ describe('Revoke delegation, end to end', () => {
 
     expectStatus(await ada.delete('/practices/' + practiceId + '/desks/grace/delegations/' + delegationId), 200);
 
-    const announced = await events.waitFor<DelegationRevokedV1Payload>(delegationRevokedV1, (event) => event.payload.delegationId === delegationId);
+    const announced = await events.waitFor<DelegationRevokedV1Payload>(
+      delegationRevokedV1,
+      (event) => event.payload.delegationId === delegationId,
+    );
 
-    expect(announced.payload).toEqual({ delegationId, practiceId, practitionerId: 'grace', assistantId: 'linus', cause: 'revoked' });
+    expect(announced.payload).toEqual({
+      delegationId,
+      practiceId,
+      practitionerId: 'grace',
+      assistantId: 'linus',
+      cause: 'revoked',
+    });
+
     events.stop();
   });
 
@@ -81,11 +109,20 @@ describe('Revoke delegation, end to end', () => {
     await register(application, 'marie');
     const ada = await application.as({ id: 'ada' });
 
-    expectStatus(await ada.post('/practices/' + practiceId + '/members', { personId: 'marie', role: 'practitioner' }), 201);
+    expectStatus(
+      await ada.post('/practices/' + practiceId + '/members', { personId: 'marie', role: 'practitioner' }),
+      201,
+    );
+
     const desk = '/practices/' + practiceId + '/desks/grace/delegations/';
 
     expectProblem(await ada.delete(desk + 'unknown'), { status: 404, code: 'DELEGATION_NOT_FOUND' });
-    expectProblem(await ada.delete('/practices/' + practiceId + '/desks/marie/delegations/' + delegationId), { status: 404, code: 'DELEGATION_NOT_FOUND' });
+
+    expectProblem(await ada.delete('/practices/' + practiceId + '/desks/marie/delegations/' + delegationId), {
+      status: 404,
+      code: 'DELEGATION_NOT_FOUND',
+    });
+
     expectStatus(await ada.delete(desk + delegationId), 200);
     expectProblem(await ada.delete(desk + delegationId), { status: 409, code: 'DELEGATION_NOT_ACTIVE' });
   });
@@ -97,7 +134,10 @@ async function grantDelegation(application: RunningApplication): Promise<{ pract
   const grace = await application.as({ id: 'grace' });
 
   const granted = expectStatus(
-    await grace.post<{ id: string }>('/practices/' + practiceId + '/desks/grace/delegations', { assistantId: 'linus', availabilityIncluded: true }),
+    await grace.post<{ id: string }>('/practices/' + practiceId + '/desks/grace/delegations', {
+      assistantId: 'linus',
+      availabilityIncluded: true,
+    }),
     201,
   );
 
@@ -109,11 +149,23 @@ async function openPracticeWithMembers(application: RunningApplication): Promise
   await register(application, 'ada', 'grace', 'linus');
 
   const root = await application.as({ id: 'root', roles: ['platform-admin'] });
-  const opened = expectStatus(await root.post<{ id: string }>('/practices', { name: 'Riverside', timeZone: 'Europe/Paris', managerId: 'ada' }), 201);
+
+  const opened = expectStatus(
+    await root.post<{ id: string }>('/practices', { name: 'Riverside', timeZone: 'Europe/Paris', managerId: 'ada' }),
+    201,
+  );
+
   const ada = await application.as({ id: 'ada' });
 
-  expectStatus(await ada.post('/practices/' + opened.body.id + '/members', { personId: 'grace', role: 'practitioner' }), 201);
-  expectStatus(await ada.post('/practices/' + opened.body.id + '/members', { personId: 'linus', role: 'assistant' }), 201);
+  expectStatus(
+    await ada.post('/practices/' + opened.body.id + '/members', { personId: 'grace', role: 'practitioner' }),
+    201,
+  );
+
+  expectStatus(
+    await ada.post('/practices/' + opened.body.id + '/members', { personId: 'linus', role: 'assistant' }),
+    201,
+  );
 
   return opened.body.id;
 }
@@ -123,13 +175,17 @@ async function register(application: RunningApplication, ...personIds: readonly 
   for (const personId of personIds) {
     const person = await application.as({ id: personId });
 
-    expectStatus(await person.put('/people/me', { displayName: 'Name of ' + personId, email: personId + '@example.com' }), 200);
+    expectStatus(
+      await person.put('/people/me', { displayName: 'Name of ' + personId, email: personId + '@example.com' }),
+      200,
+    );
   }
 }
 
 const storyOfTheRequest: Parameters<typeof expectSpanTree>[1] = [
   {
-    name: 'DELETE /practices/:practiceId/desks/:practitionerId/delegations/:delegationId', kind: 'SERVER',
+    name: 'DELETE /practices/:practiceId/desks/:practitionerId/delegations/:delegationId',
+    kind: 'SERVER',
     children: [
       {
         name: 'command RevokeDelegationCommand',
@@ -144,15 +200,11 @@ const storyOfTheRequest: Parameters<typeof expectSpanTree>[1] = [
                 children: [
                   {
                     name: 'handler DelegationRevokedEventHandler',
-                    children: [
-                      { name: 'repository IdentityRelationships.forgetDelegation' },
-                    ],
+                    children: [{ name: 'repository IdentityRelationships.forgetDelegation' }],
                   },
                   {
                     name: 'handler DelegationRevokedPublisher',
-                    children: [
-                      { name: 'outbox append identity.delegation.revoked' },
-                    ],
+                    children: [{ name: 'outbox append identity.delegation.revoked' }],
                   },
                 ],
               },

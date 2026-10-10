@@ -8,7 +8,15 @@ import { ServerLink } from '../src/streams/server-link.js';
 
 const PASSWORD = 'redis-password-e2a8';
 const URL_WITH_PASSWORD = `redis://ordering:${PASSWORD}@127.0.0.1:1`;
-const AWAY = { host: '127.0.0.1', port: 1, password: PASSWORD, lazyConnect: true, retryStrategy: () => null, maxRetriesPerRequest: 0 };
+
+const AWAY = {
+  host: '127.0.0.1',
+  port: 1,
+  password: PASSWORD,
+  lazyConnect: true,
+  retryStrategy: () => null,
+  maxRetriesPerRequest: 0,
+};
 
 const clients: Redis[] = [];
 
@@ -23,7 +31,9 @@ function aClientWithAPassword(): Redis {
 }
 
 afterAll(() => {
-  for (const client of clients) client.disconnect();
+  for (const client of clients) {
+    client.disconnect();
+  }
 });
 
 describe('the Redis adapters: what they show of the client they hold', () => {
@@ -76,7 +86,11 @@ describe('the Redis adapters: what they show of the client they hold', () => {
 describe('RedisStreamsEventBus: what it shows of its credentials', () => {
   it('shows neither the URL, nor the options, nor the client it is given when it is serialised, spread, listed or inspected', async () => {
     const buses = [
-      new RedisStreamsEventBus({ connection: URL_WITH_PASSWORD, consumer: 'billing', reconnect: { initialMs: 60_000 } }),
+      new RedisStreamsEventBus({
+        connection: URL_WITH_PASSWORD,
+        consumer: 'billing',
+        reconnect: { initialMs: 60_000 },
+      }),
       new RedisStreamsEventBus({ connection: AWAY, consumer: 'billing' }),
       new RedisStreamsEventBus({ connection: aClientWithAPassword(), consumer: 'billing' }),
     ];
@@ -93,7 +107,10 @@ describe('RedisStreamsEventBus: what it shows of its credentials', () => {
   });
 
   it('shows none of them through its link to the server either', async () => {
-    const link = new ServerLink({ connection: AWAY, reconnect: { initialMs: 1, factor: 1, maxMs: 1 }, blockMs: 100 }, () => undefined);
+    const link = new ServerLink(
+      { connection: AWAY, reconnect: { initialMs: 1, factor: 1, maxMs: 1 }, blockMs: 100 },
+      () => undefined,
+    );
 
     expectNoSecret(link, [PASSWORD]);
     expect(Object.keys(link)).toEqual([]);

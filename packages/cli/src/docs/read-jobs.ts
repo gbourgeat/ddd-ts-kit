@@ -20,9 +20,17 @@ export function readJobs(ws: Workspace, directory: string, context: string): Job
     .map((file) => {
       const source = ws.read(`${directory}/${FOLDER}/${file}`) ?? '';
       const job = toName(file.slice(0, -SUFFIX.length));
-      const [, name, schedule] = registrationOf(job.pascal, job.camel).map((pattern) => pattern.exec(`${source}\n${module}`)).find((match) => match !== null) ?? [];
 
-      return { name: name ?? `${job.pascal}Job`, schedule: scheduleText(schedule ?? ''), command: /\bnew (\w+?)Command\(/.exec(source)?.[1] ?? '' };
+      const [, name, schedule] =
+        registrationOf(job.pascal, job.camel)
+          .map((pattern) => pattern.exec(`${source}\n${module}`))
+          .find((match) => match !== null) ?? [];
+
+      return {
+        name: name ?? `${job.pascal}Job`,
+        schedule: scheduleText(schedule ?? ''),
+        command: /\bnew (\w+?)Command\(/.exec(source)?.[1] ?? '',
+      };
     });
 }
 
@@ -40,8 +48,13 @@ function scheduleText(written: string): string {
   const cron = /\bcron:\s*'([^']+)'/.exec(written)?.[1];
   const every = /\bevery:\s*(?:'([^']+)'|([\d_]+))/.exec(written);
 
-  if (cron !== undefined) return `cron ${cron} (${/\btimeZone:\s*'([^']+)'/.exec(written)?.[1] ?? 'UTC'})`;
-  if (every === null) return '';
+  if (cron !== undefined) {
+    return `cron ${cron} (${/\btimeZone:\s*'([^']+)'/.exec(written)?.[1] ?? 'UTC'})`;
+  }
+
+  if (every === null) {
+    return '';
+  }
 
   return `every ${every[1] ?? `${Number((every[2] ?? '').replaceAll('_', ''))}ms`}`;
 }

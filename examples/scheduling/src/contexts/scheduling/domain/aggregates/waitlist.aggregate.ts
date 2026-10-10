@@ -48,7 +48,12 @@ export class Waitlist extends AggregateRoot<string> {
       throw new InvalidDayError(wait.day);
     }
 
-    return new Waitlist(Waitlist.idOf(wait.calendarId, wait.day), { registeredAt: now, calendarId: wait.calendarId, day: wait.day, waiters: [] });
+    return new Waitlist(Waitlist.idOf(wait.calendarId, wait.day), {
+      registeredAt: now,
+      calendarId: wait.calendarId,
+      day: wait.day,
+      waiters: [],
+    });
   }
 
   static rehydrate(id: string, state: WaitlistState): Waitlist {
@@ -72,9 +77,13 @@ export class Waitlist extends AggregateRoot<string> {
    * offer, held thirty minutes or until the slot starts. Nothing is offered when nobody fits.
    */
   offer(freed: FreedSlot, now: Date): Offer | undefined {
-    const offered = this.state.waiters.map((waiter) => offerOf(waiter, freed, now)).find((candidate) => candidate !== undefined);
+    const offered = this.state.waiters
+      .map((waiter) => offerOf(waiter, freed, now))
+      .find((candidate) => candidate !== undefined);
 
-    if (offered === undefined) return undefined;
+    if (offered === undefined) {
+      return undefined;
+    }
 
     this.state = { ...this.state, waiters: this.state.waiters.filter((waiter) => !waiter.equals(offered.waiter)) };
     this.record(new WaitlistSlotOffered(this.id, now, offered));
@@ -106,7 +115,11 @@ export class Waitlist extends AggregateRoot<string> {
 function offerOf(waiter: Waiter, freed: FreedSlot, now: Date): Offer | undefined {
   const slot = slotOf(waiter, freed, now);
 
-  if (slot === undefined || slot.heldUntil.getTime() > freed.slot.heldUntil.getTime() || freed.held.some((held) => held.overlaps(slot))) {
+  if (
+    slot === undefined ||
+    slot.heldUntil.getTime() > freed.slot.heldUntil.getTime() ||
+    freed.held.some((held) => held.overlaps(slot))
+  ) {
     return undefined;
   }
 
@@ -120,7 +133,9 @@ function slotOf(waiter: Waiter, freed: FreedSlot, now: Date): Slot | undefined {
   try {
     return freed.calendar.slotFor(waiter.appointmentTypeId, freed.slot.startsAt, now);
   } catch (refusal) {
-    if (refusal instanceof DomainError) return undefined;
+    if (refusal instanceof DomainError) {
+      return undefined;
+    }
 
     throw refusal;
   }

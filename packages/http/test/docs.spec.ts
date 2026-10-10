@@ -9,7 +9,9 @@ const document = generateOpenApi({ info: { title: 'Orders <API>', version: '1.0.
 const find = (routes: readonly Route[], path: string): Route => {
   const route = routes.find((candidate) => candidate.path === path);
 
-  if (!route) throw new Error(`no route at ${path}`);
+  if (!route) {
+    throw new Error(`no route at ${path}`);
+  }
 
   return route;
 };

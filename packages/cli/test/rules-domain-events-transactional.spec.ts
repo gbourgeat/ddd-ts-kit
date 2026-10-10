@@ -10,7 +10,13 @@ const EXTERNAL = `${BILLING}/infrastructure/external/smtp-mailer.adapter.ts`;
 const PERSISTED = `${BILLING}/infrastructure/persistence/knex-mailer.repository.ts`;
 const DECLARATIONS = "import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';";
 const MAILER = "import { Mailer } from '../ports/mailer.port.js';";
-const ADAPTER = lines("import { Mailer } from '../../application/ports/mailer.port.js';", '', 'export class StoredMailer implements Mailer {}');
+
+const ADAPTER = lines(
+  "import { Mailer } from '../../application/ports/mailer.port.js';",
+  '',
+  'export class StoredMailer implements Mailer {}',
+);
+
 const BEFORE = 'runs before the commit and depends on';
 
 describe('domain-events/transactional-before-commit', () => {
@@ -23,7 +29,17 @@ describe('domain-events/transactional-before-commit', () => {
       "import { Redis } from 'ioredis';",
     ];
 
-    const handler = declared(imports, ['Cache', 'Lock', 'RateLimiter', 'JobScheduler', 'EventBus', 'SmtpMailer', 'Carrier', 'Database', 'Redis']);
+    const handler = declared(imports, [
+      'Cache',
+      'Lock',
+      'RateLimiter',
+      'JobScheduler',
+      'EventBus',
+      'SmtpMailer',
+      'Carrier',
+      'Database',
+      'Redis',
+    ]);
 
     expect(found({ [EVENT_HANDLER]: handler })).toEqual([
       `event-handlers/invoice-issued.event-handler.ts:8 InvoiceIssuedEventHandler ${BEFORE} Cache, a port of the kernel no transaction covers`,
@@ -48,30 +64,95 @@ describe('domain-events/transactional-before-commit', () => {
       "import type { Redis } from 'ioredis';",
     ];
 
-    const handler = declared(imports, ['InvoiceRepository', 'Pricing', 'Reminders', 'IntegrationEventPublisher', 'CommandBus', 'QueryBus', 'Clock', 'IdGenerator', 'Logger', 'Metrics', 'ActorContext', 'ExecutionScope', 'Authorizer']);
+    const handler = declared(imports, [
+      'InvoiceRepository',
+      'Pricing',
+      'Reminders',
+      'IntegrationEventPublisher',
+      'CommandBus',
+      'QueryBus',
+      'Clock',
+      'IdGenerator',
+      'Logger',
+      'Metrics',
+      'ActorContext',
+      'ExecutionScope',
+      'Authorizer',
+    ]);
 
-    expect(found({ [EVENT_HANDLER]: handler, [PUBLISHER]: handler.replace('InvoiceIssuedEventHandler', 'InvoiceIssuedPublisher') })).toEqual([]);
+    expect(
+      found({
+        [EVENT_HANDLER]: handler,
+        [PUBLISHER]: handler.replace('InvoiceIssuedEventHandler', 'InvoiceIssuedPublisher'),
+      }),
+    ).toEqual([]);
   });
+});
 
+describe('domain-events/transactional-before-commit, ports, phases and where a dependency is read', () => {
   it('takes a port of application/ports for transactional only when every adapter of it lives under infrastructure/persistence', () => {
     const handler = declared([MAILER], ['Mailer']);
-    const fake = { [`${BILLING}/test/fakes/fake-mailer.ts`]: ADAPTER, [`${BILLING}/infrastructure/external/smtp-mailer.adapter.spec.ts`]: ADAPTER };
 
-    expect(found({ [EVENT_HANDLER]: handler, [EXTERNAL]: ADAPTER })).toEqual([`event-handlers/invoice-issued.event-handler.ts:4 InvoiceIssuedEventHandler ${BEFORE} Mailer, whose adapter is under infrastructure/external/`]);
-    expect(found({ [EVENT_HANDLER]: handler, ...fake })).toEqual([`event-handlers/invoice-issued.event-handler.ts:4 InvoiceIssuedEventHandler ${BEFORE} Mailer, which has no adapter under infrastructure/persistence/`]);
+    const fake = {
+      [`${BILLING}/test/fakes/fake-mailer.ts`]: ADAPTER,
+      [`${BILLING}/infrastructure/external/smtp-mailer.adapter.spec.ts`]: ADAPTER,
+    };
+
+    expect(found({ [EVENT_HANDLER]: handler, [EXTERNAL]: ADAPTER })).toEqual([
+      `event-handlers/invoice-issued.event-handler.ts:4 InvoiceIssuedEventHandler ${BEFORE} Mailer, whose adapter is under infrastructure/external/`,
+    ]);
+
+    expect(found({ [EVENT_HANDLER]: handler, ...fake })).toEqual([
+      `event-handlers/invoice-issued.event-handler.ts:4 InvoiceIssuedEventHandler ${BEFORE} Mailer, which has no adapter under infrastructure/persistence/`,
+    ]);
+
     expect(found({ [EVENT_HANDLER]: handler, [PERSISTED]: ADAPTER, [EXTERNAL]: ADAPTER })).toHaveLength(1);
-    expect(found({ [EVENT_HANDLER]: handler, [PERSISTED]: ADAPTER, [`${BILLING}/infrastructure/mailer.ts`]: ADAPTER.replace('../../application', '../application') })).toEqual([`event-handlers/invoice-issued.event-handler.ts:4 InvoiceIssuedEventHandler ${BEFORE} Mailer, whose adapter is under infrastructure/`]);
+
+    expect(
+      found({
+        [EVENT_HANDLER]: handler,
+        [PERSISTED]: ADAPTER,
+        [`${BILLING}/infrastructure/mailer.ts`]: ADAPTER.replace('../../application', '../application'),
+      }),
+    ).toEqual([
+      `event-handlers/invoice-issued.event-handler.ts:4 InvoiceIssuedEventHandler ${BEFORE} Mailer, whose adapter is under infrastructure/`,
+    ]);
+
     expect(found({ [EVENT_HANDLER]: handler, [PERSISTED]: ADAPTER, ...fake })).toEqual([]);
-    expect(found({ [EVENT_HANDLER]: handler, [PERSISTED]: ADAPTER, [`${BILLING}/infrastructure/external/other.adapter.ts`]: ADAPTER.replace('../../application/ports/mailer.port.js', 'nodemailer') })).toEqual([]);
+
+    expect(
+      found({
+        [EVENT_HANDLER]: handler,
+        [PERSISTED]: ADAPTER,
+        [`${BILLING}/infrastructure/external/other.adapter.ts`]: ADAPTER.replace(
+          '../../application/ports/mailer.port.js',
+          'nodemailer',
+        ),
+      }),
+    ).toEqual([]);
   });
 
   it('judges an after-commit handler on the outbox publisher alone', () => {
-    const imports = ["import { Cache, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';", MAILER, "import { Redis } from 'ioredis';"];
-    const handler = declared(imports, ['Cache', 'Mailer', 'Redis', 'IntegrationEventPublisher'], "phase: 'after-commit'");
+    const imports = [
+      "import { Cache, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';",
+      MAILER,
+      "import { Redis } from 'ioredis';",
+    ];
+
+    const handler = declared(
+      imports,
+      ['Cache', 'Mailer', 'Redis', 'IntegrationEventPublisher'],
+      "phase: 'after-commit'",
+    );
+
     const [violation] = reported(projectWith({ [EVENT_HANDLER]: handler }), RULE);
 
     expect(reported(projectWith({ [EVENT_HANDLER]: handler }), RULE)).toHaveLength(1);
-    expect(violation?.message).toBe('InvoiceIssuedEventHandler runs after the commit and depends on IntegrationEventPublisher: the event it publishes would be committed apart from the state change it announces.');
+
+    expect(violation?.message).toBe(
+      'InvoiceIssuedEventHandler runs after the commit and depends on IntegrationEventPublisher: the event it publishes would be committed apart from the state change it announces.',
+    );
+
     expect(found({ [EVENT_HANDLER]: declared(imports, ['Cache'], 'phase: PHASE') })).toHaveLength(1);
     expect(found({ [EVENT_HANDLER]: declared(imports, ['Cache'], "phase: 'before-commit'") })).toHaveLength(1);
   });
@@ -108,29 +189,41 @@ describe('domain-events/transactional-before-commit', () => {
 
 describe('domain-events/transactional-before-commit, explicit style and scope', () => {
   it('explicit style: reads the phase in the module file, by the class or the variable that holds it', () => {
-    const byVariable = (options: string): string => lines(
-      "const invoiceIssuedEventHandler = platform.adapter(new InvoiceIssuedEventHandler(platform.cache), { kind: 'domain-event-handler', context: 'billing' });",
-      '',
-      "platform.domainEvents.on('billing.invoice.issued', async (event) => {",
-      '  if (event instanceof InvoiceIssued) await invoiceIssuedEventHandler.handle(event);',
-      `}${options});`,
-    );
+    const byVariable = (options: string): string =>
+      lines(
+        "const invoiceIssuedEventHandler = platform.adapter(new InvoiceIssuedEventHandler(platform.cache), { kind: 'domain-event-handler', context: 'billing' });",
+        '',
+        "platform.domainEvents.on('billing.invoice.issued', async (event) => {",
+        '  if (event instanceof InvoiceIssued) await invoiceIssuedEventHandler.handle(event);',
+        `}${options});`,
+      );
 
-    const byClass = (options: string): string => lines(
-      "resolve(DomainEventDispatcher).on('billing.invoice.issued', async (event) => {",
-      '  if (event instanceof InvoiceIssued) await resolve(InvoiceIssuedEventHandler).handle(event);',
-      `}${options});`,
-    );
+    const byClass = (options: string): string =>
+      lines(
+        "resolve(DomainEventDispatcher).on('billing.invoice.issued', async (event) => {",
+        '  if (event instanceof InvoiceIssued) await resolve(InvoiceIssuedEventHandler).handle(event);',
+        `}${options});`,
+      );
 
     const after = ", { phase: 'after-commit' }";
-    const flagged = [`event-handlers/invoice-issued.event-handler.ts:4 InvoiceIssuedEventHandler ${BEFORE} Cache, a port of the kernel no transaction covers`];
+
+    const flagged = [
+      `event-handlers/invoice-issued.event-handler.ts:4 InvoiceIssuedEventHandler ${BEFORE} Cache, a port of the kernel no transaction covers`,
+    ];
 
     expect(found({ [EVENT_HANDLER]: PLAIN, [MODULE]: byVariable(after) })).toEqual([]);
     expect(found({ [EVENT_HANDLER]: PLAIN, [MODULE]: byClass(after) })).toEqual([]);
     expect(found({ [EVENT_HANDLER]: PLAIN, [MODULE]: byVariable('') })).toEqual(flagged);
     expect(found({ [EVENT_HANDLER]: PLAIN, [MODULE]: byClass(", { phase: 'before-commit' }") })).toEqual(flagged);
     expect(found({ [EVENT_HANDLER]: PLAIN, [MODULE]: `${byVariable(after)}${byClass('')}` })).toEqual(flagged);
-    expect(found({ [EVENT_HANDLER]: PLAIN, [MODULE]: byClass(after).replaceAll('InvoiceIssuedEventHandler', 'InvoicePaidEventHandler') })).toEqual(flagged);
+
+    expect(
+      found({
+        [EVENT_HANDLER]: PLAIN,
+        [MODULE]: byClass(after).replaceAll('InvoiceIssuedEventHandler', 'InvoicePaidEventHandler'),
+      }),
+    ).toEqual(flagged);
+
     expect(found({ [EVENT_HANDLER]: PLAIN })).toEqual(flagged);
   });
 
@@ -144,7 +237,9 @@ describe('domain-events/transactional-before-commit, explicit style and scope', 
       "builder.bind(InvoiceIssuedPublisher).toClass(InvoiceIssuedPublisher, [EventBus, IdGenerator]).as('domain-event-handler');",
     );
 
-    expect(found({ [PUBLISHER]: publisher, [MODULE]: module })).toEqual([`integration/publishers/invoice-issued.publisher.ts:1 InvoiceIssuedPublisher ${BEFORE} EventBus, a port of the kernel no transaction covers`]);
+    expect(found({ [PUBLISHER]: publisher, [MODULE]: module })).toEqual([
+      `integration/publishers/invoice-issued.publisher.ts:1 InvoiceIssuedPublisher ${BEFORE} EventBus, a port of the kernel no transaction covers`,
+    ]);
   });
 
   it('does not judge tests, classes that handle no domain event, nor files outside a context', () => {
@@ -163,25 +258,54 @@ describe('domain-events/transactional-before-commit, explicit style and scope', 
   });
 
   it('leaves the adapters of a port to the whole project, says what to write instead, and obeys the config and a suppression', () => {
-    const root = projectWith({ [EVENT_HANDLER]: declared(["import { Cache } from '@ddd-ts-kit/kernel';", MAILER], ['Cache', 'Mailer']), [EXTERNAL]: ADAPTER });
-    const suppressed = PLAIN.replace('  constructor', `  // ddd-ts-kit-disable-next-line ${RULE} -- ADR-0015: the cache entry is rebuilt on a miss\n  constructor`);
+    const root = projectWith({
+      [EVENT_HANDLER]: declared(["import { Cache } from '@ddd-ts-kit/kernel';", MAILER], ['Cache', 'Mailer']),
+      [EXTERNAL]: ADAPTER,
+    });
+
+    const suppressed = PLAIN.replace(
+      '  constructor',
+      `  // ddd-ts-kit-disable-next-line ${RULE} -- ADR-0015: the cache entry is rebuilt on a miss\n  constructor`,
+    );
 
     expect(reported(root, RULE)).toHaveLength(2);
-    expect(reported(root, RULE, EVENT_HANDLER).map(({ message }) => message)).toEqual(['InvoiceIssuedEventHandler runs before the commit and depends on Cache, a port of the kernel no transaction covers: its effect would survive a rollback.']);
-    expect(reported(projectWith({ [EVENT_HANDLER]: suppressed, 'docs/adr/0015-cache.md': '# Decision\n' }), RULE)).toEqual([]);
+
+    expect(reported(root, RULE, EVENT_HANDLER).map(({ message }) => message)).toEqual([
+      'InvoiceIssuedEventHandler runs before the commit and depends on Cache, a port of the kernel no transaction covers: its effect would survive a rollback.',
+    ]);
+
+    expect(
+      reported(projectWith({ [EVENT_HANDLER]: suppressed, 'docs/adr/0015-cache.md': '# Decision\n' }), RULE),
+    ).toEqual([]);
+
     expect(reported(projectWith({ [EVENT_HANDLER]: PLAIN }, { rules: { [RULE]: 'off' } }), RULE)).toEqual([]);
   });
 });
 
-const PLAIN = lines("import type { Cache } from '@ddd-ts-kit/kernel';", '', 'export class InvoiceIssuedEventHandler {', '  constructor(private readonly cache: Cache) {}', '}');
+const PLAIN = lines(
+  "import type { Cache } from '@ddd-ts-kit/kernel';",
+  '',
+  'export class InvoiceIssuedEventHandler {',
+  '  constructor(private readonly cache: Cache) {}',
+  '}',
+);
 
 /** A handler declared with the dependencies listed, its decorator on the line after the imports and a blank one. */
 function declared(imports: readonly string[], dependencies: readonly string[], option?: string): string {
   const options = ["name: 'billing.invoice.issued'", ...(option === undefined ? [] : [option])].join(', ');
 
-  return lines(DECLARATIONS, ...imports, '', `@DomainEventHandler(InvoiceIssued, { ${options} }, [${dependencies.join(', ')}])`, 'export class InvoiceIssuedEventHandler {}');
+  return lines(
+    DECLARATIONS,
+    ...imports,
+    '',
+    `@DomainEventHandler(InvoiceIssued, { ${options} }, [${dependencies.join(', ')}])`,
+    'export class InvoiceIssuedEventHandler {}',
+  );
 }
 
 function found(files: Readonly<Record<string, string>>): string[] {
-  return reported(projectWith(files), RULE).map(({ file, line, message }) => `${file.slice(`${BILLING}/application/`.length)}:${line} ${message.slice(0, message.indexOf(': its effect'))}`);
+  return reported(projectWith(files), RULE).map(
+    ({ file, line, message }) =>
+      `${file.slice(`${BILLING}/application/`.length)}:${line} ${message.slice(0, message.indexOf(': its effect'))}`,
+  );
 }

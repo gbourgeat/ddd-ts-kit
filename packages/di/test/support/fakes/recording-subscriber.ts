@@ -28,7 +28,9 @@ export class RecordingSubscriber implements IntegrationEventSubscriber {
 
   async deliver(event: IntegrationEvent): Promise<void> {
     for (const { type, handle } of [...this.callbacks]) {
-      if (type === event.type) await handle(event);
+      if (type === event.type) {
+        await handle(event);
+      }
     }
   }
 }

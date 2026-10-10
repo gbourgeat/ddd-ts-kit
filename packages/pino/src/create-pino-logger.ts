@@ -45,7 +45,10 @@ const BUFFERED_BYTES = 4096;
  * by its name, `message`, then the fields; credentials redacted; errors described once.
  */
 export function createPinoLogger(options: CreatePinoLoggerOptions = {}): PinoLogger {
-  const instance = pino(pinoOptions(options), options.format === 'pretty' ? prettyTransport(options) : destinationOf(options));
+  const instance = pino(
+    pinoOptions(options),
+    options.format === 'pretty' ? prettyTransport(options) : destinationOf(options),
+  );
 
   return new PinoLogger(instance, options.scrubMessages === undefined ? {} : { scrubMessages: options.scrubMessages });
 }
@@ -87,7 +90,9 @@ function prettyTransport(options: CreatePinoLoggerOptions): DestinationStream {
 }
 
 function destinationOf(options: CreatePinoLoggerOptions): DestinationStream {
-  if (typeof options.destination === 'object') return options.destination;
+  if (typeof options.destination === 'object') {
+    return options.destination;
+  }
 
   return pino.destination({
     dest: options.destination ?? STANDARD_OUTPUT,

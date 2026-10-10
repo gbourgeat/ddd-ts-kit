@@ -48,7 +48,14 @@ describe('the lifecycle of an application with jobs', () => {
       onStop: () => void journal.push('modules stopped'),
     });
 
-    return { journal, modules: [kernelModule({ eventSubscriber, jobScheduler: new RecordingJobScheduler(journal) }), platform, billingModule] };
+    return {
+      journal,
+      modules: [
+        kernelModule({ eventSubscriber, jobScheduler: new RecordingJobScheduler(journal) }),
+        platform,
+        billingModule,
+      ],
+    };
   }
 
   it('starts the jobs last, once the consumers are subscribed, and stops them first', async () => {
@@ -60,7 +67,14 @@ describe('the lifecycle of an application with jobs', () => {
     await app.stop();
     await app.stop();
 
-    expect(journal).toEqual(['modules started', 'consumers subscribed', 'jobs started', 'jobs stopped', 'consumers unsubscribed', 'modules stopped']);
+    expect(journal).toEqual([
+      'modules started',
+      'consumers subscribed',
+      'jobs started',
+      'jobs stopped',
+      'consumers unsubscribed',
+      'modules stopped',
+    ]);
   });
 
   it('never starts them in a process told not to run jobs, which still registers and describes them', async () => {
@@ -76,7 +90,12 @@ describe('the lifecycle of an application with jobs', () => {
 
   it('leaves the scheduler alone in an application without job', async () => {
     const journal: string[] = [];
-    const app = createApplication({ modules: [kernelModule({ jobScheduler: () => (journal.push('scheduler built'), new RecordingJobScheduler(journal)) })] });
+
+    const app = createApplication({
+      modules: [
+        kernelModule({ jobScheduler: () => (journal.push('scheduler built'), new RecordingJobScheduler(journal)) }),
+      ],
+    });
 
     await app.start();
     await app.stop();
@@ -87,20 +106,35 @@ describe('the lifecycle of an application with jobs', () => {
 
   it('reports a scheduler that fails to stop, and still stops the rest', async () => {
     const { journal, modules } = journaled();
-    const failing: JobScheduler = Object.assign(new RecordingJobScheduler(journal), { stop: () => Promise.reject(new Error('still running')) });
+
+    const failing: JobScheduler = Object.assign(new RecordingJobScheduler(journal), {
+      stop: () => Promise.reject(new Error('still running')),
+    });
+
     const app = createApplication({ modules, overrides: [override(JobScheduler, failing)] });
 
     await app.start();
 
     await expect(app.stop()).rejects.toThrow('1 module(s) failed to stop');
-    expect(journal).toEqual(['modules started', 'consumers subscribed', 'jobs started', 'consumers unsubscribed', 'modules stopped']);
+
+    expect(journal).toEqual([
+      'modules started',
+      'consumers subscribed',
+      'jobs started',
+      'consumers unsubscribed',
+      'modules stopped',
+    ]);
   });
 });
 
 describe('a job in a test application', () => {
   it('is never started by time: a spec runs it by name and asserts the fakes', async () => {
     const invoices = new InMemoryInvoiceRepository();
-    const app = createTestApplication({ modules: [billingModule], fakes: [everyCustomer, fake(InvoiceRepository, invoices)] });
+
+    const app = createTestApplication({
+      modules: [billingModule],
+      fakes: [everyCustomer, fake(InvoiceRepository, invoices)],
+    });
 
     await app.start();
     app.clock.advance(90 * 24 * 3_600_000);
@@ -109,7 +143,11 @@ describe('a job in a test application', () => {
     const run = await app.jobs.runNow(MONTHLY);
 
     expect(run).toMatchObject({ job: MONTHLY, outcome: 'succeeded', scheduledAt: app.clock.now() });
-    expect([...invoices.invoices.values()]).toMatchObject([{ id: 'id-1', customerId: 'customer-on-subscription', issuedBy: `system:${MONTHLY}` }]);
+
+    expect([...invoices.invoices.values()]).toMatchObject([
+      { id: 'id-1', customerId: 'customer-on-subscription', issuedBy: `system:${MONTHLY}` },
+    ]);
+
     expect(app.eventBus.published).toMatchObject([{ type: 'billing.invoice.issued' }]);
   });
 
@@ -128,20 +166,43 @@ describe('a job in a test application', () => {
 
     await app.jobs.runNow('billing.close-month');
 
-    expect(seen).toMatchObject([{ origin: 'schedule', actor: { id: 'system:billing.close-month', type: 'system' }, correlationId: 'job-run-1', scheduledAt: app.clock.now() }]);
+    expect(seen).toMatchObject([
+      {
+        origin: 'schedule',
+        actor: { id: 'system:billing.close-month', type: 'system' },
+        correlationId: 'job-run-1',
+        scheduledAt: app.clock.now(),
+      },
+    ]);
+
     expect(app.executionScope.current()).toMatchObject({ origin: 'test', actor: { id: 'test-user' } });
-    expect(app.logger.entries).toMatchObject([{ message: 'Scheduled job succeeded', fields: { job: 'billing.close-month' } }]);
+
+    expect(app.logger.entries).toMatchObject([
+      { message: 'Scheduled job succeeded', fields: { job: 'billing.close-month' } },
+    ]);
   });
 
   it('throws what the job threw, where the port would only answer a code', async () => {
-    const app = createTestApplication({ modules: [billingModule], fakes: [fake(CustomerDirectory, { exists: async () => false })] });
+    const app = createTestApplication({
+      modules: [billingModule],
+      fakes: [fake(CustomerDirectory, { exists: async () => false })],
+    });
 
     await expect(app.jobs.runNow(MONTHLY)).rejects.toThrow('Unknown customer customer-on-subscription');
-    await expect(app.jobs.scheduler.runNow(MONTHLY)).resolves.toMatchObject({ outcome: 'failed', errorCode: 'UNEXPECTED_ERROR' });
+
+    await expect(app.jobs.scheduler.runNow(MONTHLY)).resolves.toMatchObject({
+      outcome: 'failed',
+      errorCode: 'UNEXPECTED_ERROR',
+    });
   });
 
   it('gives a manual scheduler for a spec about time, on the clock of the application', async () => {
-    const app = createTestApplication({ modules: [billingModule], fakes: [everyCustomer], now: new Date('2026-03-31T20:00:00.000Z') });
+    const app = createTestApplication({
+      modules: [billingModule],
+      fakes: [everyCustomer],
+      now: new Date('2026-03-31T20:00:00.000Z'),
+    });
+
     const before = IssueMonthlyInvoicesJob.executions.length;
 
     await app.jobs.scheduler.start();
@@ -149,13 +210,20 @@ describe('a job in a test application', () => {
     await app.jobs.scheduler.advance(10 * 3_600_000);
 
     // The first of April at six in Paris, which is on summer time.
-    expect(IssueMonthlyInvoicesJob.executions.slice(before)).toMatchObject([{ scheduledAt: new Date('2026-04-01T04:00:00.000Z') }]);
+    expect(IssueMonthlyInvoicesJob.executions.slice(before)).toMatchObject([
+      { scheduledAt: new Date('2026-04-01T04:00:00.000Z') },
+    ]);
+
     expect(app.clock.now()).toEqual(new Date('2026-04-01T06:00:00.000Z'));
     await app.jobs.scheduler.stop();
   });
 
   it('takes the settings of a configuration, like an application', async () => {
-    const app = createTestApplication({ modules: [billingModule], fakes: [everyCustomer], jobs: { [MONTHLY]: { enabled: false } } });
+    const app = createTestApplication({
+      modules: [billingModule],
+      fakes: [everyCustomer],
+      jobs: { [MONTHLY]: { enabled: false } },
+    });
 
     expect(app.describe().jobs).toMatchObject([{ name: MONTHLY, enabled: false }]);
     expect(app.get(CommandBus) satisfies CommandBus).toBe(app.commandBus);

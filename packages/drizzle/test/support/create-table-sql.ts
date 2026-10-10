@@ -21,13 +21,16 @@ export function createTableSql(table: PgTable): string[] {
   const columns = config.columns.map((column) => {
     const value: unknown = column.default;
 
-    const fallback = !column.hasDefault || value === undefined
-      ? ''
-      : ` default ${is(value, SQL) ? render(value) : typeof value === 'string' ? `'${value}'` : String(value)}`;
+    const fallback =
+      !column.hasDefault || value === undefined
+        ? ''
+        : ` default ${is(value, SQL) ? render(value) : typeof value === 'string' ? `'${value}'` : String(value)}`;
 
     return [
       `${quote(column.name)} ${column.getSQLType()}`,
-      column.generatedIdentity === undefined ? '' : ` generated ${column.generatedIdentity.type === 'always' ? 'always' : 'by default'} as identity`,
+      column.generatedIdentity === undefined
+        ? ''
+        : ` generated ${column.generatedIdentity.type === 'always' ? 'always' : 'by default'} as identity`,
       column.notNull ? ' not null' : '',
       fallback,
       column.primary ? ' primary key' : '',

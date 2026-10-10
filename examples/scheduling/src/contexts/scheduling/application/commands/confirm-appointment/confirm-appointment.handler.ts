@@ -14,7 +14,9 @@ export class ConfirmAppointmentHandler implements CommandHandler<ConfirmAppointm
   async execute(command: ConfirmAppointmentCommand): Promise<string> {
     const target = await this.appointmentRepository.findById(command.appointmentId);
 
-    if (target === undefined) throw new AppointmentNotFoundError(command.appointmentId);
+    if (target === undefined) {
+      throw new AppointmentNotFoundError(command.appointmentId);
+    }
 
     target.confirm(this.clock.now());
 

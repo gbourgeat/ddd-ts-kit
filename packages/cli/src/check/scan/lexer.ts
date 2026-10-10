@@ -3,7 +3,29 @@ import type { BlockCommentRecord } from './block-comment-record.js';
 import type { CommentRecord } from './comment-record.js';
 import type { StringRecord } from './string-record.js';
 
-const REGEX_PRECEDERS = new Set(['(', ',', '=', ':', '[', '!', '&', '|', '?', '{', '}', ';', '+', '-', '*', '%', '<', '>', '~', '^']);
+const REGEX_PRECEDERS = new Set([
+  '(',
+  ',',
+  '=',
+  ':',
+  '[',
+  '!',
+  '&',
+  '|',
+  '?',
+  '{',
+  '}',
+  ';',
+  '+',
+  '-',
+  '*',
+  '%',
+  '<',
+  '>',
+  '~',
+  '^',
+]);
+
 const REGEX_KEYWORDS = /(?:^|[^\w$.])(?:return|typeof|case|do|else|in|of|void|throw|new|delete|await|yield)$/;
 
 /**
@@ -22,12 +44,16 @@ export class Lexer {
 
   constructor(private readonly source: string) {
     for (let i = 0; i < source.length; i += 1) {
-      if (source[i] === '\n') this.lineStarts.push(i + 1);
+      if (source[i] === '\n') {
+        this.lineStarts.push(i + 1);
+      }
     }
   }
 
   run(): void {
-    while (this.at < this.source.length) this.step();
+    while (this.at < this.source.length) {
+      this.step();
+    }
   }
 
   lineAt(offset: number): number {
@@ -37,8 +63,11 @@ export class Lexer {
     while (low < high) {
       const middle = (low + high + 1) >> 1;
 
-      if ((this.lineStarts[middle] ?? 0) <= offset) low = middle;
-      else high = middle - 1;
+      if ((this.lineStarts[middle] ?? 0) <= offset) {
+        low = middle;
+      } else {
+        high = middle - 1;
+      }
     }
 
     return low + 1;
@@ -47,21 +76,32 @@ export class Lexer {
   private step(): void {
     const char = this.source.charAt(this.at);
 
-    if (char === '/') this.readFromSlash();
-    else if (char === "'" || char === '"') this.readQuoted(char);
-    else if (char === '`') this.readTemplateText(true);
-    else if ((char === '{' || char === '}') && this.templateDepths.length > 0) this.readBraceInTemplate(char);
-    else this.copy(char);
+    if (char === '/') {
+      this.readFromSlash();
+    } else if (char === "'" || char === '"') {
+      this.readQuoted(char);
+    } else if (char === '`') {
+      this.readTemplateText(true);
+    } else if ((char === '{' || char === '}') && this.templateDepths.length > 0) {
+      this.readBraceInTemplate(char);
+    } else {
+      this.copy(char);
+    }
   }
 
   /** A slash opens a comment or a regular expression, or divides. */
   private readFromSlash(): void {
     const next = this.source.charAt(this.at + 1);
 
-    if (next === '/') this.readLineComment();
-    else if (next === '*') this.readBlockComment();
-    else if (this.regexMayStart()) this.readRegex();
-    else this.copy('/');
+    if (next === '/') {
+      this.readLineComment();
+    } else if (next === '*') {
+      this.readBlockComment();
+    } else if (this.regexMayStart()) {
+      this.readRegex();
+    } else {
+      this.copy('/');
+    }
   }
 
   private copy(char: string): void {
@@ -116,7 +156,9 @@ export class Lexer {
 
     this.code += quote + blank(this.source.slice(start + 1, this.at)) + (closed ? quote : '');
 
-    if (closed) this.at += 1;
+    if (closed) {
+      this.at += 1;
+    }
 
     this.strings.push({ start, end: this.at, value, line: this.lineAt(start) });
   }
@@ -139,7 +181,9 @@ export class Lexer {
   private readTemplateText(opening: boolean): void {
     const start = this.at;
 
-    if (opening) this.at += 1;
+    if (opening) {
+      this.at += 1;
+    }
 
     const value = this.readUntil((char, next) => char === '`' || (char === '$' && next === '{'));
     const interpolates = this.source[this.at] === '$';
@@ -149,9 +193,12 @@ export class Lexer {
     this.code += (opening ? '`' : '') + blank(this.source.slice(opening ? start + 1 : start, this.at)) + ending;
     this.at += ending.length;
 
-    if (interpolates) this.templateDepths.push(0);
-    // Only a template without interpolation is a usable module specifier.
-    else if (opening) this.strings.push({ start, end: this.at, value, line: this.lineAt(start) });
+    if (interpolates) {
+      this.templateDepths.push(0);
+    } else if (opening) {
+      // Only a template without interpolation is a usable module specifier.
+      this.strings.push({ start, end: this.at, value, line: this.lineAt(start) });
+    }
   }
 
   private readBraceInTemplate(char: string): void {
@@ -172,7 +219,9 @@ export class Lexer {
   private regexMayStart(): boolean {
     const trimmed = this.code.trimEnd();
 
-    if (trimmed.length === 0) return true;
+    if (trimmed.length === 0) {
+      return true;
+    }
 
     return REGEX_PRECEDERS.has(trimmed.charAt(trimmed.length - 1)) || REGEX_KEYWORDS.test(trimmed.slice(-12));
   }
@@ -186,9 +235,17 @@ export class Lexer {
     while (this.at < this.source.length && this.source[this.at] !== '\n') {
       const current = this.source[this.at];
 
-      if (current === '/' && !inClass) break;
-      if (current === '[') inClass = true;
-      if (current === ']') inClass = false;
+      if (current === '/' && !inClass) {
+        break;
+      }
+
+      if (current === '[') {
+        inClass = true;
+      }
+
+      if (current === ']') {
+        inClass = false;
+      }
 
       this.at += current === '\\' ? 2 : 1;
     }
@@ -197,6 +254,8 @@ export class Lexer {
 
     this.code += '/' + blank(this.source.slice(start + 1, this.at)) + (closed ? '/' : '');
 
-    if (closed) this.at += 1;
+    if (closed) {
+      this.at += 1;
+    }
   }
 }

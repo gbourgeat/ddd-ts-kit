@@ -30,7 +30,9 @@ export function criteriaToDrizzle(plan: CriteriaPlan, columns: Readonly<Record<s
     orderBy: plan.sort.map(({ field, direction }) => {
       const column = columnOf(columns, field);
 
-      if (plan.fields[field]?.nullable !== true) return direction === 'asc' ? asc(column) : desc(column);
+      if (plan.fields[field]?.nullable !== true) {
+        return direction === 'asc' ? asc(column) : desc(column);
+      }
 
       return direction === 'asc' ? sql`${column} asc nulls last` : sql`${column} desc nulls first`;
     }),

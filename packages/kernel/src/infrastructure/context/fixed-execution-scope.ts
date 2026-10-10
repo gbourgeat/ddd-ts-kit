@@ -25,7 +25,9 @@ export class FixedExecutionScope implements ExecutionScope {
   current(): ExecutionContext | undefined {
     const actor = this.actors?.current();
 
-    if (this.context === undefined || actor === undefined) return this.context;
+    if (this.context === undefined || actor === undefined) {
+      return this.context;
+    }
 
     return withActor(this.context, actor);
   }

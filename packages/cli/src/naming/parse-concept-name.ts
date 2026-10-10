@@ -15,7 +15,10 @@ export interface NameOptions {
 /** The name of a concept as the caller typed it: well formed, without the role suffix, and not a technical bucket. */
 export function parseConceptName(input: string, what: string, options: NameOptions): Name {
   if (!/^[A-Za-z][A-Za-z0-9_\- ]*$/.test(input)) {
-    throw new CliError(`"${input}" is not a valid ${what} name.`, 'Use letters and digits only, starting with a letter, for example InvoiceLine or invoice-line.');
+    throw new CliError(
+      `"${input}" is not a valid ${what} name.`,
+      'Use letters and digits only, starting with a letter, for example InvoiceLine or invoice-line.',
+    );
   }
 
   const words = withoutRole(splitWords(input), options.strip ?? []);

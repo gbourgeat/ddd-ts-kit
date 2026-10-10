@@ -1,18 +1,40 @@
 import { describe, expect, it } from 'vitest';
 import { insertInRegion, parseWiring, replaceRegion } from '../src/markers/index.js';
 
-const file = ['// ddd-ts-kit:imports', "import a from './a.js';", '// /ddd-ts-kit:imports', 'function wire() {', '  // ddd-ts-kit:registrations', '  // /ddd-ts-kit:registrations', '  return [', '    // ddd-ts-kit:routes', '    // /ddd-ts-kit:routes', '  ];', '}'].join('\n');
+const file = [
+  '// ddd-ts-kit:imports',
+  "import a from './a.js';",
+  '// /ddd-ts-kit:imports',
+  'function wire() {',
+  '  // ddd-ts-kit:registrations',
+  '  // /ddd-ts-kit:registrations',
+  '  return [',
+  '    // ddd-ts-kit:routes',
+  '    // /ddd-ts-kit:routes',
+  '  ];',
+  '}',
+].join('\n');
 
 describe('marker regions', () => {
   it('inserts before the closing marker with its indentation', () => {
-    expect(insertInRegion(file, 'registrations', 'const b = 1;\n\nuse(b);')).toContain('  // ddd-ts-kit:registrations\n  const b = 1;\n\n  use(b);\n  // /ddd-ts-kit:registrations');
+    expect(insertInRegion(file, 'registrations', 'const b = 1;\n\nuse(b);')).toContain(
+      '  // ddd-ts-kit:registrations\n  const b = 1;\n\n  use(b);\n  // /ddd-ts-kit:registrations',
+    );
   });
 
   it('sets each block of statements apart by a blank line, and keeps the lines of a list together', () => {
-    const statements = insertInRegion(insertInRegion(file, 'registrations', 'first();') ?? '', 'registrations', 'second();');
+    const statements = insertInRegion(
+      insertInRegion(file, 'registrations', 'first();') ?? '',
+      'registrations',
+      'second();',
+    );
+
     const list = insertInRegion(insertInRegion(file, 'routes', 'first(),') ?? '', 'routes', 'second(),');
 
-    expect(statements).toContain('  // ddd-ts-kit:registrations\n  first();\n\n  second();\n  // /ddd-ts-kit:registrations');
+    expect(statements).toContain(
+      '  // ddd-ts-kit:registrations\n  first();\n\n  second();\n  // /ddd-ts-kit:registrations',
+    );
+
     expect(list).toContain('    // ddd-ts-kit:routes\n    first(),\n    second(),\n    // /ddd-ts-kit:routes');
   });
 
@@ -36,19 +58,24 @@ describe('marker regions', () => {
     expect(insertInRegion(file, 'policies', 'x')).toBeUndefined();
     expect(replaceRegion(file, 'policies', ['x'])).toBeUndefined();
 
-    expect(insertInRegion('<!-- ddd-ts-kit:aggregates -->\n<!-- /ddd-ts-kit:aggregates -->', 'aggregates', '- `Invoice`')).toBe(
-      '<!-- ddd-ts-kit:aggregates -->\n- `Invoice`\n<!-- /ddd-ts-kit:aggregates -->',
-    );
+    expect(
+      insertInRegion('<!-- ddd-ts-kit:aggregates -->\n<!-- /ddd-ts-kit:aggregates -->', 'aggregates', '- `Invoice`'),
+    ).toBe('<!-- ddd-ts-kit:aggregates -->\n- `Invoice`\n<!-- /ddd-ts-kit:aggregates -->');
   });
 
   it('replaces the whole content of a region', () => {
     const listed = insertInRegion(file, 'routes', 'first(),') ?? '';
 
-    expect(replaceRegion(listed, 'routes', ['second(),', 'third(),'])).toContain('    // ddd-ts-kit:routes\n    second(),\n    third(),\n    // /ddd-ts-kit:routes');
+    expect(replaceRegion(listed, 'routes', ['second(),', 'third(),'])).toContain(
+      '    // ddd-ts-kit:routes\n    second(),\n    third(),\n    // /ddd-ts-kit:routes',
+    );
   });
 
   it('splits a wiring template into regions', () => {
-    const sections = [...parseWiring('@@imports\nimport a;\n@@routes\nroute(),\n')].map(([region, block]) => [region, block.trim()]);
+    const sections = [...parseWiring('@@imports\nimport a;\n@@routes\nroute(),\n')].map(([region, block]) => [
+      region,
+      block.trim(),
+    ]);
 
     expect(sections).toEqual([
       ['imports', 'import a;'],

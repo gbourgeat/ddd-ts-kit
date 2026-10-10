@@ -30,7 +30,9 @@ export function setupTracing(processors: SpanProcessor[] = []): TestTracing {
     span(name) {
       const found = exporter.getFinishedSpans().find((candidate) => candidate.name === name);
 
-      if (found === undefined) throw new Error(`no span named ${name}`);
+      if (found === undefined) {
+        throw new Error(`no span named ${name}`);
+      }
 
       return found;
     },

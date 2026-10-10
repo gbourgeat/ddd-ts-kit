@@ -12,12 +12,19 @@ const cli = join(here, '..', '..', 'packages', 'cli', 'dist', 'bin.js');
 
 function project(config = {}) {
   const root = mkdtempSync(join(tmpdir(), 'ddd-ts-kit-guard-'));
-  const init = spawnSync('node', [cli, 'init', '--orm', 'none', '--context', 'ordering:core'], { cwd: root, encoding: 'utf8' });
+  const init = spawnSync('node', [cli, 'init', '--orm', 'none', '--context', 'ordering:core'], {
+    cwd: root,
+    encoding: 'utf8',
+  });
   assert.equal(init.status, 0, init.stderr);
-  if (Object.keys(config).length > 0) patchConfig(root, config);
+  if (Object.keys(config).length > 0) {
+    patchConfig(root, config);
+  }
   mkdirSync(join(root, 'node_modules', '.bin'), { recursive: true });
   // A launcher like the one npm writes: the compiled entry file itself is not executable.
-  writeFileSync(join(root, 'node_modules', '.bin', 'ddd-ts-kit'), `#!/bin/sh\nexec node "${cli}" "$@"\n`, { mode: 0o755 });
+  writeFileSync(join(root, 'node_modules', '.bin', 'ddd-ts-kit'), `#!/bin/sh\nexec node "${cli}" "$@"\n`, {
+    mode: 0o755,
+  });
   return root;
 }
 
@@ -28,8 +35,16 @@ function patchConfig(root, patch) {
 }
 
 function run(mode, input, env = {}) {
-  const result = spawnSync('node', [guard, mode], { input: JSON.stringify(input), encoding: 'utf8', env: { ...process.env, ...env } });
-  return { status: result.status, stderr: result.stderr, output: result.stdout ? JSON.parse(result.stdout) : undefined };
+  const result = spawnSync('node', [guard, mode], {
+    input: JSON.stringify(input),
+    encoding: 'utf8',
+    env: { ...process.env, ...env },
+  });
+  return {
+    status: result.status,
+    stderr: result.stderr,
+    output: result.stdout ? JSON.parse(result.stdout) : undefined,
+  };
 }
 
 function put(root, path, content = '') {
@@ -38,7 +53,11 @@ function put(root, path, content = '') {
 }
 
 function git(root, ...args) {
-  const result = spawnSync('git', ['-c', 'user.name=guard', '-c', 'user.email=guard@example.test', '-c', 'commit.gpgsign=false', ...args], { cwd: root, encoding: 'utf8' });
+  const result = spawnSync(
+    'git',
+    ['-c', 'user.name=guard', '-c', 'user.email=guard@example.test', '-c', 'commit.gpgsign=false', ...args],
+    { cwd: root, encoding: 'utf8' },
+  );
   assert.equal(result.status, 0, result.stderr);
 }
 
@@ -94,7 +113,10 @@ test('editing an existing role file and creating an ordinary file are allowed', 
   const root = project();
   const existing = join(root, 'src/contexts/ordering/ordering.module.ts');
   assert.equal(run('pre-write', write(existing)).output, undefined);
-  assert.equal(run('pre-write', write(join(root, 'src/contexts/ordering/infrastructure/persistence/order.mapper.ts'))).output, undefined);
+  assert.equal(
+    run('pre-write', write(join(root, 'src/contexts/ordering/infrastructure/persistence/order.mapper.ts'))).output,
+    undefined,
+  );
 });
 
 test('a generated contract is never edited by hand', () => {
@@ -136,10 +158,24 @@ test('stop is blocked while errors remain, and never twice in a row', () => {
 test('a new suppression is put to the project owner, an untouched one is not', () => {
   const root = project();
   const file = join(root, 'src/contexts/ordering/ordering.module.ts');
-  const adding = run('pre-write', { tool_name: 'Edit', tool_input: { file_path: file, old_string: 'const a = 1;', new_string: '// eslint-disable-next-line no-console\nconst a = 1;' } });
+  const adding = run('pre-write', {
+    tool_name: 'Edit',
+    tool_input: {
+      file_path: file,
+      old_string: 'const a = 1;',
+      new_string: '// eslint-disable-next-line no-console\nconst a = 1;',
+    },
+  });
   assert.equal(adding.output.hookSpecificOutput.permissionDecision, 'ask');
   assert.match(adding.output.hookSpecificOutput.permissionDecisionReason, /docs\/adr/);
-  const keeping = run('pre-write', { tool_name: 'Edit', tool_input: { file_path: file, old_string: '// eslint-disable-next-line x -- y\nconst a = 1;', new_string: '// eslint-disable-next-line x -- y\nconst a = 2;' } });
+  const keeping = run('pre-write', {
+    tool_name: 'Edit',
+    tool_input: {
+      file_path: file,
+      old_string: '// eslint-disable-next-line x -- y\nconst a = 1;',
+      new_string: '// eslint-disable-next-line x -- y\nconst a = 2;',
+    },
+  });
   assert.equal(keeping.output, undefined);
 });
 
@@ -147,7 +183,13 @@ test('skipping a test and relaxing the rules both need the owner', () => {
   const root = project();
   const spec = run('pre-write', write(join(root, 'src/contexts/ordering/test/unit/order.spec.ts'), {}));
   assert.equal(spec.output, undefined);
-  const skipped = run('pre-write', { tool_name: 'Write', tool_input: { file_path: join(root, 'src/contexts/ordering/test/unit/order.spec.ts'), content: "it.skip('pays', () => {});" } });
+  const skipped = run('pre-write', {
+    tool_name: 'Write',
+    tool_input: {
+      file_path: join(root, 'src/contexts/ordering/test/unit/order.spec.ts'),
+      content: "it.skip('pays', () => {});",
+    },
+  });
   assert.equal(skipped.output.hookSpecificOutput.permissionDecision, 'ask');
   const config = run('pre-write', write(join(root, 'ddd-ts-kit.config.json')));
   assert.equal(config.output.hookSpecificOutput.permissionDecision, 'ask');
@@ -228,14 +270,24 @@ test('a file of tokens is refused: a port is an abstract class', () => {
 
 test('a hand-written adapter of persistence and a mapper stay free', () => {
   const root = project();
-  for (const path of ['infrastructure/persistence/drizzle-order-reader.repository.ts', 'infrastructure/persistence/order.mapper.ts', 'presentation/http/place-order.dto.ts']) {
+  for (const path of [
+    'infrastructure/persistence/drizzle-order-reader.repository.ts',
+    'infrastructure/persistence/order.mapper.ts',
+    'presentation/http/place-order.dto.ts',
+  ]) {
     assert.equal(run('pre-write', write(join(root, 'src/contexts/ordering', path))).output, undefined, path);
   }
 });
 
 test('the test setup, the compiler options and the rule files need the owner', () => {
   const root = project();
-  for (const path of ['vitest.config.ts', 'tsconfig.json', 'commitlint.config.mjs', '.claude/rules/domain.md']) {
+  for (const path of [
+    'vitest.config.ts',
+    'tsconfig.json',
+    'biome.json',
+    'commitlint.config.mjs',
+    '.claude/rules/domain.md',
+  ]) {
     assert.equal(decision(run('pre-write', write(join(root, path)))), 'ask', path);
   }
 });
@@ -245,7 +297,11 @@ test('a context worker writes inside its bounded context and its end-to-end spec
   const agent = worker(root);
   put(root, 'test/e2e/place-order.e2e.spec.ts');
   assert.equal(run('pre-write', write(join(root, 'src/contexts/ordering/CONTEXT.md'), agent)).output, undefined);
-  assert.equal(run('pre-write', write(join(root, 'src/contexts/ordering/infrastructure/persistence/order.mapper.ts'), agent)).output, undefined);
+  assert.equal(
+    run('pre-write', write(join(root, 'src/contexts/ordering/infrastructure/persistence/order.mapper.ts'), agent))
+      .output,
+    undefined,
+  );
   assert.equal(run('pre-write', write(join(root, 'test/e2e/place-order.e2e.spec.ts'), agent)).output, undefined);
   const neighbour = run('pre-write', write(join(root, 'src/contexts/billing/CONTEXT.md'), agent));
   assert.equal(decision(neighbour), 'deny');
@@ -256,7 +312,18 @@ test('a context worker writes inside its bounded context and its end-to-end spec
 test('a context worker never writes a shared file', () => {
   const root = project();
   const agent = worker(root);
-  for (const path of ['ddd-ts-kit.config.json', 'src/main.ts', 'src/platform/compose-application.ts', 'package.json', 'package-lock.json', 'docs/context-map.md', 'docs/architecture/plan.md', 'migrations/0002_orders.js', 'test/e2e/support/start-application.ts', '.ddd-ts-kit/worker.json']) {
+  for (const path of [
+    'ddd-ts-kit.config.json',
+    'src/main.ts',
+    'src/platform/compose-application.ts',
+    'package.json',
+    'package-lock.json',
+    'docs/context-map.md',
+    'docs/architecture/plan.md',
+    'migrations/0002_orders.js',
+    'test/e2e/support/start-application.ts',
+    '.ddd-ts-kit/worker.json',
+  ]) {
     const result = run('pre-write', write(join(root, path), agent));
     assert.equal(decision(result), 'deny', path);
     assert.match(reason(result), /shared file .* conductor/, path);
@@ -288,14 +355,26 @@ test('in advise mode the worker scope asks, and off silences it', () => {
 test('a context worker does not run a generator that writes shared files or another context', () => {
   const root = project();
   const agent = worker(root);
-  for (const command of ['npx ddd-ts-kit generate repository ordering Order --json', 'npx ddd-ts-kit g integration-event ordering Order Placed', 'npx ddd-ts-kit generate context shipping --classification core', 'npx ddd-ts-kit@latest generate job ordering ExpireOrders --every 1h --command PlaceOrder']) {
+  for (const command of [
+    'npx ddd-ts-kit generate repository ordering Order --json',
+    'npx ddd-ts-kit g integration-event ordering Order Placed',
+    'npx ddd-ts-kit generate context shipping --classification core',
+    'npx ddd-ts-kit@latest generate job ordering ExpireOrders --every 1h --command PlaceOrder',
+  ]) {
     const result = run('pre-bash', bash(root, command, agent));
     assert.equal(decision(result), 'deny', command);
     assert.match(reason(result), /conductor runs it on the trunk/, command);
   }
   const neighbour = run('pre-bash', bash(root, 'npx ddd-ts-kit generate value-object billing Money --json', agent));
   assert.match(reason(neighbour), /another context/);
-  const implied = run('pre-bash', bash(root, 'npx ddd-ts-kit generate command ordering PlaceOrder --aggregate PurchaseOrder --permission order.place', agent));
+  const implied = run(
+    'pre-bash',
+    bash(
+      root,
+      'npx ddd-ts-kit generate command ordering PlaceOrder --aggregate PurchaseOrder --permission order.place',
+      agent,
+    ),
+  );
   assert.match(reason(implied), /repository of PurchaseOrder/);
 });
 
@@ -303,7 +382,15 @@ test('a context worker generates freely inside its context, and reads anywhere',
   const root = project();
   const agent = worker(root);
   put(root, 'src/contexts/ordering/domain/repositories/purchase-order.repository.ts');
-  for (const command of ['npx ddd-ts-kit generate value-object ordering Money --json', 'npx ddd-ts-kit generate command ordering PlaceOrder --aggregate PurchaseOrder --permission order.place', 'npx ddd-ts-kit list --json', 'npx ddd-ts-kit check --changed-since main', 'npm install', 'npm ci', 'npm test -- ordering']) {
+  for (const command of [
+    'npx ddd-ts-kit generate value-object ordering Money --json',
+    'npx ddd-ts-kit generate command ordering PlaceOrder --aggregate PurchaseOrder --permission order.place',
+    'npx ddd-ts-kit list --json',
+    'npx ddd-ts-kit check --changed-since main',
+    'npm install',
+    'npm ci',
+    'npm test -- ordering',
+  ]) {
     assert.equal(run('pre-bash', bash(root, command, agent)).output, undefined, command);
   }
 });
@@ -331,14 +418,22 @@ test('at stop, a tree above the commit limits is reminded once, by slice, and ne
   const root = committed({ commit: { maxFiles: 3, maxLines: 1000 } });
   const session = { cwd: root, session_id: `s-${root}` };
   assert.equal(run('stop', session).output, undefined);
-  for (const file of ['application/commands/place-order/place-order.notes.md', 'presentation/http/place-order.route.ts', 'test/unit/place-order.handler.spec.ts', 'domain/value-objects/money.notes.md']) {
+  for (const file of [
+    'application/commands/place-order/place-order.notes.md',
+    'presentation/http/place-order.route.ts',
+    'test/unit/place-order.handler.spec.ts',
+    'domain/value-objects/money.notes.md',
+  ]) {
     put(root, join('src/contexts/ordering', file), 'one\ntwo\n');
   }
   put(root, 'src/platform/extra.md', 'one\n');
   const first = run('stop', session);
   assert.equal(first.status, 0);
   assert.equal(first.output.decision, undefined);
-  assert.match(first.output.systemMessage, /5 changed files and 9 changed lines are uncommitted \(advised at most 3 files and 1000 lines/);
+  assert.match(
+    first.output.systemMessage,
+    /5 changed files and 9 changed lines are uncommitted \(advised at most 3 files and 1000 lines/,
+  );
   assert.match(first.output.systemMessage, /ordering: place-order \(3 files\), /);
   assert.match(first.output.systemMessage, /ordering: domain \(1 files\)/);
   assert.match(first.output.systemMessage, /platform \(1 files\)/);
@@ -373,20 +468,36 @@ test('generated files are not counted in the size of a commit', () => {
   // Advise mode: the stale barrel written below must not turn this stop into an architecture block.
   const root = committed({ guard: 'advise', commit: { maxFiles: 1, maxLines: 1000 } });
   put(root, 'docs/a.md', 'a\n');
-  for (const path of ['src/contexts/ordering/ordering.declarations.ts', 'openapi/openapi.json', 'docs/integration/asyncapi.json', 'docs/context-map.md', 'package-lock.json', '.dependency-cruiser.cjs', '.ddd-ts-kit/worker.json']) {
+  for (const path of [
+    'src/contexts/ordering/ordering.declarations.ts',
+    'openapi/openapi.json',
+    'docs/integration/asyncapi.json',
+    'docs/context-map.md',
+    'package-lock.json',
+    '.dependency-cruiser.cjs',
+    '.ddd-ts-kit/worker.json',
+  ]) {
     put(root, path, 'changed\n'.repeat(50));
   }
   assert.equal(run('stop', { cwd: root, session_id: `generated-${root}` }).output, undefined);
   put(root, 'docs/b.md', 'b\n');
-  assert.match(run('stop', { cwd: root, session_id: `generated-${root}` }).output.systemMessage, /2 changed files and 2 changed lines/);
+  assert.match(
+    run('stop', { cwd: root, session_id: `generated-${root}` }).output.systemMessage,
+    /2 changed files and 2 changed lines/,
+  );
 });
 
 test('the default commit limits apply when the config says nothing', () => {
   const root = committed({});
-  for (let index = 0; index < 20; index += 1) put(root, `docs/note-${index}.md`, 'a\n');
+  for (let index = 0; index < 20; index += 1) {
+    put(root, `docs/note-${index}.md`, 'a\n');
+  }
   assert.equal(run('stop', { cwd: root, session_id: `defaults-${root}` }).output, undefined);
   put(root, 'docs/note-20.md', 'a\n');
-  assert.match(run('stop', { cwd: root, session_id: `defaults-${root}` }).output.systemMessage, /at most 20 files and 600 lines/);
+  assert.match(
+    run('stop', { cwd: root, session_id: `defaults-${root}` }).output.systemMessage,
+    /at most 20 files and 600 lines/,
+  );
 });
 
 test('nonsense commit limits are an error of the configuration, reported as such', () => {
@@ -409,7 +520,11 @@ test('session start repeats the commit reminder, and stop then stays quiet', () 
 
 test('architecture errors block the stop before any word about commits', () => {
   const root = committed({ commit: { maxFiles: 1, maxLines: 1 } });
-  put(root, 'src/contexts/ordering/domain/services/pricing.service.ts', "import express from 'express';\nexport class Pricing { now() { return express; } }\n");
+  put(
+    root,
+    'src/contexts/ordering/domain/services/pricing.service.ts',
+    "import express from 'express';\nexport class Pricing { now() { return express; } }\n",
+  );
   put(root, 'docs/a.md', 'a\n');
   const { output } = run('stop', { cwd: root, session_id: `errors-${root}` });
   assert.equal(output.decision, 'block');

@@ -15,15 +15,21 @@ const ASSEMBLY_FIX =
 
 export const compositionOnlyInModule: Rule = {
   id: 'composition/only-in-module',
-  description: 'Adapters are instantiated or bound, and declared classes assembled, only in <context>.module.ts, main.ts and platform/.',
+  description:
+    'Adapters are instantiated or bound, and declared classes assembled, only in <context>.module.ts, main.ts and platform/.',
   scope: 'file',
   run(project) {
-    return perFile(project, this.id, (file) => [...(isOutsideComposition(file) ? usedAdapters(file, project) : []), ...(isOutsideAssembly(file, project) ? assemblies(file) : [])]);
+    return perFile(project, this.id, (file) => [
+      ...(isOutsideComposition(file) ? usedAdapters(file, project) : []),
+      ...(isOutsideAssembly(file, project) ? assemblies(file) : []),
+    ]);
   },
 };
 
 function isOutsideComposition({ isTest, location }: SourceFile): boolean {
-  if (isTest || location.area === 'main' || location.area === 'platform') return false;
+  if (isTest || location.area === 'main' || location.area === 'platform') {
+    return false;
+  }
 
   return !(location.area === 'context' && location.layer === 'module');
 }
@@ -32,20 +38,33 @@ function isOutsideComposition({ isTest, location }: SourceFile): boolean {
 function usedAdapters(file: SourceFile, project: Project): Finding[] {
   return importedAdapters(file).flatMap(({ name, context }) => {
     const escaped = name.replace(/\$/g, '\\$');
-    const use = new RegExp(`(?:(?<![\\w$.])new\\s+|\\.\\s*toClass\\s*\\(\\s*)${escaped}(?![\\w$])`).exec(file.scan.code);
 
-    if (use === null) return [];
+    const use = new RegExp(`(?:(?<![\\w$.])new\\s+|\\.\\s*toClass\\s*\\(\\s*)${escaped}(?![\\w$])`).exec(
+      file.scan.code,
+    );
+
+    if (use === null) {
+      return [];
+    }
 
     const how = use[0].startsWith('new') ? 'instantiated' : 'bound';
     const fix = `Receive the port through the constructor and bind ${name} to it in ${bindingPlace(project, context)} (or src/main.ts).`;
 
-    return [{ line: file.scan.lineAt(use.index), message: `The adapter ${name} is ${how} outside the composition root.`, fix }];
+    return [
+      {
+        line: file.scan.lineAt(use.index),
+        message: `The adapter ${name} is ${how} outside the composition root.`,
+        fix,
+      },
+    ];
   });
 }
 
 function importedAdapters(file: SourceFile): { name: string; context: string }[] {
   return file.imports.flatMap(({ target, names }) => {
-    if (target.kind !== 'file' || target.location.area !== 'context' || target.location.layer !== 'infrastructure') return [];
+    if (target.kind !== 'file' || target.location.area !== 'context' || target.location.layer !== 'infrastructure') {
+      return [];
+    }
 
     const { context } = target.location;
 
@@ -69,7 +88,9 @@ function isOutsideAssembly(file: SourceFile, project: Project): boolean {
 function assemblies(file: SourceFile): Finding[] {
   const fromContainer = file.imports.filter(({ target }) => target.kind === 'package' && target.name === DI_PACKAGE);
 
-  if (fromContainer.length === 0) return [];
+  if (fromContainer.length === 0) {
+    return [];
+  }
 
   const { code } = file.scan;
   const assemblers = fromContainer.flatMap(({ names }) => names.filter((name) => ASSEMBLERS.includes(name)));
@@ -77,10 +98,22 @@ function assemblies(file: SourceFile): Finding[] {
   const calls = assemblers.flatMap((name) => {
     const call = new RegExp(`(?<![\\w$.])${name}\\s*\\(`).exec(code);
 
-    return call === null ? [] : [{ line: file.scan.lineAt(call.index), message: `${name}(...) assembles a context outside the composition root.`, fix: ASSEMBLY_FIX }];
+    return call === null
+      ? []
+      : [
+          {
+            line: file.scan.lineAt(call.index),
+            message: `${name}(...) assembles a context outside the composition root.`,
+            fix: ASSEMBLY_FIX,
+          },
+        ];
   });
 
-  const included = [...code.matchAll(INCLUDE)].map((match) => ({ line: file.scan.lineAt(match.index), message: 'include(...) registers declared classes outside the composition root.', fix: ASSEMBLY_FIX }));
+  const included = [...code.matchAll(INCLUDE)].map((match) => ({
+    line: file.scan.lineAt(match.index),
+    message: 'include(...) registers declared classes outside the composition root.',
+    fix: ASSEMBLY_FIX,
+  }));
 
   return [...calls, ...included];
 }

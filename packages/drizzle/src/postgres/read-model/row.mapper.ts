@@ -8,7 +8,9 @@ export class RowMapper<Row extends object> {
 
   /** From a record keyed by column name, as a statement written in SQL answers it. */
   toRow(record: Readonly<Record<string, unknown>>): Row {
-    return Object.fromEntries(Object.entries(this.columns).map(([field, column]) => [field, decoded(column, record[column.name])])) as Row;
+    return Object.fromEntries(
+      Object.entries(this.columns).map(([field, column]) => [field, decoded(column, record[column.name])]),
+    ) as Row;
   }
 
   /** From a record keyed by field, already decoded: what `select(columns)` of the query builder answers. */

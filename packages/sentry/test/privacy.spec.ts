@@ -123,7 +123,9 @@ describe('with scrubMessages', () => {
       { type: 'LedgerUnavailable', value: 'The ledger is closed for maintenance' },
     ]);
 
-    expect(JSON.stringify(server.events[0]?.exception?.values?.map(({ type, value }) => [type, value]))).not.toContain('ada@example.org');
+    expect(JSON.stringify(server.events[0]?.exception?.values?.map(({ type, value }) => [type, value]))).not.toContain(
+      'ada@example.org',
+    );
   });
 });
 
@@ -144,14 +146,24 @@ describe('the beforeSend of the project', () => {
     errors.report(new Error('boom'), report);
     await errors.flush(2_000);
 
-    expect(seen.map((event) => event.request?.url)).toEqual(['https://shop.example/orders', 'https://shop.example/orders']);
+    expect(seen.map((event) => event.request?.url)).toEqual([
+      'https://shop.example/orders',
+      'https://shop.example/orders',
+    ]);
+
     expect(server.events.map((event) => event.exception?.values?.[0]?.type)).toEqual(['Error']);
   });
 });
 
 describe('the scrubbers alone', () => {
   it('scrubRequest keeps what identifies the route and drops the rest', () => {
-    expect(scrubRequest({ url: '/orders?id=7', data: 'raw', headers: { 'Set-Cookie': 'a=b', 'X-CSRF-Token': 't', accept: 'application/json' } })).toEqual({
+    expect(
+      scrubRequest({
+        url: '/orders?id=7',
+        data: 'raw',
+        headers: { 'Set-Cookie': 'a=b', 'X-CSRF-Token': 't', accept: 'application/json' },
+      }),
+    ).toEqual({
       url: '/orders',
       headers: { accept: 'application/json' },
     });
@@ -160,8 +172,16 @@ describe('the scrubbers alone', () => {
   });
 
   it('scrubEvent removes a user without id and the message of an event that is one', () => {
-    const event: ErrorEvent = { type: undefined, user: { email: 'ada@example.org' }, message: 'ada@example.org failed' };
+    const event: ErrorEvent = {
+      type: undefined,
+      user: { email: 'ada@example.org' },
+      message: 'ada@example.org failed',
+    };
 
-    expect(scrubEvent(event, {}, { scrubMessages: true })).toEqual({ type: undefined, user: {}, message: SCRUBBED_MESSAGE });
+    expect(scrubEvent(event, {}, { scrubMessages: true })).toEqual({
+      type: undefined,
+      user: {},
+      message: SCRUBBED_MESSAGE,
+    });
   });
 });

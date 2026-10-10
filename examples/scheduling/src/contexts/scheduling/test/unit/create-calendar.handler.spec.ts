@@ -14,7 +14,10 @@ import { CalendarRepository } from '../../domain/repositories/calendar.repositor
 import { FakeCalendarRepository } from '../fakes/calendar.repository.fake.js';
 import { FakePractitionerDirectory } from '../fakes/practitioner-directory.fake.js';
 
-const holders = authorizationModule({ authorizer: new RoleBasedAuthorizer({ roles: { holder: [schedulingPermissions['calendar.create']] } }) });
+const holders = authorizationModule({
+  authorizer: new RoleBasedAuthorizer({ roles: { holder: [schedulingPermissions['calendar.create']] } }),
+});
+
 const holder = anActor().withRole('holder').build();
 const learnedAt = { eventId: 'event-0', occurredAt: new Date('2026-01-01T00:00:00.000Z') };
 
@@ -31,7 +34,9 @@ describe('Create calendar', () => {
   it('is refused to an actor who does not hold the permission calendar.create', async () => {
     const { application } = await arrange();
 
-    await expect(application.commandBus.execute(new CreateCalendarCommand(anActor().build(), 'practice-1', 'practitioner-1'))).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(
+      application.commandBus.execute(new CreateCalendarCommand(anActor().build(), 'practice-1', 'practitioner-1')),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
   });
 
   it('opens the calendar of the practitioner in the time zone of the practice', async () => {
@@ -56,10 +61,26 @@ describe('Create calendar', () => {
 
     await application.commandBus.execute(new CreateCalendarCommand(holder, 'practice-1', 'practitioner-1'));
 
-    expect(announced).toMatchObject([{ aggregateId: 'calendar-1', practiceId: 'practice-1', practitionerId: 'practitioner-1', timeZone: 'America/New_York' }]);
+    expect(announced).toMatchObject([
+      {
+        aggregateId: 'calendar-1',
+        practiceId: 'practice-1',
+        practitionerId: 'practitioner-1',
+        timeZone: 'America/New_York',
+      },
+    ]);
 
     expect(application.eventBus.published).toMatchObject([
-      { type: 'scheduling.calendar.created', version: 1, payload: { calendarId: 'calendar-1', practiceId: 'practice-1', practitionerId: 'practitioner-1', timeZone: 'America/New_York' } },
+      {
+        type: 'scheduling.calendar.created',
+        version: 1,
+        payload: {
+          calendarId: 'calendar-1',
+          practiceId: 'practice-1',
+          practitionerId: 'practitioner-1',
+          timeZone: 'America/New_York',
+        },
+      },
     ]);
   });
 
@@ -70,8 +91,13 @@ describe('Create calendar', () => {
 
     const tuples = application.get(RelationTupleStore);
 
-    expect(await tuples.readByObject('calendar:calendar-1', 'desk')).toMatchObject([{ subject: 'desk:practice-1.practitioner-1' }]);
-    expect(await tuples.readByObject('calendar:calendar-1', 'practice')).toMatchObject([{ subject: 'practice:practice-1' }]);
+    expect(await tuples.readByObject('calendar:calendar-1', 'desk')).toMatchObject([
+      { subject: 'desk:practice-1.practitioner-1' },
+    ]);
+
+    expect(await tuples.readByObject('calendar:calendar-1', 'practice')).toMatchObject([
+      { subject: 'practice:practice-1' },
+    ]);
   });
 
   it.each([
@@ -80,13 +106,17 @@ describe('Create calendar', () => {
   ])('refuses a calendar for %s', async (_case, practiceId, practitionerId) => {
     const { application } = await arrange();
 
-    await expect(application.commandBus.execute(new CreateCalendarCommand(holder, practiceId, practitionerId))).rejects.toMatchObject({ code: 'UNKNOWN_PRACTITIONER' });
+    await expect(
+      application.commandBus.execute(new CreateCalendarCommand(holder, practiceId, practitionerId)),
+    ).rejects.toMatchObject({ code: 'UNKNOWN_PRACTITIONER' });
   });
 
   it('saves and publishes nothing when the practitioner is unknown', async () => {
     const { application, calendarRepository } = await arrange();
 
-    await application.commandBus.execute(new CreateCalendarCommand(holder, 'practice-2', 'practitioner-1')).catch(() => undefined);
+    await application.commandBus
+      .execute(new CreateCalendarCommand(holder, 'practice-2', 'practitioner-1'))
+      .catch(() => undefined);
 
     expect(calendarRepository.all()).toEqual([]);
     expect(application.eventBus.published).toEqual([]);

@@ -41,9 +41,12 @@ unitOfWorkContract(runner, {
     return {
       unitOfWork,
       outbox: new KnexOutboxStore(unitOfWork),
-      insert: async (id) => void (await unitOfWork.executor().raw('insert into contract_parcels (id) values (?)', [id])),
+      insert: async (id) =>
+        void (await unitOfWork.executor().raw('insert into contract_parcels (id) values (?)', [id])),
       insertRefusedAtCommit: async (id) =>
-        void (await unitOfWork.executor().raw("insert into contract_parcels (id, sealed_by) values (?, 'nobody')", [id])),
+        void (await unitOfWork
+          .executor()
+          .raw("insert into contract_parcels (id, sealed_by) values (?, 'nobody')", [id])),
       ids: async () => idsOf(await unitOfWork.executor().raw(SELECT)),
       // A real server hands the pool another connection; PGlite is one session behind every socket.
       ...(database.real ? { committedIds: async () => idsOf(await database.knex.raw(SELECT)) } : {}),

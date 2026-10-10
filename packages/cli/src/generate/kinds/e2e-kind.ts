@@ -1,4 +1,5 @@
 import { CliError } from '../../cli-error.js';
+import { fitStatement } from '../../layout/index.js';
 import { toName, type Name } from '../../naming/index.js';
 import type { RenderContext } from '../../templating/index.js';
 import { renderTemplate } from '../../templating/index.js';
@@ -14,30 +15,47 @@ export const e2eKind: Kind = {
   name: 'e2e',
   aliases: [],
   usage: 'e2e <context> <UseCaseName>',
-  summary: 'An end-to-end spec driving the route of a use case on the whole application, in test/e2e/ at the project root.',
+  summary:
+    'An end-to-end spec driving the route of a use case on the whole application, in test/e2e/ at the project root.',
   positionals: ['context', 'UseCaseName'],
   writesShared: false,
   run: (request) => {
     const scope = openScope(request);
     const name = label(scope, request.args[1] ?? '', { what: 'use case', strip: ['route', 'handler'] });
-    const context = vars(scope, { name: named(name), e2e: { ...endpointOf(scope, name), ...tracedCommand(scope, name) } });
+
+    const endpoint = endpointOf(scope, name);
+    const traced = tracedCommand(scope, name);
+    const command = `{ name: 'command ${name.pascal}Command'${traced.saved} }`;
+    const tree = spanTree(`${endpoint.method} ${endpoint.path}`, command);
+    const context = vars(scope, { name: named(name), e2e: { ...endpoint, ...traced, tree } });
 
     scope.ws.create(`test/e2e/${name.kebab}.e2e.spec.ts`, renderTemplate('e2e/e2e.spec.ts.tpl', context));
 
     if (!scope.ws.exists('test/e2e/support/start-application.ts')) {
-      scope.ws.note('test/e2e/support/start-application.ts is missing: `ddd-ts-kit init` creates it (existing files are kept).');
+      scope.ws.note(
+        'test/e2e/support/start-application.ts is missing: `ddd-ts-kit init` creates it (existing files are kept).',
+      );
     }
   },
 };
 
+/** The spans a request leaves, as the spec expects them, laid out for the six spaces the element is written after. */
+function spanTree(request: string, command: string): string {
+  const element = `{ name: '${request}', kind: 'SERVER', children: [${command}] },`;
+
+  return fitStatement(element, '      ').join('\n').trimStart();
+}
+
 /** What the route of the use case declares: an end-to-end spec drives the application through it. */
-function endpointOf(scope: Scope, name: Name): RenderContext {
+function endpointOf(scope: Scope, name: Name): RenderContext & { readonly method: string; readonly path: string } {
   const file = `${scope.dir}/presentation/http/${name.kebab}.route.ts`;
   const route = scope.ws.read(file) ?? '';
   const [, method, path] = /method: '([A-Z]+)',\s*path: '([^']+)'/.exec(route) ?? [];
   const status = /responses: \{ (\d{3}):/.exec(route)?.[1];
 
-  if (method === undefined || path === undefined || status === undefined) throw noRoute(scope, name, file);
+  if (method === undefined || path === undefined || status === undefined) {
+    throw noRoute(scope, name, file);
+  }
 
   return {
     method,
@@ -46,7 +64,10 @@ function endpointOf(scope: Scope, name: Name): RenderContext {
     call: method.toLowerCase(),
     body: ['POST', 'PUT', 'PATCH'].includes(method) ? ', {}' : '',
     protected: !/security:\s*false/.test(route),
-    samplePath: path.replace(/:([A-Za-z_][A-Za-z0-9_]*)/g, (_match, parameter: string) => `${toName(parameter).kebab}-1`),
+    samplePath: path.replace(
+      /:([A-Za-z_][A-Za-z0-9_]*)/g,
+      (_match, parameter: string) => `${toName(parameter).kebab}-1`,
+    ),
   };
 }
 

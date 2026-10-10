@@ -11,11 +11,24 @@ import { InMemoryCommandBus, UnitOfWork, unitOfWorkMiddleware } from '@ddd-ts-ki
 {{/if}}
 {{#if errors.sentry}}
 {{#if cache.relaySignal}}
-import { ErrorReporter, InMemoryCommandBus, UnitOfWork, errorReportingMiddleware, unitOfWorkMiddleware, type BusMiddleware } from '@ddd-ts-kit/kernel';
+import {
+  ErrorReporter,
+  InMemoryCommandBus,
+  UnitOfWork,
+  errorReportingMiddleware,
+  unitOfWorkMiddleware,
+  type BusMiddleware,
+} from '@ddd-ts-kit/kernel';
 import { relayWakeUpMiddleware } from '@ddd-ts-kit/redis';
 {{/if}}
 {{#unless cache.relaySignal}}
-import { ErrorReporter, InMemoryCommandBus, UnitOfWork, errorReportingMiddleware, unitOfWorkMiddleware } from '@ddd-ts-kit/kernel';
+import {
+  ErrorReporter,
+  InMemoryCommandBus,
+  UnitOfWork,
+  errorReportingMiddleware,
+  unitOfWorkMiddleware,
+} from '@ddd-ts-kit/kernel';
 {{/unless}}
 {{/if}}
 import type { Foundations } from '../lay-foundations.js';
@@ -48,7 +61,9 @@ export function createCommandBus(resolve: Resolve, foundations: Foundations): In
 {{/unless}}
   return new InMemoryCommandBus()
 {{#if errors.sentry}}
-    .use((message, next, info) => errorReportingMiddleware(resolve(ErrorReporter), foundations.scope)(message, next, info))
+    .use((message, next, info) =>
+      errorReportingMiddleware(resolve(ErrorReporter), foundations.scope)(message, next, info),
+    )
 {{/if}}
     .use(loggingMiddleware(foundations.logger))
     .use(metricsMiddleware(foundations.metrics))

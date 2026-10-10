@@ -15,7 +15,9 @@ export class InMemoryRateLimiter implements RateLimiter {
     const inWindow = (this.calls.get(key) ?? []).filter((at) => at > now - limit.windowMs);
     const allowed = inWindow.length < limit.limit;
 
-    if (allowed) inWindow.push(now);
+    if (allowed) {
+      inWindow.push(now);
+    }
 
     this.calls.set(key, inWindow);
 

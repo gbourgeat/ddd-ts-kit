@@ -11,8 +11,11 @@ const { SPEC } = SAMPLES;
 
 const RESEND_JOB = `${BILLING}/application/scheduling/resend-reminders.job.ts`;
 const RESEND_JOB_SPEC = `${BILLING}/test/unit/resend-reminders.job.spec.ts`;
+
 /** The job of the explicit style: the same class, registered by the module file instead of declaring itself. */
-const PLAIN_JOB = DECLARED.job.replace("import { Scheduled, type JobExecution, type ScheduledJob }", 'import type { JobExecution, ScheduledJob }').replace("@Scheduled('billing.send-reminders', { every: '15m' }, [CommandBus])\n", '');
+const PLAIN_JOB = DECLARED.job
+  .replace('import { Scheduled, type JobExecution, type ScheduledJob }', 'import type { JobExecution, ScheduledJob }')
+  .replace("@Scheduled('billing.send-reminders', { every: '15m' }, [CommandBus])\n", '');
 
 const TRIGGERS_USE_CASE: readonly Fixture[] = [
   {
@@ -25,7 +28,11 @@ const TRIGGERS_USE_CASE: readonly Fixture[] = [
     ruleId: 'scheduling/job-triggers-use-case',
     name: 'explicit style: the same job registered by the module file',
     expect: 'pass',
-    files: project({ [JOB]: PLAIN_JOB, [JOB_SPEC]: SPEC, [MODULE]: moduleRegistering('./application/scheduling/send-reminders.job.js', 'billing.send-reminders') }),
+    files: project({
+      [JOB]: PLAIN_JOB,
+      [JOB_SPEC]: SPEC,
+      [MODULE]: moduleRegistering('./application/scheduling/send-reminders.job.js', 'billing.send-reminders'),
+    }),
   },
   {
     ruleId: 'scheduling/job-triggers-use-case',
@@ -53,13 +60,18 @@ const TRIGGERS_USE_CASE: readonly Fixture[] = [
     ruleId: 'scheduling/job-triggers-use-case',
     name: 'a job class that does not implement ScheduledJob',
     expect: { file: JOB },
-    files: declaredProject({ [JOB]: DECLARED.job.replace(' implements ScheduledJob', '').replace(', type ScheduledJob', ''), [JOB_SPEC]: SPEC }),
+    files: declaredProject({
+      [JOB]: DECLARED.job.replace(' implements ScheduledJob', '').replace(', type ScheduledJob', ''),
+      [JOB_SPEC]: SPEC,
+    }),
   },
   {
     ruleId: 'scheduling/job-triggers-use-case',
     name: 'explicit style: a job registered from a file that is not a job file',
     expect: { file: MODULE },
-    files: project({ [MODULE]: moduleRegistering('./infrastructure/external/send-reminders.js', 'billing.send-reminders') }),
+    files: project({
+      [MODULE]: moduleRegistering('./infrastructure/external/send-reminders.js', 'billing.send-reminders'),
+    }),
   },
 ];
 
@@ -74,37 +86,59 @@ const JOB_NAME: readonly Fixture[] = [
     ruleId: 'scheduling/job-name',
     name: 'explicit style: the name written in the module file of the context',
     expect: 'pass',
-    files: project({ [JOB]: PLAIN_JOB, [JOB_SPEC]: SPEC, [MODULE]: moduleRegistering('./application/scheduling/send-reminders.job.js', 'billing.send-reminders') }),
+    files: project({
+      [JOB]: PLAIN_JOB,
+      [JOB_SPEC]: SPEC,
+      [MODULE]: moduleRegistering('./application/scheduling/send-reminders.job.js', 'billing.send-reminders'),
+    }),
   },
   {
     ruleId: 'scheduling/job-name',
     name: 'a job named by a constant',
     expect: { file: JOB },
-    files: declaredProject({ [JOB]: DECLARED.job.replaceAll("'billing.send-reminders'", 'JOB_NAME'), [JOB_SPEC]: SPEC }),
+    files: declaredProject({
+      [JOB]: DECLARED.job.replaceAll("'billing.send-reminders'", 'JOB_NAME'),
+      [JOB_SPEC]: SPEC,
+    }),
   },
   {
     ruleId: 'scheduling/job-name',
     name: 'a job carrying the prefix of another context',
     expect: { file: JOB },
-    files: declaredProject({ [JOB]: DECLARED.job.replaceAll('billing.send-reminders', 'catalog.send-reminders'), [JOB_SPEC]: SPEC }),
+    files: declaredProject({
+      [JOB]: DECLARED.job.replaceAll('billing.send-reminders', 'catalog.send-reminders'),
+      [JOB_SPEC]: SPEC,
+    }),
   },
   {
     ruleId: 'scheduling/job-name',
     name: 'a name that is not two kebab-case segments, registered in a module file',
     expect: { file: MODULE },
-    files: project({ [JOB]: PLAIN_JOB, [JOB_SPEC]: SPEC, [MODULE]: moduleRegistering('./application/scheduling/send-reminders.job.js', 'SendReminders') }),
+    files: project({
+      [JOB]: PLAIN_JOB,
+      [JOB_SPEC]: SPEC,
+      [MODULE]: moduleRegistering('./application/scheduling/send-reminders.job.js', 'SendReminders'),
+    }),
   },
   {
     ruleId: 'scheduling/job-name',
     name: 'a system actor under another name than the job',
     expect: { file: JOB },
-    files: declaredProject({ [JOB]: DECLARED.job.replace("systemActor('billing.send-reminders')", "systemActor('billing.reminders')"), [JOB_SPEC]: SPEC }),
+    files: declaredProject({
+      [JOB]: DECLARED.job.replace("systemActor('billing.send-reminders')", "systemActor('billing.reminders')"),
+      [JOB_SPEC]: SPEC,
+    }),
   },
   {
     ruleId: 'scheduling/job-name',
     name: 'one job name used by two jobs',
     expect: { file: JOB },
-    files: declaredProject({ [RESEND_JOB]: DECLARED.job.replace('SendRemindersJob', 'ResendRemindersJob'), [RESEND_JOB_SPEC]: SPEC, [JOB]: DECLARED.job, [JOB_SPEC]: SPEC }),
+    files: declaredProject({
+      [RESEND_JOB]: DECLARED.job.replace('SendRemindersJob', 'ResendRemindersJob'),
+      [RESEND_JOB_SPEC]: SPEC,
+      [JOB]: DECLARED.job,
+      [JOB_SPEC]: SPEC,
+    }),
   },
 ];
 

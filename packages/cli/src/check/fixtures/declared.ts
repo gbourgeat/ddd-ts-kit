@@ -4,9 +4,19 @@ const DECLARATIONS = "'@ddd-ts-kit/kernel/declarations'";
 
 /** The files of a context written in the declared style, as the generator writes them. */
 export const DECLARED = {
-  repositoryPort: source("import { Repository } from '@ddd-ts-kit/kernel';", "import type { Invoice } from '../aggregates/invoice.aggregate.js';", '', 'export abstract class InvoiceRepository extends Repository<Invoice> {}'),
+  repositoryPort: source(
+    "import { Repository } from '@ddd-ts-kit/kernel';",
+    "import type { Invoice } from '../aggregates/invoice.aggregate.js';",
+    '',
+    'export abstract class InvoiceRepository extends Repository<Invoice> {}',
+  ),
   port: source('export abstract class PaymentGateway {', '  abstract charge(invoiceId: string): Promise<void>;', '}'),
-  command: source(`import { Requires } from ${DECLARATIONS};`, '', "@Requires(billingPermissions['invoice.issue'])", 'export class IssueInvoiceCommand {}'),
+  command: source(
+    `import { Requires } from ${DECLARATIONS};`,
+    '',
+    "@Requires(billingPermissions['invoice.issue'])",
+    'export class IssueInvoiceCommand {}',
+  ),
   handler: source(
     "import { Clock } from '@ddd-ts-kit/kernel';",
     `import { CommandHandler } from ${DECLARATIONS};`,
@@ -17,7 +27,12 @@ export const DECLARED = {
     'export class IssueInvoiceHandler implements CommandHandler<IssueInvoiceCommand> {}',
   ),
   query: source(`import { Public } from ${DECLARATIONS};`, '', '@Public()', 'export class InvoicesIssuedQuery {}'),
-  queryHandler: source(`import { QueryHandler } from ${DECLARATIONS};`, '', '@QueryHandler(InvoicesIssuedQuery, [])', 'export class InvoicesIssuedHandler implements QueryHandler<InvoicesIssuedQuery> {}'),
+  queryHandler: source(
+    `import { QueryHandler } from ${DECLARATIONS};`,
+    '',
+    '@QueryHandler(InvoicesIssuedQuery, [])',
+    'export class InvoicesIssuedHandler implements QueryHandler<InvoicesIssuedQuery> {}',
+  ),
   integrationHandler: source(
     "import { CommandBus } from '@ddd-ts-kit/kernel';",
     `import { IntegrationEventHandler } from ${DECLARATIONS};`,
@@ -46,7 +61,12 @@ export const DECLARED = {
     "@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued' }, [IntegrationEventPublisher])",
     'export class InvoiceIssuedPublisher {}',
   ),
-  policy: source(`import { Policy } from ${DECLARATIONS};`, '', "@Policy(billingPermissions['invoice.void'], { name: 'billing.only-issuer-voids' })", 'export class OnlyIssuerVoidsPolicy {}'),
+  policy: source(
+    `import { Policy } from ${DECLARATIONS};`,
+    '',
+    "@Policy(billingPermissions['invoice.void'], { name: 'billing.only-issuer-voids' })",
+    'export class OnlyIssuerVoidsPolicy {}',
+  ),
   job: source(
     "import { CommandBus, systemActor } from '@ddd-ts-kit/kernel';",
     `import { Scheduled, type JobExecution, type ScheduledJob } from ${DECLARATIONS};`,

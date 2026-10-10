@@ -83,7 +83,12 @@ describe('JwtAuthenticator session', () => {
 
 describe('JwtAuthenticator session, as the project configures it', () => {
   it('lets the project say the method, as a value or from the claims', async () => {
-    const fixed = new JwtAuthenticator({ key: verifying, issuer: ISSUER, audience: AUDIENCE, authenticationMethod: 'sso' });
+    const fixed = new JwtAuthenticator({
+      key: verifying,
+      issuer: ISSUER,
+      audience: AUDIENCE,
+      authenticationMethod: 'sso',
+    });
 
     const computed = new JwtAuthenticator({
       key: verifying,
@@ -103,10 +108,20 @@ describe('JwtAuthenticator session, as the project configures it', () => {
   });
 
   it('reads the impersonator from the claim it is told, as an id or as an object', async () => {
-    const perNote = new JwtAuthenticator({ key: verifying, issuer: ISSUER, audience: AUDIENCE, impersonatorClaim: 'impersonator' });
+    const perNote = new JwtAuthenticator({
+      key: verifying,
+      issuer: ISSUER,
+      audience: AUDIENCE,
+      impersonatorClaim: 'impersonator',
+    });
 
-    expect((await sessionOf({ impersonator: 'support-7', act: { sub: 'ignored' } }, perNote)).impersonatedBy).toBe('support-7');
-    expect((await sessionOf({ impersonator: { id: 'support-8', username: 'sam' } }, perNote)).impersonatedBy).toBe('support-8');
+    expect((await sessionOf({ impersonator: 'support-7', act: { sub: 'ignored' } }, perNote)).impersonatedBy).toBe(
+      'support-7',
+    );
+
+    expect((await sessionOf({ impersonator: { id: 'support-8', username: 'sam' } }, perNote)).impersonatedBy).toBe(
+      'support-8',
+    );
   });
 
   it('lets the project add its extensions from the claims', async () => {

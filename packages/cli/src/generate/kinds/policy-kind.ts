@@ -15,7 +15,8 @@ export const policyKind: Kind = {
   name: 'policy',
   aliases: [],
   usage: 'policy <context> <Name> --permission <aggregate>.<action>',
-  summary: 'A rule about one element (only the author, not after closing), its spec and its registration with the policies Access asks.',
+  summary:
+    'A rule about one element (only the author, not after closing), its spec and its registration with the policies Access asks.',
   positionals: ['context', 'Name'],
   writesShared: true,
   run: (request) => {
@@ -24,7 +25,10 @@ export const policyKind: Kind = {
     const { permission } = scope.flags;
 
     if (permission === undefined) {
-      throw new CliError('A policy needs --permission.', 'A policy refines one permission: pass --permission <aggregate>.<action>, for example --permission invoice.void.');
+      throw new CliError(
+        'A policy needs --permission.',
+        'A policy refines one permission: pass --permission <aggregate>.<action>, for example --permission invoice.void.',
+      );
     }
 
     declarePermission(scope, permissionNamed(scope, permission), name);
@@ -37,6 +41,12 @@ export const policyKind: Kind = {
     ]);
 
     // A declared policy is found through its decorator: only a policy written as a value is listed for `Access`.
-    if (!isDeclared(scope.config)) applyWiring(scope.ws, `${scope.config.platformDir}/auth/access-policies.ts`, renderTemplate('policy/registration.tpl', context));
+    if (!isDeclared(scope.config)) {
+      applyWiring(
+        scope.ws,
+        `${scope.config.platformDir}/auth/access-policies.ts`,
+        renderTemplate('policy/registration.tpl', context),
+      );
+    }
   },
 };

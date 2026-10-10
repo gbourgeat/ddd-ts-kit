@@ -5,18 +5,32 @@ export function bookingTree(afterAppend: readonly ExpectedSpan[] = []): Expected
   return {
     name: 'POST /appointments',
     kind: 'SERVER',
-    attributes: { 'http.route': '/appointments', 'app.operation': 'bookAppointment', 'http.response.status_code': 201, 'app.origin': 'http', 'app.outcome': 'succeeded' },
+    attributes: {
+      'http.route': '/appointments',
+      'app.operation': 'bookAppointment',
+      'http.response.status_code': 201,
+      'app.origin': 'http',
+      'app.outcome': 'succeeded',
+    },
     children: [
       {
         name: 'command BookAppointment',
         kind: 'INTERNAL',
         attributes: { 'app.context': 'scheduling', 'app.use_case.kind': 'command', 'app.outcome': 'succeeded' },
         children: [
-          { name: 'repository AppointmentRepository.findOverlapping', kind: 'INTERNAL', attributes: { 'app.context': 'scheduling' } },
+          {
+            name: 'repository AppointmentRepository.findOverlapping',
+            kind: 'INTERNAL',
+            attributes: { 'app.context': 'scheduling' },
+          },
           {
             name: 'repository AppointmentRepository.save',
             kind: 'INTERNAL',
-            attributes: { 'code.namespace': 'InMemoryAppointmentRepository', 'code.function': 'save', 'app.dependency.kind': 'repository' },
+            attributes: {
+              'code.namespace': 'InMemoryAppointmentRepository',
+              'code.function': 'save',
+              'app.dependency.kind': 'repository',
+            },
           },
           { name: 'unit-of-work before-commit', kind: 'INTERNAL', children: [bookedEvent(afterAppend)] },
         ],
@@ -39,7 +53,11 @@ function bookedEvent(afterAppend: readonly ExpectedSpan[]): ExpectedSpan {
           {
             name: 'outbox append scheduling.appointment.booked',
             kind: 'INTERNAL',
-            attributes: { 'messaging.system': 'outbox', 'messaging.operation.type': 'create', 'messaging.message.id': 'id-2' },
+            attributes: {
+              'messaging.system': 'outbox',
+              'messaging.operation.type': 'create',
+              'messaging.message.id': 'id-2',
+            },
             children: afterAppend,
           },
         ],
@@ -68,7 +86,12 @@ export function confirmationTree(attempt = 1): ExpectedSpan {
       {
         name: 'command SendBookingConfirmation',
         attributes: { 'app.context': 'notification' },
-        children: [{ name: 'external MailGateway.send', attributes: { 'code.namespace': 'RecordingMailGateway', 'app.dependency.kind': 'external' } }],
+        children: [
+          {
+            name: 'external MailGateway.send',
+            attributes: { 'code.namespace': 'RecordingMailGateway', 'app.dependency.kind': 'external' },
+          },
+        ],
       },
     ],
   };
@@ -81,7 +104,11 @@ export function recordingTree(): ExpectedSpan {
     kind: 'CONSUMER',
     attributes: { 'app.context': 'analytics', 'app.messaging.attempt': 1, 'app.outcome': 'succeeded' },
     children: [
-      { name: 'command RecordBooking', attributes: { 'app.context': 'analytics' }, children: [{ name: 'repository BookingRepository.save' }] },
+      {
+        name: 'command RecordBooking',
+        attributes: { 'app.context': 'analytics' },
+        children: [{ name: 'repository BookingRepository.save' }],
+      },
     ],
   };
 }

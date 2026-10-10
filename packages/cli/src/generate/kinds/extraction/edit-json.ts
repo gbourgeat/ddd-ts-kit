@@ -7,6 +7,9 @@ type Json = Record<string, unknown>;
 export function editJson(ws: Workspace, file: string, edit: (raw: Json) => void): void {
   const text = ws.read(file);
 
-  if (text === undefined) ws.note(`${file} does not exist: nothing was added to it.`);
-  else ws.update(file, editConfigText(text, edit));
+  if (text === undefined) {
+    ws.note(`${file} does not exist: nothing was added to it.`);
+  } else {
+    ws.update(file, editConfigText(text, edit));
+  }
 }

@@ -62,7 +62,9 @@ export class ReminderBuilder extends Builder<ReminderIngredients, Reminder> {
       built.pullEvents();
     }
 
-    if (withdrawn) built.withdraw();
+    if (withdrawn) {
+      built.withdraw();
+    }
 
     return built;
   }

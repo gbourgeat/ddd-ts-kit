@@ -23,7 +23,9 @@ export function scopedPublisher(
 }
 
 function correlated(event: IntegrationEvent, context: ExecutionContext | undefined): IntegrationEvent {
-  if (event.correlationId !== undefined || context === undefined) return event;
+  if (event.correlationId !== undefined || context === undefined) {
+    return event;
+  }
 
   return { ...event, correlationId: context.correlationId };
 }

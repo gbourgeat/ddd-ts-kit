@@ -29,7 +29,10 @@ const COLUMNS = [
 ] as const;
 
 export function insertOf(entries: Sql, entry: AuditEntry): Sql {
-  const columns = joined(COLUMNS.map((column) => identifier(column)), ', ');
+  const columns = joined(
+    COLUMNS.map((column) => identifier(column)),
+    ', ',
+  );
 
   return sql`insert into ${entries} (${columns}) values (${joined(valuesOf(entry), ', ')})`;
 }

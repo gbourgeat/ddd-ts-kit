@@ -8,7 +8,9 @@ import type { Binding } from '../wiring/binding.js';
 export function withBindingAspects(instance: unknown, binding: Binding, aroundKind: readonly BindingAspect[]): unknown {
   const aspects = [...aroundKind, ...binding.aspects];
 
-  if (aspects.length === 0 || typeof instance !== 'object' || instance === null) return instance;
+  if (aspects.length === 0 || typeof instance !== 'object' || instance === null) {
+    return instance;
+  }
 
   const info: BindingAspectInfo = {
     className: binding.implementation ?? constructorNameOf(instance),

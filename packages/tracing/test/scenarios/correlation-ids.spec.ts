@@ -34,8 +34,18 @@ describe('pivoting between the trace, the logs, the audit trail and the error tr
     expect(correlationId).toEqual(expect.any(String));
     expect(consumers.map((span) => span.attributes['app.correlation_id'])).toEqual([correlationId, correlationId]);
     expect(log?.fields).toMatchObject({ correlationId, trace_id: request?.traceId, origin: 'event' });
-    expect(clinic.audit.entries.map((entry) => entry.correlationId)).toEqual([correlationId, correlationId, correlationId]);
-    expect(clinic.audit.entries.map((entry) => entry.action)).toEqual(['BookAppointment', 'SendBookingConfirmation', 'RecordBooking']);
+
+    expect(clinic.audit.entries.map((entry) => entry.correlationId)).toEqual([
+      correlationId,
+      correlationId,
+      correlationId,
+    ]);
+
+    expect(clinic.audit.entries.map((entry) => entry.action)).toEqual([
+      'BookAppointment',
+      'SendBookingConfirmation',
+      'RecordBooking',
+    ]);
   });
 
   it('gives the error report of a failed action the ids of its trace, and the audit entry the same correlation', async () => {

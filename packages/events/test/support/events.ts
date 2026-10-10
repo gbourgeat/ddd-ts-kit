@@ -10,9 +10,7 @@ export const orderPlacedV1 = defineIntegrationEvent({
   payload: zodSchema(z.object({ orderId: z.string(), total: z.number() })),
 });
 
-const money = z
-  .object({ amount: z.number().int(), currency: z.enum(['EUR', 'USD']) })
-  .meta({ id: 'Money' });
+const money = z.object({ amount: z.number().int(), currency: z.enum(['EUR', 'USD']) }).meta({ id: 'Money' });
 
 export const orderPlacedV2 = defineIntegrationEvent({
   type: 'ordering.order.placed',

@@ -50,107 +50,134 @@ function describeDiscovery(label: string, discover: () => Promise<Omit<Discovere
       found = { ...loaded, module: await discoverContext('billing', pathToFileURL(`${loaded.directory}/`)) };
     }, 60_000);
 
-    it('boots alone on the kernel and handles its messages', async () => {
-      const { IssueInvoice, GetInvoice, CustomerDirectory } = found.billing;
+    itBootsWiresAndDescribes(() => found);
+    itFindsReactionsAndNamesFailures(() => found);
+  });
+}
 
-      const app = createTestApplication({
-        modules: [found.module],
-        fakes: [fake(CustomerDirectory, { exists: async () => true })],
-      });
+function itBootsWiresAndDescribes(found: () => Discovered): void {
+  it('boots alone on the kernel and handles its messages', async () => {
+    const { IssueInvoice, GetInvoice, CustomerDirectory } = found().billing;
 
-      await app.start();
-
-      const invoiceId = await app.commandBus.execute(new IssueInvoice(ada, 'customer-1'));
-
-      expect(await app.queryBus.execute(new GetInvoice(invoiceId))).toMatchObject({ customerId: 'customer-1' });
-      expect(app.eventBus.published).toMatchObject([{ type: 'billing.invoice.issued', payload: { invoiceId } }]);
+    const app = createTestApplication({
+      modules: [found().module],
+      fakes: [fake(CustomerDirectory, { exists: async () => true })],
     });
 
-    it('wires what it found in the order of the paths, whatever the disk answers first', () => {
-      const description = createApplication({ modules: [kernelModule(), found.module] }).describe();
-      const declared = description.bindings.filter((binding) => binding.module === 'billing');
+    await app.start();
 
-      expect(declared.map((binding) => binding.implementation)).toEqual([
-        'OnlyIssuerVoids',
-        'IssueInvoiceHandler',
-        'InvoiceIssuedEventHandler',
-        'InvoiceOnOrderPlaced',
-        'InvoiceIssuedPublisher',
-        'GetInvoiceHandler',
-        'IssueMonthlyInvoicesJob',
-        'OutboxMailer',
-        'RegistryCustomerGateway',
-        'InMemoryInvoiceRepository',
-      ]);
-    });
+    const invoiceId = await app.commandBus.execute(new IssueInvoice(ada, 'customer-1'));
 
-    it('describes each binding with the file that declares it', () => {
-      const description = createApplication({ modules: [kernelModule(), found.module] }).describe();
-      const file = (relative: string) => path.join(found.directory, `${relative}${found.extension}`);
+    expect(await app.queryBus.execute(new GetInvoice(invoiceId))).toMatchObject({ customerId: 'customer-1' });
+    expect(app.eventBus.published).toMatchObject([{ type: 'billing.invoice.issued', payload: { invoiceId } }]);
+  });
 
-      expect(description.bindings).toContainEqual(
-        expect.objectContaining({
-          token: 'InvoiceRepository',
-          origin: 'declared',
-          declaredBy: 'InMemoryInvoiceRepository',
-          file: file('infrastructure/persistence/in-memory-invoice.repository'),
-        }),
-      );
+  it('wires what it found in the order of the paths, whatever the disk answers first', () => {
+    const description = createApplication({ modules: [kernelModule(), found().module] }).describe();
+    const declared = description.bindings.filter((binding) => binding.module === 'billing');
 
-      expect(description.commands).toMatchObject([
-        { message: 'IssueInvoice', access: 'protected', file: file('application/commands/issue-invoice/issue-invoice.handler') },
-      ]);
-    });
+    expect(declared.map((binding) => binding.implementation)).toEqual([
+      'OnlyIssuerVoids',
+      'IssueInvoiceHandler',
+      'InvoiceIssuedEventHandler',
+      'InvoiceOnOrderPlaced',
+      'InvoiceIssuedPublisher',
+      'GetInvoiceHandler',
+      'IssueMonthlyInvoicesJob',
+      'OutboxMailer',
+      'RegistryCustomerGateway',
+      'InMemoryInvoiceRepository',
+    ]);
+  });
 
-    it('finds the publishers of application/integration/publishers/, which are domain event handlers', () => {
-      const description = createApplication({ modules: [kernelModule(), found.module] }).describe();
+  it('describes each binding with the file that declares it', () => {
+    const description = createApplication({ modules: [kernelModule(), found().module] }).describe();
+    const file = (relative: string) => path.join(found().directory, `${relative}${found().extension}`);
 
-      expect(description.domainEventHandlers).toContainEqual({
-        event: 'InvoiceIssued',
-        name: 'billing.invoice.issued',
-        phase: 'before-commit',
-        handler: 'InvoiceIssuedPublisher',
-        module: 'billing',
+    expect(description.bindings).toContainEqual(
+      expect.objectContaining({
+        token: 'InvoiceRepository',
         origin: 'declared',
-        declaredBy: 'InvoiceIssuedPublisher',
-        file: path.join(found.directory, `application/integration/publishers/invoice-issued.publisher${found.extension}`),
-      });
+        declaredBy: 'InMemoryInvoiceRepository',
+        file: file('infrastructure/persistence/in-memory-invoice.repository'),
+      }),
+    );
+
+    expect(description.commands).toMatchObject([
+      {
+        message: 'IssueInvoice',
+        access: 'protected',
+        file: file('application/commands/issue-invoice/issue-invoice.handler'),
+      },
+    ]);
+  });
+}
+
+function itFindsReactionsAndNamesFailures(found: () => Discovered): void {
+  it('finds the publishers of application/integration/publishers/, which are domain event handlers', () => {
+    const description = createApplication({ modules: [kernelModule(), found().module] }).describe();
+
+    expect(description.domainEventHandlers).toContainEqual({
+      event: 'InvoiceIssued',
+      name: 'billing.invoice.issued',
+      phase: 'before-commit',
+      handler: 'InvoiceIssuedPublisher',
+      module: 'billing',
+      origin: 'declared',
+      declaredBy: 'InvoiceIssuedPublisher',
+      file: path.join(
+        found().directory,
+        `application/integration/publishers/invoice-issued.publisher${found().extension}`,
+      ),
     });
+  });
 
-    it('finds the projections of application/projections/ and feeds them the events they apply', async () => {
-      const directory = path.join(found.directory, '../reporting');
-      const reporting = (await import(/* @vite-ignore */ pathToFileURL(path.join(directory, `reporting.declarations${found.extension}`)).href)) as Reporting;
-      const app = createTestApplication({ modules: [await discoverContext('reporting', directory)] });
+  it('finds the projections of application/projections/ and feeds them the events they apply', async () => {
+    const directory = path.join(found().directory, '../reporting');
 
-      await app.start();
-      await app.eventBus.publish([orderPlacedBy('customer-1', 'evt-1'), orderPlacedBy('customer-1', 'evt-2'), orderPlacedBy('customer-1', 'evt-2')]);
+    const reporting = (await import(
+      /* @vite-ignore */ pathToFileURL(path.join(directory, `reporting.declarations${found().extension}`)).href
+    )) as Reporting;
 
-      expect(await app.get(reporting.CustomerOrders).get('customer-1')).toMatchObject({ orders: 2 });
+    const app = createTestApplication({ modules: [await discoverContext('reporting', directory)] });
 
-      expect(app.describe().projections).toEqual([
-        {
-          name: 'reporting.customer-orders',
-          projection: 'CustomerOrdersProjection',
-          module: 'reporting',
-          applies: [
-            { kind: 'integration', event: 'ordering.order.placed', version: 1, method: 'orderPlaced' },
-            { kind: 'domain', event: 'reporting.customer.forgotten', method: 'forgotten' },
-          ],
-          origin: 'declared',
-          declaredBy: 'CustomerOrdersProjection',
-          file: path.join(directory, `application/projections/customer-orders.projection${found.extension}`),
-        },
-      ]);
-    });
+    await app.start();
 
-    it('names the class and the file when a check fails', async () => {
-      const again = await discoverContext('invoicing', found.directory);
-      const policy = path.join(found.directory, `application/authorization/only-issuer-voids.policy${found.extension}`);
+    await app.eventBus.publish([
+      orderPlacedBy('customer-1', 'evt-1'),
+      orderPlacedBy('customer-1', 'evt-2'),
+      orderPlacedBy('customer-1', 'evt-2'),
+    ]);
 
-      expect(() => createApplication({ modules: [kernelModule(), found.module, again] })).toThrow(
-        `Token "OnlyIssuerVoids" is bound twice: by module "billing" (declared by class OnlyIssuerVoids in ${policy}) and by module "invoicing" (declared by class OnlyIssuerVoids in ${policy}).`,
-      );
-    });
+    expect(await app.get(reporting.CustomerOrders).get('customer-1')).toMatchObject({ orders: 2 });
+
+    expect(app.describe().projections).toEqual([
+      {
+        name: 'reporting.customer-orders',
+        projection: 'CustomerOrdersProjection',
+        module: 'reporting',
+        applies: [
+          { kind: 'integration', event: 'ordering.order.placed', version: 1, method: 'orderPlaced' },
+          { kind: 'domain', event: 'reporting.customer.forgotten', method: 'forgotten' },
+        ],
+        origin: 'declared',
+        declaredBy: 'CustomerOrdersProjection',
+        file: path.join(directory, `application/projections/customer-orders.projection${found().extension}`),
+      },
+    ]);
+  });
+
+  it('names the class and the file when a check fails', async () => {
+    const again = await discoverContext('invoicing', found().directory);
+
+    const policy = path.join(
+      found().directory,
+      `application/authorization/only-issuer-voids.policy${found().extension}`,
+    );
+
+    expect(() => createApplication({ modules: [kernelModule(), found().module, again] })).toThrow(
+      `Token "OnlyIssuerVoids" is bound twice: by module "billing" (declared by class OnlyIssuerVoids in ${policy}) and by module "invoicing" (declared by class OnlyIssuerVoids in ${policy}).`,
+    );
   });
 }
 
@@ -188,7 +215,11 @@ for (const mode of decoratorModes(FIXTURES)) {
     it('names ports this container binds, and fakes given under either copy stand for both', () => {
       const clock = new copy.FixedClock(new Date(0));
       const app = createApplication({ modules: [kernelModule({ clock })] });
-      const faked = createTestApplication({ modules: [], fakes: [fake(copy.IdGenerator, { next: () => 'from-the-copy' })] });
+
+      const faked = createTestApplication({
+        modules: [],
+        fakes: [fake(copy.IdGenerator, { next: () => 'from-the-copy' })],
+      });
 
       expect(app.resolve(copy.Clock)).toBe(clock);
       expect(app.resolve(Clock)).toBe(clock);

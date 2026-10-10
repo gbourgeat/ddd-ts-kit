@@ -7,7 +7,9 @@ interface Located {
 
 /** `module "billing"`, followed by the class and the file when a decorator made the declaration. */
 export function whereOf({ module, declaredBy }: Located): string {
-  if (declaredBy === undefined) return `module "${module}"`;
+  if (declaredBy === undefined) {
+    return `module "${module}"`;
+  }
 
   const file = declaredBy.file === undefined ? '' : ` in ${declaredBy.file}`;
 

@@ -1,6 +1,19 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { AggregateRoot, Command, CommandBus, DomainEventDispatcher, Repository, type DomainEvent } from '@ddd-ts-kit/kernel';
-import { createApplication, defineContextModule, kernelModule, type Application, type BindingAspect } from '@ddd-ts-kit/di';
+import {
+  AggregateRoot,
+  Command,
+  CommandBus,
+  DomainEventDispatcher,
+  Repository,
+  type DomainEvent,
+} from '@ddd-ts-kit/kernel';
+import {
+  createApplication,
+  defineContextModule,
+  kernelModule,
+  type Application,
+  type BindingAspect,
+} from '@ddd-ts-kit/di';
 import { resetTracingConfiguration, traceApplication } from '../src/index.js';
 import { expectSpanTree, installTestTracing, type ExpectedSpan, type TestTracing } from '../src/testing.js';
 
@@ -53,7 +66,9 @@ class SendParcelHandler {
 const retryingOnce: BindingAspect = (instance) => {
   const save: unknown = Reflect.get(instance, 'save');
 
-  if (typeof save !== 'function') return instance;
+  if (typeof save !== 'function') {
+    return instance;
+  }
 
   Reflect.set(instance, 'save', async (...args: unknown[]): Promise<unknown> => {
     try {
@@ -136,10 +151,21 @@ describe('the wrappers of a repository, outermost first: the span, the dispatch,
     repository.failures = 2;
     await app.start();
 
-    const trace = await tracing.traceOf(() => app.resolve(CommandBus).execute(new SendParcel()).catch(() => undefined));
+    const trace = await tracing.traceOf(() =>
+      app
+        .resolve(CommandBus)
+        .execute(new SendParcel())
+        .catch(() => undefined),
+    );
 
     expectSpanTree(trace, [
-      { name: 'command SendParcel', status: 'ERROR', children: [{ name: 'repository ParcelRepository.save', status: 'ERROR', attributes: { 'app.error.code': 'ETIMEDOUT' } }] },
+      {
+        name: 'command SendParcel',
+        status: 'ERROR',
+        children: [
+          { name: 'repository ParcelRepository.save', status: 'ERROR', attributes: { 'app.error.code': 'ETIMEDOUT' } },
+        ],
+      },
     ]);
 
     expect(handled).toEqual([]);

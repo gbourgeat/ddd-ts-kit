@@ -13,14 +13,19 @@ import { aPerson } from '../builders/person.builder.js';
 import { FakeIdentityRelationships } from '../fakes/identity-relationships.fake.js';
 import { FakePersonRepository } from '../fakes/person.repository.fake.js';
 
-const holders = authorizationModule({ authorizer: new RoleBasedAuthorizer({ roles: { holder: [identityPermissions['person.register']] } }) });
+const holders = authorizationModule({
+  authorizer: new RoleBasedAuthorizer({ roles: { holder: [identityPermissions['person.register']] } }),
+});
+
 const holder = anActor().named('person-ada').withRole('holder').build();
 
 describe('Register person', () => {
   it('saves the person and answers its identifier', async () => {
     const { application, personRepository } = arrange();
 
-    const id = await application.commandBus.execute(new RegisterPersonCommand(holder, 'Ada Lovelace', 'ada@example.com'));
+    const id = await application.commandBus.execute(
+      new RegisterPersonCommand(holder, 'Ada Lovelace', 'ada@example.com'),
+    );
 
     expect(id).toBe('person-ada');
     expect(await personRepository.findById(id)).toBeDefined();
@@ -29,7 +34,9 @@ describe('Register person', () => {
   it('is refused to an actor who does not hold the permission person.register', async () => {
     const { application } = arrange();
 
-    await expect(application.commandBus.execute(new RegisterPersonCommand(anActor().build(), 'Ada Lovelace', 'ada@example.com'))).rejects.toMatchObject({
+    await expect(
+      application.commandBus.execute(new RegisterPersonCommand(anActor().build(), 'Ada Lovelace', 'ada@example.com')),
+    ).rejects.toMatchObject({
       code: 'FORBIDDEN',
     });
   });
@@ -47,14 +54,21 @@ describe('Register person', () => {
     expect(relationships.current).toEqual(['person person-ada']);
 
     expect(application.eventBus.published).toMatchObject([
-      { type: 'identity.person.registered', version: 1, payload: { personId: 'person-ada', displayName: 'Ada Lovelace', email: 'ada@example.com' } },
+      {
+        type: 'identity.person.registered',
+        version: 1,
+        payload: { personId: 'person-ada', displayName: 'Ada Lovelace', email: 'ada@example.com' },
+      },
     ]);
   });
 
   it('updates the name and the address of a person who registers again and announces nothing new', async () => {
     const { application, personRepository } = arrange();
 
-    await personRepository.save(aPerson().identifiedBy('person-ada').named('Ada Lovelace').reachedAt('ada@example.com').build());
+    await personRepository.save(
+      aPerson().identifiedBy('person-ada').named('Ada Lovelace').reachedAt('ada@example.com').build(),
+    );
+
     const announced = application.eventBus.published.length;
 
     await application.commandBus.execute(new RegisterPersonCommand(holder, 'Ada King', 'ada.king@example.com'));
@@ -68,11 +82,18 @@ describe('Register person', () => {
 
   it.each([
     { what: 'a blank name', displayName: '   ', email: 'ada@example.com', code: 'INVALID_DISPLAY_NAME' },
-    { what: 'an address nobody can be written to at', displayName: 'Ada Lovelace', email: 'ada-at-example', code: 'INVALID_EMAIL' },
+    {
+      what: 'an address nobody can be written to at',
+      displayName: 'Ada Lovelace',
+      email: 'ada-at-example',
+      code: 'INVALID_EMAIL',
+    },
   ])('refuses $what, and saves and publishes nothing', async ({ displayName, email, code }) => {
     const { application, personRepository } = arrange();
 
-    await expect(application.commandBus.execute(new RegisterPersonCommand(holder, displayName, email))).rejects.toMatchObject({ code });
+    await expect(
+      application.commandBus.execute(new RegisterPersonCommand(holder, displayName, email)),
+    ).rejects.toMatchObject({ code });
 
     expect(personRepository.all()).toEqual([]);
     expect(application.eventBus.published).toEqual([]);

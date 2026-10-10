@@ -15,5 +15,9 @@ export function eventNames(scope: Scope, aggregateInput: string, factInput: stri
 
   assertPastFact(fact, scope.flags.allowName);
 
-  return { aggregate, event: toName(`${aggregate.words} ${fact.words}`), eventName: eventName(scope.context, aggregate, fact) };
+  return {
+    aggregate,
+    event: toName(`${aggregate.words} ${fact.words}`),
+    eventName: eventName(scope.context, aggregate, fact),
+  };
 }

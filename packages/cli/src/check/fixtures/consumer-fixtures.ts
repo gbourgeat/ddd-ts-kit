@@ -16,7 +16,8 @@ export const CONSUMER_FIXTURES: readonly Fixture[] = [
     files: project({
       [INTEGRATION_HANDLER]: 'export class ProductListedIntegrationHandler {}\n',
       [INTEGRATION_HANDLER_SPEC]: SPEC,
-      [`${BILLING}/application/integration/handlers/product-withdrawn.integration-handler.ts`]: 'export class ProductWithdrawnIntegrationHandler {}\n',
+      [`${BILLING}/application/integration/handlers/product-withdrawn.integration-handler.ts`]:
+        'export class ProductWithdrawnIntegrationHandler {}\n',
       [`${BILLING}/test/unit/product-withdrawn.integration-handler.spec.ts`]: SPEC,
       [MODULE]: [
         'export function billingModule(builder: Builder): void {',
@@ -42,7 +43,8 @@ export const CONSUMER_FIXTURES: readonly Fixture[] = [
     files: project({
       [INTEGRATION_HANDLER]: 'export class ProductListedIntegrationHandler {}\n',
       [INTEGRATION_HANDLER_SPEC]: SPEC,
-      [MODULE]: "export const billingModule = subscriber.subscribe('catalog.product.listed', (event) => productListedIntegrationHandler.handle(event));\n",
+      [MODULE]:
+        "export const billingModule = subscriber.subscribe('catalog.product.listed', (event) => productListedIntegrationHandler.handle(event));\n",
     }),
   },
   {
@@ -59,15 +61,19 @@ export const CONSUMER_FIXTURES: readonly Fixture[] = [
     name: 'one consumer name used by two contexts',
     expect: { file: `${CATALOG}/catalog.module.ts` },
     files: project({
-      [MODULE]: "export const billingModule = [consume(productListedV1, { consumer: 'product-listed', processed, unitOfWork }, list)];\n",
-      [`${CATALOG}/catalog.module.ts`]: "export const catalogModule = [consume(productListedV1, { consumer: 'product-listed', processed, unitOfWork }, index)];\n",
+      [MODULE]:
+        "export const billingModule = [consume(productListedV1, { consumer: 'product-listed', processed, unitOfWork }, list)];\n",
+      [`${CATALOG}/catalog.module.ts`]:
+        "export const catalogModule = [consume(productListedV1, { consumer: 'product-listed', processed, unitOfWork }, index)];\n",
     }),
   },
   {
     ruleId: 'events/consumer-idempotent',
     name: 'a subscription by hand without a processed-event store',
     expect: { file: MODULE },
-    files: project({ [MODULE]: "export const billingModule = [on(productListedV1, list, { consumer: 'billing.product-listed' })];\n" }),
+    files: project({
+      [MODULE]: "export const billingModule = [on(productListedV1, list, { consumer: 'billing.product-listed' })];\n",
+    }),
   },
   {
     ruleId: 'events/consumer-idempotent',
@@ -79,14 +85,19 @@ export const CONSUMER_FIXTURES: readonly Fixture[] = [
     ruleId: 'events/consumer-idempotent',
     name: 'explicit style: a handler that declares itself is not looked for in the module file',
     expect: 'pass',
-    files: project({ [INTEGRATION_HANDLER]: DECLARED.integrationHandler, [INTEGRATION_HANDLER_SPEC]: SPEC, [MODULE]: 'export const billingModule = {};\n' }),
+    files: project({
+      [INTEGRATION_HANDLER]: DECLARED.integrationHandler,
+      [INTEGRATION_HANDLER_SPEC]: SPEC,
+      [MODULE]: 'export const billingModule = {};\n',
+    }),
   },
   {
     ruleId: 'events/consumer-idempotent',
     name: 'a declared handler whose consumer name is not a string literal',
     expect: { file: INTEGRATION_HANDLER },
     files: project({
-      [INTEGRATION_HANDLER]: "import { IntegrationEventHandler } from '@ddd-ts-kit/kernel/declarations';\n\n@IntegrationEventHandler(productListedV1, { consumer: CONSUMER_NAME }, [])\nexport class ProductListedIntegrationHandler {}\n",
+      [INTEGRATION_HANDLER]:
+        "import { IntegrationEventHandler } from '@ddd-ts-kit/kernel/declarations';\n\n@IntegrationEventHandler(productListedV1, { consumer: CONSUMER_NAME }, [])\nexport class ProductListedIntegrationHandler {}\n",
       [INTEGRATION_HANDLER_SPEC]: SPEC,
     }),
   },
@@ -97,7 +108,8 @@ export const CONSUMER_FIXTURES: readonly Fixture[] = [
     files: project({
       [INTEGRATION_HANDLER]: DECLARED.integrationHandler,
       [INTEGRATION_HANDLER_SPEC]: SPEC,
-      [CATALOG_INTEGRATION_HANDLER]: "import { IntegrationEventHandler } from '@ddd-ts-kit/kernel/declarations';\n\n@IntegrationEventHandler(productListedV1, { consumer: 'billing.product-listed' }, [])\nexport class ProductListedIntegrationHandler {}\n",
+      [CATALOG_INTEGRATION_HANDLER]:
+        "import { IntegrationEventHandler } from '@ddd-ts-kit/kernel/declarations';\n\n@IntegrationEventHandler(productListedV1, { consumer: 'billing.product-listed' }, [])\nexport class ProductListedIntegrationHandler {}\n",
       [`${CATALOG}/test/unit/product-listed.integration-handler.spec.ts`]: SPEC,
     }),
   },
@@ -108,7 +120,8 @@ export const CONSUMER_FIXTURES: readonly Fixture[] = [
     files: project({
       [INTEGRATION_HANDLER]: DECLARED.integrationHandler,
       [INTEGRATION_HANDLER_SPEC]: SPEC,
-      [MODULE]: "export const billingModule = [consume(productWithdrawnV1, { consumer: 'billing.product-listed', processed, unitOfWork }, withdraw)];\n",
+      [MODULE]:
+        "export const billingModule = [consume(productWithdrawnV1, { consumer: 'billing.product-listed', processed, unitOfWork }, withdraw)];\n",
     }),
   },
 ];

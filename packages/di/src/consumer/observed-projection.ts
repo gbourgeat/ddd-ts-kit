@@ -24,7 +24,9 @@ export function observedProjection(resolve: Resolve, { projection, context, even
   const metrics = bound(resolve, Metrics);
   const clock = bound(resolve, Clock);
 
-  if (metrics === undefined) return unobserved;
+  if (metrics === undefined) {
+    return unobserved;
+  }
 
   const labels: MetricLabels = { context, projection };
 
@@ -44,7 +46,11 @@ export function observedProjection(resolve: Resolve, { projection, context, even
 
     counted(result);
 
-    if (result === 'applied') metrics.gauge('projection_last_event_age_ms').set((clock?.now().getTime() ?? Date.now()) - occurredAt.getTime(), labels);
+    if (result === 'applied') {
+      metrics
+        .gauge('projection_last_event_age_ms')
+        .set((clock?.now().getTime() ?? Date.now()) - occurredAt.getTime(), labels);
+    }
   };
 }
 

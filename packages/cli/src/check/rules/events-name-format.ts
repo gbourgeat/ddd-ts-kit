@@ -20,7 +20,9 @@ export const eventsNameFormat: Rule = {
   scope: 'file',
   run(project) {
     return perFile(project, this.id, (file) => {
-      if (!inContext(file.location) || file.isTest) return [];
+      if (!inContext(file.location) || file.isTest) {
+        return [];
+      }
 
       const { context } = file.location;
 
@@ -36,7 +38,9 @@ export const eventsNameFormat: Rule = {
 };
 
 function eventNames(file: SourceFile, { layer, inside }: ContextLocation): Named[] {
-  if (layer === 'domain' && inside[0] === 'events') return domainEventNames(file);
+  if (layer === 'domain' && inside[0] === 'events') {
+    return domainEventNames(file);
+  }
 
   return layer === 'published-language' ? integrationEventNames(file) : [];
 }
@@ -44,8 +48,12 @@ function eventNames(file: SourceFile, { layer, inside }: ContextLocation): Named
 function integrationEventNames(file: SourceFile): Named[] {
   const declarations = eventDeclarations(file);
   const declared = declarations.flatMap(({ type }) => (type === undefined ? [] : [type]));
+
   // Outside a declaration, `type: 'x'` may be a plain discriminator: only dotted values are event names.
-  const handwritten = file.scan.strings.filter((literal) => literal.value.includes('.') && !inDeclaration(declarations, literal.start) && isTypeLiteral(file, literal.start));
+  const handwritten = file.scan.strings.filter(
+    (literal) =>
+      literal.value.includes('.') && !inDeclaration(declarations, literal.start) && isTypeLiteral(file, literal.start),
+  );
 
   return [...declared, ...handwritten];
 }

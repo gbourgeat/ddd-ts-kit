@@ -1,13 +1,21 @@
 import type { Config } from '../config/index.js';
 import { usesLegacyDecorators } from '../stack/uses-legacy-decorators.js';
 import type { Workspace } from '../workspace/index.js';
+import { formatJson } from '../json/format-json.js';
 
 /** `tsconfig.json` for the editor and the type check, `tsconfig.build.json` for what ships: no test, no test database. */
 export function writeTypeScriptConfigs(ws: Workspace, config: Config): void {
   const include = [config.sourceRoot, 'scripts', 'test', ...(config.stack.orm === 'prisma' ? ['generated'] : [])];
 
   ws.create('tsconfig.json', serialize({ compilerOptions: compilerOptions(config), include }));
-  ws.create('tsconfig.build.json', serialize({ extends: './tsconfig.json', exclude: ['test', '**/test/**', '**/*.spec.ts', '**/open-test-database.ts'] }));
+
+  ws.create(
+    'tsconfig.build.json',
+    serialize({
+      extends: './tsconfig.json',
+      exclude: ['test', '**/test/**', '**/*.spec.ts', '**/open-test-database.ts'],
+    }),
+  );
 }
 
 function compilerOptions(config: Config): Record<string, unknown> {
@@ -31,5 +39,5 @@ function compilerOptions(config: Config): Record<string, unknown> {
 }
 
 function serialize(value: unknown): string {
-  return `${JSON.stringify(value, null, 2)}\n`;
+  return formatJson(value);
 }

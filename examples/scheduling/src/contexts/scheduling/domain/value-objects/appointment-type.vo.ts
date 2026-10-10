@@ -26,7 +26,9 @@ export class AppointmentType extends ValueObject<AppointmentTypeProps> {
   static create(facts: AppointmentTypeProps): Result<AppointmentType, InvalidAppointmentTypeError> {
     const refusal = refusalOf(facts);
 
-    return refusal === undefined ? ok(new AppointmentType({ ...facts, name: facts.name.trim() })) : err(new InvalidAppointmentTypeError(refusal));
+    return refusal === undefined
+      ? ok(new AppointmentType({ ...facts, name: facts.name.trim() }))
+      : err(new InvalidAppointmentTypeError(refusal));
   }
 
   /** What an appointment of this type holds when it starts at the instant: its duration, then its buffer. */
@@ -67,13 +69,21 @@ export class AppointmentType extends ValueObject<AppointmentTypeProps> {
 }
 
 function refusalOf(facts: AppointmentTypeProps): string | undefined {
-  if (facts.id.trim().length === 0 || facts.name.trim().length === 0) return 'has an identifier and a name';
+  if (facts.id.trim().length === 0 || facts.name.trim().length === 0) {
+    return 'has an identifier and a name';
+  }
 
-  if (!Number.isInteger(facts.duration) || facts.duration <= 0) return 'lasts a positive number of minutes';
+  if (!Number.isInteger(facts.duration) || facts.duration <= 0) {
+    return 'lasts a positive number of minutes';
+  }
 
-  if (!Number.isInteger(facts.grid) || facts.grid <= 0 || DAY % facts.grid !== 0) return 'has a grid of positive minutes that divides a day';
+  if (!Number.isInteger(facts.grid) || facts.grid <= 0 || DAY % facts.grid !== 0) {
+    return 'has a grid of positive minutes that divides a day';
+  }
 
-  if (!Number.isInteger(facts.buffer) || facts.buffer < 0) return 'has a buffer of whole minutes';
+  if (!Number.isInteger(facts.buffer) || facts.buffer < 0) {
+    return 'has a buffer of whole minutes';
+  }
 
   return undefined;
 }

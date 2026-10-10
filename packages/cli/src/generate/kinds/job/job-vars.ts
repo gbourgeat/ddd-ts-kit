@@ -4,7 +4,8 @@ import type { Scope } from '../../scope.js';
 import { grantSystemActor } from './grant-system-actor.js';
 import type { SentCommand } from './sent-command.js';
 
-const PERIOD = 'which period the work is for is said by `execution.scheduledAt`, never by the clock: an occurrence may run late, or twice';
+const PERIOD =
+  'which period the work is for is said by `execution.scheduledAt`, never by the clock: an occurrence may run late, or twice';
 
 export interface JobParts {
   readonly name: Name;
@@ -51,8 +52,16 @@ function grantedInSpec(scope: Scope, command: SentCommand): RenderContext {
   const key = command.permission?.slice(scope.context.kebab.length + 1);
   const set = `${scope.context.camel}Permissions`;
 
-  if (!command.isProtected) return { granted: '', permissionsImport: '' };
-  if (key === undefined) return { granted: "'*'", permissionsImport: '' };
+  if (!command.isProtected) {
+    return { granted: '', permissionsImport: '' };
+  }
 
-  return { granted: `${set}['${key}']`, permissionsImport: `import { ${set} } from '../../application/authorization/${scope.context.kebab}.permissions.js';` };
+  if (key === undefined) {
+    return { granted: "'*'", permissionsImport: '' };
+  }
+
+  return {
+    granted: `${set}['${key}']`,
+    permissionsImport: `import { ${set} } from '../../application/authorization/${scope.context.kebab}.permissions.js';`,
+  };
 }

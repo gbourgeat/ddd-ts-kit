@@ -31,7 +31,9 @@ export async function createCredentials(): Promise<Credentials> {
 
   return {
     authenticator: keycloakAuthenticator({ baseUrl, realm, audience }),
-    headersOf: async (actor) => ({ authorization: 'Bearer ' + (await tokenOf(actor, { key: privateKey, issuer: baseUrl + '/realms/' + realm })) }),
+    headersOf: async (actor) => ({
+      authorization: 'Bearer ' + (await tokenOf(actor, { key: privateKey, issuer: baseUrl + '/realms/' + realm })),
+    }),
   };
 }
 
@@ -41,7 +43,12 @@ interface Signing {
 }
 
 function tokenOf(actor: TestActor, { key, issuer }: Signing): Promise<string> {
-  const claims = { realm_access: { roles: actor.roles ?? [] }, preferred_username: actor.id, sid: 'session-of-' + actor.id, ...(actor.tenantId === undefined ? {} : { tenant_id: actor.tenantId }) };
+  const claims = {
+    realm_access: { roles: actor.roles ?? [] },
+    preferred_username: actor.id,
+    sid: 'session-of-' + actor.id,
+    ...(actor.tenantId === undefined ? {} : { tenant_id: actor.tenantId }),
+  };
 
   return new SignJWT(claims)
     .setProtectedHeader({ alg: 'RS256', kid: keyId })

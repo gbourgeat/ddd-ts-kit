@@ -72,7 +72,9 @@ export class RedisLock implements Lock {
     const ttl = String(Math.max(1, Math.ceil(ttlMs)));
     const token = Number(await this.client.eval(ACQUIRE, 2, lockKey, `${lockKey}:fence`, owner, ttl));
 
-    if (token === 0) return undefined;
+    if (token === 0) {
+      return undefined;
+    }
 
     const release = async (): Promise<void> => {
       await this.client.eval(RELEASE, 1, lockKey, owner);

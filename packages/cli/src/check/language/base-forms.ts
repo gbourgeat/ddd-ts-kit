@@ -41,9 +41,17 @@ export function baseForms(word: string): Set<string> {
 function singulars(lower: string): string[] {
   const forms: string[] = [];
 
-  if (lower.endsWith('ies')) forms.push(`${lower.slice(0, -3)}y`);
-  if (lower.endsWith('es')) forms.push(lower.slice(0, -2));
-  if (lower.endsWith('s') && !lower.endsWith('ss')) forms.push(lower.slice(0, -1));
+  if (lower.endsWith('ies')) {
+    forms.push(`${lower.slice(0, -3)}y`);
+  }
+
+  if (lower.endsWith('es')) {
+    forms.push(lower.slice(0, -2));
+  }
+
+  if (lower.endsWith('s') && !lower.endsWith('ss')) {
+    forms.push(lower.slice(0, -1));
+  }
 
   return forms;
 }
@@ -51,17 +59,23 @@ function singulars(lower: string): string[] {
 function infinitives(lower: string): string[] {
   const forms: string[] = [];
 
-  if (lower.endsWith('ied')) forms.push(`${lower.slice(0, -3)}y`);
+  if (lower.endsWith('ied')) {
+    forms.push(`${lower.slice(0, -3)}y`);
+  }
 
   for (const suffix of ['ed', 'ing']) {
-    if (!lower.endsWith(suffix) || lower.length <= suffix.length + 2) continue;
+    if (!lower.endsWith(suffix) || lower.length <= suffix.length + 2) {
+      continue;
+    }
 
     const stem = lower.slice(0, -suffix.length);
 
     forms.push(stem, `${stem}e`, undouble(stem));
   }
 
-  if (lower.endsWith('d')) forms.push(lower.slice(0, -1));
+  if (lower.endsWith('d')) {
+    forms.push(lower.slice(0, -1));
+  }
 
   return forms;
 }

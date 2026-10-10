@@ -22,7 +22,10 @@ afterAll(async () => {
 const tableOf = () => {
   const unitOfWork = createDrizzleUnitOfWork(database.db);
 
-  return { table: new DrizzleReadModelTable<CriteriaContractRow, PgQueryResultHKT>(unitOfWork, CONTRACT_TABLE), unitOfWork };
+  return {
+    table: new DrizzleReadModelTable<CriteriaContractRow, PgQueryResultHKT>(unitOfWork, CONTRACT_TABLE),
+    unitOfWork,
+  };
 };
 
 async function emptied() {
@@ -37,7 +40,19 @@ readModelStoreContract(runner, { name: 'DrizzleReadModelTable', createTable: emp
 
 describe('DrizzleReadModelTable', () => {
   const stamp = { eventId: 'evt-1', occurredAt: new Date('2026-10-10T12:00:00.000Z') };
-  const row = { id: 'a1', status: 'booked', title: "t'; drop table x; --", seats: 1, price: '1', startsAt: stamp.occurredAt, cancelledAt: null, room: null, remote: false, tenantId: 'acme' } as const;
+
+  const row = {
+    id: 'a1',
+    status: 'booked',
+    title: "t'; drop table x; --",
+    seats: 1,
+    price: '1',
+    startsAt: stamp.occurredAt,
+    cancelledAt: null,
+    room: null,
+    remote: false,
+    tenantId: 'acme',
+  } as const;
 
   it('writes on the transaction of the unit of work: a failure takes the row back with it', async () => {
     const { table, unitOfWork } = await emptied();
@@ -65,7 +80,11 @@ describe('DrizzleReadModelTable', () => {
   });
 
   it('refuses a table declared without the columns of a read model', () => {
-    const declare = () => new DrizzleReadModelTable<CriteriaContractRow, PgQueryResultHKT>(createDrizzleUnitOfWork(database.db), { ...CONTRACT_TABLE, table: plain });
+    const declare = () =>
+      new DrizzleReadModelTable<CriteriaContractRow, PgQueryResultHKT>(createDrizzleUnitOfWork(database.db), {
+        ...CONTRACT_TABLE,
+        table: plain,
+      });
 
     expect(declare).toThrow('readModelColumns');
   });

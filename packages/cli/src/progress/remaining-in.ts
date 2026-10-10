@@ -14,7 +14,9 @@ export function remainingIn(context: string, file: string, content: string): Rem
     const at = { context, file, line: index + 1 };
 
     return [
-      ...(platform === -1 ? [] : [{ kind: 'platform' as const, ...at, text: text.slice(platform + PLATFORM_MARK.length).trim() }]),
+      ...(platform === -1
+        ? []
+        : [{ kind: 'platform' as const, ...at, text: text.slice(platform + PLATFORM_MARK.length).trim() }]),
       ...(test === undefined ? [] : [{ kind: 'test' as const, ...at, text: test }]),
     ];
   });

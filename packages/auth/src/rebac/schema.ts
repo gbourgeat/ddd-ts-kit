@@ -25,7 +25,9 @@ export class Schema {
   resolve(type: string, name: string): Resolution | undefined {
     const subjects = this.relations(type)[name];
 
-    if (subjects !== undefined) return { kind: 'relation', subjects };
+    if (subjects !== undefined) {
+      return { kind: 'relation', subjects };
+    }
 
     const rewrite = this.permissions(type)[name];
 

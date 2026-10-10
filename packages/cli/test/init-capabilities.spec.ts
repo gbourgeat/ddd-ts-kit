@@ -12,33 +12,67 @@ describe('integration events', () => {
   it('behind a broker, hands each context the subscriber of its own name through the kernel port', () => {
     const root = initProject('--broker', 'rabbitmq');
 
-    expect(platform(root, 'platform.module.ts')).toContain('builder.rebind(EventSubscribers).toValue({ forContext: (name) => options.events.forConsumer(name) });');
-    expect(platform(root, 'events/create-event-provider.ts')).toContain('forConsumer: (name) => bus.forConsumer(name),');
+    expect(platform(root, 'platform.module.ts')).toContain(
+      'builder.rebind(EventSubscribers).toValue({ forContext: (name) => options.events.forConsumer(name) });',
+    );
+
+    expect(platform(root, 'events/create-event-provider.ts')).toContain(
+      'forConsumer: (name) => bus.forConsumer(name),',
+    );
+
     expect(platform(root, 'config/load-config.ts')).toContain("amqpUrl: readUrl(env, 'AMQP_URL', problems),");
     expect(read(root, 'docker-compose.yml')).toContain('image: rabbitmq:4-management-alpine');
-    expect(textsAt(readJson(root, 'package.json'), 'dependencies')).toMatchObject({ '@ddd-ts-kit/rabbitmq': '^0.1.0', amqplib: '^2.2.0' });
+
+    expect(textsAt(readJson(root, 'package.json'), 'dependencies')).toMatchObject({
+      '@ddd-ts-kit/rabbitmq': '^0.1.0',
+      amqplib: '^2.2.0',
+    });
   });
 
-  it.each(['rabbitmq', 'kafka', 'nats', 'redis'])('accepts discovery behind the broker %s, with the same line for a context as without one', (broker) => {
-    const root = initProject('--assembly', 'discovery', '--broker', broker, '--orm', 'knex', '--context', 'billing:core');
+  it.each(['rabbitmq', 'kafka', 'nats', 'redis'])(
+    'accepts discovery behind the broker %s, with the same line for a context as without one',
+    (broker) => {
+      const root = initProject(
+        '--assembly',
+        'discovery',
+        '--broker',
+        broker,
+        '--orm',
+        'knex',
+        '--context',
+        'billing:core',
+      );
 
-    expect(jsonAt(readJson(root, 'ddd-ts-kit.config.json'), 'stack')).toMatchObject({ assembly: 'discovery', broker });
-    expect(platform(root, 'compose-application.ts')).toContain("await discoverContext('billing', new URL('../contexts/billing/', import.meta.url)),");
-    expect(platform(root, 'compose-application.ts')).not.toContain('listeningContext');
-    expect(platform(root, 'platform.module.ts')).toContain('builder.rebind(EventSubscribers)');
-  });
+      expect(jsonAt(readJson(root, 'ddd-ts-kit.config.json'), 'stack')).toMatchObject({
+        assembly: 'discovery',
+        broker,
+      });
+
+      expect(platform(root, 'compose-application.ts')).toContain(
+        "await discoverContext('billing', new URL('../contexts/billing/', import.meta.url)),",
+      );
+
+      expect(platform(root, 'compose-application.ts')).not.toContain('listeningContext');
+      expect(platform(root, 'platform.module.ts')).toContain('builder.rebind(EventSubscribers)');
+    },
+  );
 
   it('gives the audit trail a subscriber of its own name, through the same port', () => {
     const module = platform(initProject('--broker', 'nats'), 'audit/audit.module.ts');
 
-    expect(module).toContain('subscribeAll(resolve(EventSubscribers).forContext(audit.consumer), audit.subscriptions);');
+    expect(module).toContain(
+      'subscribeAll(resolve(EventSubscribers).forContext(audit.consumer), audit.subscriptions);',
+    );
+
     expect(module).toContain('builder.bind(AuditTrail).toValue(audit.trail);');
     expect(module).toContain('.handledBy(ListAuditEntriesHandler, [AuditReader]);');
   });
 
   it('keeps the events in the process without a broker, relayed from the outbox', () => {
     const root = initProject();
-    const relay = "const relay = startOutboxRelay({\n  store: persistence.outbox,\n  publisher: application.eventBus,\n  intervalMs: config.outboxRelayIntervalMs,\n  logger: application.logger,\n});";
+
+    const relay =
+      'const relay = startOutboxRelay({\n  store: persistence.outbox,\n  publisher: application.eventBus,\n  intervalMs: config.outboxRelayIntervalMs,\n  logger: application.logger,\n});';
 
     expect(read(root, 'src/main.ts')).toContain(relay);
     expect(read(root, 'src/main.ts')).toContain('events: inProcessEvents(),');
@@ -49,15 +83,24 @@ describe('integration events', () => {
   it('orders the events of an aggregate on Kafka, in the bus and in the relay', () => {
     const root = initProject('--broker', 'kafka');
 
-    expect(platform(root, 'events/aggregate-key-of.ts')).toContain('export function aggregateKeyOf(event: IntegrationEvent): string | undefined');
-    expect(platform(root, 'events/start-outbox-relay.ts')).toContain("ordering: 'per-key',\n    keyOf: aggregateKeyOf,");
+    expect(platform(root, 'events/aggregate-key-of.ts')).toContain(
+      'export function aggregateKeyOf(event: IntegrationEvent): string | undefined',
+    );
+
+    expect(platform(root, 'events/start-outbox-relay.ts')).toContain(
+      "ordering: 'per-key',\n    keyOf: aggregateKeyOf,",
+    );
   });
 
   it('refuses a broker without a database, and still accepts a broker of your own', () => {
     const root = initProject('--broker', 'custom');
 
     expect(initFailure('--broker', 'rabbitmq', '--orm', 'none').code).toBe(2);
-    expect(platform(root, 'events/custom-event-bus.ts')).toContain('private readonly delivery = new InMemoryEventBus();');
+
+    expect(platform(root, 'events/custom-event-bus.ts')).toContain(
+      'private readonly delivery = new InMemoryEventBus();',
+    );
+
     expect(exists(root, 'src/platform/events/custom-event-bus.contract.spec.ts')).toBe(true);
   });
 });
@@ -66,16 +109,27 @@ describe('authentication and authorization', () => {
   it.each([
     ['rbac', 'roles.ts', "new RoleBasedAuthorizer({ roles, systemRole: 'system' })"],
     ['abac', 'attribute-policies.ts', 'policies: attributePolicies'],
-    ['rebac', 'relationship-schema.ts', 'schema: relationshipSchema, store: relationTuples, mapping: permissionMapping()'],
+    [
+      'rebac',
+      'relationship-schema.ts',
+      'schema: relationshipSchema,\n    store: relationTuples,\n    mapping: permissionMapping(),',
+    ],
     ['custom', 'custom-authorizer.contract.spec.ts', 'permissions.all()'],
   ])('writes the authorizer of the model %s behind the one port', (authz, file, expected) => {
     const root = initProject('--authz', authz);
 
     expect(exists(root, `src/platform/auth/${file}`)).toBe(true);
     expect(platform(root, 'auth/create-authorizer.ts')).toContain(expected);
-    expect(platform(root, 'auth/authorization.ts')).toContain('return authorizationModule({ authorizer: createAuthorizer(), authenticator, policies: accessPolicies, onDecision });');
+
+    expect(platform(root, 'auth/authorization.ts')).toContain(
+      'return authorizationModule({ authorizer: createAuthorizer(), authenticator, policies: accessPolicies, onDecision });',
+    );
+
     expect(platform(root, 'compose-application.ts')).toContain("authorization: 'required'");
-    expect(platform(root, 'auth/http-boundary.ts')).toContain('resolvePrincipal: principalOf(authenticator),\n    executionScope,\n    errorMapper,');
+
+    expect(platform(root, 'auth/http-boundary.ts')).toContain(
+      'resolvePrincipal: principalOf(authenticator),\n    executionScope,\n    errorMapper,',
+    );
   });
 
   it('keeps a registry of every permission where the model is laid out over it', () => {
@@ -84,7 +138,10 @@ describe('authentication and authorization', () => {
     expect(platform(root, 'auth/permissions.ts')).toContain('export const permissions = PermissionRegistry.of(');
     expect(platform(root, 'auth/permissions.ts')).toContain('// ddd-ts-kit:permission-sets');
     expect(exists(root, 'src/platform/auth/create-tuple-store.contract.spec.ts')).toBe(true);
-    expect(read(root, 'test/e2e/support/start-application.ts')).toContain('relate: (tuple) => relationTuples.write([tuple]),');
+
+    expect(read(root, 'test/e2e/support/start-application.ts')).toContain(
+      'relate: (tuple) => relationTuples.write([tuple]),',
+    );
   });
 
   it('writes a development authenticator that refuses production, when no credential is verified', () => {
@@ -93,14 +150,21 @@ describe('authentication and authorization', () => {
     expect(platform(root, 'auth/development-header-authenticator.ts')).toContain('must never run in production');
     expect(platform(root, 'auth/security-schemes.ts')).toContain('developmentActor');
     expect(platform(root, 'auth/principal-of.ts')).toContain('resolveSession(authenticator, developmentActorOf(raw))');
-    expect(read(root, 'test/e2e/support/create-credentials.ts')).toContain("new DevelopmentHeaderAuthenticator('test')");
+
+    expect(read(root, 'test/e2e/support/create-credentials.ts')).toContain(
+      "new DevelopmentHeaderAuthenticator('test')",
+    );
   });
 
   it('logs the authorization decisions when the audit trail is off, and writes no audit file', () => {
     const root = initProject('--audit', 'off');
 
     expect(platform(root, 'lay-foundations.ts')).toContain('decisions: logDecisions(logger),');
-    expect(platform(root, 'compose-application.ts')).toContain('const guard = authorization(foundations.decisions, options.authenticator);');
+
+    expect(platform(root, 'compose-application.ts')).toContain(
+      'const guard = authorization(foundations.decisions, options.authenticator);',
+    );
+
     expect(exists(root, 'src/platform/audit/create-audit.ts')).toBe(false);
     expect(platform(root, 'compose-application.ts')).not.toContain('auditModule');
   });
@@ -122,7 +186,12 @@ describe('what the stack does not have', () => {
     const root = initProject('--orm', 'none', '--docs-ui', 'none');
     const scripts = textsAt(readJson(root, 'package.json'), 'scripts');
 
-    expect(jsonAt(readJson(root, 'ddd-ts-kit.config.json'), 'stack')).toMatchObject({ orm: 'none', database: 'none', events: 'in-memory' });
+    expect(jsonAt(readJson(root, 'ddd-ts-kit.config.json'), 'stack')).toMatchObject({
+      orm: 'none',
+      database: 'none',
+      events: 'in-memory',
+    });
+
     expect(exists(root, 'src/platform/http/with-documentation.ts')).toBe(false);
     expect(exists(root, 'src/platform/events/start-outbox-relay.ts')).toBe(false);
     expect(exists(root, 'src/platform/database/schema.ts')).toBe(false);
@@ -137,7 +206,11 @@ describe('what the stack does not have', () => {
 
     expect(platform(root, 'config/load-config.ts')).toContain("databaseUrl: readUrl(env, 'DATABASE_URL', problems),");
     expect(platform(root, 'http/with-documentation.ts')).toContain("openApiDocsRoutes(document, { ui: 'scalar' })");
-    expect(platform(root, 'http/start-http-server.ts')).toContain('mountExpress(app, withDocumentation(served.routes, config), served.boundary);');
+
+    expect(platform(root, 'http/start-http-server.ts')).toContain(
+      'mountExpress(app, withDocumentation(served.routes, config), served.boundary);',
+    );
+
     expect(read(root, 'scripts/openapi.ts')).toContain('errorMapper: application.boundary.errorMapper,');
   });
 });

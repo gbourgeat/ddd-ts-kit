@@ -20,7 +20,9 @@ const read = new WeakMap<Scan, readonly DeclaredClass[]>();
 export function classesOf(scan: Scan): readonly DeclaredClass[] {
   const known = read.get(scan);
 
-  if (known !== undefined) return known;
+  if (known !== undefined) {
+    return known;
+  }
 
   const classes = readClasses(scan);
 
@@ -36,7 +38,8 @@ function readClasses(scan: Scan): DeclaredClass[] {
   return [...code.matchAll(CLASS)]
     .filter((match) => braceDepthAt(code, match.index) === 0)
     .map((match) => {
-      const before = imported.size === 0 ? { decorations: [], start: match.index } : decorationsBefore(scan, match.index);
+      const before =
+        imported.size === 0 ? { decorations: [], start: match.index } : decorationsBefore(scan, match.index);
 
       return {
         name: match[2] ?? '',
@@ -49,7 +52,9 @@ function readClasses(scan: Scan): DeclaredClass[] {
 }
 
 function importedDecorators(scan: Scan): ReadonlySet<string> {
-  const names = scan.imports.filter(({ specifier }) => specifier === DECLARATIONS_ENTRY).flatMap(({ names: bound }) => bound);
+  const names = scan.imports
+    .filter(({ specifier }) => specifier === DECLARATIONS_ENTRY)
+    .flatMap(({ names: bound }) => bound);
 
   return new Set(names.filter((name) => DECLARATION_DECORATORS.includes(name)));
 }
@@ -62,7 +67,9 @@ function decorationsBefore(scan: Scan, classStart: number): { decorations: Decor
   for (;;) {
     const decoration = decorationEndingAt(scan, scan.code.slice(0, start).trimEnd().length);
 
-    if (decoration === undefined) return { decorations, start };
+    if (decoration === undefined) {
+      return { decorations, start };
+    }
 
     decorations.unshift(decoration);
     start = decoration.start;
@@ -76,7 +83,9 @@ function decorationEndingAt(scan: Scan, end: number): Decoration | undefined {
   const open = called ? openingOf(code, close) : end;
   const name = DECORATOR_NAME.exec(code.slice(Math.max(0, open - 200), open));
 
-  if (name === null) return undefined;
+  if (name === null) {
+    return undefined;
+  }
 
   const start = open - name[0].length;
 
@@ -90,8 +99,11 @@ function openingOf(code: string, close: number): number {
   for (let at = close; at >= 0; at -= 1) {
     const char = code.charAt(at);
 
-    if (BRACKETS.closers.includes(char)) depth += 1;
-    else if (BRACKETS.openers.includes(char) && (depth -= 1) === 0) return at;
+    if (BRACKETS.closers.includes(char)) {
+      depth += 1;
+    } else if (BRACKETS.openers.includes(char) && (depth -= 1) === 0) {
+      return at;
+    }
   }
 
   return 0;

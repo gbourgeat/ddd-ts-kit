@@ -8,7 +8,10 @@
   "accessTokenLifespan": 300,
   "roles": {
     "realm": [
-      { "name": "admin", "description": "Granted everything by the generated authorization model: replace with the roles of the organisation." }
+      {
+        "name": "admin",
+        "description": "Granted everything by the generated authorization model: replace with the roles of the organisation."
+      }
     ]
   },
   "clients": [

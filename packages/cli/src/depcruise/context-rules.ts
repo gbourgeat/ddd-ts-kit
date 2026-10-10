@@ -13,7 +13,8 @@ export function contextRules(config: Config): CruiseRule[] {
     {
       name: 'context-published-language-only',
       severity: 'error',
-      comment: "A file imports from another context only through that context's published-language/. Publish the missing contract there or react to an integration event.",
+      comment:
+        "A file imports from another context only through that context's published-language/. Publish the missing contract there or react to an integration event.",
       from: { path: `${contexts}/([^/]+)/` },
       to: { path: `${contexts}/[^/]+/`, pathNot: [`${contexts}/$1/`, publishedLanguage] },
     },
@@ -22,7 +23,8 @@ export function contextRules(config: Config): CruiseRule[] {
     {
       name: 'context-published-language-is-a-contract',
       severity: 'error',
-      comment: 'published-language/ imports only its allowed packages and other published languages. Declare the contract with plain serializable types written in that folder.',
+      comment:
+        'published-language/ imports only its allowed packages and other published languages. Declare the contract with plain serializable types written in that folder.',
       from: { path: publishedLanguage, pathNot: testFiles(config) },
       to: { pathNot: [publishedLanguage, ...packagePatterns(config.publishedLanguageAllowedPackages)] },
     },

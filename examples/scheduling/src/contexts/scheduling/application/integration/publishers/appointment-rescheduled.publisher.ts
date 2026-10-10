@@ -3,7 +3,10 @@ import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
 import { AppointmentRescheduled } from '../../../domain/events/appointment-rescheduled.event.js';
 import { appointmentRescheduledV1 } from '../../../published-language/appointment-rescheduled.v1.integration-event.js';
 
-@DomainEventHandler(AppointmentRescheduled, { name: 'scheduling.appointment.rescheduled' }, [IntegrationEventPublisher, IdGenerator])
+@DomainEventHandler(AppointmentRescheduled, { name: 'scheduling.appointment.rescheduled' }, [
+  IntegrationEventPublisher,
+  IdGenerator,
+])
 export class AppointmentRescheduledPublisher implements DomainEventHandler<AppointmentRescheduled> {
   constructor(
     private readonly publisher: IntegrationEventPublisher,

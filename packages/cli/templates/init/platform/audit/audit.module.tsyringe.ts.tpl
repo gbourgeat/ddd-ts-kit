@@ -32,7 +32,11 @@ export function auditModule(audit: Audit): ContextModule {
         .handledBy(ListAuditEntriesHandler, [AuditReader]);
 {{/if}}
 {{#unless authz.rebac}}
-      builder.query(ListAuditEntriesQuery).requires(auditPermissions['trail.read']).handledBy(ListAuditEntriesHandler, [AuditReader]);
+
+      builder
+        .query(ListAuditEntriesQuery)
+        .requires(auditPermissions['trail.read'])
+        .handledBy(ListAuditEntriesHandler, [AuditReader]);
 {{/unless}}
 {{/if}}
     },

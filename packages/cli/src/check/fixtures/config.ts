@@ -20,7 +20,9 @@ function recordedRelaxations(written: Record<string, unknown>): { what: string; 
   const relaxed = [
     ...Object.keys(rules).map((id) => `rules.${id}`),
     ...(guard === 'enforce' ? [] : ['guard']),
-    ...Object.entries(contexts).flatMap(([name, context]) => context.extraDirectories.map((directory) => `contexts.${name}.extraDirectories.${directory}`)),
+    ...Object.entries(contexts).flatMap(([name, context]) =>
+      context.extraDirectories.map((directory) => `contexts.${name}.extraDirectories.${directory}`),
+    ),
   ];
 
   return relaxed.map((what) => ({ what, adr: '0001', reason: 'Needed by the fixture.' }));

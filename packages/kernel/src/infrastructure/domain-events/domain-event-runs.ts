@@ -13,8 +13,11 @@ export function domainEventRuns(events: readonly QueuedDomainEvent[]): DomainEve
   for (const queued of events) {
     const first = groups.at(-1)?.[0];
 
-    if (first !== undefined && first.dispatcher === queued.dispatcher && first.within === queued.within) groups.at(-1)?.push(queued);
-    else groups.push([queued]);
+    if (first !== undefined && first.dispatcher === queued.dispatcher && first.within === queued.within) {
+      groups.at(-1)?.push(queued);
+    } else {
+      groups.push([queued]);
+    }
   }
 
   return groups.flatMap(runOf);
@@ -23,9 +26,16 @@ export function domainEventRuns(events: readonly QueuedDomainEvent[]): DomainEve
 function runOf(group: readonly QueuedDomainEvent[]): DomainEventRun[] {
   const [first] = group;
 
-  if (first === undefined) return [];
+  if (first === undefined) {
+    return [];
+  }
 
   const facts = group.map(({ event }) => event);
 
-  return [{ dispatch: (scope, phase) => first.within(() => unitOfWorkScope.run(scope, async () => first.dispatcher.dispatch(facts, phase))) }];
+  return [
+    {
+      dispatch: (scope, phase) =>
+        first.within(() => unitOfWorkScope.run(scope, async () => first.dispatcher.dispatch(facts, phase))),
+    },
+  ];
 }

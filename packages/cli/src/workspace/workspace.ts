@@ -35,7 +35,9 @@ export class Workspace {
   read(file: string): string | undefined {
     const pending = this.pending.get(file);
 
-    if (pending !== undefined) return pending.content;
+    if (pending !== undefined) {
+      return pending.content;
+    }
 
     try {
       return fs.readFileSync(this.absolute(file), 'utf8');
@@ -46,7 +48,9 @@ export class Workspace {
 
   /** Names of the files directly inside `directory`, on disk or planned. */
   list(directory: string): string[] {
-    const planned = [...this.pending.keys()].filter((file) => path.posix.dirname(file) === directory).map((file) => path.posix.basename(file));
+    const planned = [...this.pending.keys()]
+      .filter((file) => path.posix.dirname(file) === directory)
+      .map((file) => path.posix.basename(file));
 
     return [...new Set([...this.onDisk(directory, (entry) => entry.isFile()), ...planned])].sort();
   }
@@ -69,7 +73,9 @@ export class Workspace {
     const onDisk = fs.existsSync(this.absolute(file));
 
     if ((onDisk || this.pending.has(file)) && !this.force) {
-      if (onDisk) this.skipped.add(file);
+      if (onDisk) {
+        this.skipped.add(file);
+      }
 
       return false;
     }
@@ -88,26 +94,38 @@ export class Workspace {
       return;
     }
 
-    if (this.read(file) === content) return;
+    if (this.read(file) === content) {
+      return;
+    }
 
     this.pending.set(file, { content, existed: true });
   }
 
   note(message: string): void {
-    if (!this.notes.includes(message)) this.notes.push(message);
+    if (!this.notes.includes(message)) {
+      this.notes.push(message);
+    }
   }
 
   /** Points the team at a line of a file this command changed, the way a `TODO(domain)` of a created file does. */
   step(step: NextStep): void {
-    if (!this.steps.some((known) => known.file === step.file && known.text === step.text)) this.steps.push(step);
+    if (!this.steps.some((known) => known.file === step.file && known.text === step.text)) {
+      this.steps.push(step);
+    }
   }
 
   commit(dryRun: boolean): WorkspaceReport {
     const written = [...this.pending].map(([file, { content, existed }]) => ({ file, content, existed }));
-    const left = written.filter(({ existed }) => !existed || this.force).flatMap(({ file, content }) => todosIn(file, content));
+
+    const left = written
+      .filter(({ existed }) => !existed || this.force)
+      .flatMap(({ file, content }) => todosIn(file, content));
+
     const todos = [...left, ...this.steps.map((step) => this.located(step))];
 
-    if (!dryRun) written.forEach(({ file, content }) => this.write(file, content));
+    if (!dryRun) {
+      written.forEach(({ file, content }) => this.write(file, content));
+    }
 
     // The language comes before the code: its definition is the first thing to do.
     todos.sort((left, right) => Number(isLanguageStep(right)) - Number(isLanguageStep(left)));
@@ -130,7 +148,10 @@ export class Workspace {
 
   private onDisk(directory: string, wanted: (entry: fs.Dirent) => boolean): string[] {
     try {
-      return fs.readdirSync(this.absolute(directory), { withFileTypes: true }).filter(wanted).map((entry) => entry.name);
+      return fs
+        .readdirSync(this.absolute(directory), { withFileTypes: true })
+        .filter(wanted)
+        .map((entry) => entry.name);
     } catch {
       // A directory that does not exist yet simply holds nothing on disk.
       return [];

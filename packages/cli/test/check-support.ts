@@ -32,7 +32,9 @@ export function isRecord(value: unknown): value is Record<string, unknown> {
 export function checkJsonOf(result: CliResult): CheckJson {
   const parsed = result.json();
 
-  if (!isCheckJson(parsed)) throw new Error(`Not a check report: ${result.stdout}`);
+  if (!isCheckJson(parsed)) {
+    throw new Error(`Not a check report: ${result.stdout}`);
+  }
 
   return parsed;
 }

@@ -29,7 +29,12 @@ describe('timeout', () => {
     const error = await pending.catch((caught: unknown) => caught);
 
     expect(error).toBeInstanceOf(TimeoutError);
-    expect(error).toMatchObject({ code: TIMEOUT, timeoutMs: 2000, message: 'SlowGateway.fetch did not answer within 2000 ms' });
+
+    expect(error).toMatchObject({
+      code: TIMEOUT,
+      timeoutMs: 2000,
+      message: 'SlowGateway.fetch did not answer within 2000 ms',
+    });
   });
 
   it('does not touch the arguments unless asked to pass a signal', async () => {

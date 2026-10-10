@@ -57,7 +57,10 @@ const BILLING = [
   'test/unit/issue-invoices-monthly.job.spec.ts',
 ];
 
-const SHIPPING = ['application/integration/handlers/billing-invoice-issued.integration-handler.ts', 'test/unit/billing-invoice-issued.integration-handler.spec.ts'];
+const SHIPPING = [
+  'application/integration/handlers/billing-invoice-issued.integration-handler.ts',
+  'test/unit/billing-invoice-issued.integration-handler.spec.ts',
+];
 
 /**
  * The homogeneity guarantee: whatever the generator writes, the checker accepts.
@@ -84,7 +87,8 @@ describe('a freshly generated project', () => {
 
     scaffoldEverything(root);
 
-    const inContext = (context: string): string[] => walk(root, `src/contexts/${context}`).map((file) => file.replace(`src/contexts/${context}/`, ''));
+    const inContext = (context: string): string[] =>
+      walk(root, `src/contexts/${context}`).map((file) => file.replace(`src/contexts/${context}/`, ''));
 
     expect(inContext('billing')).toEqual(expect.arrayContaining(BILLING));
     expect(inContext('shipping')).toEqual(expect.arrayContaining(SHIPPING));

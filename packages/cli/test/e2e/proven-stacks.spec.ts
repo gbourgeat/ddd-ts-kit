@@ -34,13 +34,24 @@ describe.runIf(SLOW).each(PROVEN)('a freshly generated project (%s)', (_label, s
 
   it('passes its own specs: each job run by its name and held to the command it sent, a decorated adapter, the extraction of every context', () => {
     const specs = vitest();
-    const ran = exists(root, 'src/platform/platform-test.module.ts') ? "await application.jobs.runNow('billing.cancel-stale-invoices');" : 'await job.run(occurrence);';
+
+    const ran = exists(root, 'src/platform/platform-test.module.ts')
+      ? "await application.jobs.runNow('billing.cancel-stale-invoices');"
+      : 'await job.run(occurrence);';
 
     expect(specs).toMatch(/Test Files\s+\d+ passed/);
     expect(specs).not.toContain('failed');
-    expect(read(root, JOB_SPECS[0] ?? '')).toContain(`${ran}\n\n    expect(sent).toHaveLength(1);\n    expect(sent[0]).toBeInstanceOf(CancelInvoiceCommand);`);
+
+    expect(read(root, JOB_SPECS[0] ?? '')).toContain(
+      `${ran}\n\n    expect(sent).toHaveLength(1);\n    expect(sent[0]).toBeInstanceOf(CancelInvoiceCommand);`,
+    );
+
     expect(vitest(...JOB_SPECS)).toMatch(/Tests\s+2 passed \| 4 todo/);
-    expect(read(root, DECORATED)).toMatch(isDeclared(stack) ? /@Adapter\(TaxRates[\s\S]*@Retry\(\{ attempts: 3/ : /@Retry\(\{ attempts: 3/);
+
+    expect(read(root, DECORATED)).toMatch(
+      isDeclared(stack) ? /@Adapter\(TaxRates[\s\S]*@Retry\(\{ attempts: 3/ : /@Retry\(\{ attempts: 3/,
+    );
+
     expect(vitest(DECORATED_SPEC)).toMatch(/Tests\s+1 passed/);
     expect(vitest('test/architecture/extractable.spec.ts')).toMatch(/Tests\s+\d+ passed/);
   }, 240_000);
@@ -50,7 +61,10 @@ describe.runIf(SLOW).each(PROVEN)('a freshly generated project (%s)', (_label, s
 
     expect(endToEnd).toMatch(/Tests\s+5 passed/);
     expect(endToEnd).not.toContain('failed');
-    expect(read(root, 'test/e2e/issue-invoice.e2e.spec.ts')).toMatch(/expectStatus\(response, 401\)[\s\S]*expectStatus\(response, 403\)[\s\S]*expectSpanTree\(storyOf\(trace\), \[\n\s+\{ name: 'POST \/invoices', kind: 'SERVER', children: \[\{ name: 'command IssueInvoiceCommand', children: \[\{ name: 'repository InvoiceRepository\.save' \}\] \}\] \},/);
+
+    expect(read(root, 'test/e2e/issue-invoice.e2e.spec.ts')).toMatch(
+      /expectStatus\(response, 401\)[\s\S]*expectStatus\(response, 403\)[\s\S]*expectSpanTree\(storyOf\(trace\), \[\n\s+\{\n\s+name: 'POST \/invoices',\n\s+kind: 'SERVER',\n\s+children: \[\{ name: 'command IssueInvoiceCommand', children: \[\{ name: 'repository InvoiceRepository\.save' \}\] \}\],\n\s+\},/,
+    );
   }, 240_000);
 
   it('builds, the worker and the extracted service included, and its generated documents are current', () => {

@@ -8,16 +8,22 @@ import { anonymousActor, type Actor } from '@ddd-ts-kit/kernel';
 export class DevelopmentHeaderAuthenticator implements Authenticator {
   constructor(environment: string) {
     if (environment === 'production') {
-      throw new Error('DevelopmentHeaderAuthenticator must never run in production: bind a real adapter of Authenticator');
+      throw new Error(
+        'DevelopmentHeaderAuthenticator must never run in production: bind a real adapter of Authenticator',
+      );
     }
   }
 
   async authenticate(credential: string | undefined): Promise<Actor> {
-    if (credential === undefined) return anonymousActor();
+    if (credential === undefined) {
+      return anonymousActor();
+    }
 
     const [id = '', ...settings] = credential.split(';').map((part) => part.trim());
 
-    if (id === '') throw new InvalidCredentialError('MALFORMED_DEVELOPMENT_ACTOR');
+    if (id === '') {
+      throw new InvalidCredentialError('MALFORMED_DEVELOPMENT_ACTOR');
+    }
 
     const tenantId = valueOf(settings, 'tenant');
     const roles = (valueOf(settings, 'roles') ?? '').split(',').filter((role) => role !== '');

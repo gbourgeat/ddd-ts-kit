@@ -19,14 +19,20 @@ const LONGEST_MONTH = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 export function cronProblem(expression: string): string | undefined {
   const texts = expression.trim().split(/\s+/);
 
-  if (texts.length !== FIELDS.length) return `Cron "${expression}" has ${texts.length} field(s): five are expected (minute, hour, day of month, month, day of week).`;
+  if (texts.length !== FIELDS.length) {
+    return `Cron "${expression}" has ${texts.length} field(s): five are expected (minute, hour, day of month, month, day of week).`;
+  }
 
   const values = FIELDS.map((field, index) => cronFieldValues(texts[index] ?? '', field));
   const unreadable = values.indexOf(undefined);
 
-  if (unreadable !== -1) return unreadableField(texts[unreadable] ?? '', FIELDS[unreadable]);
+  if (unreadable !== -1) {
+    return unreadableField(texts[unreadable] ?? '', FIELDS[unreadable]);
+  }
 
-  return neverFires(texts, values) ? `Cron "${texts.join(' ')}" never fires: none of its months has such a day.` : undefined;
+  return neverFires(texts, values)
+    ? `Cron "${texts.join(' ')}" never fires: none of its months has such a day.`
+    : undefined;
 }
 
 function unreadableField(text: string, field: CronField | undefined): string {
@@ -40,7 +46,9 @@ function neverFires(texts: readonly string[], values: readonly (number[] | undef
   const [, , dayOfMonth = '', , dayOfWeek = ''] = texts;
   const [, , days, months] = values;
 
-  if (dayOfMonth.startsWith('*') || !dayOfWeek.startsWith('*')) return false;
+  if (dayOfMonth.startsWith('*') || !dayOfWeek.startsWith('*')) {
+    return false;
+  }
 
   return !(months ?? []).some((month) => ((days ?? [])[0] ?? 1) <= (LONGEST_MONTH[month - 1] ?? 0));
 }

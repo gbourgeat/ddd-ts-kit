@@ -22,7 +22,9 @@ describe('Publishing "appointment expired" to other contexts', () => {
 
     await publisher.handle(new AppointmentExpired('appointment-1', new Date('2026-01-01T00:00:00.000Z'), held.booking));
 
-    expect(bus.published).toMatchObject([{ id: 'event-1', type: 'scheduling.appointment.expired', version: 1, occurredAt: '2026-01-01T00:00:00.000Z' }]);
+    expect(bus.published).toMatchObject([
+      { id: 'event-1', type: 'scheduling.appointment.expired', version: 1, occurredAt: '2026-01-01T00:00:00.000Z' },
+    ]);
   });
 
   it('carries every field of the public payload, the buffer left out', async () => {

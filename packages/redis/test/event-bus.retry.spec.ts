@@ -34,10 +34,23 @@ describe.skipIf(!REAL_SERVER)('RedisStreamsEventBus, retrying', { timeout: 30_00
 
     expect(billing.ids()).toEqual(['evt-1', 'evt-1']);
     expect((moments[1] ?? 0) - (moments[0] ?? 0)).toBeGreaterThanOrEqual(RETRY_DELAY_MS);
-    expect(settled.map(({ attempt, outcome }) => `${String(attempt)}:${outcome}`)).toEqual(['1:retried', '2:acknowledged']);
+
+    expect(settled.map(({ attempt, outcome }) => `${String(attempt)}:${outcome}`)).toEqual([
+      '1:retried',
+      '2:acknowledged',
+    ]);
 
     expect(reported).toEqual([
-      { kind: 'handler', stream: `${prefix}:${PLACED}`, consumer, eventId: 'evt-1', eventType: PLACED, code: 'INVOICING_FAILED', attempt: 1, dead: false },
+      {
+        kind: 'handler',
+        stream: `${prefix}:${PLACED}`,
+        consumer,
+        eventId: 'evt-1',
+        eventType: PLACED,
+        code: 'INVOICING_FAILED',
+        attempt: 1,
+        dead: false,
+      },
     ]);
   });
 

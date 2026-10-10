@@ -31,9 +31,7 @@ describe('OutboxPublisher', () => {
 
     await store.append([event('evt-1')]);
 
-    await expect(store.append([event('evt-2'), event('evt-1')])).rejects.toBeInstanceOf(
-      DuplicateOutboxEventError,
-    );
+    await expect(store.append([event('evt-2'), event('evt-1')])).rejects.toBeInstanceOf(DuplicateOutboxEventError);
 
     expect(store.records().map((record) => record.event.id)).toEqual(['evt-1']);
   });

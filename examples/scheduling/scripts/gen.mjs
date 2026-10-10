@@ -17,7 +17,9 @@ function summaryOf(text) {
   try {
     const result = JSON.parse(text);
 
-    if (result.created === undefined) return undefined;
+    if (result.created === undefined) {
+      return undefined;
+    }
 
     const lines = [
       `ok: ${process.argv.slice(2).join(' ')}`,

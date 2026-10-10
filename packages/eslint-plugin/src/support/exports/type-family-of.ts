@@ -11,29 +11,54 @@ export function typeFamilyOf(shape: ModuleShape): string | undefined {
   const returned = functions.map((declaration) => returnedTypeName(declaration.node));
   const [first] = returned;
 
-  if (first === undefined) return undefined;
+  if (first === undefined) {
+    return undefined;
+  }
 
-  const declared = shape.exports.filter((declaration) => declaration.kind !== 'function' && declaration.kind !== 'variable').map((declaration) => declaration.name);
+  const declared = shape.exports
+    .filter((declaration) => declaration.kind !== 'function' && declaration.kind !== 'variable')
+    .map((declaration) => declaration.name);
 
-  return [...declared, first].find((type) => isKnown(shape, type) && returned.every((name) => name !== undefined && membersOf(shape, type).includes(name)));
+  return [...declared, first].find(
+    (type) =>
+      isKnown(shape, type) && returned.every((name) => name !== undefined && membersOf(shape, type).includes(name)),
+  );
 }
 
 function returnedTypeName(node: TSESTree.Node): string | undefined {
   const type = 'returnType' in node ? node.returnType?.typeAnnotation : undefined;
 
-  return type?.type === AST_NODE_TYPES.TSTypeReference && type.typeName.type === AST_NODE_TYPES.Identifier ? type.typeName.name : undefined;
+  return type?.type === AST_NODE_TYPES.TSTypeReference && type.typeName.type === AST_NODE_TYPES.Identifier
+    ? type.typeName.name
+    : undefined;
 }
 
 /** A global such as `Promise` or `Map` is nobody's family. */
 function isKnown(shape: ModuleShape, type: string): boolean {
-  const imported = shape.program.body.some((statement) => statement.type === AST_NODE_TYPES.ImportDeclaration && statement.specifiers.some((specifier) => specifier.local.name === type));
+  const imported = shape.program.body.some(
+    (statement) =>
+      statement.type === AST_NODE_TYPES.ImportDeclaration &&
+      statement.specifiers.some((specifier) => specifier.local.name === type),
+  );
 
   return imported || shape.declarations.some((declaration) => declaration.name === type);
 }
 
 function membersOf(shape: ModuleShape, type: string): string[] {
-  const aliases = shape.declarations.flatMap((declaration) => (declaration.name === type && declaration.node.type === AST_NODE_TYPES.TSTypeAliasDeclaration ? [declaration.node.typeAnnotation] : []));
+  const aliases = shape.declarations.flatMap((declaration) =>
+    declaration.name === type && declaration.node.type === AST_NODE_TYPES.TSTypeAliasDeclaration
+      ? [declaration.node.typeAnnotation]
+      : [],
+  );
+
   const members = aliases.flatMap((alias) => (alias.type === AST_NODE_TYPES.TSUnionType ? alias.types : []));
 
-  return [type, ...members.flatMap((member) => (member.type === AST_NODE_TYPES.TSTypeReference && member.typeName.type === AST_NODE_TYPES.Identifier ? [member.typeName.name] : []))];
+  return [
+    type,
+    ...members.flatMap((member) =>
+      member.type === AST_NODE_TYPES.TSTypeReference && member.typeName.type === AST_NODE_TYPES.Identifier
+        ? [member.typeName.name]
+        : [],
+    ),
+  ];
 }

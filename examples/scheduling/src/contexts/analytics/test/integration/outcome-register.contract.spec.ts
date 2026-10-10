@@ -16,7 +16,9 @@ beforeAll(async () => {
 
   const knex = database.persistence.database.executor();
 
-  if (!(await knex.schema.withSchema(ANALYTICS_SCHEMA).hasTable('outcomes'))) await createAnalyticsTables(knex);
+  if (!(await knex.schema.withSchema(ANALYTICS_SCHEMA).hasTable('outcomes'))) {
+    await createAnalyticsTables(knex);
+  }
 });
 
 afterAll(async () => {
@@ -64,22 +66,41 @@ describe.each(ADAPTERS)('OutcomeRegister, %s', (_name, create) => {
 
   it('lists the outcomes of one calendar on one day', async () => {
     const outcomes = await create();
-    const written = [anOutcome({ id: 'appointment-2' }), anOutcome({ id: 'appointment-1' }), anOutcome({ id: 'appointment-3', day: '2026-10-13' }), anOutcome({ id: 'appointment-4', calendarId: 'calendar-2' })];
 
-    for (const outcome of written) await outcomes.upsertIfNewer(outcome.id, at(0), () => outcome);
+    const written = [
+      anOutcome({ id: 'appointment-2' }),
+      anOutcome({ id: 'appointment-1' }),
+      anOutcome({ id: 'appointment-3', day: '2026-10-13' }),
+      anOutcome({ id: 'appointment-4', calendarId: 'calendar-2' }),
+    ];
 
-    const page = await outcomes.list(scoped(Criteria.of<Outcome>().where('calendarId', 'eq', 'calendar-1').where('day', 'eq', '2026-10-12'), { kind: 'all' }));
+    for (const outcome of written) {
+      await outcomes.upsertIfNewer(outcome.id, at(0), () => outcome);
+    }
+
+    const page = await outcomes.list(
+      scoped(Criteria.of<Outcome>().where('calendarId', 'eq', 'calendar-1').where('day', 'eq', '2026-10-12'), {
+        kind: 'all',
+      }),
+    );
 
     expect(page.items.map((outcome) => outcome.id)).toEqual(['appointment-1', 'appointment-2']);
   });
 
   it('lists the outcomes of a range of days, both ends included', async () => {
     const outcomes = await create();
-    const written = ['2026-10-11', '2026-10-12', '2026-10-19', '2026-10-20'].map((day) => anOutcome({ id: `appointment-of-${day}`, day }));
 
-    for (const outcome of written) await outcomes.upsertIfNewer(outcome.id, at(0), () => outcome);
+    const written = ['2026-10-11', '2026-10-12', '2026-10-19', '2026-10-20'].map((day) =>
+      anOutcome({ id: `appointment-of-${day}`, day }),
+    );
 
-    const page = await outcomes.list(scoped(Criteria.of<Outcome>().where('day', 'between', ['2026-10-12', '2026-10-19']), { kind: 'all' }));
+    for (const outcome of written) {
+      await outcomes.upsertIfNewer(outcome.id, at(0), () => outcome);
+    }
+
+    const page = await outcomes.list(
+      scoped(Criteria.of<Outcome>().where('day', 'between', ['2026-10-12', '2026-10-19']), { kind: 'all' }),
+    );
 
     expect(page.items.map((outcome) => outcome.day)).toEqual(['2026-10-12', '2026-10-19']);
   });
@@ -89,9 +110,15 @@ describe.each(ADAPTERS)('OutcomeRegister, %s', (_name, create) => {
     const outcomes = await create();
 
     const writes = [
-      await outcomes.upsertIfNewer('appointment-1', storableStamp(precise('fact-1', 123)), () => anOutcome({ state: 'held' })),
-      await outcomes.upsertIfNewer('appointment-1', storableStamp(precise('fact-2', 456)), () => anOutcome({ state: 'completed' })),
-      await outcomes.upsertIfNewer('appointment-1', storableStamp(precise('fact-1', 123)), () => anOutcome({ state: 'held' })),
+      await outcomes.upsertIfNewer('appointment-1', storableStamp(precise('fact-1', 123)), () =>
+        anOutcome({ state: 'held' }),
+      ),
+      await outcomes.upsertIfNewer('appointment-1', storableStamp(precise('fact-2', 456)), () =>
+        anOutcome({ state: 'completed' }),
+      ),
+      await outcomes.upsertIfNewer('appointment-1', storableStamp(precise('fact-1', 123)), () =>
+        anOutcome({ state: 'held' }),
+      ),
     ];
 
     expect(writes).toEqual(['applied', 'applied', 'stale']);

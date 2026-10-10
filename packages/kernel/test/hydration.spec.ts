@@ -23,7 +23,9 @@ class Directory<T> {
   readonly byIds = async (ids: readonly string[]): Promise<ReadonlyMap<string, T>> => {
     this.calls.push([...ids]);
 
-    if (this.failure !== undefined) throw this.failure;
+    if (this.failure !== undefined) {
+      throw this.failure;
+    }
 
     return new Map(Object.entries(this.known).filter(([id]) => ids.includes(id)));
   };
@@ -86,7 +88,12 @@ describe('hydrate', () => {
     const directory = practitioners();
 
     await hydrate<AppointmentRow>([]).with('practitioner', (row) => row.practitionerId, directory.byIds);
-    await hydrate([rows[3] ?? rows[0]].flatMap((row) => row ?? [])).with('practitioner', (row) => row.practitionerId, directory.byIds);
+
+    await hydrate([rows[3] ?? rows[0]].flatMap((row) => row ?? [])).with(
+      'practitioner',
+      (row) => row.practitionerId,
+      directory.byIds,
+    );
 
     expect(directory.calls).toEqual([]);
   });
@@ -103,7 +110,10 @@ describe('hydrate', () => {
       return new Map();
     };
 
-    const loading = hydrate(rows).with('practitioner', (row) => row.practitionerId, waiting('practitioners')).with('location', (row) => row.locationId, waiting('locations')).then((page) => page);
+    const loading = hydrate(rows)
+      .with('practitioner', (row) => row.practitionerId, waiting('practitioners'))
+      .with('location', (row) => row.locationId, waiting('locations'))
+      .then((page) => page);
 
     await Promise.resolve();
     expect(started).toEqual(['practitioners', 'locations']);
@@ -123,7 +133,9 @@ describe('hydrate, when the other context fails', () => {
   });
 
   it('fails as well with a fallback that is only for missing rows', async () => {
-    const hydration = hydrate(rows).with('practitioner', (row) => row.practitionerId, down().byIds).orElse('practitioner', unknownPractitioner);
+    const hydration = hydrate(rows)
+      .with('practitioner', (row) => row.practitionerId, down().byIds)
+      .orElse('practitioner', unknownPractitioner);
 
     await expect(hydration).rejects.toThrow('the directory is down');
   });
@@ -134,7 +146,14 @@ describe('hydrate, when the other context fails', () => {
       .with('location', (row) => row.locationId, locations().byIds)
       .orElse('practitioner', unknownPractitioner, { onFailure: 'fallback' });
 
-    expect(page.items.map((row) => row.practitioner.name)).toEqual(['unknown', 'unknown', 'unknown', 'unknown', 'unknown']);
+    expect(page.items.map((row) => row.practitioner.name)).toEqual([
+      'unknown',
+      'unknown',
+      'unknown',
+      'unknown',
+      'unknown',
+    ]);
+
     expect(page.items[0]?.location).toEqual({ city: 'Lyon' });
     expect(page.warnings).toEqual([{ relation: 'practitioner', code: 'lookup_failed' }]);
     expect(JSON.stringify(page.warnings)).not.toContain('down');
@@ -147,7 +166,10 @@ describe('hydrate, when the other context fails', () => {
     const page = await slow.orElse('practitioner', unknownPractitioner, { onFailure: 'fallback', timeoutMs: 5 });
 
     expect(page.warnings).toEqual([{ relation: 'practitioner', code: 'lookup_timed_out' }]);
-    await expect(slow.orElse('practitioner', unknownPractitioner, { timeoutMs: 5 })).rejects.toThrow(HydrationTimeoutError);
+
+    await expect(slow.orElse('practitioner', unknownPractitioner, { timeoutMs: 5 })).rejects.toThrow(
+      HydrationTimeoutError,
+    );
   });
 });
 

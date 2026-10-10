@@ -15,7 +15,9 @@ export function jobSettings(environment: Environment, context?: string): Readonl
     // /ddd-ts-kit:jobs
   };
 
-  if (context === undefined) return settings;
+  if (context === undefined) {
+    return settings;
+  }
 
   return Object.fromEntries(Object.entries(settings).filter(([name]) => name.startsWith(context + '.')));
 }

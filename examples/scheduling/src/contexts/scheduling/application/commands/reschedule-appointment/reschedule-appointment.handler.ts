@@ -27,18 +27,26 @@ export class RescheduleAppointmentHandler implements CommandHandler<RescheduleAp
   async execute({ actor, appointmentId, startsAt }: RescheduleAppointmentCommand): Promise<string> {
     const target = await this.appointmentRepository.findById(appointmentId);
 
-    if (target === undefined) throw new AppointmentNotFoundError(appointmentId);
+    if (target === undefined) {
+      throw new AppointmentNotFoundError(appointmentId);
+    }
 
     await this.access.authorize(actor, schedulingPermissions['appointment.reschedule'], target);
 
     const calendar = await this.calendarRepository.findById(target.calendarId);
 
-    if (calendar === undefined) throw new UnknownCalendarError(target.calendarId);
+    if (calendar === undefined) {
+      throw new UnknownCalendarError(target.calendarId);
+    }
 
     const now = this.clock.now();
 
     const held = {
-      onCalendar: await this.appointmentRepository.heldOn(calendar.id, new Date(startsAt.getTime() - DAY), new Date(startsAt.getTime() + DAY)),
+      onCalendar: await this.appointmentRepository.heldOn(
+        calendar.id,
+        new Date(startsAt.getTime() - DAY),
+        new Date(startsAt.getTime() + DAY),
+      ),
       byPatient: await this.appointmentRepository.heldBy(target.patientId, calendar.practitionerId, now),
     };
 

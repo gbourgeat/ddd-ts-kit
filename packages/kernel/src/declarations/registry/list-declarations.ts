@@ -10,8 +10,11 @@ export function listDeclarations(): readonly DeclaredEntry[] {
     const target = reference.deref();
     const declaration = target === undefined ? undefined : byClass.get(target);
 
-    if (target === undefined || declaration === undefined) classes.delete(reference);
-    else entries.push({ target, declaration });
+    if (target === undefined || declaration === undefined) {
+      classes.delete(reference);
+    } else {
+      entries.push({ target, declaration });
+    }
   }
 
   return entries;

@@ -62,5 +62,8 @@ async function arrange() {
 }
 
 function registered(id: string, email: string, occurredAt = '2026-01-02T08:00:00.000Z') {
-  return personRegisteredV1.create({ personId: 'person-1', displayName: 'Ada Lovelace', email }, { id, occurredAt: new Date(occurredAt) });
+  return personRegisteredV1.create(
+    { personId: 'person-1', displayName: 'Ada Lovelace', email },
+    { id, occurredAt: new Date(occurredAt) },
+  );
 }

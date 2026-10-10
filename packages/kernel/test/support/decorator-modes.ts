@@ -15,8 +15,13 @@ const COMPILERS = {
 const SETTINGS = {
   'standard decorators': ['--experimentalDecorators', 'false'],
   'standard decorators, fields assigned': ['--experimentalDecorators', 'false', '--useDefineForClassFields', 'false'],
-  'experimentalDecorators': ['--experimentalDecorators', 'true'],
-  'experimentalDecorators with emitDecoratorMetadata': ['--experimentalDecorators', 'true', '--emitDecoratorMetadata', 'true'],
+  experimentalDecorators: ['--experimentalDecorators', 'true'],
+  'experimentalDecorators with emitDecoratorMetadata': [
+    '--experimentalDecorators',
+    'true',
+    '--emitDecoratorMetadata',
+    'true',
+  ],
   'experimentalDecorators, fields assigned': ['--experimentalDecorators', 'true', '--useDefineForClassFields', 'false'],
 };
 

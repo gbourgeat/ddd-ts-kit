@@ -1,4 +1,11 @@
-import { auditDecisions, auditIntegrationEvents, auditMiddleware, type AuditReader, type AuditSource, type AuditTrail } from '@ddd-ts-kit/audit';
+import {
+  auditDecisions,
+  auditIntegrationEvents,
+  auditMiddleware,
+  type AuditReader,
+  type AuditSource,
+  type AuditTrail,
+} from '@ddd-ts-kit/audit';
 import { KnexAuditTrail } from '@ddd-ts-kit/audit/knex';
 import type { OnDecision } from '@ddd-ts-kit/auth';
 import type { EventSubscription } from '@ddd-ts-kit/events';
@@ -41,7 +48,15 @@ export function createAudit(persistence: Persistence, source: AuditSource): Audi
     // TODO(platform): declare what may go into `changes` with `fields: [auditedFields(SomeCommand, ['status'])]`; by default an entry carries identifiers and codes only.
     commands: auditMiddleware(trail, { ...source, unitOfWork }),
     queries: auditMiddleware(trail, { ...source, queries: [ListAuditEntriesQuery] }),
-    subscriptions: auditIntegrationEvents(trail, { registry: auditedEvents, clock: source.clock, ids: source.ids, processed: processedEvents, unitOfWork, scope: source.scope, consumer }),
+    subscriptions: auditIntegrationEvents(trail, {
+      registry: auditedEvents,
+      clock: source.clock,
+      ids: source.ids,
+      processed: processedEvents,
+      unitOfWork,
+      scope: source.scope,
+      consumer,
+    }),
     consumer,
   };
 }

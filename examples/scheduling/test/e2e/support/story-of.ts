@@ -6,7 +6,10 @@ import type { SpanNode } from '@ddd-ts-kit/tracing/testing';
  * happened. What is left is asserted with `expectSpanTree`.
  */
 export function storyOf(trace: readonly SpanNode[]): SpanNode[] {
-  return trace.map((span) => ({ ...span, children: storyOf(span.children.filter((child) => !isOwnCall(span, child))) }));
+  return trace.map((span) => ({
+    ...span,
+    children: storyOf(span.children.filter((child) => !isOwnCall(span, child))),
+  }));
 }
 
 function isOwnCall(caller: SpanNode, called: SpanNode): boolean {

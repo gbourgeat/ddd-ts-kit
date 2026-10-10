@@ -20,16 +20,22 @@ describe('Publishing "appointment booked" to other contexts', () => {
     const bus = new InMemoryEventBus();
     const publisher = new AppointmentBookedPublisher(bus, new SequentialIdGenerator('event'));
 
-    await publisher.handle(new AppointmentBooked('appointment-1', new Date('2026-01-01T00:00:00.000Z'), { booking: held.booking }));
+    await publisher.handle(
+      new AppointmentBooked('appointment-1', new Date('2026-01-01T00:00:00.000Z'), { booking: held.booking }),
+    );
 
-    expect(bus.published).toMatchObject([{ id: 'event-1', type: 'scheduling.appointment.booked', version: 1, occurredAt: '2026-01-01T00:00:00.000Z' }]);
+    expect(bus.published).toMatchObject([
+      { id: 'event-1', type: 'scheduling.appointment.booked', version: 1, occurredAt: '2026-01-01T00:00:00.000Z' },
+    ]);
   });
 
   it('carries every field of the public payload, the buffer left out', async () => {
     const bus = new InMemoryEventBus();
     const publisher = new AppointmentBookedPublisher(bus, new SequentialIdGenerator('event'));
 
-    await publisher.handle(new AppointmentBooked('appointment-1', new Date('2026-01-01T00:00:00.000Z'), { booking: held.booking }));
+    await publisher.handle(
+      new AppointmentBooked('appointment-1', new Date('2026-01-01T00:00:00.000Z'), { booking: held.booking }),
+    );
 
     expect(bus.published.map((event) => event.payload)).toEqual([
       {
@@ -53,8 +59,15 @@ describe('Publishing a requested appointment to other contexts', () => {
     const publisher = new AppointmentBookedPublisher(bus, new SequentialIdGenerator('event'));
     const confirmBefore = new Date('2026-01-02T00:00:00.000Z');
 
-    await publisher.handle(new AppointmentBooked('appointment-1', new Date('2026-01-01T00:00:00.000Z'), { booking: held.booking, confirmBefore }));
+    await publisher.handle(
+      new AppointmentBooked('appointment-1', new Date('2026-01-01T00:00:00.000Z'), {
+        booking: held.booking,
+        confirmBefore,
+      }),
+    );
 
-    expect(bus.published.map((event) => event.payload)).toMatchObject([{ status: 'requested', confirmBefore: '2026-01-02T00:00:00.000Z' }]);
+    expect(bus.published.map((event) => event.payload)).toMatchObject([
+      { status: 'requested', confirmBefore: '2026-01-02T00:00:00.000Z' },
+    ]);
   });
 });

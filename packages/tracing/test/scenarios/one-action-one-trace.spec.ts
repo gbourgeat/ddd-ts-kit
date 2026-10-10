@@ -1,6 +1,12 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { resetTracingConfiguration } from '../../src/index.js';
-import { expectSpanTree, installTestTracing, type ExpectedSpan, type SpanNode, type TestTracing } from '../../src/testing.js';
+import {
+  expectSpanTree,
+  installTestTracing,
+  type ExpectedSpan,
+  type SpanNode,
+  type TestTracing,
+} from '../../src/testing.js';
 import { aClinic } from '../support/clinic/a-clinic.js';
 import { bookingTree, confirmationTree, recordingTree } from '../support/clinic/trees.js';
 
@@ -17,7 +23,12 @@ beforeEach(() => resetTracingConfiguration());
 const publication = (consumers: readonly ExpectedSpan[]): ExpectedSpan => ({
   name: 'publish scheduling.appointment.booked',
   kind: 'PRODUCER',
-  attributes: { 'messaging.system': 'in-memory', 'messaging.operation.type': 'send', 'messaging.destination.name': 'scheduling.appointment.booked', 'messaging.message.id': 'id-2' },
+  attributes: {
+    'messaging.system': 'in-memory',
+    'messaging.operation.type': 'send',
+    'messaging.destination.name': 'scheduling.appointment.booked',
+    'messaging.message.id': 'id-2',
+  },
   children: consumers,
 });
 

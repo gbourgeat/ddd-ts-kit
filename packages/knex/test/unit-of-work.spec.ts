@@ -1,12 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { FixedClock, InMemoryEventBus, type IntegrationEvent } from '@ddd-ts-kit/kernel';
 import { OutboxPublisher, OutboxRelay } from '@ddd-ts-kit/events';
-import {
-  KnexOutboxStore,
-  KnexProcessedEventStore,
-  createKnexUnitOfWork,
-  createOutboxTables,
-} from '../src/index.js';
+import { KnexOutboxStore, KnexProcessedEventStore, createKnexUnitOfWork, createOutboxTables } from '../src/index.js';
 import { createDatabase, type TestDatabase } from './support/database.js';
 import { Invoice } from './support/billing-core/domain/invoice.js';
 import { BILLING } from './support/billing-core/infrastructure/persistence/billing-schema.js';

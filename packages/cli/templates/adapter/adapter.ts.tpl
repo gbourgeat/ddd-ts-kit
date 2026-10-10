@@ -9,17 +9,17 @@ interface OutboundCall {
 }
 
 export class Remote{{name.pascal}} implements {{name.pascal}} {
-{{#if adapter.decorated}}
+  {{#if adapter.decorated}}
   // TODO(domain): implement each operation of {{name.pascal}} by sending one call through `this.send` and translating the answer into the types of {{context.kebab}}; the policy of this adapter is part of its definition and is carried by `send` alone.
   @Retry({ attempts: 3, backoff: { baseMs: 100 } })
   @Timeout(2000, { signal: true })
   async send(call: OutboundCall, signal?: AbortSignal): Promise<unknown> {
     return this.transport(call, signal);
   }
-{{/if}}
-{{#unless adapter.decorated}}
+  {{/if}}
+  {{#unless adapter.decorated}}
   // TODO(domain): implement each operation of {{name.pascal}} by sending one call through `this.transport` and translating the answer into the types of {{context.kebab}}; declare each one `async`, so that the policy attached in {{context.kebab}}.module.ts applies from its first call.
-{{/unless}}
+  {{/unless}}
 
   // TODO(platform): replace the body by the real client of the outside system (fetch on a base URL of the validated config, an SDK), built from what the constructor receives in {{context.kebab}}.module.ts.
   protected async transport(call: OutboundCall, signal?: AbortSignal): Promise<unknown> {

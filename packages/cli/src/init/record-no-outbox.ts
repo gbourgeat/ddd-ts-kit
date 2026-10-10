@@ -8,9 +8,14 @@ export function recordNoOutbox(ws: Workspace, config: Config, allowNoOutbox: str
   const { orm, events } = config.stack;
   const recorded = config.deviations.some((deviation) => deviation.what === 'stack.events');
 
-  if (reason === '' || orm === 'none' || events === 'outbox' || recorded) return config;
+  if (reason === '' || orm === 'none' || events === 'outbox' || recorded) {
+    return config;
+  }
 
-  const adr = writeAdr(ws, { title: 'Publish integration events without the transactional outbox', deviation: { what: 'stack.events', reason } });
+  const adr = writeAdr(ws, {
+    title: 'Publish integration events without the transactional outbox',
+    deviation: { what: 'stack.events', reason },
+  });
 
   return { ...config, deviations: [...config.deviations, { what: 'stack.events', adr, reason }] };
 }

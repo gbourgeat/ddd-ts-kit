@@ -1,4 +1,13 @@
-import { ALLOWED, DenialReason, deny, type AccessScope, type Authorizer, type CheckRequest, type Decision, type ListRequest } from '@ddd-ts-kit/auth';
+import {
+  ALLOWED,
+  DenialReason,
+  deny,
+  type AccessScope,
+  type Authorizer,
+  type CheckRequest,
+  type Decision,
+  type ListRequest,
+} from '@ddd-ts-kit/auth';
 import { isAnonymous, isSystem, type Actor } from '@ddd-ts-kit/kernel';
 import type { RoleGrant } from './role-grant.js';
 
@@ -17,18 +26,26 @@ export class RolesAndRelationshipsAuthorizer implements Authorizer {
   ) {}
 
   async check(request: CheckRequest): Promise<Decision> {
-    if (isAnonymous(request.actor)) return deny(DenialReason.anonymous);
+    if (isAnonymous(request.actor)) {
+      return deny(DenialReason.anonymous);
+    }
 
-    if (operatesItsOwnContext(request) || this.grantedByRole(request)) return ALLOWED;
+    if (operatesItsOwnContext(request) || this.grantedByRole(request)) {
+      return ALLOWED;
+    }
 
     const decision = await this.relationships.check(request);
 
-    return decision.allowed || !this.onlyARoleCouldGrant(request, decision.reason) ? decision : deny(DenialReason.noMatchingRole);
+    return decision.allowed || !this.onlyARoleCouldGrant(request, decision.reason)
+      ? decision
+      : deny(DenialReason.noMatchingRole);
   }
 
   /** Only an unconditional grant that says `all` answers a list; any other opens the use case and leaves the scope to the relationships. */
   async listAccessible(request: ListRequest): Promise<AccessScope> {
-    if (isAnonymous(request.actor)) return { kind: 'none' };
+    if (isAnonymous(request.actor)) {
+      return { kind: 'none' };
+    }
 
     const everything = this.grantsOf(request).some((grant) => grant.listing === 'all' && grant.when === undefined);
 
@@ -43,7 +60,9 @@ export class RolesAndRelationshipsAuthorizer implements Authorizer {
 
   /** The grants about this permission that this actor holds, conditions not yet asked. */
   private grantsOf({ actor, permission }: Pick<CheckRequest, 'actor' | 'permission'>): readonly RoleGrant[] {
-    if (isSystem(actor)) return [];
+    if (isSystem(actor)) {
+      return [];
+    }
 
     return this.grants.filter((grant) => grant.permissions.includes(permission.id) && holds(actor, grant));
   }
@@ -62,7 +81,9 @@ export class RolesAndRelationshipsAuthorizer implements Authorizer {
  * of that context on that context, without a stored tuple. Anything else it asks goes to the relationships.
  */
 function operatesItsOwnContext({ actor, permission, resource }: CheckRequest): boolean {
-  if (!isSystem(actor) || resource?.type !== 'context') return false;
+  if (!isSystem(actor) || resource?.type !== 'context') {
+    return false;
+  }
 
   return permission.context === resource.id && actor.id.startsWith('system:' + resource.id + '.');
 }

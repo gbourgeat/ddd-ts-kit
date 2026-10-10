@@ -19,8 +19,10 @@ type Variant = '' | 'list.';
 export const queryKind: Kind = {
   name: 'query',
   aliases: [],
-  usage: 'query <context> <UseCaseName> (--permission <aggregate>.<action> | --public) [--list] [--term "<Term>=<meaning>"]...',
-  summary: 'A query, its result, its handler, its read port with an in-memory adapter and a fake, its spec and its registration on the query bus; with --list, one page of a list filtered by the access scope of the actor.',
+  usage:
+    'query <context> <UseCaseName> (--permission <aggregate>.<action> | --public) [--list] [--term "<Term>=<meaning>"]...',
+  summary:
+    'A query, its result, its handler, its read port with an in-memory adapter and a fake, its spec and its registration on the query bus; with --list, one page of a list filtered by the access scope of the actor.',
   positionals: ['context', 'UseCaseName'],
   writesShared: false,
   run: (request) => {
@@ -32,7 +34,14 @@ export const queryKind: Kind = {
     const access = accessVars(scope, { name, kind: 'Query' });
     const variant = queryVariant(scope, access);
     const reader = { file: readerFile(scope, name) };
-    const context = vars(scope, { name: named(name), access, spec: specVars(scope, access), list: { resource: listedResource(access) }, reader });
+
+    const context = vars(scope, {
+      name: named(name),
+      access,
+      spec: specVars(scope, access),
+      list: { resource: listedResource(access) },
+      reader,
+    });
 
     writeQuery(scope, { name, variant, reader: reader.file }, context);
   },
@@ -48,8 +57,13 @@ function readerFile(scope: Scope, name: Name): string {
 
 /** `--list`: the templates of a paginated list. A list is narrowed by what its actor may see, so it names a permission. */
 function queryVariant(scope: Scope, access: RenderContext): Variant {
-  if (!scope.flags.list) return '';
-  if (access['protected'] === true) return 'list.';
+  if (!scope.flags.list) {
+    return '';
+  }
+
+  if (access['protected'] === true) {
+    return 'list.';
+  }
 
   throw new CliError(
     '--list cannot be combined with --public.',
@@ -80,7 +94,10 @@ function writeQuery(scope: Scope, { name, variant, reader }: QueryFiles, context
     [`query/${variant}reader.port.ts.tpl`, `application/ports/${name.kebab}-reader.port.ts`],
     [`query/${variant}reader.in-memory.ts.tpl`, `infrastructure/persistence/${reader}.ts`],
     [`query/${variant}reader.fake.ts.tpl`, `test/fakes/${name.kebab}-reader.fake.ts`],
-    [`query/${variant}handler.spec.${scope.config.stack.di === 'tsyringe' ? 'tsyringe' : 'buses'}.ts.tpl`, `test/unit/${name.kebab}.handler.spec.ts`],
+    [
+      `query/${variant}handler.spec.${scope.config.stack.di === 'tsyringe' ? 'tsyringe' : 'buses'}.ts.tpl`,
+      `test/unit/${name.kebab}.handler.spec.ts`,
+    ],
   ]);
 
   wire(scope, variant === '' ? 'query' : 'query/list', context);

@@ -6,7 +6,8 @@ import { perFile } from '../support/per-file.js';
 
 export const portsNoConcreteDependency: Rule = {
   id: 'ports/no-concrete-dependency',
-  description: 'A dependency list names ports: no class imported from infrastructure/ or from test/fakes/ of a context.',
+  description:
+    'A dependency list names ports: no class imported from infrastructure/ or from test/fakes/ of a context.',
   scope: 'file',
   run(project) {
     return perFile(project, this.id, (file) =>
@@ -15,7 +16,9 @@ export const portsNoConcreteDependency: Rule = {
           const target = importedFrom(file, name)?.target;
           const place = target?.kind === 'file' ? concretePlace(target.location) : undefined;
 
-          if (place === undefined) return [];
+          if (place === undefined) {
+            return [];
+          }
 
           return [
             {
@@ -31,8 +34,13 @@ export const portsNoConcreteDependency: Rule = {
 };
 
 function concretePlace(location: Location): string | undefined {
-  if (location.area !== 'context') return undefined;
-  if (location.layer === 'infrastructure') return 'infrastructure/';
+  if (location.area !== 'context') {
+    return undefined;
+  }
+
+  if (location.layer === 'infrastructure') {
+    return 'infrastructure/';
+  }
 
   return location.layer === 'test' && location.inside[0] === 'fakes' ? 'test/fakes/' : undefined;
 }

@@ -1,5 +1,10 @@
 import { DenialReason, type Permission } from '@ddd-ts-kit/auth';
-import { InMemoryRelationTupleStore, RelationBasedAuthorizer, SchemaCheckedTupleStore, type RelationTuple } from '@ddd-ts-kit/auth/rebac';
+import {
+  InMemoryRelationTupleStore,
+  RelationBasedAuthorizer,
+  SchemaCheckedTupleStore,
+  type RelationTuple,
+} from '@ddd-ts-kit/auth/rebac';
 import { anActor } from '@ddd-ts-kit/auth/testing';
 import { anonymousActor, systemActor } from '@ddd-ts-kit/kernel';
 import { beforeEach, describe, expect, it } from 'vitest';
@@ -23,22 +28,31 @@ const patient = anActor().named('pat').withRole('patient').build();
 const admin = anActor().named('root').withRole('platform-admin').build();
 const support = anActor().named('sam').withRole('support').build();
 
-describe('The authorizer of roles and relationships', () => {
-  let store: SchemaCheckedTupleStore;
-  let authorizer: RolesAndRelationshipsAuthorizer;
+let store: SchemaCheckedTupleStore;
+let authorizer: RolesAndRelationshipsAuthorizer;
 
-  beforeEach(() => {
-    store = new SchemaCheckedTupleStore(relationshipSchema, new InMemoryRelationTupleStore());
-    authorizer = new RolesAndRelationshipsAuthorizer(new RelationBasedAuthorizer({ schema: relationshipSchema, store, mapping: resourcePermissions }), roleGrants);
-  });
+beforeEach(() => {
+  store = new SchemaCheckedTupleStore(relationshipSchema, new InMemoryRelationTupleStore());
 
+  authorizer = new RolesAndRelationshipsAuthorizer(
+    new RelationBasedAuthorizer({ schema: relationshipSchema, store, mapping: resourcePermissions }),
+    roleGrants,
+  );
+});
+
+describe('The authorizer of roles and relationships, deciding on the roles of the token', () => {
   describe('the anonymous actor', () => {
     it('is refused, even what every user is granted', async () => {
-      expect(await authorizer.check({ actor: anonymousActor(), permission: browse })).toEqual({ allowed: false, reason: DenialReason.anonymous });
+      expect(await authorizer.check({ actor: anonymousActor(), permission: browse })).toEqual({
+        allowed: false,
+        reason: DenialReason.anonymous,
+      });
     });
 
     it('lists nothing', async () => {
-      expect(await authorizer.listAccessible({ actor: anonymousActor(), permission: readTrail, resourceType: 'context' })).toEqual({ kind: 'none' });
+      expect(
+        await authorizer.listAccessible({ actor: anonymousActor(), permission: readTrail, resourceType: 'context' }),
+      ).toEqual({ kind: 'none' });
     });
   });
 
@@ -48,7 +62,10 @@ describe('The authorizer of roles and relationships', () => {
     });
 
     it('is missing, by a stable code, when nothing else could grant the permission', async () => {
-      expect(await authorizer.check({ actor: doc, permission: openPractice })).toEqual({ allowed: false, reason: DenialReason.noMatchingRole });
+      expect(await authorizer.check({ actor: doc, permission: openPractice })).toEqual({
+        allowed: false,
+        reason: DenialReason.noMatchingRole,
+      });
     });
 
     it('grants every authenticated user what needs no role', async () => {
@@ -58,26 +75,55 @@ describe('The authorizer of roles and relationships', () => {
     it('grants nothing to a service or a system actor', async () => {
       const service = anActor().named('billing').asService().build();
 
-      expect(await authorizer.check({ actor: service, permission: browse })).toEqual({ allowed: false, reason: DenialReason.noMatchingRole });
-      expect(await authorizer.check({ actor: systemActor('scheduling.job'), permission: browse })).toEqual({ allowed: false, reason: DenialReason.noMatchingRole });
+      expect(await authorizer.check({ actor: service, permission: browse })).toEqual({
+        allowed: false,
+        reason: DenialReason.noMatchingRole,
+      });
+
+      expect(await authorizer.check({ actor: systemActor('scheduling.job'), permission: browse })).toEqual({
+        allowed: false,
+        reason: DenialReason.noMatchingRole,
+      });
     });
   });
 
   describe('a grant under condition', () => {
     it('holds when the use case states the patient acts for themselves', async () => {
-      expect(await authorizer.check({ actor: patient, permission: book, resource: calendar, context: { selfService: true } })).toEqual({ allowed: true });
+      expect(
+        await authorizer.check({
+          actor: patient,
+          permission: book,
+          resource: calendar,
+          context: { selfService: true },
+        }),
+      ).toEqual({ allowed: true });
     });
 
     it('does not hold without that fact: the relationships decide', async () => {
-      expect(await authorizer.check({ actor: patient, permission: book, resource: calendar })).toEqual({ allowed: false, reason: DenialReason.noRelation });
-      expect(await authorizer.check({ actor: patient, permission: book, resource: calendar, context: { selfService: false } })).toEqual({ allowed: false, reason: DenialReason.noRelation });
+      expect(await authorizer.check({ actor: patient, permission: book, resource: calendar })).toEqual({
+        allowed: false,
+        reason: DenialReason.noRelation,
+      });
+
+      expect(
+        await authorizer.check({
+          actor: patient,
+          permission: book,
+          resource: calendar,
+          context: { selfService: false },
+        }),
+      ).toEqual({ allowed: false, reason: DenialReason.noRelation });
     });
 
     it('is not given to who lacks the role, whatever the use case states', async () => {
-      expect(await authorizer.check({ actor: doc, permission: book, resource: calendar, context: { selfService: true } })).toEqual({ allowed: false, reason: DenialReason.noRelation });
+      expect(
+        await authorizer.check({ actor: doc, permission: book, resource: calendar, context: { selfService: true } }),
+      ).toEqual({ allowed: false, reason: DenialReason.noRelation });
     });
   });
+});
 
+describe('The authorizer of roles and relationships, deciding on the relationships', () => {
   describe('without a role that grants', () => {
     beforeEach(() => store.write([deskOfTheCalendar, docHoldsTheDesk]));
 
@@ -86,27 +132,42 @@ describe('The authorizer of roles and relationships', () => {
     });
 
     it('refuses who they do not lead to', async () => {
-      expect(await authorizer.check({ actor: support, permission: book, resource: calendar })).toEqual({ allowed: false, reason: DenialReason.noRelation });
+      expect(await authorizer.check({ actor: support, permission: book, resource: calendar })).toEqual({
+        allowed: false,
+        reason: DenialReason.noRelation,
+      });
     });
   });
 
   describe('listing', () => {
     it('answers everything to a role whose grant says so', async () => {
-      expect(await authorizer.listAccessible({ actor: admin, permission: readTrail, resourceType: 'context' })).toEqual({ kind: 'all' });
+      expect(await authorizer.listAccessible({ actor: admin, permission: readTrail, resourceType: 'context' })).toEqual(
+        { kind: 'all' },
+      );
     });
 
     it('leaves the scope to the relationships when the grant only opens the use case', async () => {
       await store.write([{ object: 'person:doc', relation: 'self', subject: 'user:doc' }]);
 
       expect(await authorizer.check({ actor: doc, permission: readNotifications })).toEqual({ allowed: true });
-      expect(await authorizer.listAccessible({ actor: doc, permission: readNotifications, resourceType: 'person' })).toEqual({ kind: 'ids', ids: ['doc'] });
+
+      expect(
+        await authorizer.listAccessible({ actor: doc, permission: readNotifications, resourceType: 'person' }),
+      ).toEqual({ kind: 'ids', ids: ['doc'] });
     });
 
     it('never answers everything from a grant under condition', async () => {
       await store.write([deskOfTheCalendar, docHoldsTheDesk]);
 
-      expect(await authorizer.listAccessible({ actor: patient, permission: book, resourceType: 'calendar' })).toEqual({ kind: 'ids', ids: [] });
-      expect(await authorizer.listAccessible({ actor: doc, permission: book, resourceType: 'calendar' })).toEqual({ kind: 'ids', ids: ['cal-1'] });
+      expect(await authorizer.listAccessible({ actor: patient, permission: book, resourceType: 'calendar' })).toEqual({
+        kind: 'ids',
+        ids: [],
+      });
+
+      expect(await authorizer.listAccessible({ actor: doc, permission: book, resourceType: 'calendar' })).toEqual({
+        kind: 'ids',
+        ids: ['cal-1'],
+      });
     });
   });
 
@@ -114,16 +175,38 @@ describe('The authorizer of roles and relationships', () => {
     const handler = systemActor('scheduling.on-practice-member-removed');
 
     it('operates its own context without a stored relationship', async () => {
-      expect(await authorizer.check({ actor: handler, permission: book, resource: { type: 'context', id: 'scheduling' } })).toEqual({ allowed: true });
+      expect(
+        await authorizer.check({ actor: handler, permission: book, resource: { type: 'context', id: 'scheduling' } }),
+      ).toEqual({ allowed: true });
     });
 
     it('does not operate another context, nor use the permission of another one on its own', async () => {
-      expect((await authorizer.check({ actor: handler, permission: openPractice, resource: { type: 'context', id: 'identity' } })).allowed).toBe(false);
-      expect((await authorizer.check({ actor: handler, permission: openPractice, resource: { type: 'context', id: 'scheduling' } })).allowed).toBe(false);
+      expect(
+        (
+          await authorizer.check({
+            actor: handler,
+            permission: openPractice,
+            resource: { type: 'context', id: 'identity' },
+          })
+        ).allowed,
+      ).toBe(false);
+
+      expect(
+        (
+          await authorizer.check({
+            actor: handler,
+            permission: openPractice,
+            resource: { type: 'context', id: 'scheduling' },
+          })
+        ).allowed,
+      ).toBe(false);
     });
 
     it('is nobody on an element', async () => {
-      expect(await authorizer.check({ actor: handler, permission: book, resource: calendar })).toEqual({ allowed: false, reason: DenialReason.noRelation });
+      expect(await authorizer.check({ actor: handler, permission: book, resource: calendar })).toEqual({
+        allowed: false,
+        reason: DenialReason.noRelation,
+      });
     });
   });
 });

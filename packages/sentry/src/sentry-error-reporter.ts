@@ -72,9 +72,13 @@ export class SentryErrorReporter implements ErrorReporter {
     scope.setTags(tagsOf(report, this.options.tagTenant === true));
     scope.setFingerprint(fingerprintOf(error, report));
 
-    if (report.actorId !== undefined) scope.setUser({ id: report.actorId });
+    if (report.actorId !== undefined) {
+      scope.setUser({ id: report.actorId });
+    }
 
-    if (report.extensions !== undefined) scope.setContext('report', { ...report.extensions });
+    if (report.extensions !== undefined) {
+      scope.setContext('report', { ...report.extensions });
+    }
 
     if (traced !== undefined) {
       scope.setPropagationContext({

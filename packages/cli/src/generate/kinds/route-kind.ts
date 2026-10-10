@@ -28,7 +28,12 @@ export const routeKind: Kind = {
     const name = label(scope, request.args[1] ?? '', { what: 'use case', strip: ['route', 'handler'] });
     const parts = { name, endpoint: parseEndpoint(request.flags), useCase: findUseCase(scope, name, request.flags) };
     const { validation } = scope.config.stack;
-    const context = vars(scope, { name: named(name), route: routeVars(scope, parts), list: { customSchema: validation !== 'zod' && validation !== 'class-validator' } });
+
+    const context = vars(scope, {
+      name: named(name),
+      route: routeVars(scope, parts),
+      list: { customSchema: validation !== 'zod' && validation !== 'class-validator' },
+    });
 
     emit(scope, context, routeOutputs(scope, parts));
     wire(scope, 'route', context);
@@ -36,7 +41,9 @@ export const routeKind: Kind = {
 };
 
 function assertHttpStack(scope: Scope): void {
-  if (scope.config.stack.http !== 'none') return;
+  if (scope.config.stack.http !== 'none') {
+    return;
+  }
 
   throw new CliError(
     'This project has no HTTP stack (stack.http is "none").',

@@ -18,5 +18,9 @@ export function requestOf(actor: Actor, more: Partial<ExecutionContext> = {}): E
 
 /** What every source is given: a scope opened on a request of ada, a fixed clock, readable ids. */
 export function aSource(context: ExecutionContext = requestOf(ada)) {
-  return { scope: new FixedExecutionScope(context), clock: new FixedClock(NOW), ids: new SequentialIdGenerator('audit') };
+  return {
+    scope: new FixedExecutionScope(context),
+    clock: new FixedClock(NOW),
+    ids: new SequentialIdGenerator('audit'),
+  };
 }

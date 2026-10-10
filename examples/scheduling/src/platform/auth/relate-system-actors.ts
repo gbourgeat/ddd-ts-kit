@@ -7,7 +7,11 @@ import type { RelationTuple, RelationTupleStore } from '@ddd-ts-kit/auth/rebac';
  */
 const systemRelationships: readonly RelationTuple[] = [
   // ddd-ts-kit:system-grants
-  { object: 'context:scheduling', relation: 'operator', subject: 'system:system:scheduling.expire-unconfirmed-appointments' },
+  {
+    object: 'context:scheduling',
+    relation: 'operator',
+    subject: 'system:system:scheduling.expire-unconfirmed-appointments',
+  },
   { object: 'context:identity', relation: 'operator', subject: 'system:system:identity.expire-delegations' },
   { object: 'context:notification', relation: 'operator', subject: 'system:system:notification.send-due-reminders' },
   // /ddd-ts-kit:system-grants

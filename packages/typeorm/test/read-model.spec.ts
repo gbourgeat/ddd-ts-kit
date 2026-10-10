@@ -33,7 +33,19 @@ readModelStoreContract(runner, { name: 'TypeOrmReadModelTable', createTable: emp
 
 describe('TypeOrmReadModelTable', () => {
   const stamp = { eventId: 'evt-1', occurredAt: new Date('2026-10-10T12:00:00.000Z') };
-  const row = { id: 'a1', status: 'booked', title: "t'; drop table x; --", seats: 1, price: '1', startsAt: stamp.occurredAt, cancelledAt: null, room: null, remote: false, tenantId: 'acme' } as const;
+
+  const row = {
+    id: 'a1',
+    status: 'booked',
+    title: "t'; drop table x; --",
+    seats: 1,
+    price: '1',
+    startsAt: stamp.occurredAt,
+    cancelledAt: null,
+    room: null,
+    remote: false,
+    tenantId: 'acme',
+  } as const;
 
   it('writes on the transaction of the unit of work: a failure takes the row back with it', async () => {
     const { table, unitOfWork } = await emptied();

@@ -35,11 +35,19 @@ function aBench(aspects: readonly BindingAspect[] = []): Bench {
   const loans = new TransactionalJournal('loans');
   const outbox = new TransactionalJournal('outbox');
   const unitOfWork = new TransactionalUnitOfWork([loans, outbox]);
-  const eventPublisher = { publish: async (events: readonly { id: string }[]) => events.forEach(({ id }) => outbox.write(id)) };
+
+  const eventPublisher = {
+    publish: async (events: readonly { id: string }[]) => events.forEach(({ id }) => outbox.write(id)),
+  };
 
   const decorated = defineContextModule({
     name: 'policies',
-    register: (builder) => void builder.rebind(LoanRepository).toClass(JournalLoanRepository).as('repository').with(...aspects),
+    register: (builder) =>
+      void builder
+        .rebind(LoanRepository)
+        .toClass(JournalLoanRepository)
+        .as('repository')
+        .with(...aspects),
   });
 
   JournalLoanRepository.journal = loans;
@@ -53,7 +61,9 @@ function aBench(aspects: readonly BindingAspect[] = []): Bench {
 const retryingOnce: BindingAspect = (instance) => {
   const save: unknown = Reflect.get(instance, 'save');
 
-  if (typeof save !== 'function') return instance;
+  if (typeof save !== 'function') {
+    return instance;
+  }
 
   Reflect.set(instance, 'save', async (...args: unknown[]): Promise<unknown> => {
     try {
@@ -133,13 +143,20 @@ describe('the dispatch among the wrappers of a repository', () => {
     JournalLoanRepository.journal = loans;
 
     const app = createApplication({
-      modules: [kernelModule({ unitOfWork: new TransactionalUnitOfWork([loans]), eventBus }), contextModule('lending', lending)],
+      modules: [
+        kernelModule({ unitOfWork: new TransactionalUnitOfWork([loans]), eventBus }),
+        contextModule('lending', lending),
+      ],
       decorate: (instance, { kind }) => {
-        if (kind !== 'repository' || typeof instance !== 'object' || instance === null) return instance;
+        if (kind !== 'repository' || typeof instance !== 'object' || instance === null) {
+          return instance;
+        }
 
         const save: unknown = Reflect.get(instance, 'save');
 
-        if (typeof save !== 'function') return instance;
+        if (typeof save !== 'function') {
+          return instance;
+        }
 
         Reflect.set(instance, 'save', async (...args: unknown[]): Promise<void> => {
           calls.push('save starts');
@@ -182,8 +199,16 @@ describe('which bindings dispatch', () => {
 describe('a test application', () => {
   it('dispatches with the save of the fake given for a repository port', async () => {
     const saved: string[] = [];
-    const fakeLoans: LoanRepository = { findById: async () => undefined, save: async (loan) => void saved.push(loan.id) };
-    const app = createTestApplication({ modules: [contextModule('lending', lending)], fakes: [fake(LoanRepository, fakeLoans)] });
+
+    const fakeLoans: LoanRepository = {
+      findById: async () => undefined,
+      save: async (loan) => void saved.push(loan.id),
+    };
+
+    const app = createTestApplication({
+      modules: [contextModule('lending', lending)],
+      fakes: [fake(LoanRepository, fakeLoans)],
+    });
 
     await app.commandBus.execute(new OpenLoan('l1'));
 

@@ -1,6 +1,13 @@
 import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
-import { GENESIS_HASH, InMemoryAuditTrail, canonicalize, hashOf, type AuditEntry, type AuditRecord } from '@ddd-ts-kit/audit';
+import {
+  GENESIS_HASH,
+  InMemoryAuditTrail,
+  canonicalize,
+  hashOf,
+  type AuditEntry,
+  type AuditRecord,
+} from '@ddd-ts-kit/audit';
 
 /*
  * What a project writes once, in a declaration file of its platform. This spec imports the
@@ -87,7 +94,9 @@ describe('hashOf', () => {
     await trail.record(record);
     const [entry] = trail.entries;
 
-    if (entry === undefined) throw new Error('The entry was not recorded');
+    if (entry === undefined) {
+      throw new Error('The entry was not recorded');
+    }
 
     expect(hashOf({ ...entry, outcome: 'failed' })).not.toBe(entry.hash);
     expect(hashOf({ ...entry, previousHash: 'f'.repeat(64) })).not.toBe(entry.hash);

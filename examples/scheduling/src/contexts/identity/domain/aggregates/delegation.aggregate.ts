@@ -25,7 +25,11 @@ export class Delegation extends AggregateRoot<string> {
     super(id);
   }
 
-  static create(id: string, terms: Pick<DelegationState, 'desk' | 'assistantId' | 'availabilityIncluded' | 'endsAt'>, now: Date): Delegation {
+  static create(
+    id: string,
+    terms: Pick<DelegationState, 'desk' | 'assistantId' | 'availabilityIncluded' | 'endsAt'>,
+    now: Date,
+  ): Delegation {
     if (terms.endsAt !== undefined && terms.endsAt.getTime() <= now.getTime()) {
       throw new DelegationEndsInThePastError(terms.endsAt);
     }
@@ -100,6 +104,14 @@ export class Delegation extends AggregateRoot<string> {
     const { desk, assistantId } = this.state;
 
     this.state = { ...this.state, ended: { at, cause } };
-    this.record(new DelegationRevoked(this.id, at, { practiceId: desk.practiceId, practitionerId: desk.practitionerId, assistantId, cause }));
+
+    this.record(
+      new DelegationRevoked(this.id, at, {
+        practiceId: desk.practiceId,
+        practitionerId: desk.practitionerId,
+        assistantId,
+        cause,
+      }),
+    );
   }
 }

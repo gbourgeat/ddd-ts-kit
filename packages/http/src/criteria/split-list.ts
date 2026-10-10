@@ -6,10 +6,15 @@ export function splitList(text: string): string[] {
     const character = text.charAt(index);
     const escaped = character === '\\' && index + 1 < text.length;
 
-    if (character === ',') values.push('');
-    else values[values.length - 1] += escaped ? text.charAt(index + 1) : character;
+    if (character === ',') {
+      values.push('');
+    } else {
+      values[values.length - 1] += escaped ? text.charAt(index + 1) : character;
+    }
 
-    if (escaped) index += 1;
+    if (escaped) {
+      index += 1;
+    }
   }
 
   return values;

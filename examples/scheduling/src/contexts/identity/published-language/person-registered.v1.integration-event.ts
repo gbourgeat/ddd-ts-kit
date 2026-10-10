@@ -6,7 +6,8 @@ import { PersonRegisteredV1Payload } from './person-registered.v1.payload.js';
 export const personRegisteredV1 = defineIntegrationEvent({
   type: 'identity.person.registered',
   version: 1,
-  description: 'A person signed in for the first time and is now known to the platform, with the name and the address to reach them.',
+  description:
+    'A person signed in for the first time and is now known to the platform, with the name and the address to reach them.',
   payload: classSchema(PersonRegisteredV1Payload),
 });
 

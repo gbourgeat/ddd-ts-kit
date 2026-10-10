@@ -42,7 +42,9 @@ export function runInit(root: string, options: InitOptions): WorkspaceReport {
 
   const report = ws.commit(options.dryRun);
 
-  if (!options.dryRun && report.created.includes('package.json')) report.notes.push('Run `npm install`, then `npm run verify`.');
+  if (!options.dryRun && report.created.includes('package.json')) {
+    report.notes.push('Run `npm install`, then `npm run verify`.');
+  }
 
   return report;
 }

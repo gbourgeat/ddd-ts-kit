@@ -11,7 +11,9 @@ export async function resolveSession(
   authenticator: Authenticator | SessionAuthenticator,
   credential: string | undefined,
 ): Promise<Session> {
-  if ('authenticateSession' in authenticator) return authenticator.authenticateSession(credential);
+  if ('authenticateSession' in authenticator) {
+    return authenticator.authenticateSession(credential);
+  }
 
   return sessionOf(await authenticator.authenticate(credential));
 }

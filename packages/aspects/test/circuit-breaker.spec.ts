@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { FixedClock, InMemoryMetrics } from '@ddd-ts-kit/kernel';
-import { CIRCUIT_OPEN, CircuitOpenError, circuitBreaker, circuitStateGauge, type CircuitStateChange } from '../src/index.js';
+import {
+  CIRCUIT_OPEN,
+  CircuitOpenError,
+  circuitBreaker,
+  circuitStateGauge,
+  type CircuitStateChange,
+} from '../src/index.js';
 import { FlakyGateway } from './support/flaky-gateway.js';
 import { PairNotQuoted } from './support/pair-not-quoted.js';
 import { QuoteGateway } from './support/quote-gateway.js';
@@ -42,7 +48,10 @@ describe('circuitBreaker', () => {
     const clock = new FixedClock(start);
     const gateway = circuitBreaker({ failureThreshold: 1, resetAfterMs: 30_000, clock })(new QuoteGateway());
 
-    await gateway.failNext(new PairNotQuoted()).quote('EUR-USD').catch(() => undefined);
+    await gateway
+      .failNext(new PairNotQuoted())
+      .quote('EUR-USD')
+      .catch(() => undefined);
 
     await expect(gateway.quote('EUR-USD')).resolves.toBeDefined();
   });
@@ -71,7 +80,13 @@ describe('circuitBreaker', () => {
       'half-open -> closed',
     ]);
 
-    expect(changes[0]).toEqual({ className: 'QuoteGateway', method: 'quote', context: 'pricing', from: 'closed', to: 'open' });
+    expect(changes[0]).toEqual({
+      className: 'QuoteGateway',
+      method: 'quote',
+      context: 'pricing',
+      from: 'closed',
+      to: 'open',
+    });
   });
 
   it('opens again when the trial call fails', async () => {
@@ -116,13 +131,19 @@ describe('circuitBreaker, its trial calls, its scope and its gauge', () => {
   it('keeps one circuit per method unless told to share it across the instance', async () => {
     const clock = new FixedClock(start);
     const perMethod = circuitBreaker({ failureThreshold: 1, resetAfterMs: 1000, clock })(new QuoteGateway());
-    const shared = circuitBreaker({ failureThreshold: 1, resetAfterMs: 1000, clock, scope: 'instance' })(new QuoteGateway());
+
+    const shared = circuitBreaker({ failureThreshold: 1, resetAfterMs: 1000, clock, scope: 'instance' })(
+      new QuoteGateway(),
+    );
 
     await failing(perMethod, 1);
     await failing(shared, 1);
 
     await expect(perMethod.reprice(1.1)).resolves.toBeUndefined();
-    await expect(shared.reprice(1.1)).rejects.toMatchObject({ message: expect.stringContaining('QuoteGateway is not called') });
+
+    await expect(shared.reprice(1.1)).rejects.toMatchObject({
+      message: expect.stringContaining('QuoteGateway is not called'),
+    });
   });
 
   it('keeps one circuit per instance', async () => {

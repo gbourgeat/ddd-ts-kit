@@ -17,7 +17,10 @@ import { FakeIdentityRelationships } from '../fakes/identity-relationships.fake.
 import { FakePersonRepository } from '../fakes/person.repository.fake.js';
 import { FakePracticeRepository } from '../fakes/practice.repository.fake.js';
 
-const holders = authorizationModule({ authorizer: new RoleBasedAuthorizer({ roles: { holder: [identityPermissions['practice.open']] } }) });
+const holders = authorizationModule({
+  authorizer: new RoleBasedAuthorizer({ roles: { holder: [identityPermissions['practice.open']] } }),
+});
+
 const holder = anActor().withRole('holder').build();
 
 const opening = { name: 'Riverside', timeZone: 'Europe/Paris', managerId: 'person-ada' };
@@ -37,7 +40,9 @@ describe('Open practice', () => {
   it('is refused to an actor who does not hold the permission practice.open', async () => {
     const { application } = arrange();
 
-    await expect(application.commandBus.execute(new OpenPracticeCommand(anActor().build(), opening))).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(
+      application.commandBus.execute(new OpenPracticeCommand(anActor().build(), opening)),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
   });
 
   it('opens the practice in its time zone with a registered person as its first manager, and tells the other contexts', async () => {
@@ -56,10 +61,19 @@ describe('Open practice', () => {
     expect(relationships.current).toContain(`manager person-ada of ${id}`);
 
     expect(application.eventBus.published.slice(before)).toMatchObject([
-      { type: 'identity.practice.opened', payload: { practiceId: id, name: 'Riverside', timeZone: 'Europe/Paris', managerId: 'person-ada' } },
+      {
+        type: 'identity.practice.opened',
+        payload: { practiceId: id, name: 'Riverside', timeZone: 'Europe/Paris', managerId: 'person-ada' },
+      },
       {
         type: 'identity.practice.member-added',
-        payload: { practiceId: id, personId: 'person-ada', role: 'manager', displayName: 'Ada Lovelace', timeZone: 'Europe/Paris' },
+        payload: {
+          practiceId: id,
+          personId: 'person-ada',
+          role: 'manager',
+          displayName: 'Ada Lovelace',
+          timeZone: 'Europe/Paris',
+        },
       },
     ]);
   });
@@ -70,7 +84,9 @@ describe('Open practice', () => {
     await personRepository.save(aPerson().identifiedBy('person-ada').build());
     const before = application.eventBus.published.length;
 
-    await expect(application.commandBus.execute(new OpenPracticeCommand(holder, { ...opening, timeZone: 'Europe/Atlantis' }))).rejects.toMatchObject({
+    await expect(
+      application.commandBus.execute(new OpenPracticeCommand(holder, { ...opening, timeZone: 'Europe/Atlantis' })),
+    ).rejects.toMatchObject({
       code: 'UNKNOWN_TIME_ZONE',
     });
 
@@ -81,7 +97,9 @@ describe('Open practice', () => {
   it('refuses a first manager who is not a registered person, and saves and publishes nothing', async () => {
     const { application, practiceRepository } = arrange();
 
-    await expect(application.commandBus.execute(new OpenPracticeCommand(holder, opening))).rejects.toMatchObject({ code: 'PERSON_NOT_REGISTERED' });
+    await expect(application.commandBus.execute(new OpenPracticeCommand(holder, opening))).rejects.toMatchObject({
+      code: 'PERSON_NOT_REGISTERED',
+    });
 
     expect(practiceRepository.all()).toEqual([]);
     expect(application.eventBus.published).toEqual([]);

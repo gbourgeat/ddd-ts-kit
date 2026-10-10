@@ -4,7 +4,9 @@ import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
 export function startsAtThis(node: TSESTree.Node): boolean {
   let current = node;
 
-  while (current.type === AST_NODE_TYPES.MemberExpression) current = current.object;
+  while (current.type === AST_NODE_TYPES.MemberExpression) {
+    current = current.object;
+  }
 
   return current.type === AST_NODE_TYPES.ThisExpression && node.type === AST_NODE_TYPES.MemberExpression;
 }

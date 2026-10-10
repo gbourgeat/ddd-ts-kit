@@ -44,7 +44,9 @@ export class PolicyAccess implements Access {
   async authorize(actor: Actor, permission: Permission, subject: unknown): Promise<void> {
     const decision = await this.decide(actor, permission, subject);
 
-    if (decision.allowed) return;
+    if (decision.allowed) {
+      return;
+    }
 
     throw isAnonymous(actor) ? new UnauthenticatedError() : new ForbiddenError(permission.id, decision.reason);
   }
@@ -60,11 +62,15 @@ export class PolicyAccess implements Access {
   }
 
   async scope(actor: Actor, permission: Permission, resourceType: string): Promise<AccessScope> {
-    if (isAnonymous(actor)) return { kind: 'none' };
+    if (isAnonymous(actor)) {
+      return { kind: 'none' };
+    }
 
     const { authorizer } = this.options;
 
-    if (authorizer?.listAccessible === undefined) throw new ListingNotSupportedError();
+    if (authorizer?.listAccessible === undefined) {
+      throw new ListingNotSupportedError();
+    }
 
     return authorizer.listAccessible({ actor, permission, resourceType });
   }
@@ -77,14 +83,18 @@ export class PolicyAccess implements Access {
     const policies = this.policiesByPermission.get(request.permission.id) ?? [];
     const { authorizer, clock } = this.options;
 
-    if (policies.length === 0 && authorizer === undefined) return deny(NO_POLICY);
+    if (policies.length === 0 && authorizer === undefined) {
+      return deny(NO_POLICY);
+    }
 
     const context: PolicyContext = { now: clock.now() };
 
     for (const policy of policies) {
       const verdict = verdictOf(policy, { actor: request.actor, subject }, context);
 
-      if (!verdict.allowed) return verdict;
+      if (!verdict.allowed) {
+        return verdict;
+      }
     }
 
     return authorizer === undefined ? ALLOWED : authorizer.check(request);
@@ -101,11 +111,15 @@ interface Asking {
 }
 
 function verdictOf(policy: Policy<unknown>, { actor, subject }: Asking, context: PolicyContext): Decision {
-  if (policy.appliesTo !== undefined && !policy.appliesTo(subject)) return deny(DenialReason.subjectMismatch);
+  if (policy.appliesTo !== undefined && !policy.appliesTo(subject)) {
+    return deny(DenialReason.subjectMismatch);
+  }
 
   const verdict = policy.allows(actor, subject, context);
 
-  if (typeof verdict !== 'boolean') return verdict;
+  if (typeof verdict !== 'boolean') {
+    return verdict;
+  }
 
   return verdict ? ALLOWED : deny(policy.name);
 }

@@ -21,7 +21,9 @@ export interface LogSettings {
  * spans and to its audit entries. `stop()` of the application flushes it, last.
  */
 export function createLogger(scope: ExecutionScope, settings: LogSettings | undefined): Logger {
-  if (settings === undefined) return new NoopLogger();
+  if (settings === undefined) {
+    return new NoopLogger();
+  }
 
   return createWinstonLogger({ ...settings, fields: () => traceLogFields(scope) });
 }

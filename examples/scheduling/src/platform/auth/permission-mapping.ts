@@ -8,5 +8,8 @@ import { resourcePermissions } from './resource-permissions.js';
  * says when asked of an element.
  */
 export function permissionMapping(): PermissionMapping {
-  return { ...resourcePermissions, context: Object.fromEntries(permissions.all().map((permission) => [permission.id, 'operate'])) };
+  return {
+    ...resourcePermissions,
+    context: Object.fromEntries(permissions.all().map((permission) => [permission.id, 'operate'])),
+  };
 }

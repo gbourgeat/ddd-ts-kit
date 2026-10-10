@@ -90,8 +90,10 @@ say what it does, extract it and name it.
 
 One exported class, interface or function per file, named after it in kebab-case; at most
 350 lines. Members are `private`, never `#name`. A blank line before a `return` that is not
-alone in its block and around `if`, `for`, `try`: `npm run lint:fix` settles layout, do not
-spend tokens on it.
+alone in its block and around `if`, `for`, `try`. Every `if`, `else`, `for`, `while` and `do`
+has braces and its body on its own lines, never `if (a) return b;`: a branch is visible at a
+glance, and a statement added to it later cannot silently fall outside it. `npm run lint:fix`
+then `npm run format` (Biome, line width 120) settle layout: do not spend tokens on it.
 
 ## Types
 

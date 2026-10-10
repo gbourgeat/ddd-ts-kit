@@ -34,7 +34,8 @@ export default dddTsKit({ tsconfigRootDir: import.meta.dirname });
 | `@eslint/js` recommended | the baseline of ESLint |
 | typescript-eslint `strictTypeChecked` and `stylisticTypeChecked` | with `projectService`; `strict` and `stylistic` when `typeChecked` is `false` |
 | `ddd-ts-kit/clean-code` | the standard rules backing section 6 of the architecture reference (below) |
-| `ddd-ts-kit/architecture` | every rule of this plugin, at the severity of `rules.<id>` in `ddd-ts-kit.config.json`, else at its default, and the four layout rules of `@stylistic/eslint-plugin` at the severity of `rules."clean/blank-lines"` (default `error`) |
+| `ddd-ts-kit/architecture` | every rule of this plugin, at the severity of `rules.<id>` in `ddd-ts-kit.config.json`, else at its default, the two layout rules of `@stylistic/eslint-plugin` at the severity of `rules."clean/blank-lines"` and `curly` at the severity of `rules."clean/braces"` (default `error`) |
+| `ddd-ts-kit/scripts` | `curly` on `.js`, `.mjs` and `.cjs` files, at the severity of `rules."clean/braces"`: a branch reads the same in a script |
 | `ddd-ts-kit/inner-layers` | `no-param-reassign` with `props` in `domain/` and `application/`: no output argument |
 | `ddd-ts-kit/aggregates` | `prefer-readonly` off in aggregates and entities, whose state is replaced by intention methods |
 | `ddd-ts-kit/tests` | a lighter set for specs, fakes and builders |
@@ -57,7 +58,8 @@ export default [...dddTsKit.configs.recommended]; // or configs.strict: every ru
 ```
 
 The standard rule sets of the helper are exported as `standardRules` (`escapeHatch`, `cleanCode`,
-`typedCleanCode`, `kitConventions`, `layout`). `standardRules.layout` holds the four
+`typedCleanCode`, `kitConventions`, `layout`, `braces`). `standardRules.braces` holds `curly` for
+[`clean/braces`](docs/rules/clean-braces.md); `standardRules.layout` holds the two
 `@stylistic/*` rules of [`clean/blank-lines`](docs/rules/clean-blank-lines.md) at `error`; a config
 composed by hand registers the plugin under `@stylistic` next to them:
 
@@ -96,7 +98,9 @@ is an error whatever the configured limit). `strict` sets every rule to `error`.
 | [`clean/no-hash-private`](docs/rules/clean-no-hash-private.md) | `ddd-ts-kit/clean-no-hash-private` | a class member is `private`, never `#name`; fixable | `error` | custom |
 | [`clean/one-export-per-file`](docs/rules/clean-one-export-per-file.md) | `ddd-ts-kit/clean-one-export-per-file` | one exported class, interface or function per source file, with the types of its signature, the file named after it; entry files only re-export | `error` | custom |
 | [`clean/file-size`](docs/rules/clean-file-size.md) | `ddd-ts-kit/clean-file-size` | no file over 350 lines, tests included | `error` | custom |
-| [`clean/blank-lines`](docs/rules/clean-blank-lines.md) | four `@stylistic/*` rules (`standardRules.layout`) | a blank line before every `return` and between logical blocks, no padded block, never two blank lines; fixable | `error` | standard |
+| [`clean/blank-lines`](docs/rules/clean-blank-lines.md) | two `@stylistic/*` rules (`standardRules.layout`) | a blank line before every `return` and between logical blocks, around a method; fixable | `error` | standard |
+| [`clean/braces`](docs/rules/clean-braces.md) | `curly` (`standardRules.braces`) | every `if`, `else`, `for`, `while` and `do` has braces; fixable | `error` | standard |
+| [`clean/formatted`](docs/rules/clean-formatted.md) | none: Biome (`npm run format:check`) | every file is laid out by the formatter, at a line width of 120 | none | formatter |
 | [`domain/aggregate-encapsulation`](docs/rules/domain-aggregate-encapsulation.md) | `ddd-ts-kit/domain-aggregate-encapsulation` | aggregates and entities: no public constructor, no public mutable property, no setter | `error` | custom |
 | [`domain/value-object-immutability`](docs/rules/domain-value-object-immutability.md) | `ddd-ts-kit/domain-value-object-immutability` | value objects: every property `readonly`, no setter, no write to `this` | `error` | custom |
 | [`domain/no-generic-error`](docs/rules/domain-no-generic-error.md) | `ddd-ts-kit/domain-no-generic-error` | no `throw new Error(...)` in `domain/` and `application/` | `error` | custom |
@@ -178,13 +182,17 @@ and this plugin does not reimplement it.
 | section 6, small functions | `complexity` (10, warn), `max-depth` (3, warn), `no-else-return` | `dddTsKit()` |
 | section 6, no output argument | `no-param-reassign` (`props` in `domain/` and `application/`) | `dddTsKit()` |
 | section 6, no surprise | `eqeqeq` | `dddTsKit()` |
-| section 6, layout (`clean/blank-lines`) | `@stylistic/padding-line-between-statements`, `lines-between-class-members`, `padded-blocks`, `no-multiple-empty-lines` | `recommended`, `strict`, `dddTsKit()` |
+| section 6, layout (`clean/blank-lines`) | `@stylistic/padding-line-between-statements`, `lines-between-class-members` | `recommended`, `strict`, `dddTsKit()` |
+| section 6, layout (`clean/braces`) | `curly` (`all`) | `recommended`, `strict`, `dddTsKit()` |
 
 `max-params`, `max-lines-per-function` and `max-lines` are deliberately not enabled:
 `clean-function-size` exempts constructors and module files and reads `limits` from the config,
 `clean-file-size` exempts generated files, which the standard rules cannot do, and both would
 report the same thing twice. Layout is the opposite case: `clean/blank-lines` is entirely held by
-`@stylistic/eslint-plugin`, and this plugin writes no rule for it.
+`@stylistic/eslint-plugin` and `clean/braces` by `curly`, and this plugin writes no rule for them.
+Where a token goes (indentation, quotes, line breaks, the padding of a block) is not linted at
+all: the formatter of the project, Biome, owns it (`clean/formatted`), and no `@stylistic` rule
+that would fight it is enabled.
 
 ### Where the kit and typescript-eslint strict disagree
 

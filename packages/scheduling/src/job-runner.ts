@@ -1,4 +1,11 @@
-import { executionContextOfJob, type Clock, type ExecutionScope, type IdGenerator, type JobRun, type Lock } from '@ddd-ts-kit/kernel';
+import {
+  executionContextOfJob,
+  type Clock,
+  type ExecutionScope,
+  type IdGenerator,
+  type JobRun,
+  type Lock,
+} from '@ddd-ts-kit/kernel';
 import { JobLockUnavailableError } from './errors/job-lock-unavailable-error.js';
 import { JobTimeoutError } from './errors/job-timeout-error.js';
 import type { JobRecorder } from './job-recorder.js';
@@ -43,7 +50,9 @@ export class JobRunner {
    * occurrence of the job, or until its time to live has passed.
    */
   private async holds(job: RegisteredJob, { scheduledAt, manual }: Occurrence): Promise<boolean> {
-    if (!job.policy.singleInstance || manual) return true;
+    if (!job.policy.singleInstance || manual) {
+      return true;
+    }
 
     const { timeoutMs, jitterMs } = job.policy;
     const ttlMs = (timeoutMs ?? this.options.lockTtlMs) + jitterMs + this.options.lateAfterMs;
@@ -83,7 +92,9 @@ export class JobRunner {
   private armTimeout(job: RegisteredJob, controller: AbortController): () => void {
     const { timeoutMs } = job.policy;
 
-    if (timeoutMs === undefined) return () => undefined;
+    if (timeoutMs === undefined) {
+      return () => undefined;
+    }
 
     return this.options.timers.schedule(timeoutMs, () => {
       controller.abort(new JobTimeoutError(job.name, timeoutMs));

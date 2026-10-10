@@ -88,26 +88,52 @@ export class InProcessJobScheduler implements JobScheduler {
 
   constructor(options: InProcessJobSchedulerOptions) {
     const { clock, logger = new NoopLogger(), metrics = new NoopMetrics(), timers = systemJobTimers } = options;
-    const { lateAfterMs = 60_000, graceMs = 30_000, lockTtlMs = 900_000, random = Math.random, checkpoints, onRun } = options;
+
+    const {
+      lateAfterMs = 60_000,
+      graceMs = 30_000,
+      lockTtlMs = 900_000,
+      random = Math.random,
+      checkpoints,
+      onRun,
+    } = options;
+
     const { lock, scope, ids } = options;
 
-    this.settings = { clock, logger, metrics, timers, lateAfterMs, graceMs, lockTtlMs, random, ...(checkpoints === undefined ? {} : { checkpoints }) };
+    this.settings = {
+      clock,
+      logger,
+      metrics,
+      timers,
+      lateAfterMs,
+      graceMs,
+      lockTtlMs,
+      random,
+      ...(checkpoints === undefined ? {} : { checkpoints }),
+    };
+
     this.recorder = new JobRecorder({ clock, logger, metrics, ...(onRun === undefined ? {} : { onRun }) });
     this.runner = new JobRunner({ clock, lock, scope, ids, timers, lockTtlMs, lateAfterMs }, this.recorder);
   }
 
   register(definition: JobDefinition): void {
-    if (this.jobs.has(definition.name)) throw new DuplicateJobError(definition.name);
+    if (this.jobs.has(definition.name)) {
+      throw new DuplicateJobError(definition.name);
+    }
 
     const job = new RegisteredJob(definition);
 
     this.jobs.set(job.name, job);
 
-    if (this.started) void this.follow(job, this.begin(job));
+    if (this.started) {
+      void this.follow(job, this.begin(job));
+    }
   }
 
   async start(): Promise<void> {
-    if (this.started) return;
+    if (this.started) {
+      return;
+    }
 
     this.started = true;
     await Promise.all([...this.jobs.values()].map((job) => this.follow(job, this.begin(job))));
@@ -117,12 +143,16 @@ export class InProcessJobScheduler implements JobScheduler {
     this.started = false;
     this.stopping = true;
 
-    for (const job of this.jobs.values()) job.cancelSleep?.();
+    for (const job of this.jobs.values()) {
+      job.cancelSleep?.();
+    }
 
     await Promise.all(this.ticks);
 
     const cancelAbort = this.settings.timers.schedule(this.settings.graceMs, () => {
-      for (const job of this.jobs.values()) job.abort?.(new JobAbortedError(job.name));
+      for (const job of this.jobs.values()) {
+        job.abort?.(new JobAbortedError(job.name));
+      }
     });
 
     await Promise.all(this.runsInProgress);
@@ -133,7 +163,9 @@ export class InProcessJobScheduler implements JobScheduler {
   async runNow(name: string): Promise<JobRun> {
     const job = this.jobs.get(name);
 
-    if (job === undefined) throw new UnknownJobError(name);
+    if (job === undefined) {
+      throw new UnknownJobError(name);
+    }
 
     return this.trigger(job, { scheduledAt: this.settings.clock.now(), manual: true });
   }
@@ -161,7 +193,9 @@ export class InProcessJobScheduler implements JobScheduler {
   }
 
   private async begin(job: RegisteredJob): Promise<void> {
-    if (!job.policy.enabled) return;
+    if (!job.policy.enabled) {
+      return;
+    }
 
     job.cursor = (await this.remembered(job)) ?? this.settings.clock.now();
     await this.tick(job);
@@ -192,7 +226,9 @@ export class InProcessJobScheduler implements JobScheduler {
     const after = job.cursor ?? now;
     const due = latestOccurrence(job.schedule, { after, notAfter: now });
 
-    if (due === undefined) return;
+    if (due === undefined) {
+      return;
+    }
 
     job.cursor = due;
 
@@ -200,15 +236,21 @@ export class InProcessJobScheduler implements JobScheduler {
     const late = now.getTime() - due.getTime() > this.settings.lateAfterMs + job.policy.jitterMs;
     const runs = !late || job.policy.missed === 'run-once';
 
-    if (!runs || earliest.getTime() < due.getTime()) this.recorder.notRun(job, { scheduledAt: earliest, manual: false }, 'missed');
+    if (!runs || earliest.getTime() < due.getTime()) {
+      this.recorder.notRun(job, { scheduledAt: earliest, manual: false }, 'missed');
+    }
 
-    if (runs) void this.trigger(job, { scheduledAt: due, manual: false });
+    if (runs) {
+      void this.trigger(job, { scheduledAt: due, manual: false });
+    }
 
     await this.settings.checkpoints?.write(job.name, due);
   }
 
   private sleep(job: RegisteredJob): void {
-    if (!this.started || job.cursor === undefined) return;
+    if (!this.started || job.cursor === undefined) {
+      return;
+    }
 
     const { clock, timers, random } = this.settings;
     const untilNext = nextOccurrence(job.schedule, job.cursor).getTime() - clock.now().getTime();
@@ -222,7 +264,9 @@ export class InProcessJobScheduler implements JobScheduler {
   private trigger(job: RegisteredJob, occurrence: Occurrence): Promise<JobRun> {
     const previous = job.active;
 
-    if (previous === undefined) return this.occupy(job, this.runner.run(job, occurrence));
+    if (previous === undefined) {
+      return this.occupy(job, this.runner.run(job, occurrence));
+    }
 
     if (job.policy.overlap === 'skip' || job.waiting) {
       return Promise.resolve(this.recorder.notRun(job, occurrence, 'skipped-overlap'));
@@ -230,14 +274,19 @@ export class InProcessJobScheduler implements JobScheduler {
 
     job.waiting = true;
 
-    return this.occupy(job, previous.then(() => this.afterPrevious(job, occurrence)));
+    return this.occupy(
+      job,
+      previous.then(() => this.afterPrevious(job, occurrence)),
+    );
   }
 
   private occupy(job: RegisteredJob, run: Promise<JobRun>): Promise<JobRun> {
     const active = run.finally(() => {
       this.runsInProgress.delete(active);
 
-      if (job.active === active) job.active = undefined;
+      if (job.active === active) {
+        job.active = undefined;
+      }
     });
 
     job.active = active;

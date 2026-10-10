@@ -36,7 +36,9 @@ describe.runIf(SLOW).each(REPORTED)('a generated project that reports its failur
     runIn(root, { command: process.execPath, args: [NATIVE_COMPILER, '-p', 'tsconfig.build.json'] });
 
     for (const entry of ['main', 'apps/worker/main', 'apps/ordering/main']) {
-      const [first, second] = read(root, `dist/src/${entry}.js`).split('\n').filter((line) => line.startsWith('import '));
+      const [first, second] = read(root, `dist/src/${entry}.js`)
+        .split('\n')
+        .filter((line) => line.startsWith('import '));
 
       expect(first).toContain('/platform/tracing.js');
       expect(second).toContain('/platform/errors.js');
@@ -69,6 +71,8 @@ function scaffold(root: string, flags: readonly string[]): void {
   for (const step of steps) {
     const result = cli(root, ...step, '--json');
 
-    if (result.code !== 0) throw new Error(`${step.join(' ')} failed (${String(result.code)}): ${result.stderr || result.stdout}`);
+    if (result.code !== 0) {
+      throw new Error(`${step.join(' ')} failed (${String(result.code)}): ${result.stderr || result.stdout}`);
+    }
   }
 }

@@ -102,7 +102,13 @@ export class BrokerLink {
     const timeout = this.settings.connectTimeoutMs;
 
     await this.answered(admin.createTopics({ topics: missing.map(configOf), timeout }));
-    await this.answered(visible(admin, missing.map((topic) => topic.name)));
+
+    await this.answered(
+      visible(
+        admin,
+        missing.map((topic) => topic.name),
+      ),
+    );
 
     for (const topic of missing) {
       this.known.add(topic.name);

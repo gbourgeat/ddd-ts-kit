@@ -9,7 +9,10 @@ const STATE_VALUES: Readonly<Record<CircuitState, number>> = { closed: 0, 'half-
  * An `onStateChange` that publishes the state as a gauge: 0 closed, 1 half-open, 2 open,
  * labelled `class`, `method` and `context`. The metrics default to those of the aspect runtime.
  */
-export function circuitStateGauge(metrics?: Metrics, name = 'circuit_breaker_state'): (change: CircuitStateChange) => void {
+export function circuitStateGauge(
+  metrics?: Metrics,
+  name = 'circuit_breaker_state',
+): (change: CircuitStateChange) => void {
   return (change) => {
     metricsOr(metrics)
       .gauge(name)

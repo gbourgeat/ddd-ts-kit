@@ -5,9 +5,9 @@ import type {
   Cache,
   Clock,
   DomainEventDispatcher,
-{{#if errors.sentry}}
+  {{#if errors.sentry}}
   ErrorReporter,
-{{/if}}
+  {{/if}}
   ExecutionScope,
   IdGenerator,
   InMemoryCommandBus,
@@ -17,9 +17,9 @@ import type {
   JobScheduler,
   Logger,
   Metrics,
-{{#if cache.rateLimit}}
+  {{#if cache.rateLimit}}
   RateLimiter,
-{{/if}}
+  {{/if}}
 } from '@ddd-ts-kit/kernel';
 {{#if audit.on}}
 import type { Audit } from './audit/create-audit.js';
@@ -41,12 +41,12 @@ export interface Platform {
   /** What use cases publish through. */
   readonly publisher: IntegrationEventPublisher;
   readonly subscriber: IntegrationEventSubscriber;
-{{#if broker.external}}
+  {{#if broker.external}}
 
   /** The subscriber of one consuming context: a broker gives each context queues of its own. */
   subscriberFor(context: string): IntegrationEventSubscriber;
 
-{{/if}}
+  {{/if}}
   /** The provider itself: what the outbox relay delivers to. */
   readonly eventBus: IntegrationEventPublisher;
   readonly persistence: Persistence;
@@ -61,21 +61,21 @@ export interface Platform {
   readonly actors: ActorContext;
   readonly logger: Logger;
   readonly metrics: Metrics;
-{{#if errors.sentry}}
+  {{#if errors.sentry}}
   /** Where what stands around the use cases reports an unexpected failure: the buses, the jobs, the HTTP boundary. A handler throws and never calls it. */
   readonly errors: ErrorReporter;
-{{/if}}
+  {{/if}}
   readonly cache: Cache;
-{{#if cache.rateLimit}}
+  {{#if cache.rateLimit}}
   readonly rateLimiter: RateLimiter;
-{{/if}}
+  {{/if}}
   /** Where a context registers its scheduled jobs; the application starts it when this process runs the jobs. */
   readonly jobs: JobScheduler;
   readonly adapter: Adapt;
   /** The same, for an adapter that states its own policy, as aspects or as decorators on its class. */
   readonly selfGoverned: Adapt;
   readonly protection: UseCaseProtection;
-{{#if audit.on}}
+  {{#if audit.on}}
   readonly audit: Audit;
-{{/if}}
+  {{/if}}
 }

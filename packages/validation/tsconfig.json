@@ -1,5 +1,11 @@
 {
   "extends": "../../tsconfig.base.json",
-  "compilerOptions": { "outDir": "dist", "rootDir": "src", "experimentalDecorators": true, "emitDecoratorMetadata": true },
-  "include": ["src"], "references": [{ "path": "../kernel" }]
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
+  },
+  "include": ["src"],
+  "references": [{ "path": "../kernel" }]
 }

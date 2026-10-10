@@ -447,7 +447,9 @@ are the fields of the model; `fields` renames those that differ. The text of `co
 async list(criteria: ScopedCriteria<AppointmentRow>): Promise<Page<AppointmentRow>> {
   const plan = planCriteria(appointmentCriteria, criteria);
 
-  if (plan.empty) return pageOfPlan(plan, []);
+  if (plan.empty) {
+    return pageOfPlan(plan, []);
+  }
 
   const { where, orderBy, take, skip } = criteriaToPrisma(plan);
 

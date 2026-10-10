@@ -12,10 +12,18 @@ const COUNTED_FILE_BYTES = 1_000_000;
  * of the plugin counts.
  */
 export function readChanges(root: string, staged: boolean): Change[] | undefined {
-  if (runGit(root, ['rev-parse', '--is-inside-work-tree'])?.trim() !== 'true') return undefined;
-  if (staged) return entries(runGit(root, ['diff', '--cached', ...NUMSTAT])).map(numstatChange);
+  if (runGit(root, ['rev-parse', '--is-inside-work-tree'])?.trim() !== 'true') {
+    return undefined;
+  }
 
-  const fresh = entries(runGit(root, ['ls-files', '--others', '--exclude-standard', '-z'])).map((file) => ({ path: file, lines: lineCount(path.join(root, file)) }));
+  if (staged) {
+    return entries(runGit(root, ['diff', '--cached', ...NUMSTAT])).map(numstatChange);
+  }
+
+  const fresh = entries(runGit(root, ['ls-files', '--others', '--exclude-standard', '-z'])).map((file) => ({
+    path: file,
+    lines: lineCount(path.join(root, file)),
+  }));
 
   return [...entries(runGit(root, ['diff', ...NUMSTAT, 'HEAD'])).map(numstatChange), ...fresh];
 }
@@ -34,7 +42,9 @@ function numstatChange(entry: string): Change {
 /** The lines of an untracked file; none for a file too large to be source. */
 function lineCount(file: string): number {
   try {
-    if (fs.statSync(file).size > COUNTED_FILE_BYTES) return 0;
+    if (fs.statSync(file).size > COUNTED_FILE_BYTES) {
+      return 0;
+    }
 
     const lines = fs.readFileSync(file, 'utf8').split('\n');
 

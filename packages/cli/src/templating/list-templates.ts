@@ -8,8 +8,11 @@ export function listTemplates(directory = ''): string[] {
   for (const entry of fs.readdirSync(`${TEMPLATES_ROOT}${directory}`, { withFileTypes: true })) {
     const relative = directory === '' ? entry.name : `${directory}/${entry.name}`;
 
-    if (entry.isDirectory()) found.push(...listTemplates(relative));
-    else found.push(relative);
+    if (entry.isDirectory()) {
+      found.push(...listTemplates(relative));
+    } else {
+      found.push(relative);
+    }
   }
 
   return found.sort();

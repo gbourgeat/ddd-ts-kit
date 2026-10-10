@@ -71,7 +71,10 @@ describe('A patient books, is told, and cancels: the four contexts follow', () =
     const late = expectStatus(await bookAppointment(paul, practice, { startsAt: later }), 201).body.id;
     const held = '/appointments?filter[status]=booked&filter[calendarId]=' + practice.calendarId;
 
-    const newestFirst = await eventually(async () => idsOf(expectListed(await paul.get<Listed<AppointmentLine>>(held + '&sort=-startsAt'), 2)));
+    const newestFirst = await eventually(async () =>
+      idsOf(expectListed(await paul.get<Listed<AppointmentLine>>(held + '&sort=-startsAt'), 2)),
+    );
+
     const fromTheLater = await paul.get<Listed<AppointmentLine>>(held + '&filter[startsAt]=gte:' + later.toISOString());
     const ofRosa = await rosa.get<Listed<AppointmentLine>>(held);
 
@@ -83,7 +86,10 @@ describe('A patient books, is told, and cancels: the four contexts follow', () =
   it('tells the patient who booked, and nobody else', async () => {
     const appointmentId = expectStatus(await bookAppointment(paul, practice, { startsAt }), 201).body.id;
 
-    const told = await eventually(async () => expectListed(await paul.get<Listed<NotificationLine>>('/notifications'), 1));
+    const told = await eventually(async () =>
+      expectListed(await paul.get<Listed<NotificationLine>>('/notifications'), 1),
+    );
+
     const ofRosa = await rosa.get<Listed<NotificationLine>>('/notifications');
 
     expect(told.items).toMatchObject([{ kind: 'confirmation', appointmentId, startsAt: startsAt.toISOString() }]);
@@ -96,7 +102,9 @@ describe('A patient books, is told, and cancels: the four contexts follow', () =
     expectStatus(await bookAppointment(paul, practice, { startsAt }), 201);
     expectStatus(await bookAppointment(rosa, practice, { startsAt: new Date(startsAt.getTime() + 30 * 60_000) }), 201);
 
-    const occupancy = await eventually(async () => expectHeld(await manager.get<Listed<OccupancyLine>>('/practices/' + practice.practiceId + '/occupancy'), 60));
+    const occupancy = await eventually(async () =>
+      expectHeld(await manager.get<Listed<OccupancyLine>>('/practices/' + practice.practiceId + '/occupancy'), 60),
+    );
 
     expect(occupancy).toMatchObject({ calendarId: practice.calendarId, heldMinutes: 60, appointmentsHeld: 2 });
   });
@@ -109,8 +117,15 @@ describe('A patient books, is told, and cancels: the four contexts follow', () =
     await eventually(async () => expectHeld(await manager.get<Listed<OccupancyLine>>(occupancyOfThePractice), 30));
 
     const cancellation = await paul.post('/appointments/' + appointmentId + '/cancellation', {});
-    const freed = await eventually(async () => expectHeld(await manager.get<Listed<OccupancyLine>>(occupancyOfThePractice), 0));
-    const listed = await eventually(async () => expectListed(await paul.get<Listed<AppointmentLine>>('/appointments?filter[status]=cancelled'), 1));
+
+    const freed = await eventually(async () =>
+      expectHeld(await manager.get<Listed<OccupancyLine>>(occupancyOfThePractice), 0),
+    );
+
+    const listed = await eventually(async () =>
+      expectListed(await paul.get<Listed<AppointmentLine>>('/appointments?filter[status]=cancelled'), 1),
+    );
+
     const again = await bookAppointment(rosa, practice, { startsAt });
 
     expectStatus(cancellation, 201);
@@ -141,7 +156,9 @@ function expectHeld(response: HttpResponse<Listed<OccupancyLine>>, minutes: numb
 
   expect(line?.heldMinutes).toBe(minutes);
 
-  if (line === undefined) throw new Error('The practice has no line of occupancy.');
+  if (line === undefined) {
+    throw new Error('The practice has no line of occupancy.');
+  }
 
   return line;
 }

@@ -6,7 +6,8 @@ import { AppointmentCancelledV1Payload } from './appointment-cancelled.v1.payloa
 export const appointmentCancelledV1 = defineIntegrationEvent({
   type: 'scheduling.appointment.cancelled',
   version: 1,
-  description: 'An appointment was cancelled before taking place, by the patient or by the practice; its slot is free again. The reason given stays in scheduling.',
+  description:
+    'An appointment was cancelled before taking place, by the patient or by the practice; its slot is free again. The reason given stays in scheduling.',
   payload: classSchema(AppointmentCancelledV1Payload),
 });
 

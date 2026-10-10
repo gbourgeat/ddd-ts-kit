@@ -13,7 +13,10 @@ const SCHEMA_LIBRARIES: Readonly<Record<ValidationStack, readonly string[]>> = {
   none: [],
 };
 
-export type AllowedPackages = Pick<Config, 'domainAllowedPackages' | 'applicationAllowedPackages' | 'publishedLanguageAllowedPackages'>;
+export type AllowedPackages = Pick<
+  Config,
+  'domainAllowedPackages' | 'applicationAllowedPackages' | 'publishedLanguageAllowedPackages'
+>;
 
 /**
  * What the inner layers may import when the config says nothing; anything a config adds to

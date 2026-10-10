@@ -10,8 +10,17 @@ export interface ReceivedEvent {
   readonly user?: Record<string, unknown>;
   readonly breadcrumbs?: unknown[];
   readonly request?: Record<string, unknown>;
-  readonly contexts?: { readonly trace?: { readonly trace_id?: string; readonly span_id?: string }; readonly [name: string]: unknown };
-  readonly exception?: { readonly values?: { readonly type?: string; readonly value?: string; readonly stacktrace?: { readonly frames?: Record<string, unknown>[] } }[] };
+  readonly contexts?: {
+    readonly trace?: { readonly trace_id?: string; readonly span_id?: string };
+    readonly [name: string]: unknown;
+  };
+  readonly exception?: {
+    readonly values?: {
+      readonly type?: string;
+      readonly value?: string;
+      readonly stacktrace?: { readonly frames?: Record<string, unknown>[] };
+    }[];
+  };
 }
 
 interface EnvelopeItem {
@@ -65,7 +74,9 @@ export class EnvelopeServer {
     for (const item of itemsOf(body)) {
       this.itemTypes.push(item.type);
 
-      if (item.type === 'event' && isRecord(item.payload)) this.events.push(item.payload);
+      if (item.type === 'event' && isRecord(item.payload)) {
+        this.events.push(item.payload);
+      }
     }
   }
 }
@@ -74,7 +85,9 @@ async function bodyOf(request: IncomingMessage): Promise<string> {
   const chunks: Buffer[] = [];
 
   for await (const chunk of request) {
-    if (Buffer.isBuffer(chunk)) chunks.push(chunk);
+    if (Buffer.isBuffer(chunk)) {
+      chunks.push(chunk);
+    }
   }
 
   const raw = Buffer.concat(chunks);
@@ -91,7 +104,9 @@ function itemsOf(body: string): EnvelopeItem[] {
     const header: unknown = JSON.parse(lines[index] ?? '{}');
     const payload: unknown = JSON.parse(lines[index + 1] ?? 'null');
 
-    if (isRecord(header) && typeof header['type'] === 'string') items.push({ type: header['type'], payload });
+    if (isRecord(header) && typeof header['type'] === 'string') {
+      items.push({ type: header['type'], payload });
+    }
   }
 
   return items;

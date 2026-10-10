@@ -60,7 +60,9 @@ function handledOnce<Payload>(
 ): Promise<void> {
   const { processed, unitOfWork } = runtime;
 
-  if (processed === undefined) return deliver();
+  if (processed === undefined) {
+    return deliver();
+  }
 
   const marked = (): Promise<void> => idempotent(options.consumer, processed, deliver)(event);
 

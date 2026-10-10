@@ -12,7 +12,10 @@ export function findEventDeclaration(scope: Scope, upstream: string, eventType: 
     .flatMap(declarationIn);
 
   // A new consumer has no reason to start on an old contract.
-  return declarations.reduce<EventDeclaration | undefined>((newest, candidate) => (newest === undefined || candidate.version > newest.version ? candidate : newest), undefined);
+  return declarations.reduce<EventDeclaration | undefined>(
+    (newest, candidate) => (newest === undefined || candidate.version > newest.version ? candidate : newest),
+    undefined,
+  );
 }
 
 function declarationIn(content: string): EventDeclaration[] {

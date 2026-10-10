@@ -6,9 +6,7 @@ import type { SnapshotCodec } from './snapshot-codec.js';
  * one before saving it) never changes what is stored. Either a `clone` function, or the
  * snapshot pair a real adapter's mapper already has; snapshots go through `structuredClone`.
  */
-export type InMemoryRepositoryOptions<A> =
-  | { readonly clone: (aggregate: A) => A }
-  | SnapshotCodec<A, unknown>;
+export type InMemoryRepositoryOptions<A> = { readonly clone: (aggregate: A) => A } | SnapshotCodec<A, unknown>;
 
 interface Entry<A> {
   /** A new copy of the stored aggregate at each call. */

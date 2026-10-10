@@ -34,7 +34,9 @@ export async function createCredentials(): Promise<Credentials> {
 
   return {
     authenticator: keycloakAuthenticator({ baseUrl, realm, audience, impersonatorClaim: IMPERSONATOR_CLAIM }),
-    headersOf: async (actor) => ({ authorization: 'Bearer ' + (await tokenOf(actor, { key: privateKey, issuer: baseUrl + '/realms/' + realm })) }),
+    headersOf: async (actor) => ({
+      authorization: 'Bearer ' + (await tokenOf(actor, { key: privateKey, issuer: baseUrl + '/realms/' + realm })),
+    }),
   };
 }
 

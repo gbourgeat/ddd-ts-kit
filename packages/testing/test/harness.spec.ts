@@ -42,7 +42,13 @@ class PlaceOrderHandler implements CommandHandler<PlaceOrder> {
 
   async execute(command: PlaceOrder): Promise<string> {
     const id = this.ids.next();
-    const order = Order.place(id, { id: 'customer-1', name: 'Ada' }, [{ sku: command.sku, quantity: 2 }], this.clock.now());
+
+    const order = Order.place(
+      id,
+      { id: 'customer-1', name: 'Ada' },
+      [{ sku: command.sku, quantity: 2 }],
+      this.clock.now(),
+    );
 
     await this.orders.save(order);
 
@@ -109,8 +115,15 @@ describe('createTestBuses', () => {
     const orders = dispatching(new InMemoryOrders());
     const journal: string[] = [];
 
-    domainEvents.on('ordering.order.placed', async () => void journal.push('after the commit'), { phase: 'after-commit' });
-    domainEvents.on('ordering.order.placed', async () => void journal.push(`before the commit, ${eventBus.published.length} event published by the handler`));
+    domainEvents.on('ordering.order.placed', async () => void journal.push('after the commit'), {
+      phase: 'after-commit',
+    });
+
+    domainEvents.on(
+      'ordering.order.placed',
+      async () => void journal.push(`before the commit, ${eventBus.published.length} event published by the handler`),
+    );
+
     commandBus.register(PlaceOrder, new PlaceOrderHandler(orders, eventBus, ids, clock));
 
     await commandBus.execute(new PlaceOrder('book'));

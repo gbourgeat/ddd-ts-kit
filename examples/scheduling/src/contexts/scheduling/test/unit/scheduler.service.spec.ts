@@ -28,7 +28,16 @@ describe('SchedulerService', () => {
 
     expect(booked.id).toBe('appointment-new');
     expect(booked.status).toBe('booked');
-    expect(booked.booking).toMatchObject({ calendarId: 'calendar-a', practiceId: 'practice-a', practitionerId: 'practitioner-a', patientId: 'patient-a', appointmentTypeId: 'consultation', day: '2026-03-02' });
+
+    expect(booked.booking).toMatchObject({
+      calendarId: 'calendar-a',
+      practiceId: 'practice-a',
+      practitionerId: 'practitioner-a',
+      patientId: 'patient-a',
+      appointmentTypeId: 'consultation',
+      day: '2026-03-02',
+    });
+
     expect(booked.slot.startsAt).toEqual(at('08:00'));
     expect(booked.slot.endsAt).toEqual(at('08:30'));
     expect(booked.slot.heldUntil).toEqual(at('08:40'));
@@ -38,7 +47,17 @@ describe('SchedulerService', () => {
   it('names the day of the practice, not the one of the instant, for a slot late in the evening', () => {
     const late = aCalendar().openEveryDay(['00:00', '02:00']).offering('consultation').build();
 
-    const booked = scheduler.book({ id: 'appointment-new', patientId: 'patient-a', appointmentTypeId: 'consultation', startsAt: new Date('2026-03-02T23:30:00.000Z'), now }, late, nothing);
+    const booked = scheduler.book(
+      {
+        id: 'appointment-new',
+        patientId: 'patient-a',
+        appointmentTypeId: 'consultation',
+        startsAt: new Date('2026-03-02T23:30:00.000Z'),
+        now,
+      },
+      late,
+      nothing,
+    );
 
     expect(booked.booking.day).toBe('2026-03-03');
   });
@@ -52,13 +71,17 @@ describe('SchedulerService', () => {
   });
 
   it('refuses a start the calendar is not open on', () => {
-    expect(errorOf(() => scheduler.book(wishAt('12:00'), calendar, nothing))).toMatchObject({ code: 'OUTSIDE_AVAILABILITY' });
+    expect(errorOf(() => scheduler.book(wishAt('12:00'), calendar, nothing))).toMatchObject({
+      code: 'OUTSIDE_AVAILABILITY',
+    });
   });
 
   it('refuses a start that is not on the grid of the type', () => {
     expect(errorOf(() => scheduler.book(wishAt('08:10'), calendar, nothing))).toMatchObject({ code: 'OFF_GRID' });
   });
+});
 
+describe('SchedulerService, on a calendar that holds appointments', () => {
   it('refuses a slot an active appointment already holds', () => {
     const held = { onCalendar: [heldAt('08:00').build()], byPatient: [] };
 
@@ -85,9 +108,14 @@ describe('SchedulerService', () => {
 
     expect(booked.status).toBe('booked');
   });
+});
 
+describe('SchedulerService, limiting the future appointments of a patient', () => {
   it('books the last appointment the limit of the calendar allows a patient', () => {
-    const coming: Appointment[] = [heldAt('13:00').forPatient('patient-a').build(), heldAt('14:00').forPatient('patient-a').build()];
+    const coming: Appointment[] = [
+      heldAt('13:00').forPatient('patient-a').build(),
+      heldAt('14:00').forPatient('patient-a').build(),
+    ];
 
     const booked = scheduler.book(wishAt('08:00'), calendar, { onCalendar: [], byPatient: coming });
 
@@ -96,18 +124,36 @@ describe('SchedulerService', () => {
   });
 
   it('refuses one appointment more than the limit of future appointments of a patient with the practitioner', () => {
-    const coming = [heldAt('13:00'), heldAt('14:00'), heldAt('15:00')].map((builder) => builder.forPatient('patient-a').build());
+    const coming = [heldAt('13:00'), heldAt('14:00'), heldAt('15:00')].map((builder) =>
+      builder.forPatient('patient-a').build(),
+    );
 
-    expect(errorOf(() => scheduler.book(wishAt('08:00'), calendar, { onCalendar: [], byPatient: coming }))).toMatchObject({ code: 'PATIENT_LIMIT_REACHED' });
+    expect(
+      errorOf(() => scheduler.book(wishAt('08:00'), calendar, { onCalendar: [], byPatient: coming })),
+    ).toMatchObject({ code: 'PATIENT_LIMIT_REACHED' });
   });
 
   it('counts neither the past, nor the ended, nor the appointments with another practitioner towards the limit', () => {
-    const past = anAppointment().withPractitioner('practitioner-a').forPatient('patient-a').startingAt(new Date('2026-02-20T08:00:00.000Z')).build();
+    const past = anAppointment()
+      .withPractitioner('practitioner-a')
+      .forPatient('patient-a')
+      .startingAt(new Date('2026-02-20T08:00:00.000Z'))
+      .build();
+
     const cancelled = heldAt('13:00').forPatient('patient-a').cancelledByPatient().build();
-    const elsewhere = anAppointment().withPractitioner('practitioner-b').forPatient('patient-a').startingAt(at('13:00')).build();
+
+    const elsewhere = anAppointment()
+      .withPractitioner('practitioner-b')
+      .forPatient('patient-a')
+      .startingAt(at('13:00'))
+      .build();
+
     const coming = [heldAt('14:00'), heldAt('15:00')].map((builder) => builder.forPatient('patient-a').build());
 
-    const booked = scheduler.book(wishAt('08:00'), calendar, { onCalendar: [], byPatient: [past, cancelled, elsewhere, ...coming] });
+    const booked = scheduler.book(wishAt('08:00'), calendar, {
+      onCalendar: [],
+      byPatient: [past, cancelled, elsewhere, ...coming],
+    });
 
     expect(booked.status).toBe('booked');
   });
@@ -119,7 +165,10 @@ describe('SchedulerService, moving an appointment', () => {
 
     appointment.pullEvents();
 
-    scheduler.reschedule({ appointment, startsAt: at('14:00'), now }, calendar, { onCalendar: [appointment], byPatient: [appointment] });
+    scheduler.reschedule({ appointment, startsAt: at('14:00'), now }, calendar, {
+      onCalendar: [appointment],
+      byPatient: [appointment],
+    });
 
     expect(appointment.slot.startsAt).toEqual(at('14:00'));
     expect(appointment.slot.heldUntil).toEqual(at('14:40'));
@@ -129,16 +178,27 @@ describe('SchedulerService, moving an appointment', () => {
   it('lets an appointment move onto a part of the time it holds itself', () => {
     const appointment = heldAt('08:00').lasting(60).forPatient('patient-a').build();
 
-    scheduler.reschedule({ appointment, startsAt: at('08:30'), now }, calendar, { onCalendar: [appointment], byPatient: [appointment] });
+    scheduler.reschedule({ appointment, startsAt: at('08:30'), now }, calendar, {
+      onCalendar: [appointment],
+      byPatient: [appointment],
+    });
 
     expect(appointment.slot.startsAt).toEqual(at('08:30'));
   });
 
   it('does not count the appointment itself towards the limit when it moves', () => {
     const appointment = heldAt('08:00').forPatient('patient-a').build();
-    const coming = [appointment, heldAt('14:00').forPatient('patient-a').build(), heldAt('15:00').forPatient('patient-a').build()];
 
-    scheduler.reschedule({ appointment, startsAt: at('09:00'), now }, calendar, { onCalendar: [appointment], byPatient: coming });
+    const coming = [
+      appointment,
+      heldAt('14:00').forPatient('patient-a').build(),
+      heldAt('15:00').forPatient('patient-a').build(),
+    ];
+
+    scheduler.reschedule({ appointment, startsAt: at('09:00'), now }, calendar, {
+      onCalendar: [appointment],
+      byPatient: coming,
+    });
 
     expect(appointment.slot.startsAt).toEqual(at('09:00'));
   });
@@ -149,7 +209,12 @@ describe('SchedulerService, moving an appointment', () => {
 
     appointment.pullEvents();
 
-    const refusal = errorOf(() => scheduler.reschedule({ appointment, startsAt: at('14:00'), now }, calendar, { onCalendar: [appointment, other], byPatient: [appointment] }));
+    const refusal = errorOf(() =>
+      scheduler.reschedule({ appointment, startsAt: at('14:00'), now }, calendar, {
+        onCalendar: [appointment, other],
+        byPatient: [appointment],
+      }),
+    );
 
     expect(refusal).toMatchObject({ code: 'SLOT_TAKEN' });
     expect(appointment.slot.startsAt).toEqual(at('08:00'));
@@ -159,7 +224,12 @@ describe('SchedulerService, moving an appointment', () => {
   it('refuses to move an appointment outside the availability of its calendar', () => {
     const appointment = heldAt('08:00').forPatient('patient-a').build();
 
-    const refusal = errorOf(() => scheduler.reschedule({ appointment, startsAt: at('12:00'), now }, calendar, { onCalendar: [appointment], byPatient: [appointment] }));
+    const refusal = errorOf(() =>
+      scheduler.reschedule({ appointment, startsAt: at('12:00'), now }, calendar, {
+        onCalendar: [appointment],
+        byPatient: [appointment],
+      }),
+    );
 
     expect(refusal).toMatchObject({ code: 'OUTSIDE_AVAILABILITY' });
   });
@@ -178,7 +248,7 @@ function at(time: string): Date {
 }
 
 function wishAt(time: string, appointmentTypeId = 'consultation') {
-  return ({ id: 'appointment-new', patientId: 'patient-a', appointmentTypeId, startsAt: at(time), now });
+  return { id: 'appointment-new', patientId: 'patient-a', appointmentTypeId, startsAt: at(time), now };
 }
 
 function heldAt(time: string) {

@@ -140,7 +140,9 @@ presentation ──▶ application ──▶ domain ◀── infrastructure
 | `ports/no-concrete-dependency` | A dependency list names ports: nothing imported from `infrastructure/` or from `test/fakes/`. |
 | `ports/value-import` | A port named in a dependency list or given to `bind` is imported as a value, never with `import type`. |
 | `clean/no-hash-private` | A class member is `private`, never `#name`. |
-| `clean/blank-lines` | A blank line before every `return` that is not alone in its block and between the logical blocks of a function (after a group of declarations, around `if`, `for`, `try`, around a multiline statement, around a method); no blank line at the edges of a block, never two in a row. Consecutive one-line guards, declarations and fields may stay together. |
+| `clean/blank-lines` | A blank line before every `return` that is not alone in its block and between the logical blocks of a function (after a group of declarations, around `if`, `for`, `try`, around a multiline statement, around a method); no blank line at the edges of a block, never two in a row. Consecutive declarations and fields may stay together. |
+| `clean/braces` | Every `if`, `else`, `for`, `while` and `do` has braces, and its body is on its own lines; `else` follows the closing brace on the same line. A ternary, an arrow function returning an expression and a one-line object literal are not judged. |
+| `clean/formatted` | Every TypeScript, JavaScript and JSON file is laid out by the formatter of the project, Biome, at a line width of 120: `npm run format:check` reports nothing to change. Markdown and YAML are not formatted. |
 | `clean/one-export-per-file` | A source file exports one class, interface or function and is named after it in kebab-case. Its companions are the types of its own signature, a derived form it calls, or a closed family (a type with its constructors or combinators, the accessors of one private state); anything else is listed in `onePerFile.allow` with its reason. Entry files (`index.ts`, `<context>.declarations.ts`, subpath entries) only re-export. |
 | `clean/file-size` | A file is at most 350 lines, tests included, and the limit is not configurable; files under a directory named `generated` and `.d.ts` files are exempt. |
 | `scheduling/job-triggers-use-case` | A job lives in `application/scheduling/*.job.ts`, implements `ScheduledJob` and only sends commands: no repository among its dependencies, no import of aggregates, entities, domain services or `infrastructure/`. |
@@ -158,12 +160,13 @@ explicit style) are allowed to know every layer.
 
 ### Who checks what
 
-Three analyzers hold the rules, each where it is exact:
+Three analyzers and a formatter hold the rules, each where it is exact:
 
 | Analyzer | Holds | When |
 |---|---|---|
-| `ddd-ts-kit check` (zero dependency, text level) | alone, structure and project-wide facts: `tree/*`, `naming/*`, `language/*`, `config/*`, `context/no-cycle`, `test/spec-required`, `test/builder-required`, `events/defined-in-published-language`, `composition/only-in-module`, `declarations/barrel-current`, the config side of `events/outbox-required` and of `governance/recorded-deviation` (decision records exist), and what must be unique in the project (consumer names, job names). It also holds a fast approximation of every code rule below except `domain/*` and `application/*`; of `clean/blank-lines` it holds the `return` and the padded block only | at every file write (editor hook), in CI |
-| `@ddd-ts-kit/eslint-plugin` (syntax tree) | code: `layer/*`, the imports of `context/*` and `context/extractable`, `purity/*`, `clean/*` (`clean/blank-lines` through four rules of `@stylistic/eslint-plugin` its presets enable), `domain/*`, `application/*`, `authz/*`, `events/name-format`, `events/outbox-required`, `events/consumer-idempotent`, `aspects/*`, `tracing/*`, `domain-events/*`, `standard/*`, `ports/*`, `scheduling/*`, `declarations/role-declared`, `test/no-mocks`, and the comment side of `governance/recorded-deviation`. `domain/*` and `application/*` are held by it alone. Of `domain-events/transactional-before-commit` it holds what one declared class shows; where the adapters of an `application/ports/` port live and the phase an explicit-style module file registers a handler in are held by `ddd-ts-kit check` alone. Authoritative when the two disagree | on staged files, in CI |
+| `ddd-ts-kit check` (zero dependency, text level) | alone, structure and project-wide facts: `tree/*`, `naming/*`, `language/*`, `config/*`, `context/no-cycle`, `test/spec-required`, `test/builder-required`, `events/defined-in-published-language`, `composition/only-in-module`, `declarations/barrel-current`, the config side of `events/outbox-required` and of `governance/recorded-deviation` (decision records exist), and what must be unique in the project (consumer names, job names). It also holds a fast approximation of every code rule below except `domain/*` and `application/*`; of `clean/blank-lines` it holds the `return` and the padded block only, and it holds nothing of `clean/formatted` | at every file write (editor hook), in CI |
+| `@ddd-ts-kit/eslint-plugin` (syntax tree) | code: `layer/*`, the imports of `context/*` and `context/extractable`, `purity/*`, `clean/*` but `clean/formatted` (`clean/blank-lines` through two rules of `@stylistic/eslint-plugin` and `clean/braces` through `curly`, which its presets enable), `domain/*`, `application/*`, `authz/*`, `events/name-format`, `events/outbox-required`, `events/consumer-idempotent`, `aspects/*`, `tracing/*`, `domain-events/*`, `standard/*`, `ports/*`, `scheduling/*`, `declarations/role-declared`, `test/no-mocks`, and the comment side of `governance/recorded-deviation`. `domain/*` and `application/*` are held by it alone. Of `domain-events/transactional-before-commit` it holds what one declared class shows; where the adapters of an `application/ports/` port live and the phase an explicit-style module file registers a handler in are held by `ddd-ts-kit check` alone. Authoritative when the two disagree | on staged files, in CI |
+| Biome (formatter only: its linter and its import organiser are off) | `clean/formatted`: where every token goes, at a line width of 120, with the `biome.json` that `init` writes; it also removes the padding of a block and never leaves a body on the line of its braces, which completes `clean/blank-lines` and `clean/braces`. ESLint enables no rule that decides the same thing | on staged files, in CI |
 | dependency-cruiser (resolved import graph) | the same boundaries through barrels and re-exports, cycles between files, orphans, undeclared dependencies; its configuration is generated from the config by `ddd-ts-kit depcruise-config` | in CI |
 
 knip (dead code and unused dependencies) and the TypeScript compiler in `strict` mode complete the gate.
@@ -462,7 +465,10 @@ holds more than one responsibility. Index files only re-export.
 
 **Layout.** A blank line before every `return` unless it is alone in its block, and between
 the logical blocks of a function: after a group of declarations, around `if`, `for`, `try`.
-Class members are `private`, not `#`.
+Every `if`, `else`, `for`, `while` and `do` has braces and its body on its own lines: a branch
+is visible at a glance, and a statement added to it later cannot silently fall outside it.
+Where everything else goes is not a matter of taste: the formatter lays out every file, at a
+line width of 120. Class members are `private`, not `#`.
 
 **Size.** A function does one thing and stays short: 30 lines by default, never more than 100.
 

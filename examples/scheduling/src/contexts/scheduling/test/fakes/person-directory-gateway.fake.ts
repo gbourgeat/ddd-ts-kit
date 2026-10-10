@@ -15,8 +15,14 @@ export class FakePersonDirectoryGateway implements PersonDirectoryGateway {
 
     this.failure = undefined;
 
-    if (failure !== undefined) throw failure;
+    if (failure !== undefined) {
+      throw failure;
+    }
 
-    return new Map(personIds.flatMap((personId) => (personId in this.names ? [[personId, { displayName: this.names[personId] ?? '' }] as const] : [])));
+    return new Map(
+      personIds.flatMap((personId) =>
+        personId in this.names ? [[personId, { displayName: this.names[personId] ?? '' }] as const] : [],
+      ),
+    );
   }
 }

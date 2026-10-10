@@ -5,7 +5,17 @@ import { documentationScripts } from './documentation-scripts.js';
 import { pipelineManifest } from './pipeline-manifest.js';
 import { testScripts } from './test-scripts.js';
 
-const GATES = ['typecheck', 'lint', 'test', 'test:e2e', 'check:arch', 'depcruise', 'deadcode', 'docs:check'];
+const GATES = [
+  'typecheck',
+  'lint',
+  'format:check',
+  'test',
+  'test:e2e',
+  'check:arch',
+  'depcruise',
+  'deadcode',
+  'docs:check',
+];
 
 /** The scripts of a project: the `ci:*` ones of the pipeline, then what a developer runs, and `verify`, which chains every gate the stack has. */
 export function scriptsFor(config: Config): Record<string, string> {
@@ -18,7 +28,7 @@ export function scriptsFor(config: Config): Record<string, string> {
     depcruise: `ddd-ts-kit depcruise-config --check && depcruise ${config.sourceRoot} --config ${DEPCRUISE_FILE}`,
     'ci:arch:graph': 'npm run depcruise',
     deadcode: 'knip',
-    quality: 'npm run lint && npm run check:arch && npm run depcruise && npm run deadcode',
+    quality: 'npm run format:check && npm run lint && npm run check:arch && npm run depcruise && npm run deadcode',
     ...testScripts(config),
     ...documentationScripts(config),
     ...databaseScripts(config),

@@ -22,7 +22,9 @@ export const CONFIG_FIXTURES: readonly Fixture[] = [
           rules: { 'naming/suffix': 'warn', 'test/spec-required': 'off', 'domain/no-generic-error': 'warn' },
           guard: 'advise',
           limits: { maxFunctionLines: 100 },
-          onePerFile: { allow: [{ file: 'src/platform/http-*.ts', reason: 'The server and the error it raises are one boundary.' }] },
+          onePerFile: {
+            allow: [{ file: 'src/platform/http-*.ts', reason: 'The server and the error it raises are one boundary.' }],
+          },
         }),
       },
     ),
@@ -95,7 +97,9 @@ export const CONFIG_FIXTURES: readonly Fixture[] = [
     name: 'a suppression with a reason silences the violation',
     expect: 'pass',
     files: project({
-      ...aggregate("// ddd-ts-kit-disable-next-line layer/domain-purity -- decimal arithmetic approved in ADR 12\nimport Decimal from 'decimal.js';\nexport class Invoice { total = new Decimal(0); }\n"),
+      ...aggregate(
+        "// ddd-ts-kit-disable-next-line layer/domain-purity -- decimal arithmetic approved in ADR 12\nimport Decimal from 'decimal.js';\nexport class Invoice { total = new Decimal(0); }\n",
+      ),
       [DECIMAL_ADR]: RECORD,
     }),
   },
@@ -104,6 +108,10 @@ export const CONFIG_FIXTURES: readonly Fixture[] = [
     name: 'a suppression without a reason',
     expect: { file: AGGREGATE },
     also: ['layer/domain-purity'],
-    files: project(aggregate("// ddd-ts-kit-disable-next-line layer/domain-purity\nimport Decimal from 'decimal.js';\nexport class Invoice { total = new Decimal(0); }\n")),
+    files: project(
+      aggregate(
+        "// ddd-ts-kit-disable-next-line layer/domain-purity\nimport Decimal from 'decimal.js';\nexport class Invoice { total = new Decimal(0); }\n",
+      ),
+    ),
   },
 ];

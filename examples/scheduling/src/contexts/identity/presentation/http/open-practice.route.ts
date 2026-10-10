@@ -23,7 +23,13 @@ export function openPracticeRoute(commands: CommandBus): Route {
       security: ['bearer'],
     },
     async (input) => {
-      const id = await commands.execute(new OpenPracticeCommand(actorOf(input.context.principal), { name: input.body.name, timeZone: input.body.timeZone, managerId: input.body.managerId }));
+      const id = await commands.execute(
+        new OpenPracticeCommand(actorOf(input.context.principal), {
+          name: input.body.name,
+          timeZone: input.body.timeZone,
+          managerId: input.body.managerId,
+        }),
+      );
 
       return { status: 201, body: { id } };
     },

@@ -35,7 +35,9 @@ export function resolvePersistence(options: StackOptions): Persistence {
 
 /** docs/ARCHITECTURE.md, `events/outbox-required`: leaving the outbox out with a database is a recorded deviation, never a default. */
 function assertOutboxWithDatabase(stack: { orm: string; events: string }, reason: string | undefined): void {
-  if (stack.orm === 'none' || stack.events === 'outbox' || (reason !== undefined && reason.trim() !== '')) return;
+  if (stack.orm === 'none' || stack.events === 'outbox' || (reason !== undefined && reason.trim() !== '')) {
+    return;
+  }
 
   throw new CliError(
     `--events ${stack.events} cannot be combined with --orm ${stack.orm}.`,

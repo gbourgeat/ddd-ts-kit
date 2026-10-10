@@ -26,7 +26,10 @@ describe.skipIf(!REAL_SERVER)('RedisCache.getOrLoad on a server', () => {
       return { amount: 12 };
     };
 
-    const answers = await Promise.all(Array.from({ length: 5 }, () => cache.getOrLoad(price('sku-1'), load, { ttlMs: 60_000 })));
+    const answers = await Promise.all(
+      Array.from({ length: 5 }, () => cache.getOrLoad(price('sku-1'), load, { ttlMs: 60_000 })),
+    );
+
     const again = await cache.getOrLoad(price('sku-1'), load);
 
     expect(answers).toEqual(Array.from({ length: 5 }, () => ({ amount: 12 })));
@@ -36,7 +39,11 @@ describe.skipIf(!REAL_SERVER)('RedisCache.getOrLoad on a server', () => {
 
   it('computes it once across processes when given a lock', async () => {
     const namespace = aNamespace();
-    const processes = [connect(), connect(), connect()].map((connection) => new RedisCache(connection, { namespace, lock: new RedisLock(connection, { namespace }) }));
+
+    const processes = [connect(), connect(), connect()].map(
+      (connection) => new RedisCache(connection, { namespace, lock: new RedisLock(connection, { namespace }) }),
+    );
+
     const loads = { count: 0 };
 
     const load = async () => {
@@ -46,7 +53,9 @@ describe.skipIf(!REAL_SERVER)('RedisCache.getOrLoad on a server', () => {
       return { amount: 12 };
     };
 
-    const answers = await Promise.all(processes.map((cache) => cache.getOrLoad(price('sku-1'), load, { ttlMs: 60_000 })));
+    const answers = await Promise.all(
+      processes.map((cache) => cache.getOrLoad(price('sku-1'), load, { ttlMs: 60_000 })),
+    );
 
     expect(answers).toEqual([{ amount: 12 }, { amount: 12 }, { amount: 12 }]);
     expect(loads.count).toBe(1);
@@ -63,9 +72,14 @@ describe.skipIf(!REAL_SERVER)('RedisCache.getOrLoad on a server', () => {
   });
 
   it('does not cache a failure, and lets the next caller try', async () => {
-    const cache = new RedisCache(client, { namespace: aNamespace(), lock: new RedisLock(client, { namespace: aNamespace() }) });
+    const cache = new RedisCache(client, {
+      namespace: aNamespace(),
+      lock: new RedisLock(client, { namespace: aNamespace() }),
+    });
 
-    await expect(cache.getOrLoad(price('sku-1'), async () => Promise.reject(new Error('The pricing service is away')))).rejects.toThrow('away');
+    await expect(
+      cache.getOrLoad(price('sku-1'), async () => Promise.reject(new Error('The pricing service is away'))),
+    ).rejects.toThrow('away');
 
     expect(await cache.getOrLoad(price('sku-1'), async () => ({ amount: 3 }))).toEqual({ amount: 3 });
   });

@@ -54,7 +54,9 @@ export class ProjectionRebuild<Row> {
     do {
       const page = await source.export(cursor);
 
-      for (const { key, row, stamp } of page.items) await writeIfNewer(table.shadow(), { key, stamp, next: () => row });
+      for (const { key, row, stamp } of page.items) {
+        await writeIfNewer(table.shadow(), { key, stamp, next: () => row });
+      }
 
       copied += page.items.length;
       cursor = page.nextCursor;
@@ -71,7 +73,9 @@ export class ProjectionRebuild<Row> {
     for (; rounds < maxRounds; rounds += 1) {
       const keys = await table.touched(batchSize);
 
-      if (keys.length <= settledBelow) break;
+      if (keys.length <= settledBelow) {
+        break;
+      }
 
       reread += await this.readAgain(keys);
     }
@@ -101,8 +105,11 @@ export class ProjectionRebuild<Row> {
     for (const { key } of keys) {
       const entry = found.get(key);
 
-      if (entry === undefined) await this.forget(key);
-      else await writeIfNewer(table.shadow(), { key, stamp: entry.stamp, next: () => entry.row });
+      if (entry === undefined) {
+        await this.forget(key);
+      } else {
+        await writeIfNewer(table.shadow(), { key, stamp: entry.stamp, next: () => entry.row });
+      }
     }
 
     await table.settle(keys);
@@ -114,6 +121,8 @@ export class ProjectionRebuild<Row> {
   private async forget(key: string): Promise<void> {
     const live = await this.parts.table.find(key);
 
-    if (live !== undefined && live.row === undefined) await writeIfNewer(this.parts.table.shadow(), { key, stamp: live.stamp });
+    if (live !== undefined && live.row === undefined) {
+      await writeIfNewer(this.parts.table.shadow(), { key, stamp: live.stamp });
+    }
   }
 }

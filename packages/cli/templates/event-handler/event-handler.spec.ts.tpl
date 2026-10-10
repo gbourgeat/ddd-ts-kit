@@ -1,5 +1,10 @@
 import { describe, expect, it } from '{{tests.module}}';
-import { InMemoryDomainEventDispatcher, InMemoryUnitOfWork, announceDomainEvents, unitOfWorkStage } from '@ddd-ts-kit/kernel';
+import {
+  InMemoryDomainEventDispatcher,
+  InMemoryUnitOfWork,
+  announceDomainEvents,
+  unitOfWorkStage,
+} from '@ddd-ts-kit/kernel';
 import { {{event.pascal}}EventHandler } from '../../application/event-handlers/{{event.kebab}}.event-handler.js';
 import { {{event.pascal}} } from '../../domain/events/{{event.kebab}}.event.js';
 

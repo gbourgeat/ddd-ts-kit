@@ -23,7 +23,9 @@ describe('POST /appointments/:appointmentId/confirmation', () => {
       },
     });
 
-    const response = await executeRoute(confirmAppointmentRoute(commands), request(undefined), { validateResponses: true });
+    const response = await executeRoute(confirmAppointmentRoute(commands), request(undefined), {
+      validateResponses: true,
+    });
 
     expect(response).toMatchObject({ status: 201, body: { id: 'appointment-1' } });
     expect(received).toMatchObject([{ appointmentId: 'appointment-1' }]);
@@ -40,7 +42,10 @@ describe('POST /appointments/:appointmentId/confirmation', () => {
       },
     });
 
-    const response = await executeRoute(confirmAppointmentRoute(commands), request(undefined), { validateResponses: true, errorMapper });
+    const response = await executeRoute(confirmAppointmentRoute(commands), request(undefined), {
+      validateResponses: true,
+      errorMapper,
+    });
 
     expect(response).toMatchObject({ status, body: { code } });
   });

@@ -46,7 +46,9 @@ async function looked<Row, Name extends string, Related>(
 }
 
 function within<T>(answer: Promise<T>, relation: string, timeoutMs: number | undefined): Promise<T> {
-  if (timeoutMs === undefined) return answer;
+  if (timeoutMs === undefined) {
+    return answer;
+  }
 
   return new Promise<T>((resolve, reject) => {
     const timer = setTimeout(() => {

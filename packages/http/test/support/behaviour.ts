@@ -7,11 +7,7 @@ import { answersProblems } from './behaviour-problems.js';
 import type { ReadAuthorization, StartServer } from './running-server.js';
 
 /** The one suite every adapter must pass: the behaviour belongs to the pipeline, not the framework. */
-export function describeAdapter(
-  name: string,
-  start: StartServer,
-  readAuthorization: ReadAuthorization,
-): void {
+export function describeAdapter(name: string, start: StartServer, readAuthorization: ReadAuthorization): void {
   describe(`routes mounted on ${name}`, () => {
     const client = adapterClient(start, readAuthorization);
 

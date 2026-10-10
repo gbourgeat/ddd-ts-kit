@@ -10,7 +10,9 @@ export class SchemaCheckedTupleStore implements RelationTupleStore {
   ) {}
 
   async write(tuples: readonly RelationTuple[]): Promise<void> {
-    for (const tuple of tuples) this.schema.assertWritable(tuple);
+    for (const tuple of tuples) {
+      this.schema.assertWritable(tuple);
+    }
 
     await this.store.write(tuples);
   }

@@ -14,5 +14,11 @@ const DEFINITION = /\bexport const (\w+) = defineIntegrationEvent\(\{\s*type:\s*
 export function readEventDefinitions(ws: Workspace, directory: string): EventDefinition[] {
   const folder = `${directory}/published-language`;
 
-  return ws.list(folder).flatMap((file) => [...(ws.read(`${folder}/${file}`) ?? '').matchAll(DEFINITION)].map((match) => ({ name: match[1] ?? '', type: match[2] ?? '', version: Number(match[3]) })));
+  return ws.list(folder).flatMap((file) =>
+    [...(ws.read(`${folder}/${file}`) ?? '').matchAll(DEFINITION)].map((match) => ({
+      name: match[1] ?? '',
+      type: match[2] ?? '',
+      version: Number(match[3]),
+    })),
+  );
 }

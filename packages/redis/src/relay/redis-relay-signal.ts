@@ -57,7 +57,9 @@ export class RedisRelaySignal {
 
     this.subscriber = undefined;
 
-    if (subscriber !== undefined) await closeRedis(subscriber);
+    if (subscriber !== undefined) {
+      await closeRedis(subscriber);
+    }
   }
 
   /** What a serialisation shows: a name, never the client, whose options carry the password. */
@@ -75,9 +77,13 @@ export class RedisRelaySignal {
     const subscriber = this.client.duplicate();
 
     subscriber.on('message', (channel) => {
-      if (channel !== this.channel) return;
+      if (channel !== this.channel) {
+        return;
+      }
 
-      for (const listener of [...this.listeners]) listener();
+      for (const listener of [...this.listeners]) {
+        listener();
+      }
     });
 
     // Without a handler ioredis prints connection errors; it reconnects and subscribes again by itself.

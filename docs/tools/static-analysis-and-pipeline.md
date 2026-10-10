@@ -47,7 +47,9 @@ file.
 both the checker (a fast approximation on text) and the ESLint plugin (the exact one). Five
 are held by the ESLint plugin only, and the listing says so: `domain/aggregate-encapsulation`,
 `domain/value-object-immutability`, `domain/no-generic-error`, `application/handler-shape`,
-`application/command-query-separation`.
+`application/command-query-separation`. One, `clean/formatted`, is held by neither: the
+formatter of the project, Biome, lays out every file, and the listing says "checked by Biome".
+What every project gets, tool by tool, is on the [quality baseline](quality-baseline.md) page.
 
 ## Selection criteria
 

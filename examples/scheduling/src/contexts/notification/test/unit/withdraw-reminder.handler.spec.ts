@@ -11,7 +11,10 @@ import { ReminderRepository } from '../../domain/repositories/reminder.repositor
 import { aReminder } from '../builders/reminder.builder.js';
 import { FakeReminderRepository } from '../fakes/reminder.repository.fake.js';
 
-const holders = authorizationModule({ authorizer: new RoleBasedAuthorizer({ roles: { holder: [notificationPermissions['reminder.withdraw']] } }) });
+const holders = authorizationModule({
+  authorizer: new RoleBasedAuthorizer({ roles: { holder: [notificationPermissions['reminder.withdraw']] } }),
+});
+
 const holder = anActor().withRole('holder').build();
 const startsAt = new Date('2026-01-10T09:00:00.000Z');
 
@@ -19,7 +22,10 @@ describe('Withdraw reminder', () => {
   it('withdraws the planned reminder of the appointment', async () => {
     const { application, reminderRepository } = arrange();
 
-    await reminderRepository.save(aReminder().identifiedBy('reminder-1').of('appointment-1').plannedFor(startsAt).build());
+    await reminderRepository.save(
+      aReminder().identifiedBy('reminder-1').of('appointment-1').plannedFor(startsAt).build(),
+    );
+
     await application.commandBus.execute(new WithdrawReminderCommand(holder, 'appointment-1'));
 
     expect((await reminderRepository.findById('reminder-1'))?.status).toBe('withdrawn');
@@ -28,7 +34,9 @@ describe('Withdraw reminder', () => {
   it('is refused to an actor who does not hold the permission reminder.withdraw', async () => {
     const { application } = arrange();
 
-    await expect(application.commandBus.execute(new WithdrawReminderCommand(anActor().build(), 'appointment-1'))).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(
+      application.commandBus.execute(new WithdrawReminderCommand(anActor().build(), 'appointment-1')),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
   });
 
   it('leaves the reminders of other appointments planned', async () => {
@@ -44,7 +52,15 @@ describe('Withdraw reminder', () => {
   it('leaves a reminder already sent as it is', async () => {
     const { application, reminderRepository } = arrange();
 
-    await reminderRepository.save(aReminder().identifiedBy('reminder-1').of('appointment-1').plannedFor(startsAt).sent(new Date('2026-01-09T10:00:00.000Z')).build());
+    await reminderRepository.save(
+      aReminder()
+        .identifiedBy('reminder-1')
+        .of('appointment-1')
+        .plannedFor(startsAt)
+        .sent(new Date('2026-01-09T10:00:00.000Z'))
+        .build(),
+    );
+
     await application.commandBus.execute(new WithdrawReminderCommand(holder, 'appointment-1'));
 
     expect((await reminderRepository.findById('reminder-1'))?.status).toBe('sent');

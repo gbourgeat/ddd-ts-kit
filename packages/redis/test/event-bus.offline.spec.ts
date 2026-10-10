@@ -1,6 +1,11 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import type { EventSubscribers } from '@ddd-ts-kit/kernel';
-import { RedisStreamsEventBus, streamNamesOf, type RedisStreamsEventBusOptions, type RedisStreamsFailure } from '../src/event-bus.js';
+import {
+  RedisStreamsEventBus,
+  streamNamesOf,
+  type RedisStreamsEventBusOptions,
+  type RedisStreamsFailure,
+} from '../src/event-bus.js';
 import { PLACED, anEvent, failuresOf } from './support/events.js';
 import { eventually, pause } from './support/waiting.js';
 
@@ -23,7 +28,10 @@ describe('RedisStreamsEventBus while the server is away', () => {
   it('needs a consumer name to subscribe', () => {
     const anonymous = busTo();
 
-    expect(() => anonymous.subscribe(PLACED, async () => undefined)).toThrow(expect.objectContaining({ code: 'CONSUMER_NAME_REQUIRED' }));
+    expect(() => anonymous.subscribe(PLACED, async () => undefined)).toThrow(
+      expect.objectContaining({ code: 'CONSUMER_NAME_REQUIRED' }),
+    );
+
     expect(() => anonymous.forConsumer('')).toThrow(expect.objectContaining({ code: 'CONSUMER_NAME_REQUIRED' }));
   });
 
@@ -73,7 +81,11 @@ describe('RedisStreamsEventBus while the server is away', () => {
 
     expect(failure).toMatchObject({ code: 'BROKER_UNAVAILABLE', reason: 'ECONNREFUSED' });
     expect(String(failure)).not.toContain('secret');
-    expect(new Set(reported.map((entry) => JSON.stringify(entry)))).toEqual(new Set(['{"kind":"connection","code":"ECONNREFUSED"}']));
+
+    expect(new Set(reported.map((entry) => JSON.stringify(entry)))).toEqual(
+      new Set(['{"kind":"connection","code":"ECONNREFUSED"}']),
+    );
+
     await expect(bus.assertTopology()).rejects.toMatchObject({ code: 'BROKER_UNAVAILABLE' });
   });
 

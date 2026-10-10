@@ -112,7 +112,9 @@ describe('consumers declared with builder.on', () => {
       errors: [{ code: 'UNREADABLE_EVENT', eventType: 'ordering.order.placed', reason: 'invalid-payload' }],
     });
 
-    expect(new UnreadableEventError('a.b.c', 1, 'invalid-payload').message).toBe('Cannot read a.b.c v1: invalid-payload');
+    expect(new UnreadableEventError('a.b.c', 1, 'invalid-payload').message).toBe(
+      'Cannot read a.b.c v1: invalid-payload',
+    );
   });
 
   it('are delivered the events of a test application once started, each event once', async () => {
@@ -175,7 +177,9 @@ describe('the declaration of a consumer', () => {
     const twin = defineContextModule({
       name: 'twin',
       register(builder) {
-        builder.on(OrderPlaced, { consumer: 'billing.invoice-on-order-placed' }).handledBy(InvoiceOnOrderPlaced, [CommandBus]);
+        builder
+          .on(OrderPlaced, { consumer: 'billing.invoice-on-order-placed' })
+          .handledBy(InvoiceOnOrderPlaced, [CommandBus]);
       },
     });
 
@@ -189,14 +193,19 @@ describe('the declaration of a consumer', () => {
     const twin = defineContextModule({
       name: 'twin',
       register(builder) {
-        builder.on(OrderPlaced, { consumer: 'twin.invoice-on-order-placed' }).handledBy(InvoiceOnOrderPlaced, [CommandBus]);
+        builder
+          .on(OrderPlaced, { consumer: 'twin.invoice-on-order-placed' })
+          .handledBy(InvoiceOnOrderPlaced, [CommandBus]);
       },
     });
 
     const error = wiringFailure(() => createApplication({ modules: [kernelModule(), billingModule, twin] }));
 
     expect(error.code).toBe('DUPLICATE_BINDING');
-    expect(error.message).toBe('Token "InvoiceOnOrderPlaced" is bound twice: by module "billing" and by module "twin".');
+
+    expect(error.message).toBe(
+      'Token "InvoiceOnOrderPlaced" is bound twice: by module "billing" and by module "twin".',
+    );
   });
 
   it('asks for the kernel module when there is nothing to subscribe to', () => {
@@ -214,7 +223,11 @@ describe('the declaration of a consumer', () => {
       throw new Error('this contract only exists for the compiler');
     };
 
-    const Shipped: EventContract<{ parcelId: string }> = { ...OrderPlaced, type: 'shipping.parcel.shipped', parse: neverParsed };
+    const Shipped: EventContract<{ parcelId: string }> = {
+      ...OrderPlaced,
+      type: 'shipping.parcel.shipped',
+      parse: neverParsed,
+    };
 
     const module = defineContextModule({
       name: 'typed',

@@ -16,7 +16,12 @@ import type { {{name.pascal}}Result } from '../../application/queries/{{name.keb
 import { Fake{{name.pascal}}Reader } from '../fakes/{{name.kebab}}-reader.fake.js';
 {{#if access.protected}}
 
-const holders = authorizationModule({ authorizer: new RoleBasedAuthorizer({ roles: { holder: [{{context.camel}}Permissions['{{access.permission}}']] } }) });
+const holders = authorizationModule({
+  authorizer: new RoleBasedAuthorizer({
+    roles: { holder: [{{context.camel}}Permissions['{{access.permission}}']] },
+  }),
+});
+
 const holder = anActor().withRole('holder').build();
 {{/if}}
 {{#if access.public}}
@@ -28,15 +33,17 @@ describe('{{name.title}}', () => {
   it('answers what the read model holds', async () => {
     const answer: {{name.pascal}}Result = {};
     const application = {{spec.await}}arrange(answer);
+    const query = new {{name.pascal}}Query({{access.holder}});
 
-    expect(await application.queryBus.execute(new {{name.pascal}}Query({{access.holder}}))).toEqual(answer);
+    expect(await application.queryBus.execute(query)).toEqual(answer);
   });
 {{#if access.protected}}
 
   it('is refused to an actor who does not hold the permission {{access.permission}}', async () => {
     const application = {{spec.await}}arrange({});
+    const query = new {{name.pascal}}Query(anActor().build());
 
-    await expect(application.queryBus.execute(new {{name.pascal}}Query(anActor().build()))).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(application.queryBus.execute(query)).rejects.toMatchObject({ code: 'FORBIDDEN' });
   });
 {{/if}}
 
@@ -46,6 +53,10 @@ describe('{{name.title}}', () => {
 });
 
 {{spec.async}}function arrange(answer: {{name.pascal}}Result) {
+{{#if spec.assembles}}
+  const context = {{spec.context}};
+
+{{/if}}
   return createTestApplication({
     modules: [{{spec.modules}}],
     fakes: [fake({{name.pascal}}Reader, new Fake{{name.pascal}}Reader(answer))],

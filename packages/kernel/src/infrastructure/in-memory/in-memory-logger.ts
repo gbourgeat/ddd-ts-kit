@@ -64,7 +64,9 @@ export class InMemoryLogger implements Logger {
   }
 
   private write(level: LogLevel, message: string, fields: LogFields = {}): void {
-    if (!this.isLevelEnabled(level)) return;
+    if (!this.isLevelEnabled(level)) {
+      return;
+    }
 
     this.entries.push({ level, message, fields: this.recorded(fields) });
   }

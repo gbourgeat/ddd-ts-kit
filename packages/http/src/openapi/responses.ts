@@ -54,18 +54,12 @@ function errorCodesByStatus(route: Route, mapper: ErrorMapper): Map<number, stri
   return codesByStatus;
 }
 
-function problemResponse(
-  status: number,
-  codes: readonly string[],
-  declared: JsonSchema | undefined,
-): JsonSchema {
+function problemResponse(status: number, codes: readonly string[], declared: JsonSchema | undefined): JsonSchema {
   const sorted = [...codes].sort(compare);
 
   return {
     description:
-      declared === undefined
-        ? `${statusTitle(status)}. Error codes: ${sorted.join(', ')}.`
-        : declared['description'],
+      declared === undefined ? `${statusTitle(status)}. Error codes: ${sorted.join(', ')}.` : declared['description'],
     content: {
       ...(isRecord(declared?.['content']) ? declared['content'] : {}),
       'application/problem+json': { schema: PROBLEM_REF },

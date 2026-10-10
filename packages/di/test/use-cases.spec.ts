@@ -11,14 +11,12 @@ import {
   IntegrationEventPublisher,
   Query,
   QueryBus,
-  SequentialIdGenerator,
   UnitOfWork,
 } from '@ddd-ts-kit/kernel';
 import {
   createApplication,
   defineContextModule,
   kernelModule,
-  override,
   overrideForTests,
   type BindingInfo,
 } from '../src/index.js';
@@ -30,14 +28,8 @@ import { PlaceOrderHandler } from './support/ordering/application/commands/place
 import { GetOrder } from './support/ordering/application/queries/get-order/get-order.query.js';
 import { GetOrderHandler } from './support/ordering/application/queries/get-order/get-order.handler.js';
 import { OrderRepository } from './support/ordering/domain/repositories/order.repository.js';
-import { InMemoryOrderRepository } from './support/ordering/infrastructure/persistence/in-memory-order.repository.js';
+import { deterministicKernel } from './support/deterministic-kernel.js';
 import { orderingModule } from './support/ordering/ordering.module.js';
-
-const deterministicKernel = (): ReturnType<typeof kernelModule> =>
-  kernelModule({
-    clock: new FixedClock(new Date('2026-05-01T08:00:00.000Z')),
-    ids: () => new SequentialIdGenerator('order'),
-  });
 
 beforeEach(() => {
   PlaceOrderHandler.built = 0;
@@ -270,7 +262,10 @@ describe('the checks on commands and queries', () => {
     const error = wiringFailure(() => createApplication({ modules: [kernelModule(), retention] }));
 
     expect(error.code).toBe('DUPLICATE_BINDING');
-    expect(error.message).toBe('Token "RetentionHandler" is bound twice: by module "retention" and by module "retention".');
+
+    expect(error.message).toBe(
+      'Token "RetentionHandler" is bound twice: by module "retention" and by module "retention".',
+    );
   });
 
   it('accepts one factory per statement where one class would serve two messages', async () => {
@@ -295,52 +290,5 @@ describe('the checks on commands and queries', () => {
 
     expect(await app.resolve(CommandBus).execute(new Archive())).toBe('Archive');
     expect(await app.resolve(CommandBus).execute(new Purge())).toBe('Purge');
-  });
-});
-
-describe('what a handler needs', () => {
-  it('rejects a handler dependency that no module binds, before any message', () => {
-    const error = wiringFailure(() => createApplication({ modules: [orderingModule] }));
-
-    expect(error.code).toBe('UNBOUND_DEPENDENCY');
-    expect(error.message).toContain('"PlaceOrderHandler"');
-  });
-
-  it('asks for the kernel module when handlers have no bus to go on', () => {
-    const lonely = defineContextModule({
-      name: 'lonely',
-      register(builder) {
-        builder.bind(OrderRepository).toClass(InMemoryOrderRepository);
-        builder.query(GetOrder).handledBy(GetOrderHandler, [OrderRepository]);
-      },
-    });
-
-    const error = wiringFailure(() => createApplication({ modules: [lonely] }));
-
-    expect(error.code).toBe('UNBOUND_DEPENDENCY');
-
-    expect(error.message).toBe(
-      'Module "lonely" declares the query "GetOrder", but no module binds "QueryBus". Add kernelModule() to the modules.',
-    );
-  });
-
-  it('rejects a bus that cannot receive handlers', () => {
-    const remote: CommandBus = { execute: () => Promise.reject(new Error('remote transport')) };
-
-    const error = wiringFailure(() =>
-      createApplication({ modules: [deterministicKernel(), orderingModule], overrides: [override(CommandBus, remote)] }),
-    );
-
-    expect(error.code).toBe('BUS_WITHOUT_REGISTER');
-    expect(error.message).toContain('"CommandBus" has no register(type, handler) method');
-  });
-
-  it('rejects a command left without a handler', () => {
-    const sloppy = defineContextModule({ name: 'sloppy', register: (builder) => void builder.command(PlaceOrder) });
-
-    const error = wiringFailure(() => createApplication({ modules: [kernelModule(), sloppy] }));
-
-    expect(error.code).toBe('INCOMPLETE_BINDING');
-    expect(error.message).toContain('command(PlaceOrder) without handledBy or handledByFactory');
   });
 });

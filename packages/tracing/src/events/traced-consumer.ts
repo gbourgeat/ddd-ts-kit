@@ -1,4 +1,13 @@
-import { SpanKind, context, trace, type Attributes, type Context, type Span, type SpanContext, type SpanOptions } from '@opentelemetry/api';
+import {
+  SpanKind,
+  context,
+  trace,
+  type Attributes,
+  type Context,
+  type Span,
+  type SpanContext,
+  type SpanOptions,
+} from '@opentelemetry/api';
 import type { EventDelivery, IntegrationEvent, IntegrationEventCallback } from '@ddd-ts-kit/kernel';
 import { CORRELATION_ID_ATTRIBUTE, ORIGIN_ATTRIBUTE } from '../local-root/correlate.js';
 import { spanContextFromTraceparent } from '../propagation/span-context-from-traceparent.js';
@@ -28,7 +37,10 @@ export const ATTEMPT_ATTRIBUTE = 'app.messaging.attempt';
  * says `dead-lettered`. The span starts the unit of work: it carries the correlation id of the
  * event. Never the payload.
  */
-export function tracedConsumer(handler: IntegrationEventCallback, options: TracedConsumerOptions = {}): IntegrationEventCallback {
+export function tracedConsumer(
+  handler: IntegrationEventCallback,
+  options: TracedConsumerOptions = {},
+): IntegrationEventCallback {
   return async (event, delivery) => {
     await inSpan(startOf(event, delivery, options), async (span) => {
       await handler(event, delivery);
@@ -37,7 +49,11 @@ export function tracedConsumer(handler: IntegrationEventCallback, options: Trace
   };
 }
 
-function startOf(event: IntegrationEvent, delivery: EventDelivery | undefined, options: TracedConsumerOptions): SpanStart {
+function startOf(
+  event: IntegrationEvent,
+  delivery: EventDelivery | undefined,
+  options: TracedConsumerOptions,
+): SpanStart {
   const producer = event.traceparent === undefined ? undefined : spanContextFromTraceparent(event.traceparent);
   const linked = options.trace === 'link' && producer !== undefined;
   const spanOptions: SpanOptions = { kind: SpanKind.CONSUMER, attributes: attributesOf(event, delivery, options) };
@@ -58,7 +74,11 @@ function parentOf(producer: SpanContext | undefined, linked: boolean): Context {
   return producer === undefined || linked ? active : trace.setSpanContext(active, producer);
 }
 
-function attributesOf(event: IntegrationEvent, delivery: EventDelivery | undefined, options: TracedConsumerOptions): Attributes {
+function attributesOf(
+  event: IntegrationEvent,
+  delivery: EventDelivery | undefined,
+  options: TracedConsumerOptions,
+): Attributes {
   const consumer = options.consumer ?? delivery?.consumer;
 
   return {

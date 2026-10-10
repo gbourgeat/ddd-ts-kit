@@ -2,7 +2,7 @@ import { expect } from 'vitest';
 import { cli, read, scaffoldEverything, tempDir, write } from '../helpers.js';
 import { eslintOn } from './analyzers.js';
 import { installAsPublished } from './install-as-published.js';
-import { findingsOf } from './run-in.js';
+import { bin, findingsOf } from './run-in.js';
 
 interface Reported {
   readonly ruleId: string;
@@ -43,7 +43,9 @@ export class EditedProject {
   }
 
   restore(): void {
-    for (const [file, content] of this.generated) write(this.root, file, content);
+    for (const [file, content] of this.generated) {
+      write(this.root, file, content);
+    }
   }
 
   /** What `ddd-ts-kit check` reports, the way `npm run check:arch` runs it. */
@@ -59,6 +61,11 @@ export class EditedProject {
   /** What ESLint, with the preset of the project, says of these files. */
   linted(...files: string[]): string {
     return findingsOf(this.root, eslintOn(...files));
+  }
+
+  /** What the formatter of the project, with its configuration, would change in these files. */
+  unformatted(...files: string[]): string {
+    return findingsOf(this.root, { command: bin('biome'), args: ['format', ...files] });
   }
 
   private original(file: string): string {

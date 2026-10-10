@@ -55,7 +55,9 @@ export async function discoverContext(
 }
 
 function assertInItsFolder({ relative, rule }: RoleFile, context: string): void {
-  if (rule.folders.some((folder) => relative.startsWith(`${folder}/`))) return;
+  if (rule.folders.some((folder) => relative.startsWith(`${folder}/`))) {
+    return;
+  }
 
   throw new WiringError(
     'MISPLACED_DECLARATION',
@@ -79,7 +81,9 @@ function declaredIn(file: RoleFile, namespace: unknown, context: string): Declar
   const exported = typeof namespace === 'object' && namespace !== null ? Object.values(namespace) : [];
   const declared = exported.filter(isDeclaredClass);
 
-  if (declared.length === 0) throw nothingDeclared(file, context);
+  if (declared.length === 0) {
+    throw nothingDeclared(file, context);
+  }
 
   for (const target of declared) {
     assertRoleOfItsFile(target, file);
@@ -103,7 +107,9 @@ function nothingDeclared({ absolute, rule }: RoleFile, context: string): WiringE
 function assertRoleOfItsFile(target: DeclaredClass, { absolute, rule }: RoleFile): void {
   const role = declarationOf(target)?.role;
 
-  if (role === undefined || rule.roles.includes(role)) return;
+  if (role === undefined || rule.roles.includes(role)) {
+    return;
+  }
 
   throw new WiringError(
     'MISPLACED_DECLARATION',

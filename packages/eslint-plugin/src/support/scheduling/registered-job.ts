@@ -15,7 +15,12 @@ export function registeredJob(node: TSESTree.CallExpression): RegisteredJob | un
   const last = chain.at(-1);
   const [handler] = last?.call.arguments ?? [];
 
-  if (registration === undefined || last === undefined || !last.name.startsWith('handledBy')) return undefined;
+  if (registration === undefined || last === undefined || !last.name.startsWith('handledBy')) {
+    return undefined;
+  }
 
-  return { registration, handler: last.name === 'handledBy' && handler?.type === AST_NODE_TYPES.Identifier ? handler : undefined };
+  return {
+    registration,
+    handler: last.name === 'handledBy' && handler?.type === AST_NODE_TYPES.Identifier ? handler : undefined,
+  };
 }

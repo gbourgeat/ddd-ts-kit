@@ -35,7 +35,9 @@ export default defineConfig(({ mode }) => ({
  * failed for a layer it does not execute.
  */
 function measuredLayers(mode: string): string[] {
-  return mode === INTEGRATION_MODE ? [layer('infrastructure')] : [layer('domain'), layer('application'), layer('presentation')];
+  return mode === INTEGRATION_MODE
+    ? [layer('infrastructure')]
+    : [layer('domain'), layer('application'), layer('presentation')];
 }
 
 function layer(name: string): string {

@@ -14,7 +14,9 @@ export class FakeDelegationRepository extends InMemoryRepository<Delegation> imp
   }
 
   async findActiveOfMember(practiceId: string, personId: string): Promise<readonly Delegation[]> {
-    return this.all().filter((stored) => stored.isActive && stored.desk.practiceId === practiceId && involves(stored, personId));
+    return this.all().filter(
+      (stored) => stored.isActive && stored.desk.practiceId === practiceId && involves(stored, personId),
+    );
   }
 
   async findDueAt(instant: Date): Promise<readonly Delegation[]> {

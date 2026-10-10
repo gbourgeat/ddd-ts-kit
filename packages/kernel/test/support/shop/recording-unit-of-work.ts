@@ -31,7 +31,9 @@ export class RecordingUnitOfWork implements UnitOfWork {
 
     this.failNextCommit = undefined;
 
-    if (failure !== undefined) throw failure;
+    if (failure !== undefined) {
+      throw failure;
+    }
 
     this.journal.push('commit');
   }

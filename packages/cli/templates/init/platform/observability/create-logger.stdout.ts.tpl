@@ -21,9 +21,16 @@ export interface LogSettings {
  * spans and to its audit entries. `stop()` of the application flushes it, last.
  */
 export function createLogger(scope: ExecutionScope, settings: LogSettings | undefined): Logger {
-  if (settings === undefined) return new NoopLogger();
+  if (settings === undefined) {
+    return new NoopLogger();
+  }
 
   const { level, service, environment, scrubMessages } = settings;
 
-  return new StdoutLogger({ level, base: { service, environment }, scrubMessages, fields: () => traceLogFields(scope) });
+  return new StdoutLogger({
+    level,
+    base: { service, environment },
+    scrubMessages,
+    fields: () => traceLogFields(scope),
+  });
 }

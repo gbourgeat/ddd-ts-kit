@@ -4,11 +4,7 @@ import type { JsonSchema } from '../json-schema.js';
 import type { Schema } from '../schema.js';
 import type { ValidationIssue } from '../validation-issue.js';
 import type { InferStandardOutput } from './infer-standard-output.js';
-import type {
-  StandardSchemaIssue,
-  StandardSchemaResult,
-  StandardSchemaV1,
-} from './standard-schema-v1.js';
+import type { StandardSchemaIssue, StandardSchemaResult, StandardSchemaV1 } from './standard-schema-v1.js';
 
 /**
  * Standard Schema has no JSON Schema export, so the contract side is supplied by the caller
@@ -46,9 +42,7 @@ function verdictOf<Output>(result: StandardSchemaResult<Output>): Result<Output,
 }
 
 function issueOf(issue: StandardSchemaIssue): ValidationIssue {
-  const segments = (issue.path ?? []).map((segment) =>
-    typeof segment === 'object' ? segment.key : segment,
-  );
+  const segments = (issue.path ?? []).map((segment) => (typeof segment === 'object' ? segment.key : segment));
 
   // The specification carries no machine-readable code.
   return { path: formatPath(segments), code: 'invalid', message: issue.message };

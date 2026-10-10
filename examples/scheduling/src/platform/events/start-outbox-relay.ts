@@ -1,5 +1,12 @@
 import { OutboxRelay, type OutboxStore, type RelaySignal } from '@ddd-ts-kit/events';
-import { DeadLetterReports, NoopErrorReporter, SystemClock, type ErrorReporter, type IntegrationEventPublisher, type Logger } from '@ddd-ts-kit/kernel';
+import {
+  DeadLetterReports,
+  NoopErrorReporter,
+  SystemClock,
+  type ErrorReporter,
+  type IntegrationEventPublisher,
+  type Logger,
+} from '@ddd-ts-kit/kernel';
 
 export interface OutboxRelayOptions {
   readonly store: OutboxStore;

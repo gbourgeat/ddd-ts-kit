@@ -17,9 +17,23 @@ import {
   type EventBus,
 } from '@ddd-ts-kit/kernel';
 import { InMemoryAuditTrail, auditMiddleware } from '@ddd-ts-kit/audit';
-import { UseCaseGuard, createApplication, defineContextModule, kernelModule, type Application, type ContextModule } from '@ddd-ts-kit/di';
+import {
+  UseCaseGuard,
+  createApplication,
+  defineContextModule,
+  kernelModule,
+  type Application,
+  type ContextModule,
+} from '@ddd-ts-kit/di';
 import { InMemoryOutboxStore, OutboxPublisher, OutboxRelay } from '@ddd-ts-kit/events';
-import { ForbiddenError, defineRoute, executeRoute, reportHttpErrors, type Route, type RouteResponse } from '@ddd-ts-kit/http';
+import {
+  ForbiddenError,
+  defineRoute,
+  executeRoute,
+  reportHttpErrors,
+  type Route,
+  type RouteResponse,
+} from '@ddd-ts-kit/http';
 import { reportFailedRuns } from '@ddd-ts-kit/scheduling';
 import { ManualJobScheduler } from '@ddd-ts-kit/scheduling/testing';
 import { traceApplication, tracedPublisher, tracedRoutes, type ConsumerTrace } from '../../../src/index.js';
@@ -54,7 +68,9 @@ const guardModule = defineContextModule({
   register(builder) {
     builder.bind(UseCaseGuard).toValue({
       check: async (message, next) => {
-        if (message instanceof BookAppointment && message.slot === 'forbidden') throw new ForbiddenError('booking is not allowed');
+        if (message instanceof BookAppointment && message.slot === 'forbidden') {
+          throw new ForbiddenError('booking is not allowed');
+        }
 
         return next();
       },
@@ -78,9 +94,16 @@ export async function aClinic(options: ClinicOptions = {}): Promise<Clinic> {
   const scope = app.resolve(ExecutionScope);
   const commands = app.resolve(CommandBus);
   const routes = routesOf(app);
-  const execute = { executionScope: scope, around: tracedRoutes(), onError: reportHttpErrors(app.resolve(ErrorReporter)) };
 
-  if (commands instanceof InMemoryCommandBus) commands.use(auditMiddleware(audit, { scope, clock, ids: new SequentialIdGenerator('audit') }));
+  const execute = {
+    executionScope: scope,
+    around: tracedRoutes(),
+    onError: reportHttpErrors(app.resolve(ErrorReporter)),
+  };
+
+  if (commands instanceof InMemoryCommandBus) {
+    commands.use(auditMiddleware(audit, { scope, clock, ids: new SequentialIdGenerator('audit') }));
+  }
 
   await app.start();
 
@@ -92,8 +115,10 @@ export async function aClinic(options: ClinicOptions = {}): Promise<Clinic> {
     logger,
     errors,
     audit,
-    book: (slot) => executeRoute(routes.book, { params: {}, query: {}, headers: {}, body: undefined, raw: { slot } }, execute),
-    read: (id) => executeRoute(routes.read, { params: {}, query: {}, headers: {}, body: undefined, raw: { id } }, execute),
+    book: (slot) =>
+      executeRoute(routes.book, { params: {}, query: {}, headers: {}, body: undefined, raw: { slot } }, execute),
+    read: (id) =>
+      executeRoute(routes.read, { params: {}, query: {}, headers: {}, body: undefined, raw: { id } }, execute),
   };
 }
 
@@ -132,14 +157,23 @@ function modulesOf({ clock, bus, store, logger, errors }: Parts, options: Clinic
 function jobSchedulerOf(app: Application): ManualJobScheduler {
   const scheduler = app.resolve(JobScheduler);
 
-  if (!(scheduler instanceof ManualJobScheduler)) throw new TypeError('The clinic runs its jobs on the manual scheduler.');
+  if (!(scheduler instanceof ManualJobScheduler)) {
+    throw new TypeError('The clinic runs its jobs on the manual scheduler.');
+  }
 
   return scheduler;
 }
 
 function routesOf(app: Application): { book: Route; read: Route } {
   const book = defineRoute(
-    { method: 'POST', path: '/appointments', operationId: 'bookAppointment', summary: 'Book', responses: { 201: { description: 'Booked.' } }, security: false },
+    {
+      method: 'POST',
+      path: '/appointments',
+      operationId: 'bookAppointment',
+      summary: 'Book',
+      responses: { 201: { description: 'Booked.' } },
+      security: false,
+    },
     async ({ context }) => {
       const id = await app.resolve(CommandBus).execute(new BookAppointment(slotOf(context.raw)));
 
@@ -148,7 +182,14 @@ function routesOf(app: Application): { book: Route; read: Route } {
   );
 
   const read = defineRoute(
-    { method: 'GET', path: '/appointments/:id', operationId: 'getAppointment', summary: 'Read', responses: { 204: { description: 'Found.' } }, security: false },
+    {
+      method: 'GET',
+      path: '/appointments/:id',
+      operationId: 'getAppointment',
+      summary: 'Read',
+      responses: { 204: { description: 'Found.' } },
+      security: false,
+    },
     async ({ context }) => {
       await app.resolve(QueryBus).execute(new GetAppointment(slotOf(context.raw)));
 
@@ -161,7 +202,9 @@ function routesOf(app: Application): { book: Route; read: Route } {
 
 /** The raw request of these routes is the object the spec handed to the pipeline. */
 function slotOf(raw: unknown): string {
-  if (typeof raw !== 'object' || raw === null) return '';
+  if (typeof raw !== 'object' || raw === null) {
+    return '';
+  }
 
   const value: unknown = Reflect.get(raw, 'slot') ?? Reflect.get(raw, 'id');
 

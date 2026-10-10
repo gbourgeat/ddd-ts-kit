@@ -19,7 +19,9 @@ export class IssueInvoiceHandler implements CommandHandler<IssueInvoice> {
   }
 
   async execute(command: IssueInvoice): Promise<string> {
-    if (!(await this.customers.exists(command.customerId))) throw new RangeError(`Unknown customer ${command.customerId}`);
+    if (!(await this.customers.exists(command.customerId))) {
+      throw new RangeError(`Unknown customer ${command.customerId}`);
+    }
 
     const { customerId, actor } = command;
     const invoice = Invoice.issue({ id: this.ids.next(), customerId, issuedBy: actor.id, issuedAt: this.clock.now() });

@@ -22,7 +22,11 @@ const KEPT: AutoInstrumentationSettings = {
   '@opentelemetry/instrumentation-http': {},
   '@opentelemetry/instrumentation-undici': { requireParentforSpans: true },
   '@opentelemetry/instrumentation-grpc': {},
-  '@opentelemetry/instrumentation-pg': { requireParentSpan: true, ignoreConnectSpans: true, enhancedDatabaseReporting: false },
+  '@opentelemetry/instrumentation-pg': {
+    requireParentSpan: true,
+    ignoreConnectSpans: true,
+    enhancedDatabaseReporting: false,
+  },
   '@opentelemetry/instrumentation-mysql2': { maskStatement: true },
   '@opentelemetry/instrumentation-mysql': { enhancedDatabaseReporting: false },
   '@opentelemetry/instrumentation-mongodb': { requireParentSpan: true, enhancedDatabaseReporting: false },
@@ -40,7 +44,9 @@ const KEPT: AutoInstrumentationSettings = {
  * are no trace matter. An instrumentation a later version of the bundle adds keeps the default
  * of the bundle until it is listed here.
  */
-export function defaultInstrumentations(options: DefaultInstrumentationsOptions = {}): ReturnType<typeof getNodeAutoInstrumentations> {
+export function defaultInstrumentations(
+  options: DefaultInstrumentationsOptions = {},
+): ReturnType<typeof getNodeAutoInstrumentations> {
   const ignoredPaths = options.ignoredPaths ?? NOISE_PATHS;
 
   const settings: AutoInstrumentationSettings = {

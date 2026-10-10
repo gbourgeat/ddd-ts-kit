@@ -3,7 +3,14 @@ import { unwrap } from '@ddd-ts-kit/kernel';
 import { InvalidAppointmentTypeError } from '../../domain/errors/invalid-appointment-type.error.js';
 import { AppointmentType } from '../../domain/value-objects/appointment-type.vo.js';
 
-const consultation = { id: 'type-1', name: 'Consultation', duration: 30, grid: 15, buffer: 10, needsConfirmation: false };
+const consultation = {
+  id: 'type-1',
+  name: 'Consultation',
+  duration: 30,
+  grid: 15,
+  buffer: 10,
+  needsConfirmation: false,
+};
 
 describe('AppointmentType', () => {
   it('is equal to another type with the same facts', () => {

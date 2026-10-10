@@ -10,9 +10,7 @@ export function grantPattern(grant: Grant): string {
   const pattern = typeof grant === 'string' ? grant : grant.id;
 
   if (pattern !== EVERYTHING && !GRANT_PATTERN.test(pattern)) {
-    throw new AuthorizationSetupError(
-      `"${pattern}" is not a grant: use a permission, its id, "<context>:*" or "*".`,
-    );
+    throw new AuthorizationSetupError(`"${pattern}" is not a grant: use a permission, its id, "<context>:*" or "*".`);
   }
 
   return pattern;

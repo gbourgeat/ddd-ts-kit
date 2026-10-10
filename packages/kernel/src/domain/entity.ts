@@ -3,11 +3,6 @@ export abstract class Entity<Id extends string | number = string> {
   protected constructor(readonly id: Id) {}
 
   equals(other: Entity<Id> | undefined | null): boolean {
-    return (
-      other !== undefined &&
-      other !== null &&
-      other.constructor === this.constructor &&
-      other.id === this.id
-    );
+    return other !== undefined && other !== null && other.constructor === this.constructor && other.id === this.id;
   }
 }

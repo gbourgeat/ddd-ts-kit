@@ -10,9 +10,23 @@ const RULE = 'clean/one-export-per-file';
 
 describe('the name of a file', () => {
   it('is the kebab-case of what it exports', () => {
-    const names = ['RabbitMqEventBus', 'TypeOrmOutboxStore', 'StandardSchemaV1', 'HTTPServer', 'NO_POLICY', 'invoiceIssuedV1'];
+    const names = [
+      'RabbitMqEventBus',
+      'TypeOrmOutboxStore',
+      'StandardSchemaV1',
+      'HTTPServer',
+      'NO_POLICY',
+      'invoiceIssuedV1',
+    ];
 
-    expect(names.map(kebabCaseOf)).toEqual(['rabbit-mq-event-bus', 'type-orm-outbox-store', 'standard-schema-v1', 'http-server', 'no-policy', 'invoice-issued-v1']);
+    expect(names.map(kebabCaseOf)).toEqual([
+      'rabbit-mq-event-bus',
+      'type-orm-outbox-store',
+      'standard-schema-v1',
+      'http-server',
+      'no-policy',
+      'invoice-issued-v1',
+    ]);
   });
 
   it('reads every dot as a hyphen, or keeps the name before a role the export does not end with', () => {
@@ -26,7 +40,9 @@ describe('the name of a file', () => {
   });
 
   it('is not asked of a file that exports no class, interface nor function', () => {
-    expect(messagesOf({ 'src/platform/settings.ts': 'export const PORT = 3000;\n\nexport type Mode = string;\n' })).toEqual([]);
+    expect(
+      messagesOf({ 'src/platform/settings.ts': 'export const PORT = 3000;\n\nexport type Mode = string;\n' }),
+    ).toEqual([]);
   });
 
   it('matches the files of onePerFile.allow by path or by glob', () => {
@@ -39,14 +55,41 @@ describe('the name of a file', () => {
 
 describe('clean/one-export-per-file', () => {
   it('takes a function with the function derived from it, and a family returning a type the file imports', () => {
-    const retry = lines('export function retry(): Advice {', '  return retryAdvice();', '}', '', 'export function retryAdvice(): Advice {', '  return advice;', '}');
-    const selectors = lines("import type { Selector } from './selector.js';", '', 'export function byId(): Selector {', '  return selector;', '}', '', 'export function byName(): Selector {', '  return selector;', '}');
+    const retry = lines(
+      'export function retry(): Advice {',
+      '  return retryAdvice();',
+      '}',
+      '',
+      'export function retryAdvice(): Advice {',
+      '  return advice;',
+      '}',
+    );
+
+    const selectors = lines(
+      "import type { Selector } from './selector.js';",
+      '',
+      'export function byId(): Selector {',
+      '  return selector;',
+      '}',
+      '',
+      'export function byName(): Selector {',
+      '  return selector;',
+      '}',
+    );
 
     expect(messagesOf({ 'src/platform/retry.ts': retry, 'src/platform/selectors.ts': selectors })).toEqual([]);
   });
 
   it('reports two functions nothing ties together, on the second one, and still asks for the name', () => {
-    const helpers = lines('export function first(): number {', '  return 1;', '}', '', 'export function second(): string {', "  return '';", '}');
+    const helpers = lines(
+      'export function first(): number {',
+      '  return 1;',
+      '}',
+      '',
+      'export function second(): string {',
+      "  return '';",
+      '}',
+    );
 
     expect(messagesOf({ 'src/platform/helpers.ts': helpers })).toEqual([
       'src/platform/helpers.ts:1 "helpers.ts" is not named after what it exports (first, second).',
@@ -58,31 +101,63 @@ describe('clean/one-export-per-file', () => {
     const server = lines('export class HttpServer {}', '', 'export class HttpServerError {}');
     const allow = [{ file: 'src/platform/*.ts', reason: 'One boundary.' }];
 
-    expect(messagesOf({ 'src/platform/http-server.ts': server, 'src/platform/listener.ts': server }, { onePerFile: { allow } })).toEqual([
+    expect(
+      messagesOf(
+        { 'src/platform/http-server.ts': server, 'src/platform/listener.ts': server },
+        { onePerFile: { allow } },
+      ),
+    ).toEqual([
       'src/platform/listener.ts:1 "listener.ts" is not named after what it exports (HttpServer, HttpServerError).',
     ]);
   });
 
   it('lets an entry file re-export, import for a side effect and hold an empty export, and nothing else', () => {
-    const entry = lines("import 'reflect-metadata';", "import { helper } from './helper.js';", "export * from './a.js';", "export { b, type C } from './b.js';", "export type { D } from './d.js';", 'export {};', 'export { helper };', 'const local = 1;');
+    const entry = lines(
+      "import 'reflect-metadata';",
+      "import { helper } from './helper.js';",
+      "export * from './a.js';",
+      "export { b, type C } from './b.js';",
+      "export type { D } from './d.js';",
+      'export {};',
+      'export { helper };',
+      'const local = 1;',
+    );
 
-    expect(messagesOf({ 'src/platform/index.ts': entry }).map((message) => message.split(':')[1]?.split(' ')[0])).toEqual(['2', '7', '8']);
+    expect(
+      messagesOf({ 'src/platform/index.ts': entry }).map((message) => message.split(':')[1]?.split(' ')[0]),
+    ).toEqual(['2', '7', '8']);
   });
 
   it('judges neither tests nor the files of a test directory', () => {
     const two = lines('export class First {}', '', 'export class Second {}');
 
-    expect(messagesOf({ 'src/platform/two.spec.ts': two, 'src/contexts/billing/test/fakes/fakes.ts': two, 'src/platform/test/doubles.ts': two })).toEqual([]);
+    expect(
+      messagesOf({
+        'src/platform/two.spec.ts': two,
+        'src/contexts/billing/test/fakes/fakes.ts': two,
+        'src/platform/test/doubles.ts': two,
+      }),
+    ).toEqual([]);
   });
 });
 
 describe('clean/function-size', () => {
-  const long = lines('export function longest(): number {', ...Array.from({ length: 101 }, (_, index) => `  const step${index} = ${index};`), '', '  return step0;', '}');
+  const long = lines(
+    'export function longest(): number {',
+    ...Array.from({ length: 101 }, (_, index) => `  const step${index} = ${index};`),
+    '',
+    '  return step0;',
+    '}',
+  );
 
   it('reports a function over the ceiling as an error whatever the severity, unless the rule is off', () => {
     const severityUnder = (rules: Record<string, string>): string[] => {
       const deviations = Object.keys(rules).map((id) => ({ what: `rules.${id}`, adr: '0001', reason: 'Recorded.' }));
-      const root = projectWith({ 'src/platform/longest.ts': long, 'docs/adr/0001-sizes.md': '# Sizes\n' }, { rules, deviations });
+
+      const root = projectWith(
+        { 'src/platform/longest.ts': long, 'docs/adr/0001-sizes.md': '# Sizes\n' },
+        { rules, deviations },
+      );
 
       return runCheck(loadProject(root), { rules: ['clean/function-size'] }).violations.map(({ severity }) => severity);
     };
@@ -95,21 +170,94 @@ describe('clean/function-size', () => {
 
 describe('clean/blank-lines', () => {
   it('reads a comment above a return as part of it, and leaves a blank line inside a literal to the formatter', () => {
-    const source = lines('export function total(): number {', '', '  const sum = 1;', '  // Rounded.', '  return sum;', '}', '', 'export const table = {', '', '  a: 1,', '};');
+    const source = lines(
+      'export function total(): number {',
+      '',
+      '  const sum = 1;',
+      '  // Rounded.',
+      '  return sum;',
+      '}',
+      '',
+      'export const table = {',
+      '',
+      '  a: 1,',
+      '};',
+    );
 
-    expect(reported(projectWith({ 'src/platform/total.ts': source }), 'clean/blank-lines').map(({ line, message }) => `${line} ${message}`)).toEqual([
-      '2 A blank line pads the start of a block.',
-      '5 No blank line before this `return`.',
+    expect(
+      reported(projectWith({ 'src/platform/total.ts': source }), 'clean/blank-lines').map(
+        ({ line, message }) => `${line} ${message}`,
+      ),
+    ).toEqual(['2 A blank line pads the start of a block.', '5 No blank line before this `return`.']);
+  });
+});
+
+describe('clean/braces', () => {
+  const braces = (...written: string[]): string[] =>
+    reported(projectWith({ 'src/platform/total.ts': lines(...written) }), 'clean/braces').map(
+      ({ line, message }) => `${line} ${message}`,
+    );
+
+  it('reports each branch and loop without braces, a body on the line of its braces and an else set apart', () => {
+    const found = braces(
+      'export async function run(steps: readonly (() => Promise<void>)[], ready: boolean): Promise<number> {',
+      '  if (!ready) return 0;',
+      '  for (const step of steps) await step();',
+      '  for await (const step of steps) { await step(); }',
+      '  while (ready) steps.keys();',
+      '  do steps.keys(); while (ready);',
+      '  if (ready) {',
+      '    return 1;',
+      '  }',
+      '  else return 2;',
+      '}',
+    );
+
+    expect(found).toEqual([
+      '2 The body of this `if` has no braces.',
+      '3 The body of this `for` has no braces.',
+      '4 The body of this `for` shares a line with its braces.',
+      '5 The body of this `while` has no braces.',
+      '6 The body of this `do` has no braces.',
+      '10 This `else` starts a line instead of following the closing brace.',
     ]);
+  });
+
+  it('reads a body on the next line, a comment after the brace and a keyword in a string or a comment as ESLint does', () => {
+    const found = braces(
+      'export function label(status: string): string {',
+      '  // if (legacy) return status;',
+      '  if (status === "paid")',
+      '    return "Paid";',
+      '',
+      '  if (status === "due") { // still open',
+      '    return "if (due) else";',
+      '  } else if (status === "void") {',
+      '    return `while (${status}) do`;',
+      '  }',
+      '',
+      '  return status;',
+      '}',
+    );
+
+    expect(found).toEqual(['3 The body of this `if` has no braces.']);
   });
 });
 
 describe('config/valid', () => {
   it('reports each incomplete entry of onePerFile.allow on its own line', () => {
-    const allow = [{ file: 'src/a.ts', reason: 'One thing.' }, { file: 'src/b.ts', reason: ' ' }, { reason: 'No file.' }, 'src/c.ts'];
+    const allow = [
+      { file: 'src/a.ts', reason: 'One thing.' },
+      { file: 'src/b.ts', reason: ' ' },
+      { reason: 'No file.' },
+      'src/c.ts',
+    ];
+
     const root = projectWith({}, { onePerFile: { allow } });
 
-    expect(reported(root, 'config/valid').flatMap(({ message }) => (message.startsWith('Entry') ? [message] : []))).toEqual([
+    expect(
+      reported(root, 'config/valid').flatMap(({ message }) => (message.startsWith('Entry') ? [message] : [])),
+    ).toEqual([
       'Entry 2 of "onePerFile.allow" has no reason: it is ignored.',
       'Entry 3 of "onePerFile.allow" has no file: it is ignored.',
       'Entry 4 of "onePerFile.allow" has no file and no reason: it is ignored.',

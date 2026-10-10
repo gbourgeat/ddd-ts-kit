@@ -124,11 +124,7 @@ export class KnexOutboxStore implements OutboxStore {
       .update({ status: 'published', published_at: at });
   }
 
-  async markFailed(
-    id: string,
-    error: { readonly code: string },
-    nextAttemptAt: Date | null,
-  ): Promise<void> {
+  async markFailed(id: string, error: { readonly code: string }, nextAttemptAt: Date | null): Promise<void> {
     await this.rows(this.context.executor())
       .where({ id })
       .whereNot({ status: 'published' })
@@ -164,12 +160,11 @@ export class KnexOutboxStore implements OutboxStore {
     const count = (condition: string, alias: string) =>
       executor.raw(`sum(case when ${condition} then 1 else 0 end) as ??`, [alias]);
 
-    const row: unknown = await this.rows(executor)
-      .first(
-        count("status = 'pending'", 'pending'),
-        count("status = 'pending' and last_error_code is not null", 'failed'),
-        count("status = 'dead'", 'dead'),
-      );
+    const row: unknown = await this.rows(executor).first(
+      count("status = 'pending'", 'pending'),
+      count("status = 'pending' and last_error_code is not null", 'failed'),
+      count("status = 'dead'", 'dead'),
+    );
 
     return { pending: countAt(row, 'pending'), failed: countAt(row, 'failed'), dead: countAt(row, 'dead') };
   }
@@ -186,7 +181,10 @@ export class KnexOutboxStore implements OutboxStore {
 
       if (due.length > 0) {
         await this.rows(transaction)
-          .whereIn('id', due.map((row) => row.id))
+          .whereIn(
+            'id',
+            due.map((row) => row.id),
+          )
           .update(this.lease(transaction, now));
       }
 

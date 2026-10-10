@@ -1,7 +1,16 @@
 {{#unless audit.on}}
 import type { OnDecision } from '@ddd-ts-kit/auth';
 {{/unless}}
-import { AsyncLocalStorageExecutionScope, SystemClock, UuidGenerator, type Clock, type ExecutionScope, type IdGenerator, type Logger, type Metrics } from '@ddd-ts-kit/kernel';
+import {
+  AsyncLocalStorageExecutionScope,
+  SystemClock,
+  UuidGenerator,
+  type Clock,
+  type ExecutionScope,
+  type IdGenerator,
+  type Logger,
+  type Metrics,
+} from '@ddd-ts-kit/kernel';
 import { traceApplication, type ConsumerTrace, type TracedApplication } from '@ddd-ts-kit/tracing';
 {{#if audit.on}}
 import { createAudit, type Audit } from './audit/create-audit.js';

@@ -14,15 +14,34 @@ type Private = TSESTree.PrivateIdentifier;
  * another class declares the same `#name`, or a use is not `this.#name` or `<identifier>.#name`
  * inside the class.
  */
-export function hashPrivateFix(sourceCode: Source, owner: ClassNode, name: string): TSESLint.ReportFixFunction | undefined {
-  const all = [...descendants(sourceCode.ast)].filter((node): node is Private => node.type === AST_NODE_TYPES.PrivateIdentifier && node.name === name);
+export function hashPrivateFix(
+  sourceCode: Source,
+  owner: ClassNode,
+  name: string,
+): TSESLint.ReportFixFunction | undefined {
+  const all = [...descendants(sourceCode.ast)].filter(
+    (node): node is Private => node.type === AST_NODE_TYPES.PrivateIdentifier && node.name === name,
+  );
+
   const keys = all.filter((node) => isMemberKey(node));
   const uses = all.filter((node) => !isMemberKey(node));
-  const safe = keys.every((key) => key.parent.parent === owner.body) && uses.every((use) => isPlainUse(use, owner)) && !hasMemberNamed(owner, name);
 
-  if (!safe) return undefined;
+  const safe =
+    keys.every((key) => key.parent.parent === owner.body) &&
+    uses.every((use) => isPlainUse(use, owner)) &&
+    !hasMemberNamed(owner, name);
 
-  return (fixer) => [...keys.flatMap((key) => [fixer.insertTextBefore(firstModifier(sourceCode, key), 'private '), fixer.replaceText(key, name)]), ...uses.map((use) => fixer.replaceText(use, name))];
+  if (!safe) {
+    return undefined;
+  }
+
+  return (fixer) => [
+    ...keys.flatMap((key) => [
+      fixer.insertTextBefore(firstModifier(sourceCode, key), 'private '),
+      fixer.replaceText(key, name),
+    ]),
+    ...uses.map((use) => fixer.replaceText(use, name)),
+  ];
 }
 
 function isMemberKey(node: Private): boolean {
@@ -32,15 +51,26 @@ function isMemberKey(node: Private): boolean {
 function isPlainUse(use: Private, owner: ClassNode): boolean {
   const access = use.parent;
 
-  if (access.type !== AST_NODE_TYPES.MemberExpression || use.range[0] < owner.range[0] || use.range[1] > owner.range[1]) return false;
+  if (
+    access.type !== AST_NODE_TYPES.MemberExpression ||
+    use.range[0] < owner.range[0] ||
+    use.range[1] > owner.range[1]
+  ) {
+    return false;
+  }
 
   return access.object.type === AST_NODE_TYPES.ThisExpression || access.object.type === AST_NODE_TYPES.Identifier;
 }
 
 function hasMemberNamed(owner: ClassNode, name: string): boolean {
-  const members = owner.body.body.some((member) => 'key' in member && !member.computed && member.key.type === AST_NODE_TYPES.Identifier && member.key.name === name);
+  const members = owner.body.body.some(
+    (member) =>
+      'key' in member && !member.computed && member.key.type === AST_NODE_TYPES.Identifier && member.key.name === name,
+  );
 
-  return members || parameterProperties(constructorOf(owner.body)).some((parameter) => parameterName(parameter) === name);
+  return (
+    members || parameterProperties(constructorOf(owner.body)).some((parameter) => parameterName(parameter) === name)
+  );
 }
 
 /** `private` goes before `static`, `readonly`, `async`, `get`, and after the decorators. */

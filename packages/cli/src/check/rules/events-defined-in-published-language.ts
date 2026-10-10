@@ -8,29 +8,39 @@ import { inContext } from '../support/in-context.js';
 import { KEBAB_SEGMENT } from '../support/kebab-segment.js';
 import { perFile } from '../support/per-file.js';
 
-const MISPLACED_FIX = 'Move the declaration to the published-language/ folder of the context that produces the event (`ddd-ts-kit generate integration-event <context> <Aggregate> <Fact>` creates it) and import it from there.';
+const MISPLACED_FIX =
+  'Move the declaration to the published-language/ folder of the context that produces the event (`ddd-ts-kit generate integration-event <context> <Aggregate> <Fact>` creates it) and import it from there.';
 
 export const eventsDefinedInPublishedLanguage: Rule = {
   id: 'events/defined-in-published-language',
-  description: "An integration event is declared once with defineIntegrationEvent in the producer's published-language/, with a payload schema.",
+  description:
+    "An integration event is declared once with defineIntegrationEvent in the producer's published-language/, with a payload schema.",
   scope: 'file',
   run(project) {
     // Remembers, across the files of the project, where each version of an event was first seen.
     const declared = new Map<string, string>();
 
     return perFile(project, this.id, (file) => {
-      if (file.isTest) return [];
+      if (file.isTest) {
+        return [];
+      }
 
       const declarations = eventDeclarations(file);
       const isPublished = inContext(file.location) && file.location.layer === 'published-language';
 
-      return isPublished ? [...judged(file, declarations, declared), ...handwritten(file, declarations)] : misplaced(file, declarations);
+      return isPublished
+        ? [...judged(file, declarations, declared), ...handwritten(file, declarations)]
+        : misplaced(file, declarations);
     });
   },
 };
 
 function misplaced(file: SourceFile, declarations: readonly EventDeclaration[]): Finding[] {
-  return declarations.map((declaration) => ({ line: file.scan.lineAt(declaration.start), message: 'An integration event is declared outside a published language.', fix: MISPLACED_FIX }));
+  return declarations.map((declaration) => ({
+    line: file.scan.lineAt(declaration.start),
+    message: 'An integration event is declared outside a published language.',
+    fix: MISPLACED_FIX,
+  }));
 }
 
 function judged(file: SourceFile, declarations: readonly EventDeclaration[], declared: Map<string, string>): Finding[] {
@@ -38,12 +48,17 @@ function judged(file: SourceFile, declarations: readonly EventDeclaration[], dec
     const line = file.scan.lineAt(declaration.start);
     const first = firstDeclarationOf(declaration, file.path, declared);
 
-    return [...withoutPayload(declaration, line), ...(first === undefined ? [] : [declaredTwice(declaration, line, first)])];
+    return [
+      ...withoutPayload(declaration, line),
+      ...(first === undefined ? [] : [declaredTwice(declaration, line, first)]),
+    ];
   });
 }
 
 function withoutPayload(declaration: EventDeclaration, line: number): Finding[] {
-  if (declaration.hasPayload) return [];
+  if (declaration.hasPayload) {
+    return [];
+  }
 
   return [
     {
@@ -55,13 +70,21 @@ function withoutPayload(declaration: EventDeclaration, line: number): Finding[] 
 }
 
 /** The file that already declared this version of the event; records this one when it is the first. */
-function firstDeclarationOf(declaration: EventDeclaration, file: string, declared: Map<string, string>): string | undefined {
-  if (declaration.type === undefined) return undefined;
+function firstDeclarationOf(
+  declaration: EventDeclaration,
+  file: string,
+  declared: Map<string, string>,
+): string | undefined {
+  if (declaration.type === undefined) {
+    return undefined;
+  }
 
   const key = `${declaration.type.value}@${declaration.version}`;
   const first = declared.get(key);
 
-  if (first === undefined) declared.set(key, file);
+  if (first === undefined) {
+    declared.set(key, file);
+  }
 
   return first;
 }
@@ -76,7 +99,12 @@ function declaredTwice(declaration: EventDeclaration, line: number, first: strin
 
 function handwritten(file: SourceFile, declarations: readonly EventDeclaration[]): Finding[] {
   return file.scan.strings
-    .filter((literal) => isTypeLiteral(file, literal.start) && looksLikeEventType(literal.value) && !inDeclaration(declarations, literal.start))
+    .filter(
+      (literal) =>
+        isTypeLiteral(file, literal.start) &&
+        looksLikeEventType(literal.value) &&
+        !inDeclaration(declarations, literal.start),
+    )
     .map((literal) => ({
       line: literal.line,
       message: `The event "${literal.value}" is described by hand instead of being declared.`,

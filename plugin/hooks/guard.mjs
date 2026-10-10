@@ -15,7 +15,11 @@ const SESSION_CONTEXT_LIMIT = 3000;
 const COMMIT_DEFAULTS = { maxFiles: 20, maxLines: 600 };
 const COUNTED_FILE_BYTES = 1_000_000;
 
-const GENERATED_DOCUMENTS = ['openapi/openapi.json', 'docs/integration/asyncapi.json', 'docs/integration/event-catalog.md'];
+const GENERATED_DOCUMENTS = [
+  'openapi/openapi.json',
+  'docs/integration/asyncapi.json',
+  'docs/integration/event-catalog.md',
+];
 const LOCKFILES = ['package-lock.json', 'npm-shrinkwrap.json', 'pnpm-lock.yaml', 'yarn.lock', 'bun.lock', 'bun.lockb'];
 // Rewritten by a command: counted in no commit size, merged by regenerating.
 const DERIVED_FILES = [...GENERATED_DOCUMENTS, ...LOCKFILES, '.dependency-cruiser.cjs', 'docs/context-map.md'];
@@ -34,7 +38,10 @@ const GENERATORS = [
   [/\.port\.ts$/, 'port <context> <Name>'],
   [/\.policy\.ts$/, 'policy <context> <Name> --permission <aggregate>.<action>'],
   [/\.event-handler\.ts$/, 'event-handler <context> <Aggregate> <Fact>'],
-  [/\.job\.ts$/, 'job <context> <Name> (--every <duration> | --cron "<expression>" [--time-zone <zone>]) --command <UseCase>'],
+  [
+    /\.job\.ts$/,
+    'job <context> <Name> (--every <duration> | --cron "<expression>" [--time-zone <zone>]) --command <UseCase>',
+  ],
   [/\.publisher\.ts$/, 'integration-event <context> <Aggregate> <Fact>'],
   [/\.integration-event\.ts$/, 'integration-event <context> <Aggregate> <Fact>'],
   [/\.integration-handler\.ts$/, 'integration-handler <context> <upstream> <event-type>'],
@@ -50,6 +57,7 @@ const GENERATORS = [
 const GOVERNED_FILES = [
   /^ddd-ts-kit\.config\.json$/,
   /^eslint\.config\.[cm]?js$/,
+  /^biome\.jsonc?$/,
   /^knip\.json$/,
   /^lefthook\.yml$/,
   /^commitlint\.config\.[cm]?js$/,
@@ -70,7 +78,17 @@ const ESCAPES = [
 ];
 
 // Generators that write outside the context they are given: the config, registries of the platform, the schema.
-const SHARED_GENERATORS = ['context', 'repository', 'integration-event', 'job', 'gateway', 'policy', 'service', 'worker', 'adr'];
+const SHARED_GENERATORS = [
+  'context',
+  'repository',
+  'integration-event',
+  'job',
+  'gateway',
+  'policy',
+  'service',
+  'worker',
+  'adr',
+];
 const REPORT_TO_CONDUCTOR = 'Do not work around it: finish what you can and report the need to the conductor.';
 
 const MODES = { session, 'pre-write': preWrite, 'pre-bash': preBash, 'post-write': postWrite, stop };
@@ -80,7 +98,9 @@ main();
 function main() {
   try {
     const run = MODES[process.argv[2]];
-    if (run) run(readInput());
+    if (run) {
+      run(readInput());
+    }
   } catch {
     process.exitCode = 0;
   }
@@ -90,44 +110,68 @@ function session(input) {
   const directory = input.cwd ?? process.cwd();
   const project = findProject(directory);
   const lines = project ? projectBriefing(project, input) : planPointer(directory);
-  if (lines.length === 0) return;
+  if (lines.length === 0) {
+    return;
+  }
   emit({ hookSpecificOutput: { hookEventName: 'SessionStart', additionalContext: lines.join('\n') } });
 }
 
 function preWrite(input) {
   const file = input.tool_input?.file_path;
-  if (typeof file !== 'string') return;
+  if (typeof file !== 'string') {
+    return;
+  }
   const project = findProject(dirname(file));
-  if (!project || project.mode === 'off') return;
+  if (!project || project.mode === 'off') {
+    return;
+  }
   const refusal =
     generatedFileReason(project, file) ??
     testWriterScopeReason(project, file, input) ??
     workerScopeReason(project, file, input) ??
     handWrittenRoleReason(project, file);
-  if (refusal) return refuse(project, refusal);
+  if (refusal) {
+    return refuse(project, refusal);
+  }
   const deviation = governedFileReason(project, file) ?? escapeReason(input.tool_input);
-  if (deviation) decide('ask', deviation);
+  if (deviation) {
+    decide('ask', deviation);
+  }
 }
 
 function preBash(input) {
   const command = input.tool_input?.command;
-  if (typeof command !== 'string') return;
+  if (typeof command !== 'string') {
+    return;
+  }
   const project = findProject(commandDirectory(command, input.cwd ?? process.cwd()));
-  if (!project || project.mode === 'off') return;
+  if (!project || project.mode === 'off') {
+    return;
+  }
   const context = workerContext(project, input);
-  if (!context) return;
+  if (!context) {
+    return;
+  }
   const refusal = sharedGeneratorReason(project, context, command) ?? dependencyChangeReason(command);
-  if (refusal) refuse(project, refusal);
+  if (refusal) {
+    refuse(project, refusal);
+  }
 }
 
 function postWrite(input) {
   const file = input.tool_input?.file_path;
-  if (typeof file !== 'string' || !isChecked(file)) return;
+  if (typeof file !== 'string' || !isChecked(file)) {
+    return;
+  }
   const project = findProject(dirname(file));
-  if (!project?.cli || project.mode === 'off') return;
+  if (!project?.cli || project.mode === 'off') {
+    return;
+  }
   const report = runCli(project, ['check-file', file, '--json'], 12000);
   const errors = errorsOf(report);
-  if (errors.length === 0) return;
+  if (errors.length === 0) {
+    return;
+  }
   process.stderr.write(
     `ddd-ts-kit: the file just written breaks ${errors.length} architecture rule(s). Fix them now, do not suppress.\n${describe(errors)}\n`,
   );
@@ -135,18 +179,28 @@ function postWrite(input) {
 }
 
 function stop(input) {
-  if (input.stop_hook_active) return;
+  if (input.stop_hook_active) {
+    return;
+  }
   const project = findProject(input.cwd ?? process.cwd());
-  if (!project || project.mode === 'off') return;
+  if (!project || project.mode === 'off') {
+    return;
+  }
   const errors = remainingErrors(project);
-  if (errors.length > 0) return blockStop(errors);
+  if (errors.length > 0) {
+    return blockStop(errors);
+  }
   const reminder = commitReminder(project, input, { repeat: false });
   // A warning shown to the user, never a block: the size of a commit is advice.
-  if (reminder) emit({ systemMessage: reminder });
+  if (reminder) {
+    emit({ systemMessage: reminder });
+  }
 }
 
 function remainingErrors(project) {
-  if (!project.cli || project.mode !== 'enforce' || !hasPendingChanges(project)) return [];
+  if (!project.cli || project.mode !== 'enforce' || !hasPendingChanges(project)) {
+    return [];
+  }
 
   return errorsOf(runCli(project, ['check', '--format', 'json'], 60000));
 }
@@ -169,9 +223,13 @@ function readInput() {
 function findProject(from) {
   let directory = resolve(from);
   for (;;) {
-    if (existsSync(join(directory, CONFIG))) return describeProject(directory);
+    if (existsSync(join(directory, CONFIG))) {
+      return describeProject(directory);
+    }
     const parent = dirname(directory);
-    if (parent === directory) return undefined;
+    if (parent === directory) {
+      return undefined;
+    }
     directory = parent;
   }
 }
@@ -191,7 +249,8 @@ function describeProject(root) {
 }
 
 function commitLimits(configured) {
-  const limit = (key) => (Number.isInteger(configured?.[key]) && configured[key] > 0 ? configured[key] : COMMIT_DEFAULTS[key]);
+  const limit = (key) =>
+    Number.isInteger(configured?.[key]) && configured[key] > 0 ? configured[key] : COMMIT_DEFAULTS[key];
   return { maxFiles: limit('maxFiles'), maxLines: limit('maxLines') };
 }
 
@@ -212,8 +271,11 @@ function projectBriefing(project, input) {
     ...planPointer(project.root),
     ...workerNotice(project, input),
   ];
-  if (project.cli) lines.push('Contexts:', contextMap(project));
-  else lines.push('The CLI is not installed in this project: `npm i -D ddd-ts-kit`.');
+  if (project.cli) {
+    lines.push('Contexts:', contextMap(project));
+  } else {
+    lines.push('The CLI is not installed in this project: `npm i -D ddd-ts-kit`.');
+  }
   const reminder = project.mode === 'off' ? undefined : commitReminder(project, input, { repeat: true });
 
   return reminder ? [...lines, reminder] : lines;
@@ -221,16 +283,22 @@ function projectBriefing(project, input) {
 
 function planPointer(root) {
   const plan = readText(join(root, PLAN));
-  if (plan === undefined) return [];
+  if (plan === undefined) {
+    return [];
+  }
   const next = /^Next:\s*(.+)$/m.exec(plan)?.[1]?.trim();
 
-  return [`Plan: ${PLAN} (resume with /ddd-ts-kit:start). Next: ${(next ?? 'not stated, read the plan').slice(0, 300)}`];
+  return [
+    `Plan: ${PLAN} (resume with /ddd-ts-kit:start). Next: ${(next ?? 'not stated, read the plan').slice(0, 300)}`,
+  ];
 }
 
 function workerNotice(project, input) {
   const context = workerContext(project, input);
   return context
-    ? [`Worker scope: bounded context "${context}" only (${project.contextsDir}/${context}/). Shared files belong to the conductor.`]
+    ? [
+        `Worker scope: bounded context "${context}" only (${project.contextsDir}/${context}/). Shared files belong to the conductor.`,
+      ]
     : [];
 }
 
@@ -259,8 +327,12 @@ function contextLine(context) {
 
 function generatedFileReason(project, file) {
   const path = projectPath(project, file);
-  if (GENERATED_DOCUMENTS.includes(path)) return `${path} is generated. Change the route or event declaration, then run \`npm run docs:generate\`.`;
-  if (path === '.dependency-cruiser.cjs') return `${path} is generated from ${CONFIG}. Change the config, then run \`npx ddd-ts-kit depcruise-config --write\`.`;
+  if (GENERATED_DOCUMENTS.includes(path)) {
+    return `${path} is generated. Change the route or event declaration, then run \`npm run docs:generate\`.`;
+  }
+  if (path === '.dependency-cruiser.cjs') {
+    return `${path} is generated from ${CONFIG}. Change the config, then run \`npx ddd-ts-kit depcruise-config --write\`.`;
+  }
   return isBarrel(project, path)
     ? `${path} is the generated barrel of its context. Never edit it: \`npx ddd-ts-kit generate ...\` and \`npx ddd-ts-kit docs\` rewrite it from the role files.`
     : undefined;
@@ -276,7 +348,9 @@ function insideContexts(project, path) {
 }
 
 function testWriterScopeReason(project, file, input) {
-  if (!String(input.agent_type ?? '').includes('domain-test-writer')) return undefined;
+  if (!String(input.agent_type ?? '').includes('domain-test-writer')) {
+    return undefined;
+  }
   const path = projectPath(project, file);
   return /(^|\/)test\//.test(path) || /\.spec\.ts$/.test(path)
     ? undefined
@@ -285,9 +359,13 @@ function testWriterScopeReason(project, file, input) {
 
 function workerScopeReason(project, file, input) {
   const context = workerContext(project, input);
-  if (!context) return undefined;
+  if (!context) {
+    return undefined;
+  }
   const path = projectPath(project, file);
-  if (path.startsWith(`${project.contextsDir}/${context}/`) || /^test\/e2e\/[^/]+\.e2e\.spec\.ts$/.test(path)) return undefined;
+  if (path.startsWith(`${project.contextsDir}/${context}/`) || /^test\/e2e\/[^/]+\.e2e\.spec\.ts$/.test(path)) {
+    return undefined;
+  }
   const owner = insideContexts(project, path)
     ? 'belongs to another bounded context, which has its own worker'
     : 'is a shared file (config, composition root, platform, generated documents, migrations, dependencies) that only the conductor or a generator changes';
@@ -296,15 +374,21 @@ function workerScopeReason(project, file, input) {
 }
 
 function workerContext(project, input) {
-  if (!String(input.agent_type ?? '').includes(WORKER_AGENT)) return undefined;
+  if (!String(input.agent_type ?? '').includes(WORKER_AGENT)) {
+    return undefined;
+  }
   const context = process.env.DDD_TS_KIT_WORKER_CONTEXT ?? readJson(join(project.root, WORKER_SCOPE))?.context;
   return typeof context === 'string' && /^[a-z][a-z0-9-]*$/.test(context) ? context : undefined;
 }
 
 function handWrittenRoleReason(project, file) {
   const path = projectPath(project, file);
-  if (existsSync(file) || !(insideContexts(project, path) || path.startsWith('test/e2e/'))) return undefined;
-  if (/\.ports\.ts$/.test(path)) return `${path} would be a file of tokens. A port is an abstract class and its own injection token, one per \`*.port.ts\`: \`npx ddd-ts-kit generate port <context> <Name> --json\`.`;
+  if (existsSync(file) || !(insideContexts(project, path) || path.startsWith('test/e2e/'))) {
+    return undefined;
+  }
+  if (/\.ports\.ts$/.test(path)) {
+    return `${path} would be a file of tokens. A port is an abstract class and its own injection token, one per \`*.port.ts\`: \`npx ddd-ts-kit generate port <context> <Name> --json\`.`;
+  }
   const generator = GENERATORS.find(([suffix]) => suffix.test(path));
   return generator
     ? `${path} is a new file of a generated role. Create it with \`npx ddd-ts-kit generate ${generator[1]} --json\`, then fill the TODO(domain) markers.`
@@ -319,7 +403,9 @@ function governedFileReason(project, file) {
 }
 
 function escapeReason(toolInput) {
-  const added = ESCAPES.find(([pattern]) => count(writtenText(toolInput), pattern) > count(replacedText(toolInput), pattern));
+  const added = ESCAPES.find(
+    ([pattern]) => count(writtenText(toolInput), pattern) > count(replacedText(toolInput), pattern),
+  );
   return added
     ? `This change adds ${added[1]}. Fix the cause instead; if the deviation is deliberate, the project owner confirms it and it carries a reason pointing to a decision record in docs/adr/.`
     : undefined;
@@ -341,26 +427,40 @@ function count(text, pattern) {
 
 // A sub-agent keeps the working directory of its session: its worktree shows in the command.
 function commandDirectory(command, cwd) {
-  const named = /--cwd[= ]\s*("[^"]+"|'[^']+'|\S+)/.exec(command) ?? /^\s*cd\s+("[^"]+"|'[^']+'|[^\s;&|]+)\s*(?:&&|;)/.exec(command);
+  const named =
+    /--cwd[= ]\s*("[^"]+"|'[^']+'|\S+)/.exec(command) ??
+    /^\s*cd\s+("[^"]+"|'[^']+'|[^\s;&|]+)\s*(?:&&|;)/.exec(command);
   const directory = named?.[1]?.replace(/^["']|["']$/g, '');
-  if (!directory) return cwd;
+  if (!directory) {
+    return cwd;
+  }
 
   return isAbsolute(directory) ? directory : resolve(cwd, directory);
 }
 
 function sharedGeneratorReason(project, context, command) {
-  for (const [, kind, target] of command.matchAll(/ddd-ts-kit(?:@\S+)?\s+(?:generate|g)\s+([a-z-]+)(?:\s+([A-Za-z0-9-]+))?/g)) {
-    if (SHARED_GENERATORS.includes(kind)) return `\`generate ${kind}\` writes shared files (config, registries of the platform, schema). The conductor runs it on the trunk before the workers start. ${REPORT_TO_CONDUCTOR}`;
-    if (target && target !== context) return `You build the context "${context}"; \`generate ${kind} ${target}\` writes in another context. ${REPORT_TO_CONDUCTOR}`;
+  for (const [, kind, target] of command.matchAll(
+    /ddd-ts-kit(?:@\S+)?\s+(?:generate|g)\s+([a-z-]+)(?:\s+([A-Za-z0-9-]+))?/g,
+  )) {
+    if (SHARED_GENERATORS.includes(kind)) {
+      return `\`generate ${kind}\` writes shared files (config, registries of the platform, schema). The conductor runs it on the trunk before the workers start. ${REPORT_TO_CONDUCTOR}`;
+    }
+    if (target && target !== context) {
+      return `You build the context "${context}"; \`generate ${kind} ${target}\` writes in another context. ${REPORT_TO_CONDUCTOR}`;
+    }
     const aggregate = kind === 'command' ? /--aggregate[= ]\s*([A-Za-z0-9]+)/.exec(command)?.[1] : undefined;
-    if (aggregate && !hasRepository(project, context, aggregate)) return `\`generate command --aggregate ${aggregate}\` would also create the repository of ${aggregate}, which registers in shared files. ${REPORT_TO_CONDUCTOR}`;
+    if (aggregate && !hasRepository(project, context, aggregate)) {
+      return `\`generate command --aggregate ${aggregate}\` would also create the repository of ${aggregate}, which registers in shared files. ${REPORT_TO_CONDUCTOR}`;
+    }
   }
   return undefined;
 }
 
 function hasRepository(project, context, aggregate) {
   const name = aggregate.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
-  return existsSync(join(project.root, project.contextsDir, context, 'domain', 'repositories', `${name}.repository.ts`));
+  return existsSync(
+    join(project.root, project.contextsDir, context, 'domain', 'repositories', `${name}.repository.ts`),
+  );
 }
 
 function dependencyChangeReason(command) {
@@ -423,8 +523,12 @@ function commitReminder(project, input, { repeat }) {
   const changes = (uncommittedChanges(project) ?? []).filter((change) => !isDerived(project, change.path));
   const lines = changes.reduce((sum, change) => sum + change.lines, 0);
   const marker = reminderMarker(project, input);
-  if (changes.length <= project.commit.maxFiles && lines <= project.commit.maxLines) return forget(marker);
-  if (!repeat && existsSync(marker)) return undefined;
+  if (changes.length <= project.commit.maxFiles && lines <= project.commit.maxLines) {
+    return forget(marker);
+  }
+  if (!repeat && existsSync(marker)) {
+    return undefined;
+  }
   remember(marker);
 
   return `ddd-ts-kit: ${changes.length} changed files and ${lines} changed lines are uncommitted (advised at most ${project.commit.maxFiles} files and ${project.commit.maxLines} lines a commit, generated files not counted). Commit each finished slice on its own, with the files its generator wrote: ${describeSlices(project, changes)}. See the skill ddd-ts-kit:commit-discipline.`;
@@ -432,9 +536,17 @@ function commitReminder(project, input, { repeat }) {
 
 function uncommittedChanges(project) {
   const untracked = git(project, ['ls-files', '--others', '--exclude-standard', '-z']);
-  if (untracked === undefined) return undefined;
-  const tracked = (git(project, ['diff', '--numstat', '--no-renames', '--relative', '-z', 'HEAD']) ?? '').split('\0').filter(Boolean).map(numstatChange);
-  const fresh = untracked.split('\0').filter(Boolean).map((path) => ({ path, lines: lineCount(join(project.root, path)) }));
+  if (untracked === undefined) {
+    return undefined;
+  }
+  const tracked = (git(project, ['diff', '--numstat', '--no-renames', '--relative', '-z', 'HEAD']) ?? '')
+    .split('\0')
+    .filter(Boolean)
+    .map(numstatChange);
+  const fresh = untracked
+    .split('\0')
+    .filter(Boolean)
+    .map((path) => ({ path, lines: lineCount(join(project.root, path)) }));
 
   return [...tracked, ...fresh];
 }
@@ -451,7 +563,11 @@ function numstatChange(entry) {
 
 function lineCount(file) {
   try {
-    return statSync(file).size > COUNTED_FILE_BYTES ? 0 : readFileSync(file, 'utf8').split('\n').filter((line, index, all) => index < all.length - 1 || line !== '').length;
+    return statSync(file).size > COUNTED_FILE_BYTES
+      ? 0
+      : readFileSync(file, 'utf8')
+          .split('\n')
+          .filter((line, index, all) => index < all.length - 1 || line !== '').length;
   } catch {
     return 0;
   }
@@ -463,8 +579,12 @@ function isDerived(project, path) {
 
 function describeSlices(project, changes) {
   const sizes = new Map();
-  for (const { path } of changes) sizes.set(sliceOf(project, path), (sizes.get(sliceOf(project, path)) ?? 0) + 1);
-  const slices = [...sizes].sort(([, left], [, right]) => right - left).map(([slice, files]) => `${slice} (${files} files)`);
+  for (const { path } of changes) {
+    sizes.set(sliceOf(project, path), (sizes.get(sliceOf(project, path)) ?? 0) + 1);
+  }
+  const slices = [...sizes]
+    .sort(([, left], [, right]) => right - left)
+    .map(([slice, files]) => `${slice} (${files} files)`);
 
   return slices.length > 8 ? `${slices.slice(0, 8).join(', ')} and ${slices.length - 8} more` : slices.join(', ');
 }
@@ -472,16 +592,27 @@ function describeSlices(project, changes) {
 // A slice is a use case of a context: its folder, its route and their specs travel together.
 function sliceOf(project, path) {
   const inside = insideContexts(project, path);
-  if (!inside) return path.startsWith(`${project.platformDir}/`) ? 'platform' : path.includes('/') ? path.split('/')[0] : 'project root';
+  if (!inside) {
+    return path.startsWith(`${project.platformDir}/`)
+      ? 'platform'
+      : path.includes('/')
+        ? path.split('/')[0]
+        : 'project root';
+  }
   const [context, layer, kind, useCase] = inside;
-  if (layer === 'application' && (kind === 'commands' || kind === 'queries') && useCase) return `${context}: ${useCase}`;
+  if (layer === 'application' && (kind === 'commands' || kind === 'queries') && useCase) {
+    return `${context}: ${useCase}`;
+  }
   const named = /\/([^/.]+)\.(?:route|handler\.spec|route\.spec)\.ts$/.exec(path)?.[1];
 
   return named ? `${context}: ${named}` : `${context}: ${kind === undefined ? 'context files' : layer}`;
 }
 
 function reminderMarker(project, input) {
-  const key = createHash('sha256').update(`${project.root}\n${input.session_id ?? ''}`).digest('hex').slice(0, 24);
+  const key = createHash('sha256')
+    .update(`${project.root}\n${input.session_id ?? ''}`)
+    .digest('hex')
+    .slice(0, 24);
   return join(tmpdir(), `ddd-ts-kit-commit-reminder-${key}`);
 }
 

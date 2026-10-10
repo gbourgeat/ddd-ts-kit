@@ -2,7 +2,11 @@ import type { Knex } from 'knex';
 import { decodeCursor, encodeCursor } from '@ddd-ts-kit/kernel';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
 import { KnexContext } from '@ddd-ts-kit/knex';
-import { AppointmentExportContract, type ExportedAppointment, type ExportedAppointmentPage } from '../../published-language/appointment-export.contract.js';
+import {
+  AppointmentExportContract,
+  type ExportedAppointment,
+  type ExportedAppointmentPage,
+} from '../../published-language/appointment-export.contract.js';
 import type { AppointmentRow } from './appointment-row.schema.js';
 import { SCHEDULING_SCHEMA } from './scheduling.schema.js';
 
@@ -23,11 +27,18 @@ export class KnexAppointmentExport implements AppointmentExportContract {
   async export(cursor?: string): Promise<ExportedAppointmentPage> {
     const after = cursor === undefined ? undefined : decodeCursor(cursor)['id'];
     const every = tableOf(this.database);
-    const rows = await (typeof after === 'string' ? every.where('id', '>', after) : every).orderBy('id').limit(PAGE_SIZE + 1);
+
+    const rows = await (typeof after === 'string' ? every.where('id', '>', after) : every)
+      .orderBy('id')
+      .limit(PAGE_SIZE + 1);
+
     const page = rows.slice(0, PAGE_SIZE);
     const last = page.at(-1);
 
-    return { appointments: page.map(exported), ...(rows.length > PAGE_SIZE && last !== undefined ? { nextCursor: encodeCursor({ id: last.id }) } : {}) };
+    return {
+      appointments: page.map(exported),
+      ...(rows.length > PAGE_SIZE && last !== undefined ? { nextCursor: encodeCursor({ id: last.id }) } : {}),
+    };
   }
 
   async lookup(appointmentIds: readonly string[]): Promise<readonly ExportedAppointment[]> {
@@ -35,7 +46,9 @@ export class KnexAppointmentExport implements AppointmentExportContract {
       return [];
     }
 
-    const rows = await tableOf(this.database).whereIn('id', [...appointmentIds]).orderBy('id');
+    const rows = await tableOf(this.database)
+      .whereIn('id', [...appointmentIds])
+      .orderBy('id');
 
     return rows.map(exported);
   }

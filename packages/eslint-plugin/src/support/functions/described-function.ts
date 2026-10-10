@@ -11,5 +11,8 @@ interface DescribedFunction {
 export function describedFunction(node: FunctionNode, sourceCode: Readonly<TSESLint.SourceCode>): DescribedFunction {
   const name = ASTUtils.getFunctionNameWithKind(node, sourceCode);
 
-  return { name: name.charAt(0).toUpperCase() + name.slice(1), loc: ASTUtils.getFunctionHeadLocation(node, sourceCode) };
+  return {
+    name: name.charAt(0).toUpperCase() + name.slice(1),
+    loc: ASTUtils.getFunctionHeadLocation(node, sourceCode),
+  };
 }

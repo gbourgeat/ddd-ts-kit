@@ -37,7 +37,9 @@ export class InMemoryCache implements Cache {
   async get<T>(key: CacheKey<T>): Promise<T | undefined> {
     const entry = this.entries.get(key.name);
 
-    if (entry === undefined) return undefined;
+    if (entry === undefined) {
+      return undefined;
+    }
 
     if (entry.expiresAt !== undefined && entry.expiresAt <= this.clock.now().getTime()) {
       this.entries.delete(key.name);
@@ -66,7 +68,9 @@ export class InMemoryCache implements Cache {
 
   private evictBeyondCapacity(): void {
     for (const name of this.entries.keys()) {
-      if (this.entries.size <= this.maxEntries) return;
+      if (this.entries.size <= this.maxEntries) {
+        return;
+      }
 
       this.entries.delete(name);
     }

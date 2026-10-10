@@ -25,7 +25,9 @@ beforeAll(async () => {
 
   const knex = database.persistence.database.executor();
 
-  if (!(await knex.schema.withSchema(ANALYTICS_SCHEMA).hasTable('outcomes'))) await createAnalyticsTables(knex);
+  if (!(await knex.schema.withSchema(ANALYTICS_SCHEMA).hasTable('outcomes'))) {
+    await createAnalyticsTables(knex);
+  }
 });
 
 afterAll(async () => {
@@ -39,7 +41,10 @@ const ADAPTERS: readonly (readonly [string, () => Promise<Measured>])[] = [
     async () => {
       await database.reset();
 
-      return measuredBy(new KnexOutcomeRegister(database.persistence.database), () => new KnexOccupancyReader(database.persistence.database));
+      return measuredBy(
+        new KnexOutcomeRegister(database.persistence.database),
+        () => new KnexOccupancyReader(database.persistence.database),
+      );
     },
   ],
 ];
@@ -71,7 +76,15 @@ const OUTCOMES: readonly Outcome[] = [
 const RESCHEDULED = anAppointment('appointment-11', friday, 30 * 60);
 
 const LINES = {
-  monday: anOccupancy({ ...monday, heldMinutes: 90, appointmentsHeld: 3, completed: 1, noShows: 1, cancelledByPatient: 1, cancelledByPractice: 1 }),
+  monday: anOccupancy({
+    ...monday,
+    heldMinutes: 90,
+    appointmentsHeld: 3,
+    completed: 1,
+    noShows: 1,
+    cancelledByPatient: 1,
+    cancelledByPractice: 1,
+  }),
   tuesday: anOccupancy({ ...tuesday, heldMinutes: 32, appointmentsHeld: 2 }),
   elsewhereOnTuesday: anOccupancy({ ...elsewhereOnTuesday, heldMinutes: 60, appointmentsHeld: 1 }),
   wednesday: anOccupancy({ ...wednesday, cancelledByPatient: 1 }),
@@ -93,7 +106,9 @@ describe.each(ADAPTERS)('The occupancy measured by %s', (_name, create) => {
   it('counts the time of each appointment to the nearest minute', async () => {
     const { occupancy } = await written(await create());
 
-    const page = await occupancy.list(scoped(ofThePractice.where('calendarId', 'eq', 'calendar-1').where('day', 'eq', '2026-10-13'), everyone));
+    const page = await occupancy.list(
+      scoped(ofThePractice.where('calendarId', 'eq', 'calendar-1').where('day', 'eq', '2026-10-13'), everyone),
+    );
 
     expect(page.items).toEqual([LINES.tuesday]);
   });
@@ -109,7 +124,9 @@ describe.each(ADAPTERS)('The occupancy measured by %s', (_name, create) => {
   it('counts a rescheduled appointment on its new day only, and has no line for the day it left empty', async () => {
     const { occupancy } = await written(await create());
 
-    const page = await occupancy.list(scoped(ofThePractice.where('day', 'between', ['2026-10-15', '2026-10-16']), everyone));
+    const page = await occupancy.list(
+      scoped(ofThePractice.where('day', 'between', ['2026-10-15', '2026-10-16']), everyone),
+    );
 
     expect(page.items).toEqual([LINES.friday]);
   });
@@ -143,7 +160,9 @@ describe.each(ADAPTERS)('The occupancy read from %s', (_name, create) => {
   it('keeps the days of a range, both ends included, latest first when asked', async () => {
     const { occupancy } = await written(await create());
 
-    const page = await occupancy.list(scoped(ofThePractice.where('day', 'between', ['2026-10-13', '2026-10-14']).orderBy('day', 'desc'), everyone));
+    const page = await occupancy.list(
+      scoped(ofThePractice.where('day', 'between', ['2026-10-13', '2026-10-14']).orderBy('day', 'desc'), everyone),
+    );
 
     expect(page.items).toEqual([LINES.wednesday, LINES.elsewhereOnTuesday, LINES.tuesday]);
   });
@@ -151,7 +170,12 @@ describe.each(ADAPTERS)('The occupancy read from %s', (_name, create) => {
   it('keeps the calendars asked for', async () => {
     const { occupancy } = await written(await create());
 
-    const page = await occupancy.list(scoped(ofThePractice.where('calendarId', 'in', ['calendar-2', 'calendar-3']).where('day', 'lte', '2026-10-14'), everyone));
+    const page = await occupancy.list(
+      scoped(
+        ofThePractice.where('calendarId', 'in', ['calendar-2', 'calendar-3']).where('day', 'lte', '2026-10-14'),
+        everyone,
+      ),
+    );
 
     expect(page.items).toEqual([LINES.elsewhereOnTuesday, LINES.wednesday]);
   });
@@ -159,7 +183,9 @@ describe.each(ADAPTERS)('The occupancy read from %s', (_name, create) => {
   it('orders the lines by the time held, the key deciding between two that hold as much', async () => {
     const { occupancy } = await written(await create());
 
-    const page = await occupancy.list(scoped(ofThePractice.where('day', 'gte', '2026-10-13').orderBy('heldMinutes', 'desc'), everyone));
+    const page = await occupancy.list(
+      scoped(ofThePractice.where('day', 'gte', '2026-10-13').orderBy('heldMinutes', 'desc'), everyone),
+    );
 
     expect(page.items).toEqual([LINES.elsewhereOnTuesday, LINES.tuesday, LINES.friday, LINES.wednesday]);
   });
@@ -167,7 +193,9 @@ describe.each(ADAPTERS)('The occupancy read from %s', (_name, create) => {
   it('refuses to be filtered by a figure', async () => {
     const { occupancy } = await written(await create());
 
-    await expect(occupancy.list(scoped(ofThePractice.where('noShows', 'gte', 1), everyone))).rejects.toMatchObject({ code: 'INVALID_CRITERIA' });
+    await expect(occupancy.list(scoped(ofThePractice.where('noShows', 'gte', 1), everyone))).rejects.toMatchObject({
+      code: 'INVALID_CRITERIA',
+    });
   });
 });
 
@@ -175,7 +203,9 @@ describe.each(ADAPTERS)('The occupancy an actor may read from %s', (_name, creat
   it('is narrowed to the calendars the actor measures, total included', async () => {
     const { occupancy } = await written(await create());
 
-    const page = await occupancy.list(scoped(ofThePractice.page(offsetPage()), { kind: 'ids', ids: ['calendar-1'] }, { ids: 'calendarId' }));
+    const page = await occupancy.list(
+      scoped(ofThePractice.page(offsetPage()), { kind: 'ids', ids: ['calendar-1'] }, { ids: 'calendarId' }),
+    );
 
     expect(page).toEqual({ items: [LINES.monday, LINES.tuesday], total: 2 });
   });
@@ -222,20 +252,36 @@ describe.each(ADAPTERS)('The pages of the occupancy read from %s', (_name, creat
     const byTimeHeld = ofThePractice.orderBy('heldMinutes', 'desc');
 
     const first = await occupancy.list(scoped(byTimeHeld.page(cursorPage({ limit: 2 })), everyone));
-    const second = await occupancy.list(scoped(byTimeHeld.page(cursorPage({ limit: 2, ...cursorOf(first.nextCursor) })), everyone));
-    const third = await occupancy.list(scoped(byTimeHeld.page(cursorPage({ limit: 2, ...cursorOf(second.nextCursor) })), everyone));
 
-    expect([first.items, second.items, third.items]).toEqual([[LINES.monday, LINES.elsewhereOnTuesday], [LINES.tuesday, LINES.friday], [LINES.wednesday]]);
+    const second = await occupancy.list(
+      scoped(byTimeHeld.page(cursorPage({ limit: 2, ...cursorOf(first.nextCursor) })), everyone),
+    );
+
+    const third = await occupancy.list(
+      scoped(byTimeHeld.page(cursorPage({ limit: 2, ...cursorOf(second.nextCursor) })), everyone),
+    );
+
+    expect([first.items, second.items, third.items]).toEqual([
+      [LINES.monday, LINES.elsewhereOnTuesday],
+      [LINES.tuesday, LINES.friday],
+      [LINES.wednesday],
+    ]);
+
     expect(third.nextCursor).toBeUndefined();
   });
 });
 
-function measuredBy<Register extends OutcomeRegister>(outcomes: Register, reader: (outcomes: Register) => OccupancyReader): Measured {
+function measuredBy<Register extends OutcomeRegister>(
+  outcomes: Register,
+  reader: (outcomes: Register) => OccupancyReader,
+): Measured {
   return { outcomes, occupancy: reader(outcomes) };
 }
 
 async function written(measured: Measured): Promise<Measured> {
-  for (const outcome of OUTCOMES) await measured.outcomes.upsertIfNewer(outcome.id, at(0), () => outcome);
+  for (const outcome of OUTCOMES) {
+    await measured.outcomes.upsertIfNewer(outcome.id, at(0), () => outcome);
+  }
 
   await measured.outcomes.upsertIfNewer(RESCHEDULED.id, at(30), () => RESCHEDULED);
 

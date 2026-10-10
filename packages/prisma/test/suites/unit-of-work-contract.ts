@@ -40,12 +40,17 @@ unitOfWorkContract(runner, {
         delegate: (client) => client.outboxRecord,
         claim: { strategy: 'skip-locked', dialect: 'postgresql', raw: (client) => client },
       }),
-      insert: async (id) => void (await unitOfWork.client().$executeRawUnsafe('insert into contract_parcels (id) values ($1)', id)),
+      insert: async (id) =>
+        void (await unitOfWork.client().$executeRawUnsafe('insert into contract_parcels (id) values ($1)', id)),
       insertRefusedAtCommit: async (id) =>
-        void (await unitOfWork.client().$executeRawUnsafe("insert into contract_parcels (id, sealed_by) values ($1, 'nobody')", id)),
+        void (await unitOfWork
+          .client()
+          .$executeRawUnsafe("insert into contract_parcels (id, sealed_by) values ($1, 'nobody')", id)),
       ids: async () => idsOf(await unitOfWork.client().$queryRawUnsafe<{ id: string }[]>(SELECT)),
       // A real server hands the pool another connection; PGlite is one session behind every socket.
-      ...(database.real ? { committedIds: async () => idsOf(await database.prisma.$queryRawUnsafe<{ id: string }[]>(SELECT)) } : {}),
+      ...(database.real
+        ? { committedIds: async () => idsOf(await database.prisma.$queryRawUnsafe<{ id: string }[]>(SELECT)) }
+        : {}),
     };
   },
 });

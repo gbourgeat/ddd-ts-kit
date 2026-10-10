@@ -16,7 +16,13 @@ import { aCalendar } from '../builders/calendar.builder.js';
 import { FakeAppointmentRepository } from '../fakes/appointment.repository.fake.js';
 import { FakeWaitlistRepository } from '../fakes/waitlist.repository.fake.js';
 
-const holders = authorizationModule({ authorizer: new RoleBasedAuthorizer({ roles: { holder: [schedulingPermissions['appointment.cancel']], system: [schedulingPermissions['waitlist.offer']] }, systemRole: 'system' }) });
+const holders = authorizationModule({
+  authorizer: new RoleBasedAuthorizer({
+    roles: { holder: [schedulingPermissions['appointment.cancel']], system: [schedulingPermissions['waitlist.offer']] },
+    systemRole: 'system',
+  }),
+});
+
 const holder = anActor().withRole('holder').build();
 // A freed slot is offered to the waitlist of its calendar: every calendar exists here, and nobody waits.
 const calendars = { findById: async (id: string) => aCalendar().identifiedBy(id).build(), save: async () => undefined };
@@ -37,14 +43,19 @@ describe('Cancel appointment', () => {
     expect(stored?.status).toBe('cancelled');
     expect(stored?.cancellation?.by).toBe('patient');
     expect(announced).toEqual(['scheduling.appointment.cancelled']);
-    expect(application.eventBus.published).toMatchObject([{ type: 'scheduling.appointment.cancelled', payload: { appointmentId: appointment.id, cancelledBy: 'patient' } }]);
+
+    expect(application.eventBus.published).toMatchObject([
+      { type: 'scheduling.appointment.cancelled', payload: { appointmentId: appointment.id, cancelledBy: 'patient' } },
+    ]);
   });
 
   it('refuses the patient who cancels less than 24 hours before the start, naming the rule', async () => {
     const appointment = tomorrow().startingAt(new Date('2026-03-02T08:59:00.000Z')).build();
     const { application, appointmentRepository, announced } = await arrange(appointment);
 
-    await expect(application.commandBus.execute(new CancelAppointmentCommand(patient, appointment.id))).rejects.toMatchObject({ code: 'FORBIDDEN', reason: 'scheduling.patient-cancels-until-notice' });
+    await expect(
+      application.commandBus.execute(new CancelAppointmentCommand(patient, appointment.id)),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN', reason: 'scheduling.patient-cancels-until-notice' });
 
     expect((await appointmentRepository.findById(appointment.id))?.status).toBe('booked');
     expect(announced).toEqual([]);
@@ -55,7 +66,9 @@ describe('Cancel appointment', () => {
     const appointment = tomorrow().startingAt(new Date('2026-03-01T10:00:00.000Z')).build();
     const { application, appointmentRepository } = await arrange(appointment);
 
-    await application.commandBus.execute(new CancelAppointmentCommand(holder, appointment.id, 'The practitioner is away.'));
+    await application.commandBus.execute(
+      new CancelAppointmentCommand(holder, appointment.id, 'The practitioner is away.'),
+    );
 
     const stored = await appointmentRepository.findById(appointment.id);
 
@@ -68,7 +81,9 @@ describe('Cancel appointment', () => {
     const appointment = tomorrow().build();
     const { application, appointmentRepository, announced } = await arrange(appointment);
 
-    await expect(application.commandBus.execute(new CancelAppointmentCommand(holder, appointment.id, '  '))).rejects.toMatchObject({ code: 'REASON_REQUIRED' });
+    await expect(
+      application.commandBus.execute(new CancelAppointmentCommand(holder, appointment.id, '  ')),
+    ).rejects.toMatchObject({ code: 'REASON_REQUIRED' });
 
     expect((await appointmentRepository.findById(appointment.id))?.status).toBe('booked');
     expect(announced).toEqual([]);
@@ -78,20 +93,26 @@ describe('Cancel appointment', () => {
     const appointment = tomorrow().build();
     const { application } = await arrange(appointment);
 
-    await expect(application.commandBus.execute(new CancelAppointmentCommand(anActor().build(), appointment.id, 'No reason.'))).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(
+      application.commandBus.execute(new CancelAppointmentCommand(anActor().build(), appointment.id, 'No reason.')),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
   });
 
   it('refuses an appointment that does not exist', async () => {
     const { application } = await arrange();
 
-    await expect(application.commandBus.execute(new CancelAppointmentCommand(holder, 'appointment-unknown', 'A reason.'))).rejects.toMatchObject({ code: 'APPOINTMENT_NOT_FOUND' });
+    await expect(
+      application.commandBus.execute(new CancelAppointmentCommand(holder, 'appointment-unknown', 'A reason.')),
+    ).rejects.toMatchObject({ code: 'APPOINTMENT_NOT_FOUND' });
   });
 
   it('refuses an appointment that has already ended', async () => {
     const completed = tomorrow().startingAt(new Date('2026-02-27T09:00:00.000Z')).completed().build();
     const { application } = await arrange(completed);
 
-    await expect(application.commandBus.execute(new CancelAppointmentCommand(holder, completed.id, 'A reason.'))).rejects.toMatchObject({ code: 'APPOINTMENT_ENDED' });
+    await expect(
+      application.commandBus.execute(new CancelAppointmentCommand(holder, completed.id, 'A reason.')),
+    ).rejects.toMatchObject({ code: 'APPOINTMENT_ENDED' });
   });
 });
 
@@ -99,11 +120,18 @@ async function arrange(...stored: readonly Appointment[]) {
   const appointmentRepository = new FakeAppointmentRepository();
   const announced: string[] = [];
 
-  await stored.reduce((saved, appointment) => saved.then(() => appointmentRepository.save(appointment)), Promise.resolve());
+  await stored.reduce(
+    (saved, appointment) => saved.then(() => appointmentRepository.save(appointment)),
+    Promise.resolve(),
+  );
 
   const application = createTestApplication({
     modules: [platformTestModule, contextModule('scheduling', schedulingDeclarations), holders],
-    fakes: [fake(AppointmentRepository, appointmentRepository), fake(CalendarRepository, calendars), fake(WaitlistRepository, new FakeWaitlistRepository())],
+    fakes: [
+      fake(AppointmentRepository, appointmentRepository),
+      fake(CalendarRepository, calendars),
+      fake(WaitlistRepository, new FakeWaitlistRepository()),
+    ],
     now: NOW,
   });
 

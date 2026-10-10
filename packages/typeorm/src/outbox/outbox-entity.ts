@@ -66,10 +66,7 @@ function keyColumns(dialect: TypeOrmDialect): Pick<OutboxSchemaOptions['columns'
   };
 }
 
-function pendingIndex(
-  tableName: string,
-  dialect: TypeOrmDialect,
-): NonNullable<OutboxSchemaOptions['indices']>[number] {
+function pendingIndex(tableName: string, dialect: TypeOrmDialect): NonNullable<OutboxSchemaOptions['indices']>[number] {
   if (dialect === 'mysql') {
     // No partial index in MySQL: the status leads the index instead.
     return { name: `${tableName}_pending_idx`, columns: ['status', 'nextAttemptAt', 'sequence'] };

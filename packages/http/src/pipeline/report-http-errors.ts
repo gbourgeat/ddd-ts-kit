@@ -10,8 +10,14 @@ import type { ErrorContext } from './error-context.js';
  */
 export function reportHttpErrors(reporter: ErrorReporter): (error: unknown, context: ErrorContext) => void {
   return (error, { problem, operationId, correlationId, execution }) => {
-    if (problem.status < 500) return;
+    if (problem.status < 500) {
+      return;
+    }
 
-    reportOnce(reporter, error, errorReportOf(error, { origin: 'http', operation: operationId, correlationId }, execution));
+    reportOnce(
+      reporter,
+      error,
+      errorReportOf(error, { origin: 'http', operation: operationId, correlationId }, execution),
+    );
   };
 }

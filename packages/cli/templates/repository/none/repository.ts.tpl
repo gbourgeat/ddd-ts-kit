@@ -24,7 +24,9 @@ export class InMemory{{aggregate.pascal}}Repository implements {{aggregate.pasca
   async findById(id: string): Promise<{{aggregate.pascal}} | undefined> {
     const row = this.rows.get(id);
 
-    if (row === undefined) return undefined;
+    if (row === undefined) {
+      return undefined;
+    }
 
     const found = {{aggregate.pascal}}.rehydrate(id, structuredClone(row.state));
 
@@ -36,7 +38,9 @@ export class InMemory{{aggregate.pascal}}Repository implements {{aggregate.pasca
   async save(saved: {{aggregate.pascal}}): Promise<void> {
     const stored = this.rows.get(saved.id)?.version ?? 0;
 
-    if (stored !== saved.version) throw new ConcurrencyError(saved.id);
+    if (stored !== saved.version) {
+      throw new ConcurrencyError(saved.id);
+    }
 
     saved.version = stored + 1;
     this.rows.set(saved.id, { state: structuredClone(saved.toState()), version: saved.version });

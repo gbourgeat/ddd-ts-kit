@@ -13,7 +13,11 @@ const dayBefore = new Date('2026-03-01T09:00:00.000Z');
 
 describe('Patient cancels until notice', () => {
   it('bears on the permission appointment.cancel, under a name of its own', () => {
-    expect(declarationOf(PatientCancelsUntilNoticePolicy)).toMatchObject({ role: 'policy', name: 'scheduling.patient-cancels-until-notice', permission: { id: 'scheduling:appointment.cancel' } });
+    expect(declarationOf(PatientCancelsUntilNoticePolicy)).toMatchObject({
+      role: 'policy',
+      name: 'scheduling.patient-cancels-until-notice',
+      permission: { id: 'scheduling:appointment.cancel' },
+    });
   });
 
   it('refuses a caller nobody identified', () => {

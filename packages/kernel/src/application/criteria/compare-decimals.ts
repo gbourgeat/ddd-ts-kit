@@ -9,7 +9,9 @@ export function compareDecimals(left: string, right: string): number {
   const a = parsed(left);
   const b = parsed(right);
 
-  if (a.negative !== b.negative) return a.negative ? -1 : 1;
+  if (a.negative !== b.negative) {
+    return a.negative ? -1 : 1;
+  }
 
   return a.negative ? magnitude(b, a) : magnitude(a, b);
 }
@@ -23,11 +25,17 @@ function parsed(text: string): Decimal {
 }
 
 function magnitude(a: Decimal, b: Decimal): number {
-  if (a.whole.length !== b.whole.length) return a.whole.length < b.whole.length ? -1 : 1;
+  if (a.whole.length !== b.whole.length) {
+    return a.whole.length < b.whole.length ? -1 : 1;
+  }
 
-  if (a.whole !== b.whole) return a.whole < b.whole ? -1 : 1;
+  if (a.whole !== b.whole) {
+    return a.whole < b.whole ? -1 : 1;
+  }
 
-  if (a.fraction === b.fraction) return 0;
+  if (a.fraction === b.fraction) {
+    return 0;
+  }
 
   return a.fraction < b.fraction ? -1 : 1;
 }

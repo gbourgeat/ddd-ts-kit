@@ -13,7 +13,9 @@ async function eventually<T>(read: () => Promise<T>, ready: (value: T) => boolea
   for (let attempt = 0; attempt < 50; attempt += 1) {
     const value = await read();
 
-    if (ready(value)) return value;
+    if (ready(value)) {
+      return value;
+    }
 
     await new Promise((resolve) => setTimeout(resolve, 200));
   }
@@ -60,7 +62,10 @@ describe.skipIf(IMAGE === undefined)('one action, exported over OTLP to a real J
         {
           name: 'publish scheduling.appointment.booked',
           kind: 'PRODUCER',
-          attributes: { 'messaging.system': 'in-memory', 'messaging.destination.name': 'scheduling.appointment.booked' },
+          attributes: {
+            'messaging.system': 'in-memory',
+            'messaging.destination.name': 'scheduling.appointment.booked',
+          },
           children: [confirmationTree(), recordingTree()],
         },
       ]),

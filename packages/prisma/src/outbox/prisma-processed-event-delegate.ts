@@ -4,8 +4,5 @@
  * where Prisma offers `skipDuplicates` (PostgreSQL, MySQL, CockroachDB).
  */
 export interface PrismaProcessedEventDelegate {
-  createMany(args: {
-    data: { consumer: string; eventId: string }[];
-    skipDuplicates: true;
-  }): Promise<{ count: number }>;
+  createMany(args: { data: { consumer: string; eventId: string }[]; skipDuplicates: true }): Promise<{ count: number }>;
 }

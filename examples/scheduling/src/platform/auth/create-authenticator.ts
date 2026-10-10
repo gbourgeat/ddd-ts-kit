@@ -15,5 +15,11 @@ export const IMPERSONATOR_CLAIM = 'impersonator_id';
 export function createAuthenticator(config: AppConfig): Authenticator {
   const { baseUrl, realm, audience, clientId } = config.keycloak;
 
-  return keycloakAuthenticator({ baseUrl, realm, audience, impersonatorClaim: IMPERSONATOR_CLAIM, ...(clientId === undefined ? {} : { clientId }) });
+  return keycloakAuthenticator({
+    baseUrl,
+    realm,
+    audience,
+    impersonatorClaim: IMPERSONATOR_CLAIM,
+    ...(clientId === undefined ? {} : { clientId }),
+  });
 }

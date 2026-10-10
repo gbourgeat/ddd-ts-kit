@@ -16,16 +16,22 @@ export class JobLifecycle {
 
   /** Leaves the scheduler alone, unbuilt, in an application without job. */
   register(): void {
-    if (this.jobs.length === 0) return;
+    if (this.jobs.length === 0) {
+      return;
+    }
 
     const scheduler = this.ports.resolve(JobScheduler);
     const instrument = this.ports.isBound(Instrumentation) ? this.ports.resolve(Instrumentation).job : undefined;
 
-    for (const job of this.jobs) scheduler.register(definitionOf(job, this.ports.resolve, instrument));
+    for (const job of this.jobs) {
+      scheduler.register(definitionOf(job, this.ports.resolve, instrument));
+    }
   }
 
   async start(): Promise<void> {
-    if (!this.runsByTime || this.jobs.length === 0 || this.started) return;
+    if (!this.runsByTime || this.jobs.length === 0 || this.started) {
+      return;
+    }
 
     this.started = true;
     await this.ports.resolve(JobScheduler).start();
@@ -33,7 +39,9 @@ export class JobLifecycle {
 
   /** Answers what failed, for the application to go on stopping the rest. */
   async stop(): Promise<unknown[]> {
-    if (!this.started) return [];
+    if (!this.started) {
+      return [];
+    }
 
     this.started = false;
 

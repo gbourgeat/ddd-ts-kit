@@ -122,7 +122,9 @@ const REASONS: Readonly<Record<string, string>> = {
  * is an infrastructure fault and stays what it is, to be answered as a 5xx.
  */
 function refusalOf(error: unknown): unknown {
-  if (!(error instanceof errors.JOSEError)) return error;
+  if (!(error instanceof errors.JOSEError)) {
+    return error;
+  }
 
   const reason = REASONS[error.code];
 
@@ -130,7 +132,9 @@ function refusalOf(error: unknown): unknown {
 }
 
 function actorOfClaims(claims: JWTPayload, tenantClaim: string): Actor {
-  if (claims.sub === undefined || claims.sub === '') throw new InvalidCredentialError('NO_SUBJECT');
+  if (claims.sub === undefined || claims.sub === '') {
+    throw new InvalidCredentialError('NO_SUBJECT');
+  }
 
   const tenantId = claims[tenantClaim];
 
@@ -149,16 +153,23 @@ function actorOfClaims(claims: JWTPayload, tenantClaim: string): Actor {
  */
 function rolesOf(claims: JWTPayload): readonly string[] {
   const realmAccess = claims['realm_access'];
-  const realmRoles = typeof realmAccess === 'object' && realmAccess !== null && 'roles' in realmAccess ? realmAccess.roles : undefined;
+
+  const realmRoles =
+    typeof realmAccess === 'object' && realmAccess !== null && 'roles' in realmAccess ? realmAccess.roles : undefined;
+
   const candidates = [stringsOf(realmRoles), stringsOf(claims['roles']), stringsOf(claims['scope'])];
 
   return candidates.find((roles) => roles !== undefined) ?? [];
 }
 
 function stringsOf(claim: unknown): readonly string[] | undefined {
-  if (typeof claim === 'string') return claim.split(' ').filter((item) => item !== '');
+  if (typeof claim === 'string') {
+    return claim.split(' ').filter((item) => item !== '');
+  }
 
-  if (!Array.isArray(claim)) return undefined;
+  if (!Array.isArray(claim)) {
+    return undefined;
+  }
 
   return claim.filter((item): item is string => typeof item === 'string');
 }

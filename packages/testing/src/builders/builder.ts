@@ -42,9 +42,7 @@ export abstract class Builder<Props extends object, Output> implements Resolvabl
   protected props(): Props {
     const values: Record<PropertyKey, unknown> = { ...this.defaults(), ...this.overrides };
 
-    const props = Object.fromEntries(
-      Reflect.ownKeys(values).map((key) => [key, resolveValue(values[key])]),
-    );
+    const props = Object.fromEntries(Reflect.ownKeys(values).map((key) => [key, resolveValue(values[key])]));
 
     // eslint-disable-next-line ddd-ts-kit/clean-no-escape-hatch -- every key of Props was resolved to its value type above, which the compiler cannot follow through Object.fromEntries
     return props as Props;

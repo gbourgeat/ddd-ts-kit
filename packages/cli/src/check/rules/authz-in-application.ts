@@ -27,15 +27,32 @@ const ACCESS_DECLARATIONS = ['Requires', 'Public', 'Policy'];
 /** The ports through which the application layer decides a right. */
 const ACCESS_PORTS = ['Access', 'PolicyAccess'];
 const AUTHORIZERS = ['RoleBasedAuthorizer', 'PolicyBasedAuthorizer', 'RelationBasedAuthorizer', 'Authorizer'];
-const ACTOR_NAMES = ['Actor', 'ActorContext', 'Session', 'ExecutionContext', 'AuthorizedCommand', 'AuthorizedQuery', 'anonymousActor', 'systemActor'];
+
+const ACTOR_NAMES = [
+  'Actor',
+  'ActorContext',
+  'Session',
+  'ExecutionContext',
+  'AuthorizedCommand',
+  'AuthorizedQuery',
+  'anonymousActor',
+  'systemActor',
+];
+
 const IS_ADMIN: Shortcut = { pattern: /(?<![\w$])isAdmin(?![\w$])/, what: 'isAdmin' };
 
 const DUTIES: readonly LayerDuty[] = [
   {
     layer: 'presentation',
     code: [
-      { pattern: /(?<![\w$])roles\s*\.\s*(?:includes|some|every|find|indexOf)\s*\(/, what: 'A test on the roles of the caller' },
-      { pattern: /(?<![\w$])role\s*[!=]==?|[!=]==?\s*(?:[\w$]+\s*\.\s*)*role(?![\w$(])/, what: 'A comparison on a role' },
+      {
+        pattern: /(?<![\w$])roles\s*\.\s*(?:includes|some|every|find|indexOf)\s*\(/,
+        what: 'A test on the roles of the caller',
+      },
+      {
+        pattern: /(?<![\w$])role\s*[!=]==?|[!=]==?\s*(?:[\w$]+\s*\.\s*)*role(?![\w$(])/,
+        what: 'A comparison on a role',
+      },
       IS_ADMIN,
     ],
     imported: (module) => importedFromAuth(module, AUTHORIZERS) ?? accessDeclaration(module),
@@ -44,7 +61,10 @@ const DUTIES: readonly LayerDuty[] = [
   {
     layer: 'infrastructure',
     code: [
-      { pattern: /(?<![\w$])[\w$]*(?:[aA]uthorizer|[aA]ccess)\s*\.\s*(?:authorize|check)\s*\(/, what: 'An authorization check' },
+      {
+        pattern: /(?<![\w$])[\w$]*(?:[aA]uthorizer|[aA]ccess)\s*\.\s*(?:authorize|check)\s*\(/,
+        what: 'An authorization check',
+      },
       { pattern: /(?<![\w$])ForbiddenError(?![\w$])/, what: 'ForbiddenError' },
     ],
     imported: accessDeclaration,
@@ -52,10 +72,22 @@ const DUTIES: readonly LayerDuty[] = [
   },
   {
     layer: 'domain',
-    code: [{ pattern: /(?<![\w$])[\w$]*(?:[aA]ctor|[uU]ser|[pP]rincipal|[cC]aller|[rR]equester)\s*\.\s*(?:roles|permissions)(?![\w$])/, what: 'A test on the rights of the actor' }, IS_ADMIN],
+    code: [
+      {
+        pattern:
+          /(?<![\w$])[\w$]*(?:[aA]ctor|[uU]ser|[pP]rincipal|[cC]aller|[rR]equester)\s*\.\s*(?:roles|permissions)(?![\w$])/,
+        what: 'A test on the rights of the actor',
+      },
+      IS_ADMIN,
+    ],
     imported: ({ target, names }) => {
-      if (target.kind !== 'package') return undefined;
-      if (target.name === AUTH_PACKAGE) return `"${AUTH_PACKAGE}" is imported`;
+      if (target.kind !== 'package') {
+        return undefined;
+      }
+
+      if (target.name === AUTH_PACKAGE) {
+        return `"${AUTH_PACKAGE}" is imported`;
+      }
 
       const actor = target.name === '@ddd-ts-kit/kernel' ? names.find((name) => ACTOR_NAMES.includes(name)) : undefined;
 
@@ -67,7 +99,8 @@ const DUTIES: readonly LayerDuty[] = [
 
 export const authzInApplication: Rule = {
   id: 'authz/in-application',
-  description: 'The permission is decided in the application layer: no role test in presentation/, no authorization in infrastructure/, no knowledge of the actor in domain/.',
+  description:
+    'The permission is decided in the application layer: no role test in presentation/, no authorization in infrastructure/, no knowledge of the actor in domain/.',
   scope: 'file',
   run(project) {
     return perFile(project, this.id, (file) => DUTIES.flatMap((duty) => breaches(file, duty)));
@@ -75,20 +108,28 @@ export const authzInApplication: Rule = {
 };
 
 function importedFromAuth({ target, names }: ResolvedImport, refused: readonly string[]): string | undefined {
-  const name = target.kind === 'package' && target.name === AUTH_PACKAGE ? names.find((candidate) => refused.includes(candidate)) : undefined;
+  const name =
+    target.kind === 'package' && target.name === AUTH_PACKAGE
+      ? names.find((candidate) => refused.includes(candidate))
+      : undefined;
 
   return name === undefined ? undefined : `${name} is imported`;
 }
 
 /** `Requires`, `Public` and `Policy` of the kernel declarations and the access ports of the auth package belong to application/ alone. */
 function accessDeclaration(module: ResolvedImport): string | undefined {
-  const declared = module.specifier === DECLARATIONS_ENTRY ? module.names.find((name) => ACCESS_DECLARATIONS.includes(name)) : undefined;
+  const declared =
+    module.specifier === DECLARATIONS_ENTRY
+      ? module.names.find((name) => ACCESS_DECLARATIONS.includes(name))
+      : undefined;
 
   return declared === undefined ? importedFromAuth(module, ACCESS_PORTS) : `${declared} is imported`;
 }
 
 function breaches(file: SourceFile, duty: LayerDuty): Finding[] {
-  if (inLayer(file, duty.layer) === undefined) return [];
+  if (inLayer(file, duty.layer) === undefined) {
+    return [];
+  }
 
   const { code } = file.scan;
 
@@ -104,5 +145,9 @@ function breaches(file: SourceFile, duty: LayerDuty): Finding[] {
     return what === undefined ? [] : [{ line: module.line, what }];
   });
 
-  return [...inCode, ...inImports].map(({ line, what }) => ({ line, message: `${what} in ${duty.layer}/: rights are decided in the application layer.`, fix: duty.fix }));
+  return [...inCode, ...inImports].map(({ line, what }) => ({
+    line,
+    message: `${what} in ${duty.layer}/: rights are decided in the application layer.`,
+    fix: duty.fix,
+  }));
 }

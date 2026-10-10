@@ -1,6 +1,13 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { RelationTuple, RelationTupleStore } from '@ddd-ts-kit/auth/rebac';
-import { FixedClock, FixedExecutionScope, InMemoryDomainEventDispatcher, dispatchingOnSave, executionContext, type Actor } from '@ddd-ts-kit/kernel';
+import {
+  FixedClock,
+  FixedExecutionScope,
+  InMemoryDomainEventDispatcher,
+  dispatchingOnSave,
+  executionContext,
+  type Actor,
+} from '@ddd-ts-kit/kernel';
 import { PersonRegisteredEventHandler } from '../../application/event-handlers/person-registered.event-handler.js';
 import { PersonRegistered } from '../../domain/events/person-registered.event.js';
 import { KnexPersonRepository } from '../../infrastructure/persistence/knex-person.repository.js';
@@ -58,7 +65,10 @@ describe('The relationship of a person and the fact it follows', () => {
 
     domainEvents.on('identity.person.registered', () => Promise.reject(new DirectoryDown()));
 
-    await expect(unitOfWork.run(() => people.save(aPerson().identifiedBy('ada').build()))).rejects.toBeInstanceOf(DirectoryDown);
+    await expect(unitOfWork.run(() => people.save(aPerson().identifiedBy('ada').build()))).rejects.toBeInstanceOf(
+      DirectoryDown,
+    );
+
     expect(handled).toEqual(['ada']);
     expect(await people.findById('ada')).toBeUndefined();
     expect(await selfOf('ada')).toEqual([]);
@@ -73,13 +83,20 @@ function arrange() {
   const handled: string[] = [];
 
   domainEvents.on('identity.person.registered', async (event) => {
-    if (!(event instanceof PersonRegistered)) return;
+    if (!(event instanceof PersonRegistered)) {
+      return;
+    }
 
     await handler.handle(event);
     handled.push(event.aggregateId);
   });
 
-  return { unitOfWork, domainEvents, handled, people: dispatchingOnSave(new KnexPersonRepository(context, scope, clock), () => domainEvents) };
+  return {
+    unitOfWork,
+    domainEvents,
+    handled,
+    people: dispatchingOnSave(new KnexPersonRepository(context, scope, clock), () => domainEvents),
+  };
 }
 
 function selfOf(personId: string): Promise<readonly RelationTuple[]> {

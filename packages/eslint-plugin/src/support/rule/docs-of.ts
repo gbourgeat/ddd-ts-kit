@@ -7,7 +7,9 @@ export type DddRule = TSESLint.RuleModule<string, readonly unknown[], RuleDocs>;
 export function docsOf(rule: DddRule): RuleDocs {
   const { docs } = rule.meta;
 
-  if (docs === undefined) throw new TypeError('A rule of @ddd-ts-kit/eslint-plugin has no meta.docs.');
+  if (docs === undefined) {
+    throw new TypeError('A rule of @ddd-ts-kit/eslint-plugin has no meta.docs.');
+  }
 
   return docs;
 }

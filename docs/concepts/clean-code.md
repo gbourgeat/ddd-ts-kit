@@ -62,10 +62,14 @@ Before:
 ```ts
 cancel(reason: string, at: Date, byPractitioner: boolean): void {
   // check state
-  if (this.status === 'cancelled') throw new Error('already cancelled');
+  if (this.status === 'cancelled') {
+    throw new Error('already cancelled');
+  }
   // check window
   const hours = (this.slot.startsAt.getTime() - at.getTime()) / 3_600_000;
-  if (!byPractitioner && hours < 24) throw new Error('too late');
+  if (!byPractitioner && hours < 24) {
+    throw new Error('too late');
+  }
   this.status = 'cancelled';
   this.cancelledAt = at;
 }
@@ -83,11 +87,15 @@ cancel(reason: CancellationReason, at: Date): void {
 }
 
 private assertNotCancelled(): void {
-  if (this.status.isCancelled) throw new AppointmentAlreadyCancelled(this.id);
+  if (this.status.isCancelled) {
+    throw new AppointmentAlreadyCancelled(this.id);
+  }
 }
 
 private assertWithinCancellationWindow(at: Date): void {
-  if (!this.slot.startsAfter(at, CANCELLATION_NOTICE)) throw new CancellationWindowPassed(this.id);
+  if (!this.slot.startsAfter(at, CANCELLATION_NOTICE)) {
+    throw new CancellationWindowPassed(this.id);
+  }
 }
 ```
 
@@ -145,9 +153,28 @@ for it; a diff touches the files of one concept; two people rarely edit the same
 
 A blank line before every `return` that is not alone in its block and between the logical
 blocks of a function; no blank line padding the edges of a block (`clean/blank-lines`; the
-text-level checker holds the `return` and the padded block, ESLint the whole layout, with an
-automatic fix). Class members are `private`, never `#name` (`clean/no-hash-private`): one way to
-hide a member, the one the compiler checks.
+text-level checker holds the `return` and the padded block, ESLint the blank lines between
+statements, with an automatic fix). Class members are `private`, never `#name`
+(`clean/no-hash-private`): one way to hide a member, the one the compiler checks.
+
+Every `if`, `else`, `for`, `while` and `do` has braces, and its body is on its own lines
+(`clean/braces`): a branch is visible at a glance, and a statement added to it later cannot
+silently fall outside it. A ternary and an arrow function returning an expression stay as they
+are.
+
+```ts
+// refused
+if (wrapped.has(repository)) return repository;
+
+// required
+if (wrapped.has(repository)) {
+  return repository;
+}
+```
+
+Everything else about where a token goes is decided by the formatter, Biome, at a line width of
+120 (`clean/formatted`): `npm run format` writes it, `npm run format:check` holds it before a
+commit and in the pipeline. See the [quality baseline](../tools/quality-baseline.md).
 
 ## Comments
 
@@ -199,7 +226,9 @@ Before:
 async execute(command: BookAppointment): Promise<string> {
   const id = crypto.randomUUID();
   const appointment = Appointment.book(id, command.clientId, command.slot, new Date());
-  if (process.env.SMS_ENABLED === 'true') await sendSms(command.clientId, 'Booked');
+  if (process.env.SMS_ENABLED === 'true') {
+    await sendSms(command.clientId, 'Booked');
+  }
   await this.appointments.save(appointment);
   return id;
 }

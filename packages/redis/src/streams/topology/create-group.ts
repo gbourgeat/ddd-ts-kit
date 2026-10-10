@@ -8,6 +8,8 @@ export async function createGroup(client: Redis, group: GroupDescription): Promi
   try {
     await client.xgroup('CREATE', group.stream, group.name, group.startFrom === 'new' ? '$' : '0', 'MKSTREAM');
   } catch (error) {
-    if (failureCode(error) !== GROUP_EXISTS) throw error;
+    if (failureCode(error) !== GROUP_EXISTS) {
+      throw error;
+    }
   }
 }

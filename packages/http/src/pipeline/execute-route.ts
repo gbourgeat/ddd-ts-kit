@@ -82,7 +82,9 @@ async function handled(call: Call): Promise<RouteOutput> {
 }
 
 function deadlineOf(options: ExecuteOptions): Date | undefined {
-  if (options.requestTimeoutMs === undefined) return undefined;
+  if (options.requestTimeoutMs === undefined) {
+    return undefined;
+  }
 
   const arrivedAt = options.clock?.now() ?? new Date();
 

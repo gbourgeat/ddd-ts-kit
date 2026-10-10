@@ -8,7 +8,9 @@ import type { CriteriaDefinition } from './criteria-definition.js';
 export function totalSort<Row>(definition: CriteriaDefinition<Row>, asked: readonly Sort[]): readonly Sort[] {
   const sort: readonly Sort[] = asked.length > 0 ? asked : definition.defaultSort;
 
-  if (sort.some(({ field }) => field === definition.tieBreaker)) return sort;
+  if (sort.some(({ field }) => field === definition.tieBreaker)) {
+    return sort;
+  }
 
   return [...sort, { field: definition.tieBreaker, direction: sort.at(-1)?.direction ?? 'asc' }];
 }

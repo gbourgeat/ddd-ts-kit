@@ -18,9 +18,13 @@ export function wire(scope: Scope, kind: string, context: RenderContext): void {
   const family = wiringFamily(scope.config);
 
   for (const [target, file] of Object.entries(targetsOf(scope, family))) {
-    const template = [family, ...(family === 'manual' ? [] : ['on-tsyringe'])].map((variant) => `${base}${target}.${variant}.tpl`).find(templateExists);
+    const template = [family, ...(family === 'manual' ? [] : ['on-tsyringe'])]
+      .map((variant) => `${base}${target}.${variant}.tpl`)
+      .find(templateExists);
 
-    if (template !== undefined) applyWiring(scope.ws, file, renderTemplate(template, context));
+    if (template !== undefined) {
+      applyWiring(scope.ws, file, renderTemplate(template, context));
+    }
   }
 }
 
@@ -28,7 +32,9 @@ function targetsOf(scope: Scope, family: WiringFamily): Record<string, string> {
   const { config, context, dir } = scope;
   const module = `${dir}/${context.kebab}.module.ts`;
 
-  if (family === 'manual') return { wiring: module };
+  if (family === 'manual') {
+    return { wiring: module };
+  }
 
   return {
     ...(family === 'tsyringe' ? { wiring: module } : {}),

@@ -23,7 +23,9 @@ export function removeMemberRoute(commands: CommandBus): Route {
       security: ['bearer'],
     },
     async (input) => {
-      const id = await commands.execute(new RemoveMemberCommand(actorOf(input.context.principal), input.params.practiceId, input.params.personId));
+      const id = await commands.execute(
+        new RemoveMemberCommand(actorOf(input.context.principal), input.params.practiceId, input.params.personId),
+      );
 
       return { status: 200, body: { id } };
     },

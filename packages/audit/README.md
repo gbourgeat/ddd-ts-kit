@@ -444,7 +444,9 @@ import { auditChainsTable, auditEntriesTable, auditGuardStatements } from '@ddd-
 export const auditEntries = auditEntriesTable('audit');
 export const auditChains = auditChainsTable('audit');
 // and in a custom migration (drizzle-kit generate --custom), since drizzle-kit writes no trigger:
-for (const statement of auditGuardStatements('audit')) await db.execute(sql.raw(statement));
+for (const statement of auditGuardStatements('audit')) {
+  await db.execute(sql.raw(statement));
+}
 
 new DrizzleAuditTrail(unitOfWork, { schema: 'audit' });
 ```

@@ -25,7 +25,9 @@ export function createTypeOrmUnitOfWork(
   return {
     run<T>(work: () => Promise<T>): Promise<T> {
       return withinUnitOfWork(work, (scoped) => {
-        if (current.getStore() !== undefined) return scoped();
+        if (current.getStore() !== undefined) {
+          return scoped();
+        }
 
         const inTransaction = (manager: EntityManager): Promise<T> => current.run(manager, scoped);
 

@@ -5,14 +5,18 @@ const CLOSING = ')]}>';
 export function constructorParameters(source: string): string[] {
   const start = /\bconstructor\s*\(/.exec(source);
 
-  if (start === null) return [];
+  if (start === null) {
+    return [];
+  }
 
   const parameters: string[] = [];
   let depth = 0;
   let current = '';
 
   for (const character of source.slice(start.index + start[0].length)) {
-    if (character === ')' && depth === 0) break;
+    if (character === ')' && depth === 0) {
+      break;
+    }
 
     depth += nesting(character);
 
@@ -28,7 +32,9 @@ export function constructorParameters(source: string): string[] {
 }
 
 function nesting(character: string): number {
-  if (OPENING.includes(character)) return 1;
+  if (OPENING.includes(character)) {
+    return 1;
+  }
 
   return CLOSING.includes(character) ? -1 : 0;
 }

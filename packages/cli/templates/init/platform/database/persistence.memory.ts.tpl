@@ -10,10 +10,10 @@ import type { ProcessedEventStore, UnitOfWork } from '@ddd-ts-kit/kernel';
 export interface Persistence {
   readonly unitOfWork: UnitOfWork;
   readonly outbox: OutboxStore;
-{{#if persistence.signals}}
+  {{#if persistence.signals}}
   /** Raised after each stored event, so that the relay need not poll fast. */
   readonly relaySignal: RelaySignal;
-{{/if}}
+  {{/if}}
   readonly processedEvents: ProcessedEventStore;
 
   close(): Promise<void>;

@@ -8,7 +8,9 @@ export function codeLines(node: FunctionNode, sourceCode: Readonly<TSESLint.Sour
   const lines = new Set<number>();
 
   for (const token of inside) {
-    for (let line = token.loc.start.line; line <= token.loc.end.line; line += 1) lines.add(line);
+    for (let line = token.loc.start.line; line <= token.loc.end.line; line += 1) {
+      lines.add(line);
+    }
   }
 
   return lines.size;

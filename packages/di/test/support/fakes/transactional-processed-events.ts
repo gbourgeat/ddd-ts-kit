@@ -14,7 +14,9 @@ export class TransactionalProcessedEvents extends TransactionalJournal implement
   async markProcessed(consumer: string, eventId: string): Promise<boolean> {
     const mark = `${consumer} ${eventId}`;
 
-    if (this.has(mark)) return false;
+    if (this.has(mark)) {
+      return false;
+    }
 
     this.write(mark);
 

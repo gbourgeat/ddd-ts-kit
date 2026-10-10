@@ -5,7 +5,8 @@ import type { MethodShape } from '../structure/method-shape.js';
 import { inContext } from '../support/in-context.js';
 import { perFile } from '../support/per-file.js';
 
-const BOOLEAN_PARAMETER = /^(?:(?:public|private|protected|readonly|override)\s+)*([A-Za-z_$][\w$]*)\s*\??\s*(?::\s*boolean\s*(?:=.*)?|=\s*(?:true|false))$/;
+const BOOLEAN_PARAMETER =
+  /^(?:(?:public|private|protected|readonly|override)\s+)*([A-Za-z_$][\w$]*)\s*\??\s*(?::\s*boolean\s*(?:=.*)?|=\s*(?:true|false))$/;
 
 export const cleanNoFlagArgument: Rule = {
   id: 'clean/no-flag-argument',
@@ -34,9 +35,17 @@ function flagsOf(method: MethodShape): string[] {
 
 /** Public behaviour of the domain, and the `execute` of a use case. Messages carry data: they are exempt. */
 function isJudged(file: SourceFile, shape: ClassShape, method: MethodShape): boolean {
-  if (!inContext(file.location) || file.isTest || method.visibility !== 'public' || method.isConstructor) return false;
-  if (/(?:Command|Query)$/.test(shape.name)) return false;
-  if (file.location.layer === 'domain') return true;
+  if (!inContext(file.location) || file.isTest || method.visibility !== 'public' || method.isConstructor) {
+    return false;
+  }
+
+  if (/(?:Command|Query)$/.test(shape.name)) {
+    return false;
+  }
+
+  if (file.location.layer === 'domain') {
+    return true;
+  }
 
   return file.location.layer === 'application' && method.name === 'execute';
 }

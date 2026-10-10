@@ -8,7 +8,14 @@ export default defineConfig(({ mode }) => ({
   resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
   test: {
     projects: [
-      { extends: true, test: { name: 'unit', include: ['src/**/*.spec.ts', 'test/architecture/**/*.spec.ts'], exclude: [INTEGRATION_SPECS] } },
+      {
+        extends: true,
+        test: {
+          name: 'unit',
+          include: ['src/**/*.spec.ts', 'test/architecture/**/*.spec.ts'],
+          exclude: [INTEGRATION_SPECS],
+        },
+      },
       { extends: true, test: { name: INTEGRATION_MODE, include: [INTEGRATION_SPECS] } },
     ],
     coverage: {
@@ -32,7 +39,9 @@ export default defineConfig(({ mode }) => ({
  * failed for a layer it does not execute.
  */
 function measuredLayers(mode: string): string[] {
-  return mode === INTEGRATION_MODE ? [layer('infrastructure')] : [layer('domain'), layer('application'), layer('presentation')];
+  return mode === INTEGRATION_MODE
+    ? [layer('infrastructure')]
+    : [layer('domain'), layer('application'), layer('presentation')];
 }
 
 function layer(name: string): string {

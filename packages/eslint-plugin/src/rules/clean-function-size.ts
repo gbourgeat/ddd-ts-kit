@@ -16,7 +16,8 @@ export const cleanFunctionSize = defineRule<'parameters' | 'lines', [Options]>({
   id: 'clean/function-size',
   type: 'suggestion',
   recommended: 'warn',
-  description: 'A function has at most 3 parameters and 30 lines (configurable, never above 100 lines); a longer one is doing more than one thing.',
+  description:
+    'A function has at most 3 parameters and 30 lines (configurable, never above 100 lines); a longer one is doing more than one thing.',
   messages: {
     parameters:
       '{{name}} takes {{count}} parameters (limit {{limit}}). Group the parameters that travel together into a value object or a named parameter object: they are a concept that has no name yet.',
@@ -41,11 +42,15 @@ export const cleanFunctionSize = defineRule<'parameters' | 'lines', [Options]>({
       const parameters = node.params.filter((parameter) => !isThisParameter(parameter)).length;
 
       // A constructor lists the dependencies it is given: that is wiring, not a signature to shorten.
-      if (parameters > maxParameters && !isConstructor(node)) report({ loc, messageId: 'parameters', data: { name, count: parameters, limit: maxParameters } });
+      if (parameters > maxParameters && !isConstructor(node)) {
+        report({ loc, messageId: 'parameters', data: { name, count: parameters, limit: maxParameters } });
+      }
 
       const lines = isComposition || isGroupingCallback(node) ? 0 : codeLines(node, sourceCode);
 
-      if (lines > maxLines) report({ loc, messageId: 'lines', data: { name, count: lines, limit: maxLines } });
+      if (lines > maxLines) {
+        report({ loc, messageId: 'lines', data: { name, count: lines, limit: maxLines } });
+      }
     };
 
     return { FunctionDeclaration: judge, FunctionExpression: judge, ArrowFunctionExpression: judge };
@@ -62,11 +67,18 @@ function isConstructor(node: FunctionNode): boolean {
 
 /** The callback of `describe(...)` holds tests, not steps: its length says nothing about one thing. */
 function isGroupingCallback(node: FunctionNode): boolean {
-  if (node.parent.type !== AST_NODE_TYPES.CallExpression || !node.parent.arguments.some((argument) => argument === node)) return false;
+  if (
+    node.parent.type !== AST_NODE_TYPES.CallExpression ||
+    !node.parent.arguments.some((argument) => argument === node)
+  ) {
+    return false;
+  }
 
   let callee: TSESTree.Node = node.parent.callee;
 
-  if (isInjectedGrouping(callee)) return true;
+  if (isInjectedGrouping(callee)) {
+    return true;
+  }
 
   while (callee.type === AST_NODE_TYPES.MemberExpression || callee.type === AST_NODE_TYPES.CallExpression) {
     callee = callee.type === AST_NODE_TYPES.MemberExpression ? callee.object : callee.callee;

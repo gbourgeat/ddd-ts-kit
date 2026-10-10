@@ -13,6 +13,10 @@ export function readPolicies({ ws, directory }: ContextSources): PolicyFact[] {
     .map((file) => {
       const path = `${directory}/${FOLDER}/${file}`;
 
-      return { name: toName(file.slice(0, -SUFFIX.length)).pascal, permission: /\w+Permissions\['([^']+)'\]/.exec(ws.read(path) ?? '')?.[1] ?? '', file: path };
+      return {
+        name: toName(file.slice(0, -SUFFIX.length)).pascal,
+        permission: /\w+Permissions\['([^']+)'\]/.exec(ws.read(path) ?? '')?.[1] ?? '',
+        file: path,
+      };
     });
 }

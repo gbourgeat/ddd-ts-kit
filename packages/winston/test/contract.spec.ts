@@ -46,7 +46,9 @@ describe('WinstonLogger and LogFields', () => {
   it('takes the keys a project declares by merging', () => {
     const sink = new MemorySink();
 
-    createWinstonLogger({ transports: [memoryTransport(sink)] }).child({ parcelId: 'parcel-1' }).info('parcel handed over');
+    createWinstonLogger({ transports: [memoryTransport(sink)] })
+      .child({ parcelId: 'parcel-1' })
+      .info('parcel handed over');
 
     expect(sink.records()).toMatchObject([{ parcelId: 'parcel-1' }]);
     expect(parcelOf({ parcelId: 'parcel-1' })).toBe('parcel-1');

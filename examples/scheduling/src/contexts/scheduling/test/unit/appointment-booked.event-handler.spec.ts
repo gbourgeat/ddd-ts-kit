@@ -14,14 +14,22 @@ describe('When appointment booked', () => {
 
     await handler.handle(booked);
 
-    expect(relationships.current).toEqual(['appointment appointment-1 of patient patient-5', 'appointment appointment-1 on calendar calendar-4']);
+    expect(relationships.current).toEqual([
+      'appointment appointment-1 of patient patient-5',
+      'appointment appointment-1 on calendar calendar-4',
+    ]);
   });
 
   it('records the same for an appointment that is only requested', async () => {
     const relationships = new FakeSchedulingRelationships();
     const handler = new AppointmentBookedEventHandler(relationships);
 
-    await handler.handle(new AppointmentBooked('appointment-2', booked.occurredAt, { booking: held.booking, confirmBefore: new Date('2026-01-02T00:00:00.000Z') }));
+    await handler.handle(
+      new AppointmentBooked('appointment-2', booked.occurredAt, {
+        booking: held.booking,
+        confirmBefore: new Date('2026-01-02T00:00:00.000Z'),
+      }),
+    );
 
     expect(relationships.current).toHaveLength(2);
   });

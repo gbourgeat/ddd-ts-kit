@@ -21,7 +21,9 @@ export function fromOutside(original: Method, wrapper: Method, application: obje
   const entry: Method = async function (this: unknown, ...args: unknown[]): Promise<unknown> {
     const outer = callsInProgress.getStore() ?? [];
 
-    if (outer.some((call) => call.running && call.application === application)) return original.apply(this, args);
+    if (outer.some((call) => call.running && call.application === application)) {
+      return original.apply(this, args);
+    }
 
     const call: AdvisedCall = { application, running: true };
 

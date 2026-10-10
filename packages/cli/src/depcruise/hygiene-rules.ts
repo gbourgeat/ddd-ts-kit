@@ -9,7 +9,8 @@ export function hygieneRules(config: Config): CruiseRule[] {
     {
       name: 'no-circular',
       severity: 'error',
-      comment: 'Two modules that need each other are one module, or hide a third concept. Extract what both use, or invert one direction with a port.',
+      comment:
+        'Two modules that need each other are one module, or hide a third concept. Extract what both use, or invert one direction with a port.',
       from: {},
       to: { circular: true },
     },
@@ -38,14 +39,16 @@ function productionRules(config: Config): CruiseRule[] {
     {
       name: 'not-to-dev-dependency',
       severity: 'error',
-      comment: 'Production code imports a package listed under devDependencies: it is absent from the production image. Move it to dependencies, or keep the import in a test.',
+      comment:
+        'Production code imports a package listed under devDependencies: it is absent from the production image. Move it to dependencies, or keep the import in a test.',
       from: production,
       to: { dependencyTypes: ['npm-dev'], dependencyTypesNot: ['type-only'], pathNot: ['node_modules/@types/'] },
     },
     {
       name: 'not-to-test',
       severity: 'error',
-      comment: 'Production code imports a test file (spec, fake, builder, test support). Move what is shared to the layer that owns it.',
+      comment:
+        'Production code imports a test file (spec, fake, builder, test support). Move what is shared to the layer that owns it.',
       from: production,
       to: { path: testFiles(config) },
     },
@@ -72,7 +75,11 @@ function orphanExceptions(config: Config): string[] {
 function discoveredFiles(config: Config): string[] {
   const { style, assembly } = config.stack;
 
-  if (style !== 'declared' || assembly !== 'discovery') return [];
+  if (style !== 'declared' || assembly !== 'discovery') {
+    return [];
+  }
 
-  return [`^${escapePattern(config.contextsDir)}/[^/]+/(application|infrastructure)/.*\\.(${DISCOVERED_SUFFIXES.join('|')})\\.ts$`];
+  return [
+    `^${escapePattern(config.contextsDir)}/[^/]+/(application|infrastructure)/.*\\.(${DISCOVERED_SUFFIXES.join('|')})\\.ts$`,
+  ];
 }

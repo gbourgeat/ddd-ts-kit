@@ -17,16 +17,26 @@ export function parseContext(value: unknown): ContextConfig {
 }
 
 function parseUpstream(value: unknown): Upstream | undefined {
-  if (typeof value === 'string') return { context: value, relationship: 'published-language' };
-  if (!isRecord(value) || typeof value['context'] !== 'string') return undefined;
+  if (typeof value === 'string') {
+    return { context: value, relationship: 'published-language' };
+  }
+
+  if (!isRecord(value) || typeof value['context'] !== 'string') {
+    return undefined;
+  }
 
   return { context: value['context'], relationship: text(value['relationship'], 'published-language') };
 }
 
 /** An extra directory is a path, or `{ "path": ..., "reason": ... }` so the decision is documented. */
 function parseExtraDirectory(value: unknown): string | undefined {
-  if (typeof value === 'string') return posix(value);
-  if (isRecord(value) && typeof value['path'] === 'string') return posix(value['path']);
+  if (typeof value === 'string') {
+    return posix(value);
+  }
+
+  if (isRecord(value) && typeof value['path'] === 'string') {
+    return posix(value['path']);
+  }
 
   return undefined;
 }

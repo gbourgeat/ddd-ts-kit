@@ -24,7 +24,9 @@ function compareKeys(left: SortKey, right: SortKey): number {
   for (const [index, value] of left.entries()) {
     const other = right[index];
 
-    if (other === undefined || value === other) continue;
+    if (other === undefined || value === other) {
+      continue;
+    }
 
     return value < other ? -1 : 1;
   }

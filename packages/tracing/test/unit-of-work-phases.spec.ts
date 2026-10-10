@@ -1,5 +1,12 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { AggregateRoot, Command, CommandBus, DomainEventDispatcher, Repository, type DomainEvent } from '@ddd-ts-kit/kernel';
+import {
+  AggregateRoot,
+  Command,
+  CommandBus,
+  DomainEventDispatcher,
+  Repository,
+  type DomainEvent,
+} from '@ddd-ts-kit/kernel';
 import { createApplication, defineContextModule, kernelModule, type Application } from '@ddd-ts-kit/di';
 import { resetTracingConfiguration, traceApplication } from '../src/index.js';
 import { expectSpanTree, installTestTracing, type TestTracing } from '../src/testing.js';
@@ -50,7 +57,9 @@ function anApplication(notify: (id: string) => Promise<void>): Application {
       const dispatcher = resolve(DomainEventDispatcher);
 
       dispatcher.on('shipping.parcel.sent', async (event) => {
-        if (event.aggregateId === 'p1') await resolve(ParcelRepository).save(Parcel.of('t1', 'tracked'));
+        if (event.aggregateId === 'p1') {
+          await resolve(ParcelRepository).save(Parcel.of('t1', 'tracked'));
+        }
       });
 
       dispatcher.on('shipping.parcel.sent', (event) => notify(event.aggregateId), { phase: 'after-commit' });

@@ -32,12 +32,19 @@ export async function startHttpServer(served: Served, config: AppConfig): Promis
 
 /** The readiness probe, then the limiter, before any route. */
 function guardTheDoor(app: express.Express, served: Served, config: AppConfig): void {
-  app.get('/health/ready', (_request, response) => void served.ready().then((ready) => response.status(ready ? 200 : 503).json({ status: ready ? 'up' : 'down' })));
+  app.get(
+    '/health/ready',
+    (_request, response) =>
+      void served.ready().then((ready) => response.status(ready ? 200 : 503).json({ status: ready ? 'up' : 'down' })),
+  );
 
   app.use((request, response, next) => {
     void refusalFor(served.rateLimiter, config.rateLimit, request.ip).then((refusal) => {
-      if (refusal === undefined) next();
-      else response.status(refusal.problem.status).set(refusal.headers).send(JSON.stringify(refusal.problem));
+      if (refusal === undefined) {
+        next();
+      } else {
+        response.status(refusal.problem.status).set(refusal.headers).send(JSON.stringify(refusal.problem));
+      }
     }, next);
   });
 }

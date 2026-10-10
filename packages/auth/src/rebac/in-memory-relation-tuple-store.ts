@@ -6,11 +6,15 @@ export class InMemoryRelationTupleStore implements RelationTupleStore {
   private readonly tuples = new Map<string, RelationTuple>();
 
   async write(tuples: readonly RelationTuple[]): Promise<void> {
-    for (const tuple of tuples) this.tuples.set(tupleKey(tuple), { ...tuple });
+    for (const tuple of tuples) {
+      this.tuples.set(tupleKey(tuple), { ...tuple });
+    }
   }
 
   async delete(tuples: readonly RelationTuple[]): Promise<void> {
-    for (const tuple of tuples) this.tuples.delete(tupleKey(tuple));
+    for (const tuple of tuples) {
+      this.tuples.delete(tupleKey(tuple));
+    }
   }
 
   async readByObject(object: string, relation: string): Promise<readonly RelationTuple[]> {

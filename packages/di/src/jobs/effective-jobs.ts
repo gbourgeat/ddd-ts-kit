@@ -26,7 +26,9 @@ export function effectiveJobs(wiring: Wiring, options: JobsOptions = {}): Effect
 function assertSettingsNameJobs({ jobs }: Wiring, configured: readonly string[]): void {
   const unknown = configured.find((name) => jobs.every((job) => job.name !== name));
 
-  if (unknown === undefined) return;
+  if (unknown === undefined) {
+    return;
+  }
 
   const declared = jobs.length === 0 ? 'none' : jobs.map((job) => `"${job.name}"`).join(', ');
 

@@ -4,6 +4,7 @@ import { authzActorExplicit } from '../rules/authz-actor-explicit.js';
 import { authzDeclared } from '../rules/authz-declared.js';
 import { authzInApplication } from '../rules/authz-in-application.js';
 import { cleanBlankLines } from '../rules/clean-blank-lines.js';
+import { cleanBraces } from '../rules/clean-braces.js';
 import { cleanFileSize } from '../rules/clean-file-size.js';
 import { cleanFunctionSize } from '../rules/clean-function-size.js';
 import { cleanNoCommentedOutCode } from '../rules/clean-no-commented-out-code.js';
@@ -86,6 +87,7 @@ export const ARCHITECTURE_RULES: readonly Rule[] = [
   cleanNoFlagArgument,
   cleanNoHashPrivate,
   cleanBlankLines,
+  cleanBraces,
   cleanOneExportPerFile,
   cleanFileSize,
   eventsOutboxRequired,

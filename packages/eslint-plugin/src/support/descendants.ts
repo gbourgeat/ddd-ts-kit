@@ -8,12 +8,16 @@ export function* descendants(node: TSESTree.Node): Generator<TSESTree.Node> {
   const entries: [string, unknown][] = Object.entries(node);
 
   for (const [key, value] of entries) {
-    if (key === 'parent') continue;
+    if (key === 'parent') {
+      continue;
+    }
 
     const children: readonly unknown[] = Array.isArray(value) ? value : [value];
 
     for (const child of children) {
-      if (isNode(child)) yield* descendants(child);
+      if (isNode(child)) {
+        yield* descendants(child);
+      }
     }
   }
 }

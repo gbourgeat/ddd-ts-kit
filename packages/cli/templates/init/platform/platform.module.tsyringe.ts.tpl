@@ -13,26 +13,41 @@ import { OutboxStore } from '@ddd-ts-kit/events';
 {{#if http.any}}
 import { ErrorMapper, createErrorMapper } from '@ddd-ts-kit/http';
 {{/if}}
-import {
 {{#if cache.redis}}
-  Cache,
-{{/if}}
 {{#if broker.external}}
+import {
+  Cache,
   EventSubscribers,
-{{/if}}
-{{#if cache.redis}}
   Lock,
   Metrics,
-{{/if}}
   ProcessedEventStore,
-{{#if cache.redis}}
   RateLimiter,
-{{/if}}
   UnitOfWork,
-{{#if errors.sentry}}
+  {{#if errors.sentry}}
   type ErrorReporter,
-{{/if}}
+  {{/if}}
 } from '@ddd-ts-kit/kernel';
+{{/if}}
+{{#unless broker.external}}
+{{#if errors.sentry}}
+import {
+  Cache,
+  Lock,
+  Metrics,
+  ProcessedEventStore,
+  RateLimiter,
+  UnitOfWork,
+  type ErrorReporter,
+} from '@ddd-ts-kit/kernel';
+{{/if}}
+{{#unless errors.sentry}}
+import { Cache, Lock, Metrics, ProcessedEventStore, RateLimiter, UnitOfWork } from '@ddd-ts-kit/kernel';
+{{/unless}}
+{{/unless}}
+{{/if}}
+{{#unless cache.redis}}
+import { {{#if broker.external}}EventSubscribers, {{/if}}ProcessedEventStore, UnitOfWork{{#if errors.sentry}}, type ErrorReporter{{/if}} } from '@ddd-ts-kit/kernel';
+{{/unless}}
 {{#if persistence.packagedToken}}
 import { {{persistence.token}} } from '{{persistence.tokenPackage}}';
 {{/if}}
@@ -58,24 +73,24 @@ import type { ResilienceSettings } from './resilience/resilience-settings.js';
 export interface PlatformOptions {
   /** The provider integration events are delivered to: the broker in `main.ts`, the process itself for the tools and most tests. */
   readonly events: EventProvider;
-{{#if http.any}}
+  {{#if http.any}}
   /** Who verifies the credential of a request: the real adapter in `main.ts`, a key of their own in the tests. */
   readonly authenticator: Authenticator;
-{{/if}}
+  {{/if}}
   /** Where log entries go; left out, the application writes nothing. */
   readonly log?: LogSettings;
   /** The policy around every adapter that leaves the process; left out, the defaults of `resilience/default-resilience.ts`. */
   readonly resilience?: ResilienceSettings;
   /** Whether a consumed event continues the trace of its publication (the default) or starts one linked to it. */
   readonly traceConsumers?: ConsumerTrace;
-{{#if errors.sentry}}
+  {{#if errors.sentry}}
   /** Where unexpected failures are reported: the reporter of `errors.ts` in `main.ts`; left out (the tools, the tests), nowhere. */
   readonly errors?: ErrorReporter;
-{{/if}}
-{{#if cache.redis}}
+  {{/if}}
+  {{#if cache.redis}}
   /** The Redis protocol server; left out, the cache, the lock and the limiter stay in the memory of the process. */
   readonly redis?: RedisServices;
-{{/if}}
+  {{/if}}
 }
 
 /**
@@ -90,31 +105,33 @@ export function platformModule(persistence: Persistence, options: PlatformOption
     register(builder) {
       builder.rebind(UnitOfWork).toValue(persistence.unitOfWork);
       builder.rebind(ProcessedEventStore).toValue(persistence.processedEvents);
-{{#if persistence.hasDatabase}}
+      {{#if persistence.hasDatabase}}
       builder.bind({{persistence.token}}).toValue(persistence.database);
-{{/if}}
-{{#if events.outbox}}
+      {{/if}}
+      {{#if events.outbox}}
       builder.bind(OutboxStore).toValue(persistence.outbox);
-{{/if}}
-{{#if broker.external}}
+      {{/if}}
+      {{#if broker.external}}
       builder.rebind(EventSubscribers).toValue({ forContext: (name) => options.events.forConsumer(name) });
-{{/if}}
-{{#if http.any}}
+      {{/if}}
+      {{#if http.any}}
       builder.bind(ErrorMapper).toValue(createErrorMapper());
-{{/if}}
+      {{/if}}
       // Cross-cutting behaviour stays out of the contexts. Inside the span and the dispatch the kernel module puts around a binding, outside the aspects a binding states for itself (`ownPolicy`).
       builder.around(['external', 'gateway'], () => adapterAspects(options.resilience ?? defaultResilience));
-{{#if cache.redis}}
+      {{#if cache.redis}}
 
-      if (options.redis !== undefined) bindRedis(builder, options.redis);
-{{/if}}
-{{#if style.declared}}
-{{#if cache.redis}}
+      if (options.redis !== undefined) {
+        bindRedis(builder, options.redis);
+      }
+      {{/if}}
+      {{#if style.declared}}
+      {{#if cache.redis}}
 
-{{/if}}
+      {{/if}}
       // ddd-ts-kit:bindings
       // /ddd-ts-kit:bindings
-{{/if}}
+      {{/if}}
     },
   });
 }

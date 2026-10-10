@@ -38,13 +38,40 @@ ruleTester.run('domain-aggregate-encapsulation', domainAggregateEncapsulation, {
     at(`${BILLING}/test/unit/invoice.aggregate.spec.ts`, 'class Probe { constructor(public value: number) {} }'),
   ],
   invalid: [
-    { ...at(AGGREGATE, 'export class Invoice { constructor(readonly id: string) {} }'), errors: [{ messageId: 'publicConstructor', data: { className: 'Invoice' } }] },
-    { ...at(AGGREGATE, 'export class Invoice { public constructor() {} }'), errors: [{ messageId: 'publicConstructor' }] },
-    { ...at(AGGREGATE, 'export class Invoice { static create(): Invoice { return new Invoice(); } }'), errors: [{ messageId: 'missingConstructor', data: { className: 'Invoice' } }] },
-    { ...at(AGGREGATE, 'export class Invoice { private constructor() {} status = "draft"; }'), errors: [{ messageId: 'publicMutableProperty', data: { className: 'Invoice', name: 'status' } }] },
-    { ...at(ENTITY, 'export class InvoiceLine { private constructor(public quantity: number) {} }'), errors: [{ messageId: 'publicMutableProperty', data: { className: 'InvoiceLine', name: 'quantity' } }] },
-    { ...at(AGGREGATE, 'export class Invoice { private constructor() {} private status = "draft"; setStatus(status: string): void { this.status = status; } }'), errors: [{ messageId: 'setter', data: { className: 'Invoice', name: 'setStatus' } }] },
-    { ...at(AGGREGATE, 'export class Invoice { private constructor() {} #status = "draft"; set status(value: string) { this.guard(); this.#status = value; } }'), errors: [{ messageId: 'setter', data: { className: 'Invoice', name: 'status' } }] },
+    {
+      ...at(AGGREGATE, 'export class Invoice { constructor(readonly id: string) {} }'),
+      errors: [{ messageId: 'publicConstructor', data: { className: 'Invoice' } }],
+    },
+    {
+      ...at(AGGREGATE, 'export class Invoice { public constructor() {} }'),
+      errors: [{ messageId: 'publicConstructor' }],
+    },
+    {
+      ...at(AGGREGATE, 'export class Invoice { static create(): Invoice { return new Invoice(); } }'),
+      errors: [{ messageId: 'missingConstructor', data: { className: 'Invoice' } }],
+    },
+    {
+      ...at(AGGREGATE, 'export class Invoice { private constructor() {} status = "draft"; }'),
+      errors: [{ messageId: 'publicMutableProperty', data: { className: 'Invoice', name: 'status' } }],
+    },
+    {
+      ...at(ENTITY, 'export class InvoiceLine { private constructor(public quantity: number) {} }'),
+      errors: [{ messageId: 'publicMutableProperty', data: { className: 'InvoiceLine', name: 'quantity' } }],
+    },
+    {
+      ...at(
+        AGGREGATE,
+        'export class Invoice { private constructor() {} private status = "draft"; setStatus(status: string): void { this.status = status; } }',
+      ),
+      errors: [{ messageId: 'setter', data: { className: 'Invoice', name: 'setStatus' } }],
+    },
+    {
+      ...at(
+        AGGREGATE,
+        'export class Invoice { private constructor() {} #status = "draft"; set status(value: string) { this.guard(); this.#status = value; } }',
+      ),
+      errors: [{ messageId: 'setter', data: { className: 'Invoice', name: 'status' } }],
+    },
   ],
 });
 
@@ -64,13 +91,40 @@ ruleTester.run('domain-value-object-immutability', domainValueObjectImmutability
     at(AGGREGATE, 'export class Invoice { private total = 0; add(): void { this.total += 1; } }'),
   ],
   invalid: [
-    { ...at(VALUE_OBJECT, 'export class Amount { private cents = 0; }'), errors: [{ messageId: 'mutableProperty', data: { className: 'Amount', name: 'cents' } }] },
-    { ...at(VALUE_OBJECT, 'export class Amount { #cents = 0; }'), errors: [{ messageId: 'mutableProperty', data: { className: 'Amount', name: '#cents' } }] },
-    { ...at(VALUE_OBJECT, 'export class Amount { constructor(private cents: number) {} }'), errors: [{ messageId: 'mutableProperty', data: { className: 'Amount', name: 'cents' } }] },
-    { ...at(VALUE_OBJECT, 'export class Amount { private readonly cents = 0; set value(cents: number) {} }'), errors: [{ messageId: 'setter', data: { className: 'Amount', name: 'value' } }] },
-    { ...at(VALUE_OBJECT, 'export class Amount { private readonly props = { cents: 0 }; add(other: number): void { this.props.cents += other; } }'), errors: [{ messageId: 'mutation', data: { className: 'Amount', target: 'this.props.cents' } }] },
-    { ...at(VALUE_OBJECT, 'export class Counter { private readonly count = 0; next(): void { this.count++; } }'), errors: [{ messageId: 'mutation' }] },
-    { ...at(VALUE_OBJECT, 'export class Basket { private readonly items: string[] = []; add(item: string): void { this.items.push(item); } }'), errors: [{ messageId: 'mutation', data: { className: 'Basket', target: 'this.items' } }] },
+    {
+      ...at(VALUE_OBJECT, 'export class Amount { private cents = 0; }'),
+      errors: [{ messageId: 'mutableProperty', data: { className: 'Amount', name: 'cents' } }],
+    },
+    {
+      ...at(VALUE_OBJECT, 'export class Amount { #cents = 0; }'),
+      errors: [{ messageId: 'mutableProperty', data: { className: 'Amount', name: '#cents' } }],
+    },
+    {
+      ...at(VALUE_OBJECT, 'export class Amount { constructor(private cents: number) {} }'),
+      errors: [{ messageId: 'mutableProperty', data: { className: 'Amount', name: 'cents' } }],
+    },
+    {
+      ...at(VALUE_OBJECT, 'export class Amount { private readonly cents = 0; set value(cents: number) {} }'),
+      errors: [{ messageId: 'setter', data: { className: 'Amount', name: 'value' } }],
+    },
+    {
+      ...at(
+        VALUE_OBJECT,
+        'export class Amount { private readonly props = { cents: 0 }; add(other: number): void { this.props.cents += other; } }',
+      ),
+      errors: [{ messageId: 'mutation', data: { className: 'Amount', target: 'this.props.cents' } }],
+    },
+    {
+      ...at(VALUE_OBJECT, 'export class Counter { private readonly count = 0; next(): void { this.count++; } }'),
+      errors: [{ messageId: 'mutation' }],
+    },
+    {
+      ...at(
+        VALUE_OBJECT,
+        'export class Basket { private readonly items: string[] = []; add(item: string): void { this.items.push(item); } }',
+      ),
+      errors: [{ messageId: 'mutation', data: { className: 'Basket', target: 'this.items' } }],
+    },
   ],
 });
 
@@ -84,41 +138,117 @@ ruleTester.run('domain-no-generic-error', domainNoGenericError, {
     at(AGGREGATE, 'try { run(); } catch (error) { throw error; }'),
   ],
   invalid: [
-    { ...at(AGGREGATE, "throw new Error('Invoice already issued');"), errors: [{ messageId: 'generic', data: { context: 'billing' } }] },
+    {
+      ...at(AGGREGATE, "throw new Error('Invoice already issued');"),
+      errors: [{ messageId: 'generic', data: { context: 'billing' } }],
+    },
     { ...at(COMMAND_HANDLER, "throw Error('not found');"), errors: [{ messageId: 'generic' }] },
-    { ...at(VALUE_OBJECT, "if (cents < 0) throw new globalThis.Error('negative');"), errors: [{ messageId: 'generic' }] },
+    {
+      ...at(VALUE_OBJECT, "if (cents < 0) throw new globalThis.Error('negative');"),
+      errors: [{ messageId: 'generic' }],
+    },
   ],
 });
 
 ruleTester.run('application-handler-shape', applicationHandlerShape, {
   valid: [
-    at(COMMAND_HANDLER, 'export class IssueInvoiceHandler { constructor(private readonly ids: IdGenerator) {} async execute(command: IssueInvoiceCommand): Promise<string> { return this.next(); } private next(): string { return this.ids.next(); } #audit(): void {} }'),
-    at(QUERY_HANDLER, 'class ListInvoicesHandler { execute = async (): Promise<void> => {}; }\nexport { ListInvoicesHandler };\nexport type Row = { id: string };'),
+    at(
+      COMMAND_HANDLER,
+      'export class IssueInvoiceHandler { constructor(private readonly ids: IdGenerator) {} async execute(command: IssueInvoiceCommand): Promise<string> { return this.next(); } private next(): string { return this.ids.next(); } #audit(): void {} }',
+    ),
+    at(
+      QUERY_HANDLER,
+      'class ListInvoicesHandler { execute = async (): Promise<void> => {}; }\nexport { ListInvoicesHandler };\nexport type Row = { id: string };',
+    ),
     at(COMMAND_HANDLER, 'export default class IssueInvoiceHandler { execute(): void {} }'),
-    at(`${BILLING}/application/integration/handlers/catalog-product-listed.integration-handler.ts`, 'export class CatalogProductListedHandler { async handle(event: ProductListedV1): Promise<void> {} }'),
-    at(`${BILLING}/application/event-handlers/invoice-issued.event-handler.ts`, 'export class InvoiceIssuedEventHandler { async handle(event: InvoiceIssued): Promise<void> {} }'),
-    at(`${BILLING}/application/event-handlers/invoice-issued.event-handler.ts`, 'export class InvoiceIssuedEventHandler { async handle(): Promise<void> {} }'),
+    at(
+      `${BILLING}/application/integration/handlers/catalog-product-listed.integration-handler.ts`,
+      'export class CatalogProductListedHandler { async handle(event: ProductListedV1): Promise<void> {} }',
+    ),
+    at(
+      `${BILLING}/application/event-handlers/invoice-issued.event-handler.ts`,
+      'export class InvoiceIssuedEventHandler { async handle(event: InvoiceIssued): Promise<void> {} }',
+    ),
+    at(
+      `${BILLING}/application/event-handlers/invoice-issued.event-handler.ts`,
+      'export class InvoiceIssuedEventHandler { async handle(): Promise<void> {} }',
+    ),
     at(`${BILLING}/presentation/http/issue-invoice.handler.ts`, 'export const handler = 1;'),
   ],
   invalid: [
-    { ...at(COMMAND_HANDLER, 'export const issueInvoice = async (): Promise<void> => {};'), errors: [{ messageId: 'noHandler' }] },
-    { ...at(COMMAND_HANDLER, 'class IssueInvoiceHandler { execute(): void {} }'), errors: [{ messageId: 'noHandler' }] },
-    { ...at(COMMAND_HANDLER, 'export class IssueInvoiceHandler { execute(): void {} }\nexport class CancelInvoiceHandler { execute(): void {} }'), errors: [{ messageId: 'severalClasses', data: { className: 'CancelInvoiceHandler' } }] },
-    { ...at(COMMAND_HANDLER, 'export class IssueInvoiceHandler { async handle(): Promise<void> {} }'), errors: [{ messageId: 'missingExecute', data: { className: 'IssueInvoiceHandler' } }, { messageId: 'extraPublicMethod', data: { className: 'IssueInvoiceHandler', name: 'handle' } }] },
-    { ...at(QUERY_HANDLER, 'export class ListInvoicesHandler { execute(): void {} count(): number { return 0; } static build(): void {} }'), errors: [{ messageId: 'extraPublicMethod', data: { className: 'ListInvoicesHandler', name: 'count' } }, { messageId: 'extraPublicMethod', data: { className: 'ListInvoicesHandler', name: 'build' } }] },
+    {
+      ...at(COMMAND_HANDLER, 'export const issueInvoice = async (): Promise<void> => {};'),
+      errors: [{ messageId: 'noHandler' }],
+    },
+    {
+      ...at(COMMAND_HANDLER, 'class IssueInvoiceHandler { execute(): void {} }'),
+      errors: [{ messageId: 'noHandler' }],
+    },
+    {
+      ...at(
+        COMMAND_HANDLER,
+        'export class IssueInvoiceHandler { execute(): void {} }\nexport class CancelInvoiceHandler { execute(): void {} }',
+      ),
+      errors: [{ messageId: 'severalClasses', data: { className: 'CancelInvoiceHandler' } }],
+    },
+    {
+      ...at(COMMAND_HANDLER, 'export class IssueInvoiceHandler { async handle(): Promise<void> {} }'),
+      errors: [
+        { messageId: 'missingExecute', data: { className: 'IssueInvoiceHandler' } },
+        { messageId: 'extraPublicMethod', data: { className: 'IssueInvoiceHandler', name: 'handle' } },
+      ],
+    },
+    {
+      ...at(
+        QUERY_HANDLER,
+        'export class ListInvoicesHandler { execute(): void {} count(): number { return 0; } static build(): void {} }',
+      ),
+      errors: [
+        { messageId: 'extraPublicMethod', data: { className: 'ListInvoicesHandler', name: 'count' } },
+        { messageId: 'extraPublicMethod', data: { className: 'ListInvoicesHandler', name: 'build' } },
+      ],
+    },
   ],
 });
 
 ruleTester.run('application-command-query-separation', applicationCommandQuerySeparation, {
   valid: [
-    at(QUERY_HANDLER, 'export class ListInvoicesHandler { async execute(query: Q): Promise<R> { const seen = new Set<string>(); seen.delete(query.id); return this.reader.read(query); } }'),
-    at(COMMAND_HANDLER, 'export class IssueInvoiceHandler { async execute(): Promise<void> { await this.invoices.save(invoice); await this.events.publish(event); } }'),
+    at(
+      QUERY_HANDLER,
+      'export class ListInvoicesHandler { async execute(query: Q): Promise<R> { const seen = new Set<string>(); seen.delete(query.id); return this.reader.read(query); } }',
+    ),
+    at(
+      COMMAND_HANDLER,
+      'export class IssueInvoiceHandler { async execute(): Promise<void> { await this.invoices.save(invoice); await this.events.publish(event); } }',
+    ),
     at(`${BILLING}/test/unit/list-invoices.handler.spec.ts`, 'class Probe { run(): void { this.repo.save(1); } }'),
   ],
   invalid: [
-    { ...at(QUERY_HANDLER, 'export class ListInvoicesHandler { async execute(): Promise<void> { await this.invoices.save(invoice); } }'), errors: [{ messageId: 'mutation', data: { call: 'this.invoices.save', context: 'billing' } }] },
-    { ...at(QUERY_HANDLER, 'export class ListInvoicesHandler { async execute(): Promise<void> { await this.#bus.publish(event); this.cache.delete(key); } }'), errors: [{ messageId: 'mutation', data: { call: 'this.#bus.publish', context: 'billing' } }, { messageId: 'mutation' }] },
-    { ...at(QUERY_HANDLER, 'export class ListInvoicesHandler { async execute(): Promise<void> { await this.audit.record(entry); } }'), options: [{ mutators: ['record'] }], errors: [{ messageId: 'mutation' }] },
+    {
+      ...at(
+        QUERY_HANDLER,
+        'export class ListInvoicesHandler { async execute(): Promise<void> { await this.invoices.save(invoice); } }',
+      ),
+      errors: [{ messageId: 'mutation', data: { call: 'this.invoices.save', context: 'billing' } }],
+    },
+    {
+      ...at(
+        QUERY_HANDLER,
+        'export class ListInvoicesHandler { async execute(): Promise<void> { await this.#bus.publish(event); this.cache.delete(key); } }',
+      ),
+      errors: [
+        { messageId: 'mutation', data: { call: 'this.#bus.publish', context: 'billing' } },
+        { messageId: 'mutation' },
+      ],
+    },
+    {
+      ...at(
+        QUERY_HANDLER,
+        'export class ListInvoicesHandler { async execute(): Promise<void> { await this.audit.record(entry); } }',
+      ),
+      options: [{ mutators: ['record'] }],
+      errors: [{ messageId: 'mutation' }],
+    },
   ],
 });
 
@@ -131,11 +261,23 @@ ruleTester.run('test-no-mocks', testNoMocks, {
   ],
   invalid: [
     { ...at(SPEC, 'const save = vi.fn();'), errors: [{ messageId: 'mock', data: { what: 'vi.fn' } }] },
-    { ...at(SPEC, "vi.mock('../../infrastructure/persistence/drizzle-invoice.repository.js');"), errors: [{ messageId: 'mock', data: { what: 'vi.mock' } }] },
+    {
+      ...at(SPEC, "vi.mock('../../infrastructure/persistence/drizzle-invoice.repository.js');"),
+      errors: [{ messageId: 'mock', data: { what: 'vi.mock' } }],
+    },
     { ...at(SPEC, "jest.spyOn(repository, 'save');"), errors: [{ messageId: 'mock', data: { what: 'jest.spyOn' } }] },
-    { ...at(`${BILLING}/test/fakes/clock.fake.ts`, "import sinon from 'sinon';"), errors: [{ messageId: 'library', data: { name: 'sinon' } }] },
+    {
+      ...at(`${BILLING}/test/fakes/clock.fake.ts`, "import sinon from 'sinon';"),
+      errors: [{ messageId: 'library', data: { name: 'sinon' } }],
+    },
     { ...at(SPEC, "import { mock } from 'vitest-mock-extended';"), errors: [{ messageId: 'library' }] },
-    { ...at(`${BILLING}/application/commands/issue-invoice/issue-invoice.handler.spec.ts`, 'const typed = vi.mocked(repository);'), errors: [{ messageId: 'mock' }] },
+    {
+      ...at(
+        `${BILLING}/application/commands/issue-invoice/issue-invoice.handler.spec.ts`,
+        'const typed = vi.mocked(repository);',
+      ),
+      errors: [{ messageId: 'mock' }],
+    },
   ],
 });
 
@@ -143,17 +285,32 @@ ruleTester.run('events-name-format', eventsNameFormat, {
   valid: [
     at(EVENT, "export class InvoiceIssued { readonly name = 'billing.invoice.issued'; }"),
     at(EVENT, "export const invoiceMarkedAsOverdue = { name: 'billing.invoice.marked-as-overdue' };"),
-    at(CONTRACT, "export const invoiceIssuedV1 = defineIntegrationEvent({ type: 'billing.invoice.issued', version: 1, payload: schema({ type: 'object' }) });"),
+    at(
+      CONTRACT,
+      "export const invoiceIssuedV1 = defineIntegrationEvent({ type: 'billing.invoice.issued', version: 1, payload: schema({ type: 'object' }) });",
+    ),
     at(CONTRACT, "export const kind = { type: 'invoice' };"),
     at(`${BILLING}/domain/aggregates/invoice.aggregate.ts`, "const column = { name: 'Total' };"),
     at(`${BILLING}/test/unit/invoice-issued.event.spec.ts`, "const event = { name: 'whatever' };"),
   ],
   invalid: [
-    { ...at(EVENT, "export class InvoiceIssued { readonly name = 'InvoiceIssued'; }"), errors: [{ messageId: 'format', data: { value: 'InvoiceIssued', context: 'billing' } }] },
-    { ...at(EVENT, "export class InvoiceIssued { readonly name: string = 'catalog.invoice.issued'; }"), errors: [{ messageId: 'format' }] },
-    { ...at(EVENT, "export const issued = { name: `billing.Invoice.issued` };"), errors: [{ messageId: 'format' }] },
-    { ...at(CONTRACT, "export const invoiceIssuedV1 = defineIntegrationEvent({ type: 'invoice-issued', version: 1 });"), errors: [{ messageId: 'format', data: { value: 'invoice-issued', context: 'billing' } }] },
+    {
+      ...at(EVENT, "export class InvoiceIssued { readonly name = 'InvoiceIssued'; }"),
+      errors: [{ messageId: 'format', data: { value: 'InvoiceIssued', context: 'billing' } }],
+    },
+    {
+      ...at(EVENT, "export class InvoiceIssued { readonly name: string = 'catalog.invoice.issued'; }"),
+      errors: [{ messageId: 'format' }],
+    },
+    { ...at(EVENT, 'export const issued = { name: `billing.Invoice.issued` };'), errors: [{ messageId: 'format' }] },
+    {
+      ...at(CONTRACT, "export const invoiceIssuedV1 = defineIntegrationEvent({ type: 'invoice-issued', version: 1 });"),
+      errors: [{ messageId: 'format', data: { value: 'invoice-issued', context: 'billing' } }],
+    },
     { ...at(CONTRACT, "export const legacy = { type: 'billing.invoice' };"), errors: [{ messageId: 'format' }] },
-    { ...at(CONTRACT, "export class InvoiceIssued { readonly type = 'billing.invoice.issued.v1'; }"), errors: [{ messageId: 'format' }] },
+    {
+      ...at(CONTRACT, "export class InvoiceIssued { readonly type = 'billing.invoice.issued.v1'; }"),
+      errors: [{ messageId: 'format' }],
+    },
   ],
 });

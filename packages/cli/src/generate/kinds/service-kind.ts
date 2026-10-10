@@ -13,7 +13,8 @@ export const serviceKind: Kind = {
   name: 'service',
   aliases: [],
   usage: 'service <context>',
-  summary: 'The context run alone, with its scheduled jobs: its entry point under apps/, a start script, a compose service, and `deployable` in the config.',
+  summary:
+    'The context run alone, with its scheduled jobs: its entry point under apps/, a start script, a compose service, and `deployable` in the config.',
   positionals: ['context'],
   writesShared: true,
   run: (request) => {
@@ -26,8 +27,14 @@ export const serviceKind: Kind = {
     entry.declareIn(ws);
     editJson(ws, CONFIG_FILE, (raw) => markDeployable(raw, context.kebab));
     addComposeService(ws, context.kebab, renderTemplate('service/compose.tpl', vars(scope, { service })));
-    ws.note(`Build the image of the service with \`docker build --build-arg ENTRY=${entry.compiled} .\`, or start it with \`docker compose --profile services up ${context.kebab}\`.`);
-    ws.note(`The service takes the scheduled jobs of ${context.kebab} with it: it runs them unless RUN_JOBS=false, and no job of another context.`);
+
+    ws.note(
+      `Build the image of the service with \`docker build --build-arg ENTRY=${entry.compiled} .\`, or start it with \`docker compose --profile services up ${context.kebab}\`.`,
+    );
+
+    ws.note(
+      `The service takes the scheduled jobs of ${context.kebab} with it: it runs them unless RUN_JOBS=false, and no job of another context.`,
+    );
   },
 };
 

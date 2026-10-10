@@ -122,22 +122,32 @@ export class Calendar extends AggregateRoot<string> {
     const appointmentType = this.typeOf(appointmentTypeId);
     const { bookingWindow, timeZone } = this.state;
 
-    if (bookingWindow.isTooLate(startsAt, now)) throw new BookingTooLateError(bookingWindow.notice);
+    if (bookingWindow.isTooLate(startsAt, now)) {
+      throw new BookingTooLateError(bookingWindow.notice);
+    }
 
-    if (bookingWindow.isTooFar(startsAt, now)) throw new BookingTooFarError(bookingWindow.horizon);
+    if (bookingWindow.isTooFar(startsAt, now)) {
+      throw new BookingTooFarError(bookingWindow.horizon);
+    }
 
-    if (startsAt.getTime() % MINUTE !== 0 || !appointmentType.startsOn(timeZone.minuteOf(startsAt))) throw new OffGridError(appointmentType.grid);
+    if (startsAt.getTime() % MINUTE !== 0 || !appointmentType.startsOn(timeZone.minuteOf(startsAt))) {
+      throw new OffGridError(appointmentType.grid);
+    }
 
     const slot = appointmentType.slotAt(startsAt);
 
-    if (!this.isOpenDuring(slot)) throw new OutsideAvailabilityError(startsAt);
+    if (!this.isOpenDuring(slot)) {
+      throw new OutsideAvailabilityError(startsAt);
+    }
 
     return slot;
   }
 
   /** When an appointment of the type requested now must be confirmed; nothing for a type that needs no confirmation. */
   confirmationDeadlineFor(appointmentTypeId: string, now: Date): Date | undefined {
-    return this.typeOf(appointmentTypeId).needsConfirmation ? new Date(now.getTime() + CONFIRMATION_HOLD * MINUTE) : undefined;
+    return this.typeOf(appointmentTypeId).needsConfirmation
+      ? new Date(now.getTime() + CONFIRMATION_HOLD * MINUTE)
+      : undefined;
   }
 
   /** The patient as a waiter for a type the calendar offers. */
@@ -187,7 +197,9 @@ export class Calendar extends AggregateRoot<string> {
   private typeOf(appointmentTypeId: string): AppointmentType {
     const appointmentType = this.state.appointmentTypes.find((known) => known.id === appointmentTypeId);
 
-    if (appointmentType === undefined) throw new UnknownAppointmentTypeError(appointmentTypeId);
+    if (appointmentType === undefined) {
+      throw new UnknownAppointmentTypeError(appointmentTypeId);
+    }
 
     return appointmentType;
   }
@@ -197,8 +209,13 @@ export class Calendar extends AggregateRoot<string> {
     const { timeZone, timeOffs } = this.state;
     const day = timeZone.dayOf(slot.startsAt);
     const start = timeZone.minuteOf(slot.startsAt);
-    const end = timeZone.dayOf(slot.endsAt) === day ? timeZone.minuteOf(slot.endsAt) : DAY + timeZone.minuteOf(slot.endsAt);
 
-    return this.rangesOn(day).some((range) => range.contains(start, end)) && !timeOffs.some((timeOff) => timeOff.covers(slot.startsAt, slot.endsAt));
+    const end =
+      timeZone.dayOf(slot.endsAt) === day ? timeZone.minuteOf(slot.endsAt) : DAY + timeZone.minuteOf(slot.endsAt);
+
+    return (
+      this.rangesOn(day).some((range) => range.contains(start, end)) &&
+      !timeOffs.some((timeOff) => timeOff.covers(slot.startsAt, slot.endsAt))
+    );
   }
 }

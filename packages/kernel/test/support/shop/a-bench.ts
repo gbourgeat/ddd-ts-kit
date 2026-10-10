@@ -21,7 +21,9 @@ export function aBench(): Bench {
     carts: dispatchingOnSave(new InMemoryCarts(), () => dispatcher),
     heard,
     hear: (...names) => {
-      for (const name of names) dispatcher.on(name, note);
+      for (const name of names) {
+        dispatcher.on(name, note);
+      }
     },
   };
 }

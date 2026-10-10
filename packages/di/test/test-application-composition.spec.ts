@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { Clock, FixedClock } from '@ddd-ts-kit/kernel';
-import { createApplication, createTestApplication, kernelModule, overrideForTests, type Application } from '../src/index.js';
+import {
+  createApplication,
+  createTestApplication,
+  kernelModule,
+  overrideForTests,
+  type Application,
+} from '../src/index.js';
 import { createTestKernel } from '../src/testing/create-test-kernel.js';
 import { testApplicationOf } from '../src/testing/test-application-of.js';
 import type { Resolve } from '../src/wiring/resolve.js';
@@ -43,7 +49,10 @@ class ApplicationNamedLikeTheKernel implements Application {
 
 describe('the test application, in front of the application', () => {
   const composed = () => {
-    const application = new ApplicationNamedLikeTheKernel(createApplication({ modules: [kernelModule(), orderingModule] }));
+    const application = new ApplicationNamedLikeTheKernel(
+      createApplication({ modules: [kernelModule(), orderingModule] }),
+    );
+
     const kernel = createTestKernel({ modules: [] }, application.resolve);
 
     return { application, kernel, front: testApplicationOf(application, kernel) };
@@ -62,7 +71,10 @@ describe('the test application, in front of the application', () => {
   });
 
   it('writes nothing on the application', () => {
-    const application = new ApplicationNamedLikeTheKernel(createApplication({ modules: [kernelModule(), orderingModule] }));
+    const application = new ApplicationNamedLikeTheKernel(
+      createApplication({ modules: [kernelModule(), orderingModule] }),
+    );
+
     const before = Object.entries(application);
 
     const front = testApplicationOf(application, createTestKernel({ modules: [] }, application.resolve));

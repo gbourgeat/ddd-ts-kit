@@ -142,7 +142,11 @@ describe('authorizationMiddleware', () => {
 
   it('refuses a protected message sent without its actor, as a programming error', async () => {
     class ImportInvoices extends Command {}
-    const loose = AuthorizationMap.of({ ...requires(IssueInvoice, billingPermissions['invoice.issue']), type: ImportInvoices });
+
+    const loose = AuthorizationMap.of({
+      ...requires(IssueInvoice, billingPermissions['invoice.issue']),
+      type: ImportInvoices,
+    });
 
     const bus = new InMemoryCommandBus()
       .use(authorizationMiddleware({ authorizer: new RecordingAuthorizer(), map: loose }))
@@ -204,7 +208,9 @@ describe('AuthorizationMap', () => {
   });
 
   it('refuses two declarations for one use case', () => {
-    expect(() => AuthorizationMap.of(publicUseCase(GetCatalog), publicUseCase(GetCatalog))).toThrow(AuthorizationSetupError);
+    expect(() => AuthorizationMap.of(publicUseCase(GetCatalog), publicUseCase(GetCatalog))).toThrow(
+      AuthorizationSetupError,
+    );
   });
 
   it('merges the maps of several contexts', () => {

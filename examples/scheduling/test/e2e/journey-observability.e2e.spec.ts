@@ -3,6 +3,7 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from
 import { InMemoryErrorReporter } from '@ddd-ts-kit/kernel';
 import { eventually, expectProblem, expectStatus, type HttpClient } from '@ddd-ts-kit/testing/e2e';
 import { expectSpanTree, installTestTracing, type ExpectedSpan, type SpanNode } from '@ddd-ts-kit/tracing/testing';
+import type { LogSettings } from '../../src/platform/observability/create-logger.js';
 import { bookAppointment } from './support/book-appointment.js';
 import type { Listed } from './support/listed.js';
 import { LogLines } from './support/log-lines.js';
@@ -27,7 +28,7 @@ describe('One booking, followed from outside: its trace, its log lines, its erro
 
   beforeAll(async () => {
     application = await startApplication({
-      log: { level: 'info', format: 'json', service: 'scheduling', environment: 'test', scrubMessages: true, destination: logs },
+      log: jsonLinesInto(logs),
       errors,
       storage: (persistence) => outage.around(persistence),
     });
@@ -77,15 +78,28 @@ describe('One booking, followed from outside: its trace, its log lines, its erro
     outage.begin();
 
     const trace = await tracing.traceOf(async () => {
-      expect(expectProblem(await bookAppointment(correlated(), practice, { startsAt }), { status: 500, code: 'INTERNAL_ERROR' })).not.toHaveProperty('detail');
+      expect(
+        expectProblem(await bookAppointment(correlated(), practice, { startsAt }), {
+          status: 500,
+          code: 'INTERNAL_ERROR',
+        }),
+      ).not.toHaveProperty('detail');
     });
 
     const [request] = theBookingIn(trace);
 
-    expectSpanTree(theBookingIn(trace), [{ name: 'POST /appointments', kind: 'SERVER', status: 'ERROR', children: [{ name: 'command BookAppointmentCommand', status: 'ERROR' }] }]);
+    expectSpanTree(theBookingIn(trace), storyOfTheFailure);
 
     expect(errors.reports.map(({ error, report }) => ({ error: String(error), ...report }))).toEqual([
-      { error: 'Error: The storage does not answer.', severity: 'error', origin: 'http', operation: 'BookAppointmentCommand', actorId: 'paul', correlationId, traceId: request?.traceId },
+      {
+        error: 'Error: The storage does not answer.',
+        severity: 'error',
+        origin: 'http',
+        operation: 'BookAppointmentCommand',
+        actorId: 'paul',
+        correlationId,
+        traceId: request?.traceId,
+      },
     ]);
 
     expect(logs.of(correlationId).filter((line) => line['level'] === 'error')).toMatchObject([
@@ -103,33 +117,70 @@ describe('One booking, followed from outside: its trace, its log lines, its erro
     const manager = await application.as({ id: practice.managerId });
 
     expectStatus(await bookAppointment(correlated(), practice, { startsAt }), 201);
-    await eventually(async () => expect(expectStatus(await paul.get<Listed<unknown>>('/notifications'), 200).body.items).toHaveLength(1));
-    await eventually(async () => expect(expectStatus(await manager.get<Listed<unknown>>('/practices/' + practice.practiceId + '/occupancy'), 200).body.items).toHaveLength(1));
+
+    await eventually(async () =>
+      expect(expectStatus(await paul.get<Listed<unknown>>('/notifications'), 200).body.items).toHaveLength(1),
+    );
+
+    await eventually(async () =>
+      expect(
+        expectStatus(await manager.get<Listed<unknown>>('/practices/' + practice.practiceId + '/occupancy'), 200).body
+          .items,
+      ).toHaveLength(1),
+    );
   }
 });
 
 const riverside = { name: 'Riverside', managerId: 'ada', practitionerId: 'grace', assistantId: 'linus' };
+
+function jsonLinesInto(destination: LogLines): LogSettings {
+  return {
+    level: 'info',
+    format: 'json',
+    service: 'scheduling',
+    environment: 'test',
+    scrubMessages: true,
+    destination,
+  };
+}
 
 /** The trace of the booking as the business reads it, among the traces of the requests that waited for its effects. */
 function theBookingIn(trace: readonly SpanNode[]): SpanNode[] {
   return storyOf(trace).filter((span) => span.name === 'POST /appointments');
 }
 
+const storyOfTheFailure: ExpectedSpan[] = [
+  {
+    name: 'POST /appointments',
+    kind: 'SERVER',
+    status: 'ERROR',
+    children: [{ name: 'command BookAppointmentCommand', status: 'ERROR' }],
+  },
+];
+
 function storyOfTheBooking(correlationId: string): ExpectedSpan[] {
   const followed = { 'app.correlation_id': correlationId, 'app.outcome': 'succeeded' };
 
   return [
     {
-      name: 'POST /appointments', kind: 'SERVER', attributes: { ...followed, 'app.origin': 'http' },
+      name: 'POST /appointments',
+      kind: 'SERVER',
+      attributes: { ...followed, 'app.origin': 'http' },
       children: [
         {
-          name: 'command BookAppointmentCommand', attributes: { 'app.context': 'scheduling', 'app.outcome': 'succeeded' },
+          name: 'command BookAppointmentCommand',
+          attributes: { 'app.context': 'scheduling', 'app.outcome': 'succeeded' },
           children: [
             { name: 'repository CalendarRepository.findById' },
             { name: 'repository AppointmentRepository.heldOn' },
             { name: 'repository AppointmentRepository.heldBy' },
             { name: 'repository AppointmentRepository.save' },
-            { name: 'unit-of-work before-commit', children: [{ name: 'domain-event scheduling.appointment.booked', children: whatFollowsTheFact(followed) }] },
+            {
+              name: 'unit-of-work before-commit',
+              children: [
+                { name: 'domain-event scheduling.appointment.booked', children: whatFollowsTheFact(followed) },
+              ],
+            },
           ],
         },
       ],
@@ -140,10 +191,20 @@ function storyOfTheBooking(correlationId: string): ExpectedSpan[] {
 /** At the end of the unit of work of the command, before its commit: the relationships of the appointment, its publication through the outbox, its entry in the agenda. */
 function whatFollowsTheFact(followed: Readonly<Record<string, string>>): ExpectedSpan[] {
   return [
-    { name: 'handler AppointmentBookedEventHandler', children: [{ name: 'repository SchedulingRelationships.recordAppointment' }] },
+    {
+      name: 'handler AppointmentBookedEventHandler',
+      children: [{ name: 'repository SchedulingRelationships.recordAppointment' }],
+    },
     {
       name: 'handler AppointmentBookedPublisher',
-      children: [{ name: 'outbox append scheduling.appointment.booked', children: [{ name: 'publish scheduling.appointment.booked', kind: 'PRODUCER', children: theConsumers(followed) }] }],
+      children: [
+        {
+          name: 'outbox append scheduling.appointment.booked',
+          children: [
+            { name: 'publish scheduling.appointment.booked', kind: 'PRODUCER', children: theConsumers(followed) },
+          ],
+        },
+      ],
     },
     { name: 'repository Agenda.written' },
   ];
@@ -154,13 +215,24 @@ function theConsumers(followed: Readonly<Record<string, string>>): ExpectedSpan[
   const consumed = { ...followed, 'app.origin': 'event' };
 
   return [
-    { name: 'process notification.scheduling-appointment-booked', kind: 'CONSUMER', attributes: { ...consumed, 'app.context': 'notification' }, children: [theNotification, whatFollowsTheNotification] },
-    { name: 'process analytics.outcomes', kind: 'CONSUMER', attributes: { ...consumed, 'app.context': 'analytics' }, children: [{ name: 'repository OutcomeRegister.written' }] },
+    {
+      name: 'process notification.scheduling-appointment-booked',
+      kind: 'CONSUMER',
+      attributes: { ...consumed, 'app.context': 'notification' },
+      children: [theNotification, whatFollowsTheNotification],
+    },
+    {
+      name: 'process analytics.outcomes',
+      kind: 'CONSUMER',
+      attributes: { ...consumed, 'app.context': 'analytics' },
+      children: [{ name: 'repository OutcomeRegister.written' }],
+    },
   ];
 }
 
 const theNotification: ExpectedSpan = {
-  name: 'command SendNotificationCommand', attributes: { 'app.context': 'notification', 'app.outcome': 'succeeded' },
+  name: 'command SendNotificationCommand',
+  attributes: { 'app.context': 'notification', 'app.outcome': 'succeeded' },
   children: [
     { name: 'repository NotificationRepository.findByCause' },
     { name: 'repository Contacts.get' },
@@ -178,7 +250,15 @@ const whatFollowsTheNotification: ExpectedSpan = {
       children: [
         {
           name: 'handler NotificationSentEventHandler',
-          children: [{ name: 'command PlanReminderCommand', children: [{ name: 'repository ReminderRepository.findByAppointment' }, { name: 'repository ReminderRepository.save' }] }],
+          children: [
+            {
+              name: 'command PlanReminderCommand',
+              children: [
+                { name: 'repository ReminderRepository.findByAppointment' },
+                { name: 'repository ReminderRepository.save' },
+              ],
+            },
+          ],
         },
       ],
     },

@@ -24,11 +24,15 @@ export async function writeIfNewer<Row>(rows: ReadModelRows<Row>, change: Stampe
   for (let attempt = 0; attempt < ATTEMPTS; attempt += 1) {
     const held = await rows.find(change.key);
 
-    if (held !== undefined && !isNewer(change.stamp, held.stamp)) return 'stale';
+    if (held !== undefined && !isNewer(change.stamp, held.stamp)) {
+      return 'stale';
+    }
 
     const written = await attempted(rows, change, held);
 
-    if (written !== undefined) return written;
+    if (written !== undefined) {
+      return written;
+    }
   }
 
   throw new ConcurrencyError(change.key);
@@ -42,9 +46,12 @@ async function attempted<Row>(
 ): Promise<ReadModelWrite | undefined> {
   const row = next?.(held?.row);
 
-  if (row === undefined && (next !== undefined || held === undefined)) return 'ignored';
+  if (row === undefined && (next !== undefined || held === undefined)) {
+    return 'ignored';
+  }
 
-  const done = held === undefined ? await rows.insert({ key, row, stamp }) : await rows.replace({ key, row, stamp }, held.stamp);
+  const done =
+    held === undefined ? await rows.insert({ key, row, stamp }) : await rows.replace({ key, row, stamp }, held.stamp);
 
   return done ? 'applied' : undefined;
 }

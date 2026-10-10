@@ -11,9 +11,15 @@ const body = { displayName: 'Ada Lovelace', email: 'ada@example.com' };
 
 describe('PUT /people/me', () => {
   it('answers 200 when the use case succeeds', async () => {
-    const commands = new InMemoryCommandBus().register(RegisterPersonCommand, { execute: async () => 'register-person-1' });
+    const commands = new InMemoryCommandBus().register(RegisterPersonCommand, {
+      execute: async () => 'register-person-1',
+    });
 
-    const response = await executeRoute(registerPersonRoute(commands), { params, query: {}, headers: {}, body, raw: undefined }, { validateResponses: true });
+    const response = await executeRoute(
+      registerPersonRoute(commands),
+      { params, query: {}, headers: {}, body, raw: undefined },
+      { validateResponses: true },
+    );
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual({ id: 'register-person-1' });
@@ -41,9 +47,17 @@ describe('PUT /people/me', () => {
     ['a body without an address', { displayName: 'Ada Lovelace' }],
     ['an address that is not an email', { displayName: 'Ada Lovelace', email: 'ada' }],
   ])('refuses %s with 422', async (_what, malformed) => {
-    const commands = new InMemoryCommandBus().register(RegisterPersonCommand, { execute: async () => 'register-person-1' });
+    const commands = new InMemoryCommandBus().register(RegisterPersonCommand, {
+      execute: async () => 'register-person-1',
+    });
 
-    const response = await executeRoute(registerPersonRoute(commands), { params, query: {}, headers: {}, body: malformed, raw: undefined });
+    const response = await executeRoute(registerPersonRoute(commands), {
+      params,
+      query: {},
+      headers: {},
+      body: malformed,
+      raw: undefined,
+    });
 
     expect(response.status).toBe(422);
     expect(response.body).toMatchObject({ code: 'VALIDATION_FAILED' });
@@ -59,7 +73,13 @@ describe('PUT /people/me', () => {
       },
     });
 
-    const response = await executeRoute(registerPersonRoute(commands), { params, query: {}, headers: {}, body, raw: undefined });
+    const response = await executeRoute(registerPersonRoute(commands), {
+      params,
+      query: {},
+      headers: {},
+      body,
+      raw: undefined,
+    });
 
     expect(response.status).toBe(422);
     expect(response.body).toMatchObject({ code });

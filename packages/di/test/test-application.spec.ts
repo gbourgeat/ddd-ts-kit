@@ -43,9 +43,7 @@ describe('createTestApplication', () => {
 
     expect(id).toBe('order-1');
 
-    expect((await app.queryBus.execute(new GetOrder(id)))?.placedAt).toEqual(
-      new Date('2026-03-01T10:01:00.000Z'),
-    );
+    expect((await app.queryBus.execute(new GetOrder(id)))?.placedAt).toEqual(new Date('2026-03-01T10:01:00.000Z'));
 
     expect(app.ids.next()).toBe('order-3');
   });

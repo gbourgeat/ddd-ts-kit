@@ -44,13 +44,20 @@ describe('init', () => {
     expect(created).not.toContain('src/contexts/billing/billing.module.ts');
     expect(walk(root)).toEqual([...created].sort());
     expect(read(root, 'src/contexts/billing/billing.declarations.ts')).toBe('export {};\n');
-    expect(read(root, 'src/platform/compose-application.ts')).toContain("contextModule('billing', billingDeclarations),");
+
+    expect(read(root, 'src/platform/compose-application.ts')).toContain(
+      "contextModule('billing', billingDeclarations),",
+    );
   });
 
   it('writes each context as a module file with --style explicit, and says so in the config', () => {
     const root = tempDir('init');
 
-    const created = stringsAt(cli(root, 'init', '--style', 'explicit', '--context', 'billing:core', '--json').json(), 'created');
+    const created = stringsAt(
+      cli(root, 'init', '--style', 'explicit', '--context', 'billing:core', '--json').json(),
+      'created',
+    );
+
     const stack = jsonAt(readJson(root, 'ddd-ts-kit.config.json'), 'stack');
 
     expect(created).toContain('src/contexts/billing/billing.module.ts');
@@ -61,23 +68,44 @@ describe('init', () => {
   });
 
   it('keeps the declared style for the container that reads the declarations, and the barrel for the declared style', () => {
-    expect(initFailure('--di', 'manual', '--style', 'declared').message).toBe('--style declared cannot be combined with --di manual.');
-    expect(initFailure('--http', 'nest', '--style', 'declared').fix).toContain('use --di tsyringe, or keep --style explicit');
-    expect(initFailure('--style', 'explicit', '--assembly', 'discovery').message).toBe('--assembly discovery cannot be combined with --style explicit.');
+    expect(initFailure('--di', 'manual', '--style', 'declared').message).toBe(
+      '--style declared cannot be combined with --di manual.',
+    );
+
+    expect(initFailure('--http', 'nest', '--style', 'declared').fix).toContain(
+      'use --di tsyringe, or keep --style explicit',
+    );
+
+    expect(initFailure('--style', 'explicit', '--assembly', 'discovery').message).toBe(
+      '--assembly discovery cannot be combined with --style explicit.',
+    );
+
     expect(initFailure('--style', 'implicit').fix).toBe('Use one of: declared, explicit.');
   });
 
   it('assembles a declared context by discovery when asked, and tells knip and dependency-cruiser about the files nothing imports', () => {
     const root = initProject('--assembly', 'discovery', '--context', 'billing:core');
-    const suffixes = 'command,query,handler,integration-handler,event-handler,publisher,policy,job,repository,gateway,adapter';
 
-    expect(jsonAt(readJson(root, 'ddd-ts-kit.config.json'), 'stack')).toMatchObject({ style: 'declared', assembly: 'discovery' });
+    const suffixes =
+      'command,query,handler,integration-handler,event-handler,publisher,policy,job,repository,gateway,adapter';
+
+    expect(jsonAt(readJson(root, 'ddd-ts-kit.config.json'), 'stack')).toMatchObject({
+      style: 'declared',
+      assembly: 'discovery',
+    });
+
     expect(exists(root, 'src/contexts/billing/billing.declarations.ts')).toBe(false);
-    expect(read(root, 'src/platform/compose-application.ts')).toContain("await discoverContext('billing', new URL('../contexts/billing/', import.meta.url)),");
+
+    expect(read(root, 'src/platform/compose-application.ts')).toContain(
+      "await discoverContext('billing', new URL('../contexts/billing/', import.meta.url)),",
+    );
+
     expect(read(root, 'knip.json')).toContain(`"src/contexts/*/{application,infrastructure}/**/*.{${suffixes}}.ts"`);
     expect(read(root, '.dependency-cruiser.cjs')).toContain(`(${suffixes.replaceAll(',', '|')})`);
   });
+});
 
+describe('init, the choices it records and the ones it refuses', () => {
   it('refuses to leave the outbox out with a database unless the decision is recorded', () => {
     const refused = cli(tempDir('init'), 'init', '--events', 'in-memory');
     const root = tempDir('init');
@@ -86,17 +114,63 @@ describe('init', () => {
     expect(refused.code).toBe(2);
     expect(refused.stderr).toContain('--allow-no-outbox');
     expect(allowed.code).toBe(0);
-    expect(jsonAt(readJson(root, 'ddd-ts-kit.config.json'), 'deviations')).toEqual([{ what: 'stack.events', adr: '0001', reason: 'One process, nothing to lose' }]);
-    expect(read(root, 'docs/adr/0001-publish-integration-events-without-the-transactional-outbox.md')).toContain('Deviates from: `stack.events`');
-    expect(cli(root, 'check', '--rule', 'governance/recorded-deviation', '--rule', 'events/outbox-required').code).toBe(0);
+
+    expect(jsonAt(readJson(root, 'ddd-ts-kit.config.json'), 'deviations')).toEqual([
+      { what: 'stack.events', adr: '0001', reason: 'One process, nothing to lose' },
+    ]);
+
+    expect(read(root, 'docs/adr/0001-publish-integration-events-without-the-transactional-outbox.md')).toContain(
+      'Deviates from: `stack.events`',
+    );
+
+    expect(cli(root, 'check', '--rule', 'governance/recorded-deviation', '--rule', 'events/outbox-required').code).toBe(
+      0,
+    );
   });
 
   it('writes the config with the chosen stack and the contexts', () => {
-    const root = initProject('--http', 'fastify', '--validation', 'class-validator', '--di', 'manual', '--tests', 'jest', '--context', 'billing:core', '--context', 'catalog:generic');
+    const root = initProject(
+      '--http',
+      'fastify',
+      '--validation',
+      'class-validator',
+      '--di',
+      'manual',
+      '--tests',
+      'jest',
+      '--context',
+      'billing:core',
+      '--context',
+      'catalog:generic',
+    );
+
     const config = readJson(root, 'ddd-ts-kit.config.json');
 
-    expect(jsonAt(config, 'stack')).toEqual({ http: 'fastify', validation: 'class-validator', di: 'manual', events: 'outbox', orm: 'drizzle', database: 'postgres', tests: 'jest', docsUi: 'swagger', ci: 'github', authn: 'jwt', authz: 'rbac', broker: 'none', cache: 'none', audit: 'on', errors: 'none', logger: 'stdout', style: 'explicit' });
-    expect(jsonAt(config, 'contexts')).toMatchObject({ billing: { classification: 'core' }, catalog: { classification: 'generic' } });
+    expect(jsonAt(config, 'stack')).toEqual({
+      http: 'fastify',
+      validation: 'class-validator',
+      di: 'manual',
+      events: 'outbox',
+      orm: 'drizzle',
+      database: 'postgres',
+      tests: 'jest',
+      docsUi: 'swagger',
+      ci: 'github',
+      authn: 'jwt',
+      authz: 'rbac',
+      broker: 'none',
+      cache: 'none',
+      audit: 'on',
+      errors: 'none',
+      logger: 'stdout',
+      style: 'explicit',
+    });
+
+    expect(jsonAt(config, 'contexts')).toMatchObject({
+      billing: { classification: 'core' },
+      catalog: { classification: 'generic' },
+    });
+
     expect(config).not.toHaveProperty('worker');
   });
 
@@ -105,15 +179,25 @@ describe('init', () => {
     expect(initFailure('--http', 'koa').fix).toContain('express, fastify, nest, none');
     expect(initFailure('--context', 'billing').fix).toContain('billing:core');
     expect(initFailure('--context', 'billing:central').fix).toContain('core, supporting, generic');
-    expect(initFailure('--orm', 'drizzle', '--database', 'mysql').fix).toContain('With drizzle, use --database postgres');
-    expect(initFailure('--broker', 'rabbitmq', '--orm', 'none')).toMatchObject({ code: 2, message: '--broker rabbitmq cannot be combined with --orm none.' });
+
+    expect(initFailure('--orm', 'drizzle', '--database', 'mysql').fix).toContain(
+      'With drizzle, use --database postgres',
+    );
+
+    expect(initFailure('--broker', 'rabbitmq', '--orm', 'none')).toMatchObject({
+      code: 2,
+      message: '--broker rabbitmq cannot be combined with --orm none.',
+    });
   });
 
   it('starts with the language: the first next step is the glossary of the first context', () => {
     const root = tempDir('init');
     const report = cli(root, 'init', '--context', 'billing:core', '--json').json();
     const readme = read(root, 'README.md');
-    const steps = ['1. Define the vocabulary', '2. Model', '3. Scaffold', '4. Test', '5. Verify'].map((step) => readme.indexOf(step));
+
+    const steps = ['1. Define the vocabulary', '2. Model', '3. Scaffold', '4. Test', '5. Verify'].map((step) =>
+      readme.indexOf(step),
+    );
 
     expect(stringsAt(report, 'next')[0]).toMatch(/^src\/contexts\/billing\/CONTEXT\.md:\d+$/);
     expect(String(jsonAt(report, 'todos', '0', 'text'))).toContain('define the ubiquitous language first');
@@ -125,7 +209,16 @@ describe('init in a project that already exists', () => {
   it('leaves the files it finds untouched, and merges package.json', () => {
     const root = tempDir('init');
 
-    write(root, 'package.json', JSON.stringify({ name: 'legacy-shop', scripts: { test: 'mocha', lint: 'eslint .' }, dependencies: { express: '^4.0.0', lodash: '^4.17.0' } }));
+    write(
+      root,
+      'package.json',
+      JSON.stringify({
+        name: 'legacy-shop',
+        scripts: { test: 'mocha', lint: 'eslint .' },
+        dependencies: { express: '^4.0.0', lodash: '^4.17.0' },
+      }),
+    );
+
     write(root, 'tsconfig.json', '{ "mine": true }\n');
     write(root, 'src/main.ts', '// mine\n');
 
@@ -137,8 +230,19 @@ describe('init in a project that already exists', () => {
     expect(read(root, 'tsconfig.json')).toBe('{ "mine": true }\n');
     expect(read(root, 'src/main.ts')).toBe('// mine\n');
     expect(jsonAt(merged, 'name')).toBe('legacy-shop');
-    expect(textsAt(merged, 'scripts')).toMatchObject({ test: 'mocha', lint: 'eslint .', 'check:arch': 'ddd-ts-kit check' });
-    expect(textsAt(merged, 'dependencies')).toMatchObject({ express: '^4.0.0', lodash: '^4.17.0', '@ddd-ts-kit/kernel': '^0.1.0' });
+
+    expect(textsAt(merged, 'scripts')).toMatchObject({
+      test: 'mocha',
+      lint: 'eslint .',
+      'check:arch': 'ddd-ts-kit check',
+    });
+
+    expect(textsAt(merged, 'dependencies')).toMatchObject({
+      express: '^4.0.0',
+      lodash: '^4.17.0',
+      '@ddd-ts-kit/kernel': '^0.1.0',
+    });
+
     expect(stringsAt(report, 'notes').join('\n')).toContain('keeps its own "test" script');
     expect(read(root, 'src/platform/tracing.ts')).toContain("'legacy-shop'");
   });
@@ -156,12 +260,22 @@ describe('init in a project that already exists', () => {
   it('keeps the recorded stack when run again', () => {
     const root = initProject('--http', 'fastify', '--di', 'manual');
 
-    const again = stringsAt(cli(root, 'init', '--http', 'express', '--context', 'billing:core', '--json').json(), 'created');
+    const again = stringsAt(
+      cli(root, 'init', '--http', 'express', '--context', 'billing:core', '--json').json(),
+      'created',
+    );
 
     expect(again).toEqual(expect.arrayContaining(['src/contexts/billing/CONTEXT.md']));
     expect(again).not.toContain('src/main.ts');
-    expect(read(root, 'src/contexts/billing/billing.module.ts')).toContain('export function billingModule(platform: Platform)');
-    expect(readJson(root, 'ddd-ts-kit.config.json')).toMatchObject({ stack: { http: 'fastify' }, contexts: { billing: { classification: 'core' } } });
+
+    expect(read(root, 'src/contexts/billing/billing.module.ts')).toContain(
+      'export function billingModule(platform: Platform)',
+    );
+
+    expect(readJson(root, 'ddd-ts-kit.config.json')).toMatchObject({
+      stack: { http: 'fastify' },
+      contexts: { billing: { classification: 'core' } },
+    });
   });
 
   it('writes nothing with --dry-run', () => {

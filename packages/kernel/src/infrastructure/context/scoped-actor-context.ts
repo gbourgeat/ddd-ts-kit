@@ -25,7 +25,9 @@ export class ScopedActorContext implements ActorContext {
   require(): Actor {
     const actor = this.current();
 
-    if (actor === undefined) throw new NoCurrentActorError();
+    if (actor === undefined) {
+      throw new NoCurrentActorError();
+    }
 
     return actor;
   }

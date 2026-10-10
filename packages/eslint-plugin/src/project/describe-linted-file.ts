@@ -19,7 +19,10 @@ const DEFAULT_CONFIG = parseConfig({});
 export function describeLintedFile(host: LintHost): LintedFile {
   const settings = readSettings(host.settings[SETTINGS_KEY]);
   const absolute = path.resolve(host.cwd, host.filename);
-  const project = injectedProject(settings, host.cwd) ?? findProject(path.dirname(absolute)) ?? { root: host.cwd, config: DEFAULT_CONFIG };
+
+  const project = injectedProject(settings, host.cwd) ??
+    findProject(path.dirname(absolute)) ?? { root: host.cwd, config: DEFAULT_CONFIG };
+
   const file = settings.filename ?? toPosix(path.relative(project.root, absolute));
   const location = locate(project.config, file);
 
@@ -27,7 +30,9 @@ export function describeLintedFile(host: LintHost): LintedFile {
 }
 
 function readSettings(value: unknown): PluginSettings {
-  if (!isRecord(value)) return {};
+  if (!isRecord(value)) {
+    return {};
+  }
 
   return {
     ...(value['config'] === undefined ? {} : { config: value['config'] }),
@@ -37,7 +42,9 @@ function readSettings(value: unknown): PluginSettings {
 }
 
 function injectedProject(settings: PluginSettings, cwd: string): Project | undefined {
-  if (!isRecord(settings.config)) return undefined;
+  if (!isRecord(settings.config)) {
+    return undefined;
+  }
 
   const config = injectedConfigs.get(settings.config) ?? parseConfig(settings.config);
 

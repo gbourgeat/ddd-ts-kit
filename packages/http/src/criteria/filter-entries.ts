@@ -20,7 +20,9 @@ export function filterEntries(query: Readonly<Record<string, unknown>>): FilterE
 }
 
 function nested(value: unknown, path: readonly string[]): FilterEntry[] {
-  if (isRecord(value)) return Object.entries(value).flatMap(([key, inner]) => nested(inner, [...path, key]));
+  if (isRecord(value)) {
+    return Object.entries(value).flatMap(([key, inner]) => nested(inner, [...path, key]));
+  }
 
   if (Array.isArray(value) && value.some((item) => isRecord(item))) {
     return value.flatMap((item: unknown, index) => nested(item, [...path, String(index)]));

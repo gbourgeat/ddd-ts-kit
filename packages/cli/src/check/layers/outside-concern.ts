@@ -42,5 +42,7 @@ const OUTSIDE_CONCERNS: Readonly<Record<string, Concern>> = {
 export function outsideConcern(importer: string, packageName: string, specifier: string): Flaw | undefined {
   const concern = OUTSIDE_CONCERNS[packageName];
 
-  return concern === undefined ? undefined : { message: `${importer} imports "${specifier}": ${concern.why}.`, fix: concern.fix };
+  return concern === undefined
+    ? undefined
+    : { message: `${importer} imports "${specifier}": ${concern.why}.`, fix: concern.fix };
 }

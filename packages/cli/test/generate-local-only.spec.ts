@@ -5,7 +5,18 @@ import { cli, exists, EXPLICIT_STACK, scaffoldEverything, tempDir } from './help
 import { jsonAt } from './support/json-at.js';
 import { stringsAt } from './support/strings-at.js';
 
-const SHARED_KINDS = ['context', 'repository', 'command', 'integration-event', 'job', 'policy', 'gateway', 'service', 'worker', 'adr'];
+const SHARED_KINDS = [
+  'context',
+  'repository',
+  'command',
+  'integration-event',
+  'job',
+  'policy',
+  'gateway',
+  'service',
+  'worker',
+  'adr',
+];
 
 /** One run of every kind that declares it writes nothing shared, and of a command on an aggregate that has its repository. */
 const LOCAL_RUNS: readonly (readonly string[])[] = [
@@ -32,9 +43,29 @@ describe('generate --help --json', () => {
     const kinds = jsonAt(cli(tempDir('kinds-help'), 'generate', '--help', '--json').json(), 'kinds');
 
     expect(kinds).toHaveLength(KINDS.length);
-    expect(kinds).toContainEqual({ name: 'value-object', aliases: ['vo'], usage: expect.stringContaining('value-object <context> <Name>'), summary: expect.any(String), writesShared: false, shared: [], sharedWhen: null });
-    expect(kinds).toContainEqual(expect.objectContaining({ name: 'job', writesShared: true, shared: expect.arrayContaining(['<platformDir>/job-settings.ts']), sharedWhen: null }));
-    expect(kinds).toContainEqual(expect.objectContaining({ name: 'policy', writesShared: true, sharedWhen: 'stack.style is explicit' }));
+
+    expect(kinds).toContainEqual({
+      name: 'value-object',
+      aliases: ['vo'],
+      usage: expect.stringContaining('value-object <context> <Name>'),
+      summary: expect.any(String),
+      writesShared: false,
+      shared: [],
+      sharedWhen: null,
+    });
+
+    expect(kinds).toContainEqual(
+      expect.objectContaining({
+        name: 'job',
+        writesShared: true,
+        shared: expect.arrayContaining(['<platformDir>/job-settings.ts']),
+        sharedWhen: null,
+      }),
+    );
+
+    expect(kinds).toContainEqual(
+      expect.objectContaining({ name: 'policy', writesShared: true, sharedWhen: 'stack.style is explicit' }),
+    );
   });
 
   it('declares shared exactly the kinds whose shared files are described', () => {
@@ -42,7 +73,10 @@ describe('generate --help --json', () => {
 
     expect([...shared].sort()).toEqual([...SHARED_KINDS].sort());
     expect(Object.keys(SHARED_WRITES).sort()).toEqual([...SHARED_KINDS].sort());
-    expect(LOCAL_RUNS.map(([kind]) => kind)).toEqual(expect.arrayContaining(KINDS.filter((kind) => !kind.writesShared).map((kind) => kind.name)));
+
+    expect(LOCAL_RUNS.map(([kind]) => kind)).toEqual(
+      expect.arrayContaining(KINDS.filter((kind) => !kind.writesShared).map((kind) => kind.name)),
+    );
   });
 });
 
@@ -65,11 +99,28 @@ describe.each([
     expect(planned.stderr).toBe('');
     expect(planned.code).toBe(0);
     expect(written.length).toBeGreaterThan(0);
-    expect(written.filter((file) => !file.startsWith(`src/contexts/${args[1] ?? ''}/`) && !/^test\/e2e\/[^/]+\.e2e\.spec\.ts$/.test(file))).toEqual([]);
+
+    expect(
+      written.filter(
+        (file) => !file.startsWith(`src/contexts/${args[1] ?? ''}/`) && !/^test\/e2e\/[^/]+\.e2e\.spec\.ts$/.test(file),
+      ),
+    ).toEqual([]);
   });
 
   it('refuses a kind that would write a shared file, names the file and writes nothing', () => {
-    const refused = cli(root, 'generate', 'job', 'billing', 'RemindLateInvoices', '--every', '1h', '--command', 'CancelInvoice', '--allow-name', '--local-only');
+    const refused = cli(
+      root,
+      'generate',
+      'job',
+      'billing',
+      'RemindLateInvoices',
+      '--every',
+      '1h',
+      '--command',
+      'CancelInvoice',
+      '--allow-name',
+      '--local-only',
+    );
 
     expect(refused.code).toBe(2);
     expect(refused.stderr).toContain('--local-only: this command would write');
@@ -81,27 +132,72 @@ describe.each([
   it('refuses a command that would create the repository of its aggregate, and a kind without a context', () => {
     cli(root, 'generate', 'aggregate', 'shipping', 'Parcel');
 
-    const command = cli(root, 'generate', 'command', 'shipping', 'ShipParcel', '--aggregate', 'Parcel', '--permission', 'parcel.ship', '--term', 'Ship=To hand a parcel to a carrier', '--local-only', '--json');
+    const command = cli(
+      root,
+      'generate',
+      'command',
+      'shipping',
+      'ShipParcel',
+      '--aggregate',
+      'Parcel',
+      '--permission',
+      'parcel.ship',
+      '--term',
+      'Ship=To hand a parcel to a carrier',
+      '--local-only',
+      '--json',
+    );
 
     expect(command.code).toBe(2);
     expect(String(jsonAt(command.json(), 'error', 'message'))).toContain('src/platform/database/schema.ts');
-    expect(cli(root, 'generate', 'context', 'catalog', '--classification', 'generic', '--local-only').stderr).toContain('ddd-ts-kit.config.json');
-    expect(cli(root, 'generate', 'adr', 'Keep one repository', '--local-only').stderr).toContain('docs/adr/0002-keep-one-repository.md');
+
+    expect(cli(root, 'generate', 'context', 'catalog', '--classification', 'generic', '--local-only').stderr).toContain(
+      'ddd-ts-kit.config.json',
+    );
+
+    expect(cli(root, 'generate', 'adr', 'Keep one repository', '--local-only').stderr).toContain(
+      'docs/adr/0002-keep-one-repository.md',
+    );
+
     expect(exists(root, 'src/contexts/catalog/CONTEXT.md')).toBe(false);
   });
 
   it('refuses a gateway: its contract lands in the published language of the upstream', () => {
-    const refused = cli(root, 'generate', 'gateway', 'shipping', 'billing', 'InvoiceLines', '--allow-name', '--local-only');
+    const refused = cli(
+      root,
+      'generate',
+      'gateway',
+      'shipping',
+      'billing',
+      'InvoiceLines',
+      '--allow-name',
+      '--local-only',
+    );
 
     expect(refused.code).toBe(2);
     expect(refused.stderr).toContain('src/contexts/billing/published-language/invoice-lines.contract.ts');
   });
 
   it('changes nothing to a run that writes nothing shared', () => {
-    const local = cli(root, 'generate', 'value-object', 'billing', 'Currency', '--term', 'Currency=The unit of an amount', '--local-only', '--json');
+    const local = cli(
+      root,
+      'generate',
+      'value-object',
+      'billing',
+      'Currency',
+      '--term',
+      'Currency=The unit of an amount',
+      '--local-only',
+      '--json',
+    );
 
     expect(local.code).toBe(0);
-    expect(stringsAt(local.json(), 'created')).toEqual(['src/contexts/billing/domain/value-objects/currency.vo.ts', 'src/contexts/billing/test/unit/currency.vo.spec.ts']);
+
+    expect(stringsAt(local.json(), 'created')).toEqual([
+      'src/contexts/billing/domain/value-objects/currency.vo.ts',
+      'src/contexts/billing/test/unit/currency.vo.spec.ts',
+    ]);
+
     expect(exists(root, 'src/contexts/billing/domain/value-objects/currency.vo.ts')).toBe(true);
   });
 });

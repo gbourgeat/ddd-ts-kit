@@ -21,16 +21,28 @@ describe('Publishing "appointment cancelled" to other contexts', () => {
     const bus = new InMemoryEventBus();
     const publisher = new AppointmentCancelledPublisher(bus, new SequentialIdGenerator('event'));
 
-    await publisher.handle(new AppointmentCancelled('appointment-1', new Date('2026-01-01T00:00:00.000Z'), { booking: held.booking, cancellation: unwrap(Cancellation.create('practice', 'The practitioner is away.')) }));
+    await publisher.handle(
+      new AppointmentCancelled('appointment-1', new Date('2026-01-01T00:00:00.000Z'), {
+        booking: held.booking,
+        cancellation: unwrap(Cancellation.create('practice', 'The practitioner is away.')),
+      }),
+    );
 
-    expect(bus.published).toMatchObject([{ id: 'event-1', type: 'scheduling.appointment.cancelled', version: 1, occurredAt: '2026-01-01T00:00:00.000Z' }]);
+    expect(bus.published).toMatchObject([
+      { id: 'event-1', type: 'scheduling.appointment.cancelled', version: 1, occurredAt: '2026-01-01T00:00:00.000Z' },
+    ]);
   });
 
   it('carries every field of the public payload, the buffer left out', async () => {
     const bus = new InMemoryEventBus();
     const publisher = new AppointmentCancelledPublisher(bus, new SequentialIdGenerator('event'));
 
-    await publisher.handle(new AppointmentCancelled('appointment-1', new Date('2026-01-01T00:00:00.000Z'), { booking: held.booking, cancellation: unwrap(Cancellation.create('practice', 'The practitioner is away.')) }));
+    await publisher.handle(
+      new AppointmentCancelled('appointment-1', new Date('2026-01-01T00:00:00.000Z'), {
+        booking: held.booking,
+        cancellation: unwrap(Cancellation.create('practice', 'The practitioner is away.')),
+      }),
+    );
 
     expect(bus.published.map((event) => event.payload)).toEqual([
       {

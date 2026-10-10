@@ -17,13 +17,15 @@ type Source = Readonly<TSESLint.SourceCode>;
 const EVENTS = '@ddd-ts-kit/events';
 const HANDLER_BINDINGS = new Set(['handledBy', 'handledByFactory']);
 
-const WHY = 'Delivery is at least once: without a stable consumer name and a processed-event store, a redelivered event is handled twice.';
+const WHY =
+  'Delivery is at least once: without a stable consumer name and a processed-event store, a redelivered event is handled twice.';
 
 export const eventsConsumerIdempotent = defineRule<MessageId>({
   id: 'events/consumer-idempotent',
   type: 'problem',
   recommended: 'error',
-  description: 'Every consumer of an integration event is registered or declared with a stable consumer name and a processed-event store.',
+  description:
+    'Every consumer of an integration event is registered or declared with a stable consumer name and a processed-event store.',
   messages: {
     consumerName: `This consumer is declared without a name. ${WHY} Write \`.on(<definition>, { consumer: '{{context}}.<reaction>' })\`: the name is the idempotency scope and must never change.`,
     declaredName: `{{className}} is declared with \`@IntegrationEventHandler\` but its \`consumer\` is {{problem}}. ${WHY} Write \`@IntegrationEventHandler(<definition>, { consumer: '{{context}}.<reaction>' }, [<ports>])\` with the name as a string literal: it is the idempotency scope and must never change.`,
@@ -33,18 +35,24 @@ export const eventsConsumerIdempotent = defineRule<MessageId>({
   create({ file, sourceCode, report }) {
     const here = inContext(file);
 
-    if (here === undefined || file.isTest) return {};
+    if (here === undefined || file.isTest) {
+      return {};
+    }
 
     const subscribesHere = here.layer === 'application' || here.layer === 'module';
 
     const tell = (finding: Finding): void => {
-      if (finding !== undefined) report({ ...finding, data: { ...finding.data, context: here.context } });
+      if (finding !== undefined) {
+        report({ ...finding, data: { ...finding.data, context: here.context } });
+      }
     };
 
     const declarationsOf = isDeclaredStyle(file) ? declarationReader(sourceCode.ast) : undefined;
 
     const judgeClass = (node: ClassNode): void => {
-      for (const declaration of declarationsOf?.(node) ?? []) tell(unnamedHandler(node, declaration));
+      for (const declaration of declarationsOf?.(node) ?? []) {
+        tell(unnamedHandler(node, declaration));
+      }
     };
 
     return {
@@ -52,7 +60,9 @@ export const eventsConsumerIdempotent = defineRule<MessageId>({
         tell(unnamedConsumer(node));
         tell(unprotectedSubscription(node, sourceCode));
 
-        if (subscribesHere) tell(directSubscription(node, sourceCode));
+        if (subscribesHere) {
+          tell(directSubscription(node, sourceCode));
+        }
       },
       ClassDeclaration: judgeClass,
       ClassExpression: judgeClass,
@@ -62,46 +72,78 @@ export const eventsConsumerIdempotent = defineRule<MessageId>({
 
 /** `@IntegrationEventHandler(definition, { consumer: 'billing.price-list' }, [...])`: the class is its own registration. */
 function unnamedHandler(node: ClassNode, declaration: Declaration): Finding {
-  if (declaration.name !== 'IntegrationEventHandler') return undefined;
+  if (declaration.name !== 'IntegrationEventHandler') {
+    return undefined;
+  }
 
   const consumer = writtenName(declaration.arguments[1], 'consumer');
 
-  return 'value' in consumer ? undefined : { node: declaration.node, messageId: 'declaredName', data: { className: className(node), problem: consumer.problem } };
+  return 'value' in consumer
+    ? undefined
+    : {
+        node: declaration.node,
+        messageId: 'declaredName',
+        data: { className: className(node), problem: consumer.problem },
+      };
 }
 
 /** `builder.on(definition, options).handledBy(Handler)`: the chain tells this `on` from the one of an event emitter. */
 function unnamedConsumer(node: TSESTree.CallExpression): Finding {
-  if (node.callee.type !== AST_NODE_TYPES.MemberExpression || !HANDLER_BINDINGS.has(calleeName(node) ?? '')) return undefined;
+  if (node.callee.type !== AST_NODE_TYPES.MemberExpression || !HANDLER_BINDINGS.has(calleeName(node) ?? '')) {
+    return undefined;
+  }
 
   const [declaration] = methodChain(node);
 
-  if (declaration?.name !== 'on' || missingKeys(declaration.call.arguments[1], ['consumer']).length === 0) return undefined;
+  if (declaration?.name !== 'on' || missingKeys(declaration.call.arguments[1], ['consumer']).length === 0) {
+    return undefined;
+  }
 
   return { node: declaration.call, messageId: 'consumerName' };
 }
 
 function unprotectedSubscription(node: TSESTree.CallExpression, sourceCode: Source): Finding {
-  if (node.callee.type !== AST_NODE_TYPES.Identifier || !isImportOf(sourceCode, node.callee, 'on')) return undefined;
+  if (node.callee.type !== AST_NODE_TYPES.Identifier || !isImportOf(sourceCode, node.callee, 'on')) {
+    return undefined;
+  }
 
   const missing = missingKeys(node.arguments[2], ['consumer', 'processed']);
 
-  return missing.length === 0 ? undefined : { node, messageId: 'subscription', data: { missing: missing.map((key) => `\`${key}\``).join(' and ') } };
+  return missing.length === 0
+    ? undefined
+    : { node, messageId: 'subscription', data: { missing: missing.map((key) => `\`${key}\``).join(' and ') } };
 }
 
 function isImportOf(sourceCode: Source, identifier: TSESTree.Identifier, exported: string): boolean {
   const definition = ASTUtils.findVariable(sourceCode.getScope(identifier), identifier.name)?.defs[0];
 
-  if (definition?.type !== TSESLint.Scope.DefinitionType.ImportBinding || definition.node.type !== AST_NODE_TYPES.ImportSpecifier) return false;
+  if (
+    definition?.type !== TSESLint.Scope.DefinitionType.ImportBinding ||
+    definition.node.type !== AST_NODE_TYPES.ImportSpecifier
+  ) {
+    return false;
+  }
 
   const { imported } = definition.node;
 
-  return definition.parent.type === AST_NODE_TYPES.ImportDeclaration && definition.parent.source.value === EVENTS && imported.type === AST_NODE_TYPES.Identifier && imported.name === exported;
+  return (
+    definition.parent.type === AST_NODE_TYPES.ImportDeclaration &&
+    definition.parent.source.value === EVENTS &&
+    imported.type === AST_NODE_TYPES.Identifier &&
+    imported.name === exported
+  );
 }
 
 function directSubscription(node: TSESTree.CallExpression, sourceCode: Source): Finding {
   const { callee } = node;
 
-  if (callee.type !== AST_NODE_TYPES.MemberExpression || propertyName(callee) !== 'subscribe' || node.arguments.some(isDeduplicated)) return undefined;
+  if (
+    callee.type !== AST_NODE_TYPES.MemberExpression ||
+    propertyName(callee) !== 'subscribe' ||
+    node.arguments.some(isDeduplicated)
+  ) {
+    return undefined;
+  }
 
   return { node, messageId: 'directSubscribe', data: { call: sourceCode.getText(callee) } };
 }

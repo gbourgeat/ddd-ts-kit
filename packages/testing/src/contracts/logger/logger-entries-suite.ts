@@ -34,6 +34,7 @@ export class LoggerEntriesSuite extends ContractSuite<LoggerUnderContract> {
     this.binds();
     this.correlates();
     this.filters();
+    this.saysItsLevels();
     this.survives();
   }
 
@@ -128,16 +129,21 @@ export class LoggerEntriesSuite extends ContractSuite<LoggerUnderContract> {
 
       subject.logger.info('order placed', { orderId: 'order-1' });
 
-      this.expect((await subject.lines()).map(({ message, fields }) => ({ message, orderId: fields.orderId }))).toEqual([
-        { message: 'order placed', orderId: 'order-1' },
-      ]);
+      this.expect((await subject.lines()).map(({ message, fields }) => ({ message, orderId: fields.orderId }))).toEqual(
+        [{ message: 'order placed', orderId: 'order-1' }],
+      );
     });
   }
 
   private filters(): void {
     this.it('drops an entry below its level without reading any field for it', async () => {
       let read = 0;
-      const subject = await this.createLogger({ level: 'warn', scrubMessages: false, fields: () => ({ read: (read += 1) }) });
+
+      const subject = await this.createLogger({
+        level: 'warn',
+        scrubMessages: false,
+        fields: () => ({ read: (read += 1) }),
+      });
 
       subject.logger.debug('cache missed');
       subject.logger.info('order shipped');
@@ -155,12 +161,16 @@ export class LoggerEntriesSuite extends ContractSuite<LoggerUnderContract> {
 
       this.expect(read).toBe(2);
     });
+  }
 
+  private saysItsLevels(): void {
     this.it('says which levels it writes, for a child too, as it writes them', async () => {
       const subject = await this.createLogger({ level: 'warn', scrubMessages: false, fields: () => ({}) });
       const loggers = [this.subject.logger, subject.logger, subject.logger.child({ context: 'shipping' })];
 
-      for (const level of LOG_LEVELS) subject.logger[level]('carrier asked');
+      for (const level of LOG_LEVELS) {
+        subject.logger[level]('carrier asked');
+      }
 
       this.expect(loggers.map((logger) => LOG_LEVELS.filter((level) => logger.isLevelEnabled(level)))).toEqual([
         LOG_LEVELS,

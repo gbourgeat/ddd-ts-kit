@@ -11,7 +11,9 @@ class Flaky{{name.pascal}} extends Remote{{name.pascal}} {
   protected override async transport(): Promise<unknown> {
     this.calls += 1;
 
-    if (this.calls === 1) throw new Error('unreachable');
+    if (this.calls === 1) {
+      throw new Error('unreachable');
+    }
 
     return 'answered';
   }
@@ -19,7 +21,7 @@ class Flaky{{name.pascal}} extends Remote{{name.pascal}} {
 {{/if}}
 
 describe('Remote{{name.pascal}}', () => {
-{{#if adapter.decorated}}
+  {{#if adapter.decorated}}
   it('sends again a call the outside system failed, and answers once it succeeds', async () => {
     const fakes = createAspectFakes();
     const adapter = new Flaky{{name.pascal}}();
@@ -31,12 +33,12 @@ describe('Remote{{name.pascal}}', () => {
     expect(await pending).toBe('answered');
     expect(adapter.calls).toBe(2);
   });
-{{/if}}
-{{#unless adapter.decorated}}
+  {{/if}}
+  {{#unless adapter.decorated}}
   it('is an adapter of the port, built without argument until its transport is written', () => {
     expect(new Remote{{name.pascal}}()).toBeInstanceOf(Remote{{name.pascal}});
   });
-{{/unless}}
+  {{/unless}}
 
   // TODO(domain): replace each entry below by a behaviour of {{name.pascal}} against the real outside system or its sandbox; hold this adapter and the fake of test/fakes to the same expectations.
   it.todo('answers what the outside system answers, in the types of {{context.kebab}}');

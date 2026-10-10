@@ -10,7 +10,9 @@ describe('When person registered', () => {
     const relationships = new FakeIdentityRelationships();
     const handler = new PersonRegisteredEventHandler(relationships);
 
-    await handler.handle(new PersonRegistered('person-1', at, { displayName: 'Ada Lovelace', email: 'ada@example.com' }));
+    await handler.handle(
+      new PersonRegistered('person-1', at, { displayName: 'Ada Lovelace', email: 'ada@example.com' }),
+    );
 
     expect(relationships.current).toEqual(['person person-1']);
   });

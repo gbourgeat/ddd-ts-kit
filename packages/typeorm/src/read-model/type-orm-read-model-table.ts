@@ -42,11 +42,18 @@ export class TypeOrmReadModelTable<Row extends ObjectLiteral> implements ReadMod
   }
 
   async list(plan: CriteriaPlan): Promise<ListedRows<Row>> {
-    const kept = () => this.context.manager().createQueryBuilder(this.options.entity, ALIAS).where(`${ALIAS}.deleted = :kept`, { kept: false });
+    const kept = () =>
+      this.context
+        .manager()
+        .createQueryBuilder(this.options.entity, ALIAS)
+        .where(`${ALIAS}.deleted = :kept`, { kept: false });
+
     const entities = await criteriaToTypeOrm(kept(), plan, { alias: ALIAS }).getMany();
     const rows = entities.map((entity) => this.mapper().fromEntity(entity));
 
-    return plan.kind === 'cursor' ? { rows } : { rows, total: await predicateToTypeOrm(kept(), plan.filter, { alias: ALIAS }).getCount() };
+    return plan.kind === 'cursor'
+      ? { rows }
+      : { rows, total: await predicateToTypeOrm(kept(), plan.filter, { alias: ALIAS }).getCount() };
   }
 
   rebuilding(): Promise<boolean> {
@@ -114,7 +121,9 @@ export class TypeOrmReadModelTable<Row extends ObjectLiteral> implements ReadMod
       async (statement, parameters) => {
         const rows: unknown = await this.context.manager().query(statement, [...parameters]);
 
-        return Array.isArray(rows) ? rows.filter((row): row is Readonly<Record<string, unknown>> => typeof row === 'object' && row !== null) : [];
+        return Array.isArray(rows)
+          ? rows.filter((row): row is Readonly<Record<string, unknown>> => typeof row === 'object' && row !== null)
+          : [];
       },
       { table: tableName, ...(schema === undefined ? {} : { schema }) },
     );

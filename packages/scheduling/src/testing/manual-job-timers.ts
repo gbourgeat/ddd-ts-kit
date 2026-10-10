@@ -51,7 +51,9 @@ export class ManualJobTimers implements JobTimers {
   }
 
   private nextDue(target: number): Sleeping | undefined {
-    const [earliest] = this.sleeping.filter(({ dueAt }) => dueAt <= target).sort((left, right) => left.dueAt - right.dueAt);
+    const [earliest] = this.sleeping
+      .filter(({ dueAt }) => dueAt <= target)
+      .sort((left, right) => left.dueAt - right.dueAt);
 
     return earliest;
   }

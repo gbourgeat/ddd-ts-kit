@@ -1,4 +1,8 @@
-import type { AppointmentExportContract, ExportedAppointment, ExportedAppointmentPage } from '../../../scheduling/published-language/index.js';
+import type {
+  AppointmentExportContract,
+  ExportedAppointment,
+  ExportedAppointmentPage,
+} from '../../../scheduling/published-language/index.js';
 
 const PAGE_SIZE = 2;
 

@@ -40,7 +40,11 @@ export const integrationEventKind: Kind = {
       ['integration-event/publisher.spec.ts.tpl', `test/unit/${publisher.kebab}.publisher.spec.ts`],
     ]);
 
-    publish(scope, published.map(({ file }) => file), context);
+    publish(
+      scope,
+      published.map(({ file }) => file),
+      context,
+    );
   },
 };
 
@@ -52,29 +56,43 @@ interface PublishedFile {
 /** The declaration of the event, and its payload in a file of its own where the schema library has it written as a class or an interface. */
 function publishedFiles(scope: Scope, event: string): PublishedFile[] {
   const flavour = schemaFlavour(scope);
-  const payload = flavour === 'zod' ? [] : [{ template: `integration-event/payload.${flavour}.ts.tpl`, file: `${event}.payload` }];
 
-  return [...payload, { template: `integration-event/integration-event.${flavour}.ts.tpl`, file: `${event}.integration-event` }];
+  const payload =
+    flavour === 'zod' ? [] : [{ template: `integration-event/payload.${flavour}.ts.tpl`, file: `${event}.payload` }];
+
+  return [
+    ...payload,
+    { template: `integration-event/integration-event.${flavour}.ts.tpl`, file: `${event}.integration-event` },
+  ];
 }
 
 /** The declaration joins the published language, the lists of the context and, with the audit trail on, the events whose occurrence is recorded (never their payload). */
 function publish(scope: Scope, files: readonly string[], context: RenderContext): void {
   const registry = `${scope.config.platformDir}/audit/audited-events.ts`;
 
-  for (const file of files) publishInIndex(scope.ws, `${scope.dir}/published-language`, file);
+  for (const file of files) {
+    publishInIndex(scope.ws, `${scope.dir}/published-language`, file);
+  }
 
   refreshContextDoc(scope.ws, scope.config, scope.context.kebab);
   wire(scope, 'integration-event', context);
 
-  if (scope.ws.exists(registry)) applyWiring(scope.ws, registry, renderTemplate('integration-event/audited.tpl', context));
+  if (scope.ws.exists(registry)) {
+    applyWiring(scope.ws, registry, renderTemplate('integration-event/audited.tpl', context));
+  }
 }
 
 function parseVersion(input: string | undefined): number {
   const version = Number(input ?? '1');
 
-  if (Number.isInteger(version) && version >= 1) return version;
+  if (Number.isInteger(version) && version >= 1) {
+    return version;
+  }
 
-  throw new CliError(`"${input}" is not a valid version.`, 'Pass --version with a positive integer; bump it only for a breaking change of the payload.');
+  throw new CliError(
+    `"${input}" is not a valid version.`,
+    'Pass --version with a positive integer; bump it only for a breaking change of the payload.',
+  );
 }
 
 function schemaFlavour(scope: Scope): string {

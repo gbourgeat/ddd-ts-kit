@@ -36,7 +36,9 @@ async function openInProcess(): Promise<TestDatabase> {
   await server.start();
 
   // PGlite is one session behind every socket: a second connection would step into the transaction of the first.
-  const connection = connectToDatabase('postgresql://postgres:postgres@' + server.getServerConn() + '/postgres', { poolSize: 1 });
+  const connection = connectToDatabase('postgresql://postgres:postgres@' + server.getServerConn() + '/postgres', {
+    poolSize: 1,
+  });
 
   await createTables(connection.db);
 
@@ -52,7 +54,11 @@ async function openInProcess(): Promise<TestDatabase> {
 async function openServer(url: string): Promise<TestDatabase> {
   const connection = connectToDatabase(url);
 
-  return { persistence: persistenceOver(connection.db, () => connection.close()), reset: () => truncateAll(connection.db), close: () => connection.close() };
+  return {
+    persistence: persistenceOver(connection.db, () => connection.close()),
+    reset: () => truncateAll(connection.db),
+    close: () => connection.close(),
+  };
 }
 
 interface TableName {
@@ -67,7 +73,9 @@ async function truncateAll(db: Knex): Promise<void> {
     .whereNotIn('table_schema', ['pg_catalog', 'information_schema'{{#if audit.on}}, AUDIT_SCHEMA{{/if}}])
     .whereNot('table_name', 'like', 'knex_migrations%');
 
-  if (tables.length === 0) return;
+  if (tables.length === 0) {
+    return;
+  }
 
   const names = tables.map((table) => '"' + table.table_schema + '"."' + table.table_name + '"').join(', ');
 

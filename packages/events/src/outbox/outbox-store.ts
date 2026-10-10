@@ -26,11 +26,7 @@ export abstract class OutboxStore {
   abstract markPublished(ids: readonly string[], at: Date): Promise<void>;
 
   /** Schedules the retry at `nextAttemptAt`, or declares the record dead when it is `null`. */
-  abstract markFailed(
-    id: string,
-    error: { readonly code: string },
-    nextAttemptAt: Date | null,
-  ): Promise<void>;
+  abstract markFailed(id: string, error: { readonly code: string }, nextAttemptAt: Date | null): Promise<void>;
 
   /** Puts dead records back in the queue with a fresh attempt budget. Returns how many. */
   abstract retryDead(ids: readonly string[], now: Date): Promise<number>;

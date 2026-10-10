@@ -19,7 +19,8 @@ interface Placed {
 
 export const treeClosed: Rule = {
   id: 'tree/closed',
-  description: 'A context holds only the canonical directories (plus its declared extraDirectories), and no source file outside a role directory.',
+  description:
+    'A context holds only the canonical directories (plus its declared extraDirectories), and no source file outside a role directory.',
   scope: 'project',
   run(project) {
     const report = reporter(project, this.id);
@@ -29,13 +30,20 @@ export const treeClosed: Rule = {
     return project.contextEntries.flatMap((entry) => {
       const placed = place(entry, project.config);
 
-      if (placed === undefined || rejected.some((parent) => entry.startsWith(parent))) return [];
+      if (placed === undefined || rejected.some((parent) => entry.startsWith(parent))) {
+        return [];
+      }
 
       const isDirectory = entry.endsWith('/');
       const flaw = isDirectory ? strayDirectory(placed) : straySource(placed);
 
-      if (flaw === undefined) return [];
-      if (isDirectory) rejected.push(entry);
+      if (flaw === undefined) {
+        return [];
+      }
+
+      if (isDirectory) {
+        rejected.push(entry);
+      }
 
       return [report({ file: entry.replace(/\/$/, ''), line: 1 }, flaw.message, flaw.fix)];
     });
@@ -48,13 +56,22 @@ function place(entry: string, { contextsDir, contexts, stack }: Config): Placed 
     .replace(/\/$/, '')
     .split('/');
 
-  if (rest.length === 0) return undefined;
+  if (rest.length === 0) {
+    return undefined;
+  }
 
-  return { context, declared: stack.style === 'declared', inside: rest.join('/'), extras: contexts[context]?.extraDirectories ?? [] };
+  return {
+    context,
+    declared: stack.style === 'declared',
+    inside: rest.join('/'),
+    extras: contexts[context]?.extraDirectories ?? [],
+  };
 }
 
 function strayDirectory({ context, inside, extras }: Placed): Flaw | undefined {
-  if (isCanonicalDirectory(inside) || coveredByExtra(extras, inside)) return undefined;
+  if (isCanonicalDirectory(inside) || coveredByExtra(extras, inside)) {
+    return undefined;
+  }
 
   return {
     message: `"${inside}" is not a directory of the canonical tree.`,
@@ -65,15 +82,21 @@ function strayDirectory({ context, inside, extras }: Placed): Flaw | undefined {
 function straySource(placed: Placed): Flaw | undefined {
   const { inside, extras } = placed;
 
-  if (!inside.endsWith('.ts')) return undefined;
+  if (!inside.endsWith('.ts')) {
+    return undefined;
+  }
 
   const directory = path.posix.dirname(inside);
 
-  if (directory === '.') return atContextRoot(placed);
+  if (directory === '.') {
+    return atContextRoot(placed);
+  }
 
   const open = OPEN_DIRECTORIES.some((root) => directory === root || directory.startsWith(`${root}/`));
 
-  if (open || roleOf(directory) !== undefined || coveredByExtra(extras, directory)) return undefined;
+  if (open || roleOf(directory) !== undefined || coveredByExtra(extras, directory)) {
+    return undefined;
+  }
 
   return {
     message: `"${inside}" is not in a role directory.`,
@@ -84,13 +107,20 @@ function straySource(placed: Placed): Flaw | undefined {
 function atContextRoot({ context, declared, inside: file }: Placed): Flaw | undefined {
   const barrel = barrelFile(context);
 
-  if (file === `${context}.module.ts` || (declared && file === barrel)) return undefined;
+  if (file === `${context}.module.ts` || (declared && file === barrel)) {
+    return undefined;
+  }
 
   const allowed = declared ? `CONTEXT.md, ${barrel} and ${context}.module.ts` : `CONTEXT.md and ${context}.module.ts`;
 
-  return { message: `"${file}" sits at the root of the context.`, fix: `Move it into the directory of its role; only ${allowed} live at the root of a context.` };
+  return {
+    message: `"${file}" sits at the root of the context.`,
+    fix: `Move it into the directory of its role; only ${allowed} live at the root of a context.`,
+  };
 }
 
 function coveredByExtra(extras: readonly string[], directory: string): boolean {
-  return extras.some((extra) => directory === extra || directory.startsWith(`${extra}/`) || extra.startsWith(`${directory}/`));
+  return extras.some(
+    (extra) => directory === extra || directory.startsWith(`${extra}/`) || extra.startsWith(`${directory}/`),
+  );
 }

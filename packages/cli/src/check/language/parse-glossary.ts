@@ -15,13 +15,19 @@ export function parseGlossary(contextDoc: string): Glossary {
   const lines = contextDoc.split('\n');
   const heading = lines.findIndex((line) => line.trim().toLowerCase() === GLOSSARY_HEADING.toLowerCase());
 
-  if (heading === -1) return { terms: [], line: undefined, lastRowLine: undefined };
+  if (heading === -1) {
+    return { terms: [], line: undefined, lastRowLine: undefined };
+  }
 
   const end = lines.findIndex((line, index) => index > heading && line.startsWith('## '));
 
   const rows = lines
     .slice(heading + 1, end === -1 ? lines.length : end)
-    .map((line, offset) => ({ line: heading + offset + 2, cells: glossaryCells(line), isRow: line.trim().startsWith('|') }))
+    .map((line, offset) => ({
+      line: heading + offset + 2,
+      cells: glossaryCells(line),
+      isRow: line.trim().startsWith('|'),
+    }))
     .filter((row) => row.isRow);
 
   return { terms: termsOf(rows.map((row) => row.cells)), line: heading + 1, lastRowLine: rows.at(-1)?.line };

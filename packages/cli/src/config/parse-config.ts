@@ -18,7 +18,9 @@ import { text } from './values/text.js';
  * `check` as `config/valid`, with a line number, instead of stopping every command.
  */
 export function parseConfig(raw: unknown): Config {
-  if (!isRecord(raw)) throw new CliError(`${CONFIG_FILE} must hold a JSON object.`, 'Recreate it with `ddd-ts-kit init`.');
+  if (!isRecord(raw)) {
+    throw new CliError(`${CONFIG_FILE} must hold a JSON object.`, 'Recreate it with `ddd-ts-kit init`.');
+  }
 
   const sourceRoot = posix(text(raw['sourceRoot'], 'src'));
   const stack = parseStack(isRecord(raw['stack']) ? raw['stack'] : {});
@@ -37,7 +39,10 @@ export function parseConfig(raw: unknown): Config {
   };
 }
 
-type AllowedPackages = Pick<Config, 'domainAllowedPackages' | 'applicationAllowedPackages' | 'publishedLanguageAllowedPackages'>;
+type AllowedPackages = Pick<
+  Config,
+  'domainAllowedPackages' | 'applicationAllowedPackages' | 'publishedLanguageAllowedPackages'
+>;
 
 function parseAllowedPackages(raw: Record<string, unknown>, validation: string): AllowedPackages {
   const defaults = defaultAllowedPackages(validation);
@@ -45,11 +50,17 @@ function parseAllowedPackages(raw: Record<string, unknown>, validation: string):
   return {
     domainAllowedPackages: strings(raw['domainAllowedPackages'], defaults.domainAllowedPackages),
     applicationAllowedPackages: strings(raw['applicationAllowedPackages'], defaults.applicationAllowedPackages),
-    publishedLanguageAllowedPackages: strings(raw['publishedLanguageAllowedPackages'], defaults.publishedLanguageAllowedPackages),
+    publishedLanguageAllowedPackages: strings(
+      raw['publishedLanguageAllowedPackages'],
+      defaults.publishedLanguageAllowedPackages,
+    ),
   };
 }
 
-type Governance = Pick<Config, 'limits' | 'onePerFile' | 'commit' | 'guard' | 'deviations' | 'standardInterfaces' | 'worker'>;
+type Governance = Pick<
+  Config,
+  'limits' | 'onePerFile' | 'commit' | 'guard' | 'deviations' | 'standardInterfaces' | 'worker'
+>;
 
 function parseGovernance(raw: Record<string, unknown>): Governance {
   return {
@@ -66,11 +77,17 @@ function parseGovernance(raw: Record<string, unknown>): Governance {
 function parseDeviations(value: unknown): Deviation[] {
   const entries: unknown[] = Array.isArray(value) ? value : [];
 
-  return entries.filter(isRecord).map((entry) => ({ what: text(entry['what'], ''), adr: text(entry['adr'], ''), reason: text(entry['reason'], '') }));
+  return entries.filter(isRecord).map((entry) => ({
+    what: text(entry['what'], ''),
+    adr: text(entry['adr'], ''),
+    reason: text(entry['reason'], ''),
+  }));
 }
 
 function parseStandardInterfaces(value: unknown): Record<string, string | false> {
-  const entries = Object.entries(isRecord(value) ? value : {}).flatMap(([name, instead]): [string, string | false][] => (instead === false || (typeof instead === 'string' && instead !== '') ? [[name, instead]] : []));
+  const entries = Object.entries(isRecord(value) ? value : {}).flatMap(([name, instead]): [string, string | false][] =>
+    instead === false || (typeof instead === 'string' && instead !== '') ? [[name, instead]] : [],
+  );
 
   return Object.fromEntries(entries);
 }

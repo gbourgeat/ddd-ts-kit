@@ -13,8 +13,18 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const stateDir = path.resolve(root, '../../node_modules/.cache/ddd-ts-kit-example');
 const snapshotDir = path.join(stateDir, 'generated');
 const SKIPPED = new Set(['node_modules', 'dist', 'coverage', '.env', 'reports']);
-const DERIVED = [/\.declarations\.ts$/, /^openapi\//, /^docs\/integration\/asyncapi\.json$/, /^docs\/integration\/event-catalog\.md$/, /^\.dependency-cruiser\.cjs$/];
-const MARKERS = { 'TODO(domain)': /TODO\(domain\)/g, 'TODO(platform)': /TODO\(platform\)/g, 'it.todo': /\bit\.todo\(/g };
+const DERIVED = [
+  /\.declarations\.ts$/,
+  /^openapi\//,
+  /^docs\/integration\/asyncapi\.json$/,
+  /^docs\/integration\/event-catalog\.md$/,
+  /^\.dependency-cruiser\.cjs$/,
+];
+const MARKERS = {
+  'TODO(domain)': /TODO\(domain\)/g,
+  'TODO(platform)': /TODO\(platform\)/g,
+  'it.todo': /\bit\.todo\(/g,
+};
 
 const files = walk(root).map(measure);
 const report = { areas: byArea(files), totals: totalsOf(files), markers: markers(), generators: generators() };
@@ -23,7 +33,9 @@ process.stdout.write(process.argv.includes('--json') ? JSON.stringify(report, nu
 
 function walk(directory) {
   return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
-    if (SKIPPED.has(entry.name)) return [];
+    if (SKIPPED.has(entry.name)) {
+      return [];
+    }
 
     const absolute = path.join(directory, entry.name);
 
@@ -36,14 +48,24 @@ function measure(file) {
   const lines = linesOf(path.join(root, file));
   const copy = path.join(snapshotDir, file);
 
-  if (DERIVED.some((pattern) => pattern.test(file))) return { file, origin: 'derived', generated: lines, hand: 0, removed: 0 };
-  if (!fs.existsSync(copy)) return { file, origin: 'hand', generated: 0, hand: lines, removed: 0 };
+  if (DERIVED.some((pattern) => pattern.test(file))) {
+    return { file, origin: 'derived', generated: lines, hand: 0, removed: 0 };
+  }
+  if (!fs.existsSync(copy)) {
+    return { file, origin: 'hand', generated: 0, hand: lines, removed: 0 };
+  }
 
   const diff = spawnSync('diff', ['-U0', copy, path.join(root, file)], { encoding: 'utf8' }).stdout.split('\n');
   const added = diff.filter((line) => line.startsWith('+') && !line.startsWith('+++')).length;
   const removed = diff.filter((line) => line.startsWith('-') && !line.startsWith('---')).length;
 
-  return { file, origin: added + removed === 0 ? 'generated, untouched' : 'generated, edited', generated: lines - added, hand: added, removed };
+  return {
+    file,
+    origin: added + removed === 0 ? 'generated, untouched' : 'generated, edited',
+    generated: lines - added,
+    hand: added,
+    removed,
+  };
 }
 
 function linesOf(file) {
@@ -55,11 +77,21 @@ function linesOf(file) {
 function areaOf(file) {
   const context = /^src\/contexts\/([^/]+)\/([^/]+)/.exec(file);
 
-  if (context !== null) return `${context[1]}: ${context[2].includes('.') ? 'context files' : context[2]}`;
-  if (file.startsWith('src/platform/') || file.startsWith('src/apps/') || file === 'src/main.ts') return 'platform and composition';
-  if (file.startsWith('test/')) return 'end-to-end and architecture tests';
-  if (file.startsWith('docs/')) return 'documents';
-  if (file.startsWith('scripts/')) return 'scripts';
+  if (context !== null) {
+    return `${context[1]}: ${context[2].includes('.') ? 'context files' : context[2]}`;
+  }
+  if (file.startsWith('src/platform/') || file.startsWith('src/apps/') || file === 'src/main.ts') {
+    return 'platform and composition';
+  }
+  if (file.startsWith('test/')) {
+    return 'end-to-end and architecture tests';
+  }
+  if (file.startsWith('docs/')) {
+    return 'documents';
+  }
+  if (file.startsWith('scripts/')) {
+    return 'scripts';
+  }
 
   return 'project files';
 }
@@ -80,13 +112,24 @@ function byArea(measured) {
 function totalsOf(measured) {
   const total = emptyCount();
 
-  for (const entry of measured) add(total, entry);
+  for (const entry of measured) {
+    add(total, entry);
+  }
 
   return total;
 }
 
 function emptyCount() {
-  return { files: 0, untouched: 0, edited: 0, byHand: 0, derived: 0, generatedLines: 0, handLines: 0, removedGeneratedLines: 0 };
+  return {
+    files: 0,
+    untouched: 0,
+    edited: 0,
+    byHand: 0,
+    derived: 0,
+    generatedLines: 0,
+    handLines: 0,
+    removedGeneratedLines: 0,
+  };
 }
 
 function add(count, entry) {
@@ -102,11 +145,18 @@ function add(count, entry) {
 
 /** The markers the generators wrote in all, and those still in the tree. */
 function markers() {
-  return Object.fromEntries(Object.entries(MARKERS).map(([name, pattern]) => [name, { generated: occurrences(snapshotDir, pattern), left: occurrences(root, pattern, true) }]));
+  return Object.fromEntries(
+    Object.entries(MARKERS).map(([name, pattern]) => [
+      name,
+      { generated: occurrences(snapshotDir, pattern), left: occurrences(root, pattern, true) },
+    ]),
+  );
 }
 
 function occurrences(directory, pattern, sourcesOnly = false) {
-  if (!fs.existsSync(directory)) return 0;
+  if (!fs.existsSync(directory)) {
+    return 0;
+  }
 
   return walkFrom(directory)
     .filter((file) => !sourcesOnly || /^(src|test)\//.test(path.relative(directory, file)))
@@ -115,7 +165,9 @@ function occurrences(directory, pattern, sourcesOnly = false) {
 
 function walkFrom(directory) {
   return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
-    if (SKIPPED.has(entry.name)) return [];
+    if (SKIPPED.has(entry.name)) {
+      return [];
+    }
 
     return entry.isDirectory() ? walkFrom(path.join(directory, entry.name)) : [path.join(directory, entry.name)];
   });
@@ -124,24 +176,40 @@ function walkFrom(directory) {
 function generators() {
   const log = path.join(stateDir, 'generator-log.jsonl');
 
-  if (!fs.existsSync(log)) return { runs: 0, byKind: {}, byWorker: {}, failed: 0, totalMs: 0 };
+  if (!fs.existsSync(log)) {
+    return { runs: 0, byKind: {}, byWorker: {}, failed: 0, totalMs: 0 };
+  }
 
-  const runs = fs.readFileSync(log, 'utf8').trim().split('\n').map((line) => JSON.parse(line)).filter((run) => run.command === 'generate' || run.command === 'init');
+  const runs = fs
+    .readFileSync(log, 'utf8')
+    .trim()
+    .split('\n')
+    .map((line) => JSON.parse(line))
+    .filter((run) => run.command === 'generate' || run.command === 'init');
   const succeeded = runs.filter((run) => run.exit === 0);
 
-  return { runs: succeeded.length, failed: runs.length - succeeded.length, totalMs: succeeded.reduce((sum, run) => sum + run.ms, 0), byKind: tally(succeeded, (run) => run.kind), byWorker: tally(succeeded, (run) => run.worker) };
+  return {
+    runs: succeeded.length,
+    failed: runs.length - succeeded.length,
+    totalMs: succeeded.reduce((sum, run) => sum + run.ms, 0),
+    byKind: tally(succeeded, (run) => run.kind),
+    byWorker: tally(succeeded, (run) => run.worker),
+  };
 }
 
 function tally(runs, keyOf) {
   const counts = {};
 
-  for (const run of runs) counts[keyOf(run)] = (counts[keyOf(run)] ?? 0) + 1;
+  for (const run of runs) {
+    counts[keyOf(run)] = (counts[keyOf(run)] ?? 0) + 1;
+  }
 
   return counts;
 }
 
 function markdownOf({ areas, totals, markers: left, generators: runs }) {
-  const row = (name, count) => `| ${name} | ${count.files} | ${count.untouched} | ${count.edited} | ${count.byHand} | ${count.derived} | ${count.generatedLines} | ${count.handLines} | ${count.removedGeneratedLines} |`;
+  const row = (name, count) =>
+    `| ${name} | ${count.files} | ${count.untouched} | ${count.edited} | ${count.byHand} | ${count.derived} | ${count.generatedLines} | ${count.handLines} | ${count.removedGeneratedLines} |`;
   const lines = [
     '| Area | Files | Generated, untouched | Generated, edited | Written by hand | Derived (regenerated) | Generated lines kept | Lines by hand | Generated lines removed |',
     '|---|---|---|---|---|---|---|---|---|',
@@ -156,7 +224,9 @@ function markdownOf({ areas, totals, markers: left, generators: runs }) {
     '',
     '| Kind | Runs |',
     '|---|---|',
-    ...Object.entries(runs.byKind).sort(([, a], [, b]) => b - a).map(([kind, count]) => `| ${kind} | ${count} |`),
+    ...Object.entries(runs.byKind)
+      .sort(([, a], [, b]) => b - a)
+      .map(([kind, count]) => `| ${kind} | ${count} |`),
     '',
     '| Worker | Runs |',
     '|---|---|',

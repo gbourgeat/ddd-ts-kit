@@ -24,14 +24,22 @@ const COMPARISONS = { eq: '=', ne: '<>', gt: '>', gte: '>=', lt: '<', lte: '<=' 
  * from the adapter, with an operator of a closed list: nothing a caller wrote is ever part of
  * the statement.
  */
-export function predicateToTypeOrm<Builder extends WhereExpressionBuilder>(builder: Builder, predicate: Predicate | undefined, options: TypeOrmCriteriaOptions): Builder {
-  if (predicate === undefined) return builder;
+export function predicateToTypeOrm<Builder extends WhereExpressionBuilder>(
+  builder: Builder,
+  predicate: Predicate | undefined,
+  options: TypeOrmCriteriaOptions,
+): Builder {
+  if (predicate === undefined) {
+    return builder;
+  }
 
   const rendering: Rendering = { ...options, names: [] };
 
-  return builder.andWhere(new Brackets((group) => {
-    held(group, predicate, rendering);
-  }));
+  return builder.andWhere(
+    new Brackets((group) => {
+      held(group, predicate, rendering);
+    }),
+  );
 }
 
 function held(builder: WhereExpressionBuilder, predicate: Predicate, rendering: Rendering): void {
@@ -46,8 +54,11 @@ function held(builder: WhereExpressionBuilder, predicate: Predicate, rendering: 
       held(group, part, rendering);
     });
 
-    if (predicate.kind === 'and') builder.andWhere(nested);
-    else builder.orWhere(nested);
+    if (predicate.kind === 'and') {
+      builder.andWhere(nested);
+    } else {
+      builder.orWhere(nested);
+    }
   }
 }
 
@@ -57,9 +68,11 @@ function tested(builder: WhereExpressionBuilder, test: PredicateTest, rendering:
   if (test.operator === 'isNull') {
     builder.andWhere(test.value === true ? `${column} IS NULL` : `${column} IS NOT NULL`);
   } else if (test.negated) {
-    builder.andWhere(new NotBrackets((refuted) => {
-      compared(refuted, test, { column, rendering });
-    }));
+    builder.andWhere(
+      new NotBrackets((refuted) => {
+        compared(refuted, test, { column, rendering });
+      }),
+    );
   } else {
     compared(builder, test, { column, rendering });
   }
@@ -70,7 +83,11 @@ interface Target {
   readonly rendering: Rendering;
 }
 
-function compared(builder: WhereExpressionBuilder, { operator, value }: PredicateTest, { column, rendering }: Target): void {
+function compared(
+  builder: WhereExpressionBuilder,
+  { operator, value }: PredicateTest,
+  { column, rendering }: Target,
+): void {
   const values: FieldValue[] = typeof value === 'object' && !(value instanceof Date) ? [...value] : [value];
   const [first = null, second = null] = values;
   const [one, two] = [named(rendering), named(rendering)];
@@ -84,7 +101,11 @@ function compared(builder: WhereExpressionBuilder, { operator, value }: Predicat
       break;
     case 'contains':
     case 'startsWith':
-      builder.andWhere(`${column} LIKE :${one} ESCAPE :${two}`, { [one]: likePattern(operator, String(first)), [two]: '\\' });
+      builder.andWhere(`${column} LIKE :${one} ESCAPE :${two}`, {
+        [one]: likePattern(operator, String(first)),
+        [two]: '\\',
+      });
+
       break;
     case 'isNull':
       break;

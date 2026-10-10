@@ -46,7 +46,7 @@ real tokens of the local Keycloak. For traces, set
 `http://127.0.0.1:54686`; for the error tracker add `--profile errors` and put the DSN that
 `docker compose logs glitchtip | grep 'DSN:'` prints in `SENTRY_DSN`. The API documentation is
 at `http://127.0.0.1:54300/docs`. Everything listens on 127.0.0.1, on ports 54xxx chosen not to
-meet another stack. The gate is `npm run verify` (types, lint with the kit's preset, tests, end
+meet another stack. The gate is `npm run verify` (types, lint with the kit's preset, format, tests, end
 to end, architecture rules, import graph, dead code, documentation drift); it needs no
 container. Stop with `docker compose --profile identity --profile observability --profile
 errors down --volumes`.

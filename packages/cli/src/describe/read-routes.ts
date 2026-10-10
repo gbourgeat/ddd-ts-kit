@@ -28,7 +28,9 @@ function routeOf(file: string, source: string, useCases: readonly UseCaseFact[])
     permission: useCases.find((candidate) => candidate.kind === kind && candidate.name === useCase)?.permission ?? '',
     request: requestOf(source),
     responses: responsesOf(source),
-    errors: [...(/\berrors:\s*\[([^\]]*)\]/.exec(source)?.[1] ?? '').matchAll(/'([^']+)'/g)].map((match) => match[1] ?? ''),
+    errors: [...(/\berrors:\s*\[([^\]]*)\]/.exec(source)?.[1] ?? '').matchAll(/'([^']+)'/g)].map(
+      (match) => match[1] ?? '',
+    ),
     file,
   };
 }
@@ -55,7 +57,9 @@ function responsesOf(source: string): RouteResponse[] {
 function schemaName(source: string, written: string): string {
   const page = /^pageSchemaOf\((\w+)\)$/.exec(written)?.[1];
 
-  if (page !== undefined) return `page of ${schemaName(source, page)}`;
+  if (page !== undefined) {
+    return `page of ${schemaName(source, page)}`;
+  }
 
   return new RegExp(String.raw`\bconst ${written} = classSchema\((\w+)`).exec(source)?.[1] ?? written;
 }

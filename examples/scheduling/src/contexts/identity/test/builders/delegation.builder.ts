@@ -58,7 +58,12 @@ export class DelegationBuilder extends Builder<DelegationIngredients, Delegation
   protected construct(ingredients: DelegationIngredients): Delegation {
     const { assistantId, availabilityIncluded, endsAt } = ingredients;
     const desk = Desk.create(ingredients.practiceId, ingredients.practitionerId);
-    const granted = Delegation.create(ingredients.id, { desk, assistantId, availabilityIncluded, endsAt }, ingredients.bornAt);
+
+    const granted = Delegation.create(
+      ingredients.id,
+      { desk, assistantId, availabilityIncluded, endsAt },
+      ingredients.bornAt,
+    );
 
     if (ingredients.revokedAt !== undefined) {
       granted.revoke(ingredients.revokedAt);

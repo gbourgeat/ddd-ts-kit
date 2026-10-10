@@ -23,7 +23,9 @@ export class TransactionalUnitOfWork implements UnitOfWork {
   ) {}
 
   async run<T>(work: () => Promise<T>): Promise<T> {
-    if (this.depth > 0) return this.joined(work);
+    if (this.depth > 0) {
+      return this.joined(work);
+    }
 
     this.begin();
 
@@ -51,15 +53,20 @@ export class TransactionalUnitOfWork implements UnitOfWork {
   }
 
   private begin(): void {
-    for (const participant of this.participants) participant.begin();
+    for (const participant of this.participants) {
+      participant.begin();
+    }
 
     this.whenBegun();
   }
 
   private end(outcome: 'committed' | 'rolled back'): void {
     for (const participant of this.participants) {
-      if (outcome === 'committed') participant.commit();
-      else participant.rollBack();
+      if (outcome === 'committed') {
+        participant.commit();
+      } else {
+        participant.rollBack();
+      }
     }
 
     this.outcomes.push(outcome);

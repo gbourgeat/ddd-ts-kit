@@ -1,5 +1,9 @@
 import type { DomainEvent } from '@ddd-ts-kit/kernel';
-import type { DomainEventApplication, IntegrationEventApplication, ProjectionDeclaration } from '@ddd-ts-kit/kernel/declarations';
+import type {
+  DomainEventApplication,
+  IntegrationEventApplication,
+  ProjectionDeclaration,
+} from '@ddd-ts-kit/kernel/declarations';
 import { observedProjection } from '../consumer/observed-projection.js';
 import { receive } from '../consumer/receive.js';
 import type { Declarer } from '../wiring/declarer.js';
@@ -38,16 +42,28 @@ export function projectionOf(declared: Declared): WiredProjection {
       declaredBy,
       applies: applies.map((application) =>
         application.kind === 'integration'
-          ? { kind: 'integration', event: application.contract.type, version: application.contract.version, method: application.method }
+          ? {
+              kind: 'integration',
+              event: application.contract.type,
+              version: application.contract.version,
+              method: application.method,
+            }
           : { kind: 'domain', event: application.name, method: application.method },
       ),
     },
-    consumptions: applies.flatMap((application) => (application.kind === 'integration' ? [consumptionOf(declared, application)] : [])),
-    domainEventHandlers: applies.flatMap((application) => (application.kind === 'domain' ? [handlingOf(declared, application)] : [])),
+    consumptions: applies.flatMap((application) =>
+      application.kind === 'integration' ? [consumptionOf(declared, application)] : [],
+    ),
+    domainEventHandlers: applies.flatMap((application) =>
+      application.kind === 'domain' ? [handlingOf(declared, application)] : [],
+    ),
   };
 }
 
-function consumptionOf({ declaration, module, declaredBy }: Declared, { contract, method }: IntegrationEventApplication): EventConsumption {
+function consumptionOf(
+  { declaration, module, declaredBy }: Declared,
+  { contract, method }: IntegrationEventApplication,
+): EventConsumption {
   const { name, implementation } = declaration;
 
   return {
@@ -65,13 +81,17 @@ function consumptionOf({ declaration, module, declaredBy }: Declared, { contract
         contract,
         options: { consumer: name },
         runtime,
-        handle: (event) => observed(new Date(event.occurredAt), () => applyThrough(resolve(implementation), method, event)),
+        handle: (event) =>
+          observed(new Date(event.occurredAt), () => applyThrough(resolve(implementation), method, event)),
       });
     },
   };
 }
 
-function handlingOf({ declaration, module, declaredBy }: Declared, { event, name, method }: DomainEventApplication): DomainEventHandling {
+function handlingOf(
+  { declaration, module, declaredBy }: Declared,
+  { event, name, method }: DomainEventApplication,
+): DomainEventHandling {
   const { implementation } = declaration;
 
   return {
@@ -86,7 +106,9 @@ function handlingOf({ declaration, module, declaredBy }: Declared, { event, name
       const observed = observedProjection(resolve, { projection: declaration.name, context: module, event: name });
 
       dispatcher.on(name, async (occurred: DomainEvent) => {
-        if (occurred instanceof event) await observed(occurred.occurredAt, () => applyThrough(resolve(implementation), method, occurred));
+        if (occurred instanceof event) {
+          await observed(occurred.occurredAt, () => applyThrough(resolve(implementation), method, occurred));
+        }
       });
     },
   };

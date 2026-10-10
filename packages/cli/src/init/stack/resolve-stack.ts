@@ -29,7 +29,9 @@ export type { StackOptions } from './stack-options.js';
 
 /** The stack of the project: the one its config records when it is already initialised, else the one the flags ask for. */
 export function resolveStack(root: string, options: StackOptions): Config {
-  if (fs.existsSync(path.join(root, CONFIG_FILE)) && !options.force) return readConfig(root).config;
+  if (fs.existsSync(path.join(root, CONFIG_FILE)) && !options.force) {
+    return readConfig(root).config;
+  }
 
   const http = choose(HTTP_STACKS, options.http, 'http') ?? 'express';
   const di = choose(DI_STACKS, options.di, 'di') ?? (http === 'nest' ? 'nest' : 'tsyringe');
@@ -39,7 +41,19 @@ export function resolveStack(root: string, options: StackOptions): Config {
   const docsUi = http === 'none' ? 'none' : (choose(DOCS_UIS, options.docsUi, 'docs-ui') ?? 'swagger');
   const persistence = resolvePersistence(options);
   const broker = resolveBroker(options, persistence.orm);
-  const stack = { http, di, ...resolveTooling(options), ...persistence, docsUi, ...resolveSecurity(options), broker, ...resolveOperations(options, persistence.orm), ...resolveStyle(options, di) };
+
+  const stack = {
+    http,
+    di,
+    ...resolveTooling(options),
+    ...persistence,
+    docsUi,
+    ...resolveSecurity(options),
+    broker,
+    ...resolveOperations(options, persistence.orm),
+    ...resolveStyle(options, di),
+  };
+
   const config = parseConfig({ stack, contexts: {}, rules: {} });
 
   return { ...config, worker: hasWorker(root, config) };
@@ -57,7 +71,10 @@ function hasWorker(root: string, config: Config): boolean {
  * reporting hangs on the buses, the HTTP boundary, the jobs and the process, which every stack
  * has: no other choice refuses it.
  */
-function resolveOperations(options: StackOptions, orm: string): { cache: string; audit: string; errors: string; logger: string } {
+function resolveOperations(
+  options: StackOptions,
+  orm: string,
+): { cache: string; audit: string; errors: string; logger: string } {
   return {
     cache: choose(CACHE_STACKS, options.cache, 'cache') ?? 'none',
     audit: choose(AUDIT_MODES, options.audit, 'audit') ?? (orm === 'none' ? 'off' : 'on'),
@@ -67,13 +84,18 @@ function resolveOperations(options: StackOptions, orm: string): { cache: string;
 }
 
 function resolveSecurity(options: StackOptions): { authn: string; authz: string } {
-  return { authn: choose(AUTHN_STACKS, options.authn, 'authn') ?? 'jwt', authz: choose(AUTHZ_STACKS, options.authz, 'authz') ?? 'rbac' };
+  return {
+    authn: choose(AUTHN_STACKS, options.authn, 'authn') ?? 'jwt',
+    authz: choose(AUTHZ_STACKS, options.authz, 'authz') ?? 'rbac',
+  };
 }
 
 function resolveBroker(options: StackOptions, orm: string): string {
   const broker = choose(BROKER_STACKS, options.broker, 'broker') ?? 'none';
 
-  if (broker === 'none' || orm !== 'none') return broker;
+  if (broker === 'none' || orm !== 'none') {
+    return broker;
+  }
 
   throw new CliError(
     `--broker ${broker} cannot be combined with --orm none.`,
@@ -90,7 +112,9 @@ function resolveTooling(options: StackOptions): { validation: string; tests: str
 }
 
 function assertNestGoesWithNest(http: string, di: string): void {
-  if ((http === 'nest') === (di === 'nest')) return;
+  if ((http === 'nest') === (di === 'nest')) {
+    return;
+  }
 
   throw new CliError(
     `--http ${http} cannot be combined with --di ${di}.`,

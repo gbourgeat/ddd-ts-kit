@@ -106,9 +106,7 @@ describe('consume', () => {
 
     await handler({ ...placed('evt-1'), version: 2 });
 
-    await expect(handler({ ...placed('evt-2'), payload: {} })).rejects.toBeInstanceOf(
-      InvalidEventPayloadError,
-    );
+    await expect(handler({ ...placed('evt-2'), payload: {} })).rejects.toBeInstanceOf(InvalidEventPayloadError);
 
     expect(memory.commits).toBe(0);
     expect(memory.committed().processed.size).toBe(0);
@@ -199,7 +197,9 @@ class MarkOnlyStore implements ProcessedEventStore {
   async markProcessed(consumer: string, eventId: string): Promise<boolean> {
     const key = `${consumer} ${eventId}`;
 
-    if (this.seen.has(key)) return false;
+    if (this.seen.has(key)) {
+      return false;
+    }
 
     this.seen.add(key);
 
@@ -239,9 +239,13 @@ describe('a consumer given an execution scope', () => {
       },
     };
 
-    const { handler } = consume(orderPlacedV1, { consumer: 'billing', processed, unitOfWork: memory, scope }, async () => {
-      seenByStore.push(scope.current()?.causationId);
-    });
+    const { handler } = consume(
+      orderPlacedV1,
+      { consumer: 'billing', processed, unitOfWork: memory, scope },
+      async () => {
+        seenByStore.push(scope.current()?.causationId);
+      },
+    );
 
     await handler({ ...placed('evt-1'), correlationId: 'corr-1' });
 
@@ -279,7 +283,9 @@ describe('the correlation of one stimulus, from a command to the consumers of it
 
     await scope.run(request, () => publisher.publish([placed('evt-1')]));
 
-    for (const { event } of store.records()) await handler(event);
+    for (const { event } of store.records()) {
+      await handler(event);
+    }
 
     expect(store.records().map(({ event }) => event.correlationId)).toEqual(['corr-7']);
     expect(seen).toEqual(['corr-7']);

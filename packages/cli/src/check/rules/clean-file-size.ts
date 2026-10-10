@@ -11,7 +11,9 @@ export const cleanFileSize: Rule = {
     return perFile(project, this.id, (file) => {
       const lines = file.text.split('\n').length - (file.text.endsWith('\n') ? 1 : 0);
 
-      if (lines <= MAX_FILE_LINES || file.path.split('/').includes('generated')) return [];
+      if (lines <= MAX_FILE_LINES || file.path.split('/').includes('generated')) {
+        return [];
+      }
 
       return [
         {

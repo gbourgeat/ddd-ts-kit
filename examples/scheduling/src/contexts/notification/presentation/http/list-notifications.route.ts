@@ -32,5 +32,11 @@ export function listNotificationsRoute(queries: QueryBus): Route {
 }
 
 function toLine(item: ListNotificationsItem): ListNotificationsLine {
-  return { id: item.id, kind: item.kind, appointmentId: item.appointmentId, startsAt: item.startsAt.toISOString(), sentAt: item.sentAt.toISOString() };
+  return {
+    id: item.id,
+    kind: item.kind,
+    appointmentId: item.appointmentId,
+    startsAt: item.startsAt.toISOString(),
+    sentAt: item.sentAt.toISOString(),
+  };
 }

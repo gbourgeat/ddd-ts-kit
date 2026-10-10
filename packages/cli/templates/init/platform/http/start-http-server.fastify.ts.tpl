@@ -48,9 +48,12 @@ function guardTheDoor(app: FastifyInstance, served: Served, config: AppConfig): 
   });
 
   app.addHook('onRequest', async (request, reply) => {
-    const refusal = request.url === '/health/ready' ? undefined : await refusalFor(served.rateLimiter, config.rateLimit, request.ip);
+    const refusal =
+      request.url === '/health/ready' ? undefined : await refusalFor(served.rateLimiter, config.rateLimit, request.ip);
 
-    if (refusal !== undefined) await reply.code(refusal.problem.status).headers(refusal.headers).send(JSON.stringify(refusal.problem));
+    if (refusal !== undefined) {
+      await reply.code(refusal.problem.status).headers(refusal.headers).send(JSON.stringify(refusal.problem));
+    }
   });
 }
 {{/if}}

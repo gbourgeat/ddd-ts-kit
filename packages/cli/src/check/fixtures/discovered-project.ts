@@ -5,5 +5,8 @@ import { project } from './project.js';
 
 /** The declared style assembled by discovery: the role files are found at startup, no barrel lists them. */
 export function discoveredProject(files: FixtureFiles, overrides: FixtureFiles = {}): FixtureFiles {
-  return project(files, { [CONFIG_FILE]: config({ stack: { style: 'declared', assembly: 'discovery' } }), ...overrides });
+  return project(files, {
+    [CONFIG_FILE]: config({ stack: { style: 'declared', assembly: 'discovery' } }),
+    ...overrides,
+  });
 }

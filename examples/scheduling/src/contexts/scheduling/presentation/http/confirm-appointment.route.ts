@@ -19,11 +19,19 @@ export function confirmAppointmentRoute(commands: CommandBus): Route {
       tags: ['scheduling'],
       request: { params },
       responses: { 201: { description: 'Done; the body carries the identifier.', body: accepted } },
-      errors: ['UNAUTHORIZED', 'FORBIDDEN', 'APPOINTMENT_NOT_FOUND', 'APPOINTMENT_ENDED', 'APPOINTMENT_ALREADY_CONFIRMED'],
+      errors: [
+        'UNAUTHORIZED',
+        'FORBIDDEN',
+        'APPOINTMENT_NOT_FOUND',
+        'APPOINTMENT_ENDED',
+        'APPOINTMENT_ALREADY_CONFIRMED',
+      ],
       security: ['bearer'],
     },
     async (input) => {
-      const id = await commands.execute(new ConfirmAppointmentCommand(actorOf(input.context.principal), input.params.appointmentId));
+      const id = await commands.execute(
+        new ConfirmAppointmentCommand(actorOf(input.context.principal), input.params.appointmentId),
+      );
 
       return { status: 201, body: { id } };
     },

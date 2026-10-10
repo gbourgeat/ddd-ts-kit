@@ -20,48 +20,48 @@ export interface AppConfig {
   readonly resilience: ResilienceSettings;
   /** Whether this process runs the scheduled jobs (`RUN_JOBS`): off for the API of a project that has a worker. */
   readonly runJobs: boolean;
-{{#if persistence.needsUrl}}
+  {{#if persistence.needsUrl}}
   readonly databaseUrl: string;
-{{/if}}
-{{#if events.outbox}}
+  {{/if}}
+  {{#if events.outbox}}
   readonly outboxRelayIntervalMs: number;
-{{/if}}
-{{#if docs.any}}
+  {{/if}}
+  {{#if docs.any}}
   readonly docsEnabled: boolean;
-{{/if}}
-{{#if authn.jwt}}
+  {{/if}}
+  {{#if authn.jwt}}
   readonly auth: AuthConfig;
-{{/if}}
-{{#if authn.keycloak}}
+  {{/if}}
+  {{#if authn.keycloak}}
   readonly keycloak: KeycloakConfig;
-{{/if}}
-{{#if broker.addressed}}
+  {{/if}}
+  {{#if broker.addressed}}
   readonly {{broker.key}}: string;
-{{/if}}
-{{#if redis.server}}
+  {{/if}}
+  {{#if redis.server}}
   readonly redisUrl: string;
-{{/if}}
-{{#if cache.rateLimit}}
+  {{/if}}
+  {{#if cache.rateLimit}}
   /** How many requests one caller address may send in a sliding window, before the HTTP layer answers 429. */
   readonly rateLimit: RateLimit;
-{{/if}}
-{{#if errors.sentry}}
+  {{/if}}
+  {{#if errors.sentry}}
   /** Where unexpected failures are reported: a Sentry or a GlitchTip project. Without a DSN nothing is reported. */
   readonly errorReporting: ErrorReportingConfig;
-{{/if}}
+  {{/if}}
 }
 
 /** `LOG_LEVEL`, `LOG_FORMAT` and `LOG_SCRUB_MESSAGES`. */
 interface LogConfig {
   readonly level: LogLevel;
-{{#if logger.stdout}}
+  {{#if logger.stdout}}
   /** One JSON line per entry: this logger has no pretty format (`init --logger pino` or `winston` brings one). */
   readonly format: 'json';
-{{/if}}
-{{#unless logger.stdout}}
+  {{/if}}
+  {{#unless logger.stdout}}
   /** `json` everywhere; `pretty` on a developer's machine only. */
   readonly format: 'json' | 'pretty';
-{{/unless}}
+  {{/unless}}
   /** Writes `[message removed]` for the message of every logged error that is not a `DomainError`: for logs that leave your hands. */
   readonly scrubMessages: boolean;
 }

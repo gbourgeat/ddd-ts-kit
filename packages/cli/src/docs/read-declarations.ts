@@ -22,13 +22,23 @@ interface Declared {
 /** What the decorators of the role files of a context say. */
 export function readDeclarations(ws: Workspace, directory: string): DeclaredFacts {
   const declared = declaredClasses(ws, directory);
-  const carrying = (...decorators: string[]): Declared[] => declared.filter(({ decoration }) => decorators.includes(decoration.name));
+
+  const carrying = (...decorators: string[]): Declared[] =>
+    declared.filter(({ decoration }) => decorators.includes(decoration.name));
+
   const binding = (found: Declared): DeclaredBinding => ({ name: found.className, token: argument(found, 0) });
 
   return {
     useCases: carrying('Requires', 'Public').map(useCase),
-    integrationEventHandlers: carrying('IntegrationEventHandler').map((found) => ({ name: found.className, consumer: option(found, 'consumer'), event: argument(found, 0) })),
-    policies: carrying('Policy').map((found) => ({ name: option(found, 'name') || found.className, permission: permission(found) })),
+    integrationEventHandlers: carrying('IntegrationEventHandler').map((found) => ({
+      name: found.className,
+      consumer: option(found, 'consumer'),
+      event: argument(found, 0),
+    })),
+    policies: carrying('Policy').map((found) => ({
+      name: option(found, 'name') || found.className,
+      permission: permission(found),
+    })),
     gateways: carrying('Gateway').map(binding),
     adapters: carrying('Repository', 'Adapter').map(binding),
   };
@@ -40,11 +50,19 @@ function declaredClasses(ws: Workspace, directory: string): Declared[] {
     const role = declaredRoleOf(file);
     const text = role === undefined ? undefined : ws.read(`${directory}/${file}`);
 
-    if (role === undefined || text === undefined) return [];
+    if (role === undefined || text === undefined) {
+      return [];
+    }
 
     const source = scan(text);
 
-    return declaredAs(source, role.decorators).map(({ declared, decoration }) => ({ suffix: role.suffix, className: declared.name, decoration, source, text }));
+    return declaredAs(source, role.decorators).map(({ declared, decoration }) => ({
+      suffix: role.suffix,
+      className: declared.name,
+      decoration,
+      source,
+      text,
+    }));
   });
 }
 

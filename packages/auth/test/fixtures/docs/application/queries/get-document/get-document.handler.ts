@@ -9,7 +9,9 @@ export class GetDocumentHandler {
   async execute(query: GetDocument): Promise<Document> {
     const document = await this.documents.findById(query.documentId);
 
-    if (document === undefined) throw new NotFoundError('Document not found');
+    if (document === undefined) {
+      throw new NotFoundError('Document not found');
+    }
 
     return document;
   }

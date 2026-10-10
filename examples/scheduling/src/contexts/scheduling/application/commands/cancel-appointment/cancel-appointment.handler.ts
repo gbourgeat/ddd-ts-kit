@@ -19,7 +19,9 @@ export class CancelAppointmentHandler implements CommandHandler<CancelAppointmen
   async execute({ actor, appointmentId, reason }: CancelAppointmentCommand): Promise<string> {
     const target = await this.appointmentRepository.findById(appointmentId);
 
-    if (target === undefined) throw new AppointmentNotFoundError(appointmentId);
+    if (target === undefined) {
+      throw new AppointmentNotFoundError(appointmentId);
+    }
 
     await this.access.authorize(actor, schedulingPermissions['appointment.cancel'], target);
 

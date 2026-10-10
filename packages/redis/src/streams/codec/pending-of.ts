@@ -6,6 +6,8 @@ export function pendingOf(reply: unknown): PendingEntry[] {
   return listOf(reply).flatMap((answer) => {
     const [id, consumer, , deliveries] = listOf(answer);
 
-    return typeof id === 'string' && typeof consumer === 'string' ? [{ id, consumer, deliveries: Number(deliveries) }] : [];
+    return typeof id === 'string' && typeof consumer === 'string'
+      ? [{ id, consumer, deliveries: Number(deliveries) }]
+      : [];
   });
 }

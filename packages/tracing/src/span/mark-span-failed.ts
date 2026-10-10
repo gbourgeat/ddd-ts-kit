@@ -17,7 +17,9 @@ export function markSpanFailed(span: Span, error: unknown): void {
  * SQL), so only an identifier-shaped class name and a code-shaped `code` get through.
  */
 function errorAttributes(error: unknown): Attributes {
-  if (typeof error !== 'object' || error === null) return {};
+  if (typeof error !== 'object' || error === null) {
+    return {};
+  }
 
   const className = constructorName(error);
 
@@ -32,7 +34,11 @@ function isIdentifier(value: unknown): value is string {
 function remember(span: Span, error: unknown): void {
   const spanContext = span.spanContext();
 
-  if (typeof error !== 'object' || error === null || failedTraces.has(error)) return;
+  if (typeof error !== 'object' || error === null || failedTraces.has(error)) {
+    return;
+  }
 
-  if (isSpanContextValid(spanContext)) failedTraces.set(error, spanContext.traceId);
+  if (isSpanContextValid(spanContext)) {
+    failedTraces.set(error, spanContext.traceId);
+  }
 }

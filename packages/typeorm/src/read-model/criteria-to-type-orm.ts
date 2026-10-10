@@ -20,7 +20,12 @@ export function criteriaToTypeOrm<Entity extends ObjectLiteral>(
   predicateToTypeOrm(builder, plan.filter, { ...options, parameters: `${parameters}_filter` });
   predicateToTypeOrm(builder, plan.seek, { ...options, parameters: `${parameters}_seek` });
 
-  for (const sort of plan.sort) ordered(builder, sort, { column: `${alias}.${propertyOf(properties, sort.field)}`, nullable: plan.fields[sort.field]?.nullable === true });
+  for (const sort of plan.sort) {
+    ordered(builder, sort, {
+      column: `${alias}.${propertyOf(properties, sort.field)}`,
+      nullable: plan.fields[sort.field]?.nullable === true,
+    });
+  }
 
   builder.limit(plan.fetch);
 
@@ -32,11 +37,18 @@ interface Ordered {
   readonly nullable: boolean;
 }
 
-function ordered<Entity extends ObjectLiteral>(builder: SelectQueryBuilder<Entity>, { direction }: Sort, { column, nullable }: Ordered): void {
+function ordered<Entity extends ObjectLiteral>(
+  builder: SelectQueryBuilder<Entity>,
+  { direction }: Sort,
+  { column, nullable }: Ordered,
+): void {
   const ascending = direction === 'asc';
 
-  if (nullable) builder.addOrderBy(column, ascending ? 'ASC' : 'DESC', ascending ? 'NULLS LAST' : 'NULLS FIRST');
-  else builder.addOrderBy(column, ascending ? 'ASC' : 'DESC');
+  if (nullable) {
+    builder.addOrderBy(column, ascending ? 'ASC' : 'DESC', ascending ? 'NULLS LAST' : 'NULLS FIRST');
+  } else {
+    builder.addOrderBy(column, ascending ? 'ASC' : 'DESC');
+  }
 }
 
 function propertyOf(properties: Readonly<Record<string, string>>, field: string): string {

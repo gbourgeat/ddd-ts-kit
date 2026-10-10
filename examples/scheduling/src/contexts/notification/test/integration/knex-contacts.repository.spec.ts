@@ -32,7 +32,11 @@ describe.each([
     const contacts = createContacts();
 
     await contacts.upsertIfNewer('person-1', first, () => ada);
-    await contacts.upsertIfNewer('person-1', second, (known) => ({ recipientId: 'person-1', address: 'new-' + (known?.address ?? '') }));
+
+    await contacts.upsertIfNewer('person-1', second, (known) => ({
+      recipientId: 'person-1',
+      address: 'new-' + (known?.address ?? ''),
+    }));
 
     expect(await contacts.get('person-1')).toEqual({ recipientId: 'person-1', address: 'new-ada@example.test' });
     expect(await contacts.get('person-2')).toBeUndefined();
@@ -66,7 +70,10 @@ describe.each([
 
     const writes = [
       await contacts.upsertIfNewer('person-1', storableStamp(precise('event-1', 123)), () => ada),
-      await contacts.upsertIfNewer('person-1', storableStamp(precise('event-2', 456)), () => ({ ...ada, address: 'new@example.test' })),
+      await contacts.upsertIfNewer('person-1', storableStamp(precise('event-2', 456)), () => ({
+        ...ada,
+        address: 'new@example.test',
+      })),
       await contacts.upsertIfNewer('person-1', storableStamp(precise('event-1', 123)), () => ada),
     ];
 

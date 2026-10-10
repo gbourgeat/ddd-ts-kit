@@ -2,7 +2,13 @@
 import { AssertionError } from 'node:assert';
 import { inspect } from 'node:util';
 
-const EVERYTHING = { depth: Infinity, showHidden: true, maxArrayLength: Infinity, maxStringLength: Infinity, breakLength: Infinity };
+const EVERYTHING = {
+  depth: Infinity,
+  showHidden: true,
+  maxArrayLength: Infinity,
+  maxStringLength: Infinity,
+  breakLength: Infinity,
+};
 
 /**
  * Asserts that an object the application holds (an adapter, a provider) shows none of the
@@ -15,7 +21,9 @@ export function expectNoSecret(subject: object, secrets: readonly string[]): voi
   for (const [view, shown] of Object.entries(viewsOf(subject))) {
     const leaked = secrets.findIndex((secret) => shown.includes(secret));
 
-    if (leaked === -1) continue;
+    if (leaked === -1) {
+      continue;
+    }
 
     // The secret itself is kept out of the failure: a test report is read by many.
     throw new AssertionError({

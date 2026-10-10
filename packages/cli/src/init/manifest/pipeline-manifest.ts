@@ -13,7 +13,9 @@ export function pipelineManifest(): PipelineManifest {
   const part = (key: string): Record<string, string> => {
     const value: unknown = isRecord(parsed) ? parsed[key] : undefined;
 
-    return isRecord(value) ? Object.fromEntries(Object.entries(value).map(([name, entry]) => [name, String(entry)])) : {};
+    return isRecord(value)
+      ? Object.fromEntries(Object.entries(value).map(([name, entry]) => [name, String(entry)]))
+      : {};
   };
 
   return { scripts: part('scripts'), devDependencies: part('devDependencies') };

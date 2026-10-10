@@ -8,9 +8,9 @@ export class {{name.pascal}}Job implements ScheduledJob {
 
   async run(execution: JobExecution): Promise<void> {
     // TODO(domain): {{job.todo}}
-{{#if job.ungranted}}
+    {{#if job.ungranted}}
     // TODO(domain): {{job.grant}}
-{{/if}}
+    {{/if}}
     await this.commands.execute(new {{job.command}}Command({{job.arguments}}));
   }
 }

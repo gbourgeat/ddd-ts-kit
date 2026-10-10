@@ -1,5 +1,19 @@
-import { Clock, CommandBus, FixedClock, IdGenerator, systemActor, type Command, type IntegrationEvent } from '@ddd-ts-kit/kernel';
-import { Adapter, CommandHandler, IntegrationEventHandler, QueryHandler, Repository } from '@ddd-ts-kit/kernel/declarations';
+import {
+  Clock,
+  CommandBus,
+  FixedClock,
+  IdGenerator,
+  systemActor,
+  type Command,
+  type IntegrationEvent,
+} from '@ddd-ts-kit/kernel';
+import {
+  Adapter,
+  CommandHandler,
+  IntegrationEventHandler,
+  QueryHandler,
+  Repository,
+} from '@ddd-ts-kit/kernel/declarations';
 import { IssueInvoice } from './billing/application/commands/issue-invoice/issue-invoice.command.js';
 import { CustomerDirectory } from './billing/application/ports/customer-directory.port.js';
 import { Mailer } from './billing/application/ports/mailer.port.js';

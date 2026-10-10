@@ -35,7 +35,11 @@ function duplicateEmail(email: string): UniqueViolation {
 
 describe('initSentry without a DSN', () => {
   it('starts nothing and reports nothing, so a project runs with none configured', async () => {
-    const reporters = [initSentry(), initSentry({ dsn: '' }), initSentry({ dsn: 'http://key@127.0.0.1:9/1', enabled: false })];
+    const reporters = [
+      initSentry(),
+      initSentry({ dsn: '' }),
+      initSentry({ dsn: 'http://key@127.0.0.1:9/1', enabled: false }),
+    ];
 
     for (const errors of reporters) {
       errors.report(new Error('boom'), errorReportOf(undefined, { origin: 'http', operation: 'shipOrder' }));
@@ -53,7 +57,10 @@ describe('SentryErrorReporter', () => {
     const { server, errors } = await tracking({ environment: 'staging', release: 'shop@1.4.0' });
     const failure = duplicateEmail('ada@example.org');
 
-    errors.report(failure, errorReportOf(failure, { origin: 'http', operation: 'PlaceOrder', context: 'ordering' }, request));
+    errors.report(
+      failure,
+      errorReportOf(failure, { origin: 'http', operation: 'PlaceOrder', context: 'ordering' }, request),
+    );
 
     await expect(errors.flush(2_000)).resolves.toBe(true);
     expect(errors).toBeInstanceOf(SentryErrorReporter);
@@ -63,13 +70,22 @@ describe('SentryErrorReporter', () => {
       level: 'error',
       environment: 'staging',
       release: 'shop@1.4.0',
-      tags: { origin: 'http', operation: 'PlaceOrder', bounded_context: 'ordering', correlation_id: 'corr-1', error_code: '23505' },
+      tags: {
+        origin: 'http',
+        operation: 'PlaceOrder',
+        bounded_context: 'ordering',
+        correlation_id: 'corr-1',
+        error_code: '23505',
+      },
       user: { id: 'ada' },
       exception: { values: [{ type: 'UniqueViolation', mechanism: { handled: true } }] },
     });
 
     expect(server.events[0]?.tags).not.toHaveProperty('tenant_id');
-    expect(server.events[0]?.['sdk']).toMatchObject({ integrations: ['LinkedErrors', 'ContextLines', 'SpanStreaming'] });
+
+    expect(server.events[0]?.['sdk']).toMatchObject({
+      integrations: ['LinkedErrors', 'ContextLines', 'SpanStreaming'],
+    });
   });
 
   it('knows of the user the actor id alone, and tags the tenant only when the project asks', async () => {
@@ -86,9 +102,15 @@ describe('SentryErrorReporter', () => {
     const { server, errors } = await tracking();
     const report = errorReportOf(duplicateEmail('x'), { origin: 'http', operation: 'PlaceOrder' });
 
-    for (const email of ['ada@example.org', 'grace@example.org']) errors.report(duplicateEmail(email), report);
+    for (const email of ['ada@example.org', 'grace@example.org']) {
+      errors.report(duplicateEmail(email), report);
+    }
 
-    errors.report(new LedgerUnavailable('The ledger of ACME is closed'), errorReportOf(new LedgerUnavailable('x'), { origin: 'http', operation: 'CloseLedger' }));
+    errors.report(
+      new LedgerUnavailable('The ledger of ACME is closed'),
+      errorReportOf(new LedgerUnavailable('x'), { origin: 'http', operation: 'CloseLedger' }),
+    );
+
     await errors.flush(2_000);
 
     const fingerprints = server.events.map((event) => event.fingerprint?.join(' | ')).sort();
@@ -104,12 +126,20 @@ describe('SentryErrorReporter', () => {
     const { server, errors } = await tracking();
     const source = { origin: 'process', operation: 'uncaughtException' } as const;
 
-    errors.report(new Error('crash'), errorReportOf(undefined, { ...source, severity: 'fatal', extensions: { deployment: 'blue' } }));
+    errors.report(
+      new Error('crash'),
+      errorReportOf(undefined, { ...source, severity: 'fatal', extensions: { deployment: 'blue' } }),
+    );
+
     errors.report(new Error('buried'), errorReportOf(undefined, { ...source, severity: 'warning' }));
     await errors.flush(2_000);
 
     expect(server.events.map((event) => event.level).sort()).toEqual(['fatal', 'warning']);
-    expect(server.events.find((event) => event.level === 'fatal')).toMatchObject({ contexts: { report: { deployment: 'blue' } }, exception: { values: [{ mechanism: { handled: false } }] } });
+
+    expect(server.events.find((event) => event.level === 'fatal')).toMatchObject({
+      contexts: { report: { deployment: 'blue' } },
+      exception: { values: [{ mechanism: { handled: false } }] },
+    });
   });
 
   it('reports the cause of an error with it, and a thrown value that is not an error', async () => {
@@ -142,7 +172,9 @@ describe('SentryErrorReporter', () => {
     expect(Date.now() - before).toBeLessThan(100);
     await expect(errors.flush(50)).resolves.toBe(false);
 
-    for (const socket of sockets) socket.destroy();
+    for (const socket of sockets) {
+      socket.destroy();
+    }
 
     await close(100);
     await new Promise((resolve) => silent.close(resolve));

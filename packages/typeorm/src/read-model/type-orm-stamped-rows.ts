@@ -27,9 +27,17 @@ export class TypeOrmStampedRows<Row extends object> implements ReadModelRows<Row
   async find(key: string): Promise<StampedRow<Row> | undefined> {
     const { path, mapper } = this.target;
     const manager = this.context.manager();
-    const record: unknown = await manager.createQueryBuilder().select('*').from(path, 'held').where(`${this.column(manager, 'held', this.target.key)} = :key`, { key }).getRawOne();
 
-    if (typeof record !== 'object' || record === null) return undefined;
+    const record: unknown = await manager
+      .createQueryBuilder()
+      .select('*')
+      .from(path, 'held')
+      .where(`${this.column(manager, 'held', this.target.key)} = :key`, { key })
+      .getRawOne();
+
+    if (typeof record !== 'object' || record === null) {
+      return undefined;
+    }
 
     const read = (property: string): unknown => mapper.read({ ...record }, property);
     const version = read('lastEventVersion');
@@ -37,12 +45,18 @@ export class TypeOrmStampedRows<Row extends object> implements ReadModelRows<Row
     return {
       key,
       row: read('deleted') === true ? undefined : mapper.toRow({ ...record }),
-      stamp: { eventId: String(read('lastEventId')), occurredAt: new Date(String(read('lastEventAt'))), ...(version === null ? {} : { version: Number(version) }) },
+      stamp: {
+        eventId: String(read('lastEventId')),
+        occurredAt: new Date(String(read('lastEventAt'))),
+        ...(version === null ? {} : { version: Number(version) }),
+      },
     };
   }
 
   async insert(entry: StampedRow<Row>): Promise<boolean> {
-    if (entry.row === undefined) return false;
+    if (entry.row === undefined) {
+      return false;
+    }
 
     const { path, entity, mapper } = this.target;
     const manager = this.context.manager();
@@ -50,7 +64,13 @@ export class TypeOrmStampedRows<Row extends object> implements ReadModelRows<Row
     const written = this.written(entry);
     const record = mapper.toRecord(written);
 
-    return affected(manager, (entity === undefined ? insert.into(path, Object.keys(record)).values(record) : insert.into(entity).values(written)).orIgnore());
+    return affected(
+      manager,
+      (entity === undefined
+        ? insert.into(path, Object.keys(record)).values(record)
+        : insert.into(entity).values(written)
+      ).orIgnore(),
+    );
   }
 
   async replace(entry: StampedRow<Row>, held: EventStamp): Promise<boolean> {
@@ -58,7 +78,11 @@ export class TypeOrmStampedRows<Row extends object> implements ReadModelRows<Row
     const manager = this.context.manager();
     const column = (property: string): string => manager.dataSource.driver.escape(mapper.columnOf(property));
     const written = this.written(entry);
-    const update = entity === undefined ? manager.createQueryBuilder().update(path).set(mapper.toRecord(written)) : manager.createQueryBuilder().update(entity).set(written);
+
+    const update =
+      entity === undefined
+        ? manager.createQueryBuilder().update(path).set(mapper.toRecord(written))
+        : manager.createQueryBuilder().update(entity).set(written);
 
     void update
       .where(`${column(this.target.key)} = :key`, { key: entry.key })
@@ -98,6 +122,8 @@ async function affected(manager: EntityManager, builder: QueryBuilder<ObjectLite
 
     return result.affected === 1;
   } finally {
-    if (transactional === undefined) await runner.release();
+    if (transactional === undefined) {
+      await runner.release();
+    }
   }
 }

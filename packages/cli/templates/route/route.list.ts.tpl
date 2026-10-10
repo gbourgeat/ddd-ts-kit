@@ -42,11 +42,14 @@ interface {{name.pascal}}Line {
   // TODO(domain): declare the fields of {{name.pascal}}Item that are part of the public contract, here and in the schema below.
 }
 
-const line = customSchema<{{name.pascal}}Line>((input) => (isLine(input) ? ok(input) : err([{ path: 'id', code: 'invalid_type', message: 'Expected a text.' }])), {
-  type: 'object',
-  required: ['id'],
-  properties: { id: { type: 'string' } },
-});
+const line = customSchema<{{name.pascal}}Line>(
+  (input) => (isLine(input) ? ok(input) : err([{ path: 'id', code: 'invalid_type', message: 'Expected a text.' }])),
+  {
+    type: 'object',
+    required: ['id'],
+    properties: { id: { type: 'string' } },
+  },
+);
 {{/if}}
 
 export function {{name.camel}}Route(queries: QueryBus): Route {

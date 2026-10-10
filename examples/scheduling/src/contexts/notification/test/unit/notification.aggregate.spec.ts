@@ -32,10 +32,21 @@ describe('Notification', () => {
     const startsAt = new Date('2026-03-05T14:30:00.000Z');
     const sentAt = new Date('2026-03-01T08:00:00.000Z');
 
-    const born = aNotification().identifiedBy('notification-1').sentTo('patient-9').ofKind('rescheduling').about('appointment-4', startsAt).bornAt(sentAt).build();
+    const born = aNotification()
+      .identifiedBy('notification-1')
+      .sentTo('patient-9')
+      .ofKind('rescheduling')
+      .about('appointment-4', startsAt)
+      .bornAt(sentAt)
+      .build();
 
     expect(born.pullEvents()).toMatchObject([
-      { name: 'notification.notification.sent', aggregateId: 'notification-1', occurredAt: sentAt, about: { recipientId: 'patient-9', appointmentId: 'appointment-4', startsAt } },
+      {
+        name: 'notification.notification.sent',
+        aggregateId: 'notification-1',
+        occurredAt: sentAt,
+        about: { recipientId: 'patient-9', appointmentId: 'appointment-4', startsAt },
+      },
     ]);
   });
 

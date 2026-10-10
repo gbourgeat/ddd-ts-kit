@@ -46,7 +46,9 @@ export class KnexOccupancyReader implements OccupancyReader {
   async list(criteria: ScopedCriteria<Occupancy>): Promise<Page<Occupancy>> {
     const plan = planCriteria(occupancyCriteria, criteria);
 
-    if (plan.empty) return pageOfPlan(plan, [], 0);
+    if (plan.empty) {
+      return pageOfPlan(plan, [], 0);
+    }
 
     const knex = this.database.executor();
     const page = knex.select<MeasuredLine[]>('*').from(measured(knex, plan).as('occupancy'));
@@ -59,12 +61,19 @@ export class KnexOccupancyReader implements OccupancyReader {
   private async total(plan: CriteriaPlan, lines: readonly MeasuredLine[]): Promise<number> {
     const [first] = lines;
 
-    if (first !== undefined) return first.lines;
+    if (first !== undefined) {
+      return first.lines;
+    }
 
-    if (plan.offset === 0) return 0;
+    if (plan.offset === 0) {
+      return 0;
+    }
 
     const knex = this.database.executor();
-    const counted = await knex.count<{ lines: string | number }[]>({ lines: '*' }).from(grouped(knex, plan).select('day').as('occupancy'));
+
+    const counted = await knex
+      .count<{ lines: string | number }[]>({ lines: '*' })
+      .from(grouped(knex, plan).select('day').as('occupancy'));
 
     return Number(counted[0]?.lines ?? 0);
   }
@@ -79,7 +88,10 @@ function measured(knex: Knex, plan: CriteriaPlan): Knex.QueryBuilder {
     'calendar_id',
     'day',
     knex.raw("calendar_id || '.' || day as id"),
-    knex.raw(`coalesce(sum(round(extract(epoch from (ends_at - starts_at)) / 60)) filter (where state in (${among})), 0)::integer as held_minutes`, holding),
+    knex.raw(
+      `coalesce(sum(round(extract(epoch from (ends_at - starts_at)) / 60)) filter (where state in (${among})), 0)::integer as held_minutes`,
+      holding,
+    ),
     knex.raw(`(count(*) filter (where state in (${among})))::integer as appointments_held`, holding),
     counted(knex, 'completed', 'completed'),
     counted(knex, 'no-show', 'no_shows'),

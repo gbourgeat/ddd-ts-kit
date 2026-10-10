@@ -37,11 +37,8 @@ export {
   type ProcessedEventStoreContractOptions,
 } from './contracts/processed-event-store-contract.js';
 export { rateLimiterContract, type RateLimiterContractOptions } from './contracts/rate-limiter-contract.js';
-export {
-  readModelStoreContract,
-  type ReadModelStoreContractOptions,
-  type ReadModelStoreUnderContract,
-} from './contracts/read-model-store-contract.js';
+export { readModelStoreContract, type ReadModelStoreContractOptions } from './contracts/read-model-store-contract.js';
+export type { ReadModelStoreUnderContract } from './contracts/read-model/read-model-store-under-contract.js';
 export { SourceOfTruth } from './contracts/read-model/source-of-truth.js';
 export { repositoryContract, type RepositoryContractOptions } from './contracts/repository-contract.js';
 export { unitOfWorkContract, type UnitOfWorkContractOptions } from './contracts/unit-of-work-contract.js';

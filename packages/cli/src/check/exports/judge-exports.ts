@@ -17,10 +17,18 @@ const COUNTED: readonly Exported['kind'][] = ['class', 'function', 'interface'];
 export function judgeExports(file: SourceFile): ExportVerdict {
   const { code } = file.scan;
   const exported = fileExports(file);
-  const firsts = exported.filter((candidate, index) => COUNTED.includes(candidate.kind) && exported.findIndex((other) => COUNTED.includes(other.kind) && other.name === candidate.name) === index);
+
+  const firsts = exported.filter(
+    (candidate, index) =>
+      COUNTED.includes(candidate.kind) &&
+      exported.findIndex((other) => COUNTED.includes(other.kind) && other.name === candidate.name) === index,
+  );
+
   const counted = firsts.map((first) => ({ ...implementationOf(exported, first), line: first.line }));
 
-  if (counted.length === 0) return { counted, explained: true, mains: [] };
+  if (counted.length === 0) {
+    return { counted, explained: true, mains: [] };
+  }
 
   const types = localTypes(code);
   const mains = explainedMains(exported, counted, types);
@@ -35,5 +43,8 @@ export function judgeExports(file: SourceFile): ExportVerdict {
 function implementationOf(exported: readonly Exported[], first: Exported): Exported {
   const sameName = exported.filter((candidate) => candidate.name === first.name && candidate.kind === first.kind);
 
-  return sameName.find((candidate) => candidate.kind === 'function' && candidate.text.length > candidate.signature.length) ?? first;
+  return (
+    sameName.find((candidate) => candidate.kind === 'function' && candidate.text.length > candidate.signature.length) ??
+    first
+  );
 }

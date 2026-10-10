@@ -5,7 +5,13 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from
 import { afterEach, beforeEach, describe, expect, it } from '{{tests.module}}';
 {{/unless}}
 {{#if adapter.needsDatabase}}
-import { FixedClock, FixedExecutionScope, executionContext, type Actor, type ExecutionContext } from '@ddd-ts-kit/kernel';
+import {
+  FixedClock,
+  FixedExecutionScope,
+  executionContext,
+  type Actor,
+  type ExecutionContext,
+} from '@ddd-ts-kit/kernel';
 {{/if}}
 import { repositoryContract } from '@ddd-ts-kit/testing/contracts';
 import type { {{aggregate.pascal}} } from '../../domain/aggregates/{{aggregate.kebab}}.aggregate.js';
@@ -51,7 +57,9 @@ repositoryContract<{{aggregate.pascal}}>(runner, {
   createRepository: async () => {
     await database.reset();
 
-    return new {{adapter.pascal}}{{aggregate.pascal}}Repository(database.persistence.database, new FixedExecutionScope(workOf('acme')), clock);
+    const scope = new FixedExecutionScope(workOf('acme'));
+
+    return new {{adapter.pascal}}{{aggregate.pascal}}Repository(database.persistence.database, scope, clock);
   },
 });
 {{#if tenant.scoped}}

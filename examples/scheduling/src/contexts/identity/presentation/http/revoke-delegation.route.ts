@@ -23,7 +23,9 @@ export function revokeDelegationRoute(commands: CommandBus): Route {
       security: ['bearer'],
     },
     async (input) => {
-      const id = await commands.execute(new RevokeDelegationCommand(actorOf(input.context.principal), input.params, input.params.delegationId));
+      const id = await commands.execute(
+        new RevokeDelegationCommand(actorOf(input.context.principal), input.params, input.params.delegationId),
+      );
 
       return { status: 200, body: { id } };
     },

@@ -10,7 +10,10 @@ export function declaredProject(files: FixtureFiles, overrides: FixtureFiles = {
 
   const barrels = ['billing', 'catalog'].map((context): [string, string] => {
     const directory = `src/contexts/${context}/`;
-    const inside = Object.keys(written).flatMap((file) => (file.startsWith(directory) ? [file.slice(directory.length)] : []));
+
+    const inside = Object.keys(written).flatMap((file) =>
+      file.startsWith(directory) ? [file.slice(directory.length)] : [],
+    );
 
     return [`${directory}${barrelFile(context)}`, renderBarrel(inside)];
   });

@@ -21,8 +21,10 @@ import { writtenSchedule } from './job/written-schedule.js';
 export const jobKind: Kind = {
   name: 'job',
   aliases: [],
-  usage: 'job <context> <Name> (--every <duration> | --cron "<expression>" [--time-zone <zone>]) --command <UseCaseName> [--term "<Term>=<meaning>"]...',
-  summary: 'A job run by time that sends one command as its own system actor, its spec, its registration, its switch in the job settings of the platform and, where the authorization model makes it one line, the grant of that actor.',
+  usage:
+    'job <context> <Name> (--every <duration> | --cron "<expression>" [--time-zone <zone>]) --command <UseCaseName> [--term "<Term>=<meaning>"]...',
+  summary:
+    'A job run by time that sends one command as its own system actor, its spec, its registration, its switch in the job settings of the platform and, where the authorization model makes it one line, the grant of that actor.',
   positionals: ['context', 'Name'],
   writesShared: true,
   textFlags: ['command'],
@@ -34,7 +36,12 @@ export const jobKind: Kind = {
 
     const name = concept(scope, request.args[1] ?? '', { what: 'job', strip: ['job'] });
     const command = readSentCommand(scope, commandNamed(scope, name));
-    const context = vars(scope, { name: named(name), spec: specVars(scope, { protected: false }), job: jobVars(scope, { name, schedule, command }) });
+
+    const context = vars(scope, {
+      name: named(name),
+      spec: specVars(scope, { protected: false }),
+      job: jobVars(scope, { name, schedule, command }),
+    });
 
     writeJob(scope, name, context);
   },
@@ -43,7 +50,9 @@ export const jobKind: Kind = {
 function commandNamed(scope: Scope, name: Name): string {
   const { commandName } = scope.flags;
 
-  if (commandName !== undefined && commandName.trim() !== '') return commandName;
+  if (commandName !== undefined && commandName.trim() !== '') {
+    return commandName;
+  }
 
   throw new CliError(
     'A job needs --command.',
@@ -54,7 +63,10 @@ function commandNamed(scope: Scope, name: Name): string {
 function writeJob(scope: Scope, name: Name, context: RenderContext): void {
   emit(scope, context, [
     ['job/job.ts.tpl', `application/scheduling/${name.kebab}.job.ts`],
-    [`job/job.spec.${scope.config.stack.di === 'tsyringe' ? 'tsyringe' : 'buses'}.ts.tpl`, `test/unit/${name.kebab}.job.spec.ts`],
+    [
+      `job/job.spec.${scope.config.stack.di === 'tsyringe' ? 'tsyringe' : 'buses'}.ts.tpl`,
+      `test/unit/${name.kebab}.job.spec.ts`,
+    ],
   ]);
 
   wire(scope, 'job', context);

@@ -10,7 +10,10 @@ export function parseEndpoint(flags: KindFlags): Endpoint {
   const method = flags.method?.toUpperCase();
 
   if (!isOneOf(METHODS, method)) {
-    throw new CliError(flags.method === undefined ? 'A route needs --method.' : `Unknown method "${flags.method}".`, `Pass --method with one of: ${METHODS.join(', ')}.`);
+    throw new CliError(
+      flags.method === undefined ? 'A route needs --method.' : `Unknown method "${flags.method}".`,
+      `Pass --method with one of: ${METHODS.join(', ')}.`,
+    );
   }
 
   const { path } = flags;

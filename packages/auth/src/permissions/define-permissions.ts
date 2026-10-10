@@ -33,7 +33,9 @@ export function definePermissions<
 }
 
 function assertMatches(value: string, pattern: RegExp, what: string): void {
-  if (pattern.test(value)) return;
+  if (pattern.test(value)) {
+    return;
+  }
 
   throw new AuthorizationSetupError(
     `"${value}" is not a valid ${what} name: lower-case words, digits and dashes${what === 'permission' ? ', dot-separated' : ''}.`,

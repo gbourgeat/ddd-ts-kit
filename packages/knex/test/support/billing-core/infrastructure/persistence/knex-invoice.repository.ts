@@ -25,7 +25,9 @@ export class KnexInvoiceRepository implements InvoiceRepository {
   ) {}
 
   async findById(id: string): Promise<Invoice | undefined> {
-    const row = await invoicesOf(this.context).where({ id, ...this.ownTenant() }).first();
+    const row = await invoicesOf(this.context)
+      .where({ id, ...this.ownTenant() })
+      .first();
 
     if (row === undefined) {
       return undefined;

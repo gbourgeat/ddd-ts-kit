@@ -9,9 +9,17 @@ const GLOBAL_OBJECTS = new Set(['globalThis', 'window', 'self', 'global']);
  * is a local declaration that merely shadows the global.
  */
 export function ambientName(sourceCode: Readonly<TSESLint.SourceCode>, node: TSESTree.Node): string | undefined {
-  if (node.type === AST_NODE_TYPES.Identifier) return isAmbient(sourceCode, node) ? node.name : undefined;
-  if (node.type !== AST_NODE_TYPES.MemberExpression || node.object.type !== AST_NODE_TYPES.Identifier) return undefined;
-  if (!GLOBAL_OBJECTS.has(node.object.name) || !isAmbient(sourceCode, node.object)) return undefined;
+  if (node.type === AST_NODE_TYPES.Identifier) {
+    return isAmbient(sourceCode, node) ? node.name : undefined;
+  }
+
+  if (node.type !== AST_NODE_TYPES.MemberExpression || node.object.type !== AST_NODE_TYPES.Identifier) {
+    return undefined;
+  }
+
+  if (!GLOBAL_OBJECTS.has(node.object.name) || !isAmbient(sourceCode, node.object)) {
+    return undefined;
+  }
 
   return propertyName(node);
 }
@@ -19,5 +27,8 @@ export function ambientName(sourceCode: Readonly<TSESLint.SourceCode>, node: TSE
 function isAmbient(sourceCode: Readonly<TSESLint.SourceCode>, identifier: TSESTree.Identifier): boolean {
   const variable = ASTUtils.findVariable(sourceCode.getScope(identifier), identifier.name);
 
-  return variable === null || variable.defs.every((definition) => definition.type === TSESLint.Scope.DefinitionType.ImportBinding);
+  return (
+    variable === null ||
+    variable.defs.every((definition) => definition.type === TSESLint.Scope.DefinitionType.ImportBinding)
+  );
 }

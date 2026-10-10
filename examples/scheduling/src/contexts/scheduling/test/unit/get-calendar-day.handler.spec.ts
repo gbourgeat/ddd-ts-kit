@@ -33,7 +33,9 @@ describe('Get calendar day', () => {
   it('is refused to an actor who does not hold the permission calendar.browse', async () => {
     const { application } = await arrange();
 
-    await expect(application.queryBus.execute(new GetCalendarDayQuery(anActor().build(), 'calendar-1', monday))).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(
+      application.queryBus.execute(new GetCalendarDayQuery(anActor().build(), 'calendar-1', monday)),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
   });
 
   it('shows the appointment types the calendar offers', async () => {
@@ -41,19 +43,87 @@ describe('Get calendar day', () => {
 
     const shown = await application.queryBus.execute(new GetCalendarDayQuery(holder, 'calendar-1', monday));
 
-    expect(shown.appointmentTypes).toEqual([{ id: 'consultation', name: 'consultation', duration: 30, grid: 30, buffer: 10, needsConfirmation: false }]);
+    expect(shown.appointmentTypes).toEqual([
+      { id: 'consultation', name: 'consultation', duration: 30, grid: 30, buffer: 10, needsConfirmation: false },
+    ]);
   });
 
+  it('shows the time off that crosses the day, and the hours of its exception', async () => {
+    const { application } = await arrange();
+
+    const friday = await application.queryBus.execute(new GetCalendarDayQuery(holder, 'calendar-1', '2026-03-06'));
+    const thursday = await application.queryBus.execute(new GetCalendarDayQuery(holder, 'calendar-1', '2026-03-05'));
+
+    expect(friday.timeOff).toEqual([
+      { startsAt: new Date('2026-03-06T12:00:00.000Z'), endsAt: new Date('2026-03-09T07:00:00.000Z') },
+    ]);
+
+    expect(friday.open).toEqual([
+      { startsAt: new Date('2026-03-06T09:00:00.000Z'), endsAt: new Date('2026-03-06T11:00:00.000Z') },
+    ]);
+
+    expect(thursday.timeOff).toEqual([]);
+  });
+
+  it('gives the opening of a day the clock changes as the instants of its wall clock', async () => {
+    const { application } = await arrange();
+
+    const forward = await application.queryBus.execute(new GetCalendarDayQuery(holder, 'calendar-1', '2026-03-29'));
+    const back = await application.queryBus.execute(new GetCalendarDayQuery(holder, 'calendar-1', '2026-10-25'));
+
+    expect(forward.open[0]).toEqual({
+      startsAt: new Date('2026-03-29T07:00:00.000Z'),
+      endsAt: new Date('2026-03-29T10:00:00.000Z'),
+    });
+
+    expect(back.open[0]).toEqual({
+      startsAt: new Date('2026-10-25T08:00:00.000Z'),
+      endsAt: new Date('2026-10-25T11:00:00.000Z'),
+    });
+  });
+
+  it.each([
+    ['a calendar that does not exist', 'calendar-9', monday, 'UNKNOWN_CALENDAR'],
+    ['a day that does not exist', 'calendar-1', '2026-02-30', 'INVALID_DAY'],
+  ])('refuses %s', async (...[, calendarId, day, code]) => {
+    const { application } = await arrange();
+
+    await expect(application.queryBus.execute(new GetCalendarDayQuery(holder, calendarId, day))).rejects.toMatchObject({
+      code,
+    });
+  });
+});
+
+describe('Get calendar day, the slots held that day', () => {
   it('shows a held slot the asker may read with its appointment, and any other as busy without the patient', async () => {
     const { application, agenda } = await arrange({ kind: 'ids', ids: ['mine'] });
 
-    await hold(agenda, { id: 'mine', patientId: 'patient-1', startsAt: paris('09:00'), endsAt: paris('09:30'), heldUntil: paris('09:40') });
-    await hold(agenda, { id: 'theirs', patientId: 'patient-2', status: 'requested', startsAt: paris('10:00'), endsAt: paris('10:30'), heldUntil: paris('10:40') });
+    await hold(agenda, {
+      id: 'mine',
+      patientId: 'patient-1',
+      startsAt: paris('09:00'),
+      endsAt: paris('09:30'),
+      heldUntil: paris('09:40'),
+    });
+
+    await hold(agenda, {
+      id: 'theirs',
+      patientId: 'patient-2',
+      status: 'requested',
+      startsAt: paris('10:00'),
+      endsAt: paris('10:30'),
+      heldUntil: paris('10:40'),
+    });
 
     const shown = await application.queryBus.execute(new GetCalendarDayQuery(holder, 'calendar-1', monday));
 
     expect(shown.busy).toEqual([
-      { startsAt: paris('09:00'), endsAt: paris('09:30'), heldUntil: paris('09:40'), appointment: { id: 'mine', patientId: 'patient-1', appointmentTypeId: 'consultation', status: 'booked' } },
+      {
+        startsAt: paris('09:00'),
+        endsAt: paris('09:30'),
+        heldUntil: paris('09:40'),
+        appointment: { id: 'mine', patientId: 'patient-1', appointmentTypeId: 'consultation', status: 'booked' },
+      },
       { startsAt: paris('10:00'), endsAt: paris('10:30'), heldUntil: paris('10:40') },
     ]);
   });
@@ -69,7 +139,14 @@ describe('Get calendar day', () => {
     const closed = await nothing.application.queryBus.execute(new GetCalendarDayQuery(holder, 'calendar-1', monday));
 
     expect(open.busy.map((slot) => slot.appointment?.patientId)).toEqual(['patient-2']);
-    expect(closed.busy).toEqual([{ startsAt: new Date('2026-03-02T09:00:00.000Z'), endsAt: new Date('2026-03-02T09:30:00.000Z'), heldUntil: new Date('2026-03-02T09:30:00.000Z') }]);
+
+    expect(closed.busy).toEqual([
+      {
+        startsAt: new Date('2026-03-02T09:00:00.000Z'),
+        endsAt: new Date('2026-03-02T09:30:00.000Z'),
+        heldUntil: new Date('2026-03-02T09:30:00.000Z'),
+      },
+    ]);
   });
 
   it('leaves out what holds nothing any more, the other days and the other calendars', async () => {
@@ -89,41 +166,15 @@ describe('Get calendar day', () => {
   it('shows every held slot of a day that holds more than one page of them', async () => {
     const { application, agenda } = await arrange({ kind: 'none' });
 
-    await Promise.all(Array.from({ length: 130 }, (_, index) => hold(agenda, { id: `held-${index}`, startsAt: new Date(paris('00:00').getTime() + index * 300_000) })));
+    await Promise.all(
+      Array.from({ length: 130 }, (_, index) =>
+        hold(agenda, { id: `held-${index}`, startsAt: new Date(paris('00:00').getTime() + index * 300_000) }),
+      ),
+    );
 
     const shown = await application.queryBus.execute(new GetCalendarDayQuery(holder, 'calendar-1', monday));
 
     expect(shown.busy).toHaveLength(130);
-  });
-
-  it('shows the time off that crosses the day, and the hours of its exception', async () => {
-    const { application } = await arrange();
-
-    const friday = await application.queryBus.execute(new GetCalendarDayQuery(holder, 'calendar-1', '2026-03-06'));
-    const thursday = await application.queryBus.execute(new GetCalendarDayQuery(holder, 'calendar-1', '2026-03-05'));
-
-    expect(friday.timeOff).toEqual([{ startsAt: new Date('2026-03-06T12:00:00.000Z'), endsAt: new Date('2026-03-09T07:00:00.000Z') }]);
-    expect(friday.open).toEqual([{ startsAt: new Date('2026-03-06T09:00:00.000Z'), endsAt: new Date('2026-03-06T11:00:00.000Z') }]);
-    expect(thursday.timeOff).toEqual([]);
-  });
-
-  it('gives the opening of a day the clock changes as the instants of its wall clock', async () => {
-    const { application } = await arrange();
-
-    const forward = await application.queryBus.execute(new GetCalendarDayQuery(holder, 'calendar-1', '2026-03-29'));
-    const back = await application.queryBus.execute(new GetCalendarDayQuery(holder, 'calendar-1', '2026-10-25'));
-
-    expect(forward.open[0]).toEqual({ startsAt: new Date('2026-03-29T07:00:00.000Z'), endsAt: new Date('2026-03-29T10:00:00.000Z') });
-    expect(back.open[0]).toEqual({ startsAt: new Date('2026-10-25T08:00:00.000Z'), endsAt: new Date('2026-10-25T11:00:00.000Z') });
-  });
-
-  it.each([
-    ['a calendar that does not exist', 'calendar-9', monday, 'UNKNOWN_CALENDAR'],
-    ['a day that does not exist', 'calendar-1', '2026-02-30', 'INVALID_DAY'],
-  ])('refuses %s', async (...[, calendarId, day, code]) => {
-    const { application } = await arrange();
-
-    await expect(application.queryBus.execute(new GetCalendarDayQuery(holder, calendarId, day))).rejects.toMatchObject({ code });
   });
 });
 
@@ -143,7 +194,11 @@ async function arrange(readable: AccessScope = { kind: 'none' }) {
   );
 
   const application = createTestApplication({
-    modules: [platformTestModule, contextModule('scheduling', schedulingDeclarations), authorizationModule({ authorizer: holdersReading(readable) })],
+    modules: [
+      platformTestModule,
+      contextModule('scheduling', schedulingDeclarations),
+      authorizationModule({ authorizer: holdersReading(readable) }),
+    ],
     fakes: [fake(CalendarRepository, calendarRepository), fake(Agenda, agenda)],
   });
 
@@ -158,7 +213,10 @@ function holdersReading(readable: AccessScope): Authorizer {
   };
 }
 
-async function hold(agenda: FakeAgenda, facts: Partial<ReturnType<ReturnType<typeof anAgendaEntry>['build']>>): Promise<void> {
+async function hold(
+  agenda: FakeAgenda,
+  facts: Partial<ReturnType<ReturnType<typeof anAgendaEntry>['build']>>,
+): Promise<void> {
   const entry = { ...anAgendaEntry().build(), ...facts };
 
   await agenda.upsertIfNewer(entry.id, { eventId: `event-${entry.id}`, occurredAt: entry.changedAt }, () => entry);

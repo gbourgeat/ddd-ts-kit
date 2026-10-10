@@ -10,13 +10,8 @@ export interface ProcessedEventStoreContractOptions {
 }
 
 /** What every adapter of the kernel `ProcessedEventStore` port guarantees, the in-memory one included. */
-export function processedEventStoreContract(
-  runner: ContractRunner,
-  options: ProcessedEventStoreContractOptions,
-): void {
-  new ProcessedEventStoreSuite(runner, options).describe(
-    `${options.name} (processed event store contract)`,
-  );
+export function processedEventStoreContract(runner: ContractRunner, options: ProcessedEventStoreContractOptions): void {
+  new ProcessedEventStoreSuite(runner, options).describe(`${options.name} (processed event store contract)`);
 }
 
 class ProcessedEventStoreSuite extends ContractSuite<ProcessedEventStore> {

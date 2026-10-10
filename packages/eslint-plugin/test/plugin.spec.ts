@@ -8,22 +8,29 @@ import { eslintName } from '../src/support/rule/define-rule.js';
 
 const read = (file: string): string => fs.readFileSync(new URL(file, import.meta.url), 'utf8');
 const names = Object.keys(rules);
-/** `clean/blank-lines` is held by rules of `@stylistic/eslint-plugin`: a page, no rule of this plugin. */
-const LAYOUT_PAGE = 'clean-blank-lines';
+/** Held by rules of `@stylistic/eslint-plugin`, by `curly` of ESLint and by the formatter: a page each, no rule of this plugin. */
+const DELEGATED_PAGES = ['clean-blank-lines', 'clean-braces', 'clean-formatted'];
 
 describe('the plugin', () => {
   it('names every rule after its architecture id, but the companion that holds a ceiling', () => {
     const renamed = Object.entries(rules).filter(([name, rule]) => name !== eslintName(docsOf(rule).ruleId));
 
-    expect(renamed.map(([name, rule]) => [name, docsOf(rule).ruleId])).toEqual([['clean-function-ceiling', 'clean/function-size']]);
+    expect(renamed.map(([name, rule]) => [name, docsOf(rule).ruleId])).toEqual([
+      ['clean-function-ceiling', 'clean/function-size'],
+    ]);
 
-    for (const [name, rule] of Object.entries(rules)) expect(name).toBe(docsOf(rule).name);
+    for (const [name, rule] of Object.entries(rules)) {
+      expect(name).toBe(docsOf(rule).name);
+    }
   });
 
   it.each(names)('documents %s', (name) => {
     const rule = rules[name];
 
-    expect(rule?.meta.docs?.url).toBe(`https://github.com/gbourgeat/ddd-ts-kit/blob/main/packages/eslint-plugin/docs/rules/${name}.md`);
+    expect(rule?.meta.docs?.url).toBe(
+      `https://github.com/gbourgeat/ddd-ts-kit/blob/main/packages/eslint-plugin/docs/rules/${name}.md`,
+    );
+
     expect(rule?.meta.docs?.description.length).toBeGreaterThan(20);
     const page = read(`../docs/rules/${name}.md`);
 
@@ -32,7 +39,9 @@ describe('the plugin', () => {
   });
 
   it.each(names)('lists %s in the README with its default severity', (name) => {
-    const row = read('../README.md').split('\n').find((line) => line.includes(`\`ddd-ts-kit/${name}\``));
+    const row = read('../README.md')
+      .split('\n')
+      .find((line) => line.includes(`\`ddd-ts-kit/${name}\``));
 
     expect(row).toContain(`| \`${rules[name]?.meta.docs?.recommended ?? ''}\` |`);
   });
@@ -40,7 +49,7 @@ describe('the plugin', () => {
   it('has no documentation page without a rule', () => {
     const pages = fs.readdirSync(new URL('../docs/rules', import.meta.url)).map((file) => file.replace(/\.md$/, ''));
 
-    expect(pages.sort()).toEqual([...names, LAYOUT_PAGE].sort());
+    expect(pages.sort()).toEqual([...names, ...DELEGATED_PAGES].sort());
   });
 
   it('carries the version of its package', () => {
@@ -60,6 +69,8 @@ describe('the plugin', () => {
     expect(recommended?.rules).toHaveProperty(['@typescript-eslint/no-explicit-any'], 'error');
     expect(recommended?.rules).toMatchObject(standardRules.layout);
     expect(strict?.rules).toMatchObject(standardRules.layout);
+    expect(recommended?.rules).toMatchObject(standardRules.braces);
+    expect(strict?.rules).toMatchObject(standardRules.braces);
     expect(Object.keys(recommended?.plugins ?? {})).toContain('@stylistic');
   });
 });
@@ -69,28 +80,71 @@ describe('the dddTsKit helper', () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ddd-ts-kit-eslint-'));
 
     try {
-      fs.writeFileSync(path.join(root, 'ddd-ts-kit.config.json'), JSON.stringify({ contextsDir: 'modules', rules: { 'clean/stepdown': 'warn', 'test/no-mocks': 'off' } }));
+      fs.writeFileSync(
+        path.join(root, 'ddd-ts-kit.config.json'),
+        JSON.stringify({ contextsDir: 'modules', rules: { 'clean/stepdown': 'warn', 'test/no-mocks': 'off' } }),
+      );
+
       const config = dddTsKit({ tsconfigRootDir: root });
       const architecture = config.find((entry) => entry.name === 'ddd-ts-kit/architecture');
 
-      expect(architecture?.rules).toMatchObject({ 'ddd-ts-kit/clean-stepdown': 'warn', 'ddd-ts-kit/test-no-mocks': 'off', 'ddd-ts-kit/layer-domain-purity': 'error' });
-      expect(config.find((entry) => entry.name === 'ddd-ts-kit/inner-layers')?.files).toEqual(['modules/*/domain/**/*.ts', 'modules/*/application/**/*.ts']);
+      expect(architecture?.rules).toMatchObject({
+        'ddd-ts-kit/clean-stepdown': 'warn',
+        'ddd-ts-kit/test-no-mocks': 'off',
+        'ddd-ts-kit/layer-domain-purity': 'error',
+      });
+
+      expect(config.find((entry) => entry.name === 'ddd-ts-kit/inner-layers')?.files).toEqual([
+        'modules/*/domain/**/*.ts',
+        'modules/*/application/**/*.ts',
+      ]);
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
     }
   });
 
-  it('enables the layout rules at the severity of clean/blank-lines, and leaves them out when it is off', () => {
-    const layout = (rules: Record<string, string>): unknown => inProject({ rules }, (root) => architectureOf(root)?.rules?.['@stylistic/padded-blocks']);
+  it('enables curly at the severity of clean/braces, in TypeScript and in scripts, and leaves it out when it is off', () => {
+    const braces = (rules: Record<string, string>): unknown[] =>
+      inProject({ rules }, (root) => {
+        const config = dddTsKit({ tsconfigRootDir: root });
+        const scripts = config.find((entry) => entry.name === 'ddd-ts-kit/scripts');
 
-    expect(layout({})).toEqual(['error', 'never']);
-    expect(layout({ 'clean/blank-lines': 'warn' })).toEqual(['warn', 'never']);
+        return [architectureOf(root)?.rules?.['curly'], scripts?.rules?.['curly']];
+      });
+
+    expect(braces({})).toEqual([
+      ['error', 'all'],
+      ['error', 'all'],
+    ]);
+
+    expect(braces({ 'clean/braces': 'warn' })).toEqual([
+      ['warn', 'all'],
+      ['warn', 'all'],
+    ]);
+
+    expect(braces({ 'clean/braces': 'off' })).toEqual([undefined, undefined]);
+  });
+
+  it('enables the layout rules at the severity of clean/blank-lines, and leaves them out when it is off', () => {
+    const layout = (rules: Record<string, string>): unknown =>
+      inProject(
+        { rules },
+        (root) => [architectureOf(root)?.rules?.['@stylistic/lines-between-class-members']].flat()[0],
+      );
+
+    expect(layout({})).toBe('error');
+    expect(layout({ 'clean/blank-lines': 'warn' })).toBe('warn');
     expect(layout({ 'clean/blank-lines': 'off' })).toBeUndefined();
-    expect(inProject({}, (root) => Object.keys(architectureOf(root)?.plugins ?? {}))).toEqual(['ddd-ts-kit', '@stylistic']);
+
+    expect(inProject({}, (root) => Object.keys(architectureOf(root)?.plugins ?? {}))).toEqual([
+      'ddd-ts-kit',
+      '@stylistic',
+    ]);
   });
 
   it('keeps the function ceiling an error unless clean/function-size is off', () => {
-    const ceiling = (rules: Record<string, string>): unknown => inProject({ rules }, (root) => architectureOf(root)?.rules?.['ddd-ts-kit/clean-function-ceiling']);
+    const ceiling = (rules: Record<string, string>): unknown =>
+      inProject({ rules }, (root) => architectureOf(root)?.rules?.['ddd-ts-kit/clean-function-ceiling']);
 
     expect(ceiling({})).toBe('error');
     expect(ceiling({ 'clean/function-size': 'warn' })).toBe('error');
@@ -98,7 +152,16 @@ describe('the dddTsKit helper', () => {
   });
 
   it('names no type-aware rule when types are not requested', () => {
-    const typed = new Set(['no-floating-promises', 'no-misused-promises', 'prefer-readonly', 'switch-exhaustiveness-check', 'require-await', 'dot-notation', 'unbound-method']);
+    const typed = new Set([
+      'no-floating-promises',
+      'no-misused-promises',
+      'prefer-readonly',
+      'switch-exhaustiveness-check',
+      'require-await',
+      'dot-notation',
+      'unbound-method',
+    ]);
+
     const own = dddTsKit({ typeChecked: false }).filter((entry) => entry.name?.startsWith('ddd-ts-kit/') === true);
     const named = own.flatMap((entry) => Object.keys(entry.rules ?? {}));
 

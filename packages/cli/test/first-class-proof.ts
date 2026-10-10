@@ -1,7 +1,9 @@
 import { assertTheWholeTrace } from './first-class-trace.js';
 import { cli, exists, read, write } from './helpers.js';
 
-const SHIPPING_HANDLER = 'src/contexts/shipping/application/integration/handlers/billing-invoice-issued.integration-handler.ts';
+const SHIPPING_HANDLER =
+  'src/contexts/shipping/application/integration/handlers/billing-invoice-issued.integration-handler.ts';
+
 const DECLARED_READER = 'src/contexts/billing/infrastructure/persistence/in-memory-list-invoices-reader.repository.ts';
 const EXPLICIT_READER = 'src/contexts/billing/infrastructure/persistence/in-memory-list-invoices.reader.ts';
 const LINES = "[{ id: 'invoice-1' }, { id: 'invoice-2' }, { id: 'invoice-3' }]";
@@ -14,24 +16,52 @@ const LINES = "[{ id: 'invoice-1' }, { id: 'invoice-2' }, { id: 'invoice-3' }]";
  * `TODO(domain)` or a `TODO(platform)` the generator left, in either style.
  */
 export function writeBusinessDecisions(root: string): void {
-  const prepared = cli(root, 'generate', 'command', 'shipping', 'PrepareParcel', '--public', '--term', 'Prepare=To get a parcel ready for its carrier');
+  const prepared = cli(
+    root,
+    'generate',
+    'command',
+    'shipping',
+    'PrepareParcel',
+    '--public',
+    '--term',
+    'Prepare=To get a parcel ready for its carrier',
+  );
 
-  if (prepared.code !== 0) throw new Error(`generate command shipping PrepareParcel failed: ${prepared.stderr}`);
+  if (prepared.code !== 0) {
+    throw new Error(`generate command shipping PrepareParcel failed: ${prepared.stderr}`);
+  }
 
   edit(root, SHIPPING_HANDLER, [
-    [/(import \{[^}]*\} from '@ddd-ts-kit\/kernel';\n)/, "$1import { PrepareParcelCommand } from '../../commands/prepare-parcel/prepare-parcel.command.js';\n"],
-    [/(async handle\(event: InvoiceIssuedV2\): Promise<void> \{\n)[^\n]*\n/, '$1    await this.commands.execute(new PrepareParcelCommand());\n'],
+    [
+      /(import \{[^}]*\} from '@ddd-ts-kit\/kernel';\n)/,
+      "$1import { PrepareParcelCommand } from '../../commands/prepare-parcel/prepare-parcel.command.js';\n",
+    ],
+    [
+      /(async handle\(event: InvoiceIssuedV2\): Promise<void> \{\n)[^\n]*\n/,
+      '$1    await this.commands.execute(new PrepareParcelCommand());\n',
+    ],
   ]);
 
-  edit(root, exists(root, DECLARED_READER) ? DECLARED_READER : EXPLICIT_READER, [['readonly ListInvoicesItem[] = []', `readonly ListInvoicesItem[] = ${LINES}`]]);
+  edit(root, exists(root, DECLARED_READER) ? DECLARED_READER : EXPLICIT_READER, [
+    ['readonly ListInvoicesItem[] = []', `readonly ListInvoicesItem[] = ${LINES}`],
+  ]);
 
   edit(root, 'src/contexts/billing/domain/aggregates/invoice.aggregate.ts', [
-    ["import { AggregateRoot } from '@ddd-ts-kit/kernel';", "import { AggregateRoot } from '@ddd-ts-kit/kernel';\nimport { InvoiceIssued } from '../events/invoice-issued.event.js';"],
-    ['    const created = new Invoice(id, { registeredAt: now });', '    const created = new Invoice(id, { registeredAt: now });\n\n    created.record(new InvoiceIssued(id, now));'],
+    [
+      "import { AggregateRoot } from '@ddd-ts-kit/kernel';",
+      "import { AggregateRoot } from '@ddd-ts-kit/kernel';\nimport { InvoiceIssued } from '../events/invoice-issued.event.js';",
+    ],
+    [
+      '    const created = new Invoice(id, { registeredAt: now });',
+      '    const created = new Invoice(id, { registeredAt: now });\n\n    created.record(new InvoiceIssued(id, now));',
+    ],
   ]);
 
   edit(root, 'src/platform/auth/relationship-schema.ts', [
-    ["    permissions: { operate: union('operator') },\n  },", "    permissions: { operate: union('operator') },\n  },\n  invoice: {\n    relations: { viewer: ['user'] },\n    permissions: { view: union('viewer') },\n  },"],
+    [
+      "    permissions: { operate: union('operator') },\n  },",
+      "    permissions: { operate: union('operator') },\n  },\n  invoice: {\n    relations: { viewer: ['user'] },\n    permissions: { view: union('viewer') },\n  },",
+    ],
   ]);
 
   edit(root, 'src/platform/auth/permission-mapping.ts', [
@@ -51,7 +81,9 @@ function edit(root: string, file: string, replacements: readonly (readonly [stri
   for (const [from, to] of replacements) {
     const next = content.replace(from, to);
 
-    if (next === content) throw new Error(`${file} no longer holds what the proof edits: ${String(from)}`);
+    if (next === content) {
+      throw new Error(`${file} no longer holds what the proof edits: ${String(from)}`);
+    }
 
     content = next;
   }

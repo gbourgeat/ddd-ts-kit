@@ -8,7 +8,9 @@ export function formatProgress(progress: Progress): string {
   return [
     `Next: ${progress.next ?? 'no docs/architecture/plan.md with a `Next:` line (the skill ddd-ts-kit:start writes it)'}`,
     '',
-    ...(progress.slices === null ? ['Slices: no docs/architecture/slices.md with a slices table (the skill ddd-ts-kit:plan-slices writes it)'] : sliceLines(progress.slices)),
+    ...(progress.slices === null
+      ? ['Slices: no docs/architecture/slices.md with a slices table (the skill ddd-ts-kit:plan-slices writes it)']
+      : sliceLines(progress.slices)),
     '',
     'Remaining',
     ...progress.remaining.map(remainingLine),
@@ -16,11 +18,25 @@ export function formatProgress(progress: Progress): string {
 }
 
 function sliceLines(slices: SlicesProgress): string[] {
-  const statuses = [...STATUS_ORDER.filter((status) => slices.byStatus[status] !== undefined), ...Object.keys(slices.byStatus).filter((status) => !STATUS_ORDER.includes(status))];
-  const open = statuses.filter((status) => status !== 'done').flatMap((status) => [`  ${status}`, ...slices.rows.filter((row) => row.status === status).map(rowLine)]);
-  const owners = Object.entries(slices.byOwner).map(([owner, byStatus]) => `    ${owner}: ${counts(byStatus, statuses)}`);
+  const statuses = [
+    ...STATUS_ORDER.filter((status) => slices.byStatus[status] !== undefined),
+    ...Object.keys(slices.byStatus).filter((status) => !STATUS_ORDER.includes(status)),
+  ];
 
-  return [`Slices (${slices.file}): ${slices.rows.length}, ${counts(slices.byStatus, statuses)}`, ...open, '  by owner', ...owners];
+  const open = statuses
+    .filter((status) => status !== 'done')
+    .flatMap((status) => [`  ${status}`, ...slices.rows.filter((row) => row.status === status).map(rowLine)]);
+
+  const owners = Object.entries(slices.byOwner).map(
+    ([owner, byStatus]) => `    ${owner}: ${counts(byStatus, statuses)}`,
+  );
+
+  return [
+    `Slices (${slices.file}): ${slices.rows.length}, ${counts(slices.byStatus, statuses)}`,
+    ...open,
+    '  by owner',
+    ...owners,
+  ];
 }
 
 function counts(byStatus: Readonly<Record<string, readonly string[]>>, statuses: readonly string[]): string {

@@ -114,8 +114,11 @@ export class ModuleRecorder implements ModuleBuilder {
 
       const binding = this.bindingOf(port, recipe);
 
-      if (verb === 'bind') this.draft.addBinding(binding);
-      else this.draft.replaceBinding(binding);
+      if (verb === 'bind') {
+        this.draft.addBinding(binding);
+      } else {
+        this.draft.replaceBinding(binding);
+      }
 
       return bindingOptionsOf(binding);
     };

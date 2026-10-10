@@ -23,11 +23,15 @@ export async function announceDomainEvents(
   events: readonly DomainEvent[],
   dispatcher: Pick<DomainEventDispatcher, 'dispatch'>,
 ): Promise<void> {
-  if (events.length === 0) return;
+  if (events.length === 0) {
+    return;
+  }
 
   const current = unitOfWorkScope.getStore();
 
-  if (current?.stage === 'after-commit') throw new SaveAfterCommitError('announceDomainEvents');
+  if (current?.stage === 'after-commit') {
+    throw new SaveAfterCommitError('announceDomainEvents');
+  }
 
   if (current !== undefined && current.stage !== 'closed') {
     current.queue.push(...queued(events, dispatcher, current.kind === 'save' ? AsyncLocalStorage.snapshot() : here));

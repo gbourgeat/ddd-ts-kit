@@ -56,7 +56,9 @@ function lineOf(json: string): LoggedLine {
 function levelOf(level: unknown): LogLevel {
   const known = LOG_LEVELS.find((one) => one === level);
 
-  if (known === undefined) throw new Error(`Not a level of the port: ${String(level)}`);
+  if (known === undefined) {
+    throw new Error(`Not a level of the port: ${String(level)}`);
+  }
 
   return known;
 }

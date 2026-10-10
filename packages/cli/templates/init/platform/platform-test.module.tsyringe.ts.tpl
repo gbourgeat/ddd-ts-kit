@@ -12,12 +12,12 @@ import { Database } from './database/database.js';
 export const platformTestModule = defineContextModule({
   name: 'platform',
   register(builder) {
-{{#if persistence.hasDatabase}}
+    {{#if persistence.hasDatabase}}
     builder.bind({{persistence.token}}).toFactory(() => {
       throw new Error('A handler spec has no database: give a fake for the repository it uses.');
     });
 
-{{/if}}
+    {{/if}}
     // ddd-ts-kit:test-bindings
     // /ddd-ts-kit:test-bindings
   },

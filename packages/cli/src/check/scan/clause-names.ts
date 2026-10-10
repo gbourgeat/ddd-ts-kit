@@ -8,7 +8,11 @@ const IDENTIFIER = /^[\w$]+$/;
 
 export function clauseNames(clause: string): ClauseNames {
   const braces = /\{([^}]*)\}/.exec(clause)?.[1] ?? '';
-  const named = braces.split(',').map(namedBinding).filter((binding) => IDENTIFIER.test(binding.local));
+
+  const named = braces
+    .split(',')
+    .map(namedBinding)
+    .filter((binding) => IDENTIFIER.test(binding.local));
 
   return {
     names: [...defaultAndNamespaceNames(clause.replace(/\{[^}]*\}/, ' ')), ...named.map((binding) => binding.local)],

@@ -1,8 +1,23 @@
 {{#if audit.sql}}
-import { auditDecisions, auditIntegrationEvents, auditMiddleware, type AuditReader, type AuditSource, type AuditTrail } from '@ddd-ts-kit/audit';
+import {
+  auditDecisions,
+  auditIntegrationEvents,
+  auditMiddleware,
+  type AuditReader,
+  type AuditSource,
+  type AuditTrail,
+} from '@ddd-ts-kit/audit';
 {{/if}}
 {{#if audit.memory}}
-import { InMemoryAuditTrail, auditDecisions, auditIntegrationEvents, auditMiddleware, type AuditReader, type AuditSource, type AuditTrail } from '@ddd-ts-kit/audit';
+import {
+  InMemoryAuditTrail,
+  auditDecisions,
+  auditIntegrationEvents,
+  auditMiddleware,
+  type AuditReader,
+  type AuditSource,
+  type AuditTrail,
+} from '@ddd-ts-kit/audit';
 {{/if}}
 {{#if audit.knex}}
 import { KnexAuditTrail } from '@ddd-ts-kit/audit/knex';
@@ -65,7 +80,15 @@ export function createAudit(persistence: Persistence, source: AuditSource): Audi
     commands: auditMiddleware(trail, { ...source, unitOfWork }),
     queries: auditMiddleware(trail, source),
 {{/unless}}
-    subscriptions: auditIntegrationEvents(trail, { registry: auditedEvents, clock: source.clock, ids: source.ids, processed: processedEvents, unitOfWork, scope: source.scope, consumer }),
+    subscriptions: auditIntegrationEvents(trail, {
+      registry: auditedEvents,
+      clock: source.clock,
+      ids: source.ids,
+      processed: processedEvents,
+      unitOfWork,
+      scope: source.scope,
+      consumer,
+    }),
     consumer,
   };
 }

@@ -10,16 +10,23 @@ import { isDeclared } from './is-declared.js';
  * `declarations/barrel-current` reports one that was left behind.
  */
 export function refreshBarrels(ws: Workspace, config: Config): void {
-  if (!isDeclared(config) || config.stack.assembly !== 'barrel') return;
+  if (!isDeclared(config) || config.stack.assembly !== 'barrel') {
+    return;
+  }
 
   for (const context of ws.directories(config.contextsDir)) {
-    if (config.contexts[context] === undefined) continue;
+    if (config.contexts[context] === undefined) {
+      continue;
+    }
 
     const directory = `${config.contextsDir}/${context}`;
     const file = `${directory}/${barrelFile(context)}`;
     const content = renderBarrel(filesUnder(ws, directory));
 
-    if (ws.exists(file)) ws.update(file, content);
-    else ws.create(file, content);
+    if (ws.exists(file)) {
+      ws.update(file, content);
+    } else {
+      ws.create(file, content);
+    }
   }
 }

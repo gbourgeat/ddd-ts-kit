@@ -21,11 +21,23 @@ export function addMemberRoute(commands: CommandBus): Route {
       tags: ['identity'],
       request: { params, body },
       responses: { 201: { description: 'Done; the body carries the identifier.', body: accepted } },
-      errors: ['UNAUTHORIZED', 'FORBIDDEN', 'PRACTICE_NOT_FOUND', 'PERSON_NOT_REGISTERED', 'UNKNOWN_ROLE', 'ALREADY_MEMBER'],
+      errors: [
+        'UNAUTHORIZED',
+        'FORBIDDEN',
+        'PRACTICE_NOT_FOUND',
+        'PERSON_NOT_REGISTERED',
+        'UNKNOWN_ROLE',
+        'ALREADY_MEMBER',
+      ],
       security: ['bearer'],
     },
     async (input) => {
-      const id = await commands.execute(new AddMemberCommand(actorOf(input.context.principal), input.params.practiceId, { personId: input.body.personId, role: input.body.role }));
+      const id = await commands.execute(
+        new AddMemberCommand(actorOf(input.context.principal), input.params.practiceId, {
+          personId: input.body.personId,
+          role: input.body.role,
+        }),
+      );
 
       return { status: 201, body: { id } };
     },

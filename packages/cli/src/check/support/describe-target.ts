@@ -1,11 +1,15 @@
 import type { ImportTarget } from '../model/import-target.js';
 
 export function describeTarget(target: ImportTarget): string {
-  if (target.kind !== 'file') return `"${target.name}"`;
+  if (target.kind !== 'file') {
+    return `"${target.name}"`;
+  }
 
   const { location } = target;
 
-  if (location.area === 'context') return `${location.context}/${location.layer === 'module' ? 'module file' : location.layer}`;
+  if (location.area === 'context') {
+    return `${location.context}/${location.layer === 'module' ? 'module file' : location.layer}`;
+  }
 
   return location.area === 'other' ? target.path : location.area;
 }

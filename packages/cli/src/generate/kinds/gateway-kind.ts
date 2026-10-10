@@ -16,7 +16,8 @@ export const gatewayKind: Kind = {
   name: 'gateway',
   aliases: [],
   usage: 'gateway <context> <upstreamContext> <Name>',
-  summary: "A port of the caller for a synchronous need from an upstream, its in-process adapter over the upstream's published read contract, a fake and one contract suite.",
+  summary:
+    "A port of the caller for a synchronous need from an upstream, its in-process adapter over the upstream's published read contract, a fake and one contract suite.",
   positionals: ['context', 'upstreamContext', 'Name'],
   writesShared: true,
   run: (request) => {
@@ -42,7 +43,11 @@ export const gatewayKind: Kind = {
 };
 
 function declaredUpstream(scope: Scope, upstream: string): string {
-  if (scope.config.contexts[scope.context.kebab]?.upstreams.some((candidate) => candidate.context === upstream) === true) return upstream;
+  if (
+    scope.config.contexts[scope.context.kebab]?.upstreams.some((candidate) => candidate.context === upstream) === true
+  ) {
+    return upstream;
+  }
 
   throw new CliError(
     `"${scope.context.kebab}" does not declare "${upstream}" as an upstream.`,
@@ -61,5 +66,8 @@ function explain(scope: Scope, upstream: string, name: Name): void {
   };
 
   ws.note(where[wiringFamily(config)] ?? '');
-  ws.note(`${name.pascal}Contract is published by ${upstream}: implement it there and hand that implementation to the gateway in the composition root. Extracting ${upstream} then replaces the in-process adapter by a remote one, and nothing else.`);
+
+  ws.note(
+    `${name.pascal}Contract is published by ${upstream}: implement it there and hand that implementation to the gateway in the composition root. Extracting ${upstream} then replaces the in-process adapter by a remote one, and nothing else.`,
+  );
 }

@@ -10,10 +10,7 @@ const counters = new Map<string, number>();
 export function sequence(name: string): Resolvable<string>;
 export function sequence<T>(name: string, format: (n: number) => T): Resolvable<T>;
 
-export function sequence(
-  name: string,
-  format: (n: number) => unknown = (n) => `${name}-${n}`,
-): Resolvable<unknown> {
+export function sequence(name: string, format: (n: number) => unknown = (n) => `${name}-${n}`): Resolvable<unknown> {
   return lazy(() => {
     const next = (counters.get(name) ?? 0) + 1;
 

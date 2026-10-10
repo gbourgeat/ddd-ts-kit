@@ -17,7 +17,8 @@ export class StorageOutage {
 
   /** The storage of the application, with the outage in front of its unit of work. */
   around(persistence: Persistence): Persistence {
-    const run = <T>(work: () => Promise<T>): Promise<T> => (this.lasting ? Promise.reject(new Error('The storage does not answer.')) : persistence.unitOfWork.run(work));
+    const run = <T>(work: () => Promise<T>): Promise<T> =>
+      this.lasting ? Promise.reject(new Error('The storage does not answer.')) : persistence.unitOfWork.run(work);
 
     return { ...persistence, unitOfWork: { run } };
   }

@@ -18,7 +18,9 @@ export function createKnexUnitOfWork(knex: Knex, config?: Knex.TransactionConfig
   return {
     run<T>(work: () => Promise<T>): Promise<T> {
       return withinUnitOfWork(work, (scoped) => {
-        if (current.getStore() !== undefined) return scoped();
+        if (current.getStore() !== undefined) {
+          return scoped();
+        }
 
         return knex.transaction((transaction) => current.run(transaction, scoped), config);
       });

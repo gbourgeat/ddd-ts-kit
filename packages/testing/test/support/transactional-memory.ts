@@ -22,7 +22,8 @@ export class TransactionalMemory implements UnitOfWorkUnderContract {
 
   constructor({ cooperating }: { readonly cooperating: boolean } = { cooperating: true }) {
     this.unitOfWork = {
-      run: (work) => (cooperating ? withinUnitOfWork(work, (scoped) => this.atomically(scoped)) : this.atomically(work)),
+      run: (work) =>
+        cooperating ? withinUnitOfWork(work, (scoped) => this.atomically(scoped)) : this.atomically(work),
     };
   }
 
@@ -33,7 +34,9 @@ export class TransactionalMemory implements UnitOfWorkUnderContract {
   };
 
   async insert(id: string): Promise<void> {
-    if ((await this.ids()).includes(id)) throw new Error(`duplicate key ${id}`);
+    if ((await this.ids()).includes(id)) {
+      throw new Error(`duplicate key ${id}`);
+    }
 
     this.target().rows.push(id);
   }
@@ -56,12 +59,16 @@ export class TransactionalMemory implements UnitOfWorkUnderContract {
   }
 
   private async atomically<T>(work: () => Promise<T>): Promise<T> {
-    if (this.current.getStore() !== undefined) return work();
+    if (this.current.getStore() !== undefined) {
+      return work();
+    }
 
     const written: Written = { rows: [], events: [], refusedAtCommit: false };
     const result = await this.current.run(written, work);
 
-    if (written.refusedAtCommit) throw new Error('a deferred constraint is violated');
+    if (written.refusedAtCommit) {
+      throw new Error('a deferred constraint is violated');
+    }
 
     this.committed.rows.push(...written.rows);
     this.committed.events.push(...written.events);

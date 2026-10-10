@@ -14,7 +14,9 @@ export class AccountRepository {
   }
 
   async debit(id: string, amount: number): Promise<void> {
-    if ((this.read(id) ?? 0) < amount) throw new InsufficientFunds(`account ${id} lacks ${amount}`);
+    if ((this.read(id) ?? 0) < amount) {
+      throw new InsufficientFunds(`account ${id} lacks ${amount}`);
+    }
   }
 
   async crash(): Promise<void> {

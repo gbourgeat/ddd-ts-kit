@@ -19,9 +19,9 @@ export const AUDIT_SCHEMA = 'audit';
  */
 export const createTables = async (knex: Knex): Promise<void> => {
   await createOutboxTables(knex, { schema: MESSAGING });
-{{#if audit.on}}
+  {{#if audit.on}}
   await createAuditTables(knex, { schema: AUDIT_SCHEMA });
-{{/if}}
+  {{/if}}
   // ddd-ts-kit:schemas
   // /ddd-ts-kit:schemas
 };

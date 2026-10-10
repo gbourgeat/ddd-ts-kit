@@ -26,9 +26,7 @@ export class EventRegistry {
 
   /** Sorted by type then version, whatever the registration order. */
   all(): AnyIntegrationEventDefinition[] {
-    return [...this.definitions.values()].sort(
-      (a, b) => compareText(a.type, b.type) || a.version - b.version,
-    );
+    return [...this.definitions.values()].sort((a, b) => compareText(a.type, b.type) || a.version - b.version);
   }
 
   versionsOf(type: string): number[] {

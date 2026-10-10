@@ -1,9 +1,5 @@
 import type { NatsConnection, NodeConnectionOptions } from '@nats-io/transport-node';
-import {
-  DEFAULT_STREAM,
-  DEFAULT_SUBJECT_PREFIX,
-  type NatsEventBusOptions,
-} from './nats-event-bus-options.js';
+import { DEFAULT_STREAM, DEFAULT_SUBJECT_PREFIX, type NatsEventBusOptions } from './nats-event-bus-options.js';
 import type { ReconnectOptions } from './reconnect-options.js';
 import type { RetryOptions } from './retry-options.js';
 import type { Settings } from './settings.js';
@@ -39,7 +35,8 @@ function targetOf(
   connection: string | readonly string[] | NodeConnectionOptions,
   reconnect: Required<ReconnectOptions>,
 ): NodeConnectionOptions {
-  const given = typeof connection === 'string' || isList(connection) ? { servers: [...asList(connection)] } : connection;
+  const given =
+    typeof connection === 'string' || isList(connection) ? { servers: [...asList(connection)] } : connection;
 
   return { maxReconnectAttempts: -1, reconnectTimeWait: reconnect.initialMs, ...given };
 }

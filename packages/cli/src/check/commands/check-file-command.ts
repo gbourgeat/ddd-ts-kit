@@ -23,7 +23,10 @@ export const checkFileCommand: Command = (argv, io) => {
   const absolute = path.resolve(args.workingDirectory, target);
   const root = findRoot(path.dirname(absolute));
   const file = toPosix(path.relative(root, absolute));
-  const result = isProjectSource(root, file) ? runCheck(loadProject(root, { onlyFile: file }), { fileScopeOnly: true }) : summarize([]);
+
+  const result = isProjectSource(root, file)
+    ? runCheck(loadProject(root, { onlyFile: file }), { fileScopeOnly: true })
+    : summarize([]);
 
   io.out(formatCheck(result, args.json ? 'json' : 'text'));
 

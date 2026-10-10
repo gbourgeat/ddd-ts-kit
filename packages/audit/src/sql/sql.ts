@@ -8,11 +8,14 @@ export class Sql {
 
 /** `sql\`select ${value}\``: a value becomes a parameter, a nested `Sql` is spliced in. */
 export function sql(strings: TemplateStringsArray, ...parts: readonly unknown[]): Sql {
-  return parts.reduce<Sql>((statement, part, index) => {
-    const following = text(strings[index + 1] ?? '');
+  return parts.reduce<Sql>(
+    (statement, part, index) => {
+      const following = text(strings[index + 1] ?? '');
 
-    return part instanceof Sql ? concat(concat(statement, part), following) : withValue(statement, part, following);
-  }, text(strings[0] ?? ''));
+      return part instanceof Sql ? concat(concat(statement, part), following) : withValue(statement, part, following);
+    },
+    text(strings[0] ?? ''),
+  );
 }
 
 function text(literal: string): Sql {

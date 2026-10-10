@@ -19,7 +19,10 @@ export function logDecisions(logger: Logger): OnDecision {
       ...(record.useCase === undefined ? {} : { useCase: record.useCase }),
     };
 
-    if (decision.allowed) logger.info('authorization decision', fields);
-    else logger.warn('authorization decision', fields);
+    if (decision.allowed) {
+      logger.info('authorization decision', fields);
+    } else {
+      logger.warn('authorization decision', fields);
+    }
   };
 }

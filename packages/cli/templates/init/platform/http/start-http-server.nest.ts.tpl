@@ -37,14 +37,20 @@ interface Outgoing {
 
 export async function startHttpServer(served: Served, config: AppConfig): Promise<HttpServer> {
 {{#if docs.any}}
-  const app = await NestFactory.create(createAppModule(withDocumentation(served.routes, config), served.boundary), { logger: ['error', 'warn'] });
+  const app = await NestFactory.create(createAppModule(withDocumentation(served.routes, config), served.boundary), {
+    logger: ['error', 'warn'],
+  });
 {{/if}}
 {{#unless docs.any}}
   const app = await NestFactory.create(createAppModule(served.routes, served.boundary), { logger: ['error', 'warn'] });
 {{/unless}}
 
 {{#if cache.rateLimit}}
-  app.use((request: Incoming, response: Outgoing, next: () => void) => void guardTheDoor({ served, config }, { request, response, next }));
+  app.use(
+    (request: Incoming, response: Outgoing, next: () => void) =>
+      void guardTheDoor({ served, config }, { request, response, next }),
+  );
+
 {{/if}}
   await app.listen(config.port);
 
@@ -68,15 +74,20 @@ async function guardTheDoor({ served, config }: Door, { request, response, next 
   if (request.url === '/health/ready') {
     const ready = await served.ready();
 
-    response.writeHead(ready ? 200 : 503, { 'content-type': 'application/json' }).end(JSON.stringify({ status: ready ? 'up' : 'down' }));
+    response
+      .writeHead(ready ? 200 : 503, { 'content-type': 'application/json' })
+      .end(JSON.stringify({ status: ready ? 'up' : 'down' }));
 
     return;
   }
 
   const refusal = await refusalFor(served.rateLimiter, config.rateLimit, request.socket.remoteAddress);
 
-  if (refusal === undefined) next();
-  else response.writeHead(refusal.problem.status, refusal.headers).end(JSON.stringify(refusal.problem));
+  if (refusal === undefined) {
+    next();
+  } else {
+    response.writeHead(refusal.problem.status, refusal.headers).end(JSON.stringify(refusal.problem));
+  }
 }
 {{/if}}
 

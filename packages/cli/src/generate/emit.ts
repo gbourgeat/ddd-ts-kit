@@ -19,7 +19,9 @@ export function emit(scope: Scope, context: RenderContext, outputs: readonly Out
  * styles to share one template, its declared twin sits next to it as `<name>.declared.<ext>.tpl`.
  */
 function styled(config: Config, template: string): string {
-  if (!isDeclared(config)) return template;
+  if (!isDeclared(config)) {
+    return template;
+  }
 
   const twin = template.replace(/((?:\.[a-z]+)?\.tpl)$/, '.declared$1');
 

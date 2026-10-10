@@ -11,13 +11,20 @@ export const layerPresentationNoInfrastructure: Rule = {
     return perFile(project, this.id, (file) => {
       const here = inLayer(file, 'presentation');
 
-      if (here === undefined) return [];
+      if (here === undefined) {
+        return [];
+      }
 
       const fix = `Call a command or query handler of application/ instead; the adapter is bound to its port in ${bindingPlace(project, here.context)}.`;
 
       return file.imports.flatMap(({ target, line }) => {
-        if (target.kind !== 'file' || target.location.area !== 'context') return [];
-        if (target.location.layer !== 'infrastructure' || target.location.context !== here.context) return [];
+        if (target.kind !== 'file' || target.location.area !== 'context') {
+          return [];
+        }
+
+        if (target.location.layer !== 'infrastructure' || target.location.context !== here.context) {
+          return [];
+        }
 
         return [{ line, message: `presentation/ imports infrastructure/ (${target.path}).`, fix }];
       });

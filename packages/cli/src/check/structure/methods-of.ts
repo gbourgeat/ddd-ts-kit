@@ -31,7 +31,9 @@ export function methodsOf(scan: Scan, bodyOpen: number, bodyClose: number): Meth
   while (cursor.at < bodyClose) {
     const member = cursor.memberMayStart ? memberAt(scan, cursor.at) : undefined;
 
-    if (member?.method !== undefined) methods.push(member.method);
+    if (member?.method !== undefined) {
+      methods.push(member.method);
+    }
 
     cursor = member?.after ?? stepOver(scan.code, cursor);
   }
@@ -43,17 +45,23 @@ export function methodsOf(scan: Scan, bodyOpen: number, bodyClose: number): Meth
 function memberAt(scan: Scan, at: number): Member | undefined {
   const { code } = scan;
 
-  if (code.charAt(at) === '@') return { after: { at: afterDecorator(code, at), memberMayStart: true } };
+  if (code.charAt(at) === '@') {
+    return { after: { at: afterDecorator(code, at), memberMayStart: true } };
+  }
 
   MEMBER.lastIndex = at;
 
   const match = /\s/.test(code.charAt(at)) ? null : MEMBER.exec(code);
 
-  if (match === null) return undefined;
+  if (match === null) {
+    return undefined;
+  }
 
   const method = methodAt(scan, match);
 
-  if (method === undefined) return { after: { at: matchingBracket(code, at + match[0].length - 1) + 1, memberMayStart: false } };
+  if (method === undefined) {
+    return { after: { at: matchingBracket(code, at + match[0].length - 1) + 1, memberMayStart: false } };
+  }
 
   return { method, after: { at: method.end + 1, memberMayStart: true } };
 }
@@ -69,8 +77,13 @@ function afterDecorator(code: string, at: number): number {
 function stepOver(code: string, { at, memberMayStart }: Cursor): Cursor {
   const char = code.charAt(at);
 
-  if (/\s/.test(char)) return { at: at + 1, memberMayStart };
-  if (BRACKETS.openers.includes(char)) return { at: matchingBracket(code, at) + 1, memberMayStart: char === '{' };
+  if (/\s/.test(char)) {
+    return { at: at + 1, memberMayStart };
+  }
+
+  if (BRACKETS.openers.includes(char)) {
+    return { at: matchingBracket(code, at) + 1, memberMayStart: char === '{' };
+  }
 
   return { at: at + 1, memberMayStart: char === ';' };
 }
@@ -78,7 +91,9 @@ function stepOver(code: string, { at, memberMayStart }: Cursor): Cursor {
 function methodAt(scan: Scan, match: RegExpExecArray): MethodShape | undefined {
   const signature = signatureAt(scan.code, match.index + match[0].length - 1);
 
-  if (signature === undefined) return undefined;
+  if (signature === undefined) {
+    return undefined;
+  }
 
   const modifiers = match[1] ?? '';
   const name = (match[2] ?? '').replace(/^\*\s*/, '');
@@ -99,7 +114,9 @@ function methodAt(scan: Scan, match: RegExpExecArray): MethodShape | undefined {
 }
 
 function visibilityOf(modifiers: string, name: string): MethodShape['visibility'] {
-  if (/\bprivate\b/.test(modifiers) || name.startsWith('#')) return 'private';
+  if (/\bprivate\b/.test(modifiers) || name.startsWith('#')) {
+    return 'private';
+  }
 
   return /\bprotected\b/.test(modifiers) ? 'protected' : 'public';
 }

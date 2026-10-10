@@ -17,7 +17,9 @@ const FAILS = "    throw new Error('The projection of ' + query.constructor.name
 export function writeReportedFailuresProof(root: string): void {
   const handler = read(root, HANDLER);
 
-  if (!handler.includes(READS)) throw new Error(`${HANDLER} no longer reads through its reader: update the proof.`);
+  if (!handler.includes(READS)) {
+    throw new Error(`${HANDLER} no longer reads through its reader: update the proof.`);
+  }
 
   write(root, HANDLER, handler.replace(READS, FAILS));
   write(root, REPORTED_FAILURES_PROOF, fs.readFileSync(FIXTURE, 'utf8'));

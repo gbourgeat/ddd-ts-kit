@@ -25,7 +25,9 @@ function inMemoryAdapter(aggregate: Name): Output[] {
 function ormAdapter(orm: string, prefix: string, extra: readonly string[] = []): RepositoryAdapter['files'] {
   return (aggregate) => [
     [`repository/${orm}/mapper.ts.tpl`, persistence(`${aggregate.kebab}.mapper`)],
-    ...extra.map((file): Output => [`repository/${orm}/${file}.ts.tpl`, persistence(`${aggregate.kebab}-${file}.schema`)]),
+    ...extra.map(
+      (file): Output => [`repository/${orm}/${file}.ts.tpl`, persistence(`${aggregate.kebab}-${file}.schema`)],
+    ),
     [`repository/${orm}/repository.ts.tpl`, persistence(`${prefix}-${aggregate.kebab}.repository`)],
   ];
 }

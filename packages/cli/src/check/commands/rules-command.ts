@@ -4,8 +4,7 @@ import { Arguments } from '../../commands/arguments.js';
 import { type Command } from '../../commands/command.js';
 import { CONFIG_FILE, isOneOf, readConfig, SEVERITIES } from '../../config/index.js';
 import { DEFAULT_SEVERITIES } from '../catalogue/default-severities.js';
-import { ESLINT_AUTHORITY } from '../catalogue/eslint-authority.js';
-import { ESLINT_ONLY_RULES } from '../catalogue/eslint-only-rules.js';
+import { DELEGATED_RULES } from '../catalogue/delegated-rules.js';
 import { RULES } from '../catalogue/rules.js';
 import { SUPPRESSION_RULE } from '../catalogue/suppression-rule.js';
 
@@ -13,7 +12,7 @@ interface ListedRule {
   readonly id: string;
   readonly severity: string;
   readonly description: string;
-  /** Which analyzer decides: this checker, or ESLint for the rules that need a syntax tree. */
+  /** Which tool decides: this checker, ESLint for the rules that need a syntax tree, the formatter for the layout. */
   readonly checkedBy: string;
 }
 
@@ -37,8 +36,19 @@ function listedRules(root: string): ListedRule[] {
     return isOneOf(SEVERITIES, severity) ? severity : (DEFAULT_SEVERITIES[id] ?? 'error');
   };
 
-  const own = [...RULES, SUPPRESSION_RULE].map((rule) => ({ id: rule.id, severity: severityOf(rule.id), description: rule.description, checkedBy: 'ddd-ts-kit check' }));
-  const delegated = ESLINT_ONLY_RULES.map((rule) => ({ id: rule.id, severity: severityOf(rule.id), description: `${rule.description} (${ESLINT_AUTHORITY})`, checkedBy: '@ddd-ts-kit/eslint-plugin' }));
+  const own = [...RULES, SUPPRESSION_RULE].map((rule) => ({
+    id: rule.id,
+    severity: severityOf(rule.id),
+    description: rule.description,
+    checkedBy: 'ddd-ts-kit check',
+  }));
+
+  const delegated = DELEGATED_RULES.map((rule) => ({
+    id: rule.id,
+    severity: severityOf(rule.id),
+    description: `${rule.description} (${rule.authority})`,
+    checkedBy: rule.checkedBy,
+  }));
 
   return [...own, ...delegated];
 }

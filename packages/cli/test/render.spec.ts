@@ -3,7 +3,11 @@ import { toName } from '../src/naming/index.js';
 import { listTemplates, readTemplate, render } from '../src/templating/index.js';
 
 describe('template renderer', () => {
-  const context = { name: { ...toName('InvoiceLine') }, context: { kebab: 'billing' }, flags: { on: true, off: false } };
+  const context = {
+    name: { ...toName('InvoiceLine') },
+    context: { kebab: 'billing' },
+    flags: { on: true, off: false },
+  };
 
   it('replaces nested placeholders', () => {
     expect(render('{{name.pascal}} {{name.camel}} {{name.kebab}} {{name.constant}} {{context.kebab}}', context)).toBe(
@@ -12,7 +16,9 @@ describe('template renderer', () => {
   });
 
   it('keeps or drops conditional blocks', () => {
-    expect(render('a{{#if flags.on}}b{{/if}}{{#if flags.off}}c{{/if}}{{#unless flags.off}}d{{/unless}}', context)).toBe('abd');
+    expect(render('a{{#if flags.on}}b{{/if}}{{#if flags.off}}c{{/if}}{{#unless flags.off}}d{{/unless}}', context)).toBe(
+      'abd',
+    );
   });
 
   it('supports nested blocks and does not evaluate placeholders of a dropped block', () => {
@@ -51,7 +57,37 @@ describe('shipped templates', () => {
     const kinds = new Set(templates.map((template) => template.split('/')[0]));
 
     expect([...kinds].sort()).toEqual(
-      ['acl', 'adapter', 'adr', 'architecture', 'gateway', 'policy', 'service', 'aggregate', 'builder', 'command', 'context', 'docs', 'domain-error', 'domain-event', 'domain-service', 'e2e', 'entity', 'event-handler', 'init', 'integration-event', 'integration-handler', 'job', 'pipeline', 'port', 'query', 'repository', 'route', 'value-object', 'worker'].sort(),
+      [
+        'acl',
+        'adapter',
+        'adr',
+        'architecture',
+        'gateway',
+        'policy',
+        'service',
+        'aggregate',
+        'builder',
+        'command',
+        'context',
+        'docs',
+        'domain-error',
+        'domain-event',
+        'domain-service',
+        'e2e',
+        'entity',
+        'event-handler',
+        'init',
+        'integration-event',
+        'integration-handler',
+        'job',
+        'pipeline',
+        'port',
+        'query',
+        'repository',
+        'route',
+        'value-object',
+        'worker',
+      ].sort(),
     );
   });
 

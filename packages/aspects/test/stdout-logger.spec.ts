@@ -6,10 +6,10 @@ class OrderAlreadyPaid extends DomainError {
   readonly code = 'ORDER_ALREADY_PAID';
 }
 
-describe('StdoutLogger', () => {
-  const clock = new FixedClock(new Date('2026-03-01T10:00:00.000Z'));
-  const written = (lines: string[]): unknown[] => lines.map((line) => JSON.parse(line));
+const clock = new FixedClock(new Date('2026-03-01T10:00:00.000Z'));
+const written = (lines: string[]): unknown[] => lines.map((line) => JSON.parse(line));
 
+describe('StdoutLogger', () => {
   it('writes one JSON line per entry: time, level, message, then the fields', () => {
     const lines: string[] = [];
     const logger = new StdoutLogger({ clock, write: (line) => lines.push(line), base: { service: 'shop' } });
@@ -24,7 +24,12 @@ describe('StdoutLogger', () => {
   it('adds the correlation fields of the work in progress to every entry', () => {
     const lines: string[] = [];
     let traceId = 'trace-1';
-    const logger = new StdoutLogger({ clock, write: (line) => lines.push(line), fields: () => ({ trace_id: traceId }) });
+
+    const logger = new StdoutLogger({
+      clock,
+      write: (line) => lines.push(line),
+      fields: () => ({ trace_id: traceId }),
+    });
 
     logger.warn('carrier slow');
     traceId = 'trace-2';
@@ -74,22 +79,33 @@ describe('StdoutLogger', () => {
     logger.info('first');
     logger.info('second', circular as never);
 
-    expect(written(lines)).toMatchObject([{ message: 'first' }, { message: 'second', logError: 'unserializable fields' }]);
+    expect(written(lines)).toMatchObject([
+      { message: 'first' },
+      { message: 'second', logError: 'unserializable fields' },
+    ]);
   });
 
   it('writes the entry without its fields when one at the top cannot be read, for a child too', () => {
     const lines: string[] = [];
     const logger = new StdoutLogger({ clock, write: (line) => lines.push(line), base: { service: 'shop' } });
 
-    logger.info('order shipped', { get total(): number { throw new Error('unreadable'); } });
-    logger.child({ get total(): number { throw new Error('unreadable'); } }).warn('carrier slow');
+    logger.info('order shipped', unreadableFields());
+    logger.child(unreadableFields()).warn('carrier slow');
 
     expect(written(lines)).toEqual([
       { time: '2026-03-01T10:00:00.000Z', level: 'info', message: 'order shipped', logError: 'unserializable fields' },
-      { time: '2026-03-01T10:00:00.000Z', level: 'warn', message: 'carrier slow', service: 'shop', logError: 'unserializable fields' },
+      {
+        time: '2026-03-01T10:00:00.000Z',
+        level: 'warn',
+        message: 'carrier slow',
+        service: 'shop',
+        logError: 'unserializable fields',
+      },
     ]);
   });
+});
 
+describe('StdoutLogger, on errors, levels and flush', () => {
   it('writes an error passed as a field as its description, with the code of a DomainError', () => {
     const lines: string[] = [];
     const logger = new StdoutLogger({ clock, write: (line) => lines.push(line) });
@@ -138,3 +154,11 @@ describe('StdoutLogger', () => {
     expect(lines).toHaveLength(1);
   });
 });
+
+function unreadableFields(): { readonly total: number } {
+  return {
+    get total(): number {
+      throw new Error('unreadable');
+    },
+  };
+}

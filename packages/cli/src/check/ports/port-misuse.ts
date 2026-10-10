@@ -10,7 +10,9 @@ export function portMisuse(adapter: ClassShape, port: string): Flaw | undefined 
     };
   }
 
-  if (adapter.implemented.includes(port)) return undefined;
+  if (adapter.implemented.includes(port)) {
+    return undefined;
+  }
 
   return {
     message: `${adapter.name} is bound to ${port} without implementing it.`,

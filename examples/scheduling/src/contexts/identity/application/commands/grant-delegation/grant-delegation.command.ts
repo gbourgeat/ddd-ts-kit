@@ -3,7 +3,10 @@ import { Requires } from '@ddd-ts-kit/kernel/declarations';
 import { identityPermissions } from '../../authorization/identity.permissions.js';
 
 @Requires(identityPermissions['delegation.grant'], {
-  resource: (command: GrantDelegationCommand) => ({ type: 'desk', id: `${command.desk.practiceId}.${command.desk.practitionerId}` }),
+  resource: (command: GrantDelegationCommand) => ({
+    type: 'desk',
+    id: `${command.desk.practiceId}.${command.desk.practitionerId}`,
+  }),
 })
 export class GrantDelegationCommand extends AuthorizedCommand<string> {
   constructor(

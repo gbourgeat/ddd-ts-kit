@@ -16,10 +16,14 @@ function selecting(selector: Selector, aspect: Aspect): Aspect {
   const origin = aspectOrigins.get(aspect);
 
   if (origin === undefined) {
-    throw new TypeError('when() selects methods of aspects made by defineAspect, compose or when: this function was not, so filter inside it');
+    throw new TypeError(
+      'when() selects methods of aspects made by defineAspect, compose or when: this function was not, so filter inside it',
+    );
   }
 
-  if ('parts' in origin) return when(selector, ...origin.parts);
+  if ('parts' in origin) {
+    return when(selector, ...origin.parts);
+  }
 
   return defineAspect((joinPoint) => (selector(joinPoint) ? origin.advise(joinPoint) : undefined));
 }

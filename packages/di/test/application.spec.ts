@@ -86,7 +86,10 @@ describe('createApplication', () => {
     const counter = defineContextModule({
       name: 'counter',
       register: (builder) => {
-        builder.bind(Ticket).toFactory(() => ({ number: (next += 1) })).transient();
+        builder
+          .bind(Ticket)
+          .toFactory(() => ({ number: (next += 1) }))
+          .transient();
       },
     });
 
@@ -142,7 +145,9 @@ describe('decorate hook', () => {
     const app = createApplication({
       modules: [platform, shop],
       decorate: (instance, info) => {
-        if (info.kind === 'repository' && typeof instance === 'object' && instance !== null) stamped.add(instance);
+        if (info.kind === 'repository' && typeof instance === 'object' && instance !== null) {
+          stamped.add(instance);
+        }
 
         return instance;
       },

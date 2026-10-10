@@ -103,14 +103,11 @@ function pendingIndex(table: Knex.CreateTableBuilder, outbox: string, knex: Knex
 }
 
 async function createProcessedEventsTable(knex: Knex, options: OutboxTablesOptions): Promise<void> {
-  await builderIn(knex, options.schema).createTable(
-    options.processedEventsTable ?? PROCESSED_EVENTS_TABLE,
-    (table) => {
-      table.string('consumer', INDEXABLE_LENGTH).notNullable();
-      table.string('event_id', INDEXABLE_LENGTH).notNullable();
-      table.datetime('processed_at', INSTANT).notNullable().defaultTo(rightNow(knex));
-      // The primary key is the unique (consumer, event_id) the store relies on.
-      table.primary(['consumer', 'event_id']);
-    },
-  );
+  await builderIn(knex, options.schema).createTable(options.processedEventsTable ?? PROCESSED_EVENTS_TABLE, (table) => {
+    table.string('consumer', INDEXABLE_LENGTH).notNullable();
+    table.string('event_id', INDEXABLE_LENGTH).notNullable();
+    table.datetime('processed_at', INSTANT).notNullable().defaultTo(rightNow(knex));
+    // The primary key is the unique (consumer, event_id) the store relies on.
+    table.primary(['consumer', 'event_id']);
+  });
 }

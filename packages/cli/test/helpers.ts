@@ -32,7 +32,9 @@ export function tempDir(label: string): string {
 }
 
 afterAll(() => {
-  for (const directory of created.splice(0)) fs.rmSync(directory, { recursive: true, force: true });
+  for (const directory of created.splice(0)) {
+    fs.rmSync(directory, { recursive: true, force: true });
+  }
 });
 
 export function read(root: string, file: string): string {
@@ -52,12 +54,17 @@ export function walk(root: string, directory = ''): string[] {
   const found: string[] = [];
 
   for (const entry of fs.readdirSync(path.join(root, directory), { withFileTypes: true })) {
-    if (entry.name === 'node_modules' || entry.name === 'dist') continue;
+    if (entry.name === 'node_modules' || entry.name === 'dist') {
+      continue;
+    }
 
     const relative = directory === '' ? entry.name : `${directory}/${entry.name}`;
 
-    if (entry.isDirectory()) found.push(...walk(root, relative));
-    else found.push(relative);
+    if (entry.isDirectory()) {
+      found.push(...walk(root, relative));
+    } else {
+      found.push(relative);
+    }
   }
 
   return found.sort();
@@ -82,7 +89,14 @@ export interface StackFlags {
   readonly assembly?: string;
 }
 
-export const DEFAULT_STACK: StackFlags = { http: 'express', validation: 'zod', di: 'tsyringe', tests: 'vitest', orm: 'drizzle', events: 'outbox' };
+export const DEFAULT_STACK: StackFlags = {
+  http: 'express',
+  validation: 'zod',
+  di: 'tsyringe',
+  tests: 'vitest',
+  orm: 'drizzle',
+  events: 'outbox',
+};
 
 /** `init`, then one `generate` of every kind, the way a team would: the language first. Returns each command's result. */
 export function scaffoldEverything(root: string, stack: StackFlags = DEFAULT_STACK): CliResult[] {
@@ -93,8 +107,12 @@ export function scaffoldEverything(root: string, stack: StackFlags = DEFAULT_STA
   };
 
   const withHttp = stack.http !== 'none';
+
   // Leaving the outbox out with a database is a deviation: it has to be given its reason.
-  const noOutbox = stack.orm !== 'none' && stack.events !== 'outbox' ? ['--allow-no-outbox', 'A single process with no consumer that has to survive a crash'] : [];
+  const noOutbox =
+    stack.orm !== 'none' && stack.events !== 'outbox'
+      ? ['--allow-no-outbox', 'A single process with no consumer that has to survive a crash']
+      : [];
 
   step('init', ...Object.entries(stack).flatMap(([key, value]) => [`--${key}`, String(value)]), ...noOutbox);
   scaffoldBilling(step, withHttp);
@@ -126,7 +144,12 @@ const term = (row: string): string[] => ['--term', row];
 
 function scaffoldBilling(step: Step, withHttp: boolean): void {
   const purpose = 'Bills customers for what they bought. Owns invoices from draft to payment.';
-  const terms = ['Invoice=A request for payment sent to a customer', 'Issue=To make an invoice final and send it', 'Cancel=To void an invoice before payment'];
+
+  const terms = [
+    'Invoice=A request for payment sent to a customer',
+    'Issue=To make an invoice final and send it',
+    'Cancel=To void an invoice before payment',
+  ];
 
   step('generate', 'context', 'billing', '--classification', 'core', '--purpose', purpose, ...terms.flatMap(term));
   step('generate', 'aggregate', 'billing', 'Invoice');
@@ -138,31 +161,91 @@ function scaffoldBilling(step: Step, withHttp: boolean): void {
   step('generate', 'repository', 'billing', 'Invoice');
   step('generate', 'command', 'billing', 'IssueInvoice', '--aggregate', 'Invoice', '--permission', 'invoice.issue');
   step('generate', 'command', 'billing', 'CancelInvoice', '--permission', 'invoice.cancel');
-  step('generate', 'query', 'billing', 'ListInvoices', '--permission', 'invoice.list', '--list', ...term('List=To show invoices to their customer'));
+
+  step(
+    'generate',
+    'query',
+    'billing',
+    'ListInvoices',
+    '--permission',
+    'invoice.list',
+    '--list',
+    ...term('List=To show invoices to their customer'),
+  );
+
   step('generate', 'port', 'billing', 'PaymentGateway');
   step('generate', 'adapter', 'billing', 'PaymentGateway');
   step('generate', 'policy', 'billing', 'OnlyIssuerCancels', '--permission', 'invoice.cancel');
 
-  if (withHttp) scaffoldBillingRoutes(step);
+  if (withHttp) {
+    scaffoldBillingRoutes(step);
+  }
 
   step('generate', 'integration-event', 'billing', 'Invoice', 'Issued');
   step('generate', 'integration-event', 'billing', 'Invoice', 'Issued', '--version', '2');
   step('generate', 'event-handler', 'billing', 'Invoice', 'Issued');
   step('generate', 'acl', 'billing', 'LegacyErp');
+
   // A prerequisite created on the way: the domain event does not exist yet. This one reacts once the command has committed.
-  step('generate', 'event-handler', 'billing', 'Invoice', 'MarkedAsPaid', '--phase', 'after-commit', ...term('Mark=To record a status on an invoice'), ...term('Pay=To settle an invoice'));
+  step(
+    'generate',
+    'event-handler',
+    'billing',
+    'Invoice',
+    'MarkedAsPaid',
+    '--phase',
+    'after-commit',
+    ...term('Mark=To record a status on an invoice'),
+    ...term('Pay=To settle an invoice'),
+  );
+
   scaffoldBillingJobs(step);
 }
 
 /** One job on an interval and one on a cron expression read in a time zone, each sending a protected command as its own system actor. */
 function scaffoldBillingJobs(step: Step): void {
-  step('generate', 'job', 'billing', 'CancelStaleInvoices', '--every', '15m', '--command', 'CancelInvoice', ...term('Stale=Left unpaid for too long'));
-  step('generate', 'job', 'billing', 'IssueInvoicesMonthly', '--cron', '0 6 1 * *', '--time-zone', 'Europe/Paris', '--command', 'IssueInvoice', ...term('Monthly=On the first day of each month'));
+  step(
+    'generate',
+    'job',
+    'billing',
+    'CancelStaleInvoices',
+    '--every',
+    '15m',
+    '--command',
+    'CancelInvoice',
+    ...term('Stale=Left unpaid for too long'),
+  );
+
+  step(
+    'generate',
+    'job',
+    'billing',
+    'IssueInvoicesMonthly',
+    '--cron',
+    '0 6 1 * *',
+    '--time-zone',
+    'Europe/Paris',
+    '--command',
+    'IssueInvoice',
+    ...term('Monthly=On the first day of each month'),
+  );
 }
 
 function scaffoldBillingRoutes(step: Step): void {
   step('generate', 'route', 'billing', 'IssueInvoice', '--method', 'POST', '--path', '/invoices');
-  step('generate', 'route', 'billing', 'CancelInvoice', '--method', 'DELETE', '--path', '/invoices/:invoiceId', '--command');
+
+  step(
+    'generate',
+    'route',
+    'billing',
+    'CancelInvoice',
+    '--method',
+    'DELETE',
+    '--path',
+    '/invoices/:invoiceId',
+    '--command',
+  );
+
   step('generate', 'route', 'billing', 'ListInvoices', '--method', 'GET', '--path', '/invoices', '--query');
   step('generate', 'e2e', 'billing', 'IssueInvoice');
 }
@@ -174,14 +257,28 @@ function scaffoldBillingRoutes(step: Step): void {
  * takes one declared adapter.
  */
 function scaffoldShipping(step: Step, declared: boolean): void {
-  step('generate', 'context', 'shipping', '--classification', 'supporting', '--upstream', 'billing:customer-supplier', ...term('Parcel=A package handed to a carrier'));
+  step(
+    'generate',
+    'context',
+    'shipping',
+    '--classification',
+    'supporting',
+    '--upstream',
+    'billing:customer-supplier',
+    ...term('Parcel=A package handed to a carrier'),
+  );
+
   step('generate', 'integration-handler', 'shipping', 'billing', 'billing.invoice.issued');
 
-  if (!declared) step('generate', 'consumer', 'shipping', 'billing', 'billing.invoice.cancelled');
+  if (!declared) {
+    step('generate', 'consumer', 'shipping', 'billing', 'billing.invoice.cancelled');
+  }
 
   step('generate', 'gateway', 'shipping', 'billing', 'InvoiceStatus');
 
-  if (!declared) step('generate', 'adapter', 'shipping', 'InvoiceStatusGateway', '--kind', 'gateway');
+  if (!declared) {
+    step('generate', 'adapter', 'shipping', 'InvoiceStatusGateway', '--kind', 'gateway');
+  }
 
   step('generate', 'service', 'shipping');
   step('generate', 'adr', 'Keep shipping in the same repository as billing');
@@ -189,24 +286,63 @@ function scaffoldShipping(step: Step, declared: boolean): void {
 
 /** A context name in several words, a repository created by its command, a query behind a parameterised route. */
 function scaffoldOrderFulfilment(step: Step, withHttp: boolean): void {
-  const terms = ['Purchase order=What a customer asked to receive', 'Place=To submit a purchase order', 'Track=To follow a purchase order'];
+  const terms = [
+    'Purchase order=What a customer asked to receive',
+    'Place=To submit a purchase order',
+    'Track=To follow a purchase order',
+  ];
 
   step('generate', 'context', 'order-fulfilment', '--classification', 'generic', ...terms.flatMap(term));
   step('generate', 'aggregate', 'order-fulfilment', 'PurchaseOrder');
   step('generate', 'builder', 'order-fulfilment', 'PurchaseOrder', '--force');
   step('generate', 'repository', 'order-fulfilment', 'PurchaseOrder', '--tenant-scoped');
-  step('generate', 'command', 'order-fulfilment', 'PlacePurchaseOrder', '--aggregate', 'PurchaseOrder', '--permission', 'purchase-order.place');
+
+  step(
+    'generate',
+    'command',
+    'order-fulfilment',
+    'PlacePurchaseOrder',
+    '--aggregate',
+    'PurchaseOrder',
+    '--permission',
+    'purchase-order.place',
+  );
+
   step('generate', 'query', 'order-fulfilment', 'TrackPurchaseOrder', '--public');
 
-  if (!withHttp) return;
+  if (!withHttp) {
+    return;
+  }
 
-  step('generate', 'route', 'order-fulfilment', 'PlacePurchaseOrder', '--method', 'PUT', '--path', '/purchase-orders/:purchaseOrderId');
-  step('generate', 'route', 'order-fulfilment', 'TrackPurchaseOrder', '--method', 'GET', '--path', '/purchase-orders/:purchaseOrderId/tracking');
+  step(
+    'generate',
+    'route',
+    'order-fulfilment',
+    'PlacePurchaseOrder',
+    '--method',
+    'PUT',
+    '--path',
+    '/purchase-orders/:purchaseOrderId',
+  );
+
+  step(
+    'generate',
+    'route',
+    'order-fulfilment',
+    'TrackPurchaseOrder',
+    '--method',
+    'GET',
+    '--path',
+    '/purchase-orders/:purchaseOrderId/tracking',
+  );
+
   step('generate', 'e2e', 'order-fulfilment', 'TrackPurchaseOrder');
 }
 
 function must(result: CliResult, what: string): CliResult {
-  if (result.code !== 0) throw new Error(`${what} failed (${result.code}): ${result.stderr || result.stdout}`);
+  if (result.code !== 0) {
+    throw new Error(`${what} failed (${result.code}): ${result.stderr || result.stdout}`);
+  }
 
   return result;
 }

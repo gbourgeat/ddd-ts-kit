@@ -8,7 +8,9 @@ import { readTracing } from './config/read-tracing.js';
 const problems: string[] = [];
 const settings = readTracing(process.env, problems);
 
-if (problems.length > 0) throw new ConfigError(problems);
+if (problems.length > 0) {
+  throw new ConfigError(problems);
+}
 
 export const tracing = initTracing({
   serviceName: process.env['OTEL_SERVICE_NAME'] ?? '{{project.name}}',

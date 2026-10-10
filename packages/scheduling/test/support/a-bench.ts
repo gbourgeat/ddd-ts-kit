@@ -1,4 +1,12 @@
-import { AsyncLocalStorageExecutionScope, FixedClock, InMemoryLock, InMemoryLogger, InMemoryMetrics, SequentialIdGenerator, type Lock } from '@ddd-ts-kit/kernel';
+import {
+  AsyncLocalStorageExecutionScope,
+  FixedClock,
+  InMemoryLock,
+  InMemoryLogger,
+  InMemoryMetrics,
+  SequentialIdGenerator,
+  type Lock,
+} from '@ddd-ts-kit/kernel';
 import { ManualJobScheduler, type ManualJobSchedulerOptions } from '../../src/testing.js';
 
 export interface Bench {
@@ -19,7 +27,16 @@ export function aBench(options: BenchOptions = {}): Bench {
   const scope = new AsyncLocalStorageExecutionScope();
   const logger = new InMemoryLogger();
   const metrics = new InMemoryMetrics();
-  const scheduler = new ManualJobScheduler({ lock, scope, ids: new SequentialIdGenerator('run'), logger, metrics, ...options, clock });
+
+  const scheduler = new ManualJobScheduler({
+    lock,
+    scope,
+    ids: new SequentialIdGenerator('run'),
+    logger,
+    metrics,
+    ...options,
+    clock,
+  });
 
   return { scheduler, clock, lock, scope, logger, metrics };
 }

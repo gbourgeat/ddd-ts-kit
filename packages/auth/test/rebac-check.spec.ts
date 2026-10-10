@@ -6,7 +6,17 @@ import {
   SchemaError,
   type RelationTupleStore,
 } from '../src/rebac.js';
-import { ada, allowed, authorizerWith, bob, docsPermissions, document, fact, mapping, schema } from './support/documents.js';
+import {
+  ada,
+  allowed,
+  authorizerWith,
+  bob,
+  docsPermissions,
+  document,
+  fact,
+  mapping,
+  schema,
+} from './support/documents.js';
 
 const edit = docsPermissions['document.edit'];
 const view = docsPermissions['document.view'];
@@ -166,10 +176,14 @@ describe('RelationBasedAuthorizer.check, at its limits', () => {
   it('refuses a mapping to something the schema does not declare', () => {
     const store = new InMemoryRelationTupleStore();
 
-    expect(() => new RelationBasedAuthorizer({ schema, store, mapping: { document: { [edit.id]: 'publish' } } })).toThrow(
+    expect(
+      () => new RelationBasedAuthorizer({ schema, store, mapping: { document: { [edit.id]: 'publish' } } }),
+    ).toThrow(
       new SchemaError('"docs:document.edit" is mapped to "document#publish", which the schema does not declare.'),
     );
 
-    expect(() => new RelationBasedAuthorizer({ schema, store, mapping: { invoice: { [edit.id]: 'edit' } } })).toThrow(SchemaError);
+    expect(() => new RelationBasedAuthorizer({ schema, store, mapping: { invoice: { [edit.id]: 'edit' } } })).toThrow(
+      SchemaError,
+    );
   });
 });

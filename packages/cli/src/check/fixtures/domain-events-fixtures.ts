@@ -8,7 +8,9 @@ import { SAMPLES } from './samples.js';
 import { source } from './source.js';
 import { withoutFile } from './without-file.js';
 
-const { ADAPTER, AGGREGATE_SPEC, BILLING, EVENT, EVENT_HANDLER, EVENT_HANDLER_SPEC, HANDLER, MODULE, PAYMENT_ADAPTER } = PATHS;
+const { ADAPTER, AGGREGATE_SPEC, BILLING, EVENT, EVENT_HANDLER, EVENT_HANDLER_SPEC, HANDLER, MODULE, PAYMENT_ADAPTER } =
+  PATHS;
+
 const RULE = 'domain-events/dispatched-on-save';
 const TRANSACTIONAL = 'domain-events/transactional-before-commit';
 const KERNEL = "'@ddd-ts-kit/kernel'";
@@ -47,7 +49,8 @@ const DISPATCHED_ON_SAVE: readonly Fixture[] = [
     files: declaredProject({
       ...DECLARED_CONTEXT,
       [HANDLER]: handlerDoing([], ['await this.invoices.save(command.invoice);']),
-      [AGGREGATE_SPEC]: "import { expect, it } from 'vitest';\n\nit('records nothing twice', () => {\n  expect(invoice.pullEvents()).toEqual([]);\n});\n",
+      [AGGREGATE_SPEC]:
+        "import { expect, it } from 'vitest';\n\nit('records nothing twice', () => {\n  expect(invoice.pullEvents()).toEqual([]);\n});\n",
       'src/platform/dispatching-on-save.ts': `import { DomainEventDispatcher } from ${KERNEL};\n\nexport const dispatched = (dispatcher: DomainEventDispatcher, saved: Saved): Promise<void> => dispatcher.dispatch(saved.pullEvents());\n`,
     }),
   },
@@ -55,13 +58,22 @@ const DISPATCHED_ON_SAVE: readonly Fixture[] = [
     ruleId: RULE,
     name: 'a command handler pulling the events of the aggregate it saved',
     expect: { file: HANDLER },
-    files: declaredProject({ ...DECLARED_CONTEXT, [HANDLER]: handlerDoing([], ['await this.invoices.save(command.invoice);', 'await this.announce(command.invoice.pullEvents());']) }),
+    files: declaredProject({
+      ...DECLARED_CONTEXT,
+      [HANDLER]: handlerDoing(
+        [],
+        ['await this.invoices.save(command.invoice);', 'await this.announce(command.invoice.pullEvents());'],
+      ),
+    }),
   },
   {
     ruleId: RULE,
     name: 'a command handler given the dispatcher',
     expect: { file: HANDLER },
-    files: declaredProject({ ...DECLARED_CONTEXT, [HANDLER]: handlerDoing(['DomainEventDispatcher'], ['await this.invoices.save(command.invoice);']) }),
+    files: declaredProject({
+      ...DECLARED_CONTEXT,
+      [HANDLER]: handlerDoing(['DomainEventDispatcher'], ['await this.invoices.save(command.invoice);']),
+    }),
   },
   {
     ruleId: RULE,
@@ -111,7 +123,13 @@ const TRANSACTIONAL_BEFORE_COMMIT: readonly Fixture[] = [
     ruleId: TRANSACTIONAL,
     name: 'a before-commit handler given a repository and the outbox publisher',
     expect: 'pass',
-    files: declaredProject({ ...DECLARED_CONTEXT, [EVENT_HANDLER]: reacting([FROM_KERNEL('IntegrationEventPublisher'), REPOSITORY_PORT], ['InvoiceRepository', 'IntegrationEventPublisher']) }),
+    files: declaredProject({
+      ...DECLARED_CONTEXT,
+      [EVENT_HANDLER]: reacting(
+        [FROM_KERNEL('IntegrationEventPublisher'), REPOSITORY_PORT],
+        ['InvoiceRepository', 'IntegrationEventPublisher'],
+      ),
+    }),
   },
   {
     ruleId: TRANSACTIONAL,
@@ -129,31 +147,55 @@ const TRANSACTIONAL_BEFORE_COMMIT: readonly Fixture[] = [
     ruleId: TRANSACTIONAL,
     name: 'the same port once its only adapter is under infrastructure/persistence',
     expect: 'pass',
-    files: declaredProject({ ...withoutFile(DECLARED_CONTEXT, PAYMENT_ADAPTER), [STORED_PAYMENTS]: STORED_ADAPTER, [EVENT_HANDLER]: reacting([PAYMENT_PORT], ['PaymentGateway']) }),
+    files: declaredProject({
+      ...withoutFile(DECLARED_CONTEXT, PAYMENT_ADAPTER),
+      [STORED_PAYMENTS]: STORED_ADAPTER,
+      [EVENT_HANDLER]: reacting([PAYMENT_PORT], ['PaymentGateway']),
+    }),
   },
   {
     ruleId: TRANSACTIONAL,
     name: 'the cache and the external port given to a handler declared after-commit',
     expect: 'pass',
-    files: declaredProject({ ...DECLARED_CONTEXT, [EVENT_HANDLER]: reacting([FROM_KERNEL('Cache'), PAYMENT_PORT], ['Cache', 'PaymentGateway'], AFTER_COMMIT) }),
+    files: declaredProject({
+      ...DECLARED_CONTEXT,
+      [EVENT_HANDLER]: reacting([FROM_KERNEL('Cache'), PAYMENT_PORT], ['Cache', 'PaymentGateway'], AFTER_COMMIT),
+    }),
   },
   {
     ruleId: TRANSACTIONAL,
     name: 'an after-commit handler given the outbox publisher',
     expect: { file: EVENT_HANDLER },
-    files: declaredProject({ ...DECLARED_CONTEXT, [EVENT_HANDLER]: reacting([FROM_KERNEL('IntegrationEventPublisher')], ['IntegrationEventPublisher'], AFTER_COMMIT) }),
+    files: declaredProject({
+      ...DECLARED_CONTEXT,
+      [EVENT_HANDLER]: reacting(
+        [FROM_KERNEL('IntegrationEventPublisher')],
+        ['IntegrationEventPublisher'],
+        AFTER_COMMIT,
+      ),
+    }),
   },
   {
     ruleId: TRANSACTIONAL,
     name: 'explicit style: a handler clearing a cache, registered after-commit by the module file',
     expect: 'pass',
-    files: project({ [EVENT]: DECLARED.event, [EVENT_HANDLER]: PLAIN_EVENT_HANDLER, [EVENT_HANDLER_SPEC]: SAMPLES.SPEC, [MODULE]: moduleRegistering(`, { ${AFTER_COMMIT} }`) }),
+    files: project({
+      [EVENT]: DECLARED.event,
+      [EVENT_HANDLER]: PLAIN_EVENT_HANDLER,
+      [EVENT_HANDLER_SPEC]: SAMPLES.SPEC,
+      [MODULE]: moduleRegistering(`, { ${AFTER_COMMIT} }`),
+    }),
   },
   {
     ruleId: TRANSACTIONAL,
     name: 'explicit style: the same handler registered without a phase',
     expect: { file: EVENT_HANDLER },
-    files: project({ [EVENT]: DECLARED.event, [EVENT_HANDLER]: PLAIN_EVENT_HANDLER, [EVENT_HANDLER_SPEC]: SAMPLES.SPEC, [MODULE]: moduleRegistering('') }),
+    files: project({
+      [EVENT]: DECLARED.event,
+      [EVENT_HANDLER]: PLAIN_EVENT_HANDLER,
+      [EVENT_HANDLER_SPEC]: SAMPLES.SPEC,
+      [MODULE]: moduleRegistering(''),
+    }),
   },
 ];
 
@@ -183,7 +225,9 @@ function moduleRegistering(options: string): string {
     '  platform.domainEvents.on(',
     "    'billing.invoice.issued',",
     '    async (event) => {',
-    '      if (event instanceof InvoiceIssued) await invoiceIssuedEventHandler.handle(event);',
+    '      if (event instanceof InvoiceIssued) {',
+    '        await invoiceIssuedEventHandler.handle(event);',
+    '      }',
     '    }' + options + ',',
     '  );',
     '}',

@@ -40,7 +40,13 @@ import { InProcessJobScheduler } from '@ddd-ts-kit/scheduling';
 {{#if errors.sentry}}
 import { InProcessJobScheduler, reportFailedRuns } from '@ddd-ts-kit/scheduling';
 {{/if}}
-import { traceApplication, tracedPublisher, tracedSubscriber, type ConsumerTrace, type TracedApplication } from '@ddd-ts-kit/tracing';
+import {
+  traceApplication,
+  tracedPublisher,
+  tracedSubscriber,
+  type ConsumerTrace,
+  type TracedApplication,
+} from '@ddd-ts-kit/tracing';
 {{#if audit.on}}
 import { createAudit } from './audit/create-audit.js';
 {{/if}}
@@ -96,7 +102,7 @@ export interface PlatformOptions {
 export function createPlatform(persistence: Persistence, options: PlatformOptions): Platform {
   const traced = traceApplication({ consumers: options.traceConsumers ?? 'continue' });
   const foundations = lay(persistence, options, traced);
-  const { clock, logger, metrics, scope } = foundations;
+  const { clock, logger, scope } = foundations;
   // A handler of the after-commit phase that fails is logged{{#if errors.sentry}} and reported{{/if}}: the command it follows is committed, and answers.
 {{#if errors.none}}
   const afterCommitFailed = reportAfterCommitFailures({ reporter: new NoopErrorReporter(), logger, scope });
@@ -114,19 +120,17 @@ export function createPlatform(persistence: Persistence, options: PlatformOption
 {{/unless}}
   const protection = new UseCaseProtection(authorizer, onDecision);
   const adapter = adapterOf(options.resilience ?? defaultResilience, { traced, domainEvents });
-{{#if errors.none}}
-  const observed = [loggingMiddleware(logger), metricsMiddleware(metrics), protection.guard, traced.useCase];
-{{/if}}
-{{#if errors.sentry}}
-  // First on both buses, outside the unit of work: a failed commit is reported too.
-  const observed = [errorReportingMiddleware(foundations.errors, scope), loggingMiddleware(logger), metricsMiddleware(metrics), protection.guard, traced.useCase];
-{{/if}}
+  const observed = observing(foundations, protection.guard, traced.useCase);
 
   return {
     ...foundations,
     ...eventsOn(persistence, options, { scope, traced }),
     // Around every use case, outermost first: {{#if errors.sentry}}the report of an unexpected failure, {{/if}}its log entry, its measure, the permission, its span; a command then runs in the unit of work.
-    commands: chain(new InMemoryCommandBus(), [...observed, ...beforeTheTransaction(foundations, options), unitOfWorkMiddleware(persistence.unitOfWork)]),
+    commands: chain(new InMemoryCommandBus(), [
+      ...observed,
+      ...beforeTheTransaction(foundations, options),
+      unitOfWorkMiddleware(persistence.unitOfWork),
+    ]),
     queries: chain(new InMemoryQueryBus(), [...observed{{#if audit.on}}, foundations.audit.queries{{/if}}]),
     domainEvents,
     persistence,
@@ -138,7 +142,25 @@ export function createPlatform(persistence: Persistence, options: PlatformOption
   };
 }
 
-type Foundations = Pick<Platform, 'scope' | 'clock' | 'ids' | 'logger' | 'metrics'{{#if errors.sentry}} | 'errors'{{/if}} | 'cache' | 'jobs'{{#if cache.rateLimit}} | 'rateLimiter'{{/if}}{{#if audit.on}} | 'audit'{{/if}}>;
+/** What surrounds every use case on both buses, outermost first, before what each bus adds. */
+function observing(foundations: Foundations, guard: BusMiddleware, span: BusMiddleware): readonly BusMiddleware[] {
+{{#if errors.none}}
+  return [loggingMiddleware(foundations.logger), metricsMiddleware(foundations.metrics), guard, span];
+{{/if}}
+{{#if errors.sentry}}
+  // First on both buses, outside the unit of work: a failed commit is reported too.
+  return [
+    errorReportingMiddleware(foundations.errors, foundations.scope),
+    loggingMiddleware(foundations.logger),
+    metricsMiddleware(foundations.metrics),
+    guard,
+    span,
+  ];
+{{/if}}
+}
+
+type Founded = 'scope' | 'clock' | 'ids' | 'logger' | 'metrics'{{#if errors.sentry}} | 'errors'{{/if}} | 'cache' | 'jobs'{{#if cache.rateLimit}} | 'rateLimiter'{{/if}}{{#if audit.on}} | 'audit'{{/if}};
+type Foundations = Pick<Platform, Founded>;
 
 /** What exists before anything else: one execution scope, one clock and one generator for the whole application. */
 function lay(persistence: Persistence, options: PlatformOptions, traced: TracedApplication): Foundations {
@@ -182,11 +204,19 @@ function lay(persistence: Persistence, options: PlatformOptions, traced: TracedA
     rateLimiter: options.redis?.rateLimiter ?? new InMemoryRateLimiter(clock),
 {{/if}}
 {{#if errors.none}}
-    jobs: new ConfiguredJobScheduler(new InProcessJobScheduler({ clock, lock, scope, ids, logger, metrics }), options.jobs?.settings ?? {}, traced.job),
+    jobs: new ConfiguredJobScheduler(
+      new InProcessJobScheduler({ clock, lock, scope, ids, logger, metrics }),
+      options.jobs?.settings ?? {},
+      traced.job,
+    ),
 {{/if}}
 {{#if errors.sentry}}
     // A run that failed, a timeout included, is reported; a skipped or missed occurrence is not.
-    jobs: new ConfiguredJobScheduler(new InProcessJobScheduler({ clock, lock, scope, ids, logger, metrics, onRun: reportFailedRuns(errors) }), options.jobs?.settings ?? {}, traced.job),
+    jobs: new ConfiguredJobScheduler(
+      new InProcessJobScheduler({ clock, lock, scope, ids, logger, metrics, onRun: reportFailedRuns(errors) }),
+      options.jobs?.settings ?? {},
+      traced.job,
+    ),
 {{/if}}
 {{#if audit.on}}
     audit: createAudit(persistence, { scope, clock, ids }),
@@ -197,7 +227,11 @@ function lay(persistence: Persistence, options: PlatformOptions, traced: TracedA
 type Events = Pick<Platform, 'publisher' | 'subscriber' | 'eventBus'{{#if broker.external}} | 'subscriberFor'{{/if}}>;
 
 /** Use cases publish with the correlation id of the work in progress, so everything one request causes is found again. */
-function eventsOn(persistence: Persistence, { events, traceConsumers }: PlatformOptions, { scope, traced }: Observation): Events {
+function eventsOn(
+  persistence: Persistence,
+  { events, traceConsumers }: PlatformOptions,
+  { scope, traced }: Observation,
+): Events {
   const trace = traceConsumers ?? 'continue';
 
   return {
@@ -227,14 +261,25 @@ interface Observation {
  * entry of a failure survives the rollback{{/if}}.
  */
 function beforeTheTransaction(foundations: Foundations, options: PlatformOptions): readonly BusMiddleware[] {
-  return [
 {{#if cache.relaySignal}}
-    ...(options.redis === undefined ? [] : [relayWakeUpMiddleware(options.redis.relaySignal)]),
-{{/if}}
 {{#if audit.on}}
+  return [
+    ...(options.redis === undefined ? [] : [relayWakeUpMiddleware(options.redis.relaySignal)]),
     foundations.audit.commands,
-{{/if}}
   ];
+{{/if}}
+{{#unless audit.on}}
+  return [...(options.redis === undefined ? [] : [relayWakeUpMiddleware(options.redis.relaySignal)])];
+{{/unless}}
+{{/if}}
+{{#unless cache.relaySignal}}
+{{#if audit.on}}
+  return [foundations.audit.commands];
+{{/if}}
+{{#unless audit.on}}
+  return [];
+{{/unless}}
+{{/unless}}
 }
 
 interface Chainable<Bus> {

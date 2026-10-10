@@ -36,11 +36,16 @@ unitOfWorkContract(runner, {
     return {
       unitOfWork,
       outbox: new DrizzleOutboxStore(unitOfWork, { table: outbox }),
-      insert: async (id) => void (await unitOfWork.executor().execute(sql`insert into contract_parcels (id) values (${id})`)),
+      insert: async (id) =>
+        void (await unitOfWork.executor().execute(sql`insert into contract_parcels (id) values (${id})`)),
       insertRefusedAtCommit: async (id) =>
-        void (await unitOfWork.executor().execute(sql`insert into contract_parcels (id, sealed_by) values (${id}, 'nobody')`)),
+        void (await unitOfWork
+          .executor()
+          .execute(sql`insert into contract_parcels (id, sealed_by) values (${id}, 'nobody')`)),
       ids: async () => {
-        const { rows } = await unitOfWork.executor().execute<{ id: string }>(sql`select id from contract_parcels order by id`);
+        const { rows } = await unitOfWork
+          .executor()
+          .execute<{ id: string }>(sql`select id from contract_parcels order by id`);
 
         return rows.map((row) => row.id);
       },

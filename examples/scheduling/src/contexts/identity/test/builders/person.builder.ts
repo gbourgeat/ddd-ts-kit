@@ -38,7 +38,10 @@ export class PersonBuilder extends Builder<PersonIngredients, Person> {
   }
 
   protected construct(ingredients: PersonIngredients): Person {
-    const contact = { displayName: unwrap(DisplayName.create(ingredients.displayName)), email: unwrap(Email.create(ingredients.email)) };
+    const contact = {
+      displayName: unwrap(DisplayName.create(ingredients.displayName)),
+      email: unwrap(Email.create(ingredients.email)),
+    };
 
     return Person.create(ingredients.id, contact, ingredients.bornAt);
   }

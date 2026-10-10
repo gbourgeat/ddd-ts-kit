@@ -42,17 +42,28 @@ function writeFiles(root: string, files: Fixture['files']): void {
 function judge(fixture: Fixture, violations: readonly Violation[]): string | undefined {
   const listed = violations.map((violation) => `${violation.ruleId} at ${violation.file}:${violation.line}`).join('; ');
 
-  if (fixture.expect === 'pass') return violations.length === 0 ? undefined : `expected no violation, got ${listed}`;
+  if (fixture.expect === 'pass') {
+    return violations.length === 0 ? undefined : `expected no violation, got ${listed}`;
+  }
 
   const { file } = fixture.expect;
   const hit = violations.find((violation) => violation.ruleId === fixture.ruleId && violation.file === file);
 
-  if (hit === undefined) return `expected ${fixture.ruleId} at ${file}, got ${listed || 'nothing'}`;
-  if (hit.fix.trim() === '') return 'the violation carries no fix';
+  if (hit === undefined) {
+    return `expected ${fixture.ruleId} at ${file}, got ${listed || 'nothing'}`;
+  }
 
-  const stray = violations.filter((violation) => violation.ruleId !== fixture.ruleId && fixture.also?.includes(violation.ruleId) !== true);
+  if (hit.fix.trim() === '') {
+    return 'the violation carries no fix';
+  }
 
-  return stray.length === 0 ? undefined : `other rules fired: ${stray.map((violation) => `${violation.ruleId} at ${violation.file}:${violation.line}`).join(', ')}`;
+  const stray = violations.filter(
+    (violation) => violation.ruleId !== fixture.ruleId && fixture.also?.includes(violation.ruleId) !== true,
+  );
+
+  return stray.length === 0
+    ? undefined
+    : `other rules fired: ${stray.map((violation) => `${violation.ruleId} at ${violation.file}:${violation.line}`).join(', ')}`;
 }
 
 function summary(fixture: Fixture, violations: readonly Violation[]): string {

@@ -10,7 +10,11 @@ import { REPORTED_WORK_PROOF, writeReportedWorkProof } from './write-reported-wo
 
 const DECORATED = 'src/contexts/billing/infrastructure/external/remote-tax-rates.adapter.ts';
 const DECORATED_SPEC = 'src/contexts/billing/test/integration/remote-tax-rates.adapter.spec.ts';
-const JOB_SPECS = ['cancel-stale-invoices', 'issue-invoices-monthly'].map((job) => `src/contexts/billing/test/unit/${job}.job.spec.ts`);
+
+const JOB_SPECS = ['cancel-stale-invoices', 'issue-invoices-monthly'].map(
+  (job) => `src/contexts/billing/test/unit/${job}.job.spec.ts`,
+);
+
 const DATABASE = process.env['DDD_TS_KIT_TEST_DATABASE_URL'] ?? '';
 
 /**
@@ -26,7 +30,8 @@ const DATABASE = process.env['DDD_TS_KIT_TEST_DATABASE_URL'] ?? '';
 describe.runIf(SLOW).each(FIRST_CLASS_BROKERS)('the first-class stack, events on %s', (broker) => {
   let root: string;
 
-  const vitest = (...args: string[]): string => runIn(root, { command: bin('vitest'), args: ['run', ...args], env: { DATABASE_URL: DATABASE } });
+  const vitest = (...args: string[]): string =>
+    runIn(root, { command: bin('vitest'), args: ['run', ...args], env: { DATABASE_URL: DATABASE } });
 
   beforeAll(() => {
     root = tempDir('first-class');
@@ -46,10 +51,17 @@ describe.runIf(SLOW).each(FIRST_CLASS_BROKERS)('the first-class stack, events on
 
     expect(specs).toMatch(/Test Files\s+\d+ passed/);
     expect(specs).not.toContain('failed');
+
     // class-validator imposes the legacy decorator mode: the declarations and the aspects on a method serve it as they are.
-    expect(JSON.parse(read(root, 'tsconfig.json'))).toMatchObject({ compilerOptions: { experimentalDecorators: true } });
+    expect(JSON.parse(read(root, 'tsconfig.json'))).toMatchObject({
+      compilerOptions: { experimentalDecorators: true },
+    });
+
     expect(read(root, DECORATED)).toMatch(/@Adapter\(TaxRates[\s\S]*@Retry\(\{ attempts: 3/);
-    expect(runIn(root, { command: bin('vitest'), args: ['run', DECORATED_SPEC, ...JOB_SPECS] })).toMatch(/Tests\s+3 passed \| 6 todo/);
+
+    expect(runIn(root, { command: bin('vitest'), args: ['run', DECORATED_SPEC, ...JOB_SPECS] })).toMatch(
+      /Tests\s+3 passed \| 6 todo/,
+    );
   }, 480_000);
 
   it('reports a failed job and a dead-lettered event to the reporter in memory of its test application', () => {
@@ -66,13 +78,19 @@ describe.runIf(SLOW).each(FIRST_CLASS_BROKERS)('the first-class stack, events on
   }, 240_000);
 
   it('passes its end-to-end proof', () => {
-    if (DATABASE !== '') runIn(root, { command: bin('knex'), args: ['migrate:latest'], env: { DATABASE_URL: DATABASE } });
+    if (DATABASE !== '') {
+      runIn(root, { command: bin('knex'), args: ['migrate:latest'], env: { DATABASE_URL: DATABASE } });
+    }
 
     const endToEnd = vitest('--config', 'vitest.e2e.config.ts');
 
     // The generated specs (401, 403, 201, the whole trace of the request in one tree; one public query) and the five of the proof.
     expect(endToEnd).toMatch(/Tests\s+10 passed/);
-    expect(read(root, 'test/e2e/issue-invoice.e2e.spec.ts')).toMatch(/expectSpanTree\(storyOf\(trace\)[\s\S]*'POST \/invoices'[\s\S]*'command IssueInvoiceCommand'[\s\S]*'repository InvoiceRepository\.save'[\s\S]*'domain-event billing\.invoice\.issued'/);
+
+    expect(read(root, 'test/e2e/issue-invoice.e2e.spec.ts')).toMatch(
+      /expectSpanTree\(storyOf\(trace\)[\s\S]*'POST \/invoices'[\s\S]*'command IssueInvoiceCommand'[\s\S]*'repository InvoiceRepository\.save'[\s\S]*'domain-event billing\.invoice\.issued'/,
+    );
+
     expect(endToEnd).not.toContain('failed');
   }, 480_000);
 });

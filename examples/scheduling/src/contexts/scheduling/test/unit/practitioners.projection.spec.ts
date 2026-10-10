@@ -54,7 +54,11 @@ describe('Practitioners known from identity', () => {
   it('does not bring back a removed practitioner when an older addition is delivered late', async () => {
     const { application, practitioners } = await arrange();
 
-    await application.eventBus.publish([added('event-2', 'practitioner', at('08:00')), removed('event-3', 'practitioner', at('09:00')), added('event-1', 'practitioner', at('07:00'))]);
+    await application.eventBus.publish([
+      added('event-2', 'practitioner', at('08:00')),
+      removed('event-3', 'practitioner', at('09:00')),
+      added('event-1', 'practitioner', at('07:00')),
+    ]);
 
     expect(await practitioners.get('practice-1.person-1')).toBeUndefined();
   });
@@ -64,13 +68,19 @@ describe('Practitioners known from identity', () => {
 
     await application.eventBus.publish([added('event-1', 'practitioner'), added('event-1', 'practitioner')]);
 
-    expect((await practitioners.list(scoped(Criteria.of<PractitionerEntry>(), { kind: 'all' }, {}))).items).toHaveLength(1);
+    expect(
+      (await practitioners.list(scoped(Criteria.of<PractitionerEntry>(), { kind: 'all' }, {}))).items,
+    ).toHaveLength(1);
   });
 
   it('knows again a practitioner added back after a removal', async () => {
     const { application, practitioners } = await arrange();
 
-    await application.eventBus.publish([added('event-1', 'practitioner'), removed('event-2', 'practitioner'), added('event-3', 'practitioner', at('10:00'))]);
+    await application.eventBus.publish([
+      added('event-1', 'practitioner'),
+      removed('event-2', 'practitioner'),
+      added('event-3', 'practitioner', at('10:00')),
+    ]);
 
     expect(await practitioners.get('practice-1.person-1')).toBeDefined();
   });
@@ -80,7 +90,11 @@ async function arrange() {
   const practitioners = new FakePractitionerDirectory();
 
   const application = createTestApplication({
-    modules: [platformTestModule, contextModule('scheduling', { ...schedulingDeclarations, PractitionersProjection }), authorizationModule({ authorizer: new AllowAll() })],
+    modules: [
+      platformTestModule,
+      contextModule('scheduling', { ...schedulingDeclarations, PractitionersProjection }),
+      authorizationModule({ authorizer: new AllowAll() }),
+    ],
     fakes: [fake(PractitionerDirectory, practitioners)],
   });
 
@@ -90,7 +104,10 @@ async function arrange() {
 }
 
 function added(id: string, role: Role, occurredAt = at('08:00')) {
-  return practiceMemberAddedV1.create({ practiceId: 'practice-1', personId: 'person-1', role, displayName: 'Ada Martin', timeZone: 'Europe/Paris' }, { id, occurredAt });
+  return practiceMemberAddedV1.create(
+    { practiceId: 'practice-1', personId: 'person-1', role, displayName: 'Ada Martin', timeZone: 'Europe/Paris' },
+    { id, occurredAt },
+  );
 }
 
 function removed(id: string, role: Role, occurredAt = at('09:00')) {

@@ -48,6 +48,9 @@ function answerOf(shown: GetCalendarDayResult): GetCalendarDayAnswer {
   };
 }
 
-function spanOf({ startsAt, endsAt }: { readonly startsAt: Date; readonly endsAt: Date }): { startsAt: string; endsAt: string } {
+function spanOf({ startsAt, endsAt }: { readonly startsAt: Date; readonly endsAt: Date }): {
+  startsAt: string;
+  endsAt: string;
+} {
   return { startsAt: startsAt.toISOString(), endsAt: endsAt.toISOString() };
 }

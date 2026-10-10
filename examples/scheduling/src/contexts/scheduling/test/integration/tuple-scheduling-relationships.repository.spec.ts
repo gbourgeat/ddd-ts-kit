@@ -12,8 +12,13 @@ describe('TupleSchedulingRelationships', () => {
 
     await relationships.recordCalendar(calendar);
 
-    expect(await tuples.readByObject('calendar:calendar-1', 'desk')).toEqual([{ object: 'calendar:calendar-1', relation: 'desk', subject: 'desk:practice-1.practitioner-1' }]);
-    expect(await tuples.readByObject('calendar:calendar-1', 'practice')).toEqual([{ object: 'calendar:calendar-1', relation: 'practice', subject: 'practice:practice-1' }]);
+    expect(await tuples.readByObject('calendar:calendar-1', 'desk')).toEqual([
+      { object: 'calendar:calendar-1', relation: 'desk', subject: 'desk:practice-1.practitioner-1' },
+    ]);
+
+    expect(await tuples.readByObject('calendar:calendar-1', 'practice')).toEqual([
+      { object: 'calendar:calendar-1', relation: 'practice', subject: 'practice:practice-1' },
+    ]);
   });
 
   it('relates an appointment to its patient and to its calendar', async () => {
@@ -21,8 +26,13 @@ describe('TupleSchedulingRelationships', () => {
 
     await relationships.recordAppointment(appointment);
 
-    expect(await tuples.readByObject('appointment:appointment-1', 'patient')).toEqual([{ object: 'appointment:appointment-1', relation: 'patient', subject: 'user:patient-1' }]);
-    expect(await tuples.readByObject('appointment:appointment-1', 'calendar')).toEqual([{ object: 'appointment:appointment-1', relation: 'calendar', subject: 'calendar:calendar-1' }]);
+    expect(await tuples.readByObject('appointment:appointment-1', 'patient')).toEqual([
+      { object: 'appointment:appointment-1', relation: 'patient', subject: 'user:patient-1' },
+    ]);
+
+    expect(await tuples.readByObject('appointment:appointment-1', 'calendar')).toEqual([
+      { object: 'appointment:appointment-1', relation: 'calendar', subject: 'calendar:calendar-1' },
+    ]);
   });
 
   it('knows nothing more when the same calendar is recorded twice', async () => {

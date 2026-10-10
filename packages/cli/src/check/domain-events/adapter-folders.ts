@@ -18,7 +18,9 @@ export function adapterFolders(project: Project, { context, name, path }: Port):
     const place = inLayer(file, 'infrastructure');
     const target = place?.context === context ? importedFrom(file, name)?.target : undefined;
 
-    if (place === undefined || target?.kind !== 'file' || target.path !== path) return [];
+    if (place === undefined || target?.kind !== 'file' || target.path !== path) {
+      return [];
+    }
 
     const adapters = file.structure.classes.filter((shape) => shape.implemented.includes(name));
 

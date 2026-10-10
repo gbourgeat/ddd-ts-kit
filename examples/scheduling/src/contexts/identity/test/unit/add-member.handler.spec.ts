@@ -18,14 +18,19 @@ import { FakeIdentityRelationships } from '../fakes/identity-relationships.fake.
 import { FakePersonRepository } from '../fakes/person.repository.fake.js';
 import { FakePracticeRepository } from '../fakes/practice.repository.fake.js';
 
-const holders = authorizationModule({ authorizer: new RoleBasedAuthorizer({ roles: { holder: [identityPermissions['member.add']] } }) });
+const holders = authorizationModule({
+  authorizer: new RoleBasedAuthorizer({ roles: { holder: [identityPermissions['member.add']] } }),
+});
+
 const holder = anActor().withRole('holder').build();
 
 describe('Add member', () => {
   it('saves the practice and answers the identifier of the new member', async () => {
     const { application, practiceRepository } = await arrangeWithPractice();
 
-    const id = await application.commandBus.execute(new AddMemberCommand(holder, 'practice-7', { personId: 'person-grace', role: 'practitioner' }));
+    const id = await application.commandBus.execute(
+      new AddMemberCommand(holder, 'practice-7', { personId: 'person-grace', role: 'practitioner' }),
+    );
 
     expect(id).toBe('person-grace');
     expect((await practiceRepository.findById('practice-7'))?.members).toHaveLength(2);
@@ -35,7 +40,9 @@ describe('Add member', () => {
     const { application } = arrange();
 
     await expect(
-      application.commandBus.execute(new AddMemberCommand(anActor().build(), 'practice-7', { personId: 'person-grace', role: 'practitioner' })),
+      application.commandBus.execute(
+        new AddMemberCommand(anActor().build(), 'practice-7', { personId: 'person-grace', role: 'practitioner' }),
+      ),
     ).rejects.toMatchObject({ code: 'FORBIDDEN' });
   });
 
@@ -43,28 +50,62 @@ describe('Add member', () => {
     const { application, relationships } = await arrangeWithPractice();
     const before = application.eventBus.published.length;
 
-    await application.commandBus.execute(new AddMemberCommand(holder, 'practice-7', { personId: 'person-grace', role: 'practitioner' }));
+    await application.commandBus.execute(
+      new AddMemberCommand(holder, 'practice-7', { personId: 'person-grace', role: 'practitioner' }),
+    );
 
     expect(relationships.current).toContain('practitioner person-grace of practice-7');
 
     expect(application.eventBus.published.slice(before)).toMatchObject([
       {
         type: 'identity.practice.member-added',
-        payload: { practiceId: 'practice-7', personId: 'person-grace', role: 'practitioner', displayName: 'Grace Hopper', timeZone: 'Europe/Paris' },
+        payload: {
+          practiceId: 'practice-7',
+          personId: 'person-grace',
+          role: 'practitioner',
+          displayName: 'Grace Hopper',
+          timeZone: 'Europe/Paris',
+        },
       },
     ]);
   });
 
   it.each([
-    { what: 'a person who is already a member', practiceId: 'practice-7', personId: 'person-ada', role: 'assistant', code: 'ALREADY_MEMBER' },
-    { what: 'a person who is not registered', practiceId: 'practice-7', personId: 'stranger', role: 'assistant', code: 'PERSON_NOT_REGISTERED' },
-    { what: 'a role nobody has in a practice', practiceId: 'practice-7', personId: 'person-grace', role: 'patient', code: 'UNKNOWN_ROLE' },
-    { what: 'a practice that does not exist', practiceId: 'practice-9', personId: 'person-grace', role: 'assistant', code: 'PRACTICE_NOT_FOUND' },
+    {
+      what: 'a person who is already a member',
+      practiceId: 'practice-7',
+      personId: 'person-ada',
+      role: 'assistant',
+      code: 'ALREADY_MEMBER',
+    },
+    {
+      what: 'a person who is not registered',
+      practiceId: 'practice-7',
+      personId: 'stranger',
+      role: 'assistant',
+      code: 'PERSON_NOT_REGISTERED',
+    },
+    {
+      what: 'a role nobody has in a practice',
+      practiceId: 'practice-7',
+      personId: 'person-grace',
+      role: 'patient',
+      code: 'UNKNOWN_ROLE',
+    },
+    {
+      what: 'a practice that does not exist',
+      practiceId: 'practice-9',
+      personId: 'person-grace',
+      role: 'assistant',
+      code: 'PRACTICE_NOT_FOUND',
+    },
   ])('refuses $what, and saves and publishes nothing', async ({ practiceId, personId, role, code }) => {
     const { application, practiceRepository } = await arrangeWithPractice();
     const before = application.eventBus.published.length;
 
-    await expect(application.commandBus.execute(new AddMemberCommand(holder, practiceId, { personId, role }))).rejects.toMatchObject({ code });
+    await expect(
+      application.commandBus.execute(new AddMemberCommand(holder, practiceId, { personId, role })),
+    ).rejects.toMatchObject({ code });
 
     expect((await practiceRepository.findById('practice-7'))?.members).toHaveLength(1);
     expect(application.eventBus.published).toHaveLength(before);
@@ -76,7 +117,10 @@ async function arrangeWithPractice() {
 
   await arranged.personRepository.save(aPerson().identifiedBy('person-ada').build());
   await arranged.personRepository.save(aPerson().identifiedBy('person-grace').named('Grace Hopper').build());
-  await arranged.practiceRepository.save(aPractice().identifiedBy('practice-7').inTimeZone('Europe/Paris').managedBy('person-ada').build());
+
+  await arranged.practiceRepository.save(
+    aPractice().identifiedBy('practice-7').inTimeZone('Europe/Paris').managedBy('person-ada').build(),
+  );
 
   return arranged;
 }

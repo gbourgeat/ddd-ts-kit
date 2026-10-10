@@ -4,10 +4,7 @@ export {
   type TraceApplicationOptions,
   type TracedApplication,
 } from './application/trace-application.js';
-export {
-  configureTracing,
-  resetTracingConfiguration,
-} from './configuration/configure-tracing.js';
+export { configureTracing, resetTracingConfiguration } from './configuration/configure-tracing.js';
 export { DEFAULT_LIFECYCLE_HOOKS } from './configuration/default-lifecycle-hooks.js';
 export type { TracingConfiguration } from './configuration/tracing-configuration.js';
 export { correlationIdFromActiveSpan } from './correlation/correlation-id-from-active-span.js';
@@ -23,12 +20,7 @@ export { tracedSubscriber, type TracedSubscriberOptions } from './events/traced-
 export { isNoisePath } from './http/is-noise-path.js';
 export { isNoiseRoute } from './http/is-noise-route.js';
 export { NOISE_PATHS } from './http/noise-paths.js';
-export {
-  tracedRoutes,
-  type TracedResponse,
-  type TracedRoute,
-  type TracedRoutesOptions,
-} from './http/traced-routes.js';
+export { tracedRoutes, type TracedResponse, type TracedRoute, type TracedRoutesOptions } from './http/traced-routes.js';
 export { tracedJob, type TracedJobOptions } from './jobs/traced-job.js';
 export { DROPPED_SPANS_ATTRIBUTE } from './local-root/admit-dependency-span.js';
 export { CORRELATION_ID_ATTRIBUTE, ORIGIN_ATTRIBUTE } from './local-root/correlate.js';

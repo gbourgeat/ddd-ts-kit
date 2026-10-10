@@ -2,7 +2,9 @@ import type { ExecutionContext } from '../../application/execution/execution-con
 import { NoExecutionContextError } from '../../application/execution/no-execution-context-error.js';
 
 export function requiredExecutionContext(context: ExecutionContext | undefined): ExecutionContext {
-  if (context === undefined) throw new NoExecutionContextError();
+  if (context === undefined) {
+    throw new NoExecutionContextError();
+  }
 
   return context;
 }

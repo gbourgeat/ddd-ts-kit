@@ -16,7 +16,9 @@ export class UrlSecretSpanProcessor {
     for (const key of URL_ATTRIBUTES) {
       const value = span.attributes[key];
 
-      if (typeof value === 'string') span.attributes[key] = redactUrl(value);
+      if (typeof value === 'string') {
+        span.attributes[key] = redactUrl(value);
+      }
     }
 
     const query = span.attributes[QUERY_ATTRIBUTE];

@@ -1,7 +1,14 @@
 import { InMemoryReadModelStore } from '@ddd-ts-kit/kernel';
-import { practitionerCriteria, type PractitionerDirectory, type PractitionerEntry } from '../../application/ports/practitioner-directory.port.js';
+import {
+  practitionerCriteria,
+  type PractitionerDirectory,
+  type PractitionerEntry,
+} from '../../application/ports/practitioner-directory.port.js';
 
-export class FakePractitionerDirectory extends InMemoryReadModelStore<PractitionerEntry> implements PractitionerDirectory {
+export class FakePractitionerDirectory
+  extends InMemoryReadModelStore<PractitionerEntry>
+  implements PractitionerDirectory
+{
   constructor() {
     super(practitionerCriteria);
   }

@@ -13,7 +13,9 @@ export interface Structure {
 
 const CLASS = /(?<![\w$.])class\s+([A-Za-z_$][\w$]*)(?:\s*<[^{]*?>)?(?:\s+extends\s+([\w$.]+))?([^{;]*)\{/g;
 const BEFORE_CLASS = /(?:(?<![\w$.])(export)\s+(?:default\s+)?)?(abstract\s+)?$/;
-const FUNCTION = /(?<![\w$.])(export\s+(?:default\s+)?)?(?:async\s+)?function\s*\*?\s*([A-Za-z_$][\w$]*)\s*(?:<[^(]*>)?\s*\(/g;
+
+const FUNCTION =
+  /(?<![\w$.])(export\s+(?:default\s+)?)?(?:async\s+)?function\s*\*?\s*([A-Za-z_$][\w$]*)\s*(?:<[^(]*>)?\s*\(/g;
 
 /**
  * A shallow reading of declarations: classes with their methods, top-level functions, their
@@ -21,7 +23,10 @@ const FUNCTION = /(?<![\w$.])(export\s+(?:default\s+)?)?(?:async\s+)?function\s*
  * braces in strings and comments never count.
  */
 export function readStructure(scan: Scan): Structure {
-  return { classes: [...scan.code.matchAll(CLASS)].map((match) => classShape(scan, match)), functions: topLevelFunctions(scan) };
+  return {
+    classes: [...scan.code.matchAll(CLASS)].map((match) => classShape(scan, match)),
+    functions: topLevelFunctions(scan),
+  };
 }
 
 function classShape(scan: Scan, match: RegExpExecArray): ClassShape {
@@ -59,7 +64,9 @@ function withoutTypeArguments(text: string): string {
   for (;;) {
     const stripped = current.replace(/<[^<>]*>/g, '');
 
-    if (stripped === current) return current;
+    if (stripped === current) {
+      return current;
+    }
 
     current = stripped;
   }
@@ -69,9 +76,12 @@ function topLevelFunctions(scan: Scan): TopLevelFunction[] {
   const { code } = scan;
 
   return [...code.matchAll(FUNCTION)].flatMap((match) => {
-    const signature = braceDepthAt(code, match.index) === 0 ? signatureAt(code, match.index + match[0].length - 1) : undefined;
+    const signature =
+      braceDepthAt(code, match.index) === 0 ? signatureAt(code, match.index + match[0].length - 1) : undefined;
 
-    if (signature === undefined) return [];
+    if (signature === undefined) {
+      return [];
+    }
 
     return [
       {

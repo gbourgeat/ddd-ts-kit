@@ -43,7 +43,19 @@ describe('KnexReadModelTable', () => {
 
   it('writes on the transaction of the unit of work: a failure takes the row back with it', async () => {
     const { table, unitOfWork } = tableOf();
-    const row = { id: 'a1', status: 'booked', title: 't', seats: 1, price: '1', startsAt: stamp.occurredAt, cancelledAt: null, room: null, remote: false, tenantId: 'acme' } as const;
+
+    const row = {
+      id: 'a1',
+      status: 'booked',
+      title: 't',
+      seats: 1,
+      price: '1',
+      startsAt: stamp.occurredAt,
+      cancelledAt: null,
+      room: null,
+      remote: false,
+      tenantId: 'acme',
+    } as const;
 
     const failed = unitOfWork.run(async () => {
       await table.insert({ key: 'a1', row, stamp });
@@ -57,7 +69,20 @@ describe('KnexReadModelTable', () => {
 
   it('replaces a row only while it holds the stamp that was read', async () => {
     const { table } = tableOf();
-    const row = { id: 'a1', status: 'booked', title: 't', seats: 1, price: '1', startsAt: stamp.occurredAt, cancelledAt: null, room: null, remote: false, tenantId: 'acme' } as const;
+
+    const row = {
+      id: 'a1',
+      status: 'booked',
+      title: 't',
+      seats: 1,
+      price: '1',
+      startsAt: stamp.occurredAt,
+      cancelledAt: null,
+      room: null,
+      remote: false,
+      tenantId: 'acme',
+    } as const;
+
     const later = { eventId: 'evt-2', occurredAt: new Date('2026-10-10T12:01:00.000Z') };
 
     await table.insert({ key: 'a1', row, stamp });
@@ -88,7 +113,9 @@ describe('KnexReadModelTable', () => {
       'COMMIT;',
     ]);
 
-    const { rows } = await database.knex.raw<{ rows: { tablename: string }[] }>("select tablename from pg_tables where schemaname = 'read_side' order by 1");
+    const { rows } = await database.knex.raw<{ rows: { tablename: string }[] }>(
+      "select tablename from pg_tables where schemaname = 'read_side' order by 1",
+    );
 
     expect(rows.map(({ tablename }) => tablename)).toEqual(['criteria_contract']);
   });

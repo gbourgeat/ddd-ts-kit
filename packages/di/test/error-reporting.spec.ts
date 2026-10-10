@@ -50,7 +50,9 @@ describe('kernelModule', () => {
 
     await expect(app.resolve(CommandBus).execute(new PlaceOrder('pen'))).rejects.toBe(failure);
 
-    expect(errors.reports).toEqual([{ error: failure, report: { origin: 'command', operation: 'PlaceOrder', severity: 'error' } }]);
+    expect(errors.reports).toEqual([
+      { error: failure, report: { origin: 'command', operation: 'PlaceOrder', severity: 'error' } },
+    ]);
   });
 
   it('gives the reporter the time to send when the application stops, and stops all the same when it cannot', async () => {
@@ -119,7 +121,9 @@ describe('the test application', () => {
     const failing = defineContextModule({
       name: 'reordering',
       register(builder) {
-        builder.job(REORDER, { every: '1d' }).handledByFactory(() => ({ run: () => Promise.reject(new TypeError('x is not a function')) }));
+        builder
+          .job(REORDER, { every: '1d' })
+          .handledByFactory(() => ({ run: () => Promise.reject(new TypeError('x is not a function')) }));
       },
     });
 

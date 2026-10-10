@@ -9,7 +9,9 @@ import { kebabCase } from '../kebab-case.js';
 export function isNamedAfter(stem: string, exported: string): boolean {
   const expected = kebabCase(exported);
 
-  if (stem.replaceAll('.', '-') === expected) return true;
+  if (stem.replaceAll('.', '-') === expected) {
+    return true;
+  }
 
   const [name = '', ...roles] = stem.split('.');
 

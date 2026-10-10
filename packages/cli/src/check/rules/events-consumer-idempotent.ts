@@ -10,7 +10,8 @@ import { perFile } from '../support/per-file.js';
 import { exportedClass } from '../text/exported-class.js';
 import { identifier } from '../text/identifier.js';
 
-const NAME_FIX = 'Give each consumer its own stable name, `<context>.<what-it-does>`: the processed-event store deduplicates per consumer name, so two consumers sharing one skip the events of each other.';
+const NAME_FIX =
+  'Give each consumer its own stable name, `<context>.<what-it-does>`: the processed-event store deduplicates per consumer name, so two consumers sharing one skip the events of each other.';
 
 const STORE_FIX =
   'Pass `processed` (the processed-event store) and `unitOfWork` in the options, or use consume(definition, { consumer, processed, unitOfWork }, handler): delivery is at least once, so a redelivery must be recognised.';
@@ -22,16 +23,21 @@ interface ConsumerName {
 
 export const eventsConsumerIdempotent: Rule = {
   id: 'events/consumer-idempotent',
-  description: 'Every integration event handler is registered or declared with a stable consumer name, unique in the project, and a processed-event store.',
+  description:
+    'Every integration event handler is registered or declared with a stable consumer name, unique in the project, and a processed-event store.',
   scope: 'file',
   run(project) {
-    return perFile(project, this.id, (file) => (file.isTest ? [] : [...flawedRegistrations(file), ...unnamedHandlers(file)]));
+    return perFile(project, this.id, (file) =>
+      file.isTest ? [] : [...flawedRegistrations(file), ...unnamedHandlers(file)],
+    );
   },
   acrossProject(project) {
     // Remembers, across the files of the project, where each consumer name was first seen.
     const firstUse = new Map<string, string>();
 
-    return perFile(project, this.id, (file) => (file.isTest ? [] : [...unregistered(file, project), ...namesTakenElsewhere(file, firstUse)]));
+    return perFile(project, this.id, (file) =>
+      file.isTest ? [] : [...unregistered(file, project), ...namesTakenElsewhere(file, firstUse)],
+    );
   },
 };
 
@@ -39,7 +45,11 @@ export const eventsConsumerIdempotent: Rule = {
 function flawedRegistrations(file: SourceFile): Finding[] {
   const withoutStore = consumerRegistrations(file)
     .filter((registration) => !registration.deduplicates)
-    .map(({ line }) => ({ line, message: 'A consumer is subscribed without a processed-event store.', fix: STORE_FIX }));
+    .map(({ line }) => ({
+      line,
+      message: 'A consumer is subscribed without a processed-event store.',
+      fix: STORE_FIX,
+    }));
 
   const seen = new Set<string>();
 
@@ -56,8 +66,13 @@ function flawedRegistrations(file: SourceFile): Finding[] {
 
 /** The consumer names a file gives, in a registration or in an `@IntegrationEventHandler` declaration, in source order. */
 function consumerNames(file: SourceFile): ConsumerName[] {
-  const registered = consumerRegistrations(file).flatMap(({ name, nameLine }) => (name === undefined ? [] : [{ name, line: nameLine }]));
-  const declared = declaredEventHandlers(file.scan, 'IntegrationEventHandler').flatMap(({ name }) => (name?.literal === undefined ? [] : [{ name: name.literal, line: name.line }]));
+  const registered = consumerRegistrations(file).flatMap(({ name, nameLine }) =>
+    name === undefined ? [] : [{ name, line: nameLine }],
+  );
+
+  const declared = declaredEventHandlers(file.scan, 'IntegrationEventHandler').flatMap(({ name }) =>
+    name?.literal === undefined ? [] : [{ name: name.literal, line: name.line }],
+  );
 
   return [...registered, ...declared].sort((left, right) => left.line - right.line);
 }
@@ -78,20 +93,36 @@ function unnamedHandlers(file: SourceFile): Finding[] {
 function unregistered(file: SourceFile, project: Project): Finding[] {
   const here = inLayer(file, 'application');
 
-  if (here === undefined || here.inside.slice(0, 2).join('/') !== 'integration/handlers' || !file.path.endsWith('.integration-handler.ts')) return [];
+  if (
+    here === undefined ||
+    here.inside.slice(0, 2).join('/') !== 'integration/handlers' ||
+    !file.path.endsWith('.integration-handler.ts')
+  ) {
+    return [];
+  }
 
   const handler = exportedClass(file);
-  const module = project.files.find(({ location }) => inContext(location) && location.context === here.context && location.layer === 'module');
+
+  const module = project.files.find(
+    ({ location }) => inContext(location) && location.context === here.context && location.layer === 'module',
+  );
 
   // A handler written as a subscription (no class) registers itself; without a module file there is nowhere to look.
-  if (handler === undefined || module === undefined || consumerRegistrations(file).length > 0) return [];
+  if (handler === undefined || module === undefined || consumerRegistrations(file).length > 0) {
+    return [];
+  }
+
   // A handler that declares itself needs no registration: its decorator carries the name.
-  if (declaredEventHandlers(file.scan, 'IntegrationEventHandler').length > 0) return [];
+  if (declaredEventHandlers(file.scan, 'IntegrationEventHandler').length > 0) {
+    return [];
+  }
 
   const instance = handler.name.charAt(0).toLowerCase() + handler.name.slice(1);
   const names = [handler.name, instance].map(identifier);
 
-  if (consumerRegistrations(module).some(({ code }) => names.some((name) => name.test(code)))) return [];
+  if (consumerRegistrations(module).some(({ code }) => names.some((name) => name.test(code)))) {
+    return [];
+  }
 
   return [
     {
@@ -106,8 +137,13 @@ function namesTakenElsewhere(file: SourceFile, firstUse: Map<string, string>): F
   return consumerNames(file).flatMap(({ name, line }) => {
     const first = firstUse.get(name);
 
-    if (first === undefined) firstUse.set(name, file.path);
-    if (first === undefined || first === file.path) return [];
+    if (first === undefined) {
+      firstUse.set(name, file.path);
+    }
+
+    if (first === undefined || first === file.path) {
+      return [];
+    }
 
     return [{ line, message: `The consumer name "${name}" is already used in ${first}.`, fix: NAME_FIX }];
   });

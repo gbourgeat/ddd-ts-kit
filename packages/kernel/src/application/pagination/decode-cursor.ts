@@ -21,9 +21,9 @@ function parsedPosition(cursor: string): unknown {
 }
 
 function isCursorPosition(value: unknown): value is CursorPosition {
-  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    return false;
+  }
 
-  return Object.values(value).every(
-    (part) => part === null || ['string', 'number', 'boolean'].includes(typeof part),
-  );
+  return Object.values(value).every((part) => part === null || ['string', 'number', 'boolean'].includes(typeof part));
 }

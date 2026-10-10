@@ -1,11 +1,5 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import {
-  FixedClock,
-  InMemoryEventBus,
-  stampCreation,
-  tenantScopeOf,
-  type IntegrationEvent,
-} from '@ddd-ts-kit/kernel';
+import { FixedClock, InMemoryEventBus, stampCreation, tenantScopeOf, type IntegrationEvent } from '@ddd-ts-kit/kernel';
 import { OutboxPublisher, OutboxRelay } from '@ddd-ts-kit/events';
 import {
   PrismaOutboxStore,

@@ -7,7 +7,12 @@ import { WITH_DATABASE } from './with-database.js';
 export function eventVars(config: Config): RenderContext {
   const { events } = config.stack;
 
-  return { outbox: events === 'outbox', inMemory: events !== 'outbox', wakeable: wakesTheRelay(config), ...providerVars(config) };
+  return {
+    outbox: events === 'outbox',
+    inMemory: events !== 'outbox',
+    wakeable: wakesTheRelay(config),
+    ...providerVars(config),
+  };
 }
 
 /** Whether something can wake the outbox relay before its next poll: the in-memory store, or a Redis protocol server. */
@@ -21,7 +26,9 @@ function wakesTheRelay(config: Config): boolean {
 function providerVars(config: Config): RenderContext {
   const { broker, errors } = config.stack;
 
-  if (broker === 'none') return { providerName: 'inProcessEvents', providerFile: 'in-process-events', provider: 'inProcessEvents()' };
+  if (broker === 'none') {
+    return { providerName: 'inProcessEvents', providerFile: 'in-process-events', provider: 'inProcessEvents()' };
+  }
 
   const given = errors === 'sentry' ? 'config, errors' : 'config';
   const provider = PROVIDED_BROKERS.includes(broker) ? `createEventProvider(${given})` : 'createEventProvider()';

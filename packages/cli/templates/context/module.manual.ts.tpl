@@ -9,9 +9,9 @@ import type { Platform } from '{{paths.contextToPlatform}}/platform.js';
 export interface {{context.pascal}}Wiring {
   readonly name: string;
   readonly useCases: readonly UseCaseDeclaration[];
-{{#if http.any}}
+  {{#if http.any}}
   readonly routes: readonly Route[];
-{{/if}}
+  {{/if}}
 }
 
 export function {{context.camel}}Module(platform: Platform): {{context.pascal}}Wiring {
@@ -24,11 +24,11 @@ export function {{context.camel}}Module(platform: Platform): {{context.pascal}}W
       // ddd-ts-kit:authorization
       // /ddd-ts-kit:authorization
     ],
-{{#if http.any}}
+    {{#if http.any}}
     routes: [
       // ddd-ts-kit:routes
       // /ddd-ts-kit:routes
     ],
-{{/if}}
+    {{/if}}
   };
 }

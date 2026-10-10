@@ -134,7 +134,11 @@ const everyContext: ContextSelection = {
 };
 
 /** Wires the bounded contexts on the kernel and the platform. Also used to generate the contracts and by the end-to-end tests. */
-export function composeApplication(persistence: Persistence, options: ApplicationOptions, contexts: ContextSelection = everyContext): Application {
+export function composeApplication(
+  persistence: Persistence,
+  options: ApplicationOptions,
+  contexts: ContextSelection = everyContext,
+): Application {
   const foundations = layFoundations(persistence, options);
 {{#if audit.on}}
   const guard = authorization(foundations.audit.decisions{{#if http.any}}, options.authenticator{{/if}});
@@ -144,12 +148,25 @@ export function composeApplication(persistence: Persistence, options: Applicatio
 {{/unless}}
 
   const container = createApplication({
-    modules: [kernel(foundations, persistence, options), platformModule(persistence, options), guard, {{#if audit.on}}auditModule(foundations.audit), {{/if}}...contexts.modules],
+    modules: [
+      kernel(foundations, persistence, options),
+      platformModule(persistence, options),
+      guard,
+{{#if audit.on}}
+      auditModule(foundations.audit),
+{{/if}}
+      ...contexts.modules,
+    ],
     authorization: 'required',
     jobs: options.jobs ?? { start: false },
   });
 
-  installAspectRuntime({ logger: container.resolve(Logger), metrics: container.resolve(Metrics), cache: container.resolve(Cache), clock: container.resolve(Clock) });
+  installAspectRuntime({
+    logger: container.resolve(Logger),
+    metrics: container.resolve(Metrics),
+    cache: container.resolve(Cache),
+    clock: container.resolve(Clock),
+  });
 
   return running(container, options, contexts);
 }
@@ -233,7 +250,10 @@ function running(container: Container, options: ApplicationOptions, contexts: Co
 {{/if}}
     container,
 {{#if authz.rebac}}
-    start: () => relateSystemActors().then(() => container.start()).then(() => options.events.start()),
+    start: () =>
+      relateSystemActors()
+        .then(() => container.start())
+        .then(() => options.events.start()),
 {{/if}}
 {{#unless authz.rebac}}
     start: () => container.start().then(() => options.events.start()),

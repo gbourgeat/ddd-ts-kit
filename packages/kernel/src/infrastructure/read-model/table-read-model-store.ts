@@ -24,7 +24,11 @@ export class TableReadModelStore<Row extends object> implements ReadModelStore<R
     return (await this.table.find(key))?.row;
   }
 
-  upsertIfNewer(key: string, stamp: EventStamp, next: (current: Row | undefined) => Row | undefined): Promise<ReadModelWrite> {
+  upsertIfNewer(
+    key: string,
+    stamp: EventStamp,
+    next: (current: Row | undefined) => Row | undefined,
+  ): Promise<ReadModelWrite> {
     return this.written({ key, stamp, next });
   }
 
@@ -35,7 +39,9 @@ export class TableReadModelStore<Row extends object> implements ReadModelStore<R
   async list(criteria: ScopedCriteria<Row>): Promise<Page<Row>> {
     const plan = planCriteria(this.definition, criteria);
 
-    if (plan.empty) return pageOfPlan(plan, [], 0);
+    if (plan.empty) {
+      return pageOfPlan(plan, [], 0);
+    }
 
     const { rows, total } = await this.table.list(plan);
 
@@ -43,7 +49,9 @@ export class TableReadModelStore<Row extends object> implements ReadModelStore<R
   }
 
   private async written(change: StampedChange<Row>): Promise<ReadModelWrite> {
-    if (await this.table.rebuilding()) await this.table.touch(change.key);
+    if (await this.table.rebuilding()) {
+      await this.table.touch(change.key);
+    }
 
     return writeIfNewer(this.table, change);
   }

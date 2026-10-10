@@ -45,7 +45,9 @@ const queriesOf = (scope: ExecutionScope) => new KnexInvoiceQueries(createKnexUn
 async function stored(id: string) {
   const row = await database.knex<InvoiceRow>('invoices').withSchema(BILLING).where({ id }).first();
 
-  if (row === undefined) return undefined;
+  if (row === undefined) {
+    return undefined;
+  }
 
   return {
     amount: row.amount,
@@ -65,7 +67,9 @@ describe('audit columns', () => {
   it('are named the same in every project', async () => {
     const columns = Object.keys(await database.knex('invoices').withSchema(BILLING).columnInfo());
 
-    expect(columns).toEqual(expect.arrayContaining(['created_at', 'created_by', 'updated_at', 'updated_by', 'tenant_id']));
+    expect(columns).toEqual(
+      expect.arrayContaining(['created_at', 'created_by', 'updated_at', 'updated_by', 'tenant_id']),
+    );
   });
 
   it('stamp a created row with the actor and the instant of the work in progress', async () => {
@@ -86,7 +90,9 @@ describe('audit columns', () => {
 
     invoice?.addCharge(50);
 
-    if (invoice !== undefined) await repositoryOf(scopeOf(bob)).save(invoice);
+    if (invoice !== undefined) {
+      await repositoryOf(scopeOf(bob)).save(invoice);
+    }
 
     expect(await stored('inv-1')).toMatchObject({
       amount: 150,
@@ -148,7 +154,9 @@ describe('a list query', () => {
   const ASCENDING = ['inv-a', 'inv-b', 'inv-c', 'inv-d', 'inv-e', 'inv-f', 'inv-g'];
 
   beforeEach(async () => {
-    for (const [id, amount] of Object.entries(AMOUNTS).reverse()) await draft(scopeOf(ada), id, amount);
+    for (const [id, amount] of Object.entries(AMOUNTS).reverse()) {
+      await draft(scopeOf(ada), id, amount);
+    }
 
     await draft(scopeOf(eve), 'inv-of-globex', 100);
   });
@@ -182,22 +190,25 @@ describe('a list query', () => {
     expect(idsOf(page)).toEqual([...ASCENDING].reverse());
   });
 
-  it.each(['asc', 'desc'] as const)('walks every row exactly once by cursor, %s, across rows of equal amount', async (direction) => {
-    const queries = queriesOf(scopeOf(ada));
-    const seen: string[] = [];
-    let cursor: string | undefined;
+  it.each(['asc', 'desc'] as const)(
+    'walks every row exactly once by cursor, %s, across rows of equal amount',
+    async (direction) => {
+      const queries = queriesOf(scopeOf(ada));
+      const seen: string[] = [];
+      let cursor: string | undefined;
 
-    do {
-      const page = await queries.list(
-        cursorPage({ limit: 2, sort: [{ field: 'amount', direction }], ...(cursor === undefined ? {} : { cursor }) }),
-      );
+      do {
+        const page = await queries.list(
+          cursorPage({ limit: 2, sort: [{ field: 'amount', direction }], ...(cursor === undefined ? {} : { cursor }) }),
+        );
 
-      seen.push(...idsOf(page));
-      cursor = page.nextCursor;
-    } while (cursor !== undefined);
+        seen.push(...idsOf(page));
+        cursor = page.nextCursor;
+      } while (cursor !== undefined);
 
-    expect(seen).toEqual(direction === 'asc' ? ASCENDING : [...ASCENDING].reverse());
-  });
+      expect(seen).toEqual(direction === 'asc' ? ASCENDING : [...ASCENDING].reverse());
+    },
+  );
 
   it('names no next cursor on the last page, even when it is full', async () => {
     const page = await queriesOf(scopeOf(ada)).list(cursorPage({ limit: 7 }));
@@ -212,7 +223,10 @@ describe('a list query', () => {
     const first = await queries.list(cursorPage({ limit: 3 }));
 
     await draft(scopeOf(ada), 'inv-0', 10);
-    const second = await queries.list(cursorPage({ limit: 3, ...(first.nextCursor === undefined ? {} : { cursor: first.nextCursor }) }));
+
+    const second = await queries.list(
+      cursorPage({ limit: 3, ...(first.nextCursor === undefined ? {} : { cursor: first.nextCursor }) }),
+    );
 
     expect(idsOf(second)).toEqual(['inv-d', 'inv-e', 'inv-f']);
     expect(idsOf(await queries.list(offsetPage({ limit: 3, offset: 3 })))).toEqual(['inv-c', 'inv-d', 'inv-e']);

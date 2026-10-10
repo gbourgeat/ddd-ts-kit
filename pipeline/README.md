@@ -15,6 +15,7 @@ equivalent and cannot drift, and every gate runs on a laptop with the same comma
 |---|---|---|
 | `eslint.config.mjs` | `eslint.config.mjs` | ESLint with `@ddd-ts-kit/eslint-plugin` |
 | `depcruise-config.mjs` | not installed | a standalone dependency-cruiser configuration that reads `ddd-ts-kit.config.json` each time it is loaded. A project gets `.dependency-cruiser.cjs` instead, written from the config by `ddd-ts-kit depcruise-config --write` (`init` and `generate context` write it) and held current by `depcruise-config --check` |
+| `../biome.json` (the root of this repository) | `biome.json` | the formatter: Biome with its linter and its import organiser off, line width 120. The template the CLI ships is the same file, byte for byte; it is not copied here because Biome accepts one root configuration per repository |
 | `knip.json` | `knip.json` | dead code and unused dependencies |
 | `vitest.config.ts` | `vitest.config.ts` | `unit` and `integration` projects, coverage thresholds per layer |
 | `lefthook.yml` | `lefthook.yml` | git hooks |
@@ -40,6 +41,7 @@ not a benchmark.
 |---|---|---|---|---|
 | 1 | typecheck | `ci:typecheck` | everything the compiler knows, with the native TypeScript 7 | 0.4 s |
 | 1 | lint | `ci:lint` | layer and context imports, purity of the inner layers, stepdown order, function and file size, layout, comments, escape hatches, aggregate and value object shape, handler shape, ports and declarations, access control, events, jobs; typescript-eslint strict with types | 4.5 s |
+| 1 | format | `ci:format` (in the lint job) | a file that is not laid out the way the formatter prints it: Biome, line width 120 | 0.2 s |
 | 1 | architecture | `ci:arch:check` | the tree, `CONTEXT.md`, the glossary, names, required specs and builders, event declarations, the declarations barrel, where adapters are bound, the config and its deviations | 0.3 s |
 | 1 | architecture | `ci:arch:graph` | a `.dependency-cruiser.cjs` that no longer matches the config, then the resolved import graph: the same layer and context rules through barrels, cycles, orphans, dev dependencies and test files imported by production code, undeclared packages | 0.8 s |
 | 1 | dead code | `ci:deadcode` | unused files, exports, types and dependencies | 0.6 s |

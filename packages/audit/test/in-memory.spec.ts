@@ -23,7 +23,16 @@ auditTrailContract(runner, {
 describe('InMemoryAuditTrail', () => {
   it('chains by what chainOf answers when one is given', async () => {
     const perContext = new InMemoryAuditTrail({ chainOf: (record) => record.context ?? 'none' });
-    const record = { id: 'entry-1', occurredAt: new Date(0), category: 'command', action: 'A', outcome: 'succeeded', correlationId: 'c', origin: 'cli' } as const;
+
+    const record = {
+      id: 'entry-1',
+      occurredAt: new Date(0),
+      category: 'command',
+      action: 'A',
+      outcome: 'succeeded',
+      correlationId: 'c',
+      origin: 'cli',
+    } as const;
 
     await perContext.record({ ...record, actor: { id: 'ada', type: 'user' }, context: 'billing' });
 

@@ -28,7 +28,14 @@ interface Edge {
 }
 
 /** A request is authenticated once, then handled inside the execution scope, so infrastructure sees who acts and under which correlation. */
-export function httpBoundary({ authenticator, executionScope, errorMapper, clock, logger, errors }: Edge): HttpBoundary {
+export function httpBoundary({
+  authenticator,
+  executionScope,
+  errorMapper,
+  clock,
+  logger,
+  errors,
+}: Edge): HttpBoundary {
   const report = reportHttpErrors(errors);
 
   return {
@@ -39,9 +46,17 @@ export function httpBoundary({ authenticator, executionScope, errorMapper, clock
     around: tracedRoutes(),
     // The message of the error may quote data: only the code and the route are logged.
     onError: (error, context) => {
-      if (context.problem.status < 500) return;
+      if (context.problem.status < 500) {
+        return;
+      }
 
-      logger.error('request failed', { requestId: context.requestId, correlationId: context.correlationId, operationId: context.operationId, errorCode: context.problem.code });
+      logger.error('request failed', {
+        requestId: context.requestId,
+        correlationId: context.correlationId,
+        operationId: context.operationId,
+        errorCode: context.problem.code,
+      });
+
       report(error, context);
     },
   };

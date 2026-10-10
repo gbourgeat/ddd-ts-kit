@@ -16,17 +16,23 @@ describe('TimeZone', () => {
     expect(result).toMatchObject({ ok: false, error: { code: 'UNKNOWN_TIME_ZONE' } });
   });
 
-  it.each(['Europe/Paris', 'America/New_York', 'Asia/Kolkata', 'Pacific/Auckland'])('accepts the IANA zone %s', (zone) => {
-    const result = TimeZone.create(zone);
+  it.each(['Europe/Paris', 'America/New_York', 'Asia/Kolkata', 'Pacific/Auckland'])(
+    'accepts the IANA zone %s',
+    (zone) => {
+      const result = TimeZone.create(zone);
 
-    expect(result.ok).toBe(true);
-  });
+      expect(result.ok).toBe(true);
+    },
+  );
 
-  it.each(['Paris', 'Europe/Atlantis', '+02:00', 'CET', 'UTC'])('refuses "%s", which is not the zone of a place', (zone) => {
-    const result = TimeZone.create(zone);
+  it.each(['Paris', 'Europe/Atlantis', '+02:00', 'CET', 'UTC'])(
+    'refuses "%s", which is not the zone of a place',
+    (zone) => {
+      const result = TimeZone.create(zone);
 
-    expect(result).toMatchObject({ ok: false, error: { code: 'UNKNOWN_TIME_ZONE' } });
-  });
+      expect(result).toMatchObject({ ok: false, error: { code: 'UNKNOWN_TIME_ZONE' } });
+    },
+  );
 
   it('reads the same zone whatever its case and the spaces around it', () => {
     const typed = unwrap(TimeZone.create(' europe/paris '));

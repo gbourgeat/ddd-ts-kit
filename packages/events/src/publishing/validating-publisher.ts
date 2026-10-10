@@ -31,11 +31,7 @@ export function validatingPublisher(
   };
 }
 
-function assertDeclared(
-  event: IntegrationEvent,
-  registry: EventRegistry,
-  options: ValidatingPublisherOptions,
-): void {
+function assertDeclared(event: IntegrationEvent, registry: EventRegistry, options: ValidatingPublisherOptions): void {
   const definition = registry.get(event.type, event.version);
 
   if (definition === undefined) {

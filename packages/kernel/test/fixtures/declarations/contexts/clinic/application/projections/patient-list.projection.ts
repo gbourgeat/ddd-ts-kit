@@ -14,7 +14,10 @@ export class PatientListProjection {
 
   @On(PatientRegistered)
   async registered(event: IntegrationEvent<PatientRegisteredPayload>): Promise<ReadModelWrite> {
-    return this.patients.upsertIfNewer(event.payload.patientId, stampOf(event), () => ({ id: event.payload.patientId, visits: 0 }));
+    return this.patients.upsertIfNewer(event.payload.patientId, stampOf(event), () => ({
+      id: event.payload.patientId,
+      visits: 0,
+    }));
   }
 
   @On(VisitScheduled, { name: 'clinic.visit.scheduled' })

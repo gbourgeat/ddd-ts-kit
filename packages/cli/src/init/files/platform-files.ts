@@ -12,10 +12,14 @@ export function platformFiles(config: Config): InitFile[] {
     [`${config.sourceRoot}/main.ts`, 'init/main.ts.tpl'],
     file('tracing.ts'),
     file('job-settings.ts'),
-    ...['config/app-config.ts', 'config/load-config.ts', 'config/read-tracing.ts', 'config/config-error.ts'].map((name) => file(name)),
+    ...['config/app-config.ts', 'config/load-config.ts', 'config/read-tracing.ts', 'config/config-error.ts'].map(
+      (name) => file(name),
+    ),
     file('observability/create-logger.ts', config.stack.logger),
     file('observability/create-metrics.ts'),
-    ...['resilience-settings', 'default-resilience', 'self-governed', 'adapter-aspects', 'own-policy'].map((name) => file(`resilience/${name}.ts`)),
+    ...['resilience-settings', 'default-resilience', 'self-governed', 'adapter-aspects', 'own-policy'].map((name) =>
+      file(`resilience/${name}.ts`),
+    ),
     ...compositionFiles(config),
     ...eventFiles(config),
     ...httpFiles(config),
@@ -33,9 +37,16 @@ function compositionFiles(config: Config): InitFile[] {
   const file = (name: string, variant?: string): InitFile => platformFile(config, name, variant);
   const shared = [file('compose-application.ts', family)];
 
-  if (family === 'manual') return [...shared, ...MANUAL.map((name) => file(name, family)), file('jobs/configured-job-scheduler.ts')];
+  if (family === 'manual') {
+    return [...shared, ...MANUAL.map((name) => file(name, family)), file('jobs/configured-job-scheduler.ts')];
+  }
 
-  return [...shared, ...TSYRINGE.map((name) => file(name, family)), file('buses/create-command-bus.ts'), file('buses/create-query-bus.ts')];
+  return [
+    ...shared,
+    ...TSYRINGE.map((name) => file(name, family)),
+    file('buses/create-command-bus.ts'),
+    file('buses/create-query-bus.ts'),
+  ];
 }
 
 function eventFiles(config: Config): InitFile[] {
@@ -47,7 +58,10 @@ function eventFiles(config: Config): InitFile[] {
     file('events/in-process-events.ts'),
     ...when(broker !== 'none', [file('events/create-event-provider.ts', broker)]),
     ...when(broker === 'kafka', [file('events/aggregate-key-of.ts')]),
-    ...when(broker === 'custom', [file('events/custom-event-bus.ts'), file('events/custom-event-bus.contract.spec.ts')]),
+    ...when(broker === 'custom', [
+      file('events/custom-event-bus.ts'),
+      file('events/custom-event-bus.contract.spec.ts'),
+    ]),
     ...when(events === 'outbox', [file('events/start-outbox-relay.ts')]),
   ];
 }
@@ -56,7 +70,9 @@ function httpFiles(config: Config): InitFile[] {
   const { http, docsUi, cache } = config.stack;
   const file = (name: string, variant?: string): InitFile => platformFile(config, name, variant);
 
-  if (http === 'none') return [];
+  if (http === 'none') {
+    return [];
+  }
 
   return [
     file('http/start-http-server.ts', http),

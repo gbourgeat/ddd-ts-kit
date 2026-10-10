@@ -57,7 +57,13 @@ async function createAppointmentTable(knex: Knex): Promise<void> {
     table.timestamp('confirm_before', { useTz: true });
     table.text('cancelled_by');
     table.text('cancellation_reason');
-    table.check("status in ('requested', 'booked', 'cancelled', 'expired', 'completed', 'no-show')", [], 'appointments_status_known');
+
+    table.check(
+      "status in ('requested', 'booked', 'cancelled', 'expired', 'completed', 'no-show')",
+      [],
+      'appointments_status_known',
+    );
+
     table.check('starts_at < ends_at and ends_at <= held_until', [], 'appointments_slot_ordered');
     table.index(['patient_id', 'practitioner_id', 'starts_at']);
     table.index(['status', 'confirm_before']);
@@ -65,9 +71,15 @@ async function createAppointmentTable(knex: Knex): Promise<void> {
     auditColumns(table);
   });
 
-  // A time on a calendar is held once: this constraint is the guard, and the only one. Two transactions that both read
-  // a free slot cannot both write it, whatever each believed when it checked. A lock (Redis or any other) is no
-  // substitute: a paused holder, a failover or an eviction gives two holders, which wastes work but must never book twice.
+  await holdEachSlotOnce(knex);
+}
+
+/**
+ * A time on a calendar is held once: this constraint is the guard, and the only one. Two transactions that both read
+ * a free slot cannot both write it, whatever each believed when it checked. A lock (Redis or any other) is no
+ * substitute: a paused holder, a failover or an eviction gives two holders, which wastes work but must never book twice.
+ */
+async function holdEachSlotOnce(knex: Knex): Promise<void> {
   await knex.raw(
     `alter table ??.?? add constraint ${APPOINTMENT_SLOT_HELD_ONCE} exclude using gist (calendar_id with =, tstzrange(starts_at, held_until, '[)') with &&) where (status in ('requested', 'booked'))`,
     [SCHEDULING_SCHEMA, 'appointments'],

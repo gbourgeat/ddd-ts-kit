@@ -1,5 +1,12 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { FixedClock, FixedExecutionScope, executionContext, unwrap, type Actor, type ExecutionContext } from '@ddd-ts-kit/kernel';
+import {
+  FixedClock,
+  FixedExecutionScope,
+  executionContext,
+  unwrap,
+  type Actor,
+  type ExecutionContext,
+} from '@ddd-ts-kit/kernel';
 import { repositoryContract } from '@ddd-ts-kit/testing/contracts';
 import type { Calendar } from '../../domain/aggregates/calendar.aggregate.js';
 import { Exception } from '../../domain/value-objects/exception.vo.js';
@@ -20,7 +27,10 @@ const expectations = {
       .offering('consultation', { buffer: 10, needsConfirmation: true })
       .build(),
   mutate: (changed: Calendar) => {
-    changed.addException(unwrap(Exception.create('2026-05-01', [unwrap(Range.create('10:00', '12:00'))])), new Date('2026-01-02T00:00:00.000Z'));
+    changed.addException(
+      unwrap(Exception.create('2026-05-01', [unwrap(Range.create('10:00', '12:00'))])),
+      new Date('2026-01-02T00:00:00.000Z'),
+    );
   },
   idOf: (subject: Calendar) => subject.id,
   stateOf: (subject: Calendar) => subject.toState(),

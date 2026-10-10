@@ -21,14 +21,21 @@ export function writeDocs(ws: Workspace, config: Config): void {
   const contexts = readContexts(ws, config);
 
   for (const context of contexts) {
-    if (context.declared && context.onDisk) refreshContextDoc(ws, config, context.name);
+    if (context.declared && context.onDisk) {
+      refreshContextDoc(ws, config, context.name);
+    }
   }
 
   writeContextMap(ws, contextMapLines(contexts));
   refreshBarrels(ws, config);
 
   // Written by people from here on: never replaced, not even with --force.
-  if (!ws.exists(INTEGRATION_README)) ws.create(INTEGRATION_README, renderTemplate('docs/integration-readme.md.tpl', { integration: { strategy: brokerStrategy(config) } }));
+  if (!ws.exists(INTEGRATION_README)) {
+    ws.create(
+      INTEGRATION_README,
+      renderTemplate('docs/integration-readme.md.tpl', { integration: { strategy: brokerStrategy(config) } }),
+    );
+  }
 }
 
 function writeContextMap(ws: Workspace, lines: readonly string[]): void {
@@ -42,6 +49,9 @@ function writeContextMap(ws: Workspace, lines: readonly string[]): void {
     );
   }
 
-  if (existing === undefined) ws.create(CONTEXT_MAP, next);
-  else ws.update(CONTEXT_MAP, next);
+  if (existing === undefined) {
+    ws.create(CONTEXT_MAP, next);
+  } else {
+    ws.update(CONTEXT_MAP, next);
+  }
 }

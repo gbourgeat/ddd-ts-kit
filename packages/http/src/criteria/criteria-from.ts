@@ -10,10 +10,19 @@ import { parseCriteriaQuery } from './parse-criteria-query.js';
  * issues name `query.filter.<field>` and a stable code. For a route whose query schema holds
  * other parameters too; `criteriaQuerySchema` is the same reading as a schema.
  */
-export function criteriaFrom<Row>(query: unknown, definition: CriteriaDefinition<Row>, options: CriteriaQueryOptions = {}): Criteria<Row> {
+export function criteriaFrom<Row>(
+  query: unknown,
+  definition: CriteriaDefinition<Row>,
+  options: CriteriaQueryOptions = {},
+): Criteria<Row> {
   const parsed = parseCriteriaQuery(query, definition, options);
 
-  if (parsed.ok) return parsed.value;
+  if (parsed.ok) {
+    return parsed.value;
+  }
 
-  throw new ValidationError(parsed.error.map((issue) => ({ ...issue, path: `query.${issue.path}` })), 'The request is not valid.');
+  throw new ValidationError(
+    parsed.error.map((issue) => ({ ...issue, path: `query.${issue.path}` })),
+    'The request is not valid.',
+  );
 }

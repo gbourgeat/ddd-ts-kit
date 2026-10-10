@@ -17,7 +17,13 @@ import { OfferFreedSlotCommand } from './offer-freed-slot.command.js';
  * that holds the slot until the offer expires. Both are saved in the unit of work of the
  * command: a waiter never leaves the waitlist without the slot being held for them.
  */
-@CommandHandler(OfferFreedSlotCommand, [WaitlistRepository, CalendarRepository, AppointmentRepository, IdGenerator, Clock])
+@CommandHandler(OfferFreedSlotCommand, [
+  WaitlistRepository,
+  CalendarRepository,
+  AppointmentRepository,
+  IdGenerator,
+  Clock,
+])
 export class OfferFreedSlotHandler implements CommandHandler<OfferFreedSlotCommand> {
   constructor(
     private readonly waitlistRepository: WaitlistRepository,
@@ -30,17 +36,28 @@ export class OfferFreedSlotHandler implements CommandHandler<OfferFreedSlotComma
   async execute({ calendarId, freed }: OfferFreedSlotCommand): Promise<string | undefined> {
     const calendar = await this.calendarRepository.findById(calendarId);
 
-    if (calendar === undefined) throw new UnknownCalendarError(calendarId);
+    if (calendar === undefined) {
+      throw new UnknownCalendarError(calendarId);
+    }
 
     const slot = Slot.between(freed.startsAt, freed.endsAt, freed.heldUntil);
-    const target = await this.waitlistRepository.findById(Waitlist.idOf(calendarId, calendar.timeZone.dayOf(slot.startsAt)));
+
+    const target = await this.waitlistRepository.findById(
+      Waitlist.idOf(calendarId, calendar.timeZone.dayOf(slot.startsAt)),
+    );
+
     const held = await this.appointmentRepository.heldOn(calendarId, slot.startsAt, slot.heldUntil);
     const now = this.clock.now();
     const offer = target?.offer({ slot, calendar, held: held.map((appointment) => appointment.slot) }, now);
 
-    if (target === undefined || offer === undefined) return undefined;
+    if (target === undefined || offer === undefined) {
+      return undefined;
+    }
 
-    const requested = Appointment.request(this.ids.next(), bookingOf(offer, calendar), { now, confirmBefore: offer.expiresAt });
+    const requested = Appointment.request(this.ids.next(), bookingOf(offer, calendar), {
+      now,
+      confirmBefore: offer.expiresAt,
+    });
 
     await this.waitlistRepository.save(target);
     await this.appointmentRepository.save(requested);

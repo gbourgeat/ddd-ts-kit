@@ -43,7 +43,10 @@ export function parseConfig(raw: unknown): Config {
     rules: mapEntries(source['rules'], String),
     domainAllowedPackages: strings(source['domainAllowedPackages'], KERNEL),
     applicationAllowedPackages: strings(source['applicationAllowedPackages'], APPLICATION),
-    publishedLanguageAllowedPackages: strings(source['publishedLanguageAllowedPackages'], contractPackages(source['stack'])),
+    publishedLanguageAllowedPackages: strings(
+      source['publishedLanguageAllowedPackages'],
+      contractPackages(source['stack']),
+    ),
     limits: parseLimits(source['limits']),
     onePerFile: parseOnePerFile(source['onePerFile']),
     stack: parseStack(source['stack']),
@@ -76,21 +79,33 @@ function parseContext(value: unknown): ContextConfig {
 }
 
 function parseUpstream(value: unknown): Upstream | undefined {
-  if (typeof value === 'string') return { context: value, relationship: 'published-language' };
-  if (!isRecord(value) || typeof value['context'] !== 'string') return undefined;
+  if (typeof value === 'string') {
+    return { context: value, relationship: 'published-language' };
+  }
+
+  if (!isRecord(value) || typeof value['context'] !== 'string') {
+    return undefined;
+  }
 
   return { context: value['context'], relationship: text(value['relationship'], 'published-language') };
 }
 
 function parseExtraDirectory(value: unknown): string | undefined {
-  if (typeof value === 'string') return posix(value);
-  if (isRecord(value) && typeof value['path'] === 'string') return posix(value['path']);
+  if (typeof value === 'string') {
+    return posix(value);
+  }
+
+  if (isRecord(value) && typeof value['path'] === 'string') {
+    return posix(value['path']);
+  }
 
   return undefined;
 }
 
 function parseStandardInterfaces(value: unknown): Record<string, string | false> {
-  const entries = Object.entries(isRecord(value) ? value : {}).flatMap(([name, instead]): [string, string | false][] => (instead === false || (typeof instead === 'string' && instead !== '') ? [[name, instead]] : []));
+  const entries = Object.entries(isRecord(value) ? value : {}).flatMap(([name, instead]): [string, string | false][] =>
+    instead === false || (typeof instead === 'string' && instead !== '') ? [[name, instead]] : [],
+  );
 
   return Object.fromEntries(entries);
 }
@@ -100,7 +115,10 @@ function parseLimits(value: unknown): Limits {
 
   return {
     maxParameters: positive(raw['maxParameters'], DEFAULT_LIMITS.maxParameters),
-    maxFunctionLines: Math.min(positive(raw['maxFunctionLines'], DEFAULT_LIMITS.maxFunctionLines), FUNCTION_LINES_CEILING),
+    maxFunctionLines: Math.min(
+      positive(raw['maxFunctionLines'], DEFAULT_LIMITS.maxFunctionLines),
+      FUNCTION_LINES_CEILING,
+    ),
   };
 }
 

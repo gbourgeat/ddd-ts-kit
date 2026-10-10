@@ -84,7 +84,9 @@ describe('keeping relationships in sync with the aggregates', () => {
     await app.commandBus.execute(new CreateDocument(ada, 'acme', 'Roadmap'));
     const before = tuples.all();
 
-    await expect(app.commandBus.execute(new CreateDocument(ada, 'acme', 'Roadmap'))).rejects.toBeInstanceOf(ConflictError);
+    await expect(app.commandBus.execute(new CreateDocument(ada, 'acme', 'Roadmap'))).rejects.toBeInstanceOf(
+      ConflictError,
+    );
 
     expect(tuples.all()).toEqual(before);
     expect([...documents.documents.keys()]).toEqual(['id-1']);
@@ -93,7 +95,9 @@ describe('keeping relationships in sync with the aggregates', () => {
   it('refuses the creation to somebody who is not a member of the workspace, before anything is written', async () => {
     const { app, tuples, documents } = await workspace();
 
-    await expect(app.commandBus.execute(new CreateDocument(bob, 'acme', 'Plan'))).rejects.toBeInstanceOf(ForbiddenError);
+    await expect(app.commandBus.execute(new CreateDocument(bob, 'acme', 'Plan'))).rejects.toBeInstanceOf(
+      ForbiddenError,
+    );
 
     expect(documents.documents.size).toBe(0);
     expect(tuples.all()).toHaveLength(2);

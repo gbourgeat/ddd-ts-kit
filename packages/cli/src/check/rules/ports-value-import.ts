@@ -14,7 +14,8 @@ interface Named {
 
 export const portsValueImport: Rule = {
   id: 'ports/value-import',
-  description: 'A class named in a dependency list or bound with bind or rebind is imported as a value, never with `import type`: the class is the token.',
+  description:
+    'A class named in a dependency list or bound with bind or rebind is imported as a value, never with `import type`: the class is the token.',
   scope: 'file',
   run(project) {
     return perFile(project, this.id, (file) => {
@@ -33,7 +34,9 @@ export const portsValueImport: Rule = {
 
 /** The names a file uses as injection tokens: in its dependency lists and as the first argument of `bind` and `rebind`. */
 function tokensOf(file: SourceFile): Named[] {
-  const listed = dependencyLists(file).flatMap(({ owner, names }) => names.map(({ name, line }) => ({ name, line, where: `the dependency list of ${owner}` })));
+  const listed = dependencyLists(file).flatMap(({ owner, names }) =>
+    names.map(({ name, line }) => ({ name, line, where: `the dependency list of ${owner}` })),
+  );
 
   const bound = bindingCalls(file)
     .filter(({ method, token }) => (method === 'bind' || method === 'rebind') && IDENTIFIER.test(token?.code ?? ''))

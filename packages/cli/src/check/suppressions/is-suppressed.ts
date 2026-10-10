@@ -7,7 +7,8 @@ import type { Suppression } from './find-suppressions.js';
  */
 export function isSuppressed(violation: Violation, suppressions: readonly Suppression[]): boolean {
   return suppressions.some((suppression) => {
-    const sameRule = suppression.file === violation.file && suppression.ruleId === violation.ruleId && suppression.reason !== '';
+    const sameRule =
+      suppression.file === violation.file && suppression.ruleId === violation.ruleId && suppression.reason !== '';
 
     return sameRule && (violation.line === suppression.line + 1 || (suppression.line === 1 && violation.line === 1));
   });

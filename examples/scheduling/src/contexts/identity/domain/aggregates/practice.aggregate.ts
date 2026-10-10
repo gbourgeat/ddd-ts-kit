@@ -43,7 +43,13 @@ export class Practice extends AggregateRoot<string> {
   }
 
   static create(id: string, opening: Opening, now: Date): Practice {
-    const created = new Practice(id, { registeredAt: now, name: opening.name.trim(), timeZone: opening.timeZone, members: [] });
+    const created = new Practice(id, {
+      registeredAt: now,
+      name: opening.name.trim(),
+      timeZone: opening.timeZone,
+      members: [],
+    });
+
     const facts = { name: created.state.name, timeZone: opening.timeZone.value, managerId: opening.manager.personId };
 
     created.record(new PracticeOpened(id, now, facts));
@@ -62,7 +68,13 @@ export class Practice extends AggregateRoot<string> {
     }
 
     const membership = Membership.create(newcomer.personId, newcomer.role);
-    const facts = { personId: membership.personId, role: membership.role, displayName: newcomer.displayName.value, timeZone: this.state.timeZone.value };
+
+    const facts = {
+      personId: membership.personId,
+      role: membership.role,
+      displayName: newcomer.displayName.value,
+      timeZone: this.state.timeZone.value,
+    };
 
     this.state = { ...this.state, members: [...this.state.members, membership] };
     this.record(new PracticeMemberAdded(this.id, now, facts));

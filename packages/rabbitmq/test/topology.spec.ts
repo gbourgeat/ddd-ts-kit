@@ -49,9 +49,7 @@ describe.skipIf(AMQP_URL === undefined)('RabbitMqEventBus: topology', { timeout:
         },
         { name: 'billing.ordering.order.placed.dead', role: 'dead', durable: true, arguments: quorum },
       ],
-      bindings: [
-        { exchange: 'shop-events', queue: 'billing.ordering.order.placed', routingKey: PLACED },
-      ],
+      bindings: [{ exchange: 'shop-events', queue: 'billing.ordering.order.placed', routingKey: PLACED }],
     });
   });
 

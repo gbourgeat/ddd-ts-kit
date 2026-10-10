@@ -19,7 +19,9 @@ export class CreateCalendarHandler implements CommandHandler<CreateCalendarComma
   async execute({ practiceId, practitionerId }: CreateCalendarCommand): Promise<string> {
     const practitioner = await this.practitioners.get(`${practiceId}.${practitionerId}`);
 
-    if (practitioner === undefined) throw new UnknownPractitionerError(practiceId, practitionerId);
+    if (practitioner === undefined) {
+      throw new UnknownPractitionerError(practiceId, practitionerId);
+    }
 
     // The calendar lives by the wall clock of its practice.
     const timeZone = unwrap(TimeZone.create(practitioner.timeZone));

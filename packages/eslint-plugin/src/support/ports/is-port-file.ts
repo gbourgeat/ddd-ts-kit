@@ -6,7 +6,9 @@ import type { Config } from '../../project/config.js';
 export function isPortFile(config: Config, file: string): boolean {
   const location = locate(config, file);
 
-  if (location.area !== 'context' || isTestFile(file, location)) return false;
+  if (location.area !== 'context' || isTestFile(file, location)) {
+    return false;
+  }
 
   const [folder] = location.inside;
   const isRepository = location.layer === 'domain' && folder === 'repositories' && file.endsWith('.repository.ts');

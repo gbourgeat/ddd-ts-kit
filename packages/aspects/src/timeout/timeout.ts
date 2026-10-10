@@ -53,11 +53,15 @@ function withSignal(invocation: Invocation, joinPoint: JoinPoint, signal: AbortS
   const position = joinPoint.arity - 1;
   const given = invocation.args[position];
 
-  if (position < 0 || !(given === undefined || given instanceof AbortSignal)) return invocation.args;
+  if (position < 0 || !(given === undefined || given instanceof AbortSignal)) {
+    return invocation.args;
+  }
 
   const args = [...invocation.args];
 
-  while (args.length < position) args.push(undefined);
+  while (args.length < position) {
+    args.push(undefined);
+  }
 
   args[position] = given === undefined ? signal : AbortSignal.any([given, signal]);
 

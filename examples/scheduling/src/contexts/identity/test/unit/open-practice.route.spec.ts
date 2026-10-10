@@ -13,7 +13,11 @@ describe('POST /practices', () => {
   it('answers 201 when the use case succeeds', async () => {
     const commands = new InMemoryCommandBus().register(OpenPracticeCommand, { execute: async () => 'open-practice-1' });
 
-    const response = await executeRoute(openPracticeRoute(commands), { params, query: {}, headers: {}, body, raw: undefined }, { validateResponses: true });
+    const response = await executeRoute(
+      openPracticeRoute(commands),
+      { params, query: {}, headers: {}, body, raw: undefined },
+      { validateResponses: true },
+    );
 
     expect(response.status).toBe(201);
     expect(response.body).toEqual({ id: 'open-practice-1' });
@@ -43,7 +47,13 @@ describe('POST /practices', () => {
   ])('refuses %s with 422', async (_what, malformed) => {
     const commands = new InMemoryCommandBus().register(OpenPracticeCommand, { execute: async () => 'open-practice-1' });
 
-    const response = await executeRoute(openPracticeRoute(commands), { params, query: {}, headers: {}, body: malformed, raw: undefined });
+    const response = await executeRoute(openPracticeRoute(commands), {
+      params,
+      query: {},
+      headers: {},
+      body: malformed,
+      raw: undefined,
+    });
 
     expect(response.status).toBe(422);
     expect(response.body).toMatchObject({ code: 'VALIDATION_FAILED' });
@@ -59,7 +69,13 @@ describe('POST /practices', () => {
       },
     });
 
-    const response = await executeRoute(openPracticeRoute(commands), { params, query: {}, headers: {}, body, raw: undefined });
+    const response = await executeRoute(openPracticeRoute(commands), {
+      params,
+      query: {},
+      headers: {},
+      body,
+      raw: undefined,
+    });
 
     expect(response.status).toBe(422);
     expect(response.body).toMatchObject({ code });

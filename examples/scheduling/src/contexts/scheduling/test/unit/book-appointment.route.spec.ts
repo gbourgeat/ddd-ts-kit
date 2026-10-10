@@ -23,19 +23,46 @@ describe('POST /appointments', () => {
       },
     });
 
-    const response = await executeRoute(bookAppointmentRoute(commands), request({ calendarId: 'calendar-1', appointmentTypeId: 'consultation', startsAt: '2026-03-02T09:00:00+01:00', patientId: 'patient-1' }), { validateResponses: true });
+    const response = await executeRoute(
+      bookAppointmentRoute(commands),
+      request({
+        calendarId: 'calendar-1',
+        appointmentTypeId: 'consultation',
+        startsAt: '2026-03-02T09:00:00+01:00',
+        patientId: 'patient-1',
+      }),
+      { validateResponses: true },
+    );
 
     expect(response).toMatchObject({ status: 201, body: { id: 'appointment-1' } });
-    expect(received).toMatchObject([{ calendarId: 'calendar-1', wish: { patientId: 'patient-1', appointmentTypeId: 'consultation', startsAt: new Date('2026-03-02T08:00:00.000Z') } }]);
+
+    expect(received).toMatchObject([
+      {
+        calendarId: 'calendar-1',
+        wish: {
+          patientId: 'patient-1',
+          appointmentTypeId: 'consultation',
+          startsAt: new Date('2026-03-02T08:00:00.000Z'),
+        },
+      },
+    ]);
   });
 
   it.each([
     ['without a calendar', { appointmentTypeId: 'consultation', startsAt: '2026-03-02T09:00:00Z' }],
     ['without an appointment type', { calendarId: 'calendar-1', startsAt: '2026-03-02T09:00:00Z' }],
-    ['whose start is no instant', { calendarId: 'calendar-1', appointmentTypeId: 'consultation', startsAt: 'monday morning' }],
-    ['whose patient is empty', { calendarId: 'calendar-1', appointmentTypeId: 'consultation', startsAt: '2026-03-02T09:00:00Z', patientId: '' }],
+    [
+      'whose start is no instant',
+      { calendarId: 'calendar-1', appointmentTypeId: 'consultation', startsAt: 'monday morning' },
+    ],
+    [
+      'whose patient is empty',
+      { calendarId: 'calendar-1', appointmentTypeId: 'consultation', startsAt: '2026-03-02T09:00:00Z', patientId: '' },
+    ],
   ])('refuses a body %s with 422', async (_case, body) => {
-    const commands = new InMemoryCommandBus().register(BookAppointmentCommand, { execute: async () => 'appointment-1' });
+    const commands = new InMemoryCommandBus().register(BookAppointmentCommand, {
+      execute: async () => 'appointment-1',
+    });
 
     const response = await executeRoute(bookAppointmentRoute(commands), request(body), { validateResponses: true });
 
@@ -53,7 +80,16 @@ describe('POST /appointments', () => {
       },
     });
 
-    const response = await executeRoute(bookAppointmentRoute(commands), request({ calendarId: 'calendar-1', appointmentTypeId: 'consultation', startsAt: '2026-03-02T09:00:00+01:00', patientId: 'patient-1' }), { validateResponses: true, errorMapper });
+    const response = await executeRoute(
+      bookAppointmentRoute(commands),
+      request({
+        calendarId: 'calendar-1',
+        appointmentTypeId: 'consultation',
+        startsAt: '2026-03-02T09:00:00+01:00',
+        patientId: 'patient-1',
+      }),
+      { validateResponses: true, errorMapper },
+    );
 
     expect(response).toMatchObject({ status, body: { code } });
   });

@@ -1,5 +1,11 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { FixedClock, FixedExecutionScope, executionContext, type Actor, type ExecutionContext } from '@ddd-ts-kit/kernel';
+import {
+  FixedClock,
+  FixedExecutionScope,
+  executionContext,
+  type Actor,
+  type ExecutionContext,
+} from '@ddd-ts-kit/kernel';
 import { repositoryContract } from '@ddd-ts-kit/testing/contracts';
 import type { Reminder } from '../../domain/aggregates/reminder.aggregate.js';
 import { KnexReminderRepository } from '../../infrastructure/persistence/knex-reminder.repository.js';
@@ -63,9 +69,18 @@ describe.each([
   it('answers as due the planned reminders within 24 hours of a start still to come, the earliest first', async () => {
     const repository = await createRepository();
 
-    await repository.save(aReminder().identifiedBy('due-second').plannedFor(new Date('2026-03-10T08:00:00.000Z')).build());
-    await repository.save(aReminder().identifiedBy('due-first').plannedFor(new Date('2026-03-09T12:00:00.000Z')).build());
-    await repository.save(aReminder().identifiedBy('too-early').plannedFor(new Date('2026-03-10T09:00:00.001Z')).build());
+    await repository.save(
+      aReminder().identifiedBy('due-second').plannedFor(new Date('2026-03-10T08:00:00.000Z')).build(),
+    );
+
+    await repository.save(
+      aReminder().identifiedBy('due-first').plannedFor(new Date('2026-03-09T12:00:00.000Z')).build(),
+    );
+
+    await repository.save(
+      aReminder().identifiedBy('too-early').plannedFor(new Date('2026-03-10T09:00:00.001Z')).build(),
+    );
+
     await repository.save(aReminder().identifiedBy('started').plannedFor(dayBefore).build());
 
     const due = await repository.findDue(dayBefore);

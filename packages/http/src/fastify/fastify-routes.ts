@@ -5,10 +5,7 @@ import type { FastifyMountOptions } from './fastify-mount-options.js';
 import { mountFastify } from './mount-fastify.js';
 
 /** The same as `mountFastify`, as a plugin: `app.register(fastifyRoutes(routes), { prefix })`. */
-export function fastifyRoutes(
-  routes: readonly Route[],
-  options: FastifyMountOptions = {},
-): FastifyPluginAsync {
+export function fastifyRoutes(routes: readonly Route[], options: FastifyMountOptions = {}): FastifyPluginAsync {
   assertUniqueRoutes(routes);
 
   return async (instance) => {

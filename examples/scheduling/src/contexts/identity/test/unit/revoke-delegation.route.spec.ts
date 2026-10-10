@@ -11,9 +11,15 @@ const body = undefined;
 
 describe('DELETE /practices/:practiceId/desks/:practitionerId/delegations/:delegationId', () => {
   it('answers 200 when the use case succeeds', async () => {
-    const commands = new InMemoryCommandBus().register(RevokeDelegationCommand, { execute: async () => 'revoke-delegation-1' });
+    const commands = new InMemoryCommandBus().register(RevokeDelegationCommand, {
+      execute: async () => 'revoke-delegation-1',
+    });
 
-    const response = await executeRoute(revokeDelegationRoute(commands), { params, query: {}, headers: {}, body, raw: undefined }, { validateResponses: true });
+    const response = await executeRoute(
+      revokeDelegationRoute(commands),
+      { params, query: {}, headers: {}, body, raw: undefined },
+      { validateResponses: true },
+    );
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual({ id: 'revoke-delegation-1' });
@@ -32,7 +38,9 @@ describe('DELETE /practices/:practiceId/desks/:practitionerId/delegations/:deleg
 
     await executeRoute(revokeDelegationRoute(commands), { params, query: {}, headers: {}, body, raw: undefined });
 
-    expect(sent).toMatchObject([{ desk: { practiceId: 'practice-1', practitionerId: 'person-2' }, delegationId: 'delegation-1' }]);
+    expect(sent).toMatchObject([
+      { desk: { practiceId: 'practice-1', practitionerId: 'person-2' }, delegationId: 'delegation-1' },
+    ]);
   });
 
   it.each([
@@ -45,7 +53,13 @@ describe('DELETE /practices/:practiceId/desks/:practitionerId/delegations/:deleg
       },
     });
 
-    const response = await executeRoute(revokeDelegationRoute(commands), { params, query: {}, headers: {}, body, raw: undefined });
+    const response = await executeRoute(revokeDelegationRoute(commands), {
+      params,
+      query: {},
+      headers: {},
+      body,
+      raw: undefined,
+    });
 
     expect(response.status).toBe(422);
     expect(response.body).toMatchObject({ code });

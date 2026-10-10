@@ -17,7 +17,10 @@ import { FakeIdentityRelationships } from '../fakes/identity-relationships.fake.
 import { FakePersonRepository } from '../fakes/person.repository.fake.js';
 import { FakePracticeRepository } from '../fakes/practice.repository.fake.js';
 
-const holders = authorizationModule({ authorizer: new RoleBasedAuthorizer({ roles: { holder: [identityPermissions['delegation.revoke']] } }) });
+const holders = authorizationModule({
+  authorizer: new RoleBasedAuthorizer({ roles: { holder: [identityPermissions['delegation.revoke']] } }),
+});
+
 const holder = anActor().withRole('holder').build();
 
 const desk = { practiceId: 'practice-7', practitionerId: 'person-grace' };
@@ -35,7 +38,9 @@ describe('Revoke delegation', () => {
   it('is refused to an actor who does not hold the permission delegation.revoke', async () => {
     const { application } = arrange();
 
-    await expect(application.commandBus.execute(new RevokeDelegationCommand(anActor().build(), desk, 'delegation-1'))).rejects.toMatchObject({
+    await expect(
+      application.commandBus.execute(new RevokeDelegationCommand(anActor().build(), desk, 'delegation-1')),
+    ).rejects.toMatchObject({
       code: 'FORBIDDEN',
     });
   });
@@ -52,7 +57,13 @@ describe('Revoke delegation', () => {
     expect(application.eventBus.published.slice(before)).toMatchObject([
       {
         type: 'identity.delegation.revoked',
-        payload: { delegationId: 'delegation-1', practiceId: 'practice-7', practitionerId: 'person-grace', assistantId: 'person-linus', cause: 'revoked' },
+        payload: {
+          delegationId: 'delegation-1',
+          practiceId: 'practice-7',
+          practitionerId: 'person-grace',
+          assistantId: 'person-linus',
+          cause: 'revoked',
+        },
       },
     ]);
   });
@@ -63,7 +74,9 @@ describe('Revoke delegation', () => {
     await application.commandBus.execute(new RevokeDelegationCommand(holder, desk, 'delegation-1'));
     const before = application.eventBus.published.length;
 
-    await expect(application.commandBus.execute(new RevokeDelegationCommand(holder, desk, 'delegation-1'))).rejects.toMatchObject({
+    await expect(
+      application.commandBus.execute(new RevokeDelegationCommand(holder, desk, 'delegation-1')),
+    ).rejects.toMatchObject({
       code: 'DELEGATION_NOT_ACTIVE',
     });
 
@@ -78,7 +91,9 @@ describe('Revoke delegation', () => {
     const { application, delegationRepository } = await arrangeWithDelegation();
     const before = application.eventBus.published.length;
 
-    await expect(application.commandBus.execute(new RevokeDelegationCommand(holder, onDesk, delegationId))).rejects.toMatchObject({
+    await expect(
+      application.commandBus.execute(new RevokeDelegationCommand(holder, onDesk, delegationId)),
+    ).rejects.toMatchObject({
       code: 'DELEGATION_NOT_FOUND',
     });
 
@@ -90,7 +105,9 @@ describe('Revoke delegation', () => {
 async function arrangeWithDelegation() {
   const arranged = arrange();
 
-  await arranged.delegationRepository.save(aDelegation().identifiedBy('delegation-1').onDesk('practice-7', 'person-grace').givenTo('person-linus').build());
+  await arranged.delegationRepository.save(
+    aDelegation().identifiedBy('delegation-1').onDesk('practice-7', 'person-grace').givenTo('person-linus').build(),
+  );
 
   return arranged;
 }

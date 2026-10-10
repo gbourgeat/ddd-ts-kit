@@ -11,7 +11,10 @@ import { CalendarRepository } from '../../domain/repositories/calendar.repositor
 import { aCalendar } from '../builders/calendar.builder.js';
 import { FakeCalendarRepository } from '../fakes/calendar.repository.fake.js';
 
-const holders = authorizationModule({ authorizer: new RoleBasedAuthorizer({ roles: { holder: [schedulingPermissions['calendar.set-opening-hours']] } }) });
+const holders = authorizationModule({
+  authorizer: new RoleBasedAuthorizer({ roles: { holder: [schedulingPermissions['calendar.set-opening-hours']] } }),
+});
+
 const holder = anActor().withRole('holder').build();
 
 const week = [
@@ -41,7 +44,9 @@ describe('Set opening hours', () => {
   it('is refused to an actor who does not hold the permission calendar.set-opening-hours', async () => {
     const { application } = await arrange();
 
-    await expect(application.commandBus.execute(new SetOpeningHoursCommand(anActor().build(), 'calendar-1', week))).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(
+      application.commandBus.execute(new SetOpeningHoursCommand(anActor().build(), 'calendar-1', week)),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
   });
 
   it('replaces the hours the calendar had: a weekday left out is closed', async () => {
@@ -71,15 +76,21 @@ describe('Set opening hours', () => {
   ] as const)('refuses %s and leaves the calendar as it was', async (_case, ranges) => {
     const { application, calendarRepository } = await arrange();
 
-    await expect(application.commandBus.execute(new SetOpeningHoursCommand(holder, 'calendar-1', ranges))).rejects.toMatchObject({ code: 'INVALID_RANGE' });
+    await expect(
+      application.commandBus.execute(new SetOpeningHoursCommand(holder, 'calendar-1', ranges)),
+    ).rejects.toMatchObject({ code: 'INVALID_RANGE' });
 
-    expect((await calendarRepository.findById('calendar-1'))?.rangesOn('2026-03-03').map((range) => range.start)).toEqual(['08:00']);
+    expect(
+      (await calendarRepository.findById('calendar-1'))?.rangesOn('2026-03-03').map((range) => range.start),
+    ).toEqual(['08:00']);
   });
 
   it('refuses a calendar that does not exist', async () => {
     const { application } = await arrange();
 
-    await expect(application.commandBus.execute(new SetOpeningHoursCommand(holder, 'calendar-9', week))).rejects.toMatchObject({ code: 'UNKNOWN_CALENDAR' });
+    await expect(
+      application.commandBus.execute(new SetOpeningHoursCommand(holder, 'calendar-9', week)),
+    ).rejects.toMatchObject({ code: 'UNKNOWN_CALENDAR' });
   });
 });
 

@@ -2,7 +2,9 @@ import { AuthorizedCommand, type Actor } from '@ddd-ts-kit/kernel';
 import { Requires } from '@ddd-ts-kit/kernel/declarations';
 import { schedulingPermissions } from '../../authorization/scheduling.permissions.js';
 
-@Requires(schedulingPermissions['calendar.add-time-off'], { resource: (command: AddTimeOffCommand) => ({ type: 'calendar', id: command.calendarId }) })
+@Requires(schedulingPermissions['calendar.add-time-off'], {
+  resource: (command: AddTimeOffCommand) => ({ type: 'calendar', id: command.calendarId }),
+})
 export class AddTimeOffCommand extends AuthorizedCommand<string> {
   constructor(
     actor: Actor,

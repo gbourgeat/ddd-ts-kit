@@ -178,7 +178,9 @@ describe('PolicyAccess.scope', () => {
   });
 
   it('gives nothing to the anonymous actor', async () => {
-    expect(await new PolicyAccess({ authorizer: new AllowAll(), clock }).scope(anonymousActor(), read, 'article')).toEqual({
+    expect(
+      await new PolicyAccess({ authorizer: new AllowAll(), clock }).scope(anonymousActor(), read, 'article'),
+    ).toEqual({
       kind: 'none',
     });
   });

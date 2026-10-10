@@ -7,7 +7,8 @@ export const repositoryKind: Kind = {
   name: 'repository',
   aliases: [],
   usage: 'repository <context> <Aggregate> [--tenant-scoped]',
-  summary: "A repository port (an abstract class of the domain), its in-memory fake, the adapter of the project's ORM with its mapper, the contract suite both pass, and its registration.",
+  summary:
+    "A repository port (an abstract class of the domain), its in-memory fake, the adapter of the project's ORM with its mapper, the contract suite both pass, and its registration.",
   positionals: ['context', 'Aggregate'],
   writesShared: true,
   run: (request) => {

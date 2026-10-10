@@ -5,7 +5,14 @@ import { cli, read, scaffoldEverything, tempDir, write } from './helpers.js';
 const ADR = '# The amount schema is shared with the route until it moves\n';
 /** The rules these tests break on purpose: what else the generated project holds is judged by the generator's own tests. */
 const LAYERS = ['--rule', 'layer/domain-purity', '--rule', 'layer/application-inward'];
-const SUPPRESSIBLE = [...LAYERS, '--rule', 'config/suppression-needs-reason', '--rule', 'governance/recorded-deviation'];
+
+const SUPPRESSIBLE = [
+  ...LAYERS,
+  '--rule',
+  'config/suppression-needs-reason',
+  '--rule',
+  'governance/recorded-deviation',
+];
 
 describe('check', () => {
   let root: string;
@@ -29,7 +36,12 @@ describe('check', () => {
     const json = checkJsonOf(cli(root, 'check', ...LAYERS, '--json'));
 
     expect(json).toMatchObject({ ok: false, errors: 2, warnings: 0 });
-    expect(json.violations.map((violation) => violation.ruleId)).toEqual(['layer/application-inward', 'layer/domain-purity']);
+
+    expect(json.violations.map((violation) => violation.ruleId)).toEqual([
+      'layer/application-inward',
+      'layer/domain-purity',
+    ]);
+
     expect(json.violations.every((violation) => violation.fix.length > 20)).toBe(true);
     expect(cli(root, 'check', ...LAYERS, '--format', 'json').json()).toEqual(json);
   });
@@ -37,7 +49,10 @@ describe('check', () => {
   it('prints GitHub annotations with --format github', () => {
     const { stdout } = cli(root, 'check', ...LAYERS, '--format', 'github');
 
-    expect(stdout).toContain(`::error file=${AGGREGATE},line=1,title=layer/domain-purity::The domain imports the package "zod".`);
+    expect(stdout).toContain(
+      `::error file=${AGGREGATE},line=1,title=layer/domain-purity::The domain imports the package "zod".`,
+    );
+
     expect(stdout.split('\n').filter((line) => line.startsWith('::error file='))).toHaveLength(2);
   });
 
@@ -75,7 +90,14 @@ describe('check', () => {
 describe('check and the config', () => {
   it('applies the severities of the config: warn does not fail, off does not run', () => {
     const root = projectWithImpureAggregate('check-severity');
-    const deviations = [{ what: 'rules.layer/domain-purity', adr: '0002', reason: 'The amount schema is shared with the route until it moves.' }];
+
+    const deviations = [
+      {
+        what: 'rules.layer/domain-purity',
+        adr: '0002',
+        reason: 'The amount schema is shared with the route until it moves.',
+      },
+    ];
 
     write(root, 'docs/adr/0002-shared-amount-schema.md', ADR);
     changeConfig(root, { rules: { 'layer/domain-purity': 'warn' }, deviations });
@@ -96,7 +118,12 @@ describe('check and the config', () => {
     const source = read(root, AGGREGATE);
 
     write(root, 'docs/adr/0003-shared-amount-schema.md', ADR);
-    write(root, AGGREGATE, `// ddd-ts-kit-disable-next-line layer/domain-purity -- ADR-0003: the amount schema is shared with the route until it moves\n${source}`);
+
+    write(
+      root,
+      AGGREGATE,
+      `// ddd-ts-kit-disable-next-line layer/domain-purity -- ADR-0003: the amount schema is shared with the route until it moves\n${source}`,
+    );
 
     const justified = cli(root, 'check', ...SUPPRESSIBLE);
 

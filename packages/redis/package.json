@@ -6,13 +6,37 @@
   "type": "module",
   "sideEffects": false,
   "exports": {
-    ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" },
-    "./event-bus": { "types": "./dist/event-bus.d.ts", "default": "./dist/event-bus.js" },
-    "./testing": { "types": "./dist/testing.d.ts", "default": "./dist/testing.js" }
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./event-bus": {
+      "types": "./dist/event-bus.d.ts",
+      "default": "./dist/event-bus.js"
+    },
+    "./testing": {
+      "types": "./dist/testing.d.ts",
+      "default": "./dist/testing.js"
+    }
   },
-  "files": ["dist"],
-  "dependencies": { "@ddd-ts-kit/kernel": "0.1.0" },
-  "peerDependencies": { "ioredis": "^5.0.0 || ^6.0.0", "@ddd-ts-kit/testing": "0.1.0" },
-  "peerDependenciesMeta": { "@ddd-ts-kit/testing": { "optional": true } },
-  "devDependencies": { "ioredis": "^6.0.0", "@ddd-ts-kit/events": "0.1.0", "@ddd-ts-kit/testing": "0.1.0" }
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@ddd-ts-kit/kernel": "0.1.0"
+  },
+  "peerDependencies": {
+    "ioredis": "^5.0.0 || ^6.0.0",
+    "@ddd-ts-kit/testing": "0.1.0"
+  },
+  "peerDependenciesMeta": {
+    "@ddd-ts-kit/testing": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "ioredis": "^6.0.0",
+    "@ddd-ts-kit/events": "0.1.0",
+    "@ddd-ts-kit/testing": "0.1.0"
+  }
 }

@@ -5,7 +5,11 @@ import { cli, read, walk } from '../helpers.js';
 import { runIn } from './run-in.js';
 import { NATIVE_COMPILER } from './type-errors.js';
 
-const INTEGRATION = ['docs/integration/README.md', 'docs/integration/asyncapi.json', 'docs/integration/event-catalog.md'];
+const INTEGRATION = [
+  'docs/integration/README.md',
+  'docs/integration/asyncapi.json',
+  'docs/integration/event-catalog.md',
+];
 
 /** What `npm run build` and the documentation checks of the pipeline run: the compiler in build mode, then every generated contract, written and compared. */
 export function buildAndCheckDocuments(root: string): void {
@@ -22,7 +26,9 @@ export function buildAndCheckDocuments(root: string): void {
   expect(cli(root, 'check').code).toBe(0);
   expect(cli(root, 'docs', '--check').code).toBe(0);
 
-  if (!fs.existsSync(path.join(root, 'scripts/openapi.ts'))) return;
+  if (!fs.existsSync(path.join(root, 'scripts/openapi.ts'))) {
+    return;
+  }
 
   node('dist/scripts/openapi.js');
   node('dist/scripts/openapi.js', '--check');
