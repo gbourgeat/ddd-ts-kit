@@ -25,7 +25,7 @@ export function isRegisteredAfterCommit(module: SourceFile | undefined, classNam
 }
 
 function variablesHolding(code: string, className: string): string[] {
-  const held = new RegExp(`(?<![\\w$.])(?:const|let|var)\\s+([A-Za-z_$][\\w$]*)\\s*=[^;=]*?(?<![\\w$])new\\s+${className.replace(/\$/g, '\\$')}(?![\\w$])`, 'g');
+  const held = new RegExp(`(?<![\\w$.])(?:const|let|var)\\s+([A-Za-z_$][\\w$]*)\\s*=[^;=]*?(?<![\\w$])new\\s+${className.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![\\w$])`, 'g');
 
   return [...code.matchAll(held)].flatMap((match) => match[1] ?? []);
 }
