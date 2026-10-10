@@ -1,0 +1,70 @@
+import { RelationTupleStore, type RelationTuple } from '@ddd-ts-kit/auth/rebac';
+import { Adapter } from '@ddd-ts-kit/kernel/declarations';
+import { IdentityRelationships } from '../../application/ports/identity-relationships.port.js';
+import { ownPolicy } from '../../../../platform/resilience/own-policy.js';
+
+type Membership = Parameters<IdentityRelationships['recordMembership']>[0];
+type Delegation = Parameters<IdentityRelationships['forgetDelegation']>[0];
+
+/**
+ * Writes the relationships as tuples of the store the authorizer reads. The store works in the
+ * unit of work of the command, so nothing is retried here: the policy of this adapter is empty.
+ */
+@Adapter(IdentityRelationships, { kind: 'external', aspects: [ownPolicy()] }, [RelationTupleStore])
+export class RemoteIdentityRelationships implements IdentityRelationships {
+  constructor(private readonly tuples: RelationTupleStore) {}
+
+  async recordPerson(personId: string): Promise<void> {
+    await this.tuples.write([{ object: `person:${personId}`, relation: 'self', subject: userOf(personId) }]);
+  }
+
+  async recordMembership(membership: Membership): Promise<void> {
+    await this.tuples.write(tuplesOfMembership(membership));
+  }
+
+  async forgetMembership(membership: Membership): Promise<void> {
+    await this.tuples.delete(tuplesOfMembership(membership));
+  }
+
+  async recordDelegation(delegation: Delegation & { readonly availabilityIncluded: boolean }): Promise<void> {
+    const [whole, availability] = tuplesOfDelegation(delegation);
+
+    await this.tuples.write(delegation.availabilityIncluded ? [whole, availability] : [whole]);
+  }
+
+  async forgetDelegation(delegation: Delegation): Promise<void> {
+    await this.tuples.delete(tuplesOfDelegation(delegation));
+  }
+}
+
+/** The role in the practice and, for a practitioner, the desk they hold in it. */
+function tuplesOfMembership({ practiceId, personId, role }: Membership): readonly RelationTuple[] {
+  const practice = `practice:${practiceId}`;
+  const member = { object: practice, relation: role, subject: userOf(personId) };
+
+  if (role !== 'practitioner') {
+    return [member];
+  }
+
+  const desk = deskOf(practiceId, personId);
+
+  return [member, { object: desk, relation: 'holder', subject: userOf(personId) }, { object: desk, relation: 'practice', subject: practice }];
+}
+
+/** The delegation on the whole desk, then the one on its availabilities only. */
+function tuplesOfDelegation({ practiceId, practitionerId, assistantId }: Delegation): readonly [RelationTuple, RelationTuple] {
+  const desk = deskOf(practiceId, practitionerId);
+
+  return [
+    { object: desk, relation: 'delegate', subject: userOf(assistantId) },
+    { object: desk, relation: 'availability_delegate', subject: userOf(assistantId) },
+  ];
+}
+
+function userOf(personId: string): string {
+  return `user:${personId}`;
+}
+
+function deskOf(practiceId: string, practitionerId: string): string {
+  return `desk:${practiceId}.${practitionerId}`;
+}
