@@ -60,7 +60,7 @@ export const STANDARD_FIXTURES: readonly Fixture[] = [
         [`${BILLING}/infrastructure/external/cache.service.ts`]:
           "import type { Cache } from '@ddd-ts-kit/kernel';\n\nexport class CacheService implements Cache {}\n",
         [`${BILLING}/presentation/http/request-context.dto.ts`]:
-          "import { type ILogger } from '#src/contexts/billing/presentation/http/legacy.js';\n\nexport interface RequestContext {\n  readonly logger: ILogger;\n}\n",
+          "import { type ILogger } from '@/contexts/billing/presentation/http/legacy.js';\n\nexport interface RequestContext {\n  readonly logger: ILogger;\n}\n",
         'src/platform/current-user.ts': 'export interface CurrentUser {\n  readonly id: string;\n}\n',
       },
       { [CONFIG_FILE]: config({ standardInterfaces: { CurrentUser: false } }) },

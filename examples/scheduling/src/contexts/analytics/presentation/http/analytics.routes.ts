@@ -1,7 +1,7 @@
 import type { Route } from '@ddd-ts-kit/http';
 import type { CommandBus, QueryBus } from '@ddd-ts-kit/kernel';
 // ddd-ts-kit:imports
-import { searchOccupancyRoute } from '#src/contexts/analytics/presentation/http/search-occupancy.route.js';
+import { searchOccupancyRoute } from '@/contexts/analytics/presentation/http/search-occupancy.route.js';
 // /ddd-ts-kit:imports
 
 export function analyticsRoutes(commands: CommandBus, queries: QueryBus): readonly Route[] {

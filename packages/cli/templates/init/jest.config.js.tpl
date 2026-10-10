@@ -2,8 +2,10 @@ import { governedJestCoverage } from '@ddd-ts-kit/testing/coverage';
 
 export default {
   testEnvironment: 'node',
-  // Under this condition an import alias answers the source file, not the compiled one (package.json, "imports").
-  testEnvironmentOptions: { customExportConditions: ['{{alias.condition}}', 'node', 'node-addons'] },
+  // Jest does not read tsconfig: the import aliases of its "paths", repeated here, and held equal by `ddd-ts-kit check` (imports/alias-declared).
+  moduleNameMapper: {
+    {{alias.jestMapper}}
+  },
   testMatch: ['<rootDir>/{{config.sourceRoot}}/**/*.spec.ts', '<rootDir>/test/architecture/**/*.spec.ts'],
   extensionsToTreatAsEsm: ['.ts'],
   transform: {

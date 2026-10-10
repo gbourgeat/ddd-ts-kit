@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
 import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
-import { platformTestModule } from '#src/platform/platform-test.module.js';
+import { platformTestModule } from '@/platform/platform-test.module.js';
 import {
   appointmentBookedV1,
   appointmentCancelledV1,
@@ -10,11 +10,11 @@ import {
   appointmentExpiredV1,
   appointmentMarkedNoShowV1,
   appointmentRescheduledV1,
-} from '#src/contexts/scheduling/published-language/index.js';
-import { OutcomeRegister } from '#src/contexts/analytics/application/ports/outcome-register.port.js';
-import { OutcomesProjection } from '#src/contexts/analytics/application/projections/outcomes.projection.js';
-import { anAppointmentFact } from '#src/contexts/analytics/test/builders/appointment-fact.builder.js';
-import { FakeOutcomeRegister } from '#src/contexts/analytics/test/fakes/outcome-register.fake.js';
+} from '@/contexts/scheduling/published-language/index.js';
+import { OutcomeRegister } from '@/contexts/analytics/application/ports/outcome-register.port.js';
+import { OutcomesProjection } from '@/contexts/analytics/application/projections/outcomes.projection.js';
+import { anAppointmentFact } from '@/contexts/analytics/test/builders/appointment-fact.builder.js';
+import { FakeOutcomeRegister } from '@/contexts/analytics/test/fakes/outcome-register.fake.js';
 
 const fact = anAppointmentFact();
 const booked = appointmentBookedV1.create({ ...fact, status: 'booked' }, at('00'));

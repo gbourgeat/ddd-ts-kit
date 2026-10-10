@@ -2,15 +2,15 @@ import type { Knex } from 'knex';
 import { Clock, ExecutionScope, stampCreation, stampUpdate } from '@ddd-ts-kit/kernel';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
 import { KnexContext, auditRow, insertIgnoringConflict, optimisticUpdate } from '@ddd-ts-kit/knex';
-import type { Delegation } from '#src/contexts/identity/domain/aggregates/delegation.aggregate.js';
-import type { Desk } from '#src/contexts/identity/domain/value-objects/desk.vo.js';
-import { DelegationRepository } from '#src/contexts/identity/domain/repositories/delegation.repository.js';
-import { IDENTITY_SCHEMA } from '#src/contexts/identity/infrastructure/persistence/identity.schema.js';
-import { DelegationMapper } from '#src/contexts/identity/infrastructure/persistence/delegation.mapper.js';
+import type { Delegation } from '@/contexts/identity/domain/aggregates/delegation.aggregate.js';
+import type { Desk } from '@/contexts/identity/domain/value-objects/desk.vo.js';
+import { DelegationRepository } from '@/contexts/identity/domain/repositories/delegation.repository.js';
+import { IDENTITY_SCHEMA } from '@/contexts/identity/infrastructure/persistence/identity.schema.js';
+import { DelegationMapper } from '@/contexts/identity/infrastructure/persistence/delegation.mapper.js';
 import type {
   DelegationColumns,
   DelegationRow,
-} from '#src/contexts/identity/infrastructure/persistence/delegation-row.schema.js';
+} from '@/contexts/identity/infrastructure/persistence/delegation-row.schema.js';
 
 type VersionedDelegation = DelegationColumns & { readonly version: number };
 

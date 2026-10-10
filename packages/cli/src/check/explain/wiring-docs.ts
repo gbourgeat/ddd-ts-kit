@@ -34,12 +34,12 @@ export class InvoiceIssuedEventHandler {}`,
   'declarations/barrel-current': {
     why: 'With stack.assembly set to barrel, the composition root assembles a context from <context>.declarations.ts and from nothing else. A role file added by hand and missing from the barrel compiles, passes its unit tests and is never registered. The barrel is derived from the tree, one export per role file sorted by path, so it is compared with what the tree says; with stack.assembly set to discovery the role files are found at startup and a barrel left behind is reported instead.',
     bad: `// billing.declarations.ts, while application/authorization/only-issuer-voids.policy.ts exists
-export * from '#src/contexts/billing/application/commands/issue-invoice/issue-invoice.command.js';
-export * from '#src/contexts/billing/application/commands/issue-invoice/issue-invoice.handler.js';`,
+export * from '@/contexts/billing/application/commands/issue-invoice/issue-invoice.command.js';
+export * from '@/contexts/billing/application/commands/issue-invoice/issue-invoice.handler.js';`,
     good: `// billing.declarations.ts, rewritten by \`ddd-ts-kit generate\` and \`ddd-ts-kit docs\`
-export * from '#src/contexts/billing/application/authorization/only-issuer-voids.policy.js';
-export * from '#src/contexts/billing/application/commands/issue-invoice/issue-invoice.command.js';
-export * from '#src/contexts/billing/application/commands/issue-invoice/issue-invoice.handler.js';`,
+export * from '@/contexts/billing/application/authorization/only-issuer-voids.policy.js';
+export * from '@/contexts/billing/application/commands/issue-invoice/issue-invoice.command.js';
+export * from '@/contexts/billing/application/commands/issue-invoice/issue-invoice.handler.js';`,
   },
   'config/valid': {
     why: 'Every other rule reads the config: a misspelled upstream or rule id silently disables a check. The contexts on disk and in the config have to be the same set, or part of the code is not checked at all. A function limit above the ceiling of 100 lines and an allowance without a file or a reason are read as something else than what is written, so they are reported too.',

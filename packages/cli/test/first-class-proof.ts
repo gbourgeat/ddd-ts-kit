@@ -38,7 +38,7 @@ export function writeBusinessDecisions(root: string): void {
   edit(root, SHIPPING_HANDLER, [
     [
       /(import \{[^}]*\} from '@ddd-ts-kit\/kernel';\n)/,
-      "$1import { PrepareParcelCommand } from '#src/contexts/shipping/application/commands/prepare-parcel/prepare-parcel.command.js';\n",
+      "$1import { PrepareParcelCommand } from '@/contexts/shipping/application/commands/prepare-parcel/prepare-parcel.command.js';\n",
     ],
     [
       /(async handle\(event: InvoiceIssuedV2\): Promise<void> \{\n)[^\n]*\n/,
@@ -65,7 +65,7 @@ export function writeBusinessDecisions(root: string): void {
   edit(root, 'src/contexts/billing/domain/aggregates/invoice.aggregate.ts', [
     [
       "import { AggregateRoot } from '@ddd-ts-kit/kernel';",
-      "import { AggregateRoot } from '@ddd-ts-kit/kernel';\nimport { InvoiceIssued } from '#src/contexts/billing/domain/events/invoice-issued.event.js';",
+      "import { AggregateRoot } from '@ddd-ts-kit/kernel';\nimport { InvoiceIssued } from '@/contexts/billing/domain/events/invoice-issued.event.js';",
     ],
     [
       '    const created = new Invoice(id, { registeredAt: now });',
@@ -110,7 +110,7 @@ function edit(root: string, file: string, replacements: readonly (readonly [stri
 /** The proof itself, run by the generated project: what a client and another context observe, never the database. */
 const PROOF_SPEC = `import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { collectEvents, eventually, expectStatus, type HttpClient } from '@ddd-ts-kit/testing/e2e';
-import { startApplication, type RunningApplication } from '#test/e2e/support/start-application.js';
+import { startApplication, type RunningApplication } from '$test/e2e/support/start-application.js';
 
 interface Page<Line> {
   readonly items: readonly Line[];

@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { createErrorMapper, executeRoute } from '@ddd-ts-kit/http';
 import { InMemoryQueryBus } from '@ddd-ts-kit/kernel';
-import { errorStatuses } from '#src/platform/http/error-statuses.js';
-import { GetAppointmentQuery } from '#src/contexts/scheduling/application/queries/get-appointment/get-appointment.query.js';
-import { AppointmentNotFoundError } from '#src/contexts/scheduling/domain/errors/appointment-not-found.error.js';
-import { getAppointmentRoute } from '#src/contexts/scheduling/presentation/http/get-appointment.route.js';
-import { anAgendaEntry } from '#src/contexts/scheduling/test/builders/agenda-entry.builder.js';
+import { errorStatuses } from '@/platform/http/error-statuses.js';
+import { GetAppointmentQuery } from '@/contexts/scheduling/application/queries/get-appointment/get-appointment.query.js';
+import { AppointmentNotFoundError } from '@/contexts/scheduling/domain/errors/appointment-not-found.error.js';
+import { getAppointmentRoute } from '@/contexts/scheduling/presentation/http/get-appointment.route.js';
+import { anAgendaEntry } from '@/contexts/scheduling/test/builders/agenda-entry.builder.js';
 
 const entry = anAgendaEntry().withMany({ id: 'appointment-1', status: 'cancelled', cancelledBy: 'patient' }).build();
 

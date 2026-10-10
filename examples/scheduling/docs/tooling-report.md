@@ -629,3 +629,57 @@ carries a suppression or a coverage ignore comment.
 - The generator lock of `scripts/kit.mjs` moved from the temporary directory of the system to
   the state directory of the script: nothing is left behind there.
 - The end-to-end specs are not measured: a route reached only end to end counts as uncovered.
+
+## 2026-10-10: the alias becomes `@/`, declared under tsconfig `paths` and rewritten at build
+
+The section "every import by its alias (Node subpath imports)" above is kept as it was written:
+it describes the mechanism of that day, a `#`-prefixed subpath import declared in
+`package.json` and resolved by Node under a resolution condition. The owner of the kit rejected
+that spelling for `@/`, without a `src` segment. Node cannot resolve `@/` by itself, so the
+mechanism changed: the alias is declared under `paths` in `tsconfig.json`, and the build ends
+with `ddd-ts-kit build-aliases`, which rewrites each alias of `dist/` into a relative path.
+
+What was done here, in order:
+
+1. The prefix of every alias import, replaced in place: 2101 specifiers in 561 files (2023
+   under `src/`, 73 under `test/`, 5 under `scripts/`); 2055 name the source root by `@/` and
+   46 name the tests by `$test/`. `npx eslint . --fix` then changed no file: the autofix of
+   `imports/alias-only` rewrites a relative import, and none was left. `npm run format`
+   re-wrapped 7 files, since the prefix is three characters shorter.
+2. By hand, the declarations `init` writes for a new project: `importAlias` `@/` in the config,
+   `paths` in `tsconfig.json`, the `imports` field removed from `package.json`, the resolution
+   condition removed from the `dev` script and from the two vitest configs, which now set
+   `resolve: { tsconfigPaths: true }`, and `build` chaining
+   `node scripts/kit.mjs build-aliases` after the compiler.
+3. `node scripts/kit.mjs depcruise-config --write`: the generated graph configuration no longer
+   names a condition and reads `tsconfig.json`.
+4. `migrations/0001_initial.js` names the compiled schema by `../dist/src/...` again: the knex
+   CLI runs it under plain `node`, and nothing rewrites a JavaScript file at the project root.
+5. `npm run docs:generate` had nothing to rewrite: the barrels were already what the generator
+   writes under the new alias.
+
+`$test/` and `$scripts/`, not `@test/` and `@scripts/`: a name such as `@test/x` is also the
+name a package may bear, and dependency-cruiser was measured to resolve an installed package of
+that name before the file of the project. `$` cannot appear in a package name
+([docs/tools/import-aliases.md](../../../docs/tools/import-aliases.md)).
+
+Checked after it: `npm run verify` (types, lint, format, 1290 unit and adapter specs with the
+coverage thresholds, 57 end-to-end specs, the checker with 0 finding in 724 files,
+dependency-cruiser on 763 modules, knip, `docs:check`), then the 67 rule ids of the conformance
+suite. The build rewrites 800 specifiers in 247 of the 467 emitted files; plain `node` links
+every compiled module and starts `dist/src/main.js` and the worker up to their configuration
+on Node 24.21 (`alias-example.spec.ts`, which CI also runs on Node 22). The full start with the
+compose services was not replayed.
+
+Frictions:
+
+1. **A build is now two steps.** `tsc` alone leaves the aliases in `dist/`, which then stops
+   under `node` at its first import. `imports/alias-declared` reports a script that compiles
+   without the rewrite, and the rewrite refuses an output it cannot finish.
+2. **An alias completed at run time cannot be rewritten.** `scripts/events.ts` of this example
+   already built its path from `import.meta.url`; the template of the kit did not, and the
+   rewrite refused it on the first generated project.
+3. **`scripts/demo.mjs` keeps three relative imports**: it is a JavaScript file Node runs as
+   written, outside the TypeScript sources the rule reads.
+4. **`docs/demo-transcript.md` and `docs/tooling/` are recordings** made before this change and
+   were left as recorded.

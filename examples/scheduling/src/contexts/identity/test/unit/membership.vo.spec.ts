@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { unwrap } from '@ddd-ts-kit/kernel';
-import { Membership } from '#src/contexts/identity/domain/value-objects/membership.vo.js';
-import { Role } from '#src/contexts/identity/domain/value-objects/role.vo.js';
+import { Membership } from '@/contexts/identity/domain/value-objects/membership.vo.js';
+import { Role } from '@/contexts/identity/domain/value-objects/role.vo.js';
 
 const practitioner = unwrap(Role.create('practitioner'));
 

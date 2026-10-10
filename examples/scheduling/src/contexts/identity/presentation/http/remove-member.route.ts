@@ -2,9 +2,9 @@ import { actorOf } from '@ddd-ts-kit/auth';
 import { defineRoute, type Route } from '@ddd-ts-kit/http';
 import type { CommandBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
-import { RemoveMemberCommand } from '#src/contexts/identity/application/commands/remove-member/remove-member.command.js';
-import { RemoveMemberParams } from '#src/contexts/identity/presentation/http/remove-member-params.dto.js';
-import { RemoveMemberAccepted } from '#src/contexts/identity/presentation/http/remove-member-accepted.dto.js';
+import { RemoveMemberCommand } from '@/contexts/identity/application/commands/remove-member/remove-member.command.js';
+import { RemoveMemberParams } from '@/contexts/identity/presentation/http/remove-member-params.dto.js';
+import { RemoveMemberAccepted } from '@/contexts/identity/presentation/http/remove-member-accepted.dto.js';
 
 const params = classSchema(RemoveMemberParams);
 const accepted = classSchema(RemoveMemberAccepted);

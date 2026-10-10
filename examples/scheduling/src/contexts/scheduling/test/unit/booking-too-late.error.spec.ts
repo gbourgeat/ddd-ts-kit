@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { BookingTooLateError } from '#src/contexts/scheduling/domain/errors/booking-too-late.error.js';
+import { BookingTooLateError } from '@/contexts/scheduling/domain/errors/booking-too-late.error.js';
 
 describe('BookingTooLateError', () => {
   it('carries its stable code', () => {

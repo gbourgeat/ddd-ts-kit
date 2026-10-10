@@ -2,10 +2,10 @@ import { actorOf } from '@ddd-ts-kit/auth';
 import { defineRoute, type Route } from '@ddd-ts-kit/http';
 import type { QueryBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
-import { GetAppointmentQuery } from '#src/contexts/scheduling/application/queries/get-appointment/get-appointment.query.js';
-import type { GetAppointmentResult } from '#src/contexts/scheduling/application/queries/get-appointment/get-appointment.result.js';
-import { GetAppointmentParams } from '#src/contexts/scheduling/presentation/http/get-appointment-params.dto.js';
-import { GetAppointmentAnswer } from '#src/contexts/scheduling/presentation/http/get-appointment-answer.dto.js';
+import { GetAppointmentQuery } from '@/contexts/scheduling/application/queries/get-appointment/get-appointment.query.js';
+import type { GetAppointmentResult } from '@/contexts/scheduling/application/queries/get-appointment/get-appointment.result.js';
+import { GetAppointmentParams } from '@/contexts/scheduling/presentation/http/get-appointment-params.dto.js';
+import { GetAppointmentAnswer } from '@/contexts/scheduling/presentation/http/get-appointment-answer.dto.js';
 
 const params = classSchema(GetAppointmentParams);
 const answer = classSchema(GetAppointmentAnswer);

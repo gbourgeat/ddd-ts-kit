@@ -1,6 +1,6 @@
 import type { AuditEntry, AuditReader } from '@ddd-ts-kit/audit';
 import type { Page, QueryHandler } from '@ddd-ts-kit/kernel';
-import type { SearchAuditEntriesQuery } from '#src/platform/audit/search-audit-entries.query.js';
+import type { SearchAuditEntriesQuery } from '@/platform/audit/search-audit-entries.query.js';
 
 export class SearchAuditEntriesHandler implements QueryHandler<SearchAuditEntriesQuery> {
   constructor(private readonly reader: AuditReader) {}

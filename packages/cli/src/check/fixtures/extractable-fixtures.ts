@@ -30,13 +30,13 @@ export const EXTRACTABLE_FIXTURES: readonly Fixture[] = [
     files: project(
       {
         [MODULE]:
-          "import type { ProductListedV1 } from '#src/contexts/catalog/published-language/index.js';\nimport { InMemoryInvoiceRepository } from '#src/contexts/billing/infrastructure/persistence/in-memory-invoice.repository.js';\n\nexport const billingModule = new InMemoryInvoiceRepository();\n\nexport type Listed = ProductListedV1;\n",
+          "import type { ProductListedV1 } from '@/contexts/catalog/published-language/index.js';\nimport { InMemoryInvoiceRepository } from '@/contexts/billing/infrastructure/persistence/in-memory-invoice.repository.js';\n\nexport const billingModule = new InMemoryInvoiceRepository();\n\nexport type Listed = ProductListedV1;\n",
         [ADAPTER]:
           "export const billing = pgSchema('billing');\nexport class InMemoryInvoiceRepository {\n  private readonly rows = new Map<string, string>();\n\n  get size(): number {\n    return this.rows.size;\n  }\n}\n",
         [`${BILLING}/infrastructure/external/in-process-product.gateway.ts`]:
-          "import type { ProductListedV1 } from '#src/contexts/catalog/published-language/index.js';\n\nexport type InProcessProductGateway = ProductListedV1;\n",
+          "import type { ProductListedV1 } from '@/contexts/catalog/published-language/index.js';\n\nexport type InProcessProductGateway = ProductListedV1;\n",
         'src/apps/billing/main.ts':
-          "import { billingModule } from '#src/contexts/billing/billing.module.js';\n\nbillingModule.start();\n",
+          "import { billingModule } from '@/contexts/billing/billing.module.js';\n\nbillingModule.start();\n",
       },
       {
         [CONFIG_FILE]: config({
@@ -59,7 +59,7 @@ export const EXTRACTABLE_FIXTURES: readonly Fixture[] = [
     also: ['context/published-language-only'],
     files: project({
       [MODULE]:
-        "import { catalogModule } from '#src/contexts/catalog/catalog.module.js';\nexport const billingModule = [catalogModule];\n",
+        "import { catalogModule } from '@/contexts/catalog/catalog.module.js';\nexport const billingModule = [catalogModule];\n",
     }),
   },
   {
@@ -69,7 +69,7 @@ export const EXTRACTABLE_FIXTURES: readonly Fixture[] = [
     also: ['context/published-language-only'],
     files: project({
       [ADAPTER]:
-        "import { products } from '#src/contexts/catalog/infrastructure/persistence/product.schema.js';\n\nexport const inMemoryInvoiceRepository = products;\n",
+        "import { products } from '@/contexts/catalog/infrastructure/persistence/product.schema.js';\n\nexport const inMemoryInvoiceRepository = products;\n",
     }),
   },
   {
@@ -87,7 +87,7 @@ export const EXTRACTABLE_FIXTURES: readonly Fixture[] = [
     also: ['context/published-language-only'],
     files: project(
       handler(
-        "import type { ProductRepository } from '#src/contexts/catalog/domain/repositories/product.repository.js';\nexport class IssueInvoiceHandler {\n  constructor(private readonly products: ProductRepository) {}\n}\n",
+        "import type { ProductRepository } from '@/contexts/catalog/domain/repositories/product.repository.js';\nexport class IssueInvoiceHandler {\n  constructor(private readonly products: ProductRepository) {}\n}\n",
       ),
     ),
   },
@@ -142,8 +142,8 @@ export const EXTRACTABLE_FIXTURES: readonly Fixture[] = [
       [COMMAND]: DECLARED.command,
       ...handler(
         DECLARED.handler.replace(
-          "'#src/contexts/billing/domain/repositories/invoice.repository.js'",
-          "'#src/contexts/catalog/application/ports/invoice.repository.port.js'",
+          "'@/contexts/billing/domain/repositories/invoice.repository.js'",
+          "'@/contexts/catalog/application/ports/invoice.repository.port.js'",
         ),
       ),
     }),
@@ -155,8 +155,8 @@ export const EXTRACTABLE_FIXTURES: readonly Fixture[] = [
     also: ['context/published-language-only'],
     files: declaredProject({
       [GATEWAY]: DECLARED.gateway.replace(
-        "'#src/platform/price-catalog-upstream.js'",
-        "'#src/contexts/catalog/application/ports/price-catalog-upstream.port.js'",
+        "'@/platform/price-catalog-upstream.js'",
+        "'@/contexts/catalog/application/ports/price-catalog-upstream.port.js'",
       ),
     }),
   },

@@ -1,5 +1,5 @@
 import type { Page, StampedRow } from '@ddd-ts-kit/kernel';
-import type { Outcome } from '#src/contexts/analytics/application/ports/outcome-register.port.js';
+import type { Outcome } from '@/contexts/analytics/application/ports/outcome-register.port.js';
 
 /** What scheduling states of its appointments now: the source the outcomes are rebuilt from. */
 export abstract class AppointmentExportGateway {

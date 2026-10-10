@@ -1,4 +1,4 @@
 import type { Page } from '@ddd-ts-kit/kernel';
-import type { AgendaEntry } from '#src/contexts/scheduling/application/ports/agenda.port.js';
+import type { AgendaEntry } from '@/contexts/scheduling/application/ports/agenda.port.js';
 
 export type SearchAppointmentsResult = Page<AgendaEntry>;

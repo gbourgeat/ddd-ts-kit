@@ -1,5 +1,6 @@
 import type { Command } from './commands/command.js';
 import type { Io } from './commands/io.js';
+import { buildAliasesCommand } from './commands/build-aliases.js';
 import { checkFileCommand, explainCommand, rulesCommand } from './commands/check.js';
 import { checksCommand } from './commands/checks.js';
 import { depcruiseConfigCommand } from './commands/depcruise-config.js';
@@ -27,6 +28,7 @@ const COMMANDS: Readonly<Record<string, Command>> = {
   'worker-scope': workerScopeCommand,
   docs: docsCommand,
   'depcruise-config': depcruiseConfigCommand,
+  'build-aliases': buildAliasesCommand,
   check: checksCommand,
   'check-file': checkFileCommand,
   rules: rulesCommand,
@@ -41,7 +43,7 @@ const USAGE = `Usage
                   [--ci github|gitlab|both|none] [--authn jwt|keycloak|none] [--authz rbac|abac|rebac|custom]
                   [--broker none|rabbitmq|kafka|nats|redis|custom] [--cache none|redis] [--audit on|off]
                   [--errors none|sentry] [--logger stdout|pino|winston] [--style declared|explicit] [--assembly barrel|discovery]
-                  [--allow-no-outbox "<reason>"] [--import-alias "#<name>/"]
+                  [--allow-no-outbox "<reason>"] [--import-alias '$<name>/']
                   [--context <name>:<core|supporting|generic>]... [--dry-run] [--force]
   ddd-ts-kit generate <kind> ... [--term "<Term>=<meaning>"]... [--allow-name] [--local-only] [--dry-run] [--force]     (alias: g)
   ddd-ts-kit generate --help --json
@@ -52,6 +54,7 @@ const USAGE = `Usage
   ddd-ts-kit worker-scope <context> [--worktree <path>] [--branch <name>] [--dry-run]
   ddd-ts-kit docs [--check]
   ddd-ts-kit depcruise-config [--check|--write]
+  ddd-ts-kit build-aliases [--project <tsconfig>]
   ddd-ts-kit check [paths...] [--rule <id>]... [--format text|json|github|gitlab] [--changed-since <git-ref>] [--self]
   ddd-ts-kit check --clean-only <dir>... [--rule <id>]... [--format text|json|github]
   ddd-ts-kit check --commit-size [--staged] [--strict]
@@ -61,7 +64,9 @@ const USAGE = `Usage
 
 Every command accepts --json (machine-readable output) and --cwd <dir> (project root).`;
 
-const NOTES = `  describe         one context as facts: use cases, routes, events, ports, policies, gateways, dependencies
+const NOTES = `  build-aliases    after the compiler: rewrites the import aliases left in the emitted .js and .d.ts files
+                   into relative paths, so that plain node runs the output (tsconfig.build.json by default)
+  describe         one context as facts: use cases, routes, events, ports, policies, gateways, dependencies
   status           the next step of docs/architecture/plan.md, the slices of docs/architecture/slices.md by
                    status and by owner, and the TODO(domain), TODO(platform) and it.todo left in each context
   todo             those markers as file:line, in the project or in one context

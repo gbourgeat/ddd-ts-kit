@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { PracticeMemberRemovedEventHandler } from '#src/contexts/identity/application/event-handlers/practice-member-removed.event-handler.js';
-import { PracticeMemberRemoved } from '#src/contexts/identity/domain/events/practice-member-removed.event.js';
-import { aDelegation } from '#src/contexts/identity/test/builders/delegation.builder.js';
-import { FakeDelegationRepository } from '#src/contexts/identity/test/fakes/delegation.repository.fake.js';
-import { FakeIdentityRelationships } from '#src/contexts/identity/test/fakes/identity-relationships.fake.js';
+import { PracticeMemberRemovedEventHandler } from '@/contexts/identity/application/event-handlers/practice-member-removed.event-handler.js';
+import { PracticeMemberRemoved } from '@/contexts/identity/domain/events/practice-member-removed.event.js';
+import { aDelegation } from '@/contexts/identity/test/builders/delegation.builder.js';
+import { FakeDelegationRepository } from '@/contexts/identity/test/fakes/delegation.repository.fake.js';
+import { FakeIdentityRelationships } from '@/contexts/identity/test/fakes/identity-relationships.fake.js';
 
 const at = new Date('2026-01-01T00:00:00.000Z');
 

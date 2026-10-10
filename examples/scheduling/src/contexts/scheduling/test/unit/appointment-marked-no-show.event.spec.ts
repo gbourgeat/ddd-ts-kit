@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { AppointmentMarkedNoShow } from '#src/contexts/scheduling/domain/events/appointment-marked-no-show.event.js';
-import { anAppointment } from '#src/contexts/scheduling/test/builders/appointment.builder.js';
+import { AppointmentMarkedNoShow } from '@/contexts/scheduling/domain/events/appointment-marked-no-show.event.js';
+import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder.js';
 
 const held = anAppointment().identifiedBy('appointment-1').build();
 

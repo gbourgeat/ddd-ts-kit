@@ -10,40 +10,51 @@ const RELATIVE = /(?:\bfrom|\bimport\(?)\s*['"]\.{1,2}\//;
 const sources = (root: string): string[] => ['src', 'test', 'scripts'].flatMap((tree) => walk(root, tree));
 
 describe('init and the import alias', () => {
-  it('declares "#src/" once in package.json, names it nowhere in tsconfig, and tells every runner the source condition', () => {
+  it('declares "@/" once under "paths" of tsconfig.json, leaves nothing in package.json, and points every tool at tsconfig', () => {
     const root = initProject();
+    const scripts = Object(jsonAt(readJson(root, 'package.json'), 'scripts')) as Record<string, string>;
 
-    expect(jsonAt(readJson(root, 'ddd-ts-kit.config.json'), 'importAlias')).toBe('#src/');
+    expect(jsonAt(readJson(root, 'ddd-ts-kit.config.json'), 'importAlias')).toBe('@/');
 
-    expect(Object.keys(Object(jsonAt(readJson(root, 'package.json'), 'imports')))).toEqual([
-      '#src/*.js',
-      '#test/*.js',
-      '#scripts/*.js',
+    expect(Object.keys(Object(jsonAt(readJson(root, 'tsconfig.json'), 'compilerOptions', 'paths')))).toEqual([
+      '@/*',
+      '$test/*',
+      '$scripts/*',
     ]);
 
-    expect(jsonAt(readJson(root, 'tsconfig.json'), 'compilerOptions', 'paths')).toBeUndefined();
-    expect(read(root, 'vitest.config.ts')).toContain("ssr: { resolve: { conditions: ['ddd-ts-kit-source'] } },");
+    expect(jsonAt(readJson(root, 'package.json'), 'imports')).toBeUndefined();
+    expect(read(root, 'vitest.config.ts')).toContain('resolve: { tsconfigPaths: true },');
     expect(read(root, 'vitest.config.ts')).not.toContain('alias:');
-    expect(read(root, 'vitest.e2e.config.ts')).toContain("ssr: { resolve: { conditions: ['ddd-ts-kit-source'] } },");
-    expect(jsonAt(readJson(root, 'package.json'), 'scripts', 'start')).toBe('node dist/src/main.js');
-
-    expect(jsonAt(readJson(root, 'package.json'), 'scripts', 'dev')).toContain(
-      'tsx watch --conditions=ddd-ts-kit-source ',
-    );
-
-    expect(jsonAt(readJson(root, 'package.json'), 'scripts', 'db:generate')).toBe(
-      'node --conditions=ddd-ts-kit-source node_modules/drizzle-kit/bin.cjs generate',
-    );
+    expect(read(root, 'vitest.e2e.config.ts')).toContain('resolve: { tsconfigPaths: true },');
+    expect(read(root, '.dependency-cruiser.cjs')).toContain('"fileName": "tsconfig.json"');
+    expect(read(root, 'knip.json')).not.toContain('"paths"');
+    expect(scripts['start']).toBe('node dist/src/main.js');
+    expect(scripts['dev']).toMatch(/^tsx watch --env-file-if-exists=\.env --import /);
+    expect(scripts['db:generate']).toBe('drizzle-kit generate');
+    expect(scripts['build']).toMatch(/tsc -p tsconfig\.build\.json && ddd-ts-kit build-aliases$/);
   });
 
-  it('gives jest the condition instead of a path mapping', () => {
-    const config = read(initProject('--tests', 'jest'), 'jest.config.js');
+  it('leaves nothing of the mechanism it replaces: no condition, no flag, no subpath import, in any file init or a generator writes', () => {
+    const root = tempDir('alias');
 
-    expect(config).toContain(
-      "testEnvironmentOptions: { customExportConditions: ['ddd-ts-kit-source', 'node', 'node-addons'] },",
+    scaffoldEverything(root);
+
+    const leftovers = walk(root).filter((file) =>
+      /--conditions|customExportConditions|ssr:\s*\{|['"`]#(?:src|test|scripts|generated)\//.test(read(root, file)),
     );
 
-    expect(config).not.toContain('<rootDir>/src/$1');
+    expect(leftovers).toEqual([]);
+    expect(read(root, '.dependency-cruiser.cjs')).not.toMatch(/"conditionNames": \[\s*"(?!import")/);
+  });
+
+  it('gives jest, which does not read tsconfig, the same mapping to the sources', () => {
+    const config = read(initProject('--tests', 'jest'), 'jest.config.js');
+
+    expect(config).toContain("'^@/(.*)\\\\.js$': '<rootDir>/src/$1.ts',");
+    expect(config).toContain("'^\\\\$test/(.*)\\\\.js$': '<rootDir>/test/$1.ts',");
+    expect(config).toContain("'^\\\\$scripts/(.*)\\\\.js$': '<rootDir>/scripts/$1.ts',");
+    expect(config).not.toContain('dist');
+    expect(config).not.toContain('customExportConditions');
   });
 
   it('writes no relative import, whatever the kind generated, and every file imports by an alias', () => {
@@ -54,62 +65,57 @@ describe('init and the import alias', () => {
     const written = sources(root).filter((file) => file.endsWith('.ts'));
 
     expect(written.filter((file) => RELATIVE.test(read(root, file)))).toEqual([]);
-    expect(written.filter((file) => read(root, file).includes("from '#src/")).length).toBeGreaterThan(100);
-    expect(read(root, 'test/e2e/issue-invoice.e2e.spec.ts')).toContain("from '#test/e2e/support/");
-    expect(read(root, 'scripts/openapi.ts')).toContain("from '#src/platform/");
+    expect(written.filter((file) => read(root, file).includes("from '@/")).length).toBeGreaterThan(100);
+    expect(read(root, 'test/e2e/issue-invoice.e2e.spec.ts')).toContain("from '$test/e2e/support/");
+    expect(read(root, 'scripts/openapi.ts')).toContain("from '@/platform/");
 
-    expect(read(root, 'src/contexts/billing/billing.declarations.ts')).toContain(
-      "export * from '#src/contexts/billing/",
-    );
+    expect(read(root, 'src/contexts/billing/billing.declarations.ts')).toContain("export * from '@/contexts/billing/");
   });
 
-  it('takes another name with --import-alias and writes everything under it: config, package.json, every import', () => {
+  it('takes another name with --import-alias and writes everything under it: config, tsconfig.json, every import', () => {
     const root = tempDir('alias');
 
-    scaffoldEverything(root, DEFAULT_STACK, ['--import-alias', '#app/']);
+    scaffoldEverything(root, DEFAULT_STACK, ['--import-alias', '$app/']);
 
     const written = sources(root).filter((file) => file.endsWith('.ts'));
     const report = checkJsonOf(cli(root, 'check', '--json'));
 
-    expect(jsonAt(readJson(root, 'ddd-ts-kit.config.json'), 'importAlias')).toBe('#app/');
+    expect(jsonAt(readJson(root, 'ddd-ts-kit.config.json'), 'importAlias')).toBe('$app/');
 
-    expect(jsonAt(readJson(root, 'package.json'), 'imports', '#app/*.js')).toEqual({
-      'ddd-ts-kit-source': './src/*.ts',
-      default: './dist/src/*.js',
-    });
+    expect(jsonAt(readJson(root, 'tsconfig.json'), 'compilerOptions', 'paths', '$app/*')).toEqual(['./src/*']);
 
-    expect(written.filter((file) => /['"]#src\//.test(read(root, file)))).toEqual([]);
+    expect(written.filter((file) => /['"]@\//.test(read(root, file)))).toEqual([]);
     expect(written.filter((file) => RELATIVE.test(read(root, file)))).toEqual([]);
-    expect(read(root, 'src/main.ts')).toContain("from '#app/platform/compose-application.js';");
+    expect(read(root, 'src/main.ts')).toContain("from '$app/platform/compose-application.js';");
     expect(report.violations).toEqual([]);
     expect(cli(root, 'docs', '--check').code).toBe(0);
   });
 
   it.each([
-    ['@/', 'only a specifier that starts with "#" is a subpath import'],
-    ['#/', 'Node 22 refuses a subpath import that starts with "#/"'],
-    ['#test/', '"#test/" already names the directory test/'],
-    ['#Src/', 'the alias is "#", one name in lower case'],
+    ['#app/', 'a specifier that starts with "#" is a Node subpath import'],
+    ['#/', 'a specifier that starts with "#" is a Node subpath import'],
+    ['@app/', 'it is also how the packages of a scope are named, and dependency-cruiser resolves an installed package'],
+    ['$test/', '"$test/" already names the directory test/'],
+    ['$App/', 'the alias is "@/", or "$", one name in lower case'],
+    ['~/', 'the alias is "@/", or "$", one name in lower case'],
+    ['src/', 'the alias is "@/", or "$", one name in lower case'],
   ])('refuses --import-alias %s before writing anything, and says why', (alias, reason) => {
     const refused = initFailure('--import-alias', alias);
 
     expect(refused.code).toBe(2);
     expect(refused.message).toContain(`The import alias "${alias}" is not supported: ${reason}`);
-
-    expect(refused.fix).toBe(
-      'Use a subpath import such as "#src/" (--import-alias, or "importAlias" in ddd-ts-kit.config.json).',
-    );
+    expect(refused.fix).toBe('Use "@/" or "$<name>/" (--import-alias, or "importAlias" in ddd-ts-kit.config.json).');
   });
 
-  it('refuses to initialise over a config that still names a tsconfig path', () => {
+  it('refuses to initialise over a config that still names a subpath import', () => {
     const root = tempDir('alias');
 
-    write(root, 'ddd-ts-kit.config.json', JSON.stringify({ importAlias: '@/', contexts: {} }));
+    write(root, 'ddd-ts-kit.config.json', JSON.stringify({ importAlias: '#app/', contexts: {} }));
 
     const result = cli(root, 'init', '--json');
 
     expect(result.code).toBe(2);
-    expect(String(jsonAt(result.json(), 'error', 'message'))).toContain('The import alias "@/" is not supported');
+    expect(String(jsonAt(result.json(), 'error', 'message'))).toContain('The import alias "#app/" is not supported');
     expect(walk(root)).toEqual(['ddd-ts-kit.config.json']);
   });
 });

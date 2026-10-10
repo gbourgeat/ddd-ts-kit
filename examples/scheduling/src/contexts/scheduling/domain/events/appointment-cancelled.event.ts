@@ -1,6 +1,6 @@
 import type { DomainEvent } from '@ddd-ts-kit/kernel';
-import type { Booking } from '#src/contexts/scheduling/domain/value-objects/booking.vo.js';
-import type { Cancellation } from '#src/contexts/scheduling/domain/value-objects/cancellation.vo.js';
+import type { Booking } from '@/contexts/scheduling/domain/value-objects/booking.vo.js';
+import type { Cancellation } from '@/contexts/scheduling/domain/value-objects/cancellation.vo.js';
 
 export class AppointmentCancelled implements DomainEvent {
   readonly name = 'scheduling.appointment.cancelled';

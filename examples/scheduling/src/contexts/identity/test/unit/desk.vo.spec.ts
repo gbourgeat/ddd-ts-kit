@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Desk } from '#src/contexts/identity/domain/value-objects/desk.vo.js';
+import { Desk } from '@/contexts/identity/domain/value-objects/desk.vo.js';
 
 describe('Desk', () => {
   it('is equal to the desk of the same practitioner in the same practice', () => {

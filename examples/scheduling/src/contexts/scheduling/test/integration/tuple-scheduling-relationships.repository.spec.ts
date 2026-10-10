@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { InMemoryRelationTupleStore, SchemaCheckedTupleStore } from '@ddd-ts-kit/auth/rebac';
-import { TupleSchedulingRelationships } from '#src/contexts/scheduling/infrastructure/persistence/tuple-scheduling-relationships.repository.js';
-import { relationshipSchema } from '#src/platform/auth/relationship-schema.js';
+import { TupleSchedulingRelationships } from '@/contexts/scheduling/infrastructure/persistence/tuple-scheduling-relationships.repository.js';
+import { relationshipSchema } from '@/platform/auth/relationship-schema.js';
 
 const calendar = { calendarId: 'calendar-1', practiceId: 'practice-1', practitionerId: 'practitioner-1' };
 const appointment = { appointmentId: 'appointment-1', calendarId: 'calendar-1', patientId: 'patient-1' };

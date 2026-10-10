@@ -8,12 +8,12 @@ import {
   type ExecutionContext,
 } from '@ddd-ts-kit/kernel';
 import { repositoryContract } from '@ddd-ts-kit/testing/contracts';
-import type { Waitlist } from '#src/contexts/scheduling/domain/aggregates/waitlist.aggregate.js';
-import { Waiter } from '#src/contexts/scheduling/domain/value-objects/waiter.vo.js';
-import { KnexWaitlistRepository } from '#src/contexts/scheduling/infrastructure/persistence/knex-waitlist.repository.js';
-import { openTestDatabase, type TestDatabase } from '#src/platform/database/open-test-database.js';
-import { aWaitlist } from '#src/contexts/scheduling/test/builders/waitlist.builder.js';
-import { FakeWaitlistRepository } from '#src/contexts/scheduling/test/fakes/waitlist.repository.fake.js';
+import type { Waitlist } from '@/contexts/scheduling/domain/aggregates/waitlist.aggregate.js';
+import { Waiter } from '@/contexts/scheduling/domain/value-objects/waiter.vo.js';
+import { KnexWaitlistRepository } from '@/contexts/scheduling/infrastructure/persistence/knex-waitlist.repository.js';
+import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database.js';
+import { aWaitlist } from '@/contexts/scheduling/test/builders/waitlist.builder.js';
+import { FakeWaitlistRepository } from '@/contexts/scheduling/test/fakes/waitlist.repository.fake.js';
 
 const runner = { describe, it, expect, beforeEach, afterEach };
 

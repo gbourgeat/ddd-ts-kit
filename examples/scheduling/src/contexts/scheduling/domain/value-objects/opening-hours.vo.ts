@@ -1,6 +1,6 @@
 import { ValueObject, err, ok, type Result } from '@ddd-ts-kit/kernel';
-import { InvalidRangeError } from '#src/contexts/scheduling/domain/errors/invalid-range.error.js';
-import { Range } from '#src/contexts/scheduling/domain/value-objects/range.vo.js';
+import { InvalidRangeError } from '@/contexts/scheduling/domain/errors/invalid-range.error.js';
+import { Range } from '@/contexts/scheduling/domain/value-objects/range.vo.js';
 
 export type Weekday = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
 

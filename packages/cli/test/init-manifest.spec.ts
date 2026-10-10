@@ -10,9 +10,9 @@ const manifest = (root: string): unknown => readJson(root, 'package.json');
 
 const DEFAULT_SCRIPTS = {
   start: 'node dist/src/main.js',
-  dev: 'tsx watch --conditions=ddd-ts-kit-source --env-file-if-exists=.env --import ./src/platform/tracing.ts src/main.ts',
+  dev: 'tsx watch --env-file-if-exists=.env --import ./src/platform/tracing.ts src/main.ts',
   typecheck: 'node node_modules/@typescript/native/bin/tsc -p tsconfig.json --noEmit',
-  build: 'node node_modules/@typescript/native/bin/tsc -p tsconfig.build.json',
+  build: 'node node_modules/@typescript/native/bin/tsc -p tsconfig.build.json && ddd-ts-kit build-aliases',
   test: 'vitest run',
   'test:coverage': 'vitest run --coverage',
   'test:e2e': 'vitest run --config vitest.e2e.config.ts --passWithNoTests',
@@ -20,8 +20,8 @@ const DEFAULT_SCRIPTS = {
   'docs:generate': 'ddd-ts-kit docs && npm run build && node dist/scripts/openapi.js && node dist/scripts/events.js',
   'docs:check':
     'ddd-ts-kit docs --check && npm run build && node dist/scripts/openapi.js --check && node dist/scripts/events.js --check',
-  'db:generate': 'node --conditions=ddd-ts-kit-source node_modules/drizzle-kit/bin.cjs generate',
-  'db:migrate': 'node --conditions=ddd-ts-kit-source node_modules/drizzle-kit/bin.cjs migrate',
+  'db:generate': 'drizzle-kit generate',
+  'db:migrate': 'drizzle-kit migrate',
   'infra:up': 'docker compose up -d --wait',
   'infra:down': 'docker compose down',
   verify:
@@ -129,7 +129,7 @@ describe('the package.json init writes', () => {
 });
 
 describe('the tsconfig.json init writes, and the import alias', () => {
-  it('writes a strict NodeNext tsconfig without the alias, and decorator flags only when the stack needs them', () => {
+  it('writes a strict NodeNext tsconfig, and decorator flags only when the stack needs them', () => {
     const plain = jsonAt(readJson(initProject(), 'tsconfig.json'), 'compilerOptions');
     const nest = jsonAt(readJson(initProject('--http', 'nest'), 'tsconfig.json'), 'compilerOptions');
 
@@ -141,26 +141,27 @@ describe('the tsconfig.json init writes, and the import alias', () => {
       outDir: 'dist',
     });
 
-    expect(plain).not.toHaveProperty('paths');
+    expect(plain).not.toHaveProperty('baseUrl');
     expect(plain).not.toHaveProperty('experimentalDecorators');
     expect(nest).toMatchObject({ experimentalDecorators: true, emitDecoratorMetadata: true });
   });
 
-  it('declares the alias in the imports of package.json: the source under a condition, the build otherwise', () => {
-    const compiled = (directory: string): object => ({
-      'ddd-ts-kit-source': `./${directory}/*.ts`,
-      default: `./dist/${directory}/*.js`,
+  it('declares the alias under "paths" of tsconfig.json, which the build config extends, and leaves no "imports" in package.json', () => {
+    const root = initProject();
+
+    expect(jsonAt(readJson(root, 'tsconfig.json'), 'compilerOptions', 'paths')).toEqual({
+      '@/*': ['./src/*'],
+      '$test/*': ['./test/*'],
+      '$scripts/*': ['./scripts/*'],
     });
 
-    expect(jsonAt(manifest(initProject()), 'imports')).toEqual({
-      '#src/*.js': compiled('src'),
-      '#test/*.js': './test/*.ts',
-      '#scripts/*.js': compiled('scripts'),
-    });
+    expect(jsonAt(readJson(root, 'tsconfig.build.json'), 'extends')).toBe('./tsconfig.json');
+    expect(jsonAt(readJson(root, 'tsconfig.build.json'), 'compilerOptions')).toBeUndefined();
+    expect(jsonAt(manifest(root), 'imports')).toBeUndefined();
 
-    expect(jsonAt(manifest(initProject('--orm', 'prisma')), 'imports', '#generated/*.js')).toEqual(
-      compiled('generated'),
-    );
+    expect(
+      jsonAt(readJson(initProject('--orm', 'prisma'), 'tsconfig.json'), 'compilerOptions', 'paths', '$generated/*'),
+    ).toEqual(['./generated/*']);
   });
 });
 

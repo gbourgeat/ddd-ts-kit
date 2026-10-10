@@ -35,12 +35,12 @@ ruleTester.run('context-extractable', contextExtractable, {
     at(`${BILLING}/test/fakes/rates.fake.ts`, 'export let calls = 0;', CONFIG),
     at(
       MODULE,
-      "import { Clock } from '@ddd-ts-kit/kernel';\nimport { PlatformDatabase } from '#src/platform/database/platform-database.port.js';\nimport { productListedV1 } from '#src/contexts/catalog/published-language/index.js';\nbuilder.bind(InvoiceRepository).toClass(Repo, [PlatformDatabase, Clock]);\nbuilder.on(productListedV1, { consumer: 'billing.x' }).handledBy(Handler, [resolve(Clock)]);",
+      "import { Clock } from '@ddd-ts-kit/kernel';\nimport { PlatformDatabase } from '@/platform/database/platform-database.port.js';\nimport { productListedV1 } from '@/contexts/catalog/published-language/index.js';\nbuilder.bind(InvoiceRepository).toClass(Repo, [PlatformDatabase, Clock]);\nbuilder.on(productListedV1, { consumer: 'billing.x' }).handledBy(Handler, [resolve(Clock)]);",
       CONFIG,
     ),
     at(
       MODULE,
-      "import { CatalogReader } from '#src/contexts/catalog/application/ports/catalog-reader.port.js';\nexport const all = describe(CatalogReader);",
+      "import { CatalogReader } from '@/contexts/catalog/application/ports/catalog-reader.port.js';\nexport const all = describe(CatalogReader);",
       CONFIG,
     ),
   ],
@@ -114,7 +114,7 @@ ruleTester.run('context-extractable', contextExtractable, {
     {
       ...at(
         MODULE,
-        "import { CatalogReader } from '#src/contexts/catalog/application/ports/catalog-reader.port.js';\nbuilder.query(GetPrice).public().handledBy(GetPriceHandler, [CatalogReader]);",
+        "import { CatalogReader } from '@/contexts/catalog/application/ports/catalog-reader.port.js';\nbuilder.query(GetPrice).public().handledBy(GetPriceHandler, [CatalogReader]);",
         CONFIG,
       ),
       errors: [{ messageId: 'foreignWiring', data: { here: 'billing', there: 'catalog', name: 'CatalogReader' } }],
@@ -130,7 +130,7 @@ ruleTester.run('context-extractable', contextExtractable, {
     {
       ...at(
         MODULE,
-        "import { DrizzleProductRepository } from '#src/contexts/catalog/infrastructure/persistence/drizzle-product.repository.js';\nbuilder.bind(Products).toClass(DrizzleProductRepository, [Database]);\nbuilder.rebind(DrizzleProductRepository);",
+        "import { DrizzleProductRepository } from '@/contexts/catalog/infrastructure/persistence/drizzle-product.repository.js';\nbuilder.bind(Products).toClass(DrizzleProductRepository, [Database]);\nbuilder.rebind(DrizzleProductRepository);",
         CONFIG,
       ),
       errors: [{ messageId: 'foreignWiring' }, { messageId: 'foreignWiring' }],

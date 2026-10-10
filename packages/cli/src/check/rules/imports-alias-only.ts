@@ -21,7 +21,7 @@ const BESIDE_THE_SOURCES = [FIXED_ALIAS_ROOTS.test.directory, FIXED_ALIAS_ROOTS.
 export const importsAliasOnly: Rule = {
   id: 'imports/alias-only',
   description:
-    'A file of the project is imported by its alias (`#src/...`), never by a relative path, the same directory included; an alias path holds no `.` or `..` segment. Holds under the source root, `test/` and `scripts/`.',
+    'A file of the project is imported by its alias (`@/...`), never by a relative path, the same directory included; an alias path holds no `.` or `..` segment. Holds under the source root, `test/` and `scripts/`.',
   scope: 'file',
   run(project) {
     const roots = aliasRoots(project.config);
@@ -57,7 +57,7 @@ function flawOf(roots: readonly AliasRoot[], file: string, specifier: string): F
 
   return {
     message: `The alias import "${specifier}" holds a "." or ".." segment: it can leave ${named.directory}/.`,
-    fix: `Write the path of the file from ${named.directory}/ after "${named.prefix}", with no "." or ".." segment: an alias names one file of its directory, and Node refuses the others.`,
+    fix: `Write the path of the file from ${named.directory}/ after "${named.prefix}", with no "." or ".." segment: an alias names one file of its directory, and the build rewrites it as such.`,
   };
 }
 

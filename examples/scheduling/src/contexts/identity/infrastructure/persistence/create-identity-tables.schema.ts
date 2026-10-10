@@ -1,6 +1,6 @@
 // ddd-ts-kit:imports
 import type { Knex } from 'knex';
-import { IDENTITY_SCHEMA } from '#src/contexts/identity/infrastructure/persistence/identity.schema.js';
+import { IDENTITY_SCHEMA } from '@/contexts/identity/infrastructure/persistence/identity.schema.js';
 import { auditColumns } from '@ddd-ts-kit/knex';
 // /ddd-ts-kit:imports
 

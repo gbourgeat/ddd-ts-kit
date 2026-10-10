@@ -29,7 +29,7 @@ const SEARCHING = source(
 const LISTING = SEARCHING.replace('abstract search(', 'abstract list(');
 
 const FAKED = source(
-  "import { InvoiceReader } from '#src/contexts/billing/application/ports/invoice-reader.port.js';",
+  "import { InvoiceReader } from '@/contexts/billing/application/ports/invoice-reader.port.js';",
   '',
   'export class FakeInvoiceReader implements InvoiceReader {',
   '  readonly listings: string[] = [];',

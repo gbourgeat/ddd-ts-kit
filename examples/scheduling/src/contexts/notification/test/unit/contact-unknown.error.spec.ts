@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { ContactUnknownError } from '#src/contexts/notification/domain/errors/contact-unknown.error.js';
+import { ContactUnknownError } from '@/contexts/notification/domain/errors/contact-unknown.error.js';
 
 describe('ContactUnknownError', () => {
   it('carries its stable code', () => {

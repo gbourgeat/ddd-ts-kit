@@ -9,9 +9,9 @@ import {
   type BusMiddleware,
 } from '@ddd-ts-kit/kernel';
 import { relayWakeUpMiddleware } from '@ddd-ts-kit/redis';
-import type { Foundations } from '#src/platform/lay-foundations.js';
-import type { RedisServices } from '#src/platform/redis/open-redis.js';
-import { readOnlyImpersonation } from '#src/platform/buses/read-only-impersonation.js';
+import type { Foundations } from '@/platform/lay-foundations.js';
+import type { RedisServices } from '@/platform/redis/open-redis.js';
+import { readOnlyImpersonation } from '@/platform/buses/read-only-impersonation.js';
 
 interface Signalled {
   readonly redis?: RedisServices;

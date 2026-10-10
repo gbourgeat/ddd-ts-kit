@@ -3,17 +3,20 @@ import path from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { read, REPO_ROOT, type StackFlags, write } from '../helpers.js';
 import {
+  buildSteps,
   compiledEntries,
-  compiledProject,
+  compiledOnly,
   DEV_RUNNER,
   devCommand,
   linkCompiled,
   PROBE_SPEC,
   resolvedBy,
+  type Rewritten,
+  rewriteAliases,
 } from './compiled-project.js';
 import { bin, findingsOf, runIn } from './run-in.js';
 import { label, SLOW, STACKS } from './stacks.js';
-import { started } from './started.js';
+import { type Started, started } from './started.js';
 
 const installed = (name: string): boolean => fs.existsSync(path.join(REPO_ROOT, 'node_modules', name));
 
@@ -24,29 +27,45 @@ const loadable = (stack: StackFlags): boolean =>
   MISSING[stack.orm] === undefined || installed(MISSING[stack.orm] ?? '');
 
 const RUNNABLE = STACKS.filter(loadable);
-const SOURCE_CONDITION_LINE = /\n\s*ssr: \{ resolve: \{ conditions: \['ddd-ts-kit-source'\] \} \},/;
+const READS_TSCONFIG = /\n\s*resolve: \{ tsconfigPaths: true \},/;
+const JEST_MAPPER = /\n\s*moduleNameMapper: \{[^}]*\},/;
 
 /**
- * Slow, opt-in (DDD_TS_KIT_E2E=1): every stack the workspace can load, built with the native
- * compiler, then held to what the alias promises: plain `node` runs the compiled output, the dev
- * runner and the test runner are answered the sources, from the one declaration of package.json.
+ * Slow, opt-in (DDD_TS_KIT_E2E=1): every stack the workspace can load, compiled with the native
+ * compiler, then held to what the alias promises: the build rewrites it, plain `node` runs the
+ * compiled output, the dev runner and the test runner are answered the sources.
  */
 describe.runIf(SLOW).each(RUNNABLE.map((stack) => [label(stack), stack] as const))(
   'the import alias at run time (%s)',
   (_label, stack) => {
     let root: string;
+    let bare: Started;
+    let rewritten: Rewritten;
 
     beforeAll(() => {
-      root = compiledProject(stack);
+      root = compiledOnly(stack);
+      bare = started(root, process.execPath, ['dist/src/main.js']);
+      rewritten = rewriteAliases(root);
     }, 240_000);
 
-    it('plain node links every compiled module: no loader, no flag, no alias left unresolved', () => {
+    it('compiled and not rewritten, the output stops under plain node at its first alias: the rewrite step is what makes it run', () => {
+      expect(bare.unresolved, bare.output).toBe(true);
+      expect(bare.output).toContain("'@/");
+      expect(rewritten.specifiers).toBeGreaterThan(50);
+      expect(buildSteps(root).at(-1)).toBe('ddd-ts-kit build-aliases');
+      expect(buildSteps(root).at(-2)).toContain('tsc -p tsconfig.build.json');
+    });
+
+    it('plain node links every compiled module: no loader, no flag, no alias left in a .js or a .d.ts', () => {
       const linked = linkCompiled(root);
+      const unknown = started(root, process.execPath, ['--input-type=module', '-e', "await import('@/main.js')"]);
 
       expect(linked.unresolved).toEqual([]);
-      expect(linked.aliased).toBeGreaterThan(10);
+      expect(linked.aliased).toEqual([]);
+      expect(linked.relative).toBeGreaterThan(10);
       expect(linked.linked).toBe(linked.modules);
-      expect(resolvedBy(root, [], '#src/main.js')).toBe('dist/src/main.js');
+      expect(unknown.unresolved, 'Node itself knows no alias: only the rewrite made the output run').toBe(true);
+      expect(rewriteAliases(root)).toMatchObject({ changed: 0, specifiers: 0 });
     }, 120_000);
 
     it('plain node starts each compiled entry point: the application, the worker, a context run alone', () => {
@@ -62,12 +81,16 @@ describe.runIf(SLOW).each(RUNNABLE.map((stack) => [label(stack), stack] as const
       }
     }, 120_000);
 
-    it('the dev runner is answered the sources, although a compiled copy exists, and starts the application from them', () => {
-      const run = started(root, process.execPath, devCommand(root));
+    it('the dev runner is answered the sources, although a compiled copy exists, and starts the application from them, tracing imported first', () => {
+      const command = devCommand(root);
+      const run = started(root, process.execPath, command);
 
-      expect(resolvedBy(root, DEV_RUNNER, '#src/main.js')).toBe('src/main.ts');
+      expect(command).toContain('--import');
+      expect(command).toContain('./src/platform/tracing.ts');
+      expect(resolvedBy(root, DEV_RUNNER, '@/main.js')).toBe('src/main.ts');
+      expect(resolvedBy(root, DEV_RUNNER, '@/alias-probe.js')).toBe('src/alias-probe.ts');
 
-      expect(resolvedBy(root, DEV_RUNNER, '#test/architecture/extractable.spec.js')).toBe(
+      expect(resolvedBy(root, DEV_RUNNER, '$test/architecture/extractable.spec.js')).toBe(
         'test/architecture/extractable.spec.ts',
       );
 
@@ -76,20 +99,33 @@ describe.runIf(SLOW).each(RUNNABLE.map((stack) => [label(stack), stack] as const
     }, 120_000);
 
     it.runIf(stack.tests === 'vitest')(
-      'vitest runs a spec on the source an alias names, and on its compiled copy once the condition is gone',
+      'vitest runs a spec on the source an alias names, although a compiled copy exists, and resolves nothing once it stops reading tsconfig',
       () => {
         const vitest = { command: bin('vitest'), args: ['run', PROBE_SPEC] };
         const config = read(root, 'vitest.config.ts');
 
+        expect(fs.existsSync(path.join(root, 'dist/src/alias-probe.js'))).toBe(true);
         expect(runIn(root, vitest)).toMatch(/Tests\s+1 passed/);
 
-        write(root, 'vitest.config.ts', config.replace(SOURCE_CONDITION_LINE, ''));
+        write(root, 'vitest.config.ts', config.replace(READS_TSCONFIG, ''));
 
-        expect(findingsOf(root, vitest)).toContain('to match /\\/src\\/alias-probe\\.ts$/');
+        expect(read(root, 'vitest.config.ts')).not.toBe(config);
+        expect(findingsOf(root, vitest)).toMatch(/Cannot find package '@\/alias-probe\.js'|Failed to resolve import/);
 
         write(root, 'vitest.config.ts', config);
       },
       120_000,
+    );
+
+    it.runIf(stack.tests === 'jest')(
+      'the jest config maps each alias to its source, never to the compiled copy',
+      () => {
+        const mapper = JEST_MAPPER.exec(read(root, 'jest.config.js'))?.[0] ?? '';
+
+        expect(mapper).toContain("'^@/(.*)\\\\.js$': '<rootDir>/src/$1.ts',");
+        expect(mapper).toContain("'^\\\\$test/(.*)\\\\.js$': '<rootDir>/test/$1.ts',");
+        expect(mapper).not.toContain('dist');
+      },
     );
 
     it.runIf(stack.tests === 'jest' && installed('jest'))(

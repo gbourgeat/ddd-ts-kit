@@ -8,13 +8,13 @@ import {
   type ExecutionContext,
 } from '@ddd-ts-kit/kernel';
 import { repositoryContract } from '@ddd-ts-kit/testing/contracts';
-import type { Practice } from '#src/contexts/identity/domain/aggregates/practice.aggregate.js';
-import { DisplayName } from '#src/contexts/identity/domain/value-objects/display-name.vo.js';
-import { Role } from '#src/contexts/identity/domain/value-objects/role.vo.js';
-import { KnexPracticeRepository } from '#src/contexts/identity/infrastructure/persistence/knex-practice.repository.js';
-import { openTestDatabase, type TestDatabase } from '#src/platform/database/open-test-database.js';
-import { aPractice } from '#src/contexts/identity/test/builders/practice.builder.js';
-import { FakePracticeRepository } from '#src/contexts/identity/test/fakes/practice.repository.fake.js';
+import type { Practice } from '@/contexts/identity/domain/aggregates/practice.aggregate.js';
+import { DisplayName } from '@/contexts/identity/domain/value-objects/display-name.vo.js';
+import { Role } from '@/contexts/identity/domain/value-objects/role.vo.js';
+import { KnexPracticeRepository } from '@/contexts/identity/infrastructure/persistence/knex-practice.repository.js';
+import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database.js';
+import { aPractice } from '@/contexts/identity/test/builders/practice.builder.js';
+import { FakePracticeRepository } from '@/contexts/identity/test/fakes/practice.repository.fake.js';
 
 const runner = { describe, it, expect, beforeEach, afterEach };
 

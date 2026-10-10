@@ -1,5 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { aliasRoots } from '../../src/alias/index.js';
+import { readConfig } from '../../src/config/index.js';
 import { read, REPO_ROOT, scaffoldEverything, type StackFlags, tempDir, write } from '../helpers.js';
 import { installAsPublished } from './install-as-published.js';
 import { bin, runIn } from './run-in.js';
@@ -7,6 +9,8 @@ import { NATIVE_COMPILER } from './type-errors.js';
 
 const LINKER = path.join(import.meta.dirname, 'fixtures/link-compiled.mjs');
 const TSX = path.join(REPO_ROOT, 'node_modules/tsx/dist/cli.mjs');
+/** The CLI as the project installed it: what its `build` script runs after the compiler. */
+const INSTALLED_CLI = 'node_modules/ddd-ts-kit/dist/bin.js';
 
 export const PROBE = 'src/alias-probe.ts';
 /** Under the source root, so that the import graph of the sources holds the probe. */
@@ -14,19 +18,28 @@ export const PROBE_SPEC = 'src/alias-probe.spec.ts';
 
 export interface Linked {
   readonly modules: number;
-  readonly aliased: number;
+  /** The emitted files that still hold an alias specifier. */
+  readonly aliased: readonly string[];
+  /** The emitted modules that import by a relative path. */
+  readonly relative: number;
   readonly linked: number;
   readonly unresolved: readonly string[];
 }
 
+export interface Rewritten {
+  readonly files: number;
+  readonly changed: number;
+  readonly specifiers: number;
+}
+
 /**
  * A project with every kind generated, installed as a published kit, holding a probe module that
- * says where it was loaded from and a spec that imports it by its alias, then built: a compiled
- * copy of the probe exists, which is what a tool without the source condition would load.
+ * says where it was loaded from and a spec that imports it by its alias, then compiled and not
+ * yet rewritten: a compiled copy of the probe exists, which no tool that reads the sources may load.
  */
-export function compiledProject(stack: StackFlags, more: readonly string[] = []): string {
+export function compiledOnly(stack: StackFlags, more: readonly string[] = []): string {
   const root = tempDir('alias');
-  const alias = more.at(-1) ?? '#src/';
+  const alias = more.at(-1) ?? '@/';
   const framework = stack.tests === 'jest' ? '@jest/globals' : 'vitest';
 
   scaffoldEverything(root, stack, more);
@@ -49,9 +62,34 @@ export function compiledProject(stack: StackFlags, more: readonly string[] = [])
   return root;
 }
 
-/** What plain `node` links of the compiled output, module by module. */
+/** The second half of the `build` script: the aliases of the compiled output become relative paths. */
+export function rewriteAliases(root: string): Rewritten {
+  const printed = runIn(root, { command: process.execPath, args: [INSTALLED_CLI, 'build-aliases', '--json'] });
+
+  return JSON.parse(printed) as Rewritten;
+}
+
+/** The same project, built as `npm run build` builds it: compiled, then rewritten. */
+export function compiledProject(stack: StackFlags, more: readonly string[] = []): string {
+  const root = compiledOnly(stack, more);
+
+  rewriteAliases(root);
+
+  return root;
+}
+
+/** The two steps of the `build` script of a project, which the helpers above run one by one. */
+export function buildSteps(root: string): string[] {
+  const { scripts } = JSON.parse(read(root, 'package.json')) as { scripts: Record<string, string> };
+
+  return (scripts['build'] ?? '').split(' && ');
+}
+
+/** What plain `node` links of the compiled output, module by module, and the aliases left in it. */
 export function linkCompiled(root: string): Linked {
-  return JSON.parse(runIn(root, { command: process.execPath, args: [LINKER, 'dist'] })) as Linked;
+  const prefixes = aliasRoots(readConfig(root).config).map(({ prefix }) => prefix);
+
+  return JSON.parse(runIn(root, { command: process.execPath, args: [LINKER, 'dist', ...prefixes] })) as Linked;
 }
 
 /** The entry points of the compiled output: the application, then each process under `apps/`. */
@@ -82,4 +120,5 @@ export function resolvedBy(root: string, runner: readonly string[], specifier: s
   return path.relative(fs.realpathSync(root), new URL(printed.trim()).pathname);
 }
 
-export const DEV_RUNNER = [TSX, '--conditions=ddd-ts-kit-source'];
+/** The dev runner with no flag: it reads the `paths` of tsconfig.json by itself. */
+export const DEV_RUNNER = [TSX];

@@ -1,4 +1,4 @@
-import type { AgendaEntry } from '#src/contexts/scheduling/application/ports/agenda.port.js';
+import type { AgendaEntry } from '@/contexts/scheduling/application/ports/agenda.port.js';
 
 /** The entry of the agenda, and the name identity shows for its patient: absent when identity could not say. */
 export interface GetAppointmentResult extends AgendaEntry {

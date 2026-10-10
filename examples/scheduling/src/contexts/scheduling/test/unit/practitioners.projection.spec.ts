@@ -3,15 +3,15 @@ import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { AllowAll } from '@ddd-ts-kit/auth/testing';
 import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
 import { Criteria, scoped } from '@ddd-ts-kit/kernel';
-import * as schedulingDeclarations from '#src/contexts/scheduling/scheduling.declarations.js';
-import { PractitionersProjection } from '#src/contexts/scheduling/application/projections/practitioners.projection.js';
-import { platformTestModule } from '#src/platform/platform-test.module.js';
-import { practiceMemberAddedV1, practiceMemberRemovedV1 } from '#src/contexts/identity/published-language/index.js';
+import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations.js';
+import { PractitionersProjection } from '@/contexts/scheduling/application/projections/practitioners.projection.js';
+import { platformTestModule } from '@/platform/platform-test.module.js';
+import { practiceMemberAddedV1, practiceMemberRemovedV1 } from '@/contexts/identity/published-language/index.js';
 import {
   PractitionerDirectory,
   type PractitionerEntry,
-} from '#src/contexts/scheduling/application/ports/practitioner-directory.port.js';
-import { FakePractitionerDirectory } from '#src/contexts/scheduling/test/fakes/practitioner-directory.fake.js';
+} from '@/contexts/scheduling/application/ports/practitioner-directory.port.js';
+import { FakePractitionerDirectory } from '@/contexts/scheduling/test/fakes/practitioner-directory.fake.js';
 
 type Role = 'manager' | 'practitioner' | 'assistant';
 

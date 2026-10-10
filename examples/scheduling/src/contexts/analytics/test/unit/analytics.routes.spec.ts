@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { InMemoryCommandBus, InMemoryQueryBus } from '@ddd-ts-kit/kernel';
-import { analyticsRoutes } from '#src/contexts/analytics/presentation/http/analytics.routes.js';
+import { analyticsRoutes } from '@/contexts/analytics/presentation/http/analytics.routes.js';
 
 describe('The routes of analytics', () => {
   it('answer each method and path once, each under an operation of its own', () => {

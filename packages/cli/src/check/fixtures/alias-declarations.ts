@@ -3,41 +3,43 @@ import { config } from './config.js';
 import type { FixtureFiles } from './fixture-files.js';
 import { project } from './project.js';
 
-const CONDITION = 'ddd-ts-kit-source';
-
 /** Written out, not derived: the fixtures do not prove the rule with its own code. */
 const MANIFEST = {
   name: 'fixture',
   type: 'module',
-  imports: {
-    '#src/*.js': { [CONDITION]: './src/*.ts', default: './dist/src/*.js' },
-    '#test/*.js': './test/*.ts',
-    '#scripts/*.js': { [CONDITION]: './scripts/*.ts', default: './dist/scripts/*.js' },
-  },
   scripts: {
+    build: 'node node_modules/@typescript/native/bin/tsc -p tsconfig.build.json && ddd-ts-kit build-aliases',
+    typecheck: 'node node_modules/@typescript/native/bin/tsc -p tsconfig.json --noEmit',
     start: 'node dist/src/main.js',
-    dev: `tsx watch --conditions=${CONDITION} --env-file-if-exists=.env src/main.ts`,
+    dev: 'tsx watch --env-file-if-exists=.env src/main.ts',
   },
+  dependencies: { '@ddd-ts-kit/kernel': '^0.1.0' },
 };
 
 const TSCONFIG = {
   // A comment and a trailing comma are read, as the compiler reads them.
-  compilerOptions: { module: 'NodeNext', moduleResolution: 'NodeNext', rootDir: '.', outDir: 'dist' },
+  compilerOptions: {
+    module: 'NodeNext',
+    rootDir: '.',
+    paths: { '@/*': ['./src/*'], '$test/*': ['./test/*'], '$scripts/*': ['./scripts/*'] },
+    outDir: 'dist',
+  },
   include: ['src', 'scripts', 'test'],
 };
 
-/** What `init` writes to declare the alias once and point every tool at it, with what a fixture changes over it. */
+/** What `init` writes to declare the alias and point every tool at it, with what a fixture changes over it. */
 export function aliasDeclarations(overrides: FixtureFiles = {}): FixtureFiles {
   return project(
     {},
     {
-      [CONFIG_FILE]: config({ importAlias: '#src/' }),
+      [CONFIG_FILE]: config({ importAlias: '@/' }),
       'package.json': json(MANIFEST),
       'tsconfig.json': `// The type check.\n${json(TSCONFIG).replace('"dist"\n', '"dist",\n')}`,
       'tsconfig.build.json': json({ extends: './tsconfig.json', exclude: ['test'] }),
-      'vitest.config.ts': `export default { ssr: { resolve: { conditions: ['${CONDITION}'] } }, test: { coverage: governedCoverage('') } };\n`,
+      'vitest.config.ts':
+        "export default { resolve: { tsconfigPaths: true }, test: { coverage: governedCoverage('') } };\n",
       'vitest.e2e.config.ts': "export { default } from './vitest.config.js';\n",
-      '.dependency-cruiser.cjs': `module.exports = { options: { enhancedResolveOptions: { conditionNames: ['${CONDITION}', 'import'] } } };\n`,
+      '.dependency-cruiser.cjs': "module.exports = { options: { tsConfig: { fileName: 'tsconfig.json' } } };\n",
       'knip.json': json({ entry: ['src/main.ts'] }),
       ...overrides,
     },

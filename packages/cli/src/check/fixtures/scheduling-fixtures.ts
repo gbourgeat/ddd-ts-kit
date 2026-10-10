@@ -32,7 +32,7 @@ const TRIGGERS_USE_CASE: readonly Fixture[] = [
       [JOB]: PLAIN_JOB,
       [JOB_SPEC]: SPEC,
       [MODULE]: moduleRegistering(
-        '#src/contexts/billing/application/scheduling/send-reminders.job.js',
+        '@/contexts/billing/application/scheduling/send-reminders.job.js',
         'billing.send-reminders',
       ),
     }),
@@ -44,8 +44,8 @@ const TRIGGERS_USE_CASE: readonly Fixture[] = [
     files: declaredProject({
       [JOB]: source(
         "import { Scheduled, type ScheduledJob } from '@ddd-ts-kit/kernel/declarations';",
-        "import { Invoice } from '#src/contexts/billing/domain/aggregates/invoice.aggregate.js';",
-        "import { InvoiceRepository } from '#src/contexts/billing/domain/repositories/invoice.repository.js';",
+        "import { Invoice } from '@/contexts/billing/domain/aggregates/invoice.aggregate.js';",
+        "import { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository.js';",
         '',
         "@Scheduled('billing.send-reminders', { every: '15m' }, [InvoiceRepository])",
         'export class SendRemindersJob implements ScheduledJob {',
@@ -74,7 +74,7 @@ const TRIGGERS_USE_CASE: readonly Fixture[] = [
     expect: { file: MODULE },
     files: project({
       [MODULE]: moduleRegistering(
-        '#src/contexts/billing/infrastructure/external/send-reminders.js',
+        '@/contexts/billing/infrastructure/external/send-reminders.js',
         'billing.send-reminders',
       ),
     }),
@@ -96,7 +96,7 @@ const JOB_NAME: readonly Fixture[] = [
       [JOB]: PLAIN_JOB,
       [JOB_SPEC]: SPEC,
       [MODULE]: moduleRegistering(
-        '#src/contexts/billing/application/scheduling/send-reminders.job.js',
+        '@/contexts/billing/application/scheduling/send-reminders.job.js',
         'billing.send-reminders',
       ),
     }),
@@ -126,10 +126,7 @@ const JOB_NAME: readonly Fixture[] = [
     files: project({
       [JOB]: PLAIN_JOB,
       [JOB_SPEC]: SPEC,
-      [MODULE]: moduleRegistering(
-        '#src/contexts/billing/application/scheduling/send-reminders.job.js',
-        'SendReminders',
-      ),
+      [MODULE]: moduleRegistering('@/contexts/billing/application/scheduling/send-reminders.job.js', 'SendReminders'),
     }),
   },
   {

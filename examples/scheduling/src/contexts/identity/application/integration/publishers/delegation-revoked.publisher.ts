@@ -1,7 +1,7 @@
 import { IdGenerator, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
-import { DelegationRevoked } from '#src/contexts/identity/domain/events/delegation-revoked.event.js';
-import { delegationRevokedV1 } from '#src/contexts/identity/published-language/delegation-revoked.v1.integration-event.js';
+import { DelegationRevoked } from '@/contexts/identity/domain/events/delegation-revoked.event.js';
+import { delegationRevokedV1 } from '@/contexts/identity/published-language/delegation-revoked.v1.integration-event.js';
 
 @DomainEventHandler(DelegationRevoked, { name: 'identity.delegation.revoked' }, [
   IntegrationEventPublisher,

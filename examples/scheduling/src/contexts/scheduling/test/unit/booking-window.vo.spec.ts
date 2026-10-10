@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { unwrap } from '@ddd-ts-kit/kernel';
-import { InvalidBookingWindowError } from '#src/contexts/scheduling/domain/errors/invalid-booking-window.error.js';
-import { BookingWindow } from '#src/contexts/scheduling/domain/value-objects/booking-window.vo.js';
+import { InvalidBookingWindowError } from '@/contexts/scheduling/domain/errors/invalid-booking-window.error.js';
+import { BookingWindow } from '@/contexts/scheduling/domain/value-objects/booking-window.vo.js';
 
 const now = new Date('2026-03-02T08:00:00.000Z');
 

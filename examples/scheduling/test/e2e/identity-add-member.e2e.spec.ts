@@ -5,9 +5,9 @@ import { expectSpanTree, installTestTracing } from '@ddd-ts-kit/tracing/testing'
 import {
   practiceMemberAddedV1,
   type PracticeMemberAddedV1Payload,
-} from '#src/contexts/identity/published-language/index.js';
-import { startApplication, type RunningApplication } from '#test/e2e/support/start-application.js';
-import { storyOf } from '#test/e2e/support/story-of.js';
+} from '@/contexts/identity/published-language/index.js';
+import { startApplication, type RunningApplication } from '$test/e2e/support/start-application.js';
+import { storyOf } from '$test/e2e/support/story-of.js';
 
 describe('Add member, end to end', () => {
   const tracing = installTestTracing();

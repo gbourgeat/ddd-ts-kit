@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { unwrap } from '@ddd-ts-kit/kernel';
-import { TimeZone } from '#src/contexts/identity/domain/value-objects/time-zone.vo.js';
+import { TimeZone } from '@/contexts/identity/domain/value-objects/time-zone.vo.js';
 
 describe('TimeZone', () => {
   it('is equal to another time zone with the same value', () => {

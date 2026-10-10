@@ -1,5 +1,5 @@
 import type { ResourceRef } from '@ddd-ts-kit/auth';
-import { Appointment } from '#src/contexts/scheduling/domain/aggregates/appointment.aggregate.js';
+import { Appointment } from '@/contexts/scheduling/domain/aggregates/appointment.aggregate.js';
 
 /**
  * How an element a handler hands to `Access.authorize` is named in the relationship schema. A

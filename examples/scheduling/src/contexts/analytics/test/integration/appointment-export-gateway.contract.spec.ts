@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import type { ExportedAppointment } from '#src/contexts/scheduling/published-language/index.js';
-import type { AppointmentExportGateway } from '#src/contexts/analytics/application/ports/appointment-export-gateway.port.js';
-import type { Outcome } from '#src/contexts/analytics/application/ports/outcome-register.port.js';
-import { InProcessAppointmentExportGateway } from '#src/contexts/analytics/infrastructure/external/in-process-appointment-export.gateway.js';
-import { anOutcome } from '#src/contexts/analytics/test/builders/outcome.builder.js';
-import { FakeAppointmentExportContract } from '#src/contexts/analytics/test/fakes/appointment-export-contract.fake.js';
-import { FakeAppointmentExportGateway } from '#src/contexts/analytics/test/fakes/appointment-export-gateway.fake.js';
+import type { ExportedAppointment } from '@/contexts/scheduling/published-language/index.js';
+import type { AppointmentExportGateway } from '@/contexts/analytics/application/ports/appointment-export-gateway.port.js';
+import type { Outcome } from '@/contexts/analytics/application/ports/outcome-register.port.js';
+import { InProcessAppointmentExportGateway } from '@/contexts/analytics/infrastructure/external/in-process-appointment-export.gateway.js';
+import { anOutcome } from '@/contexts/analytics/test/builders/outcome.builder.js';
+import { FakeAppointmentExportContract } from '@/contexts/analytics/test/fakes/appointment-export-contract.fake.js';
+import { FakeAppointmentExportGateway } from '@/contexts/analytics/test/fakes/appointment-export-gateway.fake.js';
 
 const OUTCOMES: readonly Outcome[] = [
   anOutcome({ id: 'appointment-1', state: 'completed', changedAt: new Date('2026-10-12T09:00:00.000Z') }),

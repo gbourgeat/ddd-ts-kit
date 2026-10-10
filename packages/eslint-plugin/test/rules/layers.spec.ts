@@ -21,7 +21,7 @@ ruleTester.run('layer-domain-purity', layerDomainPurity, {
   valid: [
     at(AGGREGATE, "import { AggregateRoot } from '@ddd-ts-kit/kernel';"),
     at(AGGREGATE, "import type { Amount } from '../value-objects/amount.vo.js';"),
-    at(AGGREGATE, "import { Money } from '#src/shared-kernel/money.vo.js';"),
+    at(AGGREGATE, "import { Money } from '@/shared-kernel/money.vo.js';"),
     at(AGGREGATE, "import { Sku } from '../../../catalog/domain/value-objects/sku.vo.js';"),
     at(AGGREGATE, "import Decimal from 'decimal.js';", { ...SAMPLE_CONFIG, domainAllowedPackages: ['decimal.js'] }),
     at(`${BILLING}/test/unit/invoice.aggregate.spec.ts`, "import { describe } from 'vitest';"),
@@ -85,11 +85,11 @@ ruleTester.run('layer-domain-purity', layerDomainPurity, {
     {
       ...at(
         AGGREGATE,
-        "import type { IssueInvoiceCommand } from '#src/contexts/billing/application/commands/issue-invoice/issue-invoice.command.js';",
+        "import type { IssueInvoiceCommand } from '@/contexts/billing/application/commands/issue-invoice/issue-invoice.command.js';",
       ),
       errors: [{ messageId: 'outerLayer' }],
     },
-    { ...at(AGGREGATE, "import { config } from '#src/platform/config.js';"), errors: [{ messageId: 'outerLayer' }] },
+    { ...at(AGGREGATE, "import { config } from '@/platform/config.js';"), errors: [{ messageId: 'outerLayer' }] },
     {
       ...at(AGGREGATE, "import type { ProductListedV1 } from '../../../catalog/published-language/index.js';"),
       errors: [{ messageId: 'upstreamContract' }],
@@ -124,8 +124,8 @@ ruleTester.run('layer-application-inward', layerApplicationInward, {
     at(HANDLER, "import type { Clock } from '@ddd-ts-kit/kernel';"),
     at(HANDLER, "import { Invoice } from '../../../domain/aggregates/invoice.aggregate.js';"),
     at(HANDLER, "import type { PaymentGateway } from '../../ports/payment-gateway.port.js';"),
-    at(HANDLER, "import type { ProductListedV1 } from '#src/contexts/catalog/published-language/index.js';"),
-    at(HANDLER, "import { Money } from '#src/shared-kernel/money.vo.js';"),
+    at(HANDLER, "import type { ProductListedV1 } from '@/contexts/catalog/published-language/index.js';"),
+    at(HANDLER, "import { Money } from '@/shared-kernel/money.vo.js';"),
     at(HANDLER, "import type { Cache, Logger } from '@ddd-ts-kit/kernel';"),
     at(
       `${BILLING}/test/unit/issue-invoice.handler.spec.ts`,
@@ -202,7 +202,7 @@ ruleTester.run('layer-application-inward', layerApplicationInward, {
       errors: [{ messageId: 'outward' }],
     },
     {
-      ...at(HANDLER, "import { database } from '#src/platform/database/database.js';"),
+      ...at(HANDLER, "import { database } from '@/platform/database/database.js';"),
       errors: [{ messageId: 'outward' }],
     },
     {
@@ -236,7 +236,7 @@ ruleTester.run('layer-presentation-no-infrastructure', layerPresentationNoInfras
     {
       ...at(
         ROUTE,
-        "import type { InvoiceRow } from '#src/contexts/billing/infrastructure/persistence/billing.schema.js';",
+        "import type { InvoiceRow } from '@/contexts/billing/infrastructure/persistence/billing.schema.js';",
       ),
       errors: [{ messageId: 'forbidden' }],
     },

@@ -1,7 +1,7 @@
 import { CommandBus, systemActor } from '@ddd-ts-kit/kernel';
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
-import { AppointmentRescheduled } from '#src/contexts/scheduling/domain/events/appointment-rescheduled.event.js';
-import { OfferFreedSlotCommand } from '#src/contexts/scheduling/application/commands/offer-freed-slot/offer-freed-slot.command.js';
+import { AppointmentRescheduled } from '@/contexts/scheduling/domain/events/appointment-rescheduled.event.js';
+import { OfferFreedSlotCommand } from '@/contexts/scheduling/application/commands/offer-freed-slot/offer-freed-slot.command.js';
 
 /** When an appointment moves, the slot it held before is offered to the waitlist of its calendar and day. */
 @DomainEventHandler(AppointmentRescheduled, { name: 'scheduling.appointment.rescheduled' }, [CommandBus])

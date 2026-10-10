@@ -2,9 +2,9 @@ import type { KnexContext } from '@ddd-ts-kit/knex';
 import type {
   PersonCard,
   PersonDirectoryContract,
-} from '#src/contexts/identity/published-language/person-directory.contract.js';
-import { IDENTITY_SCHEMA } from '#src/contexts/identity/infrastructure/persistence/identity.schema.js';
-import type { PersonRow } from '#src/contexts/identity/infrastructure/persistence/person-row.schema.js';
+} from '@/contexts/identity/published-language/person-directory.contract.js';
+import { IDENTITY_SCHEMA } from '@/contexts/identity/infrastructure/persistence/identity.schema.js';
+import type { PersonRow } from '@/contexts/identity/infrastructure/persistence/person-row.schema.js';
 
 /**
  * Answers the directory from the table of the persons: one statement, whatever the number of

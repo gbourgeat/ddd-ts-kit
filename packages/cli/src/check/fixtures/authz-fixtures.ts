@@ -172,7 +172,7 @@ export const AUTHZ_FIXTURES: readonly Fixture[] = [
     files: declaredProject({
       [COMMAND]: DECLARED.command,
       ...handler(
-        "import { Access } from '@ddd-ts-kit/auth';\nimport { CommandHandler } from '@ddd-ts-kit/kernel/declarations';\nimport { IssueInvoiceCommand } from '#src/contexts/billing/application/commands/issue-invoice/issue-invoice.command.js';\n\n@CommandHandler(IssueInvoiceCommand, [Access])\nexport class IssueInvoiceHandler {}\n",
+        "import { Access } from '@ddd-ts-kit/auth';\nimport { CommandHandler } from '@ddd-ts-kit/kernel/declarations';\nimport { IssueInvoiceCommand } from '@/contexts/billing/application/commands/issue-invoice/issue-invoice.command.js';\n\n@CommandHandler(IssueInvoiceCommand, [Access])\nexport class IssueInvoiceHandler {}\n",
       ),
       [POLICY]: DECLARED.policy,
     }),
@@ -202,7 +202,7 @@ export const AUTHZ_FIXTURES: readonly Fixture[] = [
     files: declaredProject({
       [COMMAND]: DECLARED.command,
       ...handler(
-        "import { ExecutionScope } from '@ddd-ts-kit/kernel';\nimport { CommandHandler } from '@ddd-ts-kit/kernel/declarations';\nimport { IssueInvoiceCommand } from '#src/contexts/billing/application/commands/issue-invoice/issue-invoice.command.js';\n\n@CommandHandler(IssueInvoiceCommand, [ExecutionScope])\nexport class IssueInvoiceHandler {}\n",
+        "import { ExecutionScope } from '@ddd-ts-kit/kernel';\nimport { CommandHandler } from '@ddd-ts-kit/kernel/declarations';\nimport { IssueInvoiceCommand } from '@/contexts/billing/application/commands/issue-invoice/issue-invoice.command.js';\n\n@CommandHandler(IssueInvoiceCommand, [ExecutionScope])\nexport class IssueInvoiceHandler {}\n",
       ),
     }),
   },

@@ -1,7 +1,7 @@
 import { IdGenerator, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
-import { AppointmentMarkedNoShow } from '#src/contexts/scheduling/domain/events/appointment-marked-no-show.event.js';
-import { appointmentMarkedNoShowV1 } from '#src/contexts/scheduling/published-language/appointment-marked-no-show.v1.integration-event.js';
+import { AppointmentMarkedNoShow } from '@/contexts/scheduling/domain/events/appointment-marked-no-show.event.js';
+import { appointmentMarkedNoShowV1 } from '@/contexts/scheduling/published-language/appointment-marked-no-show.v1.integration-event.js';
 
 @DomainEventHandler(AppointmentMarkedNoShow, { name: 'scheduling.appointment.marked-no-show' }, [
   IntegrationEventPublisher,

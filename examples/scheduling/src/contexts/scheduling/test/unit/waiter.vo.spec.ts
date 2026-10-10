@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { unwrap } from '@ddd-ts-kit/kernel';
-import { InvalidWaiterError } from '#src/contexts/scheduling/domain/errors/invalid-waiter.error.js';
-import { Waiter } from '#src/contexts/scheduling/domain/value-objects/waiter.vo.js';
+import { InvalidWaiterError } from '@/contexts/scheduling/domain/errors/invalid-waiter.error.js';
+import { Waiter } from '@/contexts/scheduling/domain/value-objects/waiter.vo.js';
 
 const joinedAt = new Date('2026-03-01T08:00:00.000Z');
 const ada = { patientId: 'patient-1', appointmentTypeId: 'consultation', joinedAt };

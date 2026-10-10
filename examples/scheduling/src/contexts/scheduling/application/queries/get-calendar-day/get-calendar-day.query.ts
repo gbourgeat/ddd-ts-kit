@@ -1,7 +1,7 @@
 import { AuthorizedQuery, type Actor } from '@ddd-ts-kit/kernel';
 import { Requires } from '@ddd-ts-kit/kernel/declarations';
-import { schedulingPermissions } from '#src/contexts/scheduling/application/authorization/scheduling.permissions.js';
-import type { GetCalendarDayResult } from '#src/contexts/scheduling/application/queries/get-calendar-day/get-calendar-day.result.js';
+import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions.js';
+import type { GetCalendarDayResult } from '@/contexts/scheduling/application/queries/get-calendar-day/get-calendar-day.result.js';
 
 /** One day `YYYY-MM-DD` of a calendar, in the time zone of its practice, as anyone signed in may see it. */
 @Requires(schedulingPermissions['calendar.browse'], {

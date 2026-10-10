@@ -18,7 +18,7 @@ const DECLARATIONS = "'@ddd-ts-kit/kernel/declarations'";
 
 const SAVING_ADAPTER = source(
   `import { Repository } from ${DECLARATIONS};`,
-  "import { InvoiceRepository } from '#src/contexts/billing/domain/repositories/invoice.repository.js';",
+  "import { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository.js';",
   '',
   '@Repository(InvoiceRepository, [])',
   'export class InMemoryInvoiceRepository implements InvoiceRepository {',
@@ -31,7 +31,7 @@ const SAVING_ADAPTER = source(
 const PULLING_EVENT_HANDLER = source(
   `import { DomainEventDispatcher } from ${KERNEL};`,
   `import { DomainEventHandler } from ${DECLARATIONS};`,
-  "import { InvoiceIssued } from '#src/contexts/billing/domain/events/invoice-issued.event.js';",
+  "import { InvoiceIssued } from '@/contexts/billing/domain/events/invoice-issued.event.js';",
   '',
   "@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued' }, [DomainEventDispatcher])",
   'export class InvoiceIssuedEventHandler {',
@@ -92,10 +92,9 @@ const DISPATCHED_ON_SAVE: readonly Fixture[] = [
 const FROM_KERNEL = (...names: string[]): string => `import { ${names.join(', ')} } from ${KERNEL};`;
 
 const REPOSITORY_PORT =
-  "import { InvoiceRepository } from '#src/contexts/billing/domain/repositories/invoice.repository.js';";
+  "import { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository.js';";
 
-const PAYMENT_PORT =
-  "import { PaymentGateway } from '#src/contexts/billing/application/ports/payment-gateway.port.js';";
+const PAYMENT_PORT = "import { PaymentGateway } from '@/contexts/billing/application/ports/payment-gateway.port.js';";
 
 const AFTER_COMMIT = "phase: 'after-commit'";
 const STORED_PAYMENTS = `${BILLING}/infrastructure/persistence/stored-payment-gateway.repository.ts`;
@@ -103,7 +102,7 @@ const STORED_PAYMENTS = `${BILLING}/infrastructure/persistence/stored-payment-ga
 /** The payment port kept in the database of the context: its adapter lives with the repositories. */
 const STORED_ADAPTER = source(
   `import { Repository } from ${DECLARATIONS};`,
-  "import { PaymentGateway } from '#src/contexts/billing/application/ports/payment-gateway.port.js';",
+  "import { PaymentGateway } from '@/contexts/billing/application/ports/payment-gateway.port.js';",
   '',
   '@Repository(PaymentGateway, [])',
   'export class StoredPaymentGateway implements PaymentGateway {}',
@@ -112,7 +111,7 @@ const STORED_ADAPTER = source(
 /** The handler of the explicit style: no decorator, the cache it clears typed in its constructor. */
 const PLAIN_EVENT_HANDLER = source(
   `import type { Cache } from ${KERNEL};`,
-  "import type { InvoiceIssued } from '#src/contexts/billing/domain/events/invoice-issued.event.js';",
+  "import type { InvoiceIssued } from '@/contexts/billing/domain/events/invoice-issued.event.js';",
   '',
   'export class InvoiceIssuedEventHandler {',
   '  constructor(private readonly cache: Cache) {}',
@@ -211,7 +210,7 @@ function reacting(imports: readonly string[], dependencies: readonly string[], o
   return source(
     ...imports,
     `import { DomainEventHandler } from ${DECLARATIONS};`,
-    "import { InvoiceIssued } from '#src/contexts/billing/domain/events/invoice-issued.event.js';",
+    "import { InvoiceIssued } from '@/contexts/billing/domain/events/invoice-issued.event.js';",
     '',
     `@DomainEventHandler(InvoiceIssued, { ${["name: 'billing.invoice.issued'", ...(options === undefined ? [] : [options])].join(', ')} }, [${dependencies.join(', ')}])`,
     'export class InvoiceIssuedEventHandler {}',
@@ -221,8 +220,8 @@ function reacting(imports: readonly string[], dependencies: readonly string[], o
 /** The module file of the explicit style, wired by hand: the handler is built once and registered with the options given. */
 function moduleRegistering(options: string): string {
   return source(
-    "import { InvoiceIssuedEventHandler } from '#src/contexts/billing/application/event-handlers/invoice-issued.event-handler.js';",
-    "import { InvoiceIssued } from '#src/contexts/billing/domain/events/invoice-issued.event.js';",
+    "import { InvoiceIssuedEventHandler } from '@/contexts/billing/application/event-handlers/invoice-issued.event-handler.js';",
+    "import { InvoiceIssued } from '@/contexts/billing/domain/events/invoice-issued.event.js';",
     '',
     'export function billingModule(platform: Platform): void {',
     "  const invoiceIssuedEventHandler = platform.adapter(new InvoiceIssuedEventHandler(platform.cache), { kind: 'domain-event-handler', context: 'billing' });",
@@ -244,8 +243,8 @@ function handlerDoing(dependencies: readonly string[], statements: readonly stri
   return source(
     `import { ${['Clock', ...dependencies].join(', ')} } from ${KERNEL};`,
     `import { CommandHandler } from ${DECLARATIONS};`,
-    "import { InvoiceRepository } from '#src/contexts/billing/domain/repositories/invoice.repository.js';",
-    "import { IssueInvoiceCommand } from '#src/contexts/billing/application/commands/issue-invoice/issue-invoice.command.js';",
+    "import { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository.js';",
+    "import { IssueInvoiceCommand } from '@/contexts/billing/application/commands/issue-invoice/issue-invoice.command.js';",
     '',
     `@CommandHandler(IssueInvoiceCommand, [${['InvoiceRepository', 'Clock', ...dependencies].join(', ')}])`,
     'export class IssueInvoiceHandler implements CommandHandler<IssueInvoiceCommand> {',

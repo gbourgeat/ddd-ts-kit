@@ -15,7 +15,7 @@ export function declaredProject(files: FixtureFiles, overrides: FixtureFiles = {
       file.startsWith(directory) ? [file.slice(directory.length)] : [],
     );
 
-    return [`${directory}${barrelFile(context)}`, renderBarrel(inside, `#src/contexts/${context}`)];
+    return [`${directory}${barrelFile(context)}`, renderBarrel(inside, `@/contexts/${context}`)];
   });
 
   return { ...written, ...Object.fromEntries(barrels), ...overrides };

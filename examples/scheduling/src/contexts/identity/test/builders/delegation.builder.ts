@@ -1,6 +1,6 @@
 import { Builder, sequence, type Defaults } from '@ddd-ts-kit/testing';
-import { Delegation } from '#src/contexts/identity/domain/aggregates/delegation.aggregate.js';
-import { Desk } from '#src/contexts/identity/domain/value-objects/desk.vo.js';
+import { Delegation } from '@/contexts/identity/domain/aggregates/delegation.aggregate.js';
+import { Desk } from '@/contexts/identity/domain/value-objects/desk.vo.js';
 
 interface DelegationIngredients {
   readonly id: string;

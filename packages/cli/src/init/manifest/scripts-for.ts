@@ -1,4 +1,3 @@
-import { SOURCE_CONDITION } from '../../alias/index.js';
 import type { Config } from '../../config/index.js';
 import { DEPCRUISE_FILE } from '../../depcruise/depcruise-file.js';
 import { BASELINE } from './baseline.js';
@@ -34,8 +33,8 @@ export function scriptsFor(config: Config): Record<string, string> {
 
 /**
  * The whole application, and the worker once the project has one (`generate worker` adds its script
- * to an existing project). `start` is plain `node` on the compiled output; `dev` runs the sources,
- * so it names the condition under which an import alias answers a source file.
+ * to an existing project). `start` is plain `node` on the compiled output, whose alias specifiers
+ * the build rewrote; `dev` runs the sources under tsx, which reads the `paths` of tsconfig.json.
  */
 function runScripts(config: Config): Record<string, string> {
   const compiled = `dist/${config.sourceRoot}`;
@@ -43,6 +42,6 @@ function runScripts(config: Config): Record<string, string> {
   return {
     start: `node ${compiled}/main.js`,
     ...(config.worker ? { 'start:worker': `node ${compiled}/apps/worker/main.js` } : {}),
-    dev: `tsx watch --conditions=${SOURCE_CONDITION} --env-file-if-exists=.env --import ./${config.platformDir}/tracing.ts ${config.sourceRoot}/main.ts`,
+    dev: `tsx watch --env-file-if-exists=.env --import ./${config.platformDir}/tracing.ts ${config.sourceRoot}/main.ts`,
   };
 }

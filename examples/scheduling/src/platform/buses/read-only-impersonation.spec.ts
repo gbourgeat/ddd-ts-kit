@@ -11,9 +11,9 @@ import {
 import { anActor } from '@ddd-ts-kit/auth/testing';
 import { aSession } from '@ddd-ts-kit/testing';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { openTestDatabase, type TestDatabase } from '#src/platform/database/open-test-database.js';
-import { layFoundations, type Foundations } from '#src/platform/lay-foundations.js';
-import { createCommandBus } from '#src/platform/buses/create-command-bus.js';
+import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database.js';
+import { layFoundations, type Foundations } from '@/platform/lay-foundations.js';
+import { createCommandBus } from '@/platform/buses/create-command-bus.js';
 
 class RenamePractice extends Command {}
 

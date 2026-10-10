@@ -1,15 +1,15 @@
 import { Access } from '@ddd-ts-kit/auth';
 import { Criteria, offsetPage, scoped, type ReadScope } from '@ddd-ts-kit/kernel';
 import { QueryHandler } from '@ddd-ts-kit/kernel/declarations';
-import type { Calendar } from '#src/contexts/scheduling/domain/aggregates/calendar.aggregate.js';
-import { InvalidDayError } from '#src/contexts/scheduling/domain/errors/invalid-day.error.js';
-import { UnknownCalendarError } from '#src/contexts/scheduling/domain/errors/unknown-calendar.error.js';
-import { CalendarRepository } from '#src/contexts/scheduling/domain/repositories/calendar.repository.js';
-import { TimeZone } from '#src/contexts/scheduling/domain/value-objects/time-zone.vo.js';
-import { schedulingPermissions } from '#src/contexts/scheduling/application/authorization/scheduling.permissions.js';
-import { Agenda, type AgendaEntry } from '#src/contexts/scheduling/application/ports/agenda.port.js';
-import { GetCalendarDayQuery } from '#src/contexts/scheduling/application/queries/get-calendar-day/get-calendar-day.query.js';
-import type { GetCalendarDayResult } from '#src/contexts/scheduling/application/queries/get-calendar-day/get-calendar-day.result.js';
+import type { Calendar } from '@/contexts/scheduling/domain/aggregates/calendar.aggregate.js';
+import { InvalidDayError } from '@/contexts/scheduling/domain/errors/invalid-day.error.js';
+import { UnknownCalendarError } from '@/contexts/scheduling/domain/errors/unknown-calendar.error.js';
+import { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository.js';
+import { TimeZone } from '@/contexts/scheduling/domain/value-objects/time-zone.vo.js';
+import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions.js';
+import { Agenda, type AgendaEntry } from '@/contexts/scheduling/application/ports/agenda.port.js';
+import { GetCalendarDayQuery } from '@/contexts/scheduling/application/queries/get-calendar-day/get-calendar-day.query.js';
+import type { GetCalendarDayResult } from '@/contexts/scheduling/application/queries/get-calendar-day/get-calendar-day.result.js';
 
 const PAGE = 100;
 const END_OF_DAY = 24 * 60;

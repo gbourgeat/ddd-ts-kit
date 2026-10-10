@@ -42,7 +42,7 @@ describe('pipeline templates', () => {
     expect(template('gitlab/gitlab-ci.yml')).toBe(expected);
   });
 
-  it('the vitest config differs by the placeholders of the source root, the contexts directory and the alias, by the architecture specs it runs, by the decorators plugin, which is written for the standard decorator mode only, by the coverage plugin of the legacy mode, and by the inlined package under discovery', () => {
+  it('the vitest config differs by the placeholders of the source root and the contexts directory, by the architecture specs it runs, by the decorators plugin, which is written for the standard decorator mode only, by the coverage plugin of the legacy mode, and by the inlined package under discovery', () => {
     // The proof that each context wires alone lives in test/architecture, outside the source root.
     const rendered = template('vitest.config.ts.tpl')
       .replaceAll(/^[ \t]*\{\{#if (?:assembly\.discovery|decorators\.legacy)\}\}\n[\s\S]*?^[ \t]*\{\{\/if\}\}\n/gm, '')
@@ -50,7 +50,6 @@ describe('pipeline templates', () => {
       .replace(", 'test/architecture/**/*.spec.ts'", '')
       .replaceAll('{{config.contextsDir}}', 'src/contexts')
       .replaceAll('{{config.sourceRoot}}', 'src')
-      .replaceAll('{{alias.condition}}', 'ddd-ts-kit-source')
       // With the architecture specs the unit project no longer fits one line: the formatter gives it several.
       .replace(
         "{\n        extends: true,\n        test: {\n          name: 'unit',\n          include: ['src/**/*.spec.ts'],\n          exclude: [INTEGRATION_SPECS],\n        },\n      },",

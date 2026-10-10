@@ -1,6 +1,6 @@
 import { AuthorizedCommand, type Actor } from '@ddd-ts-kit/kernel';
 import { Requires } from '@ddd-ts-kit/kernel/declarations';
-import { schedulingPermissions } from '#src/contexts/scheduling/application/authorization/scheduling.permissions.js';
+import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions.js';
 
 /** Sent by the context itself when an appointment frees what it held. Answers the identifier of the appointment requested for a waiter, or nothing when nobody took the slot. */
 @Requires(schedulingPermissions['waitlist.offer'], { resource: () => ({ type: 'context', id: 'scheduling' }) })

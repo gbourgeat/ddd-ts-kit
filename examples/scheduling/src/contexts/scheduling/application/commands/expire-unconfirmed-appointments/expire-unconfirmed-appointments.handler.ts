@@ -1,6 +1,6 @@
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
-import { AppointmentRepository } from '#src/contexts/scheduling/domain/repositories/appointment.repository.js';
-import { ExpireUnconfirmedAppointmentsCommand } from '#src/contexts/scheduling/application/commands/expire-unconfirmed-appointments/expire-unconfirmed-appointments.command.js';
+import { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository.js';
+import { ExpireUnconfirmedAppointmentsCommand } from '@/contexts/scheduling/application/commands/expire-unconfirmed-appointments/expire-unconfirmed-appointments.command.js';
 
 @CommandHandler(ExpireUnconfirmedAppointmentsCommand, [AppointmentRepository])
 export class ExpireUnconfirmedAppointmentsHandler implements CommandHandler<ExpireUnconfirmedAppointmentsCommand> {

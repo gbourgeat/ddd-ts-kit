@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { unwrap } from '@ddd-ts-kit/kernel';
-import { InvalidTimeOffError } from '#src/contexts/scheduling/domain/errors/invalid-time-off.error.js';
-import { TimeOff } from '#src/contexts/scheduling/domain/value-objects/time-off.vo.js';
+import { InvalidTimeOffError } from '@/contexts/scheduling/domain/errors/invalid-time-off.error.js';
+import { TimeOff } from '@/contexts/scheduling/domain/value-objects/time-off.vo.js';
 
 describe('TimeOff', () => {
   it('is equal to another time off over the same period', () => {

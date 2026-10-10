@@ -1,7 +1,7 @@
 import { AggregateRoot } from '@ddd-ts-kit/kernel';
-import { PersonRegistered } from '#src/contexts/identity/domain/events/person-registered.event.js';
-import type { DisplayName } from '#src/contexts/identity/domain/value-objects/display-name.vo.js';
-import type { Email } from '#src/contexts/identity/domain/value-objects/email.vo.js';
+import { PersonRegistered } from '@/contexts/identity/domain/events/person-registered.event.js';
+import type { DisplayName } from '@/contexts/identity/domain/value-objects/display-name.vo.js';
+import type { Email } from '@/contexts/identity/domain/value-objects/email.vo.js';
 
 export interface PersonState {
   readonly registeredAt: Date;

@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import type { Appointment } from '#src/contexts/scheduling/domain/aggregates/appointment.aggregate.js';
-import { SchedulerService } from '#src/contexts/scheduling/domain/services/scheduler.service.js';
-import { anAppointment } from '#src/contexts/scheduling/test/builders/appointment.builder.js';
-import { aCalendar } from '#src/contexts/scheduling/test/builders/calendar.builder.js';
+import type { Appointment } from '@/contexts/scheduling/domain/aggregates/appointment.aggregate.js';
+import { SchedulerService } from '@/contexts/scheduling/domain/services/scheduler.service.js';
+import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder.js';
+import { aCalendar } from '@/contexts/scheduling/test/builders/calendar.builder.js';
 
 // Monday 2 March 2026 in Europe/Paris is UTC+1: 09:00 on the wall clock is 08:00Z.
 const now = new Date('2026-03-01T08:00:00.000Z');

@@ -12,7 +12,7 @@ export function aliasRoots(config: Aliased): AliasRoot[] {
   const { test, scripts, generated } = FIXED_ALIAS_ROOTS;
 
   return [
-    { prefix: config.importAlias, directory: config.sourceRoot, compiled: true },
+    { prefix: config.importAlias, directory: config.sourceRoot },
     test,
     scripts,
     ...(config.stack.orm === 'prisma' ? [generated] : []),

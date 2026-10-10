@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { unwrap } from '@ddd-ts-kit/kernel';
-import { UnknownTimeZoneError } from '#src/contexts/scheduling/domain/errors/unknown-time-zone.error.js';
-import { TimeZone } from '#src/contexts/scheduling/domain/value-objects/time-zone.vo.js';
+import { UnknownTimeZoneError } from '@/contexts/scheduling/domain/errors/unknown-time-zone.error.js';
+import { TimeZone } from '@/contexts/scheduling/domain/value-objects/time-zone.vo.js';
 
 const paris = unwrap(TimeZone.create('Europe/Paris'));
 

@@ -1,12 +1,12 @@
 import type { Knex } from 'knex';
 import { createAuditTables } from '@ddd-ts-kit/audit/knex';
 import { createOutboxTables } from '@ddd-ts-kit/knex';
-import { createRelationTupleTables } from '#src/platform/auth/create-relation-tuple-tables.js';
+import { createRelationTupleTables } from '@/platform/auth/create-relation-tuple-tables.js';
 // ddd-ts-kit:imports
-import { createSchedulingTables } from '#src/contexts/scheduling/infrastructure/persistence/create-scheduling-tables.schema.js';
-import { createIdentityTables } from '#src/contexts/identity/infrastructure/persistence/create-identity-tables.schema.js';
-import { createNotificationTables } from '#src/contexts/notification/infrastructure/persistence/create-notification-tables.schema.js';
-import { createAnalyticsTables } from '#src/contexts/analytics/infrastructure/persistence/create-analytics-tables.schema.js';
+import { createSchedulingTables } from '@/contexts/scheduling/infrastructure/persistence/create-scheduling-tables.schema.js';
+import { createIdentityTables } from '@/contexts/identity/infrastructure/persistence/create-identity-tables.schema.js';
+import { createNotificationTables } from '@/contexts/notification/infrastructure/persistence/create-notification-tables.schema.js';
+import { createAnalyticsTables } from '@/contexts/analytics/infrastructure/persistence/create-analytics-tables.schema.js';
 // /ddd-ts-kit:imports
 
 export const MESSAGING = 'messaging';

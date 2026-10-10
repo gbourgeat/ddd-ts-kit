@@ -1,5 +1,5 @@
 import { ReadModelStore, defineCriteria } from '@ddd-ts-kit/kernel';
-import type { OutcomeState } from '#src/contexts/analytics/domain/services/occupancy-measure.service.js';
+import type { OutcomeState } from '@/contexts/analytics/domain/services/occupancy-measure.service.js';
 
 /** How one appointment stands for measurement, under the identifier of the appointment. */
 export type Outcome = {

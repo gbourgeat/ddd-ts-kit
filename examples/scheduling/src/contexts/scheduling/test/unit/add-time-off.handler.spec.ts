@@ -3,16 +3,16 @@ import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { anActor } from '@ddd-ts-kit/auth/testing';
 import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
-import * as schedulingDeclarations from '#src/contexts/scheduling/scheduling.declarations.js';
-import { platformTestModule } from '#src/platform/platform-test.module.js';
-import { schedulingPermissions } from '#src/contexts/scheduling/application/authorization/scheduling.permissions.js';
-import { AddTimeOffCommand } from '#src/contexts/scheduling/application/commands/add-time-off/add-time-off.command.js';
-import { AppointmentRepository } from '#src/contexts/scheduling/domain/repositories/appointment.repository.js';
-import { CalendarRepository } from '#src/contexts/scheduling/domain/repositories/calendar.repository.js';
-import { aCalendar } from '#src/contexts/scheduling/test/builders/calendar.builder.js';
-import { anAppointment, type AppointmentBuilder } from '#src/contexts/scheduling/test/builders/appointment.builder.js';
-import { FakeAppointmentRepository } from '#src/contexts/scheduling/test/fakes/appointment.repository.fake.js';
-import { FakeCalendarRepository } from '#src/contexts/scheduling/test/fakes/calendar.repository.fake.js';
+import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations.js';
+import { platformTestModule } from '@/platform/platform-test.module.js';
+import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions.js';
+import { AddTimeOffCommand } from '@/contexts/scheduling/application/commands/add-time-off/add-time-off.command.js';
+import { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository.js';
+import { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository.js';
+import { aCalendar } from '@/contexts/scheduling/test/builders/calendar.builder.js';
+import { anAppointment, type AppointmentBuilder } from '@/contexts/scheduling/test/builders/appointment.builder.js';
+import { FakeAppointmentRepository } from '@/contexts/scheduling/test/fakes/appointment.repository.fake.js';
+import { FakeCalendarRepository } from '@/contexts/scheduling/test/fakes/calendar.repository.fake.js';
 
 const holders = authorizationModule({
   authorizer: new RoleBasedAuthorizer({ roles: { holder: [schedulingPermissions['calendar.add-time-off']] } }),

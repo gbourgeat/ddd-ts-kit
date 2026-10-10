@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { unwrap } from '@ddd-ts-kit/kernel';
-import { InvalidRangeError } from '#src/contexts/scheduling/domain/errors/invalid-range.error.js';
-import { Range } from '#src/contexts/scheduling/domain/value-objects/range.vo.js';
+import { InvalidRangeError } from '@/contexts/scheduling/domain/errors/invalid-range.error.js';
+import { Range } from '@/contexts/scheduling/domain/value-objects/range.vo.js';
 
 describe('Range', () => {
   it('is equal to another range between the same times', () => {

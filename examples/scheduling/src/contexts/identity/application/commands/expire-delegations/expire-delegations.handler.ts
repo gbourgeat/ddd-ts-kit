@@ -1,6 +1,6 @@
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
-import { DelegationRepository } from '#src/contexts/identity/domain/repositories/delegation.repository.js';
-import { ExpireDelegationsCommand } from '#src/contexts/identity/application/commands/expire-delegations/expire-delegations.command.js';
+import { DelegationRepository } from '@/contexts/identity/domain/repositories/delegation.repository.js';
+import { ExpireDelegationsCommand } from '@/contexts/identity/application/commands/expire-delegations/expire-delegations.command.js';
 
 @CommandHandler(ExpireDelegationsCommand, [DelegationRepository])
 export class ExpireDelegationsHandler implements CommandHandler<ExpireDelegationsCommand> {

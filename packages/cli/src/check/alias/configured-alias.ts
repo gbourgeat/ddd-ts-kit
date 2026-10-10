@@ -4,7 +4,7 @@ import type { Violation } from '../model/violation.js';
 import { lineOf } from '../support/line-of.js';
 import type { Inspected } from './inspected.js';
 
-/** An alias some tool cannot resolve from package.json alone: nothing else is worth comparing until it is fixed. */
+/** An alias the kit cannot hold every tool to: nothing else is worth comparing until it is fixed. */
 export function configuredAlias({ project, report }: Inspected): Violation[] {
   const { importAlias } = project.config;
   const problem = aliasProblem(importAlias);
@@ -17,7 +17,7 @@ export function configuredAlias({ project, report }: Inspected): Violation[] {
     report(
       { file: CONFIG_FILE, line: lineOf(project.configText, '"importAlias"') },
       `"importAlias" is "${importAlias}", which is not supported: ${problem}.`,
-      `Set "importAlias" to a subpath import such as "${DEFAULT_IMPORT_ALIAS}", declare it under "imports" in package.json and rewrite the imports (\`eslint --fix\` turns every relative import into its alias).`,
+      `Set "importAlias" to "${DEFAULT_IMPORT_ALIAS}" or to "$<name>/", write it under "paths" in tsconfig.json and rewrite the imports (\`eslint --fix\` turns every relative import into its alias).`,
     ),
   ];
 }

@@ -1,17 +1,17 @@
 import { AggregateRoot } from '@ddd-ts-kit/kernel';
-import { AlreadyMemberError } from '#src/contexts/identity/domain/errors/already-member.error.js';
-import { NotAMemberError } from '#src/contexts/identity/domain/errors/not-a-member.error.js';
-import { NotAPractitionerError } from '#src/contexts/identity/domain/errors/not-a-practitioner.error.js';
-import { NotAnAssistantError } from '#src/contexts/identity/domain/errors/not-an-assistant.error.js';
-import { PracticeLeftUnmanagedError } from '#src/contexts/identity/domain/errors/practice-left-unmanaged.error.js';
-import { PracticeMemberAdded } from '#src/contexts/identity/domain/events/practice-member-added.event.js';
-import { PracticeMemberRemoved } from '#src/contexts/identity/domain/events/practice-member-removed.event.js';
-import { PracticeOpened } from '#src/contexts/identity/domain/events/practice-opened.event.js';
-import { Desk } from '#src/contexts/identity/domain/value-objects/desk.vo.js';
-import type { DisplayName } from '#src/contexts/identity/domain/value-objects/display-name.vo.js';
-import { Membership } from '#src/contexts/identity/domain/value-objects/membership.vo.js';
-import { Role } from '#src/contexts/identity/domain/value-objects/role.vo.js';
-import type { TimeZone } from '#src/contexts/identity/domain/value-objects/time-zone.vo.js';
+import { AlreadyMemberError } from '@/contexts/identity/domain/errors/already-member.error.js';
+import { NotAMemberError } from '@/contexts/identity/domain/errors/not-a-member.error.js';
+import { NotAPractitionerError } from '@/contexts/identity/domain/errors/not-a-practitioner.error.js';
+import { NotAnAssistantError } from '@/contexts/identity/domain/errors/not-an-assistant.error.js';
+import { PracticeLeftUnmanagedError } from '@/contexts/identity/domain/errors/practice-left-unmanaged.error.js';
+import { PracticeMemberAdded } from '@/contexts/identity/domain/events/practice-member-added.event.js';
+import { PracticeMemberRemoved } from '@/contexts/identity/domain/events/practice-member-removed.event.js';
+import { PracticeOpened } from '@/contexts/identity/domain/events/practice-opened.event.js';
+import { Desk } from '@/contexts/identity/domain/value-objects/desk.vo.js';
+import type { DisplayName } from '@/contexts/identity/domain/value-objects/display-name.vo.js';
+import { Membership } from '@/contexts/identity/domain/value-objects/membership.vo.js';
+import { Role } from '@/contexts/identity/domain/value-objects/role.vo.js';
+import type { TimeZone } from '@/contexts/identity/domain/value-objects/time-zone.vo.js';
 
 export interface PracticeState {
   readonly registeredAt: Date;

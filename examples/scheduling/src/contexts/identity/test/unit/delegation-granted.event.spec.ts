@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DelegationGranted } from '#src/contexts/identity/domain/events/delegation-granted.event.js';
+import { DelegationGranted } from '@/contexts/identity/domain/events/delegation-granted.event.js';
 
 describe('DelegationGranted', () => {
   it('is named after the context, the aggregate and the fact', () => {

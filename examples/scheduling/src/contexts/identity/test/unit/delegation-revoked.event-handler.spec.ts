@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { DelegationRevokedEventHandler } from '#src/contexts/identity/application/event-handlers/delegation-revoked.event-handler.js';
-import { DelegationRevoked } from '#src/contexts/identity/domain/events/delegation-revoked.event.js';
-import { FakeIdentityRelationships } from '#src/contexts/identity/test/fakes/identity-relationships.fake.js';
+import { DelegationRevokedEventHandler } from '@/contexts/identity/application/event-handlers/delegation-revoked.event-handler.js';
+import { DelegationRevoked } from '@/contexts/identity/domain/events/delegation-revoked.event.js';
+import { FakeIdentityRelationships } from '@/contexts/identity/test/fakes/identity-relationships.fake.js';
 
 const at = new Date('2026-01-01T00:00:00.000Z');
 const pair = { practiceId: 'practice-1', practitionerId: 'person-2', assistantId: 'person-3' };

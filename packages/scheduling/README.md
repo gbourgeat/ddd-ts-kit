@@ -29,7 +29,7 @@ and timeout (`schedule(work, delayMs)`); this one knows jobs, schedules and inst
 // src/contexts/billing/application/scheduling/send-payment-reminders.job.ts
 import { CommandBus, systemActor } from '@ddd-ts-kit/kernel';
 import { Scheduled, type JobExecution, type ScheduledJob } from '@ddd-ts-kit/kernel/declarations';
-import { SendPaymentReminders } from '#src/contexts/billing/application/commands/send-payment-reminders/send-payment-reminders.command.js';
+import { SendPaymentReminders } from '@/contexts/billing/application/commands/send-payment-reminders/send-payment-reminders.command.js';
 
 @Scheduled('billing.send-payment-reminders', { cron: '0 7 * * 1-5', timeZone: 'Europe/Paris' }, [CommandBus])
 export class SendPaymentRemindersJob implements ScheduledJob {

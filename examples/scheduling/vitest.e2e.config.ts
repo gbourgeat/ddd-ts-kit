@@ -1,8 +1,8 @@
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
-  // Under this condition an import alias answers the source file, not the compiled one (package.json, "imports").
-  ssr: { resolve: { conditions: ['ddd-ts-kit-source'] } },
+  // An import alias is resolved from the "paths" of tsconfig.json, which name the sources.
+  resolve: { tsconfigPaths: true },
   test: {
     include: ['test/e2e/**/*.e2e.spec.ts'],
     // Each file starts its own application; on a shared server (DATABASE_URL) they would

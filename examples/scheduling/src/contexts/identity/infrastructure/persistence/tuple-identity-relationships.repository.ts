@@ -1,6 +1,6 @@
 import { RelationTupleStore, type RelationTuple } from '@ddd-ts-kit/auth/rebac';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
-import { IdentityRelationships } from '#src/contexts/identity/application/ports/identity-relationships.port.js';
+import { IdentityRelationships } from '@/contexts/identity/application/ports/identity-relationships.port.js';
 
 type Membership = Parameters<IdentityRelationships['recordMembership']>[0];
 type Delegation = Parameters<IdentityRelationships['forgetDelegation']>[0];

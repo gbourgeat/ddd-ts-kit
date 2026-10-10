@@ -2,9 +2,9 @@ import { actorOf } from '@ddd-ts-kit/auth';
 import { defineRoute, type Route } from '@ddd-ts-kit/http';
 import type { CommandBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
-import { CompleteAppointmentCommand } from '#src/contexts/scheduling/application/commands/complete-appointment/complete-appointment.command.js';
-import { CompleteAppointmentParams } from '#src/contexts/scheduling/presentation/http/complete-appointment-params.dto.js';
-import { CompleteAppointmentAccepted } from '#src/contexts/scheduling/presentation/http/complete-appointment-accepted.dto.js';
+import { CompleteAppointmentCommand } from '@/contexts/scheduling/application/commands/complete-appointment/complete-appointment.command.js';
+import { CompleteAppointmentParams } from '@/contexts/scheduling/presentation/http/complete-appointment-params.dto.js';
+import { CompleteAppointmentAccepted } from '@/contexts/scheduling/presentation/http/complete-appointment-accepted.dto.js';
 
 const params = classSchema(CompleteAppointmentParams);
 const accepted = classSchema(CompleteAppointmentAccepted);

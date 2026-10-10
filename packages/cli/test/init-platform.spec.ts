@@ -106,7 +106,7 @@ describe('the platform init writes', () => {
     );
 
     expect(read(root, 'src/platform/http/start-http-server.ts')).toContain(
-      "import { createAppModule } from '#src/platform/http/create-app-module.js';",
+      "import { createAppModule } from '@/platform/http/create-app-module.js';",
     );
   });
 

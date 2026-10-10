@@ -308,7 +308,6 @@ module.exports = {
         "exports"
       ],
       "conditionNames": [
-        "ddd-ts-kit-source",
         "import",
         "node",
         "default",

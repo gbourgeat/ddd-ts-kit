@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { AppointmentEndedError } from '#src/contexts/scheduling/domain/errors/appointment-ended.error.js';
+import { AppointmentEndedError } from '@/contexts/scheduling/domain/errors/appointment-ended.error.js';
 
 describe('AppointmentEndedError', () => {
   it('carries its stable code', () => {

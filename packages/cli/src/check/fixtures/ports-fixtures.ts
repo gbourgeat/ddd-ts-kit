@@ -12,8 +12,7 @@ const { ADAPTER, COMMAND, HANDLER, MODULE, PAYMENT_ADAPTER, PORT, REPOSITORY_POR
 
 const DECLARATIONS = "'@ddd-ts-kit/kernel/declarations'";
 
-const IMPORT_PORT =
-  "import { InvoiceRepository } from '#src/contexts/billing/domain/repositories/invoice.repository.js';";
+const IMPORT_PORT = "import { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository.js';";
 
 const IMPLEMENTING = source(IMPORT_PORT, '', 'export class InMemoryInvoiceRepository implements InvoiceRepository {}');
 const EXTENDING = source(IMPORT_PORT, '', 'export class InMemoryInvoiceRepository extends InvoiceRepository {}');
@@ -227,7 +226,7 @@ const CONCRETE_DEPENDENCY: readonly Fixture[] = [
       ...handler(
         handlerNaming(
           [
-            "import { InMemoryInvoiceRepository } from '#src/contexts/billing/infrastructure/persistence/in-memory-invoice.repository.js';",
+            "import { InMemoryInvoiceRepository } from '@/contexts/billing/infrastructure/persistence/in-memory-invoice.repository.js';",
           ],
           '[InMemoryInvoiceRepository]',
         ),
@@ -241,7 +240,7 @@ const CONCRETE_DEPENDENCY: readonly Fixture[] = [
     files: project({
       [MODULE]: source(
         "import { defineModule } from '@ddd-ts-kit/di';",
-        "import { FakeInvoiceRepository } from '#src/contexts/billing/test/fakes/fake-invoice.repository.js';",
+        "import { FakeInvoiceRepository } from '@/contexts/billing/test/fakes/fake-invoice.repository.js';",
         '',
         "export const billingModule = defineModule('billing', (builder) => {",
         "  builder.command(IssueInvoiceCommand).requires(billingPermissions['invoice.issue']).handledBy(IssueInvoiceHandler, [FakeInvoiceRepository]);",
@@ -276,7 +275,7 @@ const VALUE_IMPORT: readonly Fixture[] = [
       [COMMAND]: DECLARED.command,
       ...handler(
         handlerNaming(
-          ["import type { InvoiceRepository } from '#src/contexts/billing/domain/repositories/invoice.repository.js';"],
+          ["import type { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository.js';"],
           '[InvoiceRepository]',
         ),
       ),
@@ -314,8 +313,8 @@ function moduleBinding(...statements: string[]): string {
   return source(
     "import { defineModule } from '@ddd-ts-kit/di';",
     "import { Clock } from '@ddd-ts-kit/kernel';",
-    "import { InvoiceRepository } from '#src/contexts/billing/domain/repositories/invoice.repository.js';",
-    "import { InMemoryInvoiceRepository } from '#src/contexts/billing/infrastructure/persistence/in-memory-invoice.repository.js';",
+    "import { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository.js';",
+    "import { InMemoryInvoiceRepository } from '@/contexts/billing/infrastructure/persistence/in-memory-invoice.repository.js';",
     '',
     "export const billingModule = defineModule('billing', (builder) => {",
     ...statements.map((statement) => `  ${statement}`),
@@ -327,7 +326,7 @@ function handlerNaming(imports: readonly string[], list: string): string {
   return source(
     `import { CommandHandler } from ${DECLARATIONS};`,
     ...imports,
-    "import { IssueInvoiceCommand } from '#src/contexts/billing/application/commands/issue-invoice/issue-invoice.command.js';",
+    "import { IssueInvoiceCommand } from '@/contexts/billing/application/commands/issue-invoice/issue-invoice.command.js';",
     '',
     `@CommandHandler(IssueInvoiceCommand, ${list})`,
     'export class IssueInvoiceHandler {}',

@@ -1,9 +1,9 @@
-import { Delegation } from '#src/contexts/identity/domain/aggregates/delegation.aggregate.js';
-import { Desk } from '#src/contexts/identity/domain/value-objects/desk.vo.js';
+import { Delegation } from '@/contexts/identity/domain/aggregates/delegation.aggregate.js';
+import { Desk } from '@/contexts/identity/domain/value-objects/desk.vo.js';
 import type {
   DelegationColumns,
   DelegationRow,
-} from '#src/contexts/identity/infrastructure/persistence/delegation-row.schema.js';
+} from '@/contexts/identity/infrastructure/persistence/delegation-row.schema.js';
 
 export const DelegationMapper = {
   toDomain(row: DelegationRow): Delegation {

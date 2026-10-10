@@ -2,7 +2,7 @@ import type { Injection } from '../injection.js';
 import { PATHS } from '../paths.js';
 import { SOURCE_ALIAS } from '../source-alias.js';
 
-const { AGGREGATE, BARREL, BUILDER, CONFIG, CONTEXT_DOC, EVENT, HANDLER, MANIFEST, NOTIFICATION, READER } = PATHS;
+const { AGGREGATE, BARREL, BUILDER, CONFIG, CONTEXT_DOC, EVENT, HANDLER, NOTIFICATION, READER } = PATHS;
 const { ROUTE, VALUE_OBJECT, VALUE_OBJECT_SPEC } = PATHS;
 const ERROR = `${NOTIFICATION}/domain/errors/contact-missing.ts`;
 const CHANNEL = `${NOTIFICATION}/domain/value-objects/channel.vo.ts`;
@@ -167,13 +167,13 @@ export const STRUCTURE_INJECTIONS: readonly Injection[] = [
   },
   {
     rule: 'imports/alias-declared',
-    what: 'a second entry of imports in package.json that repeats the alias',
-    file: MANIFEST,
+    what: 'a second entry under the alias in the paths of tsconfig.json',
+    file: 'tsconfig.json',
     changes: [
       {
-        file: MANIFEST,
-        from: '  "imports": {',
-        to: `  "imports": {\n    "${SOURCE_ALIAS}kernel/*.js": "./src/shared-kernel/*.ts",`,
+        file: 'tsconfig.json',
+        from: '    "paths": {',
+        to: `    "paths": {\n      "${SOURCE_ALIAS}kernel/*": ["./src/shared-kernel/*"],`,
       },
     ],
     checker: true,

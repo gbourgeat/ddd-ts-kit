@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { AppointmentNotStartedError } from '#src/contexts/scheduling/domain/errors/appointment-not-started.error.js';
+import { AppointmentNotStartedError } from '@/contexts/scheduling/domain/errors/appointment-not-started.error.js';
 
 describe('AppointmentNotStartedError', () => {
   it('carries its stable code', () => {

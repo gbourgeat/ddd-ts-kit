@@ -23,7 +23,7 @@ export const tracing = initTracing({ serviceName: 'clinic-api' });
 
 ```ts
 // main.ts
-import { tracing } from '#src/platform/tracing.js'; // first import, see "Load order"
+import { tracing } from '@/platform/tracing.js'; // first import, see "Load order"
 import { createApplication, kernelModule } from '@ddd-ts-kit/di';
 import { traceApplication, tracedPublisher, tracedRoutes } from '@ddd-ts-kit/tracing';
 

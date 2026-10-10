@@ -2,9 +2,9 @@ import { actorOf } from '@ddd-ts-kit/auth';
 import { criteriaQuerySchema, defineRoute, pageResponse, pageSchemaOf, type Route } from '@ddd-ts-kit/http';
 import type { QueryBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
-import { agendaCriteria, type AgendaEntry } from '#src/contexts/scheduling/application/ports/agenda.port.js';
-import { SearchAppointmentsQuery } from '#src/contexts/scheduling/application/queries/search-appointments/search-appointments.query.js';
-import { SearchAppointmentsLine } from '#src/contexts/scheduling/presentation/http/search-appointments-line.dto.js';
+import { agendaCriteria, type AgendaEntry } from '@/contexts/scheduling/application/ports/agenda.port.js';
+import { SearchAppointmentsQuery } from '@/contexts/scheduling/application/queries/search-appointments/search-appointments.query.js';
+import { SearchAppointmentsLine } from '@/contexts/scheduling/presentation/http/search-appointments-line.dto.js';
 
 // The filters (`filter[status]=in:booked,requested`), the sort and the page the agenda declares; anything else is answered 422.
 const query = criteriaQuerySchema(agendaCriteria);

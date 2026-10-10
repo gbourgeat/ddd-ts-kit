@@ -1,1 +1,1 @@
-export const DEFAULT_IMPORT_ALIAS = '#src/';
+export const DEFAULT_IMPORT_ALIAS = '@/';

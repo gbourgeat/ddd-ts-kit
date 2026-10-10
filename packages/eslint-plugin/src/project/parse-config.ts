@@ -38,7 +38,7 @@ export function parseConfig(raw: unknown): Config {
     contextsDir: posix(text(source['contextsDir'], `${sourceRoot}/contexts`)),
     sharedKernelDir: posix(text(source['sharedKernelDir'], `${sourceRoot}/shared-kernel`)),
     platformDir: posix(text(source['platformDir'], `${sourceRoot}/platform`)),
-    importAlias: text(source['importAlias'], '#src/'),
+    importAlias: text(source['importAlias'], '@/'),
     contexts: mapEntries(source['contexts'], parseContext),
     rules: mapEntries(source['rules'], String),
     domainAllowedPackages: strings(source['domainAllowedPackages'], KERNEL),

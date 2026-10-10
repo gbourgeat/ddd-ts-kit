@@ -17,15 +17,14 @@ export const IMPORTS_FIXTURES: readonly Fixture[] = [
       [APP_CONFIG]: SETTINGS,
       [LOAD_CONFIG]: loading(
         "import path from 'node:path';",
-        "import { appConfig } from '#src/platform/config/app-config.js';",
-        "export type { appConfig as Settings } from '#src/platform/config/app-config.js';",
-        "export const later = (): Promise<unknown> => import('#src/platform/config/app-config.js');",
+        "import { appConfig } from '@/platform/config/app-config.js';",
+        "export type { appConfig as Settings } from '@/platform/config/app-config.js';",
+        "export const later = (): Promise<unknown> => import('@/platform/config/app-config.js');",
         'export const separator = path.sep;',
       ),
-      [SUPPORT]:
-        "import { loadConfig } from '#src/platform/config/load-config.js';\nexport const start = loadConfig;\n",
-      'test/e2e/journey.e2e.spec.ts': "import { start } from '#test/e2e/support/start-application.js';\nstart();\n",
-      [SCRIPT]: "import { loadConfig } from '#src/platform/config/load-config.js';\nloadConfig();\n",
+      [SUPPORT]: "import { loadConfig } from '@/platform/config/load-config.js';\nexport const start = loadConfig;\n",
+      'test/e2e/journey.e2e.spec.ts': "import { start } from '$test/e2e/support/start-application.js';\nstart();\n",
+      [SCRIPT]: "import { loadConfig } from '@/platform/config/load-config.js';\nloadConfig();\n",
     }),
   },
   {
@@ -89,7 +88,7 @@ export const IMPORTS_FIXTURES: readonly Fixture[] = [
     ruleId: 'imports/alias-only',
     name: 'an alias path that leaves its directory by a ".." segment',
     expect: { file: LOAD_CONFIG },
-    files: project({ [LOAD_CONFIG]: "export { default as manifest } from '#src/../package.js';\n" }),
+    files: project({ [LOAD_CONFIG]: "export { default as manifest } from '@/../package.js';\n" }),
   },
 ];
 
