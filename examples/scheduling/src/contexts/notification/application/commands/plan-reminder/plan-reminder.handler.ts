@@ -1,0 +1,25 @@
+import { Clock, IdGenerator } from '@ddd-ts-kit/kernel';
+import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
+import { Reminder } from '../../../domain/aggregates/reminder.aggregate.js';
+import { ReminderRepository } from '../../../domain/repositories/reminder.repository.js';
+import { PlanReminderCommand } from './plan-reminder.command.js';
+
+@CommandHandler(PlanReminderCommand, [ReminderRepository, IdGenerator, Clock])
+export class PlanReminderHandler implements CommandHandler<PlanReminderCommand> {
+  constructor(
+    private readonly reminderRepository: ReminderRepository,
+    private readonly ids: IdGenerator,
+    private readonly clock: Clock,
+  ) {}
+
+  async execute(command: PlanReminderCommand): Promise<string> {
+    const planned = await this.reminderRepository.findByAppointment(command.appointment.appointmentId);
+    const target = planned ?? Reminder.create(this.ids.next(), command.appointment, this.clock.now());
+
+    target.planFor(command.appointment.startsAt);
+
+    await this.reminderRepository.save(target);
+
+    return target.id;
+  }
+}
