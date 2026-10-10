@@ -1,0 +1,22 @@
+name: Proposal
+description: A new rule, generator, adapter or a change of the reference architecture.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: The need
+      description: The situation in a project that the kit does not cover today, in the words of that project.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: The proposal
+      description: What would change, and where it starts (docs/ARCHITECTURE.md for a rule, a package, a template, a skill).
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: What it costs and what else was considered
