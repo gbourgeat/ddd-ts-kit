@@ -11,6 +11,10 @@ updates:
       # compiler is the separate `@typescript/native` alias.
       - dependency-name: typescript
         update-types: ['version-update:semver-major']
+      # The Node.js typings follow the oldest runtime the kit supports (`engines` in
+      # package.json), not the newest release: a major is raised by hand with it.
+      - dependency-name: '@types/node'
+        update-types: ['version-update:semver-major']
     commit-message:
       prefix: chore
       include: scope
