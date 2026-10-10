@@ -6,6 +6,17 @@
   "engines": {
     "node": ">=22.12.0"
   },
+  "imports": {
+    "#src/*.js": {
+      "ddd-ts-kit-source": "./src/*.ts",
+      "default": "./dist/src/*.js"
+    },
+    "#test/*.js": "./test/*.ts",
+    "#scripts/*.js": {
+      "ddd-ts-kit-source": "./scripts/*.ts",
+      "default": "./dist/scripts/*.js"
+    }
+  },
   "scripts": {
     "typecheck": "node scripts/tsc.mjs -p tsconfig.json --noEmit",
     "build": "node scripts/tsc.mjs -p tsconfig.build.json",
@@ -26,7 +37,7 @@
     "ci:audit": "npm audit --omit=dev --audit-level=high",
     "ci:build": "npm run build",
     "start": "node dist/src/main.js",
-    "dev": "tsx watch --env-file-if-exists=.env --import ./src/platform/tracing.ts src/main.ts",
+    "dev": "tsx watch --conditions=ddd-ts-kit-source --env-file-if-exists=.env --import ./src/platform/tracing.ts src/main.ts",
     "lint:fix": "eslint . --fix",
     "hooks:install": "lefthook install",
     "check:arch": "node scripts/kit.mjs check",

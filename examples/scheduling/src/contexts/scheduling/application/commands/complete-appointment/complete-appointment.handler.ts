@@ -1,8 +1,8 @@
 import { Clock } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
-import { AppointmentNotFoundError } from '../../../domain/errors/appointment-not-found.error.js';
-import { AppointmentRepository } from '../../../domain/repositories/appointment.repository.js';
-import { CompleteAppointmentCommand } from './complete-appointment.command.js';
+import { AppointmentNotFoundError } from '#src/contexts/scheduling/domain/errors/appointment-not-found.error.js';
+import { AppointmentRepository } from '#src/contexts/scheduling/domain/repositories/appointment.repository.js';
+import { CompleteAppointmentCommand } from '#src/contexts/scheduling/application/commands/complete-appointment/complete-appointment.command.js';
 
 @CommandHandler(CompleteAppointmentCommand, [AppointmentRepository, Clock])
 export class CompleteAppointmentHandler implements CommandHandler<CompleteAppointmentCommand> {

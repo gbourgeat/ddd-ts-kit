@@ -1,5 +1,5 @@
 import type { Knex } from 'knex';
-import { RELATION_TUPLES_TABLE } from './relation-tuples-table.js';
+import { RELATION_TUPLES_TABLE } from '#src/platform/auth/relation-tuples-table.js';
 
 interface Placed {
   /** The database schema the table is created in. */

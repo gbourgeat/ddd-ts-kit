@@ -17,7 +17,7 @@ Incorrect:
 
 ```ts
 const save = vi.fn();
-vi.mock('../../infrastructure/persistence/drizzle-invoice.repository.js');
+vi.mock('#src/contexts/billing/infrastructure/persistence/drizzle-invoice.repository.js');
 ```
 
 Correct:

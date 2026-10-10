@@ -9,11 +9,11 @@ import {
 import { anActor } from '@ddd-ts-kit/auth/testing';
 import { FixedClock, offsetPage } from '@ddd-ts-kit/kernel';
 import { createTestBuses } from '@ddd-ts-kit/testing';
-import { {{context.camel}}Permissions } from '../../application/authorization/{{context.kebab}}.permissions.js';
-import { {{name.pascal}}Handler } from '../../application/queries/{{name.kebab}}/{{name.kebab}}.handler.js';
-import { {{name.pascal}}Query } from '../../application/queries/{{name.kebab}}/{{name.kebab}}.query.js';
-import type { {{name.pascal}}Item } from '../../application/queries/{{name.kebab}}/{{name.kebab}}.result.js';
-import { Fake{{name.pascal}}Reader } from '../fakes/{{name.kebab}}-reader.fake.js';
+import { {{context.camel}}Permissions } from '{{alias.context}}/application/authorization/{{context.kebab}}.permissions.js';
+import { {{name.pascal}}Handler } from '{{alias.context}}/application/queries/{{name.kebab}}/{{name.kebab}}.handler.js';
+import { {{name.pascal}}Query } from '{{alias.context}}/application/queries/{{name.kebab}}/{{name.kebab}}.query.js';
+import type { {{name.pascal}}Item } from '{{alias.context}}/application/queries/{{name.kebab}}/{{name.kebab}}.result.js';
+import { Fake{{name.pascal}}Reader } from '{{alias.context}}/test/fakes/{{name.kebab}}-reader.fake.js';
 
 const authorizer = new RoleBasedAuthorizer({
   roles: { holder: [{{context.camel}}Permissions['{{access.permission}}']] },

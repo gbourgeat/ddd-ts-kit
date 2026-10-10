@@ -1,7 +1,7 @@
 import { describe, expect, it } from '{{tests.module}}';
 import { anActor } from '@ddd-ts-kit/auth/testing';
 import { anonymousActor } from '@ddd-ts-kit/kernel';
-import { {{name.camel}} } from '../../application/authorization/{{name.kebab}}.policy.js';
+import { {{name.camel}} } from '{{alias.context}}/application/authorization/{{name.kebab}}.policy.js';
 
 const now = new Date('2026-01-01T00:00:00.000Z');
 

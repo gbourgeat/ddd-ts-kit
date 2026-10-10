@@ -1,7 +1,7 @@
 import { InMemoryRepository } from '@ddd-ts-kit/testing';
-import { Delegation } from '../../domain/aggregates/delegation.aggregate.js';
-import type { Desk } from '../../domain/value-objects/desk.vo.js';
-import type { DelegationRepository } from '../../domain/repositories/delegation.repository.js';
+import { Delegation } from '#src/contexts/identity/domain/aggregates/delegation.aggregate.js';
+import type { Desk } from '#src/contexts/identity/domain/value-objects/desk.vo.js';
+import type { DelegationRepository } from '#src/contexts/identity/domain/repositories/delegation.repository.js';
 
 export class FakeDelegationRepository extends InMemoryRepository<Delegation> implements DelegationRepository {
   constructor() {

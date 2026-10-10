@@ -48,27 +48,27 @@ import {
   type TracedApplication,
 } from '@ddd-ts-kit/tracing';
 {{#if audit.on}}
-import { createAudit } from './audit/create-audit.js';
+import { createAudit } from '{{alias.platform}}/audit/create-audit.js';
 {{/if}}
-import { accessPolicies } from './auth/access-policies.js';
-import { createAuthorizer } from './auth/create-authorizer.js';
+import { accessPolicies } from '{{alias.platform}}/auth/access-policies.js';
+import { createAuthorizer } from '{{alias.platform}}/auth/create-authorizer.js';
 {{#unless audit.on}}
-import { logDecisions } from './auth/log-decisions.js';
+import { logDecisions } from '{{alias.platform}}/auth/log-decisions.js';
 {{/unless}}
-import { UseCaseProtection } from './auth/use-case-protection.js';
-import type { Persistence } from './database/persistence.js';
-import type { EventProvider } from './events/event-provider.js';
-import { ConfiguredJobScheduler } from './jobs/configured-job-scheduler.js';
-import { createLogger, type LogSettings } from './observability/create-logger.js';
-import { createMetrics } from './observability/create-metrics.js';
-import type { Platform } from './platform.js';
+import { UseCaseProtection } from '{{alias.platform}}/auth/use-case-protection.js';
+import type { Persistence } from '{{alias.platform}}/database/persistence.js';
+import type { EventProvider } from '{{alias.platform}}/events/event-provider.js';
+import { ConfiguredJobScheduler } from '{{alias.platform}}/jobs/configured-job-scheduler.js';
+import { createLogger, type LogSettings } from '{{alias.platform}}/observability/create-logger.js';
+import { createMetrics } from '{{alias.platform}}/observability/create-metrics.js';
+import type { Platform } from '{{alias.platform}}/platform.js';
 {{#if cache.redis}}
-import type { RedisServices } from './redis/open-redis.js';
+import type { RedisServices } from '{{alias.platform}}/redis/open-redis.js';
 {{/if}}
-import { adapterAspects } from './resilience/adapter-aspects.js';
-import { defaultResilience } from './resilience/default-resilience.js';
-import { ownPolicy } from './resilience/own-policy.js';
-import type { ResilienceSettings } from './resilience/resilience-settings.js';
+import { adapterAspects } from '{{alias.platform}}/resilience/adapter-aspects.js';
+import { defaultResilience } from '{{alias.platform}}/resilience/default-resilience.js';
+import { ownPolicy } from '{{alias.platform}}/resilience/own-policy.js';
+import type { ResilienceSettings } from '{{alias.platform}}/resilience/resilience-settings.js';
 
 interface JobsOptions {
   readonly start?: boolean;

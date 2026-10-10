@@ -1,4 +1,3 @@
-import { fileURLToPath } from 'node:url';
 import { decorators } from '@ddd-ts-kit/testing/vitest';
 import { defineConfig } from 'vitest/config';
 
@@ -8,7 +7,8 @@ const INTEGRATION_MODE = 'integration';
 export default defineConfig(({ mode }) => ({
   // Vitest does not lower standard (TC39) decorators, which every class of a declared context carries: the compiler the project builds with does.
   plugins: [decorators({ compiler: '@typescript/native' })],
-  resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
+  // Under this condition an import alias answers the source file, not the compiled one (package.json, "imports").
+  ssr: { resolve: { conditions: ['ddd-ts-kit-source'] } },
   test: {
     projects: [
       { extends: true, test: { name: 'unit', include: ['src/**/*.spec.ts'], exclude: [INTEGRATION_SPECS] } },

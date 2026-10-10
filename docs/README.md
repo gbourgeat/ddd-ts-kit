@@ -71,6 +71,7 @@ limits, and a recommendation by situation.
 | [Static analysis and pipeline](tools/static-analysis-and-pipeline.md) | the checker, the ESLint plugin, dependency-cruiser, knip, TypeScript 6 and 7; GitHub or GitLab |
 | [Quality baseline](tools/quality-baseline.md) | what every project gets and what each tool answers: type check, lint, format, dead code, import graph, architecture check, tests |
 | [Test runners](tools/test-runners.md) | Vitest or Jest |
+| [Import aliases](tools/import-aliases.md) | Node subpath imports declared once in `package.json`, against tsconfig `paths` with a rewrite or a loader; what each tool reads |
 
 ## Guides
 

@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { executeRoute } from '@ddd-ts-kit/http';
 import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';
-import { DefineAppointmentTypeCommand } from '../../application/commands/define-appointment-type/define-appointment-type.command.js';
-import { InvalidAppointmentTypeError } from '../../domain/errors/invalid-appointment-type.error.js';
-import { defineAppointmentTypeRoute } from '../../presentation/http/define-appointment-type.route.js';
+import { DefineAppointmentTypeCommand } from '#src/contexts/scheduling/application/commands/define-appointment-type/define-appointment-type.command.js';
+import { InvalidAppointmentTypeError } from '#src/contexts/scheduling/domain/errors/invalid-appointment-type.error.js';
+import { defineAppointmentTypeRoute } from '#src/contexts/scheduling/presentation/http/define-appointment-type.route.js';
 
 const valid = { name: 'Consultation', duration: 30, grid: 15, buffer: 10, needsConfirmation: true };
 

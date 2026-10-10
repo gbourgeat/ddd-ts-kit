@@ -1,6 +1,6 @@
 import { createPrismaUnitOfWork, PrismaOutboxStore, PrismaProcessedEventStore } from '@ddd-ts-kit/prisma';
-import type { PrismaClient } from '{{paths.databaseToGenerated}}/prisma/client.js';
-import type { Persistence } from './persistence.js';
+import type { PrismaClient } from '{{alias.generated}}/prisma/client.js';
+import type { Persistence } from '{{alias.platform}}/database/persistence.js';
 
 /** One object is the unit of work and what repositories query through; the stores are told how to reach their model. */
 export function persistenceOver(client: PrismaClient): Persistence {

@@ -1,5 +1,5 @@
 import type { HttpClient, HttpResponse } from '@ddd-ts-kit/testing/e2e';
-import type { StaffedPractice } from './staffed-practice.js';
+import type { StaffedPractice } from '#test/e2e/support/staffed-practice.js';
 
 /** What a caller asks of `POST /appointments`: a start on the calendar of the practice, for themselves unless a patient is named. */
 export interface Wish {

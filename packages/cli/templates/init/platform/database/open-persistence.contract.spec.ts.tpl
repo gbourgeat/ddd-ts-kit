@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from '{{tests.module}}';
 import { outboxStoreContract, processedEventStoreContract } from '@ddd-ts-kit/testing/contracts';
-import { openPersistence } from './open-persistence.js';
+import { openPersistence } from '{{alias.platform}}/database/open-persistence.js';
 
 const runner = { describe, it, expect, beforeEach, afterEach };
 

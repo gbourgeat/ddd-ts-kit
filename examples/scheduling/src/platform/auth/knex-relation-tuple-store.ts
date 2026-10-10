@@ -1,7 +1,7 @@
 import type { RelationTuple, RelationTupleStore } from '@ddd-ts-kit/auth/rebac';
 import type { KnexContext } from '@ddd-ts-kit/knex';
 import type { Knex } from 'knex';
-import { RELATION_TUPLES_TABLE } from './relation-tuples-table.js';
+import { RELATION_TUPLES_TABLE } from '#src/platform/auth/relation-tuples-table.js';
 
 interface Placed {
   /** The database schema the table was created in. */

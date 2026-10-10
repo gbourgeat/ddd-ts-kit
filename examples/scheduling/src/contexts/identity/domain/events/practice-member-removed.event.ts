@@ -1,5 +1,5 @@
 import type { DomainEvent } from '@ddd-ts-kit/kernel';
-import type { RoleName } from '../value-objects/role.vo.js';
+import type { RoleName } from '#src/contexts/identity/domain/value-objects/role.vo.js';
 
 export class PracticeMemberRemoved implements DomainEvent {
   readonly name = 'identity.practice.member-removed';

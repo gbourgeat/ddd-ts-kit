@@ -1,6 +1,6 @@
-import { createDataSource } from './create-data-source.js';
-import { persistenceOver } from './persistence-over.js';
-import type { Persistence } from './persistence.js';
+import { createDataSource } from '{{alias.platform}}/database/create-data-source.js';
+import { persistenceOver } from '{{alias.platform}}/database/persistence-over.js';
+import type { Persistence } from '{{alias.platform}}/database/persistence.js';
 
 /**
  * For the script that only lists routes: the data source is never initialised,

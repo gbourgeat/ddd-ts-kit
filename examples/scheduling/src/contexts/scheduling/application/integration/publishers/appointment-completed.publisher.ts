@@ -1,7 +1,7 @@
 import { IdGenerator, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
-import { AppointmentCompleted } from '../../../domain/events/appointment-completed.event.js';
-import { appointmentCompletedV1 } from '../../../published-language/appointment-completed.v1.integration-event.js';
+import { AppointmentCompleted } from '#src/contexts/scheduling/domain/events/appointment-completed.event.js';
+import { appointmentCompletedV1 } from '#src/contexts/scheduling/published-language/appointment-completed.v1.integration-event.js';
 
 @DomainEventHandler(AppointmentCompleted, { name: 'scheduling.appointment.completed' }, [
   IntegrationEventPublisher,

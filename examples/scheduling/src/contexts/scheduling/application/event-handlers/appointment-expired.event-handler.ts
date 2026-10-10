@@ -1,7 +1,7 @@
 import { CommandBus, systemActor } from '@ddd-ts-kit/kernel';
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
-import { AppointmentExpired } from '../../domain/events/appointment-expired.event.js';
-import { OfferFreedSlotCommand } from '../commands/offer-freed-slot/offer-freed-slot.command.js';
+import { AppointmentExpired } from '#src/contexts/scheduling/domain/events/appointment-expired.event.js';
+import { OfferFreedSlotCommand } from '#src/contexts/scheduling/application/commands/offer-freed-slot/offer-freed-slot.command.js';
 
 /** When a requested appointment expires, the slot it held is offered to the waitlist of its calendar and day: after an offer nobody confirmed, to the next waiter. */
 @DomainEventHandler(AppointmentExpired, { name: 'scheduling.appointment.expired' }, [CommandBus])

@@ -5,9 +5,9 @@ import { expectSpanTree, installTestTracing } from '@ddd-ts-kit/tracing/testing'
 import {
   delegationRevokedV1,
   type DelegationRevokedV1Payload,
-} from '../../src/contexts/identity/published-language/index.js';
-import { startApplication, type RunningApplication } from './support/start-application.js';
-import { storyOf } from './support/story-of.js';
+} from '#src/contexts/identity/published-language/index.js';
+import { startApplication, type RunningApplication } from '#test/e2e/support/start-application.js';
+import { storyOf } from '#test/e2e/support/story-of.js';
 
 describe('Revoke delegation, end to end', () => {
   const tracing = installTestTracing();

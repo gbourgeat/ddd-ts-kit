@@ -1,4 +1,4 @@
-import { createTables } from '../dist/{{config.platformDir}}/database/schema.js';
+import { createTables } from '{{alias.platform}}/database/schema.js';
 
 export const up = (knex) => createTables(knex);
 

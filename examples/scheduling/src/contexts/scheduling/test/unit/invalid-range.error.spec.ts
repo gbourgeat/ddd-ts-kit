@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { InvalidRangeError } from '../../domain/errors/invalid-range.error.js';
+import { InvalidRangeError } from '#src/contexts/scheduling/domain/errors/invalid-range.error.js';
 
 describe('InvalidRangeError', () => {
   it('carries its stable code', () => {

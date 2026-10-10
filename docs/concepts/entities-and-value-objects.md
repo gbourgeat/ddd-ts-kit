@@ -37,7 +37,7 @@ the rules that make it valid and the operations that belong to it.
 ```ts
 // contexts/appointments/domain/value-objects/time-slot.vo.ts
 import { ValueObject, err, ok, type Result } from '@ddd-ts-kit/kernel';
-import { InvalidTimeSlot } from '../errors/invalid-time-slot.error.js';
+import { InvalidTimeSlot } from '#src/contexts/appointments/domain/errors/invalid-time-slot.error.js';
 
 export type TimeSlotProps = {
   readonly startsAt: Date;
@@ -109,7 +109,7 @@ An entity is defined by a thread of continuity. Its class protects that thread:
 ```ts
 // contexts/calendars/domain/entities/time-off.entity.ts
 import { Entity } from '@ddd-ts-kit/kernel';
-import type { Period } from '../value-objects/period.vo.js';
+import type { Period } from '#src/contexts/calendars/domain/value-objects/period.vo.js';
 
 export interface TimeOffState {
   readonly period: Period;

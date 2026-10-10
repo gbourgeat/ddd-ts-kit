@@ -1,4 +1,4 @@
-import { authEnvironment } from './auth-environment.js';
+import { authEnvironment } from '{{alias.test}}/e2e/support/auth-environment.js';
 {{#if broker.addressed}}
 
 /** Without {{broker.variable}} (`npm run infra:up` gives one) the events stay in the process: the same ports, no broker. */

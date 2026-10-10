@@ -16,7 +16,7 @@ Incorrect:
 
 ```ts
 // src/contexts/billing/published-language/invoice-issued.v1.integration-event.ts
-import type { Invoice } from '../domain/aggregates/invoice.aggregate.js';
+import type { Invoice } from '#src/contexts/billing/domain/aggregates/invoice.aggregate.js';
 ```
 
 Correct:

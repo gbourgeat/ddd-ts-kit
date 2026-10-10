@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { InMemoryEventBus, SequentialIdGenerator } from '@ddd-ts-kit/kernel';
-import { AppointmentMarkedNoShowPublisher } from '../../application/integration/publishers/appointment-marked-no-show.publisher.js';
-import { AppointmentMarkedNoShow } from '../../domain/events/appointment-marked-no-show.event.js';
-import { anAppointment } from '../builders/appointment.builder.js';
+import { AppointmentMarkedNoShowPublisher } from '#src/contexts/scheduling/application/integration/publishers/appointment-marked-no-show.publisher.js';
+import { AppointmentMarkedNoShow } from '#src/contexts/scheduling/domain/events/appointment-marked-no-show.event.js';
+import { anAppointment } from '#src/contexts/scheduling/test/builders/appointment.builder.js';
 
 const held = anAppointment()
   .identifiedBy('appointment-1')

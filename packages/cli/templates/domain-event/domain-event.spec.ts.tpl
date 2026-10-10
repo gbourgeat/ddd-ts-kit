@@ -1,5 +1,5 @@
 import { describe, expect, it } from '{{tests.module}}';
-import { {{event.pascal}} } from '../../domain/events/{{event.kebab}}.event.js';
+import { {{event.pascal}} } from '{{alias.context}}/domain/events/{{event.kebab}}.event.js';
 
 describe('{{event.pascal}}', () => {
   it('is named after the context, the aggregate and the fact', () => {

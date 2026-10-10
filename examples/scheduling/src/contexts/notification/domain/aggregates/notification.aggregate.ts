@@ -1,6 +1,6 @@
 import { AggregateRoot } from '@ddd-ts-kit/kernel';
-import { NotificationSent } from '../events/notification-sent.event.js';
-import type { NotificationKind } from '../value-objects/notification-kind.vo.js';
+import { NotificationSent } from '#src/contexts/notification/domain/events/notification-sent.event.js';
+import type { NotificationKind } from '#src/contexts/notification/domain/value-objects/notification-kind.vo.js';
 
 export interface NotificationState {
   /** The instant the notification was sent. */

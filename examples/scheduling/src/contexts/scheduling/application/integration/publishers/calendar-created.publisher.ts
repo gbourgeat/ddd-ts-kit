@@ -1,7 +1,7 @@
 import { IdGenerator, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
-import { CalendarCreated } from '../../../domain/events/calendar-created.event.js';
-import { calendarCreatedV1 } from '../../../published-language/calendar-created.v1.integration-event.js';
+import { CalendarCreated } from '#src/contexts/scheduling/domain/events/calendar-created.event.js';
+import { calendarCreatedV1 } from '#src/contexts/scheduling/published-language/calendar-created.v1.integration-event.js';
 
 @DomainEventHandler(CalendarCreated, { name: 'scheduling.calendar.created' }, [IntegrationEventPublisher, IdGenerator])
 export class CalendarCreatedPublisher implements DomainEventHandler<CalendarCreated> {

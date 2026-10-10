@@ -1,5 +1,5 @@
 @@imports
-import type { {{aggregate.pascal}}Row } from './{{aggregate.kebab}}-row.schema.js';
+import type { {{aggregate.pascal}}Row } from '{{alias.context}}/infrastructure/persistence/{{aggregate.kebab}}-row.schema.js';
 @@tables
 export const {{aggregate.tableCamel}} = new EntitySchema<{{aggregate.pascal}}Row>({
   name: '{{context.pascal}}{{aggregate.pascal}}',

@@ -1,6 +1,6 @@
 {{#if upstream.known}}
 import { systemActor, type CommandBus } from '@ddd-ts-kit/kernel';
-import type { {{upstream.eventType}} } from '{{upstream.import}}';
+import type { {{upstream.eventType}} } from '{{alias.contexts}}/{{upstream.kebab}}/published-language/index.js';
 {{/if}}
 {{#unless upstream.known}}
 import { systemActor, type CommandBus, type IntegrationEvent } from '@ddd-ts-kit/kernel';

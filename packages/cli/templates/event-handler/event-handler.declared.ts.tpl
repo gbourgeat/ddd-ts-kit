@@ -1,5 +1,5 @@
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
-import { {{event.pascal}} } from '../../domain/events/{{event.kebab}}.event.js';
+import { {{event.pascal}} } from '{{alias.context}}/domain/events/{{event.kebab}}.event.js';
 
 @DomainEventHandler({{event.pascal}}, { name: '{{event.name}}'{{#if handler.afterCommit}}, phase: 'after-commit'{{/if}} })
 export class {{event.pascal}}EventHandler implements DomainEventHandler<{{event.pascal}}> {

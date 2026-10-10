@@ -3,14 +3,14 @@ import { RoleBasedAuthorizer, type AccessScope, type Authorizer } from '@ddd-ts-
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { anActor } from '@ddd-ts-kit/auth/testing';
 import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
-import * as notificationDeclarations from '../../notification.declarations.js';
+import * as notificationDeclarations from '#src/contexts/notification/notification.declarations.js';
 import { cursorPage, offsetPage } from '@ddd-ts-kit/kernel';
-import { platformTestModule } from '../../../../platform/platform-test.module.js';
-import { notificationPermissions } from '../../application/authorization/notification.permissions.js';
-import { SearchNotificationsReader } from '../../application/ports/search-notifications-reader.port.js';
-import { SearchNotificationsQuery } from '../../application/queries/search-notifications/search-notifications.query.js';
-import type { SearchNotificationsItem } from '../../application/queries/search-notifications/search-notifications.result.js';
-import { FakeSearchNotificationsReader } from '../fakes/search-notifications-reader.fake.js';
+import { platformTestModule } from '#src/platform/platform-test.module.js';
+import { notificationPermissions } from '#src/contexts/notification/application/authorization/notification.permissions.js';
+import { SearchNotificationsReader } from '#src/contexts/notification/application/ports/search-notifications-reader.port.js';
+import { SearchNotificationsQuery } from '#src/contexts/notification/application/queries/search-notifications/search-notifications.query.js';
+import type { SearchNotificationsItem } from '#src/contexts/notification/application/queries/search-notifications/search-notifications.result.js';
+import { FakeSearchNotificationsReader } from '#src/contexts/notification/test/fakes/search-notifications-reader.fake.js';
 
 const roles = new RoleBasedAuthorizer({ roles: { holder: [notificationPermissions['notification.read']] } });
 const holder = anActor().withRole('holder').build();

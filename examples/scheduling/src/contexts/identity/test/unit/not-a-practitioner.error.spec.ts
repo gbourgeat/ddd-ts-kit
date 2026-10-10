@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { NotAPractitionerError } from '../../domain/errors/not-a-practitioner.error.js';
+import { NotAPractitionerError } from '#src/contexts/identity/domain/errors/not-a-practitioner.error.js';
 
 describe('NotAPractitionerError', () => {
   it('carries its stable code', () => {

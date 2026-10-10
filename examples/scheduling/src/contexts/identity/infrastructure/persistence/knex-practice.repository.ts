@@ -2,11 +2,14 @@ import type { Knex } from 'knex';
 import { Clock, ExecutionScope, stampCreation, stampUpdate } from '@ddd-ts-kit/kernel';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
 import { KnexContext, auditRow, insertIgnoringConflict, optimisticUpdate } from '@ddd-ts-kit/knex';
-import type { Practice } from '../../domain/aggregates/practice.aggregate.js';
-import { PracticeRepository } from '../../domain/repositories/practice.repository.js';
-import { IDENTITY_SCHEMA } from './identity.schema.js';
-import { PracticeMapper } from './practice.mapper.js';
-import type { PracticeColumns, PracticeRow } from './practice-row.schema.js';
+import type { Practice } from '#src/contexts/identity/domain/aggregates/practice.aggregate.js';
+import { PracticeRepository } from '#src/contexts/identity/domain/repositories/practice.repository.js';
+import { IDENTITY_SCHEMA } from '#src/contexts/identity/infrastructure/persistence/identity.schema.js';
+import { PracticeMapper } from '#src/contexts/identity/infrastructure/persistence/practice.mapper.js';
+import type {
+  PracticeColumns,
+  PracticeRow,
+} from '#src/contexts/identity/infrastructure/persistence/practice-row.schema.js';
 
 type VersionedPractice = PracticeColumns & { readonly version: number };
 

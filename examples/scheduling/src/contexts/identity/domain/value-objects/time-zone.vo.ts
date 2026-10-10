@@ -1,5 +1,5 @@
 import { ValueObject, err, ok, type Result } from '@ddd-ts-kit/kernel';
-import { UnknownTimeZoneError } from '../errors/unknown-time-zone.error.js';
+import { UnknownTimeZoneError } from '#src/contexts/identity/domain/errors/unknown-time-zone.error.js';
 
 export type TimeZoneProps = {
   readonly value: string;

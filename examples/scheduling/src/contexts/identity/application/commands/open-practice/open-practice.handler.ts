@@ -1,11 +1,11 @@
 import { Clock, IdGenerator, unwrap } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
-import { Practice } from '../../../domain/aggregates/practice.aggregate.js';
-import { PersonNotRegisteredError } from '../../../domain/errors/person-not-registered.error.js';
-import { PersonRepository } from '../../../domain/repositories/person.repository.js';
-import { PracticeRepository } from '../../../domain/repositories/practice.repository.js';
-import { TimeZone } from '../../../domain/value-objects/time-zone.vo.js';
-import { OpenPracticeCommand } from './open-practice.command.js';
+import { Practice } from '#src/contexts/identity/domain/aggregates/practice.aggregate.js';
+import { PersonNotRegisteredError } from '#src/contexts/identity/domain/errors/person-not-registered.error.js';
+import { PersonRepository } from '#src/contexts/identity/domain/repositories/person.repository.js';
+import { PracticeRepository } from '#src/contexts/identity/domain/repositories/practice.repository.js';
+import { TimeZone } from '#src/contexts/identity/domain/value-objects/time-zone.vo.js';
+import { OpenPracticeCommand } from '#src/contexts/identity/application/commands/open-practice/open-practice.command.js';
 
 @CommandHandler(OpenPracticeCommand, [PracticeRepository, PersonRepository, IdGenerator, Clock])
 export class OpenPracticeHandler implements CommandHandler<OpenPracticeCommand> {

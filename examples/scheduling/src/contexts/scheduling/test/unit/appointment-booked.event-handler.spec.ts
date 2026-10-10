@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { AppointmentBookedEventHandler } from '../../application/event-handlers/appointment-booked.event-handler.js';
-import { AppointmentBooked } from '../../domain/events/appointment-booked.event.js';
-import { anAppointment } from '../builders/appointment.builder.js';
-import { FakeSchedulingRelationships } from '../fakes/scheduling-relationships.fake.js';
+import { AppointmentBookedEventHandler } from '#src/contexts/scheduling/application/event-handlers/appointment-booked.event-handler.js';
+import { AppointmentBooked } from '#src/contexts/scheduling/domain/events/appointment-booked.event.js';
+import { anAppointment } from '#src/contexts/scheduling/test/builders/appointment.builder.js';
+import { FakeSchedulingRelationships } from '#src/contexts/scheduling/test/fakes/scheduling-relationships.fake.js';
 
 const held = anAppointment().identifiedBy('appointment-1').onCalendar('calendar-4').forPatient('patient-5').build();
 const booked = new AppointmentBooked('appointment-1', new Date('2026-01-01T00:00:00.000Z'), { booking: held.booking });

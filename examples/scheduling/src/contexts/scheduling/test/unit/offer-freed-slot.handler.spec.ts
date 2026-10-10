@@ -4,20 +4,20 @@ import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { AllowAll, anActor } from '@ddd-ts-kit/auth/testing';
 import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
 import { unwrap } from '@ddd-ts-kit/kernel';
-import * as schedulingDeclarations from '../../scheduling.declarations.js';
-import { platformTestModule } from '../../../../platform/platform-test.module.js';
-import { schedulingPermissions } from '../../application/authorization/scheduling.permissions.js';
-import { OfferFreedSlotCommand } from '../../application/commands/offer-freed-slot/offer-freed-slot.command.js';
-import { AppointmentRepository } from '../../domain/repositories/appointment.repository.js';
-import { CalendarRepository } from '../../domain/repositories/calendar.repository.js';
-import { WaitlistRepository } from '../../domain/repositories/waitlist.repository.js';
-import { Cancellation } from '../../domain/value-objects/cancellation.vo.js';
-import { anAppointment } from '../builders/appointment.builder.js';
-import { aCalendar } from '../builders/calendar.builder.js';
-import { aWaitlist } from '../builders/waitlist.builder.js';
-import { FakeAppointmentRepository } from '../fakes/appointment.repository.fake.js';
-import { FakeCalendarRepository } from '../fakes/calendar.repository.fake.js';
-import { FakeWaitlistRepository } from '../fakes/waitlist.repository.fake.js';
+import * as schedulingDeclarations from '#src/contexts/scheduling/scheduling.declarations.js';
+import { platformTestModule } from '#src/platform/platform-test.module.js';
+import { schedulingPermissions } from '#src/contexts/scheduling/application/authorization/scheduling.permissions.js';
+import { OfferFreedSlotCommand } from '#src/contexts/scheduling/application/commands/offer-freed-slot/offer-freed-slot.command.js';
+import { AppointmentRepository } from '#src/contexts/scheduling/domain/repositories/appointment.repository.js';
+import { CalendarRepository } from '#src/contexts/scheduling/domain/repositories/calendar.repository.js';
+import { WaitlistRepository } from '#src/contexts/scheduling/domain/repositories/waitlist.repository.js';
+import { Cancellation } from '#src/contexts/scheduling/domain/value-objects/cancellation.vo.js';
+import { anAppointment } from '#src/contexts/scheduling/test/builders/appointment.builder.js';
+import { aCalendar } from '#src/contexts/scheduling/test/builders/calendar.builder.js';
+import { aWaitlist } from '#src/contexts/scheduling/test/builders/waitlist.builder.js';
+import { FakeAppointmentRepository } from '#src/contexts/scheduling/test/fakes/appointment.repository.fake.js';
+import { FakeCalendarRepository } from '#src/contexts/scheduling/test/fakes/calendar.repository.fake.js';
+import { FakeWaitlistRepository } from '#src/contexts/scheduling/test/fakes/waitlist.repository.fake.js';
 
 const holders = authorizationModule({
   authorizer: new RoleBasedAuthorizer({ roles: { holder: [schedulingPermissions['waitlist.offer']] } }),

@@ -9,10 +9,10 @@ import {
   type Metrics,
 } from '@ddd-ts-kit/kernel';
 import { traceApplication, type ConsumerTrace, type TracedApplication } from '@ddd-ts-kit/tracing';
-import { createAudit, type Audit } from './audit/create-audit.js';
-import type { Persistence } from './database/persistence.js';
-import { createLogger, type LogSettings } from './observability/create-logger.js';
-import { createMetrics } from './observability/create-metrics.js';
+import { createAudit, type Audit } from '#src/platform/audit/create-audit.js';
+import type { Persistence } from '#src/platform/database/persistence.js';
+import { createLogger, type LogSettings } from '#src/platform/observability/create-logger.js';
+import { createMetrics } from '#src/platform/observability/create-metrics.js';
 
 /**
  * What exists before any module: built once and handed to the kernel module, so that the buses,

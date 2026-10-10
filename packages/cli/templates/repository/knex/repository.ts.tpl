@@ -41,16 +41,16 @@ import {
 {{#unless tenant.scoped}}
 import { {{storage.knexImport}}, auditRow, insertIgnoringConflict, optimisticUpdate } from '@ddd-ts-kit/knex';
 {{/unless}}
-import type { {{aggregate.pascal}} } from '../../domain/aggregates/{{aggregate.kebab}}.aggregate.js';
+import type { {{aggregate.pascal}} } from '{{alias.context}}/domain/aggregates/{{aggregate.kebab}}.aggregate.js';
 {{#if style.declared}}
-import { {{aggregate.pascal}}Repository } from '../../domain/repositories/{{aggregate.kebab}}.repository.js';
+import { {{aggregate.pascal}}Repository } from '{{alias.context}}/domain/repositories/{{aggregate.kebab}}.repository.js';
 {{/if}}
 {{#unless style.declared}}
-import type { {{aggregate.pascal}}Repository } from '../../domain/repositories/{{aggregate.kebab}}.repository.js';
+import type { {{aggregate.pascal}}Repository } from '{{alias.context}}/domain/repositories/{{aggregate.kebab}}.repository.js';
 {{/unless}}
-import { {{context.constant}}_SCHEMA } from './{{context.kebab}}.schema.js';
-import { {{aggregate.pascal}}Mapper } from './{{aggregate.kebab}}.mapper.js';
-import type { {{aggregate.pascal}}Columns, {{aggregate.pascal}}Row } from './{{aggregate.kebab}}-row.schema.js';
+import { {{context.constant}}_SCHEMA } from '{{alias.context}}/infrastructure/persistence/{{context.kebab}}.schema.js';
+import { {{aggregate.pascal}}Mapper } from '{{alias.context}}/infrastructure/persistence/{{aggregate.kebab}}.mapper.js';
+import type { {{aggregate.pascal}}Columns, {{aggregate.pascal}}Row } from '{{alias.context}}/infrastructure/persistence/{{aggregate.kebab}}-row.schema.js';
 
 type Versioned{{aggregate.pascal}} = {{aggregate.pascal}}Columns & { readonly version: number };
 

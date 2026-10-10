@@ -1,7 +1,7 @@
 import { defineIntegrationEvent } from '@ddd-ts-kit/events';
 import { err, ok, type IntegrationEvent } from '@ddd-ts-kit/kernel';
 import { customSchema } from '@ddd-ts-kit/validation';
-import type { {{event.pascal}}V{{event.version}}Payload } from './{{event.kebab}}.v{{event.version}}.payload.js';
+import type { {{event.pascal}}V{{event.version}}Payload } from '{{alias.context}}/published-language/{{event.kebab}}.v{{event.version}}.payload.js';
 
 export const {{event.camel}}V{{event.version}} = defineIntegrationEvent({
   type: '{{event.name}}',

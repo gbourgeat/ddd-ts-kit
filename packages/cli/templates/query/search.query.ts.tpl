@@ -3,7 +3,7 @@ import { AuthorizedQuery, type Actor, type PageRequest } from '@ddd-ts-kit/kerne
 import { Requires } from '@ddd-ts-kit/kernel/declarations';
 {{access.useCasePermissionsImport}}
 {{/if}}
-import type { {{name.pascal}}Result, {{name.pascal}}Sort } from './{{name.kebab}}.result.js';
+import type { {{name.pascal}}Result, {{name.pascal}}Sort } from '{{alias.context}}/application/queries/{{name.kebab}}/{{name.kebab}}.result.js';
 
 {{#if style.declared}}
 @{{access.decoration}}

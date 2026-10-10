@@ -16,7 +16,7 @@ A dependency list names ports, never what implements them. A handler that lists 
 Incorrect:
 
 ```ts
-import { KnexInvoiceRepository } from '../../../infrastructure/persistence/knex-invoice.repository.js';
+import { KnexInvoiceRepository } from '#src/contexts/billing/infrastructure/persistence/knex-invoice.repository.js';
 
 @CommandHandler(IssueInvoiceCommand, [KnexInvoiceRepository, Clock])
 export class IssueInvoiceHandler {}
@@ -25,7 +25,7 @@ export class IssueInvoiceHandler {}
 Correct:
 
 ```ts
-import { InvoiceRepository } from '../../../domain/repositories/invoice.repository.js';
+import { InvoiceRepository } from '#src/contexts/billing/domain/repositories/invoice.repository.js';
 
 @CommandHandler(IssueInvoiceCommand, [InvoiceRepository, Clock])
 export class IssueInvoiceHandler {}

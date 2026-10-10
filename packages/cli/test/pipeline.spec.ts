@@ -50,7 +50,7 @@ describe('pipeline templates', () => {
       .replace(", 'test/architecture/**/*.spec.ts'", '')
       .replaceAll('{{config.contextsDir}}', 'src/contexts')
       .replaceAll('{{config.sourceRoot}}', 'src')
-      .replaceAll('{{alias.bare}}', '@')
+      .replaceAll('{{alias.condition}}', 'ddd-ts-kit-source')
       // With the architecture specs the unit project no longer fits one line: the formatter gives it several.
       .replace(
         "{\n        extends: true,\n        test: {\n          name: 'unit',\n          include: ['src/**/*.spec.ts'],\n          exclude: [INTEGRATION_SPECS],\n        },\n      },",

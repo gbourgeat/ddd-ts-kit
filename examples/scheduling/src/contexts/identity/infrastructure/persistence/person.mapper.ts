@@ -1,8 +1,8 @@
 import { unwrap } from '@ddd-ts-kit/kernel';
-import { Person } from '../../domain/aggregates/person.aggregate.js';
-import { DisplayName } from '../../domain/value-objects/display-name.vo.js';
-import { Email } from '../../domain/value-objects/email.vo.js';
-import type { PersonColumns, PersonRow } from './person-row.schema.js';
+import { Person } from '#src/contexts/identity/domain/aggregates/person.aggregate.js';
+import { DisplayName } from '#src/contexts/identity/domain/value-objects/display-name.vo.js';
+import { Email } from '#src/contexts/identity/domain/value-objects/email.vo.js';
+import type { PersonColumns, PersonRow } from '#src/contexts/identity/infrastructure/persistence/person-row.schema.js';
 
 export const PersonMapper = {
   toDomain(row: PersonRow): Person {

@@ -1,4 +1,3 @@
-import { fileURLToPath } from 'node:url';
 {{#if decorators.standard}}
 import { decorators } from '@ddd-ts-kit/testing/vitest';
 {{/if}}
@@ -12,7 +11,8 @@ export default defineConfig(({ mode }) => ({
   // Vitest does not lower standard (TC39) decorators, which every class of a declared context carries: the compiler the project builds with does.
   plugins: [decorators({ compiler: '@typescript/native' })],
   {{/if}}
-  resolve: { alias: { '{{alias.bare}}': fileURLToPath(new URL('./{{config.sourceRoot}}', import.meta.url)) } },
+  // Under this condition an import alias answers the source file, not the compiled one (package.json, "imports").
+  ssr: { resolve: { conditions: ['{{alias.condition}}'] } },
   test: {
     {{#if assembly.discovery}}
     // Discovery imports the role files of a context itself: inlined, the package loads them through the runner, which compiles them.

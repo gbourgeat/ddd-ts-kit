@@ -15,7 +15,7 @@ deviation.
   "contextsDir": "src/contexts",
   "sharedKernelDir": "src/shared-kernel",
   "platformDir": "src/platform",
-  "importAlias": "@/",
+  "importAlias": "#src/",
   "stack": {
     "http": "express",
     "validation": "zod",
@@ -58,7 +58,17 @@ deviation.
 | `contextsDir` | the bounded contexts, one directory each | `<sourceRoot>/contexts` |
 | `sharedKernelDir` | the shared kernel | `<sourceRoot>/shared-kernel` |
 | `platformDir` | the technical platform | `<sourceRoot>/platform` |
-| `importAlias` | the alias of `sourceRoot` in imports | `@/` |
+| `importAlias` | the prefix that names `sourceRoot` in imports, a Node subpath import: `#`, one name in lower case (letters, digits, hyphens) and `/`. Every file of the project is imported by it (`imports/alias-only`) | `#src/` |
+
+`importAlias` is the one place a person writes the alias. `init` (flag `--import-alias`)
+derives the `imports` of `package.json` from it and from the `rootDir` and `outDir` of
+`tsconfig.json`; `ddd-ts-kit check` compares them and everything that has to follow
+(`imports/alias-declared`). `@/` or any other tsconfig path is refused, because Node does not
+read tsconfig and the compiled output would not run; `#/` is refused because Node 22 does; and
+`#test/`, `#scripts/` and `#generated/` are taken: they name `test/`, `scripts/` and the
+client Prisma generates, and are not configurable. To rename the alias of an existing project:
+change the key, write the `imports` entry the finding gives, and replace the prefix in the
+sources. See [tools/import-aliases.md](tools/import-aliases.md).
 
 ## Stack
 

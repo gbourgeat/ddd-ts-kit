@@ -1,6 +1,6 @@
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
-import { CalendarCreated } from '../../domain/events/calendar-created.event.js';
-import { SchedulingRelationships } from '../ports/scheduling-relationships.port.js';
+import { CalendarCreated } from '#src/contexts/scheduling/domain/events/calendar-created.event.js';
+import { SchedulingRelationships } from '#src/contexts/scheduling/application/ports/scheduling-relationships.port.js';
 
 /** When a calendar is created, the platform learns whose desk and which practice it belongs to: rights on it follow. */
 @DomainEventHandler(CalendarCreated, { name: 'scheduling.calendar.created' }, [SchedulingRelationships])

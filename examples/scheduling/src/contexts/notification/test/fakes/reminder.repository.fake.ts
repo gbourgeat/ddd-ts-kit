@@ -1,6 +1,6 @@
 import { InMemoryRepository, snapshots } from '@ddd-ts-kit/testing';
-import { Reminder } from '../../domain/aggregates/reminder.aggregate.js';
-import type { ReminderRepository } from '../../domain/repositories/reminder.repository.js';
+import { Reminder } from '#src/contexts/notification/domain/aggregates/reminder.aggregate.js';
+import type { ReminderRepository } from '#src/contexts/notification/domain/repositories/reminder.repository.js';
 
 export class FakeReminderRepository extends InMemoryRepository<Reminder> implements ReminderRepository {
   constructor() {

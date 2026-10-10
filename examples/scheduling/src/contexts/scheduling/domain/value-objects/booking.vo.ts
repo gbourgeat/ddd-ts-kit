@@ -1,6 +1,6 @@
 import { ValueObject, err, ok, type Result } from '@ddd-ts-kit/kernel';
-import { InvalidBookingError } from '../errors/invalid-booking.error.js';
-import type { Slot } from './slot.vo.js';
+import { InvalidBookingError } from '#src/contexts/scheduling/domain/errors/invalid-booking.error.js';
+import type { Slot } from '#src/contexts/scheduling/domain/value-objects/slot.vo.js';
 
 export type BookingProps = {
   readonly calendarId: string;

@@ -1,5 +1,5 @@
 import { InMemoryEventBus } from '@ddd-ts-kit/kernel';
-import type { EventProvider } from './event-provider.js';
+import type { EventProvider } from '#src/platform/events/event-provider.js';
 
 /** For the tools and the tests that run without a broker: the same ports, in the process. */
 export function inProcessEvents(): EventProvider {

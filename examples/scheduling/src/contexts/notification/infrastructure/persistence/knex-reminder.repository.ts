@@ -2,11 +2,14 @@ import type { Knex } from 'knex';
 import { Clock, ExecutionScope, stampCreation, stampUpdate } from '@ddd-ts-kit/kernel';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
 import { KnexContext, auditRow, insertIgnoringConflict, optimisticUpdate } from '@ddd-ts-kit/knex';
-import type { Reminder } from '../../domain/aggregates/reminder.aggregate.js';
-import { ReminderRepository } from '../../domain/repositories/reminder.repository.js';
-import { NOTIFICATION_SCHEMA } from './notification.schema.js';
-import { ReminderMapper } from './reminder.mapper.js';
-import type { ReminderColumns, ReminderRow } from './reminder-row.schema.js';
+import type { Reminder } from '#src/contexts/notification/domain/aggregates/reminder.aggregate.js';
+import { ReminderRepository } from '#src/contexts/notification/domain/repositories/reminder.repository.js';
+import { NOTIFICATION_SCHEMA } from '#src/contexts/notification/infrastructure/persistence/notification.schema.js';
+import { ReminderMapper } from '#src/contexts/notification/infrastructure/persistence/reminder.mapper.js';
+import type {
+  ReminderColumns,
+  ReminderRow,
+} from '#src/contexts/notification/infrastructure/persistence/reminder-row.schema.js';
 
 type VersionedReminder = ReminderColumns & { readonly version: number };
 

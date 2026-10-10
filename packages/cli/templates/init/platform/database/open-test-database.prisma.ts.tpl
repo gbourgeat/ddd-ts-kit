@@ -2,10 +2,10 @@ import { readFile } from 'node:fs/promises';
 import { PGlite } from '@electric-sql/pglite';
 import { PGLiteSocketServer } from '@electric-sql/pglite-socket';
 import pg from 'pg';
-import type { PrismaClient } from '{{paths.databaseToGenerated}}/prisma/client.js';
-import { createClient } from './create-client.js';
-import { persistenceOver } from './persistence-over.js';
-import type { Persistence } from './persistence.js';
+import type { PrismaClient } from '{{alias.generated}}/prisma/client.js';
+import { createClient } from '{{alias.platform}}/database/create-client.js';
+import { persistenceOver } from '{{alias.platform}}/database/persistence-over.js';
+import type { Persistence } from '{{alias.platform}}/database/persistence.js';
 
 export interface TestDatabase {
   readonly persistence: Persistence;

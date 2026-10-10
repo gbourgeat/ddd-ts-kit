@@ -31,6 +31,7 @@ import { eventsConsumerIdempotent } from './events-consumer-idempotent.js';
 import { eventsNameFormat } from './events-name-format.js';
 import { eventsOutboxRequired } from './events-outbox-required.js';
 import { governanceRecordedDeviation } from './governance-recorded-deviation.js';
+import { importsAliasOnly } from './imports-alias-only.js';
 import { layerApplicationInward } from './layer-application-inward.js';
 import { layerDomainPurity } from './layer-domain-purity.js';
 import { layerInfrastructureNoPresentation, layerPresentationNoInfrastructure } from './layer-sideways.js';
@@ -94,6 +95,7 @@ const ALL = [
   portsValueImport,
   schedulingJobTriggersUseCase,
   schedulingJobName,
+  importsAliasOnly,
 ];
 
 /** Keyed by ESLint name: the id of docs/ARCHITECTURE.md with its slash replaced by a dash, or the name of a companion rule. */

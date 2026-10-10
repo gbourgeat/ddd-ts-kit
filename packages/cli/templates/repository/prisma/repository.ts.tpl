@@ -6,15 +6,15 @@ import { Repository } from '@ddd-ts-kit/kernel/declarations';
 import { stampCreation, stampUpdate, type Clock, type ExecutionScope } from '@ddd-ts-kit/kernel';
 {{/unless}}
 import { optimisticUpdate } from '@ddd-ts-kit/prisma';
-import type { {{aggregate.pascal}} } from '../../domain/aggregates/{{aggregate.kebab}}.aggregate.js';
+import type { {{aggregate.pascal}} } from '{{alias.context}}/domain/aggregates/{{aggregate.kebab}}.aggregate.js';
 {{#if style.declared}}
-import { {{aggregate.pascal}}Repository } from '../../domain/repositories/{{aggregate.kebab}}.repository.js';
+import { {{aggregate.pascal}}Repository } from '{{alias.context}}/domain/repositories/{{aggregate.kebab}}.repository.js';
 {{/if}}
 {{#unless style.declared}}
-import type { {{aggregate.pascal}}Repository } from '../../domain/repositories/{{aggregate.kebab}}.repository.js';
+import type { {{aggregate.pascal}}Repository } from '{{alias.context}}/domain/repositories/{{aggregate.kebab}}.repository.js';
 {{/unless}}
 {{storage.adapterImport}}
-import { {{aggregate.pascal}}Mapper } from './{{aggregate.kebab}}.mapper.js';
+import { {{aggregate.pascal}}Mapper } from '{{alias.context}}/infrastructure/persistence/{{aggregate.kebab}}.mapper.js';
 
 {{#if style.declared}}
 @Repository({{aggregate.pascal}}Repository, [Database, ExecutionScope, Clock])

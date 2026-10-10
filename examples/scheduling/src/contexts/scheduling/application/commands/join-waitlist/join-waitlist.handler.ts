@@ -1,10 +1,10 @@
 import { Clock } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
-import { Waitlist } from '../../../domain/aggregates/waitlist.aggregate.js';
-import { UnknownCalendarError } from '../../../domain/errors/unknown-calendar.error.js';
-import { CalendarRepository } from '../../../domain/repositories/calendar.repository.js';
-import { WaitlistRepository } from '../../../domain/repositories/waitlist.repository.js';
-import { JoinWaitlistCommand } from './join-waitlist.command.js';
+import { Waitlist } from '#src/contexts/scheduling/domain/aggregates/waitlist.aggregate.js';
+import { UnknownCalendarError } from '#src/contexts/scheduling/domain/errors/unknown-calendar.error.js';
+import { CalendarRepository } from '#src/contexts/scheduling/domain/repositories/calendar.repository.js';
+import { WaitlistRepository } from '#src/contexts/scheduling/domain/repositories/waitlist.repository.js';
+import { JoinWaitlistCommand } from '#src/contexts/scheduling/application/commands/join-waitlist/join-waitlist.command.js';
 
 /** Answers the identifier of the waitlist: the one of the calendar and the day, opened by its first waiter. */
 @CommandHandler(JoinWaitlistCommand, [WaitlistRepository, CalendarRepository, Clock])

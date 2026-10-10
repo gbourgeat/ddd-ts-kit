@@ -3,11 +3,14 @@ import { isTestFile as cliIsTestFile } from '../../cli/src/check/project/is-test
 import { locate as cliLocate } from '../../cli/src/check/project/locate.js';
 import { resolveImport as cliResolveImport } from '../../cli/src/check/project/resolve-import.js';
 import { parallelNames as cliParallelNames } from '../../cli/src/check/standard/parallel-names.js';
+import { aliasRoots as cliAliasRoots, toAlias as cliToAlias } from '../../cli/src/alias/index.js';
 import { parseConfig as cliParseConfig } from '../../cli/src/config/parse-config.js';
 import { isTestFile } from '../src/project/is-test-file.js';
 import { locate } from '../src/project/locate.js';
 import { resolveImport } from '../src/project/resolve-import.js';
+import { aliasRoots } from '../src/project/alias-roots.js';
 import { parseConfig } from '../src/project/parse-config.js';
+import { toAlias } from '../src/project/to-alias.js';
 import { parallelNames } from '../src/support/standard-interfaces/parallel-names.js';
 
 const RAW_CONFIGS: readonly Record<string, unknown>[] = [
@@ -39,6 +42,8 @@ const RAW_CONFIGS: readonly Record<string, unknown>[] = [
   { stack: { style: 'declared' } },
   { stack: { style: 'declared', assembly: 'discovery' } },
   { stack: { style: 'explicit', orm: 'none' } },
+  { importAlias: '#app/' },
+  { stack: { orm: 'prisma' }, sourceRoot: 'apps/api/src' },
   {
     contexts: {
       billing: {
@@ -87,8 +92,13 @@ const SPECIFIERS = [
   '../../infrastructure/persistence/billing.schema',
   './data.json',
   './legacy.cjs',
-  '@/contexts/catalog/domain/aggregates/product.aggregate.js',
-  '@/shared-kernel/money.vo.js',
+  '#src/contexts/catalog/domain/aggregates/product.aggregate.js',
+  '#src/shared-kernel/money.vo.js',
+  '#app/shared-kernel/money.vo.js',
+  '#test/e2e/support/start-application.js',
+  '#scripts/openapi.js',
+  '#generated/prisma/client.js',
+  '#src/../package.js',
   '~/platform/config.js',
   '@ddd-ts-kit/kernel',
   '@ddd-ts-kit/validation/zod',
@@ -121,6 +131,17 @@ describe('the plugin classifies files exactly like the CLI checker', () => {
       expect(isTestFile(file, locate(parseConfig(raw), file)), file).toBe(
         cliIsTestFile(file, cliLocate(cliParseConfig(raw), file)),
       );
+    }
+  });
+
+  it.each(RAW_CONFIGS)('names every sample path by the same alias under %j', (raw) => {
+    const roots = aliasRoots(parseConfig(raw));
+    const cliRoots = cliAliasRoots(cliParseConfig(raw));
+
+    expect(roots).toEqual(cliRoots.map(({ prefix, directory }) => ({ prefix, directory })));
+
+    for (const file of PATHS) {
+      expect(toAlias(roots, file), file).toBe(cliToAlias(cliRoots, file));
     }
   });
 

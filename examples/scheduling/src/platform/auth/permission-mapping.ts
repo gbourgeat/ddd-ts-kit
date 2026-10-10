@@ -1,6 +1,6 @@
 import type { PermissionMapping } from '@ddd-ts-kit/auth/rebac';
-import { permissions } from './permissions.js';
-import { resourcePermissions } from './resource-permissions.js';
+import { permissions } from '#src/platform/auth/permissions.js';
+import { resourcePermissions } from '#src/platform/auth/resource-permissions.js';
 
 /**
  * Which permission of the relationship schema each permission of a context stands for: every

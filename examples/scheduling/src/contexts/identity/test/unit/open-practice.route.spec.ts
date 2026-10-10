@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { executeRoute } from '@ddd-ts-kit/http';
 import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';
-import { OpenPracticeCommand } from '../../application/commands/open-practice/open-practice.command.js';
-import { PersonNotRegisteredError } from '../../domain/errors/person-not-registered.error.js';
-import { UnknownTimeZoneError } from '../../domain/errors/unknown-time-zone.error.js';
-import { openPracticeRoute } from '../../presentation/http/open-practice.route.js';
+import { OpenPracticeCommand } from '#src/contexts/identity/application/commands/open-practice/open-practice.command.js';
+import { PersonNotRegisteredError } from '#src/contexts/identity/domain/errors/person-not-registered.error.js';
+import { UnknownTimeZoneError } from '#src/contexts/identity/domain/errors/unknown-time-zone.error.js';
+import { openPracticeRoute } from '#src/contexts/identity/presentation/http/open-practice.route.js';
 
 const params = {};
 const body = { name: 'Riverside', timeZone: 'Europe/Paris', managerId: 'person-1' };

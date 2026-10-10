@@ -8,13 +8,13 @@ import {
   offsetPage,
   systemActor,
 } from '@ddd-ts-kit/kernel';
-import type { SearchNotificationsReader } from '../../application/ports/search-notifications-reader.port.js';
-import type { Notification } from '../../domain/aggregates/notification.aggregate.js';
-import { KnexSearchNotificationsReader } from '../../infrastructure/persistence/knex-search-notifications-reader.repository.js';
-import { KnexNotificationRepository } from '../../infrastructure/persistence/knex-notification.repository.js';
-import { openTestDatabase, type TestDatabase } from '../../../../platform/database/open-test-database.js';
-import { aNotification } from '../builders/notification.builder.js';
-import { FakeSearchNotificationsReader } from '../fakes/search-notifications-reader.fake.js';
+import type { SearchNotificationsReader } from '#src/contexts/notification/application/ports/search-notifications-reader.port.js';
+import type { Notification } from '#src/contexts/notification/domain/aggregates/notification.aggregate.js';
+import { KnexSearchNotificationsReader } from '#src/contexts/notification/infrastructure/persistence/knex-search-notifications-reader.repository.js';
+import { KnexNotificationRepository } from '#src/contexts/notification/infrastructure/persistence/knex-notification.repository.js';
+import { openTestDatabase, type TestDatabase } from '#src/platform/database/open-test-database.js';
+import { aNotification } from '#src/contexts/notification/test/builders/notification.builder.js';
+import { FakeSearchNotificationsReader } from '#src/contexts/notification/test/fakes/search-notifications-reader.fake.js';
 
 const everyone: AccessScope = { kind: 'all' };
 const startsAt = new Date('2026-02-01T09:00:00.000Z');

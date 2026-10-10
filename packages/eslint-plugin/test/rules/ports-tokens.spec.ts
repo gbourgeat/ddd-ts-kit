@@ -114,7 +114,7 @@ ruleTester.run('ports-no-concrete-dependency', portsNoConcreteDependency, {
     at(
       HANDLER,
       handler(
-        "import { Clock } from '@ddd-ts-kit/kernel';\nimport { Money } from '@/shared-kernel/money.vo.js';",
+        "import { Clock } from '@ddd-ts-kit/kernel';\nimport { Money } from '#src/shared-kernel/money.vo.js';",
         'Clock, Money, Unknown',
       ),
     ),
@@ -143,7 +143,7 @@ ruleTester.run('ports-no-concrete-dependency', portsNoConcreteDependency, {
     {
       ...at(
         MODULE,
-        "import { KnexDatabase } from './infrastructure/persistence/knex-database.js';\nimport { StripeGateway as Stripe } from '@/contexts/billing/infrastructure/external/stripe.gateway.js';\nbuilder.bind(A).toClass(B, [KnexDatabase]);\nbuilder.command(C).handledBy(H, [Stripe]);",
+        "import { KnexDatabase } from './infrastructure/persistence/knex-database.js';\nimport { StripeGateway as Stripe } from '#src/contexts/billing/infrastructure/external/stripe.gateway.js';\nbuilder.bind(A).toClass(B, [KnexDatabase]);\nbuilder.command(C).handledBy(H, [Stripe]);",
       ),
       errors: [
         { messageId: 'concrete', data: { name: 'KnexDatabase', where: 'infrastructure/' } },

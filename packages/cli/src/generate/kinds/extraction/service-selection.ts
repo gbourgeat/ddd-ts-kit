@@ -1,3 +1,4 @@
+import { contextAlias } from '../../../alias/index.js';
 import { barrelFile, routesFile } from '../../../declared/index.js';
 import { fitStatement } from '../../../layout/index.js';
 import { assembledContext } from '../../assembled-context.js';
@@ -17,20 +18,21 @@ export function serviceSelection(scope: Scope): ServiceSelection {
   const { context, config } = scope;
   const directory = `${relativeTo(`${config.sourceRoot}/apps/${context.kebab}`, config.contextsDir)}/${context.kebab}`;
   const module = assembledContext(scope, `${directory}/`);
+  const alias = contextAlias(config, context.kebab);
 
   if (config.stack.di !== 'tsyringe') {
-    return { selection: argument(`[${module}]`), imports: moduleImports(scope, directory).join('\n') };
+    return { selection: argument(`[${module}]`), imports: moduleImports(scope, alias).join('\n') };
   }
 
   const withRoutes = config.stack.http !== 'none';
 
   const routes = withRoutes
-    ? [`import { ${context.camel}Routes } from '${directory}/${compiled(routesFile(context.kebab))}';`]
+    ? [`import { ${context.camel}Routes } from '${alias}/${compiled(routesFile(context.kebab))}';`]
     : [];
 
   return {
     selection: argument(`{ modules: [${module}]${withRoutes ? `, routes: [${context.camel}Routes]` : ''} }`),
-    imports: [...moduleImports(scope, directory), ...routes].join('\n'),
+    imports: [...moduleImports(scope, alias), ...routes].join('\n'),
   };
 }
 
@@ -39,9 +41,9 @@ function argument(selection: string): string {
 }
 
 /** The same imports as in the composition root of the whole application, for this context alone. */
-function moduleImports({ context, config }: Scope, directory: string): string[] {
+function moduleImports({ context, config }: Scope, alias: string): string[] {
   if (!isDeclared(config)) {
-    return [`import { ${context.camel}Module } from '${directory}/${context.kebab}.module.js';`];
+    return [`import { ${context.camel}Module } from '${alias}/${context.kebab}.module.js';`];
   }
 
   if (config.stack.assembly === 'discovery') {
@@ -50,7 +52,7 @@ function moduleImports({ context, config }: Scope, directory: string): string[] 
 
   return [
     ...hostImports(config),
-    `import * as ${context.camel}Declarations from '${directory}/${compiled(barrelFile(context.kebab))}';`,
+    `import * as ${context.camel}Declarations from '${alias}/${compiled(barrelFile(context.kebab))}';`,
   ];
 }
 

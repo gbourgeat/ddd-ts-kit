@@ -2,6 +2,7 @@ import { CliError } from '../cli-error.js';
 import type { Config, Deviation } from './config.js';
 import { CONFIG_FILE } from './config-file.js';
 import { defaultAllowedPackages } from './default-allowed-packages.js';
+import { DEFAULT_IMPORT_ALIAS } from './default-import-alias.js';
 import { parseCommitLimits } from './parse-commit-limits.js';
 import { parseContext } from './parse-context.js';
 import { parseLimits } from './parse-limits.js';
@@ -30,7 +31,7 @@ export function parseConfig(raw: unknown): Config {
     contextsDir: posix(text(raw['contextsDir'], `${sourceRoot}/contexts`)),
     sharedKernelDir: posix(text(raw['sharedKernelDir'], `${sourceRoot}/shared-kernel`)),
     platformDir: posix(text(raw['platformDir'], `${sourceRoot}/platform`)),
-    importAlias: text(raw['importAlias'], '@/'),
+    importAlias: text(raw['importAlias'], DEFAULT_IMPORT_ALIAS),
     stack,
     contexts: mapEntries(raw['contexts'], parseContext),
     rules: mapEntries(raw['rules'], String),

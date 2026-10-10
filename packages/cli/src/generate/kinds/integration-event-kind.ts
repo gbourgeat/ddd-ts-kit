@@ -71,7 +71,7 @@ function publish(scope: Scope, files: readonly string[], context: RenderContext)
   const registry = `${scope.config.platformDir}/audit/audited-events.ts`;
 
   for (const file of files) {
-    publishInIndex(scope.ws, `${scope.dir}/published-language`, file);
+    publishInIndex(scope, `${scope.dir}/published-language`, file);
   }
 
   refreshContextDoc(scope.ws, scope.config, scope.context.kebab);

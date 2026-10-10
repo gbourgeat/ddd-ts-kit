@@ -1,8 +1,8 @@
-import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
-  resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
+  // Under this condition an import alias answers the source file, not the compiled one (package.json, "imports").
+  ssr: { resolve: { conditions: ['ddd-ts-kit-source'] } },
   test: {
     include: ['test/e2e/**/*.e2e.spec.ts'],
     // Each file starts its own application; on a shared server (DATABASE_URL) they would

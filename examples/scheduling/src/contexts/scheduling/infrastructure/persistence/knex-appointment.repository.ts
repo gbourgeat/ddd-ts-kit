@@ -2,12 +2,16 @@ import type { Knex } from 'knex';
 import { Clock, ExecutionScope, stampCreation, stampUpdate } from '@ddd-ts-kit/kernel';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
 import { KnexContext, auditRow, insertIgnoringConflict, optimisticUpdate } from '@ddd-ts-kit/knex';
-import type { Appointment } from '../../domain/aggregates/appointment.aggregate.js';
-import { AppointmentRepository } from '../../domain/repositories/appointment.repository.js';
-import { SCHEDULING_SCHEMA } from './scheduling.schema.js';
-import { AppointmentMapper } from './appointment.mapper.js';
-import { SlotTakenError } from '../../domain/errors/slot-taken.error.js';
-import { APPOINTMENT_SLOT_HELD_ONCE, type AppointmentColumns, type AppointmentRow } from './appointment-row.schema.js';
+import type { Appointment } from '#src/contexts/scheduling/domain/aggregates/appointment.aggregate.js';
+import { AppointmentRepository } from '#src/contexts/scheduling/domain/repositories/appointment.repository.js';
+import { SCHEDULING_SCHEMA } from '#src/contexts/scheduling/infrastructure/persistence/scheduling.schema.js';
+import { AppointmentMapper } from '#src/contexts/scheduling/infrastructure/persistence/appointment.mapper.js';
+import { SlotTakenError } from '#src/contexts/scheduling/domain/errors/slot-taken.error.js';
+import {
+  APPOINTMENT_SLOT_HELD_ONCE,
+  type AppointmentColumns,
+  type AppointmentRow,
+} from '#src/contexts/scheduling/infrastructure/persistence/appointment-row.schema.js';
 
 type VersionedAppointment = AppointmentColumns & { readonly version: number };
 

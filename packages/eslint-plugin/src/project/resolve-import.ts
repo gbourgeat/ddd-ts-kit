@@ -1,5 +1,6 @@
 import { builtinModules } from 'node:module';
 import path from 'node:path';
+import { aliasRoots } from './alias-roots.js';
 import type { Config } from './config.js';
 import type { Location } from './location.js';
 import { locate } from './locate.js';
@@ -18,8 +19,10 @@ export function resolveImport(config: Config, fromFile: string, specifier: strin
     return fileTarget(config, path.posix.join(path.posix.dirname(fromFile), specifier));
   }
 
-  if (config.importAlias !== '' && specifier.startsWith(config.importAlias)) {
-    return fileTarget(config, path.posix.join(config.sourceRoot, specifier.slice(config.importAlias.length)));
+  const root = aliasRoots(config).find(({ prefix }) => prefix !== '' && specifier.startsWith(prefix));
+
+  if (root !== undefined) {
+    return fileTarget(config, path.posix.join(root.directory, specifier.slice(root.prefix.length)));
   }
 
   if (specifier.startsWith('node:')) {

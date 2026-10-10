@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { NotAMemberError } from '../../domain/errors/not-a-member.error.js';
+import { NotAMemberError } from '#src/contexts/identity/domain/errors/not-a-member.error.js';
 
 describe('NotAMemberError', () => {
   it('carries its stable code', () => {

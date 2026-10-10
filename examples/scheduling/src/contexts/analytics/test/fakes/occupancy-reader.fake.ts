@@ -3,9 +3,9 @@ import {
   occupancyCriteria,
   type Occupancy,
   type OccupancyReader,
-} from '../../application/ports/occupancy-reader.port.js';
-import type { Outcome, OutcomeRegister } from '../../application/ports/outcome-register.port.js';
-import { OccupancyMeasureService } from '../../domain/services/occupancy-measure.service.js';
+} from '#src/contexts/analytics/application/ports/occupancy-reader.port.js';
+import type { Outcome, OutcomeRegister } from '#src/contexts/analytics/application/ports/outcome-register.port.js';
+import { OccupancyMeasureService } from '#src/contexts/analytics/domain/services/occupancy-measure.service.js';
 
 const measure = new OccupancyMeasureService();
 

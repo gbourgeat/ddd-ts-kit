@@ -3,19 +3,19 @@ import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { anActor } from '@ddd-ts-kit/auth/testing';
 import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
-import * as identityDeclarations from '../../identity.declarations.js';
-import { platformTestModule } from '../../../../platform/platform-test.module.js';
-import { identityPermissions } from '../../application/authorization/identity.permissions.js';
-import { ExpireDelegationsCommand } from '../../application/commands/expire-delegations/expire-delegations.command.js';
-import { IdentityRelationships } from '../../application/ports/identity-relationships.port.js';
-import { DelegationRepository } from '../../domain/repositories/delegation.repository.js';
-import { PersonRepository } from '../../domain/repositories/person.repository.js';
-import { PracticeRepository } from '../../domain/repositories/practice.repository.js';
-import { aDelegation } from '../builders/delegation.builder.js';
-import { FakeDelegationRepository } from '../fakes/delegation.repository.fake.js';
-import { FakeIdentityRelationships } from '../fakes/identity-relationships.fake.js';
-import { FakePersonRepository } from '../fakes/person.repository.fake.js';
-import { FakePracticeRepository } from '../fakes/practice.repository.fake.js';
+import * as identityDeclarations from '#src/contexts/identity/identity.declarations.js';
+import { platformTestModule } from '#src/platform/platform-test.module.js';
+import { identityPermissions } from '#src/contexts/identity/application/authorization/identity.permissions.js';
+import { ExpireDelegationsCommand } from '#src/contexts/identity/application/commands/expire-delegations/expire-delegations.command.js';
+import { IdentityRelationships } from '#src/contexts/identity/application/ports/identity-relationships.port.js';
+import { DelegationRepository } from '#src/contexts/identity/domain/repositories/delegation.repository.js';
+import { PersonRepository } from '#src/contexts/identity/domain/repositories/person.repository.js';
+import { PracticeRepository } from '#src/contexts/identity/domain/repositories/practice.repository.js';
+import { aDelegation } from '#src/contexts/identity/test/builders/delegation.builder.js';
+import { FakeDelegationRepository } from '#src/contexts/identity/test/fakes/delegation.repository.fake.js';
+import { FakeIdentityRelationships } from '#src/contexts/identity/test/fakes/identity-relationships.fake.js';
+import { FakePersonRepository } from '#src/contexts/identity/test/fakes/person.repository.fake.js';
+import { FakePracticeRepository } from '#src/contexts/identity/test/fakes/practice.repository.fake.js';
 
 const holders = authorizationModule({
   authorizer: new RoleBasedAuthorizer({ roles: { holder: [identityPermissions['delegation.expire']] } }),

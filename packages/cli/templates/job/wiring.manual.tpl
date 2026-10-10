@@ -1,5 +1,5 @@
 @@imports
-import { {{name.pascal}}Job } from './application/scheduling/{{name.kebab}}.job.js';
+import { {{name.pascal}}Job } from '{{alias.context}}/application/scheduling/{{name.kebab}}.job.js';
 @@registrations
 const {{name.camel}}Job = new {{name.pascal}}Job(platform.commands);
 

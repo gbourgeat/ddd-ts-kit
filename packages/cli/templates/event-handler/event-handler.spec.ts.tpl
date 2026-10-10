@@ -5,8 +5,8 @@ import {
   announceDomainEvents,
   unitOfWorkStage,
 } from '@ddd-ts-kit/kernel';
-import { {{event.pascal}}EventHandler } from '../../application/event-handlers/{{event.kebab}}.event-handler.js';
-import { {{event.pascal}} } from '../../domain/events/{{event.kebab}}.event.js';
+import { {{event.pascal}}EventHandler } from '{{alias.context}}/application/event-handlers/{{event.kebab}}.event-handler.js';
+import { {{event.pascal}} } from '{{alias.context}}/domain/events/{{event.kebab}}.event.js';
 
 describe('When {{event.words}}', () => {
 {{#unless handler.afterCommit}}

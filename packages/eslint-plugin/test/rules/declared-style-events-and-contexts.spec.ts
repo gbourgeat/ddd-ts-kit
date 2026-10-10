@@ -181,13 +181,13 @@ ruleTester.run('context-extractable in the declared style', contextExtractable, 
   valid: [
     at(
       HANDLER,
-      `import { CommandHandler } from '${DECLARATIONS}';\nimport { Clock, DomainEventDispatcher } from '@ddd-ts-kit/kernel';\nimport { Access } from '@ddd-ts-kit/auth';\nimport { InvoiceRepository } from '../../../domain/repositories/invoice.repository.js';\nimport { PaymentGateway } from '../../ports/payment-gateway.port.js';\nimport { Database } from '@/platform/database/database.port.js';`,
+      `import { CommandHandler } from '${DECLARATIONS}';\nimport { Clock, DomainEventDispatcher } from '@ddd-ts-kit/kernel';\nimport { Access } from '@ddd-ts-kit/auth';\nimport { InvoiceRepository } from '../../../domain/repositories/invoice.repository.js';\nimport { PaymentGateway } from '../../ports/payment-gateway.port.js';\nimport { Database } from '#src/platform/database/database.port.js';`,
       DECLARED,
     ),
     at(INTEGRATION_HANDLER, `import { productListedV1, type ProductListedV1 } from ${CATALOG_LANGUAGE};`, DECLARED),
     at(
       REPOSITORY,
-      "import { Database } from '../../../../platform/database/database.port.js';\nimport { InvoiceRepository } from '../../domain/repositories/invoice.repository.js';\nimport { DEFAULT_CURRENCY } from '@/shared-kernel/money.vo.js';\nimport { SQL } from 'drizzle-orm';",
+      "import { Database } from '../../../../platform/database/database.port.js';\nimport { InvoiceRepository } from '../../domain/repositories/invoice.repository.js';\nimport { DEFAULT_CURRENCY } from '#src/shared-kernel/money.vo.js';\nimport { SQL } from 'drizzle-orm';",
       DECLARED,
     ),
     at(HANDLER, `import { ProductReader } from ${CATALOG_PORT};`, EXPLICIT),
@@ -202,7 +202,7 @@ ruleTester.run('context-extractable in the declared style', contextExtractable, 
     at(SPEC, `import { ProductReader } from ${CATALOG_PORT};`, DECLARED),
     at(
       MODULE,
-      "import { CatalogReader } from '@/contexts/catalog/application/ports/catalog-reader.port.js';\nexport const all = describe(CatalogReader);",
+      "import { CatalogReader } from '#src/contexts/catalog/application/ports/catalog-reader.port.js';\nexport const all = describe(CatalogReader);",
       DECLARED,
     ),
   ],
@@ -221,7 +221,7 @@ ruleTester.run('context-extractable in the declared style', contextExtractable, 
     {
       ...at(
         GATEWAY,
-        "import { ProductRepository, type Product } from '@/contexts/catalog/domain/repositories/product.repository.js';",
+        "import { ProductRepository, type Product } from '#src/contexts/catalog/domain/repositories/product.repository.js';",
         DECLARED,
       ),
       errors: [
@@ -236,7 +236,7 @@ ruleTester.run('context-extractable in the declared style', contextExtractable, 
     {
       ...at(
         MODULE,
-        "import { CatalogReader } from '@/contexts/catalog/application/ports/catalog-reader.port.js';\nbuilder.query(GetPrice).public().handledBy(GetPriceHandler, [CatalogReader]);",
+        "import { CatalogReader } from '#src/contexts/catalog/application/ports/catalog-reader.port.js';\nbuilder.query(GetPrice).public().handledBy(GetPriceHandler, [CatalogReader]);",
         DECLARED,
       ),
       errors: [{ messageId: 'foreignWiring' }],

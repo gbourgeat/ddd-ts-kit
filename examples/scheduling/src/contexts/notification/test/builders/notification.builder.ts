@@ -1,7 +1,7 @@
 import { unwrap } from '@ddd-ts-kit/kernel';
 import { Builder, sequence, type Defaults } from '@ddd-ts-kit/testing';
-import { Notification } from '../../domain/aggregates/notification.aggregate.js';
-import { NotificationKind } from '../../domain/value-objects/notification-kind.vo.js';
+import { Notification } from '#src/contexts/notification/domain/aggregates/notification.aggregate.js';
+import { NotificationKind } from '#src/contexts/notification/domain/value-objects/notification-kind.vo.js';
 
 interface NotificationIngredients {
   readonly id: string;

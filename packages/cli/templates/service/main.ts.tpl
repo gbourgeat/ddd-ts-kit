@@ -1,25 +1,25 @@
 // Imported first on purpose: instrumentation has to be installed before any module it patches is loaded.
-import { tracing } from '{{paths.appToSource}}/platform/tracing.js';
+import { tracing } from '{{alias.platform}}/tracing.js';
 {{#if errors.sentry}}
 // Imported second on purpose: a failure while the rest of the application loads is already reported.
-import { errors } from '{{paths.appToSource}}/platform/errors.js';
+import { errors } from '{{alias.platform}}/errors.js';
 {{/if}}
 {{#if http.any}}
-import { createAuthenticator } from '{{paths.appToSource}}/platform/auth/create-authenticator.js';
+import { createAuthenticator } from '{{alias.platform}}/auth/create-authenticator.js';
 {{/if}}
-import { composeApplication } from '{{paths.appToSource}}/platform/compose-application.js';
-import { loadConfig } from '{{paths.appToSource}}/platform/config/load-config.js';
-import { openPersistence } from '{{paths.appToSource}}/platform/database/open-persistence.js';
-import { {{events.providerName}} } from '{{paths.appToSource}}/platform/events/{{events.providerFile}}.js';
+import { composeApplication } from '{{alias.platform}}/compose-application.js';
+import { loadConfig } from '{{alias.platform}}/config/load-config.js';
+import { openPersistence } from '{{alias.platform}}/database/open-persistence.js';
+import { {{events.providerName}} } from '{{alias.platform}}/events/{{events.providerFile}}.js';
 {{#if events.outbox}}
-import { startOutboxRelay } from '{{paths.appToSource}}/platform/events/start-outbox-relay.js';
+import { startOutboxRelay } from '{{alias.platform}}/events/start-outbox-relay.js';
 {{/if}}
 {{#if http.any}}
-import { startHttpServer } from '{{paths.appToSource}}/platform/http/start-http-server.js';
+import { startHttpServer } from '{{alias.platform}}/http/start-http-server.js';
 {{/if}}
-import { jobSettings } from '{{paths.appToSource}}/platform/job-settings.js';
+import { jobSettings } from '{{alias.platform}}/job-settings.js';
 {{#if cache.redis}}
-import { openRedis } from '{{paths.appToSource}}/platform/redis/open-redis.js';
+import { openRedis } from '{{alias.platform}}/redis/open-redis.js';
 {{/if}}
 {{service.imports}}
 // The context "{{context.kebab}}" alone, on the kernel and the platform: the same code as in the whole application, another composition root.

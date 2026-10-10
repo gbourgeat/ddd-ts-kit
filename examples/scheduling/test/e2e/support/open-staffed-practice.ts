@@ -1,7 +1,7 @@
 import { eventually, expectStatus } from '@ddd-ts-kit/testing/e2e';
-import { registerPeople } from './register-people.js';
-import type { StaffedPractice } from './staffed-practice.js';
-import type { RunningApplication } from './start-application.js';
+import { registerPeople } from '#test/e2e/support/register-people.js';
+import type { StaffedPractice } from '#test/e2e/support/staffed-practice.js';
+import type { RunningApplication } from '#test/e2e/support/start-application.js';
 
 /** Who works in the practice: three registered people, one per role. */
 export interface Staff {

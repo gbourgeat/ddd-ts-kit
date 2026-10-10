@@ -2,7 +2,7 @@ import { describe, expect, it } from '{{tests.module}}';
 import { anActor } from '@ddd-ts-kit/auth/testing';
 import { anonymousActor } from '@ddd-ts-kit/kernel';
 import { declarationOf } from '@ddd-ts-kit/kernel/declarations';
-import { {{name.pascal}}Policy } from '../../application/authorization/{{name.kebab}}.policy.js';
+import { {{name.pascal}}Policy } from '{{alias.context}}/application/authorization/{{name.kebab}}.policy.js';
 
 describe('{{name.title}}', () => {
   it('bears on the permission {{access.permission}}, under a name of its own', () => {

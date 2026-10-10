@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { NotAnAssistantError } from '../../domain/errors/not-an-assistant.error.js';
+import { NotAnAssistantError } from '#src/contexts/identity/domain/errors/not-an-assistant.error.js';
 
 describe('NotAnAssistantError', () => {
   it('carries its stable code', () => {

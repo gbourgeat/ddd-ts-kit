@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { PersonRegisteredEventHandler } from '../../application/event-handlers/person-registered.event-handler.js';
-import { PersonRegistered } from '../../domain/events/person-registered.event.js';
-import { FakeIdentityRelationships } from '../fakes/identity-relationships.fake.js';
+import { PersonRegisteredEventHandler } from '#src/contexts/identity/application/event-handlers/person-registered.event-handler.js';
+import { PersonRegistered } from '#src/contexts/identity/domain/events/person-registered.event.js';
+import { FakeIdentityRelationships } from '#src/contexts/identity/test/fakes/identity-relationships.fake.js';
 
 const at = new Date('2026-01-01T00:00:00.000Z');
 

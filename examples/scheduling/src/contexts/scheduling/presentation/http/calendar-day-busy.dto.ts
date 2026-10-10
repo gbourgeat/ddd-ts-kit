@@ -1,6 +1,6 @@
 import { Type } from 'class-transformer';
 import { IsISO8601, IsOptional, ValidateNested } from 'class-validator';
-import { CalendarDayAppointmentDto } from './calendar-day-appointment.dto.js';
+import { CalendarDayAppointmentDto } from '#src/contexts/scheduling/presentation/http/calendar-day-appointment.dto.js';
 
 /** A held slot: busy, and whose appointment it is only when the asker may read it. */
 export class CalendarDayBusyDto {

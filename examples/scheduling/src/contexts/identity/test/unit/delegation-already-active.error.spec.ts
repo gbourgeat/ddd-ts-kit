@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { DelegationAlreadyActiveError } from '../../domain/errors/delegation-already-active.error.js';
+import { DelegationAlreadyActiveError } from '#src/contexts/identity/domain/errors/delegation-already-active.error.js';
 
 describe('DelegationAlreadyActiveError', () => {
   it('carries its stable code', () => {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { AppointmentNotFoundError } from '../../domain/errors/appointment-not-found.error.js';
+import { AppointmentNotFoundError } from '#src/contexts/scheduling/domain/errors/appointment-not-found.error.js';
 
 describe('AppointmentNotFoundError', () => {
   it('carries its stable code', () => {

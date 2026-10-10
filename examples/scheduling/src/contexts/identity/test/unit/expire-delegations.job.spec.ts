@@ -2,16 +2,16 @@ import { describe, expect, it } from 'vitest';
 import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
-import * as identityDeclarations from '../../identity.declarations.js';
+import * as identityDeclarations from '#src/contexts/identity/identity.declarations.js';
 import type { Message } from '@ddd-ts-kit/kernel';
-import { platformTestModule } from '../../../../platform/platform-test.module.js';
-import { identityPermissions } from '../../application/authorization/identity.permissions.js';
-import { ExpireDelegationsCommand } from '../../application/commands/expire-delegations/expire-delegations.command.js';
-import { IdentityRelationships } from '../../application/ports/identity-relationships.port.js';
-import { DelegationRepository } from '../../domain/repositories/delegation.repository.js';
-import { aDelegation } from '../builders/delegation.builder.js';
-import { FakeDelegationRepository } from '../fakes/delegation.repository.fake.js';
-import { FakeIdentityRelationships } from '../fakes/identity-relationships.fake.js';
+import { platformTestModule } from '#src/platform/platform-test.module.js';
+import { identityPermissions } from '#src/contexts/identity/application/authorization/identity.permissions.js';
+import { ExpireDelegationsCommand } from '#src/contexts/identity/application/commands/expire-delegations/expire-delegations.command.js';
+import { IdentityRelationships } from '#src/contexts/identity/application/ports/identity-relationships.port.js';
+import { DelegationRepository } from '#src/contexts/identity/domain/repositories/delegation.repository.js';
+import { aDelegation } from '#src/contexts/identity/test/builders/delegation.builder.js';
+import { FakeDelegationRepository } from '#src/contexts/identity/test/fakes/delegation.repository.fake.js';
+import { FakeIdentityRelationships } from '#src/contexts/identity/test/fakes/identity-relationships.fake.js';
 
 const authorization = authorizationModule({
   authorizer: new RoleBasedAuthorizer({

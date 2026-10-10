@@ -117,7 +117,7 @@ describe('the module file of an explicit context', () => {
       "builder\n      .query(SearchInvoicesQuery)\n      .requires(billingPermissions['invoice.search'])\n      .handledBy(SearchInvoicesHandler, [SearchInvoicesReader, Access]);",
     );
 
-    expect(module).toContain("import { Database } from '../../platform/database/database.js';");
+    expect(module).toContain("import { Database } from '#src/platform/database/database.js';");
     expect(module).toContain('export const billingModule = defineContextModule({');
     expect(module.match(/from '@ddd-ts-kit\/di';/g)).toHaveLength(1);
   });
@@ -171,7 +171,7 @@ describe('the module file of an explicit context', () => {
     const module = read(root, `${SHIPPING}/shipping.module.ts`);
 
     expect(consumer).toContain(
-      "import type { InvoiceIssuedV2 } from '../../../../billing/published-language/index.js';",
+      "import type { InvoiceIssuedV2 } from '#src/contexts/billing/published-language/index.js';",
     );
 
     expect(consumer).toContain('constructor(private readonly commands: CommandBus) {}');
@@ -210,11 +210,11 @@ describe('the files of an explicit context', () => {
     );
 
     expect(read(root, `${persistence}/drizzle-invoice.repository.ts`)).toContain(
-      "import type { Database } from '../../../../platform/database/database.js';",
+      "import type { Database } from '#src/platform/database/database.js';",
     );
 
     expect(read(root, 'src/platform/database/schema.ts')).toContain(
-      "export * from '../../contexts/billing/infrastructure/persistence/billing.schema.js';",
+      "export * from '#src/contexts/billing/infrastructure/persistence/billing.schema.js';",
     );
 
     expect(read(root, `${BILLING}/test/fakes/invoice.repository.fake.ts`)).toContain(
@@ -255,7 +255,7 @@ describe('the files of an explicit context', () => {
 
   it('declares integration events in the published language and lists them', () => {
     expect(read(root, `${BILLING}/published-language/index.ts`)).toBe(
-      "export * from './invoice-issued.v1.integration-event.js';\nexport * from './invoice-issued.v2.integration-event.js';\nexport * from './invoice-status.contract.js';\n",
+      "export * from '#src/contexts/billing/published-language/invoice-issued.v1.integration-event.js';\nexport * from '#src/contexts/billing/published-language/invoice-issued.v2.integration-event.js';\nexport * from '#src/contexts/billing/published-language/invoice-status.contract.js';\n",
     );
 
     expect(read(root, `${BILLING}/published-language/invoice-issued.v2.integration-event.ts`)).toContain(
@@ -273,7 +273,7 @@ describe('the files of an explicit context', () => {
     expect(spec).toContain("const response = await application.client.post('/invoices', {});");
     expect(spec).toContain('expectStatus(response, 201);');
     expect(spec).toContain('reportSeedOnFailure({ beforeEach, onTestFailed });');
-    expect(spec).toContain("from './support/start-application.js';");
+    expect(spec).toContain("from '#test/e2e/support/start-application.js';");
 
     expect(read(root, 'test/e2e/track-purchase-order.e2e.spec.ts')).toContain(
       "application.client.get('/purchase-orders/purchase-order-id-1/tracking');",

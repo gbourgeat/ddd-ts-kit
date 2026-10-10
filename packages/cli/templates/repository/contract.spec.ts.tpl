@@ -14,13 +14,13 @@ import {
 } from '@ddd-ts-kit/kernel';
 {{/if}}
 import { repositoryContract } from '@ddd-ts-kit/testing/contracts';
-import type { {{aggregate.pascal}} } from '../../domain/aggregates/{{aggregate.kebab}}.aggregate.js';
-import { {{adapter.pascal}}{{aggregate.pascal}}Repository } from '../../infrastructure/persistence/{{adapter.kebab}}-{{aggregate.kebab}}.repository.js';
+import type { {{aggregate.pascal}} } from '{{alias.context}}/domain/aggregates/{{aggregate.kebab}}.aggregate.js';
+import { {{adapter.pascal}}{{aggregate.pascal}}Repository } from '{{alias.context}}/infrastructure/persistence/{{adapter.kebab}}-{{aggregate.kebab}}.repository.js';
 {{#if adapter.needsDatabase}}
-import { openTestDatabase, type TestDatabase } from '{{paths.integrationToPlatform}}/database/open-test-database.js';
+import { openTestDatabase, type TestDatabase } from '{{alias.platform}}/database/open-test-database.js';
 {{/if}}
-import { {{aggregate.article}}{{aggregate.pascal}} } from '../builders/{{aggregate.kebab}}.builder.js';
-import { Fake{{aggregate.pascal}}Repository } from '../fakes/{{aggregate.kebab}}.repository.fake.js';
+import { {{aggregate.article}}{{aggregate.pascal}} } from '{{alias.context}}/test/builders/{{aggregate.kebab}}.builder.js';
+import { Fake{{aggregate.pascal}}Repository } from '{{alias.context}}/test/fakes/{{aggregate.kebab}}.repository.fake.js';
 
 const runner = { describe, it, expect, beforeEach, afterEach };
 

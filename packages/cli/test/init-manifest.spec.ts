@@ -10,7 +10,7 @@ const manifest = (root: string): unknown => readJson(root, 'package.json');
 
 const DEFAULT_SCRIPTS = {
   start: 'node dist/src/main.js',
-  dev: 'tsx watch --env-file-if-exists=.env --import ./src/platform/tracing.ts src/main.ts',
+  dev: 'tsx watch --conditions=ddd-ts-kit-source --env-file-if-exists=.env --import ./src/platform/tracing.ts src/main.ts',
   typecheck: 'node node_modules/@typescript/native/bin/tsc -p tsconfig.json --noEmit',
   build: 'node node_modules/@typescript/native/bin/tsc -p tsconfig.build.json',
   'test:e2e': 'vitest run --config vitest.e2e.config.ts --passWithNoTests',
@@ -18,8 +18,8 @@ const DEFAULT_SCRIPTS = {
   'docs:generate': 'ddd-ts-kit docs && npm run build && node dist/scripts/openapi.js && node dist/scripts/events.js',
   'docs:check':
     'ddd-ts-kit docs --check && npm run build && node dist/scripts/openapi.js --check && node dist/scripts/events.js --check',
-  'db:generate': 'drizzle-kit generate',
-  'db:migrate': 'drizzle-kit migrate',
+  'db:generate': 'node --conditions=ddd-ts-kit-source node_modules/drizzle-kit/bin.cjs generate',
+  'db:migrate': 'node --conditions=ddd-ts-kit-source node_modules/drizzle-kit/bin.cjs migrate',
   'infra:up': 'docker compose up -d --wait',
   'infra:down': 'docker compose down',
   verify:
@@ -124,8 +124,10 @@ describe('the package.json init writes', () => {
       'typeorm migration:generate -d dist/src/platform/database/data-source.js migrations/change',
     );
   });
+});
 
-  it('writes a strict NodeNext tsconfig with the alias, and decorator flags only when the stack needs them', () => {
+describe('the tsconfig.json init writes, and the import alias', () => {
+  it('writes a strict NodeNext tsconfig without the alias, and decorator flags only when the stack needs them', () => {
     const plain = jsonAt(readJson(initProject(), 'tsconfig.json'), 'compilerOptions');
     const nest = jsonAt(readJson(initProject('--http', 'nest'), 'tsconfig.json'), 'compilerOptions');
 
@@ -133,11 +135,30 @@ describe('the package.json init writes', () => {
       strict: true,
       module: 'NodeNext',
       moduleResolution: 'NodeNext',
-      paths: { '@/*': ['./src/*'] },
+      rootDir: '.',
+      outDir: 'dist',
     });
 
+    expect(plain).not.toHaveProperty('paths');
     expect(plain).not.toHaveProperty('experimentalDecorators');
     expect(nest).toMatchObject({ experimentalDecorators: true, emitDecoratorMetadata: true });
+  });
+
+  it('declares the alias in the imports of package.json: the source under a condition, the build otherwise', () => {
+    const compiled = (directory: string): object => ({
+      'ddd-ts-kit-source': `./${directory}/*.ts`,
+      default: `./dist/${directory}/*.js`,
+    });
+
+    expect(jsonAt(manifest(initProject()), 'imports')).toEqual({
+      '#src/*.js': compiled('src'),
+      '#test/*.js': './test/*.ts',
+      '#scripts/*.js': compiled('scripts'),
+    });
+
+    expect(jsonAt(manifest(initProject('--orm', 'prisma')), 'imports', '#generated/*.js')).toEqual(
+      compiled('generated'),
+    );
   });
 });
 

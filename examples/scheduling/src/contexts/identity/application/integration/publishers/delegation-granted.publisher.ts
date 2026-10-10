@@ -1,7 +1,7 @@
 import { IdGenerator, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
-import { DelegationGranted } from '../../../domain/events/delegation-granted.event.js';
-import { delegationGrantedV1 } from '../../../published-language/delegation-granted.v1.integration-event.js';
+import { DelegationGranted } from '#src/contexts/identity/domain/events/delegation-granted.event.js';
+import { delegationGrantedV1 } from '#src/contexts/identity/published-language/delegation-granted.v1.integration-event.js';
 
 @DomainEventHandler(DelegationGranted, { name: 'identity.delegation.granted' }, [
   IntegrationEventPublisher,

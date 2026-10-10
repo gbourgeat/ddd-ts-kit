@@ -1,13 +1,19 @@
 import { unwrap } from '@ddd-ts-kit/kernel';
-import { Calendar } from '../../domain/aggregates/calendar.aggregate.js';
-import { AppointmentType, type AppointmentTypeProps } from '../../domain/value-objects/appointment-type.vo.js';
-import { BookingWindow } from '../../domain/value-objects/booking-window.vo.js';
-import { Exception } from '../../domain/value-objects/exception.vo.js';
-import { OpeningHours, type Weekday } from '../../domain/value-objects/opening-hours.vo.js';
-import { Range } from '../../domain/value-objects/range.vo.js';
-import { TimeOff } from '../../domain/value-objects/time-off.vo.js';
-import { TimeZone } from '../../domain/value-objects/time-zone.vo.js';
-import type { CalendarColumns, CalendarRow } from './calendar-row.schema.js';
+import { Calendar } from '#src/contexts/scheduling/domain/aggregates/calendar.aggregate.js';
+import {
+  AppointmentType,
+  type AppointmentTypeProps,
+} from '#src/contexts/scheduling/domain/value-objects/appointment-type.vo.js';
+import { BookingWindow } from '#src/contexts/scheduling/domain/value-objects/booking-window.vo.js';
+import { Exception } from '#src/contexts/scheduling/domain/value-objects/exception.vo.js';
+import { OpeningHours, type Weekday } from '#src/contexts/scheduling/domain/value-objects/opening-hours.vo.js';
+import { Range } from '#src/contexts/scheduling/domain/value-objects/range.vo.js';
+import { TimeOff } from '#src/contexts/scheduling/domain/value-objects/time-off.vo.js';
+import { TimeZone } from '#src/contexts/scheduling/domain/value-objects/time-zone.vo.js';
+import type {
+  CalendarColumns,
+  CalendarRow,
+} from '#src/contexts/scheduling/infrastructure/persistence/calendar-row.schema.js';
 
 type StoredRange = readonly [start: string, end: string];
 type StoredWeek = Readonly<Record<Weekday, readonly StoredRange[]>>;

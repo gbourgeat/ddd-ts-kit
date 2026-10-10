@@ -1,5 +1,5 @@
 import { Repository } from '@ddd-ts-kit/kernel';
-import type { Reminder } from '../aggregates/reminder.aggregate.js';
+import type { Reminder } from '#src/contexts/notification/domain/aggregates/reminder.aggregate.js';
 
 export abstract class ReminderRepository extends Repository<Reminder> {
   abstract findByAppointment(appointmentId: string): Promise<Reminder | undefined>;

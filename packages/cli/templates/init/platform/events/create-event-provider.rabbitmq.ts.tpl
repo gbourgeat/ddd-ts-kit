@@ -2,8 +2,8 @@
 import { DeadLetterReports, NoopErrorReporter, type ErrorReporter } from '@ddd-ts-kit/kernel';
 {{/if}}
 import { RabbitMqEventBus } from '@ddd-ts-kit/rabbitmq';
-import type { AppConfig } from '../config/app-config.js';
-import type { EventProvider } from './event-provider.js';
+import type { AppConfig } from '{{alias.platform}}/config/app-config.js';
+import type { EventProvider } from '{{alias.platform}}/events/event-provider.js';
 
 /**
  * RabbitMQ: the relay of the outbox publishes with publisher confirms, each consuming context

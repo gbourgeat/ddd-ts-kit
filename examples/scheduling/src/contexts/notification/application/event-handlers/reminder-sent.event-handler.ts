@@ -1,7 +1,7 @@
 import { CommandBus, systemActor } from '@ddd-ts-kit/kernel';
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
-import { ReminderSent } from '../../domain/events/reminder-sent.event.js';
-import { SendNotificationCommand } from '../commands/send-notification/send-notification.command.js';
+import { ReminderSent } from '#src/contexts/notification/domain/events/reminder-sent.event.js';
+import { SendNotificationCommand } from '#src/contexts/notification/application/commands/send-notification/send-notification.command.js';
 
 /** When a reminder is sent, its recipient is notified, once per reminder and start. */
 @DomainEventHandler(ReminderSent, { name: 'notification.reminder.sent' }, [CommandBus])

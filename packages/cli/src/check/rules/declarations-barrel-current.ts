@@ -1,3 +1,4 @@
+import { contextAlias } from '../../alias/index.js';
 import { barrelFile, renderBarrel } from '../../declared/index.js';
 import type { Flaw } from '../model/flaw.js';
 import type { Project } from '../model/project.js';
@@ -41,7 +42,7 @@ function judge(project: Project, context: string, file: string): Flaw | undefine
     return written === undefined ? undefined : leftBehind(context);
   }
 
-  const expected = renderBarrel(entriesOf(project, context));
+  const expected = renderBarrel(entriesOf(project, context), contextAlias(project.config, context));
 
   if (written === expected) {
     return undefined;

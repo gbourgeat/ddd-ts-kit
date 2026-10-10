@@ -1,7 +1,7 @@
 import { CommandBus, systemActor } from '@ddd-ts-kit/kernel';
 import { IntegrationEventHandler } from '@ddd-ts-kit/kernel/declarations';
-import { appointmentExpiredV1, type AppointmentExpiredV1 } from '../../../../scheduling/published-language/index.js';
-import { WithdrawReminderCommand } from '../../commands/withdraw-reminder/withdraw-reminder.command.js';
+import { appointmentExpiredV1, type AppointmentExpiredV1 } from '#src/contexts/scheduling/published-language/index.js';
+import { WithdrawReminderCommand } from '#src/contexts/notification/application/commands/withdraw-reminder/withdraw-reminder.command.js';
 
 @IntegrationEventHandler(appointmentExpiredV1, { consumer: 'notification.scheduling-appointment-expired' }, [
   CommandBus,

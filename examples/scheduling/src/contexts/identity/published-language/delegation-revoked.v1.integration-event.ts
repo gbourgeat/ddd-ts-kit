@@ -1,7 +1,7 @@
 import { defineIntegrationEvent } from '@ddd-ts-kit/events';
 import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
-import { DelegationRevokedV1Payload } from './delegation-revoked.v1.payload.js';
+import { DelegationRevokedV1Payload } from '#src/contexts/identity/published-language/delegation-revoked.v1.payload.js';
 
 export const delegationRevokedV1 = defineIntegrationEvent({
   type: 'identity.delegation.revoked',

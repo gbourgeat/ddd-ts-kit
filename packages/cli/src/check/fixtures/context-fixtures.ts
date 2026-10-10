@@ -15,7 +15,7 @@ export const CONTEXT_FIXTURES: readonly Fixture[] = [
     name: 'another context imported through its published language',
     expect: 'pass',
     files: project({
-      [ADAPTER]: "export * from '../../../catalog/published-language/index.js';\n",
+      [ADAPTER]: "export * from '#src/contexts/catalog/published-language/index.js';\n",
     }),
   },
   {
@@ -24,7 +24,7 @@ export const CONTEXT_FIXTURES: readonly Fixture[] = [
     expect: { file: ADAPTER },
     files: project({
       [ADAPTER]:
-        "import { Product } from '../../../catalog/domain/aggregates/product.aggregate.js';\n\nexport const inMemoryInvoiceRepository = Product;\n",
+        "import { Product } from '#src/contexts/catalog/domain/aggregates/product.aggregate.js';\n\nexport const inMemoryInvoiceRepository = Product;\n",
     }),
   },
   {
@@ -33,7 +33,7 @@ export const CONTEXT_FIXTURES: readonly Fixture[] = [
     expect: { file: ROUTE },
     files: project({
       [ROUTE]:
-        "import type { SearchProductsHandler } from '@/contexts/catalog/application/queries/search-products/search-products.handler.js';\n\nexport type IssueInvoiceRoute = SearchProductsHandler;\n",
+        "import type { SearchProductsHandler } from '#src/contexts/catalog/application/queries/search-products/search-products.handler.js';\n\nexport type IssueInvoiceRoute = SearchProductsHandler;\n",
     }),
   },
   {
@@ -42,7 +42,7 @@ export const CONTEXT_FIXTURES: readonly Fixture[] = [
     expect: 'pass',
     files: project({
       [ROUTE]:
-        "import type { ProductListedV1 } from '../../../catalog/published-language/index.js';\n\nexport type IssueInvoiceRoute = ProductListedV1;\n",
+        "import type { ProductListedV1 } from '#src/contexts/catalog/published-language/index.js';\n\nexport type IssueInvoiceRoute = ProductListedV1;\n",
     }),
   },
   {
@@ -51,7 +51,7 @@ export const CONTEXT_FIXTURES: readonly Fixture[] = [
     expect: { file: `${CATALOG}/presentation/http/search-products.route.ts` },
     files: project({
       [`${CATALOG}/presentation/http/search-products.route.ts`]:
-        "import type { InvoiceIssuedV1 } from '../../../billing/published-language/index.js';\n\nexport type SearchProductsRoute = InvoiceIssuedV1;\n",
+        "import type { InvoiceIssuedV1 } from '#src/contexts/billing/published-language/index.js';\n\nexport type SearchProductsRoute = InvoiceIssuedV1;\n",
     }),
   },
   {
@@ -60,7 +60,8 @@ export const CONTEXT_FIXTURES: readonly Fixture[] = [
     expect: 'pass',
     files: project({
       [PUBLISHED]: `import type { IntegrationEvent } from '@ddd-ts-kit/kernel';\n${DECLARE}${declaration('billing.invoice.issued')}export type InvoiceIssuedV1 = IntegrationEvent<{ readonly invoiceId: string }>;\n`,
-      [`${BILLING}/published-language/index.ts`]: "export * from './invoice-issued.v1.integration-event.js';\n",
+      [`${BILLING}/published-language/index.ts`]:
+        "export * from '#src/contexts/billing/published-language/invoice-issued.v1.integration-event.js';\n",
     }),
   },
   {
@@ -75,7 +76,7 @@ export const CONTEXT_FIXTURES: readonly Fixture[] = [
     expect: { file: `${BILLING}/published-language/index.ts` },
     files: project({
       [`${BILLING}/published-language/index.ts`]:
-        "export { Invoice } from '../domain/aggregates/invoice.aggregate.js';\n",
+        "export { Invoice } from '#src/contexts/billing/domain/aggregates/invoice.aggregate.js';\n",
     }),
   },
   {

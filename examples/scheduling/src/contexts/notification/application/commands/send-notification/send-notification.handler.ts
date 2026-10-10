@@ -1,12 +1,12 @@
 import { Clock, IdGenerator, unwrap } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
-import { Notification } from '../../../domain/aggregates/notification.aggregate.js';
-import { ContactUnknownError } from '../../../domain/errors/contact-unknown.error.js';
-import { NotificationRepository } from '../../../domain/repositories/notification.repository.js';
-import { NotificationKind } from '../../../domain/value-objects/notification-kind.vo.js';
-import { Contacts } from '../../ports/contacts.port.js';
-import { Mailer } from '../../ports/mailer.port.js';
-import { SendNotificationCommand } from './send-notification.command.js';
+import { Notification } from '#src/contexts/notification/domain/aggregates/notification.aggregate.js';
+import { ContactUnknownError } from '#src/contexts/notification/domain/errors/contact-unknown.error.js';
+import { NotificationRepository } from '#src/contexts/notification/domain/repositories/notification.repository.js';
+import { NotificationKind } from '#src/contexts/notification/domain/value-objects/notification-kind.vo.js';
+import { Contacts } from '#src/contexts/notification/application/ports/contacts.port.js';
+import { Mailer } from '#src/contexts/notification/application/ports/mailer.port.js';
+import { SendNotificationCommand } from '#src/contexts/notification/application/commands/send-notification/send-notification.command.js';
 
 @CommandHandler(SendNotificationCommand, [NotificationRepository, Contacts, Mailer, IdGenerator, Clock])
 export class SendNotificationHandler implements CommandHandler<SendNotificationCommand> {

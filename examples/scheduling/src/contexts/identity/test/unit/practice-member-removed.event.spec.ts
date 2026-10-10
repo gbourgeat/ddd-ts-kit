@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PracticeMemberRemoved } from '../../domain/events/practice-member-removed.event.js';
+import { PracticeMemberRemoved } from '#src/contexts/identity/domain/events/practice-member-removed.event.js';
 
 describe('PracticeMemberRemoved', () => {
   it('is named after the context, the aggregate and the fact', () => {

@@ -5,14 +5,14 @@ import { anActor } from '@ddd-ts-kit/auth/testing';
 {{spec.diWithFake}}
 {{spec.contextImports}}
 import { offsetPage } from '@ddd-ts-kit/kernel';
-import { platformTestModule } from '{{paths.integrationToPlatform}}/platform-test.module.js';
+import { platformTestModule } from '{{alias.platform}}/platform-test.module.js';
 {{#if access.protected}}
-import { {{context.camel}}Permissions } from '../../application/authorization/{{context.kebab}}.permissions.js';
+import { {{context.camel}}Permissions } from '{{alias.context}}/application/authorization/{{context.kebab}}.permissions.js';
 {{/if}}
-import { {{name.pascal}}Reader } from '../../application/ports/{{name.kebab}}-reader.port.js';
-import { {{name.pascal}}Query } from '../../application/queries/{{name.kebab}}/{{name.kebab}}.query.js';
-import type { {{name.pascal}}Item } from '../../application/queries/{{name.kebab}}/{{name.kebab}}.result.js';
-import { Fake{{name.pascal}}Reader } from '../fakes/{{name.kebab}}-reader.fake.js';
+import { {{name.pascal}}Reader } from '{{alias.context}}/application/ports/{{name.kebab}}-reader.port.js';
+import { {{name.pascal}}Query } from '{{alias.context}}/application/queries/{{name.kebab}}/{{name.kebab}}.query.js';
+import type { {{name.pascal}}Item } from '{{alias.context}}/application/queries/{{name.kebab}}/{{name.kebab}}.result.js';
+import { Fake{{name.pascal}}Reader } from '{{alias.context}}/test/fakes/{{name.kebab}}-reader.fake.js';
 
 const holders = authorizationModule({
   authorizer: new RoleBasedAuthorizer({

@@ -1,4 +1,4 @@
 @@imports
-import { {{name.camel}}Route } from './presentation/http/{{name.kebab}}.route.js';
+import { {{name.camel}}Route } from '{{alias.context}}/presentation/http/{{name.kebab}}.route.js';
 @@routes
 {{name.camel}}Route(platform.{{route.bus}}),

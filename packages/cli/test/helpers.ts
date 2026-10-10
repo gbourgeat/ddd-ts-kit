@@ -98,8 +98,8 @@ export const DEFAULT_STACK: StackFlags = {
   events: 'outbox',
 };
 
-/** `init`, then one `generate` of every kind, the way a team would: the language first. Returns each command's result. */
-export function scaffoldEverything(root: string, stack: StackFlags = DEFAULT_STACK): CliResult[] {
+/** `init` (with `more` flags), then one `generate` of every kind, the way a team would: the language first. Returns each command's result. */
+export function scaffoldEverything(root: string, stack = DEFAULT_STACK, more: readonly string[] = []): CliResult[] {
   const results: CliResult[] = [];
 
   const step: Step = (...args) => {
@@ -114,7 +114,7 @@ export function scaffoldEverything(root: string, stack: StackFlags = DEFAULT_STA
       ? ['--allow-no-outbox', 'A single process with no consumer that has to survive a crash']
       : [];
 
-  step('init', ...Object.entries(stack).flatMap(([key, value]) => [`--${key}`, String(value)]), ...noOutbox);
+  step('init', ...Object.entries(stack).flatMap(([key, value]) => [`--${key}`, String(value)]), ...noOutbox, ...more);
   scaffoldBilling(step, withHttp);
   scaffoldDecoratedAdapter(step);
   scaffoldShipping(step, isDeclared(stack));

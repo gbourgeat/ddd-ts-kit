@@ -2,10 +2,10 @@ import { actorOf } from '@ddd-ts-kit/auth';
 import { defineRoute, type Route } from '@ddd-ts-kit/http';
 import type { CommandBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
-import { DefineAppointmentTypeCommand } from '../../application/commands/define-appointment-type/define-appointment-type.command.js';
-import { DefineAppointmentTypeParams } from './define-appointment-type-params.dto.js';
-import { DefineAppointmentTypeBody } from './define-appointment-type-body.dto.js';
-import { DefineAppointmentTypeAccepted } from './define-appointment-type-accepted.dto.js';
+import { DefineAppointmentTypeCommand } from '#src/contexts/scheduling/application/commands/define-appointment-type/define-appointment-type.command.js';
+import { DefineAppointmentTypeParams } from '#src/contexts/scheduling/presentation/http/define-appointment-type-params.dto.js';
+import { DefineAppointmentTypeBody } from '#src/contexts/scheduling/presentation/http/define-appointment-type-body.dto.js';
+import { DefineAppointmentTypeAccepted } from '#src/contexts/scheduling/presentation/http/define-appointment-type-accepted.dto.js';
 
 const params = classSchema(DefineAppointmentTypeParams);
 const body = classSchema(DefineAppointmentTypeBody);

@@ -16,13 +16,13 @@ Incorrect:
 
 ```ts
 // src/contexts/billing/presentation/http/issue-invoice.route.ts
-import { DrizzleInvoiceRepository } from '../../infrastructure/persistence/drizzle-invoice.repository.js';
+import { DrizzleInvoiceRepository } from '#src/contexts/billing/infrastructure/persistence/drizzle-invoice.repository.js';
 ```
 
 Correct:
 
 ```ts
-import { IssueInvoiceCommand } from '../../application/commands/issue-invoice/issue-invoice.command.js';
+import { IssueInvoiceCommand } from '#src/contexts/billing/application/commands/issue-invoice/issue-invoice.command.js';
 ```
 
 ## Details

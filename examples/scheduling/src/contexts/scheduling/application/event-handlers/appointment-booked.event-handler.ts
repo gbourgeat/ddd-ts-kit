@@ -1,6 +1,6 @@
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
-import { AppointmentBooked } from '../../domain/events/appointment-booked.event.js';
-import { SchedulingRelationships } from '../ports/scheduling-relationships.port.js';
+import { AppointmentBooked } from '#src/contexts/scheduling/domain/events/appointment-booked.event.js';
+import { SchedulingRelationships } from '#src/contexts/scheduling/application/ports/scheduling-relationships.port.js';
 
 /** When an appointment is booked or requested, the platform learns whose it is and which calendar holds it: rights on it follow. */
 @DomainEventHandler(AppointmentBooked, { name: 'scheduling.appointment.booked' }, [SchedulingRelationships])

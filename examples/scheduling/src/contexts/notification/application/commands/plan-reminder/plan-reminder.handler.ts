@@ -1,8 +1,8 @@
 import { Clock, IdGenerator } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
-import { Reminder } from '../../../domain/aggregates/reminder.aggregate.js';
-import { ReminderRepository } from '../../../domain/repositories/reminder.repository.js';
-import { PlanReminderCommand } from './plan-reminder.command.js';
+import { Reminder } from '#src/contexts/notification/domain/aggregates/reminder.aggregate.js';
+import { ReminderRepository } from '#src/contexts/notification/domain/repositories/reminder.repository.js';
+import { PlanReminderCommand } from '#src/contexts/notification/application/commands/plan-reminder/plan-reminder.command.js';
 
 @CommandHandler(PlanReminderCommand, [ReminderRepository, IdGenerator, Clock])
 export class PlanReminderHandler implements CommandHandler<PlanReminderCommand> {

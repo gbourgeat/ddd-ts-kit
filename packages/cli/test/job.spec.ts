@@ -42,7 +42,7 @@ describe('generate job, in the declared style', () => {
     );
 
     expect(read(root, `${BILLING}/billing.declarations.ts`)).toContain(
-      "export * from './application/scheduling/cancel-stale-invoices.job.js';",
+      "export * from '#src/contexts/billing/application/scheduling/cancel-stale-invoices.job.js';",
     );
 
     expect(read(root, 'src/platform/job-settings.ts')).toContain(

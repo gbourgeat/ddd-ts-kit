@@ -1,9 +1,9 @@
 import { Clock } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
-import { DelegationNotFoundError } from '../../../domain/errors/delegation-not-found.error.js';
-import { DelegationRepository } from '../../../domain/repositories/delegation.repository.js';
-import { Desk } from '../../../domain/value-objects/desk.vo.js';
-import { RevokeDelegationCommand } from './revoke-delegation.command.js';
+import { DelegationNotFoundError } from '#src/contexts/identity/domain/errors/delegation-not-found.error.js';
+import { DelegationRepository } from '#src/contexts/identity/domain/repositories/delegation.repository.js';
+import { Desk } from '#src/contexts/identity/domain/value-objects/desk.vo.js';
+import { RevokeDelegationCommand } from '#src/contexts/identity/application/commands/revoke-delegation/revoke-delegation.command.js';
 
 @CommandHandler(RevokeDelegationCommand, [DelegationRepository, Clock])
 export class RevokeDelegationHandler implements CommandHandler<RevokeDelegationCommand> {

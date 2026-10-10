@@ -1,5 +1,7 @@
 export default {
   testEnvironment: 'node',
+  // Under this condition an import alias answers the source file, not the compiled one (package.json, "imports").
+  testEnvironmentOptions: { customExportConditions: ['{{alias.condition}}', 'node', 'node-addons'] },
   testMatch: ['<rootDir>/{{config.sourceRoot}}/**/*.spec.ts', '<rootDir>/test/architecture/**/*.spec.ts'],
   extensionsToTreatAsEsm: ['.ts'],
   transform: {
@@ -13,9 +15,5 @@ export default {
         },
       },
     ],
-  },
-  moduleNameMapper: {
-    '^{{alias.bare}}/(.*)\\.js$': '<rootDir>/{{config.sourceRoot}}/$1',
-    '^(\\.{1,2}/.*)\\.js$': '$1',
   },
 };

@@ -128,6 +128,8 @@ unit:
       - NODE_VERSION: ['22', '24']
   script:
     - npm run ci:test:unit -- --reporter=default --reporter=junit --outputFile.junit=reports/junit.xml
+    # The import alias at run time on this Node: every stack built, run compiled with plain node, from sources under tsx and vitest.
+    - npm run ci:test:alias
   coverage: '/All files[^|]*\|[^|]*\s+([\d\.]+)/'
   artifacts:
     when: always

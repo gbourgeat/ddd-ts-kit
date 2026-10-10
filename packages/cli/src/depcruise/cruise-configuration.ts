@@ -1,3 +1,4 @@
+import { SOURCE_CONDITION } from '../alias/index.js';
 import type { Config } from '../config/index.js';
 import { contextRules } from './context-rules.js';
 import type { CruiseRule } from './cruise-rule.js';
@@ -23,7 +24,9 @@ export function cruiseConfiguration(config: Config): CruiseConfiguration {
 
 /**
  * The parser is the compiler API of `typescript` 6, which the generated project installs for
- * its tools next to the native compiler: it tells type-only imports apart.
+ * its tools next to the native compiler: it tells type-only imports apart. An import alias is
+ * resolved from the `imports` of package.json under the source condition: without it the graph
+ * would follow the compiled files, which are excluded, and every boundary rule would see nothing.
  */
 function cruiseOptions(): Record<string, unknown> {
   return {
@@ -34,7 +37,7 @@ function cruiseOptions(): Record<string, unknown> {
     tsConfig: { fileName: 'tsconfig.json' },
     enhancedResolveOptions: {
       exportsFields: ['exports'],
-      conditionNames: ['import', 'node', 'default', 'types'],
+      conditionNames: [SOURCE_CONDITION, 'import', 'node', 'default', 'types'],
       mainFields: ['module', 'main', 'types', 'typings'],
     },
     skipAnalysisNotInRules: true,

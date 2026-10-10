@@ -15,7 +15,7 @@ describe('check-file', () => {
 
   it('runs the per-file rules on one file', () => {
     const adapter =
-      "import { InMemoryInvoiceRepository } from '../../../infrastructure/persistence/in-memory-invoice.repository.js';";
+      "import { InMemoryInvoiceRepository } from '#src/contexts/billing/infrastructure/persistence/in-memory-invoice.repository.js';";
 
     write(
       root,

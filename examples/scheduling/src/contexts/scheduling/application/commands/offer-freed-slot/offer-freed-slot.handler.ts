@@ -1,16 +1,16 @@
 import { Clock, IdGenerator, unwrap } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
-import { Appointment } from '../../../domain/aggregates/appointment.aggregate.js';
-import type { Calendar } from '../../../domain/aggregates/calendar.aggregate.js';
-import { Waitlist } from '../../../domain/aggregates/waitlist.aggregate.js';
-import { UnknownCalendarError } from '../../../domain/errors/unknown-calendar.error.js';
-import { AppointmentRepository } from '../../../domain/repositories/appointment.repository.js';
-import { CalendarRepository } from '../../../domain/repositories/calendar.repository.js';
-import { WaitlistRepository } from '../../../domain/repositories/waitlist.repository.js';
-import { Booking } from '../../../domain/value-objects/booking.vo.js';
-import type { Offer } from '../../../domain/value-objects/offer.vo.js';
-import { Slot } from '../../../domain/value-objects/slot.vo.js';
-import { OfferFreedSlotCommand } from './offer-freed-slot.command.js';
+import { Appointment } from '#src/contexts/scheduling/domain/aggregates/appointment.aggregate.js';
+import type { Calendar } from '#src/contexts/scheduling/domain/aggregates/calendar.aggregate.js';
+import { Waitlist } from '#src/contexts/scheduling/domain/aggregates/waitlist.aggregate.js';
+import { UnknownCalendarError } from '#src/contexts/scheduling/domain/errors/unknown-calendar.error.js';
+import { AppointmentRepository } from '#src/contexts/scheduling/domain/repositories/appointment.repository.js';
+import { CalendarRepository } from '#src/contexts/scheduling/domain/repositories/calendar.repository.js';
+import { WaitlistRepository } from '#src/contexts/scheduling/domain/repositories/waitlist.repository.js';
+import { Booking } from '#src/contexts/scheduling/domain/value-objects/booking.vo.js';
+import type { Offer } from '#src/contexts/scheduling/domain/value-objects/offer.vo.js';
+import { Slot } from '#src/contexts/scheduling/domain/value-objects/slot.vo.js';
+import { OfferFreedSlotCommand } from '#src/contexts/scheduling/application/commands/offer-freed-slot/offer-freed-slot.command.js';
 
 /**
  * The waitlist decides who the freed slot goes to; the offer is then a requested appointment

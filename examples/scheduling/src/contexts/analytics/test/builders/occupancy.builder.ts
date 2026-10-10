@@ -1,4 +1,4 @@
-import type { Occupancy } from '../../application/ports/occupancy-reader.port.js';
+import type { Occupancy } from '#src/contexts/analytics/application/ports/occupancy-reader.port.js';
 
 /** The occupancy of calendar-1 on 2026-10-12, with nothing held and nothing counted. */
 export function anOccupancy(overrides: Partial<Occupancy> = {}): Occupancy {

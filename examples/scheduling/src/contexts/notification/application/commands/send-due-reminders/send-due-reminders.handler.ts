@@ -1,6 +1,6 @@
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
-import { ReminderRepository } from '../../../domain/repositories/reminder.repository.js';
-import { SendDueRemindersCommand } from './send-due-reminders.command.js';
+import { ReminderRepository } from '#src/contexts/notification/domain/repositories/reminder.repository.js';
+import { SendDueRemindersCommand } from '#src/contexts/notification/application/commands/send-due-reminders/send-due-reminders.command.js';
 
 @CommandHandler(SendDueRemindersCommand, [ReminderRepository])
 export class SendDueRemindersHandler implements CommandHandler<SendDueRemindersCommand> {

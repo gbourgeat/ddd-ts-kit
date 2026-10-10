@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { createErrorMapper, executeRoute } from '@ddd-ts-kit/http';
 import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';
-import { errorStatuses } from '../../../../platform/http/error-statuses.js';
-import { BookAppointmentCommand } from '../../application/commands/book-appointment/book-appointment.command.js';
-import { PatientLimitReachedError } from '../../domain/errors/patient-limit-reached.error.js';
-import { SlotTakenError } from '../../domain/errors/slot-taken.error.js';
-import { UnknownCalendarError } from '../../domain/errors/unknown-calendar.error.js';
-import { bookAppointmentRoute } from '../../presentation/http/book-appointment.route.js';
+import { errorStatuses } from '#src/platform/http/error-statuses.js';
+import { BookAppointmentCommand } from '#src/contexts/scheduling/application/commands/book-appointment/book-appointment.command.js';
+import { PatientLimitReachedError } from '#src/contexts/scheduling/domain/errors/patient-limit-reached.error.js';
+import { SlotTakenError } from '#src/contexts/scheduling/domain/errors/slot-taken.error.js';
+import { UnknownCalendarError } from '#src/contexts/scheduling/domain/errors/unknown-calendar.error.js';
+import { bookAppointmentRoute } from '#src/contexts/scheduling/presentation/http/book-appointment.route.js';
 
 // The one table of the platform: a code it does not name answers 422.
 const errorMapper = createErrorMapper(errorStatuses);

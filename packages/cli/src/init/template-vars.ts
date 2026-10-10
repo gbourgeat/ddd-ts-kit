@@ -1,4 +1,3 @@
-import path from 'node:path';
 import type { Config } from '../config/index.js';
 import { stackVars } from '../stack/stack-vars.js';
 import { WITH_DATABASE } from '../stack/with-database.js';
@@ -33,11 +32,6 @@ export function templateVars(config: Config, projectName: string): RenderContext
       mysql: database === 'mysql',
       sqlite: database === 'sqlite',
       server: database === 'postgres' || database === 'mysql',
-    },
-    paths: {
-      databaseToGenerated: path.posix.relative(`${config.platformDir}/database`, 'generated'),
-      scriptsToSource: `../${config.sourceRoot}`,
-      e2eToPlatform: `../../../${config.platformDir}`,
     },
   };
 }

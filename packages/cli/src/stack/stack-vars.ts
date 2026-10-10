@@ -1,5 +1,6 @@
 import type { Config } from '../config/index.js';
 import type { RenderContext } from '../templating/index.js';
+import { aliasVars } from './alias-vars.js';
 import { auditVars } from './audit-vars.js';
 import { authenticationVars } from './authentication-vars.js';
 import { brokerVars } from './broker-vars.js';
@@ -36,7 +37,7 @@ export function stackVars(config: Config): RenderContext {
     tests: { ...one(tests, ['vitest', 'jest']), module: tests === 'jest' ? '@jest/globals' : 'vitest' },
     worker: { on: config.worker, off: !config.worker },
     config: platformPaths(config),
-    alias: { bare: config.importAlias.replace(/\/$/, '') },
+    alias: aliasVars(config),
     persistence: persistenceVars(config),
   };
 }

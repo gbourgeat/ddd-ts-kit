@@ -52,18 +52,18 @@ import { {{#if broker.external}}EventSubscribers, {{/if}}ProcessedEventStore, Un
 import { {{persistence.token}} } from '{{persistence.tokenPackage}}';
 {{/if}}
 {{#if persistence.ownDatabase}}
-import { Database } from './database/database.js';
+import { Database } from '{{alias.platform}}/database/database.js';
 {{/if}}
 import type { ConsumerTrace } from '@ddd-ts-kit/tracing';
-import type { Persistence } from './database/persistence.js';
-import type { EventProvider } from './events/event-provider.js';
-import type { LogSettings } from './observability/create-logger.js';
+import type { Persistence } from '{{alias.platform}}/database/persistence.js';
+import type { EventProvider } from '{{alias.platform}}/events/event-provider.js';
+import type { LogSettings } from '{{alias.platform}}/observability/create-logger.js';
 {{#if cache.redis}}
-import type { RedisServices } from './redis/open-redis.js';
+import type { RedisServices } from '{{alias.platform}}/redis/open-redis.js';
 {{/if}}
-import { adapterAspects } from './resilience/adapter-aspects.js';
-import { defaultResilience } from './resilience/default-resilience.js';
-import type { ResilienceSettings } from './resilience/resilience-settings.js';
+import { adapterAspects } from '{{alias.platform}}/resilience/adapter-aspects.js';
+import { defaultResilience } from '{{alias.platform}}/resilience/default-resilience.js';
+import type { ResilienceSettings } from '{{alias.platform}}/resilience/resilience-settings.js';
 {{#if style.declared}}
 // ddd-ts-kit:imports
 // /ddd-ts-kit:imports

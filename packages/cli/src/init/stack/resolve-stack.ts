@@ -8,6 +8,7 @@ import {
   CACHE_STACKS,
   CI_PLATFORMS,
   CONFIG_FILE,
+  DEFAULT_IMPORT_ALIAS,
   DI_STACKS,
   DOCS_UIS,
   ERROR_REPORTERS,
@@ -19,6 +20,7 @@ import {
   VALIDATION_STACKS,
   type Config,
 } from '../../config/index.js';
+import { aliasProblem } from '../../alias/index.js';
 import { CliError } from '../../cli-error.js';
 import { choose } from './choose.js';
 import { resolvePersistence } from './resolve-persistence.js';
@@ -30,7 +32,7 @@ export type { StackOptions } from './stack-options.js';
 /** The stack of the project: the one its config records when it is already initialised, else the one the flags ask for. */
 export function resolveStack(root: string, options: StackOptions): Config {
   if (fs.existsSync(path.join(root, CONFIG_FILE)) && !options.force) {
-    return readConfig(root).config;
+    return supportedAlias(readConfig(root).config);
   }
 
   const http = choose(HTTP_STACKS, options.http, 'http') ?? 'express';
@@ -54,9 +56,24 @@ export function resolveStack(root: string, options: StackOptions): Config {
     ...resolveStyle(options, di),
   };
 
-  const config = parseConfig({ stack, contexts: {}, rules: {} });
+  const alias = options.importAlias === undefined ? {} : { importAlias: options.importAlias };
+  const config = supportedAlias(parseConfig({ ...alias, stack, contexts: {}, rules: {} }));
 
   return { ...config, worker: hasWorker(root, config) };
+}
+
+/** Every file `init` writes imports by the alias: one that some tool cannot resolve is refused before anything is written. */
+function supportedAlias(config: Config): Config {
+  const problem = aliasProblem(config.importAlias);
+
+  if (problem === undefined) {
+    return config;
+  }
+
+  throw new CliError(
+    `The import alias "${config.importAlias}" is not supported: ${problem}.`,
+    `Use a subpath import such as "${DEFAULT_IMPORT_ALIAS}" (--import-alias, or "importAlias" in ${CONFIG_FILE}).`,
+  );
 }
 
 /** `--force` writes the project anew: a worker that is already there keeps the jobs, so the API still starts with its jobs off. */

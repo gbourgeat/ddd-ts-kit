@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CalendarAppointmentTypeDefined } from '../../domain/events/calendar-appointment-type-defined.event.js';
+import { CalendarAppointmentTypeDefined } from '#src/contexts/scheduling/domain/events/calendar-appointment-type-defined.event.js';
 
 describe('CalendarAppointmentTypeDefined', () => {
   it('is named after the context, the aggregate and the fact', () => {

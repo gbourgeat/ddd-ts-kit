@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { OutsideAvailabilityError } from '../../domain/errors/outside-availability.error.js';
-import { Slot } from '../../domain/value-objects/slot.vo.js';
-import { aCalendar } from '../builders/calendar.builder.js';
+import { OutsideAvailabilityError } from '#src/contexts/scheduling/domain/errors/outside-availability.error.js';
+import { Slot } from '#src/contexts/scheduling/domain/value-objects/slot.vo.js';
+import { aCalendar } from '#src/contexts/scheduling/test/builders/calendar.builder.js';
 
 describe('Calendar, on the days the clock of Europe/Paris changes', () => {
   it.each([

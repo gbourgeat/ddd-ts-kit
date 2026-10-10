@@ -3,12 +3,12 @@ import { defineContextModule, type ContextModule } from '@ddd-ts-kit/di';
 import { subscribeAll } from '@ddd-ts-kit/events';
 import { EventSubscribers } from '@ddd-ts-kit/kernel';
 {{#if audit.route}}
-import { auditPermissions } from './audit.permissions.js';
+import { auditPermissions } from '{{alias.platform}}/audit/audit.permissions.js';
 {{/if}}
-import type { Audit } from './create-audit.js';
+import type { Audit } from '{{alias.platform}}/audit/create-audit.js';
 {{#if audit.route}}
-import { SearchAuditEntriesHandler } from './search-audit-entries.handler.js';
-import { SearchAuditEntriesQuery } from './search-audit-entries.query.js';
+import { SearchAuditEntriesHandler } from '{{alias.platform}}/audit/search-audit-entries.handler.js';
+import { SearchAuditEntriesQuery } from '{{alias.platform}}/audit/search-audit-entries.query.js';
 {{/if}}
 
 /**

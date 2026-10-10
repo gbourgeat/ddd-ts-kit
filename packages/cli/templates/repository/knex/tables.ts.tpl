@@ -1,6 +1,6 @@
 // ddd-ts-kit:imports
 import type { Knex } from 'knex';
-import { {{context.constant}}_SCHEMA } from './{{context.kebab}}.schema.js';
+import { {{context.constant}}_SCHEMA } from '{{alias.context}}/infrastructure/persistence/{{context.kebab}}.schema.js';
 // /ddd-ts-kit:imports
 
 export async function create{{context.pascal}}Tables(knex: Knex): Promise<void> {

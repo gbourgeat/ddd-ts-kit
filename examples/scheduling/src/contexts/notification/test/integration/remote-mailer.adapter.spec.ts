@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { createAspectFakes, withAspectRuntime } from '@ddd-ts-kit/aspects/testing';
 import { InMemoryLogger } from '@ddd-ts-kit/kernel';
-import { RemoteMailer } from '../../infrastructure/external/remote-mailer.adapter.js';
-import { aNotification } from '../builders/notification.builder.js';
-import { FakeMailer } from '../fakes/mailer.fake.js';
+import { RemoteMailer } from '#src/contexts/notification/infrastructure/external/remote-mailer.adapter.js';
+import { aNotification } from '#src/contexts/notification/test/builders/notification.builder.js';
+import { FakeMailer } from '#src/contexts/notification/test/fakes/mailer.fake.js';
 
 class FlakyMailer extends RemoteMailer {
   calls = 0;

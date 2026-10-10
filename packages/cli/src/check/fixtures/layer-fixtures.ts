@@ -20,8 +20,8 @@ export const LAYER_FIXTURES: readonly Fixture[] = [
       aggregate(
         [
           "import { AggregateRoot } from '@ddd-ts-kit/kernel';",
-          "import { Money } from '../value-objects/money.vo.js';",
-          "import type { Currency } from '@/shared-kernel/currency.js';",
+          "import { Money } from '#src/contexts/billing/domain/value-objects/money.vo.js';",
+          "import type { Currency } from '#src/shared-kernel/currency.js';",
           "// import { z } from 'zod';",
           "/* import fs from 'node:fs'; */",
           'const note = "import x from \'zod\'";',
@@ -70,7 +70,7 @@ export const LAYER_FIXTURES: readonly Fixture[] = [
     expect: { file: AGGREGATE },
     files: project(
       aggregate(
-        "import type { Mailer } from '../../application/ports/mailer.port.js';\nexport class Invoice {}\nexport type M = Mailer;\n",
+        "import type { Mailer } from '#src/contexts/billing/application/ports/mailer.port.js';\nexport class Invoice {}\nexport type M = Mailer;\n",
       ),
     ),
   },
@@ -107,8 +107,8 @@ export const LAYER_FIXTURES: readonly Fixture[] = [
       handler(
         [
           "import type { UseCase } from '@ddd-ts-kit/kernel';",
-          "import type { InvoiceRepository } from '../../../domain/repositories/invoice.repository.js';",
-          "import type { ProductListedV1 } from '../../../../catalog/published-language/index.js';",
+          "import type { InvoiceRepository } from '#src/contexts/billing/domain/repositories/invoice.repository.js';",
+          "import type { ProductListedV1 } from '#src/contexts/catalog/published-language/index.js';",
           'export class IssueInvoiceHandler {}',
           'export type T = UseCase<ProductListedV1, InvoiceRepository>;',
         ].join('\n'),
@@ -155,7 +155,7 @@ export const LAYER_FIXTURES: readonly Fixture[] = [
     expect: { file: HANDLER },
     files: project(
       handler(
-        "import type { PgInvoiceRepository } from '../../../infrastructure/persistence/pg-invoice.repository.js';\nexport class IssueInvoiceHandler {}\nexport type R = PgInvoiceRepository;\n",
+        "import type { PgInvoiceRepository } from '#src/contexts/billing/infrastructure/persistence/pg-invoice.repository.js';\nexport class IssueInvoiceHandler {}\nexport type R = PgInvoiceRepository;\n",
       ),
     ),
   },
@@ -182,7 +182,7 @@ export const LAYER_FIXTURES: readonly Fixture[] = [
     files: project({
       ...handler('export class IssueInvoiceHandler {}\n'),
       [ROUTE]:
-        "import type { IssueInvoiceHandler } from '../../application/commands/issue-invoice/issue-invoice.handler.js';\n\nexport type IssueInvoiceRoute = IssueInvoiceHandler;\n",
+        "import type { IssueInvoiceHandler } from '#src/contexts/billing/application/commands/issue-invoice/issue-invoice.handler.js';\n\nexport type IssueInvoiceRoute = IssueInvoiceHandler;\n",
     }),
   },
   {
@@ -191,7 +191,7 @@ export const LAYER_FIXTURES: readonly Fixture[] = [
     expect: { file: ROUTE },
     files: project({
       [ROUTE]:
-        "import type { InMemoryInvoiceRepository } from '../../infrastructure/persistence/in-memory-invoice.repository.js';\n\nexport type IssueInvoiceRoute = InMemoryInvoiceRepository;\n",
+        "import type { InMemoryInvoiceRepository } from '#src/contexts/billing/infrastructure/persistence/in-memory-invoice.repository.js';\n\nexport type IssueInvoiceRoute = InMemoryInvoiceRepository;\n",
     }),
   },
   {
@@ -200,7 +200,7 @@ export const LAYER_FIXTURES: readonly Fixture[] = [
     expect: 'pass',
     files: project({
       [ADAPTER]:
-        "import type { InvoiceRepository } from '../../domain/repositories/invoice.repository.js';\nexport class InMemoryInvoiceRepository {}\nexport type R = InvoiceRepository;\n",
+        "import type { InvoiceRepository } from '#src/contexts/billing/domain/repositories/invoice.repository.js';\nexport class InMemoryInvoiceRepository {}\nexport type R = InvoiceRepository;\n",
     }),
   },
   {
@@ -209,7 +209,7 @@ export const LAYER_FIXTURES: readonly Fixture[] = [
     expect: { file: ADAPTER },
     files: project({
       [ADAPTER]:
-        "import type { InvoiceDto } from '@/contexts/billing/presentation/http/invoice.dto.js';\n\nexport type InMemoryInvoiceRepository = InvoiceDto;\n",
+        "import type { InvoiceDto } from '#src/contexts/billing/presentation/http/invoice.dto.js';\n\nexport type InMemoryInvoiceRepository = InvoiceDto;\n",
     }),
   },
   {

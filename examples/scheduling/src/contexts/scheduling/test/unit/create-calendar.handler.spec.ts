@@ -5,14 +5,14 @@ import { RelationTupleStore } from '@ddd-ts-kit/auth/rebac';
 import { anActor } from '@ddd-ts-kit/auth/testing';
 import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
 import type { DomainEvent } from '@ddd-ts-kit/kernel';
-import * as schedulingDeclarations from '../../scheduling.declarations.js';
-import { platformTestModule } from '../../../../platform/platform-test.module.js';
-import { schedulingPermissions } from '../../application/authorization/scheduling.permissions.js';
-import { CreateCalendarCommand } from '../../application/commands/create-calendar/create-calendar.command.js';
-import { PractitionerDirectory } from '../../application/ports/practitioner-directory.port.js';
-import { CalendarRepository } from '../../domain/repositories/calendar.repository.js';
-import { FakeCalendarRepository } from '../fakes/calendar.repository.fake.js';
-import { FakePractitionerDirectory } from '../fakes/practitioner-directory.fake.js';
+import * as schedulingDeclarations from '#src/contexts/scheduling/scheduling.declarations.js';
+import { platformTestModule } from '#src/platform/platform-test.module.js';
+import { schedulingPermissions } from '#src/contexts/scheduling/application/authorization/scheduling.permissions.js';
+import { CreateCalendarCommand } from '#src/contexts/scheduling/application/commands/create-calendar/create-calendar.command.js';
+import { PractitionerDirectory } from '#src/contexts/scheduling/application/ports/practitioner-directory.port.js';
+import { CalendarRepository } from '#src/contexts/scheduling/domain/repositories/calendar.repository.js';
+import { FakeCalendarRepository } from '#src/contexts/scheduling/test/fakes/calendar.repository.fake.js';
+import { FakePractitionerDirectory } from '#src/contexts/scheduling/test/fakes/practitioner-directory.fake.js';
 
 const holders = authorizationModule({
   authorizer: new RoleBasedAuthorizer({ roles: { holder: [schedulingPermissions['calendar.create']] } }),
