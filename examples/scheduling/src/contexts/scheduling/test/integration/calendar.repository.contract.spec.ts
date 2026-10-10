@@ -1,0 +1,60 @@
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { FixedClock, FixedExecutionScope, executionContext, unwrap, type Actor, type ExecutionContext } from '@ddd-ts-kit/kernel';
+import { repositoryContract } from '@ddd-ts-kit/testing/contracts';
+import type { Calendar } from '../../domain/aggregates/calendar.aggregate.js';
+import { Exception } from '../../domain/value-objects/exception.vo.js';
+import { Range } from '../../domain/value-objects/range.vo.js';
+import { KnexCalendarRepository } from '../../infrastructure/persistence/knex-calendar.repository.js';
+import { openTestDatabase, type TestDatabase } from '../../../../platform/database/open-test-database.js';
+import { aCalendar } from '../builders/calendar.builder.js';
+import { FakeCalendarRepository } from '../fakes/calendar.repository.fake.js';
+
+const runner = { describe, it, expect, beforeEach, afterEach };
+
+const expectations = {
+  createAggregate: () =>
+    aCalendar()
+      .openEveryDay(['09:00', '12:00'], ['14:00', '18:00'])
+      .withException('2026-12-25')
+      .off(new Date('2026-08-01T00:00:00.000Z'), new Date('2026-08-15T00:00:00.000Z'))
+      .offering('consultation', { buffer: 10, needsConfirmation: true })
+      .build(),
+  mutate: (changed: Calendar) => {
+    changed.addException(unwrap(Exception.create('2026-05-01', [unwrap(Range.create('10:00', '12:00'))])), new Date('2026-01-02T00:00:00.000Z'));
+  },
+  idOf: (subject: Calendar) => subject.id,
+  stateOf: (subject: Calendar) => subject.toState(),
+};
+
+repositoryContract<Calendar>(runner, {
+  ...expectations,
+  name: 'FakeCalendarRepository',
+  createRepository: () => new FakeCalendarRepository(),
+});
+
+const clock = new FixedClock(new Date('2026-01-01T00:00:00.000Z'));
+let database: TestDatabase;
+
+beforeAll(async () => {
+  database = await openTestDatabase();
+});
+
+afterAll(async () => {
+  await database.close();
+});
+
+repositoryContract<Calendar>(runner, {
+  ...expectations,
+  name: 'KnexCalendarRepository',
+  createRepository: async () => {
+    await database.reset();
+
+    return new KnexCalendarRepository(database.persistence.database, new FixedExecutionScope(workOf('acme')), clock);
+  },
+});
+
+function workOf(tenantId: string): ExecutionContext {
+  const actor: Actor = { id: 'member-of-' + tenantId, type: 'user', tenantId, roles: [], attributes: {} };
+
+  return executionContext({ correlationId: 'contract-spec', actor, origin: 'test' });
+}
