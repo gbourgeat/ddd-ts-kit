@@ -24,7 +24,7 @@ import {
   ArchiveInvoices,
   GetCatalog,
   IssueInvoice,
-  ListInvoices,
+  SearchInvoices,
   VoidInvoice,
   ada,
   billingPermissions,
@@ -63,7 +63,7 @@ const billingModule = defineContextModule({
       .handledBy(VoidInvoiceHandler);
 
     builder
-      .query(ListInvoices)
+      .query(SearchInvoices)
       .requires(billingPermissions['invoice.read'])
       .handledByFactory(() => ({ execute: async () => ['inv-1'] }));
 
@@ -101,7 +101,7 @@ describe('authorizationModule', () => {
       ForbiddenError,
     );
 
-    await expect(resolve(QueryBus).execute(new ListInvoices(anonymousActor()))).rejects.toBeInstanceOf(
+    await expect(resolve(QueryBus).execute(new SearchInvoices(anonymousActor()))).rejects.toBeInstanceOf(
       UnauthenticatedError,
     );
 
@@ -116,7 +116,7 @@ describe('authorizationModule', () => {
     expect(declared.map((declaration) => [declaration.type.name, declaration.access])).toEqual([
       ['IssueInvoice', 'protected'],
       ['VoidInvoice', 'protected'],
-      ['ListInvoices', 'protected'],
+      ['SearchInvoices', 'protected'],
       ['GetCatalog', 'public'],
     ]);
 
@@ -126,7 +126,7 @@ describe('authorizationModule', () => {
     ]);
 
     expect(app.describe().queries).toMatchObject([
-      { message: 'ListInvoices', access: 'protected', permission: 'billing:invoice.read' },
+      { message: 'SearchInvoices', access: 'protected', permission: 'billing:invoice.read' },
       { message: 'GetCatalog', access: 'public' },
     ]);
   });

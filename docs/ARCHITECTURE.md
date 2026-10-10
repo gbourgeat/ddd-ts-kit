@@ -102,6 +102,7 @@ presentation ──▶ application ──▶ domain ◀── infrastructure
 | `tree/context-doc` | Every context has a `CONTEXT.md` with the required sections (`Purpose`, `Classification`, `Ubiquitous language`, `Aggregates`, `Published events`, `Relationships`) and the classification declared in the config. |
 | `naming/suffix` | A file in a role directory carries the role's suffix, in kebab-case. |
 | `naming/one-concept-per-file` | One exported aggregate, entity, value object, event, handler or job per file, and one declared class per role file. |
+| `naming/search-not-list` | A read that takes criteria, a scope or a page is a search. In a context, no method is named `list`, or `list` followed by an upper-case letter (`listByCustomer`), in a port (`domain/repositories/*.repository.ts`, `application/ports/*.port.ts`) nor in a class of `infrastructure/` or `test/fakes/`: it is named `search...`. Under `application/queries/`, no folder or file is named `list` or starts with `list-` or `list.`, and no class is named `List` or starts with `List` followed by an upper-case letter: the query is `Search<Things>Query` in `search-<things>/`. A property is not judged, nor `listAccessible`, which the `Authorizer` port of the kit requires; a read of one element or none stays `findById` or `findBy...`. |
 | `test/spec-required` | Every aggregate, value object, domain service, command handler, query handler, domain event handler, integration event handler and job has a `*.spec.ts` in the context's `test/`. |
 | `events/name-format` | Domain and integration event names follow `<context>.<aggregate>.<fact-in-past-tense>`. |
 | `events/defined-in-published-language` | An integration event is declared once with `defineIntegrationEvent` in the producer's `published-language/`, with a payload schema. Catalog and AsyncAPI document are generated from these declarations. |
@@ -350,7 +351,7 @@ over attributes (ABAC), or relationships in the manner of Google Zanzibar (ReBAC
 process or delegated to a dedicated service. Changing model changes an adapter and the
 permission definitions, not the handlers.
 
-*The current actor.* Use cases get it explicitly, as data of the command or query. Lists are
+*The current actor.* Use cases get it explicitly, as data of the command or query. Searches are
 filtered by passing the access scope of the actor (`access.scope(actor, permission, type)`)
 to the read port, never by filtering in memory after loading. Every unit of work (a request, a consumed event, a
 scheduled job) runs inside an `ExecutionScope` opened at the boundary, holding the
@@ -392,7 +393,7 @@ is a defect, whoever asked for it.
 
 **Standard persistence shapes.** Audit columns are named `created_at`, `created_by`,
 `updated_at`, `updated_by` and the tenant column `tenant_id` in every project, written from
-the execution scope by the repository adapter through the kernel helpers. Lists use the
+the execution scope by the repository adapter through the kernel helpers. Searches use the
 kernel `Page` and `PageRequest`; a cursor always ends on a unique tie-breaker so paging is
 stable.
 

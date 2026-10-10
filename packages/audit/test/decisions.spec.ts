@@ -13,13 +13,13 @@ import { InMemoryAuditTrail, auditDecisions, verifyChain, type AuditDecisionsOpt
 import { NOW, aSource, ada, requestOf, support } from './support/fixtures.js';
 import { CancelAppointmentCommand } from './support/scheduling/application/commands/cancel-appointment.command.js';
 import { SaveSearchQuery } from './support/scheduling/application/commands/save-search-query.command.js';
-import { ListAppointmentsQuery } from './support/scheduling/application/queries/list-appointments.query.js';
+import { SearchAppointmentsQuery } from './support/scheduling/application/queries/search-appointments.query.js';
 import { ReadMedicalFileQuery } from './support/scheduling/application/queries/read-medical-file.query.js';
 import { UpcomingAppointments } from './support/scheduling/application/queries/upcoming-appointments.query.js';
 
 const permissions = definePermissions('scheduling', {
   'appointment.cancel': { description: 'Cancel an appointment' },
-  'appointment.read': { description: 'List appointments' },
+  'appointment.read': { description: 'Search appointments' },
   'medical-file.read': { description: 'Read the medical file of a patient' },
   'search.save': { description: 'Save a search' },
 });
@@ -28,7 +28,7 @@ const map = AuthorizationMap.of(
   requires(CancelAppointmentCommand, permissions['appointment.cancel'], {
     resource: (command) => ({ type: 'appointment', id: command.appointmentId }),
   }),
-  requires(ListAppointmentsQuery, permissions['appointment.read']),
+  requires(SearchAppointmentsQuery, permissions['appointment.read']),
   requires(UpcomingAppointments, permissions['appointment.read']),
   requires(SaveSearchQuery, permissions['search.save']),
   requires(ReadMedicalFileQuery, permissions['medical-file.read'], {
@@ -56,7 +56,7 @@ function application(authorizer = new AllowAll(), options: Partial<AuditDecision
 
   const queries = new InMemoryQueryBus()
     .use(guard)
-    .register(ListAppointmentsQuery, { execute: async () => ['apt-1'] })
+    .register(SearchAppointmentsQuery, { execute: async () => ['apt-1'] })
     .register(UpcomingAppointments, { execute: async () => ['apt-1'] })
     .register(ReadMedicalFileQuery, { execute: async () => 'file' });
 
@@ -96,7 +96,7 @@ describe('auditDecisions', () => {
     const { trail, commands, queries } = application(new DenyAll('NO_MATCHING_ROLE'));
 
     await expect(commands.execute(new CancelAppointmentCommand(ada, 'apt-1'))).rejects.toThrow(ForbiddenError);
-    await expect(queries.execute(new ListAppointmentsQuery(ada))).rejects.toThrow(ForbiddenError);
+    await expect(queries.execute(new SearchAppointmentsQuery(ada))).rejects.toThrow(ForbiddenError);
 
     expect(trail.entries.map(({ action, outcome, reason }) => ({ action, outcome, reason }))).toEqual([
       { action: 'scheduling:appointment.cancel', outcome: 'denied', reason: 'NO_MATCHING_ROLE' },
@@ -111,7 +111,7 @@ describe('auditDecisions, the allowed reads', () => {
   it('leaves out an allowed read, unless its permission is sensitive', async () => {
     const { trail, queries } = application();
 
-    await queries.execute(new ListAppointmentsQuery(ada));
+    await queries.execute(new SearchAppointmentsQuery(ada));
     await queries.execute(new ReadMedicalFileQuery(ada, 'patient-9'));
 
     expect(trail.entries.map(({ action, outcome, resource }) => ({ action, outcome, resource }))).toEqual([
@@ -136,7 +136,7 @@ describe('auditDecisions, the allowed reads', () => {
       actorId: 'ada',
       permissionId: 'scheduling:appointment.read',
       decision: { allowed: true },
-      useCase: 'ListAppointmentsQuery',
+      useCase: 'SearchAppointmentsQuery',
     });
 
     expect(trail.entries.map((entry) => entry.outcome)).toEqual(['allowed']);
@@ -145,7 +145,7 @@ describe('auditDecisions, the allowed reads', () => {
   it('records every allowed read when asked to', async () => {
     const { trail, queries } = application(new AllowAll(), { allowedReads: 'all' });
 
-    await queries.execute(new ListAppointmentsQuery(ada));
+    await queries.execute(new SearchAppointmentsQuery(ada));
 
     expect(trail.entries.map((entry) => entry.action)).toEqual(['scheduling:appointment.read']);
   });
@@ -158,7 +158,7 @@ describe('auditDecisions, the allowed reads', () => {
     });
 
     for (let index = 0; index < 4; index += 1) {
-      await queries.execute(new ListAppointmentsQuery(ada));
+      await queries.execute(new SearchAppointmentsQuery(ada));
     }
 
     expect(trail.entries).toHaveLength(2);

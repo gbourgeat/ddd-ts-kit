@@ -74,7 +74,7 @@ describe('KnexAgenda, listing', () => {
         .build(),
     );
 
-    const page = await agenda.list(scoped(everything.page(offsetPage({ limit: 2 })), { kind: 'all' }));
+    const page = await agenda.search(scoped(everything.page(offsetPage({ limit: 2 })), { kind: 'all' }));
 
     expect(page.items.map((entry) => entry.id)).toEqual(['appointment-a', 'appointment-b']);
     expect(page.total).toBe(3);
@@ -85,12 +85,12 @@ describe('KnexAgenda, listing', () => {
     await write(anAgendaEntry().withMany({ id: 'appointment-b', calendarId: 'calendar-b' }).build());
     await write(anAgendaEntry().withMany({ id: 'appointment-c', calendarId: 'calendar-a' }).build());
 
-    const own = await agenda.list(
+    const own = await agenda.search(
       scoped(everything, { kind: 'ids', ids: ['appointment-b', 'appointment-c'] }, { ids: 'id' }),
     );
 
-    const run = await agenda.list(scoped(everything, { kind: 'ids', ids: ['calendar-a'] }, { ids: 'calendarId' }));
-    const none = await agenda.list(scoped(everything, { kind: 'none' }, { ids: 'id' }));
+    const run = await agenda.search(scoped(everything, { kind: 'ids', ids: ['calendar-a'] }, { ids: 'calendarId' }));
+    const none = await agenda.search(scoped(everything, { kind: 'none' }, { ids: 'id' }));
 
     expect(own.items.map((entry) => entry.id)).toEqual(['appointment-b', 'appointment-c']);
     expect(run.items.map((entry) => entry.id)).toEqual(['appointment-a', 'appointment-c']);
@@ -100,17 +100,19 @@ describe('KnexAgenda, listing', () => {
   it('filters by the day of the practice, by status and by a span of starts', async () => {
     await writeTwoDays();
 
-    const monday = await agenda.list(scoped(everything.where('day', 'eq', '2026-03-02'), { kind: 'all' }));
+    const monday = await agenda.search(scoped(everything.where('day', 'eq', '2026-03-02'), { kind: 'all' }));
 
-    const active = await agenda.list(
+    const active = await agenda.search(
       scoped(everything.where('status', 'in', ['booked', 'requested']), { kind: 'all' }),
     );
 
-    const fromTen = await agenda.list(
+    const fromTen = await agenda.search(
       scoped(everything.where('startsAt', 'gte', at('10:00')).where('day', 'lte', '2026-03-02'), { kind: 'all' }),
     );
 
-    const unconfirmed = await agenda.list(scoped(everything.where('confirmBefore', 'isNull', false), { kind: 'all' }));
+    const unconfirmed = await agenda.search(
+      scoped(everything.where('confirmBefore', 'isNull', false), { kind: 'all' }),
+    );
 
     expect(monday.items.map((entry) => entry.id)).toEqual(['appointment-a', 'appointment-b']);
     expect(active.items.map((entry) => entry.id)).toEqual(['appointment-a', 'appointment-c']);

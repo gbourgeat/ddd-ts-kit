@@ -268,12 +268,12 @@ export class DrizzleInvoiceRepository implements InvoiceRepository {
 const ownTenant = (scope: ExecutionScope) => eq(invoices.tenantId, tenantScopeOf(scope).tenantId);
 ```
 
-A list query takes the kernel `PageRequest` and answers a `Page`, in both variants:
+A search query takes the kernel `PageRequest` and answers a `Page`, in both variants:
 
 ```ts
 // contexts/billing-core/application/ports/invoice-queries.port.ts
 export abstract class InvoiceQueries {
-  abstract list(request: PageRequest<'amount'>): Promise<Page<InvoiceSummary>>;
+  abstract search(request: PageRequest<'amount'>): Promise<Page<InvoiceSummary>>;
 }
 ```
 
@@ -289,7 +289,7 @@ export class DrizzleInvoiceQueries implements InvoiceQueries {
     private readonly scope: ExecutionScope,
   ) {}
 
-  list(request: PageRequest<'amount'>): Promise<Page<InvoiceSummary>> {
+  search(request: PageRequest<'amount'>): Promise<Page<InvoiceSummary>> {
     return request.kind === 'offset' ? this.byOffset(request) : this.byCursor(request);
   }
 
@@ -390,7 +390,7 @@ of identifiers: every value is a parameter encoded by its column, a text search 
 
 ```ts
 // infrastructure/persistence/drizzle-appointment-queries.reader.ts
-async list(criteria: ScopedCriteria<AppointmentRow>): Promise<Page<AppointmentRow>> {
+async search(criteria: ScopedCriteria<AppointmentRow>): Promise<Page<AppointmentRow>> {
   const plan = planCriteria(appointmentCriteria, criteria);
 
   if (plan.empty) {

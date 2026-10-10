@@ -18,9 +18,9 @@ import { OPERATOR_CASES } from './criteria/operator-cases.js';
 import { SCOPE_CASES } from './criteria/scope-cases.js';
 import { SORT_CASES } from './criteria/sort-cases.js';
 
-/** What the contract reads through: the `list` of a read port over the rows it was given. */
+/** What the contract reads through: the `search` of a read port over the rows it was given. */
 export interface ReadModelUnderContract {
-  list(criteria: ScopedCriteria<CriteriaContractRow>): Promise<Page<CriteriaContractRow>>;
+  search(criteria: ScopedCriteria<CriteriaContractRow>): Promise<Page<CriteriaContractRow>>;
   close?(): Awaitable<void>;
 }
 
@@ -65,7 +65,7 @@ class CriteriaSuite extends ContractSuite<ReadModelUnderContract> {
 
   private answers(example: CriteriaCase): void {
     this.it(example.name, async () => {
-      const page = await this.subject.list(
+      const page = await this.subject.search(
         read(example).refine((criteria) => criteria.page(offsetPage({ limit: 50 }))),
       );
 
@@ -77,7 +77,7 @@ class CriteriaSuite extends ContractSuite<ReadModelUnderContract> {
   private pagesByOffset(): void {
     this.it('an offset page holds its slice and the total of the filtered rows', async () => {
       const acme = (offset: number): Promise<Page<CriteriaContractRow>> =>
-        this.subject.list(
+        this.subject.search(
           scoped(
             Criteria.of<CriteriaContractRow>()
               .where('tenantId', 'eq', 'acme')
@@ -93,7 +93,7 @@ class CriteriaSuite extends ContractSuite<ReadModelUnderContract> {
     });
 
     this.it('a read without a page answers the first page of the default size', async () => {
-      const page = await this.subject.list(scoped(Criteria.of<CriteriaContractRow>(), { kind: 'all' }));
+      const page = await this.subject.search(scoped(Criteria.of<CriteriaContractRow>(), { kind: 'all' }));
 
       this.expect(summary(page)).toEqual({ ids: OPERATOR_CASES[0]?.ids, total: 8, more: false });
     });
@@ -113,7 +113,7 @@ class CriteriaSuite extends ContractSuite<ReadModelUnderContract> {
     });
 
     this.it('a cursor page carries no total, and no cursor when it is the last', async () => {
-      const page = await this.subject.list(
+      const page = await this.subject.search(
         scoped(Criteria.of<CriteriaContractRow>().page(cursorPage({ limit: 8 })), { kind: 'all' }),
       );
 
@@ -128,7 +128,7 @@ class CriteriaSuite extends ContractSuite<ReadModelUnderContract> {
 
     do {
       const request = cursorPage({ limit, ...(cursor === undefined ? {} : { cursor }) });
-      const page = await this.subject.list(read(example).refine((criteria) => criteria.page(request)));
+      const page = await this.subject.search(read(example).refine((criteria) => criteria.page(request)));
 
       ids.push(...idsOf(page));
       cursor = page.nextCursor;

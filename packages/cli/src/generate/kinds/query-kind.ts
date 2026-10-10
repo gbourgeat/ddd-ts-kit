@@ -14,15 +14,15 @@ import { specVars } from '../spec-vars.js';
 import { vars } from '../vars.js';
 import { wire } from '../wire.js';
 
-type Variant = '' | 'list.';
+type Variant = '' | 'search.';
 
 export const queryKind: Kind = {
   name: 'query',
   aliases: [],
   usage:
-    'query <context> <UseCaseName> (--permission <aggregate>.<action> | --public) [--list] [--term "<Term>=<meaning>"]...',
+    'query <context> <UseCaseName> (--permission <aggregate>.<action> | --public) [--search] [--term "<Term>=<meaning>"]...',
   summary:
-    'A query, its result, its handler, its read port with an in-memory adapter and a fake, its spec and its registration on the query bus; with --list, one page of a list filtered by the access scope of the actor.',
+    'A query, its result, its handler, its read port with an in-memory adapter and a fake, its spec and its registration on the query bus; with --search, one page of a search filtered by the access scope of the actor.',
   positionals: ['context', 'UseCaseName'],
   writesShared: false,
   run: (request) => {
@@ -39,7 +39,7 @@ export const queryKind: Kind = {
       name: named(name),
       access,
       spec: specVars(scope, access),
-      list: { resource: listedResource(access) },
+      search: { resource: searchedResource(access) },
       reader,
     });
 
@@ -55,24 +55,24 @@ function readerFile(scope: Scope, name: Name): string {
   return isDeclared(scope.config) ? `in-memory-${name.kebab}-reader.repository` : `in-memory-${name.kebab}.reader`;
 }
 
-/** `--list`: the templates of a paginated list. A list is narrowed by what its actor may see, so it names a permission. */
+/** `--search`: the templates of a paginated search. A search is narrowed by what its actor may see, so it names a permission. */
 function queryVariant(scope: Scope, access: RenderContext): Variant {
-  if (!scope.flags.list) {
+  if (!scope.flags.search) {
     return '';
   }
 
   if (access['protected'] === true) {
-    return 'list.';
+    return 'search.';
   }
 
   throw new CliError(
-    '--list cannot be combined with --public.',
-    'A generated list is filtered by the access scope the authorizer computes for its actor: give it --permission <aggregate>.<action>, or generate a plain public query and page it yourself.',
+    '--search cannot be combined with --public.',
+    'A generated search is filtered by the access scope the authorizer computes for its actor: give it --permission <aggregate>.<action>, or generate a plain public query and page it yourself.',
   );
 }
 
-/** The element a list shows, as the authorization model names it: the aggregate of its permission, to start with. */
-function listedResource(access: RenderContext): string {
+/** The element a search answers, as the authorization model names it: the aggregate of its permission, to start with. */
+function searchedResource(access: RenderContext): string {
   const permission = access['permission'];
 
   return typeof permission === 'string' ? (permission.split('.')[0] ?? '') : '';
@@ -100,5 +100,5 @@ function writeQuery(scope: Scope, { name, variant, reader }: QueryFiles, context
     ],
   ]);
 
-  wire(scope, variant === '' ? 'query' : 'query/list', context);
+  wire(scope, variant === '' ? 'query' : 'query/search', context);
 }

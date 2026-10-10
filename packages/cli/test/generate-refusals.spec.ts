@@ -106,6 +106,23 @@ describe('generate, plans and refusals', () => {
     );
   });
 
+  it('knows --search only: the former --list is an unknown option and writes nothing', () => {
+    const result = cli(
+      root,
+      'generate',
+      'query',
+      'billing',
+      'SearchInvoices',
+      '--permission',
+      'invoice.search',
+      '--list',
+    );
+
+    expect(result.code).toBe(2);
+    expect(result.stderr).toContain("Unknown option '--list'");
+    expect(exists(root, 'src/contexts/billing/application/queries/search-invoices')).toBe(false);
+  });
+
   it('describes the kinds in --help', () => {
     const help = cli(root, '--help').stdout;
 

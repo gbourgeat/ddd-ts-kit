@@ -44,7 +44,7 @@ describe('a context wired by hand', () => {
     expect(walk(root, persistence)).toEqual([
       `${persistence}/billing.schema.ts`,
       `${persistence}/create-billing-tables.schema.ts`,
-      `${persistence}/in-memory-list-invoices.reader.ts`,
+      `${persistence}/in-memory-search-invoices.reader.ts`,
       `${persistence}/invoice-row.schema.ts`,
       `${persistence}/invoice.mapper.ts`,
       `${persistence}/knex-invoice.repository.ts`,
@@ -78,7 +78,7 @@ describe('a context wired by hand', () => {
       `${http}/cancel-invoice-params.dto.ts`,
       `${http}/issue-invoice-accepted.dto.ts`,
       `${http}/issue-invoice-body.dto.ts`,
-      `${http}/list-invoices-line.dto.ts`,
+      `${http}/search-invoices-line.dto.ts`,
     ]);
 
     expect(read(root, `${http}/issue-invoice.route.ts`)).toContain(

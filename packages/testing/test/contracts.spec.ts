@@ -108,7 +108,7 @@ rateLimiterContract(runner, {
 criteriaContract(runner, {
   name: 'evaluateCriteria',
   createReadModel: (rows) => ({
-    list: async (criteria) => evaluateCriteria(criteriaContractDefinition, rows, criteria),
+    search: async (criteria) => evaluateCriteria(criteriaContractDefinition, rows, criteria),
   }),
 });
 

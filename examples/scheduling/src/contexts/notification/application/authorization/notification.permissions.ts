@@ -6,6 +6,6 @@ export const notificationPermissions = definePermissions('notification', {
   'notification.send': { description: 'Send notification' },
   'reminder.plan': { description: 'Plan reminder' },
   'reminder.withdraw': { description: 'Withdraw reminder' },
-  'notification.read': { description: 'List notifications' },
+  'notification.read': { description: 'Search notifications' },
   // /ddd-ts-kit:permissions
 });

@@ -116,7 +116,7 @@ describe('init --audit', () => {
       /decisions: auditDecisions\([\s\S]*commands: auditMiddleware\([\s\S]*subscriptions: auditIntegrationEvents\(/,
     );
 
-    expect(read(root, 'src/platform/audit/list-audit-entries.route.ts')).toContain("path: '/audit/entries'");
+    expect(read(root, 'src/platform/audit/search-audit-entries.route.ts')).toContain("path: '/audit/entries'");
     expect(read(root, 'src/platform/audit/audit.module.ts')).toContain(".requires(auditPermissions['trail.read'])");
     expect(exists(root, 'src/platform/auth/log-decisions.ts')).toBe(false);
     expect(manifest(root).dependencies).toMatchObject({ '@ddd-ts-kit/audit': '^0.1.0' });
@@ -144,7 +144,7 @@ describe('init --audit', () => {
   });
 });
 
-describe('generate query --list and generate adapter', () => {
+describe('generate query --search and generate adapter', () => {
   function project(...flags: string[]): string {
     const root = tempDir('operations');
 
@@ -160,7 +160,7 @@ describe('generate query --list and generate adapter', () => {
       '--term',
       'Invoice=A request for payment',
       '--term',
-      'List=To show invoices',
+      'Search=To show invoices',
     );
 
     return root;
@@ -170,29 +170,29 @@ describe('generate query --list and generate adapter', () => {
     const root = project();
 
     expect(
-      cli(root, 'generate', 'query', 'billing', 'ListInvoices', '--permission', 'invoice.list', '--list').code,
+      cli(root, 'generate', 'query', 'billing', 'SearchInvoices', '--permission', 'invoice.search', '--search').code,
     ).toBe(0);
 
-    cli(root, 'generate', 'route', 'billing', 'ListInvoices', '--method', 'GET', '--path', '/invoices');
+    cli(root, 'generate', 'route', 'billing', 'SearchInvoices', '--method', 'GET', '--path', '/invoices');
 
-    expect(read(root, 'src/contexts/billing/application/queries/list-invoices/list-invoices.query.ts')).toContain(
-      'readonly page: PageRequest<ListInvoicesSort>',
+    expect(read(root, 'src/contexts/billing/application/queries/search-invoices/search-invoices.query.ts')).toContain(
+      'readonly page: PageRequest<SearchInvoicesSort>',
     );
 
-    expect(read(root, 'src/contexts/billing/application/queries/list-invoices/list-invoices.handler.ts')).toContain(
-      "this.access.scope(query.actor, billingPermissions['invoice.list'], 'invoice')",
+    expect(read(root, 'src/contexts/billing/application/queries/search-invoices/search-invoices.handler.ts')).toContain(
+      "this.access.scope(query.actor, billingPermissions['invoice.search'], 'invoice')",
     );
 
-    expect(read(root, 'src/contexts/billing/application/ports/list-invoices-reader.port.ts')).toContain(
-      'abstract list(scope: AccessScope, page: PageRequest<ListInvoicesSort>): Promise<ListInvoicesResult>;',
+    expect(read(root, 'src/contexts/billing/application/ports/search-invoices-reader.port.ts')).toContain(
+      'abstract search(scope: AccessScope, page: PageRequest<SearchInvoicesSort>): Promise<SearchInvoicesResult>;',
     );
 
-    expect(read(root, 'src/contexts/billing/presentation/http/list-invoices.route.ts')).toMatch(
+    expect(read(root, 'src/contexts/billing/presentation/http/search-invoices.route.ts')).toMatch(
       /pageQuerySchema\([\s\S]*pageSchemaOf\(line\)[\s\S]*pageResponse\(page,/,
     );
 
     expect(
-      cli(root, 'generate', 'query', 'billing', 'ListInvoiceLines', '--public', '--list', '--allow-name').code,
+      cli(root, 'generate', 'query', 'billing', 'SearchInvoiceLines', '--public', '--search', '--allow-name').code,
     ).toBe(2);
   });
 

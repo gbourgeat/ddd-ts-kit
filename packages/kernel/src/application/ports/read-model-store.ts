@@ -27,5 +27,5 @@ export abstract class ReadModelStore<Row> {
   /** Removes the row, keeping its stamp: an older event delivered late does not bring it back. */
   abstract delete(key: string, stamp: EventStamp): Promise<ReadModelWrite>;
 
-  abstract list(criteria: ScopedCriteria<Row>): Promise<Page<Row>>;
+  abstract search(criteria: ScopedCriteria<Row>): Promise<Page<Row>>;
 }

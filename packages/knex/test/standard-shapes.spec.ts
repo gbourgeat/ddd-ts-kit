@@ -115,8 +115,8 @@ describe('tenant scoping', () => {
     await draft(scopeOf(ada), 'inv-1', 100);
 
     expect(await repositoryOf(scopeOf(eve)).findById('inv-1')).toBeUndefined();
-    expect(await queriesOf(scopeOf(eve)).list(offsetPage())).toEqual({ items: [], total: 0 });
-    expect((await queriesOf(scopeOf(eve)).list(cursorPage())).items).toEqual([]);
+    expect(await queriesOf(scopeOf(eve)).search(offsetPage())).toEqual({ items: [], total: 0 });
+    expect((await queriesOf(scopeOf(eve)).search(cursorPage())).items).toEqual([]);
     expect((await repositoryOf(scopeOf(bob)).findById('inv-1'))?.state.amount).toBe(100);
   });
 
@@ -135,7 +135,7 @@ describe('tenant scoping', () => {
   it('refuses to reach tenant-scoped storage from work that names no tenant', async () => {
     await expect(draft(scopeOf(nobody), 'inv-1', 100)).rejects.toBeInstanceOf(NoCurrentTenantError);
     await expect(repositoryOf(scopeOf(nobody)).findById('inv-1')).rejects.toBeInstanceOf(NoCurrentTenantError);
-    await expect(queriesOf(scopeOf(nobody)).list(offsetPage())).rejects.toBeInstanceOf(NoCurrentTenantError);
+    await expect(queriesOf(scopeOf(nobody)).search(offsetPage())).rejects.toBeInstanceOf(NoCurrentTenantError);
   });
 });
 
@@ -166,9 +166,9 @@ describe('a list query', () => {
   it('answers an offset page with the total, in an order the tie-breaker makes total', async () => {
     const queries = queriesOf(scopeOf(ada));
 
-    const first = await queries.list(offsetPage({ limit: 3 }));
-    const second = await queries.list(offsetPage({ limit: 3, offset: 3 }));
-    const third = await queries.list(offsetPage({ limit: 3, offset: 6 }));
+    const first = await queries.search(offsetPage({ limit: 3 }));
+    const second = await queries.search(offsetPage({ limit: 3, offset: 3 }));
+    const third = await queries.search(offsetPage({ limit: 3, offset: 6 }));
 
     expect(first).toEqual({
       items: [
@@ -183,7 +183,7 @@ describe('a list query', () => {
   });
 
   it('sorts in the direction it is asked, tie-breaker included', async () => {
-    const page = await queriesOf(scopeOf(ada)).list(
+    const page = await queriesOf(scopeOf(ada)).search(
       offsetPage({ limit: 7, sort: [{ field: 'amount', direction: 'desc' }] }),
     );
 
@@ -198,7 +198,7 @@ describe('a list query', () => {
       let cursor: string | undefined;
 
       do {
-        const page = await queries.list(
+        const page = await queries.search(
           cursorPage({ limit: 2, sort: [{ field: 'amount', direction }], ...(cursor === undefined ? {} : { cursor }) }),
         );
 
@@ -211,7 +211,7 @@ describe('a list query', () => {
   );
 
   it('names no next cursor on the last page, even when it is full', async () => {
-    const page = await queriesOf(scopeOf(ada)).list(cursorPage({ limit: 7 }));
+    const page = await queriesOf(scopeOf(ada)).search(cursorPage({ limit: 7 }));
 
     expect(idsOf(page)).toEqual(ASCENDING);
     expect(page).not.toHaveProperty('nextCursor');
@@ -220,23 +220,26 @@ describe('a list query', () => {
 
   it('keeps its place by cursor when a row is inserted before it, where an offset would repeat one', async () => {
     const queries = queriesOf(scopeOf(ada));
-    const first = await queries.list(cursorPage({ limit: 3 }));
+    const first = await queries.search(cursorPage({ limit: 3 }));
 
     await draft(scopeOf(ada), 'inv-0', 10);
 
-    const second = await queries.list(
+    const second = await queries.search(
       cursorPage({ limit: 3, ...(first.nextCursor === undefined ? {} : { cursor: first.nextCursor }) }),
     );
 
     expect(idsOf(second)).toEqual(['inv-d', 'inv-e', 'inv-f']);
-    expect(idsOf(await queries.list(offsetPage({ limit: 3, offset: 3 })))).toEqual(['inv-c', 'inv-d', 'inv-e']);
+    expect(idsOf(await queries.search(offsetPage({ limit: 3, offset: 3 })))).toEqual(['inv-c', 'inv-d', 'inv-e']);
   });
 
   it('refuses a cursor it did not write', async () => {
     const queries = queriesOf(scopeOf(ada));
     const forged = Buffer.from(JSON.stringify({ amount: '0 or 1=1', id: 7 })).toString('base64url');
 
-    await expect(queries.list(cursorPage({ cursor: 'not-a-cursor' }))).rejects.toBeInstanceOf(InvalidPageRequestError);
-    await expect(queries.list(cursorPage({ cursor: forged }))).rejects.toBeInstanceOf(InvalidPageRequestError);
+    await expect(queries.search(cursorPage({ cursor: 'not-a-cursor' }))).rejects.toBeInstanceOf(
+      InvalidPageRequestError,
+    );
+
+    await expect(queries.search(cursorPage({ cursor: forged }))).rejects.toBeInstanceOf(InvalidPageRequestError);
   });
 });

@@ -62,7 +62,7 @@ This is why practices come: a time on a calendar is held once, under rules of av
 | Add | To put an exception or a time off on a calendar |  |
 | Define | To describe an appointment type a calendar offers |  |
 | Freed | Free again after an appointment ended or moved |  |
-| List | To read the appointments one may see, narrowed, sorted and page by page |  |
+| Search | To read the appointments one may see, narrowed, sorted and page by page |  |
 | Practice | The place practitioners receive patients in, known from identity by its identifier; it lives in one time zone |  |
 | Read | To see an appointment, or the agenda of a practice, as one is allowed to |  |
 | Get | To read one element one may see |  |
@@ -106,7 +106,7 @@ This is why practices come: a time on a calendar is held once, under rules of av
 - `scheduling:calendar.define-appointment-type`
 - `scheduling:waitlist.join`
 - `scheduling:waitlist.offer`
-- `scheduling:appointment.list`
+- `scheduling:appointment.search`
 - `scheduling:agenda.read`
 - `scheduling:appointment.read`
 - `scheduling:calendar.browse`
@@ -163,18 +163,18 @@ Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-ki
 | `GetAppointment` | query | `appointment.read` |
 | `GetCalendarDay` | query | `calendar.browse` |
 | `JoinWaitlist` | command | `waitlist.join` |
-| `ListAppointments` | query | `appointment.list` |
-| `ListPracticeAgenda` | query | `agenda.read` |
 | `MarkAppointmentNoShow` | command | `appointment.mark-no-show` |
 | `OfferFreedSlot` | command | `waitlist.offer` |
 | `RescheduleAppointment` | command | `appointment.reschedule` |
+| `SearchAppointments` | query | `appointment.search` |
+| `SearchPracticeAgenda` | query | `agenda.read` |
 | `SetOpeningHours` | command | `calendar.set-opening-hours` |
 
 ### Routes
 
 | Method | Path | Operation | Use case | Permission | Request | Responses | Errors |
 |---|---|---|---|---|---|---|---|
-| GET | `/appointments` | `listAppointments` | `ListAppointments` | `appointment.list` | query | 200: `page of ListAppointmentsLine` | `UNAUTHORIZED`, `FORBIDDEN`, `INVALID_CRITERIA` |
+| GET | `/appointments` | `searchAppointments` | `SearchAppointments` | `appointment.search` | query | 200: `page of SearchAppointmentsLine` | `UNAUTHORIZED`, `FORBIDDEN`, `INVALID_CRITERIA` |
 | POST | `/appointments` | `bookAppointment` | `BookAppointment` | `appointment.book` | body: `BookAppointmentBody` | 201: `BookAppointmentAccepted` | `UNAUTHORIZED`, `FORBIDDEN`, `UNKNOWN_CALENDAR`, `UNKNOWN_APPOINTMENT_TYPE`, `OUTSIDE_AVAILABILITY`, `OFF_GRID`, `BOOKING_TOO_LATE`, `BOOKING_TOO_FAR`, `SLOT_TAKEN`, `PATIENT_LIMIT_REACHED` |
 | GET | `/appointments/:appointmentId` | `getAppointment` | `GetAppointment` | `appointment.read` | params: `GetAppointmentParams` | 200: `GetAppointmentAnswer` | `UNAUTHORIZED`, `FORBIDDEN`, `APPOINTMENT_NOT_FOUND` |
 | POST | `/appointments/:appointmentId/cancellation` | `cancelAppointment` | `CancelAppointment` | `appointment.cancel` | params: `CancelAppointmentParams`, body: `CancelAppointmentBody` | 201: `CancelAppointmentAccepted` | `UNAUTHORIZED`, `FORBIDDEN`, `APPOINTMENT_NOT_FOUND`, `APPOINTMENT_ENDED`, `REASON_REQUIRED` |
@@ -189,7 +189,7 @@ Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-ki
 | PUT | `/calendars/:calendarId/opening-hours` | `setOpeningHours` | `SetOpeningHours` | `calendar.set-opening-hours` | params: `SetOpeningHoursParams`, body: `SetOpeningHoursBody` | 200: `SetOpeningHoursAccepted` | `UNAUTHORIZED`, `FORBIDDEN`, `UNKNOWN_CALENDAR`, `INVALID_RANGE` |
 | POST | `/calendars/:calendarId/time-off` | `addTimeOff` | `AddTimeOff` | `calendar.add-time-off` | params: `AddTimeOffParams`, body: `AddTimeOffBody` | 201: `AddTimeOffAccepted` | `UNAUTHORIZED`, `FORBIDDEN`, `UNKNOWN_CALENDAR`, `INVALID_TIME_OFF`, `TIME_OFF_OVER_APPOINTMENTS` |
 | POST | `/calendars/:calendarId/waitlist` | `joinWaitlist` | `JoinWaitlist` | `waitlist.join` | params: `JoinWaitlistParams`, body: `JoinWaitlistBody` | 201: `JoinWaitlistAccepted` | `UNAUTHORIZED`, `FORBIDDEN`, `UNKNOWN_CALENDAR`, `UNKNOWN_APPOINTMENT_TYPE`, `INVALID_DAY`, `ALREADY_WAITING` |
-| GET | `/practices/:practiceId/agenda` | `listPracticeAgenda` | `ListPracticeAgenda` | `agenda.read` | params: `ListPracticeAgendaParams`, query | 200: `page of ListPracticeAgendaLine` | `UNAUTHORIZED`, `FORBIDDEN`, `INVALID_CRITERIA` |
+| GET | `/practices/:practiceId/agenda` | `searchPracticeAgenda` | `SearchPracticeAgenda` | `agenda.read` | params: `SearchPracticeAgendaParams`, query | 200: `page of SearchPracticeAgendaLine` | `UNAUTHORIZED`, `FORBIDDEN`, `INVALID_CRITERIA` |
 
 ### Publishers
 

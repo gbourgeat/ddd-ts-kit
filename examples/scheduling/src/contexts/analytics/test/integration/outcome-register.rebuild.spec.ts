@@ -72,7 +72,7 @@ describe('The outcomes, rebuilt from what scheduling states', () => {
   it('gain the appointment the projection never saw and lose the one scheduling never had', async () => {
     await rebuild();
 
-    const page = await outcomes.list(scoped(Criteria.of<Outcome>().orderBy('id'), { kind: 'all' }));
+    const page = await outcomes.search(scoped(Criteria.of<Outcome>().orderBy('id'), { kind: 'all' }));
 
     expect(page.items.map((outcome) => outcome.id)).toEqual(['appointment-1', 'appointment-2', 'appointment-3']);
   });

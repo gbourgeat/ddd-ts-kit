@@ -61,7 +61,7 @@ ruleTester.run(
       {
         ...at(
           HANDLER,
-          declaring('QueryHandler', '@QueryHandler(ListInvoicesQuery, [])\nexport class IssueInvoiceHandler {}'),
+          declaring('QueryHandler', '@QueryHandler(SearchInvoicesQuery, [])\nexport class IssueInvoiceHandler {}'),
           DECLARED,
         ),
         errors: [
@@ -80,7 +80,7 @@ ruleTester.run(
           QUERY_HANDLER,
           declaring(
             'CommandHandler as Handles',
-            '@Handles(IssueInvoiceCommand, [])\nexport class ListInvoicesHandler {}',
+            '@Handles(IssueInvoiceCommand, [])\nexport class SearchInvoicesHandler {}',
           ),
           DECLARED,
         ),
@@ -89,7 +89,7 @@ ruleTester.run(
             messageId: 'wrongRole',
             data: {
               ...role('handler', 'application/queries', 'QueryHandler'),
-              className: 'ListInvoicesHandler',
+              className: 'SearchInvoicesHandler',
               actual: 'CommandHandler',
             },
           },

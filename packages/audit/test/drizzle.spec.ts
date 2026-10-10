@@ -163,7 +163,7 @@ describe('DrizzleAuditTrail on the PGlite driver', () => {
       trail.record({ ...aRecord('entry-2'), changes: { rows: 2000, email: { masked: 'k1:9f' } } }),
     );
 
-    const { items, total } = await trail.list(
+    const { items, total } = await trail.search(
       { chain: 'tenant:acme' },
       { kind: 'offset', offset: 0, limit: 10, sort: [] },
     );

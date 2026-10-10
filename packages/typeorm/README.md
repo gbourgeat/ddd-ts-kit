@@ -290,12 +290,12 @@ export class TypeOrmInvoiceRepository implements InvoiceRepository {
 TypeORM's `@CreateDateColumn` and `@UpdateDateColumn` are not used: they take the time of the
 database server, not of the `Clock`, and know nothing of who acts.
 
-A list query takes the kernel `PageRequest` and answers a `Page`, in both variants:
+A search query takes the kernel `PageRequest` and answers a `Page`, in both variants:
 
 ```ts
 // contexts/billing-core/application/ports/invoice-queries.port.ts
 export abstract class InvoiceQueries {
-  abstract list(request: PageRequest<'amount'>): Promise<Page<InvoiceSummary>>;
+  abstract search(request: PageRequest<'amount'>): Promise<Page<InvoiceSummary>>;
 }
 ```
 
@@ -312,7 +312,7 @@ export class TypeOrmInvoiceQueries implements InvoiceQueries {
     private readonly scope: ExecutionScope,
   ) {}
 
-  async list(request: PageRequest<'amount'>): Promise<Page<InvoiceSummary>> {
+  async search(request: PageRequest<'amount'>): Promise<Page<InvoiceSummary>> {
     return request.kind === 'offset' ? this.byOffset(request) : this.byCursor(request);
   }
 
@@ -407,7 +407,7 @@ operator of a closed list, both from the adapter. A text search is `LIKE :p ESCA
 
 ```ts
 // infrastructure/persistence/type-orm-appointment-queries.reader.ts
-async list(criteria: ScopedCriteria<AppointmentRow>): Promise<Page<AppointmentRow>> {
+async search(criteria: ScopedCriteria<AppointmentRow>): Promise<Page<AppointmentRow>> {
   const plan = planCriteria(appointmentCriteria, criteria);
 
   if (plan.empty) {

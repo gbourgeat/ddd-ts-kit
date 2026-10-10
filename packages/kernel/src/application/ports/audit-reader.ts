@@ -14,5 +14,5 @@ export abstract class AuditReader {
     Object.defineProperty(this, 'tokenKey', { value: 'kernel.AuditReader' });
   }
 
-  abstract list(filter: AuditFilter, page: PageRequest<AuditSortField>): Promise<Page<AuditEntry>>;
+  abstract search(filter: AuditFilter, page: PageRequest<AuditSortField>): Promise<Page<AuditEntry>>;
 }

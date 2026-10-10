@@ -41,7 +41,7 @@ say it in one comment where the constraint is declared. Projections have no gene
 `application/projections/<name>.projection.ts` after the README of `@ddd-ts-kit/kernel`
 ("Projections", "Criteria", "Hydration") and `@ddd-ts-kit/knex` ("Read models", "Criteria"), and
 report what the checker says of it. The lists take the kit's criteria (`filter[...]`, `sort`) and
-the access scope, as those READMEs show; `generate query --list` writes a simpler shape: adapt it
+the access scope, as those READMEs show; `generate query --search` writes a simpler shape: adapt it
 and report what you had to change.
 
 Done when: your rows are built and tested, no marker is left in your files, eslint, vitest and

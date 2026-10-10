@@ -10,6 +10,7 @@ const SERVICE = `${BILLING}/domain/services/pricing.service.ts`;
 const JOB = `${BILLING}/application/scheduling/cancel-stale-invoices.job.ts`;
 const EVENT_HANDLER = `${BILLING}/application/event-handlers/invoice-issued.event-handler.ts`;
 const OTHER_JOB = `${BILLING}/application/scheduling/issue-invoices-monthly.job.ts`;
+const READER = `${BILLING}/application/ports/search-invoices-reader.port.ts`;
 const LIST = '[InvoiceRepository, IdGenerator, Clock]';
 const SAVED = '    await this.invoiceRepository.save(target);\n';
 const SENT = "    await this.commands.execute(new CancelInvoiceCommand(systemActor('billing.cancel-stale-invoices')));";
@@ -207,6 +208,14 @@ describe.runIf(SLOW)('a violation of a rule of this wave, written into a generat
 
     expect(project.checkedRules()).toContain('clean/blank-lines');
     expect(project.unformatted(JOB)).toContain(JOB);
+  }, 120_000);
+
+  it('the checker catches a read port whose method is named list, a naming rule it holds alone', () => {
+    project.edit(READER, '  abstract search(', '  abstract list(');
+
+    expect(project.checked().filter((violation) => violation.ruleId === 'naming/search-not-list')).toEqual([
+      expect.objectContaining({ severity: 'error', file: READER }),
+    ]);
   }, 120_000);
 
   it('the checker catches two jobs under one name, project-wide', () => {

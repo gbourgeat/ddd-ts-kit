@@ -73,7 +73,7 @@ describe('An appointment, from its booking on, through the application', () => {
     const appointmentId = await booked('ada');
 
     const detail = await call('ada', 'getAppointment', { params: { appointmentId } });
-    const list = await call('ada', 'listAppointments', {});
+    const list = await call('ada', 'searchAppointments', {});
 
     expect(detail).toMatchObject({
       status: 200,
@@ -93,7 +93,7 @@ describe('An appointment, from its booking on, through the application', () => {
     const appointmentId = await booked('ada');
 
     const detail = await call('bob', 'getAppointment', { params: { appointmentId } });
-    const list = await call('bob', 'listAppointments', {});
+    const list = await call('bob', 'searchAppointments', {});
 
     expect(detail.status).toBe(403);
     expect(list).toMatchObject({ status: 200, body: { items: [], total: 0 } });

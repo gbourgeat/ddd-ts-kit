@@ -24,7 +24,7 @@ export class GetAppointmentHandler implements QueryHandler<GetAppointmentQuery> 
   async execute(query: GetAppointmentQuery): Promise<GetAppointmentResult> {
     const scope = await this.access.scope(query.actor, schedulingPermissions['appointment.read'], 'appointment');
 
-    const found = await this.agenda.list(
+    const found = await this.agenda.search(
       scoped(Criteria.of<AgendaEntry>().where('id', 'eq', query.appointmentId), scope, { ids: 'id' }),
     );
 

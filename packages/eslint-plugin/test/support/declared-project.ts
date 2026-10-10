@@ -34,7 +34,7 @@ onDisk(
   ),
 );
 
-onDisk(QUERY, declaring('Public as Open', '@Open()\nexport class ListInvoicesQuery extends Query<Invoice[]> {}'));
+onDisk(QUERY, declaring('Public as Open', '@Open()\nexport class SearchInvoicesQuery extends Query<Invoice[]> {}'));
 
 onDisk(
   `${BILLING}/application/commands/void-invoice/void-invoice.command.ts`,

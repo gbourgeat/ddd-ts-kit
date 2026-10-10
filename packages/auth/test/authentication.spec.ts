@@ -26,7 +26,7 @@ import {
   type Authenticator,
 } from '../src/index.js';
 import { FakeAuthenticator } from '../src/testing.js';
-import { ListInvoices, ada, billingPermissions, bob } from './support/billing.js';
+import { SearchInvoices, ada, billingPermissions, bob } from './support/billing.js';
 
 describe('bearerCredential', () => {
   it('extracts the token of the Authorization header, whatever its case', () => {
@@ -148,10 +148,10 @@ describe('a route of @ddd-ts-kit/http', () => {
     .use(
       authorizationMiddleware({
         authorizer: new RoleBasedAuthorizer({ roles: { accountant: [billingPermissions['invoice.read']] } }),
-        map: AuthorizationMap.of(requires(ListInvoices, billingPermissions['invoice.read'])),
+        map: AuthorizationMap.of(requires(SearchInvoices, billingPermissions['invoice.read'])),
       }),
     )
-    .register(ListInvoices, {
+    .register(SearchInvoices, {
       execute: async () => {
         seenByInfrastructure.push(actorContext.current()?.id);
 
@@ -159,18 +159,18 @@ describe('a route of @ddd-ts-kit/http', () => {
       },
     });
 
-  const listInvoices = defineRoute(
+  const searchInvoices = defineRoute(
     {
       method: 'GET',
       path: '/invoices',
-      operationId: 'listInvoices',
-      summary: 'List invoices',
+      operationId: 'searchInvoices',
+      summary: 'Search invoices',
       responses: { 200: { description: 'The invoices' } },
       errors: ['UNAUTHORIZED', 'FORBIDDEN'],
       security: ['bearer'],
     },
     inActorContext(actorContext, async ({ context }) => {
-      await queries.execute(new ListInvoices(actorOf(context.principal)));
+      await queries.execute(new SearchInvoices(actorOf(context.principal)));
 
       return { status: 200 as const };
     }),
@@ -182,7 +182,7 @@ describe('a route of @ddd-ts-kit/http', () => {
     const headers = authorization === undefined ? {} : { authorization };
     const request: RawRequest = { params: {}, query: {}, headers, body: undefined, raw: { headers } };
 
-    return executeRoute(listInvoices, request, { resolvePrincipal });
+    return executeRoute(searchInvoices, request, { resolvePrincipal });
   };
 
   it('answers 200 to an actor holding the permission, seen by infrastructure through the actor context', async () => {

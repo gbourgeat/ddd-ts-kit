@@ -656,7 +656,7 @@ into the decision.
 
 ### Page and PageRequest
 
-One shape for every list, in two variants:
+One shape for every search, in two variants:
 
 ```ts
 offsetPage({ offset: 40, limit: 20, sort: [{ field: 'placedAt', direction: 'desc' }] });
@@ -705,7 +705,7 @@ abstract class AuditTrail {
 }
 
 abstract class AuditReader {
-  abstract list(filter: AuditFilter, page: PageRequest<AuditSortField>): Promise<Page<AuditEntry>>;
+  abstract search(filter: AuditFilter, page: PageRequest<AuditSortField>): Promise<Page<AuditEntry>>;
 }
 ```
 
@@ -728,7 +728,7 @@ them, named after the decision it takes.
 
 ## Criteria
 
-A read of a read model, described once for every list: filters, a sort, a page. A criteria
+A read of a read model, described once for every search: filters, a sort, a page. A criteria
 knows field names and nothing of a store. It is not a specification: a specification is a
 business predicate on an aggregate and lives in the domain; a criteria describes a read.
 
@@ -763,7 +763,7 @@ export abstract class AppointmentList extends ReadModelStore<AppointmentRow> {}
 ```
 
 ```ts
-// contexts/scheduling/application/queries/list-appointments/list-appointments.handler.ts
+// contexts/scheduling/application/queries/search-appointments/search-appointments.handler.ts
 const criteria = Criteria.of<AppointmentRow>()
   .where('status', 'in', ['booked', 'confirmed'])
   .where('startsAt', 'gte', query.from)
@@ -773,7 +773,7 @@ const criteria = Criteria.of<AppointmentRow>()
 
 const scope = await this.access.scope(query.actor, permissions['appointment.read'], 'appointment');
 
-return this.appointments.list(scoped(criteria, scope, { ids: 'id', filter: { tenantId: 'tenantId' } }));
+return this.appointments.search(scoped(criteria, scope, { ids: 'id', filter: { tenantId: 'tenantId' } }));
 ```
 
 **Checked by the compiler.** `where` takes a field of the row, an operator that applies to
@@ -872,7 +872,7 @@ gateway port: for detail views and small pages whose foreign data must be fresh.
 filters or sorts by the foreign field needs a projection instead.
 
 ```ts
-const page = await this.appointments.list(criteria);
+const page = await this.appointments.search(criteria);
 
 return hydrate(page)
   .with('practitioner', (row) => row.practitionerId, this.practitioners.byIds)
@@ -953,7 +953,7 @@ barrel `<context>.declarations.ts` refuses a line for a `*.projection.ts` file
 ### Idempotent and ordered by construction
 
 `ReadModelStore<Row>` is the port of a read model: `get`, `upsertIfNewer`, `delete` and
-`list(scopedCriteria)`. Every row carries the stamp of the event that last changed it, and a
+`search(scopedCriteria)`. Every row carries the stamp of the event that last changed it, and a
 write happens only if its event is newer:
 
 | Rule | |
@@ -961,7 +961,7 @@ write happens only if its event is newer:
 | Stamp | `stampOf(event)`: the id and the instant of an integration event; the name, the aggregate and the instant of a domain event; plus `stampOf(event, version)` when the event carries a per-key version |
 | Newer | a greater `version` when both stamps carry one; else a later instant; at the same instant, the greater event id. The same event is never newer than itself |
 | `upsertIfNewer(key, stamp, next)` | writes `next(current)`; `stale` when the row holds this event or a later one; `ignored` when `next` answers `undefined` (a patch of a row that does not exist) |
-| `delete(key, stamp)` | the row is gone for `get` and `list`, and its stamp stays: an older event delivered late does not bring it back, a later one does |
+| `delete(key, stamp)` | the row is gone for `get` and `search`, and its stamp stays: an older event delivered late does not bring it back, a later one does |
 | Concurrency | a write is conditional on the stamp it read and is read again when another got there first; five attempts, then `ConcurrencyError` and the redelivery of the event |
 | Transaction | the store writes on the executor of the unit of work, so the row and the processed-event mark of the event commit or roll back together |
 

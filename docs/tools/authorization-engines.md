@@ -11,7 +11,7 @@ hold your adapter to.
 ## What is being chosen
 
 A use case declares the permission it requires (`appointment.cancel`), a middleware asks the
-`Authorizer` before the handler runs, and a list query asks for an access scope. The concept
+`Authorizer` before the handler runs, and a search query asks for an access scope. The concept
 page [authentication and authorization](../concepts/authentication-and-authorization.md)
 explains the three models. The choice here is where the decision is computed and where its data
 lives:

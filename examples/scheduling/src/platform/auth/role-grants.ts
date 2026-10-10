@@ -12,7 +12,7 @@ export const roleGrants: readonly RoleGrant[] = [
     permissions: [
       'identity:person.register',
       'scheduling:calendar.browse',
-      'scheduling:appointment.list',
+      'scheduling:appointment.search',
       'notification:notification.read',
     ],
     listing: 'relationships',

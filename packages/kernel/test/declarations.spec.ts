@@ -54,19 +54,19 @@ function describeTheClinic(label: string, load: () => Promise<Clinic>): void {
 function messagesAndTheirHandlers(clinic: () => Clinic): void {
   describe('messages and their handlers', () => {
     it('a protected command says what it requires, about what, and what an audit may keep', () => {
-      const { ScheduleVisit, ListOpeningHours, scheduleVisits } = clinic();
+      const { ScheduleVisit, SearchOpeningHours, scheduleVisits } = clinic();
       const declaration = declared(ScheduleVisit, 'message');
       const command = new ScheduleVisit(ada, 'patient-7', new Date(0));
 
       expect(declaration).toMatchObject({ kind: 'command', access: 'protected', permission: scheduleVisits });
       expect(declaration.resourceOf?.(command)).toEqual({ type: 'patient', id: 'patient-7' });
       expect(declaration.contextOf?.(command)).toEqual({ onBehalfOf: 'ada' });
-      expect(declaration.resourceOf?.(new ListOpeningHours())).toBeUndefined();
+      expect(declaration.resourceOf?.(new SearchOpeningHours())).toBeUndefined();
       expect(declaration.audited).toEqual(['startsAt', { field: 'patientId', masked: true }]);
     });
 
     it('a public message says so, command or query', () => {
-      expect(declared(clinic().ListOpeningHours, 'message')).toEqual({
+      expect(declared(clinic().SearchOpeningHours, 'message')).toEqual({
         role: 'message',
         kind: 'query',
         access: 'public',
@@ -77,7 +77,7 @@ function messagesAndTheirHandlers(clinic: () => Clinic): void {
     });
 
     it('a handler names its message and the tokens of its constructor, in order', () => {
-      const { ScheduleVisit, ScheduleVisitHandler, ListOpeningHours, ListOpeningHoursHandler, VisitRepository } =
+      const { ScheduleVisit, ScheduleVisitHandler, SearchOpeningHours, SearchOpeningHoursHandler, VisitRepository } =
         clinic();
 
       const declaration = declared(ScheduleVisitHandler, 'command-handler');
@@ -90,8 +90,8 @@ function messagesAndTheirHandlers(clinic: () => Clinic): void {
 
       expect(identities(declaration.dependencies)).toEqual(identities([VisitRepository, Clock]));
 
-      expect(declared(ListOpeningHoursHandler, 'query-handler')).toMatchObject({
-        message: ListOpeningHours,
+      expect(declared(SearchOpeningHoursHandler, 'query-handler')).toMatchObject({
+        message: SearchOpeningHours,
         dependencies: [],
       });
     });

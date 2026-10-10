@@ -30,10 +30,10 @@ describe('a statement laid out for the names of the project', () => {
   });
 
   it('opens only the object a call receives last when what precedes it fits', () => {
-    const statement = `const reader = platform.adapter(new InMemoryList${LONG}sReader(), { kind: 'repository', context: 'order-fulfilment' });`;
+    const statement = `const reader = platform.adapter(new InMemorySearch${LONG}sReader(), { kind: 'repository', context: 'order-fulfilment' });`;
 
     expect(fitStatement(statement, '  ')).toEqual([
-      `  const reader = platform.adapter(new InMemoryList${LONG}sReader(), {`,
+      `  const reader = platform.adapter(new InMemorySearch${LONG}sReader(), {`,
       "    kind: 'repository',",
       "    context: 'order-fulfilment',",
       '  });',
@@ -59,7 +59,7 @@ describe('a rendered source file', () => {
     const source = [
       `import type { List${LONG}sResult, List${LONG}sSort } from '../queries/list-${LONG}s/list-${LONG}s.result.js';`,
       `export class Fake${LONG}Repository extends InMemoryRepository<${LONG}> implements ${LONG}Repository {`,
-      `  abstract list(scope: AccessScope, page: PageRequest<List${LONG}sSort>): Promise<List${LONG}sResult>;`,
+      `  abstract search(scope: AccessScope, page: PageRequest<List${LONG}sSort>): Promise<List${LONG}sResult>;`,
       '}',
     ].join('\n');
 
@@ -72,7 +72,7 @@ describe('a rendered source file', () => {
       `  extends InMemoryRepository<${LONG}>`,
       `  implements ${LONG}Repository`,
       '{',
-      '  abstract list(',
+      '  abstract search(',
       '    scope: AccessScope,',
       `    page: PageRequest<List${LONG}sSort>,`,
       `  ): Promise<List${LONG}sResult>;`,
@@ -81,7 +81,7 @@ describe('a rendered source file', () => {
   });
 
   it('sets a statement it broke apart from its neighbours, and leaves comments and short lines alone', () => {
-    const call = `await this.access.scope(query.actor, ${LONG}Permissions['international-purchase-order.list'], 'international-purchase-order');`;
+    const call = `await this.access.scope(query.actor, ${LONG}Permissions['international-purchase-order.search'], 'international-purchase-order');`;
     const comment = `  // ${'a long comment '.repeat(10)}`;
     const source = ['  const one = 1;', comment, `  ${call}`, '  return one;'].join('\n');
 
@@ -91,7 +91,7 @@ describe('a rendered source file', () => {
       comment,
       '  await this.access.scope(',
       '    query.actor,',
-      `    ${LONG}Permissions['international-purchase-order.list'],`,
+      `    ${LONG}Permissions['international-purchase-order.search'],`,
       "    'international-purchase-order',",
       '  );',
       '',

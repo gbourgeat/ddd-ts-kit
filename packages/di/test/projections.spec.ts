@@ -50,7 +50,7 @@ describe('a declared projection', () => {
 
     const page = await app
       .get(CustomerOrders)
-      .list(scoped(Criteria.of<reporting.CustomerOrdersRow>(), { kind: 'all' }));
+      .search(scoped(Criteria.of<reporting.CustomerOrdersRow>(), { kind: 'all' }));
 
     expect(page.items).toEqual([
       { customerId: 'customer-1', orders: 2, lastOrderId: 'order-evt-2' },

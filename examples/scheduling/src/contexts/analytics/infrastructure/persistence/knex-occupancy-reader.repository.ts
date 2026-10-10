@@ -43,7 +43,7 @@ interface MeasuredLine {
 export class KnexOccupancyReader implements OccupancyReader {
   constructor(private readonly database: KnexContext) {}
 
-  async list(criteria: ScopedCriteria<Occupancy>): Promise<Page<Occupancy>> {
+  async search(criteria: ScopedCriteria<Occupancy>): Promise<Page<Occupancy>> {
     const plan = planCriteria(occupancyCriteria, criteria);
 
     if (plan.empty) {

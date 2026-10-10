@@ -14,10 +14,10 @@ import { chainOfTenant } from '../chain/chain-of-tenant.js';
 import { GENESIS_HASH } from '../chain/genesis-hash.js';
 import { seal } from '../chain/seal.js';
 import { sealCheckpoint } from '../chain/seal-checkpoint.js';
-import { decodeCursor } from '../listing/decode-cursor.js';
-import { encodeCursor } from '../listing/encode-cursor.js';
-import type { ListOrder } from '../listing/list-order.js';
-import { orderOf } from '../listing/order-of.js';
+import { decodeCursor } from '../search/decode-cursor.js';
+import { encodeCursor } from '../search/encode-cursor.js';
+import type { SearchOrder } from '../search/search-order.js';
+import { orderOf } from '../search/order-of.js';
 import type { AuditTrailOptions } from '../trail/audit-trail-options.js';
 import type { AuditTables } from './audit-tables.js';
 import { entryOf } from './entry-of.js';
@@ -57,7 +57,7 @@ export class PostgresAuditTrail implements AuditTrail, AuditReader {
     });
   }
 
-  async list(filter: AuditFilter, page: PageRequest<AuditSortField>): Promise<Page<AuditEntry>> {
+  async search(filter: AuditFilter, page: PageRequest<AuditSortField>): Promise<Page<AuditEntry>> {
     const order = orderOf(page);
     const matching = conditionsOf(filter);
 
@@ -95,7 +95,7 @@ export class PostgresAuditTrail implements AuditTrail, AuditReader {
     return { chain, sequence: Number(head?.['sequence']), hash };
   }
 
-  private async select(conditions: readonly Sql[], order: ListOrder, limit: Sql): Promise<AuditEntry[]> {
+  private async select(conditions: readonly Sql[], order: SearchOrder, limit: Sql): Promise<AuditEntry[]> {
     const statement = sql`select * from ${this.tables.entries} ${where(conditions)} order by ${orderBy(order)} ${limit}`;
 
     return (await this.session().query(statement)).map(entryOf);
@@ -138,7 +138,7 @@ function rangesOf({ from, to, fromSequence, toSequence }: AuditFilter): Sql[] {
 }
 
 /** A row comparison: the three columns move together, in the direction of the order. */
-function afterCursor(cursor: string, order: ListOrder): Sql {
+function afterCursor(cursor: string, order: SearchOrder): Sql {
   const { occurredAt, chain, sequence } = decodeCursor(cursor);
   const beyond = order.direction === 'asc' ? sql`>` : sql`<`;
 
@@ -153,7 +153,7 @@ function where(conditions: readonly Sql[]): Sql {
   return conditions.length === 0 ? sql`` : sql`where ${joined(conditions, ' and ')}`;
 }
 
-function orderBy(order: ListOrder): Sql {
+function orderBy(order: SearchOrder): Sql {
   const direction = order.direction === 'asc' ? sql`asc` : sql`desc`;
 
   const columns =

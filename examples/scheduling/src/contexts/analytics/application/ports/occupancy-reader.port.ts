@@ -33,5 +33,5 @@ export abstract class OccupancyReader {
    * One page of the occupancy the criteria and the scope keep, measured from the outcomes as
    * they stand when it is read. A calendar and day without any appointment has no line.
    */
-  abstract list(criteria: ScopedCriteria<Occupancy>): Promise<Page<Occupancy>>;
+  abstract search(criteria: ScopedCriteria<Occupancy>): Promise<Page<Occupancy>>;
 }

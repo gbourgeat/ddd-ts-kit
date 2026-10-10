@@ -7,8 +7,8 @@ import { auditPermissions } from './audit.permissions.js';
 {{/if}}
 import type { Audit } from './create-audit.js';
 {{#if audit.route}}
-import { ListAuditEntriesHandler } from './list-audit-entries.handler.js';
-import { ListAuditEntriesQuery } from './list-audit-entries.query.js';
+import { SearchAuditEntriesHandler } from './search-audit-entries.handler.js';
+import { SearchAuditEntriesQuery } from './search-audit-entries.query.js';
 {{/if}}
 
 /**
@@ -27,16 +27,16 @@ export function auditModule(audit: Audit): ContextModule {
 {{#if authz.rebac}}
 
       builder
-        .query(ListAuditEntriesQuery)
+        .query(SearchAuditEntriesQuery)
         .requires(auditPermissions['trail.read'], { resource: () => ({ type: 'context', id: 'audit' }) })
-        .handledBy(ListAuditEntriesHandler, [AuditReader]);
+        .handledBy(SearchAuditEntriesHandler, [AuditReader]);
 {{/if}}
 {{#unless authz.rebac}}
 
       builder
-        .query(ListAuditEntriesQuery)
+        .query(SearchAuditEntriesQuery)
         .requires(auditPermissions['trail.read'])
-        .handledBy(ListAuditEntriesHandler, [AuditReader]);
+        .handledBy(SearchAuditEntriesHandler, [AuditReader]);
 {{/unless}}
 {{/if}}
     },

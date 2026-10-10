@@ -89,12 +89,12 @@ after the cancellation window has passed" holds for everybody, so it is an invar
 aggregate (`CancellationWindowPassed`). "Only the client who booked" depends on who asks, so it
 is a policy.
 
-## Lists are filtered by the query
+## Searches are filtered by the query
 
 Loading every appointment and filtering in memory leaks counts, breaks paging and is slow. The
 handler asks the authorizer for the access scope of the actor (everything, nothing, a set of
 ids or a filter) and hands it to the read port; the adapter turns it into the condition of the
-statement. `ListAppointments` for a client therefore reads only that client's rows, and page 2
+statement. `SearchAppointments` for a client therefore reads only that client's rows, and page 2
 is still page 2.
 
 ## Three models

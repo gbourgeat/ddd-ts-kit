@@ -5,9 +5,9 @@ export const EXPLICIT = { ...SAMPLE_CONFIG, stack: { style: 'explicit' } };
 
 export const MODULE = `${BILLING}/billing.module.ts`;
 export const COMMAND = `${BILLING}/application/commands/issue-invoice/issue-invoice.command.ts`;
-export const QUERY = `${BILLING}/application/queries/list-invoices/list-invoices.query.ts`;
+export const QUERY = `${BILLING}/application/queries/search-invoices/search-invoices.query.ts`;
 export const HANDLER = `${BILLING}/application/commands/issue-invoice/issue-invoice.handler.ts`;
-export const QUERY_HANDLER = `${BILLING}/application/queries/list-invoices/list-invoices.handler.ts`;
+export const QUERY_HANDLER = `${BILLING}/application/queries/search-invoices/search-invoices.handler.ts`;
 export const INTEGRATION_HANDLER = `${BILLING}/application/integration/handlers/catalog-product-listed.integration-handler.ts`;
 export const EVENT_HANDLER = `${BILLING}/application/event-handlers/invoice-issued.event-handler.ts`;
 export const PUBLISHER = `${BILLING}/application/integration/publishers/invoice-issued.publisher.ts`;

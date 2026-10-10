@@ -175,26 +175,26 @@ const options: ExecuteOptions = {
 
 ## Pagination
 
-One query vocabulary and one answer for every list, on top of the kernel `PageRequest` and
+One query vocabulary and one answer for every search, on top of the kernel `PageRequest` and
 `Page`: `limit`, `offset` or `cursor`, and `sort` (`placedAt,-total`: comma-separated fields, a
 leading `-` for descending).
 
 ```ts
 import { defineRoute, pageQuerySchema, pageResponse, pageSchemaOf } from '@ddd-ts-kit/http';
 
-const listOrders = defineRoute(
+const searchOrders = defineRoute(
   {
     method: 'GET',
     path: '/orders',
-    operationId: 'listOrders',
-    summary: 'List orders',
+    operationId: 'searchOrders',
+    summary: 'Search orders',
     request: { query: pageQuerySchema({ sortable: ['placedAt', 'total'], maxSize: 50 }) },
     responses: { 200: { description: 'A page of orders.', body: pageSchemaOf(order) } },
     security: ['bearer'],
   },
   async ({ query }) => ({
     status: 200, // query is a PageRequest<'placedAt' | 'total'>
-    body: pageResponse(await orders.list(query), toOrderDto),
+    body: pageResponse(await orders.search(query), toOrderDto),
   }),
 );
 ```
@@ -216,26 +216,26 @@ together are refused. These helpers depend on no validation library; `pageQueryS
 
 ## Filters and sorting
 
-One query grammar for every list route, on top of the kernel `Criteria`: the read port declares
+One query grammar for every search route, on top of the kernel `Criteria`: the read port declares
 what it accepts with `defineCriteria`, and the route reads the query into a criteria that
 definition accepts, or answers 422.
 
 ```ts
 import { criteriaQuerySchema, defineRoute, pageResponse, pageSchemaOf } from '@ddd-ts-kit/http';
 
-const listAppointments = defineRoute(
+const searchAppointments = defineRoute(
   {
     method: 'GET',
     path: '/appointments',
-    operationId: 'listAppointments',
-    summary: 'List appointments',
+    operationId: 'searchAppointments',
+    summary: 'Search appointments',
     request: { query: criteriaQuerySchema(appointmentCriteria) },
     responses: { 200: { description: 'A page of appointments.', body: pageSchemaOf(appointment) } },
     security: ['bearer'],
   },
   async ({ query, context }) => ({
     status: 200, // query is a Criteria<AppointmentRow>
-    body: pageResponse(await queries.execute(new ListAppointments(context.execution.actor, query)), toAppointmentDto),
+    body: pageResponse(await queries.execute(new SearchAppointments(context.execution.actor, query)), toAppointmentDto),
   }),
 );
 ```

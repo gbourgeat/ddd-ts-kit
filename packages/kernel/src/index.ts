@@ -154,7 +154,7 @@ export * from './application/read-model/is-newer.js';
 export * from './application/read-model/read-model-write.js';
 export * from './application/read-model/stamped-row.js';
 export * from './application/read-model/touched-key.js';
-export * from './application/read-model/listed-rows.js';
+export * from './application/read-model/searched-rows.js';
 export * from './application/read-model/read-model-source.js';
 export * from './application/read-model/projection-rebuild-report.js';
 export * from './application/pagination/cursor-page.js';

@@ -45,10 +45,10 @@ export * from './application/queries/get-appointment/get-appointment.handler.js'
 export * from './application/queries/get-appointment/get-appointment.query.js';
 export * from './application/queries/get-calendar-day/get-calendar-day.handler.js';
 export * from './application/queries/get-calendar-day/get-calendar-day.query.js';
-export * from './application/queries/list-appointments/list-appointments.handler.js';
-export * from './application/queries/list-appointments/list-appointments.query.js';
-export * from './application/queries/list-practice-agenda/list-practice-agenda.handler.js';
-export * from './application/queries/list-practice-agenda/list-practice-agenda.query.js';
+export * from './application/queries/search-appointments/search-appointments.handler.js';
+export * from './application/queries/search-appointments/search-appointments.query.js';
+export * from './application/queries/search-practice-agenda/search-practice-agenda.handler.js';
+export * from './application/queries/search-practice-agenda/search-practice-agenda.query.js';
 export * from './application/scheduling/expire-unconfirmed-appointments.job.js';
 export * from './infrastructure/external/in-process-person-directory.gateway.js';
 export * from './infrastructure/persistence/knex-agenda.repository.js';

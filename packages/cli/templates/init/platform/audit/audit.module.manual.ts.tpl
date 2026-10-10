@@ -2,9 +2,9 @@ import { requires, type UseCaseDeclaration } from '@ddd-ts-kit/auth';
 import type { Route } from '@ddd-ts-kit/http';
 import type { Platform } from '../platform.js';
 import { auditPermissions } from './audit.permissions.js';
-import { ListAuditEntriesHandler } from './list-audit-entries.handler.js';
-import { ListAuditEntriesQuery } from './list-audit-entries.query.js';
-import { listAuditEntriesRoute } from './list-audit-entries.route.js';
+import { SearchAuditEntriesHandler } from './search-audit-entries.handler.js';
+import { SearchAuditEntriesQuery } from './search-audit-entries.query.js';
+import { searchAuditEntriesRoute } from './search-audit-entries.route.js';
 
 interface AuditWiring {
   readonly name: string;
@@ -18,7 +18,7 @@ interface AuditWiring {
  * use case so that reading the trail is authorized and recorded.
  */
 export function auditModule(platform: Platform): AuditWiring {
-  platform.queries.register(ListAuditEntriesQuery, new ListAuditEntriesHandler(platform.audit.trail), {
+  platform.queries.register(SearchAuditEntriesQuery, new SearchAuditEntriesHandler(platform.audit.trail), {
     context: 'audit',
   });
 
@@ -26,14 +26,14 @@ export function auditModule(platform: Platform): AuditWiring {
     name: 'audit',
     {{#if authz.rebac}}
     useCases: [
-      requires(ListAuditEntriesQuery, auditPermissions['trail.read'], {
+      requires(SearchAuditEntriesQuery, auditPermissions['trail.read'], {
         resource: () => ({ type: 'context', id: 'audit' }),
       }),
     ],
     {{/if}}
     {{#unless authz.rebac}}
-    useCases: [requires(ListAuditEntriesQuery, auditPermissions['trail.read'])],
+    useCases: [requires(SearchAuditEntriesQuery, auditPermissions['trail.read'])],
     {{/unless}}
-    routes: [listAuditEntriesRoute(platform.queries)],
+    routes: [searchAuditEntriesRoute(platform.queries)],
   };
 }

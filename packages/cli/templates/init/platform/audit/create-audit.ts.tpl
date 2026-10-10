@@ -37,7 +37,7 @@ import { auditPermissions } from './audit.permissions.js';
 {{/if}}
 import { auditedEvents } from './audited-events.js';
 {{#if audit.route}}
-import { ListAuditEntriesQuery } from './list-audit-entries.query.js';
+import { SearchAuditEntriesQuery } from './search-audit-entries.query.js';
 {{/if}}
 
 /** The name the audit trail consumes integration events under: its idempotency scope, and its queues behind a broker. */
@@ -72,7 +72,7 @@ export function createAudit(persistence: Persistence, source: AuditSource): Audi
     decisions: auditDecisions(trail, { ...source, sensitivePermissions: [auditPermissions['trail.read'].id] }),
     // TODO(platform): declare what may go into `changes` with `fields: [auditedFields(SomeCommand, ['status'])]`; by default an entry carries identifiers and codes only.
     commands: auditMiddleware(trail, { ...source, unitOfWork }),
-    queries: auditMiddleware(trail, { ...source, queries: [ListAuditEntriesQuery] }),
+    queries: auditMiddleware(trail, { ...source, queries: [SearchAuditEntriesQuery] }),
 {{/if}}
 {{#unless audit.route}}
     decisions: auditDecisions(trail, source),

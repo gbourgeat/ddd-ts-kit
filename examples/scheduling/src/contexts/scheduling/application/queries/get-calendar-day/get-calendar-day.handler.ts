@@ -56,7 +56,9 @@ export class GetCalendarDayHandler implements QueryHandler<GetCalendarDayQuery> 
       .where('day', 'eq', place.day)
       .where('status', 'in', ['requested', 'booked']);
 
-    const page = await this.agenda.list(scoped(active.page(offsetPage({ offset, limit: PAGE })), scope, { ids: 'id' }));
+    const page = await this.agenda.search(
+      scoped(active.page(offsetPage({ offset, limit: PAGE })), scope, { ids: 'id' }),
+    );
 
     return page.items.length < PAGE ? page.items : [...page.items, ...(await this.heldOn(place, scope, offset + PAGE))];
   }

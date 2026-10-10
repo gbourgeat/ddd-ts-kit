@@ -4,8 +4,10 @@ import { cli, exists, read, write } from './helpers.js';
 const SHIPPING_HANDLER =
   'src/contexts/shipping/application/integration/handlers/billing-invoice-issued.integration-handler.ts';
 
-const DECLARED_READER = 'src/contexts/billing/infrastructure/persistence/in-memory-list-invoices-reader.repository.ts';
-const EXPLICIT_READER = 'src/contexts/billing/infrastructure/persistence/in-memory-list-invoices.reader.ts';
+const DECLARED_READER =
+  'src/contexts/billing/infrastructure/persistence/in-memory-search-invoices-reader.repository.ts';
+
+const EXPLICIT_READER = 'src/contexts/billing/infrastructure/persistence/in-memory-search-invoices.reader.ts';
 const LINES = "[{ id: 'invoice-1' }, { id: 'invoice-2' }, { id: 'invoice-3' }]";
 
 /**
@@ -43,7 +45,7 @@ export function writeBusinessDecisions(root: string): void {
   ]);
 
   edit(root, exists(root, DECLARED_READER) ? DECLARED_READER : EXPLICIT_READER, [
-    ['readonly ListInvoicesItem[] = []', `readonly ListInvoicesItem[] = ${LINES}`],
+    ['readonly SearchInvoicesItem[] = []', `readonly SearchInvoicesItem[] = ${LINES}`],
   ]);
 
   edit(root, 'src/contexts/billing/domain/aggregates/invoice.aggregate.ts', [
@@ -67,7 +69,7 @@ export function writeBusinessDecisions(root: string): void {
   edit(root, 'src/platform/auth/permission-mapping.ts', [
     [
       "  return { context: Object.fromEntries(permissions.all().map((permission) => [permission.id, 'operate'])) };",
-      "  return { context: Object.fromEntries(permissions.all().map((permission) => [permission.id, 'operate'])), invoice: { 'billing:invoice.list': 'view' } };",
+      "  return { context: Object.fromEntries(permissions.all().map((permission) => [permission.id, 'operate'])), invoice: { 'billing:invoice.search': 'view' } };",
     ],
   ]);
 

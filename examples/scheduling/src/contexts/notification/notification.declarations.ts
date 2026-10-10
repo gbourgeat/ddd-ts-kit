@@ -13,11 +13,11 @@ export * from './application/integration/handlers/scheduling-appointment-cancell
 export * from './application/integration/handlers/scheduling-appointment-confirmed.integration-handler.js';
 export * from './application/integration/handlers/scheduling-appointment-expired.integration-handler.js';
 export * from './application/integration/handlers/scheduling-appointment-rescheduled.integration-handler.js';
-export * from './application/queries/list-notifications/list-notifications.handler.js';
-export * from './application/queries/list-notifications/list-notifications.query.js';
+export * from './application/queries/search-notifications/search-notifications.handler.js';
+export * from './application/queries/search-notifications/search-notifications.query.js';
 export * from './application/scheduling/send-due-reminders.job.js';
 export * from './infrastructure/external/remote-mailer.adapter.js';
 export * from './infrastructure/persistence/knex-contacts.repository.js';
-export * from './infrastructure/persistence/knex-list-notifications-reader.repository.js';
 export * from './infrastructure/persistence/knex-notification.repository.js';
 export * from './infrastructure/persistence/knex-reminder.repository.js';
+export * from './infrastructure/persistence/knex-search-notifications-reader.repository.js';

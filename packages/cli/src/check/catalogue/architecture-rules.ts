@@ -36,6 +36,7 @@ import { layerDomainPurity } from '../rules/layer-domain-purity.js';
 import { layerInfrastructureNoPresentation } from '../rules/layer-infrastructure-no-presentation.js';
 import { layerPresentationNoInfrastructure } from '../rules/layer-presentation-no-infrastructure.js';
 import { namingOneConceptPerFile } from '../rules/naming-one-concept-per-file.js';
+import { namingSearchNotList } from '../rules/naming-search-not-list.js';
 import { namingSuffix } from '../rules/naming-suffix.js';
 import { portsAbstractClass } from '../rules/ports-abstract-class.js';
 import { portsImplementsNeverExtends } from '../rules/ports-implements-never-extends.js';
@@ -69,6 +70,7 @@ export const ARCHITECTURE_RULES: readonly Rule[] = [
   treeContextDoc,
   namingSuffix,
   namingOneConceptPerFile,
+  namingSearchNotList,
   testSpecRequired,
   eventsNameFormat,
   eventsDefinedInPublishedLanguage,

@@ -29,7 +29,7 @@ Needed, and specific in what is said and when, but it decides nothing: a simple 
 | Rescheduling | The notification that an appointment moved to another start |  |
 | Cancellation | The notification that an appointment is cancelled |  |
 | Read | To see the notifications sent to oneself |  |
-| List | To read the notifications sent to a person, latest first |  |
+| Search | To read the notifications sent to a person, latest first |  |
 
 ## Aggregates
 
@@ -79,8 +79,8 @@ Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-ki
 
 | Use case | Kind | Permission |
 |---|---|---|
-| `ListNotifications` | query | `notification.read` |
 | `PlanReminder` | command | `reminder.plan` |
+| `SearchNotifications` | query | `notification.read` |
 | `SendDueReminders` | command | `reminder.send` |
 | `SendNotification` | command | `notification.send` |
 | `WithdrawReminder` | command | `reminder.withdraw` |
@@ -89,7 +89,7 @@ Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-ki
 
 | Method | Path | Operation | Use case | Permission | Request | Responses | Errors |
 |---|---|---|---|---|---|---|---|
-| GET | `/notifications` | `listNotifications` | `ListNotifications` | `notification.read` | query | 200: `page of ListNotificationsLine` | `UNAUTHORIZED`, `FORBIDDEN` |
+| GET | `/notifications` | `searchNotifications` | `SearchNotifications` | `notification.read` | query | 200: `page of SearchNotificationsLine` | `UNAUTHORIZED`, `FORBIDDEN` |
 
 ### Consumed events
 
@@ -106,8 +106,8 @@ Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-ki
 | Port | Kind | Adapters |
 |---|---|---|
 | `Contacts` | repository | `KnexContacts` |
-| `ListNotificationsReader` | repository | `KnexListNotificationsReader` |
 | `Mailer` | external | `RemoteMailer` |
 | `NotificationRepository` | repository | `KnexNotificationRepository` |
 | `ReminderRepository` | repository | `KnexReminderRepository` |
+| `SearchNotificationsReader` | repository | `KnexSearchNotificationsReader` |
 <!-- /ddd-ts-kit:reference -->

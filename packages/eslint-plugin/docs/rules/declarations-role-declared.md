@@ -43,9 +43,9 @@ Incorrect:
 // application/commands/issue-invoice/issue-invoice.handler.ts
 export class IssueInvoiceHandler {}
 
-// application/queries/list-invoices/list-invoices.handler.ts
-@CommandHandler(ListInvoicesQuery, [InvoiceReader])
-export class ListInvoicesHandler {}
+// application/queries/search-invoices/search-invoices.handler.ts
+@CommandHandler(SearchInvoicesQuery, [InvoiceReader])
+export class SearchInvoicesHandler {}
 
 // application/authorization/only-issuer-voids.policy.ts
 @Policy(billingPermissions['invoice.void'], { name: policyName })

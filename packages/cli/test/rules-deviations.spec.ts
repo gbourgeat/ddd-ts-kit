@@ -113,9 +113,9 @@ describe('authz/declared', () => {
       'export function register(builder: Builder): void {',
       '  builder.command(IssueInvoiceCommand).handledBy(IssueInvoiceHandler, [Clock])',
       '  builder',
-      '    .query(ListInvoicesQuery)',
-      "    .requires(billingPermissions['invoice.list'])",
-      '    .handledBy(ListInvoicesHandler, []);',
+      '    .query(SearchInvoicesQuery)',
+      "    .requires(billingPermissions['invoice.search'])",
+      '    .handledBy(SearchInvoicesHandler, []);',
       '}',
       '',
     ].join('\n');

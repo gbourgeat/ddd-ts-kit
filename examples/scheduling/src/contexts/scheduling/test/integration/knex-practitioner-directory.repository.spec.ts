@@ -49,7 +49,7 @@ describe('KnexPractitionerDirectory', () => {
       entry('practice-2', 'ada', 'Ada Martin'),
     );
 
-    const page = await practitioners.list(
+    const page = await practitioners.search(
       scoped(Criteria.of<PractitionerEntry>().where('practiceId', 'eq', 'practice-1'), { kind: 'all' }, {}),
     );
 

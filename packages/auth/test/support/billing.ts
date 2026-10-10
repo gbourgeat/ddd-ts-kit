@@ -30,7 +30,7 @@ export class VoidInvoice extends AuthorizedCommand {
   }
 }
 
-export class ListInvoices extends AuthorizedQuery<readonly string[]> {}
+export class SearchInvoices extends AuthorizedQuery<readonly string[]> {}
 
 export class GetCatalog extends Query<readonly string[]> {}
 

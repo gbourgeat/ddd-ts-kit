@@ -31,7 +31,7 @@ describe('authorization and gateway kinds', () => {
   it('declares each permission once, carries the actor in the message and lets the route name its security scheme', () => {
     expect(
       read(root, `${BILLING}/application/authorization/billing.permissions.ts`).match(
-        /'invoice\.(issue|cancel|list)':/g,
+        /'invoice\.(issue|cancel|search)':/g,
       ),
     ).toHaveLength(3);
 
@@ -136,7 +136,7 @@ describe('extraction and governance kinds', () => {
   it('lists permissions, policies, gateways and what is deployable, and documents them', () => {
     const listed = cli(root, 'list').stdout;
 
-    expect(listed).toContain('permissions: invoice.issue, invoice.cancel, invoice.list');
+    expect(listed).toContain('permissions: invoice.issue, invoice.cancel, invoice.search');
     expect(listed).toContain('policies: OnlyIssuerCancels');
     expect(listed).toContain('gateways: InvoiceStatus');
     expect(listed).toContain('deployable alone: yes');

@@ -756,10 +756,10 @@ A list is filtered by the query, never in memory after loading. The handler asks
 and hands it to the read port:
 
 ```ts
-// application/queries/list-invoices/list-invoices.handler.ts
-async execute(query: ListInvoices): Promise<readonly InvoiceSummary[]> {
+// application/queries/search-invoices/search-invoices.handler.ts
+async execute(query: SearchInvoices): Promise<readonly InvoiceSummary[]> {
   const scope = await this.access.scope(query.actor, billingPermissions['invoice.read'], 'invoice');
-  return this.invoices.list(scope, query.page);
+  return this.invoices.search(scope, query.page);
 }
 ```
 

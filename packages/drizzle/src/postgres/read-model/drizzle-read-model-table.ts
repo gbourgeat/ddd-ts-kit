@@ -4,7 +4,7 @@ import {
   PostgresReadModelRebuild,
   type CriteriaPlan,
   type EventStamp,
-  type ListedRows,
+  type SearchedRows,
   type ReadModelRows,
   type ReadModelTable,
   type StampedRow,
@@ -66,7 +66,7 @@ export class DrizzleReadModelTable<
     return this.rows.replace(entry, held);
   }
 
-  async list(plan: CriteriaPlan): Promise<ListedRows<Row>> {
+  async search(plan: CriteriaPlan): Promise<SearchedRows<Row>> {
     const { table, columns } = this.options;
     const { where, counted, orderBy, limit, offset } = criteriaToDrizzle(plan, columns);
     const kept = eq(this.target.stamps.deleted, false);

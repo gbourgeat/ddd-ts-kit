@@ -51,7 +51,7 @@ criteriaContract(runner, {
   createReadModel: async (rows) => {
     await load(rows);
 
-    return { list: (criteria) => storeOf().list(criteria) };
+    return { search: (criteria) => storeOf().search(criteria) };
   },
 });
 
@@ -89,7 +89,7 @@ describe('criteriaToTypeOrm', () => {
   });
 
   it('orders a field that may be null as the plan means it, and seeks past a cursor by the same order', async () => {
-    const first = await storeOf().list(
+    const first = await storeOf().search(
       scoped(all.orderBy('room', 'desc').page(cursorPage({ limit: 3 })), { kind: 'all' }),
     );
 
@@ -110,13 +110,13 @@ describe('criteriaToTypeOrm', () => {
   });
 
   it('reads a page with one statement for a cursor page, two for an offset page, and none for an empty scope', async () => {
-    await storeOf().list(scoped(all.page(cursorPage({ limit: 2 })), { kind: 'all' }));
+    await storeOf().search(scoped(all.page(cursorPage({ limit: 2 })), { kind: 'all' }));
     expect(database.queries).toHaveLength(1);
 
-    await storeOf().list(scoped(all, { kind: 'all' }));
+    await storeOf().search(scoped(all, { kind: 'all' }));
     expect(database.queries).toHaveLength(3);
 
-    await storeOf().list(scoped(all, { kind: 'none' }));
+    await storeOf().search(scoped(all, { kind: 'none' }));
     expect(database.queries).toHaveLength(3);
   });
 

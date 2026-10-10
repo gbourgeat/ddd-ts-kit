@@ -57,7 +57,7 @@ class AuditTrailSuite extends ContractSuite<AuditTrailUnderContract> {
 
   private appends(): void {
     this.it('starts empty', async () => {
-      this.expect(await this.subject.list({}, offsetPage())).toEqual({ items: [], total: 0 });
+      this.expect(await this.subject.search({}, offsetPage())).toEqual({ items: [], total: 0 });
     });
 
     this.it('gives back what was recorded, sealed as the first entry of its chain', async () => {
@@ -212,10 +212,10 @@ class AuditTrailSuite extends ContractSuite<AuditTrailUnderContract> {
     ];
 
     for (const [criterion, filter, expected] of cases) {
-      this.it(`lists by ${criterion}`, async () => {
+      this.it(`searches by ${criterion}`, async () => {
         await this.recordAll(JOURNAL);
 
-        const page = await this.subject.list(filter, offsetPage());
+        const page = await this.subject.search(filter, offsetPage());
 
         this.expect(page.items.map((entry) => entry.id)).toEqual(expected);
         this.expect(page.total).toBe(expected.length);
@@ -227,7 +227,7 @@ class AuditTrailSuite extends ContractSuite<AuditTrailUnderContract> {
     this.it('cuts an offset page out of the whole and counts the whole', async () => {
       await this.recordAll(JOURNAL);
 
-      const page = await this.subject.list({}, offsetPage({ offset: 1, limit: 2 }));
+      const page = await this.subject.search({}, offsetPage({ offset: 1, limit: 2 }));
 
       this.expect(page.items.map((entry) => entry.id)).toEqual(['e-2', 'e-3']);
       this.expect(page.total).toBe(4);
@@ -262,11 +262,11 @@ class AuditTrailSuite extends ContractSuite<AuditTrailUnderContract> {
   }
 
   private async all(): Promise<readonly AuditEntry[]> {
-    return (await this.subject.list({}, offsetPage({ limit: 100 }))).items;
+    return (await this.subject.search({}, offsetPage({ limit: 100 }))).items;
   }
 
   private async entriesOf(chain: string): Promise<readonly AuditEntry[]> {
-    return (await this.subject.list({ chain }, offsetPage({ limit: 100, sort: BY_SEQUENCE }))).items;
+    return (await this.subject.search({ chain }, offsetPage({ limit: 100, sort: BY_SEQUENCE }))).items;
   }
 
   private async sequencesOf(chain: string): Promise<number[]> {
@@ -278,7 +278,7 @@ class AuditTrailSuite extends ContractSuite<AuditTrailUnderContract> {
     let cursor: string | undefined;
 
     do {
-      const page = await this.subject.list(
+      const page = await this.subject.search(
         {},
         cursorPage({ limit: 3, sort, ...(cursor === undefined ? {} : { cursor }) }),
       );

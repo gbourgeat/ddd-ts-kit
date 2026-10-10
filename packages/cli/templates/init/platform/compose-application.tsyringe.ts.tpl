@@ -58,7 +58,7 @@ import { tracedPublisher } from '@ddd-ts-kit/tracing';
 import { auditModule } from './audit/audit.module.js';
 {{/if}}
 {{#if audit.route}}
-import { listAuditEntriesRoute } from './audit/list-audit-entries.route.js';
+import { searchAuditEntriesRoute } from './audit/search-audit-entries.route.js';
 {{/if}}
 import { authorization } from './auth/authorization.js';
 {{#if http.any}}
@@ -268,6 +268,6 @@ function routesOf(container: Container, contexts: ContextSelection): readonly Ro
   const commands = container.resolve(CommandBus);
   const queries = container.resolve(QueryBus);
 
-  return defineRoutes(...contexts.routes.map((routes) => routes(commands, queries)){{#if audit.route}}, [listAuditEntriesRoute(queries)]{{/if}});
+  return defineRoutes(...contexts.routes.map((routes) => routes(commands, queries)){{#if audit.route}}, [searchAuditEntriesRoute(queries)]{{/if}});
 }
 {{/if}}

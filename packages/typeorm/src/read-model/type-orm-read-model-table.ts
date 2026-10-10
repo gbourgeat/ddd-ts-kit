@@ -3,7 +3,7 @@ import {
   PostgresReadModelRebuild,
   type CriteriaPlan,
   type EventStamp,
-  type ListedRows,
+  type SearchedRows,
   type ReadModelRows,
   type ReadModelTable,
   type StampedRow,
@@ -41,7 +41,7 @@ export class TypeOrmReadModelTable<Row extends ObjectLiteral> implements ReadMod
     return this.rowsIn().replace(entry, held);
   }
 
-  async list(plan: CriteriaPlan): Promise<ListedRows<Row>> {
+  async search(plan: CriteriaPlan): Promise<SearchedRows<Row>> {
     const kept = () =>
       this.context
         .manager()

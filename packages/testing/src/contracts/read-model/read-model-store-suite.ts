@@ -24,7 +24,7 @@ export abstract class ReadModelStoreSuite extends ContractSuite<ReadModelStoreUn
   }
 
   protected async ids(): Promise<string[]> {
-    const page = await this.store.list(scoped(Criteria.of<Row>().orderBy('id'), everything));
+    const page = await this.store.search(scoped(Criteria.of<Row>().orderBy('id'), everything));
 
     return page.items.map(({ id }) => id);
   }

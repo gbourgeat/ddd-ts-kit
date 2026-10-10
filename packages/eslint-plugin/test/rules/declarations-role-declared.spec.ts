@@ -44,7 +44,7 @@ ruleTester.run('declarations-role-declared', declarationsRoleDeclared, {
       QUERY_HANDLER,
       declaring(
         'QueryHandler',
-        '@QueryHandler(ListInvoicesQuery, [InvoiceReader])\nclass ListInvoicesHandler {}\nexport { ListInvoicesHandler };',
+        '@QueryHandler(SearchInvoicesQuery, [InvoiceReader])\nclass SearchInvoicesHandler {}\nexport { SearchInvoicesHandler };',
       ),
       DECLARED,
     ),
@@ -123,7 +123,7 @@ ruleTester.run('declarations-role-declared', declarationsRoleDeclared, {
       DECLARED,
     ),
     at(
-      `${BILLING}/application/queries/list-invoices/list-invoices.event-handler.ts`,
+      `${BILLING}/application/queries/search-invoices/search-invoices.event-handler.ts`,
       'export class Misplaced {}',
       DECLARED,
     ),

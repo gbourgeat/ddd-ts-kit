@@ -20,7 +20,7 @@ Needed by practice managers, built entirely from what scheduling announces: one 
 | No show | A count of appointments whose patient did not come |  |
 | Calendar | A line whose occupancy is measured, in a practice | scheduling: the agenda |
 | Day | A calendar date in the time zone of the practice |  |
-| List | To read the occupancy of the calendars of a practice, day by day |  |
+| Search | To read the occupancy of the calendars of a practice, day by day |  |
 | Read | To see the occupancy of the calendars one measures |  |
 | Measure | To compute the occupancy of a calendar over a day from the outcomes of its appointments |  |
 
@@ -48,7 +48,7 @@ no line; a day whose appointments were all cancelled has one, with nothing held.
 **Where it is defined.** `domain/services/occupancy-measure.service.ts` is the definition: which
 outcomes hold their time, and the figures of a set of outcomes.
 
-**Where it is computed.** In the database, when `ListOccupancy` is read:
+**Where it is computed.** In the database, when `SearchOccupancy` is read:
 `infrastructure/persistence/knex-occupancy-reader.repository.ts`, the adapter of the port
 `OccupancyReader`, runs one statement that keeps the outcomes the filters and the scope of the
 actor allow (the practice, the calendars, the days), groups them by calendar and day, measures
@@ -101,13 +101,13 @@ Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-ki
 
 | Use case | Kind | Permission |
 |---|---|---|
-| `ListOccupancy` | query | `occupancy.read` |
+| `SearchOccupancy` | query | `occupancy.read` |
 
 ### Routes
 
 | Method | Path | Operation | Use case | Permission | Request | Responses | Errors |
 |---|---|---|---|---|---|---|---|
-| GET | `/practices/:practiceId/occupancy` | `listOccupancy` | `ListOccupancy` | `occupancy.read` | params: `ListOccupancyParams`, query | 200: `page of ListOccupancyLine` | `UNAUTHORIZED`, `FORBIDDEN` |
+| GET | `/practices/:practiceId/occupancy` | `searchOccupancy` | `SearchOccupancy` | `occupancy.read` | params: `SearchOccupancyParams`, query | 200: `page of SearchOccupancyLine` | `UNAUTHORIZED`, `FORBIDDEN` |
 
 ### Ports
 

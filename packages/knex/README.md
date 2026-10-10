@@ -318,12 +318,12 @@ export class KnexInvoiceRepository implements InvoiceRepository {
 }
 ```
 
-A list query takes the kernel `PageRequest` and answers a `Page`, in both variants:
+A search query takes the kernel `PageRequest` and answers a `Page`, in both variants:
 
 ```ts
 // contexts/billing-core/application/ports/invoice-queries.port.ts
 export abstract class InvoiceQueries {
-  abstract list(request: PageRequest<'amount'>): Promise<Page<InvoiceSummary>>;
+  abstract search(request: PageRequest<'amount'>): Promise<Page<InvoiceSummary>>;
 }
 ```
 
@@ -339,7 +339,7 @@ export class KnexInvoiceQueries implements InvoiceQueries {
     private readonly scope: ExecutionScope,
   ) {}
 
-  async list(request: PageRequest<'amount'>): Promise<Page<InvoiceSummary>> {
+  async search(request: PageRequest<'amount'>): Promise<Page<InvoiceSummary>> {
     return request.kind === 'offset' ? this.byOffset(request) : this.byCursor(request);
   }
 
@@ -430,7 +430,7 @@ of identifiers: every value is a binding, a text search is `like ? escape ?` wit
 
 ```ts
 // infrastructure/persistence/knex-appointment-queries.reader.ts
-async list(criteria: ScopedCriteria<AppointmentRow>): Promise<Page<AppointmentRow>> {
+async search(criteria: ScopedCriteria<AppointmentRow>): Promise<Page<AppointmentRow>> {
   const plan = planCriteria(appointmentCriteria, criteria);
 
   if (plan.empty) {

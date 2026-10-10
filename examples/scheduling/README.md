@@ -79,7 +79,7 @@ of each is its user name.
 | Permissions on every use case, policies on the loaded element | `scheduling/application/authorization/` |
 | Relationships (Zanzibar style) combined with roles | `src/platform/auth/relationship-schema.ts`, `resource-permissions.ts`, `role-grants.ts`, `roles-and-relationships.authorizer.ts`, [ADR 0001](docs/adr/0001-combine-token-roles-with-relationships-in-one-authorizer.md) |
 | Persistent relation tuples, written in the unit of work | `src/platform/auth/knex-relation-tuple-store.ts`; `*/application/ports/*-relationships.port.ts` and their adapters |
-| Lists narrowed in the statement by the access scope, with criteria | `scheduling/application/queries/list-appointments/`, `list-practice-agenda/`, `analytics/application/queries/list-occupancy/` |
+| Searches narrowed in the statement by the access scope, with criteria | `scheduling/application/queries/search-appointments/`, `search-practice-agenda/`, `analytics/application/queries/search-occupancy/` |
 | Field-level difference: busy without the name | `scheduling/application/queries/get-calendar-day/` |
 | Read-only impersonation, visible in the trail | `src/platform/buses/read-only-impersonation.ts`, `test/e2e/journey-authorization.e2e.spec.ts` |
 | Integration events, versioned, through the outbox | `src/contexts/*/published-language/`, `docs/integration/event-catalog.md` |
@@ -191,7 +191,7 @@ and the domain then asks for a reason (`REASON_REQUIRED`, 422): that is an invar
 right.
 
 Each practice is kept to itself by the same model: the agenda and the occupancy of a practice
-require a relationship to that practice, and every list is narrowed in the SQL statement by the
+require a relationship to that practice, and every search is narrowed in the SQL statement by the
 scope the authorizer computes for the actor.
 
 ## How one request is traced

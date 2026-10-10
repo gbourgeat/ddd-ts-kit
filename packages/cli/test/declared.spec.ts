@@ -16,7 +16,7 @@ const CONFIG = 'ddd-ts-kit.config.json';
 const DECLARATIONS = "'@ddd-ts-kit/kernel/declarations'";
 const COMMAND = `${BILLING}/application/commands/issue-invoice/issue-invoice.command.ts`;
 const HANDLER = `${BILLING}/application/commands/issue-invoice/issue-invoice.handler.ts`;
-const QUERY = `${BILLING}/application/queries/list-invoices/list-invoices.query.ts`;
+const QUERY = `${BILLING}/application/queries/search-invoices/search-invoices.query.ts`;
 const INTEGRATION_HANDLER = `${BILLING}/application/integration/handlers/product-listed.integration-handler.ts`;
 const EVENT = `${BILLING}/domain/events/invoice-issued.event.ts`;
 const EVENT_HANDLER = `${BILLING}/application/event-handlers/invoice-issued.event-handler.ts`;
@@ -29,7 +29,7 @@ const BARREL = `${BILLING}/billing.declarations.ts`;
 const SOURCES = {
   [COMMAND]: `import { Requires } from ${DECLARATIONS};\n\n@Requires(billingPermissions['invoice.issue'])\nexport class IssueInvoiceCommand {}\n`,
   [HANDLER]: `import { CommandHandler } from ${DECLARATIONS};\n\n@CommandHandler(IssueInvoiceCommand, [])\nexport class IssueInvoiceHandler {}\n`,
-  [QUERY]: `import { Public } from ${DECLARATIONS};\n\n@Public()\nexport class ListInvoicesQuery {}\n`,
+  [QUERY]: `import { Public } from ${DECLARATIONS};\n\n@Public()\nexport class SearchInvoicesQuery {}\n`,
   [INTEGRATION_HANDLER]: `import { IntegrationEventHandler } from ${DECLARATIONS};\n\n@IntegrationEventHandler(\n  productListedV1,\n  { consumer: 'billing.product-listed' },\n  [],\n)\nexport class ProductListedIntegrationHandler {}\n`,
   [EVENT]: "export class InvoiceIssued {\n  readonly name = 'billing.invoice.issued';\n}\n",
   [EVENT_HANDLER]: `import { DomainEventHandler } from ${DECLARATIONS};\nimport { InvoiceIssued } from '../../domain/events/invoice-issued.event.js';\n\n@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued' })\nexport class InvoiceIssuedEventHandler {}\n`,
@@ -128,7 +128,7 @@ describe('the declared style in check and check-file', () => {
     const root = declaredProject(
       {
         ...SOURCES,
-        [QUERY]: 'export class ListInvoicesQuery {}\n',
+        [QUERY]: 'export class SearchInvoicesQuery {}\n',
         [HANDLER]: 'export class IssueInvoiceHandler {}\n',
       },
       { [BARREL]: 'export {};\n' },
@@ -241,14 +241,14 @@ describe('the declared style in check and check-file', () => {
 /** What `list --json` says of the declared billing context. */
 const BILLING_LISTED = {
   commands: ['IssueInvoice'],
-  queries: ['ListInvoices'],
+  queries: ['SearchInvoices'],
   integrationEventHandlers: ['ProductListedIntegrationHandler'],
   policies: ['billing.only-issuer-voids'],
   gateways: ['InProcessPriceCatalogGateway'],
   declarations: {
     useCases: [
       { kind: 'command', name: 'IssueInvoice', requires: 'invoice.issue' },
-      { kind: 'query', name: 'ListInvoices', requires: 'public' },
+      { kind: 'query', name: 'SearchInvoices', requires: 'public' },
     ],
     integrationEventHandlers: [
       { name: 'ProductListedIntegrationHandler', consumer: 'billing.product-listed', event: 'productListedV1' },
@@ -264,7 +264,7 @@ describe('list in the declared style', () => {
     const root = declaredProject(SOURCES);
     const text = cli(root, 'list').stdout;
 
-    expect(text).toContain('  commands: IssueInvoice (requires invoice.issue)\n  queries: ListInvoices (public)\n');
+    expect(text).toContain('  commands: IssueInvoice (requires invoice.issue)\n  queries: SearchInvoices (public)\n');
 
     expect(text).toContain(
       '  integration event handlers: ProductListedIntegrationHandler (consumer billing.product-listed, on productListedV1)\n',
@@ -278,13 +278,13 @@ describe('list in the declared style', () => {
   });
 
   it('leaves out a message that declares nothing, and reads no decorator in the explicit style', () => {
-    const undeclared = declaredProject({ ...SOURCES, [QUERY]: 'export class ListInvoicesQuery {}\n' });
+    const undeclared = declaredProject({ ...SOURCES, [QUERY]: 'export class SearchInvoicesQuery {}\n' });
     const explicit = explicitProject(SOURCES);
 
     expect(cli(undeclared, 'list').stdout).toContain('  queries: none\n');
 
     expect(cli(explicit, 'list').stdout).toContain(
-      '  commands: IssueInvoice\n  queries: ListInvoices\n  domain events: InvoiceIssued\n  published events: none\n  integration event handlers: ProductListed\n',
+      '  commands: IssueInvoice\n  queries: SearchInvoices\n  domain events: InvoiceIssued\n  published events: none\n  integration event handlers: ProductListed\n',
     );
 
     expect(cli(explicit, 'list').stdout).not.toContain('adapters:');

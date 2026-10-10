@@ -69,7 +69,7 @@ describe('Practitioners known from identity', () => {
     await application.eventBus.publish([added('event-1', 'practitioner'), added('event-1', 'practitioner')]);
 
     expect(
-      (await practitioners.list(scoped(Criteria.of<PractitionerEntry>(), { kind: 'all' }, {}))).items,
+      (await practitioners.search(scoped(Criteria.of<PractitionerEntry>(), { kind: 'all' }, {}))).items,
     ).toHaveLength(1);
   });
 

@@ -50,7 +50,7 @@ lookups of the port, the columns, the mapper.
   `updated_by`, and `tenant_id` with `--tenant-scoped`, stamped by the adapter from the
   `ExecutionScope` and the `Clock` through the kernel helpers. The domain does not know them.
 - **Outbox in the same transaction** as the business write (`events/outbox-required`).
-- **Lists** use the kernel `Page` and `PageRequest`; a cursor ends on a unique tie-breaker.
+- **Searches** use the kernel `Page` and `PageRequest`; a cursor ends on a unique tie-breaker.
 - **Queries may skip aggregates**: `generate query` writes a read port and an in-memory
   reader; replace the reader by an adapter that queries the tables and returns the shape of
   the port.

@@ -24,9 +24,9 @@ Specifics: this context is a read side, with no aggregate. Two read models, both
 checker says of it): the outcome of each appointment (one row per appointment, each event sets the
 state: held, completed, no-show, cancelled by the patient, cancelled by the practice, expired), and
 the occupancy of a calendar on a day (held minutes, appointments held, completed, no-shows,
-cancellations by party), recomputed from the outcomes each time one changes. `ListOccupancy` is a
+cancellations by party), recomputed from the outcomes each time one changes. `SearchOccupancy` is a
 list with the kit's criteria (`filter[calendarId]`, `filter[day]` with a range, `sort`), paginated
-and narrowed by the access scope (`generate query --list` writes a simpler shape: adapt it and
+and narrowed by the access scope (`generate query --search` writes a simpler shape: adapt it and
 report what you had to change). `VerifyOccupancy` recomputes the days of the last week from the
 outcomes and repairs differences, idempotently, from the job's `scheduledAt`. One integration spec
 runs `ProjectionRebuild` on the outcomes read model from a fake of the export gateway holding rows

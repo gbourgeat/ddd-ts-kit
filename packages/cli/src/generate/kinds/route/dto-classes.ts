@@ -5,7 +5,7 @@ const WITH_BODY = ['POST', 'PUT', 'PATCH'];
 
 /** The class-validator classes a route reads and answers with, by the role each plays: one class per file. */
 export function dtoClasses(endpoint: Endpoint, useCase: UseCase): string[] {
-  if (useCase.isList) {
+  if (useCase.isSearch) {
     return ['line'];
   }
 

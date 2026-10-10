@@ -28,7 +28,7 @@ import {
 } from '@ddd-ts-kit/kernel';
 import { tracedPublisher } from '@ddd-ts-kit/tracing';
 import { auditModule } from './audit/audit.module.js';
-import { listAuditEntriesRoute } from './audit/list-audit-entries.route.js';
+import { searchAuditEntriesRoute } from './audit/search-audit-entries.route.js';
 import { authorization } from './auth/authorization.js';
 import { httpBoundary, type HttpBoundary } from './auth/http-boundary.js';
 import { relateSystemActors } from './auth/relate-system-actors.js';
@@ -200,5 +200,7 @@ function routesOf(container: Container, contexts: ContextSelection): readonly Ro
   const commands = container.resolve(CommandBus);
   const queries = container.resolve(QueryBus);
 
-  return defineRoutes(...contexts.routes.map((routes) => routes(commands, queries)), [listAuditEntriesRoute(queries)]);
+  return defineRoutes(...contexts.routes.map((routes) => routes(commands, queries)), [
+    searchAuditEntriesRoute(queries),
+  ]);
 }

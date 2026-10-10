@@ -21,7 +21,7 @@ import { TransactionalAuditTrail } from './support/transactional-audit-trail.js'
 import { aRescheduling } from './support/scheduling/a-rescheduling.js';
 import { CancelAppointmentCommand } from './support/scheduling/application/commands/cancel-appointment.command.js';
 import { RescheduleAppointmentCommand } from './support/scheduling/application/commands/reschedule-appointment.command.js';
-import { ListAppointmentsQuery } from './support/scheduling/application/queries/list-appointments.query.js';
+import { SearchAppointmentsQuery } from './support/scheduling/application/queries/search-appointments.query.js';
 import { ReadMedicalFileQuery } from './support/scheduling/application/queries/read-medical-file.query.js';
 import { AppointmentAlreadyCancelled } from './support/scheduling/domain/errors/appointment-already-cancelled.js';
 
@@ -53,7 +53,7 @@ function application(options: Partial<AuditMiddlewareOptions> = {}) {
 
   const queries = new InMemoryQueryBus()
     .use(audit)
-    .register(ListAppointmentsQuery, { execute: async () => ['apt-1'] })
+    .register(SearchAppointmentsQuery, { execute: async () => ['apt-1'] })
     .register(ReadMedicalFileQuery, { execute: async () => 'file' });
 
   return { committed, unitOfWork, appointments, commands, queries };
@@ -212,7 +212,7 @@ describe('auditMiddleware, queries, declared fields and the execution context', 
     const all = application({ queries: 'all' });
 
     for (const { queries } of [none, some, all]) {
-      await queries.execute(new ListAppointmentsQuery(ada));
+      await queries.execute(new SearchAppointmentsQuery(ada));
       await queries.execute(new ReadMedicalFileQuery(ada, 'patient-9'));
     }
 
@@ -223,7 +223,7 @@ describe('auditMiddleware, queries, declared fields and the execution context', 
     ]);
 
     expect(all.committed.entries.map((entry) => entry.action)).toEqual([
-      'ListAppointmentsQuery',
+      'SearchAppointmentsQuery',
       'ReadMedicalFileQuery',
     ]);
   });

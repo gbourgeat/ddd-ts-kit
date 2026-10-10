@@ -22,7 +22,7 @@ describe('a context generated in the declared style', () => {
     expect(billing).toEqual(expect.arrayContaining(['billing.declarations.ts', 'presentation/http/billing.routes.ts']));
 
     expect(read(root, `${BILLING}/presentation/http/billing.routes.ts`)).toContain(
-      'issueInvoiceRoute(commands),\n    cancelInvoiceRoute(commands),\n    listInvoicesRoute(queries),',
+      'issueInvoiceRoute(commands),\n    cancelInvoiceRoute(commands),\n    searchInvoicesRoute(queries),',
     );
   });
 
@@ -37,21 +37,21 @@ describe('a context generated in the declared style', () => {
       "export * from './application/event-handlers/invoice-marked-as-paid.event-handler.js';",
       "export * from './application/integration/publishers/invoice-issued-v2.publisher.js';",
       "export * from './application/integration/publishers/invoice-issued.publisher.js';",
-      "export * from './application/queries/list-invoices/list-invoices.handler.js';",
-      "export * from './application/queries/list-invoices/list-invoices.query.js';",
+      "export * from './application/queries/search-invoices/search-invoices.handler.js';",
+      "export * from './application/queries/search-invoices/search-invoices.query.js';",
       "export * from './application/scheduling/cancel-stale-invoices.job.js';",
       "export * from './application/scheduling/issue-invoices-monthly.job.js';",
       "export * from './infrastructure/external/remote-payment-gateway.adapter.js';",
       "export * from './infrastructure/external/remote-tax-rates.adapter.js';",
       "export * from './infrastructure/persistence/drizzle-invoice.repository.js';",
-      "export * from './infrastructure/persistence/in-memory-list-invoices-reader.repository.js';",
+      "export * from './infrastructure/persistence/in-memory-search-invoices-reader.repository.js';",
     ]);
   });
 
   it('says who may send a message on the message, and what handles it on the handler, the list naming port classes', () => {
     const command = read(root, `${BILLING}/application/commands/issue-invoice/issue-invoice.command.ts`);
     const handler = read(root, `${BILLING}/application/commands/issue-invoice/issue-invoice.handler.ts`);
-    const list = read(root, `${BILLING}/application/queries/list-invoices/list-invoices.handler.ts`);
+    const list = read(root, `${BILLING}/application/queries/search-invoices/search-invoices.handler.ts`);
 
     expect(command).toContain(
       "@Requires(billingPermissions['invoice.issue'])\nexport class IssueInvoiceCommand extends AuthorizedCommand<string> {",
@@ -78,7 +78,7 @@ describe('a context generated in the declared style', () => {
       ),
     ).toContain('@Public()\nexport class TrackPurchaseOrderQuery extends Query<TrackPurchaseOrderResult> {');
 
-    expect(list).toContain('@QueryHandler(ListInvoicesQuery, [ListInvoicesReader, Access])');
+    expect(list).toContain('@QueryHandler(SearchInvoicesQuery, [SearchInvoicesReader, Access])');
     expect(list).toContain("import { Access } from '@ddd-ts-kit/auth';");
   });
 
@@ -95,8 +95,8 @@ describe('a context generated in the declared style', () => {
       'export abstract class PaymentGateway {',
     );
 
-    expect(read(root, `${BILLING}/application/ports/list-invoices-reader.port.ts`)).toContain(
-      'export abstract class ListInvoicesReader {\n  abstract list(',
+    expect(read(root, `${BILLING}/application/ports/search-invoices-reader.port.ts`)).toContain(
+      'export abstract class SearchInvoicesReader {\n  abstract search(',
     );
 
     expect(read(root, `${BILLING}/test/fakes/payment-gateway.fake.ts`)).toContain(
@@ -117,8 +117,10 @@ describe('a context generated in the declared style, towards the outside', () =>
     expect(repository).toContain("import { Database } from '../../../../platform/database/database.js';");
     expect(repository).toContain('  private insert(state: VersionedInvoice) {');
 
-    expect(read(root, `${BILLING}/infrastructure/persistence/in-memory-list-invoices-reader.repository.ts`)).toContain(
-      '@Repository(ListInvoicesReader)\nexport class InMemoryListInvoicesReader implements ListInvoicesReader {\n  protected readonly items: readonly ListInvoicesItem[] = [];',
+    expect(
+      read(root, `${BILLING}/infrastructure/persistence/in-memory-search-invoices-reader.repository.ts`),
+    ).toContain(
+      '@Repository(SearchInvoicesReader)\nexport class InMemorySearchInvoicesReader implements SearchInvoicesReader {\n  protected readonly items: readonly SearchInvoicesItem[] = [];',
     );
 
     expect(read(root, `${BILLING}/infrastructure/external/remote-payment-gateway.adapter.ts`)).toContain(
