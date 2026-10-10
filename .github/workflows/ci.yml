@@ -172,6 +172,42 @@ jobs:
       - run: npm run build
       - run: npm run ci:test:e2e
 
+  example:
+    name: Example application (examples/scheduling)
+    needs: unit
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: public.ecr.aws/docker/library/postgres:18
+        env:
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: app
+          POSTGRES_DB: app
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U app -d app"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: The example's own gate (types, lint, tests, end to end, architecture, graph, dead code, documents)
+        run: npm run example:verify
+      - name: The example's adapter specs on a PostgreSQL server (two concurrent bookings meet real transactions)
+        env:
+          DATABASE_URL: postgres://app:app@localhost:5432/app
+        run: |
+          npm run db:migrate --workspace examples/scheduling
+          npm run test:postgres --workspace examples/scheduling
+
   security:
     name: Security
     needs: install

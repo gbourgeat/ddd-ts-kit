@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "examples/*"
   ],
   "engines": {
     "node": ">=22.12.0"
@@ -14,6 +15,7 @@
     "test": "vitest run",
     "check:self": "node packages/cli/dist/bin.js check --self",
     "verify": "npm run build && npm run test && npm run check:self",
+    "example:verify": "npm run verify --workspace examples/scheduling",
     "lint": "eslint --config eslint.config.mjs .",
     "knip": "knip",
     "depcruise": "depcruise packages --config .dependency-cruiser.cjs",

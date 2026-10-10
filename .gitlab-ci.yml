@@ -160,6 +160,24 @@ e2e:
   script:
     - npm run ci:test:e2e -- --reporter=default --reporter=junit --outputFile.junit=reports/junit.xml
 
+example:
+  extends: .built
+  stage: test
+  needs: [unit]
+  services:
+    - name: ${POSTGRES_IMAGE}
+      alias: postgres
+  variables:
+    POSTGRES_USER: app
+    POSTGRES_PASSWORD: app
+    POSTGRES_DB: app
+  script:
+    - npm run example:verify
+    # The adapter specs again, on a server: two concurrent bookings meet real transactions.
+    - export DATABASE_URL=postgres://app:app@postgres:5432/app
+    - npm run db:migrate --workspace examples/scheduling
+    - npm run test:postgres --workspace examples/scheduling
+
 audit:
   extends: .node
   stage: security

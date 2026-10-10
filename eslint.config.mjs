@@ -28,7 +28,7 @@ const SHAPE_RULES = {
 export default defineConfig(
   {
     name: 'workspace/ignores',
-    ignores: ['**/dist/**', '**/node_modules/**', 'coverage/**', 'reports/**', 'packages/cli/templates/**', 'packages/prisma/test/generated/**', '**/*.d.ts'],
+    ignores: ['**/dist/**', '**/node_modules/**', 'examples/**', 'coverage/**', 'reports/**', 'packages/cli/templates/**', 'packages/prisma/test/generated/**', '**/*.d.ts'],
   },
   {
     name: 'workspace/sources',

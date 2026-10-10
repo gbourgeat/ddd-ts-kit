@@ -1,5 +1,8 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
+  "ignoreWorkspaces": [
+    "examples/*"
+  ],
   "ignoreDependencies": [
     "@arethetypeswrong/cli",
     "publint",
