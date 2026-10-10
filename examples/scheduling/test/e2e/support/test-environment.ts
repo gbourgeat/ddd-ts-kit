@@ -1,4 +1,4 @@
-import { authEnvironment } from '#test/e2e/support/auth-environment.js';
+import { authEnvironment } from '$test/e2e/support/auth-environment.js';
 
 /** Without REDIS_URL (`npm run infra:up` gives one) what lives on the Redis protocol server stays in the memory of the process: the same ports, no server. */
 export const noRedis = 'redis://in-process/tests';

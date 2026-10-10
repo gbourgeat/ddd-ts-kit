@@ -1,10 +1,10 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { FixedClock, FixedExecutionScope, executionContext, systemActor } from '@ddd-ts-kit/kernel';
-import type { Appointment } from '#src/contexts/scheduling/domain/aggregates/appointment.aggregate.js';
-import { KnexAppointmentExport } from '#src/contexts/scheduling/infrastructure/persistence/knex-appointment-export.repository.js';
-import { KnexAppointmentRepository } from '#src/contexts/scheduling/infrastructure/persistence/knex-appointment.repository.js';
-import { openTestDatabase, type TestDatabase } from '#src/platform/database/open-test-database.js';
-import { anAppointment } from '#src/contexts/scheduling/test/builders/appointment.builder.js';
+import type { Appointment } from '@/contexts/scheduling/domain/aggregates/appointment.aggregate.js';
+import { KnexAppointmentExport } from '@/contexts/scheduling/infrastructure/persistence/knex-appointment-export.repository.js';
+import { KnexAppointmentRepository } from '@/contexts/scheduling/infrastructure/persistence/knex-appointment.repository.js';
+import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database.js';
+import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder.js';
 
 const scope = new FixedExecutionScope(
   executionContext({ correlationId: 'export-spec', actor: systemActor('scheduling.spec'), origin: 'test' }),

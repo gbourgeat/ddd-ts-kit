@@ -1,7 +1,7 @@
 import { defineIntegrationEvent } from '@ddd-ts-kit/events';
 import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
-import { AppointmentRescheduledV1Payload } from '#src/contexts/scheduling/published-language/appointment-rescheduled.v1.payload.js';
+import { AppointmentRescheduledV1Payload } from '@/contexts/scheduling/published-language/appointment-rescheduled.v1.payload.js';
 
 export const appointmentRescheduledV1 = defineIntegrationEvent({
   type: 'scheduling.appointment.rescheduled',

@@ -15,20 +15,20 @@ import {
 } from '@ddd-ts-kit/kernel';
 import { KnexContext } from '@ddd-ts-kit/knex';
 import type { ConsumerTrace } from '@ddd-ts-kit/tracing';
-import { createTupleStore } from '#src/platform/auth/create-tuple-store.js';
-import type { Persistence } from '#src/platform/database/persistence.js';
-import type { EventProvider } from '#src/platform/events/event-provider.js';
-import type { LogSettings } from '#src/platform/observability/create-logger.js';
-import type { RedisServices } from '#src/platform/redis/open-redis.js';
-import { adapterAspects } from '#src/platform/resilience/adapter-aspects.js';
-import { defaultResilience } from '#src/platform/resilience/default-resilience.js';
-import type { ResilienceSettings } from '#src/platform/resilience/resilience-settings.js';
-import { KnexPersonDirectory } from '#src/contexts/identity/infrastructure/persistence/knex-person-directory.reader.js';
-import { KnexAppointmentExport } from '#src/contexts/scheduling/infrastructure/persistence/knex-appointment-export.repository.js';
-import { errorStatuses } from '#src/platform/http/error-statuses.js';
+import { createTupleStore } from '@/platform/auth/create-tuple-store.js';
+import type { Persistence } from '@/platform/database/persistence.js';
+import type { EventProvider } from '@/platform/events/event-provider.js';
+import type { LogSettings } from '@/platform/observability/create-logger.js';
+import type { RedisServices } from '@/platform/redis/open-redis.js';
+import { adapterAspects } from '@/platform/resilience/adapter-aspects.js';
+import { defaultResilience } from '@/platform/resilience/default-resilience.js';
+import type { ResilienceSettings } from '@/platform/resilience/resilience-settings.js';
+import { KnexPersonDirectory } from '@/contexts/identity/infrastructure/persistence/knex-person-directory.reader.js';
+import { KnexAppointmentExport } from '@/contexts/scheduling/infrastructure/persistence/knex-appointment-export.repository.js';
+import { errorStatuses } from '@/platform/http/error-statuses.js';
 // ddd-ts-kit:imports
-import { PersonDirectoryContract } from '#src/contexts/identity/published-language/index.js';
-import { AppointmentExportContract } from '#src/contexts/scheduling/published-language/index.js';
+import { PersonDirectoryContract } from '@/contexts/identity/published-language/index.js';
+import { AppointmentExportContract } from '@/contexts/scheduling/published-language/index.js';
 // /ddd-ts-kit:imports
 
 /** What the platform is built on, beyond the storage: chosen in `main.ts`, defaulted for the tools and the tests. */

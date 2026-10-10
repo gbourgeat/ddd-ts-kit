@@ -8,13 +8,13 @@ import {
   type ExecutionContext,
 } from '@ddd-ts-kit/kernel';
 import { repositoryContract } from '@ddd-ts-kit/testing/contracts';
-import type { Person } from '#src/contexts/identity/domain/aggregates/person.aggregate.js';
-import { DisplayName } from '#src/contexts/identity/domain/value-objects/display-name.vo.js';
-import { Email } from '#src/contexts/identity/domain/value-objects/email.vo.js';
-import { KnexPersonRepository } from '#src/contexts/identity/infrastructure/persistence/knex-person.repository.js';
-import { openTestDatabase, type TestDatabase } from '#src/platform/database/open-test-database.js';
-import { aPerson } from '#src/contexts/identity/test/builders/person.builder.js';
-import { FakePersonRepository } from '#src/contexts/identity/test/fakes/person.repository.fake.js';
+import type { Person } from '@/contexts/identity/domain/aggregates/person.aggregate.js';
+import { DisplayName } from '@/contexts/identity/domain/value-objects/display-name.vo.js';
+import { Email } from '@/contexts/identity/domain/value-objects/email.vo.js';
+import { KnexPersonRepository } from '@/contexts/identity/infrastructure/persistence/knex-person.repository.js';
+import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database.js';
+import { aPerson } from '@/contexts/identity/test/builders/person.builder.js';
+import { FakePersonRepository } from '@/contexts/identity/test/fakes/person.repository.fake.js';
 
 const runner = { describe, it, expect, beforeEach, afterEach };
 

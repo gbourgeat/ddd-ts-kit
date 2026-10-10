@@ -2,14 +2,14 @@ import type { Knex } from 'knex';
 import { Clock, ExecutionScope, stampCreation, stampUpdate } from '@ddd-ts-kit/kernel';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
 import { KnexContext, auditRow, insertIgnoringConflict, optimisticUpdate } from '@ddd-ts-kit/knex';
-import type { Waitlist } from '#src/contexts/scheduling/domain/aggregates/waitlist.aggregate.js';
-import { WaitlistRepository } from '#src/contexts/scheduling/domain/repositories/waitlist.repository.js';
-import { SCHEDULING_SCHEMA } from '#src/contexts/scheduling/infrastructure/persistence/scheduling.schema.js';
-import { WaitlistMapper } from '#src/contexts/scheduling/infrastructure/persistence/waitlist.mapper.js';
+import type { Waitlist } from '@/contexts/scheduling/domain/aggregates/waitlist.aggregate.js';
+import { WaitlistRepository } from '@/contexts/scheduling/domain/repositories/waitlist.repository.js';
+import { SCHEDULING_SCHEMA } from '@/contexts/scheduling/infrastructure/persistence/scheduling.schema.js';
+import { WaitlistMapper } from '@/contexts/scheduling/infrastructure/persistence/waitlist.mapper.js';
 import type {
   WaitlistColumns,
   WaitlistRow,
-} from '#src/contexts/scheduling/infrastructure/persistence/waitlist-row.schema.js';
+} from '@/contexts/scheduling/infrastructure/persistence/waitlist-row.schema.js';
 
 type VersionedWaitlist = WaitlistColumns & { readonly version: number };
 

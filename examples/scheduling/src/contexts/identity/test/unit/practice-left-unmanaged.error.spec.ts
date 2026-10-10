@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { PracticeLeftUnmanagedError } from '#src/contexts/identity/domain/errors/practice-left-unmanaged.error.js';
+import { PracticeLeftUnmanagedError } from '@/contexts/identity/domain/errors/practice-left-unmanaged.error.js';
 
 describe('PracticeLeftUnmanagedError', () => {
   it('carries its stable code', () => {

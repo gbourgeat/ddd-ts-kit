@@ -67,7 +67,7 @@ describe('authorization and gateway kinds', () => {
     const adapter = read(root, `${SHIPPING}/infrastructure/external/in-process-invoice-status.gateway.ts`);
     const module = read(root, `${SHIPPING}/shipping.module.ts`);
 
-    expect(adapter).toContain("from '#src/contexts/billing/published-language/index.js'");
+    expect(adapter).toContain("from '@/contexts/billing/published-language/index.js'");
     expect(adapter).toContain('TODO(platform): when billing runs as its own service');
 
     expect(read(root, `${BILLING}/published-language/invoice-status.contract.ts`)).toContain(

@@ -3,7 +3,7 @@ import type { Project } from '../model/project.js';
 import { compilerOptionsOf } from './compiler-options-of.js';
 
 /** Where a tsconfig of the project reads and writes; nothing when the file is absent or unreadable. */
-export function buildLayoutOf(project: Project, file: string): BuildLayout | undefined {
+export function buildLayoutOf(project: Pick<Project, 'root'>, file: string): BuildLayout | undefined {
   const options = compilerOptionsOf(project, file);
 
   if (options === undefined) {

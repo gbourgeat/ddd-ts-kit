@@ -1,10 +1,10 @@
 import { Clock, unwrap } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
-import { UnknownCalendarError } from '#src/contexts/scheduling/domain/errors/unknown-calendar.error.js';
-import { CalendarRepository } from '#src/contexts/scheduling/domain/repositories/calendar.repository.js';
-import { Exception } from '#src/contexts/scheduling/domain/value-objects/exception.vo.js';
-import { Range } from '#src/contexts/scheduling/domain/value-objects/range.vo.js';
-import { AddExceptionCommand } from '#src/contexts/scheduling/application/commands/add-exception/add-exception.command.js';
+import { UnknownCalendarError } from '@/contexts/scheduling/domain/errors/unknown-calendar.error.js';
+import { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository.js';
+import { Exception } from '@/contexts/scheduling/domain/value-objects/exception.vo.js';
+import { Range } from '@/contexts/scheduling/domain/value-objects/range.vo.js';
+import { AddExceptionCommand } from '@/contexts/scheduling/application/commands/add-exception/add-exception.command.js';
 
 @CommandHandler(AddExceptionCommand, [CalendarRepository, Clock])
 export class AddExceptionHandler implements CommandHandler<AddExceptionCommand> {

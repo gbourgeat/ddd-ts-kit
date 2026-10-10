@@ -1,8 +1,8 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { RelationTupleStore } from '@ddd-ts-kit/auth/rebac';
-import { TupleIdentityRelationships } from '#src/contexts/identity/infrastructure/persistence/tuple-identity-relationships.repository.js';
-import { createTupleStore } from '#src/platform/auth/create-tuple-store.js';
-import { openTestDatabase, type TestDatabase } from '#src/platform/database/open-test-database.js';
+import { TupleIdentityRelationships } from '@/contexts/identity/infrastructure/persistence/tuple-identity-relationships.repository.js';
+import { createTupleStore } from '@/platform/auth/create-tuple-store.js';
+import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database.js';
 
 const delegation = { practiceId: 'practice-1', practitionerId: 'grace', assistantId: 'linus' };
 let database: TestDatabase;

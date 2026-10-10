@@ -1,6 +1,6 @@
 import { Repository } from '@ddd-ts-kit/kernel';
-import type { Delegation } from '#src/contexts/identity/domain/aggregates/delegation.aggregate.js';
-import type { Desk } from '#src/contexts/identity/domain/value-objects/desk.vo.js';
+import type { Delegation } from '@/contexts/identity/domain/aggregates/delegation.aggregate.js';
+import type { Desk } from '@/contexts/identity/domain/value-objects/desk.vo.js';
 
 export abstract class DelegationRepository extends Repository<Delegation> {
   /** The delegation a practitioner currently gives this assistant on this desk: there is at most one. */

@@ -3,13 +3,13 @@ import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { anActor } from '@ddd-ts-kit/auth/testing';
 import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
-import * as notificationDeclarations from '#src/contexts/notification/notification.declarations.js';
-import { platformTestModule } from '#src/platform/platform-test.module.js';
-import { notificationPermissions } from '#src/contexts/notification/application/authorization/notification.permissions.js';
-import { WithdrawReminderCommand } from '#src/contexts/notification/application/commands/withdraw-reminder/withdraw-reminder.command.js';
-import { ReminderRepository } from '#src/contexts/notification/domain/repositories/reminder.repository.js';
-import { aReminder } from '#src/contexts/notification/test/builders/reminder.builder.js';
-import { FakeReminderRepository } from '#src/contexts/notification/test/fakes/reminder.repository.fake.js';
+import * as notificationDeclarations from '@/contexts/notification/notification.declarations.js';
+import { platformTestModule } from '@/platform/platform-test.module.js';
+import { notificationPermissions } from '@/contexts/notification/application/authorization/notification.permissions.js';
+import { WithdrawReminderCommand } from '@/contexts/notification/application/commands/withdraw-reminder/withdraw-reminder.command.js';
+import { ReminderRepository } from '@/contexts/notification/domain/repositories/reminder.repository.js';
+import { aReminder } from '@/contexts/notification/test/builders/reminder.builder.js';
+import { FakeReminderRepository } from '@/contexts/notification/test/fakes/reminder.repository.fake.js';
 
 const holders = authorizationModule({
   authorizer: new RoleBasedAuthorizer({ roles: { holder: [notificationPermissions['reminder.withdraw']] } }),

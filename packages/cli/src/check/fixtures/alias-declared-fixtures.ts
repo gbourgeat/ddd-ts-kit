@@ -4,90 +4,87 @@ import { config } from './config.js';
 import type { Fixture } from './fixture.js';
 
 const RULE = 'imports/alias-declared';
-const CONDITION = 'ddd-ts-kit-source';
-const SOURCES = { [CONDITION]: './src/*.ts', default: './dist/src/*.js' };
-const TESTS = './test/*.ts';
-const SCRIPTS = { [CONDITION]: './scripts/*.ts', default: './dist/scripts/*.js' };
-const IMPORTS = { '#src/*.js': SOURCES, '#test/*.js': TESTS, '#scripts/*.js': SCRIPTS };
-const DEV = `tsx watch --conditions=${CONDITION} src/main.ts`;
+const PATHS = { '@/*': ['./src/*'], '$test/*': ['./test/*'], '$scripts/*': ['./scripts/*'] };
+const COMPILE = 'node node_modules/@typescript/native/bin/tsc -p tsconfig.build.json';
+const BUILD = `${COMPILE} && ddd-ts-kit build-aliases`;
+const JEST_MAPPER = String.raw`moduleNameMapper: { '^\\$app/(.*)\\.js$': '<rootDir>/src/$1.ts', '^\\$test/(.*)\\.js$': '<rootDir>/test/$1.ts', '^\\$scripts/(.*)\\.js$': '<rootDir>/scripts/$1.ts' }`;
 
 export const ALIAS_DECLARED_FIXTURES: readonly Fixture[] = [
   { ruleId: RULE, name: 'one declaration, and every tool pointed at it', expect: 'pass', files: aliasDeclarations() },
   {
     ruleId: RULE,
-    name: 'another name for the source root, declared the same way; a jest config that extends the one that sets the condition',
+    name: 'another name for the source root, declared the same way; a jest config that repeats the mapping, and one that extends it',
     expect: 'pass',
     files: aliasDeclarations({
-      [CONFIG_FILE]: config({ importAlias: '#app/' }),
-      'package.json': manifest({ '#app/*.js': SOURCES, '#test/*.js': TESTS, '#scripts/*.js': SCRIPTS }),
-      'jest.config.js': `export default { testEnvironmentOptions: { customExportConditions: ['${CONDITION}'] }, ...governedJestCoverage() };\n`,
+      [CONFIG_FILE]: config({ importAlias: '$app/' }),
+      'tsconfig.json': tsconfig({ ...PATHS, '@/*': undefined, '$app/*': ['./src/*'] }),
+      'jest.config.js': `export default { ${JEST_MAPPER}, ...governedJestCoverage() };\n`,
       'jest.e2e.config.js': "import base from './jest.config.js';\nexport default { ...base };\n",
     }),
   },
-  failing('a tsconfig path as the alias: Node does not read it', CONFIG_FILE, config({ importAlias: '@/' })),
-  failing('"#/", which Node 22 refuses', CONFIG_FILE, config({ importAlias: '#/' })),
-  failing('an alias that already names the tests', CONFIG_FILE, config({ importAlias: '#test/' })),
-  failing('no "imports" in package.json', 'package.json', manifest(undefined)),
+  failing('a Node subpath import as the alias', CONFIG_FILE, config({ importAlias: '#app/' })),
+  failing('an alias that could be any package', CONFIG_FILE, config({ importAlias: 'app/' })),
+  failing('an alias that is the name of a scope', CONFIG_FILE, config({ importAlias: '@app/' })),
+  failing('an alias that already names the tests', CONFIG_FILE, config({ importAlias: '$test/' })),
+  failing('no "paths" in tsconfig.json', 'tsconfig.json', tsconfig(undefined)),
   failing(
-    'the alias of the config under another name in package.json',
-    'package.json',
-    manifest({ '#app/*.js': SOURCES, '#test/*.js': TESTS, '#scripts/*.js': SCRIPTS }),
+    'the alias of the config under another name in tsconfig.json',
+    'tsconfig.json',
+    tsconfig({ ...PATHS, '@/*': undefined, '$app/*': ['./src/*'] }),
   ),
-  failing(
-    'a compiled target that is not where tsconfig writes',
-    'package.json',
-    manifest({ ...IMPORTS, '#src/*.js': { [CONDITION]: './src/*.ts', default: './build/src/*.js' } }),
-  ),
-  failing(
-    'the compiled target first: the source condition would never be reached',
-    'package.json',
-    manifest({ ...IMPORTS, '#src/*.js': { default: './dist/src/*.js', [CONDITION]: './src/*.ts' } }),
-  ),
+  failing('an alias that names the compiled files', 'tsconfig.json', tsconfig({ ...PATHS, '@/*': ['./dist/src/*'] })),
   failing(
     'a second entry under the alias',
-    'package.json',
-    manifest({ ...IMPORTS, '#src/platform/*.js': './src/platform/*.ts' }),
-  ),
-  failing(
-    'a dev script that runs the sources without the condition',
-    'package.json',
-    manifest(IMPORTS, 'tsx watch src/main.ts'),
-  ),
-  failing(
-    'a tsconfig that maps the alias under "paths"',
     'tsconfig.json',
-    json({ compilerOptions: { rootDir: '.', outDir: 'dist', paths: { '#src/*': ['./src/*'] } } }),
+    tsconfig({ ...PATHS, '@/platform/*': ['./src/platform/*'] }),
   ),
+  failing('a "baseUrl" that moves every target', 'tsconfig.json', tsconfig(PATHS, { baseUrl: './src' })),
   failing(
-    'a resolution that does not read "imports"',
-    'tsconfig.json',
-    json({ compilerOptions: { rootDir: '.', outDir: 'dist', moduleResolution: 'node10' } }),
-  ),
-  failing(
-    'a build that writes elsewhere than the type check maps',
+    'a build config with paths of its own',
     'tsconfig.build.json',
-    json({ extends: './tsconfig.json', compilerOptions: { outDir: 'build' } }),
+    json({ extends: './tsconfig.json', compilerOptions: { paths: { '@/*': ['./lib/*'] } } }),
+  ),
+  failing('a build that compiles and does not rewrite the aliases', 'package.json', manifest({ build: COMPILE })),
+  failing(
+    'a rewrite that runs before the compiler',
+    'package.json',
+    manifest({ build: `ddd-ts-kit build-aliases && ${COMPILE}` }),
   ),
   failing(
-    'a vitest config without the condition',
+    'a dev script that runs the sources under another tsconfig',
+    'package.json',
+    manifest({ build: BUILD, dev: 'tsx watch --tsconfig tsconfig.dev.json src/main.ts' }),
+  ),
+  failing(
+    'a vitest config that does not read tsconfig',
     'vitest.config.ts',
     "export default { test: { coverage: governedCoverage('') } };\n",
   ),
   failing(
-    'a jest config without the condition',
+    'a jest config without the mapping',
     'jest.config.js',
     "export default { testEnvironment: 'node', ...governedJestCoverage() };\n",
   ),
   failing(
-    'a dependency-cruiser config without the condition',
+    'a jest config that maps the alias to the compiled files',
+    'jest.config.js',
+    String.raw`export default { moduleNameMapper: { '^@/(.*)\\.js$': '<rootDir>/dist/src/$1.js', '^\\$test/(.*)\\.js$': '<rootDir>/test/$1.ts', '^\\$scripts/(.*)\\.js$': '<rootDir>/scripts/$1.ts' }, ...governedJestCoverage() };` +
+      '\n',
+  ),
+  failing(
+    'a dependency-cruiser config that does not read tsconfig',
     '.dependency-cruiser.cjs',
     "module.exports = { options: { enhancedResolveOptions: { conditionNames: ['import'] } } };\n",
   ),
-  failing('a knip config that maps the alias', 'knip.json', json({ paths: { '#src/*': ['./src/*'] } })),
+  failing('a knip config that maps the alias', 'knip.json', json({ paths: { '@/*': ['./src/*'] } })),
 ];
 
-function manifest(imports: unknown, dev = DEV): string {
-  return json({ name: 'fixture', type: 'module', imports, scripts: { dev } });
+function tsconfig(paths: unknown, more: Record<string, unknown> = {}): string {
+  return json({ compilerOptions: { rootDir: '.', outDir: 'dist', paths, ...more } });
+}
+
+function manifest(scripts: Record<string, string>): string {
+  return json({ name: 'fixture', type: 'module', scripts });
 }
 
 function failing(name: string, file: string, content: string): Fixture {

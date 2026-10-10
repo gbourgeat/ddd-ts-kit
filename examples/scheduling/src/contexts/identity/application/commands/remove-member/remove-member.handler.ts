@@ -1,8 +1,8 @@
 import { Clock } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
-import { PracticeNotFoundError } from '#src/contexts/identity/domain/errors/practice-not-found.error.js';
-import { PracticeRepository } from '#src/contexts/identity/domain/repositories/practice.repository.js';
-import { RemoveMemberCommand } from '#src/contexts/identity/application/commands/remove-member/remove-member.command.js';
+import { PracticeNotFoundError } from '@/contexts/identity/domain/errors/practice-not-found.error.js';
+import { PracticeRepository } from '@/contexts/identity/domain/repositories/practice.repository.js';
+import { RemoveMemberCommand } from '@/contexts/identity/application/commands/remove-member/remove-member.command.js';
 
 @CommandHandler(RemoveMemberCommand, [PracticeRepository, Clock])
 export class RemoveMemberHandler implements CommandHandler<RemoveMemberCommand> {

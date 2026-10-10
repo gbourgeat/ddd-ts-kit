@@ -8,13 +8,13 @@ import {
   type ExecutionContext,
 } from '@ddd-ts-kit/kernel';
 import { repositoryContract } from '@ddd-ts-kit/testing/contracts';
-import type { Appointment } from '#src/contexts/scheduling/domain/aggregates/appointment.aggregate.js';
-import type { AppointmentRepository } from '#src/contexts/scheduling/domain/repositories/appointment.repository.js';
-import { Cancellation } from '#src/contexts/scheduling/domain/value-objects/cancellation.vo.js';
-import { KnexAppointmentRepository } from '#src/contexts/scheduling/infrastructure/persistence/knex-appointment.repository.js';
-import { openTestDatabase, type TestDatabase } from '#src/platform/database/open-test-database.js';
-import { anAppointment } from '#src/contexts/scheduling/test/builders/appointment.builder.js';
-import { FakeAppointmentRepository } from '#src/contexts/scheduling/test/fakes/appointment.repository.fake.js';
+import type { Appointment } from '@/contexts/scheduling/domain/aggregates/appointment.aggregate.js';
+import type { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository.js';
+import { Cancellation } from '@/contexts/scheduling/domain/value-objects/cancellation.vo.js';
+import { KnexAppointmentRepository } from '@/contexts/scheduling/infrastructure/persistence/knex-appointment.repository.js';
+import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database.js';
+import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder.js';
+import { FakeAppointmentRepository } from '@/contexts/scheduling/test/fakes/appointment.repository.fake.js';
 
 const runner = { describe, it, expect, beforeEach, afterEach };
 

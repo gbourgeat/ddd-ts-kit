@@ -2,10 +2,10 @@ import { actorOf } from '@ddd-ts-kit/auth';
 import { criteriaQuerySchema, defineRoute, pageResponse, pageSchemaOf, type Route } from '@ddd-ts-kit/http';
 import type { QueryBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
-import { occupancyCriteria, type Occupancy } from '#src/contexts/analytics/application/ports/occupancy-reader.port.js';
-import { SearchOccupancyQuery } from '#src/contexts/analytics/application/queries/search-occupancy/search-occupancy.query.js';
-import { SearchOccupancyLine } from '#src/contexts/analytics/presentation/http/search-occupancy-line.dto.js';
-import { SearchOccupancyParams } from '#src/contexts/analytics/presentation/http/search-occupancy-params.dto.js';
+import { occupancyCriteria, type Occupancy } from '@/contexts/analytics/application/ports/occupancy-reader.port.js';
+import { SearchOccupancyQuery } from '@/contexts/analytics/application/queries/search-occupancy/search-occupancy.query.js';
+import { SearchOccupancyLine } from '@/contexts/analytics/presentation/http/search-occupancy-line.dto.js';
+import { SearchOccupancyParams } from '@/contexts/analytics/presentation/http/search-occupancy-params.dto.js';
 
 const params = classSchema(SearchOccupancyParams);
 const query = criteriaQuerySchema(occupancyCriteria);

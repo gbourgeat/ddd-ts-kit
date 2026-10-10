@@ -26,13 +26,13 @@ that breaks them.
 ```ts
 // contexts/appointments/domain/aggregates/appointment.aggregate.ts
 import { AggregateRoot } from '@ddd-ts-kit/kernel';
-import { AppointmentAlreadyCancelled } from '#src/contexts/appointments/domain/errors/appointment-already-cancelled.error.js';
-import { CancellationWindowPassed } from '#src/contexts/appointments/domain/errors/cancellation-window-passed.error.js';
-import { AppointmentBooked } from '#src/contexts/appointments/domain/events/appointment-booked.event.js';
-import { AppointmentCancelled } from '#src/contexts/appointments/domain/events/appointment-cancelled.event.js';
-import { AppointmentRescheduled } from '#src/contexts/appointments/domain/events/appointment-rescheduled.event.js';
-import type { CancellationReason } from '#src/contexts/appointments/domain/value-objects/cancellation-reason.vo.js';
-import type { TimeSlot } from '#src/contexts/appointments/domain/value-objects/time-slot.vo.js';
+import { AppointmentAlreadyCancelled } from '@/contexts/appointments/domain/errors/appointment-already-cancelled.error.js';
+import { CancellationWindowPassed } from '@/contexts/appointments/domain/errors/cancellation-window-passed.error.js';
+import { AppointmentBooked } from '@/contexts/appointments/domain/events/appointment-booked.event.js';
+import { AppointmentCancelled } from '@/contexts/appointments/domain/events/appointment-cancelled.event.js';
+import { AppointmentRescheduled } from '@/contexts/appointments/domain/events/appointment-rescheduled.event.js';
+import type { CancellationReason } from '@/contexts/appointments/domain/value-objects/cancellation-reason.vo.js';
+import type { TimeSlot } from '@/contexts/appointments/domain/value-objects/time-slot.vo.js';
 
 const FREE_CANCELLATION_MS = 24 * 60 * 60 * 1000;
 

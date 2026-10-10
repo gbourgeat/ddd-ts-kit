@@ -1,19 +1,20 @@
 import { FIXED_ALIAS_ROOTS } from './fixed-alias-roots.js';
 
-const SUPPORTED = /^#[a-z][a-z0-9-]*\/$/;
+const SUPPORTED = /^(?:@|\$[a-z][a-z0-9-]*)\/$/;
+const SCOPED = /^@[^/]+\/$/;
 
 /** Why `importAlias` cannot be honoured by every tool from one declaration, or nothing when it can. */
 export function aliasProblem(importAlias: string): string | undefined {
-  if (importAlias === '#/') {
-    return 'Node 22 refuses a subpath import that starts with "#/", which the kit supports';
+  if (importAlias.startsWith('#')) {
+    return 'a specifier that starts with "#" is a Node subpath import, declared in package.json and resolved by Node itself; the kit declares the alias under "paths" in tsconfig.json and rewrites it when it builds';
   }
 
-  if (!importAlias.startsWith('#')) {
-    return 'only a specifier that starts with "#" is a subpath import, which Node, the compiler and every tool of the pipeline resolve from package.json alone; a tsconfig path such as "@/" is unknown to Node, so the compiled output would not run';
+  if (SCOPED.test(importAlias)) {
+    return 'it is also how the packages of a scope are named, and dependency-cruiser resolves an installed package before the project; "@/" has no scope name and "$<name>/" holds a character no package name may hold';
   }
 
   if (!SUPPORTED.test(importAlias)) {
-    return 'the alias is "#", one name in lower case (letters, digits, hyphens) and a final "/"';
+    return 'the alias is "@/", or "$", one name in lower case (letters, digits, hyphens) and a final "/": the two forms that can never be the name of a package';
   }
 
   const taken = Object.values(FIXED_ALIAS_ROOTS).find(({ prefix }) => prefix === importAlias);

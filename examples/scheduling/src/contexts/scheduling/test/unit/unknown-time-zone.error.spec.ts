@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { UnknownTimeZoneError } from '#src/contexts/scheduling/domain/errors/unknown-time-zone.error.js';
+import { UnknownTimeZoneError } from '@/contexts/scheduling/domain/errors/unknown-time-zone.error.js';
 
 describe('UnknownTimeZoneError', () => {
   it('carries its stable code', () => {

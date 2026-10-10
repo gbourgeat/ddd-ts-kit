@@ -1,5 +1,5 @@
 import { defineCriteria, type Page, type ScopedCriteria } from '@ddd-ts-kit/kernel';
-import type { OccupancyFigures } from '#src/contexts/analytics/domain/services/occupancy-measure.service.js';
+import type { OccupancyFigures } from '@/contexts/analytics/domain/services/occupancy-measure.service.js';
 
 /** The occupancy of a calendar over a day, under the key `<calendarId>.<day>`. */
 export type Occupancy = OccupancyFigures & {

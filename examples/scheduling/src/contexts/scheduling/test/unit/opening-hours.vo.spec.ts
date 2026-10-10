@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { unwrap } from '@ddd-ts-kit/kernel';
-import { InvalidRangeError } from '#src/contexts/scheduling/domain/errors/invalid-range.error.js';
-import { OpeningHours } from '#src/contexts/scheduling/domain/value-objects/opening-hours.vo.js';
-import { Range } from '#src/contexts/scheduling/domain/value-objects/range.vo.js';
+import { InvalidRangeError } from '@/contexts/scheduling/domain/errors/invalid-range.error.js';
+import { OpeningHours } from '@/contexts/scheduling/domain/value-objects/opening-hours.vo.js';
+import { Range } from '@/contexts/scheduling/domain/value-objects/range.vo.js';
 
 const morning = range('09:00', '12:00');
 const afternoon = range('14:00', '18:00');

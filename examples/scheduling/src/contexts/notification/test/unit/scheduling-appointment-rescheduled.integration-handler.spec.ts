@@ -3,20 +3,20 @@ import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
 import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';
-import * as notificationDeclarations from '#src/contexts/notification/notification.declarations.js';
-import { platformTestModule } from '#src/platform/platform-test.module.js';
-import { appointmentRescheduledV1 } from '#src/contexts/scheduling/published-language/index.js';
-import { notificationPermissions } from '#src/contexts/notification/application/authorization/notification.permissions.js';
-import { SchedulingAppointmentRescheduledIntegrationHandler } from '#src/contexts/notification/application/integration/handlers/scheduling-appointment-rescheduled.integration-handler.js';
-import { Contacts } from '#src/contexts/notification/application/ports/contacts.port.js';
-import { Mailer } from '#src/contexts/notification/application/ports/mailer.port.js';
-import { NotificationRepository } from '#src/contexts/notification/domain/repositories/notification.repository.js';
-import { ReminderRepository } from '#src/contexts/notification/domain/repositories/reminder.repository.js';
-import { aReminder } from '#src/contexts/notification/test/builders/reminder.builder.js';
-import { FakeContacts } from '#src/contexts/notification/test/fakes/contacts.fake.js';
-import { FakeMailer } from '#src/contexts/notification/test/fakes/mailer.fake.js';
-import { FakeNotificationRepository } from '#src/contexts/notification/test/fakes/notification.repository.fake.js';
-import { FakeReminderRepository } from '#src/contexts/notification/test/fakes/reminder.repository.fake.js';
+import * as notificationDeclarations from '@/contexts/notification/notification.declarations.js';
+import { platformTestModule } from '@/platform/platform-test.module.js';
+import { appointmentRescheduledV1 } from '@/contexts/scheduling/published-language/index.js';
+import { notificationPermissions } from '@/contexts/notification/application/authorization/notification.permissions.js';
+import { SchedulingAppointmentRescheduledIntegrationHandler } from '@/contexts/notification/application/integration/handlers/scheduling-appointment-rescheduled.integration-handler.js';
+import { Contacts } from '@/contexts/notification/application/ports/contacts.port.js';
+import { Mailer } from '@/contexts/notification/application/ports/mailer.port.js';
+import { NotificationRepository } from '@/contexts/notification/domain/repositories/notification.repository.js';
+import { ReminderRepository } from '@/contexts/notification/domain/repositories/reminder.repository.js';
+import { aReminder } from '@/contexts/notification/test/builders/reminder.builder.js';
+import { FakeContacts } from '@/contexts/notification/test/fakes/contacts.fake.js';
+import { FakeMailer } from '@/contexts/notification/test/fakes/mailer.fake.js';
+import { FakeNotificationRepository } from '@/contexts/notification/test/fakes/notification.repository.fake.js';
+import { FakeReminderRepository } from '@/contexts/notification/test/fakes/reminder.repository.fake.js';
 
 const authorization = authorizationModule({
   authorizer: new RoleBasedAuthorizer({

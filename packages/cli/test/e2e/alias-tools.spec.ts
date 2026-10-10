@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import path from 'node:path';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { DEFAULT_STACK, read, REPO_ROOT, write } from '../helpers.js';
@@ -9,6 +10,7 @@ import {
   linkCompiled,
   PROBE_SPEC,
   resolvedBy,
+  rewriteAliases,
 } from './compiled-project.js';
 import { expectNoFinding } from './expect-no-finding.js';
 import { bin, findingsOf, runIn } from './run-in.js';
@@ -18,8 +20,8 @@ import { NATIVE_COMPILER } from './type-errors.js';
 
 const TOOLS_COMPILER = path.join(REPO_ROOT, 'node_modules/typescript/bin/tsc');
 const HANDLER = 'src/contexts/billing/application/commands/issue-invoice/issue-invoice.handler.ts';
-const COMMAND = '#src/contexts/billing/application/commands/issue-invoice/issue-invoice.command.js';
-const NOWHERE = "import { location } from '#src/nowhere.js';";
+const COMMAND = '@/contexts/billing/application/commands/issue-invoice/issue-invoice.command.js';
+const NOWHERE = "import { location } from '@/nowhere.js';";
 
 interface Cruised {
   readonly modules: readonly { source: string; dependencies: readonly { module: string; resolved: string }[] }[];
@@ -62,7 +64,7 @@ describe.runIf(SLOW)('every tool of a generated project resolves an alias to the
       });
 
       expect(files).toMatch(
-        /^src\/alias-probe\.ts\n\s+Imported via '#src\/alias-probe\.js' from file 'src\/alias-probe\.spec\.ts'/m,
+        /^src\/alias-probe\.ts\n\s+Imported via '@\/alias-probe\.js' from file 'src\/alias-probe\.spec\.ts'/m,
       );
 
       expect(files).not.toMatch(/^dist\//m);
@@ -80,7 +82,7 @@ describe.runIf(SLOW)('every tool of a generated project resolves an alias to the
 
     const probe = cruised.modules.find((module) => module.source === PROBE_SPEC);
 
-    expect(probe?.dependencies.find((dependency) => dependency.module === '#src/alias-probe.js')?.resolved).toBe(
+    expect(probe?.dependencies.find((dependency) => dependency.module === '@/alias-probe.js')?.resolved).toBe(
       'src/alias-probe.ts',
     );
 
@@ -88,7 +90,7 @@ describe.runIf(SLOW)('every tool of a generated project resolves an alias to the
     expectNoFinding(root);
   }, 480_000);
 
-  it('an alias that names no file is refused by the compiler, by dependency-cruiser, by knip and by node', () => {
+  it('an alias that names no file is refused by the compiler, by dependency-cruiser, by knip and by the build', () => {
     edit(PROBE_SPEC, (spec) => spec.replace(/import \{ location \} from '[^']*';/, NOWHERE));
 
     const compiled = findingsOf(root, {
@@ -96,16 +98,24 @@ describe.runIf(SLOW)('every tool of a generated project resolves an alias to the
       args: [NATIVE_COMPILER, '-p', 'tsconfig.json', '--noEmit'],
     });
 
-    const loaded = started(root, process.execPath, ['--input-type=module', '-e', "await import('#src/nowhere.js')"]);
-
-    expect(compiled).toContain("TS2307: Cannot find module '#src/nowhere.js'");
+    expect(compiled).toContain("TS2307: Cannot find module '@/nowhere.js'");
 
     expect(
       findingsOf(root, { command: bin('depcruise'), args: ['src', '--config', '.dependency-cruiser.cjs'] }),
-    ).toContain('#src/nowhere.js');
+    ).toContain('@/nowhere.js');
 
-    expect(findingsOf(root, KNIP)).toContain('#src/nowhere.js');
-    expect(loaded.unresolved).toBe(true);
+    expect(findingsOf(root, KNIP)).toContain('@/nowhere.js');
+
+    // The compiler emits in spite of the error: the rewrite step is the last one that can refuse the output.
+    write(root, 'tsconfig.probe.json', JSON.stringify({ extends: './tsconfig.json', include: [PROBE_SPEC] }));
+    findingsOf(root, { command: process.execPath, args: [NATIVE_COMPILER, '-p', 'tsconfig.probe.json'] });
+
+    expect(() => rewriteAliases(root)).toThrow(
+      /alias-probe\.spec\.js, line \d+: .{1,2}@\/nowhere\.js.{1,2} names no file the build emitted/,
+    );
+
+    fs.rmSync(path.join(root, 'dist/src/alias-probe.spec.js'));
+    fs.rmSync(path.join(root, 'dist/src/alias-probe.spec.d.ts'), { force: true });
   }, 240_000);
 
   it('knip still sees a file nothing imports: an alias hides no dead code', () => {
@@ -138,11 +148,11 @@ describe.runIf(SLOW)('every tool of a generated project resolves an alias to the
 });
 
 /** Slow, opt-in: the same project under another alias, asked for at `init`, held to its whole pipeline and run. */
-describe.runIf(SLOW)('a project initialised with --import-alias "#app/"', () => {
+describe.runIf(SLOW)('a project initialised with --import-alias "$app/"', () => {
   let root: string;
 
   beforeAll(() => {
-    root = compiledProject(DEFAULT_STACK, ['--import-alias', '#app/']);
+    root = compiledProject(DEFAULT_STACK, ['--import-alias', '$app/']);
   }, 240_000);
 
   it('has no finding: the checker, ESLint, dependency-cruiser, knip', () => {
@@ -153,8 +163,9 @@ describe.runIf(SLOW)('a project initialised with --import-alias "#app/"', () => 
     const specs = runIn(root, { command: bin('vitest'), args: ['run'] });
 
     expect(linkCompiled(root).unresolved).toEqual([]);
-    expect(resolvedBy(root, [], '#app/main.js')).toBe('dist/src/main.js');
-    expect(resolvedBy(root, DEV_RUNNER, '#app/main.js')).toBe('src/main.ts');
+    expect(linkCompiled(root).aliased).toEqual([]);
+    expect(read(root, 'dist/src/main.js')).toContain("from './platform/compose-application.js';");
+    expect(resolvedBy(root, DEV_RUNNER, '$app/main.js')).toBe('src/main.ts');
 
     expect(compiledEntries(root).map((entry) => started(root, process.execPath, [entry]).unresolved)).toEqual([
       false,

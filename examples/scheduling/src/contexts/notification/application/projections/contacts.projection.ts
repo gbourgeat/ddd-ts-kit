@@ -1,8 +1,8 @@
 import { stampOf } from '@ddd-ts-kit/kernel';
 import { On, Projection } from '@ddd-ts-kit/kernel/declarations';
-import { personRegisteredV1, type PersonRegisteredV1 } from '#src/contexts/identity/published-language/index.js';
-import { storableStamp } from '#src/shared-kernel/storable-stamp.js';
-import { Contacts } from '#src/contexts/notification/application/ports/contacts.port.js';
+import { personRegisteredV1, type PersonRegisteredV1 } from '@/contexts/identity/published-language/index.js';
+import { storableStamp } from '@/shared-kernel/storable-stamp.js';
+import { Contacts } from '@/contexts/notification/application/ports/contacts.port.js';
 
 @Projection('notification.contacts', [Contacts])
 export class ContactsProjection {

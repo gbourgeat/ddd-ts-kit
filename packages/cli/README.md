@@ -41,7 +41,7 @@ ddd-ts-kit init [--http express|fastify|nest|none]
                 [--broker none|rabbitmq|kafka|nats|redis|custom] [--cache none|redis] [--audit on|off]
                 [--errors none|sentry] [--logger stdout|pino|winston]
                 [--style declared|explicit] [--assembly barrel|discovery]
-                [--allow-no-outbox "<reason>"] [--import-alias "#<name>/"]
+                [--allow-no-outbox "<reason>"] [--import-alias '$<name>/']
                 [--context <name>:<core|supporting|generic>]...
                 [--dry-run] [--force]
 ```
@@ -99,8 +99,8 @@ config, `docsUi`, `ci` and `logger` included.
 | Written | Content |
 |---|---|
 | `ddd-ts-kit.config.json` | stack, contexts, rule severities ([docs/CONFIG.md](../../docs/CONFIG.md)) |
-| `package.json` | scripts and dependencies of the stack (below), and `imports`: the one declaration of the import alias (`#src/*.js` to the source under the condition `ddd-ts-kit-source`, to the compiled file otherwise; `#test/*.js`, `#scripts/*.js`, and `#generated/*.js` with Prisma), derived from `importAlias` (`--import-alias "#<name>/"`, `#src/` by default; `@/` and `#/` are refused with the reason) |
-| `tsconfig.json`, `tsconfig.build.json` | strict, NodeNext, `rootDir` `.` and `outDir` `dist`, no `paths`: the compiler reads the alias from `package.json` and maps the compiled target back to its source; `experimentalDecorators` (and `emitDecoratorMetadata`) only for nest or class-validator, whose decorators are legacy ones: the declarations and the aspects serve both modes |
+| `package.json` | scripts and dependencies of the stack (below); `build` is the compiler, then `ddd-ts-kit build-aliases` |
+| `tsconfig.json`, `tsconfig.build.json` | strict, NodeNext, `rootDir` `.` and `outDir` `dist`, and `paths`: the one declaration of the import alias (`@/*` to `./src/*`, `$test/*`, `$scripts/*`, and `$generated/*` with Prisma), derived from `importAlias` (`--import-alias '$<name>/'`, `@/` by default; `#<name>/` and `@<name>/` are refused with the reason); the build config extends the other and declares no `paths`; `experimentalDecorators` (and `emitDecoratorMetadata`) only for nest or class-validator, whose decorators are legacy ones: the declarations and the aspects serve both modes |
 | `src/main.ts` | composition root: tracing first (error reporting second with `--errors sentry`), config, persistence, application (`log`, `traceConsumers: config.tracing.consumers`, `resilience`, `jobs: { start: config.runJobs, settings: jobSettings(process.env) }`), outbox relay, HTTP server; on `SIGTERM` or `SIGINT` it closes the server, stops the relay, stops the application, closes the persistence and shuts the tracing down |
 | `src/platform/` | one export per file, each named after it, in one folder per concern. At its root: `tracing.ts`, `compose-application.ts` and `job-settings.ts` (`jobSettings(environment, context?)`: one line per job, `JOB_<CONTEXT>_<JOB>_ENABLED=false` switches one off). `config/` (`app-config.ts`, `load-config.ts`, `config-error.ts`, `read-tracing.ts`: fail-fast on `DATABASE_URL`, `LOG_LEVEL`, `LOG_FORMAT`, `LOG_SCRUB_MESSAGES`, the `OUTBOUND_*` policy, `RUN_JOBS` and the tracing variables below); `observability/` (`create-logger.ts`, see `--logger`; `create-metrics.ts`: a `NoopMetrics` behind a `TODO(platform)`); `resilience/` (`resilience-settings.ts`, `default-resilience.ts`, `adapter-aspects.ts`: retry with backoff and a timeout for `external` and `gateway`, `own-policy.ts` for an adapter that states its own, `self-governed.ts`); `events/`, `database/`, `auth/`, `audit/`, `redis/` (below); `http/` (`start-http-server.ts`, `with-documentation.ts`: `/docs` and `/openapi.json`, off in production unless `API_DOCS=true`). With `--di tsyringe`: `compose-application.ts` (`composeApplication(persistence, options, contexts?)`: `kernelModule({...})`, the platform module, the authorization module, the contexts; installs the aspect runtime), `lay-foundations.ts` (one execution scope, clock, id generator, logger, metrics, instrumentation and audit, built before any module), `platform.module.ts` (what replaces the in-process defaults of the kernel: unit of work, processed-event store, the storage class, `OutboxStore`, `EventSubscribers` behind a broker, `ErrorMapper`, and `builder.around(['external', 'gateway'], ...)`, the resilience of every adapter that leaves the process), `platform-test.module.ts` (what a handler spec lists next to its context: the storage class bound to a factory that throws), `buses/create-command-bus.ts` and `create-query-bus.ts` (outermost first: `errorReportingMiddleware`, `loggingMiddleware`, `metricsMiddleware`, the permission, the span of the use case, the audit entry, then the unit of work of a command). With `--di manual` or `nest`: `compose-application.ts`, `platform.ts` (`interface Platform`, with `jobs: JobScheduler` and `adapter`, which wraps what a module file instantiates), `create-platform.ts`, `jobs/configured-job-scheduler.ts` (applies `job-settings.ts` to what a module registers) |
 | tracing | wired once, by the platform (`tracing/platform-only`): no `decorate` hook, no `decorate-bindings.ts`. `tracing.ts` starts `initTracing` of `@ddd-ts-kit/tracing/node` before any other module, on what `config/read-tracing.ts` validates: `OTEL_EXPORTER_OTLP_ENDPOINT` (a URL; left out, no span leaves the process), `TRACE_SAMPLE_RATIO` (0 to 1) and `TRACE_CONSUMERS` (`continue`, the default: a consumed event stays in the trace of its publication; `link`: each delivery starts a trace linked to it). With `--di tsyringe`: `lay-foundations.ts` builds `traceApplication({ consumers })`, `compose-application.ts` hands it to `kernelModule({ instrumentation })` (one span per use case, repository call, domain event, publication, consumer and job) and gives the outbox relay `tracedPublisher(bus)`. With hand wiring: `create-platform.ts` applies the members of `traceApplication()` itself (`useCase` on both buses, `domainEvents`, `publisher`, `binding` around every adapter, `job`, `executionScope`, `errorReporter`), with `tracedSubscriber` and `tracedPublisher` around the provider. With an HTTP stack, in both families, `auth/http-boundary.ts` sets `around: tracedRoutes()`: one `SERVER` span per request, named by its route |
@@ -141,12 +141,12 @@ to its lists, everything else is kept, and the notes of the command list what wa
 denied and `Read(!./.env.example)`, a negation placed after it in the same list, takes the
 example file back out.
 
-Every `.ts` file `init` and `generate` write imports by the alias (`#src/platform/errors.js`),
+Every `.ts` file `init` and `generate` write imports by the alias (`@/platform/errors.js`),
 never by a relative path; the barrel and a published-language index re-export by it too.
 
-Scripts: `dev` (`tsx watch --conditions=ddd-ts-kit-source`, so that an alias answers the sources,
+Scripts: `dev` (`tsx watch`, which resolves an alias from the `paths` of `tsconfig.json`,
 with `.env` loaded by `--env-file-if-exists` and tracing preloaded),
-`build`, `start`, `typecheck`, `lint`, `lint:fix`, `test`, `test:e2e`, `check:arch`, `depcruise`,
+`build` (the compiler, then `ddd-ts-kit build-aliases`), `start` (plain `node` on `dist/`), `typecheck`, `lint`, `lint:fix`, `test`, `test:e2e`, `check:arch`, `depcruise`,
 `deadcode`, `quality`, `openapi:generate|check`, `events:generate|check`, `docs:generate|check`,
 `db:generate`, `db:migrate`, `infra:up`, `infra:down`, `hooks:install`, `start:<context>` and
 `start:worker` once `generate service` and `generate worker` wrote their entry, the `ci:*` scripts the
@@ -348,6 +348,33 @@ published languages, declared upstreams, allowed packages, cycles and orphans. `
 it as `.dependency-cruiser.cjs`; `--check` exits 1 when the file is missing or stale, which is
 what `npm run depcruise` runs first. Edit the config, not the file.
 
+## build-aliases
+
+```
+ddd-ts-kit build-aliases [--project <tsconfig>]
+```
+
+The second step of `npm run build`, after the compiler. The compiler emits an import alias as
+it was written (`@/platform/errors.js`), and Node resolves no alias: this command rewrites, in
+every `.js`, `.mjs`, `.cjs`, `.d.ts`, `.d.mts` and `.d.cts` under the output directory of the
+tsconfig (`tsconfig.build.json` by default), each alias specifier into the relative path of the
+emitted file it names, so that `node dist/src/main.js` runs with no loader and no flag.
+
+- Rewritten: the specifier of `import ... from`, `export ... from`, a bare `import`,
+  `import('...')` and `require('...')` with a string literal, `import.meta.resolve('...')`, and
+  in declarations `import type`, `typeof import('...')` and `declare module '...'`.
+- Exact: the file is scanned, not searched; a string that only looks like an import, in other
+  code, a comment, a template or a regular expression, is left alone. Lines never move and the
+  source maps are not touched.
+- Idempotent: a second run rewrites nothing.
+- It exits 2 and writes nothing when an alias names no emitted file, when `import()` is given
+  an alias completed at run time (a template with an interpolation, a concatenation), or when
+  the output directory does not exist.
+
+`--json` answers `{ outDir, files, changed, specifiers }`. `ddd-ts-kit check` reports a script
+that compiles without this step (`imports/alias-declared`). The whole mechanism:
+[docs/tools/import-aliases.md](../../docs/tools/import-aliases.md).
+
 ## list
 
 ```
@@ -509,7 +536,7 @@ saying what to do instead. Exit code 1 when there is at least one error.
 | `clean/file-size` | a file of more than 350 lines, sources and tests; a path with a segment `generated` and declaration files are exempt |
 | `composition/only-in-module` | `new X`, or `bind(..).toClass(X, ..)` and `rebind(..).toClass(X, ..)`, of a class imported from `infrastructure/`, outside the module file, `main.ts`, the platform and tests; in a file importing `@ddd-ts-kit/di`, a call of `contextModule`, `discoverContext` or `.include(` outside those places and `apps/<context>/main.ts` |
 | `imports/alias-only` | under the source root, `test/` and `scripts/`: an `import`, `export ... from` or `import()` with a relative specifier, the same directory included (the fix names the alias to write; `eslint --fix` writes it); an alias specifier with a `.` or `..` segment |
-| `imports/alias-declared` | an `importAlias` that is not `#<name>/` or that is `#test/`, `#scripts/`, `#generated/`; an `imports` entry of `package.json` missing or different from what `importAlias`, `rootDir` and `outDir` give (the fix gives the entry); another `imports` entry under an alias; `paths` of a tsconfig or of `knip.json` mapping an alias; two tsconfig files that do not share `rootDir` and `outDir`, or a `moduleResolution` that does not read `imports`; a script running `tsx` or `drizzle-kit`, a `vitest` or `jest` config at the root, or `.dependency-cruiser.cjs` without the condition `ddd-ts-kit-source`. A project without `package.json` is not judged |
+| `imports/alias-declared` | an `importAlias` that is not `@/` or `$<name>/`, or that is `$test/`, `$scripts/`, `$generated/`; a `paths` entry of `tsconfig.json` missing or different from what `importAlias` gives (the fix gives the entry); another `paths` entry under an alias; a `baseUrl`; a `tsconfig.build.json` whose `paths` differ; `paths` of `knip.json` mapping an alias; a script that compiles (`tsc` without `--noEmit`) and does not run `ddd-ts-kit build-aliases` afterwards; a script running `tsx --tsconfig` on another file; a `vitest` config at the root without `tsconfigPaths: true`, a `jest` config without the derived `moduleNameMapper` entries, or `.dependency-cruiser.cjs` without `tsConfig`. A project without `package.json` is not judged |
 | `config/valid` | unknown upstream, classification, relationship, rule id or `guard` mode; a context missing on disk or in the config; a `commit` limit that is not a positive integer |
 | `config/suppression-needs-reason` | a suppression without a rule id or a reason (kept as an alias next to `governance/recorded-deviation`, which judges the reason) |
 | `authz/declared` | in a module file, `builder.command(X)` or `builder.query(X)` without `.requires(` or `.public(` in its chain, unless the message class carries `@Requires` or `@Public` of `@ddd-ts-kit/kernel/declarations`; with manual or nest wiring, a command or query class absent from every `requires(X, ...)` and `publicUseCase(X)` of the module file and of `application/authorization/`; a `defineRoute` without `security` (the route type refuses it already, and an empty list too: this is the text-level net for a definition built loosely); in the declared style, the exported class of a `*.command.ts` or `*.query.ts` file carrying neither `@Requires` nor `@Public` |
@@ -561,8 +588,8 @@ generated `lefthook.yml` runs it on the index at each commit, without blocking.
 ### Limits
 
 The checker reads sources with a small lexer and a shallow reading of declarations, not with a
-compiler. It follows relative specifiers, the aliases of the project (`importAlias`, `#test/`,
-`#scripts/`, `#generated/`) and bare packages, and classifies files by their path: an alias
+compiler. It follows relative specifiers, the aliases of the project (`importAlias`, `$test/`,
+`$scripts/`, `$generated/`) and bare packages, and classifies files by their path: an alias
 import is judged by every boundary rule exactly as the relative path to the same file.
 
 - Comments, strings, templates and regular expressions are skipped; a regular expression in an

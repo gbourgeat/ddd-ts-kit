@@ -1,4 +1,4 @@
-import type { PersonDirectoryGateway } from '#src/contexts/scheduling/application/ports/person-directory-gateway.port.js';
+import type { PersonDirectoryGateway } from '@/contexts/scheduling/application/ports/person-directory-gateway.port.js';
 
 /** Answers the names a test gave it, and fails on demand as a remote directory may. */
 export class FakePersonDirectoryGateway implements PersonDirectoryGateway {

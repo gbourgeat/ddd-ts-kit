@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { PracticeNotFoundError } from '#src/contexts/identity/domain/errors/practice-not-found.error.js';
+import { PracticeNotFoundError } from '@/contexts/identity/domain/errors/practice-not-found.error.js';
 
 describe('PracticeNotFoundError', () => {
   it('carries its stable code', () => {

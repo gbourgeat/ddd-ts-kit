@@ -1,6 +1,6 @@
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
-import { PracticeMemberAdded } from '#src/contexts/identity/domain/events/practice-member-added.event.js';
-import { IdentityRelationships } from '#src/contexts/identity/application/ports/identity-relationships.port.js';
+import { PracticeMemberAdded } from '@/contexts/identity/domain/events/practice-member-added.event.js';
+import { IdentityRelationships } from '@/contexts/identity/application/ports/identity-relationships.port.js';
 
 /** When a member is added, the platform learns their role in the practice and, for a practitioner, the desk they hold. */
 @DomainEventHandler(PracticeMemberAdded, { name: 'identity.practice.member-added' }, [IdentityRelationships])

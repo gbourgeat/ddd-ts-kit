@@ -244,8 +244,8 @@ const ONE_EXPORT: readonly Fixture[] = [
         '}',
       ),
       'src/platform/index.ts': source(
-        "export { countOf, increment } from '#src/platform/counters.js';",
-        "export type { Outcome } from '#src/shared-kernel/outcome.js';",
+        "export { countOf, increment } from '@/platform/counters.js';",
+        "export type { Outcome } from '@/shared-kernel/outcome.js';",
       ),
     }),
   },
@@ -289,11 +289,7 @@ const ONE_EXPORT: readonly Fixture[] = [
     name: 'an index file that declares something',
     expect: { file: 'src/platform/index.ts' },
     files: project({
-      'src/platform/index.ts': source(
-        "export * from '#src/platform/counters.js';",
-        '',
-        'export const platformName = 1;',
-      ),
+      'src/platform/index.ts': source("export * from '@/platform/counters.js';", '', 'export const platformName = 1;'),
     }),
   },
 ];

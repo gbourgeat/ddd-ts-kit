@@ -1,10 +1,10 @@
 import { Access } from '@ddd-ts-kit/auth';
 import { scoped } from '@ddd-ts-kit/kernel';
 import { QueryHandler } from '@ddd-ts-kit/kernel/declarations';
-import { schedulingPermissions } from '#src/contexts/scheduling/application/authorization/scheduling.permissions.js';
-import { Agenda } from '#src/contexts/scheduling/application/ports/agenda.port.js';
-import { SearchAppointmentsQuery } from '#src/contexts/scheduling/application/queries/search-appointments/search-appointments.query.js';
-import type { SearchAppointmentsResult } from '#src/contexts/scheduling/application/queries/search-appointments/search-appointments.result.js';
+import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions.js';
+import { Agenda } from '@/contexts/scheduling/application/ports/agenda.port.js';
+import { SearchAppointmentsQuery } from '@/contexts/scheduling/application/queries/search-appointments/search-appointments.query.js';
+import type { SearchAppointmentsResult } from '@/contexts/scheduling/application/queries/search-appointments/search-appointments.result.js';
 
 @QueryHandler(SearchAppointmentsQuery, [Agenda, Access])
 export class SearchAppointmentsHandler implements QueryHandler<SearchAppointmentsQuery> {

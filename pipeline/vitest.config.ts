@@ -8,8 +8,8 @@ const INTEGRATION_MODE = 'integration';
 export default defineConfig(({ mode }) => ({
   // Vitest does not lower standard (TC39) decorators, which every class of a declared context carries: the compiler the project builds with does.
   plugins: [decorators({ compiler: '@typescript/native' })],
-  // Under this condition an import alias answers the source file, not the compiled one (package.json, "imports").
-  ssr: { resolve: { conditions: ['ddd-ts-kit-source'] } },
+  // An import alias is resolved from the "paths" of tsconfig.json, which name the sources.
+  resolve: { tsconfigPaths: true },
   test: {
     projects: [
       { extends: true, test: { name: 'unit', include: ['src/**/*.spec.ts'], exclude: [INTEGRATION_SPECS] } },

@@ -11,11 +11,14 @@ const INTEGRATION = [
   'docs/integration/event-catalog.md',
 ];
 
-/** What `npm run build` and the documentation checks of the pipeline run: the compiler in build mode, then every generated contract, written and compared. */
+/** What `npm run build` and the documentation checks of the pipeline run: the compiler in build mode, the aliases of its output rewritten, then every generated contract, written and compared. */
 export function buildAndCheckDocuments(root: string): void {
   const node = (...args: string[]): string => runIn(root, { command: process.execPath, args });
 
   node(NATIVE_COMPILER, '-p', 'tsconfig.build.json');
+
+  expect(cli(root, 'build-aliases').code).toBe(0);
+
   node('dist/scripts/events.js');
   node('dist/scripts/events.js', '--check');
 

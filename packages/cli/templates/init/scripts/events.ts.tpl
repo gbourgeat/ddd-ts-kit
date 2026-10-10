@@ -45,12 +45,13 @@ function reportStale(): void {
   }
 }
 
-/** Every declaration exported by a published language. Read through the import alias, which answers the compiled modules when this script runs, so that a new context needs no registration. */
+/** Every declaration exported by a published language. Read from the compiled modules next to this script, so that a new context needs no registration: a path completed at run time cannot be an import alias, which the build rewrites. */
 async function declaredEvents(): Promise<AnyIntegrationEventDefinition[]> {
   const declarations: AnyIntegrationEventDefinition[] = [];
 
   for (const context of contextNames()) {
-    const exported: unknown = await import('{{alias.contexts}}/' + context + '/published-language/index.js');
+    const index = new URL('../{{config.contextsDir}}/' + context + '/published-language/index.js', import.meta.url);
+    const exported: unknown = await import(index.href);
     const values: unknown[] = typeof exported === 'object' && exported !== null ? Object.values(exported) : [];
 
     declarations.push(...values.filter(isDeclaration));

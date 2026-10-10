@@ -20,14 +20,14 @@ export const importsAliasOnly = defineRule<MessageId>({
   recommended: 'error',
   fixable: 'code',
   description:
-    'A file of the project is imported by its alias (`#src/...`), never by a relative path, the same directory included; an alias path holds no `.` or `..` segment.',
+    'A file of the project is imported by its alias (`@/...`), never by a relative path, the same directory included; an alias path holds no `.` or `..` segment.',
   messages: {
     relative:
       '"{{specifier}}" is a relative import. Import the file by its alias, \'{{alias}}\': the alias names the file from the root of the project, so the import reads the same from anywhere and survives a move of this file.',
     unnamed:
       '"{{specifier}}" is a relative import of a file no alias names. Keep what the code imports under {{directories}}; a file elsewhere (a manifest, a build product) is read at run time, not imported.',
     segment:
-      'The alias import "{{specifier}}" holds a "." or ".." segment: it can leave {{directory}}/. Write the path of the file from {{directory}}/ after "{{prefix}}", with no "." or ".." segment: an alias names one file of its directory, and Node refuses the others.',
+      'The alias import "{{specifier}}" holds a "." or ".." segment: it can leave {{directory}}/. Write the path of the file from {{directory}}/ after "{{prefix}}", with no "." or ".." segment: an alias names one file of its directory, and the build rewrites it as such.',
   },
   create({ file, report }) {
     const roots = aliasRoots(file.config);

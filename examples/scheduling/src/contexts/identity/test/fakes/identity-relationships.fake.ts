@@ -1,4 +1,4 @@
-import type { IdentityRelationships } from '#src/contexts/identity/application/ports/identity-relationships.port.js';
+import type { IdentityRelationships } from '@/contexts/identity/application/ports/identity-relationships.port.js';
 
 type Membership = Parameters<IdentityRelationships['recordMembership']>[0];
 type Delegation = Parameters<IdentityRelationships['recordDelegation']>[0];

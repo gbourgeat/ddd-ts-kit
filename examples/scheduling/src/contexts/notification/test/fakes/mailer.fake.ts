@@ -1,5 +1,5 @@
-import type { Mailer } from '#src/contexts/notification/application/ports/mailer.port.js';
-import type { Notification } from '#src/contexts/notification/domain/aggregates/notification.aggregate.js';
+import type { Mailer } from '@/contexts/notification/application/ports/mailer.port.js';
+import type { Notification } from '@/contexts/notification/domain/aggregates/notification.aggregate.js';
 
 interface DeliveredMail {
   readonly address: string;

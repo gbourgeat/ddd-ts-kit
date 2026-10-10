@@ -2,10 +2,10 @@ import { actorOf } from '@ddd-ts-kit/auth';
 import { defineRoute, type Route } from '@ddd-ts-kit/http';
 import type { CommandBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
-import { AddExceptionCommand } from '#src/contexts/scheduling/application/commands/add-exception/add-exception.command.js';
-import { AddExceptionParams } from '#src/contexts/scheduling/presentation/http/add-exception-params.dto.js';
-import { AddExceptionBody } from '#src/contexts/scheduling/presentation/http/add-exception-body.dto.js';
-import { AddExceptionAccepted } from '#src/contexts/scheduling/presentation/http/add-exception-accepted.dto.js';
+import { AddExceptionCommand } from '@/contexts/scheduling/application/commands/add-exception/add-exception.command.js';
+import { AddExceptionParams } from '@/contexts/scheduling/presentation/http/add-exception-params.dto.js';
+import { AddExceptionBody } from '@/contexts/scheduling/presentation/http/add-exception-body.dto.js';
+import { AddExceptionAccepted } from '@/contexts/scheduling/presentation/http/add-exception-accepted.dto.js';
 
 const params = classSchema(AddExceptionParams);
 const body = classSchema(AddExceptionBody);

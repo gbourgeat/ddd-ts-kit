@@ -72,7 +72,7 @@ function supportedAlias(config: Config): Config {
 
   throw new CliError(
     `The import alias "${config.importAlias}" is not supported: ${problem}.`,
-    `Use a subpath import such as "${DEFAULT_IMPORT_ALIAS}" (--import-alias, or "importAlias" in ${CONFIG_FILE}).`,
+    `Use "${DEFAULT_IMPORT_ALIAS}" or "$<name>/" (--import-alias, or "importAlias" in ${CONFIG_FILE}).`,
   );
 }
 

@@ -153,29 +153,30 @@ presentation ──▶ application ──▶ domain ◀── infrastructure
 | `domain-events/transactional-before-commit` | A domain event handler that runs before the commit has only transactional effects: the commit can still fail after the handlers ran (a deferred constraint, a serialization failure, a lost connection), so a before-commit handler may only have effects the rollback undoes. Judged: every production domain event handler of a context, that is a class of `application/event-handlers/*.event-handler.ts` or `application/integration/publishers/*.publisher.ts`, and any class carrying `@DomainEventHandler`. Its phase is `after-commit` when the options of its `@DomainEventHandler` write `phase: 'after-commit'`, or, for a class without the decorator, when every `.on(` registration of `<context>.module.ts` whose callback mentions it (the class name, or the variable assigned from `new <Class>(`) has a third argument holding `phase: 'after-commit'`; otherwise it is `before-commit`. Its dependencies are the names of the dependency list of its decorator, the types of its constructor parameters and the list of `.toClass(Handler, [..])`, each resolved through the imports of the file that writes it. A before-commit handler may depend on a repository port and anything else of the `domain/` layer of its context; on the ports of `@ddd-ts-kit/kernel` except `Cache`, `Lock`, `RateLimiter`, `JobScheduler` and `EventBus`; on `@ddd-ts-kit/auth`; on the files of its context outside `infrastructure/` and `application/ports/`; and on a port of `application/ports/` of its context only when it is a persistence port: at least one production class of the context implements it under `infrastructure/persistence/` and none anywhere else under `infrastructure/`. Refused before the commit: those five kernel ports, any other port of `application/ports/`, anything imported from `infrastructure/`, from another context, from the platform or from a package other than `@ddd-ts-kit/kernel` and `@ddd-ts-kit/auth`. An after-commit handler is refused `IntegrationEventPublisher` alone (after the commit nothing makes the outbox row atomic with a state change: it sends a command through `CommandBus`). |
 | `tracing/platform-only` | `@ddd-ts-kit/tracing` (every entry) and `@opentelemetry/*` are imported only by the platform directory, `main.ts` and `apps/`. |
 | `composition/only-in-module` | Adapters are instantiated or bound, and declared classes assembled (`contextModule`, `discoverContext`, `include`), only in `<context>.module.ts`, `main.ts`, `apps/` and the platform directory. In the declared style an adapter is bound by its own declaration and nothing instantiates it. |
-| `imports/alias-only` | A file of the project is imported by its alias (`#src/...`, `#test/...`, `#scripts/...`), never by a relative path, the same directory included: `import`, `export ... from` and `import()`, under the source root, `test/` and `scripts/`. An alias path holds no `.` or `..` segment. ESLint fixes it. |
-| `imports/alias-declared` | The alias has one declaration and every tool follows it: `importAlias` is a subpath import (`#<name>/`), `imports` in `package.json` is exactly what `importAlias`, `rootDir` and `outDir` give, no `paths` of `tsconfig` or of knip and no other `imports` entry repeats it, and what runs or reads the sources sets the condition `ddd-ts-kit-source` (tsx in the scripts, the test runner in its config, dependency-cruiser in its generated config). |
+| `imports/alias-only` | A file of the project is imported by its alias (`@/...`, `$test/...`, `$scripts/...`), never by a relative path, the same directory included: `import`, `export ... from` and `import()`, under the source root, `test/` and `scripts/`. An alias path holds no `.` or `..` segment. ESLint fixes it. |
+| `imports/alias-declared` | The alias has one source and every tool follows it: `importAlias` is `@/` or `$<name>/`, two forms no package can be named by; `paths` in `tsconfig.json` is exactly what it gives, with no other entry under an alias and no `baseUrl`, and `tsconfig.build.json` does not differ; vitest and dependency-cruiser are told to read tsconfig, jest repeats the same mapping, knip adds none; a script that compiles runs `ddd-ts-kit build-aliases` afterwards, and tsx runs under `tsconfig.json`. |
 | `config/valid` | `ddd-ts-kit.config.json` is consistent: known contexts, classifications, relationships, rule ids and guard mode, the same contexts as on disk, a function limit within the ceiling, complete `onePerFile.allow` entries, positive commit limits and coverage thresholds that are percentages. |
 | `config/suppression-needs-reason` | An inline suppression names its rule and gives a reason after `--`. |
 
 ### Imports
 
 A file of the project is named by its alias, from the root of the project, never by a relative
-path: `#src/contexts/billing/domain/aggregates/invoice.aggregate.js`, whatever the file that
-imports it, the same directory included. `#src/` is `importAlias` of the config and names the
-source root; `#test/` names `test/`, `#scripts/` names `scripts/`, and with Prisma
-`#generated/` names the generated client. The alias is a Node subpath import: it is declared
-once, under `imports` in `package.json`, which Node, the compiler, the runners, knip and
-dependency-cruiser all read, so the compiled output runs with plain `node`. Under the condition
-`ddd-ts-kit-source` an alias answers the TypeScript source, otherwise the compiled file; what
-runs or reads the sources sets the condition. Every rule of this section reads an alias exactly
-as a relative path. The mechanism, what each tool reads and what was measured:
+path: `@/contexts/billing/domain/aggregates/invoice.aggregate.js`, whatever the file that
+imports it, the same directory included. `@/` is `importAlias` of the config and names the
+source root; `$test/` names `test/`, `$scripts/` names `scripts/`, and with Prisma
+`$generated/` names the generated client: none of these can be the name of a package. The alias
+is declared once, under `paths` in `tsconfig.json`, which the compiler, the runners, knip and
+dependency-cruiser read; they always load the sources. Node reads no alias, so the build ends
+with `ddd-ts-kit build-aliases`, which rewrites each alias of the compiled output into a
+relative path: production is plain `node`, with no loader and no runtime dependency. Every rule
+of this section reads an alias exactly as a relative path. The mechanism, what each tool reads,
+what the build step does and what was measured:
 [tools/import-aliases.md](tools/import-aliases.md).
 
 ```ts
 // src/contexts/billing/application/commands/issue-invoice/issue-invoice.handler.ts
-import { IssueInvoiceCommand } from '#src/contexts/billing/application/commands/issue-invoice/issue-invoice.command.js';
-import { Invoice } from '#src/contexts/billing/domain/aggregates/invoice.aggregate.js';
+import { IssueInvoiceCommand } from '@/contexts/billing/application/commands/issue-invoice/issue-invoice.command.js';
+import { Invoice } from '@/contexts/billing/domain/aggregates/invoice.aggregate.js';
 ```
 
 Only the composition root (`main.ts`, `apps/`, the platform directory) and what assembles a

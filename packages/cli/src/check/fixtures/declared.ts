@@ -6,7 +6,7 @@ const DECLARATIONS = "'@ddd-ts-kit/kernel/declarations'";
 export const DECLARED = {
   repositoryPort: source(
     "import { Repository } from '@ddd-ts-kit/kernel';",
-    "import type { Invoice } from '#src/contexts/billing/domain/aggregates/invoice.aggregate.js';",
+    "import type { Invoice } from '@/contexts/billing/domain/aggregates/invoice.aggregate.js';",
     '',
     'export abstract class InvoiceRepository extends Repository<Invoice> {}',
   ),
@@ -20,8 +20,8 @@ export const DECLARED = {
   handler: source(
     "import { Clock } from '@ddd-ts-kit/kernel';",
     `import { CommandHandler } from ${DECLARATIONS};`,
-    "import { InvoiceRepository } from '#src/contexts/billing/domain/repositories/invoice.repository.js';",
-    "import { IssueInvoiceCommand } from '#src/contexts/billing/application/commands/issue-invoice/issue-invoice.command.js';",
+    "import { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository.js';",
+    "import { IssueInvoiceCommand } from '@/contexts/billing/application/commands/issue-invoice/issue-invoice.command.js';",
     '',
     '@CommandHandler(IssueInvoiceCommand, [InvoiceRepository, Clock])',
     'export class IssueInvoiceHandler implements CommandHandler<IssueInvoiceCommand> {}',
@@ -36,7 +36,7 @@ export const DECLARED = {
   integrationHandler: source(
     "import { CommandBus } from '@ddd-ts-kit/kernel';",
     `import { IntegrationEventHandler } from ${DECLARATIONS};`,
-    "import { productListedV1 } from '#src/contexts/catalog/published-language/index.js';",
+    "import { productListedV1 } from '@/contexts/catalog/published-language/index.js';",
     '',
     '@IntegrationEventHandler(',
     '  productListedV1,',
@@ -48,7 +48,7 @@ export const DECLARED = {
   event: source('export class InvoiceIssued {', "  readonly name = 'billing.invoice.issued';", '}'),
   eventHandler: source(
     `import { DomainEventHandler } from ${DECLARATIONS};`,
-    "import { InvoiceIssued } from '#src/contexts/billing/domain/events/invoice-issued.event.js';",
+    "import { InvoiceIssued } from '@/contexts/billing/domain/events/invoice-issued.event.js';",
     '',
     "@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued' })",
     'export class InvoiceIssuedEventHandler {}',
@@ -56,7 +56,7 @@ export const DECLARED = {
   publisher: source(
     "import { IntegrationEventPublisher } from '@ddd-ts-kit/kernel';",
     `import { DomainEventHandler } from ${DECLARATIONS};`,
-    "import { InvoiceIssued } from '#src/contexts/billing/domain/events/invoice-issued.event.js';",
+    "import { InvoiceIssued } from '@/contexts/billing/domain/events/invoice-issued.event.js';",
     '',
     "@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued' }, [IntegrationEventPublisher])",
     'export class InvoiceIssuedPublisher {}',
@@ -83,23 +83,23 @@ export const DECLARED = {
   repository: source(
     "import { Clock, ExecutionScope } from '@ddd-ts-kit/kernel';",
     `import { Repository } from ${DECLARATIONS};`,
-    "import { Database } from '#src/platform/database.js';",
-    "import { InvoiceRepository } from '#src/contexts/billing/domain/repositories/invoice.repository.js';",
+    "import { Database } from '@/platform/database.js';",
+    "import { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository.js';",
     '',
     '@Repository(InvoiceRepository, [Database, ExecutionScope, Clock])',
     'export class InMemoryInvoiceRepository implements InvoiceRepository {}',
   ),
   gateway: source(
     `import { Gateway } from ${DECLARATIONS};`,
-    "import { PriceCatalogUpstream } from '#src/platform/price-catalog-upstream.js';",
-    "import { PriceCatalogGateway } from '#src/contexts/billing/application/ports/price-catalog-gateway.port.js';",
+    "import { PriceCatalogUpstream } from '@/platform/price-catalog-upstream.js';",
+    "import { PriceCatalogGateway } from '@/contexts/billing/application/ports/price-catalog-gateway.port.js';",
     '',
     '@Gateway(PriceCatalogGateway, [PriceCatalogUpstream])',
     'export class InProcessPriceCatalogGateway implements PriceCatalogGateway {}',
   ),
   adapter: source(
     `import { Adapter } from ${DECLARATIONS};`,
-    "import { PaymentGateway } from '#src/contexts/billing/application/ports/payment-gateway.port.js';",
+    "import { PaymentGateway } from '@/contexts/billing/application/ports/payment-gateway.port.js';",
     '',
     "@Adapter(PaymentGateway, { kind: 'external' })",
     'export class RemotePaymentGateway implements PaymentGateway {}',

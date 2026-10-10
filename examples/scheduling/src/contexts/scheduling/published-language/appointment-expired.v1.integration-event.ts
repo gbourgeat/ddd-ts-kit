@@ -1,7 +1,7 @@
 import { defineIntegrationEvent } from '@ddd-ts-kit/events';
 import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
-import { AppointmentExpiredV1Payload } from '#src/contexts/scheduling/published-language/appointment-expired.v1.payload.js';
+import { AppointmentExpiredV1Payload } from '@/contexts/scheduling/published-language/appointment-expired.v1.payload.js';
 
 export const appointmentExpiredV1 = defineIntegrationEvent({
   type: 'scheduling.appointment.expired',

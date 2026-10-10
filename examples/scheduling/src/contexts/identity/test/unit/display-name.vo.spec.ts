@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { unwrap } from '@ddd-ts-kit/kernel';
-import { DisplayName } from '#src/contexts/identity/domain/value-objects/display-name.vo.js';
+import { DisplayName } from '@/contexts/identity/domain/value-objects/display-name.vo.js';
 
 describe('DisplayName', () => {
   it('is equal to another display name with the same value', () => {

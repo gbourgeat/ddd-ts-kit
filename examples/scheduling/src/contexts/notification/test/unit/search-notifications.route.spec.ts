@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { executeRoute } from '@ddd-ts-kit/http';
 import { InMemoryQueryBus, type PageRequest } from '@ddd-ts-kit/kernel';
-import { SearchNotificationsQuery } from '#src/contexts/notification/application/queries/search-notifications/search-notifications.query.js';
+import { SearchNotificationsQuery } from '@/contexts/notification/application/queries/search-notifications/search-notifications.query.js';
 import type {
   SearchNotificationsItem,
   SearchNotificationsSort,
-} from '#src/contexts/notification/application/queries/search-notifications/search-notifications.result.js';
-import { searchNotificationsRoute } from '#src/contexts/notification/presentation/http/search-notifications.route.js';
+} from '@/contexts/notification/application/queries/search-notifications/search-notifications.result.js';
+import { searchNotificationsRoute } from '@/contexts/notification/presentation/http/search-notifications.route.js';
 
 const sent: SearchNotificationsItem = {
   id: 'notification-1',

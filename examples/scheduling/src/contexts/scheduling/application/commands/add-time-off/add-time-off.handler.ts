@@ -1,10 +1,10 @@
 import { Clock, unwrap } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
-import { UnknownCalendarError } from '#src/contexts/scheduling/domain/errors/unknown-calendar.error.js';
-import { AppointmentRepository } from '#src/contexts/scheduling/domain/repositories/appointment.repository.js';
-import { CalendarRepository } from '#src/contexts/scheduling/domain/repositories/calendar.repository.js';
-import { TimeOff } from '#src/contexts/scheduling/domain/value-objects/time-off.vo.js';
-import { AddTimeOffCommand } from '#src/contexts/scheduling/application/commands/add-time-off/add-time-off.command.js';
+import { UnknownCalendarError } from '@/contexts/scheduling/domain/errors/unknown-calendar.error.js';
+import { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository.js';
+import { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository.js';
+import { TimeOff } from '@/contexts/scheduling/domain/value-objects/time-off.vo.js';
+import { AddTimeOffCommand } from '@/contexts/scheduling/application/commands/add-time-off/add-time-off.command.js';
 
 @CommandHandler(AddTimeOffCommand, [CalendarRepository, AppointmentRepository, Clock])
 export class AddTimeOffHandler implements CommandHandler<AddTimeOffCommand> {

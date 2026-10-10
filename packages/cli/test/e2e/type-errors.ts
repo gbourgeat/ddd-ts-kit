@@ -1,8 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import { SOURCE_CONDITION } from '../../src/alias/index.js';
-import { REPO_ROOT, write } from '../helpers.js';
+import { read, REPO_ROOT, write } from '../helpers.js';
 
 /** The compiler the generated scripts call by path: `npx tsc` would run the older one, kept for the tools. */
 export const NATIVE_COMPILER = path.join(REPO_ROOT, 'node_modules/@typescript/native/bin/tsc');
@@ -22,8 +21,8 @@ export function typeErrors(root: string): string {
     'tsconfig.e2e.json',
     JSON.stringify({
       extends: './tsconfig.json',
-      // The sources of the workspace packages widen `rootDir`, so a compiled alias target no longer maps back to its source: the source condition names it.
-      compilerOptions: { noEmit: true, rootDir: '/', paths: sourcePaths(), customConditions: [SOURCE_CONDITION] },
+      // `paths` of an extending config replaces the one it extends: the aliases of the project are repeated next to the sources of the packages.
+      compilerOptions: { noEmit: true, rootDir: '/', paths: { ...aliasPaths(root), ...sourcePaths() } },
       include: ['src', 'scripts', 'test', path.join(PACKAGES, 'validation/src/*.d.ts')],
     }),
   );
@@ -39,6 +38,14 @@ export function typeErrors(root: string): string {
   } catch (error) {
     return error instanceof Error && 'stdout' in error ? String(error.stdout) : String(error);
   }
+}
+
+function aliasPaths(root: string): Record<string, string[]> {
+  const { compilerOptions } = JSON.parse(read(root, 'tsconfig.json')) as {
+    compilerOptions: { paths: Record<string, string[]> };
+  };
+
+  return compilerOptions.paths;
 }
 
 /** Every entry of every runtime package, resolved to its source file. */

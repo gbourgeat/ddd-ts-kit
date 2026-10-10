@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { InMemoryCommandBus, InMemoryQueryBus } from '@ddd-ts-kit/kernel';
-import { identityRoutes } from '#src/contexts/identity/presentation/http/identity.routes.js';
+import { identityRoutes } from '@/contexts/identity/presentation/http/identity.routes.js';
 
 describe('The routes of identity', () => {
   it('answer each method and path once, each under an operation of its own', () => {

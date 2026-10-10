@@ -1,6 +1,6 @@
 import { forKinds, retry, timeout, when, type Aspect } from '@ddd-ts-kit/aspects';
-import type { ResilienceSettings } from '#src/platform/resilience/resilience-settings.js';
-import { selfGoverned } from '#src/platform/resilience/self-governed.js';
+import type { ResilienceSettings } from '@/platform/resilience/resilience-settings.js';
+import { selfGoverned } from '@/platform/resilience/self-governed.js';
 
 /**
  * What goes around every adapter that leaves the process (`external`, `gateway`) and states no

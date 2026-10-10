@@ -3,7 +3,7 @@
   "contextsDir": "src/contexts",
   "sharedKernelDir": "src/shared-kernel",
   "platformDir": "src/platform",
-  "importAlias": "#src/",
+  "importAlias": "@/",
   "stack": {
     "http": "express",
     "validation": "class-validator",

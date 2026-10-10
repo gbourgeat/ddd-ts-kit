@@ -15,11 +15,11 @@ export const COMPOSITION_FIXTURES: readonly Fixture[] = [
     files: project({
       [ADAPTER]: 'export class InMemoryInvoiceRepository {}\n',
       [`${BILLING}/billing.module.ts`]:
-        "import { InMemoryInvoiceRepository } from '#src/contexts/billing/infrastructure/persistence/in-memory-invoice.repository.js';\nexport const billingModule = new InMemoryInvoiceRepository();\n",
+        "import { InMemoryInvoiceRepository } from '@/contexts/billing/infrastructure/persistence/in-memory-invoice.repository.js';\nexport const billingModule = new InMemoryInvoiceRepository();\n",
       'src/main.ts':
-        "import { InMemoryInvoiceRepository } from '#src/contexts/billing/infrastructure/persistence/in-memory-invoice.repository.js';\n\nconst repository = new InMemoryInvoiceRepository();\n\nrepository.start();\n",
+        "import { InMemoryInvoiceRepository } from '@/contexts/billing/infrastructure/persistence/in-memory-invoice.repository.js';\n\nconst repository = new InMemoryInvoiceRepository();\n\nrepository.start();\n",
       [`${BILLING}/test/integration/in-memory-invoice.repository.spec.ts`]:
-        "import { InMemoryInvoiceRepository } from '#src/contexts/billing/infrastructure/persistence/in-memory-invoice.repository.js';\nexport const repository = new InMemoryInvoiceRepository();\n",
+        "import { InMemoryInvoiceRepository } from '@/contexts/billing/infrastructure/persistence/in-memory-invoice.repository.js';\nexport const repository = new InMemoryInvoiceRepository();\n",
     }),
   },
   {
@@ -29,7 +29,7 @@ export const COMPOSITION_FIXTURES: readonly Fixture[] = [
     also: ['layer/application-inward'],
     files: project(
       handler(
-        "import { InMemoryInvoiceRepository as Repo } from '#src/contexts/billing/infrastructure/persistence/in-memory-invoice.repository.js';\nexport class IssueInvoiceHandler {\n  readonly repository = new Repo();\n}\n",
+        "import { InMemoryInvoiceRepository as Repo } from '@/contexts/billing/infrastructure/persistence/in-memory-invoice.repository.js';\nexport class IssueInvoiceHandler {\n  readonly repository = new Repo();\n}\n",
       ),
     ),
   },
@@ -39,7 +39,7 @@ export const COMPOSITION_FIXTURES: readonly Fixture[] = [
     expect: { file: 'src/bootstrap.ts' },
     files: project({
       'src/bootstrap.ts':
-        "import { InMemoryInvoiceRepository } from '#src/contexts/billing/infrastructure/persistence/in-memory-invoice.repository.js';\n\nexport function bootstrap(builder: Builder): void {\n  builder.bind(InvoiceRepository).toClass(InMemoryInvoiceRepository, []);\n}\n",
+        "import { InMemoryInvoiceRepository } from '@/contexts/billing/infrastructure/persistence/in-memory-invoice.repository.js';\n\nexport function bootstrap(builder: Builder): void {\n  builder.bind(InvoiceRepository).toClass(InMemoryInvoiceRepository, []);\n}\n",
     }),
   },
   {
@@ -49,7 +49,7 @@ export const COMPOSITION_FIXTURES: readonly Fixture[] = [
     files: declaredProject({
       [ADAPTER]: DECLARED.repository,
       'src/main.ts':
-        "import { contextModule } from '@ddd-ts-kit/di';\nimport * as billingDeclarations from '#src/contexts/billing/billing.declarations.js';\n\nconst billing = contextModule('billing', billingDeclarations);\n\nbilling.start();\n",
+        "import { contextModule } from '@ddd-ts-kit/di';\nimport * as billingDeclarations from '@/contexts/billing/billing.declarations.js';\n\nconst billing = contextModule('billing', billingDeclarations);\n\nbilling.start();\n",
       'src/apps/billing/main.ts':
         "import { discoverContext } from '@ddd-ts-kit/di/discovery';\n\nconst billing = await discoverContext('billing', new URL('../../contexts/billing/', import.meta.url));\n\nbilling.start();\n",
       [PLATFORM_MODULE]:

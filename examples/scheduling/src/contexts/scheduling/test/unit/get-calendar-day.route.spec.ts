@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { executeRoute } from '@ddd-ts-kit/http';
 import { InMemoryQueryBus } from '@ddd-ts-kit/kernel';
-import { GetCalendarDayQuery } from '#src/contexts/scheduling/application/queries/get-calendar-day/get-calendar-day.query.js';
-import type { GetCalendarDayResult } from '#src/contexts/scheduling/application/queries/get-calendar-day/get-calendar-day.result.js';
-import { UnknownCalendarError } from '#src/contexts/scheduling/domain/errors/unknown-calendar.error.js';
-import { getCalendarDayRoute } from '#src/contexts/scheduling/presentation/http/get-calendar-day.route.js';
+import { GetCalendarDayQuery } from '@/contexts/scheduling/application/queries/get-calendar-day/get-calendar-day.query.js';
+import type { GetCalendarDayResult } from '@/contexts/scheduling/application/queries/get-calendar-day/get-calendar-day.result.js';
+import { UnknownCalendarError } from '@/contexts/scheduling/domain/errors/unknown-calendar.error.js';
+import { getCalendarDayRoute } from '@/contexts/scheduling/presentation/http/get-calendar-day.route.js';
 
 const shown: GetCalendarDayResult = {
   calendarId: 'calendar-1',

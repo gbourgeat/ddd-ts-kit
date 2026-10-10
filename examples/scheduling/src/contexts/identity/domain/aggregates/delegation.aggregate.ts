@@ -1,9 +1,9 @@
 import { AggregateRoot } from '@ddd-ts-kit/kernel';
-import { DelegationEndsInThePastError } from '#src/contexts/identity/domain/errors/delegation-ends-in-the-past.error.js';
-import { DelegationNotActiveError } from '#src/contexts/identity/domain/errors/delegation-not-active.error.js';
-import { DelegationGranted } from '#src/contexts/identity/domain/events/delegation-granted.event.js';
-import { DelegationRevoked } from '#src/contexts/identity/domain/events/delegation-revoked.event.js';
-import type { Desk } from '#src/contexts/identity/domain/value-objects/desk.vo.js';
+import { DelegationEndsInThePastError } from '@/contexts/identity/domain/errors/delegation-ends-in-the-past.error.js';
+import { DelegationNotActiveError } from '@/contexts/identity/domain/errors/delegation-not-active.error.js';
+import { DelegationGranted } from '@/contexts/identity/domain/events/delegation-granted.event.js';
+import { DelegationRevoked } from '@/contexts/identity/domain/events/delegation-revoked.event.js';
+import type { Desk } from '@/contexts/identity/domain/value-objects/desk.vo.js';
 
 /** Why a delegation ended: withdrawn by hand, its end date passed, or one of its two members left the practice. */
 type EndCause = DelegationRevoked['facts']['cause'];

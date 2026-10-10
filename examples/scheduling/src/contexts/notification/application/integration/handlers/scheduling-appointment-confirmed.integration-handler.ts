@@ -1,10 +1,7 @@
 import { CommandBus, systemActor } from '@ddd-ts-kit/kernel';
 import { IntegrationEventHandler } from '@ddd-ts-kit/kernel/declarations';
-import {
-  appointmentConfirmedV1,
-  type AppointmentConfirmedV1,
-} from '#src/contexts/scheduling/published-language/index.js';
-import { SendNotificationCommand } from '#src/contexts/notification/application/commands/send-notification/send-notification.command.js';
+import { appointmentConfirmedV1, type AppointmentConfirmedV1 } from '@/contexts/scheduling/published-language/index.js';
+import { SendNotificationCommand } from '@/contexts/notification/application/commands/send-notification/send-notification.command.js';
 
 @IntegrationEventHandler(appointmentConfirmedV1, { consumer: 'notification.scheduling-appointment-confirmed' }, [
   CommandBus,

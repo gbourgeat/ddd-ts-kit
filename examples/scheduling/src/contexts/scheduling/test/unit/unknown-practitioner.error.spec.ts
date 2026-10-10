@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { UnknownPractitionerError } from '#src/contexts/scheduling/domain/errors/unknown-practitioner.error.js';
+import { UnknownPractitionerError } from '@/contexts/scheduling/domain/errors/unknown-practitioner.error.js';
 
 describe('UnknownPractitionerError', () => {
   it('carries its stable code', () => {

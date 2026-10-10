@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { executeRoute } from '@ddd-ts-kit/http';
 import { InMemoryQueryBus, planCriteria, scoped } from '@ddd-ts-kit/kernel';
-import { agendaCriteria } from '#src/contexts/scheduling/application/ports/agenda.port.js';
-import { SearchPracticeAgendaQuery } from '#src/contexts/scheduling/application/queries/search-practice-agenda/search-practice-agenda.query.js';
-import { searchPracticeAgendaRoute } from '#src/contexts/scheduling/presentation/http/search-practice-agenda.route.js';
-import { anAgendaEntry } from '#src/contexts/scheduling/test/builders/agenda-entry.builder.js';
+import { agendaCriteria } from '@/contexts/scheduling/application/ports/agenda.port.js';
+import { SearchPracticeAgendaQuery } from '@/contexts/scheduling/application/queries/search-practice-agenda/search-practice-agenda.query.js';
+import { searchPracticeAgendaRoute } from '@/contexts/scheduling/presentation/http/search-practice-agenda.route.js';
+import { anAgendaEntry } from '@/contexts/scheduling/test/builders/agenda-entry.builder.js';
 
 const requested = anAgendaEntry()
   .withMany({ id: 'appointment-1', status: 'requested', confirmBefore: new Date('2026-03-01T12:00:00.000Z') })

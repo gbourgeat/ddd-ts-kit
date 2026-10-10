@@ -1,8 +1,8 @@
 import { CommandBus, systemActor } from '@ddd-ts-kit/kernel';
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
-import { NotificationSent } from '#src/contexts/notification/domain/events/notification-sent.event.js';
-import { PlanReminderCommand } from '#src/contexts/notification/application/commands/plan-reminder/plan-reminder.command.js';
-import { WithdrawReminderCommand } from '#src/contexts/notification/application/commands/withdraw-reminder/withdraw-reminder.command.js';
+import { NotificationSent } from '@/contexts/notification/domain/events/notification-sent.event.js';
+import { PlanReminderCommand } from '@/contexts/notification/application/commands/plan-reminder/plan-reminder.command.js';
+import { WithdrawReminderCommand } from '@/contexts/notification/application/commands/withdraw-reminder/withdraw-reminder.command.js';
 
 /**
  * When a notification told of an appointment to come, its reminder is planned for the start it

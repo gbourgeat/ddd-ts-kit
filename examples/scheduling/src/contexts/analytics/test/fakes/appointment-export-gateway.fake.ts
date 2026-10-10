@@ -1,6 +1,6 @@
 import { pageOf, type Page, type StampedRow } from '@ddd-ts-kit/kernel';
-import type { AppointmentExportGateway } from '#src/contexts/analytics/application/ports/appointment-export-gateway.port.js';
-import type { Outcome } from '#src/contexts/analytics/application/ports/outcome-register.port.js';
+import type { AppointmentExportGateway } from '@/contexts/analytics/application/ports/appointment-export-gateway.port.js';
+import type { Outcome } from '@/contexts/analytics/application/ports/outcome-register.port.js';
 
 const PAGE_SIZE = 2;
 

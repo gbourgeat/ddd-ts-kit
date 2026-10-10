@@ -1,4 +1,3 @@
-import { SOURCE_CONDITION } from '../../alias/index.js';
 import { DEPCRUISE_FILE } from '../../depcruise/depcruise-file.js';
 import type { Violation } from '../model/violation.js';
 import { isRecord } from '../support/is-record.js';
@@ -7,9 +6,10 @@ import type { Inspected } from './inspected.js';
 import { parseJsonc } from './parse-jsonc.js';
 import { readProjectFile } from './read-project-file.js';
 
-const { deadCode: KNIP, manifest: MANIFEST } = ALIAS_FILES;
+const { deadCode: KNIP, typeCheck: TYPE_CHECK } = ALIAS_FILES;
+const READS_TSCONFIG = new RegExp(`["']?tsConfig["']?\\s*:\\s*\\{\\s*["']?fileName["']?\\s*:\\s*["']${TYPE_CHECK}["']`);
 
-/** dependency-cruiser needs the source condition to follow an alias to a source; knip reads package.json and needs no path of its own. */
+/** dependency-cruiser is told to read tsconfig; knip reads it by itself and needs no path of its own. */
 export function graphTools(inspected: Inspected): Violation[] {
   return [...cruiser(inspected), ...deadCode(inspected)];
 }
@@ -17,15 +17,15 @@ export function graphTools(inspected: Inspected): Violation[] {
 function cruiser({ project, report }: Inspected): Violation[] {
   const text = readProjectFile(project, DEPCRUISE_FILE);
 
-  if (text === undefined || text.includes(SOURCE_CONDITION)) {
+  if (text === undefined || READS_TSCONFIG.test(text)) {
     return [];
   }
 
   return [
     report(
       { file: DEPCRUISE_FILE, line: 1 },
-      `${DEPCRUISE_FILE} does not resolve under the condition "${SOURCE_CONDITION}".`,
-      'Run `ddd-ts-kit depcruise-config --write`: without the condition the graph follows an alias to the compiled files, which are excluded, and no boundary rule sees the import.',
+      `${DEPCRUISE_FILE} does not resolve the import alias from ${TYPE_CHECK}.`,
+      `Run \`ddd-ts-kit depcruise-config --write\`: without \`tsConfig: { fileName: '${TYPE_CHECK}' }\` an alias resolves to nothing in the graph, and no boundary rule sees the import.`,
     ),
   ];
 }
@@ -40,7 +40,7 @@ function deadCode({ project, report, roots }: Inspected): Violation[] {
       report(
         { file: KNIP, line: 1 },
         `${KNIP} maps "${key}" under "paths".`,
-        `Remove the entry: knip resolves an alias from the "imports" of ${MANIFEST}, like every other tool.`,
+        `Remove the entry: knip reads the "paths" of ${TYPE_CHECK} by itself, and a second mapping is one more place to forget.`,
       ),
     );
 }

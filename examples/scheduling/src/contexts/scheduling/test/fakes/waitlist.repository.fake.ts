@@ -1,6 +1,6 @@
 import { InMemoryRepository } from '@ddd-ts-kit/testing';
-import { Waitlist } from '#src/contexts/scheduling/domain/aggregates/waitlist.aggregate.js';
-import type { WaitlistRepository } from '#src/contexts/scheduling/domain/repositories/waitlist.repository.js';
+import { Waitlist } from '@/contexts/scheduling/domain/aggregates/waitlist.aggregate.js';
+import type { WaitlistRepository } from '@/contexts/scheduling/domain/repositories/waitlist.repository.js';
 
 export class FakeWaitlistRepository extends InMemoryRepository<Waitlist> implements WaitlistRepository {
   constructor() {

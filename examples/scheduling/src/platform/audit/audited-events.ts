@@ -9,7 +9,7 @@ import {
   appointmentExpiredV1,
   appointmentCompletedV1,
   appointmentMarkedNoShowV1,
-} from '#src/contexts/scheduling/published-language/index.js';
+} from '@/contexts/scheduling/published-language/index.js';
 import {
   personRegisteredV1,
   practiceOpenedV1,
@@ -17,7 +17,7 @@ import {
   practiceMemberRemovedV1,
   delegationGrantedV1,
   delegationRevokedV1,
-} from '#src/contexts/identity/published-language/index.js';
+} from '@/contexts/identity/published-language/index.js';
 // /ddd-ts-kit:imports
 
 /** Every integration event the contexts declare: the audit trail records that each one occurred. `generate integration-event` adds to it. */

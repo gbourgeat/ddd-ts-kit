@@ -1,8 +1,8 @@
 import { relationTupleStoreContract } from '@ddd-ts-kit/auth/testing';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { openTestDatabase, type TestDatabase } from '#src/platform/database/open-test-database.js';
-import { AUTHORIZATION_SCHEMA } from '#src/platform/database/schema.js';
-import { KnexRelationTupleStore } from '#src/platform/auth/knex-relation-tuple-store.js';
+import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database.js';
+import { AUTHORIZATION_SCHEMA } from '@/platform/database/schema.js';
+import { KnexRelationTupleStore } from '@/platform/auth/knex-relation-tuple-store.js';
 
 let database: TestDatabase;
 

@@ -1,10 +1,10 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { Criteria, scoped } from '@ddd-ts-kit/kernel';
-import type { Contact, Contacts } from '#src/contexts/notification/application/ports/contacts.port.js';
-import { KnexContacts } from '#src/contexts/notification/infrastructure/persistence/knex-contacts.repository.js';
-import { storableStamp } from '#src/shared-kernel/storable-stamp.js';
-import { openTestDatabase, type TestDatabase } from '#src/platform/database/open-test-database.js';
-import { FakeContacts } from '#src/contexts/notification/test/fakes/contacts.fake.js';
+import type { Contact, Contacts } from '@/contexts/notification/application/ports/contacts.port.js';
+import { KnexContacts } from '@/contexts/notification/infrastructure/persistence/knex-contacts.repository.js';
+import { storableStamp } from '@/shared-kernel/storable-stamp.js';
+import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database.js';
+import { FakeContacts } from '@/contexts/notification/test/fakes/contacts.fake.js';
 
 const first = { eventId: 'event-1', occurredAt: new Date('2026-01-02T08:00:00.000Z') };
 const second = { eventId: 'event-2', occurredAt: new Date('2026-01-03T08:00:00.000Z') };

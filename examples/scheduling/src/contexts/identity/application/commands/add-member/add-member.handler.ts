@@ -1,11 +1,11 @@
 import { Clock, unwrap } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
-import { PersonNotRegisteredError } from '#src/contexts/identity/domain/errors/person-not-registered.error.js';
-import { PracticeNotFoundError } from '#src/contexts/identity/domain/errors/practice-not-found.error.js';
-import { PersonRepository } from '#src/contexts/identity/domain/repositories/person.repository.js';
-import { PracticeRepository } from '#src/contexts/identity/domain/repositories/practice.repository.js';
-import { Role } from '#src/contexts/identity/domain/value-objects/role.vo.js';
-import { AddMemberCommand } from '#src/contexts/identity/application/commands/add-member/add-member.command.js';
+import { PersonNotRegisteredError } from '@/contexts/identity/domain/errors/person-not-registered.error.js';
+import { PracticeNotFoundError } from '@/contexts/identity/domain/errors/practice-not-found.error.js';
+import { PersonRepository } from '@/contexts/identity/domain/repositories/person.repository.js';
+import { PracticeRepository } from '@/contexts/identity/domain/repositories/practice.repository.js';
+import { Role } from '@/contexts/identity/domain/value-objects/role.vo.js';
+import { AddMemberCommand } from '@/contexts/identity/application/commands/add-member/add-member.command.js';
 
 @CommandHandler(AddMemberCommand, [PracticeRepository, PersonRepository, Clock])
 export class AddMemberHandler implements CommandHandler<AddMemberCommand> {

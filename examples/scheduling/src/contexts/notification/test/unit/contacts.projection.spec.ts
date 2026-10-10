@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { createTestApplication, defineContextModule, fake } from '@ddd-ts-kit/di';
-import { platformTestModule } from '#src/platform/platform-test.module.js';
-import { personRegisteredV1 } from '#src/contexts/identity/published-language/index.js';
-import { Contacts } from '#src/contexts/notification/application/ports/contacts.port.js';
-import { ContactsProjection } from '#src/contexts/notification/application/projections/contacts.projection.js';
-import { FakeContacts } from '#src/contexts/notification/test/fakes/contacts.fake.js';
+import { platformTestModule } from '@/platform/platform-test.module.js';
+import { personRegisteredV1 } from '@/contexts/identity/published-language/index.js';
+import { Contacts } from '@/contexts/notification/application/ports/contacts.port.js';
+import { ContactsProjection } from '@/contexts/notification/application/projections/contacts.projection.js';
+import { FakeContacts } from '@/contexts/notification/test/fakes/contacts.fake.js';
 
 /** The generated barrel does not take a projection yet: it joins the context here as it does in the platform. */
 const projections = defineContextModule({

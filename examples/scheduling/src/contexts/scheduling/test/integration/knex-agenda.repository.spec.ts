@@ -1,14 +1,14 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { Criteria, offsetPage, scoped, unwrap } from '@ddd-ts-kit/kernel';
-import type { AgendaEntry } from '#src/contexts/scheduling/application/ports/agenda.port.js';
-import { AgendaProjection } from '#src/contexts/scheduling/application/projections/agenda.projection.js';
-import { AppointmentBooked } from '#src/contexts/scheduling/domain/events/appointment-booked.event.js';
-import { AppointmentCancelled } from '#src/contexts/scheduling/domain/events/appointment-cancelled.event.js';
-import { Cancellation } from '#src/contexts/scheduling/domain/value-objects/cancellation.vo.js';
-import { KnexAgenda } from '#src/contexts/scheduling/infrastructure/persistence/knex-agenda.repository.js';
-import { openTestDatabase, type TestDatabase } from '#src/platform/database/open-test-database.js';
-import { anAgendaEntry } from '#src/contexts/scheduling/test/builders/agenda-entry.builder.js';
-import { anAppointment } from '#src/contexts/scheduling/test/builders/appointment.builder.js';
+import type { AgendaEntry } from '@/contexts/scheduling/application/ports/agenda.port.js';
+import { AgendaProjection } from '@/contexts/scheduling/application/projections/agenda.projection.js';
+import { AppointmentBooked } from '@/contexts/scheduling/domain/events/appointment-booked.event.js';
+import { AppointmentCancelled } from '@/contexts/scheduling/domain/events/appointment-cancelled.event.js';
+import { Cancellation } from '@/contexts/scheduling/domain/value-objects/cancellation.vo.js';
+import { KnexAgenda } from '@/contexts/scheduling/infrastructure/persistence/knex-agenda.repository.js';
+import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database.js';
+import { anAgendaEntry } from '@/contexts/scheduling/test/builders/agenda-entry.builder.js';
+import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder.js';
 
 const everything = Criteria.of<AgendaEntry>();
 

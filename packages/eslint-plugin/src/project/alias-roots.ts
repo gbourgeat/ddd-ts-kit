@@ -1,9 +1,9 @@
 import type { AliasRoot } from './alias-root.js';
 import type { Config } from './config.js';
 
-const TEST: AliasRoot = { prefix: '#test/', directory: 'test' };
-const SCRIPTS: AliasRoot = { prefix: '#scripts/', directory: 'scripts' };
-const GENERATED: AliasRoot = { prefix: '#generated/', directory: 'generated' };
+const TEST: AliasRoot = { prefix: '$test/', directory: 'test' };
+const SCRIPTS: AliasRoot = { prefix: '$scripts/', directory: 'scripts' };
+const GENERATED: AliasRoot = { prefix: '$generated/', directory: 'generated' };
 
 /**
  * Every tree of a project whose files are imported by an alias: the source root under

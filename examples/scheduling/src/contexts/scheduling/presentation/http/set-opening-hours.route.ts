@@ -2,10 +2,10 @@ import { actorOf } from '@ddd-ts-kit/auth';
 import { defineRoute, type Route } from '@ddd-ts-kit/http';
 import type { CommandBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
-import { SetOpeningHoursCommand } from '#src/contexts/scheduling/application/commands/set-opening-hours/set-opening-hours.command.js';
-import { SetOpeningHoursParams } from '#src/contexts/scheduling/presentation/http/set-opening-hours-params.dto.js';
-import { SetOpeningHoursBody } from '#src/contexts/scheduling/presentation/http/set-opening-hours-body.dto.js';
-import { SetOpeningHoursAccepted } from '#src/contexts/scheduling/presentation/http/set-opening-hours-accepted.dto.js';
+import { SetOpeningHoursCommand } from '@/contexts/scheduling/application/commands/set-opening-hours/set-opening-hours.command.js';
+import { SetOpeningHoursParams } from '@/contexts/scheduling/presentation/http/set-opening-hours-params.dto.js';
+import { SetOpeningHoursBody } from '@/contexts/scheduling/presentation/http/set-opening-hours-body.dto.js';
+import { SetOpeningHoursAccepted } from '@/contexts/scheduling/presentation/http/set-opening-hours-accepted.dto.js';
 
 const params = classSchema(SetOpeningHoursParams);
 const body = classSchema(SetOpeningHoursBody);

@@ -1,7 +1,7 @@
 import { DeadLetterReports, NoopErrorReporter, type ErrorReporter } from '@ddd-ts-kit/kernel';
 import { RedisStreamsEventBus } from '@ddd-ts-kit/redis/event-bus';
-import type { AppConfig } from '#src/platform/config/app-config.js';
-import type { EventProvider } from '#src/platform/events/event-provider.js';
+import type { AppConfig } from '@/platform/config/app-config.js';
+import type { EventProvider } from '@/platform/events/event-provider.js';
 
 /**
  * Redis Streams, on Redis, Dragonfly or Valkey: the relay of the outbox appends to one stream per

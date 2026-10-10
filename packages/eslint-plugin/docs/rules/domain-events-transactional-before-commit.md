@@ -30,7 +30,7 @@ Incorrect:
 // src/contexts/billing/application/event-handlers/invoice-issued.event-handler.ts
 import { Cache } from '@ddd-ts-kit/kernel';
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
-import { InvoiceRepository } from '#src/contexts/billing/domain/repositories/invoice.repository.js';
+import { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository.js';
 
 @DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued' }, [InvoiceRepository, Cache])
 export class InvoiceIssuedEventHandler {

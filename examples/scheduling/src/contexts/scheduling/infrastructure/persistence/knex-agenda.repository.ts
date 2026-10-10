@@ -1,7 +1,7 @@
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
 import { KnexContext, KnexReadModelStore } from '@ddd-ts-kit/knex';
-import { Agenda, agendaCriteria, type AgendaEntry } from '#src/contexts/scheduling/application/ports/agenda.port.js';
-import { SCHEDULING_SCHEMA } from '#src/contexts/scheduling/infrastructure/persistence/scheduling.schema.js';
+import { Agenda, agendaCriteria, type AgendaEntry } from '@/contexts/scheduling/application/ports/agenda.port.js';
+import { SCHEDULING_SCHEMA } from '@/contexts/scheduling/infrastructure/persistence/scheduling.schema.js';
 
 @Repository(Agenda, [KnexContext])
 export class KnexAgenda extends KnexReadModelStore<AgendaEntry> implements Agenda {

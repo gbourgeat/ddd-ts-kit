@@ -1,6 +1,6 @@
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
-import { PersonRegistered } from '#src/contexts/identity/domain/events/person-registered.event.js';
-import { IdentityRelationships } from '#src/contexts/identity/application/ports/identity-relationships.port.js';
+import { PersonRegistered } from '@/contexts/identity/domain/events/person-registered.event.js';
+import { IdentityRelationships } from '@/contexts/identity/application/ports/identity-relationships.port.js';
 
 /** When a person is registered, the platform learns that this person is themselves. */
 @DomainEventHandler(PersonRegistered, { name: 'identity.person.registered' }, [IdentityRelationships])

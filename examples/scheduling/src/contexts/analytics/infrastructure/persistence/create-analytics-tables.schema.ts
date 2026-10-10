@@ -1,6 +1,6 @@
 import type { Knex } from 'knex';
 import { readModelColumns } from '@ddd-ts-kit/knex';
-import { ANALYTICS_SCHEMA } from '#src/contexts/analytics/infrastructure/persistence/analytics.schema.js';
+import { ANALYTICS_SCHEMA } from '@/contexts/analytics/infrastructure/persistence/analytics.schema.js';
 
 /** Sorted and compared by range as a read orders strings: by code point. */
 const ORDERED_TEXT = 'text collate "C"';

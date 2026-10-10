@@ -2,9 +2,9 @@ import { actorOf } from '@ddd-ts-kit/auth';
 import { defineRoute, type Route } from '@ddd-ts-kit/http';
 import type { Actor, CommandBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
-import { BookAppointmentCommand } from '#src/contexts/scheduling/application/commands/book-appointment/book-appointment.command.js';
-import { BookAppointmentBody } from '#src/contexts/scheduling/presentation/http/book-appointment-body.dto.js';
-import { BookAppointmentAccepted } from '#src/contexts/scheduling/presentation/http/book-appointment-accepted.dto.js';
+import { BookAppointmentCommand } from '@/contexts/scheduling/application/commands/book-appointment/book-appointment.command.js';
+import { BookAppointmentBody } from '@/contexts/scheduling/presentation/http/book-appointment-body.dto.js';
+import { BookAppointmentAccepted } from '@/contexts/scheduling/presentation/http/book-appointment-accepted.dto.js';
 
 const body = classSchema(BookAppointmentBody);
 const accepted = classSchema(BookAppointmentAccepted);

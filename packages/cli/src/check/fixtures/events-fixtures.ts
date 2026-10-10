@@ -40,7 +40,7 @@ export const EVENTS_FIXTURES: readonly Fixture[] = [
       [PUBLISHED]: `${DECLARE}${declaration('billing.invoice.issued')}`,
       [`${BILLING}/published-language/invoice-issued.v2.integration-event.ts`]: `${DECLARE}${declaration('billing.invoice.issued', 2)}`,
       [`${BILLING}/application/integration/publishers/invoice-issued.publisher.ts`]:
-        "import { invoiceIssuedV1 } from '#src/contexts/billing/published-language/invoice-issued.v1.integration-event.js';\nexport class InvoiceIssuedPublisher { readonly definition = invoiceIssuedV1; }\n",
+        "import { invoiceIssuedV1 } from '@/contexts/billing/published-language/invoice-issued.v1.integration-event.js';\nexport class InvoiceIssuedPublisher { readonly definition = invoiceIssuedV1; }\n",
     }),
   },
   {

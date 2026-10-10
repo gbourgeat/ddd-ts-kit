@@ -1,9 +1,9 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { FixedClock, FixedExecutionScope, executionContext, type Actor } from '@ddd-ts-kit/kernel';
-import { KnexPersonDirectory } from '#src/contexts/identity/infrastructure/persistence/knex-person-directory.reader.js';
-import { KnexPersonRepository } from '#src/contexts/identity/infrastructure/persistence/knex-person.repository.js';
-import { openTestDatabase, type TestDatabase } from '#src/platform/database/open-test-database.js';
-import { aPerson } from '#src/contexts/identity/test/builders/person.builder.js';
+import { KnexPersonDirectory } from '@/contexts/identity/infrastructure/persistence/knex-person-directory.reader.js';
+import { KnexPersonRepository } from '@/contexts/identity/infrastructure/persistence/knex-person.repository.js';
+import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database.js';
+import { aPerson } from '@/contexts/identity/test/builders/person.builder.js';
 
 const actor: Actor = { id: 'registrar', type: 'user', tenantId: 'acme', roles: [], attributes: {} };
 const scope = new FixedExecutionScope(executionContext({ correlationId: 'directory-spec', actor, origin: 'test' }));

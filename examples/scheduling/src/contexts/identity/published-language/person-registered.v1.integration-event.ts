@@ -1,7 +1,7 @@
 import { defineIntegrationEvent } from '@ddd-ts-kit/events';
 import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
-import { PersonRegisteredV1Payload } from '#src/contexts/identity/published-language/person-registered.v1.payload.js';
+import { PersonRegisteredV1Payload } from '@/contexts/identity/published-language/person-registered.v1.payload.js';
 
 export const personRegisteredV1 = defineIntegrationEvent({
   type: 'identity.person.registered',

@@ -1,12 +1,12 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { Criteria, ProjectionRebuild, scoped } from '@ddd-ts-kit/kernel';
-import { openTestDatabase, type TestDatabase } from '#src/platform/database/open-test-database.js';
-import type { Outcome } from '#src/contexts/analytics/application/ports/outcome-register.port.js';
-import { ANALYTICS_SCHEMA } from '#src/contexts/analytics/infrastructure/persistence/analytics.schema.js';
-import { createAnalyticsTables } from '#src/contexts/analytics/infrastructure/persistence/create-analytics-tables.schema.js';
-import { KnexOutcomeRegister } from '#src/contexts/analytics/infrastructure/persistence/knex-outcome-register.repository.js';
-import { anOutcome } from '#src/contexts/analytics/test/builders/outcome.builder.js';
-import { FakeAppointmentExportGateway } from '#src/contexts/analytics/test/fakes/appointment-export-gateway.fake.js';
+import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database.js';
+import type { Outcome } from '@/contexts/analytics/application/ports/outcome-register.port.js';
+import { ANALYTICS_SCHEMA } from '@/contexts/analytics/infrastructure/persistence/analytics.schema.js';
+import { createAnalyticsTables } from '@/contexts/analytics/infrastructure/persistence/create-analytics-tables.schema.js';
+import { KnexOutcomeRegister } from '@/contexts/analytics/infrastructure/persistence/knex-outcome-register.repository.js';
+import { anOutcome } from '@/contexts/analytics/test/builders/outcome.builder.js';
+import { FakeAppointmentExportGateway } from '@/contexts/analytics/test/fakes/appointment-export-gateway.fake.js';
 
 /** What scheduling states: three appointments, exported two a page. */
 const TRUTH: readonly Outcome[] = [

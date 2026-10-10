@@ -19,8 +19,8 @@ export default defineConfig(({ mode }) => ({
   // Under `emitDecoratorMetadata` the transform guards every type a decorated class names with a branch no test can take: the statements that apply decorators are kept out of the measure.
   plugins: [decoratorCoverage()],
   {{/if}}
-  // Under this condition an import alias answers the source file, not the compiled one (package.json, "imports").
-  ssr: { resolve: { conditions: ['{{alias.condition}}'] } },
+  // An import alias is resolved from the "paths" of tsconfig.json, which name the sources.
+  resolve: { tsconfigPaths: true },
   test: {
     {{#if assembly.discovery}}
     // Discovery imports the role files of a context itself: inlined, the package loads them through the runner, which compiles them.

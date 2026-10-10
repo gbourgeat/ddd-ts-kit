@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { unwrap } from '@ddd-ts-kit/kernel';
 import { given } from '@ddd-ts-kit/testing';
-import { Waitlist } from '#src/contexts/scheduling/domain/aggregates/waitlist.aggregate.js';
-import { AlreadyWaitingError } from '#src/contexts/scheduling/domain/errors/already-waiting.error.js';
-import { InvalidDayError } from '#src/contexts/scheduling/domain/errors/invalid-day.error.js';
-import { Slot } from '#src/contexts/scheduling/domain/value-objects/slot.vo.js';
-import { Waiter } from '#src/contexts/scheduling/domain/value-objects/waiter.vo.js';
-import { aCalendar } from '#src/contexts/scheduling/test/builders/calendar.builder.js';
-import { aWaitlist } from '#src/contexts/scheduling/test/builders/waitlist.builder.js';
+import { Waitlist } from '@/contexts/scheduling/domain/aggregates/waitlist.aggregate.js';
+import { AlreadyWaitingError } from '@/contexts/scheduling/domain/errors/already-waiting.error.js';
+import { InvalidDayError } from '@/contexts/scheduling/domain/errors/invalid-day.error.js';
+import { Slot } from '@/contexts/scheduling/domain/value-objects/slot.vo.js';
+import { Waiter } from '@/contexts/scheduling/domain/value-objects/waiter.vo.js';
+import { aCalendar } from '@/contexts/scheduling/test/builders/calendar.builder.js';
+import { aWaitlist } from '@/contexts/scheduling/test/builders/waitlist.builder.js';
 
 /** Friday before the Monday the waitlists of this spec wait for. */
 const now = new Date('2026-02-27T10:00:00.000Z');

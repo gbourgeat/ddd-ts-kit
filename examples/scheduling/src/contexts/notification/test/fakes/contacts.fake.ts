@@ -3,7 +3,7 @@ import {
   contactCriteria,
   type Contact,
   type Contacts,
-} from '#src/contexts/notification/application/ports/contacts.port.js';
+} from '@/contexts/notification/application/ports/contacts.port.js';
 
 export class FakeContacts extends InMemoryReadModelStore<Contact> implements Contacts {
   constructor() {

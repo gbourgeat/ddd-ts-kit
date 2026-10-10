@@ -1,15 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { unwrap } from '@ddd-ts-kit/kernel';
 import { given } from '@ddd-ts-kit/testing';
-import { Practice } from '#src/contexts/identity/domain/aggregates/practice.aggregate.js';
-import { AlreadyMemberError } from '#src/contexts/identity/domain/errors/already-member.error.js';
-import { NotAMemberError } from '#src/contexts/identity/domain/errors/not-a-member.error.js';
-import { NotAPractitionerError } from '#src/contexts/identity/domain/errors/not-a-practitioner.error.js';
-import { NotAnAssistantError } from '#src/contexts/identity/domain/errors/not-an-assistant.error.js';
-import { PracticeLeftUnmanagedError } from '#src/contexts/identity/domain/errors/practice-left-unmanaged.error.js';
-import { DisplayName } from '#src/contexts/identity/domain/value-objects/display-name.vo.js';
-import { Role, type RoleName } from '#src/contexts/identity/domain/value-objects/role.vo.js';
-import { aPractice } from '#src/contexts/identity/test/builders/practice.builder.js';
+import { Practice } from '@/contexts/identity/domain/aggregates/practice.aggregate.js';
+import { AlreadyMemberError } from '@/contexts/identity/domain/errors/already-member.error.js';
+import { NotAMemberError } from '@/contexts/identity/domain/errors/not-a-member.error.js';
+import { NotAPractitionerError } from '@/contexts/identity/domain/errors/not-a-practitioner.error.js';
+import { NotAnAssistantError } from '@/contexts/identity/domain/errors/not-an-assistant.error.js';
+import { PracticeLeftUnmanagedError } from '@/contexts/identity/domain/errors/practice-left-unmanaged.error.js';
+import { DisplayName } from '@/contexts/identity/domain/value-objects/display-name.vo.js';
+import { Role, type RoleName } from '@/contexts/identity/domain/value-objects/role.vo.js';
+import { aPractice } from '@/contexts/identity/test/builders/practice.builder.js';
 
 const later = new Date('2026-02-01T00:00:00.000Z');
 

@@ -16,10 +16,10 @@ const SAVED = '    await this.invoiceRepository.save(target);\n';
 const SENT = "    await this.commands.execute(new CancelInvoiceCommand(systemActor('billing.cancel-stale-invoices')));";
 
 const ADAPTER_IMPORT =
-  "import { DrizzleInvoiceRepository } from '#src/contexts/billing/infrastructure/persistence/drizzle-invoice.repository.js';\n";
+  "import { DrizzleInvoiceRepository } from '@/contexts/billing/infrastructure/persistence/drizzle-invoice.repository.js';\n";
 
 const DECLARED =
-  "import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';\nimport { InvoiceIssued } from '#src/contexts/billing/domain/events/invoice-issued.event.js';\n\n@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued' })";
+  "import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';\nimport { InvoiceIssued } from '@/contexts/billing/domain/events/invoice-issued.event.js';\n\n@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued' })";
 
 const CACHING = `import { Cache } from '@ddd-ts-kit/kernel';\n${DECLARED.replace(' })', ' }, [Cache])')}`;
 const SPRAWL = `\nexport function sprawl(): number {\n  let total = 0;\n\n${'  total += 1;\n'.repeat(101)}\n  return total;\n}\n`;
@@ -154,7 +154,7 @@ const INJECTIONS: readonly Injection[] = [
     eslint: 'ddd-ts-kit/imports-alias-only',
     what: 'a relative import of the same directory',
     file: HANDLER,
-    from: "from '#src/contexts/billing/application/commands/issue-invoice/issue-invoice.command.js';",
+    from: "from '@/contexts/billing/application/commands/issue-invoice/issue-invoice.command.js';",
     to: "from './issue-invoice.command.js';",
   },
   {

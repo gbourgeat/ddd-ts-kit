@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { executeRoute } from '@ddd-ts-kit/http';
 import { InMemoryQueryBus } from '@ddd-ts-kit/kernel';
-import { SearchOccupancyQuery } from '#src/contexts/analytics/application/queries/search-occupancy/search-occupancy.query.js';
-import { searchOccupancyRoute } from '#src/contexts/analytics/presentation/http/search-occupancy.route.js';
-import { anOccupancy } from '#src/contexts/analytics/test/builders/occupancy.builder.js';
+import { SearchOccupancyQuery } from '@/contexts/analytics/application/queries/search-occupancy/search-occupancy.query.js';
+import { searchOccupancyRoute } from '@/contexts/analytics/presentation/http/search-occupancy.route.js';
+import { anOccupancy } from '@/contexts/analytics/test/builders/occupancy.builder.js';
 
 const line = anOccupancy({ heldMinutes: 30, appointmentsHeld: 1 });
 

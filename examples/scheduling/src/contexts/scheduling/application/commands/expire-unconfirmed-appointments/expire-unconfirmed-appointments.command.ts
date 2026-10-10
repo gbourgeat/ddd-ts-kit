@@ -1,6 +1,6 @@
 import { AuthorizedCommand, type Actor } from '@ddd-ts-kit/kernel';
 import { Requires } from '@ddd-ts-kit/kernel/declarations';
-import { schedulingPermissions } from '#src/contexts/scheduling/application/authorization/scheduling.permissions.js';
+import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions.js';
 
 /** Ends every requested appointment whose confirmation deadline is reached at `at`, the instant the occurrence of the job was planned for. */
 @Requires(schedulingPermissions['appointment.expire'], {

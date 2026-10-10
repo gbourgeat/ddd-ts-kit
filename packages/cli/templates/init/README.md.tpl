@@ -31,8 +31,8 @@ npm run dev
 ```
 
 `npm run dev` restarts the application when a source file changes. It runs `tsx watch`, which
-executes TypeScript directly; `--conditions={{alias.condition}}` makes an import alias answer
-the source file instead of the compiled one; `--env-file-if-exists=.env` gives Node the variables of `.env`
+executes TypeScript directly and resolves an import alias from the `paths` of `tsconfig.json`;
+`--env-file-if-exists=.env` gives Node the variables of `.env`
 when the file is there, and `--import` loads `{{config.platformDir}}/tracing.ts` before
 everything else so that instrumentation is installed first.
 `{{config.platformDir}}/config/load-config.ts` validates the variables and refuses to start when
@@ -214,13 +214,14 @@ native version does not ship: do not use `npx tsc`, it would run version 6.
 
 Every file of the project is imported by an alias from the project root, never by a relative
 path: `{{alias.platform}}/config/load-config.js` for `{{config.platformDir}}/config/load-config.ts`,
-`{{alias.test}}/...` for `test/`, `{{alias.scripts}}/...` for `scripts/`. The alias is a Node
-subpath import, declared once under `imports` in `package.json`: under the condition
-`{{alias.condition}}` it answers the TypeScript source, otherwise the compiled file under
-`dist/`. `npm start` is plain `node` and loads `dist/`; `npm run dev`, the tests and the import
-graph set the condition and read the sources. `npm run lint:fix` turns a relative import into
-its alias, and `npm run check:arch` reports a declaration that no longer follows `importAlias`
-of `ddd-ts-kit.config.json` (`imports/alias-only`, `imports/alias-declared`).
+`{{alias.test}}/...` for `test/`, `{{alias.scripts}}/...` for `scripts/`. The alias is declared
+once, under `paths` in `tsconfig.json`, which the compiler, `npm run dev`, the tests, knip and
+the import graph read. Node reads no alias: `npm run build` compiles, then
+`ddd-ts-kit build-aliases` rewrites each alias of `dist/` into a relative path, so `npm start`
+is plain `node`. `npm run lint:fix` turns a relative import into its alias, and
+`npm run check:arch` reports a declaration that no longer follows `importAlias` of
+`ddd-ts-kit.config.json`, or a build that skips the rewrite (`imports/alias-only`,
+`imports/alias-declared`).
 
 | Gate | Script | Tool |
 |---|---|---|

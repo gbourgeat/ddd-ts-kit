@@ -8,8 +8,8 @@ export default defineConfig({
   // The application under test holds classes that carry standard decorators.
   plugins: [decorators({ compiler: '@typescript/native' })],
   {{/if}}
-  // Under this condition an import alias answers the source file, not the compiled one (package.json, "imports").
-  ssr: { resolve: { conditions: ['{{alias.condition}}'] } },
+  // An import alias is resolved from the "paths" of tsconfig.json, which name the sources.
+  resolve: { tsconfigPaths: true },
   test: {
     include: ['test/e2e/**/*.e2e.spec.ts'],
     {{#if assembly.discovery}}

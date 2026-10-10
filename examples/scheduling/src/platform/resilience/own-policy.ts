@@ -1,5 +1,5 @@
 import { compose, type Aspect } from '@ddd-ts-kit/aspects';
-import { selfGoverned } from '#src/platform/resilience/self-governed.js';
+import { selfGoverned } from '@/platform/resilience/self-governed.js';
 
 /**
  * The policy one adapter states for itself, in place of the default one:

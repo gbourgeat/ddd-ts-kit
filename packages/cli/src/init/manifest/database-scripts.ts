@@ -1,14 +1,11 @@
-import { SOURCE_CONDITION } from '../../alias/index.js';
 import type { Config } from '../../config/index.js';
-
-const DRIZZLE_KIT = `node --conditions=${SOURCE_CONDITION} node_modules/drizzle-kit/bin.cjs`;
 
 /** The pipelines call `db:migrate` before the adapter specs whatever the stack: without a database it says so and succeeds. */
 const DATABASE_SCRIPTS: Readonly<Record<string, Record<string, string>>> = {
   none: { 'db:migrate': 'echo "No database to migrate."' },
   custom: { 'db:migrate': 'echo "Custom persistence: run your own migrations here."' },
-  // drizzle-kit loads the TypeScript schema, which re-exports the tables of each context by their alias: it is answered the sources under the source condition.
-  drizzle: { 'db:generate': `${DRIZZLE_KIT} generate`, 'db:migrate': `${DRIZZLE_KIT} migrate` },
+  // drizzle-kit loads the TypeScript schema, which re-exports the tables of each context by their alias: it reads the `paths` of tsconfig.json itself.
+  drizzle: { 'db:generate': 'drizzle-kit generate', 'db:migrate': 'drizzle-kit migrate' },
   knex: { 'db:generate': 'knex migrate:make', 'db:migrate': 'npm run build && knex migrate:latest' },
   // The client and the schema of the tests are build products of prisma/schema.prisma: every entry point refreshes them.
   prisma: {

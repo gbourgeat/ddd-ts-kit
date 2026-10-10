@@ -2,12 +2,9 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, onTestFailed } f
 import { collectEvents, expectProblem, expectStatus } from '@ddd-ts-kit/testing/e2e';
 import { reportSeedOnFailure } from '@ddd-ts-kit/testing/faker';
 import { expectSpanTree, installTestTracing } from '@ddd-ts-kit/tracing/testing';
-import {
-  delegationGrantedV1,
-  type DelegationGrantedV1Payload,
-} from '#src/contexts/identity/published-language/index.js';
-import { startApplication, type RunningApplication } from '#test/e2e/support/start-application.js';
-import { storyOf } from '#test/e2e/support/story-of.js';
+import { delegationGrantedV1, type DelegationGrantedV1Payload } from '@/contexts/identity/published-language/index.js';
+import { startApplication, type RunningApplication } from '$test/e2e/support/start-application.js';
+import { storyOf } from '$test/e2e/support/story-of.js';
 
 const tracing = installTestTracing();
 let application: RunningApplication;

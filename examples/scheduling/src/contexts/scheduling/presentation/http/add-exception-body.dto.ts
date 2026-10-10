@@ -1,6 +1,6 @@
 import { Type } from 'class-transformer';
 import { ArrayMaxSize, IsArray, Matches, ValidateNested } from 'class-validator';
-import { DayRangeDto } from '#src/contexts/scheduling/presentation/http/day-range.dto.js';
+import { DayRangeDto } from '@/contexts/scheduling/presentation/http/day-range.dto.js';
 
 export class AddExceptionBody {
   /** The day whose hours are replaced, `YYYY-MM-DD` in the time zone of the practice. */

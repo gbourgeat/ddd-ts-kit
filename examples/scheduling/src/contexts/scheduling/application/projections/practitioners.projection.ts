@@ -5,9 +5,9 @@ import {
   practiceMemberRemovedV1,
   type PracticeMemberAddedV1,
   type PracticeMemberRemovedV1,
-} from '#src/contexts/identity/published-language/index.js';
-import { storableStamp } from '#src/shared-kernel/storable-stamp.js';
-import { PractitionerDirectory } from '#src/contexts/scheduling/application/ports/practitioner-directory.port.js';
+} from '@/contexts/identity/published-language/index.js';
+import { storableStamp } from '@/shared-kernel/storable-stamp.js';
+import { PractitionerDirectory } from '@/contexts/scheduling/application/ports/practitioner-directory.port.js';
 
 /** Keeps the practitioners of each practice, with the time zone of the practice, from what identity announces of its members. */
 @Projection('scheduling.practitioners', [PractitionerDirectory])

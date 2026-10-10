@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { InvalidEmailError } from '#src/contexts/identity/domain/errors/invalid-email.error.js';
+import { InvalidEmailError } from '@/contexts/identity/domain/errors/invalid-email.error.js';
 
 describe('InvalidEmailError', () => {
   it('carries its stable code', () => {

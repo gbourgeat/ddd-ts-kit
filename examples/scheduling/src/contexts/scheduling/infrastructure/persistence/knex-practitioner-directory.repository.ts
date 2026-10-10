@@ -4,8 +4,8 @@ import {
   PractitionerDirectory,
   practitionerCriteria,
   type PractitionerEntry,
-} from '#src/contexts/scheduling/application/ports/practitioner-directory.port.js';
-import { SCHEDULING_SCHEMA } from '#src/contexts/scheduling/infrastructure/persistence/scheduling.schema.js';
+} from '@/contexts/scheduling/application/ports/practitioner-directory.port.js';
+import { SCHEDULING_SCHEMA } from '@/contexts/scheduling/infrastructure/persistence/scheduling.schema.js';
 
 @Repository(PractitionerDirectory, [KnexContext])
 export class KnexPractitionerDirectory extends KnexReadModelStore<PractitionerEntry> implements PractitionerDirectory {

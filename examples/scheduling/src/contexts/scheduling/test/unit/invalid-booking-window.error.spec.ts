@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { InvalidBookingWindowError } from '#src/contexts/scheduling/domain/errors/invalid-booking-window.error.js';
+import { InvalidBookingWindowError } from '@/contexts/scheduling/domain/errors/invalid-booking-window.error.js';
 
 describe('InvalidBookingWindowError', () => {
   it('carries its stable code', () => {

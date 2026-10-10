@@ -17,7 +17,7 @@ const GOVERNED = `import { defineConfig } from 'vitest/config';
 import { governedCoverage } from '@ddd-ts-kit/testing/coverage';
 
 export default defineConfig(({ mode }) => ({
-  ssr: { resolve: { conditions: ['ddd-ts-kit-source'] } },
+  resolve: { tsconfigPaths: true },
   test: {
     exclude: ['src/contexts/*/test/integration/**'],
     coverage: { provider: 'v8', reporter: ['text'], ...governedCoverage(mode) },
@@ -33,7 +33,7 @@ const BY_HAND = GOVERNED.replace(
 const UNGOVERNED = `import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
-  ssr: { resolve: { conditions: ['ddd-ts-kit-source'] } },
+  resolve: { tsconfigPaths: true },
   test: { coverage: { provider: 'v8', thresholds: { lines: 10 } } },
 });
 `;

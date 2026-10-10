@@ -11,7 +11,11 @@ const DEPTH = 8;
  * project, the nearest winning; nothing when the file is absent. `rootDir` and `outDir` are
  * answered from the project root.
  */
-export function compilerOptionsOf(project: Project, file: string, depth = DEPTH): Record<string, unknown> | undefined {
+export function compilerOptionsOf(
+  project: Pick<Project, 'root'>,
+  file: string,
+  depth = DEPTH,
+): Record<string, unknown> | undefined {
   const text = readProjectFile(project, file);
   const written = text === undefined ? undefined : parseJsonc(text);
 

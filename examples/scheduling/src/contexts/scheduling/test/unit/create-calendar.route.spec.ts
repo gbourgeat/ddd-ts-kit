@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { executeRoute } from '@ddd-ts-kit/http';
 import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';
-import { CreateCalendarCommand } from '#src/contexts/scheduling/application/commands/create-calendar/create-calendar.command.js';
-import { UnknownPractitionerError } from '#src/contexts/scheduling/domain/errors/unknown-practitioner.error.js';
-import { createCalendarRoute } from '#src/contexts/scheduling/presentation/http/create-calendar.route.js';
+import { CreateCalendarCommand } from '@/contexts/scheduling/application/commands/create-calendar/create-calendar.command.js';
+import { UnknownPractitionerError } from '@/contexts/scheduling/domain/errors/unknown-practitioner.error.js';
+import { createCalendarRoute } from '@/contexts/scheduling/presentation/http/create-calendar.route.js';
 
 describe('POST /calendars', () => {
   it('answers 201 with the identifier when the use case succeeds', async () => {
