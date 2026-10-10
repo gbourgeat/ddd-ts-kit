@@ -1,0 +1,75 @@
+import { describe, expect, it } from 'vitest';
+import { executeRoute } from '@ddd-ts-kit/http';
+import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';
+import { GrantDelegationCommand } from '../../application/commands/grant-delegation/grant-delegation.command.js';
+import { DelegationAlreadyActiveError } from '../../domain/errors/delegation-already-active.error.js';
+import { DelegationEndsInThePastError } from '../../domain/errors/delegation-ends-in-the-past.error.js';
+import { NotAPractitionerError } from '../../domain/errors/not-a-practitioner.error.js';
+import { NotAnAssistantError } from '../../domain/errors/not-an-assistant.error.js';
+import { PracticeNotFoundError } from '../../domain/errors/practice-not-found.error.js';
+import { grantDelegationRoute } from '../../presentation/http/grant-delegation.route.js';
+
+const params = { practiceId: 'practice-1', practitionerId: 'person-2' };
+const body = { assistantId: 'person-3', availabilityIncluded: true, endsAt: '2026-06-01T00:00:00.000Z' };
+
+describe('POST /practices/:practiceId/desks/:practitionerId/delegations', () => {
+  it('answers 201 when the use case succeeds', async () => {
+    const commands = new InMemoryCommandBus().register(GrantDelegationCommand, { execute: async () => 'grant-delegation-1' });
+
+    const response = await executeRoute(grantDelegationRoute(commands), { params, query: {}, headers: {}, body, raw: undefined }, { validateResponses: true });
+
+    expect(response.status).toBe(201);
+    expect(response.body).toEqual({ id: 'grant-delegation-1' });
+  });
+
+  it('hands the use case what the client sent', async () => {
+    const sent: GrantDelegationCommand[] = [];
+
+    const commands = new InMemoryCommandBus().register(GrantDelegationCommand, {
+      execute: async (command) => {
+        sent.push(command);
+
+        return 'grant-delegation-1';
+      },
+    });
+
+    await executeRoute(grantDelegationRoute(commands), { params, query: {}, headers: {}, body, raw: undefined });
+
+    expect(sent).toMatchObject([{
+        desk: { practiceId: 'practice-1', practitionerId: 'person-2' },
+        terms: { assistantId: 'person-3', availabilityIncluded: true, endsAt: new Date('2026-06-01T00:00:00.000Z') },
+      }]);
+  });
+
+  it.each([
+    ['a body without an assistant', { availabilityIncluded: true }],
+    ['an availability that is neither included nor left out', { assistantId: 'person-3', availabilityIncluded: 'maybe' }],
+    ['an end that is not a date', { assistantId: 'person-3', availabilityIncluded: true, endsAt: 'tomorrow' }],
+  ])('refuses %s with 422', async (_what, malformed) => {
+    const commands = new InMemoryCommandBus().register(GrantDelegationCommand, { execute: async () => 'grant-delegation-1' });
+
+    const response = await executeRoute(grantDelegationRoute(commands), { params, query: {}, headers: {}, body: malformed, raw: undefined });
+
+    expect(response.status).toBe(422);
+    expect(response.body).toMatchObject({ code: 'VALIDATION_FAILED' });
+  });
+
+  it.each([
+    ['PRACTICE_NOT_FOUND', new PracticeNotFoundError('practice-1')],
+    ['NOT_A_PRACTITIONER', new NotAPractitionerError('person-1')],
+    ['NOT_AN_ASSISTANT', new NotAnAssistantError('person-1')],
+    ['DELEGATION_ENDS_IN_THE_PAST', new DelegationEndsInThePastError(new Date('2020-01-01T00:00:00.000Z'))],
+    ['DELEGATION_ALREADY_ACTIVE', new DelegationAlreadyActiveError('delegation-1')],
+  ])('answers 422 with the code %s when the use case refuses', async (code, refusal) => {
+    const commands = new InMemoryCommandBus().register(GrantDelegationCommand, {
+      execute: async () => {
+        throw refusal;
+      },
+    });
+
+    const response = await executeRoute(grantDelegationRoute(commands), { params, query: {}, headers: {}, body, raw: undefined });
+
+    expect(response.status).toBe(422);
+    expect(response.body).toMatchObject({ code });
+  });
+});
