@@ -40,7 +40,10 @@ describe('InMemoryAuditTrail', () => {
   });
 
   it('refuses a cursor it did not give', async () => {
-    const reading = new InMemoryAuditTrail().list({}, { kind: 'cursor', cursor: 'not-a-cursor', limit: 10, sort: [] });
+    const reading = new InMemoryAuditTrail().search(
+      {},
+      { kind: 'cursor', cursor: 'not-a-cursor', limit: 10, sort: [] },
+    );
 
     await expect(reading).rejects.toMatchObject({ code: 'INVALID_PAGE_REQUEST' });
   });

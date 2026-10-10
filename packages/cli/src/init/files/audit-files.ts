@@ -6,9 +6,9 @@ import { when } from './when.js';
 
 const READ_SIDE = [
   'audit.permissions.ts',
-  'list-audit-entries.query.ts',
-  'list-audit-entries.handler.ts',
-  'list-audit-entries.route.ts',
+  'search-audit-entries.query.ts',
+  'search-audit-entries.handler.ts',
+  'search-audit-entries.route.ts',
 ];
 
 /**

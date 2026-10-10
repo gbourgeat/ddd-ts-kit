@@ -98,7 +98,7 @@ describe.each(ADAPTERS)('The occupancy measured by %s', (_name, create) => {
   it('counts the appointments of a calendar on a day, state by state, and the time of those that hold it', async () => {
     const { occupancy } = await written(await create());
 
-    const page = await occupancy.list(scoped(ofThePractice.where('day', 'eq', '2026-10-12'), everyone));
+    const page = await occupancy.search(scoped(ofThePractice.where('day', 'eq', '2026-10-12'), everyone));
 
     expect(page.items).toEqual([LINES.monday]);
   });
@@ -106,7 +106,7 @@ describe.each(ADAPTERS)('The occupancy measured by %s', (_name, create) => {
   it('counts the time of each appointment to the nearest minute', async () => {
     const { occupancy } = await written(await create());
 
-    const page = await occupancy.list(
+    const page = await occupancy.search(
       scoped(ofThePractice.where('calendarId', 'eq', 'calendar-1').where('day', 'eq', '2026-10-13'), everyone),
     );
 
@@ -116,7 +116,7 @@ describe.each(ADAPTERS)('The occupancy measured by %s', (_name, create) => {
   it('keeps a line for a day whose only appointment was cancelled, with nothing held', async () => {
     const { occupancy } = await written(await create());
 
-    const page = await occupancy.list(scoped(ofThePractice.where('day', 'eq', '2026-10-14'), everyone));
+    const page = await occupancy.search(scoped(ofThePractice.where('day', 'eq', '2026-10-14'), everyone));
 
     expect(page.items).toEqual([LINES.wednesday]);
   });
@@ -124,7 +124,7 @@ describe.each(ADAPTERS)('The occupancy measured by %s', (_name, create) => {
   it('counts a rescheduled appointment on its new day only, and has no line for the day it left empty', async () => {
     const { occupancy } = await written(await create());
 
-    const page = await occupancy.list(
+    const page = await occupancy.search(
       scoped(ofThePractice.where('day', 'between', ['2026-10-15', '2026-10-16']), everyone),
     );
 
@@ -136,7 +136,7 @@ describe.each(ADAPTERS)('The occupancy measured by %s', (_name, create) => {
 
     await measured.outcomes.delete('appointment-09', at(60));
 
-    const page = await measured.occupancy.list(scoped(ofThePractice.where('day', 'eq', '2026-10-13'), everyone));
+    const page = await measured.occupancy.search(scoped(ofThePractice.where('day', 'eq', '2026-10-13'), everyone));
 
     expect(page.items).toEqual([LINES.tuesday]);
   });
@@ -144,7 +144,7 @@ describe.each(ADAPTERS)('The occupancy measured by %s', (_name, create) => {
   it('answers nothing where no appointment was ever announced', async () => {
     const { occupancy } = await create();
 
-    expect(await occupancy.list(scoped(ofThePractice.page(offsetPage()), everyone))).toEqual({ items: [], total: 0 });
+    expect(await occupancy.search(scoped(ofThePractice.page(offsetPage()), everyone))).toEqual({ items: [], total: 0 });
   });
 });
 
@@ -152,7 +152,7 @@ describe.each(ADAPTERS)('The occupancy read from %s', (_name, create) => {
   it('lists the lines of one practice, never those of another, by day then by calendar', async () => {
     const { occupancy } = await written(await create());
 
-    const page = await occupancy.list(scoped(ofThePractice, everyone));
+    const page = await occupancy.search(scoped(ofThePractice, everyone));
 
     expect(page.items).toEqual([LINES.monday, LINES.tuesday, LINES.elsewhereOnTuesday, LINES.wednesday, LINES.friday]);
   });
@@ -160,7 +160,7 @@ describe.each(ADAPTERS)('The occupancy read from %s', (_name, create) => {
   it('keeps the days of a range, both ends included, latest first when asked', async () => {
     const { occupancy } = await written(await create());
 
-    const page = await occupancy.list(
+    const page = await occupancy.search(
       scoped(ofThePractice.where('day', 'between', ['2026-10-13', '2026-10-14']).orderBy('day', 'desc'), everyone),
     );
 
@@ -170,7 +170,7 @@ describe.each(ADAPTERS)('The occupancy read from %s', (_name, create) => {
   it('keeps the calendars asked for', async () => {
     const { occupancy } = await written(await create());
 
-    const page = await occupancy.list(
+    const page = await occupancy.search(
       scoped(
         ofThePractice.where('calendarId', 'in', ['calendar-2', 'calendar-3']).where('day', 'lte', '2026-10-14'),
         everyone,
@@ -183,7 +183,7 @@ describe.each(ADAPTERS)('The occupancy read from %s', (_name, create) => {
   it('orders the lines by the time held, the key deciding between two that hold as much', async () => {
     const { occupancy } = await written(await create());
 
-    const page = await occupancy.list(
+    const page = await occupancy.search(
       scoped(ofThePractice.where('day', 'gte', '2026-10-13').orderBy('heldMinutes', 'desc'), everyone),
     );
 
@@ -193,7 +193,7 @@ describe.each(ADAPTERS)('The occupancy read from %s', (_name, create) => {
   it('refuses to be filtered by a figure', async () => {
     const { occupancy } = await written(await create());
 
-    await expect(occupancy.list(scoped(ofThePractice.where('noShows', 'gte', 1), everyone))).rejects.toMatchObject({
+    await expect(occupancy.search(scoped(ofThePractice.where('noShows', 'gte', 1), everyone))).rejects.toMatchObject({
       code: 'INVALID_CRITERIA',
     });
   });
@@ -203,7 +203,7 @@ describe.each(ADAPTERS)('The occupancy an actor may read from %s', (_name, creat
   it('is narrowed to the calendars the actor measures, total included', async () => {
     const { occupancy } = await written(await create());
 
-    const page = await occupancy.list(
+    const page = await occupancy.search(
       scoped(ofThePractice.page(offsetPage()), { kind: 'ids', ids: ['calendar-1'] }, { ids: 'calendarId' }),
     );
 
@@ -214,7 +214,7 @@ describe.each(ADAPTERS)('The occupancy an actor may read from %s', (_name, creat
     const { occupancy } = await written(await create());
     const asked = ofThePractice.where('calendarId', 'eq', 'calendar-2').page(offsetPage());
 
-    const page = await occupancy.list(scoped(asked, { kind: 'ids', ids: ['calendar-1'] }, { ids: 'calendarId' }));
+    const page = await occupancy.search(scoped(asked, { kind: 'ids', ids: ['calendar-1'] }, { ids: 'calendarId' }));
 
     expect(page).toEqual({ items: [], total: 0 });
   });
@@ -222,7 +222,7 @@ describe.each(ADAPTERS)('The occupancy an actor may read from %s', (_name, creat
   it('is empty for an actor who measures no calendar', async () => {
     const { occupancy } = await written(await create());
 
-    const page = await occupancy.list(scoped(ofThePractice.page(offsetPage()), { kind: 'none' }));
+    const page = await occupancy.search(scoped(ofThePractice.page(offsetPage()), { kind: 'none' }));
 
     expect(page).toEqual({ items: [], total: 0 });
   });
@@ -232,8 +232,8 @@ describe.each(ADAPTERS)('The pages of the occupancy read from %s', (_name, creat
   it('are slices of the same order, each with the total of the lines', async () => {
     const { occupancy } = await written(await create());
 
-    const first = await occupancy.list(scoped(ofThePractice.page(offsetPage({ limit: 2 })), everyone));
-    const second = await occupancy.list(scoped(ofThePractice.page(offsetPage({ offset: 2, limit: 2 })), everyone));
+    const first = await occupancy.search(scoped(ofThePractice.page(offsetPage({ limit: 2 })), everyone));
+    const second = await occupancy.search(scoped(ofThePractice.page(offsetPage({ offset: 2, limit: 2 })), everyone));
 
     expect(first).toEqual({ items: [LINES.monday, LINES.tuesday], total: 5 });
     expect(second).toEqual({ items: [LINES.elsewhereOnTuesday, LINES.wednesday], total: 5 });
@@ -242,7 +242,7 @@ describe.each(ADAPTERS)('The pages of the occupancy read from %s', (_name, creat
   it('still say the total past the last line', async () => {
     const { occupancy } = await written(await create());
 
-    const page = await occupancy.list(scoped(ofThePractice.page(offsetPage({ offset: 10, limit: 2 })), everyone));
+    const page = await occupancy.search(scoped(ofThePractice.page(offsetPage({ offset: 10, limit: 2 })), everyone));
 
     expect(page).toEqual({ items: [], total: 5 });
   });
@@ -251,13 +251,13 @@ describe.each(ADAPTERS)('The pages of the occupancy read from %s', (_name, creat
     const { occupancy } = await written(await create());
     const byTimeHeld = ofThePractice.orderBy('heldMinutes', 'desc');
 
-    const first = await occupancy.list(scoped(byTimeHeld.page(cursorPage({ limit: 2 })), everyone));
+    const first = await occupancy.search(scoped(byTimeHeld.page(cursorPage({ limit: 2 })), everyone));
 
-    const second = await occupancy.list(
+    const second = await occupancy.search(
       scoped(byTimeHeld.page(cursorPage({ limit: 2, ...cursorOf(first.nextCursor) })), everyone),
     );
 
-    const third = await occupancy.list(
+    const third = await occupancy.search(
       scoped(byTimeHeld.page(cursorPage({ limit: 2, ...cursorOf(second.nextCursor) })), everyone),
     );
 

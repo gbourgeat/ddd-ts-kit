@@ -48,7 +48,7 @@ npx ddd-ts-kit generate domain-event <ctx> <Aggregate> <Fact> --json  # the fact
 npx ddd-ts-kit generate route <ctx> <UseCase> --method POST --path /<resource> --json
 ```
 
-A read is `generate query ... (--permission ... | --public)`; a list adds `--list` (paged,
+A read is `generate query ... (--permission ... | --public)`; a search adds `--search` (paged,
 narrowed in the query by the caller's access scope). A reaction inside the context is
 `generate event-handler` (phase below); work started by time is
 `generate job ... --command <UseCase>`, which only sends the command.

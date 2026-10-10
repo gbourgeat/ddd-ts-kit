@@ -4,8 +4,8 @@ import { subscribeAll } from '@ddd-ts-kit/events';
 import { EventSubscribers } from '@ddd-ts-kit/kernel';
 import { auditPermissions } from './audit.permissions.js';
 import type { Audit } from './create-audit.js';
-import { ListAuditEntriesHandler } from './list-audit-entries.handler.js';
-import { ListAuditEntriesQuery } from './list-audit-entries.query.js';
+import { SearchAuditEntriesHandler } from './search-audit-entries.handler.js';
+import { SearchAuditEntriesQuery } from './search-audit-entries.query.js';
 
 /**
  * The audit trail as a capability of the platform, not a bounded context: the store behind its
@@ -21,9 +21,9 @@ export function auditModule(audit: Audit): ContextModule {
       builder.bind(AuditReader).toValue(audit.trail);
 
       builder
-        .query(ListAuditEntriesQuery)
+        .query(SearchAuditEntriesQuery)
         .requires(auditPermissions['trail.read'], { resource: () => ({ type: 'context', id: 'audit' }) })
-        .handledBy(ListAuditEntriesHandler, [AuditReader]);
+        .handledBy(SearchAuditEntriesHandler, [AuditReader]);
     },
     onStart({ resolve }) {
       subscribeAll(resolve(EventSubscribers).forContext(audit.consumer), audit.subscriptions);

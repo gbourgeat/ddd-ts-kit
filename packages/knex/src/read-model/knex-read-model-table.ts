@@ -2,7 +2,7 @@ import {
   PostgresReadModelRebuild,
   type CriteriaPlan,
   type EventStamp,
-  type ListedRows,
+  type SearchedRows,
   type ReadModelRows,
   type ReadModelTable,
   type StampedRow,
@@ -55,7 +55,7 @@ export class KnexReadModelTable<Row extends object> implements ReadModelTable<Ro
     return this.rows.replace(entry, held);
   }
 
-  async list(plan: CriteriaPlan): Promise<ListedRows<Row>> {
+  async search(plan: CriteriaPlan): Promise<SearchedRows<Row>> {
     const { columns } = this.options;
     const mapper = new RowMapper<Row>(columns);
     const kept = () => this.rows.table().where('deleted', false);

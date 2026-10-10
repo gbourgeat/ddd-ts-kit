@@ -24,8 +24,8 @@
   "paths": {
     "/appointments": {
       "get": {
-        "operationId": "listAppointments",
-        "summary": "List appointments",
+        "operationId": "searchAppointments",
+        "summary": "Search appointments",
         "tags": [
           "scheduling"
         ],
@@ -274,7 +274,7 @@
         ],
         "responses": {
           "200": {
-            "description": "One page of the list.",
+            "description": "One page of the search.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1363,8 +1363,8 @@
     },
     "/audit/entries": {
       "get": {
-        "operationId": "listAuditEntries",
-        "summary": "List the entries of the audit trail",
+        "operationId": "searchAuditEntries",
+        "summary": "Search the entries of the audit trail",
         "tags": [
           "audit"
         ],
@@ -2532,8 +2532,8 @@
     },
     "/notifications": {
       "get": {
-        "operationId": "listNotifications",
-        "summary": "List notifications",
+        "operationId": "searchNotifications",
+        "summary": "Search notifications",
         "tags": [
           "notification"
         ],
@@ -2591,7 +2591,7 @@
         ],
         "responses": {
           "200": {
-            "description": "One page of the list.",
+            "description": "One page of the search.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2928,8 +2928,8 @@
     },
     "/practices/{practiceId}/agenda": {
       "get": {
-        "operationId": "listPracticeAgenda",
-        "summary": "List practice agenda",
+        "operationId": "searchPracticeAgenda",
+        "summary": "Search practice agenda",
         "tags": [
           "scheduling"
         ],
@@ -3187,7 +3187,7 @@
         ],
         "responses": {
           "200": {
-            "description": "One page of the list.",
+            "description": "One page of the search.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3798,8 +3798,8 @@
     },
     "/practices/{practiceId}/occupancy": {
       "get": {
-        "operationId": "listOccupancy",
-        "summary": "List occupancy",
+        "operationId": "searchOccupancy",
+        "summary": "Search occupancy",
         "tags": [
           "analytics"
         ],
@@ -3925,7 +3925,7 @@
         ],
         "responses": {
           "200": {
-            "description": "One page of the list.",
+            "description": "One page of the search.",
             "content": {
               "application/json": {
                 "schema": {

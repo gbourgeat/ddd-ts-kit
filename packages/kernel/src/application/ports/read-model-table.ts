@@ -1,5 +1,5 @@
 import type { CriteriaPlan } from '../criteria/criteria-plan.js';
-import type { ListedRows } from '../read-model/listed-rows.js';
+import type { SearchedRows } from '../read-model/searched-rows.js';
 import type { TouchedKey } from '../read-model/touched-key.js';
 import { ReadModelRows } from './read-model-rows.js';
 
@@ -9,7 +9,7 @@ import { ReadModelRows } from './read-model-rows.js';
  */
 export abstract class ReadModelTable<Row> extends ReadModelRows<Row> {
   /** The rows of a plan that is not empty, deleted ones left out, and their total for an offset page. */
-  abstract list(plan: CriteriaPlan): Promise<ListedRows<Row>>;
+  abstract search(plan: CriteriaPlan): Promise<SearchedRows<Row>>;
 
   /** Whether a rebuild is in progress: writes then record their key with `touch`. */
   abstract rebuilding(): Promise<boolean>;

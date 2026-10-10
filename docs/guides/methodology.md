@@ -184,7 +184,7 @@ one is demonstrable:
 
 1. the slice that creates the main aggregate (`BookAppointment`);
 2. the slices that change it (`RescheduleAppointment`, `CancelAppointment`);
-3. the reads (`GetAppointment`, `ListAppointments`);
+3. the reads (`GetAppointment`, `SearchAppointments`);
 4. what crosses a boundary: the integration event, then its handler in the downstream.
 
 `npx ddd-ts-kit list` shows what exists per context (`describe <context>` gives one context

@@ -2,7 +2,7 @@ import {
   PostgresReadModelRebuild,
   type CriteriaPlan,
   type EventStamp,
-  type ListedRows,
+  type SearchedRows,
   type ReadModelRows,
   type ReadModelTable,
   type StampedRow,
@@ -66,7 +66,7 @@ export class PrismaReadModelTable<Row extends object, Tx extends PrismaRawQuerie
     return this.rows.replace(entry, held);
   }
 
-  async list(plan: CriteriaPlan): Promise<ListedRows<Row>> {
+  async search(plan: CriteriaPlan): Promise<SearchedRows<Row>> {
     const { where, counted, orderBy, take, skip } = criteriaToPrisma(plan);
     const model = this.rows.model();
     const found = await model.findMany({ where: { AND: [KEPT, where] }, orderBy, take, skip });

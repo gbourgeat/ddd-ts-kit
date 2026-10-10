@@ -59,7 +59,7 @@ describe.each([
     await contacts.upsertIfNewer('person-2', first, () => ({ recipientId: 'person-2', address: 'grace@example.test' }));
     await contacts.upsertIfNewer('person-1', first, () => ada);
 
-    const page = await contacts.list(scoped(Criteria.of<Contact>(), { kind: 'all' }, { ids: 'recipientId' }));
+    const page = await contacts.search(scoped(Criteria.of<Contact>(), { kind: 'all' }, { ids: 'recipientId' }));
 
     expect(page.items.map((contact) => contact.recipientId)).toEqual(['person-1', 'person-2']);
   });

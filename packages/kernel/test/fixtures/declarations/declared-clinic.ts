@@ -12,8 +12,8 @@ export * from './contexts/clinic/application/authorization/only-own-patients.pol
 export * from './contexts/clinic/application/commands/schedule-visit/schedule-visit.command.js';
 export * from './contexts/clinic/application/commands/schedule-visit/schedule-visit.handler.js';
 export * from './contexts/clinic/application/commands/request-callback/request-callback.command.js';
-export * from './contexts/clinic/application/queries/list-opening-hours/list-opening-hours.query.js';
-export * from './contexts/clinic/application/queries/list-opening-hours/list-opening-hours.handler.js';
+export * from './contexts/clinic/application/queries/search-opening-hours/search-opening-hours.query.js';
+export * from './contexts/clinic/application/queries/search-opening-hours/search-opening-hours.handler.js';
 export * from './contexts/clinic/published-language/patient-registered.js';
 export * from './contexts/clinic/application/integration/handlers/welcome-on-patient-registered.integration-handler.js';
 export * from './contexts/clinic/application/event-handlers/remind-on-visit-scheduled.event-handler.js';

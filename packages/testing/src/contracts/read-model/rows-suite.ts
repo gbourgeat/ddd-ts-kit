@@ -8,7 +8,7 @@ import { stampedAt as at } from './stamped-at.js';
 
 type Row = CriteriaContractRow;
 
-/** Rows that round trip, events applied once and in order, deletions that last, and listing. */
+/** Rows that round trip, events applied once and in order, deletions that last, and searching. */
 export class RowsSuite extends ReadModelStoreSuite {
   protected tests(): void {
     this.closesAfterEach();
@@ -16,7 +16,7 @@ export class RowsSuite extends ReadModelStoreSuite {
     this.appliesInOrder();
     this.appliesByVersion();
     this.deletes();
-    this.lists();
+    this.searches();
   }
 
   private keepsRows(): void {
@@ -128,8 +128,8 @@ export class RowsSuite extends ReadModelStoreSuite {
     });
   }
 
-  private lists(): void {
-    this.it('lists by criteria, without the deleted rows', async () => {
+  private searches(): void {
+    this.it('searches by criteria, without the deleted rows', async () => {
       for (const written of criteriaContractRows()) {
         await this.put(written, at('evt-1', 1));
       }
@@ -137,7 +137,7 @@ export class RowsSuite extends ReadModelStoreSuite {
       await this.store.delete('a8', at('evt-2', 2));
 
       const booked = Criteria.of<Row>().where('status', 'eq', 'booked').orderBy('seats', 'desc');
-      const page = await this.store.list(scoped(booked, everything));
+      const page = await this.store.search(scoped(booked, everything));
 
       this.expect(page.items.map(({ id }) => id)).toEqual(['a7', 'a1', 'a4']);
       this.expect(page.total).toBe(3);
@@ -149,7 +149,7 @@ export class RowsSuite extends ReadModelStoreSuite {
       }
 
       const acme = (cursor?: string) =>
-        this.store.list(
+        this.store.search(
           scoped(
             Criteria.of<Row>().page(cursorPage({ limit: 3, ...(cursor === undefined ? {} : { cursor }) })),
             { kind: 'filter', filter: { tenantId: 'acme' } },
@@ -165,7 +165,7 @@ export class RowsSuite extends ReadModelStoreSuite {
         ['a6', 'a7'],
       ]);
 
-      this.expect((await this.store.list(scoped(Criteria.of<Row>(), { kind: 'none' }))).items).toEqual([]);
+      this.expect((await this.store.search(scoped(Criteria.of<Row>(), { kind: 'none' }))).items).toEqual([]);
     });
   }
 }

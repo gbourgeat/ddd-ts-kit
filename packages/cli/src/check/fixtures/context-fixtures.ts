@@ -33,7 +33,7 @@ export const CONTEXT_FIXTURES: readonly Fixture[] = [
     expect: { file: ROUTE },
     files: project({
       [ROUTE]:
-        "import type { ListProductsHandler } from '@/contexts/catalog/application/queries/list-products/list-products.handler.js';\n\nexport type IssueInvoiceRoute = ListProductsHandler;\n",
+        "import type { SearchProductsHandler } from '@/contexts/catalog/application/queries/search-products/search-products.handler.js';\n\nexport type IssueInvoiceRoute = SearchProductsHandler;\n",
     }),
   },
   {
@@ -48,10 +48,10 @@ export const CONTEXT_FIXTURES: readonly Fixture[] = [
   {
     ruleId: 'context/declared-relationship',
     name: 'a published language imported without a declared relationship',
-    expect: { file: `${CATALOG}/presentation/http/list-products.route.ts` },
+    expect: { file: `${CATALOG}/presentation/http/search-products.route.ts` },
     files: project({
-      [`${CATALOG}/presentation/http/list-products.route.ts`]:
-        "import type { InvoiceIssuedV1 } from '../../../billing/published-language/index.js';\n\nexport type ListProductsRoute = InvoiceIssuedV1;\n",
+      [`${CATALOG}/presentation/http/search-products.route.ts`]:
+        "import type { InvoiceIssuedV1 } from '../../../billing/published-language/index.js';\n\nexport type SearchProductsRoute = InvoiceIssuedV1;\n",
     }),
   },
   {

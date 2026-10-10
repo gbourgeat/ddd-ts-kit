@@ -38,7 +38,7 @@ class IssueInvoice extends AuthorizedCommand<string> {
   }
 }
 
-class ListInvoices extends AuthorizedQuery<readonly string[]> {}
+class SearchInvoices extends AuthorizedQuery<readonly string[]> {}
 class GetCatalog extends Query<readonly string[]> {}
 class ArchiveInvoices extends Command {}
 class PurgeInvoices extends Command {}
@@ -61,7 +61,7 @@ const billingModule = defineContextModule({
       .handledBy(IssueInvoiceHandler);
 
     builder
-      .query(ListInvoices)
+      .query(SearchInvoices)
       .requires(readInvoices)
       .handledByFactory(() => ({ execute: async () => ['inv-1'] }));
 
@@ -109,7 +109,7 @@ describe('declaring the access to a use case next to its handler', () => {
 
     expect(summary).toEqual([
       { kind: 'command', message: 'IssueInvoice', module: 'billing', access: 'protected', permission: issueInvoice },
-      { kind: 'query', message: 'ListInvoices', module: 'billing', access: 'protected', permission: readInvoices },
+      { kind: 'query', message: 'SearchInvoices', module: 'billing', access: 'protected', permission: readInvoices },
       { kind: 'query', message: 'GetCatalog', module: 'billing', access: 'public', permission: undefined },
       { kind: 'command', message: 'ArchiveInvoices', module: 'archiving', access: undefined, permission: undefined },
       { kind: 'command', message: 'PurgeInvoices', module: 'archiving', access: undefined, permission: undefined },
@@ -144,7 +144,7 @@ describe('declaring the access to a use case next to its handler', () => {
     ]);
 
     expect(queries.map(({ message, access }) => [message, access])).toEqual([
-      ['ListInvoices', 'protected'],
+      ['SearchInvoices', 'protected'],
       ['GetCatalog', 'public'],
     ]);
   });
@@ -281,9 +281,9 @@ describe('the use case guard', () => {
     const open = createTestApplication({ modules: [billingModule] });
 
     await expect(guarded.commandBus.execute(new IssueInvoice(ada, 'customer-1'))).rejects.toBeInstanceOf(RangeError);
-    await expect(guarded.queryBus.execute(new ListInvoices(ada))).rejects.toBeInstanceOf(RangeError);
+    await expect(guarded.queryBus.execute(new SearchInvoices(ada))).rejects.toBeInstanceOf(RangeError);
     expect(unitOfWork.opened).toBe(0);
-    expect(await open.queryBus.execute(new ListInvoices(ada))).toEqual(['inv-1']);
+    expect(await open.queryBus.execute(new SearchInvoices(ada))).toEqual(['inv-1']);
   });
 
   it('can be faked in a test', async () => {

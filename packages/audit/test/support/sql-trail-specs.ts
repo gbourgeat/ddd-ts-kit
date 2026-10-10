@@ -109,7 +109,7 @@ function unitOfWorkSpecs(specs: SqlTrailSpecs): void {
       await expect(failing).rejects.toThrow('The handler failed');
       await unitOfWork.run(() => trail.record(aRecord('entry-3')));
 
-      const { items } = await trail.list({}, { kind: 'offset', offset: 0, limit: 10, sort: [] });
+      const { items } = await trail.search({}, { kind: 'offset', offset: 0, limit: 10, sort: [] });
 
       expect(items.map(({ id, sequence }) => ({ id, sequence }))).toEqual([
         { id: 'entry-1', sequence: 1 },
@@ -179,7 +179,7 @@ function unitOfWorkSpecs(specs: SqlTrailSpecs): void {
         }
       });
 
-      const { items } = await trail.list({ chain: CHAIN }, { kind: 'offset', offset: 0, limit: 10, sort: [] });
+      const { items } = await trail.search({ chain: CHAIN }, { kind: 'offset', offset: 0, limit: 10, sort: [] });
 
       expect(sealed).toEqual([{ checkpoint: { chain: CHAIN, sequence: 2, hash: items[1]?.hash }, visible: 2 }]);
     });
@@ -195,7 +195,7 @@ function concurrencySpecs(specs: SqlTrailSpecs): void {
 
       await Promise.all(records.map((record, index) => (index % 2 === 0 ? here.trail : there.trail).record(record)));
 
-      const { items } = await here.trail.list(
+      const { items } = await here.trail.search(
         { chain: CHAIN },
         { kind: 'offset', offset: 0, limit: 100, sort: [{ field: 'sequence', direction: 'asc' }] },
       );

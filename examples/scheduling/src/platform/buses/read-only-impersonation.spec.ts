@@ -56,7 +56,7 @@ describe('The command bus, for a session that impersonates', () => {
     await expect(refused).rejects.toMatchObject({ code: 'FORBIDDEN', reason: 'IMPERSONATION_READ_ONLY' });
     expect(handled).toBe(0);
 
-    const { items } = await foundations.audit.trail.list({ correlationId: 'impersonated' }, firstPage);
+    const { items } = await foundations.audit.trail.search({ correlationId: 'impersonated' }, firstPage);
 
     expect(items).toMatchObject([
       {
@@ -75,7 +75,7 @@ describe('The command bus, for a session that impersonates', () => {
 
     expect(handled).toBe(1);
 
-    const { items } = await foundations.audit.trail.list({ correlationId: 'ordinary' }, firstPage);
+    const { items } = await foundations.audit.trail.search({ correlationId: 'ordinary' }, firstPage);
 
     expect(items).toMatchObject([{ action: 'RenamePractice', outcome: 'succeeded' }]);
     expect(items[0]?.impersonatedBy).toBeUndefined();

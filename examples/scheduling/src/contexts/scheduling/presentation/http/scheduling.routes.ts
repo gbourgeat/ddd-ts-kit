@@ -13,8 +13,8 @@ import { addExceptionRoute } from './add-exception.route.js';
 import { addTimeOffRoute } from './add-time-off.route.js';
 import { defineAppointmentTypeRoute } from './define-appointment-type.route.js';
 import { joinWaitlistRoute } from './join-waitlist.route.js';
-import { listAppointmentsRoute } from './list-appointments.route.js';
-import { listPracticeAgendaRoute } from './list-practice-agenda.route.js';
+import { searchAppointmentsRoute } from './search-appointments.route.js';
+import { searchPracticeAgendaRoute } from './search-practice-agenda.route.js';
 import { getAppointmentRoute } from './get-appointment.route.js';
 import { getCalendarDayRoute } from './get-calendar-day.route.js';
 // /ddd-ts-kit:imports
@@ -34,8 +34,8 @@ export function schedulingRoutes(commands: CommandBus, queries: QueryBus): reado
     addTimeOffRoute(commands),
     defineAppointmentTypeRoute(commands),
     joinWaitlistRoute(commands),
-    listAppointmentsRoute(queries),
-    listPracticeAgendaRoute(queries),
+    searchAppointmentsRoute(queries),
+    searchPracticeAgendaRoute(queries),
     getAppointmentRoute(queries),
     getCalendarDayRoute(queries),
     // /ddd-ts-kit:routes

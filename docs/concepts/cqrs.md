@@ -44,7 +44,7 @@ flowchart LR
   subgraph read [Query path]
     R2[GET /appointments] --> QB[QueryBus]
     QB --> MW2[middlewares: logging, metrics, permission, span, audit]
-    MW2 --> H2[ListAppointmentsHandler]
+    MW2 --> H2[SearchAppointmentsHandler]
     H2 --> RD[read port]
   end
   RP --> DB[(appointments schema)]
@@ -58,7 +58,7 @@ dispatches them once the handler has returned, before the commit. It answers the
 the new appointment and nothing else: the client that wants to display the appointment sends
 `GetAppointment`. Returning the whole aggregate would tie the response to the write model.
 
-**Query.** `ListAppointments` needs twenty rows of five columns, filtered by what the actor may
+**Query.** `SearchAppointments` needs twenty rows of five columns, filtered by what the actor may
 see and paginated. Loading twenty aggregates with their invariants to throw most of the state
 away is waste. The handler asks a read port, whose adapter queries the tables directly and
 returns the shape the port declares. The access scope computed by the authorizer goes into that
@@ -111,7 +111,7 @@ found.
   page of a list, checked against a definition), hydration, the `ReadModelStore` port with a
   SQL table store, the `@Projection` and `@On` declarations of a projector and a rebuild
   (kernel README, "Criteria", "Hydration" and "Projections"). The CLI generates none of it
-  yet: `generate query --list` writes a read port with an in-memory adapter and a fake, and
+  yet: `generate query --search` writes a read port with an in-memory adapter and a fake, and
   the projector and its store are written by hand. The status of each part is in the
   [read side proposal](../proposals/read-side.md).
 - **No performance by itself.** Two code paths over one database scale like one database.

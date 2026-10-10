@@ -28,7 +28,7 @@ export class KnexInvoiceQueries implements InvoiceQueries {
     private readonly scope: ExecutionScope,
   ) {}
 
-  async list(request: PageRequest<InvoiceSort>): Promise<Page<InvoiceSummary>> {
+  async search(request: PageRequest<InvoiceSort>): Promise<Page<InvoiceSummary>> {
     return request.kind === 'offset' ? this.byOffset(request) : this.byCursor(request);
   }
 

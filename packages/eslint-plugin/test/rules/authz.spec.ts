@@ -44,7 +44,7 @@ ruleTester.run('authz-declared', authzDeclared, {
       COMMAND,
       'export class VoidInvoice extends AuthorizedCommand { constructor(readonly who: Actor = anonymousActor()) { super(who); } }',
     ),
-    at(COMMAND, 'export class ListMine extends AuthorizedQuery<Invoice[]> {}'),
+    at(COMMAND, 'export class SearchMine extends AuthorizedQuery<Invoice[]> {}'),
     at(COMMAND, 'export class GetCatalog extends Query<Catalog> { constructor() { super(); } }'),
     at(
       MODULE,
@@ -63,9 +63,9 @@ ruleTester.run('authz-declared', authzDeclared, {
     {
       ...at(
         MODULE,
-        'builder\n  .query(ListInvoices)\n  .handledByFactory((resolve) => new ListInvoicesHandler(resolve(INVOICES)));',
+        'builder\n  .query(SearchInvoices)\n  .handledByFactory((resolve) => new SearchInvoicesHandler(resolve(INVOICES)));',
       ),
-      errors: [{ messageId: 'useCase', data: { kind: 'query', name: 'ListInvoices', binding: 'handledByFactory' } }],
+      errors: [{ messageId: 'useCase', data: { kind: 'query', name: 'SearchInvoices', binding: 'handledByFactory' } }],
     },
     {
       ...at(MODULE, 'register.command(A).handledBy(AHandler);\nregister.command(B).public().handledBy(BHandler);'),
@@ -92,8 +92,11 @@ ruleTester.run('authz-declared', authzDeclared, {
       errors: [{ messageId: 'actor', data: { className: 'VoidInvoice', base: 'AuthorizedCommand' } }],
     },
     {
-      ...at(COMMAND, 'export class ListMine extends kernel.AuthorizedQuery<Invoice[]> { constructor() { super(); } }'),
-      errors: [{ messageId: 'actor', data: { className: 'ListMine', base: 'AuthorizedQuery' } }],
+      ...at(
+        COMMAND,
+        'export class SearchMine extends kernel.AuthorizedQuery<Invoice[]> { constructor() { super(); } }',
+      ),
+      errors: [{ messageId: 'actor', data: { className: 'SearchMine', base: 'AuthorizedQuery' } }],
     },
     {
       ...at(

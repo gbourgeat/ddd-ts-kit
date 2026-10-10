@@ -162,7 +162,7 @@ flowchart TD
   end
   subgraph S2[Phase 2: four workers in parallel]
     W1[W1 calendars: SetWorkingHours, AddTimeOff]
-    W2[W2 appointments: Book, Reschedule, Cancel, Get, List]
+    W2[W2 appointments: Book, Reschedule, Cancel, Get, Search]
     W3[W3 availability: projection handlers, FindOpenSlots]
     W4[W4 notifications: confirmation, reminders job, provider ACL]
   end

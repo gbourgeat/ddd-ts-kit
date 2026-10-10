@@ -10,5 +10,5 @@ export interface InvoiceSummary {
 export type InvoiceSort = 'amount';
 
 export abstract class InvoiceQueries {
-  abstract list(request: PageRequest<InvoiceSort>): Promise<Page<InvoiceSummary>>;
+  abstract search(request: PageRequest<InvoiceSort>): Promise<Page<InvoiceSummary>>;
 }

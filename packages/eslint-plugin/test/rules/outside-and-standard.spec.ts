@@ -69,7 +69,7 @@ ruleTester.run('standard-no-parallel-interface', standardNoParallelInterface, {
     ),
     at(
       PORT,
-      "import type { Logger, Page, PageRequest } from '@ddd-ts-kit/kernel';\nexport interface InvoiceListing { list(request: PageRequest): Promise<Page<string>> }",
+      "import type { Logger, Page, PageRequest } from '@ddd-ts-kit/kernel';\nexport interface InvoiceListing { search(request: PageRequest): Promise<Page<string>> }",
     ),
     at(
       ADAPTER,

@@ -33,7 +33,7 @@ class RenameArticle extends AuthorizedCommand<string> {
   }
 }
 
-class ListArticles extends AuthorizedQuery<readonly string[]> {}
+class SearchArticles extends AuthorizedQuery<readonly string[]> {}
 
 class GetCatalog extends Command {}
 
@@ -74,7 +74,7 @@ describe('authorized commands and queries', () => {
 
     expect(command.actor).toBe(ada);
     expect(command.title).toBe('Tuples');
-    expect(new ListArticles(bob).actor).toBe(bob);
+    expect(new SearchArticles(bob).actor).toBe(bob);
   });
 
   it('are told apart from public messages', () => {

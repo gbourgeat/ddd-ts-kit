@@ -51,7 +51,7 @@ export async function verifyChain(
 }
 
 function isReader(source: readonly AuditEntry[] | AuditReader): source is AuditReader {
-  return 'list' in source && typeof source.list === 'function';
+  return 'search' in source && typeof source.search === 'function';
 }
 
 async function readChain(reader: AuditReader, options: VerifyChainOptions): Promise<AuditEntry[]> {
@@ -76,7 +76,7 @@ async function readChain(reader: AuditReader, options: VerifyChainOptions): Prom
       ...(cursor === undefined ? {} : { cursor }),
     });
 
-    const page = await reader.list(filter, request);
+    const page = await reader.search(filter, request);
 
     entries.push(...page.items);
     cursor = page.nextCursor;

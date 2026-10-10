@@ -38,7 +38,7 @@ ruleTester.run('authz-actor-explicit', authzActorExplicit, {
     at(HANDLER, 'const context = options.actorContext;'),
     at(
       HANDLER,
-      'class H { async execute(query: ListInvoices) { const scope = await this.access.scopeOf(query.actor, permission); return this.invoices.within(scope); } }',
+      'class H { async execute(query: SearchInvoices) { const scope = await this.access.scopeOf(query.actor, permission); return this.invoices.within(scope); } }',
     ),
     at(HANDLER, 'function within(scope: AccessScope) { return scope.current(); }'),
     at(

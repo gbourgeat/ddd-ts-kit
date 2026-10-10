@@ -12,7 +12,7 @@ const ENTITY = `${BILLING}/domain/entities/invoice-line.entity.ts`;
 const VALUE_OBJECT = `${BILLING}/domain/value-objects/amount.vo.ts`;
 const SERVICE = `${BILLING}/domain/services/invoice-numbering.service.ts`;
 const COMMAND_HANDLER = `${BILLING}/application/commands/issue-invoice/issue-invoice.handler.ts`;
-const QUERY_HANDLER = `${BILLING}/application/queries/list-invoices/list-invoices.handler.ts`;
+const QUERY_HANDLER = `${BILLING}/application/queries/search-invoices/search-invoices.handler.ts`;
 const SPEC = `${BILLING}/test/unit/issue-invoice.handler.spec.ts`;
 const EVENT = `${BILLING}/domain/events/invoice-issued.event.ts`;
 const CONTRACT = `${BILLING}/published-language/invoice-issued.v1.integration-event.ts`;
@@ -158,7 +158,7 @@ ruleTester.run('application-handler-shape', applicationHandlerShape, {
     ),
     at(
       QUERY_HANDLER,
-      'class ListInvoicesHandler { execute = async (): Promise<void> => {}; }\nexport { ListInvoicesHandler };\nexport type Row = { id: string };',
+      'class SearchInvoicesHandler { execute = async (): Promise<void> => {}; }\nexport { SearchInvoicesHandler };\nexport type Row = { id: string };',
     ),
     at(COMMAND_HANDLER, 'export default class IssueInvoiceHandler { execute(): void {} }'),
     at(
@@ -201,11 +201,11 @@ ruleTester.run('application-handler-shape', applicationHandlerShape, {
     {
       ...at(
         QUERY_HANDLER,
-        'export class ListInvoicesHandler { execute(): void {} count(): number { return 0; } static build(): void {} }',
+        'export class SearchInvoicesHandler { execute(): void {} count(): number { return 0; } static build(): void {} }',
       ),
       errors: [
-        { messageId: 'extraPublicMethod', data: { className: 'ListInvoicesHandler', name: 'count' } },
-        { messageId: 'extraPublicMethod', data: { className: 'ListInvoicesHandler', name: 'build' } },
+        { messageId: 'extraPublicMethod', data: { className: 'SearchInvoicesHandler', name: 'count' } },
+        { messageId: 'extraPublicMethod', data: { className: 'SearchInvoicesHandler', name: 'build' } },
       ],
     },
   ],
@@ -215,26 +215,26 @@ ruleTester.run('application-command-query-separation', applicationCommandQuerySe
   valid: [
     at(
       QUERY_HANDLER,
-      'export class ListInvoicesHandler { async execute(query: Q): Promise<R> { const seen = new Set<string>(); seen.delete(query.id); return this.reader.read(query); } }',
+      'export class SearchInvoicesHandler { async execute(query: Q): Promise<R> { const seen = new Set<string>(); seen.delete(query.id); return this.reader.read(query); } }',
     ),
     at(
       COMMAND_HANDLER,
       'export class IssueInvoiceHandler { async execute(): Promise<void> { await this.invoices.save(invoice); await this.events.publish(event); } }',
     ),
-    at(`${BILLING}/test/unit/list-invoices.handler.spec.ts`, 'class Probe { run(): void { this.repo.save(1); } }'),
+    at(`${BILLING}/test/unit/search-invoices.handler.spec.ts`, 'class Probe { run(): void { this.repo.save(1); } }'),
   ],
   invalid: [
     {
       ...at(
         QUERY_HANDLER,
-        'export class ListInvoicesHandler { async execute(): Promise<void> { await this.invoices.save(invoice); } }',
+        'export class SearchInvoicesHandler { async execute(): Promise<void> { await this.invoices.save(invoice); } }',
       ),
       errors: [{ messageId: 'mutation', data: { call: 'this.invoices.save', context: 'billing' } }],
     },
     {
       ...at(
         QUERY_HANDLER,
-        'export class ListInvoicesHandler { async execute(): Promise<void> { await this.#bus.publish(event); this.cache.delete(key); } }',
+        'export class SearchInvoicesHandler { async execute(): Promise<void> { await this.#bus.publish(event); this.cache.delete(key); } }',
       ),
       errors: [
         { messageId: 'mutation', data: { call: 'this.#bus.publish', context: 'billing' } },
@@ -244,7 +244,7 @@ ruleTester.run('application-command-query-separation', applicationCommandQuerySe
     {
       ...at(
         QUERY_HANDLER,
-        'export class ListInvoicesHandler { async execute(): Promise<void> { await this.audit.record(entry); } }',
+        'export class SearchInvoicesHandler { async execute(): Promise<void> { await this.audit.record(entry); } }',
       ),
       options: [{ mutators: ['record'] }],
       errors: [{ messageId: 'mutation' }],

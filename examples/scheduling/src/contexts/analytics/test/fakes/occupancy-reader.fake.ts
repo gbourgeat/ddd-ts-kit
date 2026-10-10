@@ -13,7 +13,7 @@ const measure = new OccupancyMeasureService();
 export class FakeOccupancyReader implements OccupancyReader {
   constructor(private readonly outcomes: OutcomeRegister) {}
 
-  async list(criteria: ScopedCriteria<Occupancy>): Promise<Page<Occupancy>> {
+  async search(criteria: ScopedCriteria<Occupancy>): Promise<Page<Occupancy>> {
     return evaluateCriteria(occupancyCriteria, measured(await everyOutcome(this.outcomes)), criteria);
   }
 }
@@ -23,7 +23,7 @@ async function everyOutcome(register: OutcomeRegister): Promise<readonly Outcome
   let cursor: string | undefined;
 
   do {
-    const page = await register.list(
+    const page = await register.search(
       scoped(Criteria.of<Outcome>().page(cursorPage(cursor === undefined ? { limit: 100 } : { cursor, limit: 100 })), {
         kind: 'all',
       }),

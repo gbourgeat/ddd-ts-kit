@@ -36,14 +36,14 @@ export class TableReadModelStore<Row extends object> implements ReadModelStore<R
     return this.written({ key, stamp });
   }
 
-  async list(criteria: ScopedCriteria<Row>): Promise<Page<Row>> {
+  async search(criteria: ScopedCriteria<Row>): Promise<Page<Row>> {
     const plan = planCriteria(this.definition, criteria);
 
     if (plan.empty) {
       return pageOfPlan(plan, [], 0);
     }
 
-    const { rows, total } = await this.table.list(plan);
+    const { rows, total } = await this.table.search(plan);
 
     return pageOfPlan(plan, rows, total);
   }

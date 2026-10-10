@@ -166,11 +166,11 @@ function scaffoldBilling(step: Step, withHttp: boolean): void {
     'generate',
     'query',
     'billing',
-    'ListInvoices',
+    'SearchInvoices',
     '--permission',
-    'invoice.list',
-    '--list',
-    ...term('List=To show invoices to their customer'),
+    'invoice.search',
+    '--search',
+    ...term('Search=To show invoices to their customer'),
   );
 
   step('generate', 'port', 'billing', 'PaymentGateway');
@@ -246,7 +246,7 @@ function scaffoldBillingRoutes(step: Step): void {
     '--command',
   );
 
-  step('generate', 'route', 'billing', 'ListInvoices', '--method', 'GET', '--path', '/invoices', '--query');
+  step('generate', 'route', 'billing', 'SearchInvoices', '--method', 'GET', '--path', '/invoices', '--query');
   step('generate', 'e2e', 'billing', 'IssueInvoice');
 }
 

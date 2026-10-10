@@ -4,7 +4,7 @@ import type { CriteriaQueryOptions } from './criteria-query-options.js';
 import { parseCriteriaQuery } from './parse-criteria-query.js';
 
 /**
- * Reads the criteria of a list route from its query: `filter[<field>]=<operator>:<value>`,
+ * Reads the criteria of a search route from its query: `filter[<field>]=<operator>:<value>`,
  * groups, and the `sort`, `limit`, `offset` and `cursor` of a page. Anything the definition of
  * the read port does not declare throws the `ValidationError` of the pipeline: a 422 whose
  * issues name `query.filter.<field>` and a stable code. For a route whose query schema holds

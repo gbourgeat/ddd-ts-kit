@@ -78,7 +78,7 @@ describe.each(ADAPTERS)('OutcomeRegister, %s', (_name, create) => {
       await outcomes.upsertIfNewer(outcome.id, at(0), () => outcome);
     }
 
-    const page = await outcomes.list(
+    const page = await outcomes.search(
       scoped(Criteria.of<Outcome>().where('calendarId', 'eq', 'calendar-1').where('day', 'eq', '2026-10-12'), {
         kind: 'all',
       }),
@@ -98,7 +98,7 @@ describe.each(ADAPTERS)('OutcomeRegister, %s', (_name, create) => {
       await outcomes.upsertIfNewer(outcome.id, at(0), () => outcome);
     }
 
-    const page = await outcomes.list(
+    const page = await outcomes.search(
       scoped(Criteria.of<Outcome>().where('day', 'between', ['2026-10-12', '2026-10-19']), { kind: 'all' }),
     );
 

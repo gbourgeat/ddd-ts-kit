@@ -15,12 +15,12 @@ import { emptyChain } from '../chain/empty-chain.js';
 import { headAfter } from '../chain/head-after.js';
 import { seal } from '../chain/seal.js';
 import { sealCheckpoint } from '../chain/seal-checkpoint.js';
-import { comparing } from '../listing/comparing.js';
-import { decodeCursor } from '../listing/decode-cursor.js';
-import { encodeCursor } from '../listing/encode-cursor.js';
-import type { ListOrder } from '../listing/list-order.js';
-import { matches } from '../listing/matches.js';
-import { orderOf } from '../listing/order-of.js';
+import { comparing } from '../search/comparing.js';
+import { decodeCursor } from '../search/decode-cursor.js';
+import { encodeCursor } from '../search/encode-cursor.js';
+import type { SearchOrder } from '../search/search-order.js';
+import { matches } from '../search/matches.js';
+import { orderOf } from '../search/order-of.js';
 import type { AuditTrailOptions } from './audit-trail-options.js';
 
 /**
@@ -48,7 +48,7 @@ export class InMemoryAuditTrail implements AuditTrail, AuditReader {
     await sealCheckpoint(entry, this.options.sealing);
   }
 
-  async list(filter: AuditFilter, page: PageRequest<AuditSortField>): Promise<Page<AuditEntry>> {
+  async search(filter: AuditFilter, page: PageRequest<AuditSortField>): Promise<Page<AuditEntry>> {
     const order = orderOf(page);
     const found = this.entries.filter(matches(filter)).sort(comparing(order));
 
@@ -64,7 +64,7 @@ export class InMemoryAuditTrail implements AuditTrail, AuditReader {
   }
 }
 
-function after(cursor: string, order: ListOrder): (entry: AuditEntry) => boolean {
+function after(cursor: string, order: SearchOrder): (entry: AuditEntry) => boolean {
   const position = decodeCursor(cursor);
   const compare = comparing(order);
 

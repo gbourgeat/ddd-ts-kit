@@ -32,7 +32,7 @@ export const routeKind: Kind = {
     const context = vars(scope, {
       name: named(name),
       route: routeVars(scope, parts),
-      list: { customSchema: validation !== 'zod' && validation !== 'class-validator' },
+      search: { customSchema: validation !== 'zod' && validation !== 'class-validator' },
     });
 
     emit(scope, context, routeOutputs(scope, parts));
@@ -56,7 +56,7 @@ function routeOutputs(scope: Scope, { name, endpoint, useCase }: RouteParts): Ou
   const dtos = validation === 'class-validator' ? dtoClasses(endpoint, useCase) : [];
 
   return [
-    [`route/route.${useCase.isList ? 'list' : validation}.ts.tpl`, `presentation/http/${name.kebab}.route.ts`],
+    [`route/route.${useCase.isSearch ? 'search' : validation}.ts.tpl`, `presentation/http/${name.kebab}.route.ts`],
     ...dtos.map((role): Output => [`route/dto.${role}.ts.tpl`, `presentation/http/${name.kebab}-${role}.dto.ts`]),
     ['route/route.spec.ts.tpl', `test/unit/${name.kebab}.route.spec.ts`],
   ];

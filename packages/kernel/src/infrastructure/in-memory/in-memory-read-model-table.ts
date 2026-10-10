@@ -3,7 +3,7 @@ import { selectRows } from '../../application/criteria/select-rows.js';
 import type { ReadModelRows } from '../../application/ports/read-model-rows.js';
 import type { ReadModelTable } from '../../application/ports/read-model-table.js';
 import type { EventStamp } from '../../application/read-model/event-stamp.js';
-import type { ListedRows } from '../../application/read-model/listed-rows.js';
+import type { SearchedRows } from '../../application/read-model/searched-rows.js';
 import type { StampedRow } from '../../application/read-model/stamped-row.js';
 import type { TouchedKey } from '../../application/read-model/touched-key.js';
 
@@ -32,7 +32,7 @@ export class InMemoryReadModelTable<Row extends object> implements ReadModelTabl
     return replaced(this.live, entry, held);
   }
 
-  async list(plan: CriteriaPlan): Promise<ListedRows<Row>> {
+  async search(plan: CriteriaPlan): Promise<SearchedRows<Row>> {
     const rows = [...this.live.values()].flatMap(({ row }) => (row === undefined ? [] : [structuredClone(row)]));
 
     return selectRows(plan, rows);

@@ -3,7 +3,7 @@ name: access-control
 description: >-
   Designs or reviews authentication and authorization in a ddd-ts-kit project. Every use
   case declares the permission it requires or says it is public, rights are decided in the
-  application layer, the actor is explicit, lists are narrowed by an access scope. Covers
+  application layer, the actor is explicit, searches are narrowed by an access scope. Covers
   policies on one element and the choice between roles, attributes and relationships. Use
   when adding a permission, a role or an ownership rule, when code needs the connected user
   or the tenant, when filtering a list by rights, or when an authz/* rule is reported.
@@ -58,9 +58,9 @@ A policy is a named, pure, unit-tested class in `application/authorization/*.pol
 asks `Access.authorize(command.actor, permission, element)`. A rule that holds whoever asks ("not after publication") is an invariant: it goes in
 the aggregate.
 
-## Lists
+## Searches
 
-Never load then filter in memory. `generate query ... --list` writes a handler that asks the
+Never load then filter in memory. `generate query ... --search` writes a handler that asks the
 access scope of the actor (`all`, `none`, a set of ids, or a filter) and hands it to the read
 port; the adapter turns it into the query.
 

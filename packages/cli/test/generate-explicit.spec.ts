@@ -62,7 +62,7 @@ describe('generated code, in the explicit style', () => {
     for (const spec of [
       'issue-invoice.handler.spec.ts',
       'cancel-invoice.handler.spec.ts',
-      'list-invoices.handler.spec.ts',
+      'search-invoices.handler.spec.ts',
     ]) {
       const text = read(root, `${BILLING}/test/unit/${spec}`);
 
@@ -109,10 +109,12 @@ describe('the module file of an explicit context', () => {
       "builder\n      .command(CancelInvoiceCommand)\n      .requires(billingPermissions['invoice.cancel'])\n      .handledBy(CancelInvoiceHandler);",
     );
 
-    expect(module).toContain("builder.bind(ListInvoicesReader).toClass(InMemoryListInvoicesReader).as('repository');");
+    expect(module).toContain(
+      "builder.bind(SearchInvoicesReader).toClass(InMemorySearchInvoicesReader).as('repository');",
+    );
 
     expect(module).toContain(
-      "builder\n      .query(ListInvoicesQuery)\n      .requires(billingPermissions['invoice.list'])\n      .handledBy(ListInvoicesHandler, [ListInvoicesReader, Access]);",
+      "builder\n      .query(SearchInvoicesQuery)\n      .requires(billingPermissions['invoice.search'])\n      .handledBy(SearchInvoicesHandler, [SearchInvoicesReader, Access]);",
     );
 
     expect(module).toContain("import { Database } from '../../platform/database/database.js';");
@@ -152,7 +154,7 @@ describe('the module file of an explicit context', () => {
     );
 
     expect(routes).toContain(
-      'issueInvoiceRoute(commands),\n    cancelInvoiceRoute(commands),\n    listInvoicesRoute(queries),',
+      'issueInvoiceRoute(commands),\n    cancelInvoiceRoute(commands),\n    searchInvoicesRoute(queries),',
     );
 
     expect(read(root, 'src/platform/compose-application.ts')).toContain(
@@ -224,30 +226,30 @@ describe('the files of an explicit context', () => {
   });
 
   it('splits a query into its message, its result and its handler, with a read port that is an abstract class', () => {
-    const folder = `${BILLING}/application/queries/list-invoices`;
+    const folder = `${BILLING}/application/queries/search-invoices`;
 
     expect(walk(root, folder)).toEqual([
-      `${folder}/list-invoices.handler.ts`,
-      `${folder}/list-invoices.query.ts`,
-      `${folder}/list-invoices.result.ts`,
+      `${folder}/search-invoices.handler.ts`,
+      `${folder}/search-invoices.query.ts`,
+      `${folder}/search-invoices.result.ts`,
     ]);
 
-    expect(read(root, `${folder}/list-invoices.result.ts`)).toContain(
-      'export type ListInvoicesResult = Page<ListInvoicesItem>;',
+    expect(read(root, `${folder}/search-invoices.result.ts`)).toContain(
+      'export type SearchInvoicesResult = Page<SearchInvoicesItem>;',
     );
 
-    expect(read(root, `${folder}/list-invoices.query.ts`).match(/^export /gm)).toHaveLength(1);
+    expect(read(root, `${folder}/search-invoices.query.ts`).match(/^export /gm)).toHaveLength(1);
 
-    expect(read(root, `${BILLING}/application/ports/list-invoices-reader.port.ts`)).toContain(
-      'export abstract class ListInvoicesReader {\n  abstract list(scope: AccessScope, page: PageRequest<ListInvoicesSort>): Promise<ListInvoicesResult>;\n}',
+    expect(read(root, `${BILLING}/application/ports/search-invoices-reader.port.ts`)).toContain(
+      'export abstract class SearchInvoicesReader {\n  abstract search(scope: AccessScope, page: PageRequest<SearchInvoicesSort>): Promise<SearchInvoicesResult>;\n}',
     );
 
-    expect(read(root, `${BILLING}/infrastructure/persistence/in-memory-list-invoices.reader.ts`)).toContain(
-      'export class InMemoryListInvoicesReader implements ListInvoicesReader {\n  protected readonly items: readonly ListInvoicesItem[] = [];',
+    expect(read(root, `${BILLING}/infrastructure/persistence/in-memory-search-invoices.reader.ts`)).toContain(
+      'export class InMemorySearchInvoicesReader implements SearchInvoicesReader {\n  protected readonly items: readonly SearchInvoicesItem[] = [];',
     );
 
-    expect(read(root, `${BILLING}/test/fakes/list-invoices-reader.fake.ts`)).toContain(
-      'export class FakeListInvoicesReader extends InMemoryListInvoicesReader {',
+    expect(read(root, `${BILLING}/test/fakes/search-invoices-reader.fake.ts`)).toContain(
+      'export class FakeSearchInvoicesReader extends InMemorySearchInvoicesReader {',
     );
   });
 
@@ -297,7 +299,7 @@ describe('an explicit project, as `list` maps it', () => {
         upstreams: [],
         aggregates: ['Invoice'],
         commands: ['CancelInvoice', 'IssueInvoice'],
-        queries: ['ListInvoices'],
+        queries: ['SearchInvoices'],
         domainEvents: ['InvoiceIssued', 'InvoiceMarkedAsPaid'],
         publishedEvents: ['billing.invoice.issued@v1', 'billing.invoice.issued@v2'],
         builders: ['Invoice'],

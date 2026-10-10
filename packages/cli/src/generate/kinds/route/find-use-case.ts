@@ -35,11 +35,11 @@ export function findUseCase(scope: Scope, name: Name, flags: KindFlags): UseCase
 }
 
 /** What the source of the message says about it, read from its declaration. */
-function shapeOf(source: string, isQuery: boolean): Pick<UseCase, 'returnsId' | 'isProtected' | 'isList'> {
+function shapeOf(source: string, isQuery: boolean): Pick<UseCase, 'returnsId' | 'isProtected' | 'isSearch'> {
   return {
     // A command that answers an identifier is declared `extends Command<string>` or `extends AuthorizedCommand<string>`.
     returnsId: !isQuery && /extends\s+(?:Authorized)?Command<\s*string\s*>/.test(source),
     isProtected: /extends\s+Authorized(?:Command|Query)\b/.test(source),
-    isList: isQuery && /\breadonly page: PageRequest</.test(source),
+    isSearch: isQuery && /\breadonly page: PageRequest</.test(source),
   };
 }

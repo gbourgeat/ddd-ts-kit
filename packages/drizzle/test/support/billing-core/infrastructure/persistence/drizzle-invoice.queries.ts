@@ -27,7 +27,7 @@ export class DrizzleInvoiceQueries implements InvoiceQueries {
     private readonly scope: ExecutionScope,
   ) {}
 
-  list(request: PageRequest<InvoiceSort>): Promise<Page<InvoiceSummary>> {
+  search(request: PageRequest<InvoiceSort>): Promise<Page<InvoiceSummary>> {
     return request.kind === 'offset' ? this.byOffset(request) : this.byCursor(request);
   }
 

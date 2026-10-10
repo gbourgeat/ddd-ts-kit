@@ -16,8 +16,8 @@ export const schedulingPermissions = definePermissions('scheduling', {
   'calendar.define-appointment-type': { description: 'Define appointment type' },
   'waitlist.join': { description: 'Join waitlist' },
   'waitlist.offer': { description: 'Offer freed slot' },
-  'appointment.list': { description: 'List appointments' },
-  'agenda.read': { description: 'List practice agenda' },
+  'appointment.search': { description: 'Search appointments' },
+  'agenda.read': { description: 'Search practice agenda' },
   'appointment.read': { description: 'Get appointment' },
   'calendar.browse': { description: 'Get calendar day' },
   // /ddd-ts-kit:permissions

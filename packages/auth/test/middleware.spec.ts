@@ -24,7 +24,7 @@ import {
   ArchiveInvoices,
   GetCatalog,
   IssueInvoice,
-  ListInvoices,
+  SearchInvoices,
   VoidInvoice,
   ada,
   billingPermissions,
@@ -36,7 +36,7 @@ const map = AuthorizationMap.of(
     resource: (command) => ({ type: 'invoice', id: command.invoiceId }),
     context: (command) => ({ tenantId: command.tenantId }),
   }),
-  requires(ListInvoices, billingPermissions['invoice.read']),
+  requires(SearchInvoices, billingPermissions['invoice.read']),
   publicUseCase(GetCatalog),
 );
 
@@ -65,7 +65,7 @@ function application(authorizer = new RecordingAuthorizer()) {
 
   const queries = new InMemoryQueryBus()
     .use(guard)
-    .register(ListInvoices, { execute: async () => ['inv-1'] })
+    .register(SearchInvoices, { execute: async () => ['inv-1'] })
     .register(GetCatalog, { execute: async () => ['book'] });
 
   return { authorizer, audit, handled, unitOfWork, commands, queries };
@@ -114,7 +114,7 @@ describe('authorizationMiddleware', () => {
   it('refuses the anonymous actor with a 401 error, without asking the authorizer', async () => {
     const { queries, authorizer } = application();
 
-    const refusal = await queries.execute(new ListInvoices(anonymousActor())).catch((error: unknown) => error);
+    const refusal = await queries.execute(new SearchInvoices(anonymousActor())).catch((error: unknown) => error);
 
     expect(refusal).toBeInstanceOf(UnauthenticatedError);
     expect(refusal).toMatchObject({ code: 'UNAUTHORIZED' });
@@ -163,7 +163,7 @@ describe('the audit hook of authorizationMiddleware', () => {
 
     await allowing.commands.execute(new VoidInvoice(ada, 'inv-7'));
     await refusing.commands.execute(new VoidInvoice(ada, 'inv-7')).catch(() => undefined);
-    await refusing.queries.execute(new ListInvoices(anonymousActor())).catch(() => undefined);
+    await refusing.queries.execute(new SearchInvoices(anonymousActor())).catch(() => undefined);
 
     expect(allowing.audit).toEqual([
       {
@@ -202,7 +202,7 @@ describe('AuthorizationMap', () => {
     expect(map.declarations().map((declaration) => [declaration.type.name, declaration.access])).toEqual([
       ['IssueInvoice', 'protected'],
       ['VoidInvoice', 'protected'],
-      ['ListInvoices', 'protected'],
+      ['SearchInvoices', 'protected'],
       ['GetCatalog', 'public'],
     ]);
   });

@@ -65,7 +65,7 @@ describe('integration events', () => {
     );
 
     expect(module).toContain('builder.bind(AuditTrail).toValue(audit.trail);');
-    expect(module).toContain('.handledBy(ListAuditEntriesHandler, [AuditReader]);');
+    expect(module).toContain('.handledBy(SearchAuditEntriesHandler, [AuditReader]);');
   });
 
   it('keeps the events in the process without a broker, relayed from the outbox', () => {

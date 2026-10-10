@@ -54,7 +54,7 @@ export const STANDARD_FIXTURES: readonly Fixture[] = [
     files: project(
       {
         [ADAPTER]:
-          "import type { Logger, Page } from '@ddd-ts-kit/kernel';\nexport class InMemoryInvoiceRepository {\n  constructor(private readonly logger: Logger) {}\n\n  async list(): Promise<Page<string>> {\n    return { items: [] };\n  }\n}\n",
+          "import type { Logger, Page } from '@ddd-ts-kit/kernel';\nexport class InMemoryInvoiceRepository {\n  constructor(private readonly logger: Logger) {}\n\n  async search(): Promise<Page<string>> {\n    return { items: [] };\n  }\n}\n",
         [`${BILLING}/infrastructure/external/pino.logger.ts`]:
           "import type { Logger } from '@ddd-ts-kit/kernel';\n\nexport class PinoLogger implements Logger {}\n",
         [`${BILLING}/infrastructure/external/cache.service.ts`]:

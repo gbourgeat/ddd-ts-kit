@@ -32,9 +32,9 @@ describe.each(STYLES)('describe, in a %s project', (style, stack) => {
       },
       {
         kind: 'query',
-        name: 'ListInvoices',
-        permission: 'invoice.list',
-        file: 'src/contexts/billing/application/queries/list-invoices',
+        name: 'SearchInvoices',
+        permission: 'invoice.search',
+        file: 'src/contexts/billing/application/queries/search-invoices',
       },
     ]);
 
@@ -50,9 +50,9 @@ describe.each(STYLES)('describe, in a %s project', (style, stack) => {
       expect.objectContaining({
         method: 'GET',
         path: '/invoices',
-        operationId: 'listInvoices',
-        useCase: 'ListInvoices',
-        permission: 'invoice.list',
+        operationId: 'searchInvoices',
+        useCase: 'SearchInvoices',
+        permission: 'invoice.search',
         request: [{ part: 'query', schema: 'query' }],
         responses: [{ status: 200, schema: 'page of line' }],
       }),

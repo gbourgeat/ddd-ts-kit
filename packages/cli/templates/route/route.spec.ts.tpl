@@ -11,7 +11,7 @@ describe('{{route.method}} {{route.path}}', () => {
       execute: async () => ({}),
     });
     {{/if}}
-    {{#if route.isList}}
+    {{#if route.isSearch}}
     const {{route.bus}} = new {{route.busClass}}().register({{route.input}}, {
       execute: async () => ({ items: [{ id: '{{name.kebab}}-1' }], total: 1 }),
     });

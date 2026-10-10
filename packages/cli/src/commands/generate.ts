@@ -57,7 +57,7 @@ const OPTIONS = {
   permission: TEXT,
   public: SWITCH,
   'tenant-scoped': SWITCH,
-  list: SWITCH,
+  search: SWITCH,
   kind: TEXT,
   decorators: SWITCH,
   deviation: TEXT,
@@ -147,7 +147,7 @@ function flagsOf(args: Arguments): KindFlags {
   };
 }
 
-type Switch = 'command' | 'query' | 'allowName' | 'public' | 'tenantScoped' | 'list' | 'decorators';
+type Switch = 'command' | 'query' | 'allowName' | 'public' | 'tenantScoped' | 'search' | 'decorators';
 
 function switchesOf(args: Arguments): Pick<KindFlags, Switch> {
   return {
@@ -156,7 +156,7 @@ function switchesOf(args: Arguments): Pick<KindFlags, Switch> {
     allowName: args.flag('allow-name'),
     public: args.flag('public'),
     tenantScoped: args.flag('tenant-scoped'),
-    list: args.flag('list'),
+    search: args.flag('search'),
     decorators: args.flag('decorators'),
   };
 }

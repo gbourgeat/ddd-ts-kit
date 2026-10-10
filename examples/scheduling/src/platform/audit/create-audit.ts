@@ -14,7 +14,7 @@ import type { Persistence } from '../database/persistence.js';
 import { AUDIT_SCHEMA } from '../database/schema.js';
 import { auditPermissions } from './audit.permissions.js';
 import { auditedEvents } from './audited-events.js';
-import { ListAuditEntriesQuery } from './list-audit-entries.query.js';
+import { SearchAuditEntriesQuery } from './search-audit-entries.query.js';
 
 /** The name the audit trail consumes integration events under: its idempotency scope, and its queues behind a broker. */
 const consumer = 'audit';
@@ -47,7 +47,7 @@ export function createAudit(persistence: Persistence, source: AuditSource): Audi
     decisions: auditDecisions(trail, { ...source, sensitivePermissions: [auditPermissions['trail.read'].id] }),
     // TODO(platform): declare what may go into `changes` with `fields: [auditedFields(SomeCommand, ['status'])]`; by default an entry carries identifiers and codes only.
     commands: auditMiddleware(trail, { ...source, unitOfWork }),
-    queries: auditMiddleware(trail, { ...source, queries: [ListAuditEntriesQuery] }),
+    queries: auditMiddleware(trail, { ...source, queries: [SearchAuditEntriesQuery] }),
     subscriptions: auditIntegrationEvents(trail, {
       registry: auditedEvents,
       clock: source.clock,

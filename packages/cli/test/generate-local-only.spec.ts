@@ -28,14 +28,14 @@ const LOCAL_RUNS: readonly (readonly string[])[] = [
   ['domain-error', 'billing', 'InvoiceAlreadyCancelled', '--allow-name'],
   ['domain-service', 'billing', 'MonthlyPricing'],
   ['command', 'billing', 'MarkInvoiceAsPaid', '--aggregate', 'Invoice', '--permission', 'invoice.pay'],
-  ['query', 'billing', 'ListStaleInvoices', '--permission', 'invoice.list'],
+  ['query', 'billing', 'SearchStaleInvoices', '--permission', 'invoice.search'],
   ['port', 'billing', 'InvoiceMailer', '--allow-name'],
   ['adapter', 'billing', 'PriceList'],
-  ['route', 'billing', 'ListInvoices', '--method', 'GET', '--path', '/stale-invoices', '--query', '--force'],
+  ['route', 'billing', 'SearchInvoices', '--method', 'GET', '--path', '/stale-invoices', '--query', '--force'],
   ['integration-handler', 'shipping', 'billing', 'billing.invoice.issued', '--force'],
   ['event-handler', 'billing', 'Invoice', 'Cancelled'],
   ['acl', 'billing', 'LegacyLedger', '--allow-name'],
-  ['e2e', 'billing', 'ListInvoices'],
+  ['e2e', 'billing', 'SearchInvoices'],
 ];
 
 describe('generate --help --json', () => {

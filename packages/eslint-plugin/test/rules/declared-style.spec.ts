@@ -22,7 +22,7 @@ import {
 import { at, BILLING, ruleTester } from '../support/rule-tester.js';
 
 const REGISTERS_DECORATED =
-  "import { IssueInvoiceCommand } from './application/commands/issue-invoice/issue-invoice.command.js';\nimport { ListInvoicesQuery as ListInvoices } from '@/contexts/billing/application/queries/list-invoices/list-invoices.query.js';\nbuilder.command(IssueInvoiceCommand).handledBy(IssueInvoiceHandler, [INVOICES]);\nbuilder.query(ListInvoices).handledBy(ListInvoicesHandler, [INVOICES]);";
+  "import { IssueInvoiceCommand } from './application/commands/issue-invoice/issue-invoice.command.js';\nimport { SearchInvoicesQuery as SearchInvoices } from '@/contexts/billing/application/queries/search-invoices/search-invoices.query.js';\nbuilder.command(IssueInvoiceCommand).handledBy(IssueInvoiceHandler, [INVOICES]);\nbuilder.query(SearchInvoices).handledBy(SearchInvoicesHandler, [INVOICES]);";
 
 ruleTester.run('authz-declared in the declared style', authzDeclared, {
   valid: [
@@ -76,10 +76,10 @@ ruleTester.run('authz-declared in the declared style', authzDeclared, {
     {
       ...at(
         QUERY,
-        'class ListInvoicesQuery extends AuthorizedQuery<Invoice[]> {}\nexport default ListInvoicesQuery;',
+        'class SearchInvoicesQuery extends AuthorizedQuery<Invoice[]> {}\nexport default SearchInvoicesQuery;',
         DECLARED,
       ),
-      errors: [{ messageId: 'message', data: { kind: 'query', className: 'ListInvoicesQuery' } }],
+      errors: [{ messageId: 'message', data: { kind: 'query', className: 'SearchInvoicesQuery' } }],
     },
     {
       ...at(

@@ -5,7 +5,7 @@ import type { CriteriaQueryOptions } from './criteria-query-options.js';
 import { parseCriteriaQuery } from './parse-criteria-query.js';
 
 /**
- * The query of a list route as a `Schema`: `request: { query: criteriaQuerySchema(definition) }`
+ * The query of a search route as a `Schema`: `request: { query: criteriaQuerySchema(definition) }`
  * hands the handler a `Criteria` the read port accepts, and documents every filter, the sort
  * and the page in the contract.
  */

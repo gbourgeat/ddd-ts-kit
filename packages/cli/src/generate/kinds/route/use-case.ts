@@ -7,6 +7,6 @@ export interface UseCase {
   readonly returnsId: boolean;
   /** The message carries its actor: the route hands over who is calling and names the security scheme. */
   readonly isProtected: boolean;
-  /** The query answers one page of a list: the route reads the page from the query string. */
-  readonly isList: boolean;
+  /** The query answers one page of a search: the route reads the page from the query string. */
+  readonly isSearch: boolean;
 }

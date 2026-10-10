@@ -326,12 +326,12 @@ export class PrismaInvoiceRepository implements InvoiceRepository {
 }
 ```
 
-A list query takes the kernel `PageRequest` and answers a `Page`, in both variants:
+A search query takes the kernel `PageRequest` and answers a `Page`, in both variants:
 
 ```ts
 // contexts/billing-core/application/ports/invoice-queries.port.ts
 export abstract class InvoiceQueries {
-  abstract list(request: PageRequest<'amount'>): Promise<Page<InvoiceSummary>>;
+  abstract search(request: PageRequest<'amount'>): Promise<Page<InvoiceSummary>>;
 }
 ```
 
@@ -347,7 +347,7 @@ export class PrismaInvoiceQueries implements InvoiceQueries {
     private readonly scope: ExecutionScope,
   ) {}
 
-  async list(request: PageRequest<'amount'>): Promise<Page<InvoiceSummary>> {
+  async search(request: PageRequest<'amount'>): Promise<Page<InvoiceSummary>> {
     return request.kind === 'offset' ? this.byOffset(request) : this.byCursor(request);
   }
 
@@ -444,7 +444,7 @@ are the fields of the model; `fields` renames those that differ. The text of `co
 
 ```ts
 // infrastructure/persistence/prisma-appointment-queries.reader.ts
-async list(criteria: ScopedCriteria<AppointmentRow>): Promise<Page<AppointmentRow>> {
+async search(criteria: ScopedCriteria<AppointmentRow>): Promise<Page<AppointmentRow>> {
   const plan = planCriteria(appointmentCriteria, criteria);
 
   if (plan.empty) {

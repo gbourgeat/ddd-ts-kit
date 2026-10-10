@@ -94,12 +94,12 @@ describe('pageResponse', () => {
 describe('a paginated route', () => {
   const order = zodSchema(z.object({ id: z.string(), total: z.number() }), { io: 'output' });
 
-  const listOrders = defineRoute(
+  const searchOrders = defineRoute(
     {
       method: 'GET',
       path: '/orders',
-      operationId: 'listOrders',
-      summary: 'List orders',
+      operationId: 'searchOrders',
+      summary: 'Search orders',
       request: { query: pageQuerySchema({ sortable: SORTABLE, maxSize: 50 }) },
       responses: { 200: { description: 'A page of orders.', body: pageSchemaOf(order) } },
       security: ['bearer'],
@@ -116,7 +116,7 @@ describe('a paginated route', () => {
   const call = (query: Record<string, unknown>) => {
     const request: RawRequest = { params: {}, query, headers: {}, body: undefined, raw: undefined };
 
-    return executeRoute(listOrders, request, { validateResponses: true });
+    return executeRoute(searchOrders, request, { validateResponses: true });
   };
 
   it('answers the page in the declared shape', async () => {
@@ -134,7 +134,7 @@ describe('a paginated route', () => {
   });
 
   it('describes its parameters and its answer in the contract', () => {
-    const document = generateOpenApi({ info: { title: 'Orders', version: '1.0.0' }, routes: [listOrders] });
+    const document = generateOpenApi({ info: { title: 'Orders', version: '1.0.0' }, routes: [searchOrders] });
     const operation = document.paths['/orders']?.['get'];
 
     expect(operation?.['parameters']).toMatchObject([

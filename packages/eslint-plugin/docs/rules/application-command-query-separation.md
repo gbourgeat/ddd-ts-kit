@@ -15,8 +15,8 @@ A query answers and never changes state: it can then be retried, cached and run 
 Incorrect:
 
 ```ts
-export class ListInvoicesHandler {
-  async execute(query: ListInvoicesQuery): Promise<ListInvoicesResult> {
+export class SearchInvoicesHandler {
+  async execute(query: SearchInvoicesQuery): Promise<SearchInvoicesResult> {
     await this.audit.save(query);
     return this.reader.read(query);
   }
@@ -26,8 +26,8 @@ export class ListInvoicesHandler {
 Correct:
 
 ```ts
-export class ListInvoicesHandler {
-  async execute(query: ListInvoicesQuery): Promise<ListInvoicesResult> {
+export class SearchInvoicesHandler {
+  async execute(query: SearchInvoicesQuery): Promise<SearchInvoicesResult> {
     return this.reader.read(query);
   }
 }
