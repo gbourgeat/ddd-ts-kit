@@ -1,3 +1,4 @@
+import { stripVTControlCharacters } from 'node:util';
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -90,7 +91,7 @@ describe('createPinoLogger', () => {
     logger.warn('carrier slow', { carrier: 'post', token: 'never-shown' });
     await logger.flush();
 
-    const text = readFileSync(file, 'utf8');
+    const text = stripVTControlCharacters(readFileSync(file, 'utf8'));
 
     expect(text).toMatch(/^\[\d{2}:\d{2}:\d{2}\.\d{3}\] WARN: carrier slow$/m);
     expect(text).toContain('carrier: "post"');
