@@ -2,9 +2,9 @@ import { actorOf } from '@ddd-ts-kit/auth';
 import { defineRoute, type Route } from '@ddd-ts-kit/http';
 import type { CommandBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
-import { MarkAppointmentNoShowCommand } from '../../application/commands/mark-appointment-no-show/mark-appointment-no-show.command.js';
-import { MarkAppointmentNoShowParams } from './mark-appointment-no-show-params.dto.js';
-import { MarkAppointmentNoShowAccepted } from './mark-appointment-no-show-accepted.dto.js';
+import { MarkAppointmentNoShowCommand } from '#src/contexts/scheduling/application/commands/mark-appointment-no-show/mark-appointment-no-show.command.js';
+import { MarkAppointmentNoShowParams } from '#src/contexts/scheduling/presentation/http/mark-appointment-no-show-params.dto.js';
+import { MarkAppointmentNoShowAccepted } from '#src/contexts/scheduling/presentation/http/mark-appointment-no-show-accepted.dto.js';
 
 const params = classSchema(MarkAppointmentNoShowParams);
 const accepted = classSchema(MarkAppointmentNoShowAccepted);

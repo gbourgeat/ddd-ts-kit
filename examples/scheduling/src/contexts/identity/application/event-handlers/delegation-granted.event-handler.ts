@@ -1,6 +1,6 @@
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
-import { DelegationGranted } from '../../domain/events/delegation-granted.event.js';
-import { IdentityRelationships } from '../ports/identity-relationships.port.js';
+import { DelegationGranted } from '#src/contexts/identity/domain/events/delegation-granted.event.js';
+import { IdentityRelationships } from '#src/contexts/identity/application/ports/identity-relationships.port.js';
 
 /** When a delegation is granted, the platform learns that the assistant is a delegate on the desk of the practitioner. */
 @DomainEventHandler(DelegationGranted, { name: 'identity.delegation.granted' }, [IdentityRelationships])

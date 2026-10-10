@@ -1,6 +1,6 @@
 @@imports
-import { {{event.pascal}}EventHandler } from './application/event-handlers/{{event.kebab}}.event-handler.js';
-import { {{event.pascal}} } from './domain/events/{{event.kebab}}.event.js';
+import { {{event.pascal}}EventHandler } from '{{alias.context}}/application/event-handlers/{{event.kebab}}.event-handler.js';
+import { {{event.pascal}} } from '{{alias.context}}/domain/events/{{event.kebab}}.event.js';
 @@registrations
 const {{event.camel}}EventHandler = platform.adapter(new {{event.pascal}}EventHandler(), { kind: 'domain-event-handler', context: '{{context.kebab}}' });
 

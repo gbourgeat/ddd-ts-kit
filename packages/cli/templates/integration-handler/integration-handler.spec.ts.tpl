@@ -1,6 +1,6 @@
 import { describe, expect, it } from '{{tests.module}}';
 import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';
-import { {{name.pascal}}IntegrationHandler } from '../../application/integration/handlers/{{name.kebab}}.integration-handler.js';
+import { {{name.pascal}}IntegrationHandler } from '{{alias.context}}/application/integration/handlers/{{name.kebab}}.integration-handler.js';
 
 describe('When {{upstream.kebab}} publishes {{upstream.eventName}}', () => {
   it('listens to the type {{upstream.kebab}} publishes', () => {

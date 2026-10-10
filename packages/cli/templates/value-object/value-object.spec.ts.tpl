@@ -1,6 +1,6 @@
 import { describe, expect, it } from '{{tests.module}}';
 import { unwrap } from '@ddd-ts-kit/kernel';
-import { {{name.pascal}} } from '../../domain/value-objects/{{name.kebab}}.vo.js';
+import { {{name.pascal}} } from '{{alias.context}}/domain/value-objects/{{name.kebab}}.vo.js';
 
 describe('{{name.pascal}}', () => {
   it('is equal to another {{name.words}} with the same value', () => {

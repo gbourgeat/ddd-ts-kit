@@ -95,7 +95,7 @@ export const AUTHZ_DECLARED_FIXTURES: readonly Fixture[] = [
     expect: { file: QUERY },
     files: declaredProject({
       [QUERY]:
-        "import { Public } from '../../authorization/home-made.js';\n\n@Public()\nexport class InvoicesIssuedQuery {}\n",
+        "import { Public } from '#src/contexts/billing/application/authorization/home-made.js';\n\n@Public()\nexport class InvoicesIssuedQuery {}\n",
     }),
   },
   {
@@ -105,7 +105,7 @@ export const AUTHZ_DECLARED_FIXTURES: readonly Fixture[] = [
     files: project({
       [COMMAND]: DECLARED.command,
       [MODULE]:
-        "import { IssueInvoiceCommand } from './application/commands/issue-invoice/issue-invoice.command.js';\nexport function billingModule(builder: Builder): void {\n  builder.command(IssueInvoiceCommand).handledBy(IssueInvoiceHandler, [Clock]);\n}\n",
+        "import { IssueInvoiceCommand } from '#src/contexts/billing/application/commands/issue-invoice/issue-invoice.command.js';\nexport function billingModule(builder: Builder): void {\n  builder.command(IssueInvoiceCommand).handledBy(IssueInvoiceHandler, [Clock]);\n}\n",
     }),
   },
   {

@@ -1,4 +1,3 @@
-import { fileURLToPath } from 'node:url';
 {{#if decorators.standard}}
 import { decorators } from '@ddd-ts-kit/testing/vitest';
 {{/if}}
@@ -9,7 +8,8 @@ export default defineConfig({
   // The application under test holds classes that carry standard decorators.
   plugins: [decorators({ compiler: '@typescript/native' })],
   {{/if}}
-  resolve: { alias: { '{{alias.bare}}': fileURLToPath(new URL('./{{config.sourceRoot}}', import.meta.url)) } },
+  // Under this condition an import alias answers the source file, not the compiled one (package.json, "imports").
+  ssr: { resolve: { conditions: ['{{alias.condition}}'] } },
   test: {
     include: ['test/e2e/**/*.e2e.spec.ts'],
     {{#if assembly.discovery}}

@@ -1,13 +1,13 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { Criteria, scoped } from '@ddd-ts-kit/kernel';
-import { storableStamp } from '../../../../shared-kernel/storable-stamp.js';
-import { openTestDatabase, type TestDatabase } from '../../../../platform/database/open-test-database.js';
-import type { Outcome, OutcomeRegister } from '../../application/ports/outcome-register.port.js';
-import { ANALYTICS_SCHEMA } from '../../infrastructure/persistence/analytics.schema.js';
-import { createAnalyticsTables } from '../../infrastructure/persistence/create-analytics-tables.schema.js';
-import { KnexOutcomeRegister } from '../../infrastructure/persistence/knex-outcome-register.repository.js';
-import { anOutcome } from '../builders/outcome.builder.js';
-import { FakeOutcomeRegister } from '../fakes/outcome-register.fake.js';
+import { storableStamp } from '#src/shared-kernel/storable-stamp.js';
+import { openTestDatabase, type TestDatabase } from '#src/platform/database/open-test-database.js';
+import type { Outcome, OutcomeRegister } from '#src/contexts/analytics/application/ports/outcome-register.port.js';
+import { ANALYTICS_SCHEMA } from '#src/contexts/analytics/infrastructure/persistence/analytics.schema.js';
+import { createAnalyticsTables } from '#src/contexts/analytics/infrastructure/persistence/create-analytics-tables.schema.js';
+import { KnexOutcomeRegister } from '#src/contexts/analytics/infrastructure/persistence/knex-outcome-register.repository.js';
+import { anOutcome } from '#src/contexts/analytics/test/builders/outcome.builder.js';
+import { FakeOutcomeRegister } from '#src/contexts/analytics/test/fakes/outcome-register.fake.js';
 
 let database: TestDatabase;
 

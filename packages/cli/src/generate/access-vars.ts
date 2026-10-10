@@ -1,3 +1,4 @@
+import { contextAlias } from '../alias/index.js';
 import { CliError } from '../cli-error.js';
 import { fitStatement } from '../layout/index.js';
 import type { RenderContext } from '../templating/index.js';
@@ -71,6 +72,8 @@ function publicAccess(useCase: UseCaseMessage): RenderContext {
 
 function protectedAccess(scope: Scope, useCase: UseCaseMessage, permission: string): RenderContext {
   const set = `${scope.context.camel}Permissions`;
+  const file = permissionsFile(scope.context).replace(/\.ts$/, '.js');
+  const permissions = `import { ${set} } from '${contextAlias(scope.config, scope.context.kebab)}/${file}';`;
   const requirement = `${set}['${permission}']${resourceOption(scope)}`;
 
   return {
@@ -80,10 +83,10 @@ function protectedAccess(scope: Scope, useCase: UseCaseMessage, permission: stri
     declaration: `.requires(${requirement})`,
     manualImport: "import { requires } from '@ddd-ts-kit/auth';",
     manualDeclaration: `requires(${useCase.name.pascal}${useCase.kind}, ${requirement}),`,
-    permissionsImport: `import { ${set} } from './${permissionsFile(scope.context).replace(/\.ts$/, '.js')}';`,
+    permissionsImport: permissions,
     holder: 'holder',
     requirement,
-    useCasePermissionsImport: `import { ${set} } from '../../authorization/${scope.context.kebab}.permissions.js';`,
+    useCasePermissionsImport: permissions,
     decorator: 'Requires',
     decoration: fitStatement(`@Requires(${requirement})`, '').join('\n').slice(1),
     queryBase: 'AuthorizedQuery',

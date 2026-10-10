@@ -18,7 +18,7 @@ Written against `@sentry/node` 11: the options it relies on (`enableOpenTelemetr
 // platform/errors.ts: imported second, right after platform/tracing.ts
 import { reportProcessFailures } from '@ddd-ts-kit/kernel';
 import { initSentry } from '@ddd-ts-kit/sentry';
-import { loadConfig } from './config/load-config.js';
+import { loadConfig } from '#src/platform/config/load-config.js';
 
 // { dsn?, environment, release?, scrubMessages } of the validated configuration.
 // Without a DSN nothing starts and nothing is reported.
@@ -29,8 +29,8 @@ reportProcessFailures(errors); // uncaughtException and unhandledRejection: repo
 
 ```ts
 // main.ts
-import { tracing } from './platform/tracing.js'; // first
-import { errors } from './platform/errors.js'; // second
+import { tracing } from '#src/platform/tracing.js'; // first
+import { errors } from '#src/platform/errors.js'; // second
 import { DeadLetterReports } from '@ddd-ts-kit/kernel';
 import { createApplication, kernelModule } from '@ddd-ts-kit/di';
 import { reportHttpErrors } from '@ddd-ts-kit/http';

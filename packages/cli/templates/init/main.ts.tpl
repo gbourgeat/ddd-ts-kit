@@ -1,25 +1,25 @@
 // Imported first on purpose: instrumentation has to be installed before any module it patches is loaded.
-import { tracing } from './platform/tracing.js';
+import { tracing } from '{{alias.platform}}/tracing.js';
 {{#if errors.sentry}}
 // Imported second on purpose: a failure while the rest of the application loads is already reported.
-import { errors } from './platform/errors.js';
+import { errors } from '{{alias.platform}}/errors.js';
 {{/if}}
 {{#if http.any}}
-import { createAuthenticator } from './platform/auth/create-authenticator.js';
+import { createAuthenticator } from '{{alias.platform}}/auth/create-authenticator.js';
 {{/if}}
-import { composeApplication } from './platform/compose-application.js';
-import { loadConfig } from './platform/config/load-config.js';
-import { openPersistence } from './platform/database/open-persistence.js';
-import { {{events.providerName}} } from './platform/events/{{events.providerFile}}.js';
+import { composeApplication } from '{{alias.platform}}/compose-application.js';
+import { loadConfig } from '{{alias.platform}}/config/load-config.js';
+import { openPersistence } from '{{alias.platform}}/database/open-persistence.js';
+import { {{events.providerName}} } from '{{alias.platform}}/events/{{events.providerFile}}.js';
 {{#if events.outbox}}
-import { startOutboxRelay } from './platform/events/start-outbox-relay.js';
+import { startOutboxRelay } from '{{alias.platform}}/events/start-outbox-relay.js';
 {{/if}}
 {{#if http.any}}
-import { startHttpServer } from './platform/http/start-http-server.js';
+import { startHttpServer } from '{{alias.platform}}/http/start-http-server.js';
 {{/if}}
-import { jobSettings } from './platform/job-settings.js';
+import { jobSettings } from '{{alias.platform}}/job-settings.js';
 {{#if cache.redis}}
-import { openRedis } from './platform/redis/open-redis.js';
+import { openRedis } from '{{alias.platform}}/redis/open-redis.js';
 {{/if}}
 
 const config = loadConfig(process.env);

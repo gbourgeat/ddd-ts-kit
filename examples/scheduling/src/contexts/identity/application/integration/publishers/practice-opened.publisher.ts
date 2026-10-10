@@ -1,7 +1,7 @@
 import { IdGenerator, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
-import { PracticeOpened } from '../../../domain/events/practice-opened.event.js';
-import { practiceOpenedV1 } from '../../../published-language/practice-opened.v1.integration-event.js';
+import { PracticeOpened } from '#src/contexts/identity/domain/events/practice-opened.event.js';
+import { practiceOpenedV1 } from '#src/contexts/identity/published-language/practice-opened.v1.integration-event.js';
 
 @DomainEventHandler(PracticeOpened, { name: 'identity.practice.opened' }, [IntegrationEventPublisher, IdGenerator])
 export class PracticeOpenedPublisher implements DomainEventHandler<PracticeOpened> {

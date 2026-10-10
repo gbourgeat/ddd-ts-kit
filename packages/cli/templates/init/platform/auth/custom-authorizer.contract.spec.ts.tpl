@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from '{{tests.module}}';
 import { definePermissions } from '@ddd-ts-kit/auth';
 import { anActor, authorizerContract } from '@ddd-ts-kit/auth/testing';
-import { CustomAuthorizer } from './custom-authorizer.js';
+import { CustomAuthorizer } from '{{alias.platform}}/auth/custom-authorizer.js';
 
 const permissions = definePermissions('contract', {
   'element.read': { description: 'Read an element' },

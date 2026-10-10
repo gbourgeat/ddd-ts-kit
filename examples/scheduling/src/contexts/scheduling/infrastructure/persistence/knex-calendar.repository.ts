@@ -2,11 +2,14 @@ import type { Knex } from 'knex';
 import { Clock, ExecutionScope, stampCreation, stampUpdate } from '@ddd-ts-kit/kernel';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
 import { KnexContext, auditRow, insertIgnoringConflict, optimisticUpdate } from '@ddd-ts-kit/knex';
-import type { Calendar } from '../../domain/aggregates/calendar.aggregate.js';
-import { CalendarRepository } from '../../domain/repositories/calendar.repository.js';
-import { SCHEDULING_SCHEMA } from './scheduling.schema.js';
-import { CalendarMapper } from './calendar.mapper.js';
-import type { CalendarColumns, CalendarRow } from './calendar-row.schema.js';
+import type { Calendar } from '#src/contexts/scheduling/domain/aggregates/calendar.aggregate.js';
+import { CalendarRepository } from '#src/contexts/scheduling/domain/repositories/calendar.repository.js';
+import { SCHEDULING_SCHEMA } from '#src/contexts/scheduling/infrastructure/persistence/scheduling.schema.js';
+import { CalendarMapper } from '#src/contexts/scheduling/infrastructure/persistence/calendar.mapper.js';
+import type {
+  CalendarColumns,
+  CalendarRow,
+} from '#src/contexts/scheduling/infrastructure/persistence/calendar-row.schema.js';
 
 type VersionedCalendar = CalendarColumns & { readonly version: number };
 

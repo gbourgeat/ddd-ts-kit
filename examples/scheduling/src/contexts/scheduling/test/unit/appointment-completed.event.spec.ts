@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { AppointmentCompleted } from '../../domain/events/appointment-completed.event.js';
-import { anAppointment } from '../builders/appointment.builder.js';
+import { AppointmentCompleted } from '#src/contexts/scheduling/domain/events/appointment-completed.event.js';
+import { anAppointment } from '#src/contexts/scheduling/test/builders/appointment.builder.js';
 
 const held = anAppointment().identifiedBy('appointment-1').build();
 

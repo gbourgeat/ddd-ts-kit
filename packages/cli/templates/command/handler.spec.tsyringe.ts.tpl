@@ -11,14 +11,14 @@ import { anActor } from '@ddd-ts-kit/auth/testing';
 {{spec.diPlain}}
 {{/unless}}
 {{spec.contextImports}}
-import { platformTestModule } from '{{paths.integrationToPlatform}}/platform-test.module.js';
+import { platformTestModule } from '{{alias.platform}}/platform-test.module.js';
 {{#if access.protected}}
-import { {{context.camel}}Permissions } from '../../application/authorization/{{context.kebab}}.permissions.js';
+import { {{context.camel}}Permissions } from '{{alias.context}}/application/authorization/{{context.kebab}}.permissions.js';
 {{/if}}
-import { {{name.pascal}}Command } from '../../application/commands/{{name.kebab}}/{{name.kebab}}.command.js';
+import { {{name.pascal}}Command } from '{{alias.context}}/application/commands/{{name.kebab}}/{{name.kebab}}.command.js';
 {{#if command.hasAggregate}}
-import { {{aggregate.pascal}}Repository } from '../../domain/repositories/{{aggregate.kebab}}.repository.js';
-import { Fake{{aggregate.pascal}}Repository } from '../fakes/{{aggregate.kebab}}.repository.fake.js';
+import { {{aggregate.pascal}}Repository } from '{{alias.context}}/domain/repositories/{{aggregate.kebab}}.repository.js';
+import { Fake{{aggregate.pascal}}Repository } from '{{alias.context}}/test/fakes/{{aggregate.kebab}}.repository.fake.js';
 {{/if}}
 {{#if access.protected}}
 

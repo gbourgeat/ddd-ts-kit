@@ -2,13 +2,13 @@ import { PGlite } from '@electric-sql/pglite';
 import { is, sql, SQL } from 'drizzle-orm';
 import { getTableConfig, PgDialect, PgTable } from 'drizzle-orm/pg-core';
 import { drizzle } from 'drizzle-orm/pglite';
-import { connectToDatabase } from './connect-to-database.js';
-import { persistenceOver } from './persistence-over.js';
-import type { Persistence } from './persistence.js';
+import { connectToDatabase } from '{{alias.platform}}/database/connect-to-database.js';
+import { persistenceOver } from '{{alias.platform}}/database/persistence-over.js';
+import type { Persistence } from '{{alias.platform}}/database/persistence.js';
 {{#if audit.on}}
 import { auditGuardStatements } from '@ddd-ts-kit/audit/drizzle';
 {{/if}}
-import * as schema from './schema.js';
+import * as schema from '{{alias.platform}}/database/schema.js';
 
 export interface TestDatabase {
   readonly persistence: Persistence;

@@ -157,7 +157,7 @@ ruleTester.run('declarations-role-declared, the names of a declaration and the d
         EVENT_HANDLER,
         declaring(
           'DomainEventHandler',
-          `import { InvoiceIssued as Issued } from '@/contexts/billing/domain/events/invoice-issued.event.js';\n@DomainEventHandler(Issued, { name: 'billing.invoice.sent' })\nexport class InvoiceIssuedEventHandler {}`,
+          `import { InvoiceIssued as Issued } from '#src/contexts/billing/domain/events/invoice-issued.event.js';\n@DomainEventHandler(Issued, { name: 'billing.invoice.sent' })\nexport class InvoiceIssuedEventHandler {}`,
         ),
       ),
       errors: [

@@ -1,6 +1,6 @@
 import { InMemoryRepository, snapshots } from '@ddd-ts-kit/testing';
-import { {{aggregate.pascal}} } from '../../domain/aggregates/{{aggregate.kebab}}.aggregate.js';
-import type { {{aggregate.pascal}}Repository } from '../../domain/repositories/{{aggregate.kebab}}.repository.js';
+import { {{aggregate.pascal}} } from '{{alias.context}}/domain/aggregates/{{aggregate.kebab}}.aggregate.js';
+import type { {{aggregate.pascal}}Repository } from '{{alias.context}}/domain/repositories/{{aggregate.kebab}}.repository.js';
 
 export class Fake{{aggregate.pascal}}Repository extends InMemoryRepository<{{aggregate.pascal}}> implements {{aggregate.pascal}}Repository {
   constructor() {

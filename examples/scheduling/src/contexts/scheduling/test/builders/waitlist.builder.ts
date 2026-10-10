@@ -1,7 +1,7 @@
 import { unwrap } from '@ddd-ts-kit/kernel';
 import { Builder, sequence, type Defaults } from '@ddd-ts-kit/testing';
-import { Waitlist } from '../../domain/aggregates/waitlist.aggregate.js';
-import { Waiter } from '../../domain/value-objects/waiter.vo.js';
+import { Waitlist } from '#src/contexts/scheduling/domain/aggregates/waitlist.aggregate.js';
+import { Waiter } from '#src/contexts/scheduling/domain/value-objects/waiter.vo.js';
 
 interface WaitlistIngredients {
   readonly bornAt: Date;

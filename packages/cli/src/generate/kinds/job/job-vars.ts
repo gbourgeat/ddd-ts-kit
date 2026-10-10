@@ -1,5 +1,7 @@
+import { contextAlias } from '../../../alias/index.js';
 import type { Name } from '../../../naming/index.js';
 import type { RenderContext } from '../../../templating/index.js';
+import { permissionsFile } from '../../permissions-file.js';
 import type { Scope } from '../../scope.js';
 import { grantSystemActor } from './grant-system-actor.js';
 import type { SentCommand } from './sent-command.js';
@@ -62,6 +64,6 @@ function grantedInSpec(scope: Scope, command: SentCommand): RenderContext {
 
   return {
     granted: `${set}['${key}']`,
-    permissionsImport: `import { ${set} } from '../../application/authorization/${scope.context.kebab}.permissions.js';`,
+    permissionsImport: `import { ${set} } from '${contextAlias(scope.config, scope.context.kebab)}/${permissionsFile(scope.context).replace(/\.ts$/, '.js')}';`,
   };
 }

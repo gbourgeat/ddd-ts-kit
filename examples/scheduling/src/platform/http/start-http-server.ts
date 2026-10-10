@@ -2,10 +2,10 @@ import type { Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import express from 'express';
 import { mountExpress } from '@ddd-ts-kit/http/express';
-import type { Application } from '../compose-application.js';
-import type { AppConfig } from '../config/app-config.js';
-import { refusalFor } from './refusal-for.js';
-import { withDocumentation } from './with-documentation.js';
+import type { Application } from '#src/platform/compose-application.js';
+import type { AppConfig } from '#src/platform/config/app-config.js';
+import { refusalFor } from '#src/platform/http/refusal-for.js';
+import { withDocumentation } from '#src/platform/http/with-documentation.js';
 
 export interface HttpServer {
   /** The port really bound: differs from the configured one when that was 0. */

@@ -1,6 +1,6 @@
 import type { Authenticator } from '@ddd-ts-kit/auth';
 import { keycloakAuthenticator } from '@ddd-ts-kit/auth/jwt';
-import type { AppConfig } from '../config/app-config.js';
+import type { AppConfig } from '{{alias.platform}}/config/app-config.js';
 
 /**
  * Verifies the access tokens of the Keycloak realm against the keys it publishes. The actor takes

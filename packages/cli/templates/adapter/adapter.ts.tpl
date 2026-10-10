@@ -1,7 +1,7 @@
 {{#if adapter.decorated}}
 import { Retry, Timeout } from '@ddd-ts-kit/aspects/decorators';
 {{/if}}
-import type { {{name.pascal}} } from '../../application/ports/{{name.kebab}}.port.js';
+import type { {{name.pascal}} } from '{{alias.context}}/application/ports/{{name.kebab}}.port.js';
 
 interface OutboundCall {
   readonly operation: string;

@@ -4,39 +4,39 @@ import type { RelationTuple } from '@ddd-ts-kit/auth/rebac';
 import type { IntegrationEventSubscriber } from '@ddd-ts-kit/kernel';
 import { createHttpClient, type HttpClient } from '@ddd-ts-kit/testing/e2e';
 {{#if authz.rebac}}
-import { relationTuples } from '{{paths.e2eToPlatform}}/auth/relation-tuples.js';
+import { relationTuples } from '{{alias.platform}}/auth/relation-tuples.js';
 {{/if}}
-import { composeApplication } from '{{paths.e2eToPlatform}}/compose-application.js';
-import type { AppConfig } from '{{paths.e2eToPlatform}}/config/app-config.js';
-import { loadConfig } from '{{paths.e2eToPlatform}}/config/load-config.js';
-import { openTestDatabase, type TestDatabase } from '{{paths.e2eToPlatform}}/database/open-test-database.js';
+import { composeApplication } from '{{alias.platform}}/compose-application.js';
+import type { AppConfig } from '{{alias.platform}}/config/app-config.js';
+import { loadConfig } from '{{alias.platform}}/config/load-config.js';
+import { openTestDatabase, type TestDatabase } from '{{alias.platform}}/database/open-test-database.js';
 {{#if broker.provided}}
-import { createEventProvider } from '{{paths.e2eToPlatform}}/events/create-event-provider.js';
-import type { EventProvider } from '{{paths.e2eToPlatform}}/events/event-provider.js';
+import { createEventProvider } from '{{alias.platform}}/events/create-event-provider.js';
+import type { EventProvider } from '{{alias.platform}}/events/event-provider.js';
 {{/if}}
-import { inProcessEvents } from '{{paths.e2eToPlatform}}/events/in-process-events.js';
+import { inProcessEvents } from '{{alias.platform}}/events/in-process-events.js';
 {{#if events.outbox}}
-import { startOutboxRelay } from '{{paths.e2eToPlatform}}/events/start-outbox-relay.js';
+import { startOutboxRelay } from '{{alias.platform}}/events/start-outbox-relay.js';
 {{/if}}
-import { startHttpServer } from '{{paths.e2eToPlatform}}/http/start-http-server.js';
+import { startHttpServer } from '{{alias.platform}}/http/start-http-server.js';
 {{#if cache.redis}}
-import { openRedis } from '{{paths.e2eToPlatform}}/redis/open-redis.js';
+import { openRedis } from '{{alias.platform}}/redis/open-redis.js';
 {{/if}}
-import { createCredentials, type Credentials, type TestActor } from './create-credentials.js';
+import { createCredentials, type Credentials, type TestActor } from '{{alias.test}}/e2e/support/create-credentials.js';
 {{#if broker.addressed}}
 {{#if redis.server}}
-import { noBroker, noRedis, testEnvironment } from './test-environment.js';
+import { noBroker, noRedis, testEnvironment } from '{{alias.test}}/e2e/support/test-environment.js';
 {{/if}}
 {{#unless redis.server}}
-import { noBroker, testEnvironment } from './test-environment.js';
+import { noBroker, testEnvironment } from '{{alias.test}}/e2e/support/test-environment.js';
 {{/unless}}
 {{/if}}
 {{#unless broker.addressed}}
 {{#if redis.server}}
-import { noRedis, testEnvironment } from './test-environment.js';
+import { noRedis, testEnvironment } from '{{alias.test}}/e2e/support/test-environment.js';
 {{/if}}
 {{#unless redis.server}}
-import { testEnvironment } from './test-environment.js';
+import { testEnvironment } from '{{alias.test}}/e2e/support/test-environment.js';
 {{/unless}}
 {{/unless}}
 

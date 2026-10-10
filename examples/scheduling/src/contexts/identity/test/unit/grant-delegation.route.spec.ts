@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { executeRoute } from '@ddd-ts-kit/http';
 import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';
-import { GrantDelegationCommand } from '../../application/commands/grant-delegation/grant-delegation.command.js';
-import { DelegationAlreadyActiveError } from '../../domain/errors/delegation-already-active.error.js';
-import { DelegationEndsInThePastError } from '../../domain/errors/delegation-ends-in-the-past.error.js';
-import { NotAPractitionerError } from '../../domain/errors/not-a-practitioner.error.js';
-import { NotAnAssistantError } from '../../domain/errors/not-an-assistant.error.js';
-import { PracticeNotFoundError } from '../../domain/errors/practice-not-found.error.js';
-import { grantDelegationRoute } from '../../presentation/http/grant-delegation.route.js';
+import { GrantDelegationCommand } from '#src/contexts/identity/application/commands/grant-delegation/grant-delegation.command.js';
+import { DelegationAlreadyActiveError } from '#src/contexts/identity/domain/errors/delegation-already-active.error.js';
+import { DelegationEndsInThePastError } from '#src/contexts/identity/domain/errors/delegation-ends-in-the-past.error.js';
+import { NotAPractitionerError } from '#src/contexts/identity/domain/errors/not-a-practitioner.error.js';
+import { NotAnAssistantError } from '#src/contexts/identity/domain/errors/not-an-assistant.error.js';
+import { PracticeNotFoundError } from '#src/contexts/identity/domain/errors/practice-not-found.error.js';
+import { grantDelegationRoute } from '#src/contexts/identity/presentation/http/grant-delegation.route.js';
 
 const params = { practiceId: 'practice-1', practitionerId: 'person-2' };
 const body = { assistantId: 'person-3', availabilityIncluded: true, endsAt: '2026-06-01T00:00:00.000Z' };

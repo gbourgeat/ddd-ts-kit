@@ -1,3 +1,4 @@
+import { ALIAS_DECLARED_FIXTURES } from './alias-declared-fixtures.js';
 import { AUTHZ_DECLARED_FIXTURES } from './authz-declared-fixtures.js';
 import { AUTHZ_FIXTURES } from './authz-fixtures.js';
 import { CLEAN_FIXTURES } from './clean-fixtures.js';
@@ -10,6 +11,7 @@ import { DOMAIN_EVENTS_FIXTURES } from './domain-events-fixtures.js';
 import { EVENTS_FIXTURES } from './events-fixtures.js';
 import { EXTRACTABLE_FIXTURES } from './extractable-fixtures.js';
 import { GOVERNANCE_FIXTURES } from './governance-fixtures.js';
+import { IMPORTS_FIXTURES } from './imports-fixtures.js';
 import { LANGUAGE_FIXTURES } from './language-fixtures.js';
 import { LAYER_FIXTURES } from './layer-fixtures.js';
 import { LAYOUT_FIXTURES } from './layout-fixtures.js';
@@ -30,6 +32,7 @@ import type { Fixture } from './fixture.js';
  * replays the very same list.
  */
 export const FIXTURES: readonly Fixture[] = [
+  ...ALIAS_DECLARED_FIXTURES,
   ...AUTHZ_DECLARED_FIXTURES,
   ...AUTHZ_FIXTURES,
   ...CLEAN_FIXTURES,
@@ -42,6 +45,7 @@ export const FIXTURES: readonly Fixture[] = [
   ...EVENTS_FIXTURES,
   ...EXTRACTABLE_FIXTURES,
   ...GOVERNANCE_FIXTURES,
+  ...IMPORTS_FIXTURES,
   ...LANGUAGE_FIXTURES,
   ...LAYER_FIXTURES,
   ...LAYOUT_FIXTURES,

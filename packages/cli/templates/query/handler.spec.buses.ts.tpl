@@ -5,12 +5,12 @@ import { anActor } from '@ddd-ts-kit/auth/testing';
 {{/if}}
 import { createTestBuses } from '@ddd-ts-kit/testing';
 {{#if access.protected}}
-import { {{context.camel}}Permissions } from '../../application/authorization/{{context.kebab}}.permissions.js';
+import { {{context.camel}}Permissions } from '{{alias.context}}/application/authorization/{{context.kebab}}.permissions.js';
 {{/if}}
-import { {{name.pascal}}Handler } from '../../application/queries/{{name.kebab}}/{{name.kebab}}.handler.js';
-import { {{name.pascal}}Query } from '../../application/queries/{{name.kebab}}/{{name.kebab}}.query.js';
-import type { {{name.pascal}}Result } from '../../application/queries/{{name.kebab}}/{{name.kebab}}.result.js';
-import { Fake{{name.pascal}}Reader } from '../fakes/{{name.kebab}}-reader.fake.js';
+import { {{name.pascal}}Handler } from '{{alias.context}}/application/queries/{{name.kebab}}/{{name.kebab}}.handler.js';
+import { {{name.pascal}}Query } from '{{alias.context}}/application/queries/{{name.kebab}}/{{name.kebab}}.query.js';
+import type { {{name.pascal}}Result } from '{{alias.context}}/application/queries/{{name.kebab}}/{{name.kebab}}.result.js';
+import { Fake{{name.pascal}}Reader } from '{{alias.context}}/test/fakes/{{name.kebab}}-reader.fake.js';
 {{#if access.protected}}
 
 const holders = authorizationMiddleware({

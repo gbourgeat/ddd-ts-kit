@@ -26,6 +26,7 @@ export const NEW_ESLINT_RULES = [
   'ddd-ts-kit/clean-function-ceiling',
   'ddd-ts-kit/scheduling-job-triggers-use-case',
   'ddd-ts-kit/scheduling-job-name',
+  'ddd-ts-kit/imports-alias-only',
   '@stylistic/padding-line-between-statements',
   '@stylistic/lines-between-class-members',
 ];

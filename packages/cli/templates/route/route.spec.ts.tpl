@@ -2,7 +2,7 @@ import { describe, expect, it } from '{{tests.module}}';
 import { executeRoute } from '@ddd-ts-kit/http';
 import { {{route.busClass}} } from '@ddd-ts-kit/kernel';
 {{route.messageImport}}
-import { {{name.camel}}Route } from '../../presentation/http/{{name.kebab}}.route.js';
+import { {{name.camel}}Route } from '{{alias.context}}/presentation/http/{{name.kebab}}.route.js';
 
 describe('{{route.method}} {{route.path}}', () => {
   it('answers {{route.status}} when the use case succeeds', async () => {

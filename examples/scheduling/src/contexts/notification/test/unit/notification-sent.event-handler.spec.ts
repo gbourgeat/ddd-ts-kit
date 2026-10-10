@@ -2,21 +2,21 @@ import { describe, expect, it } from 'vitest';
 import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
-import * as notificationDeclarations from '../../notification.declarations.js';
-import { platformTestModule } from '../../../../platform/platform-test.module.js';
-import { notificationPermissions } from '../../application/authorization/notification.permissions.js';
-import { Contacts } from '../../application/ports/contacts.port.js';
-import { Mailer } from '../../application/ports/mailer.port.js';
-import { NotificationRepository } from '../../domain/repositories/notification.repository.js';
-import { ReminderRepository } from '../../domain/repositories/reminder.repository.js';
-import { aReminder } from '../builders/reminder.builder.js';
-import { FakeContacts } from '../fakes/contacts.fake.js';
-import { FakeMailer } from '../fakes/mailer.fake.js';
-import { FakeNotificationRepository } from '../fakes/notification.repository.fake.js';
-import { FakeReminderRepository } from '../fakes/reminder.repository.fake.js';
+import * as notificationDeclarations from '#src/contexts/notification/notification.declarations.js';
+import { platformTestModule } from '#src/platform/platform-test.module.js';
+import { notificationPermissions } from '#src/contexts/notification/application/authorization/notification.permissions.js';
+import { Contacts } from '#src/contexts/notification/application/ports/contacts.port.js';
+import { Mailer } from '#src/contexts/notification/application/ports/mailer.port.js';
+import { NotificationRepository } from '#src/contexts/notification/domain/repositories/notification.repository.js';
+import { ReminderRepository } from '#src/contexts/notification/domain/repositories/reminder.repository.js';
+import { aReminder } from '#src/contexts/notification/test/builders/reminder.builder.js';
+import { FakeContacts } from '#src/contexts/notification/test/fakes/contacts.fake.js';
+import { FakeMailer } from '#src/contexts/notification/test/fakes/mailer.fake.js';
+import { FakeNotificationRepository } from '#src/contexts/notification/test/fakes/notification.repository.fake.js';
+import { FakeReminderRepository } from '#src/contexts/notification/test/fakes/reminder.repository.fake.js';
 import { unwrap } from '@ddd-ts-kit/kernel';
-import { NotificationSent } from '../../domain/events/notification-sent.event.js';
-import { NotificationKind } from '../../domain/value-objects/notification-kind.vo.js';
+import { NotificationSent } from '#src/contexts/notification/domain/events/notification-sent.event.js';
+import { NotificationKind } from '#src/contexts/notification/domain/value-objects/notification-kind.vo.js';
 
 const authorization = authorizationModule({
   authorizer: new RoleBasedAuthorizer({

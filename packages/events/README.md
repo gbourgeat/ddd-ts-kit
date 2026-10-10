@@ -215,7 +215,7 @@ handler by hand:
 // contexts/billing/application/integration/handlers/invoice-on-order-placed.integration-handler.ts
 import { CommandBus, type IntegrationEvent } from '@ddd-ts-kit/kernel';
 import { IntegrationEventHandler } from '@ddd-ts-kit/kernel/declarations';
-import { orderPlaced, type OrderPlaced } from '../../../../ordering/published-language/index.js';
+import { orderPlaced, type OrderPlaced } from '#src/contexts/ordering/published-language/index.js';
 
 @IntegrationEventHandler(orderPlaced, { consumer: 'billing.invoice-on-order-placed' }, [CommandBus])
 export class InvoiceOnOrderPlaced {

@@ -55,23 +55,23 @@ import {
 } from '@ddd-ts-kit/kernel';
 import { tracedPublisher } from '@ddd-ts-kit/tracing';
 {{#if audit.on}}
-import { auditModule } from './audit/audit.module.js';
+import { auditModule } from '{{alias.platform}}/audit/audit.module.js';
 {{/if}}
 {{#if audit.route}}
-import { searchAuditEntriesRoute } from './audit/search-audit-entries.route.js';
+import { searchAuditEntriesRoute } from '{{alias.platform}}/audit/search-audit-entries.route.js';
 {{/if}}
-import { authorization } from './auth/authorization.js';
+import { authorization } from '{{alias.platform}}/auth/authorization.js';
 {{#if http.any}}
-import { httpBoundary, type HttpBoundary } from './auth/http-boundary.js';
+import { httpBoundary, type HttpBoundary } from '{{alias.platform}}/auth/http-boundary.js';
 {{/if}}
 {{#if authz.rebac}}
-import { relateSystemActors } from './auth/relate-system-actors.js';
+import { relateSystemActors } from '{{alias.platform}}/auth/relate-system-actors.js';
 {{/if}}
-import { createCommandBus } from './buses/create-command-bus.js';
-import { createQueryBus } from './buses/create-query-bus.js';
-import type { Persistence } from './database/persistence.js';
-import { layFoundations, type Foundations } from './lay-foundations.js';
-import { platformModule, type PlatformOptions } from './platform.module.js';
+import { createCommandBus } from '{{alias.platform}}/buses/create-command-bus.js';
+import { createQueryBus } from '{{alias.platform}}/buses/create-query-bus.js';
+import type { Persistence } from '{{alias.platform}}/database/persistence.js';
+import { layFoundations, type Foundations } from '{{alias.platform}}/lay-foundations.js';
+import { platformModule, type PlatformOptions } from '{{alias.platform}}/platform.module.js';
 // ddd-ts-kit:imports
 // /ddd-ts-kit:imports
 

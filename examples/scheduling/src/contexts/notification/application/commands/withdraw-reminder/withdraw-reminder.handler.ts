@@ -1,6 +1,6 @@
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
-import { ReminderRepository } from '../../../domain/repositories/reminder.repository.js';
-import { WithdrawReminderCommand } from './withdraw-reminder.command.js';
+import { ReminderRepository } from '#src/contexts/notification/domain/repositories/reminder.repository.js';
+import { WithdrawReminderCommand } from '#src/contexts/notification/application/commands/withdraw-reminder/withdraw-reminder.command.js';
 
 @CommandHandler(WithdrawReminderCommand, [ReminderRepository])
 export class WithdrawReminderHandler implements CommandHandler<WithdrawReminderCommand> {

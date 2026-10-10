@@ -8,7 +8,7 @@ import { contextModule, createTestApplication, type ContextModule } from '@ddd-t
 import { createTestApplication, type ContextModule } from '@ddd-ts-kit/di';
 import { discoverContext } from '@ddd-ts-kit/di/discovery';
 {{/if}}
-import { platformTestModule } from '{{paths.architectureToSource}}/platform/platform-test.module.js';
+import { platformTestModule } from '{{alias.platform}}/platform-test.module.js';
 // ddd-ts-kit:imports
 // /ddd-ts-kit:imports
 

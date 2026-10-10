@@ -1,9 +1,12 @@
 import { unwrap } from '@ddd-ts-kit/kernel';
-import { Practice } from '../../domain/aggregates/practice.aggregate.js';
-import { Membership } from '../../domain/value-objects/membership.vo.js';
-import { Role } from '../../domain/value-objects/role.vo.js';
-import { TimeZone } from '../../domain/value-objects/time-zone.vo.js';
-import type { PracticeColumns, PracticeRow } from './practice-row.schema.js';
+import { Practice } from '#src/contexts/identity/domain/aggregates/practice.aggregate.js';
+import { Membership } from '#src/contexts/identity/domain/value-objects/membership.vo.js';
+import { Role } from '#src/contexts/identity/domain/value-objects/role.vo.js';
+import { TimeZone } from '#src/contexts/identity/domain/value-objects/time-zone.vo.js';
+import type {
+  PracticeColumns,
+  PracticeRow,
+} from '#src/contexts/identity/infrastructure/persistence/practice-row.schema.js';
 
 interface StoredMember {
   readonly personId: string;

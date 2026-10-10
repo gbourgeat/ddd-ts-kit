@@ -5,7 +5,6 @@ import { stackVars } from '../../stack/stack-vars.js';
 import { renderTemplate } from '../../templating/index.js';
 import type { Workspace } from '../../workspace/index.js';
 import type { Kind } from '../kind.js';
-import { relativeTo } from '../relative-to.js';
 import { addComposeService } from './extraction/add-compose-service.js';
 import { editJson } from './extraction/edit-json.js';
 import { EntryPoint } from './extraction/entry-point.js';
@@ -27,10 +26,7 @@ export const workerKind: Kind = {
 
     const entry = new EntryPoint(config, NAME);
 
-    const context = {
-      ...stackVars(config),
-      paths: { appToSource: relativeTo(`${config.sourceRoot}/apps/${NAME}`, config.sourceRoot) },
-    };
+    const context = stackVars(config);
 
     ws.create(entry.source, renderTemplate('worker/main.ts.tpl', context));
     entry.declareIn(ws);

@@ -7,13 +7,13 @@ import {
   type ExecutionContext,
 } from '@ddd-ts-kit/kernel';
 import { repositoryContract } from '@ddd-ts-kit/testing/contracts';
-import type { Delegation } from '../../domain/aggregates/delegation.aggregate.js';
-import type { DelegationRepository } from '../../domain/repositories/delegation.repository.js';
-import { Desk } from '../../domain/value-objects/desk.vo.js';
-import { KnexDelegationRepository } from '../../infrastructure/persistence/knex-delegation.repository.js';
-import { openTestDatabase, type TestDatabase } from '../../../../platform/database/open-test-database.js';
-import { aDelegation } from '../builders/delegation.builder.js';
-import { FakeDelegationRepository } from '../fakes/delegation.repository.fake.js';
+import type { Delegation } from '#src/contexts/identity/domain/aggregates/delegation.aggregate.js';
+import type { DelegationRepository } from '#src/contexts/identity/domain/repositories/delegation.repository.js';
+import { Desk } from '#src/contexts/identity/domain/value-objects/desk.vo.js';
+import { KnexDelegationRepository } from '#src/contexts/identity/infrastructure/persistence/knex-delegation.repository.js';
+import { openTestDatabase, type TestDatabase } from '#src/platform/database/open-test-database.js';
+import { aDelegation } from '#src/contexts/identity/test/builders/delegation.builder.js';
+import { FakeDelegationRepository } from '#src/contexts/identity/test/fakes/delegation.repository.fake.js';
 
 const runner = { describe, it, expect, beforeEach, afterEach };
 

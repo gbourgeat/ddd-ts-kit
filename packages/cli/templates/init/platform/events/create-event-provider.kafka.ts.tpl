@@ -2,9 +2,9 @@ import { KafkaEventBus } from '@ddd-ts-kit/kafka';
 {{#if errors.broker}}
 import { DeadLetterReports, NoopErrorReporter, type ErrorReporter } from '@ddd-ts-kit/kernel';
 {{/if}}
-import type { AppConfig } from '../config/app-config.js';
-import { aggregateKeyOf } from './aggregate-key-of.js';
-import type { EventProvider } from './event-provider.js';
+import type { AppConfig } from '{{alias.platform}}/config/app-config.js';
+import { aggregateKeyOf } from '{{alias.platform}}/events/aggregate-key-of.js';
+import type { EventProvider } from '{{alias.platform}}/events/event-provider.js';
 
 /**
  * Kafka: the relay of the outbox produces to one topic per event type and marks a record

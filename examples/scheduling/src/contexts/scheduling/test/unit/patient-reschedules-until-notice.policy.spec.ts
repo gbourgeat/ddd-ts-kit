@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { anActor } from '@ddd-ts-kit/auth/testing';
 import { anonymousActor } from '@ddd-ts-kit/kernel';
 import { declarationOf } from '@ddd-ts-kit/kernel/declarations';
-import { PatientReschedulesUntilNoticePolicy } from '../../application/authorization/patient-reschedules-until-notice.policy.js';
-import { anAppointment } from '../builders/appointment.builder.js';
-import { aCalendar } from '../builders/calendar.builder.js';
+import { PatientReschedulesUntilNoticePolicy } from '#src/contexts/scheduling/application/authorization/patient-reschedules-until-notice.policy.js';
+import { anAppointment } from '#src/contexts/scheduling/test/builders/appointment.builder.js';
+import { aCalendar } from '#src/contexts/scheduling/test/builders/calendar.builder.js';
 
 const policy = new PatientReschedulesUntilNoticePolicy();
 const patient = anActor().named('patient-1').build();

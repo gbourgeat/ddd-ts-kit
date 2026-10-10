@@ -1,7 +1,7 @@
 import { defineIntegrationEvent } from '@ddd-ts-kit/events';
 import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
-import { AppointmentConfirmedV1Payload } from './appointment-confirmed.v1.payload.js';
+import { AppointmentConfirmedV1Payload } from '#src/contexts/scheduling/published-language/appointment-confirmed.v1.payload.js';
 
 export const appointmentConfirmedV1 = defineIntegrationEvent({
   type: 'scheduling.appointment.confirmed',

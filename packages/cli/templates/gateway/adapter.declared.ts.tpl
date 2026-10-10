@@ -1,6 +1,6 @@
 import { Gateway } from '@ddd-ts-kit/kernel/declarations';
-import { {{name.pascal}}Contract } from '../../../{{upstream.kebab}}/published-language/index.js';
-import { {{name.pascal}}Gateway } from '../../application/ports/{{name.kebab}}-gateway.port.js';
+import { {{name.pascal}}Contract } from '{{alias.contexts}}/{{upstream.kebab}}/published-language/index.js';
+import { {{name.pascal}}Gateway } from '{{alias.context}}/application/ports/{{name.kebab}}-gateway.port.js';
 
 // TODO(platform): when {{upstream.kebab}} runs as its own service, turn this class into the remote adapter of {{name.pascal}}Gateway (an HTTP or RPC client with a timeout, retries and a fallback): the declaration stays, nothing else changes.
 @Gateway({{name.pascal}}Gateway, [{{name.pascal}}Contract])

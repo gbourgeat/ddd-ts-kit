@@ -6,9 +6,9 @@ import {
   AppointmentExportContract,
   type ExportedAppointment,
   type ExportedAppointmentPage,
-} from '../../published-language/appointment-export.contract.js';
-import type { AppointmentRow } from './appointment-row.schema.js';
-import { SCHEDULING_SCHEMA } from './scheduling.schema.js';
+} from '#src/contexts/scheduling/published-language/appointment-export.contract.js';
+import type { AppointmentRow } from '#src/contexts/scheduling/infrastructure/persistence/appointment-row.schema.js';
+import { SCHEDULING_SCHEMA } from '#src/contexts/scheduling/infrastructure/persistence/scheduling.schema.js';
 
 /** The appointments of one page of the export. */
 const PAGE_SIZE = 100;

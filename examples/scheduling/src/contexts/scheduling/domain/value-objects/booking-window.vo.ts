@@ -1,5 +1,5 @@
 import { ValueObject, err, ok, type Result } from '@ddd-ts-kit/kernel';
-import { InvalidBookingWindowError } from '../errors/invalid-booking-window.error.js';
+import { InvalidBookingWindowError } from '#src/contexts/scheduling/domain/errors/invalid-booking-window.error.js';
 
 export type BookingWindowProps = {
   /** The minimum minutes between booking and start. */

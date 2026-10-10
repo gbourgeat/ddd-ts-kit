@@ -1,10 +1,10 @@
 import { unwrap } from '@ddd-ts-kit/kernel';
-import { Appointment } from '../aggregates/appointment.aggregate.js';
-import type { Calendar } from '../aggregates/calendar.aggregate.js';
-import { PatientLimitReachedError } from '../errors/patient-limit-reached.error.js';
-import { SlotTakenError } from '../errors/slot-taken.error.js';
-import { Booking } from '../value-objects/booking.vo.js';
-import type { Slot } from '../value-objects/slot.vo.js';
+import { Appointment } from '#src/contexts/scheduling/domain/aggregates/appointment.aggregate.js';
+import type { Calendar } from '#src/contexts/scheduling/domain/aggregates/calendar.aggregate.js';
+import { PatientLimitReachedError } from '#src/contexts/scheduling/domain/errors/patient-limit-reached.error.js';
+import { SlotTakenError } from '#src/contexts/scheduling/domain/errors/slot-taken.error.js';
+import { Booking } from '#src/contexts/scheduling/domain/value-objects/booking.vo.js';
+import type { Slot } from '#src/contexts/scheduling/domain/value-objects/slot.vo.js';
 
 /** What is already held when a slot is asked for: around it on the calendar, and by the patient with the practitioner. */
 interface Held {

@@ -1,7 +1,10 @@
 import { unwrap } from '@ddd-ts-kit/kernel';
-import { Notification } from '../../domain/aggregates/notification.aggregate.js';
-import { NotificationKind } from '../../domain/value-objects/notification-kind.vo.js';
-import type { NotificationColumns, NotificationRow } from './notification-row.schema.js';
+import { Notification } from '#src/contexts/notification/domain/aggregates/notification.aggregate.js';
+import { NotificationKind } from '#src/contexts/notification/domain/value-objects/notification-kind.vo.js';
+import type {
+  NotificationColumns,
+  NotificationRow,
+} from '#src/contexts/notification/infrastructure/persistence/notification-row.schema.js';
 
 export const NotificationMapper = {
   toDomain(row: NotificationRow): Notification {

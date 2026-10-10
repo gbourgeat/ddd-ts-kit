@@ -1,11 +1,11 @@
 import type { AccessScope } from '@ddd-ts-kit/auth';
 import { InvalidPageRequestError, decodeCursor, encodeCursor, pageOf, type PageRequest } from '@ddd-ts-kit/kernel';
-import type { SearchNotificationsReader } from '../../application/ports/search-notifications-reader.port.js';
+import type { SearchNotificationsReader } from '#src/contexts/notification/application/ports/search-notifications-reader.port.js';
 import type {
   SearchNotificationsItem,
   SearchNotificationsResult,
   SearchNotificationsSort,
-} from '../../application/queries/search-notifications/search-notifications.result.js';
+} from '#src/contexts/notification/application/queries/search-notifications/search-notifications.result.js';
 
 /** The read port in memory, over the lines a spec gives it: narrowed by the scope and ordered as the adapter over the database does. */
 export class FakeSearchNotificationsReader implements SearchNotificationsReader {

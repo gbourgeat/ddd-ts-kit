@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { InMemoryEventBus, SequentialIdGenerator } from '@ddd-ts-kit/kernel';
-import { PracticeMemberAddedPublisher } from '../../application/integration/publishers/practice-member-added.publisher.js';
-import { PracticeMemberAdded } from '../../domain/events/practice-member-added.event.js';
+import { PracticeMemberAddedPublisher } from '#src/contexts/identity/application/integration/publishers/practice-member-added.publisher.js';
+import { PracticeMemberAdded } from '#src/contexts/identity/domain/events/practice-member-added.event.js';
 
 describe('Publishing "practice member added" to other contexts', () => {
   it('publishes, with every field of the public payload, version 1 of identity.practice.member-added', async () => {

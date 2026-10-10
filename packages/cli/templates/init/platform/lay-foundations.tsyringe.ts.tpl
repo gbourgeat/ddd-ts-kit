@@ -13,14 +13,14 @@ import {
 } from '@ddd-ts-kit/kernel';
 import { traceApplication, type ConsumerTrace, type TracedApplication } from '@ddd-ts-kit/tracing';
 {{#if audit.on}}
-import { createAudit, type Audit } from './audit/create-audit.js';
+import { createAudit, type Audit } from '{{alias.platform}}/audit/create-audit.js';
 {{/if}}
 {{#unless audit.on}}
-import { logDecisions } from './auth/log-decisions.js';
+import { logDecisions } from '{{alias.platform}}/auth/log-decisions.js';
 {{/unless}}
-import type { Persistence } from './database/persistence.js';
-import { createLogger, type LogSettings } from './observability/create-logger.js';
-import { createMetrics } from './observability/create-metrics.js';
+import type { Persistence } from '{{alias.platform}}/database/persistence.js';
+import { createLogger, type LogSettings } from '{{alias.platform}}/observability/create-logger.js';
+import { createMetrics } from '{{alias.platform}}/observability/create-metrics.js';
 
 /**
  * What exists before any module: built once and handed to the kernel module, so that the buses,

@@ -1,5 +1,5 @@
 import { ValueObject, err, ok, type Result } from '@ddd-ts-kit/kernel';
-import { InvalidRangeError } from '../errors/invalid-range.error.js';
+import { InvalidRangeError } from '#src/contexts/scheduling/domain/errors/invalid-range.error.js';
 
 export type RangeProps = {
   readonly startMinute: number;

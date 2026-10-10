@@ -2,10 +2,10 @@ import { PGlite } from '@electric-sql/pglite';
 import { btree_gist } from '@electric-sql/pglite/contrib/btree_gist';
 import { PGLiteSocketServer } from '@electric-sql/pglite-socket';
 import type { Knex } from 'knex';
-import { connectToDatabase } from './connect-to-database.js';
-import { persistenceOver } from './persistence-over.js';
-import type { Persistence } from './persistence.js';
-import { AUDIT_SCHEMA, createTables } from './schema.js';
+import { connectToDatabase } from '#src/platform/database/connect-to-database.js';
+import { persistenceOver } from '#src/platform/database/persistence-over.js';
+import type { Persistence } from '#src/platform/database/persistence.js';
+import { AUDIT_SCHEMA, createTables } from '#src/platform/database/schema.js';
 
 export interface TestDatabase {
   readonly persistence: Persistence;

@@ -1,5 +1,5 @@
 import { InMemoryEventBus } from '@ddd-ts-kit/kernel';
-import type { EventProvider } from './event-provider.js';
+import type { EventProvider } from '{{alias.platform}}/events/event-provider.js';
 
 {{#if broker.none}}
 /** Same process, no broker: {{#if events.outbox}}the relay of the outbox publishes to this bus, which runs the consumers{{/if}}{{#unless events.outbox}}use cases publish to this bus, which runs the consumers{{/unless}}. */

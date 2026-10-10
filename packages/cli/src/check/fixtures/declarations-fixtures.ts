@@ -158,7 +158,7 @@ export const DECLARATIONS_FIXTURES: readonly Fixture[] = [
     expect: { file: BARREL },
     files: declaredProject(DECLARED_CONTEXT, {
       [BARREL]: DECLARED_BARREL.replace(
-        "export * from './application/authorization/only-issuer-voids.policy.js';\n",
+        "export * from '#src/contexts/billing/application/authorization/only-issuer-voids.policy.js';\n",
         '',
       ),
     }),

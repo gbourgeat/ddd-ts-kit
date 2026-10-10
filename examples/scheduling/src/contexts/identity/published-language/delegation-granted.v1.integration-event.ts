@@ -1,7 +1,7 @@
 import { defineIntegrationEvent } from '@ddd-ts-kit/events';
 import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
-import { DelegationGrantedV1Payload } from './delegation-granted.v1.payload.js';
+import { DelegationGrantedV1Payload } from '#src/contexts/identity/published-language/delegation-granted.v1.payload.js';
 
 export const delegationGrantedV1 = defineIntegrationEvent({
   type: 'identity.delegation.granted',

@@ -26,7 +26,7 @@ const SCHEMA_LIBRARIES: Readonly<Record<string, readonly string[]>> = {
 
 /**
  * Mirrors `parseConfig` of the CLI key by key, minus the stack choices that only the
- * generator needs: of `stack`, the style and the assembly are kept. A malformed value falls back to its default: `ddd-ts-kit check` reports it
+ * generator needs: of `stack`, the style, the assembly and the ORM are kept. A malformed value falls back to its default: `ddd-ts-kit check` reports it
  * as `config/valid`, a linter run must not stop on it.
  */
 export function parseConfig(raw: unknown): Config {
@@ -38,7 +38,7 @@ export function parseConfig(raw: unknown): Config {
     contextsDir: posix(text(source['contextsDir'], `${sourceRoot}/contexts`)),
     sharedKernelDir: posix(text(source['sharedKernelDir'], `${sourceRoot}/shared-kernel`)),
     platformDir: posix(text(source['platformDir'], `${sourceRoot}/platform`)),
-    importAlias: text(source['importAlias'], '@/'),
+    importAlias: text(source['importAlias'], '#src/'),
     contexts: mapEntries(source['contexts'], parseContext),
     rules: mapEntries(source['rules'], String),
     domainAllowedPackages: strings(source['domainAllowedPackages'], KERNEL),
@@ -57,7 +57,11 @@ export function parseConfig(raw: unknown): Config {
 function parseStack(value: unknown): Stack {
   const raw = isRecord(value) ? value : {};
 
-  return { style: oneOf(STYLES, raw['style'], 'explicit'), assembly: oneOf(ASSEMBLIES, raw['assembly'], 'barrel') };
+  return {
+    style: oneOf(STYLES, raw['style'], 'explicit'),
+    assembly: oneOf(ASSEMBLIES, raw['assembly'], 'barrel'),
+    orm: text(raw['orm'], 'drizzle'),
+  };
 }
 
 function contractPackages(stack: unknown): readonly string[] {

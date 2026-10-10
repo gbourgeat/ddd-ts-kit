@@ -1,5 +1,5 @@
 import type { DomainEvent } from '@ddd-ts-kit/kernel';
-import type { Booking } from '../value-objects/booking.vo.js';
+import type { Booking } from '#src/contexts/scheduling/domain/value-objects/booking.vo.js';
 
 export class AppointmentBooked implements DomainEvent {
   readonly name = 'scheduling.appointment.booked';

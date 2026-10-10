@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { OutsideAvailabilityError } from '../../domain/errors/outside-availability.error.js';
+import { OutsideAvailabilityError } from '#src/contexts/scheduling/domain/errors/outside-availability.error.js';
 
 describe('OutsideAvailabilityError', () => {
   it('carries its stable code', () => {

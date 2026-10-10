@@ -2,7 +2,7 @@ import type { UseCaseDeclaration } from '@ddd-ts-kit/auth';
 {{#if http.any}}
 import type { Route } from '@ddd-ts-kit/http';
 {{/if}}
-import type { Platform } from '{{paths.contextToPlatform}}/platform.js';
+import type { Platform } from '{{alias.platform}}/platform.js';
 // ddd-ts-kit:imports
 // /ddd-ts-kit:imports
 

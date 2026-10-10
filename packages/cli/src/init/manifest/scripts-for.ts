@@ -1,3 +1,4 @@
+import { SOURCE_CONDITION } from '../../alias/index.js';
 import type { Config } from '../../config/index.js';
 import { DEPCRUISE_FILE } from '../../depcruise/depcruise-file.js';
 import { databaseScripts } from './database-scripts.js';
@@ -41,13 +42,17 @@ export function scriptsFor(config: Config): Record<string, string> {
   return { ...scripts, verify: gates.map((gate) => `npm run ${gate}`).join(' && ') };
 }
 
-/** The whole application, and the worker once the project has one (`generate worker` adds its script to an existing project). */
+/**
+ * The whole application, and the worker once the project has one (`generate worker` adds its script
+ * to an existing project). `start` is plain `node` on the compiled output; `dev` runs the sources,
+ * so it names the condition under which an import alias answers a source file.
+ */
 function runScripts(config: Config): Record<string, string> {
   const compiled = `dist/${config.sourceRoot}`;
 
   return {
     start: `node ${compiled}/main.js`,
     ...(config.worker ? { 'start:worker': `node ${compiled}/apps/worker/main.js` } : {}),
-    dev: `tsx watch --env-file-if-exists=.env --import ./${config.platformDir}/tracing.ts ${config.sourceRoot}/main.ts`,
+    dev: `tsx watch --conditions=${SOURCE_CONDITION} --env-file-if-exists=.env --import ./${config.platformDir}/tracing.ts ${config.sourceRoot}/main.ts`,
   };
 }

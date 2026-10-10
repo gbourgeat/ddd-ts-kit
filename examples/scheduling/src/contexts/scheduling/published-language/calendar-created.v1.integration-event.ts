@@ -1,7 +1,7 @@
 import { defineIntegrationEvent } from '@ddd-ts-kit/events';
 import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
-import { CalendarCreatedV1Payload } from './calendar-created.v1.payload.js';
+import { CalendarCreatedV1Payload } from '#src/contexts/scheduling/published-language/calendar-created.v1.payload.js';
 
 export const calendarCreatedV1 = defineIntegrationEvent({
   type: 'scheduling.calendar.created',

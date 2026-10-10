@@ -1,10 +1,10 @@
 import { Access } from '@ddd-ts-kit/auth';
 import { scoped } from '@ddd-ts-kit/kernel';
 import { QueryHandler } from '@ddd-ts-kit/kernel/declarations';
-import { analyticsPermissions } from '../../authorization/analytics.permissions.js';
-import { OccupancyReader } from '../../ports/occupancy-reader.port.js';
-import { SearchOccupancyQuery } from './search-occupancy.query.js';
-import type { SearchOccupancyResult } from './search-occupancy.result.js';
+import { analyticsPermissions } from '#src/contexts/analytics/application/authorization/analytics.permissions.js';
+import { OccupancyReader } from '#src/contexts/analytics/application/ports/occupancy-reader.port.js';
+import { SearchOccupancyQuery } from '#src/contexts/analytics/application/queries/search-occupancy/search-occupancy.query.js';
+import type { SearchOccupancyResult } from '#src/contexts/analytics/application/queries/search-occupancy/search-occupancy.result.js';
 
 @QueryHandler(SearchOccupancyQuery, [OccupancyReader, Access])
 export class SearchOccupancyHandler implements QueryHandler<SearchOccupancyQuery> {

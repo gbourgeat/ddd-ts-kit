@@ -1,7 +1,7 @@
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
 import { KnexContext, KnexReadModelStore } from '@ddd-ts-kit/knex';
-import { Contacts, contactCriteria, type Contact } from '../../application/ports/contacts.port.js';
-import { NOTIFICATION_SCHEMA } from './notification.schema.js';
+import { Contacts, contactCriteria, type Contact } from '#src/contexts/notification/application/ports/contacts.port.js';
+import { NOTIFICATION_SCHEMA } from '#src/contexts/notification/infrastructure/persistence/notification.schema.js';
 
 @Repository(Contacts, [KnexContext])
 export class KnexContacts extends KnexReadModelStore<Contact> implements Contacts {

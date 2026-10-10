@@ -1,6 +1,6 @@
 import { definePolicy } from '@ddd-ts-kit/auth';
 import { isAuthenticated } from '@ddd-ts-kit/kernel';
-import { {{context.camel}}Permissions } from './{{context.kebab}}.permissions.js';
+import { {{context.camel}}Permissions } from '{{alias.context}}/application/authorization/{{context.kebab}}.permissions.js';
 
 // TODO(domain): replace `unknown` by the aggregate "{{name.words}}" reads, add `appliesTo: (subject): subject is <Aggregate> => subject instanceof <Aggregate>`, and decide from the actor, the loaded element and `now`; the handler asks it through `Access.authorize(command.actor, permission, element)`.
 export const {{name.camel}} = definePolicy<unknown>({

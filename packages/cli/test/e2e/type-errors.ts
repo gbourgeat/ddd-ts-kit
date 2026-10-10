@@ -1,6 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+import { SOURCE_CONDITION } from '../../src/alias/index.js';
 import { REPO_ROOT, write } from '../helpers.js';
 
 /** The compiler the generated scripts call by path: `npx tsc` would run the older one, kept for the tools. */
@@ -21,7 +22,8 @@ export function typeErrors(root: string): string {
     'tsconfig.e2e.json',
     JSON.stringify({
       extends: './tsconfig.json',
-      compilerOptions: { noEmit: true, rootDir: '/', paths: sourcePaths() },
+      // The sources of the workspace packages widen `rootDir`, so a compiled alias target no longer maps back to its source: the source condition names it.
+      compilerOptions: { noEmit: true, rootDir: '/', paths: sourcePaths(), customConditions: [SOURCE_CONDITION] },
       include: ['src', 'scripts', 'test', path.join(PACKAGES, 'validation/src/*.d.ts')],
     }),
   );
@@ -41,7 +43,7 @@ export function typeErrors(root: string): string {
 
 /** Every entry of every runtime package, resolved to its source file. */
 function sourcePaths(): Record<string, string[]> {
-  const paths: Record<string, string[]> = { '@/*': ['./src/*'] };
+  const paths: Record<string, string[]> = {};
 
   for (const name of fs.readdirSync(PACKAGES).filter((entry) => !TOOLS.includes(entry))) {
     const source = (entry: string): string => path.join(PACKAGES, name, 'src', `${entry}.ts`);

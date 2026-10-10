@@ -227,6 +227,18 @@ from a project of its own, all recorded in the tooling report: `scripts/tsc.mjs`
 (`.github/`, `.gitlab-ci.yml`) are kept as generated; in this repository they do not run from a
 sub-directory, and the root pipeline has an `example` job instead. The rules for coding agents are the files `init` generated at the root of the example.
 
+## Imports
+
+Every file is imported by an alias from the project root, never by a relative path:
+`#src/contexts/scheduling/domain/aggregates/appointment.aggregate.js`, `#test/e2e/support/...`,
+`#scripts/...`. The alias is a Node subpath import declared once, under `imports` in
+`package.json`: under the condition `ddd-ts-kit-source` it answers the TypeScript source,
+otherwise the compiled file under `dist/`. `npm start` and the Docker image are plain `node`
+on `dist/`; `npm run dev`, vitest and dependency-cruiser set the condition and read `src/`.
+`npm run lint:fix` turns a relative import into its alias; `npm run check:arch` reports a
+declaration that no longer follows `importAlias` of `ddd-ts-kit.config.json`. The reasons and
+what was measured: [docs/tools/import-aliases.md](../../docs/tools/import-aliases.md).
+
 ## What is not built
 
 Listed precisely in [docs/tooling-report.md](docs/tooling-report.md), "Not built, or built

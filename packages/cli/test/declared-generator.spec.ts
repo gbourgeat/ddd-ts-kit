@@ -28,23 +28,23 @@ describe('a context generated in the declared style', () => {
 
   it('exports every role file from the barrel, sorted by path, and nothing else', () => {
     expect(read(root, `${BILLING}/billing.declarations.ts`).trimEnd().split('\n')).toEqual([
-      "export * from './application/authorization/only-issuer-cancels.policy.js';",
-      "export * from './application/commands/cancel-invoice/cancel-invoice.command.js';",
-      "export * from './application/commands/cancel-invoice/cancel-invoice.handler.js';",
-      "export * from './application/commands/issue-invoice/issue-invoice.command.js';",
-      "export * from './application/commands/issue-invoice/issue-invoice.handler.js';",
-      "export * from './application/event-handlers/invoice-issued.event-handler.js';",
-      "export * from './application/event-handlers/invoice-marked-as-paid.event-handler.js';",
-      "export * from './application/integration/publishers/invoice-issued-v2.publisher.js';",
-      "export * from './application/integration/publishers/invoice-issued.publisher.js';",
-      "export * from './application/queries/search-invoices/search-invoices.handler.js';",
-      "export * from './application/queries/search-invoices/search-invoices.query.js';",
-      "export * from './application/scheduling/cancel-stale-invoices.job.js';",
-      "export * from './application/scheduling/issue-invoices-monthly.job.js';",
-      "export * from './infrastructure/external/remote-payment-gateway.adapter.js';",
-      "export * from './infrastructure/external/remote-tax-rates.adapter.js';",
-      "export * from './infrastructure/persistence/drizzle-invoice.repository.js';",
-      "export * from './infrastructure/persistence/in-memory-search-invoices-reader.repository.js';",
+      "export * from '#src/contexts/billing/application/authorization/only-issuer-cancels.policy.js';",
+      "export * from '#src/contexts/billing/application/commands/cancel-invoice/cancel-invoice.command.js';",
+      "export * from '#src/contexts/billing/application/commands/cancel-invoice/cancel-invoice.handler.js';",
+      "export * from '#src/contexts/billing/application/commands/issue-invoice/issue-invoice.command.js';",
+      "export * from '#src/contexts/billing/application/commands/issue-invoice/issue-invoice.handler.js';",
+      "export * from '#src/contexts/billing/application/event-handlers/invoice-issued.event-handler.js';",
+      "export * from '#src/contexts/billing/application/event-handlers/invoice-marked-as-paid.event-handler.js';",
+      "export * from '#src/contexts/billing/application/integration/publishers/invoice-issued-v2.publisher.js';",
+      "export * from '#src/contexts/billing/application/integration/publishers/invoice-issued.publisher.js';",
+      "export * from '#src/contexts/billing/application/queries/search-invoices/search-invoices.handler.js';",
+      "export * from '#src/contexts/billing/application/queries/search-invoices/search-invoices.query.js';",
+      "export * from '#src/contexts/billing/application/scheduling/cancel-stale-invoices.job.js';",
+      "export * from '#src/contexts/billing/application/scheduling/issue-invoices-monthly.job.js';",
+      "export * from '#src/contexts/billing/infrastructure/external/remote-payment-gateway.adapter.js';",
+      "export * from '#src/contexts/billing/infrastructure/external/remote-tax-rates.adapter.js';",
+      "export * from '#src/contexts/billing/infrastructure/persistence/drizzle-invoice.repository.js';",
+      "export * from '#src/contexts/billing/infrastructure/persistence/in-memory-search-invoices-reader.repository.js';",
     ]);
   });
 
@@ -64,7 +64,7 @@ describe('a context generated in the declared style', () => {
     expect(handler).toContain("import { Clock, IdGenerator } from '@ddd-ts-kit/kernel';");
 
     expect(handler).toContain(
-      "import { InvoiceRepository } from '../../../domain/repositories/invoice.repository.js';",
+      "import { InvoiceRepository } from '#src/contexts/billing/domain/repositories/invoice.repository.js';",
     );
 
     expect(read(root, `${BILLING}/application/commands/cancel-invoice/cancel-invoice.handler.ts`)).toContain(
@@ -114,7 +114,7 @@ describe('a context generated in the declared style, towards the outside', () =>
       '@Repository(InvoiceRepository, [Database, ExecutionScope, Clock])\nexport class DrizzleInvoiceRepository implements InvoiceRepository {',
     );
 
-    expect(repository).toContain("import { Database } from '../../../../platform/database/database.js';");
+    expect(repository).toContain("import { Database } from '#src/platform/database/database.js';");
     expect(repository).toContain('  private insert(state: VersionedInvoice) {');
 
     expect(
@@ -133,7 +133,7 @@ describe('a context generated in the declared style, towards the outside', () =>
       '  @Retry({ attempts: 3, backoff: { baseMs: 100 } })\n  @Timeout(2000, { signal: true })\n  async send(',
     );
 
-    expect(decorated).toContain("import { ownPolicy } from '../../../../platform/resilience/own-policy.js';");
+    expect(decorated).toContain("import { ownPolicy } from '#src/platform/resilience/own-policy.js';");
   });
 
   it('declares reactions: to a domain event, to publish it, to an integration event of an upstream, and a policy as a class', () => {
@@ -169,7 +169,9 @@ describe('a context generated in the declared style, towards the outside', () =>
       '@Gateway(InvoiceStatusGateway, [InvoiceStatusContract])\nexport class InProcessInvoiceStatusGateway implements InvoiceStatusGateway {',
     );
 
-    expect(gateway).toContain("import { InvoiceStatusContract } from '../../../billing/published-language/index.js';");
+    expect(gateway).toContain(
+      "import { InvoiceStatusContract } from '#src/contexts/billing/published-language/index.js';",
+    );
 
     expect(read(root, `${BILLING}/published-language/invoice-status.contract.ts`)).toContain(
       'export abstract class InvoiceStatusContract {',
@@ -190,7 +192,7 @@ describe('a declared context and what hosts it', () => {
     const composition = read(root, 'src/platform/compose-application.ts');
 
     expect(composition).toContain(
-      "import * as billingDeclarations from '../contexts/billing/billing.declarations.js';",
+      "import * as billingDeclarations from '#src/contexts/billing/billing.declarations.js';",
     );
 
     expect(composition).toContain(
@@ -212,8 +214,8 @@ describe('a declared context and what hosts it', () => {
     const spec = read(root, `${BILLING}/test/unit/issue-invoice.handler.spec.ts`);
     const open = read(root, 'src/contexts/order-fulfilment/test/unit/track-purchase-order.handler.spec.ts');
 
-    expect(spec).toContain("import * as billingDeclarations from '../../billing.declarations.js';");
-    expect(spec).toContain("import { platformTestModule } from '../../../../platform/platform-test.module.js';");
+    expect(spec).toContain("import * as billingDeclarations from '#src/contexts/billing/billing.declarations.js';");
+    expect(spec).toContain("import { platformTestModule } from '#src/platform/platform-test.module.js';");
 
     expect(spec).toContain(
       "  const context = contextModule('billing', billingDeclarations);\n\n  const invoiceRepository = new FakeInvoiceRepository();\n\n  const application = createTestApplication({\n    modules: [platformTestModule, context, holders],\n    fakes: [fake(InvoiceRepository, invoiceRepository)],\n    idPrefix: 'invoice',\n  });",
@@ -275,7 +277,7 @@ describe('a declared context and what hosts it', () => {
     write(
       root,
       added,
-      "import { Adapter } from '@ddd-ts-kit/kernel/declarations';\nimport { InvoiceStatusContract } from '../../../billing/published-language/index.js';\n\n@Adapter(InvoiceStatusContract)\nexport class RemoteCarrier implements InvoiceStatusContract {}\n",
+      "import { Adapter } from '@ddd-ts-kit/kernel/declarations';\nimport { InvoiceStatusContract } from '#src/contexts/billing/published-language/index.js';\n\n@Adapter(InvoiceStatusContract)\nexport class RemoteCarrier implements InvoiceStatusContract {}\n",
     );
 
     const stale = cli(root, 'docs', '--check');
@@ -287,7 +289,7 @@ describe('a declared context and what hosts it', () => {
     expect(cli(root, 'docs').code).toBe(0);
 
     expect(read(root, `${SHIPPING}/shipping.declarations.ts`)).toContain(
-      "export * from './infrastructure/external/remote-carrier.adapter.js';",
+      "export * from '#src/contexts/shipping/infrastructure/external/remote-carrier.adapter.js';",
     );
 
     expect(cli(root, 'check', '--rule', 'declarations/barrel-current').code).toBe(0);

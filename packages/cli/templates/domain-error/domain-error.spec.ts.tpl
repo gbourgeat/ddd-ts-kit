@@ -1,6 +1,6 @@
 import { describe, expect, it } from '{{tests.module}}';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { {{name.pascal}}Error } from '../../domain/errors/{{name.kebab}}.error.js';
+import { {{name.pascal}}Error } from '{{alias.context}}/domain/errors/{{name.kebab}}.error.js';
 
 describe('{{name.pascal}}Error', () => {
   it('carries its stable code', () => {

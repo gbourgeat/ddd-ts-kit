@@ -1,11 +1,11 @@
-import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vitest/config';
 
 const INTEGRATION_SPECS = 'src/contexts/*/test/integration/**/*.spec.ts';
 const INTEGRATION_MODE = 'integration';
 
 export default defineConfig(({ mode }) => ({
-  resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
+  // Under this condition an import alias answers the source file, not the compiled one (package.json, "imports").
+  ssr: { resolve: { conditions: ['ddd-ts-kit-source'] } },
   test: {
     projects: [
       {

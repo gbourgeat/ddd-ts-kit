@@ -497,3 +497,51 @@ Frictions:
 
 The generator run of this change (`docs`) is in the log kept by `scripts/kit.mjs`;
 `docs/tooling/generator-log.jsonl` was not refreshed.
+
+## 2026-10-10: every import by its alias (Node subpath imports)
+
+The example imported relatively everywhere (`../../../domain/...`) although its config named an
+alias, `@/`, that only `tsconfig.json` and the vitest configs knew: an alias import would have
+type-checked and then failed under `node dist/src/main.js`. The alias is now `#src/`, a Node
+subpath import declared once under `imports` in `package.json`, with `#test/` and `#scripts/`
+next to it, and the rule `imports/alias-only` refuses a relative import.
+
+What was done, in order:
+
+1. By hand, the declarations `init` writes for a new project: `importAlias` `#src/` in the
+   config, the `imports` of `package.json`, `--conditions=ddd-ts-kit-source` in the `dev`
+   script, `paths` removed from `tsconfig.json`, `ssr.resolve.conditions` in place of
+   `resolve.alias` in the two vitest configs. `ddd-ts-kit check` named each one that was
+   missing (`imports/alias-declared`), with the text to write.
+2. `node scripts/kit.mjs depcruise-config --write`: the generated graph configuration resolves
+   under the source condition.
+3. `npx eslint . --fix`: 2097 imports rewritten in 557 files (2019 under `src/`, 73 under
+   `test/`, 5 under `scripts/`), the four barrels included. The checker counted the same 2097
+   before the fix and none after. Then `npm run format`: 25 files re-wrapped, since an alias
+   path is longer. A second `eslint . --fix` changed no file.
+4. `migrations/0001_initial.js` names the compiled schema by `#src/platform/database/schema.js`
+   instead of `../dist/src/...`: under the plain `node` of the knex CLI the alias answers
+   `dist/`.
+
+Checked after it: `npm run typecheck`, `npm run build`, 1285 unit and adapter specs, 57
+end-to-end specs, dependency-cruiser (759 modules, no violation), knip, `docs:check`. Plain
+`node` links the 463 compiled modules on Node 22.23 and Node 24.21 with no alias left
+unresolved; `node dist/src/main.js`, the worker and `tsx` on `src/main.ts` each run up to the
+connection to PostgreSQL, which no server answered on this machine: the full start with the
+compose services was not replayed.
+
+What the tools did well: the fix needed no decision, file by file, and the formatter absorbed
+every long line; no file passed 350 lines and no function 30, since imports count in neither.
+`docs` had nothing to rewrite after the fix: the barrels ESLint fixed were already what the
+generator writes.
+
+Frictions:
+
+1. **Three tools load the compiled copy in silence when the condition is missing**: tsx, vitest
+   and jest resolve an alias to `dist/` as `node` does, so a stale build would be tested instead
+   of the sources. That is what `imports/alias-declared` checks in the scripts and in the runner
+   configs, and why the condition is in each of them.
+2. **Renaming the alias is not a command.** The config, the `imports` entry and the prefix in
+   the sources are three edits; the checker names the first two.
+3. **`docs/demo-transcript.md` and `docs/tooling/` are recordings** made before this change and
+   were left as recorded.

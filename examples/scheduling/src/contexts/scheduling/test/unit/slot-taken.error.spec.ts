@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { SlotTakenError } from '../../domain/errors/slot-taken.error.js';
+import { SlotTakenError } from '#src/contexts/scheduling/domain/errors/slot-taken.error.js';
 
 describe('SlotTakenError', () => {
   it('carries its stable code', () => {

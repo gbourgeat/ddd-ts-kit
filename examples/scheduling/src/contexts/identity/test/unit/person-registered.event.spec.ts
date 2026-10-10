@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PersonRegistered } from '../../domain/events/person-registered.event.js';
+import { PersonRegistered } from '#src/contexts/identity/domain/events/person-registered.event.js';
 
 describe('PersonRegistered', () => {
   it('is named after the context, the aggregate and the fact', () => {

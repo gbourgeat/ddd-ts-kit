@@ -3,8 +3,8 @@ import { IntegrationEventHandler } from '@ddd-ts-kit/kernel/declarations';
 import {
   appointmentCancelledV1,
   type AppointmentCancelledV1,
-} from '../../../../scheduling/published-language/index.js';
-import { SendNotificationCommand } from '../../commands/send-notification/send-notification.command.js';
+} from '#src/contexts/scheduling/published-language/index.js';
+import { SendNotificationCommand } from '#src/contexts/notification/application/commands/send-notification/send-notification.command.js';
 
 @IntegrationEventHandler(appointmentCancelledV1, { consumer: 'notification.scheduling-appointment-cancelled' }, [
   CommandBus,

@@ -42,7 +42,7 @@ export function retry(options: RetryOptions): Aspect {}
 export class RabbitMqEventBus {}
 
 // src/platform/index.ts
-export { retry, type RetryOptions } from './retry.js';
+export { retry, type RetryOptions } from '#src/platform/retry.js';
 ```
 
 ## Details

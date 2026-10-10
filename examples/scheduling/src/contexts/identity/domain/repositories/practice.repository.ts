@@ -1,4 +1,4 @@
 import { Repository } from '@ddd-ts-kit/kernel';
-import type { Practice } from '../aggregates/practice.aggregate.js';
+import type { Practice } from '#src/contexts/identity/domain/aggregates/practice.aggregate.js';
 
 export abstract class PracticeRepository extends Repository<Practice> {}

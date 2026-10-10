@@ -1,6 +1,6 @@
 import { PermissionRegistry } from '@ddd-ts-kit/auth';
 {{#if audit.route}}
-import { auditPermissions } from '../audit/audit.permissions.js';
+import { auditPermissions } from '{{alias.platform}}/audit/audit.permissions.js';
 {{/if}}
 // ddd-ts-kit:imports
 // /ddd-ts-kit:imports

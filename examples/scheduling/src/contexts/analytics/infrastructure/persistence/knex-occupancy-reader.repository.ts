@@ -2,9 +2,13 @@ import type { Knex } from 'knex';
 import { pageOfPlan, planCriteria, type CriteriaPlan, type Page, type ScopedCriteria } from '@ddd-ts-kit/kernel';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
 import { KnexContext, criteriaToKnex, predicateToKnex } from '@ddd-ts-kit/knex';
-import { OccupancyReader, occupancyCriteria, type Occupancy } from '../../application/ports/occupancy-reader.port.js';
-import { OccupancyMeasureService } from '../../domain/services/occupancy-measure.service.js';
-import { ANALYTICS_SCHEMA } from './analytics.schema.js';
+import {
+  OccupancyReader,
+  occupancyCriteria,
+  type Occupancy,
+} from '#src/contexts/analytics/application/ports/occupancy-reader.port.js';
+import { OccupancyMeasureService } from '#src/contexts/analytics/domain/services/occupancy-measure.service.js';
+import { ANALYTICS_SCHEMA } from '#src/contexts/analytics/infrastructure/persistence/analytics.schema.js';
 
 /** What a line is grouped by, and so what a filter or a scope may name: each is a column of the outcomes. */
 const GROUPED = { practiceId: 'practice_id', calendarId: 'calendar_id', day: 'day' };

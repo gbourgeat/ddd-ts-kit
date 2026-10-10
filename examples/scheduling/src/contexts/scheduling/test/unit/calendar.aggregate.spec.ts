@@ -1,21 +1,21 @@
 import { describe, expect, it } from 'vitest';
 import { unwrap } from '@ddd-ts-kit/kernel';
 import { given } from '@ddd-ts-kit/testing';
-import { Calendar } from '../../domain/aggregates/calendar.aggregate.js';
-import { BookingTooFarError } from '../../domain/errors/booking-too-far.error.js';
-import { BookingTooLateError } from '../../domain/errors/booking-too-late.error.js';
-import { OffGridError } from '../../domain/errors/off-grid.error.js';
-import { OutsideAvailabilityError } from '../../domain/errors/outside-availability.error.js';
-import { TimeOffOverAppointmentsError } from '../../domain/errors/time-off-over-appointments.error.js';
-import { UnknownAppointmentTypeError } from '../../domain/errors/unknown-appointment-type.error.js';
-import { AppointmentType } from '../../domain/value-objects/appointment-type.vo.js';
-import { Exception } from '../../domain/value-objects/exception.vo.js';
-import { OpeningHours } from '../../domain/value-objects/opening-hours.vo.js';
-import { Range } from '../../domain/value-objects/range.vo.js';
-import { Slot } from '../../domain/value-objects/slot.vo.js';
-import { TimeOff } from '../../domain/value-objects/time-off.vo.js';
-import { TimeZone } from '../../domain/value-objects/time-zone.vo.js';
-import { aCalendar } from '../builders/calendar.builder.js';
+import { Calendar } from '#src/contexts/scheduling/domain/aggregates/calendar.aggregate.js';
+import { BookingTooFarError } from '#src/contexts/scheduling/domain/errors/booking-too-far.error.js';
+import { BookingTooLateError } from '#src/contexts/scheduling/domain/errors/booking-too-late.error.js';
+import { OffGridError } from '#src/contexts/scheduling/domain/errors/off-grid.error.js';
+import { OutsideAvailabilityError } from '#src/contexts/scheduling/domain/errors/outside-availability.error.js';
+import { TimeOffOverAppointmentsError } from '#src/contexts/scheduling/domain/errors/time-off-over-appointments.error.js';
+import { UnknownAppointmentTypeError } from '#src/contexts/scheduling/domain/errors/unknown-appointment-type.error.js';
+import { AppointmentType } from '#src/contexts/scheduling/domain/value-objects/appointment-type.vo.js';
+import { Exception } from '#src/contexts/scheduling/domain/value-objects/exception.vo.js';
+import { OpeningHours } from '#src/contexts/scheduling/domain/value-objects/opening-hours.vo.js';
+import { Range } from '#src/contexts/scheduling/domain/value-objects/range.vo.js';
+import { Slot } from '#src/contexts/scheduling/domain/value-objects/slot.vo.js';
+import { TimeOff } from '#src/contexts/scheduling/domain/value-objects/time-off.vo.js';
+import { TimeZone } from '#src/contexts/scheduling/domain/value-objects/time-zone.vo.js';
+import { aCalendar } from '#src/contexts/scheduling/test/builders/calendar.builder.js';
 
 const paris = unwrap(TimeZone.create('Europe/Paris'));
 /** Long before every start of this spec and inside the horizon of all of them. */

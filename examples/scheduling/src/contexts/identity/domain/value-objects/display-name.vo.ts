@@ -1,5 +1,5 @@
 import { ValueObject, err, ok, type Result } from '@ddd-ts-kit/kernel';
-import { InvalidDisplayNameError } from '../errors/invalid-display-name.error.js';
+import { InvalidDisplayNameError } from '#src/contexts/identity/domain/errors/invalid-display-name.error.js';
 
 export type DisplayNameProps = {
   readonly value: string;

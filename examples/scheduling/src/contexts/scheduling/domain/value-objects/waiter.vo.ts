@@ -1,5 +1,5 @@
 import { ValueObject, err, ok, type Result } from '@ddd-ts-kit/kernel';
-import { InvalidWaiterError } from '../errors/invalid-waiter.error.js';
+import { InvalidWaiterError } from '#src/contexts/scheduling/domain/errors/invalid-waiter.error.js';
 
 export type WaiterProps = {
   readonly patientId: string;

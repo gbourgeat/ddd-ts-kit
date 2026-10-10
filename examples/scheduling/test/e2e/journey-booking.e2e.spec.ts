@@ -1,13 +1,13 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, onTestFailed } from 'vitest';
 import { eventually, expectProblem, expectStatus, type HttpClient, type HttpResponse } from '@ddd-ts-kit/testing/e2e';
 import { reportSeedOnFailure } from '@ddd-ts-kit/testing/faker';
-import { bookAppointment } from './support/book-appointment.js';
-import type { Listed } from './support/listed.js';
-import { openStaffedPractice } from './support/open-staffed-practice.js';
-import { registerPeople } from './support/register-people.js';
-import { slotStarting } from './support/slot-starting.js';
-import type { StaffedPractice } from './support/staffed-practice.js';
-import { startApplication, type RunningApplication } from './support/start-application.js';
+import { bookAppointment } from '#test/e2e/support/book-appointment.js';
+import type { Listed } from '#test/e2e/support/listed.js';
+import { openStaffedPractice } from '#test/e2e/support/open-staffed-practice.js';
+import { registerPeople } from '#test/e2e/support/register-people.js';
+import { slotStarting } from '#test/e2e/support/slot-starting.js';
+import type { StaffedPractice } from '#test/e2e/support/staffed-practice.js';
+import { startApplication, type RunningApplication } from '#test/e2e/support/start-application.js';
 
 interface AppointmentLine {
   readonly id: string;

@@ -1,7 +1,7 @@
 import { IdGenerator, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
-import { AppointmentExpired } from '../../../domain/events/appointment-expired.event.js';
-import { appointmentExpiredV1 } from '../../../published-language/appointment-expired.v1.integration-event.js';
+import { AppointmentExpired } from '#src/contexts/scheduling/domain/events/appointment-expired.event.js';
+import { appointmentExpiredV1 } from '#src/contexts/scheduling/published-language/appointment-expired.v1.integration-event.js';
 
 @DomainEventHandler(AppointmentExpired, { name: 'scheduling.appointment.expired' }, [
   IntegrationEventPublisher,

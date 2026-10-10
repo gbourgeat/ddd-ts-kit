@@ -4,7 +4,7 @@ import type { ProcessedEventStore, UnitOfWork } from '@ddd-ts-kit/kernel';
 import type { {{persistence.token}} } from '{{persistence.tokenPackage}}';
 {{/if}}
 {{#if persistence.ownDatabase}}
-import type { Database } from './database.js';
+import type { Database } from '{{alias.platform}}/database/database.js';
 {{/if}}
 
 /** Where state lives and how a command is made atomic. The platform module binds each member to its port. */

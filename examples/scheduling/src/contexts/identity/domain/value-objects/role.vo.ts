@@ -1,5 +1,5 @@
 import { ValueObject, err, ok, type Result } from '@ddd-ts-kit/kernel';
-import { UnknownRoleError } from '../errors/unknown-role.error.js';
+import { UnknownRoleError } from '#src/contexts/identity/domain/errors/unknown-role.error.js';
 
 export type RoleName = 'manager' | 'practitioner' | 'assistant';
 

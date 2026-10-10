@@ -1,3 +1,4 @@
+import { aliasRoots, importMap } from '../../alias/index.js';
 import type { Config } from '../../config/index.js';
 import { CliError } from '../../cli-error.js';
 import type { Workspace } from '../../workspace/index.js';
@@ -20,7 +21,7 @@ export function writeManifest(ws: Workspace, request: ManifestRequest): void {
   const existing = ws.read('package.json');
 
   if (existing === undefined) {
-    ws.create('package.json', serialize(newManifest(request.projectName, scripts, wanted)));
+    ws.create('package.json', serialize(newManifest(request, scripts, wanted)));
 
     return;
   }
@@ -36,6 +37,7 @@ export function writeManifest(ws: Workspace, request: ManifestRequest): void {
 
   merge('dependencies', wanted.dependencies, keptRange);
   merge('devDependencies', wanted.devDependencies, keptRange);
+  merge('imports', importMap(aliasRoots(request.config)), keptImport);
 
   if (manifest['type'] === undefined) {
     manifest['type'] = 'module';
@@ -46,13 +48,18 @@ export function writeManifest(ws: Workspace, request: ManifestRequest): void {
   ws.update('package.json', serialize(manifest));
 }
 
-function newManifest(name: string, scripts: Record<string, string>, wanted: Packages): Record<string, unknown> {
+function newManifest(
+  { config, projectName }: ManifestRequest,
+  scripts: Record<string, string>,
+  wanted: Packages,
+): Record<string, unknown> {
   return {
-    name,
+    name: projectName,
     version: '0.1.0',
     private: true,
     type: 'module',
     engines: { node: '>=22.12.0' },
+    imports: importMap(aliasRoots(config)),
     scripts,
     ...wanted,
   };
@@ -62,6 +69,9 @@ const serialize = (manifest: unknown): string => formatJson(manifest);
 
 const keptRange = (name: string): string =>
   `package.json keeps its own range for ${name}; the kit was built against ${VERSIONS[name] ?? 'latest'}.`;
+
+const keptImport = (name: string): string =>
+  `package.json keeps its own "imports" entry for ${name}; \`ddd-ts-kit check\` reports it under imports/alias-declared.`;
 
 function parseManifest(text: string): Record<string, unknown> {
   let manifest: unknown;
@@ -79,7 +89,7 @@ function parseManifest(text: string): Record<string, unknown> {
   throw new CliError('package.json must hold a JSON object.', 'Fix it, then run `ddd-ts-kit init` again.');
 }
 
-type Merge = (key: string, additions: Record<string, string>, kept: (name: string) => string) => void;
+type Merge = (key: string, additions: Record<string, unknown>, kept: (name: string) => string) => void;
 
 function mergeInto(ws: Workspace, manifest: Record<string, unknown>, force: boolean): Merge {
   return (key, additions, kept) => {
@@ -88,7 +98,7 @@ function mergeInto(ws: Workspace, manifest: Record<string, unknown>, force: bool
     for (const [name, value] of Object.entries(additions)) {
       if (current[name] === undefined || force) {
         current[name] = value;
-      } else if (current[name] !== value) {
+      } else if (JSON.stringify(current[name]) !== JSON.stringify(value)) {
         ws.note(kept(name));
       }
     }

@@ -37,7 +37,7 @@ export function createLogger(scope: ExecutionScope, settings: LogSettings): Pino
 
 ```ts
 // main.ts
-import { tracing } from './platform/tracing.js'; // first
+import { tracing } from '#src/platform/tracing.js'; // first
 import { AsyncLocalStorageExecutionScope } from '@ddd-ts-kit/kernel';
 import { createApplication, kernelModule } from '@ddd-ts-kit/di';
 

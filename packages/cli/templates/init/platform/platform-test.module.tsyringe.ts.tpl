@@ -3,7 +3,7 @@ import { defineContextModule } from '@ddd-ts-kit/di';
 import { {{persistence.token}} } from '{{persistence.tokenPackage}}';
 {{/if}}
 {{#if persistence.ownDatabase}}
-import { Database } from './database/database.js';
+import { Database } from '{{alias.platform}}/database/database.js';
 {{/if}}
 // ddd-ts-kit:imports
 // /ddd-ts-kit:imports

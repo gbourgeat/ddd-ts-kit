@@ -11,9 +11,9 @@ import { reportSeedOnFailure } from '@ddd-ts-kit/testing/faker';
 {{#if e2e.traced}}
 import { expectSpanTree, installTestTracing } from '@ddd-ts-kit/tracing/testing';
 {{/if}}
-import { startApplication, type RunningApplication } from './support/start-application.js';
+import { startApplication, type RunningApplication } from '{{alias.test}}/e2e/support/start-application.js';
 {{#if e2e.traced}}
-import { storyOf } from './support/story-of.js';
+import { storyOf } from '{{alias.test}}/e2e/support/story-of.js';
 {{/if}}
 
 describe('{{name.title}}, end to end', () => {

@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { executeRoute } from '@ddd-ts-kit/http';
 import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';
-import { JoinWaitlistCommand } from '../../application/commands/join-waitlist/join-waitlist.command.js';
-import { AlreadyWaitingError } from '../../domain/errors/already-waiting.error.js';
-import { joinWaitlistRoute } from '../../presentation/http/join-waitlist.route.js';
+import { JoinWaitlistCommand } from '#src/contexts/scheduling/application/commands/join-waitlist/join-waitlist.command.js';
+import { AlreadyWaitingError } from '#src/contexts/scheduling/domain/errors/already-waiting.error.js';
+import { joinWaitlistRoute } from '#src/contexts/scheduling/presentation/http/join-waitlist.route.js';
 
 const valid = { patientId: 'patient-1', appointmentTypeId: 'consultation', day: '2026-03-02' };
 

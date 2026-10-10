@@ -1,5 +1,5 @@
 import { DataSource } from 'typeorm';
-import { entities } from './schema.js';
+import { entities } from '{{alias.platform}}/database/schema.js';
 
 export interface ConnectionOptions {
   /** Default 10. A single-session database (the in-process one of the tests) needs 1. */

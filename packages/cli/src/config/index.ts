@@ -5,6 +5,7 @@ export type { CommitLimits } from './commit-limits.js';
 export type { Config, ContextConfig, Deviation, Limits, Upstream } from './config.js';
 export { CONFIG_FILE } from './config-file.js';
 export { defaultAllowedPackages } from './default-allowed-packages.js';
+export { DEFAULT_IMPORT_ALIAS } from './default-import-alias.js';
 export { editConfigText } from './edit-config-text.js';
 export { FUNCTION_LINES_CEILING } from './function-lines-ceiling.js';
 export { GUARD_MODES } from './guard-modes.js';

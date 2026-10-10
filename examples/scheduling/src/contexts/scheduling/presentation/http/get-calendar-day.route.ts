@@ -2,10 +2,10 @@ import { actorOf } from '@ddd-ts-kit/auth';
 import { defineRoute, type Route } from '@ddd-ts-kit/http';
 import type { QueryBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
-import { GetCalendarDayQuery } from '../../application/queries/get-calendar-day/get-calendar-day.query.js';
-import type { GetCalendarDayResult } from '../../application/queries/get-calendar-day/get-calendar-day.result.js';
-import { GetCalendarDayParams } from './get-calendar-day-params.dto.js';
-import { GetCalendarDayAnswer } from './get-calendar-day-answer.dto.js';
+import { GetCalendarDayQuery } from '#src/contexts/scheduling/application/queries/get-calendar-day/get-calendar-day.query.js';
+import type { GetCalendarDayResult } from '#src/contexts/scheduling/application/queries/get-calendar-day/get-calendar-day.result.js';
+import { GetCalendarDayParams } from '#src/contexts/scheduling/presentation/http/get-calendar-day-params.dto.js';
+import { GetCalendarDayAnswer } from '#src/contexts/scheduling/presentation/http/get-calendar-day-answer.dto.js';
 
 const params = classSchema(GetCalendarDayParams);
 const answer = classSchema(GetCalendarDayAnswer);

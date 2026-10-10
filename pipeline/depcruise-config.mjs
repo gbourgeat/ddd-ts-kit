@@ -3,6 +3,8 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 
 const PROJECT_CONFIG = 'ddd-ts-kit.config.json';
+// An import alias answers the source file under this condition (package.json, "imports"): without it the graph follows the compiled files, which are excluded.
+const SOURCE_CONDITION = 'ddd-ts-kit-source';
 
 /** @type {import('dependency-cruiser').IConfiguration} */
 export default buildConfiguration(readProjectConfig());
@@ -304,7 +306,7 @@ function cruiseOptions(parser) {
     tsConfig: { fileName: 'tsconfig.json' },
     enhancedResolveOptions: {
       exportsFields: ['exports'],
-      conditionNames: ['import', 'node', 'default', 'types'],
+      conditionNames: [SOURCE_CONDITION, 'import', 'node', 'default', 'types'],
       mainFields: ['module', 'main', 'types', 'typings'],
     },
     skipAnalysisNotInRules: true,

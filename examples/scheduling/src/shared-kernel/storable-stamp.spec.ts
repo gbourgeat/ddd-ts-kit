@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { storableStamp } from './storable-stamp.js';
+import { storableStamp } from '#src/shared-kernel/storable-stamp.js';
 
 describe('storableStamp', () => {
   it('gives the instant to the second and keeps the event', () => {

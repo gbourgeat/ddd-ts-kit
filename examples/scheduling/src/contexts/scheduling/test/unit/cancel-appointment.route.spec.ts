@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { createErrorMapper, executeRoute } from '@ddd-ts-kit/http';
 import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';
-import { errorStatuses } from '../../../../platform/http/error-statuses.js';
-import { CancelAppointmentCommand } from '../../application/commands/cancel-appointment/cancel-appointment.command.js';
-import { AppointmentEndedError } from '../../domain/errors/appointment-ended.error.js';
-import { AppointmentNotFoundError } from '../../domain/errors/appointment-not-found.error.js';
-import { ReasonRequiredError } from '../../domain/errors/reason-required.error.js';
-import { cancelAppointmentRoute } from '../../presentation/http/cancel-appointment.route.js';
+import { errorStatuses } from '#src/platform/http/error-statuses.js';
+import { CancelAppointmentCommand } from '#src/contexts/scheduling/application/commands/cancel-appointment/cancel-appointment.command.js';
+import { AppointmentEndedError } from '#src/contexts/scheduling/domain/errors/appointment-ended.error.js';
+import { AppointmentNotFoundError } from '#src/contexts/scheduling/domain/errors/appointment-not-found.error.js';
+import { ReasonRequiredError } from '#src/contexts/scheduling/domain/errors/reason-required.error.js';
+import { cancelAppointmentRoute } from '#src/contexts/scheduling/presentation/http/cancel-appointment.route.js';
 
 // The one table of the platform: a code it does not name answers 422.
 const errorMapper = createErrorMapper(errorStatuses);

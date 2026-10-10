@@ -1,5 +1,5 @@
 import type { DomainEvent } from '@ddd-ts-kit/kernel';
-import type { NotificationKind } from '../value-objects/notification-kind.vo.js';
+import type { NotificationKind } from '#src/contexts/notification/domain/value-objects/notification-kind.vo.js';
 
 export class NotificationSent implements DomainEvent {
   readonly name = 'notification.notification.sent';

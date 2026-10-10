@@ -22,7 +22,7 @@ import {
 import { at, BILLING, ruleTester } from '../support/rule-tester.js';
 
 const REGISTERS_DECORATED =
-  "import { IssueInvoiceCommand } from './application/commands/issue-invoice/issue-invoice.command.js';\nimport { SearchInvoicesQuery as SearchInvoices } from '@/contexts/billing/application/queries/search-invoices/search-invoices.query.js';\nbuilder.command(IssueInvoiceCommand).handledBy(IssueInvoiceHandler, [INVOICES]);\nbuilder.query(SearchInvoices).handledBy(SearchInvoicesHandler, [INVOICES]);";
+  "import { IssueInvoiceCommand } from './application/commands/issue-invoice/issue-invoice.command.js';\nimport { SearchInvoicesQuery as SearchInvoices } from '#src/contexts/billing/application/queries/search-invoices/search-invoices.query.js';\nbuilder.command(IssueInvoiceCommand).handledBy(IssueInvoiceHandler, [INVOICES]);\nbuilder.query(SearchInvoices).handledBy(SearchInvoicesHandler, [INVOICES]);";
 
 ruleTester.run('authz-declared in the declared style', authzDeclared, {
   valid: [

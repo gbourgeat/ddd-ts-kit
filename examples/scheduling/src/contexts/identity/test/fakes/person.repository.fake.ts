@@ -1,6 +1,6 @@
 import { InMemoryRepository } from '@ddd-ts-kit/testing';
-import { Person } from '../../domain/aggregates/person.aggregate.js';
-import type { PersonRepository } from '../../domain/repositories/person.repository.js';
+import { Person } from '#src/contexts/identity/domain/aggregates/person.aggregate.js';
+import type { PersonRepository } from '#src/contexts/identity/domain/repositories/person.repository.js';
 
 export class FakePersonRepository extends InMemoryRepository<Person> implements PersonRepository {
   constructor() {

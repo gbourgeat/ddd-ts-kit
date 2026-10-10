@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { unwrap } from '@ddd-ts-kit/kernel';
-import { Cancellation } from '../../domain/value-objects/cancellation.vo.js';
-import { AppointmentCancelled } from '../../domain/events/appointment-cancelled.event.js';
-import { anAppointment } from '../builders/appointment.builder.js';
+import { Cancellation } from '#src/contexts/scheduling/domain/value-objects/cancellation.vo.js';
+import { AppointmentCancelled } from '#src/contexts/scheduling/domain/events/appointment-cancelled.event.js';
+import { anAppointment } from '#src/contexts/scheduling/test/builders/appointment.builder.js';
 
 const held = anAppointment().identifiedBy('appointment-1').build();
 

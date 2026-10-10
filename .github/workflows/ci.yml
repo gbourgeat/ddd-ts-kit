@@ -117,7 +117,7 @@ jobs:
     name: Unit tests (Node ${{ matrix.node }})
     needs: [typecheck, lint, architecture, deadcode, docs]
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     strategy:
       fail-fast: false
       matrix:
@@ -133,6 +133,8 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npm run ci:test:unit
+      - name: Import alias at run time on this Node (every stack built, run compiled with plain node, from sources under tsx and vitest)
+        run: npm run ci:test:alias
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: ${{ !cancelled() && matrix.node == 24 }}
         with:

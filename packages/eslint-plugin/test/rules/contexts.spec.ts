@@ -11,9 +11,9 @@ const CONTRACT = `${BILLING}/published-language/invoice-issued.v1.integration-ev
 ruleTester.run('context-published-language-only', contextPublishedLanguageOnly, {
   valid: [
     at(HANDLER, "import type { ProductListedV1 } from '../../../../catalog/published-language/index.js';"),
-    at(HANDLER, "import type { ProductListedV1 } from '@/contexts/catalog/published-language';"),
+    at(HANDLER, "import type { ProductListedV1 } from '#src/contexts/catalog/published-language';"),
     at(HANDLER, "import { Invoice } from '../../../domain/aggregates/invoice.aggregate.js';"),
-    at('src/platform/application.ts', "import { catalogModule } from '@/contexts/catalog/catalog.module.js';"),
+    at('src/platform/application.ts', "import { catalogModule } from '#src/contexts/catalog/catalog.module.js';"),
   ],
   invalid: [
     {
@@ -33,7 +33,7 @@ ruleTester.run('context-published-language-only', contextPublishedLanguageOnly, 
     {
       ...at(
         HANDLER,
-        "import type { ProductReader } from '@/contexts/catalog/application/ports/product-reader.port.js';",
+        "import type { ProductReader } from '#src/contexts/catalog/application/ports/product-reader.port.js';",
       ),
       errors: [{ messageId: 'internals' }],
     },
@@ -48,7 +48,7 @@ ruleTester.run('context-published-language-only', contextPublishedLanguageOnly, 
     {
       ...at(
         HANDLER,
-        "const catalog = await import('@/contexts/catalog/infrastructure/persistence/catalog.schema.js');",
+        "const catalog = await import('#src/contexts/catalog/infrastructure/persistence/catalog.schema.js');",
       ),
       errors: [{ messageId: 'internals' }],
     },
@@ -57,11 +57,11 @@ ruleTester.run('context-published-language-only', contextPublishedLanguageOnly, 
 
 ruleTester.run('context-declared-relationship', contextDeclaredRelationship, {
   valid: [
-    at(HANDLER, "import type { ProductListedV1 } from '@/contexts/catalog/published-language/index.js';"),
+    at(HANDLER, "import type { ProductListedV1 } from '#src/contexts/catalog/published-language/index.js';"),
     at(HANDLER, "import type { InvoiceIssuedV1 } from '../../../published-language/index.js';"),
     at(
       'src/contexts/shipping/shipping.module.ts',
-      "import { x } from '@/contexts/billing/published-language/index.js';",
+      "import { x } from '#src/contexts/billing/published-language/index.js';",
       { contexts: { shipping: { classification: 'supporting', upstreams: ['billing'] } } },
     ),
   ],
@@ -69,7 +69,7 @@ ruleTester.run('context-declared-relationship', contextDeclaredRelationship, {
     {
       ...at(
         'src/contexts/shipping/application/integration/handlers/billing-invoice-issued.integration-handler.ts',
-        "import type { InvoiceIssuedV1 } from '@/contexts/billing/published-language/index.js';",
+        "import type { InvoiceIssuedV1 } from '#src/contexts/billing/published-language/index.js';",
       ),
       errors: [{ messageId: 'undeclared', data: { here: 'shipping', there: 'billing' } }],
     },
@@ -105,9 +105,12 @@ ruleTester.run('context-published-language-is-a-contract', contextPublishedLangu
     { ...at(CONTRACT, "import { IsString } from 'class-validator';"), errors: [{ messageId: 'leak' }] },
     { ...at(CONTRACT, "import { randomUUID } from 'node:crypto';"), errors: [{ messageId: 'leak' }] },
     {
-      ...at(CONTRACT, "export type { InvoiceState } from '@/contexts/billing/domain/aggregates/invoice.aggregate.js';"),
+      ...at(
+        CONTRACT,
+        "export type { InvoiceState } from '#src/contexts/billing/domain/aggregates/invoice.aggregate.js';",
+      ),
       errors: [{ messageId: 'leak' }],
     },
-    { ...at(CONTRACT, "import { Money } from '@/shared-kernel/money.vo.js';"), errors: [{ messageId: 'leak' }] },
+    { ...at(CONTRACT, "import { Money } from '#src/shared-kernel/money.vo.js';"), errors: [{ messageId: 'leak' }] },
   ],
 });

@@ -4,8 +4,8 @@ import type { Authenticator } from '@ddd-ts-kit/auth';
 import { keycloakAuthenticator } from '@ddd-ts-kit/auth/jwt';
 import type { HttpHeaders } from '@ddd-ts-kit/testing/e2e';
 import { SignJWT, exportJWK, generateKeyPair, type CryptoKey, type JWK } from 'jose';
-import { IMPERSONATOR_CLAIM } from '../../../src/platform/auth/create-authenticator.js';
-import { authEnvironment } from './auth-environment.js';
+import { IMPERSONATOR_CLAIM } from '#src/platform/auth/create-authenticator.js';
+import { authEnvironment } from '#test/e2e/support/auth-environment.js';
 
 const realm = authEnvironment.KEYCLOAK_REALM;
 const audience = authEnvironment.KEYCLOAK_AUDIENCE;

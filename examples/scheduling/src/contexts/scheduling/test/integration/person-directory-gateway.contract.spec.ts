@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import type { PersonDirectoryGateway } from '../../application/ports/person-directory-gateway.port.js';
-import { InProcessPersonDirectoryGateway } from '../../infrastructure/external/in-process-person-directory.gateway.js';
-import { FakePersonDirectoryGateway } from '../fakes/person-directory-gateway.fake.js';
+import type { PersonDirectoryGateway } from '#src/contexts/scheduling/application/ports/person-directory-gateway.port.js';
+import { InProcessPersonDirectoryGateway } from '#src/contexts/scheduling/infrastructure/external/in-process-person-directory.gateway.js';
+import { FakePersonDirectoryGateway } from '#src/contexts/scheduling/test/fakes/person-directory-gateway.fake.js';
 
 const KNOWN = { 'person-1': 'Ada Martin', 'person-2': 'Zoe Bernard' };
 

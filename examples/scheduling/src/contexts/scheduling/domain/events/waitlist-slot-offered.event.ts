@@ -1,5 +1,5 @@
 import type { DomainEvent } from '@ddd-ts-kit/kernel';
-import type { Offer } from '../value-objects/offer.vo.js';
+import type { Offer } from '#src/contexts/scheduling/domain/value-objects/offer.vo.js';
 
 export class WaitlistSlotOffered implements DomainEvent {
   readonly name = 'scheduling.waitlist.slot-offered';

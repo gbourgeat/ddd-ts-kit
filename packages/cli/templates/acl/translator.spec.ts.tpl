@@ -1,5 +1,5 @@
 import { describe, expect, it } from '{{tests.module}}';
-import { {{name.pascal}}Translator } from '../../infrastructure/anti-corruption/{{name.kebab}}.translator.js';
+import { {{name.pascal}}Translator } from '{{alias.context}}/infrastructure/anti-corruption/{{name.kebab}}.translator.js';
 
 describe('Translating the model of {{name.title}}', () => {
   it('produces a record of {{context.kebab}}', () => {

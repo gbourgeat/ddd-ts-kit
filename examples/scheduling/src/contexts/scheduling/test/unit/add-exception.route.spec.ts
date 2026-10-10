@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { executeRoute } from '@ddd-ts-kit/http';
 import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';
-import { AddExceptionCommand } from '../../application/commands/add-exception/add-exception.command.js';
-import { InvalidDayError } from '../../domain/errors/invalid-day.error.js';
-import { addExceptionRoute } from '../../presentation/http/add-exception.route.js';
+import { AddExceptionCommand } from '#src/contexts/scheduling/application/commands/add-exception/add-exception.command.js';
+import { InvalidDayError } from '#src/contexts/scheduling/domain/errors/invalid-day.error.js';
+import { addExceptionRoute } from '#src/contexts/scheduling/presentation/http/add-exception.route.js';
 
 const valid = { day: '2026-05-01', ranges: [{ start: '10:00', end: '12:00' }] };
 

@@ -14,10 +14,7 @@
     "emitDecoratorMetadata": true,
     "types": ["node"],
     "rootDir": ".",
-    "outDir": "dist",
-    "paths": {
-      "@/*": ["./src/*"]
-    }
+    "outDir": "dist"
   },
   "include": ["src", "scripts", "test"]
 }

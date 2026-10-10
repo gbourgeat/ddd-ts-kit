@@ -1,4 +1,4 @@
-import type { Outcome } from '../../application/ports/outcome-register.port.js';
+import type { Outcome } from '#src/contexts/analytics/application/ports/outcome-register.port.js';
 
 /** An appointment held for half an hour on calendar-1, on 2026-10-12. */
 export function anOutcome(overrides: Partial<Outcome> = {}): Outcome {

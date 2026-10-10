@@ -1,8 +1,8 @@
 import { describe, expect, it } from '{{tests.module}}';
 import type { Message } from '@ddd-ts-kit/kernel';
 import { createTestBuses } from '@ddd-ts-kit/testing';
-import { {{job.command}}Command } from '../../application/commands/{{job.commandKebab}}/{{job.commandKebab}}.command.js';
-import { {{name.pascal}}Job } from '../../application/scheduling/{{name.kebab}}.job.js';
+import { {{job.command}}Command } from '{{alias.context}}/application/commands/{{job.commandKebab}}/{{job.commandKebab}}.command.js';
+import { {{name.pascal}}Job } from '{{alias.context}}/application/scheduling/{{name.kebab}}.job.js';
 
 const occurrence = {
   scheduledAt: new Date('2026-01-01T07:00:00.000Z'),

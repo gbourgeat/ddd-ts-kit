@@ -3,6 +3,7 @@ import { AUTHZ_DOCS } from './authz-docs.js';
 import { CLEAN_DOCS } from './clean-docs.js';
 import { CONTEXT_DOCS } from './context-docs.js';
 import { EVENTS_DOCS } from './events-docs.js';
+import { IMPORTS_DOCS } from './imports-docs.js';
 import { LANGUAGE_DOCS } from './language-docs.js';
 import { LAYER_DOCS } from './layer-docs.js';
 import { LAYOUT_DOCS } from './layout-docs.js';
@@ -18,6 +19,7 @@ export const RULE_DOCS: Readonly<Record<string, RuleDoc>> = {
   ...CLEAN_DOCS,
   ...CONTEXT_DOCS,
   ...EVENTS_DOCS,
+  ...IMPORTS_DOCS,
   ...LANGUAGE_DOCS,
   ...LAYER_DOCS,
   ...LAYOUT_DOCS,

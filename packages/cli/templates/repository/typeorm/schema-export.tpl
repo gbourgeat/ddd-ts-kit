@@ -1,4 +1,4 @@
 @@imports
-import { {{aggregate.tableCamel}} } from '{{paths.databaseToContexts}}/{{context.kebab}}/infrastructure/persistence/{{context.kebab}}.schema.js';
+import { {{aggregate.tableCamel}} } from '{{alias.context}}/infrastructure/persistence/{{context.kebab}}.schema.js';
 @@schemas
 {{aggregate.tableCamel}},

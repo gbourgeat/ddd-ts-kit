@@ -1,7 +1,7 @@
 import { IdGenerator, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
-import { PracticeMemberRemoved } from '../../../domain/events/practice-member-removed.event.js';
-import { practiceMemberRemovedV1 } from '../../../published-language/practice-member-removed.v1.integration-event.js';
+import { PracticeMemberRemoved } from '#src/contexts/identity/domain/events/practice-member-removed.event.js';
+import { practiceMemberRemovedV1 } from '#src/contexts/identity/published-language/practice-member-removed.v1.integration-event.js';
 
 @DomainEventHandler(PracticeMemberRemoved, { name: 'identity.practice.member-removed' }, [
   IntegrationEventPublisher,

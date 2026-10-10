@@ -28,7 +28,7 @@ export const gatewayKind: Kind = {
     const published = `${scope.config.contextsDir}/${upstream}/published-language`;
 
     scope.ws.create(`${published}/${name.kebab}.contract.ts`, renderTemplate('gateway/contract.ts.tpl', context));
-    publishInIndex(scope.ws, published, `${name.kebab}.contract`);
+    publishInIndex(scope, published, `${name.kebab}.contract`);
 
     emit(scope, context, [
       ['gateway/port.ts.tpl', `application/ports/${name.kebab}-gateway.port.ts`],

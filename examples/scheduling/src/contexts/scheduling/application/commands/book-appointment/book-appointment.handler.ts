@@ -1,10 +1,10 @@
 import { Clock, IdGenerator } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
-import { UnknownCalendarError } from '../../../domain/errors/unknown-calendar.error.js';
-import { AppointmentRepository } from '../../../domain/repositories/appointment.repository.js';
-import { CalendarRepository } from '../../../domain/repositories/calendar.repository.js';
-import { SchedulerService } from '../../../domain/services/scheduler.service.js';
-import { BookAppointmentCommand } from './book-appointment.command.js';
+import { UnknownCalendarError } from '#src/contexts/scheduling/domain/errors/unknown-calendar.error.js';
+import { AppointmentRepository } from '#src/contexts/scheduling/domain/repositories/appointment.repository.js';
+import { CalendarRepository } from '#src/contexts/scheduling/domain/repositories/calendar.repository.js';
+import { SchedulerService } from '#src/contexts/scheduling/domain/services/scheduler.service.js';
+import { BookAppointmentCommand } from '#src/contexts/scheduling/application/commands/book-appointment/book-appointment.command.js';
 
 /** An appointment and its buffer never last a day: what could overlap a slot is held within a day of its start. */
 const DAY = 24 * 60 * 60_000;

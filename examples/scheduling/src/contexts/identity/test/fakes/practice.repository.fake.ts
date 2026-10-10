@@ -1,6 +1,6 @@
 import { InMemoryRepository } from '@ddd-ts-kit/testing';
-import { Practice } from '../../domain/aggregates/practice.aggregate.js';
-import type { PracticeRepository } from '../../domain/repositories/practice.repository.js';
+import { Practice } from '#src/contexts/identity/domain/aggregates/practice.aggregate.js';
+import type { PracticeRepository } from '#src/contexts/identity/domain/repositories/practice.repository.js';
 
 export class FakePracticeRepository extends InMemoryRepository<Practice> implements PracticeRepository {
   constructor() {

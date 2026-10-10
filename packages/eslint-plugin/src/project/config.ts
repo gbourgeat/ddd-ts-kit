@@ -15,12 +15,14 @@ export type Style = 'declared' | 'explicit';
 
 export type Assembly = 'barrel' | 'discovery';
 
-/** The two stack choices a rule reads; the others only concern the generator. */
+/** The stack choices a rule reads; the others only concern the generator. */
 export interface Stack {
   /** `declared`: each class says what it is with a decorator and there is no module file. A config that does not say is `explicit`. */
   readonly style: Style;
   /** How a declared context reaches the composition root: one generated barrel, or discovery of its role files. */
   readonly assembly: Assembly;
+  /** Kept as written: with `prisma` the generated client under `generated/` has an import alias of its own. */
+  readonly orm: string;
 }
 
 export interface Limits {

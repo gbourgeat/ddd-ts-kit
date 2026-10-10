@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { unwrap } from '@ddd-ts-kit/kernel';
-import { NotificationKind } from '../../domain/value-objects/notification-kind.vo.js';
+import { NotificationKind } from '#src/contexts/notification/domain/value-objects/notification-kind.vo.js';
 
 describe('NotificationKind', () => {
   it('is equal to another notification kind with the same value', () => {

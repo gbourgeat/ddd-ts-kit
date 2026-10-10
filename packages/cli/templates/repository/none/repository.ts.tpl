@@ -2,12 +2,12 @@ import { ConcurrencyError } from '@ddd-ts-kit/kernel';
 {{#if style.declared}}
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
 {{/if}}
-import { {{aggregate.pascal}}, type {{aggregate.pascal}}State } from '../../domain/aggregates/{{aggregate.kebab}}.aggregate.js';
+import { {{aggregate.pascal}}, type {{aggregate.pascal}}State } from '{{alias.context}}/domain/aggregates/{{aggregate.kebab}}.aggregate.js';
 {{#if style.declared}}
-import { {{aggregate.pascal}}Repository } from '../../domain/repositories/{{aggregate.kebab}}.repository.js';
+import { {{aggregate.pascal}}Repository } from '{{alias.context}}/domain/repositories/{{aggregate.kebab}}.repository.js';
 {{/if}}
 {{#unless style.declared}}
-import type { {{aggregate.pascal}}Repository } from '../../domain/repositories/{{aggregate.kebab}}.repository.js';
+import type { {{aggregate.pascal}}Repository } from '{{alias.context}}/domain/repositories/{{aggregate.kebab}}.repository.js';
 {{/unless}}
 
 interface Stored{{aggregate.pascal}} {

@@ -66,7 +66,7 @@ Correct:
 // application/commands/issue-invoice/issue-invoice.handler.ts
 import { Clock } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
-import { InvoiceRepository } from '../../../domain/repositories/invoice.repository.js';
+import { InvoiceRepository } from '#src/contexts/billing/domain/repositories/invoice.repository.js';
 
 @CommandHandler(IssueInvoiceCommand, [InvoiceRepository, Clock])
 export class IssueInvoiceHandler implements CommandHandler<IssueInvoiceCommand> {}
@@ -96,7 +96,7 @@ None.
 
 ## Limits
 
-- An event class reached through a barrel (`../../domain/events/index.js`), a renaming export, a default import or a namespace is not followed: its name is not compared. `ddd-ts-kit check` resolves the same import in the project.
+- An event class reached through a barrel (`#src/contexts/billing/domain/events/index.js`), a renaming export, a default import or a namespace is not followed: its name is not compared. `ddd-ts-kit check` resolves the same import in the project.
 - A decorator applied through a variable (`const declare = Repository(InvoiceRepository); @declare class ...`) is not recognised.
 - That the dependency list matches the constructor and that a handler handles its message is checked by the compiler, not here; that an adapter implements its port is `ports/implements-never-extends`, and where a job lives and what it is named are `scheduling/job-triggers-use-case` and `scheduling/job-name`.
 - That each role file holds a single declared class is `naming/one-concept-per-file` of `ddd-ts-kit check`.

@@ -1,3 +1,4 @@
+import { contextAlias } from '../../../alias/index.js';
 import { toName, type Name } from '../../../naming/index.js';
 import type { RenderContext } from '../../../templating/index.js';
 import type { Scope } from '../../scope.js';
@@ -14,6 +15,7 @@ export interface RouteParts {
 /** What the templates of a route read: its endpoint, the use case it calls and how the stack validates. */
 export function routeVars(scope: Scope, { name, endpoint, useCase }: RouteParts): RenderContext {
   const hasBody = ['POST', 'PUT', 'PATCH'].includes(endpoint.method);
+  const alias = contextAlias(scope.config, scope.context.kebab);
 
   return {
     method: endpoint.method,
@@ -28,10 +30,13 @@ export function routeVars(scope: Scope, { name, endpoint, useCase }: RouteParts)
     usesAnyObject: hasBody || useCase.isQuery,
     usesSchema: hasBody || useCase.isQuery || useCase.returnsId,
     dtoImports: dtoClasses(endpoint, useCase)
-      .map((role) => `import { ${name.pascal}${toName(role).pascal} } from './${name.kebab}-${role}.dto.js';`)
+      .map(
+        (role) =>
+          `import { ${name.pascal}${toName(role).pascal} } from '${alias}/presentation/http/${name.kebab}-${role}.dto.js';`,
+      )
       .join('\n'),
     ...requestVars(scope, endpoint, hasBody),
-    ...busVars(useCase),
+    ...busVars(useCase, alias),
     ...securityVars(scope, useCase),
     ...parameterVars(endpoint.parameters),
   };
@@ -61,14 +66,16 @@ function successStatus(endpoint: Endpoint, useCase: UseCase): number {
   return endpoint.method === 'POST' ? 201 : 200;
 }
 
-function busVars(useCase: UseCase): RenderContext {
+function busVars(useCase: UseCase, alias: string): RenderContext {
+  const message = `import { ${useCase.message} } from '${alias}/${useCase.messageFile}.js';`;
+
   return {
     input: useCase.message,
     bus: useCase.isQuery ? 'queries' : 'commands',
     busType: useCase.isQuery ? 'QueryBus' : 'CommandBus',
     busClass: useCase.isQuery ? 'InMemoryQueryBus' : 'InMemoryCommandBus',
-    useCaseImport: `import { ${useCase.message} } from '../../${useCase.messageFile}.js';`,
-    messageImport: `import { ${useCase.message} } from '../../${useCase.messageFile}.js';`,
+    useCaseImport: message,
+    messageImport: message,
   };
 }
 

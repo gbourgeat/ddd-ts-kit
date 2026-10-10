@@ -1,7 +1,7 @@
 import { describe, expect, it } from '{{tests.module}}';
 import { given } from '@ddd-ts-kit/testing';
-import { {{name.pascal}} } from '../../domain/aggregates/{{name.kebab}}.aggregate.js';
-import { {{name.article}}{{name.pascal}} } from '../builders/{{name.kebab}}.builder.js';
+import { {{name.pascal}} } from '{{alias.context}}/domain/aggregates/{{name.kebab}}.aggregate.js';
+import { {{name.article}}{{name.pascal}} } from '{{alias.context}}/test/builders/{{name.kebab}}.builder.js';
 
 describe('{{name.pascal}}', () => {
   it('is born with its identity', () => {

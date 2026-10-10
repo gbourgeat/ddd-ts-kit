@@ -122,7 +122,5 @@ function upstreamVars(upstream: Name, eventType: string, declaration: EventDecla
     eventType: declaration?.typeName ?? '',
     definition: declaration?.definition ?? '',
     version: declaration?.version ?? 1,
-    import: `../../../../${upstream.kebab}/published-language/index.js`,
-    moduleImport: `../${upstream.kebab}/published-language/index.js`,
   };
 }

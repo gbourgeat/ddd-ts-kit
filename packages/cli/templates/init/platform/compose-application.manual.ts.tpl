@@ -18,17 +18,17 @@ import type { IntegrationEventPublisher, IntegrationEventSubscriber, Logger, Rat
 import type { IntegrationEventPublisher, IntegrationEventSubscriber, Logger } from '@ddd-ts-kit/kernel';
 {{/unless}}
 {{#if audit.route}}
-import { auditModule } from './audit/audit.module.js';
+import { auditModule } from '{{alias.platform}}/audit/audit.module.js';
 {{/if}}
 {{#if http.any}}
-import { httpBoundary, type HttpBoundary } from './auth/http-boundary.js';
+import { httpBoundary, type HttpBoundary } from '{{alias.platform}}/auth/http-boundary.js';
 {{/if}}
 {{#if authz.rebac}}
-import { relateSystemActors } from './auth/relate-system-actors.js';
+import { relateSystemActors } from '{{alias.platform}}/auth/relate-system-actors.js';
 {{/if}}
-import { createPlatform, type PlatformOptions } from './create-platform.js';
-import type { Persistence } from './database/persistence.js';
-import type { Platform } from './platform.js';
+import { createPlatform, type PlatformOptions } from '{{alias.platform}}/create-platform.js';
+import type { Persistence } from '{{alias.platform}}/database/persistence.js';
+import type { Platform } from '{{alias.platform}}/platform.js';
 // ddd-ts-kit:imports
 // /ddd-ts-kit:imports
 

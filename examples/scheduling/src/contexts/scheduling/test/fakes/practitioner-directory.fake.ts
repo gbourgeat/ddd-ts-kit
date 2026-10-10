@@ -3,7 +3,7 @@ import {
   practitionerCriteria,
   type PractitionerDirectory,
   type PractitionerEntry,
-} from '../../application/ports/practitioner-directory.port.js';
+} from '#src/contexts/scheduling/application/ports/practitioner-directory.port.js';
 
 export class FakePractitionerDirectory
   extends InMemoryReadModelStore<PractitionerEntry>
