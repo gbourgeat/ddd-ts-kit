@@ -6,6 +6,14 @@ the worker started from `dist/`. Tokens are real tokens of the local Keycloak an
 printed; the passwords of the demo users are their user names, for local development only.
 Bodies are cut after 700 characters.
 
+> **Read with this in mind.** This run predates a change of design in `analytics`. The occupancy
+> of step 7 was then served by a stored line per calendar and day, recounted at each event by a
+> second projection (`process analytics.occupancy` and `OccupancyRegister` in the trace of
+> step 10) and verified by a nightly job. Since then the occupancy is measured from the outcomes
+> when it is read, and that projection, its table and the job are gone. The run is kept as it
+> was; the last section, "Run again after analytics moved to read time", holds what a second
+> real run answered for these two steps.
+
 ## Commands
 
 ```bash
@@ -221,4 +229,63 @@ The worker's log at the first five-minute boundary (the API's log holds no line 
 ```bash
 kill %1 %2
 docker compose --profile identity --profile observability --profile errors down --volumes
+```
+
+## Run again after analytics moved to read time
+
+A second real run of `scripts/demo.mjs`, on 2026-10-10, after the stored occupancy was removed:
+the same commands on an empty database, with the profiles `identity` and `observability` only
+(no GlitchTip, so step 11 answered "SENTRY_DSN is not set: skipped."). Every other step answered
+as designed. Two steps differ in what serves them, not in what a client reads.
+
+Step 7, the occupancy, now one grouped statement over the outcomes. The same shape and the same
+figures as above for the same scenario (the identifiers are those of this run):
+
+- `GET /practices/f6fe6079-0b05-4855-a9e3-ae518ed15a45/occupancy` as **demo-manager**: `200` `{"items":[{"id":"767d0ef7-879d-400b-bc38-f0aa4ef4f3a5.2026-10-10","calendarId":"767d0ef7-879d-400b-bc38-f0aa4ef4f3a5","day":"2026-10-10","heldMinutes":0,"appointmentsHeld":0,"completed":0,"noShows":0,"cancelledByPatient":0,"cancelledByPractice":1},{"id":"767d0ef7-879d-400b-bc38-f0aa4ef4f3a5.2026-10-17","calendarId":"767d0ef7-879d-400b-bc38-f0aa4ef4f3a5","day":"2026-10-17","heldMinutes":60,"appointmentsHeld":2,"completed":0,"noShows":0,"cancelledByPatient":0,"cancelledByPractice":0}],"total":2}`
+
+Step 10, the trace of the booking. `analytics` is one consumer, which writes the outcome; there
+is no `process analytics.occupancy`, no `OutcomeRegister.get` or `.list` and no
+`OccupancyRegister` any more:
+
+`GET http://127.0.0.1:54686/api/v3/traces/bf1d9dd666a392d44302b8d55771b7db`: 92 spans in one trace, from the processes scheduling (the API and the worker are one consumer group: either may take a delivery). Distinct names:
+
+```text
+pg.query:BEGIN app
+pg.query:INSERT app
+pg.query:SELECT app
+pg.query:UPDATE app
+pg.query:COMMIT app
+pg.query:SAVEPOINT app
+pg.query:RELEASE app
+repository CalendarRepository.findById
+repository AppointmentRepository.heldOn
+repository AppointmentRepository.heldBy
+repository AppointmentRepository.insert
+external SchedulingRelationships.recordAppointment
+handler AppointmentBookedEventHandler
+outbox append scheduling.appointment.booked
+handler AppointmentBookedPublisher
+repository Agenda.written
+repository Agenda.upsertIfNewer
+domain-event scheduling.appointment.booked
+repository AppointmentRepository.save
+command BookAppointmentCommand
+publish scheduling.appointment.booked
+repository NotificationRepository.findByCause
+repository Contacts.get
+external Mailer.transport
+external Mailer.deliver
+repository OutcomeRegister.written
+repository NotificationRepository.insert
+process analytics.outcomes
+repository ReminderRepository.findByAppointment
+repository ReminderRepository.insert
+repository ReminderRepository.save
+command PlanReminderCommand
+handler NotificationSentEventHandler
+domain-event notification.notification.sent
+repository NotificationRepository.save
+command SendNotificationCommand
+process notification.scheduling-appointment-booked
+POST /appointments
 ```
