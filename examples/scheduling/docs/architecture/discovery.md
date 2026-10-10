@@ -31,7 +31,7 @@ Light event storming in writing, from `needs.md`. The words are those of the pra
 | 23 | Time (every minute) | Expire offers | Offer expired | whenever Offer expired, offer the slot to the next waiter | |
 | 24 | Time (every 15 minutes) | Send due reminders | Reminder sent (once per appointment and start) | | Appointments starting in 24 h |
 | 25 | System (policy of 13, 14, 16, 17, 21) | Send notification | Notification sent, or Notification failed | | Contact of the person |
-| 26 | Time (every night) | Verify occupancy | Occupancy verified | | |
+| 26 | Time (every night) | Verify occupancy (built, then removed after delivery: occupancy is measured when it is read, see `slices.md`, note of 37) | Occupancy verified | | |
 | 27 | Practice manager, practitioner | (reads) | | | Occupancy, cancellations, no-shows per calendar and day |
 | 28 | Support | (reads on behalf of a user) | | every look is recorded | What the user sees |
 | 29 | Platform admin | (reads) | | | Who did what, who was refused what |
