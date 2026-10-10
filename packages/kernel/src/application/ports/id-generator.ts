@@ -1,5 +1,7 @@
 export abstract class IdGenerator {
-  static readonly tokenKey = 'kernel.IdGenerator';
+  static {
+    Object.defineProperty(this, 'tokenKey', { value: 'kernel.IdGenerator' });
+  }
 
   abstract next(): string;
 }

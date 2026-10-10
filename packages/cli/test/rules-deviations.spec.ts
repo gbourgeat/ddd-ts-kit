@@ -1,10 +1,10 @@
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
-import { afterAll, describe, expect, it } from 'vitest';
-import { runCheck } from '../src/check/engine.js';
-import { loadProject } from '../src/check/project.js';
-import { parseConfig, serializeConfig } from '../src/config.js';
+import { describe, expect, it } from 'vitest';
+import { runCheck } from '../src/check/engine/run-check.js';
+import { loadProject } from '../src/check/project/load-project.js';
+import { parseConfig, serializeConfig } from '../src/config/index.js';
+import { projectWith, reported } from './rules-support.js';
 
 const BILLING = 'src/contexts/billing';
 const SHIPPING = 'src/contexts/shipping';
@@ -13,12 +13,6 @@ const COMMAND = `${BILLING}/application/commands/issue-invoice/issue-invoice.com
 const INTEGRATION_HANDLER = `${SHIPPING}/application/integration/handlers/invoice-cancelled.integration-handler.ts`;
 const ADAPTER = `${BILLING}/infrastructure/persistence/in-memory-invoice.repository.ts`;
 const CONFIG = 'ddd-ts-kit.config.json';
-
-const created: string[] = [];
-
-afterAll(() => {
-  for (const directory of created.splice(0)) fs.rmSync(directory, { recursive: true, force: true });
-});
 
 describe('governance/recorded-deviation', () => {
   const suppression = (reason: string): string => `// eslint-disable-next-line no-console -- ${reason}\nexport const repository = 1;\n`;
@@ -52,6 +46,7 @@ describe('governance/recorded-deviation', () => {
       domainAllowedPackages: ['@ddd-ts-kit/kernel', 'decimal.js'],
       guard: 'advise',
     };
+
     const whats = ['rules.tree/closed', 'rules.naming/suffix', 'domainAllowedPackages.decimal.js', 'guard'];
     const deviations = whats.map((what) => ({ what, adr: '0004', reason: 'Recorded.' }));
     const bare = projectWith({}, relaxed);
@@ -66,6 +61,7 @@ describe('governance/recorded-deviation', () => {
       'The package "decimal.js" is added to domainAllowedPackages',
       '"guard" is "advise": the editor hook no longer refuses a violation',
     ]);
+
     expect(found.map(({ line }) => lines[line - 1]?.trim())).toEqual(['"tree/closed": "off",', '"naming/suffix": "warn",', '"decimal.js"', '"guard": "advise"']);
     expect(reported(recorded, 'governance/recorded-deviation')).toEqual([]);
   });
@@ -94,7 +90,7 @@ describe('authz/declared', () => {
   it('reads the declaration in the chain of its own registration only', () => {
     const module = [
       'export function register(builder: Builder): void {',
-      '  builder.command(IssueInvoiceCommand).handledBy(IssueInvoiceHandler, [CLOCK])',
+      '  builder.command(IssueInvoiceCommand).handledBy(IssueInvoiceHandler, [Clock])',
       '  builder',
       '    .query(ListInvoicesQuery)',
       "    .requires(billingPermissions['invoice.list'])",
@@ -102,6 +98,7 @@ describe('authz/declared', () => {
       '}',
       '',
     ].join('\n');
+
     const root = projectWith({ [MODULE]: module });
 
     expect(reported(root, 'authz/declared', MODULE).map(({ line }) => line)).toEqual([2]);
@@ -112,19 +109,20 @@ describe('events/consumer-idempotent', () => {
   const handler = { [INTEGRATION_HANDLER]: 'export class InvoiceCancelledHandler {}\n' };
   const module = (registration: string): Record<string, string> => ({ [`${SHIPPING}/shipping.module.ts`]: `export function start(): void {\n  ${registration}\n}\n` });
 
-  it('finds the integration event handler by its class, its instance or its token in a named registration', () => {
+  it('finds the integration event handler by its class or its instance in a named registration', () => {
     const registrations = [
-      "builder.on(invoiceCancelledV1, { consumer: 'shipping.invoice-cancelled' }).handledBy(InvoiceCancelledHandler, [COMMAND_BUS]);",
+      "builder.on(invoiceCancelledV1, { consumer: 'shipping.invoice-cancelled' }).handledBy(InvoiceCancelledHandler, [CommandBus]);",
       "subscribeAll(subscriber, [consume(invoiceCancelledV1, { consumer: 'shipping.invoice-cancelled', processed, unitOfWork }, (event) => invoiceCancelledHandler.handle(event))]);",
-      "subscriber.subscribe(InvoiceCancelledHandler.eventType, idempotent('shipping.invoice-cancelled', store, (event) => resolve(INVOICE_CANCELLED_HANDLER).handle(event)));",
+      "subscriber.subscribe(InvoiceCancelledHandler.eventType, idempotent('shipping.invoice-cancelled', store, (event) => resolve(InvoiceCancelledHandler).handle(event)));",
     ];
+
     for (const registration of registrations) {
       expect(reported(projectWith({ ...handler, ...module(registration) }), 'events/consumer-idempotent'), registration).toEqual([]);
     }
   });
 
   it('reports an integration event handler that is only bound, and says nothing about it in check-file', () => {
-    const root = projectWith({ ...handler, ...module("builder.bind(INVOICE_CANCELLED_HANDLER).toClass(InvoiceCancelledHandler, [COMMAND_BUS]).as('consumer');") });
+    const root = projectWith({ ...handler, ...module("builder.bind(InvoiceCancelledHandler).toClass(InvoiceCancelledHandler, [CommandBus]).as('consumer');") });
 
     expect(reported(root, 'events/consumer-idempotent').map(({ file }) => file)).toEqual([INTEGRATION_HANDLER]);
     expect(reported(root, 'events/consumer-idempotent', INTEGRATION_HANDLER)).toEqual([]);
@@ -175,15 +173,23 @@ describe('aspects, outside packages and standard interfaces', () => {
   });
 
   it('says where each outside concern belongs, whatever the allow-list holds', () => {
-    const imports = ["import { retry } from '@ddd-ts-kit/aspects';", "import { record } from '@ddd-ts-kit/audit/drizzle';", "import { RedisCache } from '@ddd-ts-kit/redis';", "import { withSpan } from '@ddd-ts-kit/tracing/node';"];
-    const allowed = ['@ddd-ts-kit/kernel', '@ddd-ts-kit/aspects', '@ddd-ts-kit/audit', '@ddd-ts-kit/redis', '@ddd-ts-kit/tracing'];
+    const imports = ["import { retry } from '@ddd-ts-kit/aspects';", "import { record } from '@ddd-ts-kit/audit/drizzle';", "import { RedisCache } from '@ddd-ts-kit/redis';", "import { withSpan } from '@ddd-ts-kit/tracing/node';", "import { InProcessJobScheduler } from '@ddd-ts-kit/scheduling';", "import { SentryErrorReporter } from '@ddd-ts-kit/sentry';"];
+    const allowed = ['@ddd-ts-kit/kernel', '@ddd-ts-kit/aspects', '@ddd-ts-kit/audit', '@ddd-ts-kit/redis', '@ddd-ts-kit/tracing', '@ddd-ts-kit/scheduling', '@ddd-ts-kit/sentry'];
     const root = projectWith({ [HANDLER]: `${imports.join('\n')}\n` }, { applicationAllowedPackages: allowed });
 
     const found = runCheck(loadProject(root), { rules: ['layer/application-inward'] }).violations;
 
-    expect(found.map(({ line }) => line)).toEqual([1, 2, 3, 4]);
+    expect(found.map(({ line }) => line)).toEqual([1, 2, 3, 4, 5, 6]);
     expect(found.map(({ message }) => message.split(':')[0])).toEqual(imports.map((line) => `The application layer imports "${/'(.+)'/.exec(line)?.[1] ?? ''}"`));
-    expect(found.map(({ fix }) => fix)).toEqual([expect.stringContaining('`.with(...)`'), expect.stringContaining('bus middleware'), expect.stringContaining('`Cache` of @ddd-ts-kit/kernel'), expect.stringContaining('`decorate` hook')]);
+
+    expect(found.map(({ fix }) => fix)).toEqual([
+      expect.stringContaining('`.with(...)`'),
+      expect.stringContaining('bus middleware'),
+      expect.stringContaining('`Cache` of @ddd-ts-kit/kernel'),
+      expect.stringContaining('`traceApplication()`'),
+      expect.stringContaining('`JobScheduler` port'),
+      expect.stringContaining('`ErrorReporter` port'),
+    ]);
   });
 
   it('reads the names of standard/no-parallel-interface from the config over the defaults', () => {
@@ -195,6 +201,7 @@ describe('aspects, outside packages and standard interfaces', () => {
       '1: ILogger is a home-made copy of a standard interface: use Logger.',
       '2: CurrentUser is a home-made copy of a standard interface: use ExecutionContext or Actor.',
     ]);
+
     expect(reported(configured, 'standard/no-parallel-interface').map(({ line, message }) => `${line}: ${message}`)).toEqual([
       '1: ILogger is a home-made copy of a standard interface: use Logger (see ADR-0003).',
       '3: TenantInfo is a home-made copy of a standard interface: use TenantScoped.',
@@ -208,26 +215,3 @@ describe('aspects, outside packages and standard interfaces', () => {
     expect(JSON.parse(serializeConfig(parseConfig({})))).not.toHaveProperty('standardInterfaces');
   });
 });
-
-function projectWith(files: Readonly<Record<string, string>>, config: Record<string, unknown> = {}): string {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ddd-ts-kit-deviations-'));
-  created.push(root);
-  const contexts = { billing: { classification: 'core', upstreams: [] }, shipping: { classification: 'supporting', upstreams: ['billing'] } };
-  const written = { [CONFIG]: JSON.stringify({ contexts, ...config }, null, 2), ...files };
-  for (const [file, content] of Object.entries(written)) {
-    fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
-    fs.writeFileSync(path.join(root, file), content);
-  }
-  return root;
-}
-
-interface Reported {
-  readonly file: string;
-  readonly line: number;
-  readonly message: string;
-}
-
-function reported(root: string, rule: string, onlyFile?: string): Reported[] {
-  const project = onlyFile === undefined ? loadProject(root) : loadProject(root, { onlyFile });
-  return runCheck(project, { rules: [rule], fileScopeOnly: onlyFile !== undefined }).violations.map(({ file, line, message }) => ({ file, line, message }));
-}

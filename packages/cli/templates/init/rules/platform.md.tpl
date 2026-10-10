@@ -1,0 +1,31 @@
+---
+paths:
+  - "{{config.platformDir}}/**"
+  - "{{config.sourceRoot}}/main.ts"
+  - "{{config.sourceRoot}}/apps/**"
+{{#if style.explicit}}
+  - "{{config.contextsDir}}/*/*.module.ts"
+{{/if}}
+---
+
+# Platform and composition root
+
+- `main.ts`, and each `apps/*/main.ts`, imports `platform/tracing.ts` first{{#if errors.sentry}}, `platform/errors.ts` second{{/if}}, then composes the application: nothing else belongs in an entry point.
+- Contexts, routes and registries are added by the generator between `// ddd-ts-kit:` markers: never edit between them, never remove one.
+{{#if di.tsyringe}}
+- Ports and values are bound by class: `bind(Port).toClass(...)`, `toValue(...)`, or `rebind(Port)` over a default of the kernel module. No token helper, no injection constant; one exported class, interface or function per file.
+- Cross-cutting behaviour lives here: spans through `kernelModule({ instrumentation })` (`lay-foundations.ts`), `around: tracedRoutes()` at the HTTP boundary and `tracedPublisher` for the outbox relay; logs, measures, permissions and audit as bus middlewares (`buses/`); the policy of outbound adapters in `resilience/`.
+{{/if}}
+{{#unless di.tsyringe}}
+- One `Platform` is built in `create-platform.ts` and handed to each context; a port or a value is typed by an abstract class. No token helper, no injection constant; one exported class, interface or function per file.
+- Cross-cutting behaviour lives here: spans through the members of `traceApplication()` (`create-platform.ts`), `around: tracedRoutes()` at the HTTP boundary and `tracedPublisher` for the outbox relay; logs, measures, permissions and audit as bus middlewares; the policy of outbound adapters in `resilience/`.
+{{/unless}}
+- `@ddd-ts-kit/tracing` and `@opentelemetry/*` are imported here and nowhere else (`tracing/platform-only`).
+- Logs, spans and error reports carry identifiers and codes only: never arguments, payloads, error messages, nor anything personal beyond the id of the actor.
+- Configuration is read here only, by `config/load-config.ts`: validated, fail fast, every problem named by its variable. A new variable joins `AppConfig` and `.env.example`. `RUN_JOBS` says whether a process runs the jobs, `job-settings.ts` what configuration changes of each.
+- Stopping: the HTTP server, the relay, then `application.stop()`, which ends with the error reporter and, last, the logger; connections and tracing after it. Whatever logs closes before the logger.
+{{#if style.explicit}}
+- `<context>.module.ts` is the only place a context binds its adapters and registers its handlers (`composition/only-in-module`); the generator writes between its markers.
+{{/if}}
+- A change here is shared by every context: it goes in its own commit (`chore(platform): ...`), on the trunk, never inside a slice.
+- Method: `/ddd-ts-kit:wiring` and `/ddd-ts-kit:cross-cutting`. A process for the jobs: `npx ddd-ts-kit generate worker`; a context alone: `npx ddd-ts-kit generate service <context>`.

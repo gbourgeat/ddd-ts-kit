@@ -1,17 +1,5 @@
-import { PrismaPg } from '@prisma/adapter-pg';
-import type { PrismaContext } from '@ddd-ts-kit/prisma';
-import { PrismaClient, type Prisma } from '{{paths.databaseToGenerated}}/prisma/client.js';
+import { PrismaContext } from '@ddd-ts-kit/prisma';
+import type { Prisma } from '{{paths.databaseToGenerated}}/prisma/client.js';
 
-export type Database = PrismaClient;
-export type DatabaseContext = PrismaContext<Prisma.TransactionClient>;
-
-export interface ConnectionOptions {
-  /** A single-session database (the in-process one of the tests) needs 1. */
-  readonly poolSize?: number;
-}
-
-/** The client connects on the first query. Run `npm run db:client` after a change of prisma/schema.prisma. */
-export function createClient(url: string, options: ConnectionOptions = {}): Database {
-  const pool = options.poolSize === undefined ? {} : { max: options.poolSize };
-  return new PrismaClient({ adapter: new PrismaPg({ connectionString: url, ...pool }) });
-}
+/** The storage of the application, as a repository adapter names it in its dependency list: the transaction client of the current unit of work, or the root client. */
+export abstract class Database extends PrismaContext<Prisma.TransactionClient> {}

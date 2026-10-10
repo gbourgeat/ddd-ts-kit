@@ -197,9 +197,12 @@ class InMemoryOrderRepository extends InMemoryRepository<Order> implements Order
 }
 
 it('places an order and announces it', async () => {
-  const { commandBus, eventBus, clock, ids, publishedEvents } = createTestBuses();
-  const orders = new InMemoryOrderRepository();
-  commandBus.register(PlaceOrder, new PlaceOrderHandler(orders, eventBus, ids, clock));
+  const { commandBus, domainEvents, dispatching, eventBus, clock, ids, publishedEvents } = createTestBuses();
+  const orders = dispatching(new InMemoryOrderRepository());
+  const publisher = new OrderPlacedPublisher(eventBus, ids);
+
+  domainEvents.on('ordering.order.placed', (event) => publisher.handle(event));
+  commandBus.register(PlaceOrder, new PlaceOrderHandler(orders, ids, clock));
 
   const id = await commandBus.execute(new PlaceOrder('sku-1'));
 
@@ -207,6 +210,13 @@ it('places an order and announces it', async () => {
   expect(publishedEvents('ordering.order.placed')).toMatchObject([{ payload: { orderId: id } }]);
 });
 ```
+
+The handler only saves: `await this.orders.save(order); return order.id;`. Domain events leave
+with the save. `dispatching(fake)` gives the fake what the application gives every repository:
+once `save` (or any method handed the aggregate) resolved, the events the aggregate recorded
+are dispatched to `domainEvents`, in recording order. With `createTestApplication` of
+`@ddd-ts-kit/di` there is nothing to call: the fake given for a repository port dispatches to
+`app.domainEvents`, and the declared domain event handlers react.
 
 `InMemoryRepository` is a fake, not a mock: a working repository over a Map that keeps its own
 copy of what is saved (through `snapshots({ toSnapshot, fromSnapshot })` or `{ clone }`) and
@@ -384,6 +394,9 @@ repositoryContract(runner, { ...options, name: 'DrizzleOrderRepository', createR
 | `cacheContract` | any `Cache`: round trip of every shape of value, isolation of entries, deletion, time to live |
 | `lockContract` | any `Lock`: one holder at a time also under concurrent requests, release, expiry, a late release ignored, growing fencing token, `waitMs` |
 | `jobSchedulerContract` | any `JobScheduler`: registration and description, a duplicate name and an unreadable schedule refused, `runNow` (also for a disabled job, an unknown name rejected), nothing by time before `start` or after `stop`, no overlap by default, a failing job answered `failed` with its code while the others go on, the execution context of a run |
+| `loggerContract` | any `Logger`: every level with its message and fields of every shape, level and message that no field forges, children that add their fields and nest, fields read at each entry, an entry below the level dropped without reading a field, `isLevelEnabled` answering what is written (for a child too), no throw on a circular field or a getter that throws, at the top of the fields included; an `Error` passed as a field written as its description (`type`, `code` of a `DomainError`, `message`, own `stack`, `cause`, eight errors deep at most), its message replaced when the logger scrubs unless it is a `DomainError`; every entry in the sink once `flush()` resolves, then no throw from a log call or a second flush. `createLogger({ level, fields, scrubMessages })` answers the logger and `lines()`, what its sink received as `{ level, message, fields }`. No capability flag: `InMemoryLogger` takes the same three options and passes the whole suite |
+| `criteriaContract` | any translator of criteria, the in-memory evaluator included: a table of criteria and the ids each answers, in order, over eight fixed rows. Every operator on every type it applies to, decimals as numbers, instants to the millisecond and across zones, case and the characters a `LIKE` would trip on, nulls under each operator, `and`, `or`, `not` and what a negation does to a null, sorts with ties and nulls in both directions, offset pages with their total, every sort walked by cursor one and two rows at a time, the four kinds of access scope, and hostile values. `createReadModel(rows)` answers `{ list(scopedCriteria) }` over exactly those rows, read with `criteriaContractDefinition` |
+| `readModelStoreContract` | any `ReadModelTable` under `TableReadModelStore`: rows of every type round trip, the current row handed to a later event, an event applied once, never one older than the row, order by event id at the same instant and by version when given, concurrent writes ending on the latest, deletions that last, listing by criteria and scope, and `ProjectionRebuild`: rebuilt from the source alone, no event lost while it exports (on a row already copied and on one not yet), stale and new events after the swap, deletions during and before it, a failed export leaving the table as it was, the table still itself after two rebuilds. `createTable()` answers `{ table, unitOfWork }`; `SourceOfTruth` is the fake of the source |
 | `rateLimiterContract` | any `RateLimiter`: limit, `remaining` and `retryAfterMs`, refused calls not counted, sliding window, isolation of keys, concurrent calls |
 
 The cache, lock and rate limiter suites also take `elapse(ms)`, which makes time pass for the
@@ -413,6 +426,24 @@ class GeocoderSuite extends ContractSuite<Geocoder> {
     });
   }
 }
+```
+
+## Secrets an adapter must not show
+
+An adapter is logged, spread into a diagnostic and serialised by code that knows nothing of
+what it holds. `expectNoSecret(adapter, [password, url])` asserts that none of the given values
+shows through `JSON.stringify`, an object spread, the values `Object.keys` leads to, or
+`util.inspect` at any depth, hidden properties included. The failure names the view and the
+rank of the secret, never its value.
+
+```ts
+import { expectNoSecret } from '@ddd-ts-kit/testing';
+
+it('shows no credential', () => {
+  const bus = new KafkaEventBus({ brokers, client: { 'sasl.password': password } });
+
+  expectNoSecret(bus, [password]);
+});
 ```
 
 ## Standard decorators under Vitest

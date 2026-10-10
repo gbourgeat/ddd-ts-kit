@@ -28,7 +28,7 @@ describe('InMemoryLogger', () => {
   });
 
   it('gives a child its fields on every entry, written to the same place', () => {
-    const logger = new InMemoryLogger({ service: 'shop' });
+    const logger = new InMemoryLogger({ base: { service: 'shop' } });
     const child = logger.child({ context: 'billing' }).child({ correlationId: 'corr-1' });
 
     child.info('invoice issued', { context: 'invoicing' });

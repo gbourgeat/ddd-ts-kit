@@ -1,4 +1,4 @@
 @@imports
-import { wire{{context.pascal}} } from '{{paths.platformToContexts}}/{{context.kebab}}/{{context.kebab}}.module.js';
+import { {{context.camel}}Module } from '{{paths.platformToContexts}}/{{context.kebab}}/{{context.kebab}}.module.js';
 @@contexts
-wire{{context.pascal}},
+{{context.camel}}Module,

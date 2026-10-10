@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { Clock, CommandBus, IdGenerator, type Actor } from '@ddd-ts-kit/kernel';
+import { Clock, CommandBus, IdGenerator, type Actor, type IntegrationEvent } from '@ddd-ts-kit/kernel';
 import {
   createApplication,
   createTestApplication,
@@ -14,11 +14,20 @@ import { discoverContext } from '../src/discovery.js';
 import { decoratorModes, removeCompiled } from './support/decorator-modes.js';
 
 type Billing = typeof import('./fixtures/contexts/billing/billing.declarations.js');
+type Reporting = typeof import('./fixtures/contexts/reporting/reporting.declarations.js');
 type Kernel = typeof import('@ddd-ts-kit/kernel');
 
 const FIXTURES = path.join(import.meta.dirname, 'fixtures');
 const BILLING = 'contexts/billing';
 const ada: Actor = { id: 'ada', type: 'user', roles: [], attributes: {} };
+
+const orderPlacedBy = (customerId: string, id: string): IntegrationEvent => ({
+  id,
+  type: 'ordering.order.placed',
+  version: 1,
+  occurredAt: `2026-10-10T12:00:0${id.slice(-1)}.000Z`,
+  payload: { orderId: `order-${id}`, customerId },
+});
 
 afterAll(() => {
   removeCompiled(FIXTURES);
@@ -105,6 +114,32 @@ function describeDiscovery(label: string, discover: () => Promise<Omit<Discovere
         declaredBy: 'InvoiceIssuedPublisher',
         file: path.join(found.directory, `application/integration/publishers/invoice-issued.publisher${found.extension}`),
       });
+    });
+
+    it('finds the projections of application/projections/ and feeds them the events they apply', async () => {
+      const directory = path.join(found.directory, '../reporting');
+      const reporting = (await import(/* @vite-ignore */ pathToFileURL(path.join(directory, `reporting.declarations${found.extension}`)).href)) as Reporting;
+      const app = createTestApplication({ modules: [await discoverContext('reporting', directory)] });
+
+      await app.start();
+      await app.eventBus.publish([orderPlacedBy('customer-1', 'evt-1'), orderPlacedBy('customer-1', 'evt-2'), orderPlacedBy('customer-1', 'evt-2')]);
+
+      expect(await app.get(reporting.CustomerOrders).get('customer-1')).toMatchObject({ orders: 2 });
+
+      expect(app.describe().projections).toEqual([
+        {
+          name: 'reporting.customer-orders',
+          projection: 'CustomerOrdersProjection',
+          module: 'reporting',
+          applies: [
+            { kind: 'integration', event: 'ordering.order.placed', version: 1, method: 'orderPlaced' },
+            { kind: 'domain', event: 'reporting.customer.forgotten', method: 'forgotten' },
+          ],
+          origin: 'declared',
+          declaredBy: 'CustomerOrdersProjection',
+          file: path.join(directory, `application/projections/customer-orders.projection${found.extension}`),
+        },
+      ]);
     });
 
     it('names the class and the file when a check fails', async () => {

@@ -39,6 +39,7 @@ ruleTester.run('aspects-outside-in', aspectsOutsideIn, {
 
 ruleTester.run('standard-no-parallel-interface', standardNoParallelInterface, {
   valid: [
+    at(`${BILLING}/infrastructure/external/sentry-reporter.adapter.ts`, 'export class ErrorTracker implements ErrorReporter {}\nexport class CronScheduler implements JobScheduler {}\nexport class BackgroundJob implements ScheduledJob {}'),
     at(PORT, "import type { Logger, Page, PageRequest } from '@ddd-ts-kit/kernel';\nexport interface InvoiceListing { list(request: PageRequest): Promise<Page<string>> }"),
     at(ADAPTER, 'export class PinoLogger implements Logger {}\nexport class StdoutLogger implements Logger {}\nexport class RedisCache implements Cache {}'),
     at(ADAPTER, 'export class CacheService implements kernel.Cache {}\nexport class AppLogger extends InMemoryLogger implements Logger {}'),
@@ -55,6 +56,9 @@ ruleTester.run('standard-no-parallel-interface', standardNoParallelInterface, {
   ],
   invalid: [
     { ...at(PORT, 'export interface ILogger { info(message: string): void }'), errors: [{ messageId: 'parallel', data: { name: 'ILogger', instead: 'Logger' } }] },
+    { ...at(PORT, 'export interface IJobScheduler {}\nexport class CronScheduler {}\nexport interface TaskScheduler {}\nexport class JobSchedulerService {}'), errors: ['IJobScheduler', 'CronScheduler', 'TaskScheduler', 'JobSchedulerService'].map((name) => ({ messageId: 'parallel' as const, data: { name, instead: 'JobScheduler' } })) },
+    { ...at(PORT, 'export interface IScheduledJob {}\nexport abstract class CronJob {}\nexport type ScheduledTask = () => void;\nexport class BackgroundJob {}'), errors: ['IScheduledJob', 'CronJob', 'ScheduledTask', 'BackgroundJob'].map((name) => ({ messageId: 'parallel' as const, data: { name, instead: 'ScheduledJob' } })) },
+    { ...at(PORT, 'export interface IErrorReporter {}\nexport class ErrorReporterService {}\nexport class ErrorTracker {}\nexport class ExceptionReporter {}\nexport class CrashReporter {}'), errors: ['IErrorReporter', 'ErrorReporterService', 'ErrorTracker', 'ExceptionReporter', 'CrashReporter'].map((name) => ({ messageId: 'parallel' as const, data: { name, instead: 'ErrorReporter' } })) },
     { ...at(PORT, 'export interface AppLogger extends Logger {}\nexport type LoggerService = Logger;\nabstract class LoggerInterface {}'), errors: [{ messageId: 'parallel' }, { messageId: 'parallel' }, { messageId: 'parallel' }] },
     { ...at(PORT, 'export interface IMetrics {}\nexport interface MetricsService {}\nexport interface ICache {}\nexport class CacheService {}'), errors: [{ messageId: 'parallel', data: { name: 'IMetrics', instead: 'Metrics' } }, { messageId: 'parallel' }, { messageId: 'parallel', data: { name: 'ICache', instead: 'Cache' } }, { messageId: 'parallel' }] },
     { ...at('src/shared-kernel/user-context.ts', 'export type UserContext = Readonly<{ userId: string }>;'), errors: [{ messageId: 'parallel', data: { name: 'UserContext', instead: 'ExecutionContext or Actor' } }] },

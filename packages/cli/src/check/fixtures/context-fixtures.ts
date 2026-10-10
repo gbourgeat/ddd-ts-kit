@@ -1,0 +1,99 @@
+import { CONFIG_FILE } from '../../config/index.js';
+import { config } from './config.js';
+import { declaration } from './declaration.js';
+import type { Fixture } from './fixture.js';
+import { PATHS } from './paths.js';
+import { project } from './project.js';
+import { SAMPLES } from './samples.js';
+
+const { ADAPTER, BILLING, CATALOG, PUBLISHED, ROUTE } = PATHS;
+const { DECLARE } = SAMPLES;
+
+export const CONTEXT_FIXTURES: readonly Fixture[] = [
+  {
+    ruleId: 'context/published-language-only',
+    name: 'another context imported through its published language',
+    expect: 'pass',
+    files: project({
+      [ADAPTER]: "export * from '../../../catalog/published-language/index.js';\n",
+    }),
+  },
+  {
+    ruleId: 'context/published-language-only',
+    name: 'another context imported through its domain',
+    expect: { file: ADAPTER },
+    files: project({
+      [ADAPTER]: "import { Product } from '../../../catalog/domain/aggregates/product.aggregate.js';\n\nexport const inMemoryInvoiceRepository = Product;\n",
+    }),
+  },
+  {
+    ruleId: 'context/published-language-only',
+    name: 'another context imported through the alias',
+    expect: { file: ROUTE },
+    files: project({
+      [ROUTE]: "import type { ListProductsHandler } from '@/contexts/catalog/application/queries/list-products/list-products.handler.js';\n\nexport type IssueInvoiceRoute = ListProductsHandler;\n",
+    }),
+  },
+  {
+    ruleId: 'context/declared-relationship',
+    name: 'an upstream that is declared',
+    expect: 'pass',
+    files: project({
+      [ROUTE]: "import type { ProductListedV1 } from '../../../catalog/published-language/index.js';\n\nexport type IssueInvoiceRoute = ProductListedV1;\n",
+    }),
+  },
+  {
+    ruleId: 'context/declared-relationship',
+    name: 'a published language imported without a declared relationship',
+    expect: { file: `${CATALOG}/presentation/http/list-products.route.ts` },
+    files: project({
+      [`${CATALOG}/presentation/http/list-products.route.ts`]:
+        "import type { InvoiceIssuedV1 } from '../../../billing/published-language/index.js';\n\nexport type ListProductsRoute = InvoiceIssuedV1;\n",
+    }),
+  },
+  {
+    ruleId: 'context/published-language-is-a-contract',
+    name: 'a declaration built on the kernel envelope and the schema library of the project',
+    expect: 'pass',
+    files: project({
+      [PUBLISHED]: `import type { IntegrationEvent } from '@ddd-ts-kit/kernel';\n${DECLARE}${declaration('billing.invoice.issued')}export type InvoiceIssuedV1 = IntegrationEvent<{ readonly invoiceId: string }>;\n`,
+      [`${BILLING}/published-language/index.ts`]: "export * from './invoice-issued.v1.integration-event.js';\n",
+    }),
+  },
+  {
+    ruleId: 'context/published-language-is-a-contract',
+    name: 'a contract importing a package that is neither the kernel nor the schema library',
+    expect: { file: PUBLISHED },
+    files: project({ [PUBLISHED]: "import { v4 } from 'uuid';\n\nexport const invoiceIssuedV1 = v4();\n" }),
+  },
+  {
+    ruleId: 'context/published-language-is-a-contract',
+    name: 'a contract re-exporting the domain',
+    expect: { file: `${BILLING}/published-language/index.ts` },
+    files: project({
+      [`${BILLING}/published-language/index.ts`]: "export { Invoice } from '../domain/aggregates/invoice.aggregate.js';\n",
+    }),
+  },
+  {
+    ruleId: 'context/no-cycle',
+    name: 'a one-way relationship',
+    expect: 'pass',
+    files: project({}),
+  },
+  {
+    ruleId: 'context/no-cycle',
+    name: 'two contexts upstream of each other',
+    expect: { file: CONFIG_FILE },
+    files: project(
+      {},
+      {
+        [CONFIG_FILE]: config({
+          contexts: {
+            billing: { classification: 'core', upstreams: [{ context: 'catalog' }] },
+            catalog: { classification: 'supporting', upstreams: ['billing'] },
+          },
+        }),
+      },
+    ),
+  },
+];

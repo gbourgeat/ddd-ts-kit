@@ -1,10 +1,7 @@
-import type { Config } from '../config.js';
-import { CliError } from '../errors.js';
-import { insertInRegion, parseWiring } from '../markers.js';
-import type { RenderContext } from '../render.js';
-import { renderTemplate, templateExists } from '../templates.js';
-import type { Workspace } from '../workspace.js';
-import { declareWiring, isDeclared } from './declared.js';
+import type { Config } from '../config/index.js';
+import type { RenderContext } from '../templating/index.js';
+import { renderTemplate, templateExists } from '../templating/index.js';
+import { isDeclared } from './is-declared.js';
 import type { Scope } from './scope.js';
 
 /** One generated file: the template it comes from and its path inside the context. */
@@ -23,52 +20,8 @@ export function emit(scope: Scope, context: RenderContext, outputs: readonly Out
  */
 function styled(config: Config, template: string): string {
   if (!isDeclared(config)) return template;
+
   const twin = template.replace(/((?:\.[a-z]+)?\.tpl)$/, '.declared$1');
+
   return templateExists(twin) ? twin : template;
-}
-
-/** Registers a new element in the module file of the context. A kind written `<kind>/<variant>` has its wiring in `<variant>.wiring.<family>.tpl`. */
-export function wire(scope: Scope, kind: string, context: RenderContext): void {
-  if (isDeclared(scope.config)) {
-    declareWiring(scope, kind, context);
-    return;
-  }
-  const file = `${scope.dir}/${scope.context.kebab}.module.ts`;
-  const template = kind.includes('/') ? `${kind}.wiring` : `${kind}/wiring`;
-  applyWiring(scope.ws, file, renderTemplate(`${template}.${wiringFamily(scope.config)}.tpl`, context));
-}
-
-/** The nest module wires by hand inside a Nest provider, so it shares the manual family. */
-function wiringFamily(config: Config): 'tsyringe' | 'manual' {
-  return config.stack.di === 'tsyringe' ? 'tsyringe' : 'manual';
-}
-
-/** Applies a rendered wiring template to a file with marker regions. */
-export function applyWiring(ws: Workspace, file: string, wiring: string): void {
-  const original = ws.read(file);
-  if (original === undefined) {
-    ws.note(`${file} does not exist: wire the new element by hand.`);
-    return;
-  }
-  let content = original;
-  for (const [region, block] of parseWiring(wiring)) {
-    if (block.trim() === '') continue;
-    const next = insertInRegion(content, region, block);
-    if (next === undefined) ws.note(`${file} has no "ddd-ts-kit:${region}" region: add this by hand:\n${block.trimEnd()}`);
-    else content = next;
-  }
-  ws.update(file, content);
-}
-
-export interface Prerequisite {
-  /** Path inside the context. */
-  readonly file: string;
-  readonly what: string;
-  readonly createdBy: string;
-}
-
-export function requireFile(scope: Scope, prerequisite: Prerequisite): void {
-  const target = `${scope.dir}/${prerequisite.file}`;
-  if (scope.ws.exists(target)) return;
-  throw new CliError(`${prerequisite.what} does not exist in "${scope.context.kebab}" (${target}).`, `Create it first with \`${prerequisite.createdBy}\`.`);
 }

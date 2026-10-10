@@ -350,6 +350,77 @@ The rules these examples hold, and that the tests of this package check on a rea
 - **An offset page answers `total`**, a cursor page `nextCursor`. Offer the offset form for
   small, browsable lists and the cursor form for anything that grows.
 
+## Criteria
+
+`criteriaToDrizzle(plan, columns)` turns a criteria plan of the kernel into the parts of a
+query: `where` (the filters, the scope of the actor and the keyset of a cursor page),
+`counted` (the filters and the scope alone, for a total), `orderBy` (the total order ended by
+the tie-breaker), `limit` and `offset`. `predicateToDrizzle(predicate, columns)` gives one
+condition. `columns` maps each field of the read model to its column, and is the only source
+of identifiers: every value is a parameter encoded by its column, a text search is
+`like $1 escape $2` with `%`, `_` and `\` escaped.
+
+```ts
+// infrastructure/persistence/drizzle-appointment.queries.ts
+async list(criteria: ScopedCriteria<AppointmentRow>): Promise<Page<AppointmentRow>> {
+  const plan = planCriteria(appointmentCriteria, criteria);
+
+  if (plan.empty) return pageOfPlan(plan, []);
+
+  const { where, orderBy, limit, offset } = criteriaToDrizzle(plan, COLUMNS);
+  const rows = await this.database.executor().select().from(appointments).where(where).orderBy(...orderBy).limit(limit).offset(offset);
+
+  return pageOfPlan(plan, rows);
+}
+```
+
+A cursor page is fetched one row longer than asked, which is how `pageOfPlan` knows whether
+another follows; an offset page takes its total from `db.$count(table, counted)`. A field
+declared `nullable` is ordered `nulls last` ascending and `nulls first` descending.
+
+**Strings.** A text column is ordered and compared by range in the collation of the column;
+criteria order strings by code point. Declare the text columns that are sorted or compared
+with `gt`, `lt` or `between` with `COLLATE "C"` (a `customType` whose `dataType` is `text collate "C"`, or the migration): the index then serves the sort, and the
+order is the same as in the fake. **Decimals** are a `numeric` column and a string in the
+row; they read back in the scale of the column. **Instants** are `timestamptz` and a `Date`.
+An integer is `integer`: a `bigint` comes back as a string from the driver.
+
+## Read models
+
+```ts
+// infrastructure/persistence/appointment-list.ts
+export const appointmentList = contextSchema('scheduling').table('appointment_list', {
+  id: text('id').primaryKey(),
+  status: text('status').notNull(),
+  startsAt: timestamp('starts_at', { withTimezone: true, mode: 'date' }).notNull(),
+  ...readModelColumns(), // last_event_id, last_event_at, last_event_version, deleted
+});
+
+// infrastructure/persistence/drizzle-appointment-list.adapter.ts
+@Adapter(AppointmentList, [Database])
+export class DrizzleAppointmentList extends DrizzleReadModelStore<AppointmentRow, NodePgQueryResultHKT> implements AppointmentList {
+  constructor(database: Database) {
+    super(database, {
+      table: appointmentList,
+      key: appointmentList.id,
+      columns: { id: appointmentList.id, status: appointmentList.status, startsAt: appointmentList.startsAt },
+      definition: appointmentCriteria,
+    });
+  }
+}
+```
+
+Every write goes through `TableReadModelStore` of the kernel: a row is written only if its
+event is newer than the one it holds, on the executor of the unit of work, so the row and the
+processed-event mark commit together. A removed row stays in the table with `deleted` set:
+a query of your own on the table leaves those rows out, and so does a unique index
+(`WHERE NOT deleted`). `store.table` is what `ProjectionRebuild` takes; the rebuild is
+PostgreSQL only (a copy `<table>__rebuild` made `LIKE ... INCLUDING ALL`, the keys written
+meanwhile in `<table>__touched`, the swap by rename in one transaction) and its guarantees
+and limits are in the README of `@ddd-ts-kit/kernel` ("Rebuild"). The store passes
+`criteriaContract` and `readModelStoreContract` of `@ddd-ts-kit/testing/contracts`, on PGlite
+and on PostgreSQL 18.
+
 ## Outbox and idempotency
 
 - `DrizzleOutboxStore.claimBatch` selects the due rows `FOR UPDATE SKIP LOCKED` and leases
@@ -365,3 +436,11 @@ The rules these examples hold, and that the tests of this package check on a rea
 The stores of this package pass `outboxStoreContract` and `processedEventStoreContract` of
 `@ddd-ts-kit/testing/contracts` on PGlite (PostgreSQL in process, no container). Hold your
 repositories to `repositoryContract` the same way, next to their in-memory fake.
+
+The criteria translator and the read model store also run on a real server when
+`DDD_TS_KIT_TEST_DATABASE_URL` is set, through `drizzle-orm/node-postgres`, each spec file in a
+database of its own that it drops afterwards (last run: PostgreSQL 18):
+
+```
+DDD_TS_KIT_TEST_DATABASE_URL=postgresql://user:password@localhost:5432/postgres npx vitest run packages/drizzle
+```

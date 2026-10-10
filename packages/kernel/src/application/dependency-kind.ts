@@ -9,4 +9,5 @@ export type DependencyKind =
   | 'use-case'
   | 'publisher'
   | 'consumer'
+  | 'domain-event-handler'
   | 'job';

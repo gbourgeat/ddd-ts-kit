@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { render } from '../src/render.js';
-import { toName } from '../src/naming.js';
-import { listTemplates, readTemplate } from '../src/templates.js';
+import { toName } from '../src/naming/index.js';
+import { listTemplates, readTemplate, render } from '../src/templating/index.js';
 
 describe('template renderer', () => {
   const context = { name: { ...toName('InvoiceLine') }, context: { kebab: 'billing' }, flags: { on: true, off: false } };
@@ -50,8 +49,9 @@ describe('shipped templates', () => {
 
   it('exist for every kind', () => {
     const kinds = new Set(templates.map((template) => template.split('/')[0]));
+
     expect([...kinds].sort()).toEqual(
-      ['acl', 'adapter', 'adr', 'architecture', 'gateway', 'policy', 'service', 'aggregate', 'builder', 'command', 'context', 'docs', 'domain-error', 'domain-event', 'domain-service', 'e2e', 'entity', 'event-handler', 'init', 'integration-event', 'integration-handler', 'pipeline', 'port', 'query', 'repository', 'route', 'value-object'].sort(),
+      ['acl', 'adapter', 'adr', 'architecture', 'gateway', 'policy', 'service', 'aggregate', 'builder', 'command', 'context', 'docs', 'domain-error', 'domain-event', 'domain-service', 'e2e', 'entity', 'event-handler', 'init', 'integration-event', 'integration-handler', 'job', 'pipeline', 'port', 'query', 'repository', 'route', 'value-object', 'worker'].sort(),
     );
   });
 

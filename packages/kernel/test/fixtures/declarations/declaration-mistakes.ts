@@ -1,10 +1,12 @@
-import { AuthorizedCommand, Clock, Command, IdGenerator, Query, type Actor, type CommandBus } from '../../../src/index.js';
+import { AuthorizedCommand, Clock, Command, IdGenerator, Query, type Actor, type CommandBus, type IntegrationEvent } from '../../../src/index.js';
 import {
   Adapter,
   CommandHandler,
   DomainEventHandler,
   IntegrationEventHandler,
+  On,
   Policy,
+  Projection,
   Public,
   QueryHandler,
   Repository,
@@ -14,6 +16,7 @@ import {
 import {
   PatientRegistered,
   InMemoryVisitRepository,
+  PatientList,
   ScheduleVisit,
   VisitRepository,
   VisitScheduled,
@@ -218,3 +221,32 @@ Scheduled('clinic.never', { overlap: 'skip' });
 Scheduled('clinic.without-unit', { every: '15' });
 // @ts-expect-error -- an occurrence that overlaps is skipped or queued, nothing else
 Scheduled('clinic.parallel', { every: '1h', overlap: 'parallel' });
+
+@Projection('clinic.of-another-event', [PatientList])
+export class ProjectionOfAnotherEvent {
+  constructor(readonly patients: PatientList) {}
+
+  // @ts-expect-error -- the method applies another payload than the event it is written on
+  @On(PatientRegistered)
+  async registered(_event: IntegrationEvent<{ readonly visitId: number }>): Promise<void> {}
+
+  // @ts-expect-error -- the method applies an integration event, VisitScheduled is a domain event
+  @On(VisitScheduled, { name: 'clinic.visit.scheduled' })
+  async scheduled(_event: IntegrationEvent<{ readonly visitId: number }>): Promise<void> {}
+
+  // @ts-expect-error -- a domain event is named
+  @On(VisitScheduled)
+  async unnamed(_event: VisitScheduled): Promise<void> {}
+}
+
+// @ts-expect-error -- the wrong port: Clock is not the read model of the projection
+@Projection('clinic.with-a-wrong-token', [Clock])
+export class ProjectionWithAWrongToken {
+  constructor(readonly patients: PatientList) {}
+
+  @On(PatientRegistered)
+  async registered(_event: IntegrationEvent<{ readonly patientId: string }>): Promise<void> {}
+}
+
+// @ts-expect-error -- a projection name is <context>.<name>
+Projection('patients');

@@ -6,9 +6,13 @@ description: >-
   a file, comments only for what code cannot say, no escape hatches, testability by
   construction (Clock, IdGenerator, ports). Use when a clean/*, purity/* or language/* rule
   is reported, or when the user asks to clean, simplify, rename or make code more readable.
+  To define a missing business term use glossary.
 allowed-tools:
+  - Read
+  - Edit
   - Bash(npx ddd-ts-kit check *)
-  - Bash(npx ddd-ts-kit list *)
+  - Bash(npx ddd-ts-kit explain *)
+  - Bash(npm run lint *)
 ---
 
 # Clean code
@@ -78,8 +82,15 @@ say what it does, extract it and name it.
   `clock.now()` into the aggregate method; aggregates do not hold a clock.
 - Identifiers: `IdGenerator`.
 - Anything outside the process: a port in `application/ports/`, with a fake.
-- Dependencies by constructor, as interfaces. No singleton import, no static state, no
-  `process.env` outside `platform/config`.
+- Dependencies by constructor, as ports (abstract classes). No singleton import, no static
+  state, no `process.env` outside `src/platform/config/`.
+
+## Files and layout
+
+One exported class, interface or function per file, named after it in kebab-case; at most
+350 lines. Members are `private`, never `#name`. A blank line before a `return` that is not
+alone in its block and around `if`, `for`, `try`: `npm run lint:fix` settles layout, do not
+spend tokens on it.
 
 ## Types
 
@@ -90,4 +101,5 @@ unrepresentable instead of validating them later.
 ## When a rule is reported
 
 Fix the code, not the rule. Suppressing (`// ddd-ts-kit-disable-next-line <rule> -- reason`),
-lowering a severity or raising a limit needs the user's explicit agreement.
+lowering a severity or raising a limit needs the owner's explicit agreement and a decision
+record: skill `ddd-ts-kit:deviation`.

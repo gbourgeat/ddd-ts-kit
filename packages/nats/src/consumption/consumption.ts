@@ -7,7 +7,7 @@ import {
   type JsMsg,
 } from '@nats-io/jetstream';
 import type { NatsConnection } from '@nats-io/transport-node';
-import type { IntegrationEvent, IntegrationEventCallback, Subscription } from '@ddd-ts-kit/kernel';
+import type { EventDelivery, IntegrationEvent, IntegrationEventCallback, Subscription } from '@ddd-ts-kit/kernel';
 import { decode } from '../codec/decode.js';
 import {
   ATTEMPT_HEADER,
@@ -19,6 +19,7 @@ import {
 import { republication } from '../codec/republication.js';
 import { failureCode } from '../errors/failure-code.js';
 import { ignore } from '../ignore.js';
+import { MESSAGING_SYSTEM } from '../messaging-system.js';
 import type { NatsDelivery } from '../options/nats-delivery.js';
 import type { NatsFailure } from '../options/nats-failure.js';
 import type { RetryOptions } from '../options/retry-options.js';
@@ -230,7 +231,7 @@ export class Consumption {
   }
 
   private async handle(delivery: Delivery, event: IntegrationEvent): Promise<void> {
-    const code = await failureOf(delivery.subscription.handlers, event);
+    const code = await failureOf(delivery.subscription.handlers, event, this.deliveryOf(delivery));
 
     if (code === undefined) {
       this.settled(delivery, 'acknowledged');
@@ -240,6 +241,16 @@ export class Consumption {
     }
 
     await this.retryOrBury(delivery, event, code);
+  }
+
+  private deliveryOf({ subscription, message }: Delivery): EventDelivery {
+    return {
+      attempt: message.info.deliveryCount,
+      maxAttempts: this.settings.retry.maxAttempts,
+      system: MESSAGING_SYSTEM,
+      destination: message.subject,
+      consumer: subscription.names.durable,
+    };
   }
 
   private async buryPoison(delivery: Delivery): Promise<void> {

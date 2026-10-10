@@ -5,6 +5,7 @@ import type {
   InMemoryCache,
   InMemoryCommandBus,
   InMemoryDomainEventDispatcher,
+  InMemoryErrorReporter,
   InMemoryEventBus,
   InMemoryLock,
   InMemoryLogger,
@@ -31,10 +32,12 @@ export interface TestKernel {
    * It follows `actorContext`; replace it with `executionScope.enter(context)`.
    */
   readonly executionScope: FixedExecutionScope;
-  /** `logger.entries` lists what was logged. */
+  /** `logger.entries` lists what was logged, errors as their description. */
   readonly logger: InMemoryLogger;
   /** `metrics.samples` lists what was measured. */
   readonly metrics: InMemoryMetrics;
+  /** `errors.reports` lists the unexpected failures the buses and the jobs reported. */
+  readonly errors: InMemoryErrorReporter;
   /** Expires by `clock`. */
   readonly cache: InMemoryCache;
   /** Frees a key by `clock`; a wait for a held key really waits. */

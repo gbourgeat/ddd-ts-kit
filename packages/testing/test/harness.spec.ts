@@ -86,6 +86,24 @@ describe('createTestBuses', () => {
     expect(publishedEvents()).toHaveLength(1);
   });
 
+  it('makes a repository fake dispatch the domain events of what it saves, as the application does', async () => {
+    const { dispatching, domainEvents } = createTestBuses({ now: at });
+    const orders = dispatching(new InMemoryOrders());
+    const heard: string[] = [];
+
+    domainEvents.on('ordering.order.placed', async (event) => void heard.push(`${event.name} ${event.aggregateId}`));
+    domainEvents.on('ordering.order.paid', async (event) => void heard.push(`${event.name} ${event.aggregateId}`));
+
+    const order = Order.place('order-1', { id: 'c', name: 'Ada' }, [{ sku: 'pen', quantity: 3 }], at);
+
+    order.pay(at);
+    await orders.save(order);
+
+    expect(heard).toEqual(['ordering.order.placed order-1', 'ordering.order.paid order-1']);
+    expect(order.pullEvents()).toEqual([]);
+    expect(orders.count()).toBe(1);
+  });
+
   it('gives a query bus, a frozen clock that can move and a unit of work', async () => {
     const { commandBus, queryBus, clock, unitOfWork } = createTestBuses({ now: at });
     const orders = new InMemoryOrders();

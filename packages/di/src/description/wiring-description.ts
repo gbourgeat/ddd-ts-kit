@@ -69,6 +69,22 @@ export interface ScheduledJobDescription extends OriginDescription, JobPolicy {
   readonly module: string;
 }
 
+/** One event a projection applies: an integration event with its version, or a domain event of its own context. */
+export interface AppliedEventDescription {
+  readonly kind: 'integration' | 'domain';
+  readonly event: string;
+  readonly version?: number;
+  readonly method: string;
+}
+
+/** A declared projection. Its events are subscribed under its name, and are not listed among the handlers. */
+export interface ProjectionDescription extends OriginDescription {
+  readonly name: string;
+  readonly projection: string;
+  readonly module: string;
+  readonly applies: readonly AppliedEventDescription[];
+}
+
 /** The wiring as plain, serializable data: ports and classes appear by name. */
 export interface WiringDescription {
   readonly modules: readonly string[];
@@ -82,6 +98,8 @@ export interface WiringDescription {
   readonly policies: readonly PolicyDescription[];
   /** The declared jobs. What they did last and when they run next is asked to the job scheduler. */
   readonly jobs: readonly ScheduledJobDescription[];
+  /** The declared projections, each with the events it applies. */
+  readonly projections: readonly ProjectionDescription[];
   /** Every overridden token, including those no module binds. */
   readonly overrides: readonly string[];
 }

@@ -8,9 +8,18 @@ import { expectStatus } from '@ddd-ts-kit/testing/e2e';
 {{#if tests.vitest}}
 import { reportSeedOnFailure } from '@ddd-ts-kit/testing/faker';
 {{/if}}
-import { startApplication, type RunningApplication } from './support/application.js';
+{{#if e2e.traced}}
+import { expectSpanTree, installTestTracing } from '@ddd-ts-kit/tracing/testing';
+{{/if}}
+import { startApplication, type RunningApplication } from './support/start-application.js';
+{{#if e2e.traced}}
+import { storyOf } from './support/story-of.js';
+{{/if}}
 
 describe('{{name.title}}, end to end', () => {
+{{#if e2e.traced}}
+  const tracing = installTestTracing();
+{{/if}}
   let application: RunningApplication;
 
   beforeAll(async () => {
@@ -19,6 +28,9 @@ describe('{{name.title}}, end to end', () => {
 
   afterAll(async () => {
     await application.close();
+{{#if e2e.traced}}
+    tracing.uninstall();
+{{/if}}
   });
 
   beforeEach(async () => {
@@ -42,6 +54,31 @@ describe('{{name.title}}, end to end', () => {
     const response = await stranger.{{e2e.call}}('{{e2e.samplePath}}'{{e2e.body}});
 
     expectStatus(response, 403);
+  });
+
+{{/if}}
+{{#if e2e.traced}}
+  it('is one trace: the request, the use case and what it saves', async () => {
+{{#if e2e.protected}}
+{{#if authz.rebac}}
+    await application.relate({ object: 'context:{{context.kebab}}', relation: 'operator', subject: 'user:ada' });
+{{/if}}
+    const ada = await application.as({ id: 'ada', roles: ['admin'] });
+
+    const trace = await tracing.traceOf(async () => {
+      expectStatus(await ada.{{e2e.call}}('{{e2e.samplePath}}'{{e2e.body}}), {{e2e.status}});
+    });
+{{/if}}
+{{#unless e2e.protected}}
+    const trace = await tracing.traceOf(async () => {
+      expectStatus(await application.client.{{e2e.call}}('{{e2e.samplePath}}'{{e2e.body}}), {{e2e.status}});
+    });
+{{/unless}}
+
+    // Exact on names and structure, and kept before the tests whose request leaves work behind (a relay still publishing would add its spans here). Once "{{name.words}}" announces a fact, its spans come under the save: `domain-event <name>`, `handler <Class>`, `outbox append <type>`, then, awaited with `eventually`, `publish <type>` and `process <consumer>` with the command it sends.
+    expectSpanTree(storyOf(trace), [
+      { name: '{{e2e.method}} {{e2e.path}}', kind: 'SERVER', children: [{ name: 'command {{name.pascal}}Command'{{e2e.saved}} }] },
+    ]);
   });
 
 {{/if}}

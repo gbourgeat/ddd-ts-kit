@@ -1,43 +1,50 @@
-import { eventDeclarations, inDeclaration, isTypeLiteral, type EventDeclaration } from '../event-declarations.js';
-import type { Rule, SourceFile } from '../types.js';
-import { inContext, KEBAB_SEGMENT, reporter, type Finding } from './helpers.js';
+import { eventDeclarations, type EventDeclaration } from '../events/event-declarations.js';
+import { inDeclaration } from '../events/in-declaration.js';
+import { isTypeLiteral } from '../events/is-type-literal.js';
+import type { Finding } from '../model/finding.js';
+import type { Rule } from '../model/rule.js';
+import type { SourceFile } from '../model/source-file.js';
+import { inContext } from '../support/in-context.js';
+import { KEBAB_SEGMENT } from '../support/kebab-segment.js';
+import { perFile } from '../support/per-file.js';
+
+const MISPLACED_FIX = 'Move the declaration to the published-language/ folder of the context that produces the event (`ddd-ts-kit generate integration-event <context> <Aggregate> <Fact>` creates it) and import it from there.';
 
 export const eventsDefinedInPublishedLanguage: Rule = {
   id: 'events/defined-in-published-language',
   description: "An integration event is declared once with defineIntegrationEvent in the producer's published-language/, with a payload schema.",
   scope: 'file',
   run(project) {
-    const report = reporter(project, this.id);
+    // Remembers, across the files of the project, where each version of an event was first seen.
     const declared = new Map<string, string>();
-    return project.files
-      .filter((file) => !file.isTest)
-      .flatMap((file) => {
-        const declarations = eventDeclarations(file);
-        const isPublished = inContext(file.location) && file.location.layer === 'published-language';
-        const findings = isPublished ? [...judged(file, declarations, declared), ...handwritten(file, declarations)] : misplaced(file, declarations);
-        return findings.map(({ line, message, fix }) => report({ file: file.path, line }, message, fix));
-      });
+
+    return perFile(project, this.id, (file) => {
+      if (file.isTest) return [];
+
+      const declarations = eventDeclarations(file);
+      const isPublished = inContext(file.location) && file.location.layer === 'published-language';
+
+      return isPublished ? [...judged(file, declarations, declared), ...handwritten(file, declarations)] : misplaced(file, declarations);
+    });
   },
 };
 
 function misplaced(file: SourceFile, declarations: readonly EventDeclaration[]): Finding[] {
-  return declarations.map((declaration) => ({
-    line: file.scan.lineAt(declaration.start),
-    message: 'An integration event is declared outside a published language.',
-    fix: `Move the declaration to the published-language/ folder of the context that produces the event (\`ddd-ts-kit generate integration-event <context> <Aggregate> <Fact>\` creates it) and import it from there.`,
-  }));
+  return declarations.map((declaration) => ({ line: file.scan.lineAt(declaration.start), message: 'An integration event is declared outside a published language.', fix: MISPLACED_FIX }));
 }
 
-/** `declared` remembers, across the files of the project, where each version of an event was first seen. */
 function judged(file: SourceFile, declarations: readonly EventDeclaration[], declared: Map<string, string>): Finding[] {
   return declarations.flatMap((declaration) => {
     const line = file.scan.lineAt(declaration.start);
-    return [...withoutPayload(declaration, line), ...declaredTwice({ declaration, line, file: file.path }, declared)];
+    const first = firstDeclarationOf(declaration, file.path, declared);
+
+    return [...withoutPayload(declaration, line), ...(first === undefined ? [] : [declaredTwice(declaration, line, first)])];
   });
 }
 
 function withoutPayload(declaration: EventDeclaration, line: number): Finding[] {
   if (declaration.hasPayload) return [];
+
   return [
     {
       line,
@@ -47,21 +54,24 @@ function withoutPayload(declaration: EventDeclaration, line: number): Finding[] 
   ];
 }
 
-function declaredTwice({ declaration, line, file }: { declaration: EventDeclaration; line: number; file: string }, declared: Map<string, string>): Finding[] {
-  if (declaration.type === undefined) return [];
+/** The file that already declared this version of the event; records this one when it is the first. */
+function firstDeclarationOf(declaration: EventDeclaration, file: string, declared: Map<string, string>): string | undefined {
+  if (declaration.type === undefined) return undefined;
+
   const key = `${declaration.type.value}@${declaration.version}`;
   const first = declared.get(key);
-  if (first === undefined) {
-    declared.set(key, file);
-    return [];
-  }
-  return [
-    {
-      line,
-      message: `Version ${declaration.version} of ${declaration.type.value} is already declared in ${first}.`,
-      fix: 'Keep one declaration per event type and version; a breaking change of the payload is a new version with its own declaration.',
-    },
-  ];
+
+  if (first === undefined) declared.set(key, file);
+
+  return first;
+}
+
+function declaredTwice(declaration: EventDeclaration, line: number, first: string): Finding {
+  return {
+    line,
+    message: `Version ${declaration.version} of ${declaration.type?.value ?? ''} is already declared in ${first}.`,
+    fix: 'Keep one declaration per event type and version; a breaking change of the payload is a new version with its own declaration.',
+  };
 }
 
 function handwritten(file: SourceFile, declarations: readonly EventDeclaration[]): Finding[] {
@@ -76,5 +86,6 @@ function handwritten(file: SourceFile, declarations: readonly EventDeclaration[]
 
 function looksLikeEventType(value: string): boolean {
   const parts = value.split('.');
+
   return parts.length === 3 && parts.every((part) => KEBAB_SEGMENT.test(part));
 }

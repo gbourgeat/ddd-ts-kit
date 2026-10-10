@@ -1,5 +1,11 @@
-export { run, VERSION, type Io } from './cli.js';
-export { runCheck, type CheckOptions, type CheckResult } from './check/engine.js';
-export { loadProject } from './check/project.js';
-export { RULE_IDS, RULES } from './check/rules/index.js';
-export type { Project, Rule, Violation } from './check/types.js';
+export { run } from './run.js';
+export { VERSION } from './version.js';
+export type { Io } from './commands/io.js';
+export { RULE_IDS } from './check/catalogue/rule-ids.js';
+export { RULES } from './check/catalogue/rules.js';
+export { runCheck, type CheckOptions } from './check/engine/run-check.js';
+export type { CheckResult } from './check/engine/check-result.js';
+export type { Project } from './check/model/project.js';
+export type { Rule } from './check/model/rule.js';
+export type { Violation } from './check/model/violation.js';
+export { loadProject } from './check/project/load-project.js';

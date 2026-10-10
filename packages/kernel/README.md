@@ -13,17 +13,44 @@ npm i @ddd-ts-kit/kernel
 | Area | Exports |
 |---|---|
 | Domain | `Entity`, `AggregateRoot` (version, recorded events), `ValueObject`, `DomainEvent`, `DomainError` with a stable `code` (`InvariantViolation`, `NotFoundError`, `ConflictError`, `ConcurrencyError`), `Result` with `ok`, `err`, `unwrap` |
-| Ports | `Clock`, `IdGenerator`, `UnitOfWork`, `Repository` (abstract classes: each one is its own injection token), `UseCase`, `DependencyKind` (the roles a binding declares, read by di, tracing and aspects: `repository`, `gateway`, `external`, `use-case`, `publisher`, `consumer`, `job`) |
-| Buses | `Command`, `Query`, `CommandBus`, `QueryBus`, `BusMiddleware`, the in-process `InMemoryCommandBus` and `InMemoryQueryBus`, `unitOfWorkMiddleware` |
-| Events | `IntegrationEvent`, `IntegrationEventPublisher`, `IntegrationEventSubscriber`, `EventBus` (both at once), `EventSubscribers` (the subscriber of each bounded context), `ProcessedEventStore`, `idempotent`, `InMemoryEventBus`, `DomainEventDispatcher`, `IntegrationEventCallback` and `DomainEventCallback` (the functions a subscriber and a dispatcher are given), `executionContextOfEvent`, `inEventScope`, `scopedPublisher` |
+| Ports | `Clock`, `IdGenerator`, `UnitOfWork`, `Repository` (abstract classes: each one is its own injection token), `UseCase`, `DependencyKind` (the roles a binding declares, read by di, tracing and aspects: `repository`, `gateway`, `external`, `use-case`, `publisher`, `consumer`, `domain-event-handler`, `job`) |
+| Buses | `Command`, `Query`, `CommandBus`, `QueryBus`, `BusMiddleware`, the in-process `InMemoryCommandBus` and `InMemoryQueryBus` (`register(type, handler, { context })` names the bounded context in `MessageInfo`), `unitOfWorkMiddleware` |
+| Events | `IntegrationEvent`, `IntegrationEventPublisher`, `IntegrationEventSubscriber`, `EventBus` (both at once), `EventSubscribers` (the subscriber of each bounded context), `ProcessedEventStore`, `idempotent`, `InMemoryEventBus`, `DomainEventDispatcher`, `IntegrationEventCallback` and `DomainEventCallback` (the functions a subscriber and a dispatcher are given), `executionContextOfEvent`, `inEventScope`, `scopedPublisher`, `EventDelivery` (what a provider says of one delivery: attempt, last attempt, transport, source, consumer), `messagingSystemOf` |
+| Domain events with the save | `dispatchingOnSave` (the wrapper that makes a repository dispatch what the aggregates it is handed recorded), `announceDomainEvents`, `apartFromDomainEventFlow` |
 | Actor | `Actor`, `AuthorizedCommand`, `AuthorizedQuery`, `ActorContext` |
-| Standard interfaces | `Session`, `ExecutionContext` and `ExecutionScope`, `Logger`, `Metrics`, `Cache`, `Lock`, `RateLimiter`, `Page` and `PageRequest`, `AuditStamp`, `TenantScoped`, `AuditTrail`, `AuditReader` and `AuditEntry` |
+| Standard interfaces | `Session`, `ExecutionContext` and `ExecutionScope`, `Logger`, `Metrics`, `ErrorReporter`, `Cache`, `Lock`, `RateLimiter`, `Page` and `PageRequest`, `AuditStamp`, `TenantScoped`, `AuditTrail`, `AuditReader` and `AuditEntry` |
 | Scheduled jobs | `JobScheduler`, `ScheduledJob`, `JobExecution`, `JobSchedule`, `JobOptions`, `JobDefinition`, `JobRun`, `JobDescription`, `parseJobSchedule`, `describeJobSchedule`, `jobPolicy`, `executionContextOfJob` |
+| Read side | `Criteria`, `defineCriteria`, `validateCriteria`, `scoped`, `planCriteria`, `evaluateCriteria`, `pageOfPlan`, `hydrate`, `ReadModelStore`, `stampOf`, `TableReadModelStore`, `ProjectionRebuild`, `InMemoryReadModelStore` (see "Criteria", "Hydration" and "Projections") |
 | Persistence helpers | `optimisticUpdate`, `schemaNameOf`, `stampCreation`, `stampUpdate`, `tenantScopeOf`, `encodeCursor`, `decodeCursor` |
-| Doubles | `FixedClock`, `SequentialIdGenerator`, `InMemoryUnitOfWork`, `FixedActorContext`, `FixedExecutionScope`, `InMemoryLogger`, `InMemoryMetrics`, `InMemoryCache`, `InMemoryLock`, `InMemoryRateLimiter` |
-| Declarations (`@ddd-ts-kit/kernel/declarations`) | `Requires`, `Public`, `CommandHandler`, `QueryHandler`, `IntegrationEventHandler`, `DomainEventHandler`, `Scheduled`, `Repository`, `Gateway`, `Adapter`, `Policy`, `declarationOf`, `listDeclarations`, `Token`, `describeToken`, `tokenIdentity`, `portDefect` |
+| Error reporting | `ErrorReporter`, `ErrorReport`, `errorReportOf`, `reportOnce`, `isUnexpectedError`, `errorReportingMiddleware`, `DeadLetterReports`, `reportProcessFailures`, `NoopErrorReporter` |
+| Doubles | `FixedClock`, `SequentialIdGenerator`, `InMemoryUnitOfWork`, `FixedActorContext`, `FixedExecutionScope`, `InMemoryLogger`, `InMemoryMetrics`, `InMemoryErrorReporter`, `InMemoryCache`, `InMemoryLock`, `InMemoryRateLimiter` |
+| Declarations (`@ddd-ts-kit/kernel/declarations`) | `Requires`, `Public`, `CommandHandler`, `QueryHandler`, `IntegrationEventHandler`, `DomainEventHandler`, `Scheduled`, `Projection`, `On`, `Repository`, `Gateway`, `Adapter`, `Policy`, `declarationOf`, `listDeclarations`, `Token`, `describeToken`, `tokenIdentity`, `portDefect` |
 
 The rules these blocks serve are in `docs/ARCHITECTURE.md`.
+
+## Domain events leave with the save
+
+An aggregate records its events; nothing in a use case hands them over. A repository wrapped
+by `dispatchingOnSave(repository, () => dispatcher)` dispatches them itself, once a method that
+was handed the aggregate has resolved:
+
+```ts
+const orders = dispatchingOnSave(new KnexOrderRepository(db), () => dispatcher);
+
+await orders.save(order);            // persisted, then the events `order` recorded are dispatched, in order
+await orders.saveAll([first, second]);
+await orders.remove(order);          // a "deleted" event leaves with the removal
+```
+
+`kernelModule()` of `@ddd-ts-kit/di` applies it to every binding of kind `repository`, so an
+application never writes this line; the table of what it guarantees (ordering, re-entrancy,
+failures, unit of work, wrapper order) is in the README of that package. In short: the events
+are pulled only when the call succeeded; events recorded by handlers wait their turn and go out
+in recording order, without recursion; the first handler that fails rejects the save;
+`unitOfWorkMiddleware` runs the handler, the save and the dispatch in one unit of work.
+`pullEvents()` stays public for this wrapper and for the specs of an aggregate; a use case and
+a repository adapter never call it. An aggregate is recognised by what it does (it has
+`pullEvents`), so a context compiled against another copy of the kernel is followed too.
 
 ## Declarations
 
@@ -158,6 +185,24 @@ twice, or bundled next to `node_modules`, declares a `tokenKey`. The key is the 
 ports that declare the same key are the same token, so prefix it with the package or the
 context. It is declared, never inherited: a port that extends a keyed port declares its own.
 
+When to declare one: only for a port that one process may load from two copies of its package.
+A port of an application, compiled once into one program, never declares a key: the class is
+identity enough, and a key would only be a name to keep unique by hand.
+
+A port that extends a port of the kernel declares its key as any other does, without
+`override`: the kernel ports carry theirs as an own property that is not a declared member
+(`kernel.<ClassName>`, set in a static block), so nothing is overridden.
+
+```ts
+export abstract class OrderRepository extends Repository<Order> {
+  static readonly tokenKey = 'ordering.OrderRepository';
+}
+
+export abstract class BusinessClock extends Clock {
+  static readonly tokenKey = 'ordering.BusinessClock';
+}
+```
+
 **What the compiler refuses**, in both decorator modes:
 
 - a dependency list that does not name one port per constructor parameter, each of the type of
@@ -189,6 +234,7 @@ left alone.
 | `IntegrationEventHandler(definition, { consumer, actorOf? }, [ports])` | the handler of an integration event of another context | `@IntegrationEventHandler(OrderPlaced, { consumer: 'billing.invoice-on-order-placed' }, [CommandBus])` |
 | `DomainEventHandler(Event, { name }, [ports])` | a handler of a domain event of its own context | `@DomainEventHandler(OrderPaid, { name: 'ordering.order.paid' }, [CommandBus])` |
 | `Scheduled(name, schedule and options, [ports])` | a job run by time, which triggers use cases | `@Scheduled('billing.send-reminders', { cron: '0 7 * * 1-5', timeZone: 'Europe/Paris' }, [CommandBus])` |
+| `Projection(name, [ports])` with `On(definition)` on its methods | a projector: the class that keeps one read model up to date | `@Projection('scheduling.appointment-list', [AppointmentList])`, `@On(PaymentCaptured)` |
 | `Repository(Port, options?, [ports])` | the adapter of a repository of the domain | `@Repository(OrderRepository, [Database, ExecutionScope, Clock])` |
 | `Gateway(Port, options?, [ports])` | the adapter of a port that calls another context | `@Gateway(StockGateway, [HttpClient])` |
 | `Adapter(Port, options?, [ports])` | the adapter of any other port | `@Adapter(PaymentGateway, { kind: 'external' }, [PaymentSettings])` |
@@ -362,11 +408,63 @@ the test double, and follows a `FixedActorContext` when given one.
 
 ### Logger
 
-`debug`, `info`, `warn`, `error(message, fields?)` and `child(fields)`. `LogFields` spells the
-well-known keys once: `correlationId`, `causationId`, `context`, `actorId`, `tenantId`,
-`errorType`, `errorCode`, `durationMs`; any other key is accepted. The kernel never writes to the
-console: `NoopLogger` is the default, `InMemoryLogger` records `entries` for a test, and a JSON
-lines adapter is in `@ddd-ts-kit/aspects`. The domain and use cases do not log.
+`debug`, `info`, `warn`, `error(message, fields?)`, `child(fields)`, `isLevelEnabled(level)` and
+`flush()`. `LogFields` spells the well-known keys once: `correlationId`, `causationId`,
+`context`, `actorId`, `tenantId`, `errorType`, `errorCode`, `durationMs`; any other key is
+accepted. A call never throws, whatever the fields: when they cannot be read or serialized the
+entry is written with `UNWRITABLE_FIELDS` (`logError: "unserializable fields"`) in their place.
+The kernel never writes to the console: `NoopLogger` is the default, `InMemoryLogger` records
+`entries` for a test, a JSON lines adapter is in `@ddd-ts-kit/aspects`, and `@ddd-ts-kit/pino`
+and `@ddd-ts-kit/winston` are the adapters of those libraries. The domain and use cases do not
+log.
+
+**Errors are log values.** `LogValue` admits an `Error`, so
+`logger.error('payment failed', { error })` compiles as it is, and a project may name the key
+once (`interface LogFields { error?: Error }`, see "Extending"). An `Error` directly under a
+key of the fields is written by every logger as `describeError(error)` describes it, an
+`ErrorDescription`:
+
+| Key | |
+|---|---|
+| `type` | the class name |
+| `code` | the `code` of a `DomainError`; absent for any other error |
+| `message` | the message |
+| `stack` | the stack of this error alone |
+| `cause` | the cause, described the same way when it is an `Error`: eight errors deep at most, so a chain that loops ends |
+
+Deeper in the fields (inside a nested object or a list) an error is left to the serializer of
+the adapter: pass it under a key. `describeErrorFields(fields)` is the copy of the fields a
+logger writes; an adapter of your own calls it and is held to the result by `loggerContract`.
+
+**Messages of unexpected errors can be dropped.** Every logger of the kit takes
+`scrubMessages: true` (`DescribeErrorOptions`): the message of every error that is not a
+`DomainError` becomes `SCRUBBED_MESSAGE` (`[message removed]`) and its stack loses its first
+line, which repeats it. Messages of `DomainError`s are written by the project and stay. It is
+the option of the same name of `@ddd-ts-kit/sentry`, with the same rule and the same marker.
+The default keeps the messages: a log that says `[message removed]` costs every investigation.
+
+**What the kit logs on its own never holds a message.** The `logged` aspect,
+`loggingMiddleware` and the job scheduler never hand an error to a logger: they write
+`errorType` and `errorCode`, as `identifyError(error)` gives them, and the error itself goes to
+the `ErrorReporter`. That holds whatever `scrubMessages` says. The full description is for the
+error a project decides to log, in an adapter or a route; scrubbing is its opt-in for logs that
+leave its hands.
+
+**`isLevelEnabled(level)`** says whether an entry of that level would be written, for the
+logger and its children. Ask it before building fields that cost; the kit does, in `logged`,
+`loggingMiddleware` and the scheduler. `NoopLogger` answers `false`.
+
+**`flush()`** resolves once every entry logged so far, through the logger or a child, was
+handed to its destination, and never rejects. It is called once, when the process stops, after
+the last entry: the application of `@ddd-ts-kit/di` calls it at the end of `stop()`. What is
+logged after a flush is unspecified, and never throws: pino and `StdoutLogger` still write it,
+winston, whose flush ends the logger, drops it. A second call resolves too.
+
+`InMemoryLogger` takes `{ level?, fields?, base?, scrubMessages? }` like a real adapter: a
+threshold (default `debug`, every entry), fields read at each entry, fields added to every
+entry. Its `entries` hold what a logger writes: an error passed as a field is recorded as its
+description. `CREDENTIAL_KEYS` and `REDACTED` are the field names and the marker the pino and
+winston adapters redact with; `StdoutLogger` and `InMemoryLogger` redact nothing.
 
 ### Metrics
 
@@ -374,6 +472,35 @@ lines adapter is in `@ddd-ts-kit/aspects`. The domain and use cases do not log.
 `gauge(name).set(value, labels?)`. Label values come from a small closed set, never an
 identifier. `NoopMetrics` is the default; `InMemoryMetrics` records `samples` and answers
 `counterValue`, `histogramValues` and `gaugeValue` for a subset of labels.
+
+### ErrorReporter
+
+`report(error, report)` and `flush(timeoutMs)`: where unexpected failures go to be looked at,
+an error tracker. `report` is synchronous: it queues and returns, never throws and never waits
+for the tracker; `flush` waits for the queue before the process stops and never rejects.
+`ErrorReport` is plain data, identifiers only: `origin`, `operation`, `context`,
+`correlationId`, `traceId`, `actorId`, `tenantId`, `errorCode`, `severity` (`fatal`, `error`,
+`warning`) and the project's `extensions`. `NoopErrorReporter` is the default,
+`InMemoryErrorReporter` records `reports` for a test, and `@ddd-ts-kit/sentry` is the adapter
+for Sentry and GlitchTip.
+
+No handler, aggregate or repository calls it: they throw. What stands around them reports,
+each attached from outside:
+
+| Capture point | Is | Reports |
+|---|---|---|
+| buses | `errorReportingMiddleware(reporter, scope)`, first on the bus | a command or query failing with anything but a `DomainError`; silent while an event is consumed |
+| HTTP | `reportHttpErrors(reporter)` of `@ddd-ts-kit/http`, as `onError` | every request answered 5xx |
+| jobs | `reportFailedRuns(reporter)` of `@ddd-ts-kit/scheduling`, as `onRun` | a run that failed with anything but a `DomainError` |
+| events | `new DeadLetterReports(reporter)`: `onFailure` on the hook of the provider, `observing(subscriber)` around its subscriber | an event its provider gives up, never a retried delivery |
+| process | `reportProcessFailures(reporter)` | `uncaughtException` and `unhandledRejection`, then exit code 1 after a flush |
+
+A `DomainError` is a business refusal and is never reported, unless HTTP answers it as a 5xx or
+it buries an event (a `warning`). All of them go through `reportOnce`: the first capture point
+that sees an error object reports it, the boundaries it crosses afterwards recognise it, so a
+command failing inside a request or a job is one report, named after the command.
+`errorReportOf(error, source, executionContext?)` builds the report: origin, correlation, actor
+and tenant ids come from the execution context, never threaded by hand.
 
 ### Cache
 
@@ -528,9 +655,301 @@ percentage, who the subject is) differs with each provider, and OpenFeature alre
 vendor-neutral contract: a project that needs flags declares a port in the context that reads
 them, named after the decision it takes.
 
+## Criteria
+
+A read of a read model, described once for every list: filters, a sort, a page. A criteria
+knows field names and nothing of a store. It is not a specification: a specification is a
+business predicate on an aggregate and lives in the domain; a criteria describes a read.
+
+```ts
+// contexts/scheduling/application/ports/appointment-list.port.ts
+import { ReadModelStore, defineCriteria } from '@ddd-ts-kit/kernel';
+
+export interface AppointmentRow {
+  readonly id: string;
+  readonly status: 'booked' | 'confirmed' | 'cancelled';
+  readonly startsAt: Date;
+  readonly practitionerId: string;
+  readonly cancelledAt: Date | null;
+  readonly tenantId: string;
+}
+
+export const appointmentCriteria = defineCriteria<AppointmentRow>({
+  fields: {
+    id: { type: 'string' },
+    status: { type: 'string', filter: ['eq', 'in'], sortable: true },
+    startsAt: { type: 'instant', filter: ['gte', 'lt', 'between'], sortable: true },
+    practitionerId: { type: 'string', filter: ['eq'] },
+    cancelledAt: { type: 'instant', filter: ['isNull'], nullable: true },
+    tenantId: { type: 'string' },
+  },
+  defaultSort: [{ field: 'startsAt', direction: 'asc' }],
+  tieBreaker: 'id',
+  limits: { maxPageSize: 50 },
+});
+
+export abstract class AppointmentList extends ReadModelStore<AppointmentRow> {}
+```
+
+```ts
+// contexts/scheduling/application/queries/list-appointments/list-appointments.handler.ts
+const criteria = Criteria.of<AppointmentRow>()
+  .where('status', 'in', ['booked', 'confirmed'])
+  .where('startsAt', 'gte', query.from)
+  .or((any) => any.where('practitionerId', 'eq', query.practitionerId).where('cancelledAt', 'isNull', false))
+  .orderBy('startsAt', 'asc')
+  .page(query.page);
+
+const scope = await this.access.scope(query.actor, permissions['appointment.read'], 'appointment');
+
+return this.appointments.list(scoped(criteria, scope, { ids: 'id', filter: { tenantId: 'tenantId' } }));
+```
+
+**Checked by the compiler.** `where` takes a field of the row, an operator that applies to
+what the field holds, and a value of its type: `where('seats', 'contains', '2')`, an order on
+a boolean, `isNull` on a field that is never null, a value outside a union of literals and a
+field hydrated at query time are all refused. The same holds for a declaration: the type of
+each field, its operators and `nullable` are checked against the row.
+
+**Checked by the read port.** `validateCriteria(definition, criteria)` answers the violations,
+never throws, and never quotes a value. `planCriteria(definition, criteria)` validates first and
+throws `InvalidCriteriaError` (`INVALID_CRITERIA`): a criteria its definition refuses never
+reaches a statement.
+
+| Code | Path | Refused |
+|---|---|---|
+| `unknown_field` | `filter.<field>` | a field the definition does not declare |
+| `operator_not_allowed` | `filter.<field>` | an operator the field does not declare |
+| `invalid_value` | `filter.<field>` | a value that is not of the type of the field, an empty list, a `between` without two values, an empty text to search |
+| `in_list_too_long` | `filter.<field>` | a list above `maxInList` (100) |
+| `too_deep` | `filter` | groups nested deeper than `maxDepth` (1: `or(a, b)`; 2: `or(and(a, b), c)`) |
+| `empty_group` | `filter` | a group without a filter |
+| `too_many_filters` | `filter` | more conditions than `maxFilters` (20) |
+| `unsortable_field` | `sort` | a sort on a field not declared `sortable` (the tie-breaker always is) |
+| `page_too_large` | `page.limit` | a page above `maxPageSize` (100; the default size is 20) |
+| `invalid_cursor` | `page.cursor` | a cursor that is not the `nextCursor` of a page of the same sort |
+
+### What a criteria means
+
+The reference is `evaluateCriteria(definition, rows, criteria)`, which runs a criteria over
+rows held in memory and is what a fake of a read port answers with. Every store translator is
+held to the same table by `criteriaContract` of `@ddd-ts-kit/testing/contracts`.
+
+| Rule | Meaning |
+|---|---|
+| Types | `string`; `number`; `boolean`; `instant`, a `Date` compared by its time, to the millisecond; `decimal`, a string of digits (`-12.50`) compared as a number without the rounding of a float |
+| `eq`, `ne`, `in` | by value: two instants of the same time are equal whatever the zone they were written in, `10.5` is `10.50` |
+| `gt`, `gte`, `lt`, `lte` | numbers, decimals and instants by value; strings by Unicode code point, so upper case comes before lower case (`'B' < 'a'`); not on a boolean |
+| `between` | both bounds included |
+| `contains`, `startsWith` | on a string only, case sensitive, the text taken literally: `%`, `_` and `\` are characters. A search that ignores case reads a lower-cased column the projection writes |
+| `isNull` | `true` keeps the rows without a value, `false` those with one; only on a field declared `nullable` |
+| A null | never satisfies a comparison, `ne` included; only `isNull` sees it |
+| Conditions | joined by AND |
+| `and`, `or`, `not` | `not` holds on the rows that do not satisfy all its filters, **nulls included**: logic has two values, so `not(room eq 'B')` keeps the rows without a room, where SQL alone would drop them |
+| Sort | the `orderBy` calls, then the sort of the page request for the fields not ordered yet; without any, the `defaultSort` of the definition |
+| Total order | the tie-breaker of the definition ends every sort, in the direction of the last field, unless the sort names it |
+| Null in a sort | the greatest value: last ascending, first descending (the default of PostgreSQL) |
+| `false` and `true` | `false` first ascending |
+| Offset page | the slice and `total`, the count of the filtered rows |
+| Cursor page | no `total`; `nextCursor` when another page follows. The cursor holds the sort values of the last row, is checked against the declared types when it comes back, and belongs to one sort |
+| No page | the first page of the default size |
+
+Two things follow from where a store keeps its data, and are written in each adapter README.
+**Strings are ordered by the collation of their column**: the reference is the `"C"` collation
+of PostgreSQL, so a text column that is sorted or compared by range is declared `COLLATE "C"`.
+**A decimal reads back as its column formats it** (`10.5`, or `10.5000` for a fixed scale):
+compare decimals as numbers.
+
+### The scope of the actor
+
+`scoped(criteria, accessScope, mapping)` answers a `ScopedCriteria`, which is what a read port
+asks for: a read cannot reach it without a scope. The scope is kept apart from the filters and
+joined to them by AND, so nothing a caller writes, an `or` or a `not` included, widens what the
+actor may read; `refine` changes the criteria and keeps the restriction.
+
+| Scope | Becomes |
+|---|---|
+| `{ kind: 'all' }` | nothing: the criteria as it is |
+| `{ kind: 'none' }`, or `ids` without any id | an empty page, without a query |
+| `{ kind: 'ids', ids }` | `in` on the field `mapping.ids` names; the list is the authorizer's and is not bounded by `maxInList` |
+| `{ kind: 'filter', filter }` | one `eq` per entry, on the field `mapping.filter` names for its key |
+
+A scope the mapping cannot express throws `UnmappedReadScopeError` instead of reading without
+the restriction, and so does a mapped field the definition does not declare. The fields of a
+scope need no operator in the definition: the read port chose them, not the caller. The scope
+is the shape `AccessScope` of `@ddd-ts-kit/auth`, named `ReadScope` here so that the kernel
+depends on no authorization model.
+
+### For a store
+
+`planCriteria` answers a `CriteriaPlan`, plain data a translator renders and nothing else: the
+predicate of the filters and the scope, the predicate of the keyset for a cursor page, the
+total order, the rows to fetch. Negations are already pushed down to the comparisons, so a
+translator renders `and`, `or` and tests; the keyset is a predicate like another, so paging by
+cursor is written once. `pageOfPlan(plan, rows, total?)` turns the rows a query answered into
+the `Page`. The adapter packages hold the translators: `criteriaToKnex`, `criteriaToDrizzle`,
+`criteriaToPrisma`, `criteriaToTypeOrm`.
+
+**Limits.** No join: a field of another context is filtered once a projection copied it. No
+aggregation, no full-text search. A long `ids` scope is a long `IN` list: beyond a few
+thousand identifiers, project the right the scope stands for into the read model.
+
+## Hydration
+
+Completing the rows of a read with data of another bounded context, at query time, through a
+gateway port: for detail views and small pages whose foreign data must be fresh. A list that
+filters or sorts by the foreign field needs a projection instead.
+
+```ts
+const page = await this.appointments.list(criteria);
+
+return hydrate(page)
+  .with('practitioner', (row) => row.practitionerId, this.practitioners.byIds)
+  .with('location', (row) => row.locationId, this.locations.byIds)
+  .orElse('practitioner', unknownPractitioner, { onFailure: 'fallback', timeoutMs: 300 });
+```
+
+`lookup` is `(ids: readonly string[]) => Promise<ReadonlyMap<string, T>>`, a method of the
+gateway port; the `cached` aspect of `@ddd-ts-kit/aspects` goes around the gateway as around
+any other.
+
+| Rule | |
+|---|---|
+| Calls | one per relation for the whole page, with each key once; none when no row has a key. Never one per row |
+| Concurrency | the relations are looked up at the same time |
+| Result | the row and the hydrated properties, typed; a `Page` stays a `Page` with the same `total` and `nextCursor`, a list of rows becomes a page of them; `warnings` is added |
+| A row without a key, or unknown on the other side | left without the property, which is typed optional |
+| `orElse(name, fallback)` | every row has the property, typed required: the fallback where nothing was found |
+| A lookup that rejects | fails the whole hydration (policy `fail`, the default), fallback or not |
+| `orElse(name, fallback, { onFailure: 'fallback' })` | the rows take the fallback and `warnings` holds `{ relation, code: 'lookup_failed' }`: never a silent success, never the error message |
+| `timeoutMs` | the lookup is given up after that long (`HydrationTimeoutError`, warning code `lookup_timed_out`), then follows `onFailure` |
+
+A hydrated property cannot be named by a criteria definition: `FieldOf<Row>` keeps the fields
+that hold a scalar, and the compiler refuses the rest. The traces show one `gateway
+<Port>.byIds` span per relation, as for any call to a gateway: hydration opens no span itself.
+
+## Projections
+
+A projector keeps one read model up to date from events: integration events of upstream
+contexts, domain events of its own. It writes its read model through a port and does nothing
+else: it sends no command and reads no other context.
+
+```ts
+// contexts/scheduling/application/projections/appointment-list.projection.ts
+import { stampOf, type IntegrationEvent } from '@ddd-ts-kit/kernel';
+import { On, Projection } from '@ddd-ts-kit/kernel/declarations';
+
+@Projection('scheduling.appointment-list', [AppointmentList])
+export class AppointmentListProjection {
+  constructor(private readonly appointments: AppointmentList) {}
+
+  @On(AppointmentBooked, { name: 'scheduling.appointment.booked' })
+  booked(event: AppointmentBooked) {
+    return this.appointments.upsertIfNewer(event.aggregateId, stampOf(event), () => rowOf(event));
+  }
+
+  @On(PaymentCaptured)
+  paid(event: IntegrationEvent<PaymentCapturedPayload>) {
+    return this.appointments.upsertIfNewer(event.payload.appointmentId, stampOf(event), (row) =>
+      row === undefined ? undefined : { ...row, paid: true },
+    );
+  }
+
+  @On(AppointmentCancelled, { name: 'scheduling.appointment.cancelled' })
+  cancelled(event: AppointmentCancelled) {
+    return this.appointments.delete(event.aggregateId, stampOf(event));
+  }
+}
+```
+
+`@Projection('<context>.<name>', [ports])` is a declaration like the others: both decorator
+modes, the dependency list checked by the compiler, one class per file, in
+`application/projections/`, in a `*.projection.ts` file. `@On(definition)` on a method says
+"this method applies that integration event"; `@On(EventClass, { name })` says it for a domain
+event of the projection's own context. A method that takes another event is refused by the
+compiler, a projection without any `@On` and an `@On` on a class without `@Projection` throw
+when the file loads. A method answers what its store answered, which is how the application
+counts what was applied and what was stale.
+
+### Idempotent and ordered by construction
+
+`ReadModelStore<Row>` is the port of a read model: `get`, `upsertIfNewer`, `delete` and
+`list(scopedCriteria)`. Every row carries the stamp of the event that last changed it, and a
+write happens only if its event is newer:
+
+| Rule | |
+|---|---|
+| Stamp | `stampOf(event)`: the id and the instant of an integration event; the name, the aggregate and the instant of a domain event; plus `stampOf(event, version)` when the event carries a per-key version |
+| Newer | a greater `version` when both stamps carry one; else a later instant; at the same instant, the greater event id. The same event is never newer than itself |
+| `upsertIfNewer(key, stamp, next)` | writes `next(current)`; `stale` when the row holds this event or a later one; `ignored` when `next` answers `undefined` (a patch of a row that does not exist) |
+| `delete(key, stamp)` | the row is gone for `get` and `list`, and its stamp stays: an older event delivered late does not bring it back, a later one does |
+| Concurrency | a write is conditional on the stamp it read and is read again when another got there first; five attempts, then `ConcurrencyError` and the redelivery of the event |
+| Transaction | the store writes on the executor of the unit of work, so the row and the processed-event mark of the event commit or roll back together |
+
+So a redelivery, a duplicate and two events of one key delivered out of order all end on the
+same row. **What this does not give**: an older event skipped as stale is not applied later, so
+an event should carry the state of the fields it sets, or come in order per key (the outbox
+orders per key); a deletion that reaches a row never seen leaves no trace; with instants and
+no version, the order of two events of one key is the order of the clocks that stamped them;
+a version is compared with the version the row holds, so pass one only when every event of a
+row comes from the same stream. One write is one row: an event that concerns many rows lists
+them with a criteria and writes each.
+
+`TableReadModelStore` is the one implementation of the port, over a `ReadModelTable` an
+adapter gives (three statements and the query of a plan): `InMemoryReadModelStore` here for
+the fakes, `KnexReadModelStore`, `DrizzleReadModelStore`, `PrismaReadModelStore` and
+`TypeOrmReadModelStore` in the adapter packages, all held to `readModelStoreContract`.
+
+### Rebuild
+
+The kit has no event store: a read model is rebuilt from the source of truth, the read
+contract the owning context publishes, behind a gateway port that answers stamped rows.
+
+```ts
+await new ProjectionRebuild({ table: appointments.table, source, unitOfWork }).run();
+// source.export(cursor): a page of { key, row, stamp } and its nextCursor
+// source.lookup(keys):   the rows of these keys as they are now
+```
+
+| Step | What happens |
+|---|---|
+| 1 | an empty copy of the table is opened, with its indexes and constraints and the traces of the deleted rows; from then on every write of the projection records its key before it writes |
+| 2 | the export is copied, page by page, into the copy. Events keep being applied to the table, which keeps answering reads |
+| 3 | the recorded keys are read again from the source, in rounds, until few remain |
+| 4 | in one transaction: the writers are held, the last recorded keys are read again, the copy takes the name of the table, the old table is dropped |
+
+The copy is filled from the source alone, never from the table being replaced, so a rebuild
+repairs rows the projection got wrong. **No event is lost**: an event is delivered after its
+source committed it, so either the export read its row afterwards, or its key was recorded and
+read again, or it is applied after the swap to a row whose stamp is older. **No event is
+applied twice**: an event the source already reflected is `stale` against the stamp its row
+came with. Both rest on what the source says of each row: the stamp of the last event its
+state reflects. With the id and instant of that event, or a per-key version, the guarantee is
+exact; with an `updatedAt` alone, an event of the very same instant is applied once more over
+the state that already holds it, which is harmless for an event that sets state and wrong for
+one that counts.
+
+**The window.** Reads are never interrupted until step 4. Writers wait during step 4, for the
+time it takes to read the last keys again (at most `settledBelow`, 50 by default, unless the
+table changes faster than `maxRounds` rounds can follow) and to rename two tables. A write that
+had started just before fails and is redelivered. A rebuild that fails drops its copy and
+leaves the table as it was. On PostgreSQL the copy is made `LIKE ... INCLUDING ALL`:
+privileges granted on the table by name, row security policies and triggers are not copied
+and are restored by the migration that follows, and the indexes of the copy keep the names
+PostgreSQL derived for them.
+
+### Seen from outside
+
+Through the ports that exist. `@ddd-ts-kit/di` counts `projection_events_total` by `context`,
+`projection`, `event` and `result` (`applied`, `stale`, `ignored`, `failed`) on `Metrics`, and
+sets `projection_last_event_age_ms`, the age of the last event applied when it was: the lag.
+A projection is subscribed as a consumer under its name, so each delivery is one `process
+<projection>` span, with the calls to its read model below it, and an event buried after its
+retries reaches the error reporter as for any consumer.
+
 ## How to extend
 
-`Session`, `ExecutionContext`, `Actor` and `AuditEntry` each have an empty interface that a project fills by
+`Session`, `ExecutionContext`, `Actor`, `AuditEntry` and `ErrorReport` each have an empty interface that a project fills by
 declaration merging, once, in a declaration file of its platform:
 
 ```ts
@@ -550,8 +969,12 @@ declare module '@ddd-ts-kit/kernel' {
   interface AuditEntryExtensions {
     readonly region: 'eu' | 'us';
   }
+  interface ErrorReportExtensions {
+    readonly deployment: 'blue' | 'green';
+  }
   interface LogFields {
     orderId?: string;
+    error?: Error;
   }
   interface MetricLabels {
     region?: 'eu' | 'us' | undefined;

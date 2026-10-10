@@ -1,7 +1,8 @@
 import { JobScheduler } from '@ddd-ts-kit/kernel';
 import { definitionOf } from '../jobs/definition-of.js';
 import type { EffectiveJob } from '../jobs/effective-job.js';
-import type { Resolve } from '../wiring/resolve.js';
+import { Instrumentation } from '../kernel/instrumentation.js';
+import type { BoundPorts } from './bound-ports.js';
 
 /** The declared jobs on the job scheduler: registered at creation, run by time while the application runs. */
 export class JobLifecycle {
@@ -9,7 +10,7 @@ export class JobLifecycle {
 
   constructor(
     readonly jobs: readonly EffectiveJob[],
-    private readonly resolve: Resolve,
+    private readonly ports: BoundPorts,
     private readonly runsByTime: boolean,
   ) {}
 
@@ -17,16 +18,17 @@ export class JobLifecycle {
   register(): void {
     if (this.jobs.length === 0) return;
 
-    const scheduler = this.resolve(JobScheduler);
+    const scheduler = this.ports.resolve(JobScheduler);
+    const instrument = this.ports.isBound(Instrumentation) ? this.ports.resolve(Instrumentation).job : undefined;
 
-    for (const job of this.jobs) scheduler.register(definitionOf(job, this.resolve));
+    for (const job of this.jobs) scheduler.register(definitionOf(job, this.ports.resolve, instrument));
   }
 
   async start(): Promise<void> {
     if (!this.runsByTime || this.jobs.length === 0 || this.started) return;
 
     this.started = true;
-    await this.resolve(JobScheduler).start();
+    await this.ports.resolve(JobScheduler).start();
   }
 
   /** Answers what failed, for the application to go on stopping the rest. */
@@ -36,7 +38,7 @@ export class JobLifecycle {
     this.started = false;
 
     try {
-      await this.resolve(JobScheduler).stop();
+      await this.ports.resolve(JobScheduler).stop();
 
       return [];
     } catch (error) {

@@ -25,7 +25,7 @@ describe('traceDependency', () => {
   it('names the span after kind, class and method and describes the dependency', async () => {
     await repository().findBalance('acc-1');
 
-    const span = tracing.span('repository.AccountRepository.findBalance');
+    const span = tracing.span('repository AccountRepository.findBalance');
 
     expect(span.attributes).toEqual({
       'code.namespace': 'AccountRepository',
@@ -50,7 +50,7 @@ describe('traceDependency', () => {
     await twice.findBalance('acc-1');
 
     expect(tracing.spans().map((span) => span.name)).toEqual([
-      'repository.AccountRepository.findBalance',
+      'repository AccountRepository.findBalance',
     ]);
   });
 
@@ -62,7 +62,7 @@ describe('traceDependency', () => {
 
     await wrapped.findBalance('acc-1');
 
-    expect(tracing.span('gateway.Accounts.findBalance').attributes['code.namespace']).toBe('Accounts');
+    expect(tracing.span('gateway Accounts.findBalance').attributes['code.namespace']).toBe('Accounts');
   });
 
   it('produces no span for a synchronous method', () => {
@@ -79,7 +79,7 @@ describe('traceDependency', () => {
     await expect(wrapped.lazyCount()).resolves.toBe(1);
 
     expect(tracing.spans().map((span) => span.name)).toEqual([
-      'repository.AccountRepository.lazyCount',
+      'repository AccountRepository.lazyCount',
     ]);
   });
 
@@ -89,7 +89,7 @@ describe('traceDependency', () => {
     await withSpan('request', () => wrapped.findBalance('acc-1'));
 
     const parent = tracing.span('request');
-    const child = tracing.span('repository.AccountRepository.findBalance');
+    const child = tracing.span('repository AccountRepository.findBalance');
 
     expect(child.parentSpanContext?.spanId).toBe(parent.spanContext().spanId);
   });
@@ -130,7 +130,7 @@ describe('traceDependency, what it wraps', () => {
     await wrapped.onModuleInit();
 
     expect(tracing.spans().map((span) => span.name)).toEqual([
-      'repository.AccountRepository.onModuleInit',
+      'repository AccountRepository.onModuleInit',
     ]);
   });
 
@@ -147,8 +147,8 @@ describe('traceDependency, what it wraps', () => {
     await gateway.send();
 
     expect(tracing.spans().map((span) => span.name)).toEqual([
-      'gateway.Gateway.inherited',
-      'gateway.Gateway.send',
+      'gateway Gateway.inherited',
+      'gateway Gateway.send',
     ]);
   });
 

@@ -1,14 +1,7 @@
-import { IsString } from 'class-validator';
 import { defineIntegrationEvent } from '@ddd-ts-kit/events';
 import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
-
-export class {{event.pascal}}V{{event.version}}Payload {
-  @IsString()
-  {{aggregate.camel}}Id = '';
-
-  // TODO(domain): add what downstream contexts need to know about "{{event.words}}", as decorated primitive fields; this is a public contract: inside version {{event.version}} a field can be added, never renamed or removed.
-}
+import { {{event.pascal}}V{{event.version}}Payload } from './{{event.kebab}}.v{{event.version}}.payload.js';
 
 export const {{event.camel}}V{{event.version}} = defineIntegrationEvent({
   type: '{{event.name}}',

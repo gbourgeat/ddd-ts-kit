@@ -370,6 +370,82 @@ The rules these examples hold, and that the tests of this package check on a rea
 - **An offset page answers `total`**, a cursor page `nextCursor`. Offer the offset form for
   small, browsable lists and the cursor form for anything that grows.
 
+## Criteria
+
+`criteriaToTypeOrm(builder, plan, { alias })` adds a criteria plan of the kernel to a
+`SelectQueryBuilder` on the entity of a read model: the filters and the scope of the actor,
+the keyset of a cursor page, the total order ended by the tie-breaker, the window.
+`predicateToTypeOrm(builder, predicate, { alias })` adds the filters alone, for a count. The
+fields of the read model are the properties of the entity (`properties` renames those that
+differ). Every value is a named parameter; the only text composed is `alias.property` with an
+operator of a closed list, both from the adapter. A text search is `LIKE :p ESCAPE :e` with
+`%`, `_` and `\` escaped.
+
+```ts
+// infrastructure/persistence/typeorm-appointment.queries.ts
+async list(criteria: ScopedCriteria<AppointmentRow>): Promise<Page<AppointmentRow>> {
+  const plan = planCriteria(appointmentCriteria, criteria);
+
+  if (plan.empty) return pageOfPlan(plan, []);
+
+  const builder = this.context.manager().createQueryBuilder(appointmentList, 'row');
+
+  return pageOfPlan(plan, await criteriaToTypeOrm(builder, plan, { alias: 'row' }).getMany());
+}
+```
+
+A cursor page is fetched one row longer than asked, which is how `pageOfPlan` knows whether
+another follows; an offset page takes its total from `predicateToTypeOrm(...).getCount()`. A
+field declared `nullable` is ordered `NULLS LAST` ascending and `NULLS FIRST` descending. Two
+criteria in one query take distinct parameter names with the `parameters` option.
+
+**Strings.** A text column is ordered and compared by range in the collation of the column;
+criteria order strings by code point. Declare the text columns that are sorted or compared
+with `gt`, `lt` or `between` with `collation: 'C'`: the index then serves the sort, and the
+order is the same as in the fake. **Decimals** are a `numeric` column and a string in the
+row; they read back in the scale of the column. **Instants** are `timestamptz` and a `Date`.
+An integer is `integer`: a `bigint` comes back as a string from the driver.
+
+## Read models
+
+```ts
+// infrastructure/persistence/appointment-list.ts
+export const appointmentList = new EntitySchema<AppointmentRow & ReadModelStamps>({
+  name: 'AppointmentRow',
+  tableName: 'appointment_list',
+  schema: 'scheduling',
+  columns: {
+    id: { type: 'text', primary: true },
+    status: { type: 'text' },
+    startsAt: { name: 'starts_at', type: 'timestamp with time zone', precision: 3 },
+    ...readModelColumns(), // last_event_id, last_event_at, last_event_version, deleted
+  },
+});
+
+// infrastructure/persistence/typeorm-appointment-list.adapter.ts
+@Adapter(AppointmentList, [TypeOrmContext])
+export class TypeOrmAppointmentList extends TypeOrmReadModelStore<AppointmentRow> implements AppointmentList {
+  constructor(context: TypeOrmContext) {
+    super(context, { entity: appointmentList, definition: appointmentCriteria });
+  }
+}
+```
+
+Every write goes through `TableReadModelStore` of the kernel: a row is written only if its
+event is newer than the one it holds, on the executor of the unit of work, so the row and the
+processed-event mark commit together. A removed row stays in the table with `deleted` set:
+a query of your own on the table leaves those rows out, and so does a unique index
+(`WHERE NOT deleted`). `store.table` is what `ProjectionRebuild` takes; the rebuild is
+PostgreSQL only (a copy `<table>__rebuild` made `LIKE ... INCLUDING ALL`, the keys written
+meanwhile in `<table>__touched`, the swap by rename in one transaction) and its guarantees
+and limits are in the README of `@ddd-ts-kit/kernel` ("Rebuild"). The store passes
+`criteriaContract` and `readModelStoreContract` of `@ddd-ts-kit/testing/contracts`, on PGlite
+and on PostgreSQL 18.
+Criteria and read models were never run on MySQL or SQLite.
+
+The table is written through its entity; the copy of a rebuild, which has none, is written by
+column through the same query builder.
+
 ## Outbox and idempotency
 
 - `TypeOrmOutboxStore.claimBatch` selects the due rows `FOR UPDATE SKIP LOCKED`

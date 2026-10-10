@@ -4,7 +4,7 @@ import { defineAspect } from '../aspect/define-aspect.js';
 import type { Invocation } from '../aspect/invocation.js';
 import type { JoinPoint } from '../aspect/join-point.js';
 import { TimeoutError } from '../errors/timeout-error.js';
-import { schedulerOr } from '../runtime/collaborators.js';
+import { schedulerOr } from '../runtime/scheduler-or.js';
 import type { Scheduler } from '../runtime/scheduler.js';
 
 export interface TimeoutOptions {

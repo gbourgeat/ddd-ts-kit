@@ -77,14 +77,14 @@ function layerRules(project) {
     {
       name: 'layer-domain-purity',
       severity: 'error',
-      comment: 'domain/ imports only its own domain/, the shared kernel and the allowed kernel packages. Invert the dependency: declare the need as an interface in domain/ or a port in application/ports.',
+      comment: 'domain/ imports only its own domain/, the shared kernel and the allowed kernel packages. Invert the dependency: declare the need as a port, an abstract class in domain/repositories or application/ports.',
       from: { path: `${context}/domain/`, pathNot: testFiles(project) },
       to: { pathNot: [own('domain'), sharedKernel, internalsOf(project), ...packages(project.domainPackages)] },
     },
     {
       name: 'layer-application-inward',
       severity: 'error',
-      comment: 'application/ imports domain/, application/, published languages and the allowed kernel packages. Depend on a port and let the module file bind the adapter.',
+      comment: 'application/ imports domain/, application/, published languages and the allowed kernel packages. Depend on a port and let the composition root bind the adapter.',
       from: { path: `${context}/application/`, pathNot: testFiles(project) },
       to: { pathNot: [own('domain'), own('application'), own('published-language'), sharedKernel, otherContexts, ...packages(project.applicationPackages)] },
     },
@@ -154,14 +154,14 @@ function hygieneRules(project) {
     {
       name: 'no-circular',
       severity: 'error',
-      comment: 'Two modules that need each other are one module, or hide a third concept. Extract what both use, or invert one direction with an interface.',
+      comment: 'Two modules that need each other are one module, or hide a third concept. Extract what both use, or invert one direction with a port.',
       from: {},
       to: { circular: true },
     },
     {
       name: 'no-orphans',
       severity: 'error',
-      comment: 'Nothing imports this file. Delete it, or register it in the module file of its context.',
+      comment: 'Nothing imports this file. Delete it, or register it where its context is assembled.',
       from: { orphan: true, pathNot: orphanExceptions(project) },
       to: {},
     },
@@ -197,7 +197,7 @@ function productionRules(project) {
 }
 
 function testFiles(project) {
-  return [`^${escape(project.contextsDir)}/[^/]+/test/`, '\\.(spec|test)\\.[cm]?ts$', '(^|/)testing\\.ts$', '^test/'];
+  return [`^${escape(project.contextsDir)}/[^/]+/test/`, '\\.(spec|test)\\.[cm]?ts$', '(^|/)open-test-database\\.ts$', '^test/'];
 }
 
 /** Entry points and files loaded by a tool instead of an import. */

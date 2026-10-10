@@ -1,44 +1,51 @@
 import path from 'node:path';
-import { portsFile, routesFile } from '../../declared/roles.js';
-import { roleOf } from '../canonical.js';
-import type { Rule } from '../types.js';
-import { inContext, isDeclaredStyle, KEBAB_SEGMENT, pathInContext, reporter, type ContextLocation, type Finding } from './helpers.js';
+import { routesFile } from '../../declared/index.js';
+import { roleOf } from '../canonical/role-of.js';
+import type { ContextLocation } from '../model/context-location.js';
+import type { Flaw } from '../model/flaw.js';
+import type { Rule } from '../model/rule.js';
+import { inContext } from '../support/in-context.js';
+import { KEBAB_SEGMENT } from '../support/kebab-segment.js';
+import { pathInContext } from '../support/path-in-context.js';
+import { perFile } from '../support/per-file.js';
+import { roleDirectory } from '../support/role-directory.js';
 
 export const namingSuffix: Rule = {
   id: 'naming/suffix',
   description: "A file in a role directory carries the role's suffix, in kebab-case.",
   scope: 'file',
   run(project) {
-    const report = reporter(project, this.id);
-    return project.files.flatMap((file) => {
+    return perFile(project, this.id, (file) => {
       if (!inContext(file.location) || file.location.layer === 'module') return [];
+
       const name = path.posix.basename(file.path);
+
       if (name === 'index.ts') return [];
-      if (isDeclaredStyle(project) && isDeclaredListing(pathInContext(project, file), file.location.context)) return [];
-      const finding = notKebab(name) ?? withoutSuffix(name, file.location);
-      return finding === undefined ? [] : [report({ file: file.path, line: 1 }, finding.message, finding.fix)];
+      // The routes of a context are one list named after it instead of a role, in either style.
+      if (pathInContext(project, file) === routesFile(file.location.context)) return [];
+
+      const flaw = notKebab(name) ?? withoutSuffix(name, file.location);
+
+      return flaw === undefined ? [] : [{ line: 1, ...flaw }];
     });
   },
 };
 
-/** The two files of a declared context named after it instead of a role: its tokens and its routes. */
-function isDeclaredListing(file: string | undefined, context: string): boolean {
-  return file === portsFile(context) || file === routesFile(context);
-}
-
-type Misnamed = Omit<Finding, 'line'>;
-
-function notKebab(name: string): Misnamed | undefined {
+function notKebab(name: string): Flaw | undefined {
   if (name.split('.').every((segment) => KEBAB_SEGMENT.test(segment))) return undefined;
+
   return { message: `"${name}" is not in kebab-case.`, fix: 'Rename the file in lower-case words separated by hyphens, for example invoice-line.entity.ts.' };
 }
 
-function withoutSuffix(name: string, { layer, inside }: ContextLocation): Misnamed | undefined {
-  if (layer === 'root') return undefined;
-  const directory = [layer, ...inside.slice(0, -1)].join('/');
+function withoutSuffix(name: string, location: ContextLocation): Flaw | undefined {
+  if (location.layer === 'root') return undefined;
+
+  const directory = roleDirectory(location);
   const role = roleOf(directory);
+
   if (role === undefined || role.suffixes.length === 0) return undefined;
   if (role.suffixes.some((suffix) => name.endsWith(suffix) && name.length > suffix.length)) return undefined;
+
   return {
     message: `"${name}" sits in ${directory}/ without the suffix of that role.`,
     fix: `Rename it to end with ${role.suffixes.join(' or ')}, or move it to the directory matching what it is.`,

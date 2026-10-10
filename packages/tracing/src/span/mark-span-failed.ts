@@ -1,5 +1,7 @@
-import { SpanStatusCode, type Attributes, type Span } from '@opentelemetry/api';
+import { SpanStatusCode, isSpanContextValid, type Attributes, type Span } from '@opentelemetry/api';
 import { constructorName } from './constructor-name.js';
+import { failedTraces } from './failed-traces.js';
+import { refusalCode } from './refusal-code.js';
 
 const IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_]*$/;
 
@@ -7,26 +9,30 @@ const IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_]*$/;
 export function markSpanFailed(span: Span, error: unknown): void {
   span.setStatus({ code: SpanStatusCode.ERROR });
   span.setAttributes(errorAttributes(error));
+  remember(span, error);
 }
 
 /**
  * What a span may say about a failure. Messages and stacks quote data (ids, emails,
- * SQL), so only identifier-shaped names and codes get through.
+ * SQL), so only an identifier-shaped class name and a code-shaped `code` get through.
  */
 function errorAttributes(error: unknown): Attributes {
-  const attributes: Attributes = {};
-
-  if (typeof error !== 'object' || error === null) return attributes;
+  if (typeof error !== 'object' || error === null) return {};
 
   const className = constructorName(error);
 
-  if (isIdentifier(className)) attributes['error.type'] = className;
-
-  if ('code' in error && isIdentifier(error.code)) attributes['app.error.code'] = error.code;
-
-  return attributes;
+  return { ...(isIdentifier(className) ? { 'error.type': className } : {}), ...refusalCode(error) };
 }
 
 function isIdentifier(value: unknown): value is string {
   return typeof value === 'string' && IDENTIFIER.test(value);
+}
+
+/** The innermost span sees the error first: the trace it names is the one the failure happened in. */
+function remember(span: Span, error: unknown): void {
+  const spanContext = span.spanContext();
+
+  if (typeof error !== 'object' || error === null || failedTraces.has(error)) return;
+
+  if (isSpanContextValid(spanContext)) failedTraces.set(error, spanContext.traceId);
 }

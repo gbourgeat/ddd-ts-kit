@@ -387,6 +387,77 @@ The rules these examples hold, and that the tests of this package check on a rea
 - **An offset page answers `total`**, a cursor page `nextCursor`. Offer the offset form for
   small, browsable lists and the cursor form for anything that grows.
 
+## Criteria
+
+`criteriaToKnex(builder, plan, columns)` adds a criteria plan of the kernel to a query: the
+filters and the scope of the actor, the keyset of a cursor page, the total order ended by the
+tie-breaker, the window. `predicateToKnex(builder, predicate, columns)` adds the filters alone,
+for a count. `columns` maps each field of the read model to its column, and is the only source
+of identifiers: every value is a binding, a text search is `like ? escape ?` with `%`, `_` and
+`\` escaped.
+
+```ts
+// infrastructure/persistence/knex-appointment.queries.ts
+async list(criteria: ScopedCriteria<AppointmentRow>): Promise<Page<AppointmentRow>> {
+  const plan = planCriteria(appointmentCriteria, criteria);
+
+  if (plan.empty) return pageOfPlan(plan, []);
+
+  const rows = await criteriaToKnex(this.context.executor()<AppointmentRow>('appointment_list'), plan, COLUMNS);
+
+  return pageOfPlan(plan, rows.map(toRow));
+}
+```
+
+A cursor page is fetched one row longer than asked, which is how `pageOfPlan` knows whether
+another follows; an offset page takes its total from a second statement
+(`predicateToKnex(...).count()`). A field declared `nullable` is ordered `nulls last`
+ascending and `nulls first` descending on every dialect.
+
+**Strings.** A text column is ordered and compared by range in the collation of the column;
+criteria order strings by code point. Declare the text columns that are sorted or compared
+with `gt`, `lt` or `between` with `COLLATE "C"`: the index then serves the sort, and the
+order is the same as in the fake. **Decimals** are a `numeric` column and a string in the
+row; they read back in the scale of the column. **Instants** are `timestamptz` and a `Date`.
+An integer is `integer`: a `bigint` comes back as a string from the driver.
+
+## Read models
+
+```ts
+// the migration
+await knex.schema.withSchema('scheduling').createTable('appointment_list', (table) => {
+  table.text('id').primary();
+  table.text('status').notNullable();
+  table.datetime('starts_at', { useTz: true, precision: 3 }).notNullable();
+  readModelColumns(table); // last_event_id, last_event_at, last_event_version, deleted
+});
+
+// infrastructure/persistence/knex-appointment-list.adapter.ts
+@Adapter(AppointmentList, [KnexContext])
+export class KnexAppointmentList extends KnexReadModelStore<AppointmentRow> implements AppointmentList {
+  constructor(context: KnexContext) {
+    super(context, {
+      schema: 'scheduling',
+      table: 'appointment_list',
+      columns: { id: 'id', status: 'status', startsAt: 'starts_at' },
+      definition: appointmentCriteria,
+    });
+  }
+}
+```
+
+Every write goes through `TableReadModelStore` of the kernel: a row is written only if its
+event is newer than the one it holds, on the executor of the unit of work, so the row and the
+processed-event mark commit together. A removed row stays in the table with `deleted` set:
+a query of your own on the table leaves those rows out, and so does a unique index
+(`WHERE NOT deleted`). `store.table` is what `ProjectionRebuild` takes; the rebuild is
+PostgreSQL only (a copy `<table>__rebuild` made `LIKE ... INCLUDING ALL`, the keys written
+meanwhile in `<table>__touched`, the swap by rename in one transaction) and its guarantees
+and limits are in the README of `@ddd-ts-kit/kernel` ("Rebuild"). The store passes
+`criteriaContract` and `readModelStoreContract` of `@ddd-ts-kit/testing/contracts`, on PGlite
+and on PostgreSQL 18.
+Criteria and read models were never run on MySQL or SQLite.
+
 ## Outbox and idempotency
 
 - `KnexOutboxStore.claimBatch` selects the due rows `FOR UPDATE SKIP LOCKED` and leases them in

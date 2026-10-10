@@ -11,5 +11,7 @@ export interface EventConsumption {
   readonly handler: Token<unknown>;
   readonly module: string;
   readonly declaredBy?: Declarer;
+  /** Name of the projection the consumption belongs to, when it is not a handler of integration events. */
+  readonly projection?: string;
   readonly subscribe: (resolve: Resolve, runtime: ConsumerRuntime) => IntegrationEventCallback;
 }

@@ -6,7 +6,7 @@ import { auditPermissions } from '../audit/audit.permissions.js';
 // /ddd-ts-kit:imports
 
 /** Every permission of every context{{#if audit.route}}, and the one of the audit trail{{/if}}: the authorization model is laid out over it. */
-export const permissionRegistry = PermissionRegistry.of(
+export const permissions = PermissionRegistry.of(
 {{#if audit.route}}
   auditPermissions,
 {{/if}}

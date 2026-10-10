@@ -173,6 +173,27 @@ function adaptersJobsAndPolicies(clinic: () => Clinic): void {
       expect(declare('clinic.purge', '0 7 * * *', 'Europe/Lutece')).toThrow(/Job "clinic.purge": "Europe\/Lutece" is not a time zone/);
     });
 
+    it('a projection names itself, its read model and the method that applies each event', () => {
+      const { PatientListProjection, PatientList, PatientRegistered, VisitScheduled } = clinic();
+      const declaration = declared(PatientListProjection, 'projection');
+
+      expect(declaration).toMatchObject({ name: 'clinic.patient-list', implementation: PatientListProjection });
+      expect(identities(declaration.dependencies)).toEqual(identities([PatientList]));
+
+      expect(declaration.applies).toEqual([
+        { kind: 'integration', method: 'registered', contract: PatientRegistered },
+        { kind: 'domain', method: 'visitScheduled', event: VisitScheduled, name: 'clinic.visit.scheduled' },
+      ]);
+
+      expect(PatientListProjection.built).toBe(0);
+    });
+
+    it('a projection is refused where it is written: no event, a name that is none, an @On left alone', () => {
+      expect(() => clinic().declareAProjectionOfNothing()).toThrow(/Projection OfNothing applies no event/);
+      expect(() => clinic().declareAProjection('Clinic.Patients')).toThrow(/"Clinic.Patients" is not a projection name/);
+      expect(() => clinic().declareAnOnWithoutItsProjection()).toThrow(/@On is written on the method "registered" of a class that carries no @Projection/);
+    });
+
     it('a policy names its permission and the reason it gives', () => {
       expect(declared(clinic().OnlyOwnPatients, 'policy')).toMatchObject({
         name: 'clinic.only-own-patients',

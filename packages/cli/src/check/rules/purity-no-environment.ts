@@ -1,4 +1,4 @@
-import { definePurityRule } from '../purity-scan.js';
+import { definePurityRule } from '../purity/define-purity-rule.js';
 
 export const purityNoEnvironment = definePurityRule({
   id: 'purity/no-environment',
@@ -10,5 +10,5 @@ export const purityNoEnvironment = definePurityRule({
     { pattern: /(?<![\w$.])new\s+(?:XMLHttpRequest|WebSocket|EventSource)(?![\w$])/g, what: 'A network client' },
   ],
   modules: ['fs', 'http', 'https', 'http2', 'net', 'dgram', 'dns', 'tls', 'child_process', 'worker_threads', 'os', 'readline', 'axios', 'node-fetch', 'undici', 'got', 'dotenv'],
-  fix: 'Declare what is needed as a port in application/ports (a configuration value object, a logger, a gateway), implement it in infrastructure/ and bind it in the module file.',
+  fix: 'Declare what is needed as a port in application/ports (an abstract class: a configuration value, a logger, a gateway), implement it in infrastructure/ and bind it at the composition root.',
 });

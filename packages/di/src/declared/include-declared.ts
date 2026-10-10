@@ -14,6 +14,7 @@ import {
   type JobDeclaration,
   type PolicyDeclaration,
   type PortDeclaration,
+  type ProjectionDeclaration,
   type Token,
 } from '@ddd-ts-kit/kernel/declarations';
 import { declaredRequirement } from '../authorization/declared-requirement.js';
@@ -28,6 +29,7 @@ import type { WiringDraft } from '../wiring/wiring-draft.js';
 import { consumptionOf } from './consumption-of.js';
 import type { DeclaredSource } from './declared-source.js';
 import { declarerOf } from './discovered-files.js';
+import { projectionOf } from './projection-of.js';
 
 interface Inclusion {
   readonly draft: WiringDraft;
@@ -97,6 +99,10 @@ function register(registration: Registration, declaration: Declaration): void {
       registerJob(registration, declaration);
 
       return;
+    case 'projection':
+      registerProjection(registration, declaration);
+
+      return;
     default:
       registerPort(registration, declaration);
   }
@@ -155,7 +161,7 @@ function registerDomainEventHandler(registration: Registration, declaration: Dom
   const { name, dependencies } = declaration;
 
   declaration.pair(<E extends DomainEvent>(event: DomainEventType<E>, implementation: ClassOf<DomainEventHandler<E>>) => {
-    draft.addBinding(underItself(registration, { implementation, dependencies, kind: 'consumer' }));
+    draft.addBinding(underItself(registration, { implementation, dependencies, kind: 'domain-event-handler' }));
 
     draft.addDomainEventHandler({
       name,
@@ -198,6 +204,19 @@ function registerJob(registration: Registration, declaration: JobDeclaration): v
 
   draft.addJob({ name, schedule, options, job: implementation, module, declaredBy });
   draft.addBinding(underItself(registration, { implementation, dependencies, kind: 'job' }));
+}
+
+function registerProjection(registration: Registration, declaration: ProjectionDeclaration): void {
+  const { draft, module, declaredBy } = registration;
+  const { implementation, dependencies } = declaration;
+  const wired = projectionOf({ declaration, module, declaredBy });
+
+  draft.addProjection(wired.registration);
+  draft.addBinding(underItself(registration, { implementation, dependencies, kind: 'consumer' }));
+
+  for (const consumption of wired.consumptions) draft.addConsumption(consumption);
+
+  for (const handling of wired.domainEventHandlers) draft.addDomainEventHandler(handling);
 }
 
 function registerPort(registration: Registration, declaration: PortDeclaration): void {

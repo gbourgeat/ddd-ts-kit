@@ -1,6 +1,6 @@
-import type { Repository } from '@ddd-ts-kit/kernel';
+import { Repository } from '@ddd-ts-kit/kernel';
 import type { {{aggregate.pascal}} } from '../aggregates/{{aggregate.kebab}}.aggregate.js';
 
-export interface {{aggregate.pascal}}Repository extends Repository<{{aggregate.pascal}}> {
-  // TODO(domain): add only the lookups a use case needs, named in the ubiquitous language (for example `findByNumber(number: InvoiceNumber)`); queries for screens go through a read port instead.
+export abstract class {{aggregate.pascal}}Repository extends Repository<{{aggregate.pascal}}> {
+  // TODO(domain): add only the lookups a use case needs, as abstract methods named in the ubiquitous language (for example `abstract findByNumber(number: InvoiceNumber): Promise<{{aggregate.pascal}} | undefined>`); queries for screens go through a read port instead.
 }

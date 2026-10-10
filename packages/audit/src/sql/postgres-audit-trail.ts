@@ -23,7 +23,7 @@ import type { AuditTables } from './audit-tables.js';
 import { entryOf } from './entry-of.js';
 import { insertOf } from './insert-of.js';
 import type { SqlSession } from './sql-session.js';
-import { joined, sql, type Sql } from './statement.js';
+import { joined, sql, type Sql } from './sql.js';
 
 /**
  * The trail in PostgreSQL, whatever the query builder: the adapters give it a session, which

@@ -59,22 +59,30 @@ export class IssueInvoice extends AuthorizedCommand<string> {
 
 ```ts
 // contexts/billing/application/commands/issue-invoice/issue-invoice.handler.ts
-import { Clock, DomainEventDispatcher, IdGenerator } from '@ddd-ts-kit/kernel';
+import { Clock, IdGenerator } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
 
-@CommandHandler(IssueInvoice, [InvoiceRepository, PaymentGateway, DomainEventDispatcher, IdGenerator, Clock])
+@CommandHandler(IssueInvoice, [InvoiceRepository, PaymentGateway, IdGenerator, Clock])
 export class IssueInvoiceHandler implements CommandHandler<IssueInvoice> {
   constructor(
     private readonly invoices: InvoiceRepository,
     private readonly payments: PaymentGateway,
-    private readonly domainEvents: DomainEventDispatcher,
     private readonly ids: IdGenerator,
     private readonly clock: Clock,
   ) {}
 
-  async execute(command: IssueInvoice): Promise<string> { /* ... */ }
+  async execute(command: IssueInvoice): Promise<string> {
+    const invoice = Invoice.issue({ id: this.ids.next(), customerId: command.customerId, issuedAt: this.clock.now() });
+
+    await this.invoices.save(invoice);
+
+    return invoice.id;
+  }
 }
 ```
+
+The handler only saves. The domain events the aggregate recorded leave with the save: see
+"Domain events leave with the save".
 
 ```ts
 // contexts/billing/application/queries/get-invoice/get-invoice.query.ts and .handler.ts
@@ -260,9 +268,10 @@ The full list, with the options of each, is in the README of `@ddd-ts-kit/kernel
 | `@Requires(permission, options?)` / `@Public()` on a command or a query | the access of the use case: what `.requires(...)` and `.public()` say in an explicit module, read by `authorization: 'required'` and by the authorization module |
 | `@CommandHandler(Message, [ports])`, `@QueryHandler(Message, [ports])` | a singleton of kind `use-case`, registered on `CommandBus` or `QueryBus` |
 | `@IntegrationEventHandler(contract, { consumer }, [ports])` | a singleton of kind `consumer`, subscribed by `start()` on the subscriber of its context, idempotent per consumer name, run in the execution context of the event, its mark and its work in one unit of work |
-| `@DomainEventHandler(Event, { name }, [ports])` | a singleton of kind `consumer`, attached to `DomainEventDispatcher` when the application is created; an event dispatched under the name and built from another class is left alone |
+| `@DomainEventHandler(Event, { name }, [ports])` | a singleton of kind `domain-event-handler`, attached to `DomainEventDispatcher` when the application is created; an event dispatched under the name and built from another class is left alone |
+| `@Projection(name, [ports])`, with `@On(definition)` or `@On(Event, { name })` on its methods | a singleton of kind `consumer`. Each integration event it applies is subscribed by `start()` under the name of the projection, exactly as a handler of integration events is: its own execution context, idempotent per name, its mark and its write in one unit of work. Each domain event of its own context is attached to `DomainEventDispatcher` and applied inside the save. See "Projections" |
 | `@Scheduled(name, schedule and options, [ports])` | a singleton of kind `job`, registered on `JobScheduler` when the application is created, started by `start()` after the consumers and stopped first by `stop()`; see "Scheduled jobs" |
-| `@Repository(Port, options?, [ports])` | the binding of the port, kind `repository` |
+| `@Repository(Port, options?, [ports])` | the binding of the port, kind `repository`: its save dispatches the domain events of the aggregate |
 | `@Gateway(Port, options?, [ports])` | the binding of the port, kind `gateway` |
 | `@Adapter(Port, { kind? }, [ports])` | the binding of the port, kind `external` (default) or `publisher` |
 | `@Policy(permission, { name }, [ports])` | a singleton listed in `DeclaredPolicies`, which the authorization module evaluates |
@@ -303,6 +312,7 @@ themselves:
 | `*.event-handler` | `application/event-handlers/` | `@DomainEventHandler` |
 | `*.policy` | `application/authorization/` | `@Policy` |
 | `*.job` | `application/scheduling/` | `@Scheduled` |
+| `*.projection` | `application/projections/` | `@Projection` |
 | `*.repository` | `infrastructure/persistence/` | `@Repository` |
 | `*.gateway`, `*.adapter` | `infrastructure/` | `@Gateway`, `@Adapter` |
 
@@ -450,7 +460,7 @@ it('places an order and announces it', async () => {
 | `bind(Port).toFactory((resolve) => instance)` | anything a constructor cannot express |
 | `bind(Port).toValue(value)` | an existing object, a fake, or the plain object a value class types |
 | `.singleton()` / `.transient()` | one instance per application (default) or one per resolution |
-| `.as(kind)` | role of the binding, handed to the `decorate` hook: `repository`, `gateway`, `external`, `use-case`, `publisher`, `consumer`, `job` |
+| `.as(kind)` | role of the binding, handed to the `decorate` hook: `repository`, `gateway`, `external`, `use-case`, `publisher`, `consumer`, `domain-event-handler`, `job`. A port extending the kernel `Repository` is of kind `repository` without it |
 | `rebind(Port).to...` | replaces the binding of a module listed earlier, such as a default of `kernelModule()` |
 | `command(Type).handledBy(Handler, [ports])` | binds the handler under itself (singleton, kind `use-case`) and registers it on `CommandBus` |
 | `query(Type).handledBy(Handler, [ports])` | the same on `QueryBus` |
@@ -530,6 +540,42 @@ The name handed to `forContext` is the name of the module: the first argument of
 without the kernel module needs one of the two bound, `IntegrationEventSubscriber` or
 `EventSubscribers`; `EventSubscribers` wins when both are.
 
+## Projections
+
+A projection is a class of `application/projections/`, in a `*.projection.ts` file, declared
+with `@Projection('<context>.<name>', [ports])`; the README of `@ddd-ts-kit/kernel`
+("Projections") says what it may do and why its writes are idempotent and ordered. Here it is
+wired: `contextModule` and `discoverContext` find it like any declared class, and an explicit
+module takes it with `builder.include(AppointmentListProjection)`.
+
+```ts
+const app = createTestApplication({ modules: [contextModule('reporting', reporting)] });
+
+await app.start();
+await app.eventBus.publish([orderPlaced('evt-1'), orderPlaced('evt-1'), orderPlaced('evt-2')]);
+
+expect(await app.get(CustomerOrders).get('customer-1')).toMatchObject({ orders: 2 });
+```
+
+A spec feeds a projection through the in-memory bus and reads the model through its port:
+there is nothing else to learn. The fake of a read model port is `InMemoryReadModelStore` of
+the kernel, bound by its adapter or given with `fake(Port, store)`.
+
+- **One consumer.** The name of the projection is the consumer name of every event it applies:
+  the idempotency scope in `ProcessedEventStore`, the system actor it runs as, the
+  `process <projection>` span and, behind a broker, its queue or its group. Two projections of
+  the same name are refused (`DUPLICATE_PROJECTION`), and so are two methods of one projection
+  applying the same event (`DUPLICATE_CONSUMER`).
+- **One unit of work per event.** With `UnitOfWork` and `ProcessedEventStore` bound to the same
+  database as the read model, the mark and the row commit or roll back together. Without
+  them, the stamp each row carries still makes a redelivery a no-op.
+- **Measured.** With `Metrics` bound, `projection_events_total` counts each event by `context`,
+  `projection`, `event` and `result` (`applied`, `stale`, `ignored`, `failed`), and
+  `projection_last_event_age_ms` holds the age of the last event applied when it was.
+- **Described.** `describe().projections` lists each projection with the events it applies and
+  the method of each; they do not appear among `integrationEventHandlers` and
+  `domainEventHandlers`.
+
 ## Behind a broker
 
 Discovery, a broker and a database, with no helper of your own. The complete composition root:
@@ -585,7 +631,7 @@ barrel instead of discovery the two lines become `contextModule('ordering', orde
 | `Clock` | `SystemClock` | `clock` |
 | `IdGenerator` | `UuidGenerator` | `ids` |
 | `UnitOfWork` | `InMemoryUnitOfWork` | `unitOfWork` |
-| `CommandBus` | `InMemoryCommandBus` running each command in the unit of work | `commandBus` |
+| `CommandBus` | `InMemoryCommandBus` running each command, and the dispatch of the domain events its saves announce, in the unit of work | `commandBus` |
 | `QueryBus` | `InMemoryQueryBus` | `queryBus` |
 | `EventBus` | `InMemoryEventBus` | `eventBus` |
 | `IntegrationEventPublisher` | the event bus | `eventPublisher` |
@@ -594,13 +640,14 @@ barrel instead of discovery the two lines become `contextModule('ordering', orde
 | `ProcessedEventStore` | `InMemoryProcessedEventStore` | `processedEvents` |
 | `ExecutionScope` | `AsyncLocalStorageExecutionScope` | `executionScope` |
 | `ActorContext` | `ScopedActorContext`: the actor of the execution scope | `actorContext` |
-| `DomainEventDispatcher` | `InMemoryDomainEventDispatcher` | `domainEvents` |
-| `Logger` | `NoopLogger` | `logger` |
+| `DomainEventDispatcher` | `InMemoryDomainEventDispatcher`, which the save of every repository dispatches to | `domainEvents` |
+| `Logger` | `NoopLogger`. `app.stop()` flushes it last, after the error reporter, and stops all the same when the flush fails | `logger` |
 | `Metrics` | `NoopMetrics` | `metrics` |
+| `ErrorReporter` | `NoopErrorReporter`. The default buses and the default scheduler hand it their unexpected failures (never a `DomainError`), and `app.stop()` gives it two seconds to flush | `errorReporter` |
 | `Cache` | `InMemoryCache` on `Clock` | `cache` |
 | `Lock` | `InMemoryLock` on `Clock`: this process only | `lock` |
 | `RateLimiter` | `InMemoryRateLimiter` on `Clock`: this process only | `rateLimiter` |
-| `JobScheduler` | `InProcessJobScheduler` of `@ddd-ts-kit/scheduling` on `Clock`, `Lock`, `ExecutionScope`, `IdGenerator`, `Logger` and `Metrics` | `jobScheduler` |
+| `JobScheduler` | `InProcessJobScheduler` of `@ddd-ts-kit/scheduling` on `Clock`, `Lock`, `ExecutionScope`, `IdGenerator`, `Logger`, `Metrics` and `ErrorReporter` | `jobScheduler` |
 
 The ports are the abstract classes of `@ddd-ts-kit/kernel`: a handler names `Clock` in its
 dependency list without importing this package.
@@ -706,12 +753,13 @@ spec touches:
 |---|---|
 | `commandBus`, `queryBus` | the in-memory buses, with every declared handler |
 | `eventBus` | `InMemoryEventBus`; `eventBus.published` lists what the use cases announced. Every context listens on it, whatever `EventSubscribers` the modules bind |
-| `domainEvents` | `InMemoryDomainEventDispatcher`; dispatch a domain event to see the declared handlers react |
+| `domainEvents` | `InMemoryDomainEventDispatcher`: the save of every repository, adapter or fake, dispatches to it, and a spec may dispatch a domain event itself to see the declared handlers react |
 | `clock` | `FixedClock` at `now` (default `2026-01-01T00:00:00.000Z`); `clock.advance(ms)` |
 | `ids` | `SequentialIdGenerator`: `id-1`, `id-2`... |
 | `actorContext` | `FixedActorContext`; `actAs(actor)` changes who infrastructure sees |
 | `executionScope` | `FixedExecutionScope` (correlation `test-correlation`, origin `test`), following `actorContext` |
 | `logger`, `metrics` | `InMemoryLogger` and `InMemoryMetrics`: assert `logger.entries`, `metrics.samples` |
+| `errors` | `InMemoryErrorReporter`: `errors.reports` lists the unexpected failures of the commands, queries and jobs, as data |
 | `cache` | `InMemoryCache` on `clock` |
 | `lock`, `rateLimiter` | `InMemoryLock` and `InMemoryRateLimiter` on `clock` |
 | `jobs` | `runNow(name)` runs a declared job as the scheduler would and throws what it threw; `scheduler` is a `ManualJobScheduler` on `clock`, not started |
@@ -822,6 +870,8 @@ factory is reported when it is resolved (`DEPENDENCY_CYCLE`, `UNBOUND_TOKEN`).
   policies: [],
   jobs: [{ name: 'ordering.expire-carts', schedule: 'every 15m', overlap: 'skip', missed: 'skip', jitterMs: 0,
            enabled: true, singleInstance: true, job: 'ExpireCartsJob', module: 'ordering' }],
+  projections: [{ name: 'ordering.order-list', projection: 'OrderListProjection', module: 'ordering',
+                  applies: [{ kind: 'integration', event: 'billing.payment.captured', version: 1, method: 'paid' }] }],
   overrides: [],
 }
 ```
@@ -842,12 +892,65 @@ carries none of the three:
 of the application applied. What a job did last and when it runs next is not wiring: ask
 `app.resolve(JobScheduler).describe()`.
 
+## Domain events leave with the save
+
+A handler writes `await this.orders.save(order); return order.id;` and nothing else: no
+`pullEvents()`, no `DomainEventDispatcher` in a use case. `kernelModule()` puts
+`dispatchingOnSave` of the kernel around every binding of kind `repository`, in every module:
+declared with `@Repository`, bound `.as('repository')`, or bound under a port that extends the
+kernel `Repository` (which is a repository whether the module says so or not). A repository
+adapter contains no dispatch code.
+
+| Question | Answer |
+|---|---|
+| Which methods | Every method of the repository that is handed an aggregate, or an array of them, and resolves: `save(order)`, `saveAll([a, b])`, `remove(order)`. A method that is handed no aggregate (`findById`, `remove(id)`) dispatches nothing: a removal that announces an event takes the aggregate |
+| Which events, in which order | Those the aggregates of the call recorded, pulled once the call resolved: in the order of the arguments, then of recording |
+| Where | Inside the unit of work of the command: the default command bus runs the handler, hence the save and the dispatch, in `UnitOfWork.run`. What the domain event handlers write, the outbox included, commits or rolls back with the state |
+| A handler of the event fails | The save rejects with what it threw, the command fails, the unit of work rolls back. The events still waiting are dropped, and the aggregate instance has given its events: do not save it again |
+| The save fails | Nothing is pulled: the events stay on the aggregate, nothing is dispatched |
+| A handler saves another aggregate | Its events wait behind the ones already announced and are dispatched by the same chain, in recording order, without recursion. The first save resolves when the chain is empty |
+| A handler sends a command | That command is a unit of work of its own: its events are dispatched before it returns |
+| The same aggregate saved twice | The second save dispatches what was recorded since the first, which may be nothing |
+| A save outside of any unit of work | Still dispatches. Nothing is atomic then: the state is written, the handlers run, and a handler that fails rejects the save without undoing it |
+| An adapter that pulls the events itself | Leaves nothing to dispatch: no double dispatch, and no dispatch at all unless the adapter does it. An adapter never calls `pullEvents()` |
+| Order of the wrappers | Outermost first: the `decorate` hook and the instrumentation (the span of the save), the dispatch, the aspects of the binding (`.with(retry(...))`). A retried save dispatches once; a handler that fails is not retried as a failed save; the span of the save contains what the save announced |
+
+In a test application, the adapter of a module and the fake given for a repository port both
+dispatch to `app.domainEvents`, whether `kernelModule()` is listed or not. Without a container,
+`dispatchingOnSave(repository, () => dispatcher)` of the kernel is the same wrapper, and
+`createTestBuses().dispatching(fake)` of `@ddd-ts-kit/testing` applies it to a fake.
+
+A module puts an aspect of its own around every binding of some kinds with
+`builder.around(kinds, (resolve) => aspect)`: outside the aspects of each binding, inside the
+`decorate` hook, the first declared outermost.
+
+## Observing the application
+
+`kernelModule({ instrumentation })` takes what observes the application from outside: an object
+whose members are wrappers, each optional, applied where the thing is built.
+
+| Member | Wraps |
+|---|---|
+| `binding` | every instance of a binding declared with a kind, outside the dispatch of domain events |
+| `useCase` | a bus middleware, on both default buses, after the use case guard and outside the unit of work; it reads `info.context`, the module of the handler |
+| `publisher` | the `IntegrationEventPublisher` |
+| `consumer` | what each declared consumer is subscribed with, told its consumer name, its module and its event type |
+| `domainEvents` | the `DomainEventDispatcher` |
+| `job` | each run of a declared job, inside its execution scope, told the job name and its module |
+| `errorReporter` | the `ErrorReporter` |
+| `executionScope` | told the `ExecutionScope` once it is built |
+
+`traceApplication()` of `@ddd-ts-kit/tracing` is such an object, and makes one readable trace
+per action; this package depends on no tracing library. A port given through an option of
+`kernelModule` is wrapped too; one rebound by a later module is not.
+
 ## The `decorate` hook
 
 `createApplication({ decorate })` receives every instance a binding creates, handlers and
 consumers included, with `{ token, context, kind? }` where `token` is the port class, and
-returns the instance to hand out. It is the place for cross-cutting wrappers such as tracing;
-see the README of `@ddd-ts-kit/tracing`. This package depends on no tracing library.
+returns the instance to hand out. It is the place for cross-cutting wrappers of a project.
+Tracing comes through `kernelModule({ instrumentation })` instead, see "Observing the
+application".
 
 One binding takes its own wrappers with `.with(...)`, the first outermost:
 

@@ -1,7 +1,9 @@
+import { inspect } from 'node:util';
 import { Redis } from 'ioredis';
 import { closeRedis } from '../connection/close-redis.js';
 import { FAIL_FAST } from '../connection/fail-fast.js';
 import type { RedisSource } from '../connection/redis-source.js';
+import { conceal } from '../secrecy/conceal.js';
 import { BrokerUnavailableError } from './errors/broker-unavailable-error.js';
 import { EventBusClosedError } from './errors/event-bus-closed-error.js';
 import { failureCode } from './errors/failure-code.js';
@@ -13,6 +15,8 @@ export interface LinkSettings {
   readonly reconnect: Required<ReconnectOptions>;
   readonly blockMs: number;
 }
+
+const DESCRIPTION = 'ServerLink [connection concealed]';
 
 /**
  * The connection the bus publishes and acknowledges on, and the source of the connections
@@ -43,6 +47,7 @@ export class ServerLink {
     this.failed = failed;
     this.wasReady = this.connection.status === 'ready';
     this.connection.on('ready', this.onReady).on('error', this.onError).on('close', this.onClose);
+    conceal(this);
   }
 
   /** The connection for commands that answer at once. A command sent while the server is away fails by the rules of the client. */
@@ -95,6 +100,14 @@ export class ServerLink {
       this.connection.on('error', ignore);
       await closeRedis(this.connection);
     }
+  }
+
+  toJSON(): string {
+    return DESCRIPTION;
+  }
+
+  [inspect.custom](): string {
+    return DESCRIPTION;
   }
 
   private refuseOnceClosed(): void {

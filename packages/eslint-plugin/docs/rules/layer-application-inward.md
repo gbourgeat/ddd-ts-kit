@@ -11,7 +11,7 @@ Use cases orchestrate the domain through ports. An import of an adapter, a drive
 ## Reported
 
 - a package outside `applicationAllowedPackages`
-- `@ddd-ts-kit/aspects`, `@ddd-ts-kit/audit`, `@ddd-ts-kit/redis` and `@ddd-ts-kit/tracing`, by any entry (`.`, `/decorators`, `/testing`, `/node`, ...), with a message of their own: they apply or record a concern from outside the use cases
+- `@ddd-ts-kit/aspects`, `@ddd-ts-kit/audit`, `@ddd-ts-kit/redis`, `@ddd-ts-kit/scheduling`, `@ddd-ts-kit/sentry` and `@ddd-ts-kit/tracing`, by any entry (`.`, `/decorators`, `/testing`, `/node`, ...), with a message of their own: they apply or record a concern from outside the use cases
 - any Node built-in
 - `infrastructure/`, `presentation/` or the module file of the same context
 - the platform or `main.ts`
@@ -29,13 +29,16 @@ import { DrizzleInvoiceRepository } from '../../../infrastructure/persistence/dr
 Correct:
 
 ```ts
-import type { Cache, Clock } from '@ddd-ts-kit/kernel';
-import type { InvoiceRepository } from '../../../domain/repositories/invoice.repository.js';
-import type { PaymentGateway } from '../../ports/payment-gateway.port.js';
+// a port is an abstract class: the type of the dependency and its injection token
+import { Cache, Clock } from '@ddd-ts-kit/kernel';
+import { InvoiceRepository } from '../../../domain/repositories/invoice.repository.js';
+import { PaymentGateway } from '../../ports/payment-gateway.port.js';
 
 // declared style
-import { CLOCK, CommandHandler } from '@ddd-ts-kit/kernel/declarations';
-import { INVOICE_REPOSITORY } from '../../ports/billing.ports.js';
+import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
+
+@CommandHandler(IssueInvoiceCommand, [InvoiceRepository, PaymentGateway, Clock])
+export class IssueInvoiceHandler implements CommandHandler<IssueInvoiceCommand> {}
 ```
 
 ## Details

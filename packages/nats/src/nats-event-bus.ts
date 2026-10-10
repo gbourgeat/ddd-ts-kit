@@ -1,3 +1,4 @@
+import { inspect } from 'node:util';
 import { jetstreamManager } from '@nats-io/jetstream';
 import { connect } from '@nats-io/transport-node';
 import type {
@@ -12,11 +13,13 @@ import { republication } from './codec/republication.js';
 import { BrokerLink } from './connection/broker-link.js';
 import { Consumption } from './consumption/consumption.js';
 import { ConsumerNameRequiredError } from './errors/consumer-name-required-error.js';
+import { MESSAGING_SYSTEM } from './messaging-system.js';
 import { EventBusClosedError } from './errors/event-bus-closed-error.js';
 import type { NatsEventBusOptions } from './options/nats-event-bus-options.js';
 import type { Settings } from './options/settings.js';
 import { settingsOf } from './options/settings-of.js';
 import { Publications } from './publication/publications.js';
+import { conceal } from './secrecy/conceal.js';
 import { bindingNamesOf } from './topology/binding-names-of.js';
 import type { ConsumerBinding } from './topology/consumer-binding.js';
 import { deadStreamOf } from './topology/dead-stream-of.js';
@@ -24,6 +27,8 @@ import { declareTopology } from './topology/declare-topology.js';
 import type { NatsTopology } from './topology/nats-topology.js';
 import { topologyOf } from './topology/topology-of.js';
 import type { TopologySettings } from './topology/topology-settings.js';
+
+const DESCRIPTION = 'NatsEventBus [connection concealed]';
 
 /**
  * The provider for NATS JetStream.
@@ -36,6 +41,9 @@ import type { TopologySettings } from './topology/topology-settings.js';
  * consumers deduplicate.
  */
 export class NatsEventBus implements EventBus {
+  /** Read by what observes the bus from outside: the name of the transport. */
+  readonly messagingSystem = MESSAGING_SYSTEM;
+
   private readonly settings: Settings;
 
   private readonly link: BrokerLink;
@@ -71,6 +79,8 @@ export class NatsEventBus implements EventBus {
         this.settings.onFailure({ kind: 'connection', code });
       },
     });
+
+    conceal(this);
   }
 
   /** Messages delivered to this bus whose handlers have not finished yet. */
@@ -165,6 +175,16 @@ export class NatsEventBus implements EventBus {
     await this.consumption.drain();
     await this.link.close();
     this.publications.detach();
+  }
+
+  /** What a serialisation shows of the bus: its name, never its connection. */
+  toJSON(): string {
+    return DESCRIPTION;
+  }
+
+  /** What `console.log` and `util.inspect` show of the bus: the same. */
+  [inspect.custom](): string {
+    return DESCRIPTION;
   }
 
   /** Adds a handler to the durable consumer of one consumer for one type, and connects if needed. */

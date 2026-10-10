@@ -39,7 +39,7 @@ describe('traceDependency, a failing call', () => {
       .catch((error: unknown) => error);
 
     expect(failure).toBeInstanceOf(InsufficientFunds);
-    const span = tracing.span('repository.AccountRepository.debit');
+    const span = tracing.span('repository AccountRepository.debit');
 
     expect(span.status).toEqual({ code: SpanStatusCode.ERROR });
     expect(span.attributes['error.type']).toBe('InsufficientFunds');
@@ -50,7 +50,7 @@ describe('traceDependency, a failing call', () => {
   it('reports an infrastructure fault by class name only', async () => {
     await expect(repository().crash()).rejects.toThrow(TypeError);
 
-    const span = tracing.span('repository.AccountRepository.crash');
+    const span = tracing.span('repository AccountRepository.crash');
 
     expect(span.attributes['error.type']).toBe('TypeError');
     expect(span.attributes).not.toHaveProperty('app.error.code');
@@ -63,11 +63,11 @@ describe('traceDependency, a failing call', () => {
     await expect(wrapped.rejectWithUnsafeCode()).rejects.toThrow();
 
     expect(
-      tracing.span('repository.AccountRepository.rejectWithDriverCode').attributes['app.error.code'],
+      tracing.span('repository AccountRepository.rejectWithDriverCode').attributes['app.error.code'],
     ).toBe('ECONNREFUSED');
 
     expect(
-      tracing.span('repository.AccountRepository.rejectWithUnsafeCode').attributes,
+      tracing.span('repository AccountRepository.rejectWithUnsafeCode').attributes,
     ).not.toHaveProperty('app.error.code');
   });
 
@@ -85,6 +85,6 @@ describe('traceDependency, a failing call', () => {
 
     await expect(gateway.call()).rejects.toThrow();
 
-    expect(tracing.span('gateway.Inline.call').attributes).not.toHaveProperty('error.type');
+    expect(tracing.span('gateway Inline.call').attributes).not.toHaveProperty('error.type');
   });
 });

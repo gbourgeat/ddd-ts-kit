@@ -4,7 +4,7 @@ import type { AuditTablesOptions } from '../sql/audit-tables-options.js';
 import { PostgresAuditTrail } from '../sql/postgres-audit-trail.js';
 import { rowsOf } from '../sql/rows-of.js';
 import type { SqlSession } from '../sql/sql-session.js';
-import type { Sql } from '../sql/statement.js';
+import type { Sql } from '../sql/sql.js';
 import type { AuditTrailOptions } from '../trail/audit-trail-options.js';
 import type { KnexAuditContext } from './knex-audit-context.js';
 

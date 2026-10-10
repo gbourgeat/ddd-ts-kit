@@ -9,6 +9,9 @@
 {{/if}}
     "{{config.contextsDir}}/*/published-language/index.ts",
     "{{config.contextsDir}}/*/test/fakes/*.ts",
+{{#if knip.apps}}
+    "{{config.sourceRoot}}/apps/*/main.ts",
+{{/if}}
     "scripts/*.ts"{{knip.e2eEntry}}
   ],
   "project": ["{{config.sourceRoot}}/**/*.ts", "scripts/**/*.ts"{{knip.e2eProject}}],

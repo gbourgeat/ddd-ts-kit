@@ -10,18 +10,26 @@ export function traceableMethods(instance: object, skipped: ReadonlySet<string>)
     for (const name of Object.getOwnPropertyNames(owner)) {
       if (name === 'constructor' || skipped.has(name) || methods.has(name)) continue;
 
-      const descriptor = Object.getOwnPropertyDescriptor(owner, name);
-
-      // A read-only own property cannot be shadowed, neither in place nor through a proxy.
-      if (descriptor === undefined || (owner === instance && isReadOnly(descriptor))) continue;
-
-      const candidate: unknown = descriptor.value;
+      const candidate = methodHeld(owner, name, instance);
 
       if (isTraceable(candidate)) methods.set(name, candidate);
     }
   }
 
   return methods;
+}
+
+/** What the instance answers for a name its owner holds a function under, `undefined` for anything else. */
+function methodHeld(owner: object, name: string, instance: object): unknown {
+  const descriptor = Object.getOwnPropertyDescriptor(owner, name);
+
+  // A read-only own property cannot be shadowed, neither in place nor through a proxy.
+  if (descriptor === undefined || (owner === instance && isReadOnly(descriptor))) return undefined;
+
+  if (typeof descriptor.value !== 'function') return undefined;
+
+  // Read through the instance: a proxy put in front of it by an aspect answers its own wrapper.
+  return Reflect.get(instance, name);
 }
 
 function prototypeChain(instance: object): object[] {

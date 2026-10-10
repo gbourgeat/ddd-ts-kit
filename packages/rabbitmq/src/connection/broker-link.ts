@@ -1,9 +1,11 @@
+import { inspect } from 'node:util';
 import type { ChannelModel } from 'amqplib';
 import { BrokerUnavailableError } from '../errors/broker-unavailable-error.js';
 import { EventBusClosedError } from '../errors/event-bus-closed-error.js';
 import { failureCode } from '../errors/failure-code.js';
 import { ignore } from '../ignore.js';
 import type { ReconnectOptions } from '../options/reconnect-options.js';
+import { conceal } from '../secrecy/conceal.js';
 
 export interface LinkHooks {
   /** Sets channels, topology and consumers up on a fresh connection. A failure retries. */
@@ -17,6 +19,8 @@ export interface LinkSettings {
   readonly open: () => Promise<ChannelModel>;
   readonly reconnect: Required<ReconnectOptions>;
 }
+
+const DESCRIPTION = 'BrokerLink [connection concealed]';
 
 /**
  * The one connection of a bus, kept alive: when it drops, it is opened again after a delay
@@ -36,7 +40,9 @@ export class BrokerLink {
   constructor(
     private readonly settings: LinkSettings,
     private readonly hooks: LinkHooks,
-  ) {}
+  ) {
+    conceal(this);
+  }
 
   /**
    * The live connection. Opens the first one, joins an attempt in progress, and fails at
@@ -80,6 +86,14 @@ export class BrokerLink {
 
     this.model = undefined;
     await model?.close().catch(ignore);
+  }
+
+  toJSON(): string {
+    return DESCRIPTION;
+  }
+
+  [inspect.custom](): string {
+    return DESCRIPTION;
   }
 
   private open(): void {

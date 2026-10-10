@@ -5,6 +5,7 @@ import type { JobDeclaration } from './job-declaration.js';
 import type { MessageDeclaration } from './message-declaration.js';
 import type { PolicyDeclaration } from './policy-declaration.js';
 import type { PortDeclaration } from './port-declaration.js';
+import type { ProjectionDeclaration } from './projection-declaration.js';
 
 /** What a class said about itself. Plain data: reading it instantiates and resolves nothing. */
 export type Declaration =
@@ -14,4 +15,5 @@ export type Declaration =
   | DomainEventHandlerDeclaration
   | PortDeclaration
   | PolicyDeclaration
-  | JobDeclaration;
+  | JobDeclaration
+  | ProjectionDeclaration;

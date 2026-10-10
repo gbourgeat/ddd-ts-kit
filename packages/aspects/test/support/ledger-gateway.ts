@@ -10,8 +10,15 @@ export class LedgerGateway {
 
   private readonly sent: string[] = [];
 
+  private readonly attempted: string[] = [];
+
   get posted(): number {
     return this.sent.length;
+  }
+
+  /** How many times the private step ran, failures included. */
+  get sendAttempts(): number {
+    return this.attempted.length;
   }
 
   failNext(...failures: unknown[]): this {
@@ -34,6 +41,7 @@ export class LedgerGateway {
   }
 
   private async send(account: string): Promise<void> {
+    this.attempted.push(account);
     const failure = this.failures.shift();
 
     if (failure !== undefined) throw failure;

@@ -1,33 +1,41 @@
-import { declaredRoleOf } from '../../declared/roles.js';
-import { roleOf } from '../canonical.js';
-import { classesOf } from '../declarations.js';
-import type { Project, Rule, SourceFile } from '../types.js';
-import { inContext, isDeclaredStyle, pathInContext, reporter, toViolations, type Finding } from './helpers.js';
+import { declaredRoleOf } from '../../declared/index.js';
+import { roleOf } from '../canonical/role-of.js';
+import { classesOf } from '../declarations/classes-of.js';
+import type { Finding } from '../model/finding.js';
+import type { Project } from '../model/project.js';
+import type { Rule } from '../model/rule.js';
+import type { SourceFile } from '../model/source-file.js';
+import { inContext } from '../support/in-context.js';
+import { isDeclaredStyle } from '../support/is-declared-style.js';
+import { pathInContext } from '../support/path-in-context.js';
+import { perFile } from '../support/per-file.js';
+import { roleDirectory } from '../support/role-directory.js';
 
 const EXPORTED_CLASS = /(?<![\w$.])export\s+(?:default\s+)?(?:abstract\s+)?class\s+([\w$]+)/g;
 
 export const namingOneConceptPerFile: Rule = {
   id: 'naming/one-concept-per-file',
-  description: 'One exported aggregate, entity, value object, event or handler per file, and one declared class per role file.',
+  description: 'One exported aggregate, entity, value object, event, handler or job per file, and one declared class per role file.',
   scope: 'file',
   run(project) {
-    const report = reporter(project, this.id);
-    return project.files.flatMap((file) => {
+    return perFile(project, this.id, (file) => {
       if (!inContext(file.location) || file.isTest) return [];
+
       const exported = severalExportedClasses(file);
-      return toViolations(report, file.path, exported.length > 0 ? exported : severalDeclaredClasses(file, project));
+
+      return exported.length > 0 ? exported : severalDeclaredClasses(file, project);
     });
   },
 };
 
 function severalExportedClasses(file: SourceFile): Finding[] {
-  if (!inContext(file.location)) return [];
-  const { layer, inside } = file.location;
-  const directory = [layer, ...inside.slice(0, -1)].join('/');
-  if (roleOf(directory)?.oneConcept !== true) return [];
+  if (!inContext(file.location) || roleOf(roleDirectory(file.location))?.oneConcept !== true) return [];
+
   const classes = [...file.scan.code.matchAll(EXPORTED_CLASS)];
   const [first, second] = classes;
+
   if (first === undefined || second === undefined) return [];
+
   return [
     {
       line: file.scan.lineAt(second.index),
@@ -40,9 +48,12 @@ function severalExportedClasses(file: SourceFile): Finding[] {
 /** In the declared style a role file is found by its name and read for one class: a second declared class hides behind the first. */
 function severalDeclaredClasses(file: SourceFile, project: Project): Finding[] {
   if (!isDeclaredStyle(project) || declaredRoleOf(pathInContext(project, file) ?? '') === undefined) return [];
+
   const declared = classesOf(file.scan).filter(({ decorations }) => decorations.length > 0);
   const [first, second] = declared;
+
   if (first === undefined || second === undefined) return [];
+
   return [
     {
       line: second.line,

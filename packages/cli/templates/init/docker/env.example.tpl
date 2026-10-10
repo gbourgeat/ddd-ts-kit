@@ -1,8 +1,18 @@
 # Copy to .env: `npm run dev` and docker compose both read it. Never commit .env.
 NODE_ENV=development
 PORT=3000
-# debug, info, warn or error: one JSON line per entry on the standard output.
+# debug, info, warn or error.
 LOG_LEVEL=info
+{{#if logger.stdout}}
+# json only: one JSON line per entry on the standard output (`init --logger pino` or `--logger winston` brings a pretty format).
+# LOG_FORMAT=json
+{{/if}}
+{{#unless logger.stdout}}
+# json (one line per entry, everywhere) or pretty (a developer's terminal, never in production).
+# LOG_FORMAT=pretty
+{{/unless}}
+# true writes "[message removed]" for the message of every logged error that is not a DomainError: for logs that leave your hands.
+# LOG_SCRUB_MESSAGES=false
 # Around every adapter that leaves the process (kinds external and gateway): attempts, first delay, time limit of one attempt.
 # OUTBOUND_RETRY_ATTEMPTS=3
 # OUTBOUND_RETRY_BASE_DELAY_MS=100
@@ -10,6 +20,14 @@ LOG_LEVEL=info
 {{#if docs.any}}
 # Interactive API documentation at /docs. On by default outside production.
 # API_DOCS=true
+{{/if}}
+# Scheduled jobs. RUN_JOBS says whether this process runs them: {{#if worker.off}}true by default; `ddd-ts-kit generate worker` moves them to a process of their own{{/if}}{{#if worker.on}}false by default, the worker (apps/worker) runs them{{/if}}.
+# One job is switched off in one environment with JOB_<CONTEXT>_<JOB>_ENABLED=false (see {{config.platformDir}}/job-settings.ts).
+{{#if worker.off}}
+# RUN_JOBS=true
+{{/if}}
+{{#if worker.on}}
+# RUN_JOBS=false
 {{/if}}
 {{#if database.postgres}}
 
@@ -95,9 +113,27 @@ KEYCLOAK_AUDIENCE={{project.name}}-api
 
 # Authentication is the development header (x-development-actor: <id>;roles=<a>,<b>): the application refuses to start with NODE_ENV=production.
 {{/if}}
+{{#if errors.sentry}}
 
-# Traces: start Jaeger with `docker compose --profile observability up -d`, then open http://localhost:16686
-# OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+# Unexpected failures go to a Sentry or a GlitchTip project (same protocol, only the DSN differs). Without SENTRY_DSN the
+# application starts and reports nothing. A local GlitchTip: `docker compose --profile errors up -d --wait`, then
+# `docker compose logs glitchtip | grep 'DSN:'` prints the DSN; open http://localhost:8000 (test@example.com / admin_pass, local development ONLY).
+# SENTRY_DSN=http://<public-key>@localhost:8000/1
+# The environment issues are filed under (NODE_ENV when left out) and the release they are attached to (none when left out).
+# SENTRY_ENVIRONMENT=development
+# SENTRY_RELEASE=
+# true removes the message of every reported error that is not a DomainError: for a tracker hosted by a third party.
+# SENTRY_SCRUB_MESSAGES=false
+GLITCHTIP_PORT=8000
+{{/if}}
+
+# Traces: start Jaeger with `docker compose --profile observability up -d jaeger`, then open http://127.0.0.1:16686
+# Without an endpoint no span leaves the process.
+# OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:4318
+# Share of the traces kept, 0 to 1, decided where a trace starts; left out, every trace is kept.
+# TRACE_SAMPLE_RATIO=1
+# continue: a consumed event stays in the trace of the request that published it. link: each delivery starts its own trace, linked to it.
+# TRACE_CONSUMERS=continue
 OTEL_SERVICE_NAME={{project.name}}
 JAEGER_UI_PORT=16686
 OTLP_HTTP_PORT=4318

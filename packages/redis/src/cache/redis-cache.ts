@@ -1,7 +1,9 @@
+import { inspect } from 'node:util';
 import type { Redis } from 'ioredis';
 import { NoopMetrics, type Cache, type CacheEntryOptions, type CacheKey, type Counter, type Lock, type Metrics } from '@ddd-ts-kit/kernel';
 import { namespaced } from '../keys/namespaced.js';
 import { prefixPattern } from '../keys/prefix-pattern.js';
+import { conceal } from '../secrecy/conceal.js';
 import type { CacheCodec } from './cache-codec.js';
 import type { CacheOperation } from './cache-operation.js';
 import { jsonCodec } from './json-codec.js';
@@ -34,6 +36,7 @@ export interface LoadOptions extends CacheEntryOptions {
 }
 
 const SCAN_BATCH = 200;
+const DESCRIPTION = 'RedisCache [client concealed]';
 
 /**
  * The kernel `Cache` on the Redis protocol. A value that can be computed again, never the
@@ -61,6 +64,7 @@ export class RedisCache implements Cache {
     this.failing = options.onError === 'throw';
     this.errors = (options.metrics ?? new NoopMetrics()).counter('cache_errors_total');
     this.lock = options.lock;
+    conceal(this);
   }
 
   async get<T>(key: CacheKey<T>): Promise<T | undefined> {
@@ -118,6 +122,16 @@ export class RedisCache implements Cache {
 
     // eslint-disable-next-line ddd-ts-kit/clean-no-escape-hatch -- computations of every type share one map: the one stored under this name was started with this key
     return pending as Promise<T>;
+  }
+
+  /** What a serialisation shows: a name, never the client, whose options carry the password. */
+  toJSON(): string {
+    return DESCRIPTION;
+  }
+
+  /** What `console.log` and `util.inspect` show: the same. */
+  [inspect.custom](): string {
+    return DESCRIPTION;
   }
 
   private keyOf(name: string): string {

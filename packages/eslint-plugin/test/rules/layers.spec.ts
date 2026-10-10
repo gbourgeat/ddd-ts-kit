@@ -9,6 +9,7 @@ const ROUTE = `${BILLING}/presentation/http/issue-invoice.route.ts`;
 const ADAPTER = `${BILLING}/infrastructure/persistence/drizzle-invoice.repository.ts`;
 
 const ASPECT = 'an aspect (logging, metrics, retry, timeout, circuit breaking, caching) is applied from outside, never written in the model or in a use case';
+
 const AT_THE_ROOT =
   'Remove the import and apply the aspect at the composition root (`.with(...)` on the binding, or the `decorate` hook), in a bus middleware for what concerns every use case, or on an adapter class in infrastructure/.';
 
@@ -31,6 +32,7 @@ ruleTester.run('layer-domain-purity', layerDomainPurity, {
     { ...at(AGGREGATE, "import { Logged } from '@ddd-ts-kit/aspects/decorators';"), errors: [{ messageId: 'outsideConcern', data: { importer: 'The domain', specifier: '@ddd-ts-kit/aspects/decorators', why: ASPECT, fix: AT_THE_ROOT } }] },
     { ...at(AGGREGATE, "import { retry } from '@ddd-ts-kit/aspects';\nimport type { AuditEntry } from '@ddd-ts-kit/audit';"), errors: [{ messageId: 'outsideConcern' }, { messageId: 'outsideConcern' }] },
     { ...at(AGGREGATE, "import { withSpan } from '@ddd-ts-kit/tracing';", { ...SAMPLE_CONFIG, domainAllowedPackages: ['@ddd-ts-kit/kernel', '@ddd-ts-kit/tracing'] }), errors: [{ messageId: 'outsideConcern' }] },
+    { ...at(AGGREGATE, "import { InProcessJobScheduler } from '@ddd-ts-kit/scheduling';\nimport { SentryErrorReporter } from '@ddd-ts-kit/sentry';", { ...SAMPLE_CONFIG, domainAllowedPackages: ['@ddd-ts-kit/kernel', '@ddd-ts-kit/scheduling', '@ddd-ts-kit/sentry'] }), errors: [{ messageId: 'outsideConcern' }, { messageId: 'outsideConcern' }] },
     { ...at(AGGREGATE, "import { randomUUID } from 'node:crypto';"), errors: [{ messageId: 'builtin' }] },
     { ...at(AGGREGATE, "import path from 'path';"), errors: [{ messageId: 'builtin' }] },
     { ...at(AGGREGATE, "import { InvoiceRow } from '../../infrastructure/persistence/billing.schema.js';"), errors: [{ messageId: 'outerLayer' }] },
@@ -64,6 +66,8 @@ ruleTester.run('layer-application-inward', layerApplicationInward, {
     { ...at(HANDLER, "import type { AuditTrail } from '@ddd-ts-kit/audit';\nimport { drizzleAuditTrail } from '@ddd-ts-kit/audit/drizzle';"), errors: [{ messageId: 'outsideConcern' }, { messageId: 'outsideConcern' }] },
     { ...at(HANDLER, "const tracing = await import('@ddd-ts-kit/tracing/node');"), errors: [{ messageId: 'outsideConcern' }] },
     { ...at(HANDLER, "import { RedisCache } from '@ddd-ts-kit/redis';", { ...SAMPLE_CONFIG, applicationAllowedPackages: ['@ddd-ts-kit/kernel', '@ddd-ts-kit/redis'] }), errors: [{ messageId: 'outsideConcern' }] },
+    { ...at(HANDLER, "import { ManualJobScheduler } from '@ddd-ts-kit/scheduling/testing';", { ...SAMPLE_CONFIG, applicationAllowedPackages: ['@ddd-ts-kit/kernel', '@ddd-ts-kit/scheduling'] }), errors: [{ messageId: 'outsideConcern' }] },
+    { ...at(`${BILLING}/application/scheduling/send-reminders.job.ts`, "import { SentryErrorReporter } from '@ddd-ts-kit/sentry';"), errors: [{ messageId: 'outsideConcern' }] },
     { ...at(HANDLER, "import { eq } from 'drizzle-orm';"), errors: [{ messageId: 'package', data: { name: 'drizzle-orm', context: 'billing' } }] },
     { ...at(HANDLER, "import { readFile } from 'node:fs/promises';"), errors: [{ messageId: 'builtin' }] },
     { ...at(HANDLER, "import { DrizzleInvoiceRepository } from '../../../infrastructure/persistence/drizzle-invoice.repository.js';"), errors: [{ messageId: 'outward' }] },

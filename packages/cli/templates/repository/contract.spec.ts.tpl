@@ -11,7 +11,7 @@ import { repositoryContract } from '@ddd-ts-kit/testing/contracts';
 import type { {{aggregate.pascal}} } from '../../domain/aggregates/{{aggregate.kebab}}.aggregate.js';
 import { {{adapter.pascal}}{{aggregate.pascal}}Repository } from '../../infrastructure/persistence/{{adapter.kebab}}-{{aggregate.kebab}}.repository.js';
 {{#if adapter.needsDatabase}}
-import { openTestDatabase, type TestDatabase } from '{{paths.integrationToPlatform}}/database/testing.js';
+import { openTestDatabase, type TestDatabase } from '{{paths.integrationToPlatform}}/database/open-test-database.js';
 {{/if}}
 import { {{aggregate.article}}{{aggregate.pascal}} } from '../builders/{{aggregate.kebab}}.builder.js';
 import { Fake{{aggregate.pascal}}Repository } from '../fakes/{{aggregate.kebab}}.repository.fake.js';
@@ -50,6 +50,7 @@ repositoryContract<{{aggregate.pascal}}>(runner, {
   name: '{{adapter.pascal}}{{aggregate.pascal}}Repository',
   createRepository: async () => {
     await database.reset();
+
     return new {{adapter.pascal}}{{aggregate.pascal}}Repository(database.persistence.database, new FixedExecutionScope(workOf('acme')), clock);
   },
 });
@@ -58,9 +59,11 @@ repositoryContract<{{aggregate.pascal}}>(runner, {
 describe('{{adapter.pascal}}{{aggregate.pascal}}Repository, tenant by tenant', () => {
   it('hides from a tenant what another tenant saved', async () => {
     await database.reset();
+
     const scope = new FixedExecutionScope(workOf('acme'));
     const repository = new {{adapter.pascal}}{{aggregate.pascal}}Repository(database.persistence.database, scope, clock);
     const saved = {{aggregate.article}}{{aggregate.pascal}}().build();
+
     await repository.save(saved);
 
     scope.enter(workOf('globex'));
@@ -72,6 +75,7 @@ describe('{{adapter.pascal}}{{aggregate.pascal}}Repository, tenant by tenant', (
 
 function workOf(tenantId: string): ExecutionContext {
   const actor: Actor = { id: 'member-of-' + tenantId, type: 'user', tenantId, roles: [], attributes: {} };
+
   return executionContext({ correlationId: 'contract-spec', actor, origin: 'test' });
 }
 {{/if}}

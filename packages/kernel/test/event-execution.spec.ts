@@ -6,6 +6,7 @@ import {
   executionContextOfEvent,
   inEventScope,
   isSession,
+  messagingSystemOf,
   anonymousSession,
   scopedPublisher,
   systemActor,
@@ -103,5 +104,36 @@ describe('isSession', () => {
     expect(isSession({ ...systemSession('relay'), issuedAt: '2026-01-01' })).toBe(false);
     expect(isSession({ ...systemSession('relay'), actor: { id: 'ada' } })).toBe(false);
     expect(isSession(undefined)).toBe(false);
+  });
+});
+
+describe('what observes the events from outside', () => {
+  it('is told by the in-memory bus which delivery a handler receives', async () => {
+    const bus = new InMemoryEventBus();
+    const deliveries: unknown[] = [];
+
+    bus.subscribe('ordering.order.placed', async (_event, delivery) => void deliveries.push(delivery));
+    await bus.publish([placed()]);
+
+    expect(deliveries).toEqual([{ attempt: 1, system: 'in-memory', destination: 'ordering.order.placed' }]);
+  });
+
+  it('reads the name of the transport on a publisher, through the decorator that stamps the correlation', () => {
+    const scope = new AsyncLocalStorageExecutionScope();
+    const outbox = { messagingSystem: 'outbox', publish: async (): Promise<void> => undefined };
+
+    expect(messagingSystemOf(new InMemoryEventBus())).toBe('in-memory');
+    expect(messagingSystemOf(scopedPublisher(outbox, scope))).toBe('outbox');
+    expect(messagingSystemOf(scopedPublisher({ publish: outbox.publish }, scope))).toBeUndefined();
+  });
+
+  it('hands the delivery through the event scope to the handler', async () => {
+    const scope = new AsyncLocalStorageExecutionScope();
+    const deliveries: unknown[] = [];
+    const handler = inEventScope(scope, { consumer: 'billing' }, async (_event, delivery) => void deliveries.push(delivery));
+
+    await handler(placed(), { attempt: 2, maxAttempts: 3 });
+
+    expect(deliveries).toEqual([{ attempt: 2, maxAttempts: 3 }]);
   });
 });

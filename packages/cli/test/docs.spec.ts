@@ -34,7 +34,9 @@ describe('docs', () => {
     for (const heading of ['## Reading guide', '## Why these boundaries', '## Relationship notes', '## Known tensions']) {
       expect(map).toContain(`${heading}\n\nTODO(domain): `);
     }
+
     const integration = read(root, 'docs/integration/README.md');
+
     for (const heading of ['## Delivery guarantees', '## Provider', '## Versioning policy', '## Flows', '## External integrations']) {
       expect(integration).toContain(heading);
     }
@@ -42,10 +44,12 @@ describe('docs', () => {
 
   it('names the stale file and exits 1 with --check, then repairs it', () => {
     const config = JSON.parse(read(root, 'ddd-ts-kit.config.json')) as { contexts: Record<string, { upstreams: unknown[] }> };
+
     config.contexts['order-fulfilment']?.upstreams.push({ context: 'billing', relationship: 'conformist' });
     write(root, 'ddd-ts-kit.config.json', JSON.stringify(config, null, 2));
 
     const stale = cli(root, 'docs', '--check');
+
     expect(stale.code).toBe(1);
     expect(stale.stdout).toContain('stale  docs/context-map.md');
     expect(stale.stdout).toContain('stale  src/contexts/order-fulfilment/CONTEXT.md');
@@ -82,6 +86,7 @@ describe('docs', () => {
 
   it('writes the documentation of a project that has none yet', () => {
     const bare = tempDir('docs-bare');
+
     cli(bare, 'init', '--context', 'billing:core');
     write(bare, 'docs/context-map.md', read(bare, 'docs/context-map.md'));
 

@@ -1,11 +1,13 @@
 import {
   CommandBus,
   DomainEventDispatcher,
+  ErrorReporter,
   JobScheduler,
+  Logger,
   QueryBus,
   type MessageInfo,
 } from '@ddd-ts-kit/kernel';
-import { describeToken, tokenIdentity, type Token } from '@ddd-ts-kit/kernel/declarations';
+import { describeToken, tokenIdentity, type BindingAspect, type Token } from '@ddd-ts-kit/kernel/declarations';
 import { container as rootContainer, instanceCachingFactory } from 'tsyringe';
 import { DeclaredPolicies } from '../authorization/declared-policies.js';
 import { declarationsOf } from '../authorization/declarations-of.js';
@@ -33,15 +35,13 @@ import { isHandlerRegistry } from './is-handler-registry.js';
 import { JobLifecycle } from './job-lifecycle.js';
 import { withBindingAspects } from './with-binding-aspects.js';
 
+const ERROR_FLUSH_TIMEOUT_MS = 2_000;
+
 const BUS_OF: Readonly<Record<MessageInfo['kind'], Token<unknown>>> = {
   command: CommandBus,
   query: QueryBus,
 };
 
-/*
- * No member is named after one of the test kernel (`jobs`, `clock`, `eventBus`...): the test
- * application lays those over this object, and would replace a private field of the same name.
- */
 export class ContainerApplication implements Application {
   readonly container = rootContainer.createChildContainer();
 
@@ -65,7 +65,7 @@ export class ContainerApplication implements Application {
     const ports = { resolve: this.resolve, isBound: (target: Token<unknown>) => this.isBound(target) };
 
     this.consumerSubscriptions = new ConsumerSubscriptions(wiring.consumptions, ports);
-    this.jobLifecycle = new JobLifecycle(effectiveJobs, this.resolve, options.jobs?.start !== false);
+    this.jobLifecycle = new JobLifecycle(effectiveJobs, ports, options.jobs?.start !== false);
     // Registered first: a module binding or an override of the guard comes later and wins.
     this.provide(UseCaseGuard, passEveryMessage);
     this.provide(UseCaseDeclarations, { list: declarationsOf(wiring) });
@@ -112,13 +112,20 @@ export class ContainerApplication implements Application {
     await this.jobLifecycle.start();
   };
 
-  /** The jobs go first: the runs in progress end, or are aborted, while everything they use is still up. */
+  /**
+   * The jobs go first: the runs in progress end, or are aborted, while everything they use is
+   * still up. The error reporter is flushed once everything stopped, so what failed while
+   * stopping is sent too; the logger last of all, after the last entry anything wrote.
+   */
   readonly stop = async (): Promise<void> => {
     const failures = [
       ...(await this.jobLifecycle.stop()),
       ...this.consumerSubscriptions.unsubscribe(),
       ...(await this.stopModules()),
     ];
+
+    await this.flushErrorReports();
+    await this.flushLogs();
 
     if (failures.length > 0) {
       throw new AggregateError(failures, `${failures.length} module(s) failed to stop`);
@@ -165,7 +172,7 @@ export class ContainerApplication implements Application {
     const { decorate } = this.options;
 
     const create = (): unknown => {
-      const instance = withBindingAspects(binding.create(this.resolve), binding);
+      const instance = withBindingAspects(binding.create(this.resolve), binding, this.aspectsAround(binding));
 
       return decorate === undefined ? instance : decorate(instance, info);
     };
@@ -175,6 +182,14 @@ export class ContainerApplication implements Application {
     this.container.register(tokenIdentity(binding.token), {
       useFactory: binding.lifetime === 'singleton' ? instanceCachingFactory(create) : create,
     });
+  }
+
+  private aspectsAround({ kind }: Binding): BindingAspect[] {
+    if (kind === undefined) return [];
+
+    return this.wiring.kindAspects
+      .filter((around) => around.kinds.includes(kind))
+      .map((around) => around.aspect(this.resolve));
   }
 
   private registerValue(target: Token<unknown>, value: unknown): void {
@@ -197,7 +212,7 @@ export class ContainerApplication implements Application {
       );
     }
 
-    for (const handling of handlings) bus.register(handling.message, this.lazily(handling));
+    for (const handling of handlings) bus.register(handling.message, this.lazily(handling), { context: handling.module });
   }
 
   // Async so that a handler failing to be built rejects the execution instead of throwing
@@ -228,5 +243,27 @@ export class ContainerApplication implements Application {
     }
 
     return failures;
+  }
+
+  /** Left alone, unbuilt, in an application without the kernel module. A reporter that cannot send keeps the stop going. */
+  private async flushErrorReports(): Promise<void> {
+    if (!this.isBound(ErrorReporter)) return;
+
+    try {
+      await this.resolve(ErrorReporter).flush(ERROR_FLUSH_TIMEOUT_MS);
+    } catch {
+      return;
+    }
+  }
+
+  /** A logger that cannot be built or flushed keeps the stop going. */
+  private async flushLogs(): Promise<void> {
+    if (!this.isBound(Logger)) return;
+
+    try {
+      await this.resolve(Logger).flush();
+    } catch {
+      return;
+    }
   }
 }

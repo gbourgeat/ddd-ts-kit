@@ -7,6 +7,7 @@ import type { Declarer } from '../wiring/declarer.js';
 import type { DomainEventHandling } from '../wiring/domain-event-handling.js';
 import type { EventConsumption } from '../wiring/event-consumption.js';
 import type { PolicyBinding } from '../wiring/policy-binding.js';
+import type { ProjectionRegistration } from '../wiring/projection-registration.js';
 import type { Wiring } from '../wiring/wiring.js';
 import type {
   BindingDescription,
@@ -15,6 +16,7 @@ import type {
   IntegrationEventHandlerDescription,
   OriginDescription,
   PolicyDescription,
+  ProjectionDescription,
   ScheduledJobDescription,
   WiringDescription,
 } from './wiring-description.js';
@@ -29,10 +31,11 @@ export function describeWiring(
     bindings: wiring.bindings.values().map((binding) => describeBinding(binding, overridden)),
     commands: describeHandlers(wiring, 'command'),
     queries: describeHandlers(wiring, 'query'),
-    integrationEventHandlers: wiring.consumptions.map(describeConsumption),
-    domainEventHandlers: wiring.domainEventHandlers.map(describeDomainEventHandler),
+    integrationEventHandlers: wiring.consumptions.filter(({ projection }) => projection === undefined).map(describeConsumption),
+    domainEventHandlers: wiring.domainEventHandlers.filter(({ projection }) => projection === undefined).map(describeDomainEventHandler),
     policies: wiring.policies.map(describePolicy),
     jobs: jobs.map(describeJob),
+    projections: wiring.projections.map(describeProjection),
     overrides: overridden.tokens().map(describeToken),
   };
 }
@@ -97,4 +100,8 @@ function describeJob({ name, schedule, policy, job, module, declaredBy }: Effect
     module,
     ...originOf(declaredBy),
   };
+}
+
+function describeProjection({ name, projection, module, applies, declaredBy }: ProjectionRegistration): ProjectionDescription {
+  return { name, projection: describeToken(projection), module, applies, ...originOf(declaredBy) };
 }

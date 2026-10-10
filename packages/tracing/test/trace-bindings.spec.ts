@@ -22,7 +22,7 @@ describe('traceBindings', () => {
 
     expect(decorated).toBe(ledger);
 
-    expect(tracing.span('repository.Ledger.balanceOf').attributes).toMatchObject({
+    expect(tracing.span('repository Ledger.balanceOf').attributes).toMatchObject({
       'app.context': 'billing',
       'app.dependency.kind': 'repository',
     });

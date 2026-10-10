@@ -269,8 +269,9 @@ below the termination grace of the platform.
 ### Replacing the scheduler
 
 `kernelModule()` builds the scheduler on the kernel ports it binds: `Clock`, `Lock`,
-`ExecutionScope`, `IdGenerator`, `Logger` and `Metrics`. To build it otherwise (with
-checkpoints, another grace period, an error tracker on `onRun`), give the kernel module yours:
+`ExecutionScope`, `IdGenerator`, `Logger` and `Metrics`, with `reportFailedRuns` on the bound
+`ErrorReporter` as `onRun`. To build it otherwise (with checkpoints, another grace period,
+another observer), give the kernel module yours:
 
 ```ts
 import { Clock, ExecutionScope, IdGenerator, Lock, Logger, Metrics } from '@ddd-ts-kit/kernel';
@@ -318,7 +319,7 @@ await scheduler.start();
 | `graceMs` | `30000` | how long `stop()` waits |
 | `lockTtlMs` | `900000` | time to live of the lock of a job without `timeoutMs` |
 | `random` | `Math.random` | draws the jitter |
-| `onRun` | none | `(run, error?) => void` for every occurrence handled, with what the job threw: where an error tracker is plugged |
+| `onRun` | none | `(run, error?, detail?) => void` for every occurrence handled, with what the job threw and the correlation id of the run: `reportFailedRuns(errorReporter)` is the observer that reports to the kernel `ErrorReporter` every run that failed with anything but a `DomainError` |
 
 It sleeps at most one hour at a time and computes again when it wakes, so a clock that is
 corrected, or a suspended machine, is noticed within the hour.
@@ -345,7 +346,7 @@ Every occurrence handled has one outcome, recorded three times:
   `scheduled_job_duration_ms`, labelled `job`, `context`, `status` (the outcome) and
   `error_code`. An alert on "no `succeeded` for this job since N intervals" catches every way a
   job stops running, which an alert on failures does not.
-- **`onRun`**: the same record, plus the error.
+- **`onRun`**: the same record, plus the error and the correlation id of the run.
 
 `missed` is recorded once for a gap, with the first instant that was missed, not once per
 instant. The `errorCode` is the `code` of what was thrown (a `DomainError`, `JOB_TIMEOUT`,

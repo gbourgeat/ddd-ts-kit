@@ -16,6 +16,7 @@ export { SessionBuilder } from './execution/session-builder.js';
 export { createTestBuses, type TestBuses, type TestBusesOptions } from './harness/create-test-buses.js';
 export { InMemoryRepository, type InMemoryRepositoryOptions } from './repositories/in-memory-repository.js';
 export { snapshots } from './repositories/snapshots.js';
+export { expectNoSecret } from './secrecy/expect-no-secret.js';
 export type { AsyncOutcome } from './scenarios/async-outcome.js';
 export type { AsyncScenario } from './scenarios/async-scenario.js';
 export type { EventMatcher } from './scenarios/event-matcher.js';

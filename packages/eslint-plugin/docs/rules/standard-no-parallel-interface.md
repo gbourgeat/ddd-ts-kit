@@ -6,7 +6,7 @@ Applies to: every production file under the source root; tests excluded.
 
 ## Why
 
-The kernel defines the shapes every project shares (`Actor`, `Session`, `ExecutionContext`, `Logger`, `Metrics`, `Cache`, `Page` and `PageRequest`, `AuditStamp`, `Clock`, `IdGenerator`, `UnitOfWork`), so that an adapter, a middleware or a dashboard written once fits them all. A home-made `ILogger` or `UserContext` next to them forks the shape: every adapter needs a translation, and the fields of the project never reach the standard log lines, spans and audit entries.
+The kernel defines the shapes every project shares (`Actor`, `Session`, `ExecutionContext`, `Logger`, `Metrics`, `Cache`, `Page` and `PageRequest`, `AuditStamp`, `Clock`, `IdGenerator`, `UnitOfWork`, `JobScheduler`, `ScheduledJob`, `ErrorReporter`), so that an adapter, a middleware or a dashboard written once fits them all. A home-made `ILogger` or `UserContext` next to them forks the shape: every adapter needs a translation, and the fields of the project never reach the standard log lines, spans and audit entries.
 
 ## Reported
 
@@ -23,6 +23,9 @@ A class, an interface or a type alias declared under one of these names:
 | `PaginationParams`, `PageParams`, `IPageRequest` | `PageRequest` |
 | `AuditLog`, `AuditLogEntry`, `AuditRecord`, `IAuditEntry` | `AuditEntry` of `@ddd-ts-kit/audit` (`AuditStamp`, also `IAuditStamp`, for audit columns) |
 | `IClock`, `IIdGenerator`, `IUnitOfWork` | `Clock`, `IdGenerator`, `UnitOfWork` |
+| `IJobScheduler`, `JobSchedulerService`, `CronScheduler`, `TaskScheduler` | `JobScheduler` |
+| `IScheduledJob`, `CronJob`, `ScheduledTask`, `BackgroundJob` | `ScheduledJob` |
+| `IErrorReporter`, `ErrorReporterService`, `ErrorTracker`, `ExceptionReporter`, `CrashReporter` | `ErrorReporter` |
 
 Incorrect:
 

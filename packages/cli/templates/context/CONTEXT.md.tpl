@@ -30,7 +30,17 @@ TODO(domain): say in one sentence why this context is {{doc.classification}}.
 <!-- ddd-ts-kit:permissions -->
 <!-- /ddd-ts-kit:permissions -->
 
+## Scheduled jobs
+
+<!-- ddd-ts-kit:jobs -->
+<!-- /ddd-ts-kit:jobs -->
+
 ## Relationships
 
 <!-- ddd-ts-kit:relationships -->
 <!-- /ddd-ts-kit:relationships -->
+
+## Reference
+
+<!-- ddd-ts-kit:reference -->
+<!-- /ddd-ts-kit:reference -->

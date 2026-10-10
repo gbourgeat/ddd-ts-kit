@@ -2,11 +2,16 @@ import { describe, expect, it } from '{{tests.module}}';
 import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { anActor } from '@ddd-ts-kit/auth/testing';
-import { createTestApplication, fake } from '@ddd-ts-kit/di';
+{{spec.diWithFake}}
+{{spec.contextImports}}
 import { offsetPage } from '@ddd-ts-kit/kernel';
-import { platformTestModule } from '{{paths.integrationToPlatform}}/platform.module.js';
-import { {{name.pascal}}Query, type {{name.pascal}}Item } from '../../application/queries/{{name.kebab}}/{{name.kebab}}.query.js';
-import { {{spec.moduleNames}} } from '../../{{context.kebab}}.module.js';
+import { platformTestModule } from '{{paths.integrationToPlatform}}/platform-test.module.js';
+{{#if access.protected}}
+import { {{context.camel}}Permissions } from '../../application/authorization/{{context.kebab}}.permissions.js';
+{{/if}}
+import { {{name.pascal}}Reader } from '../../application/ports/{{name.kebab}}-reader.port.js';
+import { {{name.pascal}}Query } from '../../application/queries/{{name.kebab}}/{{name.kebab}}.query.js';
+import type { {{name.pascal}}Item } from '../../application/queries/{{name.kebab}}/{{name.kebab}}.result.js';
 import { Fake{{name.pascal}}Reader } from '../fakes/{{name.kebab}}-reader.fake.js';
 
 const holders = authorizationModule({ authorizer: new RoleBasedAuthorizer({ roles: { holder: [{{context.camel}}Permissions['{{access.permission}}']] } }) });
@@ -15,7 +20,7 @@ const LINES: readonly {{name.pascal}}Item[] = [{ id: '{{list.resource}}-1' }, { 
 
 describe('{{name.title}}', () => {
   it('answers one page of what the actor may see, with the total', async () => {
-    const application = arrange(LINES);
+    const application = {{spec.await}}arrange(LINES);
 
     const page = await application.queryBus.execute(new {{name.pascal}}Query(holder, offsetPage({ limit: 2 })));
 
@@ -23,7 +28,7 @@ describe('{{name.title}}', () => {
   });
 
   it('is refused to an actor who does not hold the permission {{access.permission}}', async () => {
-    const application = arrange(LINES);
+    const application = {{spec.await}}arrange(LINES);
 
     await expect(application.queryBus.execute(new {{name.pascal}}Query(anActor().build(), offsetPage()))).rejects.toMatchObject({ code: 'FORBIDDEN' });
   });
@@ -33,9 +38,9 @@ describe('{{name.title}}', () => {
   it.todo('applies each criterion of the query');
 });
 
-function arrange(lines: readonly {{name.pascal}}Item[]) {
+{{spec.async}}function arrange(lines: readonly {{name.pascal}}Item[]) {
   return createTestApplication({
     modules: [{{spec.modules}}],
-    fakes: [fake({{name.constant}}_READER, new Fake{{name.pascal}}Reader(lines))],
+    fakes: [fake({{name.pascal}}Reader, new Fake{{name.pascal}}Reader(lines))],
   });
 }

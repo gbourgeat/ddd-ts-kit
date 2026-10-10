@@ -11,7 +11,7 @@ The domain is the part of the system that must survive a change of framework, OR
 ## Reported
 
 - a package outside `domainAllowedPackages` (default: `@ddd-ts-kit/kernel`)
-- `@ddd-ts-kit/aspects`, `@ddd-ts-kit/audit`, `@ddd-ts-kit/redis` and `@ddd-ts-kit/tracing`, by any entry (`.`, `/decorators`, `/testing`, `/node`, ...), with a message of their own: they apply or record a concern from outside the model
+- `@ddd-ts-kit/aspects`, `@ddd-ts-kit/audit`, `@ddd-ts-kit/redis`, `@ddd-ts-kit/scheduling`, `@ddd-ts-kit/sentry` and `@ddd-ts-kit/tracing`, by any entry (`.`, `/decorators`, `/testing`, `/node`, ...), with a message of their own: they apply or record a concern from outside the model
 - in a declared-style project (`stack.style: "declared"`): `@ddd-ts-kit/kernel/declarations`, even though `@ddd-ts-kit/kernel` is allowed, with a message of its own: the domain declares nothing
 - any Node built-in
 - another layer of the same context, the platform, `main.ts`
@@ -38,7 +38,7 @@ import { Money } from '@/shared-kernel/money.vo.js';
 
 ## Details
 
-Aggregates, entities, value objects, events, services and repository interfaces carry no decorator and name no token: the decorator goes on the class of `application/` or `infrastructure/` that plays a role, and tokens live in `application/ports/`. The refusal of the declarations entry holds even when `domainAllowedPackages` names it. An explicit-style project is judged as before: the entry is part of `@ddd-ts-kit/kernel` there. A decorator that is nevertheless carried by a class of `domain/` is reported by `declarations-role-declared`.
+Aggregates, entities, value objects, events, services and repository ports carry no decorator and no dependency list: the decorator goes on the class of `application/` or `infrastructure/` that plays a role, and a port is an abstract class of `domain/repositories/` or `application/ports/`. The refusal of the declarations entry holds even when `domainAllowedPackages` names it. An explicit-style project is judged as before: the entry is part of `@ddd-ts-kit/kernel` there. A decorator that is nevertheless carried by a class of `domain/` is reported by `declarations-role-declared`.
 
 Static imports, type-only imports, `export ... from`, dynamic `import()`, `require()`, `import x = require()` and `import("...")` types are all read, through relative paths and the configured `importAlias`.
 

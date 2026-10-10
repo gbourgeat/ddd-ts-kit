@@ -71,7 +71,11 @@ const errorMapper = createErrorMapper({ ORDER_ALREADY_SHIPPED: 409, QUOTA_EXCEED
 ```
 
 Anything that is not a `DomainError` answers 500 `Internal Server Error` with no detail: the
-message of an unexpected error never leaves the process. Log it from the `onError` hook.
+message of an unexpected error never leaves the process. Log it from the `onError` hook, and
+report it to the error tracker with `onError: reportHttpErrors(errorReporter)`: every request
+answered 5xx goes to the kernel `ErrorReporter`, once, with the correlation, actor and tenant
+ids of its execution context (`context.execution`, present once the request got that far); a
+4xx never does.
 
 ## Options shared by the adapters
 
@@ -85,8 +89,14 @@ const options: ExecuteOptions = {
     if (problem.status >= 500) logger.error({ requestId, correlationId, operationId, error });
   },
   validateResponses: process.env.NODE_ENV === 'test', // checks answers against the declaration
+  around: tracedRoutes(), // of @ddd-ts-kit/tracing: the span of the request, named by its route template
 };
 ```
+
+`around(route, respond)` wraps the whole handling of a request, from authentication to the
+answer, refusals included, and is told the route that was matched (`method`, `path` as
+declared, `operationId`). It is where a tracer names a request `POST /orders/:id/lines` instead
+of by its URL; this package depends on no tracing library.
 
 The request id is the incoming `x-request-id` when well formed, else a UUID; it is echoed in
 the `x-request-id` response header and in every problem.
@@ -201,6 +211,79 @@ neither `offset` nor `cursor` (`offset` by default). Without `sortable`, a `sort
 refused: a client never chooses a column the read port did not offer. `offset` and `cursor`
 together are refused. These helpers depend on no validation library; `pageQuerySchema` and
 `pageSchemaOf` are plain `Schema`s and sit next to zod or class-validator schemas.
+
+## Filters and sorting
+
+One query grammar for every list route, on top of the kernel `Criteria`: the read port declares
+what it accepts with `defineCriteria`, and the route reads the query into a criteria that
+definition accepts, or answers 422.
+
+```ts
+import { criteriaQuerySchema, defineRoute, pageResponse, pageSchemaOf } from '@ddd-ts-kit/http';
+
+const listAppointments = defineRoute(
+  {
+    method: 'GET',
+    path: '/appointments',
+    operationId: 'listAppointments',
+    summary: 'List appointments',
+    request: { query: criteriaQuerySchema(appointmentCriteria) },
+    responses: { 200: { description: 'A page of appointments.', body: pageSchemaOf(appointment) } },
+    security: ['bearer'],
+  },
+  async ({ query, context }) => ({
+    status: 200, // query is a Criteria<AppointmentRow>
+    body: pageResponse(await queries.execute(new ListAppointments(context.actor, query)), toAppointmentDto),
+  }),
+);
+```
+
+```
+GET /appointments?filter[status]=in:booked,confirmed&filter[startsAt]=gte:2026-10-01T00:00:00Z
+                 &filter[or][practitionerId]=eq:p-7&filter[or][remote]=true
+                 &sort=-startsAt,id&limit=20&cursor=eyJzdGFydHNBdCI6...
+```
+
+| Written | Means |
+|---|---|
+| `filter[<field>]=<operator>:<value>` | one condition. The operators are those of the kernel: `eq`, `ne`, `in`, `gt`, `gte`, `lt`, `lte`, `contains`, `startsWith`, `isNull`, `between` |
+| `filter[<field>]=<value>` | `eq`. The text before the first colon is an operator only when it is the name of one: `filter[title]=10:30 review` is an `eq`, and a value that starts like an operator is written `eq:in:the morning` |
+| several `filter[...]` | joined by AND; the same field may be repeated: `filter[seats]=gte:2&filter[seats]=lte:4` |
+| `in:<a>,<b>,<c>` | a list, separated by commas. A comma inside a value is written `\,`, a backslash `\\`; a colon needs nothing |
+| `between:<from>,<to>` | two values, both bounds included |
+| `isNull:true`, `isNull:false`, `isNull` | without a value, or with one; `isNull` alone means `true` |
+| `contains:<text>`, `startsWith:<text>` | the text as it is, commas included; case sensitive |
+| `filter[or][<field>]=...` | the conditions written under `or` are alternatives; under `not`, the rows that satisfy them all are refused; `and` exists for symmetry |
+| `filter[or][0][<field>]=...&filter[or][0][<other>]=...&filter[or][1][<field>]=...` | an index holds several conditions together inside a group: `or(and(...), ...)`. It counts as one more level of depth, which the definition allows or not (`maxDepth`, 1 by default) |
+| `sort=-startsAt,id` | comma-separated or repeated, a leading `-` for descending, among the fields declared sortable and the tie-breaker |
+| `limit`, `offset`, `cursor` | the page, read by the helpers of "Pagination" with the limits of the definition |
+
+A value is read by the type its field declares: a number in plain digits (no exponent), `true`
+or `false`, a decimal kept as written, an instant in ISO 8601 with its zone
+(`2026-10-01T08:00:00Z`, `2026-10-01T10:00:00+02:00`) or a date alone, taken at midnight UTC.
+Percent-encoding is the transport's: `+` in a zone is sent `%2B`. `and`, `or`, `not` and
+numbers are reserved names: a field called so cannot be filtered. Both ways a framework hands
+a query are read: the keys as written (`'filter[status]'`, Express 5 and Fastify by default)
+and already nested (`filter: { status }`, a `qs` parser).
+
+Anything the definition does not declare is refused with the 422 problem of the pipeline, one
+issue per mistake, none quoting a value:
+
+| `path` | `code` |
+|---|---|
+| `query.filter.<field>` | `unknown_field`, `operator_not_allowed`, `invalid_value`, `in_list_too_long`, `invalid_filter` (not written `filter[<field>]=<operator>:<value>`) |
+| `query.filter` | `too_deep`, `empty_group`, `too_many_filters`, `invalid_filter` |
+| `query.sort` | `unsortable_field`, `invalid_sort` |
+| `query.limit`, `query.offset`, `query.cursor` | `invalid_limit`, `invalid_offset`, `invalid_cursor`, `offset_with_cursor` |
+
+| Helper | Does |
+|---|---|
+| `criteriaQuerySchema(definition, { kind? })` | the reading as a `Schema`, for a route whose whole query is the criteria |
+| `criteriaFrom(query, definition, { kind? })` | the same reading in a handler, for a route whose query schema holds other parameters too; throws the `ValidationError` of the pipeline |
+| `criteriaParameters(definition)` | the JSON Schema of the query, one OpenAPI parameter per property: `filter[<field>]` for each field with an operator, with the operators in its description and in `x-filter-operators`, its type in `x-filter-type`; `sort` as the list of the values it accepts; `limit`, `offset` and `cursor` |
+
+The scope of the actor is not a parameter: the handler of the query joins it with `scoped`,
+and nothing in a query string can remove it.
 
 ## Express 5
 

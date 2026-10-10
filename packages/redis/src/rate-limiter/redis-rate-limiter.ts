@@ -1,8 +1,10 @@
 import { randomBytes } from 'node:crypto';
+import { inspect } from 'node:util';
 import type { Redis } from 'ioredis';
 import { SystemClock, rateLimitDecisionOf, type Clock, type RateLimit, type RateLimitDecision, type RateLimiter } from '@ddd-ts-kit/kernel';
 import { namespaced } from '../keys/namespaced.js';
 import { listOf } from '../replies/list-of.js';
+import { conceal } from '../secrecy/conceal.js';
 
 export interface RedisRateLimiterOptions {
   /** Prefix of the keys. Default `rate`. */
@@ -40,6 +42,8 @@ end
 local oldest = redis.call('ZRANGE', KEYS[1], 0, 0, 'WITHSCORES')
 return {allowed, calls, oldest[2]}`;
 
+const DESCRIPTION = 'RedisRateLimiter [client concealed]';
+
 /**
  * An exact sliding window, as a sorted set of the instants of the allowed calls: one member
  * per call, so a key costs memory in proportion to its limit. For limits in the tens of
@@ -59,6 +63,7 @@ export class RedisRateLimiter implements RateLimiter {
     this.namespace = options.namespace ?? 'rate';
     this.clock = options.clock ?? new SystemClock();
     this.onError = options.onError ?? 'throw';
+    conceal(this);
   }
 
   async consume(key: string, limit: RateLimit): Promise<RateLimitDecision> {
@@ -76,6 +81,16 @@ export class RedisRateLimiter implements RateLimiter {
 
       return { allowed, remaining: 0, retryAfterMs: allowed ? 0 : limit.windowMs };
     }
+  }
+
+  /** What a serialisation shows: a name, never the client, whose options carry the password. */
+  toJSON(): string {
+    return DESCRIPTION;
+  }
+
+  /** What `console.log` and `util.inspect` show: the same. */
+  [inspect.custom](): string {
+    return DESCRIPTION;
   }
 }
 

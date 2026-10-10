@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { addGlossaryRows, parseGlossary, unknownWords } from '../src/check/glossary.js';
-import { baseForms, sameWord } from '../src/check/inflection.js';
-import { looksLikeCode } from '../src/check/rules/clean-no-commented-out-code.js';
-import { restatesName } from '../src/check/rules/clean-no-noise-comment.js';
-import { scan } from '../src/check/scanner.js';
-import { readStructure } from '../src/check/structure.js';
+import { looksLikeCode } from '../src/check/comments/looks-like-code.js';
+import { restatesName } from '../src/check/comments/restates-name.js';
+import { addGlossaryRows } from '../src/check/language/add-glossary-rows.js';
+import { baseForms } from '../src/check/language/base-forms.js';
+import { parseGlossary } from '../src/check/language/parse-glossary.js';
+import { sameWord } from '../src/check/language/same-word.js';
+import { unknownWords } from '../src/check/language/unknown-words.js';
+import { scan } from '../src/check/scan/scan.js';
+import { readStructure } from '../src/check/structure/read-structure.js';
 
 const DOC = [
   '# Billing',
@@ -145,6 +148,7 @@ describe('structure reader', () => {
     '  }',
     '}',
   ].join('\n');
+
   const structure = readStructure(scan(source));
 
   it('reads top-level functions with their parameters, across generics and object types', () => {
@@ -159,6 +163,7 @@ describe('structure reader', () => {
 
     expect(basket?.name).toBe('Basket');
     expect(basket?.superclass).toBe('Base');
+
     expect(basket?.methods.map((method) => [method.name, method.visibility, method.isStatic, method.parameters.length, method.bodyLines])).toEqual([
       ['constructor', 'private', false, 2, 1],
       ['empty', 'public', true, 1, 1],

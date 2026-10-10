@@ -10,7 +10,7 @@ A use case that reads "the current actor" from the air works behind an HTTP requ
 
 ## Reported
 
-- an import of `ActorContext`, `ACTOR_CONTEXT`, `AsyncLocalStorageActorContext`, `ExecutionScope`, `EXECUTION_SCOPE`, `AsyncLocalStorageExecutionScope`, `ScopedActorContext` or `AsyncLocalStorage`, from any module
+- an import of `ActorContext`, `ExecutionScope`, `AsyncLocalStorageExecutionScope`, `ScopedActorContext` or `AsyncLocalStorage`, from any module, as a type or as a value: the port class is also its injection token, so a value import is the one a dependency list would name
 - the same names reached through a namespace (`kernel.ExecutionScope`, `hooks.AsyncLocalStorage`)
 - a constructor parameter typed `ActorContext` or `ExecutionScope`
 - a call of `.current()` or `.require()` without argument on a receiver declared with one of these types, or, when the file does not show its declaration, named `actors`, `scope`, `scopes`, `...actorContext` or `...executionScope`
@@ -48,7 +48,7 @@ const row = { ...toRow(invoice), ...stampCreation(this.scope, this.clock), ...te
 
 ## Details
 
-`infrastructure/` and the platform may read the `ExecutionScope` and the `ActorContext` for audit columns, tenant scoping, log fields and the correlation id, and the module binds `ACTOR_CONTEXT` and `EXECUTION_SCOPE`: none of them is judged. Tests are not judged either, so `FixedExecutionScope` and `FixedActorContext` stay available to them. An import, the constructor parameter it types and the read are three reports, one per line to change.
+`infrastructure/` and the platform may read the `ExecutionScope` and the `ActorContext` for audit columns, tenant scoping, log fields and the correlation id, and the module binds `ActorContext` and `ExecutionScope`: none of them is judged. Tests are not judged either, so `FixedExecutionScope` and `FixedActorContext` stay available to them. An import, the constructor parameter it types and the read are three reports, one per line to change.
 
 The type of a receiver is read from its declaration in the same file (a parameter, a variable, a property, a parameter property): no type information is needed. A receiver named `scope` and declared with another type (`AccessScope`, a concept of the domain) is not reported.
 

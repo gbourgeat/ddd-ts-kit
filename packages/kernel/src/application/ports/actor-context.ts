@@ -6,7 +6,9 @@ import type { Actor } from '../actor/actor.js';
  * Handlers and the domain take the actor from the command or query instead.
  */
 export abstract class ActorContext {
-  static readonly tokenKey = 'kernel.ActorContext';
+  static {
+    Object.defineProperty(this, 'tokenKey', { value: 'kernel.ActorContext' });
+  }
 
   abstract current(): Actor | undefined;
 

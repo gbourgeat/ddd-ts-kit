@@ -13,7 +13,9 @@ export interface AcquireOptions {
  * happen twice is refused by a database constraint.
  */
 export abstract class Lock {
-  static readonly tokenKey = 'kernel.Lock';
+  static {
+    Object.defineProperty(this, 'tokenKey', { value: 'kernel.Lock' });
+  }
 
   abstract acquire(key: string, options: AcquireOptions): Promise<LockHandle | undefined>;
 }

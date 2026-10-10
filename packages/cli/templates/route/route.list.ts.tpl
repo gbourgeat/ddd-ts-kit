@@ -18,7 +18,7 @@ import { classSchema } from '@ddd-ts-kit/validation/class-validator';
 {{/if}}
 {{route.useCaseImport}}
 {{#if validation.classValidator}}
-import { {{name.pascal}}Line } from './{{name.kebab}}.dto.js';
+import { {{name.pascal}}Line } from './{{name.kebab}}-line.dto.js';
 {{/if}}
 
 // TODO(domain): list here the fields of {{name.pascal}}Sort a client may sort by, and bound the size of a page.
@@ -66,6 +66,7 @@ export function {{name.camel}}Route(queries: QueryBus): Route {
     async (input) => {
       // TODO(domain): hand the criteria of the query over too, once the query schema declares them next to the page; map each line to its public fields.
       const page = await queries.execute(new {{route.input}}(actorOf(input.context.principal), input.query));
+
       return { status: 200, body: pageResponse(page, (item) => ({ id: item.id })) };
     },
   );

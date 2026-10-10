@@ -10,7 +10,9 @@ import type { Page } from '../pagination/page.js';
  * (default `occurredAt` ascending). An offset page carries `total`, a cursor page `nextCursor`.
  */
 export abstract class AuditReader {
-  static readonly tokenKey = 'kernel.AuditReader';
+  static {
+    Object.defineProperty(this, 'tokenKey', { value: 'kernel.AuditReader' });
+  }
 
   abstract list(filter: AuditFilter, page: PageRequest<AuditSortField>): Promise<Page<AuditEntry>>;
 }

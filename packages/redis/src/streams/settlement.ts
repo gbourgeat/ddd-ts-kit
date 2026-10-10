@@ -1,5 +1,5 @@
 import type { Redis } from 'ioredis';
-import type { IntegrationEvent, IntegrationEventCallback } from '@ddd-ts-kit/kernel';
+import type { EventDelivery, IntegrationEvent, IntegrationEventCallback } from '@ddd-ts-kit/kernel';
 import { bury } from './bury.js';
 import { decode } from './codec/decode.js';
 import type { Entry } from './codec/entry.js';
@@ -13,6 +13,7 @@ import {
 } from './codec/entry-fields.js';
 import type { Delivery } from './delivery.js';
 import { failureCode } from './errors/failure-code.js';
+import { MESSAGING_SYSTEM } from './messaging-system.js';
 import type { RedisStreamsDelivery } from './options/redis-streams-delivery.js';
 import type { RedisStreamsFailure } from './options/redis-streams-failure.js';
 import type { RetryOptions } from './options/retry-options.js';
@@ -94,7 +95,7 @@ export class Settlement {
   }
 
   private async handle(delivery: Delivery, event: IntegrationEvent, handlers: ReadonlySet<IntegrationEventCallback>): Promise<void> {
-    const code = await failureOf(handlers, event);
+    const code = await failureOf(handlers, event, this.deliveryOf(delivery));
 
     if (code === undefined) {
       this.settled(delivery, 'acknowledged');
@@ -102,6 +103,12 @@ export class Settlement {
     } else {
       await this.fail(delivery, event, code);
     }
+  }
+
+  private deliveryOf({ stream, attempt }: Delivery): EventDelivery {
+    const { consumer, retry } = this.settings;
+
+    return { attempt, maxAttempts: retry.maxAttempts, system: MESSAGING_SYSTEM, destination: stream, consumer };
   }
 
   private async fail(delivery: Delivery, event: IntegrationEvent, code: string): Promise<void> {
@@ -142,12 +149,16 @@ export class Settlement {
 }
 
 /** Runs every handler, so one that fails does not starve the others; gives the first code. */
-async function failureOf(handlers: ReadonlySet<IntegrationEventCallback>, event: IntegrationEvent): Promise<string | undefined> {
+async function failureOf(
+  handlers: ReadonlySet<IntegrationEventCallback>,
+  event: IntegrationEvent,
+  delivery: EventDelivery,
+): Promise<string | undefined> {
   let code: string | undefined;
 
   for (const handler of [...handlers]) {
     try {
-      await handler(event);
+      await handler(event, delivery);
     } catch (error) {
       code ??= failureCode(error);
     }

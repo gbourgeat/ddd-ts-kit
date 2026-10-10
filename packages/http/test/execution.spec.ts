@@ -9,7 +9,7 @@ import {
   type Session,
 } from '@ddd-ts-kit/kernel';
 import { zodSchema } from '@ddd-ts-kit/validation/zod';
-import { defineRoute, executeRoute, type ErrorContext, type RawRequest } from '../src/index.js';
+import { UnauthorizedError, defineRoute, executeRoute, type ErrorContext, type RawRequest } from '../src/index.js';
 
 const ada: Actor = { id: 'ada', type: 'user', tenantId: 'acme', roles: ['clerk'], attributes: {} };
 
@@ -213,5 +213,50 @@ describe('RouteSpec', () => {
       );
 
     expect(undeclared).toThrow(/declare "security"/);
+  });
+});
+
+describe('what observes a request from outside', () => {
+  const ping = defineRoute(
+    { method: 'GET', path: '/orders/:orderId', operationId: 'getOrder', summary: 'Read', responses: { 204: { description: 'Found.' } }, security: false },
+    async () => ({ status: 204 }),
+  );
+
+  it('wraps the whole handling, is told the route as declared, and answers what the pipeline answers', async () => {
+    const seen: string[] = [];
+
+    const response = await executeRoute(ping, request(), {
+      around: async (route, respond) => {
+        seen.push(`${route.method} ${route.path} ${route.operationId}`);
+
+        const answered = await respond();
+
+        seen.push(`answered ${answered.status}`);
+
+        return answered;
+      },
+    });
+
+    expect(response.status).toBe(204);
+    expect(seen).toEqual(['GET /orders/:orderId getOrder', 'answered 204']);
+  });
+
+  it('sees a refusal as an answer: the problem, not an exception', async () => {
+    const statuses: number[] = [];
+
+    await executeRoute(ping, request(), {
+      resolvePrincipal: () => {
+        throw new UnauthorizedError('no credential');
+      },
+      around: async (_route, respond) => {
+        const answered = await respond();
+
+        statuses.push(answered.status);
+
+        return answered;
+      },
+    });
+
+    expect(statuses).toEqual([401]);
   });
 });

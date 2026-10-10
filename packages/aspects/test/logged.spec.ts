@@ -53,6 +53,24 @@ describe('logged', () => {
     });
   });
 
+  it('builds no field for an entry its logger would not write', async () => {
+    const fakes = createAspectFakes();
+    const logger = new InMemoryLogger({ level: 'warn' });
+    let read = 0;
+    const fields = (): { region: string } => ({ region: `eu-${String((read += 1))}` });
+    const gateway = logged({ logger, fields })(new QuoteGateway());
+
+    await withAspectRuntime(fakes, () => gateway.quote('EUR-USD'));
+
+    expect(read).toBe(0);
+
+    gateway.failNext(new Unreachable());
+    await expect(withAspectRuntime(fakes, () => gateway.quote('EUR-USD'))).rejects.toBeInstanceOf(Unreachable);
+
+    expect(read).toBe(1);
+    expect(logger.entries).toMatchObject([{ level: 'error', message: 'QuoteGateway.quote failed', fields: { region: 'eu-1' } }]);
+  });
+
   it('never records arguments, results or error messages', async () => {
     const fakes = createAspectFakes();
     const gateway = logged()(new QuoteGateway());

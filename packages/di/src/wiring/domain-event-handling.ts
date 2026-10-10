@@ -12,5 +12,7 @@ export interface DomainEventHandling {
   readonly handler: Token<unknown>;
   readonly module: string;
   readonly declaredBy?: Declarer;
+  /** Name of the projection the method belongs to, when it is not a declared handler. */
+  readonly projection?: string;
   readonly attach: (resolve: Resolve, dispatcher: DomainEventDispatcher) => void;
 }

@@ -40,9 +40,9 @@ export const KIT_CONVENTIONS: Rules = {
   '@typescript-eslint/require-await': 'off',
   // The id type of an aggregate is part of its declaration, even when it is the default one.
   '@typescript-eslint/no-unnecessary-type-arguments': 'off',
-  // Props are type aliases, states and ports are interfaces: both read well, neither is safer.
+  // Props are type aliases, states and options are interfaces: both read well, neither is safer.
   '@typescript-eslint/consistent-type-definitions': 'off',
-  // `interface InvoiceRepository extends Repository<Invoice> {}` names a port; `{}` as a type stays forbidden.
+  // `interface SessionExtensions {}` is left open for declaration merging; `{}` as a type stays forbidden.
   '@typescript-eslint/no-empty-object-type': ['error', { allowInterfaces: 'always' }],
   // A domain service or a fake starts empty and is filled with behaviour; a class of statics only stays forbidden.
   '@typescript-eslint/no-extraneous-class': ['error', { allowEmpty: true, allowWithDecorator: true }],

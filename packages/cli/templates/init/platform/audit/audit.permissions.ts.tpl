@@ -4,5 +4,3 @@ import { definePermissions } from '@ddd-ts-kit/auth';
 export const auditPermissions = definePermissions('audit', {
   'trail.read': { description: 'Read the audit trail' },
 });
-
-export const AUDIT_TRAIL_READ = auditPermissions['trail.read'].id;

@@ -1,64 +1,23 @@
-import { CONFIG_FILE, defaultAllowedPackages, type Config, type Deviation } from '../../config.js';
-import { commentLines } from '../comments.js';
-import { ADR_DIRECTORY, DecisionRecords, recordNumber, referencedRecord } from '../decision-records.js';
-import { DEFAULT_SEVERITIES } from '../severity.js';
-import { findSuppressions } from '../suppressions.js';
-import type { Rule, SourceFile } from '../types.js';
-import { lineOfSequence, reporter, toViolations, type Finding } from './helpers.js';
+import { CONFIG_FILE, defaultAllowedPackages, type Config, type Deviation } from '../../config/index.js';
+import { DEFAULT_SEVERITIES } from '../catalogue/default-severities.js';
+import { commentLines } from '../comments/comment-lines.js';
+import { ADR_DIRECTORY } from '../governance/adr-directory.js';
+import { DecisionRecords } from '../governance/decision-records.js';
+import { recordNumber } from '../governance/record-number.js';
+import { referencedRecord } from '../governance/referenced-record.js';
+import type { Finding } from '../model/finding.js';
+import type { Flaw } from '../model/flaw.js';
+import type { Rule } from '../model/rule.js';
+import type { SourceFile } from '../model/source-file.js';
+import { findSuppressions } from '../suppressions/find-suppressions.js';
+import { lineOfSequence } from '../support/line-of-sequence.js';
+import { perFile } from '../support/per-file.js';
+import { reporter } from '../support/reporter.js';
+import { toViolations } from '../support/to-violations.js';
 
 const DIRECTIVE = /^((?:ddd-ts-kit|eslint)-disable(?:-next-line|-line)?)(?![\w-])(.*)$/;
 const RECORD_SHAPE = `${ADR_DIRECTORY}/NNNN-<slug>.md (context, what is deviated from, why, scope, condition for removing it)`;
-
-export const governanceRecordedDeviation: Rule = {
-  id: 'governance/recorded-deviation',
-  description: 'A suppression, a lowered severity, an extra directory or an extra allowed package carries a reason and points to a decision record in docs/adr/.',
-  scope: 'file',
-  run(project) {
-    const report = reporter(project, this.id);
-    const records = new DecisionRecords(project.root);
-    return project.files.flatMap((file) => toViolations(report, file.path, unrecordedSuppressions(file, records)));
-  },
-  acrossProject(project) {
-    const records = new DecisionRecords(project.root);
-    const { config, configText } = project;
-    const findings = [...unrecordedRelaxations(config), ...config.deviations.flatMap((deviation) => flawedDeviation(deviation, records))];
-    const located = findings.map(({ where, message, fix }) => ({ line: lineOfSequence(configText, where), message, fix }));
-    return toViolations(reporter(project, this.id), CONFIG_FILE, located);
-  },
-};
-
-function unrecordedSuppressions(file: SourceFile, records: DecisionRecords): Finding[] {
-  const reportedElsewhere = new Set(
-    findSuppressions(file)
-      .filter((suppression) => suppression.ruleId === '' || suppression.reason === '')
-      .map((suppression) => suppression.line),
-  );
-  return commentLines(file).flatMap((comment) => {
-    const directive = comment.sample ? null : DIRECTIVE.exec(comment.text);
-    if (directive === null || reportedElsewhere.has(comment.line)) return [];
-    const [, name = '', rest = ''] = directive;
-    const reason = rest.split('--').slice(1).join('--').trim();
-    // A lint suppression without any reason is reported by clean/no-escape-hatch.
-    if (reason === '' && name.startsWith('eslint')) return [];
-    return withoutRecord(name, reason, records).map((finding) => ({ line: comment.line, ...finding }));
-  });
-}
-
-type Unplaced = Omit<Finding, 'line'>;
-
-function withoutRecord(name: string, reason: string, records: DecisionRecords): Unplaced[] {
-  const number = referencedRecord(reason);
-  if (number === undefined) {
-    const fix = `Fix the cause instead; if the deviation is deliberate, write ${RECORD_SHAPE} and end the comment with \`-- ADR-NNNN: <reason>\`.`;
-    return [{ message: `The suppression (${name}) points to no decision record.`, fix }];
-  }
-  if (records.has(number)) return [];
-  return [{ message: `The suppression (${name}) refers to ADR-${number}, but ${ADR_DIRECTORY}/ holds no record with that number.`, fix: missingRecordFix(number) }];
-}
-
-function missingRecordFix(number: number): string {
-  return `Write ${ADR_DIRECTORY}/${String(number).padStart(4, '0')}-<slug>.md (context, what is deviated from, why, scope, condition for removing it), or correct the number.`;
-}
+const PACKAGE_LISTS = ['domainAllowedPackages', 'applicationAllowedPackages', 'publishedLanguageAllowedPackages'] as const;
 
 /** What the config relaxes, the `what` a deviation has to carry for it, and where the setting is written. */
 interface Relaxation {
@@ -67,12 +26,69 @@ interface Relaxation {
   readonly where: readonly string[];
 }
 
-interface ConfigFinding extends Unplaced {
+interface ConfigFinding extends Flaw {
   readonly where: readonly string[];
+}
+
+export const governanceRecordedDeviation: Rule = {
+  id: 'governance/recorded-deviation',
+  description: 'A suppression, a lowered severity, an extra directory or an extra allowed package carries a reason and points to a decision record in docs/adr/.',
+  scope: 'file',
+  run(project) {
+    const records = new DecisionRecords(project.root);
+
+    return perFile(project, this.id, (file) => unrecordedSuppressions(file, records));
+  },
+  acrossProject(project) {
+    const records = new DecisionRecords(project.root);
+    const { config, configText } = project;
+    const findings = [...unrecordedRelaxations(config), ...config.deviations.flatMap((deviation) => flawedDeviation(deviation, records))];
+    const located = findings.map(({ where, message, fix }) => ({ line: lineOfSequence(configText, where), message, fix }));
+
+    return toViolations(reporter(project, this.id), CONFIG_FILE, located);
+  },
+};
+
+function unrecordedSuppressions(file: SourceFile, records: DecisionRecords): Finding[] {
+  const incomplete = findSuppressions(file).filter((suppression) => suppression.ruleId === '' || suppression.reason === '');
+  const reportedElsewhere = new Set(incomplete.map((suppression) => suppression.line));
+
+  return commentLines(file).flatMap((comment) => {
+    const directive = comment.sample ? null : DIRECTIVE.exec(comment.text);
+
+    if (directive === null || reportedElsewhere.has(comment.line)) return [];
+
+    const [, name = '', rest = ''] = directive;
+    const reason = rest.split('--').slice(1).join('--').trim();
+
+    // A lint suppression without any reason is reported by clean/no-escape-hatch.
+    if (reason === '' && name.startsWith('eslint')) return [];
+
+    return withoutRecord(name, reason, records).map((flaw) => ({ line: comment.line, ...flaw }));
+  });
+}
+
+function withoutRecord(name: string, reason: string, records: DecisionRecords): Flaw[] {
+  const number = referencedRecord(reason);
+
+  if (number === undefined) {
+    const fix = `Fix the cause instead; if the deviation is deliberate, write ${RECORD_SHAPE} and end the comment with \`-- ADR-NNNN: <reason>\`.`;
+
+    return [{ message: `The suppression (${name}) points to no decision record.`, fix }];
+  }
+
+  if (records.has(number)) return [];
+
+  return [{ message: `The suppression (${name}) refers to ADR-${number}, but ${ADR_DIRECTORY}/ holds no record with that number.`, fix: missingRecordFix(number) }];
+}
+
+function missingRecordFix(number: number): string {
+  return `Write ${ADR_DIRECTORY}/${String(number).padStart(4, '0')}-<slug>.md (context, what is deviated from, why, scope, condition for removing it), or correct the number.`;
 }
 
 function unrecordedRelaxations(config: Config): ConfigFinding[] {
   const relaxations = [...loweredRules(config), ...extraDirectories(config), ...extraPackages(config), ...guardMode(config), ...eventsWithoutOutbox(config)];
+
   return relaxations
     .filter(({ what }) => !config.deviations.some((deviation) => deviation.what === what))
     .map(({ what, said, where }) => ({
@@ -98,14 +114,11 @@ function extraDirectories({ contexts }: Config): Relaxation[] {
   );
 }
 
-const PACKAGE_LISTS = ['domainAllowedPackages', 'applicationAllowedPackages', 'publishedLanguageAllowedPackages'] as const;
-
 function extraPackages(config: Config): Relaxation[] {
   const defaults = defaultAllowedPackages(config.stack.validation);
+
   return PACKAGE_LISTS.flatMap((list) =>
-    config[list]
-      .filter((name) => !defaults[list].includes(name))
-      .map((name) => ({ what: `${list}.${name}`, said: `The package "${name}" is added to ${list}`, where: [`"${list}"`, `"${name}"`] })),
+    config[list].filter((name) => !defaults[list].includes(name)).map((name) => ({ what: `${list}.${name}`, said: `The package "${name}" is added to ${list}`, where: [`"${list}"`, `"${name}"`] })),
   );
 }
 
@@ -115,17 +128,25 @@ function guardMode({ guard }: Config): Relaxation[] {
 
 function eventsWithoutOutbox({ stack }: Config): Relaxation[] {
   if (stack.orm === 'none' || stack.database === 'none' || stack.events === 'outbox') return [];
+
   return [{ what: 'stack.events', said: `"stack.events" is "${stack.events}" although the project has a database`, where: ['"stack"', '"events"'] }];
 }
 
 function flawedDeviation({ what, adr, reason }: Deviation, records: DecisionRecords): ConfigFinding[] {
-  const where = ['"deviations"', `"${what}"`];
-  const number = recordNumber(adr);
   const entry = what === '' ? 'A deviation' : `The deviation "${what}"`;
-  const flaws: Unplaced[] = [];
+  const flaws: Flaw[] = [];
+
   if (what === '') flaws.push({ message: 'A deviation does not say what it relaxes.', fix: 'Set "what" to the setting it justifies, for example "rules.<id>", "guard" or "domainAllowedPackages.<package>".' });
   if (reason.trim() === '') flaws.push({ message: `${entry} gives no reason.`, fix: 'Write in "reason" why the default does not fit this project, in one sentence.' });
-  if (number === undefined) flaws.push({ message: `${entry} names no decision record.`, fix: `Set "adr" to the number of the record, and write ${RECORD_SHAPE}.` });
-  else if (!records.has(number)) flaws.push({ message: `${entry} points to ADR-${number}, but ${ADR_DIRECTORY}/ holds no record with that number.`, fix: missingRecordFix(number) });
-  return flaws.map((flaw) => ({ where, ...flaw }));
+
+  return [...flaws, ...unrecorded(entry, adr, records)].map((flaw) => ({ where: ['"deviations"', `"${what}"`], ...flaw }));
+}
+
+function unrecorded(entry: string, adr: string, records: DecisionRecords): Flaw[] {
+  const number = recordNumber(adr);
+
+  if (number === undefined) return [{ message: `${entry} names no decision record.`, fix: `Set "adr" to the number of the record, and write ${RECORD_SHAPE}.` }];
+  if (records.has(number)) return [];
+
+  return [{ message: `${entry} points to ADR-${number}, but ${ADR_DIRECTORY}/ holds no record with that number.`, fix: missingRecordFix(number) }];
 }

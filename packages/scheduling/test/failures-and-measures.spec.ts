@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { InMemoryLogger } from '@ddd-ts-kit/kernel';
 import { DURATION_HISTOGRAM, RUNS_COUNTER } from '../src/index.js';
 import { aBench } from './support/a-bench.js';
 import { MINUTE } from './support/durations.js';
@@ -53,13 +54,27 @@ describe('a job that fails', () => {
     expect(await scheduler.runNow(EXPORT)).toMatchObject({ outcome: 'failed', errorCode: 'UNEXPECTED_ERROR' });
   });
 
+  it('writes nothing about a run below the level of its logger, and still measures it', async () => {
+    const logger = new InMemoryLogger({ level: 'error' });
+    const { scheduler, metrics } = aBench({ logger });
+
+    scheduler.register({ name: REMINDERS, schedule: QUARTERLY, run: new RecordingJob().run });
+    scheduler.register({ name: EXPORT, schedule: QUARTERLY, run: () => Promise.reject(new LedgerClosed('closed')) });
+    await scheduler.start();
+
+    await scheduler.advance(2 * MINUTE);
+
+    expect(logger.entries.map((entry) => entry.message)).toEqual(['Scheduled job failed']);
+    expect(metrics.counterValue(RUNS_COUNTER, { job: REMINDERS, status: 'succeeded' })).toBe(1);
+  });
+
   it('is still run and answered when the logger and the metrics themselves throw', async () => {
     const broken = (): never => {
       throw new Error('collector down');
     };
 
     const { scheduler } = aBench({
-      logger: { debug: broken, info: broken, warn: broken, error: broken, child: broken },
+      logger: { debug: broken, info: broken, warn: broken, error: broken, child: broken, isLevelEnabled: broken, flush: broken },
       metrics: { counter: broken, histogram: broken, gauge: broken },
     });
 

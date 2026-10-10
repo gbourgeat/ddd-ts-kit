@@ -23,7 +23,7 @@ const HEADER = `generator client {
 
 datasource db {
   provider = "postgresql"
-  schemas  = ["public", "messaging", "billing_core"]
+  schemas  = ["public", "messaging", "billing_core", "read_side"]
 }
 `;
 
@@ -48,6 +48,31 @@ model Invoice {
 }
 `;
 
+const READ_MODEL = `
+/// The read model of the criteria and read model contracts: one field of every type, and the
+/// four fields of the shipped template that order the events of a projection.
+model CriteriaContractRow {
+  id               String    @id
+  status           String
+  title            String
+  seats            Int
+  price            Decimal
+  startsAt         DateTime  @map("starts_at") @db.Timestamptz(3)
+  cancelledAt      DateTime? @map("cancelled_at") @db.Timestamptz(3)
+  room             String?
+  remote           Boolean
+  tenantId         String    @map("tenant_id")
+  lastEventId      String    @map("last_event_id")
+  lastEventAt      DateTime  @map("last_event_at") @db.Timestamptz(3)
+  lastEventVersion BigInt?   @map("last_event_version")
+  deleted          Boolean   @default(false)
+
+  @@index([tenantId, startsAt, id], map: "criteria_contract_tenant_starts_idx")
+  @@map("criteria_contract")
+  @@schema("read_side")
+}
+`;
+
 const inSchema = (models: string, schema: string): string =>
   models.replaceAll(/^}$/gm, `  @@schema("${schema}")\n}`);
 
@@ -62,7 +87,7 @@ async function composeSchema(): Promise<string> {
     .replace('model OutboxRecord ', 'model MessagingOutboxRecord ')
     .replace('model ProcessedEvent ', 'model MessagingProcessedEvent ');
 
-  return [HEADER, inSchema(fragment, 'public'), inSchema(renamed, 'messaging'), INVOICE].join('\n');
+  return [HEADER, inSchema(fragment, 'public'), inSchema(renamed, 'messaging'), INVOICE, READ_MODEL].join('\n');
 }
 
 async function prisma(args: readonly string[]): Promise<void> {

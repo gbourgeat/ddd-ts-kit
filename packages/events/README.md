@@ -108,6 +108,15 @@ with an exponential backoff; after `maxAttempts` the record is `dead` until
 `store.retryDead(ids, now)`. `store.stats()` gives `{ pending, failed, dead }` for a health
 check, `store.purgePublished(before)` keeps the table small.
 
+**Tracing across the outbox.** The envelope carries `traceparent`, and every outbox store
+persists and restores it exactly (the contract suite checks it). With
+`kernelModule({ instrumentation: traceApplication() })` the context of the request is stamped
+when the event is appended, and `new OutboxRelay({ store, publisher: tracedPublisher(broker), clock })`
+continues that trace when it publishes later: the relay has no span of its own, and a tick
+that publishes nothing makes none. `OutboxPublisher` names itself `messagingSystem: 'outbox'`,
+which `validatingPublisher` and `scopedPublisher` pass on. See the README of
+`@ddd-ts-kit/tracing`.
+
 Delivery is at least once. **By default ordering is not guaranteed, not even per aggregate**:
 a failed event is retried while its successors go out, and several relays may run side by
 side. When order matters, carry a sequence or a version in the payload, or ask the relay for
@@ -230,9 +239,9 @@ optional parts, for a consumer that needs no deduplication or has no transaction
 case: with `processed` and no `unitOfWork`, the mark is taken before the handler runs. If the
 handler then fails, a transactional store keeps the mark (it was committed on its own) and the
 redelivery is skipped: the event is lost for that consumer. Without a database, use a store
-that can take its mark back, a `ReleasableProcessedEventStore` such as
-`InMemoryReleasableProcessedEventStore`: `on` and `consume` release the mark of a handler that
-failed (the `InMemoryProcessedEventStore` of the kernel releases too). `ReleasableProcessedEventStore` is a type, not a port of its own: it is the
+that can take its mark back, a `ReleasableProcessedEventStore` such as the
+`InMemoryProcessedEventStore` of the kernel: `on` and `consume` release the mark of a handler
+that failed. `ReleasableProcessedEventStore` is a type, not a port of its own: it is the
 `ProcessedEventStore` port of the kernel with its optional `release` made mandatory, and such
 a store is bound under `ProcessedEventStore`.
 

@@ -14,14 +14,17 @@ export interface TraceDependencyOptions {
   readonly className?: string;
   /** Bounded context owning the dependency. */
   readonly context?: string;
+  /** Name of the port the instance is bound under: it names the spans in place of the class. */
+  readonly port?: string;
 }
 
 const wrapped = new WeakSet<object>();
 
 /**
  * Wraps the async methods of an adapter so each call is one span named
- * `<kind>.<ClassName>.<method>`. Meant for the composition root only: the wrapped class
- * imports nothing from this package.
+ * `<kind> <Port>.<method>` (`repository OrderRepository.save`), after the port when it is
+ * known and after the class otherwise; the handler of a domain event is `handler <ClassName>`.
+ * Meant for the composition root only: the wrapped class imports nothing from this package.
  *
  * The methods are shadowed on the instance itself, so the returned value is the same
  * object: `instanceof`, `this` and private members keep working, and wrapping twice
@@ -58,10 +61,18 @@ function tracedMethods(instance: object, options: TraceDependencyOptions): Map<s
       ...(options.context === undefined ? {} : { 'app.context': options.context }),
     };
 
-    wrappers.set(name, traced(method, `${options.kind}.${className}.${name}`, attributes));
+    wrappers.set(name, traced(method, spanName({ ...options, className }, name), attributes));
   }
 
   return wrappers;
+}
+
+function spanName(options: TraceDependencyOptions & { readonly className: string }, method: string): string {
+  if (options.kind === 'domain-event-handler') {
+    return method === 'handle' ? `handler ${options.className}` : `handler ${options.className}.${method}`;
+  }
+
+  return `${options.kind} ${options.port ?? options.className}.${method}`;
 }
 
 function ownClassName(instance: object): string {

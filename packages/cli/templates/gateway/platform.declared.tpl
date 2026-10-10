@@ -1,6 +1,4 @@
 @@imports
-import { {{name.constant}}_UPSTREAM } from '{{paths.platformToContexts}}/{{context.kebab}}/application/ports/{{context.kebab}}.ports.js';
+import { {{name.pascal}}Contract } from '{{paths.platformToContexts}}/{{upstream.kebab}}/published-language/index.js';
 @@bindings
-builder.bind({{name.constant}}_UPSTREAM).toValue({});
-@@test-bindings
-builder.bind({{name.constant}}_UPSTREAM).toValue({});
+builder.bind({{name.pascal}}Contract).toValue({});

@@ -11,7 +11,9 @@ export interface CacheEntryOptions {
  * `@ddd-ts-kit/aspects`.
  */
 export abstract class Cache {
-  static readonly tokenKey = 'kernel.Cache';
+  static {
+    Object.defineProperty(this, 'tokenKey', { value: 'kernel.Cache' });
+  }
 
   abstract get<T>(key: CacheKey<T>): Promise<T | undefined>;
 

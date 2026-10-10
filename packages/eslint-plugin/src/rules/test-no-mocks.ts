@@ -1,6 +1,7 @@
-import { defineRule } from '../support/define-rule.js';
-import { ambientName, propertyName } from '../support/globals.js';
-import { importListener } from '../support/imports.js';
+import { defineRule } from '../support/rule/define-rule.js';
+import { ambientName } from '../support/globals/ambient-name.js';
+import { propertyName } from '../support/globals/property-name.js';
+import { importListener } from '../support/imports/import-listener.js';
 
 const MOCKING_MEMBERS = new Set(['mock', 'doMock', 'unstable_mockModule', 'fn', 'spyOn', 'mocked']);
 const MOCKING_GLOBALS = new Set(['vi', 'jest']);
@@ -20,6 +21,7 @@ export const testNoMocks = defineRule<'mock' | 'library'>({
   },
   create({ file, sourceCode, report }) {
     if (file.location.area !== 'context' || !file.isTest) return {};
+
     return {
       ...importListener(file, ({ node, target }) => {
         if (target.kind === 'package' && MOCKING_LIBRARIES.has(target.name)) report({ node, messageId: 'library', data: { name: target.name } });
@@ -27,6 +29,7 @@ export const testNoMocks = defineRule<'mock' | 'library'>({
       MemberExpression(node) {
         const object = ambientName(sourceCode, node.object) ?? '';
         const member = propertyName(node) ?? '';
+
         if (MOCKING_GLOBALS.has(object) && MOCKING_MEMBERS.has(member)) report({ node, messageId: 'mock', data: { what: `${object}.${member}` } });
       },
     };

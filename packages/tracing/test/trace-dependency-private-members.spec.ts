@@ -28,10 +28,10 @@ describe('traceDependency, a class with private members', () => {
 
     await ledger.balanceOf('acc-1');
 
-    const outer = tracing.span('repository.Ledger.balanceOf');
-    const inner = tracing.span('repository.Ledger.pendingOf');
+    const outer = tracing.span('repository Ledger.balanceOf');
+    const inner = tracing.span('repository Ledger.pendingOf');
 
-    expect(spanNames()).toEqual(['repository.Ledger.pendingOf', 'repository.Ledger.balanceOf']);
+    expect(spanNames()).toEqual(['repository Ledger.pendingOf', 'repository Ledger.balanceOf']);
     expect(inner.parentSpanContext?.spanId).toBe(outer.spanContext().spanId);
   });
 
@@ -53,7 +53,7 @@ describe('traceDependency, a class with private members', () => {
 
     await traceDependency(new Notifier(), { kind: 'gateway' }).notify();
 
-    expect(spanNames()).toEqual(['gateway.Notifier.deliver', 'gateway.Notifier.notify']);
+    expect(spanNames()).toEqual(['gateway Notifier.deliver', 'gateway Notifier.notify']);
   });
 
   it('keeps private members working behind the proxy of a frozen instance', async () => {
@@ -64,7 +64,7 @@ describe('traceDependency, a class with private members', () => {
     expect(ledger.readCount).toBe(1);
     // Behind a proxy the methods reach each other on the real instance: only the call made
     // from outside is a span.
-    expect(spanNames()).toEqual(['repository.Ledger.balanceOf']);
+    expect(spanNames()).toEqual(['repository Ledger.balanceOf']);
   });
 
   it('runs a frozen instance with the receiver its built-in parent accepts', async () => {
@@ -78,6 +78,6 @@ describe('traceDependency, a class with private members', () => {
 
     await expect(registry.count()).resolves.toBe(1);
     expect(registry.size).toBe(1);
-    expect(spanNames()).toEqual(['gateway.Registry.count']);
+    expect(spanNames()).toEqual(['gateway Registry.count']);
   });
 });

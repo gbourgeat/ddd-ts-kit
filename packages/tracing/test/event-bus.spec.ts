@@ -98,7 +98,9 @@ describe('tracedPublisher', () => {
     expect(span.parentSpanContext?.spanId).toBe(tracing.span('request').spanContext().spanId);
 
     expect(span.attributes).toEqual({
-      'messaging.operation': 'publish',
+      'messaging.system': 'in-memory',
+      'messaging.operation.name': 'publish',
+      'messaging.operation.type': 'send',
       'messaging.destination.name': 'ordering.order.placed',
       'messaging.message.id': 'evt-1',
     });
@@ -109,16 +111,29 @@ describe('tracedPublisher', () => {
     expect(bus.published[0]?.payload).toEqual(orderPlaced().payload);
   });
 
-  it('keeps an existing traceparent and attaches the span to that trace', async () => {
+  it('continues the trace an event already names, and stamps its own span on what goes out', async () => {
     const bus = new InMemoryEventBus();
 
-    await tracedPublisher(bus).publish([orderPlaced({ traceparent: TRACEPARENT })]);
+    await withSpan('relay tick', () => tracedPublisher(bus).publish([orderPlaced({ traceparent: TRACEPARENT })]));
 
-    expect(bus.published[0]?.traceparent).toBe(TRACEPARENT);
     const span = tracing.span('publish ordering.order.placed');
 
     expect(span.spanContext().traceId).toBe(TRACE_ID);
     expect(span.parentSpanContext?.spanId).toBe(SPAN_ID);
+    expect(bus.published[0]?.traceparent).toBe(`00-${TRACE_ID}-${span.spanContext().spanId}-01`);
+  });
+
+  it('names the span of a publisher that only stores after the outbox, as the creation of the message', async () => {
+    const stored: IntegrationEvent[] = [];
+    const outbox = { messagingSystem: 'outbox', publish: async (events: readonly IntegrationEvent[]) => void stored.push(...events) };
+
+    await withSpan('request', () => tracedPublisher(outbox).publish([orderPlaced()]));
+
+    const span = tracing.span('outbox append ordering.order.placed');
+
+    expect(span.kind).toBe(SpanKind.INTERNAL);
+    expect(span.attributes).toMatchObject({ 'messaging.system': 'outbox', 'messaging.operation.name': 'append', 'messaging.operation.type': 'create' });
+    expect(stored[0]?.traceparent).toBe(`00-${span.spanContext().traceId}-${span.spanContext().spanId}-01`);
   });
 
   it('opens one span per event and publishes the batch in one call', async () => {
@@ -183,9 +198,16 @@ describe('tracedSubscriber', () => {
     expect(span.parentSpanContext?.spanId).toBe(SPAN_ID);
 
     expect(span.attributes).toEqual({
-      'messaging.operation': 'process',
+      'messaging.system': 'in-memory',
+      'messaging.operation.name': 'process',
+      'messaging.operation.type': 'process',
       'messaging.destination.name': 'ordering.order.placed',
       'messaging.message.id': 'evt-1',
+      'app.messaging.source': 'ordering.order.placed',
+      'app.messaging.attempt': 1,
+      'app.correlation_id': 'evt-1',
+      'app.origin': 'event',
+      'app.outcome': 'succeeded',
     });
 
     expect(seenInHandler).toBe(TRACE_ID);

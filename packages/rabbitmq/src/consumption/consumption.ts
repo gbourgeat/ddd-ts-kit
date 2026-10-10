@@ -1,11 +1,12 @@
 import type { ChannelModel, ConfirmChannel, ConsumeMessage } from 'amqplib';
-import type { IntegrationEvent, IntegrationEventCallback, Subscription } from '@ddd-ts-kit/kernel';
+import type { EventDelivery, IntegrationEvent, IntegrationEventCallback, Subscription } from '@ddd-ts-kit/kernel';
 import { attemptOf } from '../codec/attempt-of.js';
 import { decode } from '../codec/decode.js';
 import { ATTEMPT_HEADER, DEAD_REASON_HEADER, ERROR_CODE_HEADER } from '../codec/headers.js';
 import { republication } from '../codec/republication.js';
 import { failureCode } from '../errors/failure-code.js';
 import { ignore } from '../ignore.js';
+import { MESSAGING_SYSTEM } from '../messaging-system.js';
 import type { RabbitMqDelivery } from '../options/rabbit-mq-delivery.js';
 import type { RabbitMqFailure } from '../options/rabbit-mq-failure.js';
 import type { RetryOptions } from '../options/retry-options.js';
@@ -192,7 +193,7 @@ export class Consumption {
       return;
     }
 
-    const code = await failureOf(subscription.handlers, event);
+    const code = await failureOf(subscription.handlers, event, this.deliveryOf(delivery));
 
     if (code === undefined) {
       this.settled(delivery, 'acknowledged');
@@ -205,6 +206,16 @@ export class Consumption {
     }
 
     await this.retryOrBury(delivery, event, code);
+  }
+
+  private deliveryOf({ subscription, message }: Delivery): EventDelivery {
+    return {
+      attempt: attemptOf(message),
+      maxAttempts: this.settings.retry.maxAttempts,
+      system: MESSAGING_SYSTEM,
+      destination: subscription.queues.work,
+      consumer: subscription.binding.consumer,
+    };
   }
 
   private async buryPoison(delivery: Delivery): Promise<void> {

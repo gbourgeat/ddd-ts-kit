@@ -1,6 +1,7 @@
 import type { AdviceFactory } from '../aspect/advice-factory.js';
 import type { AspectInfo } from '../aspect/aspect-info.js';
 import { advised } from './advised.js';
+import { fromOutside } from './from-outside.js';
 import { isWrappable } from './is-wrappable.js';
 import { knownAsync } from './known-async.js';
 import { LIFECYCLE_HOOKS } from './lifecycle-hooks.js';
@@ -13,20 +14,23 @@ import { siteOf } from './site-of.js';
 const standsFor = new WeakMap<Method, Method>();
 
 /**
- * Puts the advice around every asynchronous method of the instance, whatever its TypeScript
- * visibility: a `private` method is a method like another once compiled. A method declared
- * `async` is advised from its first call; a method that merely returns a promise is advised
- * from its second call (the first one teaches that it is asynchronous). Synchronous methods,
- * getters, symbols, generators and lifecycle hooks are left alone.
+ * Puts the advice around the calls that reach the instance from outside, on every asynchronous
+ * method. Public cannot be told from `private` once compiled, so every method is wrapped; what
+ * tells the calls apart is where they come from: a call the instance makes on itself while one
+ * of its advised calls is running is not advised again. A method declared `async` is advised
+ * from its first call; a method that merely returns a promise is advised from its second call
+ * (the first one teaches that it is asynchronous). Synchronous methods, getters, symbols,
+ * generators and lifecycle hooks are left alone.
  */
 export function adviseMethods<T extends object>(instance: T, info: AspectInfo, advise: AdviceFactory): T {
   const wrappers = new Map<string, Method>();
   const site = siteOf(instance, info);
+  const application = {};
 
   for (const [name, method] of wrappableMethods(instance)) {
     const wrapper = advised(method, { ...site, method: name, arity: method.length }, advise);
 
-    if (wrapper !== undefined) wrappers.set(name, learning(method, wrapper));
+    if (wrapper !== undefined) wrappers.set(name, learning(method, fromOutside(method, wrapper, application)));
   }
 
   if (wrappers.size === 0) return instance;
@@ -113,7 +117,8 @@ function isThenable(value: unknown): boolean {
 /**
  * A sealed or frozen instance cannot receive own methods, so it is fronted by a proxy that
  * answers the wrappers. A method runs with the proxy as `this`, as it would with the instance
- * itself: a method it calls through `this` is advised too, and its fields are read through.
+ * itself: a method it calls through `this` meets the same wrappers, and its fields are read
+ * through.
  */
 function proxied<T extends object>(instance: T, wrappers: ReadonlyMap<string, Method>): T {
   return new Proxy(instance, {

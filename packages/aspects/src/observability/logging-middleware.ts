@@ -1,5 +1,5 @@
 import type { BusMiddleware, Clock, LogLevel, Logger } from '@ddd-ts-kit/kernel';
-import { clockOr } from '../runtime/collaborators.js';
+import { clockOr } from '../runtime/clock-or.js';
 import { logCall } from './log-call.js';
 
 export interface LoggingMiddlewareOptions {
@@ -21,7 +21,7 @@ export function loggingMiddleware(logger: Logger, options: LoggingMiddlewareOpti
         clock: clockOr(options.clock),
         level: options.level ?? 'info',
         operation: `${info.kind} ${info.name}`,
-        fields: { message: info.name, messageKind: info.kind },
+        fields: () => ({ message: info.name, messageKind: info.kind }),
       },
       next,
     );

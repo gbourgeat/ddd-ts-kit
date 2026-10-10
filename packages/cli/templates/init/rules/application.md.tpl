@@ -1,21 +1,24 @@
 ---
 paths:
   - "{{config.contextsDir}}/*/application/**"
-  - "{{config.contextsDir}}/*/published-language/**"
 ---
 
-# Application layer and published language
+# Application layer
 
-- Imports `domain/`, `application/`, published languages and `@ddd-ts-kit/kernel` only (`layer/application-inward`). Never `infrastructure/`, `presentation/`, a framework or a driver: declare a port in `application/ports/`.
+- Imports `domain/`, `application/`, published languages, `@ddd-ts-kit/kernel` and `@ddd-ts-kit/auth` only (`layer/application-inward`): never `infrastructure/`, `presentation/`, a framework or a driver.
+- One use case per folder, `commands/<use-case>/` or `queries/<use-case>/`: the message, its handler, a `*.result.ts` when the answer has a shape of its own. The handler has one public method, `execute` (`application/handler-shape`): it loads or builds, calls ONE intention method, `await repository.save(aggregate)`, and returns at most an identifier.
+- Events leave with the save: never `pullEvents()`, never a `DomainEventDispatcher` here (`domain-events/dispatched-on-save`). A reaction is a class of `event-handlers/` or a publisher of `integration/publishers/`.
 {{#if style.declared}}
-- A class declares itself with a decorator of `@ddd-ts-kit/kernel/declarations` (`declarations/role-declared`): `@Requires(permission)` or `@Public()` on the command or query (`authz/declared`), `@CommandHandler(Message, [TOKENS])` or `@QueryHandler` on its handler, `@IntegrationEventHandler(definition, { consumer }, [TOKENS])`, `@DomainEventHandler(Event, { name })`, `@Policy(permission, { name })`. The token list names the constructor parameters in order; tokens of the context live in `ports/<context>.ports.ts`. Names are string literals.
+- Every command and query carries `@Requires(permission)` or `@Public()` (`authz/declared`), and the actor is in the message (`authz/actor-explicit`). Permissions live in `authorization/<context>.permissions.ts`, rules that need loaded state in `authorization/*.policy.ts`.
+- The decorator is the registration (`declarations/role-declared`): `@CommandHandler(Message, [Ports])`, `@QueryHandler`, `@DomainEventHandler(Event, { name }, [Ports])`, `@IntegrationEventHandler(definition, { consumer }, [Ports])`, `@Scheduled('<context>.<job>', schedule, [CommandBus])`, `@Policy(permission, { name })`. Names are string literals.
 {{/if}}
-- One use case per folder: `commands/<use-case>/` or `queries/<use-case>/`. A command extends `Command<Result>`, a query `Query<Result>`; the handler file exports one class whose only public method is `execute` (`application/handler-shape`).
-- A handler orchestrates (load, call the aggregate, save, dispatch events); the business decision lives in the domain.
-- A command returns at most an identifier. A query never saves, deletes or publishes (`application/command-query-separation`) and may read a projection through a port.
-- The unit of work is a middleware of the command bus, not code in the handler. Time and identifiers come from `Clock` and `IdGenerator` (`purity/*`).
-- A port is named for what the application needs (`PaymentGateway`), not for a technology. Each port has a fake in `test/fakes/`.
-- Another context is known only through its `published-language/` (`context/published-language-only`), with the relationship declared in the config (`context/declared-relationship`).
-- `published-language/` holds versioned, serializable contracts and imports only the kernel (`context/published-language-is-a-contract`). Inside a version, fields are added, never renamed or removed.
-- Integration event handlers are idempotent under their consumer name: delivery is at least once.
-- Add behaviour with `/ddd-ts-kit:use-case`; scaffold with `npx ddd-ts-kit generate command|query|port|event-handler|integration-event|integration-handler`.
+{{#if style.explicit}}
+- Every command and query is registered in `<context>.module.ts` with the permission it requires, or as public (`authz/declared`), and the actor is in the message (`authz/actor-explicit`). Permissions live in `authorization/<context>.permissions.ts`, rules that need loaded state in `authorization/*.policy.ts`.
+- A class here carries no registration of its own: `<context>.module.ts` binds it. A job is registered as `@Scheduled('<context>.<job>', schedule, [CommandBus])` would say: one name, one schedule, the command bus.
+{{/if}}
+- A port is an abstract class in `ports/<name>.port.ts` and its own injection token (`ports/abstract-class`, `ports/no-token-constant`), named for the need (`PaymentGateway`), with a fake in `test/fakes/`.
+- A dependency list names port classes, imported as values, in the order of the constructor: never an adapter or a fake (`ports/value-import`, `ports/no-concrete-dependency`).
+- A job (`scheduling/*.job.ts`) and an integration event handler (`integration/handlers/`) only build one command and send it as a system actor; both are safe to repeat (`scheduling/job-triggers-use-case`, `events/consumer-idempotent`).
+- A query never saves, deletes or publishes (`application/command-query-separation`); it hands the access scope of the actor to its read port and never filters after loading.
+- Time through `Clock`, identifiers through `IdGenerator`, no `process.env` (`purity/*`). No logging, tracing, retry or audit call: they are applied from outside (`aspects/outside-in`, `tracing/platform-only`).
+- A whole feature with `/ddd-ts-kit:use-case`. Create with `npx ddd-ts-kit generate command|query|port|policy|job|event-handler|integration-handler ... --json`, then fill the `TODO(domain)` places.

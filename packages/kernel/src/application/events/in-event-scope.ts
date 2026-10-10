@@ -9,5 +9,5 @@ export function inEventScope(
   options: EventExecutionOptions,
   handler: IntegrationEventCallback,
 ): IntegrationEventCallback {
-  return (event) => scope.run(executionContextOfEvent(event, options), () => handler(event));
+  return (event, delivery) => scope.run(executionContextOfEvent(event, options), () => handler(event, delivery));
 }

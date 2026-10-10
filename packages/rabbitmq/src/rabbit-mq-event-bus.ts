@@ -1,3 +1,4 @@
+import { inspect } from 'node:util';
 import { connect } from 'amqplib';
 import type {
   EventBus,
@@ -11,11 +12,13 @@ import { republication } from './codec/republication.js';
 import { BrokerLink } from './connection/broker-link.js';
 import { Consumption } from './consumption/consumption.js';
 import { ConsumerNameRequiredError } from './errors/consumer-name-required-error.js';
+import { MESSAGING_SYSTEM } from './messaging-system.js';
 import { EventBusClosedError } from './errors/event-bus-closed-error.js';
 import type { RabbitMqEventBusOptions } from './options/rabbit-mq-event-bus-options.js';
 import type { Settings } from './options/settings.js';
 import { settingsOf } from './options/settings-of.js';
 import { Publications } from './publication/publications.js';
+import { conceal } from './secrecy/conceal.js';
 import { sendConfirmed } from './publication/send-confirmed.js';
 import type { ConsumerBinding } from './topology/consumer-binding.js';
 import { declareTopology } from './topology/declare-topology.js';
@@ -23,6 +26,8 @@ import { queueNamesOf } from './topology/queue-names-of.js';
 import type { RabbitMqTopology } from './topology/rabbit-mq-topology.js';
 import { topologyOf } from './topology/topology-of.js';
 import type { TopologySettings } from './topology/topology-settings.js';
+
+const DESCRIPTION = 'RabbitMqEventBus [connection concealed]';
 
 /**
  * The provider for RabbitMQ and other AMQP 0-9-1 brokers.
@@ -34,6 +39,9 @@ import type { TopologySettings } from './topology/topology-settings.js';
  * Delivery is at least once and unordered: consumers deduplicate.
  */
 export class RabbitMqEventBus implements EventBus {
+  /** Read by what observes the bus from outside: the name of the transport. */
+  readonly messagingSystem = MESSAGING_SYSTEM;
+
   private readonly settings: Settings;
 
   private readonly link: BrokerLink;
@@ -72,6 +80,8 @@ export class RabbitMqEventBus implements EventBus {
         this.settings.onFailure({ kind: 'connection', code });
       },
     });
+
+    conceal(this);
   }
 
   /** Messages delivered to this bus whose handlers have not finished yet. */
@@ -170,6 +180,16 @@ export class RabbitMqEventBus implements EventBus {
     await this.consumption.drain();
     await this.publications.close();
     await this.link.close();
+  }
+
+  /** What a serialisation shows of the bus: its name, never its connection. */
+  toJSON(): string {
+    return DESCRIPTION;
+  }
+
+  /** What `console.log` and `util.inspect` show of the bus: the same. */
+  [inspect.custom](): string {
+    return DESCRIPTION;
   }
 
   /** Adds a handler to the queue of one consumer for one type, and connects if needed. */

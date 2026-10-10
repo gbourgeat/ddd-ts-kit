@@ -1,20 +1,25 @@
 // Imported first on purpose: instrumentation has to be installed before any module it patches is loaded.
 import { tracing } from './platform/tracing.js';
-import { composeApplication } from './platform/application.js';
+{{#if errors.sentry}}
+// Imported second on purpose: a failure while the rest of the application loads is already reported.
+import { errors } from './platform/errors.js';
+{{/if}}
 {{#if http.any}}
-import { createAuthenticator } from './platform/auth/authenticator.js';
+import { createAuthenticator } from './platform/auth/create-authenticator.js';
 {{/if}}
-{{#if cache.redis}}
-import { openRedis } from './platform/cache.js';
-{{/if}}
-import { loadConfig } from './platform/config.js';
-import { {{events.providerName}} } from './platform/events.js';
-import { openPersistence } from './platform/database/persistence.js';
-{{#if http.any}}
-import { startHttpServer } from './platform/http-server.js';
-{{/if}}
+import { composeApplication } from './platform/compose-application.js';
+import { loadConfig } from './platform/config/load-config.js';
+import { openPersistence } from './platform/database/open-persistence.js';
+import { {{events.providerName}} } from './platform/events/{{events.providerFile}}.js';
 {{#if events.outbox}}
-import { startOutboxRelay } from './platform/outbox-relay.js';
+import { startOutboxRelay } from './platform/events/start-outbox-relay.js';
+{{/if}}
+{{#if http.any}}
+import { startHttpServer } from './platform/http/start-http-server.js';
+{{/if}}
+import { jobSettings } from './platform/job-settings.js';
+{{#if cache.redis}}
+import { openRedis } from './platform/redis/open-redis.js';
 {{/if}}
 
 const config = loadConfig(process.env);
@@ -27,28 +32,47 @@ const persistence = openPersistence();
 {{#if cache.redis}}
 const redis = openRedis(config);
 {{/if}}
+
 const application = composeApplication(persistence, {
   events: {{events.provider}},
+{{#if errors.sentry}}
+  errors,
+{{/if}}
 {{#if http.any}}
   authenticator: createAuthenticator(config),
 {{/if}}
-  log: { level: config.logLevel, service: config.serviceName },
+  log: { ...config.log, service: config.serviceName, environment: config.environment },
+  traceConsumers: config.tracing.consumers,
   resilience: config.resilience,
+  jobs: { start: config.runJobs, settings: jobSettings(process.env) },
 {{#if cache.redis}}
   redis,
 {{/if}}
 });
+
 await application.start();
+
 {{#if events.outbox}}
-{{#if cache.relaySignal}}
-const relay = startOutboxRelay({ store: persistence.outbox, publisher: application.eventBus, intervalMs: config.outboxRelayIntervalMs, logger: application.logger, wakeOn: redis.relaySignal });
+const relay = startOutboxRelay({
+  store: persistence.outbox,
+  publisher: application.eventBus,
+  intervalMs: config.outboxRelayIntervalMs,
+  logger: application.logger,
+{{#if errors.sentry}}
+  errors,
 {{/if}}
-{{#unless cache.relaySignal}}
-const relay = startOutboxRelay({ store: persistence.outbox, publisher: application.eventBus, intervalMs: config.outboxRelayIntervalMs, logger: application.logger{{#if persistence.signals}}, wakeOn: persistence.relaySignal{{/if}} });
-{{/unless}}
+{{#if cache.relaySignal}}
+  wakeOn: redis.relaySignal,
+{{/if}}
+{{#if persistence.signals}}
+  wakeOn: persistence.relaySignal,
+{{/if}}
+});
+
 {{/if}}
 {{#if http.any}}
 const server = await startHttpServer(application, config);
+
 application.logger.info('listening', { port: server.port });
 {{/if}}
 {{#unless http.any}}

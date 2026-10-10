@@ -10,15 +10,24 @@ export abstract class AggregateRoot<Id extends string | number = string> extends
   /** Optimistic concurrency token, managed by the repository adapter. */
   version = 0;
 
-  private events: DomainEvent[] = [];
+  private readonly events: DomainEvent[] = [];
 
-  /** Hands the recorded events to the application layer and clears them. */
+  /**
+   * The recorded events are no part of the state: they are kept out of enumeration, so that
+   * comparing, spreading or serialising an aggregate never sees what it has yet to announce.
+   */
+  protected constructor(id: Id) {
+    super(id);
+    Object.defineProperty(this, 'events', { enumerable: false });
+  }
+
+  /**
+   * Hands over the recorded events and clears them. Called for a handler by the save of the
+   * repository (`dispatchingOnSave`), and by a spec that asserts what an aggregate recorded;
+   * never by a use case or a repository adapter.
+   */
   pullEvents(): DomainEvent[] {
-    const events = this.events;
-
-    this.events = [];
-
-    return events;
+    return this.events.splice(0);
   }
 
   protected record(event: DomainEvent): void {

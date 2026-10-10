@@ -18,28 +18,28 @@ Delivery is at least once. A consumer without a stable name and a processed-even
 Incorrect:
 
 ```ts
-builder.on(productListedV1).handledBy(ProductListedHandler, [COMMAND_BUS]);
+builder.on(productListedV1).handledBy(ProductListedHandler, [CommandBus]);
 
 subscribeAll(platform.subscriber, [on(productListedV1, (event) => consumer.handle(event))]);
 
-resolve(EVENT_SUBSCRIBER).subscribe('catalog.product.listed', (event) => consumer.handle(event));
+resolve(IntegrationEventSubscriber).subscribe('catalog.product.listed', (event) => consumer.handle(event));
 
 // declared style
-@IntegrationEventHandler(productListedV1, { consumer: CONSUMER_NAME }, [COMMAND_BUS])
+@IntegrationEventHandler(productListedV1, { consumer: consumerName }, [CommandBus])
 export class CatalogProductListedHandler {}
 ```
 
 Correct:
 
 ```ts
-builder.on(productListedV1, { consumer: 'billing.price-list' }).handledBy(ProductListedHandler, [COMMAND_BUS]);
+builder.on(productListedV1, { consumer: 'billing.price-list' }).handledBy(ProductListedHandler, [CommandBus]);
 
 subscribeAll(platform.subscriber, [
   on(productListedV1, (event) => consumer.handle(event), { consumer: 'billing.price-list', processed: platform.persistence.processedEvents }),
 ]);
 
 // declared style
-@IntegrationEventHandler(productListedV1, { consumer: 'billing.catalog-product-listed' }, [COMMAND_BUS])
+@IntegrationEventHandler(productListedV1, { consumer: 'billing.catalog-product-listed' }, [CommandBus])
 export class CatalogProductListedHandler {}
 ```
 
@@ -47,7 +47,7 @@ export class CatalogProductListedHandler {}
 
 `on` is recognised by its import from `@ddd-ts-kit/events`, under any local name; `builder.on` by the chain that ends with a handler, which tells it from the `on` of an event emitter. `consume` requires both options by its type and is not judged. `subscribe(type, idempotent(name, store, handler))` is accepted: `idempotent` of the kernel is what `on` and `consume` are built on.
 
-In a declared-style project an integration event handler class is its own registration: `@IntegrationEventHandler(definition, { consumer: '<context>.<reaction>' }, [tokens])` satisfies the rule and nothing has to be written in a module file. The decorator counts when its name is imported from `@ddd-ts-kit/kernel/declarations` in the file, under an alias or a namespace too. A module file kept in a declared-style project is judged as in the explicit style. In an explicit-style project the decorator is not read.
+In a declared-style project an integration event handler class is its own registration: `@IntegrationEventHandler(definition, { consumer: '<context>.<reaction>' }, [ports])` satisfies the rule and nothing has to be written in a module file. The decorator counts when its name is imported from `@ddd-ts-kit/kernel/declarations` in the file, under an alias or a namespace too. A module file kept in a declared-style project is judged as in the explicit style. In an explicit-style project the decorator is not read.
 
 ## Options
 

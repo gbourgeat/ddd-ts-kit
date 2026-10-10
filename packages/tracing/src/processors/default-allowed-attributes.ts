@@ -1,0 +1,47 @@
+/**
+ * Attribute names and prefixes (ending with a dot) a span may carry by default: what the kit
+ * writes (`app.`, `code.`, `messaging.`, `error.type`) and what the instrumentations kept on by
+ * default write about a request, a query or a peer. Whatever else an instrumentation adds is
+ * dropped before export.
+ */
+export const DEFAULT_ALLOWED_ATTRIBUTES: readonly string[] = [
+  'app.',
+  'code.',
+  'messaging.',
+  'error.type',
+  'http.request.method',
+  'http.request.method_original',
+  'http.request.resend_count',
+  'http.response.status_code',
+  'http.route',
+  'http.method',
+  'http.status_code',
+  'http.scheme',
+  'http.target',
+  'http.url',
+  'http.host',
+  'http.flavor',
+  'url.',
+  'server.',
+  'network.protocol.',
+  'network.transport',
+  'network.type',
+  'net.host.name',
+  'net.host.port',
+  'net.peer.name',
+  'net.peer.port',
+  'db.system',
+  'db.system.name',
+  'db.namespace',
+  'db.name',
+  'db.collection.name',
+  'db.operation',
+  'db.operation.name',
+  'db.sql.table',
+  'db.statement',
+  'db.query.text',
+  'db.query.summary',
+  'db.response.status_code',
+  'rpc.',
+  'otel.',
+];

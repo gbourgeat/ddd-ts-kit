@@ -1,12 +1,10 @@
 @@imports
-import { DOMAIN_EVENTS } from '{{paths.contextToPlatform}}/platform.module.js';
+import { DomainEventDispatcher } from '@ddd-ts-kit/kernel';
 import { {{event.pascal}}EventHandler } from './application/event-handlers/{{event.kebab}}.event-handler.js';
 import { {{event.pascal}} } from './domain/events/{{event.kebab}}.event.js';
-@@tokens
-export const {{event.constant}}_EVENT_HANDLER = token<{{event.pascal}}EventHandler>('{{context.kebab}}.{{event.pascal}}EventHandler');
 @@registrations
-builder.bind({{event.constant}}_EVENT_HANDLER).toClass({{event.pascal}}EventHandler);
+builder.bind({{event.pascal}}EventHandler).toClass({{event.pascal}}EventHandler).as('domain-event-handler');
 @@start
-resolve(DOMAIN_EVENTS).on('{{event.name}}', async (event) => {
-  if (event instanceof {{event.pascal}}) await resolve({{event.constant}}_EVENT_HANDLER).handle(event);
+resolve(DomainEventDispatcher).on('{{event.name}}', async (event) => {
+  if (event instanceof {{event.pascal}}) await resolve({{event.pascal}}EventHandler).handle(event);
 });

@@ -1,7 +1,7 @@
 import { AST_NODE_TYPES } from '@typescript-eslint/utils';
-import { defineRule } from '../support/define-rule.js';
-import { propertyName } from '../support/globals.js';
-import { startsAtThis } from '../support/members.js';
+import { defineRule } from '../support/rule/define-rule.js';
+import { propertyName } from '../support/globals/property-name.js';
+import { startsAtThis } from '../support/members/starts-at-this.js';
 
 interface Options {
   readonly mutators?: readonly string[];
@@ -28,11 +28,15 @@ export const applicationCommandQuerySeparation = defineRule<'mutation', [Options
   defaultOptions: [{}],
   create({ file, sourceCode, options: [options], report }) {
     const { location } = file;
+
     if (location.area !== 'context' || location.layer !== 'application' || file.isTest || location.inside[0] !== 'queries') return {};
+
     const mutators = options.mutators ?? DEFAULT_MUTATORS;
+
     return {
       CallExpression(node) {
         const { callee } = node;
+
         // Only dependencies held by the handler are judged: `seen.delete(id)` on a local Set changes nothing outside.
         if (callee.type !== AST_NODE_TYPES.MemberExpression || !startsAtThis(callee.object)) return;
         if (mutators.includes(propertyName(callee) ?? '')) report({ node, messageId: 'mutation', data: { call: sourceCode.getText(callee), context: location.context } });

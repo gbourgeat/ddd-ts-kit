@@ -1,7 +1,6 @@
 import { requires, type UseCaseDeclaration } from '@ddd-ts-kit/auth';
 import type { Route } from '@ddd-ts-kit/http';
-import { traceUseCase } from '@ddd-ts-kit/tracing';
-import type { Platform } from '../platform.module.js';
+import type { Platform } from '../platform.js';
 import { auditPermissions } from './audit.permissions.js';
 import { ListAuditEntriesHandler } from './list-audit-entries.handler.js';
 import { ListAuditEntriesQuery } from './list-audit-entries.query.js';
@@ -18,8 +17,9 @@ interface AuditWiring {
  * no model of its own, only one protected query over the `AuditReader` port, registered like any
  * use case so that reading the trail is authorized and recorded.
  */
-export function wireAudit(platform: Platform): AuditWiring {
-  platform.queries.register(ListAuditEntriesQuery, traceUseCase(new ListAuditEntriesHandler(platform.audit.trail), { context: 'audit' }));
+export function auditModule(platform: Platform): AuditWiring {
+  platform.queries.register(ListAuditEntriesQuery, new ListAuditEntriesHandler(platform.audit.trail), { context: 'audit' });
+
   return {
     name: 'audit',
 {{#if authz.rebac}}

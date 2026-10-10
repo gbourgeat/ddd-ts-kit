@@ -8,6 +8,7 @@ import {
 } from '@ddd-ts-kit/kernel';
 import type { Token } from '@ddd-ts-kit/kernel/declarations';
 import type { ConsumerRuntime } from '../consumer/consumer-runtime.js';
+import { Instrumentation, type InstrumentedConsumer } from '../kernel/instrumentation.js';
 import type { EventConsumption } from '../wiring/event-consumption.js';
 import type { BoundPorts } from './bound-ports.js';
 import { failuresOf } from './failures-of.js';
@@ -39,13 +40,16 @@ export class ConsumerSubscriptions {
     if (this.consumptions.length === 0) return [];
 
     const runtime = this.runtime();
+    const instrument = this.resolveIfBound(Instrumentation)?.consumer;
 
-    return this.consumptions.map((consumption) =>
-      this.subscriberOf(consumption.module).subscribe(
+    return this.consumptions.map((consumption) => {
+      const handler = consumption.subscribe(this.ports.resolve, runtime);
+
+      return this.subscriberOf(consumption.module).subscribe(
         consumption.type,
-        consumption.subscribe(this.ports.resolve, runtime),
-      ),
-    );
+        instrument === undefined ? handler : instrument(handler, consumerOf(consumption)),
+      );
+    });
   }
 
   private runtime(): ConsumerRuntime {
@@ -76,4 +80,8 @@ export class ConsumerSubscriptions {
   private resolveIfBound<T>(target: Token<T>): T | undefined {
     return this.ports.isBound(target) ? this.ports.resolve(target) : undefined;
   }
+}
+
+function consumerOf({ consumer, module, type }: EventConsumption): InstrumentedConsumer {
+  return { consumer, context: module, type };
 }

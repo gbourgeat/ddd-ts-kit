@@ -6,7 +6,9 @@ import type { ResultOf } from '../messaging/result-of.js';
  * never on a handler class, so the transport behind (in-process, queue, RPC) is a wiring choice.
  */
 export abstract class CommandBus {
-  static readonly tokenKey = 'kernel.CommandBus';
+  static {
+    Object.defineProperty(this, 'tokenKey', { value: 'kernel.CommandBus' });
+  }
 
   abstract execute<C extends Command<unknown>>(command: C): Promise<ResultOf<C>>;
 }

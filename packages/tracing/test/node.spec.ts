@@ -8,7 +8,7 @@ import {
   traceDependency,
   withSpan,
 } from '../src/index.js';
-import { initTracing } from '../src/node.js';
+import { defaultInstrumentations, initTracing } from '../src/node.js';
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -69,7 +69,7 @@ describe('initTracing', () => {
 
     const request = spans.find((span) => span.name === 'request');
 
-    expect(spans.map((span) => span.name)).toEqual(['gateway.Ping.ping', 'request']);
+    expect(spans.map((span) => span.name)).toEqual(['gateway Ping.ping', 'request']);
 
     expect(request?.attributes).toEqual({
       'url.full': 'https://example.org/?token=REDACTED',
@@ -83,5 +83,46 @@ describe('initTracing', () => {
       'service.version': '1.2.3',
       'deployment.environment.name': 'test',
     });
+  });
+});
+
+describe('the instrumentations on by default', () => {
+  const names = (settings?: Parameters<typeof defaultInstrumentations>[0]): string[] =>
+    defaultInstrumentations(settings)
+      .map((instrumentation) => instrumentation.instrumentationName.replace('@opentelemetry/instrumentation-', ''))
+      .sort();
+
+  it('are the two sides of HTTP and the database and cache drivers, nothing else', () => {
+    expect(names()).toEqual(['grpc', 'http', 'ioredis', 'mongodb', 'mysql', 'mysql2', 'pg', 'redis', 'undici']);
+  });
+
+  it('record a statement as written and only inside a trace, and no connection span', () => {
+    const pg = defaultInstrumentations().find((instrumentation) => instrumentation.instrumentationName.endsWith('-pg'));
+
+    expect(pg?.getConfig()).toMatchObject({ requireParentSpan: true, ignoreConnectSpans: true, enhancedDatabaseReporting: false });
+  });
+
+  it('ignore the incoming requests of the noise paths, the given ones when given', () => {
+    const ignores = (url: string, ignoredPaths?: readonly string[]): unknown => {
+      const http = defaultInstrumentations(ignoredPaths === undefined ? {} : { ignoredPaths }).find((instrumentation) =>
+        instrumentation.instrumentationName.endsWith('-http'),
+      );
+
+      const hook: unknown = Reflect.get(http?.getConfig() ?? {}, 'ignoreIncomingRequestHook');
+
+      return typeof hook === 'function' ? Reflect.apply(hook, undefined, [{ url }]) : undefined;
+    };
+
+    expect(ignores('/health')).toBe(true);
+    expect(ignores('/readyz?verbose=1')).toBe(true);
+    expect(ignores('/orders/42')).toBe(false);
+    expect(ignores('/health', ['/status'])).toBe(false);
+    expect(ignores('/status', ['/status'])).toBe(true);
+  });
+
+  it('change one by one when the application says so', () => {
+    const settings = { '@opentelemetry/instrumentation-fs': { enabled: true }, '@opentelemetry/instrumentation-grpc': { enabled: false } };
+
+    expect(names({ settings })).toEqual(['fs', 'http', 'ioredis', 'mongodb', 'mysql', 'mysql2', 'pg', 'redis', 'undici']);
   });
 });

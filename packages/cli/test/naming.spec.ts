@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { CliError } from '../src/errors.js';
-import { assertPastFact, eventName, looksLikePastFact, parseConceptName, parseContextName, toName } from '../src/naming.js';
+import { CliError } from '../src/cli-error.js';
+import { assertPastFact, eventName, looksLikePastFact, parseConceptName, parseContextName, toName } from '../src/naming/index.js';
 
 describe('names', () => {
   it('normalizes any input case', () => {
     for (const input of ['InvoiceLine', 'invoiceLine', 'invoice-line', 'invoice_line', 'invoice line', 'INVOICE_LINE']) {
       const name = toName(input);
+
       expect([name.pascal, name.camel, name.kebab, name.constant, name.words], input).toEqual([
         'InvoiceLine',
         'invoiceLine',
@@ -57,7 +58,9 @@ function fixOf(action: () => unknown): string {
     action();
   } catch (error) {
     if (error instanceof CliError) return error.fix;
+
     throw error;
   }
+
   return '';
 }

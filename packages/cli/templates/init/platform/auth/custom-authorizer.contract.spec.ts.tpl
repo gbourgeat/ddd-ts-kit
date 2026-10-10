@@ -14,6 +14,7 @@ authorizerContract(
     name: 'The custom authorizer',
     create: () => {
       const reader = anActor().named('ada').withRole('reader').build();
+
       return {
         authorizer: new CustomAuthorizer({ reader: [permissions['element.read'].id] }),
         granted: { actor: reader, permission: permissions['element.read'] },

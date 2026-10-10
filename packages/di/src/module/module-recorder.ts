@@ -27,6 +27,7 @@ import { WiringError } from '../errors/wiring-error.js';
 import { writtenJob } from '../jobs/written-job.js';
 import { assertPort } from '../wiring/assert-port.js';
 import type { Binding } from '../wiring/binding.js';
+import { naturalKind } from '../wiring/natural-kind.js';
 import { classRecipe, factoryRecipe, valueRecipe, type Recipe } from '../wiring/recipe.js';
 import type { WiringDraft } from '../wiring/wiring-draft.js';
 import { bindingOptionsOf } from './binding-options-of.js';
@@ -93,6 +94,10 @@ export class ModuleRecorder implements ModuleBuilder {
     includeDeclared({ draft: this.draft, module: this.module }, declared);
   };
 
+  readonly around: ModuleBuilder['around'] = (kinds, aspect) => {
+    this.draft.addKindAspect({ kinds, aspect, module: this.module });
+  };
+
   assertNothingLeftUnfinished(): void {
     const [statement] = this.unfinished;
 
@@ -135,7 +140,16 @@ export class ModuleRecorder implements ModuleBuilder {
   }
 
   private bindingOf(target: Token<unknown>, recipe: Recipe): Binding {
-    return { token: target, module: this.module, lifetime: 'singleton', aspects: [], ...recipe };
+    const kind = naturalKind(target);
+
+    return {
+      token: target,
+      module: this.module,
+      lifetime: 'singleton',
+      aspects: [],
+      ...recipe,
+      ...(kind === undefined ? {} : { kind }),
+    };
   }
 
   private useCase<M extends Message>(kind: MessageInfo['kind'], message: MessageType<M>): ProtectedUseCaseTarget<M> {

@@ -9,4 +9,5 @@ export { JobLockUnavailableError } from './errors/job-lock-unavailable-error.js'
 export { JobTimeoutError } from './errors/job-timeout-error.js';
 export { UNEXPECTED_ERROR } from './errors/error-code-of.js';
 export { DURATION_HISTOGRAM, RUNS_COUNTER } from './metric-names.js';
-export type { JobRunObserver } from './job-run-observer.js';
+export type { JobRunDetail, JobRunObserver } from './job-run-observer.js';
+export { reportFailedRuns } from './report-failed-runs.js';

@@ -13,7 +13,7 @@ Read by the CLI, the hook and the skills. It lives at the root of the consuming 
     "http": "express",
     "validation": "zod",
     "di": "tsyringe",
-    "events": "in-memory",
+    "events": "outbox",
     "orm": "drizzle",
     "database": "postgres",
     "tests": "vitest"
@@ -44,7 +44,7 @@ Read by the CLI, the hook and the skills. It lives at the root of the consuming 
 | `stack.di` | `tsyringe`, `nest`, `manual` | `tsyringe` (`nest` when `http` is `nest`) |
 | `stack.events` | `in-memory`, `outbox`, `custom` | `outbox` when an ORM is set (anything else then needs a `stack.events` deviation), `in-memory` otherwise |
 | `stack.orm` | `drizzle`, `knex`, `prisma`, `typeorm`, `custom`, `none` | `drizzle` |
-| `stack.database` | `postgres`, `mysql`, `sqlite`, `mongodb`, `none` | `postgres` |
+| `stack.database` | `postgres`, `mysql`, `sqlite`, `none` (the generated adapters target PostgreSQL; `mysql` and `sqlite` only with `orm: custom`) | `postgres` |
 | `stack.tests` | `vitest`, `jest` | `vitest` |
 | `stack.authn` | `jwt`, `keycloak`, `none` | `jwt` |
 | `stack.cache` | `none`, `redis`: what backs the kernel `Cache` port, the HTTP rate limiter and the wake-up of the outbox relay (Redis, Dragonfly or Valkey) | `none` |
@@ -58,7 +58,12 @@ Read by the CLI, the hook and the skills. It lives at the root of the consuming 
 | `stack.docsUi` | `swagger`, `scalar`, `redoc`, `none` | `swagger` |
 | `contexts.<name>.deployable` | `true`, `false`: the context has its own entry point `src/apps/<name>/main.ts` | `false` |
 | `applicationAllowedPackages` | package names | `["@ddd-ts-kit/kernel", "@ddd-ts-kit/auth"]` |
-| `limits` | `{ "maxParameters": 3, "maxFunctionLines": 30 }` | as shown |
+| `limits` | `{ "maxParameters": 3, "maxFunctionLines": 30 }`; `maxFunctionLines` is at most 100, a larger value is read as 100 and reported | as shown |
+| `onePerFile.allow` | `[{ "file": "<path or glob>", "reason": "<why these exports are one thing>" }]`: exempts a file from the count of `clean/one-export-per-file`, never from its file name check | `[]` |
+| `stack.errors` | `none`, `sentry`: where unexpected failures are reported; `sentry` binds the kernel `ErrorReporter` to `@ddd-ts-kit/sentry` (Sentry or GlitchTip) | `none` |
+| `worker` | `true`, `false`: the project has `src/apps/worker/main.ts`; scheduled jobs then run there and not in the API process | `false` |
+| `stack.logger` | `stdout`, `pino`, `winston`: what implements the kernel `Logger` port. `stdout` writes JSON lines, redacts nothing and has no pretty format; `pino` and `winston` redact credential keys and accept `LOG_FORMAT=json` or `pretty` | `stdout` |
+| `commit` | `{ "maxFiles": 20, "maxLines": 600 }`: advised size of one commit, read by `ddd-ts-kit check --commit-size` (advisory, `--strict` exits 1) and by the editor hook (a reminder, never blocking). Generated files are not counted | as shown |
 | `guard` | `enforce`, `advise`, `off`: how the editor hook of the plugin reacts | `enforce` |
 | `deviations[]` | `{ "what", "adr", "reason" }`: a recorded exception. `what` is `rules.<id>`, `contexts.<name>.extraDirectories.<path>`, `domainAllowedPackages.<package>`, `applicationAllowedPackages.<package>`, `publishedLanguageAllowedPackages.<package>`, `guard` or `stack.events`; `adr` names an existing `docs/adr/<number>-*.md` | `[]` |
 | `contexts.<name>.classification` | `core`, `supporting`, `generic` | required |
@@ -71,5 +76,6 @@ A relaxed rule, an extra directory, an extra allowed package, a guard that is no
 or events off the outbox are deviations: each needs an entry in `deviations` pointing to a
 decision record (`npx ddd-ts-kit generate adr "<title>" --deviation <what>` writes both).
 
-`@ddd-ts-kit/aspects`, `@ddd-ts-kit/audit`, `@ddd-ts-kit/redis` and `@ddd-ts-kit/tracing` stay
+`@ddd-ts-kit/aspects`, `@ddd-ts-kit/audit`, `@ddd-ts-kit/redis`, `@ddd-ts-kit/scheduling`,
+`@ddd-ts-kit/sentry` and `@ddd-ts-kit/tracing` stay
 refused in `domain/` and `application/` even when listed in an allow-list.

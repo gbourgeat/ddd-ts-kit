@@ -50,7 +50,7 @@ describe('with an execution scope', () => {
       [ORIGIN_ATTRIBUTE]: 'http',
     });
 
-    expect(tracing.span('gateway.Ping.ping').attributes).not.toHaveProperty(CORRELATION_ID_ATTRIBUTE);
+    expect(tracing.span('gateway Ping.ping').attributes).not.toHaveProperty(CORRELATION_ID_ATTRIBUTE);
   });
 
   it('names them on a root started inside the scope', async () => {

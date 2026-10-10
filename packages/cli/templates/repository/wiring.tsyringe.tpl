@@ -1,16 +1,14 @@
 @@imports
-import type { {{aggregate.pascal}}Repository } from './domain/repositories/{{aggregate.kebab}}.repository.js';
-import { {{adapter.pascal}}{{aggregate.pascal}}Repository } from './infrastructure/persistence/{{adapter.kebab}}-{{aggregate.kebab}}.repository.js';
 {{#if adapter.needsDatabase}}
-import { CLOCK, EXECUTION_SCOPE } from '@ddd-ts-kit/di';
-import { DATABASE } from '{{paths.contextToPlatform}}/platform.module.js';
+import { Clock, ExecutionScope } from '@ddd-ts-kit/kernel';
+{{storage.moduleImport}}
 {{/if}}
-@@tokens
-export const {{aggregate.constant}}_REPOSITORY = token<{{aggregate.pascal}}Repository>('{{context.kebab}}.{{aggregate.pascal}}Repository');
+import { {{aggregate.pascal}}Repository } from './domain/repositories/{{aggregate.kebab}}.repository.js';
+import { {{adapter.pascal}}{{aggregate.pascal}}Repository } from './infrastructure/persistence/{{adapter.kebab}}-{{aggregate.kebab}}.repository.js';
 @@registrations
 {{#if adapter.needsDatabase}}
-builder.bind({{aggregate.constant}}_REPOSITORY).toClass({{adapter.pascal}}{{aggregate.pascal}}Repository, [DATABASE, EXECUTION_SCOPE, CLOCK]).as('repository');
+builder.bind({{aggregate.pascal}}Repository).toClass({{adapter.pascal}}{{aggregate.pascal}}Repository, [{{storage.token}}, ExecutionScope, Clock]).as('repository');
 {{/if}}
 {{#unless adapter.needsDatabase}}
-builder.bind({{aggregate.constant}}_REPOSITORY).toClass({{adapter.pascal}}{{aggregate.pascal}}Repository).as('repository');
+builder.bind({{aggregate.pascal}}Repository).toClass({{adapter.pascal}}{{aggregate.pascal}}Repository).as('repository');
 {{/unless}}

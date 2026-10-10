@@ -10,6 +10,9 @@ import type { IntegrationEventSubscriber } from '../../application/ports/integra
  * does not stop the others, and failures are collected and rethrown together.
  */
 export class InMemoryEventBus implements IntegrationEventPublisher, IntegrationEventSubscriber {
+  /** Read by what observes the bus from outside: the name of the transport. */
+  readonly messagingSystem = 'in-memory';
+
   readonly published: IntegrationEvent[] = [];
 
   private readonly handlers = new Map<string, Set<IntegrationEventCallback>>();
@@ -22,7 +25,7 @@ export class InMemoryEventBus implements IntegrationEventPublisher, IntegrationE
 
       for (const handler of this.handlers.get(event.type) ?? []) {
         try {
-          await handler(event);
+          await handler(event, { attempt: 1, system: this.messagingSystem, destination: event.type });
         } catch (error) {
           failures.push(error);
         }

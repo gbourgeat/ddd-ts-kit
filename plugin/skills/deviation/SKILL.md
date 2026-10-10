@@ -5,6 +5,10 @@ description: >-
   skip a rule, do it quick and dirty, disable a check, add an eslint-disable or ts-ignore,
   put logic where it does not belong "just this once", skip tests or the glossary, or when
   the guard asks for confirmation on a suppression or a change of the rules.
+allowed-tools:
+  - Read
+  - Bash(npx ddd-ts-kit explain *)
+  - Bash(npx ddd-ts-kit generate adr *)
 ---
 
 # Deviations

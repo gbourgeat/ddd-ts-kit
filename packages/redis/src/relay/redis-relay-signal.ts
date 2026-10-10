@@ -1,10 +1,14 @@
+import { inspect } from 'node:util';
 import type { Redis } from 'ioredis';
 import { closeRedis } from '../connection/close-redis.js';
+import { conceal } from '../secrecy/conceal.js';
 
 export interface RedisRelaySignalOptions {
   /** One channel per outbox. Default `ddd-ts-kit:outbox`. */
   readonly channel?: string;
 }
+
+const DESCRIPTION = 'RedisRelaySignal [client concealed]';
 
 /**
  * The `RelaySignal` of `@ddd-ts-kit/events` between processes, over publish/subscribe: the
@@ -27,6 +31,7 @@ export class RedisRelaySignal {
   constructor(client: Redis, options: RedisRelaySignalOptions = {}) {
     this.client = client;
     this.channel = options.channel ?? 'ddd-ts-kit:outbox';
+    conceal(this);
   }
 
   subscribe(listener: () => void): { unsubscribe(): void } {
@@ -53,6 +58,16 @@ export class RedisRelaySignal {
     this.subscriber = undefined;
 
     if (subscriber !== undefined) await closeRedis(subscriber);
+  }
+
+  /** What a serialisation shows: a name, never the client, whose options carry the password. */
+  toJSON(): string {
+    return DESCRIPTION;
+  }
+
+  /** What `console.log` and `util.inspect` show: the same. */
+  [inspect.custom](): string {
+    return DESCRIPTION;
   }
 
   /** A connection in subscriber mode accepts no other command, hence one of its own. */

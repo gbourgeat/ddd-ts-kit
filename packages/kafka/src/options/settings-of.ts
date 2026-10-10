@@ -6,8 +6,6 @@ import type { TopicOptions } from './topic-options.js';
 
 export function settingsOf(options: KafkaEventBusOptions): Settings {
   return {
-    brokers: brokersOf(options.brokers),
-    client: options.client ?? {},
     consumer: options.consumer,
     topicOf: options.topicOf ?? ((type) => type),
     keyOf: options.keyOf ?? ((event) => event.id),
@@ -23,12 +21,6 @@ export function settingsOf(options: KafkaEventBusOptions): Settings {
     onFailure: guarded(options.onFailure),
     onDelivery: guarded(options.onDelivery),
   };
-}
-
-function brokersOf(brokers: string | readonly string[]): string[] {
-  const listed = typeof brokers === 'string' ? brokers.split(',') : [...brokers];
-
-  return listed.map((broker) => broker.trim()).filter((broker) => broker.length > 0);
 }
 
 function topicsOf(topics: TopicOptions = {}): Required<TopicOptions> {

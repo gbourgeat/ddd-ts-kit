@@ -1,58 +1,88 @@
-import { CONFIG_FILE, parseConfig, readConfig } from '../config.js';
-import { DEPCRUISE_FILE, renderCruiseFile } from '../depcruise/configuration.js';
-import { CONTEXT_MAP, writeDocs } from '../docs/docs.js';
-import { CliError } from '../errors.js';
+import { CONFIG_FILE, parseConfig, readConfig } from '../config/index.js';
+import { DEPCRUISE_FILE } from '../depcruise/depcruise-file.js';
+import { renderCruiseFile } from '../depcruise/render-cruise-file.js';
+import { CONTEXT_MAP } from '../docs/context-map-file.js';
+import { writeDocs } from '../docs/write-docs.js';
+import { CliError } from '../cli-error.js';
+import { findKind } from '../generate/find-kind.js';
 import type { Kind, KindFlags } from '../generate/kind.js';
-import { refreshBarrels } from '../generate/declared.js';
-import { findKind, KINDS } from '../generate/kinds.js';
-import { Workspace } from '../workspace.js';
-import { Arguments, type Command } from './args.js';
-import { printReport } from './report.js';
+import { KINDS } from '../generate/kinds.js';
+import { refreshBarrels } from '../generate/refresh-barrels.js';
+import { refuseSharedWrites } from '../generate/refuse-shared-writes.js';
+import { toName } from '../naming/index.js';
+import { Workspace } from '../workspace/index.js';
+import { Arguments } from './arguments.js';
+import type { Command } from './command.js';
+import { printReport } from './print-report.js';
 
 export const generateCommand: Command = (argv, io) => {
-  const args = Arguments.parse(argv, OPTIONS);
+  const asked = findKind(argv.find((argument) => !argument.startsWith('-')) ?? '');
+  const args = Arguments.parse(argv, optionsOf(asked));
   const [kindName, ...rest] = args.positionals;
   const kind = requestedKind(kindName, rest);
   const root = args.projectRoot;
   const ws = new Workspace(root, args.flag('force'));
-  kind.run({ ws, config: readConfig(root).config, args: rest, flags: flagsOf(args) });
+  const { config } = readConfig(root);
+
+  kind.run({ ws, config, args: rest, flags: flagsOf(args) });
   refreshDocs(ws);
+
+  if (args.flag('local-only')) refuseSharedWrites(ws, config, kind.positionals[0] === 'context' ? toName(rest[0] ?? '').kebab : undefined);
+
   printReport(io, args, ws.commit(args.flag('dry-run')));
+
   return 0;
 };
 
+const TEXT = { type: 'string' } as const;
+const SWITCH = { type: 'boolean', default: false } as const;
+const TEXTS = { type: 'string', multiple: true } as const;
+
 /** Every flag a kind may take; each kind reads the ones it knows. */
 const OPTIONS = {
-  classification: { type: 'string' },
-  purpose: { type: 'string' },
-  upstream: { type: 'string', multiple: true },
-  term: { type: 'string', multiple: true },
-  code: { type: 'string' },
-  aggregate: { type: 'string' },
-  method: { type: 'string' },
-  path: { type: 'string' },
-  command: { type: 'boolean', default: false },
-  query: { type: 'boolean', default: false },
-  version: { type: 'string' },
-  'allow-name': { type: 'boolean', default: false },
-  permission: { type: 'string' },
-  public: { type: 'boolean', default: false },
-  'tenant-scoped': { type: 'boolean', default: false },
-  list: { type: 'boolean', default: false },
-  kind: { type: 'string' },
-  decorators: { type: 'boolean', default: false },
-  deviation: { type: 'string' },
-  reason: { type: 'string' },
-  'dry-run': { type: 'boolean', default: false },
-  force: { type: 'boolean', default: false },
-} as const;
+  classification: TEXT,
+  purpose: TEXT,
+  upstream: TEXTS,
+  term: TEXTS,
+  code: TEXT,
+  aggregate: TEXT,
+  method: TEXT,
+  path: TEXT,
+  command: SWITCH,
+  query: SWITCH,
+  version: TEXT,
+  'allow-name': SWITCH,
+  permission: TEXT,
+  public: SWITCH,
+  'tenant-scoped': SWITCH,
+  list: SWITCH,
+  kind: TEXT,
+  decorators: SWITCH,
+  deviation: TEXT,
+  reason: TEXT,
+  every: TEXT,
+  cron: TEXT,
+  'time-zone': TEXT,
+  'dry-run': SWITCH,
+  force: SWITCH,
+  'local-only': SWITCH,
+};
+
+/** One flag may be a switch for a kind and a text for another: `--command` of a route, `--command <UseCase>` of a job. */
+function optionsOf(kind: Kind | undefined): Record<string, typeof TEXT | typeof SWITCH | typeof TEXTS> {
+  return { ...OPTIONS, ...Object.fromEntries((kind?.textFlags ?? []).map((flag) => [flag, TEXT])) };
+}
 
 /** Keeps what is derived from the config and the tree in step with what was just scaffolded, once the project has it. */
 function refreshDocs(ws: Workspace): void {
   const config = ws.read(CONFIG_FILE);
+
   if (config === undefined) return;
+
   const current = parseConfig(JSON.parse(config));
+
   refreshBarrels(ws, current);
+
   if (ws.exists(CONTEXT_MAP)) writeDocs(ws, current);
   // The import graph rules are derived from the config: a new context or upstream changes them.
   if (ws.exists(DEPCRUISE_FILE)) ws.update(DEPCRUISE_FILE, renderCruiseFile(current));
@@ -60,18 +90,26 @@ function refreshDocs(ws: Workspace): void {
 
 function requestedKind(name: string | undefined, rest: readonly string[]): Kind {
   const kind = name === undefined ? undefined : findKind(name);
+
   if (kind === undefined) {
     throw new CliError(name === undefined ? 'generate needs a kind.' : `Unknown kind "${name}".`, `Use one of: ${KINDS.map((candidate) => candidate.name).join(', ')}.`);
   }
+
   if (rest.length !== kind.positionals.length) {
     throw new CliError(`${kind.name} expects ${kind.positionals.length} argument(s): ${kind.positionals.join(', ')}.`, `Usage: ddd-ts-kit generate ${kind.usage}`);
   }
+
   return kind;
 }
 
 function flagsOf(args: Arguments): KindFlags {
+  const timeZone = args.text('time-zone');
+  const commandName = args.text('command');
+
   return {
-    ...args.texts(['classification', 'purpose', 'code', 'aggregate', 'method', 'path', 'version', 'permission', 'deviation', 'reason', 'kind']),
+    ...args.texts(['classification', 'purpose', 'code', 'aggregate', 'method', 'path', 'version', 'permission', 'deviation', 'reason', 'kind', 'every', 'cron']),
+    ...(timeZone === undefined ? {} : { timeZone }),
+    ...(commandName === undefined ? {} : { commandName }),
     upstream: args.many('upstream'),
     term: args.many('term'),
     command: args.flag('command'),

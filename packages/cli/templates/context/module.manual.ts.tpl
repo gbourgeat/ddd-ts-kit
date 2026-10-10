@@ -2,11 +2,9 @@ import type { UseCaseDeclaration } from '@ddd-ts-kit/auth';
 {{#if http.any}}
 import type { Route } from '@ddd-ts-kit/http';
 {{/if}}
-import type { Platform } from '{{paths.contextToPlatform}}/platform.module.js';
+import type { Platform } from '{{paths.contextToPlatform}}/platform.js';
 // ddd-ts-kit:imports
 // /ddd-ts-kit:imports
-
-export { {{context.camel}}Permissions } from './application/authorization/{{context.kebab}}.permissions.js';
 
 export interface {{context.pascal}}Wiring {
   readonly name: string;
@@ -16,9 +14,10 @@ export interface {{context.pascal}}Wiring {
 {{/if}}
 }
 
-export function wire{{context.pascal}}(platform: Platform): {{context.pascal}}Wiring {
+export function {{context.camel}}Module(platform: Platform): {{context.pascal}}Wiring {
   // ddd-ts-kit:registrations
   // /ddd-ts-kit:registrations
+
   return {
     name: '{{context.kebab}}',
     useCases: [

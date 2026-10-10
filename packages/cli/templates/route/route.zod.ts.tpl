@@ -60,16 +60,19 @@ export function {{name.camel}}Route({{route.bus}}: {{route.busType}}): Route {
 {{#if route.isQuery}}
       // TODO(domain): build the query from `input` (params, query string); the actor is already there and map its answer to the public fields.
       await {{route.bus}}.execute(new {{route.input}}({{route.actor}}));
+
       return { status: {{route.status}}, body: {} };
 {{/if}}
 {{#if route.returnsId}}
       // TODO(domain): build the command from `input` (body, params); the actor is already there.
       const id = await {{route.bus}}.execute(new {{route.input}}({{route.actor}}));
+
       return { status: {{route.status}}, body: { id } };
 {{/if}}
 {{#if route.returnsNothing}}
       // TODO(domain): build the command from `input` (body, params); the actor is already there.
       await {{route.bus}}.execute(new {{route.input}}({{route.actor}}));
+
       return { status: {{route.status}} };
 {{/if}}
     },

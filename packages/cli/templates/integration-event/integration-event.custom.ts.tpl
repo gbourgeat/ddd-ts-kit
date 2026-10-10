@@ -1,11 +1,7 @@
 import { defineIntegrationEvent } from '@ddd-ts-kit/events';
 import { err, ok, type IntegrationEvent } from '@ddd-ts-kit/kernel';
 import { customSchema } from '@ddd-ts-kit/validation';
-
-export interface {{event.pascal}}V{{event.version}}Payload {
-  readonly {{aggregate.camel}}Id: string;
-  // TODO(domain): add what downstream contexts need to know about "{{event.words}}", as readonly primitives; this is a public contract: inside version {{event.version}} a field can be added, never renamed or removed.
-}
+import type { {{event.pascal}}V{{event.version}}Payload } from './{{event.kebab}}.v{{event.version}}.payload.js';
 
 export const {{event.camel}}V{{event.version}} = defineIntegrationEvent({
   type: '{{event.name}}',

@@ -11,7 +11,7 @@ A function with more than three parameters hides a concept that has no name yet;
 ## Reported
 
 - more than `maxParameters` parameters (default 3); constructors are exempt, a `this` parameter is not counted
-- more than `maxLines` lines of code in the body (default 30); blank lines and comment lines are not counted
+- more than `maxLines` lines of code in the body (default 30, never above 100); blank lines and comment lines are not counted
 
 Incorrect:
 
@@ -27,11 +27,11 @@ function charge(payment: Payment, policy: RetryPolicy): void {}
 
 ## Details
 
-The module file of a context (`<context>.module.ts`) is exempt from the line limit: a composition grows with the context. So is the callback of `describe`, `suite` and `context`: it holds tests, not steps.
+The module file of a context (`<context>.module.ts`) is exempt from the line limit: a composition grows with the context. So is the callback of `describe`, `suite` and `context`: it holds tests, not steps. Both are still held by the hard ceiling of 100 lines, which is the companion rule [`clean-function-ceiling`](clean-function-ceiling.md), an `error` whatever the severity of this one.
 
 ## Options
 
-`[{ "maxParameters": 3, "maxLines": 30 }]`. When an option is absent, `limits.maxParameters` and `limits.maxFunctionLines` of `ddd-ts-kit.config.json` apply, then the defaults.
+`[{ "maxParameters": 3, "maxLines": 30 }]`. When an option is absent, `limits.maxParameters` and `limits.maxFunctionLines` of `ddd-ts-kit.config.json` apply, then the defaults. A `maxLines` or a `limits.maxFunctionLines` above 100 is read as 100.
 
 `rules."clean/function-size"` in `ddd-ts-kit.config.json` set to `off` silences the rule, and `// ddd-ts-kit-disable-next-line clean/function-size -- <reason>` silences one line, exactly as for `ddd-ts-kit check`.
 

@@ -1,42 +1,58 @@
+{{#if style.declared}}
+import { Clock, ExecutionScope, stampCreation, stampUpdate } from '@ddd-ts-kit/kernel';
+import { Repository } from '@ddd-ts-kit/kernel/declarations';
+{{/if}}
+{{#unless style.declared}}
 import { stampCreation, stampUpdate, type Clock, type ExecutionScope } from '@ddd-ts-kit/kernel';
-import { insertIgnoringConflict, optimisticUpdate } from '@ddd-ts-kit/typeorm';
-{{#if style.declared}}
-import { CLOCK, EXECUTION_SCOPE, Repository } from '@ddd-ts-kit/kernel/declarations';
-import { {{aggregate.constant}}_REPOSITORY } from '../../application/ports/{{context.kebab}}.ports.js';
-{{/if}}
+{{/unless}}
+import { {{storage.typeormImport}}, insertIgnoringConflict, optimisticUpdate } from '@ddd-ts-kit/typeorm';
 import type { {{aggregate.pascal}} } from '../../domain/aggregates/{{aggregate.kebab}}.aggregate.js';
-import type { {{aggregate.pascal}}Repository } from '../../domain/repositories/{{aggregate.kebab}}.repository.js';
-import type { DatabaseContext } from '{{paths.persistenceToPlatform}}/database/database.js';
 {{#if style.declared}}
-import { DATABASE } from '{{paths.persistenceToPlatform}}/tokens.js';
+import { {{aggregate.pascal}}Repository } from '../../domain/repositories/{{aggregate.kebab}}.repository.js';
 {{/if}}
+{{#unless style.declared}}
+import type { {{aggregate.pascal}}Repository } from '../../domain/repositories/{{aggregate.kebab}}.repository.js';
+{{/unless}}
 import { {{aggregate.tableCamel}} } from './{{context.kebab}}.schema.js';
 import { {{aggregate.pascal}}Mapper } from './{{aggregate.kebab}}.mapper.js';
+import type { {{aggregate.pascal}}Columns } from './{{aggregate.kebab}}-row.schema.js';
+
+type Versioned{{aggregate.pascal}} = {{aggregate.pascal}}Columns & { version: number };
 
 {{#if style.declared}}
-@Repository({{aggregate.constant}}_REPOSITORY, [DATABASE, EXECUTION_SCOPE, CLOCK])
+@Repository({{aggregate.pascal}}Repository, [TypeOrmContext, ExecutionScope, Clock])
 {{/if}}
 export class TypeOrm{{aggregate.pascal}}Repository implements {{aggregate.pascal}}Repository {
   constructor(
-    private readonly database: DatabaseContext,
+    private readonly database: TypeOrmContext,
     private readonly scope: ExecutionScope,
     private readonly clock: Clock,
   ) {}
 
   async findById(id: string): Promise<{{aggregate.pascal}} | undefined> {
     const row = await this.database.manager().findOneBy({{aggregate.tableCamel}}, { id });
+
     return row === null ? undefined : {{aggregate.pascal}}Mapper.toDomain(row);
   }
 
   async save(saved: {{aggregate.pascal}}): Promise<void> {
-    const manager = this.database.manager();
     await optimisticUpdate(saved, async ({ expected, next }) => {
       const state = { ...{{aggregate.pascal}}Mapper.toRow(saved), version: next };
-      if (expected === 0) {
-        return (await insertIgnoringConflict(manager, {{aggregate.tableCamel}}, { ...state, ...stampCreation(this.scope, this.clock) })) ? 1 : 0;
-      }
-      const updated = await manager.update({{aggregate.tableCamel}}, { id: saved.id, version: expected }, { ...state, ...stampUpdate(this.scope, this.clock) });
-      return updated.affected ?? 0;
+
+      return expected === 0 ? this.insert(state) : this.update(state, expected);
     });
+  }
+
+  private async insert(state: Versioned{{aggregate.pascal}}): Promise<number> {
+    const row = { ...state, ...stampCreation(this.scope, this.clock) };
+
+    return (await insertIgnoringConflict(this.database.manager(), {{aggregate.tableCamel}}, row)) ? 1 : 0;
+  }
+
+  private async update(state: Versioned{{aggregate.pascal}}, expected: number): Promise<number> {
+    const row = { ...state, ...stampUpdate(this.scope, this.clock) };
+    const updated = await this.database.manager().update({{aggregate.tableCamel}}, { id: state.id, version: expected }, row);
+
+    return updated.affected ?? 0;
   }
 }

@@ -1,0 +1,243 @@
+# Parallel work without collisions
+
+**Summary.** Several people, or several coding agents, can build one project at the same time
+if the work is sliced along the two seams the architecture already has: the bounded context
+and the vertical use case. Almost everything inside a context is private to it and safe to
+write in parallel. A short list of files is shared by construction (the config, the generated
+barrels and documents, the composition root, the migrations, the published language of an
+upstream) and must be changed in sequence. This guide lists both, explains worktrees, merge
+order and who regenerates what, and ends with a concrete plan: four contexts of the scheduling
+application built by four workers after a shared bootstrap.
+
+## Two ways to slice
+
+**By bounded context.** One worker, one context. The closed tree puts everything a context
+needs under `src/contexts/<context>/`, and the rules forbid reaching into another context
+except through its published language. Two workers in two contexts therefore edit disjoint
+directories.
+
+**By vertical use case, inside a context.** One command or query, end to end: its folder under
+`application/commands/` or `application/queries/`, its route, its specs. Two use cases of one
+context share the aggregate file and the context's generated barrel, so they conflict more
+often than two contexts do. Parallelise inside a context only after the aggregate's shape has
+settled.
+
+Do not slice by layer ("you write the domain, I write the handlers"): each half is untestable
+until the other exists, and the two meet in every file.
+
+## What is safe in parallel, and what must be sequenced
+
+| File or area | Written by | Parallel? | How to handle |
+|---|---|---|---|
+| `src/contexts/<A>/**` and `src/contexts/<B>/**` | different workers | yes | disjoint by construction |
+| two use case folders of one context | different workers | mostly | they meet in the aggregate, the barrel and the routes file: merge often |
+| `ddd-ts-kit.config.json` | `init`, `generate context`, `generate service`, `generate adr --deviation` | **no** | create all contexts and relationships in the bootstrap; later changes one at a time, by the platform owner |
+| `src/platform/application.ts`, `src/main.ts`, `platform.module.ts` | `generate context`, `generate gateway`, hand edits | **no** | registration regions are written between markers; two branches adding a context both touch them |
+| `test/architecture/extractable.spec.ts` | `generate context` | **no** | same: written with each context |
+| `<context>.declarations.ts` (the barrel) | every `generate` in that context, and `docs` | per context | derived: never merge by hand, regenerate (below) |
+| `docs/context-map.md`, the generated lists of each `CONTEXT.md` | `ddd-ts-kit docs`, every `generate` | **no**, but cheap | derived: regenerate after merging |
+| `openapi/openapi.json`, `docs/integration/asyncapi.json`, `docs/integration/event-catalog.md` | `npm run docs:generate` | **no**, but cheap | derived and deterministic: regenerate after merging |
+| `.dependency-cruiser.cjs` | `depcruise-config --write`, every `generate` | **no**, but cheap | derived from the config: regenerate |
+| database migrations | the ORM's tooling | **no** | one schema per context keeps tables apart, but the migration sequence is one list: number at merge time |
+| the `published-language/` of an upstream | the upstream's owner | **no** for its consumers | merge the contract first; consumers branch from it |
+| `src/shared-kernel/` | co-owners | **no** | rare by design; one change at a time |
+| `package.json`, the lockfile | anyone adding a dependency | **no** | add dependencies in the bootstrap or in a dedicated change |
+
+The pattern behind the table: a file is safe when one worker owns it, and a derived file is
+never a merge problem as long as nobody tries to merge it.
+
+### Generated files: regenerate, never resolve by hand
+
+The barrel, the context map, the `CONTEXT.md` lists, the dependency-cruiser configuration, the
+OpenAPI document, the AsyncAPI document and the event catalog are all functions of the sources.
+When two branches changed one of them, the conflict carries no information. Take either side,
+then:
+
+```bash
+npx ddd-ts-kit docs          # context map, CONTEXT.md lists, barrels
+npm run docs:generate        # OpenAPI, AsyncAPI, event catalog
+npm run verify
+```
+
+The generators are deterministic (sorted output, independent of registration order), so two
+people regenerating from the same sources get the same bytes. `docs --check` and
+`declarations/barrel-current` fail the pipeline if somebody forgot.
+
+**Who regenerates:** whoever merges second. The first branch to land is consistent by itself;
+the second one rebases or merges the default branch, regenerates, and commits the result with
+its own change. In a team of agents, give that job to the coordinator, not to each worker.
+
+### Migrations
+
+Each context owns its tables in its own database schema, so two contexts never alter the same
+table. What they share is the ordered list of migration files. Generate the migration last,
+just before merging, on top of the current default branch; if two branches each added "the
+next" migration, the second one regenerates its own. Never edit a migration that has run
+somewhere.
+
+### The published language of an upstream
+
+A consumer cannot be built against a contract that is still moving. Merge the upstream's
+declaration first (the event, its publisher, the regenerated catalog), as its own small pull
+request, then let the consumers start. See "Contracts first" in
+[Team workflow](team-workflow.md).
+
+## Git worktrees
+
+A worktree is a second working directory of the same repository on another branch. It lets
+several workers run at once on one machine without stashing or switching:
+
+```bash
+git worktree add ../scheduling-appointments -b feat/appointments-book
+git worktree add ../scheduling-calendars -b feat/calendars-working-hours
+```
+
+Each worktree needs its own `npm install` (dependencies are not shared between worktrees) and
+its own ports if two of them run `npm run dev` or the end-to-end tests at once: the generated
+`docker-compose.yml` takes its ports from `.env`, so give each worktree its own `.env`. Fast
+tests need no server at all (adapter specs can run on an in-process PostgreSQL), which is what
+makes four workers on one laptop practical.
+
+Rules that keep worktrees from hurting:
+
+- one worker per worktree, one branch per worktree; a worktree is not a place to share;
+- stage file by file, and read the staged diff before committing: a broad `git add` in a
+  directory another process writes to commits somebody else's half-finished work;
+- remove the worktree when its branch is merged (`git worktree remove`).
+
+For coding agents specifically: an agent told to work "in the appointments context" that is
+started in the main checkout will still read, and may edit, anything. Give it a worktree and
+name the directory it owns. The plugin's hook refuses a hand-written file where a generator
+exists and any edit of a generated contract, and asks before a change of the governed files
+(the config, the lint and pipeline files), which is exactly the shared list above.
+
+## Merge order
+
+1. **The bootstrap**, alone, first.
+2. **Contracts**, upstream before downstream: follow the arrows of the context map.
+3. **Slices inside each context**, in any order between contexts.
+4. **Consumers** of an event, after the event's declaration is merged (they do not need the
+   producer's behaviour to exist: a handler is tested with events built from the declaration).
+5. **End-to-end specs that cross contexts**, last, when both sides are in.
+
+Merge small and often. Two branches that each lived a week will conflict in the aggregate and
+in every derived file; the same work in ten pull requests conflicts in none.
+
+## A concrete plan: four contexts, four workers
+
+The scheduling application: `calendars`, `appointments`, `availability`, `notifications`
+(`analytics` is added later the same way; identity is bought, not built).
+
+```mermaid
+flowchart TD
+  subgraph S0[Phase 0: one worker, sequential]
+    B[Bootstrap: init, four contexts, relationships, glossaries, verify green, merged]
+  end
+  subgraph S1[Phase 1: contracts, sequential, small]
+    C1[calendars publishes working-hours-changed, time-off-added]
+    C2[appointments publishes booked, rescheduled, cancelled]
+    C1 --> C2
+  end
+  subgraph S2[Phase 2: four workers in parallel]
+    W1[W1 calendars: SetWorkingHours, AddTimeOff]
+    W2[W2 appointments: Book, Reschedule, Cancel, Get, List]
+    W3[W3 availability: projection handlers, FindOpenSlots]
+    W4[W4 notifications: confirmation, reminders job, provider ACL]
+  end
+  subgraph S3[Phase 3: one worker]
+    I[Merge in map order, regenerate, cross-context e2e]
+  end
+  B --> C1
+  C2 --> W1 & W2 & W3 & W4
+  W1 & W2 & W3 & W4 --> I
+```
+
+**Phase 0, shared bootstrap (one worker, nobody else starts).**
+
+```bash
+npx ddd-ts-kit init --context calendars:supporting --context appointments:core \
+  --context availability:supporting --context notifications:supporting
+npm install && npm run verify
+```
+
+Then, still sequentially, because each of these edits the config or a shared registration:
+the upstreams of each context (`appointments` names `calendars`; `availability` names
+`calendars` and `appointments`; `notifications` names `appointments`), the first terms of each
+glossary, and any dependency the stack needs. Merge. From here on, the config is frozen for
+the phase.
+
+**Phase 1, contracts (sequential, each a small pull request).** The two upstreams declare
+their integration events with `generate integration-event`. The aggregates behind them can be
+empty shells: what matters is the declared type, version and payload. Regenerate the catalog.
+Merge `calendars` first, then `appointments`.
+
+**Phase 2, four workers, each in a worktree, each owning one directory.**
+
+| Worker | Owns | Builds | Depends on (already merged) |
+|---|---|---|---|
+| W1 | `src/contexts/calendars/` | `Calendar` aggregate, `SetWorkingHours`, `AddTimeOff`, their routes; emits the two events | nothing |
+| W2 | `src/contexts/appointments/` | `Appointment` aggregate, the booking commands and queries, the no-double-booking constraint; emits the three events | the declared `calendars` events, if it keeps a local copy of working hours |
+| W3 | `src/contexts/availability/` | integration handlers feeding its projection, `FindOpenSlots` | the declared events of both upstreams |
+| W4 | `src/contexts/notifications/` | handler under the consumer name `notifications.remind-on-appointment-booked`, the job `notifications.send-reminders`, the anti-corruption layer of the provider | the declared `appointments` events |
+
+Each worker's brief says: the one directory it may write, the files it must not touch (the
+config, `src/platform/`, `src/main.ts`, another context, any generated document), that it must
+not regenerate shared documents, and that it stops and reports if its slice seems to need a
+change outside its directory. W3 and W4 test their handlers with events built from the
+declarations; they do not wait for W1 and W2 to finish.
+
+**Phase 3, integration (one worker).** Merge in the order of the map (`calendars`,
+`appointments`, `availability`, `notifications`), regenerate the derived files after each
+merge, write the migrations in sequence, then add the end-to-end specs that cross contexts
+(book an appointment, observe the confirmation and the slot disappearing) and run
+`npm run verify`.
+
+The plugin writes the same plan down as a table: the skill `plan-slices` produces
+`docs/architecture/slices.md`, where each row is a `contract`, a `skeleton` (an aggregate and
+its repository, whose generators also write shared files) or a `slice`, with an owner and the
+rows it depends on. Contracts and skeletons belong to the coordinator, slices to the worker of
+their context, and only the coordinator edits the file.
+
+What makes the plan work is that phases 0 and 1 are deliberately not parallel. They take a
+small fraction of the total time and remove nearly every collision from the rest.
+
+## Limits and when not to use it
+
+- **Parallelism does not help discovery.** While the boundaries and the language are still
+  moving, four workers produce four incompatible guesses. Split only after the bootstrap and
+  the contracts are merged.
+- **Inside one context the gain is small.** Use cases share the aggregate; past two workers
+  the merges cost more than the parallelism returns.
+- **A context whose upstream contract is not stable cannot start.** Sequence it.
+- **Agents multiply cost as well as speed.** Each one carries its own context window; four
+  workers spend roughly four times the tokens of one, see
+  [Token economy](token-economy.md). On one machine they also share memory, CPU, ports and the
+  Docker daemon.
+- **Nothing locks a file between people.** The rules forbid cross-context imports; they do not
+  stop two branches from editing the config. The sequencing above is a discipline, held by
+  review and by the brief each worker receives. For agents the plugin goes one step further:
+  its skill `parallel-work` has the coordinator write a `.ddd-ts-kit/worker.json` naming the
+  context in each worktree, and the hook then refuses a write outside that context. This was
+  being added while this guide was written (2026-10-10) and is described by the skill, not yet
+  by a README; it fails open like the rest of the hook.
+- **The plan assumes the declared style with a barrel per context.** In the explicit style,
+  `<context>.module.ts` is a hand-maintained registration file inside each context: still
+  private to the context, but a conflict point between two use cases of that context.
+
+## Sources
+
+- Git documentation, `git-worktree`, https://git-scm.com/docs/git-worktree
+- Matthew Skelton and Manuel Pais, *Team Topologies*, IT Revolution, 2019.
+- Sam Newman, *Building Microservices*, 2nd edition, O'Reilly, 2021, chapter 5 (contracts and
+  consumer-first design).
+- This repository: the [CLI README](../../packages/cli/README.md) (what each generator writes,
+  marker regions, derived barrels), the skill `document`.
+
+## See also
+
+- [Team workflow](team-workflow.md)
+- [Commit discipline](commit-discipline.md)
+- [Methodology](methodology.md)
+- [Token economy](token-economy.md)
+- [Context map: a worked example](../concepts/context-map-worked-example.md)
+- [Modular monolith](../concepts/modular-monolith.md)

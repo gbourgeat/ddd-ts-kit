@@ -1,0 +1,41 @@
+const BILLING = 'src/contexts/billing';
+const CATALOG = 'src/contexts/catalog';
+
+/** Where the fixtures put what they write: the canonical places of two contexts, billing downstream of catalog. */
+export const PATHS = {
+  BILLING,
+  CATALOG,
+  AGGREGATE: `${BILLING}/domain/aggregates/invoice.aggregate.ts`,
+  AGGREGATE_SPEC: `${BILLING}/test/unit/invoice.aggregate.spec.ts`,
+  BUILDER: `${BILLING}/test/builders/invoice.builder.ts`,
+  EVENT: `${BILLING}/domain/events/invoice-issued.event.ts`,
+  REPOSITORY_PORT: `${BILLING}/domain/repositories/invoice.repository.ts`,
+  COMMAND: `${BILLING}/application/commands/issue-invoice/issue-invoice.command.ts`,
+  HANDLER: `${BILLING}/application/commands/issue-invoice/issue-invoice.handler.ts`,
+  HANDLER_SPEC: `${BILLING}/test/unit/issue-invoice.handler.spec.ts`,
+  QUERY: `${BILLING}/application/queries/invoices-issued/invoices-issued.query.ts`,
+  QUERY_HANDLER: `${BILLING}/application/queries/invoices-issued/invoices-issued.handler.ts`,
+  QUERY_HANDLER_SPEC: `${BILLING}/test/unit/invoices-issued.handler.spec.ts`,
+  PORT: `${BILLING}/application/ports/payment-gateway.port.ts`,
+  POLICY: `${BILLING}/application/authorization/only-issuer-voids.policy.ts`,
+  EVENT_HANDLER: `${BILLING}/application/event-handlers/invoice-issued.event-handler.ts`,
+  EVENT_HANDLER_SPEC: `${BILLING}/test/unit/invoice-issued.event-handler.spec.ts`,
+  JOB: `${BILLING}/application/scheduling/send-reminders.job.ts`,
+  JOB_SPEC: `${BILLING}/test/unit/send-reminders.job.spec.ts`,
+  PUBLISHER: `${BILLING}/application/integration/publishers/invoice-issued.publisher.ts`,
+  INTEGRATION_HANDLER: `${BILLING}/application/integration/handlers/product-listed.integration-handler.ts`,
+  INTEGRATION_HANDLER_SPEC: `${BILLING}/test/unit/product-listed.integration-handler.spec.ts`,
+  CATALOG_INTEGRATION_HANDLER: `${CATALOG}/application/integration/handlers/product-listed.integration-handler.ts`,
+  ADAPTER: `${BILLING}/infrastructure/persistence/in-memory-invoice.repository.ts`,
+  GATEWAY: `${BILLING}/infrastructure/external/in-process-price-catalog.gateway.ts`,
+  PAYMENT_ADAPTER: `${BILLING}/infrastructure/external/remote-payment-gateway.adapter.ts`,
+  ROUTE: `${BILLING}/presentation/http/issue-invoice.route.ts`,
+  ROUTES: `${BILLING}/presentation/http/billing.routes.ts`,
+  PUBLISHED: `${BILLING}/published-language/invoice-issued.v1.integration-event.ts`,
+  MODULE: `${BILLING}/billing.module.ts`,
+  BARREL: `${BILLING}/billing.declarations.ts`,
+  PLATFORM_MODULE: 'src/platform/platform.module.ts',
+  /** The decision record behind what the fixtures relax on purpose, so that only the rule under test speaks. */
+  FIXTURE_ADR: 'docs/adr/0001-fixture-decisions.md',
+  DECIMAL_ADR: 'docs/adr/0012-decimal-arithmetic.md',
+} as const;

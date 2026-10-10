@@ -1,9 +1,9 @@
 import { QueryHandler } from '@ddd-ts-kit/kernel/declarations';
-import { {{name.constant}}_READER } from '../../ports/{{context.kebab}}.ports.js';
-import type { {{name.pascal}}Reader } from '../../ports/{{name.kebab}}-reader.port.js';
-import { {{name.pascal}}Query, type {{name.pascal}}Result } from './{{name.kebab}}.query.js';
+import { {{name.pascal}}Reader } from '../../ports/{{name.kebab}}-reader.port.js';
+import { {{name.pascal}}Query } from './{{name.kebab}}.query.js';
+import type { {{name.pascal}}Result } from './{{name.kebab}}.result.js';
 
-@QueryHandler({{name.pascal}}Query, [{{name.constant}}_READER])
+@QueryHandler({{name.pascal}}Query, [{{name.pascal}}Reader])
 export class {{name.pascal}}Handler implements QueryHandler<{{name.pascal}}Query> {
   constructor(private readonly reader: {{name.pascal}}Reader) {}
 

@@ -21,7 +21,11 @@ const TABLES = [
   'messaging.outbox',
   'messaging.processed_events',
   'billing_core.invoices',
+  'read_side.criteria_contract',
 ];
+
+/** What the Prisma schema cannot say, and a migration of the project adds by hand: strings ordered by code point. */
+const BINARY_ORDER = 'alter table read_side.criteria_contract alter column room type text collate "C"';
 
 /**
  * One PostgreSQL database with the tables of the test schema, created by the DDL that
@@ -33,6 +37,7 @@ export async function createDatabase(): Promise<TestDatabase> {
 
   await migration.connect();
   await migration.query(await readFile(DDL_PATH, 'utf8'));
+  await migration.query(BINARY_ORDER);
   await migration.end();
 
   const prisma = new PrismaClient({

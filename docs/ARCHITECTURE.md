@@ -10,6 +10,10 @@ A system is a set of **bounded contexts**. Each one owns a model, a vocabulary a
 
 - Every context has a `CONTEXT.md`: purpose, classification, ubiquitous language (glossary),
   aggregates, published events, relationships.
+  It ends with a generated `## Reference`: use cases with their permission, routes, consumed
+  and published events, ports with their adapters, policies, gateways and a dependencies
+  line. `ddd-ts-kit docs` writes it, `docs --check` detects its drift, and
+  `ddd-ts-kit describe <context> --json` gives the same facts as data.
 - Every context is classified: `core` (differentiating, gets the best design effort),
   `supporting` (needed, not differentiating) or `generic` (buy or keep trivial).
 - Relationships are declared in `ddd-ts-kit.config.json`, never implied by an import. A
@@ -48,7 +52,7 @@ src/
       services/                  *.service.ts      (stateless domain logic over several aggregates)
     application/
       commands/<use-case>/       *.command.ts, *.handler.ts
-      queries/<use-case>/        *.query.ts, *.handler.ts
+      queries/<use-case>/        *.query.ts, *.result.ts, *.handler.ts
       ports/                     *.port.ts         (ports to the outside world: abstract classes)
       authorization/             <context>.permissions.ts, *.policy.ts (who may do what, here)
       event-handlers/            *.event-handler.ts (reactions to this context's domain events)
@@ -61,7 +65,7 @@ src/
       external/                  adapters of outside systems
       anti-corruption/           translators of another context's or system's model
     presentation/
-      http/                      *.route.ts or *.controller.ts, *.dto.ts
+      http/                      *.route.ts or *.controller.ts, *.dto.ts, <context>.routes.ts
       cli/
     test/
       unit/  integration/
@@ -106,7 +110,7 @@ presentation ──▶ application ──▶ domain ◀── infrastructure
 | `purity/no-ambient-randomness` | No `Math.random`, `crypto.randomUUID` or id library in `domain/` or `application/`: identifiers come from the `IdGenerator` port. |
 | `purity/no-environment` | No `process.env`, `console`, file system or network access in `domain/` or `application/`. |
 | `clean/stepdown` | A file reads top to bottom: static factories, public members, then protected and private ones, and a function above the functions it calls. |
-| `clean/function-size` | A function has at most 3 parameters and 30 lines (configurable); a longer one is doing more than one thing. Default severity `warn`. |
+| `clean/function-size` | A function has at most 3 parameters and 30 lines (configurable, never above 100); a longer one is doing more than one thing. Default severity `warn`. No function is longer than 100 lines of code, `describe` callbacks included: that ceiling is an `error`. |
 | `clean/no-commented-out-code` | No code in comments. Version control remembers. |
 | `clean/no-noise-comment` | No comment that restates the code, no banner, no journal, no closing-brace comment, no `@param` without description. Default severity `warn`. |
 | `clean/no-escape-hatch` | No `any`, no non-null assertion, no type assertion outside mappers and infrastructure, no `@ts-ignore`, no `@ts-expect-error` without a reason, no `eslint-disable` without a reason. |
@@ -127,6 +131,19 @@ presentation ──▶ application ──▶ domain ◀── infrastructure
 | `standard/no-parallel-interface` | No home-made copy of a standard interface of the kernel: no declared `ILogger`, `AppLogger`, `UserContext`, `CurrentUser`, `UserSession`, `PaginatedResult`, `AuditLog` and the like. Use the kernel interface and extend it by declaration merging; the list is `standardInterfaces` in the config. Default severity `warn`. |
 | `declarations/role-declared` | In the declared style, a role file exports a class carrying the decorator of its role, and a declared class lives in a role file. Consumer, policy and domain event names are non-empty string literals, and no class under `domain/` carries a declaration. |
 | `declarations/barrel-current` | In the declared style with a barrel, `<context>.declarations.ts` holds exactly one `export *` per role file of its context: a role file cannot be silently left unregistered. |
+| `ports/abstract-class` | A port (`domain/repositories/*.repository.ts`, `application/ports/*.port.ts`) is an abstract class with abstract members only: no constructor, no private or protected member, no body, no initializer, `static readonly tokenKey` excepted. Never an interface. |
+| `ports/implements-never-extends` | An adapter implements its port and never extends it: the class declared with `@Repository`, `@Gateway` or `@Adapter`, the class given to `bind(Port).toClass(..)`, and any class of `infrastructure/`. |
+| `ports/no-token-constant` | A dependency is named by the class of its port: no `token(..)`, no symbol or string given to `bind`, `rebind`, `resolve`, `fake` or `override`, no UPPER_SNAKE constant in a dependency list, no `*.ports.ts` or `tokens.ts` file. |
+| `ports/no-concrete-dependency` | A dependency list names ports: nothing imported from `infrastructure/` or from `test/fakes/`. |
+| `ports/value-import` | A port named in a dependency list or given to `bind` is imported as a value, never with `import type`. |
+| `clean/no-hash-private` | A class member is `private`, never `#name`. |
+| `clean/blank-lines` | A blank line before every `return` that is not alone in its block and between the logical blocks of a function (after a group of declarations, around `if`, `for`, `try`, around a multiline statement, around a method); no blank line at the edges of a block, never two in a row. Consecutive one-line guards, declarations and fields may stay together. |
+| `clean/one-export-per-file` | A source file exports one class, interface or function and is named after it in kebab-case. Its companions are the types of its own signature, a derived form it calls, or a closed family (a type with its constructors or combinators, the accessors of one private state); anything else is listed in `onePerFile.allow` with its reason. Entry files (`index.ts`, `<context>.declarations.ts`, subpath entries) only re-export. |
+| `clean/file-size` | A file is at most 350 lines, tests included; generated files and declaration files are exempt. |
+| `scheduling/job-triggers-use-case` | A job lives in `application/scheduling/*.job.ts`, implements `ScheduledJob` and only sends commands: no repository among its dependencies, no import of aggregates, entities, domain services or `infrastructure/`. |
+| `scheduling/job-name` | A job is named `<context>.<job-name>` by a string literal in lower-case kebab-case, the context being its own; its `systemActor` carries the same name; the name is unique in the project. |
+| `domain-events/dispatched-on-save` | Domain events leave with the save: no `pullEvents()` call in `application/` or `infrastructure/` of a context, and no `DomainEventDispatcher` imported, named in a dependency list or received by a constructor in `application/commands/`, `application/queries/` or a repository adapter. A handler writes `await repository.save(aggregate)` and nothing else; a removal that announces an event takes the aggregate. |
+| `tracing/platform-only` | `@ddd-ts-kit/tracing` (every entry) and `@opentelemetry/*` are imported only by the platform directory, `main.ts` and `apps/`. |
 | `composition/only-in-module` | Adapters are instantiated or registered only in `<context>.module.ts` and `main.ts`. |
 
 Only the module file and `main.ts` are allowed to know every layer.
@@ -138,7 +155,7 @@ Three analyzers hold the rules, each where it is exact:
 | Analyzer | Holds | When |
 |---|---|---|
 | `ddd-ts-kit check` (zero dependency, text level) | structure and project-wide facts: `tree/*`, `naming/*`, `language/*`, `config/*`, `context/no-cycle`, `test/spec-required`, `test/builder-required`, the config side of `events/outbox-required` and `governance/recorded-deviation` (decision records exist), unique consumer names, and a fast approximation of the code rules | at every file write (editor hook), in CI |
-| `@ddd-ts-kit/eslint-plugin` (syntax tree) | code: `layer/*`, `context/*` imports and `context/extractable`, `purity/*`, `clean/*`, `domain/*`, `application/*`, `authz/*`, `events/*`, `aspects/*`, `standard/*`, `test/no-mocks`, and the comment side of `governance/recorded-deviation`. Authoritative when the two disagree | on staged files, in CI |
+| `@ddd-ts-kit/eslint-plugin` (syntax tree) | code: `layer/*`, `context/*` imports and `context/extractable`, `purity/*`, `clean/*`, `domain/*`, `application/*`, `authz/*`, `events/*`, `aspects/*`, `tracing/*`, `domain-events/*`, `standard/*`, `ports/*`, `scheduling/*`, `test/no-mocks`, and the comment side of `governance/recorded-deviation`. Authoritative when the two disagree | on staged files, in CI |
 | dependency-cruiser (resolved import graph) | the same boundaries through barrels and re-exports, cycles between files, orphans, undeclared dependencies | in CI |
 
 knip (dead code and unused dependencies) and the TypeScript compiler in `strict` mode complete the gate.
@@ -153,8 +170,12 @@ and a violated one raises a `DomainError` with a stable `code`.
 **Value objects.** Immutable, validated in `create`, compared with `equals`. Primitive obsession
 is a defect: an email, an amount, a period are types.
 
-**Domain events.** Past tense, immutable, recorded by the aggregate, pulled and dispatched by
-the application layer after the unit of work commits.
+**Domain events.** Past tense, immutable, recorded by the aggregate. They leave with the
+save: after a repository method handed an aggregate resolves, the events it recorded are
+dispatched in order, inside the unit of work of the command, so their handlers and the
+outbox commit or roll back with the state change. A handler writes
+`await this.orders.save(order)` and nothing else: no `pullEvents()`, no dispatcher. A
+repository adapter only persists.
 
 **Use cases.** One command or query per folder, one handler per command. A command returns at
 most an identifier. A query never changes state and may bypass aggregates to read a projection
@@ -165,7 +186,8 @@ through a port. Handlers orchestrate; business decisions live in the domain.
 implementations; another transport is an adapter chosen in the composition root. Cross-cutting
 behaviour (unit of work, authorization, logging) is a bus middleware, not code repeated in
 handlers. A command is a class extending `Command<Result>`, a query a class extending
-`Query<Result>`; handlers are registered in `<context>.module.ts`.
+`Query<Result>`; a handler is registered by its own declaration, or in
+`<context>.module.ts` in the explicit style.
 
 **Ports.** A port is an abstract class with abstract members only: no constructor, no
 field, no body. The class is the contract and the injection token at once, so there is no
@@ -189,8 +211,15 @@ work in both decorator modes of TypeScript, so a project bound to the legacy mod
 class-validator or NestJS uses the same ones. The explicit style (`<context>.module.ts`
 listing the bindings) remains available and can be mixed in.
 
+**Error reporting.** Unexpected failures go to the `ErrorReporter` port, from outside the
+use cases: a response answered 5xx, a command failing on something that is not a business
+refusal, an integration event buried after its retries, a failed job, a crash of the process.
+A `DomainError` is an answer, not an incident, and is not reported. One failure is one
+report, by the first boundary that sees it, carrying the correlation id and the trace id and
+nothing personal beyond the actor's identifier.
+
 **Scheduled jobs.** A job run by time is declared with
-`@Scheduled('<context>.<job>', { every } or { cron, timeZone }, [tokens])` in
+`@Scheduled('<context>.<job>', { every } or { cron, timeZone }, [ports])` in
 `application/scheduling/` and does one thing: it sends a command. It runs in its own
 execution scope (origin `schedule`, a system actor named after the job, a fresh correlation
 id), so it is logged, measured and audited like any other unit of work. Across several
@@ -273,7 +302,7 @@ every query, log fields, the correlation id stamped on published events) reads t
 
 **Standard interfaces.** The kernel defines the shapes every project shares, so adapters and
 tooling interoperate: `Actor`, `Session`, `ExecutionContext`, `Logger`, `Metrics`, `Cache`,
-`Lock`, `RateLimiter`, `Page` and `PageRequest`, `AuditStamp`, `TenantScoped`, the audit
+`Lock`, `RateLimiter`, `JobScheduler`, `ErrorReporter`, `Page` and `PageRequest`, `AuditStamp`, `TenantScoped`, the audit
 ports `AuditTrail` and `AuditReader` with their `AuditEntry`, next to `Clock`, `IdGenerator`
 and `UnitOfWork`. A project extends them without forking, by augmenting the extension interfaces
 the kernel leaves open (`SessionExtensions`, `ExecutionContextExtensions`, ...). A project
@@ -283,7 +312,7 @@ or `ILogger` is a defect.
 **Cross-cutting behaviour.** Logging, metrics, tracing, retry, timeout, circuit breaking and
 caching are never written inside domain or application code. They are applied from outside,
 in this order of preference: wrappers bound at the composition root
-(`.with(retry(...), timeout(...))`, or globally through the `decorate` hook, as tracing is);
+(`.with(retry(...), timeout(...))`, or for every binding of a kind through the platform);
 bus middlewares for what concerns every use case; and, for an adapter whose policy is part of
 its definition, a standard decorator on the adapter class in `infrastructure/` or `platform/`.
 None of the three is allowed in `domain/` or `application/`. What an aspect records follows
@@ -303,7 +332,7 @@ the execution scope by the repository adapter through the kernel helpers. Lists 
 kernel `Page` and `PageRequest`; a cursor always ends on a unique tie-breaker so paging is
 stable.
 
-**Persistence.** Repositories are interfaces of the domain. Drizzle on PostgreSQL is the
+**Persistence.** Repositories are ports of the domain. Drizzle on PostgreSQL is the
 default adapter family, one database schema per context; Knex, Prisma and TypeORM have
 adapter packages too, and any other mature ORM or database is an adapter of the same interfaces and passes the same repository contract suite. Rows never
 leave `infrastructure/persistence/`: a mapper translates to and from the aggregate.
@@ -315,10 +344,17 @@ in the domain and never depend on a validation library.
 **Contract.** The OpenAPI document is generated from route definitions and committed. CI
 regenerates it and fails on a diff. It is never edited by hand.
 
-**Tracing.** Non-invasive: no tracing import in `domain/` or `application/`. Adapters are
-wrapped at registration in the composition root; a span carries class, method, context and an
-error code, the root span also the correlation id and the origin, never arguments, results,
-error messages or anything about the actor.
+**Tracing.** Non-invasive: no tracing import in `domain/` or `application/`; the platform
+wires it once. One action is one trace: the request, the use case, each call to a repository,
+a gateway or an outside system, the domain events of a save and their handlers, the outbox
+append, then, later and in the same trace, the publication by the relay and each consuming
+context with the commands it sends. A scheduled job is a trace of its own. Span names are
+stable and low in cardinality (`command BookAppointment`, `repository
+AppointmentRepository.save`, `process notification.appointment-booked`); health, readiness
+and documentation routes and plumbing produce none. A span carries class, method, context,
+outcome and an error code, the root also the correlation id and the origin, never arguments,
+results, error messages or anything about the actor. The same correlation id is on log
+lines, audit entries and error reports.
 
 ## 5. Tests
 

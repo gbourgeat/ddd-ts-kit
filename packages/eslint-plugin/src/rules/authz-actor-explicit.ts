@@ -1,17 +1,19 @@
 import { ASTUtils, AST_NODE_TYPES, TSESLint, type TSESTree } from '@typescript-eslint/utils';
-import { accessedName } from '../support/calls.js';
-import { declaredTypeName } from '../support/declared-type.js';
-import { defineRule, type Report } from '../support/define-rule.js';
-import { propertyName } from '../support/globals.js';
-import { importListener, innerLayer } from '../support/imports.js';
-import { parameterTypeName } from '../support/types.js';
+import { accessedName } from '../support/calls/accessed-name.js';
+import { declaredTypeName } from '../support/types/declared-type-name.js';
+import { defineRule, type Report } from '../support/rule/define-rule.js';
+import { propertyName } from '../support/globals/property-name.js';
+import { importListener } from '../support/imports/import-listener.js';
+import { innerLayer } from '../support/imports/inner-layer.js';
+import { parameterTypeName } from '../support/types/parameter-type-name.js';
 
 type MessageId = 'imported' | 'used' | 'helper' | 'injected' | 'read';
 type Source = Readonly<TSESLint.SourceCode>;
 
 /** The two ports that answer "who, in which unit of work" without being handed it. */
 const AMBIENT_PORTS = new Set(['ActorContext', 'ExecutionScope']);
-const AMBIENT = new Set([...AMBIENT_PORTS, 'ACTOR_CONTEXT', 'EXECUTION_SCOPE', 'AsyncLocalStorageActorContext', 'AsyncLocalStorageExecutionScope', 'ScopedActorContext', 'AsyncLocalStorage']);
+/** The ports, their adapters of the kernel and what those are built on: a class is a type and an injection token at once, so naming one is reading the ambient context. */
+const AMBIENT = new Set([...AMBIENT_PORTS, 'AsyncLocalStorageExecutionScope', 'ScopedActorContext', 'AsyncLocalStorage']);
 /** Kernel helpers that read the execution scope for a repository adapter: audit columns and the tenant of a statement. */
 const INFRASTRUCTURE_HELPERS = new Set(['tenantScopeOf', 'stampCreation', 'stampUpdate']);
 const READS = new Set(['current', 'require']);
@@ -27,7 +29,7 @@ export const authzActorExplicit = defineRule<MessageId>({
   recommended: 'error',
   description: 'Use cases receive the actor in the command or query: domain/ and application/ never read the ambient ExecutionScope or ActorContext.',
   messages: {
-    imported: `{{name}} is imported in the {{layer}} layer: it gives the actor or the execution context of the current unit of work without anybody passing it. ${INSTEAD}`,
+    imported: `{{name}} is imported in the {{layer}} layer, as a type or as the port named in a dependency list: it gives the actor or the execution context of the current unit of work without anybody passing it. ${INSTEAD}`,
     used: `{{name}} is used in the {{layer}} layer: it gives the actor or the execution context of the current unit of work without anybody passing it. ${INSTEAD}`,
     helper: `{{name}} is used in the {{layer}} layer: it reads the execution scope to stamp audit columns or to scope a statement by tenant, which is the work of a repository adapter. ${INSTEAD}`,
     injected: `{{className}} is given {{port}}: a use case whose actor is ambient cannot be called from an integration event handler, a job or a test without setting a global. ${INSTEAD}`,
@@ -35,17 +37,22 @@ export const authzActorExplicit = defineRule<MessageId>({
   },
   create({ file, sourceCode, report }) {
     const layer = innerLayer(file);
+
     if (layer === undefined) return {};
+
     const named = (node: TSESTree.Node, name: string | undefined): void => {
       if (name !== undefined && AMBIENT.has(name)) report({ node, messageId: 'used', data: { name, layer } });
     };
+
     return {
       ...importListener(file, ({ names }) => {
         for (const { name, node } of names.filter((imported) => AMBIENT.has(imported.name))) report({ node, messageId: 'imported', data: { name, layer } });
+
         for (const { name, node } of names.filter((imported) => INFRASTRUCTURE_HELPERS.has(imported.name))) report({ node, messageId: 'helper', data: { name, layer } });
       }),
       MemberExpression(node) {
         named(node.property, propertyName(node));
+
         if (isHelperOfNamespace(sourceCode, node)) report({ node: node.property, messageId: 'helper', data: { name: propertyName(node), layer } });
       },
       TSQualifiedName: (node) => named(node.right, node.right.name),
@@ -59,9 +66,12 @@ export const authzActorExplicit = defineRule<MessageId>({
 
 function injectedPorts(node: TSESTree.MethodDefinition, report: Report<MessageId>): void {
   if (node.kind !== 'constructor') return;
+
   const className = node.parent.parent.id?.name ?? 'The class';
+
   for (const parameter of node.value.params) {
     const port = parameterTypeName(parameter);
+
     if (port !== undefined && AMBIENT_PORTS.has(port)) report({ node: parameter, messageId: 'injected', data: { className, port } });
   }
 }
@@ -69,7 +79,9 @@ function injectedPorts(node: TSESTree.MethodDefinition, report: Report<MessageId
 /** `kernel.stampCreation` where `kernel` is an import: a method of the project that happens to carry the name is not the helper. */
 function isHelperOfNamespace(sourceCode: Source, node: TSESTree.MemberExpression): boolean {
   if (node.object.type !== AST_NODE_TYPES.Identifier || !INFRASTRUCTURE_HELPERS.has(propertyName(node) ?? '')) return false;
+
   const definitions = ASTUtils.findVariable(sourceCode.getScope(node), node.object.name)?.defs ?? [];
+
   return definitions.some((definition) => definition.type === TSESLint.Scope.DefinitionType.ImportBinding);
 }
 
@@ -79,7 +91,10 @@ function isHelperOfNamespace(sourceCode: Source, node: TSESTree.MemberExpression
  */
 function isAmbientRead(sourceCode: Source, node: TSESTree.CallExpression): boolean {
   const { callee } = node;
+
   if (callee.type !== AST_NODE_TYPES.MemberExpression || node.arguments.length > 0 || !READS.has(propertyName(callee) ?? '')) return false;
+
   const declared = declaredTypeName(sourceCode, callee.object);
+
   return declared === undefined ? AMBIENT_RECEIVER.test(accessedName(callee.object) ?? '') : AMBIENT.has(declared);
 }

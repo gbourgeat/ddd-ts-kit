@@ -1,5 +1,6 @@
 import type { CommandHandler } from '../../application/messaging/command-handler.js';
 import type { Command } from '../../application/messaging/command.js';
+import type { HandlerRegistration } from '../../application/messaging/handler-registration.js';
 import type { MessageType } from '../../application/messaging/message-type.js';
 import type { ResultOf } from '../../application/messaging/result-of.js';
 import type { CommandBus } from '../../application/ports/command-bus.js';
@@ -11,8 +12,12 @@ export class InMemoryCommandBus extends InProcessBus implements CommandBus {
     super('command');
   }
 
-  register<C extends Command<unknown>>(type: MessageType<C>, handler: CommandHandler<C>): this {
-    this.add(type, handler);
+  register<C extends Command<unknown>>(
+    type: MessageType<C>,
+    handler: CommandHandler<C>,
+    registration?: HandlerRegistration,
+  ): this {
+    this.add(type, handler, registration);
 
     return this;
   }

@@ -1,10 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { isTestFile as cliIsTestFile, locate as cliLocate, resolveImport as cliResolveImport } from '../../cli/src/check/project.js';
-import { parallelNames as cliParallelNames } from '../../cli/src/check/standard-interfaces.js';
-import { parseConfig as cliParseConfig } from '../../cli/src/config.js';
-import { isTestFile, locate, resolveImport } from '../src/project/classify.js';
-import { parseConfig } from '../src/project/config.js';
-import { parallelNames } from '../src/support/standard-interfaces.js';
+import { isTestFile as cliIsTestFile } from '../../cli/src/check/project/is-test-file.js';
+import { locate as cliLocate } from '../../cli/src/check/project/locate.js';
+import { resolveImport as cliResolveImport } from '../../cli/src/check/project/resolve-import.js';
+import { parallelNames as cliParallelNames } from '../../cli/src/check/standard/parallel-names.js';
+import { parseConfig as cliParseConfig } from '../../cli/src/config/parse-config.js';
+import { isTestFile } from '../src/project/is-test-file.js';
+import { locate } from '../src/project/locate.js';
+import { resolveImport } from '../src/project/resolve-import.js';
+import { parseConfig } from '../src/project/parse-config.js';
+import { parallelNames } from '../src/support/standard-interfaces/parallel-names.js';
 
 const RAW_CONFIGS: readonly Record<string, unknown>[] = [
   {},
@@ -14,6 +18,9 @@ const RAW_CONFIGS: readonly Record<string, unknown>[] = [
   { stack: { validation: 'none' }, publishedLanguageAllowedPackages: ['valibot'], rules: { 'clean/stepdown': 'warn' } },
   { standardInterfaces: { TenantInfo: 'TenantScoped', CurrentUser: false, Empty: '', Wrong: true, Count: 3 } },
   { standardInterfaces: ['ILogger'] },
+  { limits: { maxParameters: 2, maxFunctionLines: 500 } },
+  { onePerFile: { allow: [{ file: './src/platform/collaborators.ts', reason: ' the defaults of one runtime ' }, { file: 'src/**/x.ts', reason: ' ' }, { file: 'src/a.ts' }, { reason: 'no file' }, 'src/b.ts', 7] } },
+  { onePerFile: ['src/a.ts'] },
   { stack: { style: 'declared' } },
   { stack: { style: 'declared', assembly: 'discovery' } },
   { stack: { style: 'explicit', orm: 'none' } },
@@ -73,11 +80,13 @@ const SPECIFIERS = [
 describe('the plugin classifies files exactly like the CLI checker', () => {
   it.each(RAW_CONFIGS)('reads the config %j the same way', (raw) => {
     const read = parseConfig(raw);
+
     expect(read).toEqual(keysReadByThePlugin(cliParseConfig(raw), read));
   });
 
   it.each(RAW_CONFIGS)('names the same home-made copies of standard interfaces under %j', (raw) => {
     const names = parallelNames(parseConfig(raw).standardInterfaces);
+
     expect([...names]).toEqual([...cliParallelNames(cliParseConfig(raw).standardInterfaces)]);
     expect(names.get('ILogger')).toBe('Logger');
   });
@@ -105,6 +114,7 @@ describe('the plugin classifies files exactly like the CLI checker', () => {
 function keysReadByThePlugin(cli: unknown, plugin: unknown): unknown {
   if (Array.isArray(cli) && Array.isArray(plugin)) return cli.map((item: unknown, index) => keysReadByThePlugin(item, plugin[index]));
   if (!isPlainObject(cli) || !isPlainObject(plugin)) return cli;
+
   return Object.fromEntries(Object.keys(plugin).map((key) => [key, keysReadByThePlugin(cli[key], plugin[key])]));
 }
 

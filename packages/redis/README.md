@@ -66,6 +66,14 @@ volumes:
 
 `REDIS_URL=redis://127.0.0.1:6379` then suits the three servers alike.
 
+**Credentials.** A client of ioredis keeps its options, password included, and shows them to
+whoever inspects it: that cannot be changed from here, so never log a client. The adapters of
+this package (`RedisCache`, `RedisLock`, `RedisRateLimiter`, `RedisRelaySignal`,
+`RedisStreamsEventBus`) hold their client in a field that is not enumerable, and answer their
+name to `JSON.stringify` and `util.inspect`: logging, spreading or serialising an adapter does
+not lead to the client. The object `connectRedis` answers gives its `client` by name
+(`redis.client`, `const { client } = redis`) and leaves it out of a spread or a log.
+
 ## Cache
 
 `RedisCache` implements the kernel `Cache` port with its typed `CacheKey`.
@@ -356,7 +364,11 @@ process.on('SIGTERM', async () => {
   builder.rebind(EventSubscribers).toValue({ forContext: (name) => bus.forConsumer(name) });
   ```
 - The tracing wrappers work as with any provider: the bus carries `traceparent` and
-  `correlationId` untouched, in the envelope and as fields of the entry.
+  `correlationId` untouched, in the envelope and as fields of the entry, across a retry too.
+  Next to the event, each handler receives the delivery (`EventDelivery` of the kernel):
+  `{ attempt, maxAttempts, system: 'redis', destination, consumer }`, where `destination` is the
+  stream. `@ddd-ts-kit/tracing` reads it to make one CONSUMER span per attempt; the bus names
+  itself `messagingSystem: 'redis'`.
 - The correlation makes the round trip. Publish through `scopedPublisher(publisher, scope)` of
   the kernel and consume with `consume(definition, { ..., scope }, handler)`: the consumer runs
   in an execution context whose `correlationId` is the one of the request that published,

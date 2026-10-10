@@ -60,6 +60,8 @@ export class JobRecorder {
   }
 
   private record(job: RegisteredJob, run: JobRun, detail: Detail): JobRun {
+    const { correlationId } = detail;
+
     job.lastRun = run;
 
     quietly(() => {
@@ -70,7 +72,9 @@ export class JobRecorder {
       this.log(run, detail);
     });
 
-    quietly(() => this.options.onRun?.(run, detail.failure?.error));
+    quietly(() => {
+      this.options.onRun?.(run, detail.failure?.error, correlationId === undefined ? {} : { correlationId });
+    });
 
     return run;
   }
@@ -84,6 +88,10 @@ export class JobRecorder {
   }
 
   private log(run: JobRun, { correlationId, failure }: Detail): void {
+    const level = LEVELS[run.outcome];
+
+    if (!this.options.logger.isLevelEnabled(level)) return;
+
     const fields: LogFields = {
       job: run.job,
       context: contextOf(run.job),
@@ -95,7 +103,7 @@ export class JobRecorder {
       ...(failure === undefined ? {} : { errorType: typeOf(failure.error) }),
     };
 
-    this.options.logger[LEVELS[run.outcome]](`Scheduled job ${WORDS[run.outcome]}`, fields);
+    this.options.logger[level](`Scheduled job ${WORDS[run.outcome]}`, fields);
   }
 }
 

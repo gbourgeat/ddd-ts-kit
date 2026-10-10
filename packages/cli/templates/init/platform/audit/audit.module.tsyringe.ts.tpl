@@ -1,34 +1,43 @@
-import type { AuditReader } from '@ddd-ts-kit/audit';
-import { QUERY_BUS, defineContextModule, token, type ContextModule } from '@ddd-ts-kit/di';
-import type { Route } from '@ddd-ts-kit/http';
+import { AuditReader, AuditTrail } from '@ddd-ts-kit/audit';
+import { defineContextModule, type ContextModule } from '@ddd-ts-kit/di';
+import { subscribeAll } from '@ddd-ts-kit/events';
+import { EventSubscribers } from '@ddd-ts-kit/kernel';
+{{#if audit.route}}
 import { auditPermissions } from './audit.permissions.js';
+{{/if}}
+import type { Audit } from './create-audit.js';
+{{#if audit.route}}
 import { ListAuditEntriesHandler } from './list-audit-entries.handler.js';
 import { ListAuditEntriesQuery } from './list-audit-entries.query.js';
-import { listAuditEntriesRoute } from './list-audit-entries.route.js';
-
-export const AUDIT_ROUTES = token<readonly Route[]>('audit.routes');
-const AUDIT_READER = token<AuditReader>('audit.AuditReader');
+{{/if}}
 
 /**
- * The read side of the audit trail: a capability of the platform, not a bounded context. It has
- * no model of its own, only one protected query over the `AuditReader` port, registered like any
- * use case so that reading the trail is authorized and recorded.
+ * The audit trail as a capability of the platform, not a bounded context: the store behind its
+ * two ports, the subscription to every declared integration event, under a name of its own{{#if audit.route}}, and
+ * its read side, one protected query registered like any use case so that reading the trail is
+ * authorized and recorded{{/if}}.
  */
-export function auditModule(reader: AuditReader): ContextModule {
+export function auditModule(audit: Audit): ContextModule {
   return defineContextModule({
     name: 'audit',
     register(builder) {
-      builder.bind(AUDIT_READER).toValue(reader);
+      builder.bind(AuditTrail).toValue(audit.trail);
+      builder.bind(AuditReader).toValue(audit.trail);
+{{#if audit.route}}
 {{#if authz.rebac}}
+
       builder
         .query(ListAuditEntriesQuery)
         .requires(auditPermissions['trail.read'], { resource: () => ({ type: 'context', id: 'audit' }) })
-        .handledBy(ListAuditEntriesHandler, [AUDIT_READER]);
+        .handledBy(ListAuditEntriesHandler, [AuditReader]);
 {{/if}}
 {{#unless authz.rebac}}
-      builder.query(ListAuditEntriesQuery).requires(auditPermissions['trail.read']).handledBy(ListAuditEntriesHandler, [AUDIT_READER]);
+      builder.query(ListAuditEntriesQuery).requires(auditPermissions['trail.read']).handledBy(ListAuditEntriesHandler, [AuditReader]);
 {{/unless}}
-      builder.bind(AUDIT_ROUTES).toFactory((resolve) => [listAuditEntriesRoute(resolve(QUERY_BUS))]);
+{{/if}}
+    },
+    onStart({ resolve }) {
+      subscribeAll(resolve(EventSubscribers).forContext(audit.consumer), audit.subscriptions);
     },
   });
 }

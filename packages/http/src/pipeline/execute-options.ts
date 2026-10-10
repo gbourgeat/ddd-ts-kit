@@ -2,6 +2,7 @@ import type { Clock, ExecutionScope } from '@ddd-ts-kit/kernel';
 import type { ErrorMapper } from '../error/error-mapper.js';
 import type { ErrorContext } from './error-context.js';
 import type { RawRequest } from './raw-request.js';
+import type { RouteAround } from './route-around.js';
 
 export interface ExecuteOptions {
   readonly errorMapper?: ErrorMapper;
@@ -30,4 +31,10 @@ export interface ExecuteOptions {
   readonly requestTimeoutMs?: number;
   /** The instant a request arrived at, for `requestTimeoutMs`. Defaults to the system clock. */
   readonly clock?: Clock;
+  /**
+   * Wraps the whole handling of each request, from authentication to the answer, refusals
+   * included. This is where a tracer names the request after its route: `tracedRoutes()` of
+   * `@ddd-ts-kit/tracing` fits as it is.
+   */
+  readonly around?: RouteAround;
 }

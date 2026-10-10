@@ -7,7 +7,9 @@ import type { ExecutionContext } from '../execution/execution-context.js';
  * in the command or query.
  */
 export abstract class ExecutionScope {
-  static readonly tokenKey = 'kernel.ExecutionScope';
+  static {
+    Object.defineProperty(this, 'tokenKey', { value: 'kernel.ExecutionScope' });
+  }
 
   abstract current(): ExecutionContext | undefined;
 

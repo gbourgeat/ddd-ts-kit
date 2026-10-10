@@ -7,7 +7,7 @@ description: >-
   the standalone entry point and the per-context boot test. Use when the user mentions
   microservices, splitting the monolith, deploying or scaling one context alone, when a
   context needs data or a synchronous answer from another, or when context/extractable is
-  reported.
+  reported. To choose the relationship between two contexts use context-map.
 argument-hint: "<context>"
 allowed-tools:
   - Bash(npx ddd-ts-kit check *)
@@ -33,7 +33,7 @@ composition and adapters only. If extraction would require editing `domain/` or
 | Collaboration by integration events, published through the outbox, consumed idempotently | `events/outbox-required`, `events/consumer-idempotent` |
 | A synchronous need (a price, a credit check) goes through a port of the caller, bound as `gateway`. In process today, HTTP or RPC tomorrow: same port, timeouts and failure handled from day one | `layer/application-inward` |
 | Data needed often from another context is a local projection fed by its events, not a call | review |
-| The module wires with the kernel and the platform only | per-context boot test |
+| The context assembles with the kernel and the platform only (its declarations or its module) | per-context boot test |
 | Configuration is read through the platform and namespaced by context | review |
 | No shared mutable state, no singleton shared across contexts | `composition/only-in-module` |
 | Authorization travels as an actor in the message, never as a session | `authz/actor-explicit` |
@@ -52,21 +52,24 @@ platform only: a hidden dependency on another context makes it fail.
    behaviour when the other side is down.
 4. Does it need to *change* the other's state in the same transaction? Then either the two
    are one context, or the requirement must become a process: one step, an event, the next
-   step, with compensation. Go back to `ddd-ts-kit:model-context`.
+   step, with compensation. Go back to `ddd-ts-kit:bounded-contexts`.
 
 ## Extracting
 
 1. `npx ddd-ts-kit generate service <context>`: `src/apps/<context>/main.ts` composing that
-   context, the kernel and the platform, with its own image target.
+   context, the kernel and the platform, with its own start script and image target. Its
+   scheduled jobs leave with it (`npx ddd-ts-kit generate worker` gives the jobs of the
+   remaining contexts a process of their own).
 2. Replace each in-process `gateway` adapter that points to it, in the remaining contexts,
    by a remote adapter of the same port. Same contract suite.
-3. Switch the event provider from in-memory to a broker for both sides (outbox relay on the
-   producer, durable subscription on the consumer). Nothing changes in handlers.
+3. Switch the event provider from in-memory to a broker for both sides (`stack.broker`:
+   outbox relay on the producer, one durable subscription per consumer name). Nothing changes
+   in handlers. The declared style then needs the `barrel` assembly.
 4. Move the context's schema and migrations with it; the others never read it, so nothing
    else moves.
 5. The published language becomes a versioned package or stays a shared source folder: it
    is a contract either way.
-6. Document in `docs/context-map.md` and an ADR: what is deployed where, and the new failure
+6. Document in `docs/context-map.md` (skill `ddd-ts-kit:context-map`) and a decision record: what is deployed where, and the new failure
    modes (the other side can now be down).
 
 Do not extract for its own sake: a separate deployment buys independent scaling and release

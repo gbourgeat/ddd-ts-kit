@@ -1,29 +1,27 @@
 import { describe, expect, it } from 'vitest';
-import { scan } from '../src/check/scanner.js';
+import { scan } from '../src/check/scan/scan.js';
 
-const specifiers = (source: string): string[] => scan(source).imports.map((record) => `${record.kind}:${record.specifier}`);
+const EVERY_FORM = [
+    "import a from 'a';",
+    "import { b, c as d } from 'b';",
+    "import * as e from 'e';",
+    "import type { F } from 'f';",
+    "import g, { type H } from 'g';",
+    "import 'side-effect';",
+    "export { i } from 'i';",
+    "export * from 'j';",
+    "export type { K } from 'k';",
+    "const l = await import('l');",
+    "const m = require('m');",
+    "import n = require('n');",
+    "type O = import('o').O;",
+    'import p from "p";',
+    'import q from `q`;',
+].join('\n');
 
 describe('import scanner', () => {
   it('finds every form of import', () => {
-    const source = [
-      "import a from 'a';",
-      "import { b, c as d } from 'b';",
-      "import * as e from 'e';",
-      "import type { F } from 'f';",
-      "import g, { type H } from 'g';",
-      "import 'side-effect';",
-      "export { i } from 'i';",
-      "export * from 'j';",
-      "export type { K } from 'k';",
-      "const l = await import('l');",
-      "const m = require('m');",
-      "import n = require('n');",
-      "type O = import('o').O;",
-      'import p from "p";',
-      'import q from `q`;',
-    ].join('\n');
-
-    expect(specifiers(source)).toEqual([
+    expect(specifiers(EVERY_FORM)).toEqual([
       'import:a',
       'import:b',
       'import:e',
@@ -47,6 +45,14 @@ describe('import scanner', () => {
 
     expect(first).toMatchObject({ line: 3, typeOnly: true, names: ['A', 'C'] });
     expect(second).toMatchObject({ line: 7, typeOnly: false, names: ['D', 'E'] });
+  });
+
+  it('tells the names imported as types from the ones imported as values', () => {
+    const [whole, inline, plain] = scan("import type { A, B } from 'a';\nimport { type C, D, type E as F } from 'c';\nimport G, { H } from 'g';\n").imports;
+
+    expect(whole?.typeNames).toEqual(['A', 'B']);
+    expect(inline).toMatchObject({ typeOnly: false, names: ['C', 'D', 'F'], typeNames: ['C', 'F'] });
+    expect(plain?.typeNames).toEqual([]);
   });
 
   it('ignores imports written in comments, strings, templates and regular expressions', () => {
@@ -103,3 +109,7 @@ describe('import scanner', () => {
     ]);
   });
 });
+
+function specifiers(source: string): string[] {
+  return scan(source).imports.map((record) => `${record.kind}:${record.specifier}`);
+}

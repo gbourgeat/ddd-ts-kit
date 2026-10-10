@@ -1,23 +1,27 @@
 // Imported first on purpose: instrumentation has to be installed before any module it patches is loaded.
 import { tracing } from '{{paths.appToSource}}/platform/tracing.js';
-{{service.imports}}
-import { composeApplication } from '{{paths.appToSource}}/platform/application.js';
+{{#if errors.sentry}}
+// Imported second on purpose: a failure while the rest of the application loads is already reported.
+import { errors } from '{{paths.appToSource}}/platform/errors.js';
+{{/if}}
 {{#if http.any}}
-import { createAuthenticator } from '{{paths.appToSource}}/platform/auth/authenticator.js';
+import { createAuthenticator } from '{{paths.appToSource}}/platform/auth/create-authenticator.js';
 {{/if}}
-{{#if cache.redis}}
-import { openRedis } from '{{paths.appToSource}}/platform/cache.js';
-{{/if}}
-import { loadConfig } from '{{paths.appToSource}}/platform/config.js';
-import { openPersistence } from '{{paths.appToSource}}/platform/database/persistence.js';
-import { {{events.providerName}} } from '{{paths.appToSource}}/platform/events.js';
-{{#if http.any}}
-import { startHttpServer } from '{{paths.appToSource}}/platform/http-server.js';
-{{/if}}
+import { composeApplication } from '{{paths.appToSource}}/platform/compose-application.js';
+import { loadConfig } from '{{paths.appToSource}}/platform/config/load-config.js';
+import { openPersistence } from '{{paths.appToSource}}/platform/database/open-persistence.js';
+import { {{events.providerName}} } from '{{paths.appToSource}}/platform/events/{{events.providerFile}}.js';
 {{#if events.outbox}}
-import { startOutboxRelay } from '{{paths.appToSource}}/platform/outbox-relay.js';
+import { startOutboxRelay } from '{{paths.appToSource}}/platform/events/start-outbox-relay.js';
 {{/if}}
-
+{{#if http.any}}
+import { startHttpServer } from '{{paths.appToSource}}/platform/http/start-http-server.js';
+{{/if}}
+import { jobSettings } from '{{paths.appToSource}}/platform/job-settings.js';
+{{#if cache.redis}}
+import { openRedis } from '{{paths.appToSource}}/platform/redis/open-redis.js';
+{{/if}}
+{{service.imports}}
 // The context "{{context.kebab}}" alone, on the kernel and the platform: the same code as in the whole application, another composition root.
 const config = loadConfig(process.env);
 {{#if persistence.needsUrl}}
@@ -29,32 +33,52 @@ const persistence = openPersistence();
 {{#if cache.redis}}
 const redis = openRedis(config);
 {{/if}}
+
 const application = composeApplication(
   persistence,
   {
     events: {{events.provider}},
+{{#if errors.sentry}}
+    errors,
+{{/if}}
 {{#if http.any}}
     authenticator: createAuthenticator(config),
 {{/if}}
-    log: { level: config.logLevel, service: config.serviceName },
+    log: { ...config.log, service: config.serviceName, environment: config.environment },
+    traceConsumers: config.tracing.consumers,
     resilience: config.resilience,
+    // A context run alone takes its jobs with it, and only its own.
+    jobs: { start: config.runJobs, settings: jobSettings(process.env, '{{context.kebab}}') },
 {{#if cache.redis}}
     redis,
 {{/if}}
   },
   {{service.selection}},
 );
+
 await application.start();
+
 {{#if events.outbox}}
-{{#if cache.relaySignal}}
-const relay = startOutboxRelay({ store: persistence.outbox, publisher: application.eventBus, intervalMs: config.outboxRelayIntervalMs, logger: application.logger, wakeOn: redis.relaySignal });
+const relay = startOutboxRelay({
+  store: persistence.outbox,
+  publisher: application.eventBus,
+  intervalMs: config.outboxRelayIntervalMs,
+  logger: application.logger,
+{{#if errors.sentry}}
+  errors,
 {{/if}}
-{{#unless cache.relaySignal}}
-const relay = startOutboxRelay({ store: persistence.outbox, publisher: application.eventBus, intervalMs: config.outboxRelayIntervalMs, logger: application.logger });
-{{/unless}}
+{{#if cache.relaySignal}}
+  wakeOn: redis.relaySignal,
+{{/if}}
+{{#if persistence.signals}}
+  wakeOn: persistence.relaySignal,
+{{/if}}
+});
+
 {{/if}}
 {{#if http.any}}
 const server = await startHttpServer(application, config);
+
 application.logger.info('listening', { context: '{{context.kebab}}', port: server.port });
 {{/if}}
 {{#unless http.any}}

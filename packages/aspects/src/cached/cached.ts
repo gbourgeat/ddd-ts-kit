@@ -5,7 +5,7 @@ import type { Aspect } from '../aspect/aspect.js';
 import { defineAspect } from '../aspect/define-aspect.js';
 import type { JoinPoint } from '../aspect/join-point.js';
 import { AspectNotAllowedError } from '../errors/aspect-not-allowed-error.js';
-import { cacheOr } from '../runtime/collaborators.js';
+import { cacheOr } from '../runtime/cache-or.js';
 
 export interface CachedOptions {
   /**

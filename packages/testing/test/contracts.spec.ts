@@ -6,17 +6,24 @@ import {
   InMemoryLock,
   InMemoryProcessedEventStore,
   InMemoryRateLimiter,
+  InMemoryReadModelTable,
+  InMemoryUnitOfWork,
+  evaluateCriteria,
 } from '@ddd-ts-kit/kernel';
 import { InMemoryOutboxStore } from '@ddd-ts-kit/events';
 import { InMemoryRepository, resetSequences, snapshots } from '../src/index.js';
 import {
   cacheContract,
+  criteriaContract,
+  criteriaContractDefinition,
   eventBusContract,
   lockContract,
   outboxStoreContract,
   processedEventStoreContract,
   rateLimiterContract,
+  readModelStoreContract,
   repositoryContract,
+  type CriteriaContractRow,
 } from '../src/contracts.js';
 import { anOrder } from './support/builders.js';
 import { Order, at } from './support/order.js';
@@ -94,3 +101,15 @@ cacheContract(runner, { name: 'InMemoryCache', createCache: () => new InMemoryCa
 lockContract(runner, { name: 'InMemoryLock', createLock: () => new InMemoryLock(aClock()), elapse });
 
 rateLimiterContract(runner, { name: 'InMemoryRateLimiter', createLimiter: () => new InMemoryRateLimiter(aClock()), elapse });
+
+criteriaContract(runner, {
+  name: 'evaluateCriteria',
+  createReadModel: (rows) => ({
+    list: async (criteria) => evaluateCriteria(criteriaContractDefinition, rows, criteria),
+  }),
+});
+
+readModelStoreContract(runner, {
+  name: 'InMemoryReadModelTable',
+  createTable: () => ({ table: new InMemoryReadModelTable<CriteriaContractRow>(), unitOfWork: new InMemoryUnitOfWork() }),
+});

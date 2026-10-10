@@ -6,7 +6,7 @@ import type { {{upstream.eventType}} } from '{{upstream.import}}';
 import { systemActor, type CommandBus, type IntegrationEvent } from '@ddd-ts-kit/kernel';
 {{/unless}}
 
-export class {{name.pascal}}Handler {
+export class {{name.pascal}}IntegrationHandler {
   static readonly eventType = '{{upstream.eventName}}';
 
   readonly actor = systemActor('{{context.kebab}}.{{name.kebab}}');

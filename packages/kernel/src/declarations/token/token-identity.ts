@@ -4,7 +4,9 @@ import type { Token } from './token.js';
 /**
  * What a container keys a token by. A class is its own identity, which two copies of a package
  * loaded in one process do not share: a class that declares `static readonly tokenKey` is
- * known by that key instead, the same in every copy. The ports of the kit all declare one.
+ * known by that key instead, the same in every copy. The ports of the kernel carry theirs as
+ * an own property that is not a declared member, so that a port extending one of them declares
+ * its own key without `override`.
  */
 export function tokenIdentity(target: Token<unknown>): symbol {
   const key = stableKeyOf(target);

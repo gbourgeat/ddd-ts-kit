@@ -8,11 +8,7 @@ interface OutboundCall {
   readonly payload: unknown;
 }
 
-type Transport = (call: OutboundCall, signal?: AbortSignal) => Promise<unknown>;
-
 export class Remote{{name.pascal}} implements {{name.pascal}} {
-  constructor(readonly transport: Transport = notConnected) {}
-
 {{#if adapter.decorated}}
   // TODO(domain): implement each operation of {{name.pascal}} by sending one call through `this.send` and translating the answer into the types of {{context.kebab}}; the policy of this adapter is part of its definition and is carried by `send` alone.
   @Retry({ attempts: 3, backoff: { baseMs: 100 } })
@@ -24,9 +20,11 @@ export class Remote{{name.pascal}} implements {{name.pascal}} {
 {{#unless adapter.decorated}}
   // TODO(domain): implement each operation of {{name.pascal}} by sending one call through `this.transport` and translating the answer into the types of {{context.kebab}}; declare each one `async`, so that the policy attached in {{context.kebab}}.module.ts applies from its first call.
 {{/unless}}
-}
 
-// TODO(platform): replace by the real client of the outside system (fetch on a base URL of the validated config, an SDK), given to the constructor in {{context.kebab}}.module.ts.
-function notConnected(): Promise<never> {
-  return Promise.reject(new Error('Remote{{name.pascal}} has no transport yet'));
+  // TODO(platform): replace the body by the real client of the outside system (fetch on a base URL of the validated config, an SDK), built from what the constructor receives in {{context.kebab}}.module.ts.
+  protected async transport(call: OutboundCall, signal?: AbortSignal): Promise<unknown> {
+    signal?.throwIfAborted();
+
+    throw new Error(`Remote{{name.pascal}} has no transport yet: "${call.operation}" was not sent`);
+  }
 }

@@ -6,18 +6,18 @@ import { customSchema, type JsonSchema } from '@ddd-ts-kit/validation';
 import { ListAuditEntriesQuery, type AuditEntriesFilter } from './list-audit-entries.query.js';
 
 /** Newest first unless asked otherwise, by cursor: the trail only grows, an offset would shift under the reader. */
-const PAGE = { sortable: ['occurredAt', 'sequence'], maxSize: 100, kind: 'cursor' } as const;
-const OUTCOMES = ['allowed', 'denied', 'succeeded', 'failed'] as const;
+const pageLimits = { sortable: ['occurredAt', 'sequence'], maxSize: 100, kind: 'cursor' } as const;
+const outcomes = ['allowed', 'denied', 'succeeded', 'failed'] as const;
 
 type Parameters = Readonly<Record<string, unknown>>;
 
 const query = customSchema<Parameters>((input) => (isRecord(input) ? ok(input) : err([{ path: '', code: 'invalid_type', message: 'Expected query parameters.' }])), {
   type: 'object',
   properties: {
-    ...propertiesOf(pageRequestParameters(PAGE)),
+    ...propertiesOf(pageRequestParameters(pageLimits)),
     actorId: { type: 'string', description: 'Entries about what this actor did.' },
     action: { type: 'string', description: 'A permission id, a command name or an event type.' },
-    outcome: { type: 'string', enum: [...OUTCOMES] },
+    outcome: { type: 'string', enum: [...outcomes] },
     correlationId: { type: 'string', description: 'Everything one request or event caused.' },
   },
 });
@@ -45,31 +45,31 @@ interface AuditEntryView {
   readonly hash: string;
 }
 
-const TEXT = { type: 'string' } as const;
+const text = { type: 'string' } as const;
 
 const entry = customSchema<AuditEntryView>((input) => (isEntryView(input) ? ok(input) : err([{ path: '', code: 'invalid_type', message: 'Expected an audit entry.' }])), {
   type: 'object',
   required: ['id', 'chain', 'sequence', 'occurredAt', 'category', 'action', 'outcome', 'actorId', 'actorType', 'correlationId', 'origin', 'previousHash', 'hash'],
   properties: {
-    id: TEXT,
-    chain: TEXT,
+    id: text,
+    chain: text,
     sequence: { type: 'integer', minimum: 1 },
     occurredAt: { type: 'string', format: 'date-time' },
-    category: TEXT,
-    action: TEXT,
-    outcome: { type: 'string', enum: [...OUTCOMES] },
-    reason: TEXT,
-    actorId: TEXT,
-    actorType: TEXT,
-    tenantId: TEXT,
-    resourceType: TEXT,
-    resourceId: TEXT,
-    context: TEXT,
-    correlationId: TEXT,
-    causationId: TEXT,
-    origin: TEXT,
-    previousHash: TEXT,
-    hash: TEXT,
+    category: text,
+    action: text,
+    outcome: { type: 'string', enum: [...outcomes] },
+    reason: text,
+    actorId: text,
+    actorType: text,
+    tenantId: text,
+    resourceType: text,
+    resourceId: text,
+    context: text,
+    correlationId: text,
+    causationId: text,
+    origin: text,
+    previousHash: text,
+    hash: text,
   },
 });
 
@@ -88,14 +88,16 @@ export function listAuditEntriesRoute(queries: QueryBus): Route {
       security: ['{{authn.scheme}}'],
     },
     async (input) => {
-      const page = await queries.execute(new ListAuditEntriesQuery(actorOf(input.context.principal), pageRequestFrom(input.query, PAGE), filterOf(input.query)));
+      const page = await queries.execute(new ListAuditEntriesQuery(actorOf(input.context.principal), pageRequestFrom(input.query, pageLimits), filterOf(input.query)));
+
       return { status: 200, body: pageResponse(page, toView) };
     },
   );
 }
 
 function filterOf(parameters: Parameters): AuditEntriesFilter {
-  const outcome = OUTCOMES.find((candidate) => candidate === parameters['outcome']);
+  const outcome = outcomes.find((candidate) => candidate === parameters['outcome']);
+
   return {
     ...textOf(parameters, 'actorId'),
     ...textOf(parameters, 'action'),
@@ -107,12 +109,15 @@ function filterOf(parameters: Parameters): AuditEntriesFilter {
 function textOf<Key extends string>(parameters: Parameters, key: Key): Partial<Record<Key, string>> {
   const value = parameters[key];
   const found: Partial<Record<Key, string>> = {};
+
   if (typeof value === 'string' && value !== '') found[key] = value;
+
   return found;
 }
 
 function toView(source: AuditEntry): AuditEntryView {
   const { actor, resource } = source;
+
   return {
     id: source.id,
     chain: source.chain,
@@ -137,6 +142,7 @@ function toView(source: AuditEntry): AuditEntryView {
 
 function propertiesOf(schema: JsonSchema): JsonSchema {
   const { properties } = schema;
+
   return typeof properties === 'object' && properties !== null ? { ...properties } : {};
 }
 

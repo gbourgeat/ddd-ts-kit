@@ -1,3 +1,4 @@
+import { inspect } from 'node:util';
 import type {
   EventBus,
   IntegrationEvent,
@@ -10,8 +11,10 @@ import { Consumption } from './consumption.js';
 import { ConsumerNameRequiredError } from './errors/consumer-name-required-error.js';
 import { EventBusClosedError } from './errors/event-bus-closed-error.js';
 import type { RedisStreamsEventBusOptions } from './options/redis-streams-event-bus-options.js';
+import { MESSAGING_SYSTEM } from './messaging-system.js';
 import type { Settings } from './options/settings.js';
 import { settingsOf } from './options/settings-of.js';
+import { conceal } from '../secrecy/conceal.js';
 import { Publications } from './publications.js';
 import { ServerLink } from './server-link.js';
 import type { ConsumerBinding } from './topology/consumer-binding.js';
@@ -19,6 +22,8 @@ import { declareTopology } from './topology/declare-topology.js';
 import type { RedisStreamsTopology } from './topology/redis-streams-topology.js';
 import { streamNamesOf } from './topology/stream-names-of.js';
 import { topologyOf } from './topology/topology-of.js';
+
+const DESCRIPTION = 'RedisStreamsEventBus [connection concealed]';
 
 /**
  * The provider on Redis Streams, for Redis, Dragonfly and Valkey.
@@ -31,6 +36,9 @@ import { topologyOf } from './topology/topology-of.js';
  * deduplicate.
  */
 export class RedisStreamsEventBus implements EventBus {
+  /** Read by what observes the bus from outside: the name of the transport. */
+  readonly messagingSystem = MESSAGING_SYSTEM;
+
   private readonly settings: Settings;
 
   private readonly link: ServerLink;
@@ -52,6 +60,7 @@ export class RedisStreamsEventBus implements EventBus {
 
     this.publications = new Publications(this.settings);
     this.consumption = new Consumption(this.link, this.settings);
+    conceal(this);
   }
 
   /** Entries delivered to this bus whose handlers have not finished yet. */
@@ -119,6 +128,16 @@ export class RedisStreamsEventBus implements EventBus {
     this.closed = true;
     await this.consumption.drain();
     await this.link.close();
+  }
+
+  /** What a serialisation shows of the bus: its name, never its connection. */
+  toJSON(): string {
+    return DESCRIPTION;
+  }
+
+  /** What `console.log` and `util.inspect` show of the bus: the same. */
+  [inspect.custom](): string {
+    return DESCRIPTION;
   }
 
   private bind(binding: ConsumerBinding, handler: IntegrationEventCallback): Subscription {

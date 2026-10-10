@@ -1,53 +1,68 @@
+import { assertTheWholeTrace } from './first-class-trace.js';
 import { cli, exists, read, write } from './helpers.js';
 
 const SHIPPING_HANDLER = 'src/contexts/shipping/application/integration/handlers/billing-invoice-issued.integration-handler.ts';
 const DECLARED_READER = 'src/contexts/billing/infrastructure/persistence/in-memory-list-invoices-reader.repository.ts';
+const EXPLICIT_READER = 'src/contexts/billing/infrastructure/persistence/in-memory-list-invoices.reader.ts';
 const LINES = "[{ id: 'invoice-1' }, { id: 'invoice-2' }, { id: 'invoice-3' }]";
 
 /**
  * What a team writes after `init` and `generate` in the project of the first-class stack, kept
  * to the minimum the proof needs: the aggregate records its birth fact, the list reads three
- * lines, the relationship schema knows the listed element, and shipping prepares a parcel when
- * billing issues an invoice. Nothing here repairs generated code: each edit answers a
+ * lines, the relationship schema knows the listed element, shipping prepares a parcel when
+ * billing issues an invoice, and the generated trace assertion is extended to that whole story. Nothing here repairs generated code: each edit answers a
  * `TODO(domain)` or a `TODO(platform)` the generator left, in either style.
  */
 export function writeBusinessDecisions(root: string): void {
   const prepared = cli(root, 'generate', 'command', 'shipping', 'PrepareParcel', '--public', '--term', 'Prepare=To get a parcel ready for its carrier');
+
   if (prepared.code !== 0) throw new Error(`generate command shipping PrepareParcel failed: ${prepared.stderr}`);
+
   edit(root, SHIPPING_HANDLER, [
-    ["import { systemActor, type CommandBus } from '@ddd-ts-kit/kernel';", "import { systemActor, type CommandBus } from '@ddd-ts-kit/kernel';\nimport { PrepareParcelCommand } from '../../commands/prepare-parcel/prepare-parcel.command.js';"],
+    [/(import \{[^}]*\} from '@ddd-ts-kit\/kernel';\n)/, "$1import { PrepareParcelCommand } from '../../commands/prepare-parcel/prepare-parcel.command.js';\n"],
     [/(async handle\(event: InvoiceIssuedV2\): Promise<void> \{\n)[^\n]*\n/, '$1    await this.commands.execute(new PrepareParcelCommand());\n'],
   ]);
-  if (exists(root, DECLARED_READER)) edit(root, DECLARED_READER, [['readonly ListInvoicesItem[] = []', `readonly ListInvoicesItem[] = ${LINES}`]]);
-  else edit(root, 'src/contexts/billing/billing.module.ts', [['new InMemoryListInvoicesReader([])', `new InMemoryListInvoicesReader(${LINES})`]]);
+
+  edit(root, exists(root, DECLARED_READER) ? DECLARED_READER : EXPLICIT_READER, [['readonly ListInvoicesItem[] = []', `readonly ListInvoicesItem[] = ${LINES}`]]);
+
   edit(root, 'src/contexts/billing/domain/aggregates/invoice.aggregate.ts', [
     ["import { AggregateRoot } from '@ddd-ts-kit/kernel';", "import { AggregateRoot } from '@ddd-ts-kit/kernel';\nimport { InvoiceIssued } from '../events/invoice-issued.event.js';"],
-    ['    const created = new Invoice(id, { registeredAt: now });', '    const created = new Invoice(id, { registeredAt: now });\n    created.record(new InvoiceIssued(id, now));'],
+    ['    const created = new Invoice(id, { registeredAt: now });', '    const created = new Invoice(id, { registeredAt: now });\n\n    created.record(new InvoiceIssued(id, now));'],
   ]);
-  edit(root, 'src/platform/auth/relationships.ts', [
+
+  edit(root, 'src/platform/auth/relationship-schema.ts', [
     ["    permissions: { operate: union('operator') },\n  },", "    permissions: { operate: union('operator') },\n  },\n  invoice: {\n    relations: { viewer: ['user'] },\n    permissions: { view: union('viewer') },\n  },"],
+  ]);
+
+  edit(root, 'src/platform/auth/permission-mapping.ts', [
     [
-      "  return { context: Object.fromEntries(permissionRegistry.all().map((permission) => [permission.id, 'operate'])) };",
-      "  return { context: Object.fromEntries(permissionRegistry.all().map((permission) => [permission.id, 'operate'])), invoice: { 'billing:invoice.list': 'view' } };",
+      "  return { context: Object.fromEntries(permissions.all().map((permission) => [permission.id, 'operate'])) };",
+      "  return { context: Object.fromEntries(permissions.all().map((permission) => [permission.id, 'operate'])), invoice: { 'billing:invoice.list': 'view' } };",
     ],
   ]);
+
+  assertTheWholeTrace(root);
   write(root, 'test/e2e/first-class.e2e.spec.ts', PROOF_SPEC);
 }
 
 function edit(root: string, file: string, replacements: readonly (readonly [string | RegExp, string])[]): void {
   let content = read(root, file);
+
   for (const [from, to] of replacements) {
     const next = content.replace(from, to);
+
     if (next === content) throw new Error(`${file} no longer holds what the proof edits: ${String(from)}`);
+
     content = next;
   }
+
   write(root, file, content);
 }
 
 /** The proof itself, run by the generated project: what a client and another context observe, never the database. */
 const PROOF_SPEC = `import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { collectEvents, eventually, expectStatus, type HttpClient } from '@ddd-ts-kit/testing/e2e';
-import { startApplication, type RunningApplication } from './support/application.js';
+import { startApplication, type RunningApplication } from './support/start-application.js';
 
 interface Page<Line> {
   readonly items: readonly Line[];
@@ -81,22 +96,26 @@ describe('The first-class stack, end to end', () => {
 
   async function operatorOf(context: string, id: string): Promise<HttpClient> {
     await application.relate({ object: 'context:' + context, relation: 'operator', subject: 'user:' + id });
+
     return application.as({ id });
   }
 
   async function entriesOf(correlationId: string): Promise<readonly Entry[]> {
     const auditor = await operatorOf('audit', 'auditor');
     const response = expectStatus(await auditor.get<Page<Entry>>('/audit/entries?limit=100&correlationId=' + correlationId), 200);
+
     return response.body.items;
   }
 
   it('lists one page of what the access scope of the actor covers, and nothing else', async () => {
     const ada = await operatorOf('billing', 'ada');
+
     await application.relate({ object: 'invoice:invoice-1', relation: 'viewer', subject: 'user:ada' });
     await application.relate({ object: 'invoice:invoice-3', relation: 'viewer', subject: 'user:ada' });
 
     const first = expectStatus(await ada.get<Page<{ id: string }>>('/invoices?limit=1'), 200);
     const second = expectStatus(await ada.get<Page<{ id: string }>>('/invoices?limit=1&offset=1'), 200);
+
     expectStatus(await ada.get('/invoices?limit=0'), 422);
 
     expect(first.body).toEqual({ items: [{ id: 'invoice-1' }], total: 2 });
@@ -116,6 +135,7 @@ describe('The first-class stack, end to end', () => {
       expect.objectContaining({ category: 'authorization', action: 'billing:invoice.issue', outcome: 'allowed', actorId: 'ada', origin: 'http' }),
       expect.objectContaining({ category: 'command', action: 'IssueInvoiceCommand', outcome: 'succeeded', actorId: 'ada' }),
     ]));
+
     expect(await entriesOf(denied)).toEqual([expect.objectContaining({ category: 'authorization', action: 'billing:invoice.issue', outcome: 'denied', actorId: 'stranger' })]);
   });
 
@@ -140,6 +160,7 @@ describe('The first-class stack, end to end', () => {
 
     await eventually(async () => {
       const prepared = (await entriesOf(correlationId)).filter((entry) => entry.action === 'PrepareParcelCommand');
+
       expect(prepared).toEqual([expect.objectContaining({ category: 'command', outcome: 'succeeded', actorId: 'system:shipping.billing-invoice-issued', origin: 'event' })]);
     }, { timeoutMs: 20_000 });
   });

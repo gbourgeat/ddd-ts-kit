@@ -1,0 +1,30 @@
+import type { Authenticator } from '@ddd-ts-kit/auth';
+import type { HttpHeaders } from '@ddd-ts-kit/testing/e2e';
+import { developmentActorHeader } from '{{paths.e2eToPlatform}}/auth/development-actor-header.js';
+import { DevelopmentHeaderAuthenticator } from '{{paths.e2eToPlatform}}/auth/development-header-authenticator.js';
+
+/** Who a test calls as: the identity, the roles and the tenant the development header carries. */
+export interface TestActor {
+  readonly id: string;
+  readonly roles?: readonly string[];
+  readonly tenantId?: string;
+}
+
+export interface Credentials {
+  readonly authenticator: Authenticator;
+
+  headersOf(actor: TestActor): Promise<HttpHeaders>;
+}
+
+export async function createCredentials(): Promise<Credentials> {
+  return {
+    authenticator: new DevelopmentHeaderAuthenticator('test'),
+    headersOf: async (actor) => ({ [developmentActorHeader]: headerOf(actor) }),
+  };
+}
+
+function headerOf(actor: TestActor): string {
+  const tenant = actor.tenantId === undefined ? [] : ['tenant=' + actor.tenantId];
+
+  return [actor.id, 'roles=' + (actor.roles ?? []).join(','), ...tenant].join(';');
+}

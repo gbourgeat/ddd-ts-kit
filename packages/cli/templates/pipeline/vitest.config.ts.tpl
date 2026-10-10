@@ -14,6 +14,10 @@ export default defineConfig(({ mode }) => ({
 {{/if}}
   resolve: { alias: { '{{alias.bare}}': fileURLToPath(new URL('./{{config.sourceRoot}}', import.meta.url)) } },
   test: {
+{{#if assembly.discovery}}
+    // Discovery imports the role files of a context itself: inlined, the package loads them through the runner, which compiles them.
+    server: { deps: { inline: ['@ddd-ts-kit/di'] } },
+{{/if}}
     projects: [
       { extends: true, test: { name: 'unit', include: ['{{config.sourceRoot}}/**/*.spec.ts', 'test/architecture/**/*.spec.ts'], exclude: [INTEGRATION_SPECS] } },
       { extends: true, test: { name: INTEGRATION_MODE, include: [INTEGRATION_SPECS] } },

@@ -12,6 +12,7 @@ export class ListAuditEntriesHandler implements QueryHandler<ListAuditEntriesQue
    */
   async execute(query: ListAuditEntriesQuery): Promise<Page<AuditEntry>> {
     const { tenantId } = query.actor;
+
     return this.reader.list({ ...query.filter, ...(tenantId === undefined ? {} : { tenantId }) }, query.page);
   }
 }

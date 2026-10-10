@@ -35,7 +35,7 @@ ruleTester.run('events-outbox-required', eventsOutboxRequired, {
 
 ruleTester.run('events-consumer-idempotent', eventsConsumerIdempotent, {
   valid: [
-    at(MODULE, "builder.on(productListedV1, { consumer: 'billing.price-list' }).handledBy(ProductListedHandler, [COMMAND_BUS]);"),
+    at(MODULE, "builder.on(productListedV1, { consumer: 'billing.price-list' }).handledBy(ProductListedHandler, [CommandBus]);"),
     at(MODULE, 'builder.on(productListedV1, { consumer: PRICE_LIST }).handledBy(ProductListedHandler);'),
     at(MODULE, 'builder.on(productListedV1, options).handledBy(ProductListedHandler);'),
     at(MODULE, 'builder.on(productListedV1, { ...shared }).handledBy(ProductListedHandler);'),
@@ -44,19 +44,19 @@ ruleTester.run('events-consumer-idempotent', eventsConsumerIdempotent, {
     at(MODULE, "import { consume } from '@ddd-ts-kit/events';\nconsume(productListedV1, { consumer: 'billing.price-list', processed, unitOfWork }, handle);"),
     at(MODULE, "import { on } from 'node:events';\non(emitter, 'tick');"),
     at(MODULE, 'function on(a: A, b: B): void {}\non(productListedV1, handle);'),
-    at(MODULE, "resolve(EVENT_SUBSCRIBER).subscribe(ProductListedHandler.eventType, idempotent('billing.price-list', resolve(PROCESSED_EVENTS), (event) => resolve(PRODUCT_LISTED_HANDLER).handle(event)));"),
+    at(MODULE, "resolve(IntegrationEventSubscriber).subscribe(ProductListedHandler.eventType, idempotent('billing.price-list', resolve(ProcessedEventStore), (event) => resolve(ProductListedHandler).handle(event)));"),
     at(ADAPTER, "await this.channel.subscribe('queue', handler);"),
     at('src/platform/events/wiring.ts', 'subscriber.subscribe(type, handler);'),
     at(`${BILLING}/test/integration/product-listed.integration-handler.spec.ts`, "import { on } from '@ddd-ts-kit/events';\nbus.subscribe('x', handler);\non(productListedV1, handler);"),
   ],
   invalid: [
-    { ...at(MODULE, 'builder.on(productListedV1).handledBy(ProductListedHandler, [COMMAND_BUS]);'), errors: [{ messageId: 'consumerName', data: { context: 'billing' } }] },
-    { ...at(MODULE, 'builder.on(productListedV1, {}).handledByFactory((resolve) => new ProductListedHandler(resolve(COMMAND_BUS)));'), errors: [{ messageId: 'consumerName' }] },
+    { ...at(MODULE, 'builder.on(productListedV1).handledBy(ProductListedHandler, [CommandBus]);'), errors: [{ messageId: 'consumerName', data: { context: 'billing' } }] },
+    { ...at(MODULE, 'builder.on(productListedV1, {}).handledByFactory((resolve) => new ProductListedHandler(resolve(CommandBus)));'), errors: [{ messageId: 'consumerName' }] },
     { ...at(MODULE, "builder.on(productListedV1, { consumer: '' }).handledBy(ProductListedHandler);"), errors: [{ messageId: 'consumerName' }] },
     { ...at(MODULE, "import { on } from '@ddd-ts-kit/events';\non(productListedV1, (event) => consumer.handle(event));"), errors: [{ messageId: 'subscription', data: { missing: '`consumer` and `processed`', context: 'billing' } }] },
     { ...at(MODULE, "import { on as reactTo } from '@ddd-ts-kit/events';\nreactTo(productListedV1, handle, { consumer: 'billing.price-list' });"), errors: [{ messageId: 'subscription', data: { missing: '`processed`', context: 'billing' } }] },
     { ...at(INTEGRATION_HANDLER, "import { on } from '@ddd-ts-kit/events';\nexport const subscription = on(productListedV1, handle, { processed });"), errors: [{ messageId: 'subscription', data: { missing: '`consumer`', context: 'billing' } }] },
-    { ...at(MODULE, 'resolve(EVENT_SUBSCRIBER).subscribe(ProductListedHandler.eventType, (event) => resolve(PRODUCT_LISTED_HANDLER).handle(event));'), errors: [{ messageId: 'directSubscribe', data: { call: 'resolve(EVENT_SUBSCRIBER).subscribe', context: 'billing' } }] },
+    { ...at(MODULE, 'resolve(IntegrationEventSubscriber).subscribe(ProductListedHandler.eventType, (event) => resolve(ProductListedHandler).handle(event));'), errors: [{ messageId: 'directSubscribe', data: { call: 'resolve(IntegrationEventSubscriber).subscribe', context: 'billing' } }] },
     { ...at(INTEGRATION_HANDLER, "this.subscriber.subscribe('catalog.product.listed', (event) => this.handle(event));"), errors: [{ messageId: 'directSubscribe' }] },
   ],
 });

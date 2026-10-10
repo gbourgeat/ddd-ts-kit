@@ -21,4 +21,12 @@ export class NoopLogger implements Logger {
   child(): Logger {
     return this;
   }
+
+  isLevelEnabled(): boolean {
+    return false;
+  }
+
+  flush(): Promise<void> {
+    return Promise.resolve();
+  }
 }

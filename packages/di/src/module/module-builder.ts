@@ -1,5 +1,6 @@
-import type { Actored, Command, MessageType, Query, ScheduledJob } from '@ddd-ts-kit/kernel';
+import type { Actored, Command, DependencyKind, MessageType, Query, ScheduledJob } from '@ddd-ts-kit/kernel';
 import type {
+  BindingAspect,
   EventContract,
   IntegrationEventHandler,
   ScheduledOptions,
@@ -7,6 +8,7 @@ import type {
 } from '@ddd-ts-kit/kernel/declarations';
 import type { ConsumerOptions } from '../consumer/consumer-options.js';
 import type { DeclaredSource } from '../declared/declared-source.js';
+import type { Resolve } from '../wiring/resolve.js';
 import type { BindingTarget } from './binding-target.js';
 import type { HandlerTarget } from './handler-target.js';
 import type { ProtectedUseCaseTarget } from './protected-use-case-target.js';
@@ -53,4 +55,12 @@ export interface ModuleBuilder {
    * alone; here it mixes with the explicit statements of one module.
    */
   include(declared: DeclaredSource): void;
+
+  /**
+   * Puts an aspect around every instance the application creates for a binding of one of the
+   * kinds, whichever module declares the binding: outside the aspects of the binding itself
+   * (`.with`), inside the `decorate` hook, the first one declared outermost. This is how
+   * `kernelModule()` makes every repository dispatch domain events with its save.
+   */
+  around(kinds: readonly DependencyKind[], aspect: (resolve: Resolve) => BindingAspect): void;
 }

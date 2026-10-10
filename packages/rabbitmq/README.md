@@ -168,6 +168,19 @@ doubling up to 30 s), declares its topology again and resumes its consumers. Pub
 flight reject, and so does `publish` between two attempts, so the outbox relay keeps the
 records and retries them. Messages that were being handled are redelivered by the broker.
 
+**Credentials.** The URL or the options of `connection` are held by the function that opens the connection, in no field. A `RabbitMqEventBus` that is logged, spread or
+serialised shows `RabbitMqEventBus [connection concealed]` and nothing else: its fields are not enumerable,
+and `toJSON` and `util.inspect` answer that name. The failures it reports are codes. What the
+client library itself shows when one of its own objects is inspected is not in the hands of
+this package: do not log those.
+
+**What a handler is told.** Next to the event, each handler receives the delivery
+(`EventDelivery` of the kernel): `{ attempt, maxAttempts, system: 'rabbitmq', destination, consumer }`,
+where `destination` is the work queue. Handlers of the application ignore it; `@ddd-ts-kit/tracing` reads it
+to make one CONSUMER span per attempt and to mark the redeliveries and the attempt after which
+the event is buried. The bus names itself `messagingSystem: 'rabbitmq'`, and `traceparent` travels in
+the envelope and as a real header, intact across a retry.
+
 ## Operations
 
 What to watch:

@@ -4,8 +4,11 @@ export { type DomainEventHandlerOptions, DomainEventHandler } from './declaratio
 export { Gateway } from './declarations/decorators/gateway.js';
 export { type IntegrationEventHandlerOptions, IntegrationEventHandler } from './declarations/decorators/integration-event-handler.js';
 export type { MessageDeclarator } from './declarations/decorators/message-declarator.js';
+export { On } from './declarations/decorators/on.js';
 export { type PolicyOptions, Policy } from './declarations/decorators/policy.js';
 export type { PortOptions } from './declarations/decorators/port-options.js';
+export type { ProjectionMethodDecorator } from './declarations/decorators/projection-method-decorator.js';
+export { Projection } from './declarations/decorators/projection.js';
 export { type PublicOptions, Public } from './declarations/decorators/public.js';
 export { QueryHandler } from './declarations/decorators/query-handler.js';
 export { Repository } from './declarations/decorators/repository.js';
@@ -40,6 +43,12 @@ export type { PermissionRef } from './declarations/model/permission-ref.js';
 export type { PolicyDeclaration } from './declarations/model/policy-declaration.js';
 export type { PolicyVerdict } from './declarations/model/policy-verdict.js';
 export type { PortDeclaration } from './declarations/model/port-declaration.js';
+export type {
+  DomainEventApplication,
+  IntegrationEventApplication,
+  ProjectionApplication,
+} from './declarations/model/projection-application.js';
+export type { ProjectionDeclaration } from './declarations/model/projection-declaration.js';
 export type { ResourcePointer } from './declarations/model/resource-pointer.js';
 export { DeclarationError } from './declarations/registry/declaration-error.js';
 export { declarationOf } from './declarations/registry/declaration-of.js';

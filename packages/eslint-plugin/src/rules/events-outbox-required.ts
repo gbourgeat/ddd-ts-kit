@@ -1,7 +1,8 @@
-import { defineRule } from '../support/define-rule.js';
-import { importListener, innerLayer } from '../support/imports.js';
+import { defineRule } from '../support/rule/define-rule.js';
+import { importListener } from '../support/imports/import-listener.js';
+import { innerLayer } from '../support/imports/inner-layer.js';
 import type { LintedFile } from '../project/linted-file.js';
-import { parameterTypeName } from '../support/types.js';
+import { parameterTypeName } from '../support/types/parameter-type-name.js';
 
 interface Options {
   readonly brokerPackages?: readonly string[];
@@ -34,18 +35,24 @@ export const eventsOutboxRequired = defineRule<'broker' | 'concreteBus' | 'publi
   defaultOptions: [{}],
   create({ file, options: [options], report }) {
     const layer = innerLayer(file);
+
     if (layer === undefined) return {};
+
     const brokers = options.brokerPackages ?? DEFAULT_BROKER_PACKAGES;
     const judgesConstructors = isPublisher(file);
+
     return {
       ...importListener(file, ({ node, target, names }) => {
         if (target.kind === 'package' && brokers.includes(target.name)) report({ node, messageId: 'broker', data: { name: target.name, layer } });
+
         for (const bus of names.filter((imported) => CONCRETE_BUSES.has(imported.name))) report({ node: bus.node, messageId: 'concreteBus', data: { name: bus.name, layer } });
       }),
       MethodDefinition(node) {
         if (!judgesConstructors || node.kind !== 'constructor') return;
+
         for (const parameter of node.value.params) {
           const type = parameterTypeName(parameter) ?? '';
+
           if (TRANSPORT_TYPE.test(type)) report({ node: parameter, messageId: 'publisherDependency', data: { className: node.parent.parent.id?.name ?? 'The publisher', type } });
         }
       },
@@ -55,5 +62,6 @@ export const eventsOutboxRequired = defineRule<'broker' | 'concreteBus' | 'publi
 
 function isPublisher(file: LintedFile): boolean {
   const { location } = file;
+
   return location.area === 'context' && location.layer === 'application' && location.inside[0] === 'integration' && location.inside[1] === 'publishers';
 }

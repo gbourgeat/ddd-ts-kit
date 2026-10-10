@@ -1,4 +1,4 @@
-import type { IntegrationEvent, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
+import { messagingSystemOf, type IntegrationEvent, type IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
 import { InvalidEventPayloadError } from '../definition/invalid-event-payload-error.js';
 import type { EventRegistry } from '../registry/event-registry.js';
 import { UnknownEventError } from './unknown-event-error.js';
@@ -17,6 +17,8 @@ export function validatingPublisher(
   registry: EventRegistry,
   options: ValidatingPublisherOptions = { unknown: 'reject' },
 ): IntegrationEventPublisher {
+  const messagingSystem = messagingSystemOf(publisher);
+
   return {
     async publish(events) {
       for (const event of events) {
@@ -25,6 +27,7 @@ export function validatingPublisher(
 
       await publisher.publish(events);
     },
+    ...(messagingSystem === undefined ? {} : { messagingSystem }),
   };
 }
 

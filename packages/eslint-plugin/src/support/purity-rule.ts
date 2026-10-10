@@ -1,7 +1,9 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import { defineRule } from './define-rule.js';
-import { ambientName, propertyName } from './globals.js';
-import { importListener, innerLayer } from './imports.js';
+import { defineRule } from './rule/define-rule.js';
+import { ambientName } from './globals/ambient-name.js';
+import { propertyName } from './globals/property-name.js';
+import { importListener } from './imports/import-listener.js';
+import { innerLayer } from './imports/inner-layer.js';
 
 export interface Purity {
   readonly id: string;
@@ -33,11 +35,15 @@ export function purityRule(rule: Purity) {
     },
     create({ file, sourceCode, report }) {
       const layer = innerLayer(file);
+
       if (layer === undefined) return {};
+
       const used = (node: TSESTree.Node, what: string | undefined): void => {
         if (what !== undefined) report({ node, messageId: 'used', data: { what, layer } });
       };
+
       const ambient = (node: TSESTree.Node): string => ambientName(sourceCode, node) ?? '';
+
       return {
         ...importListener(file, ({ node, target }) => {
           if (target.kind !== 'file' && rule.modules.includes(moduleName(target))) report({ node, messageId: 'imported', data: { name: target.name, layer } });
@@ -57,18 +63,23 @@ function moduleName(target: { readonly kind: 'package' | 'builtin'; readonly nam
 
 function forbiddenNamedImport(rule: Purity, node: TSESTree.ImportSpecifier): string | undefined {
   if (node.parent.type !== AST_NODE_TYPES.ImportDeclaration) return undefined;
+
   const source = node.parent.source.value;
   const name = node.imported.type === AST_NODE_TYPES.Identifier ? node.imported.name : node.imported.value;
+
   return rule.namedImports[source.replace(/^node:/, '')]?.includes(name) === true ? `${name} of "${source}"` : undefined;
 }
 
 function forbiddenMember(rule: Purity, object: string, property: string | undefined): string | undefined {
   const members = Object.hasOwn(rule.members, object) ? rule.members[object] : undefined;
+
   if (members === undefined || property === undefined) return undefined;
+
   return members.length === 0 || members.includes(property) ? `${object}.${property}` : undefined;
 }
 
 function forbiddenConstruction(rule: Purity, callee: string, argumentCount: number): string | undefined {
   if (rule.constructions.includes(callee)) return `new ${callee}`;
+
   return rule.bareConstructions.includes(callee) && argumentCount === 0 ? `new ${callee}() without argument` : undefined;
 }

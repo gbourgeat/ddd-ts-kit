@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   AsyncLocalStorageExecutionScope,
   InMemoryEventBus,
+  InMemoryProcessedEventStore,
   InMemoryUnitOfWork,
   executionContext,
   scopedPublisher,
@@ -13,7 +14,6 @@ import {
 } from '@ddd-ts-kit/kernel';
 import {
   InMemoryOutboxStore,
-  InMemoryReleasableProcessedEventStore,
   InvalidEventPayloadError,
   OutboxPublisher,
   consume,
@@ -116,7 +116,7 @@ describe('consume', () => {
 
   it('scopes the deduplication to the consumer', async () => {
     const bus = new InMemoryEventBus();
-    const processed = new InMemoryReleasableProcessedEventStore();
+    const processed = new InMemoryProcessedEventStore();
     const unitOfWork = new InMemoryUnitOfWork();
     const handled: string[] = [];
 
@@ -152,7 +152,7 @@ describe('a handler that fails, without a transaction to roll the mark back', ()
 
     const { handler } = on(orderPlacedV1, failingOnce(handled), {
       consumer: 'billing',
-      processed: new InMemoryReleasableProcessedEventStore(),
+      processed: new InMemoryProcessedEventStore(),
     });
 
     await expect(handler(placed('evt-1'))).rejects.toBeInstanceOf(InvoicingFailed);
@@ -163,7 +163,7 @@ describe('a handler that fails, without a transaction to roll the mark back', ()
   });
 
   it('keeps the mark of a success when the event is delivered again', async () => {
-    const processed = new InMemoryReleasableProcessedEventStore();
+    const processed = new InMemoryProcessedEventStore();
     const handled: string[] = [];
 
     const { handler } = on(orderPlacedV1, async (event) => void handled.push(event.id), {

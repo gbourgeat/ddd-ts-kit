@@ -1,6 +1,7 @@
 import type { BusMiddleware } from '../../application/messaging/bus-middleware.js';
 import { DuplicateHandlerError } from '../../application/messaging/duplicate-handler-error.js';
 import { HandlerNotFoundError } from '../../application/messaging/handler-not-found-error.js';
+import type { HandlerRegistration } from '../../application/messaging/handler-registration.js';
 import type { MessageInfo } from '../../application/messaging/message-info.js';
 import type { MessageType } from '../../application/messaging/message-type.js';
 import type { Message } from '../../application/messaging/message.js';
@@ -9,6 +10,8 @@ import type { AnyHandler } from './any-handler.js';
 
 export class InProcessBus {
   private readonly handlers = new Map<unknown, AnyHandler>();
+
+  private readonly contexts = new Map<unknown, string>();
 
   private readonly middlewares: BusMiddleware[] = [];
 
@@ -20,16 +23,20 @@ export class InProcessBus {
     return this;
   }
 
-  protected add(type: MessageType<Message>, handler: AnyHandler): void {
+  protected add(type: MessageType<Message>, handler: AnyHandler, registration: HandlerRegistration = {}): void {
     if (this.handlers.has(type)) {
       throw new DuplicateHandlerError({ kind: this.kind, name: type.name });
     }
 
     this.handlers.set(type, handler);
+
+    if (registration.context !== undefined) this.contexts.set(type, registration.context);
   }
 
   protected dispatch<M extends Message>(message: M): Promise<ResultOf<M>> {
-    const info: MessageInfo = { kind: this.kind, name: message.constructor.name };
+    const context = this.contexts.get(message.constructor);
+    const name = message.constructor.name;
+    const info: MessageInfo = { kind: this.kind, name, ...(context === undefined ? {} : { context }) };
     const handler = this.handlers.get(message.constructor);
 
     if (!handler) {

@@ -17,6 +17,7 @@ export const ROLE_RULES: readonly RoleRule[] = [
   { suffix: 'event-handler', folders: ['application/event-handlers'], roles: ['domain-event-handler'] },
   { suffix: 'policy', folders: ['application/authorization'], roles: ['policy'] },
   { suffix: 'job', folders: ['application/scheduling'], roles: ['job'] },
+  { suffix: 'projection', folders: ['application/projections'], roles: ['projection'] },
   { suffix: 'repository', folders: ['infrastructure/persistence'], roles: ['repository'] },
   { suffix: 'gateway', folders: ['infrastructure'], roles: ['gateway'] },
   { suffix: 'adapter', folders: ['infrastructure'], roles: ['adapter'] },

@@ -1,5 +1,5 @@
 # Local infrastructure. `npm run infra:up` starts it and waits until it is healthy;
-# add `--profile observability` to also get Jaeger{{#if authn.keycloak}}, `--profile identity` to get Keycloak{{/if}}. Ports come from .env (see .env.example).
+# add `--profile observability` to also get Jaeger{{#if authn.keycloak}}, `--profile identity` to get Keycloak{{/if}}{{#if errors.sentry}}, `--profile errors` to get GlitchTip{{/if}}. Ports come from .env (see .env.example).
 name: {{project.name}}
 
 services:
@@ -146,8 +146,73 @@ services:
     image: jaegertracing/jaeger:2.22.0
     profiles: [observability]
     ports:
-      - "${JAEGER_UI_PORT:-16686}:16686"
-      - "${OTLP_HTTP_PORT:-4318}:4318"
+      - "127.0.0.1:${JAEGER_UI_PORT:-16686}:16686"
+      - "127.0.0.1:${OTLP_HTTP_PORT:-4318}:4318"
+{{#if errors.sentry}}
+
+  # GlitchTip 6 in development mode, for local use only: an error tracker that speaks the Sentry protocol.
+  # Its first start migrates its database, then creates a user (test@example.com / admin_pass), an organization
+  # and a project, and prints the DSN to put in SENTRY_DSN: `docker compose logs glitchtip | grep 'DSN:'`.
+  glitchtip:
+    image: glitchtip/glitchtip:6.2.6
+    profiles: [errors]
+    depends_on:
+      glitchtip-postgres:
+        condition: service_healthy
+      glitchtip-valkey:
+        condition: service_started
+    ports:
+      - "127.0.0.1:${GLITCHTIP_PORT:-8000}:8000"
+    environment:
+      # Web and worker in one process.
+      SERVER_ROLE: all_in_one
+      DATABASE_URL: postgres://postgres:postgres@glitchtip-postgres:5432/glitchtip
+      VALKEY_URL: redis://glitchtip-valkey:6379
+      # Never in production: openssl rand -hex 32.
+      SECRET_KEY: local-development-only-not-a-secret
+      GLITCHTIP_DOMAIN: http://localhost:${GLITCHTIP_PORT:-8000}
+      EMAIL_URL: consolemail://
+      DEFAULT_FROM_EMAIL: glitchtip@localhost
+      # Development only: required by the bootstrap below.
+      DEBUG: "true"
+      GLITCHTIP_BOOTSTRAP_DEV: "true"
+    healthcheck:
+      test: ["CMD", "python", "healthcheck.py"]
+      interval: 10s
+      timeout: 6s
+      retries: 6
+      start_period: 180s
+
+  glitchtip-postgres:
+    image: postgres:18-alpine
+    profiles: [errors]
+    environment:
+      POSTGRES_DB: glitchtip
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - glitchtip-postgres:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d glitchtip"]
+      interval: 5s
+      retries: 12
+
+  glitchtip-valkey:
+    image: valkey/valkey:9-alpine
+    profiles: [errors]
+{{/if}}
+{{#if worker.on}}
+
+  # The scheduled jobs in a process of their own: the same image, another entry point. The API then starts with its jobs off (RUN_JOBS).
+  worker:
+    build:
+      context: .
+      args:
+        ENTRY: dist/{{config.sourceRoot}}/apps/worker/main.js
+    profiles: [services]
+    env_file: .env
+    environment:
+      RUN_JOBS: "true"
+{{/if}}
 {{#if compose.volumes}}
 
 volumes:
@@ -163,4 +228,7 @@ volumes:
 {{/if}}
 {{#if redis.server}}
   {{redis.service}}-data:
+{{/if}}
+{{#if errors.sentry}}
+  glitchtip-postgres:
 {{/if}}

@@ -1,5 +1,5 @@
 import type { KafkaJS } from '@confluentinc/kafka-javascript';
-import type { IntegrationEvent, IntegrationEventCallback, Subscription } from '@ddd-ts-kit/kernel';
+import type { EventDelivery, IntegrationEvent, IntegrationEventCallback, Subscription } from '@ddd-ts-kit/kernel';
 import { decode } from '../codec/decode.js';
 import {
   ATTEMPT_HEADER,
@@ -13,6 +13,7 @@ import { sourceOf } from '../codec/source-of.js';
 import { textHeader } from '../codec/text-header.js';
 import { reasonOf } from '../errors/reason-of.js';
 import type { KafkaDelivery } from '../options/kafka-delivery.js';
+import { MESSAGING_SYSTEM } from '../messaging-system.js';
 import type { KafkaFailure } from '../options/kafka-failure.js';
 import type { RetryOptions } from '../options/retry-options.js';
 import type { Publications } from '../publication/publications.js';
@@ -153,7 +154,7 @@ export class RecordHandling {
       postpone(delivery, (resume) => this.waitingForHandlers.add(resume));
     }
 
-    const code = await failureOf(handlers, event);
+    const code = await failureOf(handlers, event, this.deliveryOf(delivery));
 
     if (code === undefined) {
       this.settled(delivery, 'acknowledged');
@@ -161,6 +162,16 @@ export class RecordHandling {
     } else {
       await this.retryOrBury(delivery, event, code);
     }
+  }
+
+  private deliveryOf(delivery: Delivery): EventDelivery {
+    return {
+      attempt: this.attempts.of(delivery),
+      maxAttempts: this.dependencies.retry.maxAttempts,
+      system: MESSAGING_SYSTEM,
+      destination: delivery.topic,
+      consumer: this.consumer,
+    };
   }
 
   private async retryOrBury(delivery: Delivery, event: IntegrationEvent, code: string): Promise<void> {

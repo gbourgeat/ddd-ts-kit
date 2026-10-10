@@ -7,7 +7,8 @@ import { Unreachable } from './support/unreachable.js';
 
 /*
  * The classes of the kit keep their state in TypeScript `private` members, which are ordinary
- * properties and methods once compiled: an aspect reads and wraps them like the public ones.
+ * properties and methods once compiled: an aspect cannot tell them from the public ones, so it
+ * advises the calls that come from outside and leaves alone the ones an instance makes on itself.
  * Both ways an aspect stands around an instance are specified: own methods on an extensible
  * instance, a proxy in front of a frozen one.
  */
@@ -29,21 +30,17 @@ describe.each(STANDINGS)('an aspect around a class with private members: %s', (_
     expect(ledger.posted).toBe(2);
   });
 
-  it('runs a private method called through this, and advises it like any asynchronous method', async () => {
+  it('runs a private method called through this without advising it again: one call from outside, one advice', async () => {
     const journal: string[] = [];
     const ledger = wrap(recording(journal));
 
     await ledger.post('rent', 900);
 
-    expect(journal).toEqual([
-      'around > LedgerGateway.post',
-      'around > LedgerGateway.send',
-      'around < LedgerGateway.send',
-      'around < LedgerGateway.post',
-    ]);
+    expect(journal).toEqual(['around > LedgerGateway.post', 'around < LedgerGateway.post']);
+    expect(ledger.sendAttempts).toBe(1);
   });
 
-  it('advises a public method another one calls through this', async () => {
+  it('does not advise again a public method another one calls through this', async () => {
     const journal: string[] = [];
     const ledger = wrap(recording(journal));
 
@@ -52,7 +49,7 @@ describe.each(STANDINGS)('an aspect around a class with private members: %s', (_
       ['power', 80],
     ]);
 
-    expect(journal.filter((line) => line.endsWith('> LedgerGateway.post'))).toHaveLength(2);
+    expect(journal).toEqual(['around > LedgerGateway.postAll', 'around < LedgerGateway.postAll']);
     expect(await ledger.balance()).toBe(980);
   });
 
@@ -65,21 +62,17 @@ describe.each(STANDINGS)('an aspect around a class with private members: %s', (_
     expect(ledger.posted).toBe(1);
   });
 
-  it('nests composed aspects the same way around every method reached through this', async () => {
+  it('nests composed aspects once around the call from outside, and not around what it reaches through this', async () => {
     const journal: string[] = [];
     const ledger = wrap(compose(recording(journal, 'outer'), recording(journal, 'inner')));
 
     await ledger.post('rent', 900);
 
-    expect(journal.map((line) => line.split('.')[0])).toEqual([
-      'outer > LedgerGateway',
-      'inner > LedgerGateway',
-      'outer > LedgerGateway',
-      'inner > LedgerGateway',
-      'inner < LedgerGateway',
-      'outer < LedgerGateway',
-      'inner < LedgerGateway',
-      'outer < LedgerGateway',
+    expect(journal).toEqual([
+      'outer > LedgerGateway.post',
+      'inner > LedgerGateway.post',
+      'inner < LedgerGateway.post',
+      'outer < LedgerGateway.post',
     ]);
   });
 });

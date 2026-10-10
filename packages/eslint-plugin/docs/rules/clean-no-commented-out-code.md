@@ -45,4 +45,4 @@ None.
 
 ## With the CLI checker
 
-`ddd-ts-kit check` approximates this rule on the text of the file and stays the fast edit-time guard. This rule is the authority.
+`ddd-ts-kit check` approximates this rule on the text of the file, with the same exemption of JSDoc blocks, and stays the fast edit-time guard. This rule is the authority.

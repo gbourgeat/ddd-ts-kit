@@ -3,6 +3,7 @@ import {
   InMemoryLogger,
   InMemoryMetrics,
   anonymousSession,
+  errorReportOf,
   executionContext,
   systemActor,
   type Actor,
@@ -27,6 +28,9 @@ declare module '@ddd-ts-kit/kernel' {
   }
   interface LogFields {
     orderId?: string;
+  }
+  interface ErrorReportExtensions {
+    readonly deployment: 'blue' | 'green';
   }
   interface MetricLabels {
     region?: 'eu' | 'us';
@@ -110,5 +114,21 @@ describe('LogFields and MetricLabels', () => {
 
     expect(logger.entries).toHaveLength(2);
     expect(metrics.counterValue('orders_total', { region: 'eu' })).toBe(1);
+  });
+});
+
+describe('ErrorReportExtensions', () => {
+  it('types the fields a project adds to an error report, optional when read', () => {
+    const report = errorReportOf(new Error('boom'), {
+      origin: 'http',
+      operation: 'shipOrder',
+      extensions: { deployment: 'blue' },
+    });
+
+    // @ts-expect-error -- 'red' is not a declared deployment
+    const wrong = errorReportOf(undefined, { origin: 'http', operation: 'x', extensions: { deployment: 'red' } });
+
+    expect([report.extensions?.deployment, wrong.extensions?.deployment]).toEqual(['blue', 'red']);
+    expect(errorReportOf(undefined, { origin: 'http', operation: 'x' }).extensions).toBeUndefined();
   });
 });

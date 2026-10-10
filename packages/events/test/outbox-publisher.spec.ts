@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { FixedClock, InMemoryEventBus } from '@ddd-ts-kit/kernel';
+import { FixedClock, InMemoryEventBus, messagingSystemOf } from '@ddd-ts-kit/kernel';
 import {
   DuplicateOutboxEventError,
   InMemoryOutboxStore,
   OutboxPublisher,
   OutboxRelay,
+  createEventRegistry,
+  validatingPublisher,
 } from '../src/index.js';
 import { at } from './support/events.js';
 import { invoiceIssuedEvent as event } from './support/invoice-issued-event.js';
@@ -34,5 +36,16 @@ describe('OutboxPublisher', () => {
     );
 
     expect(store.records().map((record) => record.event.id)).toEqual(['evt-1']);
+  });
+});
+
+describe('what the outbox publisher says of itself', () => {
+  it('names itself as the publisher that only stores, and the validating decorator passes it on', () => {
+    const outbox = new OutboxPublisher(new InMemoryOutboxStore());
+    const validating = validatingPublisher(outbox, createEventRegistry([]), { unknown: 'allow' });
+
+    expect(messagingSystemOf(outbox)).toBe('outbox');
+    expect(messagingSystemOf(validating)).toBe('outbox');
+    expect(messagingSystemOf(validatingPublisher(new InMemoryEventBus(), createEventRegistry([])))).toBe('in-memory');
   });
 });

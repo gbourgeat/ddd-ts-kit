@@ -21,8 +21,8 @@ ruleTester.run('context-extractable', contextExtractable, {
     at(PORT, 'const cache = new Map<string, number>();\ncache.set("a", 1);\nexport function rate(): number { return cache.size; }', CONFIG),
     at('src/platform/registry.ts', 'export let current = 0;\nexport const all = [];\nall.push(1);', CONFIG),
     at(`${BILLING}/test/fakes/rates.fake.ts`, 'export let calls = 0;', CONFIG),
-    at(MODULE, "import { CLOCK } from '@ddd-ts-kit/di';\nimport { PLATFORM_DATABASE } from '@/platform/platform.module.js';\nimport { productListedV1 } from '@/contexts/catalog/published-language/index.js';\nbuilder.bind(REPO).toClass(Repo, [PLATFORM_DATABASE, CLOCK]);\nbuilder.on(productListedV1, { consumer: 'billing.x' }).handledBy(Handler, [resolve(CLOCK)]);", CONFIG),
-    at(MODULE, "import { CATALOG_READER } from '@/contexts/catalog/catalog.module.js';\nexport const all = describe(CATALOG_READER);", CONFIG),
+    at(MODULE, "import { Clock } from '@ddd-ts-kit/kernel';\nimport { PlatformDatabase } from '@/platform/database/platform-database.port.js';\nimport { productListedV1 } from '@/contexts/catalog/published-language/index.js';\nbuilder.bind(InvoiceRepository).toClass(Repo, [PlatformDatabase, Clock]);\nbuilder.on(productListedV1, { consumer: 'billing.x' }).handledBy(Handler, [resolve(Clock)]);", CONFIG),
+    at(MODULE, "import { CatalogReader } from '@/contexts/catalog/application/ports/catalog-reader.port.js';\nexport const all = describe(CatalogReader);", CONFIG),
   ],
   invalid: [
     { ...at(SCHEMA, "export const catalog = contextSchema('catalog');", CONFIG), errors: [{ messageId: 'foreignSchema', data: { here: 'billing', there: 'catalog' } }] },
@@ -38,8 +38,8 @@ ruleTester.run('context-extractable', contextExtractable, {
     { ...at(PORT, 'export const counters = { sent: 0 };\ncounters.sent++;', CONFIG), errors: [{ messageId: 'mutableState' }] },
     { ...at(PORT, 'export const defaults = {};\nObject.assign(defaults, overrides);', CONFIG), errors: [{ messageId: 'mutableState' }] },
     { ...at(PORT, 'export const pending = new Set<string>();\nfunction done(id: string): void { pending.delete(id); }', CONFIG), errors: [{ messageId: 'mutableState' }] },
-    { ...at(MODULE, "import { CATALOG_READER } from '@/contexts/catalog/catalog.module.js';\nbuilder.query(GetPrice).public().handledBy(GetPriceHandler, [CATALOG_READER]);", CONFIG), errors: [{ messageId: 'foreignWiring', data: { here: 'billing', there: 'catalog', name: 'CATALOG_READER' } }] },
-    { ...at(MODULE, "import { PRODUCTS as CATALOG_PRODUCTS } from '../catalog/catalog.module.js';\nconst products = resolve(CATALOG_PRODUCTS);", CONFIG), errors: [{ messageId: 'foreignWiring', data: { here: 'billing', there: 'catalog', name: 'CATALOG_PRODUCTS' } }] },
-    { ...at(MODULE, "import { DrizzleProductRepository } from '@/contexts/catalog/infrastructure/persistence/drizzle-product.repository.js';\nbuilder.bind(PRODUCTS).toClass(DrizzleProductRepository, [DATABASE]);\nbuilder.rebind(DrizzleProductRepository);", CONFIG), errors: [{ messageId: 'foreignWiring' }, { messageId: 'foreignWiring' }] },
+    { ...at(MODULE, "import { CatalogReader } from '@/contexts/catalog/application/ports/catalog-reader.port.js';\nbuilder.query(GetPrice).public().handledBy(GetPriceHandler, [CatalogReader]);", CONFIG), errors: [{ messageId: 'foreignWiring', data: { here: 'billing', there: 'catalog', name: 'CatalogReader' } }] },
+    { ...at(MODULE, "import { ProductRepository as CatalogProducts } from '../catalog/domain/repositories/product.repository.js';\nconst products = resolve(CatalogProducts);", CONFIG), errors: [{ messageId: 'foreignWiring', data: { here: 'billing', there: 'catalog', name: 'CatalogProducts' } }] },
+    { ...at(MODULE, "import { DrizzleProductRepository } from '@/contexts/catalog/infrastructure/persistence/drizzle-product.repository.js';\nbuilder.bind(Products).toClass(DrizzleProductRepository, [Database]);\nbuilder.rebind(DrizzleProductRepository);", CONFIG), errors: [{ messageId: 'foreignWiring' }, { messageId: 'foreignWiring' }] },
   ],
 });

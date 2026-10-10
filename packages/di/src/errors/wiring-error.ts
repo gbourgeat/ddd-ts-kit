@@ -18,7 +18,8 @@ export type WiringErrorCode =
   | 'MISPLACED_DECLARATION'
   | 'DUPLICATE_JOB'
   | 'UNKNOWN_JOB'
-  | 'INVALID_JOB_SETTINGS';
+  | 'INVALID_JOB_SETTINGS'
+  | 'DUPLICATE_PROJECTION';
 
 /** A mistake in the composition root. Never a business failure, hence not a DomainError. */
 export class WiringError extends Error {

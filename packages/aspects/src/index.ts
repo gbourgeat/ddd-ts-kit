@@ -20,8 +20,6 @@ export { BULKHEAD_FULL, BulkheadFullError } from './errors/bulkhead-full-error.j
 export { CIRCUIT_OPEN, CircuitOpenError } from './errors/circuit-open-error.js';
 export { TIMEOUT, TimeoutError } from './errors/timeout-error.js';
 export { AspectNotAllowedError } from './errors/aspect-not-allowed-error.js';
-export { describeError } from './errors/describe-error.js';
-export type { ErrorDescription } from './errors/error-description.js';
 export { logged, type LoggedOptions } from './observability/logged.js';
 export { timed, type TimedOptions } from './observability/timed.js';
 export { retry, type RetryOptions } from './retry/retry.js';

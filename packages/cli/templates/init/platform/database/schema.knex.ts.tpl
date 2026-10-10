@@ -17,11 +17,11 @@ export const AUDIT_SCHEMA = 'audit';
  * in-process database of the tests both call it; once a database is shared, a change of an
  * existing table goes into a migration of its own (`npm run db:generate <name>`).
  */
-export async function createTables(knex: Knex): Promise<void> {
+export const createTables = async (knex: Knex): Promise<void> => {
   await createOutboxTables(knex, { schema: MESSAGING });
 {{#if audit.on}}
   await createAuditTables(knex, { schema: AUDIT_SCHEMA });
 {{/if}}
   // ddd-ts-kit:schemas
   // /ddd-ts-kit:schemas
-}
+};

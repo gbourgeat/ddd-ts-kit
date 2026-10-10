@@ -1,7 +1,7 @@
 import type { AdviceFactory } from '../aspect/advice-factory.js';
 import type { Aspect } from '../aspect/aspect.js';
 import { defineAspect } from '../aspect/define-aspect.js';
-import { schedulerOr } from '../runtime/collaborators.js';
+import { schedulerOr } from '../runtime/scheduler-or.js';
 import type { Backoff } from './backoff.js';
 import { delayBeforeRetry } from './delay-before-retry.js';
 import { isTransient } from './is-transient.js';

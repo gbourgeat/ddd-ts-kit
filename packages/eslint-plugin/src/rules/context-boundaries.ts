@@ -1,5 +1,8 @@
-import { defineRule } from '../support/define-rule.js';
-import { describeTarget, importListener, inContext, inLayer } from '../support/imports.js';
+import { defineRule } from '../support/rule/define-rule.js';
+import { describeTarget } from '../support/imports/describe-target.js';
+import { importListener } from '../support/imports/import-listener.js';
+import { inContext } from '../support/imports/in-context.js';
+import { inLayer } from '../support/imports/in-layer.js';
 
 export const contextPublishedLanguageOnly = defineRule<'internals'>({
   id: 'context/published-language-only',
@@ -12,11 +15,16 @@ export const contextPublishedLanguageOnly = defineRule<'internals'>({
   },
   create({ file, report }) {
     const here = inContext(file);
+
     if (here === undefined) return {};
+
     return importListener(file, ({ node, target }) => {
       if (target.kind !== 'file' || target.location.area !== 'context') return;
+
       const there = target.location;
+
       if (there.context === here.context || there.layer === 'published-language') return;
+
       report({ node, messageId: 'internals', data: { here: here.context, there: there.context, path: target.path, contextsDir: file.config.contextsDir } });
     });
   },
@@ -33,12 +41,18 @@ export const contextDeclaredRelationship = defineRule<'undeclared'>({
   },
   create({ file, report }) {
     const here = inContext(file);
+
     if (here === undefined) return {};
+
     const upstreams = file.config.contexts[here.context]?.upstreams.map((upstream) => upstream.context) ?? [];
+
     return importListener(file, ({ node, target }) => {
       if (target.kind !== 'file' || target.location.area !== 'context') return;
+
       const there = target.location;
+
       if (there.context === here.context || there.layer !== 'published-language' || upstreams.includes(there.context)) return;
+
       report({ node, messageId: 'undeclared', data: { here: here.context, there: there.context } });
     });
   },
@@ -54,10 +68,13 @@ export const contextPublishedLanguageIsAContract = defineRule<'leak'>({
   },
   create({ file, report }) {
     if (inLayer(file, 'published-language') === undefined) return {};
+
     const allowed = file.config.publishedLanguageAllowedPackages;
+
     return importListener(file, ({ node, target }) => {
       if (target.kind === 'package' && allowed.includes(target.name)) return;
       if (target.kind === 'file' && target.location.area === 'context' && target.location.layer === 'published-language') return;
+
       report({ node, messageId: 'leak', data: { target: describeTarget(target) } });
     });
   },

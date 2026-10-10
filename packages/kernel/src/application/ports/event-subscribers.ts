@@ -5,7 +5,9 @@ import type { IntegrationEventSubscriber } from './integration-event-subscriber.
  * every consuming context its own, so that an extracted context keeps its queues.
  */
 export abstract class EventSubscribers {
-  static readonly tokenKey = 'kernel.EventSubscribers';
+  static {
+    Object.defineProperty(this, 'tokenKey', { value: 'kernel.EventSubscribers' });
+  }
 
   abstract forContext(name: string): IntegrationEventSubscriber;
 }

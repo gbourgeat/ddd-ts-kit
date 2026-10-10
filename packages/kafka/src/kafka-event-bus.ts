@@ -1,3 +1,4 @@
+import { inspect } from 'node:util';
 import type {
   EventBus,
   IntegrationEvent,
@@ -6,20 +7,25 @@ import type {
   Subscription,
 } from '@ddd-ts-kit/kernel';
 import { BrokerLink } from './connection/broker-link.js';
+import { clusterOf } from './connection/cluster-of.js';
 import { Consumption } from './consumption/consumption.js';
 import { GroupConsumer } from './consumption/group-consumer.js';
 import { ConsumerNameRequiredError } from './errors/consumer-name-required-error.js';
+import { MESSAGING_SYSTEM } from './messaging-system.js';
 import { EventBusClosedError } from './errors/event-bus-closed-error.js';
 import type { KafkaEventBusOptions } from './options/kafka-event-bus-options.js';
 import type { Settings } from './options/settings.js';
 import { settingsOf } from './options/settings-of.js';
 import { Publications } from './publication/publications.js';
 import { DeadLetterReplay } from './replay/dead-letter-replay.js';
+import { conceal } from './secrecy/conceal.js';
 import type { ConsumerBinding } from './topology/consumer-binding.js';
 import { describeTopic } from './topology/describe-topic.js';
 import type { KafkaTopology } from './topology/kafka-topology.js';
 import { topologyOf } from './topology/topology-of.js';
 import type { TopologySettings } from './topology/topology-settings.js';
+
+const DESCRIPTION = 'KafkaEventBus [clients concealed]';
 
 /**
  * The provider for Apache Kafka and other logs speaking its protocol.
@@ -32,6 +38,9 @@ import type { TopologySettings } from './topology/topology-settings.js';
  * once, in order for the records of one key: consumers deduplicate.
  */
 export class KafkaEventBus implements EventBus {
+  /** Read by what observes the bus from outside: the name of the transport. */
+  readonly messagingSystem = MESSAGING_SYSTEM;
+
   private readonly settings: Settings;
 
   private readonly link: BrokerLink;
@@ -47,7 +56,7 @@ export class KafkaEventBus implements EventBus {
     const topology = topologySettingsOf(settings);
 
     this.settings = settings;
-    this.link = new BrokerLink({ ...settings, createTopics: settings.topics.create });
+    this.link = new BrokerLink(clusterOf(options), { ...settings, createTopics: settings.topics.create });
 
     this.publications = new Publications(this.link, {
       routing: settings,
@@ -62,6 +71,8 @@ export class KafkaEventBus implements EventBus {
     this.consumption = new Consumption(
       (consumer) => new GroupConsumer(consumer, { ...dependencies, settings: { ...settings, topology } }),
     );
+
+    conceal(this);
   }
 
   /** Records delivered to this bus whose handlers have not finished yet. */
@@ -153,6 +164,16 @@ export class KafkaEventBus implements EventBus {
     await this.consumption.drain();
     await this.publications.close();
     await this.link.close();
+  }
+
+  /** What a serialisation shows of the bus: its name, never its clients or their properties. */
+  toJSON(): string {
+    return DESCRIPTION;
+  }
+
+  /** What `console.log` and `util.inspect` show of the bus: the same. */
+  [inspect.custom](): string {
+    return DESCRIPTION;
   }
 
   /** Adds a handler to the group of one consumer for one type; the group joins in the background. */

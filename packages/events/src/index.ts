@@ -12,7 +12,6 @@ export * from './registry/event-registry.js';
 export * from './subscription/consume.js';
 export * from './subscription/event-scope-options.js';
 export * from './subscription/event-subscription.js';
-export * from './subscription/in-memory-releasable-processed-event-store.js';
 export * from './subscription/on.js';
 export * from './subscription/releasable-processed-event-store.js';
 export * from './subscription/subscribe-all.js';

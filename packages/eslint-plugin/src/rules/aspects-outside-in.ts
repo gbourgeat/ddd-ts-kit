@@ -1,7 +1,8 @@
 import type { LintedFile } from '../project/linted-file.js';
-import { defineRule } from '../support/define-rule.js';
-import { importListener, inSourceRoot } from '../support/imports.js';
-import { ASPECTS_PACKAGE } from '../support/outside-concerns.js';
+import { defineRule } from '../support/rule/define-rule.js';
+import { importListener } from '../support/imports/import-listener.js';
+import { inSourceRoot } from '../support/imports/in-source-root.js';
+import { ASPECTS_PACKAGE } from '../support/outside-concerns/outside-concern.js';
 
 const DECORATORS = `${ASPECTS_PACKAGE}/decorators`;
 
@@ -15,6 +16,7 @@ export const aspectsOutsideIn = defineRule<'decorators'>({
   },
   create({ file, report }) {
     if (!isJudged(file)) return {};
+
     return importListener(file, ({ node, specifier }) => {
       if (specifier === DECORATORS || specifier.startsWith(`${DECORATORS}/`)) report({ node, messageId: 'decorators', data: { place: placeOf(file) } });
     });
@@ -24,7 +26,9 @@ export const aspectsOutsideIn = defineRule<'decorators'>({
 /** domain/ and application/ are left to the layer rules, which refuse every entry of the package: one import, one report. */
 function isJudged(file: LintedFile): boolean {
   const { location } = file;
+
   if (file.isTest || !inSourceRoot(file) || location.area === 'platform') return false;
+
   return location.area !== 'context' || !['infrastructure', 'domain', 'application'].includes(location.layer);
 }
 
@@ -32,5 +36,6 @@ function placeOf({ location, path }: LintedFile): string {
   if (location.area === 'shared-kernel') return 'the shared kernel';
   if (location.area !== 'context') return path;
   if (location.layer === 'module') return `the module file of "${location.context}"`;
+
   return location.layer === 'root' ? path : `${location.layer}/`;
 }

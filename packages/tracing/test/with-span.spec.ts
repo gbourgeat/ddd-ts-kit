@@ -1,27 +1,7 @@
 import { SpanStatusCode, trace } from '@opentelemetry/api';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { traceUseCase, withSpan } from '../src/index.js';
+import { withSpan } from '../src/index.js';
 import { setupTracing, type TestTracing } from './support/setup-tracing.js';
-
-describe('traceUseCase', () => {
-  it('traces a handler as a use case of its context', async () => {
-    const tracing = setupTracing();
-
-    class PlaceOrderHandler {
-      async execute(): Promise<string> {
-        return 'order-1';
-      }
-    }
-
-    await traceUseCase(new PlaceOrderHandler(), { context: 'ordering' }).execute();
-
-    const span = tracing.span('use-case.PlaceOrderHandler.execute');
-
-    expect(span.attributes['app.dependency.kind']).toBe('use-case');
-    expect(span.attributes['app.context']).toBe('ordering');
-    tracing.teardown();
-  });
-});
 
 describe('withSpan', () => {
   let tracing: TestTracing;

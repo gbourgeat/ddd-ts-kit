@@ -1,0 +1,134 @@
+import { CLASSIFICATIONS, commitLimitProblems, CONFIG_FILE, FUNCTION_LINES_CEILING, GUARD_MODES, isOneOf, RELATIONSHIPS, SEVERITIES, type ContextConfig, type Upstream } from '../../config/index.js';
+import type { Project } from '../model/project.js';
+import type { Report } from '../model/report.js';
+import type { Violation } from '../model/violation.js';
+import { isRecord } from '../support/is-record.js';
+import { lineOf } from '../support/line-of.js';
+import { lineOfSequence } from '../support/line-of-sequence.js';
+import { rawConfig } from './raw-config.js';
+
+/** What `config/valid` looks at in one project, each finding placed on a line of the config file. */
+export class ConfigInspection {
+  constructor(
+    private readonly project: Project,
+    private readonly report: Report,
+  ) {}
+
+  declaredContext(name: string, context: ContextConfig): Violation[] {
+    return [...this.classification(name, context), ...context.upstreams.flatMap((upstream) => this.upstream(name, upstream)), ...this.presence(name, context)];
+  }
+
+  undeclaredDirectories(): Violation[] {
+    const { contextsDir, contexts } = this.project.config;
+    const fix = `Declare it under "contexts" in ${CONFIG_FILE} with its classification and upstreams.`;
+
+    return this.project.contextsOnDisk
+      .filter((name) => contexts[name] === undefined)
+      .map((name) => this.report({ file: `${contextsDir}/${name}`, line: 1 }, `The directory ${contextsDir}/${name} is not a declared context.`, fix));
+  }
+
+  ruleSettings(known: readonly string[]): Violation[] {
+    return Object.entries(this.project.config.rules).flatMap(([id, severity]) => {
+      if (!known.includes(id)) return [this.inConfig(id, `The rule "${id}" does not exist.`, 'Fix the id; `ddd-ts-kit rules` lists the valid ones.')];
+      if (!isOneOf(SEVERITIES, severity)) return [this.inConfig(id, `The rule "${id}" has the severity "${severity}".`, `Use one of: ${SEVERITIES.join(', ')}.`)];
+
+      return [];
+    });
+  }
+
+  guardMode(): Violation[] {
+    const { guard } = this.project.config;
+
+    if (isOneOf(GUARD_MODES, guard)) return [];
+
+    return [this.inConfig('guard', `"guard" is "${guard}".`, `Use one of: ${GUARD_MODES.join(', ')} (how the editor hook reacts to a violation: refuse the write, only report it, or stay silent).`)];
+  }
+
+  /** A limit above the ceiling is read as the ceiling: the config says something the checker does not do. */
+  functionLinesLimit(): Violation[] {
+    const limits = rawConfig(this.project)['limits'];
+    const written = isRecord(limits) ? limits['maxFunctionLines'] : undefined;
+
+    if (typeof written !== 'number' || written <= FUNCTION_LINES_CEILING) return [];
+
+    const fix = `Set "limits.maxFunctionLines" to ${FUNCTION_LINES_CEILING} or less: no function is longer than ${FUNCTION_LINES_CEILING} lines, whatever the config says.`;
+
+    return [this.inConfig('maxFunctionLines', `"limits.maxFunctionLines" is ${written}, above the ceiling of ${FUNCTION_LINES_CEILING}: it is read as ${FUNCTION_LINES_CEILING}.`, fix)];
+  }
+
+  /** A commit limit that is not a positive integer is read as its default: the config says something nothing does. */
+  commitLimits(): Violation[] {
+    return commitLimitProblems(rawConfig(this.project)['commit']).map(({ key, message, fix }) => this.inConfig(key, message, fix));
+  }
+
+  /** An entry without a file or without a reason allows nothing: it is ignored, and has to be said. */
+  onePerFileAllowances(): Violation[] {
+    const onePerFile = rawConfig(this.project)['onePerFile'];
+    const entries: unknown[] = isRecord(onePerFile) && Array.isArray(onePerFile['allow']) ? onePerFile['allow'] : [];
+    const fix = 'Write each entry as { "file": "<path or glob from the project root>", "reason": "<why these exports are one thing>" }, or remove it.';
+
+    return entries.flatMap((entry, index) => {
+      const missing = missingOf(entry);
+
+      if (missing === undefined) return [];
+
+      const line = lineOfSequence(this.project.configText, ['"onePerFile"', '"allow"', ...Array.from({ length: index + 1 }, () => '{')]);
+
+      return [this.report({ file: CONFIG_FILE, line }, `Entry ${index + 1} of "onePerFile.allow" has no ${missing}: it is ignored.`, fix)];
+    });
+  }
+
+  private classification(name: string, context: ContextConfig): Violation[] {
+    if (isOneOf(CLASSIFICATIONS, context.classification)) return [];
+
+    return [this.inConfig(name, `The context "${name}" has the classification "${context.classification}".`, `Set contexts.${name}.classification to one of: ${CLASSIFICATIONS.join(', ')}.`)];
+  }
+
+  private upstream(name: string, upstream: Upstream): Violation[] {
+    const violations: Violation[] = [];
+
+    if (upstream.context === name) {
+      violations.push(this.inConfig(name, `The context "${name}" lists itself as an upstream.`, 'Remove the entry: a context does not depend on itself.'));
+    } else if (this.project.config.contexts[upstream.context] === undefined) {
+      const create = `\`ddd-ts-kit generate context ${upstream.context} --classification <core|supporting|generic>\``;
+
+      violations.push(this.inConfig(upstream.context, `The context "${name}" declares the unknown upstream "${upstream.context}".`, `Fix the name, or create the context with ${create}.`));
+    }
+
+    if (!isOneOf(RELATIONSHIPS, upstream.relationship)) {
+      const message = `The relationship "${upstream.relationship}" between "${name}" and "${upstream.context}" is unknown.`;
+
+      violations.push(this.inConfig(upstream.relationship, message, `Use one of: ${RELATIONSHIPS.join(', ')}.`));
+    }
+
+    return violations;
+  }
+
+  private presence(name: string, context: ContextConfig): Violation[] {
+    if (this.project.contextsOnDisk.includes(name)) return [];
+
+    const { contextsDir } = this.project.config;
+    const create = `\`ddd-ts-kit generate context ${name} --classification ${context.classification || 'core'}\``;
+
+    return [this.inConfig(name, `The context "${name}" is declared but ${contextsDir}/${name} does not exist.`, `Create it with ${create}, or remove it from the config.`)];
+  }
+
+  /** A violation located on the line of the config file that first quotes `needle`. */
+  private inConfig(needle: string, message: string, fix: string): Violation {
+    return this.report({ file: CONFIG_FILE, line: lineOf(this.project.configText, `"${needle}"`) }, message, fix);
+  }
+}
+
+function missingOf(entry: unknown): string | undefined {
+  const record = isRecord(entry) ? entry : {};
+
+  const has = (key: string): boolean => {
+    const value = record[key];
+
+    return typeof value === 'string' && value.trim() !== '';
+  };
+
+  if (!has('file')) return has('reason') ? 'file' : 'file and no reason';
+
+  return has('reason') ? undefined : 'reason';
+}

@@ -1,0 +1,99 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import {
+  AUDIT_MODES,
+  AUTHN_STACKS,
+  AUTHZ_STACKS,
+  BROKER_STACKS,
+  CACHE_STACKS,
+  CI_PLATFORMS,
+  CONFIG_FILE,
+  DI_STACKS,
+  DOCS_UIS,
+  ERROR_REPORTERS,
+  HTTP_STACKS,
+  LOGGERS,
+  parseConfig,
+  readConfig,
+  TEST_STACKS,
+  VALIDATION_STACKS,
+  type Config,
+} from '../../config/index.js';
+import { CliError } from '../../cli-error.js';
+import { choose } from './choose.js';
+import { resolvePersistence } from './resolve-persistence.js';
+import { resolveStyle } from './resolve-style.js';
+import type { StackOptions } from './stack-options.js';
+
+export type { StackOptions } from './stack-options.js';
+
+/** The stack of the project: the one its config records when it is already initialised, else the one the flags ask for. */
+export function resolveStack(root: string, options: StackOptions): Config {
+  if (fs.existsSync(path.join(root, CONFIG_FILE)) && !options.force) return readConfig(root).config;
+
+  const http = choose(HTTP_STACKS, options.http, 'http') ?? 'express';
+  const di = choose(DI_STACKS, options.di, 'di') ?? (http === 'nest' ? 'nest' : 'tsyringe');
+
+  assertNestGoesWithNest(http, di);
+
+  const docsUi = http === 'none' ? 'none' : (choose(DOCS_UIS, options.docsUi, 'docs-ui') ?? 'swagger');
+  const persistence = resolvePersistence(options);
+  const broker = resolveBroker(options, persistence.orm);
+  const stack = { http, di, ...resolveTooling(options), ...persistence, docsUi, ...resolveSecurity(options), broker, ...resolveOperations(options, persistence.orm), ...resolveStyle(options, di) };
+  const config = parseConfig({ stack, contexts: {}, rules: {} });
+
+  return { ...config, worker: hasWorker(root, config) };
+}
+
+/** `--force` writes the project anew: a worker that is already there keeps the jobs, so the API still starts with its jobs off. */
+function hasWorker(root: string, config: Config): boolean {
+  return fs.existsSync(path.join(root, config.sourceRoot, 'apps/worker/main.ts'));
+}
+
+/**
+ * The cache stays in the process unless asked otherwise; the audit trail is on as soon as there
+ * is a database to keep it in; unexpected failures are reported nowhere unless asked; the logger
+ * writes JSON lines on the standard output unless pino or winston is asked for. Error
+ * reporting hangs on the buses, the HTTP boundary, the jobs and the process, which every stack
+ * has: no other choice refuses it.
+ */
+function resolveOperations(options: StackOptions, orm: string): { cache: string; audit: string; errors: string; logger: string } {
+  return {
+    cache: choose(CACHE_STACKS, options.cache, 'cache') ?? 'none',
+    audit: choose(AUDIT_MODES, options.audit, 'audit') ?? (orm === 'none' ? 'off' : 'on'),
+    errors: choose(ERROR_REPORTERS, options.errors, 'errors') ?? 'none',
+    logger: choose(LOGGERS, options.logger, 'logger') ?? 'stdout',
+  };
+}
+
+function resolveSecurity(options: StackOptions): { authn: string; authz: string } {
+  return { authn: choose(AUTHN_STACKS, options.authn, 'authn') ?? 'jwt', authz: choose(AUTHZ_STACKS, options.authz, 'authz') ?? 'rbac' };
+}
+
+function resolveBroker(options: StackOptions, orm: string): string {
+  const broker = choose(BROKER_STACKS, options.broker, 'broker') ?? 'none';
+
+  if (broker === 'none' || orm !== 'none') return broker;
+
+  throw new CliError(
+    `--broker ${broker} cannot be combined with --orm none.`,
+    'A broker is reached through the transactional outbox, which needs a database: pick an ORM, or keep --broker none.',
+  );
+}
+
+function resolveTooling(options: StackOptions): { validation: string; tests: string; ci: string } {
+  return {
+    validation: choose(VALIDATION_STACKS, options.validation, 'validation') ?? 'zod',
+    tests: choose(TEST_STACKS, options.tests, 'tests') ?? 'vitest',
+    ci: choose(CI_PLATFORMS, options.ci, 'ci') ?? 'github',
+  };
+}
+
+function assertNestGoesWithNest(http: string, di: string): void {
+  if ((http === 'nest') === (di === 'nest')) return;
+
+  throw new CliError(
+    `--http ${http} cannot be combined with --di ${di}.`,
+    'NestJS hosts the application as a whole: use --http nest together with --di nest, or pick express or fastify with tsyringe or manual.',
+  );
+}

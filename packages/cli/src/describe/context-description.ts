@@ -1,0 +1,108 @@
+import type { Upstream } from '../config/index.js';
+import type { JobFacts } from '../docs/context-facts.js';
+
+/**
+ * One bounded context as facts, read from the config and from the source text: what `describe`
+ * prints and what `docs` writes in the reference of its CONTEXT.md. Paths are relative to the
+ * project root; a text that could not be read is empty.
+ */
+export interface ContextDescription {
+  readonly name: string;
+  readonly classification: string;
+  readonly purpose: string;
+  readonly deployable: boolean;
+  readonly doc: string;
+  readonly glossary: readonly string[];
+  readonly upstreams: readonly Upstream[];
+  readonly downstreams: readonly Upstream[];
+  readonly aggregates: readonly string[];
+  readonly domainEvents: readonly string[];
+  readonly permissions: readonly string[];
+  readonly useCases: readonly UseCaseFact[];
+  readonly routes: readonly RouteFact[];
+  readonly consumedEvents: readonly ConsumedEventFact[];
+  readonly publishedEvents: readonly PublishedEventFact[];
+  readonly ports: readonly PortFact[];
+  readonly policies: readonly PolicyFact[];
+  readonly gateways: readonly GatewayFact[];
+  readonly jobs: readonly JobFacts[];
+  /** The generated contracts that hold what the source text does not say: the fields of each schema. */
+  readonly contracts: Contracts;
+}
+
+export interface UseCaseFact {
+  readonly kind: 'command' | 'query';
+  readonly name: string;
+  /** `<aggregate>.<action>`, or `public`. */
+  readonly permission: string;
+  readonly file: string;
+}
+
+export interface RouteFact {
+  readonly method: string;
+  readonly path: string;
+  readonly operationId: string;
+  readonly useCase: string;
+  readonly permission: string;
+  readonly request: readonly RequestPart[];
+  readonly responses: readonly RouteResponse[];
+  readonly errors: readonly string[];
+  readonly file: string;
+}
+
+export interface RequestPart {
+  /** `body`, `params`, `query` or `headers`. */
+  readonly part: string;
+  /** The schema class, or the name of the schema constant in the route file. */
+  readonly schema: string;
+}
+
+export interface RouteResponse {
+  readonly status: number;
+  /** Empty when the response has no body. */
+  readonly schema: string;
+}
+
+export interface ConsumedEventFact {
+  readonly type: string;
+  /** The version of the declaration the handler is given; null when the event has no declaration in this repository. */
+  readonly version: number | null;
+  /** The context that publishes it. */
+  readonly from: string;
+  readonly handler: string;
+  readonly consumer: string;
+  readonly file: string;
+}
+
+export interface PublishedEventFact {
+  readonly type: string;
+  readonly versions: readonly number[];
+  readonly publishers: readonly string[];
+}
+
+export interface PortFact {
+  readonly name: string;
+  /** `repository`, `gateway`, `external`...: the role its adapters are bound under; empty when it has none. */
+  readonly kind: string;
+  readonly adapters: readonly string[];
+  readonly file: string;
+}
+
+export interface PolicyFact {
+  readonly name: string;
+  readonly permission: string;
+  readonly file: string;
+}
+
+export interface GatewayFact {
+  readonly name: string;
+  /** The context whose published language the gateway reads; empty for a system outside the repository. */
+  readonly upstream: string;
+  readonly adapters: readonly string[];
+  readonly file: string;
+}
+
+export interface Contracts {
+  readonly openapi: string;
+  readonly eventCatalog: string;
+}

@@ -26,6 +26,7 @@ ruleTester.run('governance-recorded-deviation', governanceRecordedDeviation, {
 
 describe('governance-recorded-deviation against the directives that silence it', () => {
   const linter = new Linter();
+
   const lint = (code: string): string[] =>
     linter
       .verify(code, [{ plugins: { 'ddd-ts-kit': plugin }, linterOptions: { reportUnusedDisableDirectives: 'off' }, rules: { 'ddd-ts-kit/governance-recorded-deviation': 'error', 'no-console': 'error' } }])

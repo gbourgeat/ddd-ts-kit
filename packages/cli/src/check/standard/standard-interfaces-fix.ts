@@ -1,0 +1,2 @@
+export const STANDARD_INTERFACES_FIX =
+  'Standard interfaces come from @ddd-ts-kit/kernel: import the one named here, and add the fields of the project by declaration merging of the extension interface it leaves open (SessionExtensions, ExecutionContextExtensions, ActorExtensions, LogFields, MetricLabels); an implementation is a class named after its technology (`PinoLogger implements Logger`).';

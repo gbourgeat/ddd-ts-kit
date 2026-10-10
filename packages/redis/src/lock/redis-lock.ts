@@ -1,7 +1,9 @@
 import { randomBytes } from 'node:crypto';
+import { inspect } from 'node:util';
 import type { Redis } from 'ioredis';
 import { acquiring, type AcquireOptions, type Lock, type LockHandle, type WaitingOptions } from '@ddd-ts-kit/kernel';
 import { namespaced } from '../keys/namespaced.js';
+import { conceal } from '../secrecy/conceal.js';
 
 export interface RedisLockOptions extends WaitingOptions {
   /** Prefix of the keys, typically the bounded context. Default `lock`. */
@@ -21,6 +23,8 @@ if redis.call('GET', KEYS[1]) == ARGV[1] then
   return redis.call('DEL', KEYS[1])
 end
 return 0`;
+
+const DESCRIPTION = 'RedisLock [client concealed]';
 
 /**
  * The single-instance lock of the Redis documentation: `SET key owner NX PX ttl`, released by
@@ -44,10 +48,21 @@ export class RedisLock implements Lock {
     this.client = client;
     this.namespace = options.namespace ?? 'lock';
     this.waiting = options;
+    conceal(this);
   }
 
   acquire(key: string, options: AcquireOptions): Promise<LockHandle | undefined> {
     return acquiring(() => this.attempt(key, options.ttlMs), options.waitMs ?? 0, this.waiting);
+  }
+
+  /** What a serialisation shows: a name, never the client, whose options carry the password. */
+  toJSON(): string {
+    return DESCRIPTION;
+  }
+
+  /** What `console.log` and `util.inspect` show: the same. */
+  [inspect.custom](): string {
+    return DESCRIPTION;
   }
 
   private async attempt(key: string, ttlMs: number): Promise<LockHandle | undefined> {

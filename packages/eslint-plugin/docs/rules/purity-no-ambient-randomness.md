@@ -40,4 +40,4 @@ None.
 
 ## With the CLI checker
 
-`ddd-ts-kit check` looks for the same tokens with regular expressions. This rule is the authority: it knows a shadowed name from the global, and code from a string.
+`ddd-ts-kit check` looks for the same names with regular expressions. This rule is the authority: it knows a shadowed name from the global, and code from a string.

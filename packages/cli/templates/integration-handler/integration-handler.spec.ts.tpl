@@ -1,17 +1,17 @@
 import { describe, expect, it } from '{{tests.module}}';
 import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';
-import { {{name.pascal}}Handler } from '../../application/integration/handlers/{{name.kebab}}.integration-handler.js';
+import { {{name.pascal}}IntegrationHandler } from '../../application/integration/handlers/{{name.kebab}}.integration-handler.js';
 
 describe('When {{upstream.kebab}} publishes {{upstream.eventName}}', () => {
   it('listens to the type {{upstream.kebab}} publishes', () => {
-    const handler = new {{name.pascal}}Handler(new InMemoryCommandBus());
+    const handler = new {{name.pascal}}IntegrationHandler(new InMemoryCommandBus());
 
-    expect(handler).toBeInstanceOf({{name.pascal}}Handler);
-    expect({{name.pascal}}Handler.eventType).toBe('{{upstream.eventName}}');
+    expect(handler).toBeInstanceOf({{name.pascal}}IntegrationHandler);
+    expect({{name.pascal}}IntegrationHandler.eventType).toBe('{{upstream.eventName}}');
   });
 
   it('acts as a system actor named after its consumer name', () => {
-    const handler = new {{name.pascal}}Handler(new InMemoryCommandBus());
+    const handler = new {{name.pascal}}IntegrationHandler(new InMemoryCommandBus());
 
     expect(handler.actor).toMatchObject({ id: 'system:{{context.kebab}}.{{name.kebab}}', type: 'system' });
   });

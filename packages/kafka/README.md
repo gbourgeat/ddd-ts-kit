@@ -262,6 +262,19 @@ second record with the same event id, which consumers deduplicate. A consumer th
 start, commit or write a dead letter reports `kind: 'connection'` and tries again after the
 `reconnect` backoff (200 ms doubling up to 30 s), without moving past the record.
 
+**Credentials.** The `client` properties (SASL password, TLS keys) go to the client library when the bus is built and are kept nowhere else. A `KafkaEventBus` that is logged, spread or
+serialised shows `KafkaEventBus [clients concealed]` and nothing else: its fields are not enumerable,
+and `toJSON` and `util.inspect` answer that name. The failures it reports are codes. What the
+client library itself shows when one of its own objects is inspected is not in the hands of
+this package: do not log those.
+
+**What a handler is told.** Next to the event, each handler receives the delivery
+(`EventDelivery` of the kernel): `{ attempt, maxAttempts, system: 'kafka', destination, consumer }`,
+where `destination` is the topic. Handlers of the application ignore it; `@ddd-ts-kit/tracing` reads it
+to make one CONSUMER span per attempt and to mark the redeliveries and the attempt after which
+the event is buried. The bus names itself `messagingSystem: 'kafka'`, and `traceparent` travels in
+the envelope and as a real header, intact across a retry.
+
 ## Operations
 
 What to watch:

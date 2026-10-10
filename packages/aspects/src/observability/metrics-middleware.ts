@@ -1,5 +1,5 @@
 import type { BusMiddleware, Clock, Metrics } from '@ddd-ts-kit/kernel';
-import { clockOr } from '../runtime/collaborators.js';
+import { clockOr } from '../runtime/clock-or.js';
 import { timeCall } from './time-call.js';
 
 export interface MetricsMiddlewareOptions {

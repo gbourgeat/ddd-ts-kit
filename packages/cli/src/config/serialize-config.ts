@@ -1,0 +1,44 @@
+import type { Config } from './config.js';
+import { DEFAULT_COMMIT_LIMITS } from './default-commit-limits.js';
+import type { Stack } from './stack.js';
+
+/** The config as written to disk: defaults are spelled out so the file documents itself. */
+export function serializeConfig(config: Config): string {
+  const { sourceRoot, contextsDir, sharedKernelDir, platformDir, importAlias, rules, domainAllowedPackages, applicationAllowedPackages } = config;
+  const written = { sourceRoot, contextsDir, sharedKernelDir, platformDir, importAlias, stack: writtenStack(config.stack), contexts: writtenContexts(config), rules, domainAllowedPackages, applicationAllowedPackages };
+
+  return `${JSON.stringify({ ...written, ...optionalKeys(config) }, null, 2)}\n`;
+}
+
+function writtenContexts(config: Config): Record<string, unknown> {
+  const contexts = Object.entries(config.contexts).map(([name, context]): [string, unknown] => [
+    name,
+    {
+      classification: context.classification,
+      upstreams: context.upstreams,
+      ...(context.extraDirectories.length > 0 ? { extraDirectories: context.extraDirectories } : {}),
+      ...(context.deployable ? { deployable: true } : {}),
+    },
+  ]);
+
+  return Object.fromEntries(contexts);
+}
+
+function optionalKeys({ deviations, standardInterfaces, onePerFile, worker, commit }: Config): Record<string, unknown> {
+  const sized = commit.maxFiles !== DEFAULT_COMMIT_LIMITS.maxFiles || commit.maxLines !== DEFAULT_COMMIT_LIMITS.maxLines;
+
+  return {
+    ...(deviations.length > 0 ? { deviations } : {}),
+    ...(Object.keys(standardInterfaces).length > 0 ? { standardInterfaces } : {}),
+    ...(onePerFile.allow.length > 0 ? { onePerFile } : {}),
+    ...(sized ? { commit } : {}),
+    ...(worker ? { worker } : {}),
+  };
+}
+
+/** The assembly is a choice of the declared style only: an explicit project has a module file and nothing to assemble. */
+function writtenStack(stack: Stack): Partial<Stack> {
+  const { assembly, ...rest } = stack;
+
+  return stack.style === 'declared' ? { ...rest, assembly } : rest;
+}

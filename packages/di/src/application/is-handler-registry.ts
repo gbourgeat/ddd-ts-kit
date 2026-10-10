@@ -1,8 +1,8 @@
-import type { Message, MessageType } from '@ddd-ts-kit/kernel';
+import type { HandlerRegistration, Message, MessageType } from '@ddd-ts-kit/kernel';
 import type { AnyMessageHandler } from '../wiring/any-message-handler.js';
 
 interface HandlerRegistry {
-  register(type: MessageType<Message>, handler: AnyMessageHandler): unknown;
+  register(type: MessageType<Message>, handler: AnyMessageHandler, registration?: HandlerRegistration): unknown;
 }
 
 /** A bus the declared handlers can be attached to: the in-process ones, not a remote transport. */

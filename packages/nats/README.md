@@ -216,6 +216,19 @@ delivered again after `ackWaitMs`. The bus opens the first connection itself, wi
 exponential backoff (`reconnect`, 200 ms doubling up to 30 s), and a new one if the client
 ever gives up.
 
+**Credentials.** The URL or the options of `connection` are held by the function that opens the connection, in no field. A `NatsEventBus` that is logged, spread or
+serialised shows `NatsEventBus [connection concealed]` and nothing else: its fields are not enumerable,
+and `toJSON` and `util.inspect` answer that name. The failures it reports are codes. What the
+client library itself shows when one of its own objects is inspected is not in the hands of
+this package: do not log those.
+
+**What a handler is told.** Next to the event, each handler receives the delivery
+(`EventDelivery` of the kernel): `{ attempt, maxAttempts, system: 'nats', destination, consumer }`,
+where `destination` is the subject. Handlers of the application ignore it; `@ddd-ts-kit/tracing` reads it
+to make one CONSUMER span per attempt and to mark the redeliveries and the attempt after which
+the event is buried. The bus names itself `messagingSystem: 'nats'`, and `traceparent` travels in
+the envelope and as a real header, intact across a retry.
+
 ## Operations
 
 What to watch:

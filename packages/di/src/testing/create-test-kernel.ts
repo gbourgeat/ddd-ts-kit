@@ -4,6 +4,7 @@ import {
   FixedExecutionScope,
   InMemoryCache,
   InMemoryDomainEventDispatcher,
+  InMemoryErrorReporter,
   InMemoryEventBus,
   InMemoryLock,
   InMemoryLogger,
@@ -14,6 +15,7 @@ import {
   type Actor,
   type ExecutionContext,
 } from '@ddd-ts-kit/kernel';
+import { reportFailedRuns } from '@ddd-ts-kit/scheduling';
 import { ManualJobScheduler } from '@ddd-ts-kit/scheduling/testing';
 import { guardedQueryBus } from '../kernel/guarded-query-bus.js';
 import { transactionalCommandBus } from '../kernel/transactional-command-bus.js';
@@ -32,12 +34,14 @@ export function createTestKernel(options: TestApplicationOptions, resolve: Resol
   const actorContext = new FixedActorContext(context.actor);
   const executionScope = new FixedExecutionScope(context, actorContext);
   const observability = { logger: new InMemoryLogger(), metrics: new InMemoryMetrics(), lock: new InMemoryLock(clock) };
+  const errors = new InMemoryErrorReporter();
 
   const scheduler = new ManualJobScheduler({
     clock,
     scope: executionScope,
     ids: new SequentialIdGenerator('job-run'),
     ...observability,
+    onRun: reportFailedRuns(errors),
   });
 
   return {
@@ -50,6 +54,7 @@ export function createTestKernel(options: TestApplicationOptions, resolve: Resol
     actorContext,
     executionScope,
     ...observability,
+    errors,
     cache: new InMemoryCache(clock),
     rateLimiter: new InMemoryRateLimiter(clock),
     jobs: testJobs(scheduler),

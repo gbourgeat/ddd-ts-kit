@@ -1,76 +1,79 @@
-import type { ClassShape, MethodShape, TopLevelFunction } from '../structure.js';
-import type { Rule, SourceFile, Violation } from '../types.js';
-import { reporter, type Report } from './helpers.js';
+import type { Finding } from '../model/finding.js';
+import type { Rule } from '../model/rule.js';
+import type { SourceFile } from '../model/source-file.js';
+import type { ClassShape } from '../structure/class-shape.js';
+import type { MethodShape } from '../structure/method-shape.js';
+import type { TopLevelFunction } from '../structure/top-level-function.js';
+import { perFile } from '../support/per-file.js';
+
+/** Not part of a longer name, and not a property access; a spread (`...helper()`) is a plain use. */
+const NOT_A_MEMBER = '(?<![\\w$])(?<!(?:^|[^.])\\.)';
 
 export const cleanStepdown: Rule = {
   id: 'clean/stepdown',
   description: 'A file reads top to bottom: public members before private ones, a function above the functions it calls.',
   scope: 'file',
   run(project) {
-    const report = reporter(project, this.id);
-    return project.files.flatMap((file) => {
+    return perFile(project, this.id, (file) => {
       const { classes, functions } = file.structure;
       const helpers = functions.filter((helper) => !helper.exported);
-      return [...classes.flatMap((shape) => misplacedMembers({ file, shape, report })), ...helpers.flatMap((helper) => helperAboveCaller(file, helper, report))];
+
+      return [...classes.flatMap((shape) => misplacedMembers(file, shape)), ...helpers.flatMap((helper) => helperAboveCaller(file, helper))];
     });
   },
 };
 
-interface Judged {
-  readonly file: SourceFile;
-  readonly shape: ClassShape;
-  readonly report: Report;
-}
-
-function misplacedMembers(judged: Judged): Violation[] {
-  const beforePublic = privateBeforePublic(judged);
+function misplacedMembers(file: SourceFile, shape: ClassShape): Finding[] {
+  const beforePublic = privateBeforePublic(shape);
   // One finding per method: a private method above the public ones is not reported again for its caller.
-  const reported = new Set(beforePublic.map((violation) => violation.line));
-  const others = judged.shape.methods.filter((method) => method.visibility === 'private' && !method.isConstructor && !reported.has(method.line));
-  return [...beforePublic, ...others.flatMap((method) => privateAboveCaller(judged, method))];
+  const reported = new Set(beforePublic.map((finding) => finding.line));
+  const others = shape.methods.filter((method) => method.visibility === 'private' && !method.isConstructor && !reported.has(method.line));
+
+  return [...beforePublic, ...others.flatMap((method) => privateAboveCaller(file, shape, method))];
 }
 
-function privateBeforePublic({ file, shape, report }: Judged): Violation[] {
+function privateBeforePublic(shape: ClassShape): Finding[] {
   const ordinary = shape.methods.filter((method) => !method.isConstructor);
   const lastPublic = ordinary.filter((method) => method.visibility === 'public').at(-1);
+
   if (lastPublic === undefined) return [];
+
   return ordinary
     .filter((method) => method.visibility === 'private' && method.start < lastPublic.start)
-    .map((method) =>
-      report(
-        { file: file.path, line: method.line },
-        `The private method ${method.name} of ${shape.name} is declared before the public method ${lastPublic.name}.`,
-        `Move ${method.name} below the public methods of ${shape.name}, after its first caller: a reader meets what the class does before how.`,
-      ),
-    );
+    .map((method) => ({
+      line: method.line,
+      message: `The private method ${method.name} of ${shape.name} is declared before the public method ${lastPublic.name}.`,
+      fix: `Move ${method.name} below the public methods of ${shape.name}, after its first caller: a reader meets what the class does before how.`,
+    }));
 }
 
-/** Not part of a longer name, and not a property access; a spread (`...helper()`) is a plain use. */
-const NOT_A_MEMBER = '(?<![\\w$])(?<!(?:^|[^.])\\.)';
-
-function privateAboveCaller({ file, shape, report }: Judged, method: MethodShape): Violation[] {
-  const name = method.name.startsWith('#') ? `#${escape(method.name.slice(1))}` : escape(method.name);
+function privateAboveCaller(file: SourceFile, shape: ClassShape, method: MethodShape): Finding[] {
   const receiver = method.isStatic ? `(?:this|${escape(shape.name)})` : 'this';
-  const use = firstUse(file.scan.code.slice(0, shape.end), new RegExp(`(?<![\\w$])${receiver}\\s*\\??\\.\\s*${name}(?![\\w$])`, 'g'), method);
+  const pattern = new RegExp(`(?<![\\w$])${receiver}\\s*\\??\\.\\s*${escape(method.name)}(?![\\w$])`, 'g');
+  const use = firstUse(file.scan.code.slice(0, shape.end), pattern, method);
+
   if (use === undefined || use < method.start || use < shape.start) return [];
+
   return [
-    report(
-      { file: file.path, line: method.line },
-      `The private method ${method.name} of ${shape.name} is declared above its first caller (line ${file.scan.lineAt(use)}).`,
-      `Move ${method.name} just below the method that first calls it.`,
-    ),
+    {
+      line: method.line,
+      message: `The private method ${method.name} of ${shape.name} is declared above its first caller (line ${file.scan.lineAt(use)}).`,
+      fix: `Move ${method.name} just below the method that first calls it.`,
+    },
   ];
 }
 
-function helperAboveCaller(file: SourceFile, helper: TopLevelFunction, report: Report): Violation[] {
+function helperAboveCaller(file: SourceFile, helper: TopLevelFunction): Finding[] {
   const use = firstUse(file.scan.code, new RegExp(`${NOT_A_MEMBER}${escape(helper.name)}(?![\\w$])`, 'g'), helper);
+
   if (use === undefined || use < helper.start) return [];
+
   return [
-    report(
-      { file: file.path, line: helper.line },
-      `The function ${helper.name} is declared above its first caller (line ${file.scan.lineAt(use)}).`,
-      `Move ${helper.name} below the function that first calls it: function declarations are hoisted, so the file can read from intention to detail.`,
-    ),
+    {
+      line: helper.line,
+      message: `The function ${helper.name} is declared above its first caller (line ${file.scan.lineAt(use)}).`,
+      fix: `Move ${helper.name} below the function that first calls it: function declarations are hoisted, so the file can read from intention to detail.`,
+    },
   ];
 }
 
@@ -79,6 +82,7 @@ function firstUse(code: string, pattern: RegExp, own: { start: number; end: numb
   for (const match of code.matchAll(pattern)) {
     if (match.index < own.start || match.index > own.end) return match.index;
   }
+
   return undefined;
 }
 

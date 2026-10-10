@@ -3,10 +3,12 @@ import {
   FixedClock,
   FixedExecutionScope,
   InMemoryCommandBus,
+  InMemoryDomainEventDispatcher,
   InMemoryEventBus,
   InMemoryQueryBus,
   InMemoryUnitOfWork,
   SequentialIdGenerator,
+  dispatchingOnSave,
   executionContext,
   type ExecutionContext,
   type IntegrationEvent,
@@ -28,6 +30,8 @@ export interface TestBuses {
   readonly commandBus: InMemoryCommandBus;
   readonly queryBus: InMemoryQueryBus;
   readonly eventBus: InMemoryEventBus;
+  /** Where the repositories wrapped by `dispatching` announce the domain events of what they save. */
+  readonly domainEvents: InMemoryDomainEventDispatcher;
   readonly unitOfWork: InMemoryUnitOfWork;
   readonly clock: FixedClock;
   readonly ids: SequentialIdGenerator;
@@ -38,6 +42,11 @@ export interface TestBuses {
   readonly executionScope: FixedExecutionScope;
   /** Follows `executionScope`; `actorContext.actAs(actor)` changes the actor of both. */
   readonly actorContext: FixedActorContext;
+  /**
+   * The repository fake as the application hands it to a handler: its save dispatches the
+   * domain events of the aggregate to `domainEvents`. The handler under test only saves.
+   */
+  dispatching<T extends object>(repository: T): T;
   /** The integration events published so far, optionally of one type only. */
   publishedEvents<Payload = unknown>(type?: string): IntegrationEvent<Payload>[];
 }
@@ -50,11 +59,14 @@ export function createTestBuses(options: TestBusesOptions = {}): TestBuses {
   const eventBus = new InMemoryEventBus();
   const context = options.executionContext ?? DEFAULT_EXECUTION_CONTEXT;
   const actorContext = new FixedActorContext(context.actor);
+  const domainEvents = new InMemoryDomainEventDispatcher();
 
   return {
     commandBus: new InMemoryCommandBus(),
     queryBus: new InMemoryQueryBus(),
     eventBus,
+    domainEvents,
+    dispatching: (repository) => dispatchingOnSave(repository, () => domainEvents),
     unitOfWork: new InMemoryUnitOfWork(),
     clock: new FixedClock(options.now ?? new Date('2026-01-01T00:00:00.000Z')),
     ids: new SequentialIdGenerator(options.idPrefix),

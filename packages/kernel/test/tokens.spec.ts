@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { Clock, CommandBus, IntegrationEventPublisher } from '../src/index.js';
+import {
+  AggregateRoot,
+  Clock,
+  CommandBus,
+  DomainEventDispatcher,
+  IntegrationEventPublisher,
+  IntegrationEventSubscriber,
+  Repository,
+} from '../src/index.js';
 import { describeToken, portDefect, tokenIdentity } from '../src/declarations.js';
 
 describe('tokens', () => {
@@ -33,6 +41,30 @@ describe('tokens', () => {
     abstract class TransactionalPublisher extends IntegrationEventPublisher {}
 
     expect(tokenIdentity(TransactionalPublisher)).not.toBe(tokenIdentity(IntegrationEventPublisher));
+  });
+
+  it('a port that extends a port of the kernel declares its own key as any port does', () => {
+    class Order extends AggregateRoot {}
+
+    abstract class OrderRepository extends Repository<Order> {
+      static readonly tokenKey = 'ordering.OrderRepository';
+    }
+
+    abstract class BusinessClock extends Clock {
+      static readonly tokenKey = 'ordering.BusinessClock';
+    }
+
+    expect(tokenIdentity(OrderRepository)).toBe(Symbol.for('@ddd-ts-kit/token/ordering.OrderRepository'));
+    expect(tokenIdentity(BusinessClock)).toBe(Symbol.for('@ddd-ts-kit/token/ordering.BusinessClock'));
+    expect(tokenIdentity(BusinessClock)).not.toBe(tokenIdentity(Clock));
+  });
+
+  it('a port of the kernel is keyed by the name of its class', () => {
+    const keyed = { Clock, CommandBus, DomainEventDispatcher, IntegrationEventPublisher, IntegrationEventSubscriber };
+
+    for (const [name, port] of Object.entries(keyed)) {
+      expect(tokenIdentity(port)).toBe(Symbol.for(`@ddd-ts-kit/token/kernel.${name}`));
+    }
   });
 
   it('a port may extend a port, and a class bound to itself is no port', () => {

@@ -1,6 +1,7 @@
-import type { Layer } from '../project/classify.js';
-import { defineRule } from '../support/define-rule.js';
-import { importListener, inLayer } from '../support/imports.js';
+import type { Layer } from '../project/layer.js';
+import { defineRule } from '../support/rule/define-rule.js';
+import { importListener } from '../support/imports/import-listener.js';
+import { inLayer } from '../support/imports/in-layer.js';
 
 interface Sideways {
   readonly id: string;
@@ -35,10 +36,13 @@ function sidewaysRule(rule: Sideways) {
     messages: { forbidden: `${rule.from}/ imports ${rule.to}/ ({{path}}). ${rule.instead}` },
     create({ file, report }) {
       const here = inLayer(file, rule.from);
+
       if (here === undefined) return {};
+
       return importListener(file, ({ node, target }) => {
         if (target.kind !== 'file' || target.location.area !== 'context') return;
         if (target.location.layer !== rule.to || target.location.context !== here.context) return;
+
         report({ node, messageId: 'forbidden', data: { path: target.path, context: here.context } });
       });
     },

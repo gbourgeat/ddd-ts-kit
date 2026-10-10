@@ -6,7 +6,9 @@ import type { AuditRecord } from '../audit/audit-record.js';
  * infrastructure and cross-cutting code, never by a use case or an aggregate.
  */
 export abstract class AuditTrail {
-  static readonly tokenKey = 'kernel.AuditTrail';
+  static {
+    Object.defineProperty(this, 'tokenKey', { value: 'kernel.AuditTrail' });
+  }
 
   abstract record(record: AuditRecord): Promise<void>;
 }

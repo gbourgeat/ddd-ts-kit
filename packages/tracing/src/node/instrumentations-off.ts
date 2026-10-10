@@ -1,0 +1,38 @@
+/**
+ * The instrumentations of the bundle that are off by default: what is neither an HTTP side nor
+ * a database or cache driver. Named one by one, since listing the bundle would load them all.
+ */
+export const INSTRUMENTATIONS_OFF = [
+  '@opentelemetry/instrumentation-amqplib',
+  '@opentelemetry/instrumentation-aws-lambda',
+  '@opentelemetry/instrumentation-aws-sdk',
+  '@opentelemetry/instrumentation-bunyan',
+  '@opentelemetry/instrumentation-cassandra-driver',
+  '@opentelemetry/instrumentation-connect',
+  '@opentelemetry/instrumentation-cucumber',
+  '@opentelemetry/instrumentation-dataloader',
+  '@opentelemetry/instrumentation-dns',
+  '@opentelemetry/instrumentation-express',
+  '@opentelemetry/instrumentation-fs',
+  '@opentelemetry/instrumentation-generic-pool',
+  '@opentelemetry/instrumentation-graphql',
+  '@opentelemetry/instrumentation-hapi',
+  '@opentelemetry/instrumentation-host-metrics',
+  '@opentelemetry/instrumentation-kafkajs',
+  '@opentelemetry/instrumentation-knex',
+  '@opentelemetry/instrumentation-koa',
+  '@opentelemetry/instrumentation-lru-memoizer',
+  '@opentelemetry/instrumentation-memcached',
+  '@opentelemetry/instrumentation-mongoose',
+  '@opentelemetry/instrumentation-nestjs-core',
+  '@opentelemetry/instrumentation-net',
+  '@opentelemetry/instrumentation-openai',
+  '@opentelemetry/instrumentation-oracledb',
+  '@opentelemetry/instrumentation-pino',
+  '@opentelemetry/instrumentation-restify',
+  '@opentelemetry/instrumentation-router',
+  '@opentelemetry/instrumentation-runtime-node',
+  '@opentelemetry/instrumentation-socket.io',
+  '@opentelemetry/instrumentation-tedious',
+  '@opentelemetry/instrumentation-winston',
+] as const;

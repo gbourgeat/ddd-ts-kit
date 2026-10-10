@@ -3,10 +3,7 @@ import { {{access.queryBase}} } from '@ddd-ts-kit/kernel';
 import { {{access.decorator}} } from '@ddd-ts-kit/kernel/declarations';
 {{access.useCasePermissionsImport}}
 {{/if}}
-
-export interface {{name.pascal}}Result {
-  // TODO(domain): declare the answer exactly as the reader needs it, flat and serializable; this is a read model, not the aggregate.
-}
+import type { {{name.pascal}}Result } from './{{name.kebab}}.result.js';
 
 {{#if style.declared}}
 @{{access.decoration}}

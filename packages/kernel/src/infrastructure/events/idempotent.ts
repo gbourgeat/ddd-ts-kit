@@ -10,11 +10,11 @@ export function idempotent(
   store: ProcessedEventStore,
   handler: IntegrationEventCallback,
 ): IntegrationEventCallback {
-  return async (event) => {
+  return async (event, delivery) => {
     if (!(await store.markProcessed(consumer, event.id))) return;
 
     try {
-      await handler(event);
+      await handler(event, delivery);
     } catch (error) {
       await store.release?.(consumer, event.id);
       throw error;

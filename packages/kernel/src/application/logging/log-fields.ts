@@ -5,7 +5,7 @@ import type { LogValue } from './log-value.js';
  * adapter and every dashboard agrees on them; a project adds its own by declaration merging:
  *
  *     declare module '@ddd-ts-kit/kernel' {
- *       interface LogFields { orderId?: string }
+ *       interface LogFields { orderId?: string; error?: Error }
  *     }
  */
 export interface LogFields {
@@ -15,7 +15,7 @@ export interface LogFields {
   context?: string;
   actorId?: string;
   tenantId?: string;
-  /** Class name of a caught error. Its message is never logged: it quotes data. */
+  /** Class name of a caught error, as `identifyError` gives it: what the kit logs of an error, never its message. */
   errorType?: string;
   /** The stable `code` of a `DomainError`. */
   errorCode?: string;

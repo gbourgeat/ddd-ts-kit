@@ -1,67 +1,59 @@
 ---
 name: scaffold
 description: >-
-  Creates ONE new file of a ddd-ts-kit role from a template with `ddd-ts-kit generate`
-  (context, aggregate, entity, value object, domain event, domain error, domain service,
-  command, query, port, repository, route, integration event, integration event handler, domain event handler,
-  anti-corruption layer, builder, e2e spec), with its spec and wiring, then lists the
-  places where business logic is expected. Use whenever a single file of one of these roles
-  is needed, instead of writing it by hand. For a whole feature or endpoint use use-case;
-  for cross-context events use integration-event.
+  Creates ONE file of a ddd-ts-kit role from a template with `ddd-ts-kit generate`, with its
+  spec, fake and registration, then lists the places where business logic is expected. Use
+  whenever a single aggregate, entity, value object, domain event, error or service, port,
+  repository, adapter, gateway, policy, job, event handler, builder, end-to-end spec or
+  context is needed, instead of writing it by hand, or when the guard refuses a hand-written
+  file. For a whole feature use use-case; for events between contexts use integration-event.
 argument-hint: "<kind> <context> <Name> [options]"
 allowed-tools:
+  - Read
+  - Edit
   - Bash(npx ddd-ts-kit generate *)
   - Bash(npx ddd-ts-kit check *)
   - Bash(npx ddd-ts-kit list *)
-  - Read
-  - Grep
-  - Glob
 ---
 
-# Scaffold
+# Scaffold one file
 
 Requested: `$ARGUMENTS`
 
-Boilerplate is generated, never typed. The generator and the checker share one definition of
-the architecture, so a generated file is conformant by construction and costs no tokens.
-
-## Kinds
-
-| Kind | Command | Lands in |
-|---|---|---|
-| context | `generate context <name> --classification <c> [--upstream <ctx>:<rel>]` | `contexts/<name>/` |
-| aggregate | `generate aggregate <ctx> <Name>` | `domain/aggregates/` |
-| entity | `generate entity <ctx> <Name>` | `domain/entities/` |
-| value object | `generate vo <ctx> <Name>` | `domain/value-objects/` |
-| domain event | `generate domain-event <ctx> <Aggregate> <Fact>` | `domain/events/` |
-| domain error | `generate domain-error <ctx> <Name> [--code CODE]` | `domain/errors/` |
-| domain service | `generate domain-service <ctx> <Name>` | `domain/services/` |
-| command | `generate command <ctx> <UseCase> [--aggregate <Name>]` | `application/commands/<use-case>/` |
-| query | `generate query <ctx> <UseCase>` | `application/queries/<use-case>/` |
-| port | `generate port <ctx> <Name>` | `application/ports/` + fake |
-| repository | `generate repository <ctx> <Aggregate>` | interface, in-memory adapter, contract suite |
-| route | `generate route <ctx> <UseCase> --method <M> --path <p>` | `presentation/http/` |
-| integration event | `generate integration-event <ctx> <Aggregate> <Fact>` | `published-language/` + publisher |
-| integration event handler | `generate integration-handler <ctx> <upstream> <event-type>` | `application/integration/handlers/` |
-| event handler | `generate event-handler <ctx> <Aggregate> <Fact>` | `application/event-handlers/` |
-| anti-corruption layer | `generate acl <ctx> <upstream-or-system>` | `infrastructure/anti-corruption/` |
+Boilerplate is generated, never typed: the generator and the checker share one definition of
+the tree, so a generated file conforms by construction and costs no tokens.
 
 ## Procedure
 
-1. Name from the glossary of the context's `CONTEXT.md`. If the term is missing, add it there
-   first. The CLI refuses `Manager`, `Helper`, `Util`, `Data`, `Info`: find the domain word.
-2. Run with `--json`:
+1. **Name from the glossary** of the context's `CONTEXT.md`. A missing term is added in the
+   same command with `--term "<Term>=<meaning>"`. Technical words (`Manager`, `Helper`,
+   `Data`, `Info`, `Impl`, `Model`) are refused: find the business word.
+2. **Run with `--json`** (`--dry-run` first when unsure):
    ```bash
    npx ddd-ts-kit generate <kind> ... --json
    ```
-   The output lists `created`, `updated` and `next`: the `file:line` of every `TODO(domain)`.
-3. Open only the `next` locations. Each `TODO(domain)` states the decision expected: an
-   invariant, a field, an error, a payload. Implement it and delete the marker. A marker you
-   cannot resolve is a question for the user, not a guess.
-4. Replace each `it.todo` of the generated spec by a real test. Tests first when the rule is
-   non-trivial (skill `ddd-ts-kit:use-case`).
-5. `npx ddd-ts-kit check` and the tests of the context.
+   Exact arguments of every kind: [kinds.md](kinds.md), or `npx ddd-ts-kit --help`.
+3. **Open only the `next` places**, each a `file:line` holding a `TODO(domain)` that states
+   the decision expected. Decide, write, delete the marker. A marker you cannot resolve is a
+   question for the user, not a guess. `notes` says what the generator could not do.
+4. **Replace each `it.todo`** of the generated spec by a real test (skill
+   `ddd-ts-kit:testing`).
+5. `npx ddd-ts-kit check --changed-since HEAD` and the tests of the context.
 
-Never edit the structure the generator produced (constructor visibility, factories, suffixes,
-folders). If the structure does not fit, the model is probably wrong: go back to
-`ddd-ts-kit:model-context`.
+## What the generator settles for you
+
+- **Registration.** In the declared style (the default with tsyringe) the class carries its
+  decorator and the barrel `<context>.declarations.ts` is rewritten; never edit the barrel.
+  In the explicit style the binding is added between the markers of `<context>.module.ts`.
+- **Access.** `command` and `query` are refused without `--permission <aggregate>.<action>`
+  or `--public`; the permission joins `<context>.permissions.ts`.
+- **Ports.** A port is an abstract class, used as its own injection token: no constant, no
+  token file. `port` and `repository` write the fake and the contract suite with it.
+- **Dependencies between kinds.** A missing repository or domain event is created; a
+  missing aggregate, use case or route stops the command with the one to run first.
+- **Documents.** The generated lists of `CONTEXT.md` and the generated documentation are
+  refreshed.
+
+Never change the structure the generator produced (constructor visibility, factories,
+suffixes, folders, decorators). If it does not fit, the model is probably wrong: go back to
+`ddd-ts-kit:glossary` or `ddd-ts-kit:bounded-contexts`.

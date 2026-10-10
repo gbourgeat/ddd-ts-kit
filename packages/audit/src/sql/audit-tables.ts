@@ -2,7 +2,7 @@ import { AUDIT_CHAINS_TABLE } from './audit-chains-table-name.js';
 import { AUDIT_ENTRIES_TABLE } from './audit-entries-table-name.js';
 import type { AuditTablesOptions } from './audit-tables-options.js';
 import { qualified } from './qualified.js';
-import type { Sql } from './statement.js';
+import type { Sql } from './sql.js';
 
 export interface AuditTables {
   readonly entries: Sql;

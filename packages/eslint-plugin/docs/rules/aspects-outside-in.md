@@ -25,7 +25,7 @@ Correct:
 // src/contexts/billing/billing.module.ts
 import { retry, timeout } from '@ddd-ts-kit/aspects';
 
-builder.bind(PAYMENT_GATEWAY).toClass(StripePaymentGateway, [CONFIG]).with(retry({ attempts: 3 }), timeout(2000));
+builder.bind(PaymentGateway).toClass(StripePaymentGateway, [PaymentSettings]).with(retry({ attempts: 3 }), timeout(2000));
 
 // src/contexts/billing/infrastructure/external/stripe-payment.gateway.ts
 import { Retry } from '@ddd-ts-kit/aspects/decorators';

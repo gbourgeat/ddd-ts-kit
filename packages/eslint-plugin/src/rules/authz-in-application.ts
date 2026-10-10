@@ -1,13 +1,15 @@
 import { AST_NODE_TYPES, type TSESLint, type TSESTree } from '@typescript-eslint/utils';
 import { ancestors } from '../support/ancestors.js';
-import { accessedName } from '../support/calls.js';
-import { DECLARATIONS_ENTRY, isDeclaredStyle } from '../support/declarations.js';
-import { defineRule, type Report } from '../support/define-rule.js';
-import { propertyName } from '../support/globals.js';
-import { importListener, inContext, type ImportedName, type ImportSite } from '../support/imports.js';
+import { accessedName } from '../support/calls/accessed-name.js';
+import { DECLARATIONS_ENTRY } from '../support/declarations/declaration-reader.js';
+import { isDeclaredStyle } from '../support/declarations/is-declared-style.js';
+import { defineRule, type Report } from '../support/rule/define-rule.js';
+import { propertyName } from '../support/globals/property-name.js';
+import { importListener, type ImportedName, type ImportSite } from '../support/imports/import-listener.js';
+import { inContext } from '../support/imports/in-context.js';
 import type { LintedFile } from '../project/linted-file.js';
-import { declaredTypeName } from '../support/declared-type.js';
-import { startsAtThis } from '../support/members.js';
+import { declaredTypeName } from '../support/types/declared-type-name.js';
+import { startsAtThis } from '../support/members/starts-at-this.js';
 
 type MessageId = 'declaredOutside' | 'rights' | 'roleTest' | 'authorizerImport' | 'decision' | 'refusal' | 'authInDomain' | 'actorInDomain' | 'rightsInDomain';
 type Tell = Report<MessageId>;
@@ -27,6 +29,9 @@ const ACTOR_MODEL = new Set(['Actor', 'Actored', 'ActorContext', 'Session', 'Exe
 /** The declarations that say or decide who may do what: they belong on a message or a policy of application/. */
 const ACCESS_DECLARATIONS = new Set(['Requires', 'Public', 'Policy']);
 
+/** The ports a handler asks for a decision: the class is the type and the injection token. */
+const ACCESS_PORTS = new Set(['Access', 'PolicyAccess']);
+
 const IN_APPLICATION =
   'Declare the permission on the use case (`.requires(...)` in the module, or `@Requires(...)` on the message) and, for a rule that needs loaded state, write a policy in application/authorization evaluated by the handler through `Access`.';
 
@@ -34,9 +39,9 @@ export const authzInApplication = defineRule<MessageId>({
   id: 'authz/in-application',
   type: 'problem',
   recommended: 'error',
-  description: 'The permission is decided in the application layer through the Authorizer port: no role test in presentation/, no authorization in infrastructure/, no knowledge of rights in domain/.',
+  description: 'The permission is decided in the application layer through the Authorizer and Access ports: no role test in presentation/, no authorization in infrastructure/, no knowledge of rights in domain/.',
   messages: {
-    declaredOutside: `{{layer}}/ imports {{name}} from "{{specifier}}": who may do what is declared and decided in application/. Put \`@Requires(...)\` or \`@Public()\` on the command or query, write a rule that needs loaded state as a \`@Policy\` class of application/authorization, and give \`ACCESS\` to a handler only.`,
+    declaredOutside: `{{layer}}/ imports {{name}} from "{{specifier}}": who may do what is declared and decided in application/. Put \`@Requires(...)\` or \`@Public()\` on the command or query, write a rule that needs loaded state as a \`@Policy\` class of application/authorization, and name \`Access\` in the dependency list of a handler only.`,
     rights: `presentation/ reads {{access}}: a route maps a request to a command and decides nothing. Put the actor in the command or query and remove the test. ${IN_APPLICATION}`,
     roleTest: `presentation/ compares {{access}} with a role name. Put the actor in the command or query and remove the test. ${IN_APPLICATION}`,
     authorizerImport: `presentation/ imports {{name}} from "${AUTH}", which decides access. Keep only the request glue here (actorOf, sessionOf, resolveSession, a SessionAuthenticator, inActorContext, the error classes). ${IN_APPLICATION}`,
@@ -48,24 +53,31 @@ export const authzInApplication = defineRule<MessageId>({
   },
   create({ file, sourceCode, report }) {
     const here = inContext(file);
+
     if (here === undefined || file.isTest) return {};
     if (here.layer === 'presentation') return presentation(file, sourceCode, report);
     if (here.layer === 'infrastructure') return infrastructure(file, sourceCode, report);
+
     return here.layer === 'domain' ? domain(file, sourceCode, report) : {};
   },
 });
 
 function presentation(file: LintedFile, sourceCode: Source, tell: Tell): TSESLint.RuleListener {
   const tellDeclaredOutside = declaredOutside(file, 'presentation', tell);
+
   const roleTest = (node: TSESTree.Node, tested: TSESTree.Node): void => {
     if (isRole(tested)) tell({ node, messageId: 'roleTest', data: { access: sourceCode.getText(tested) } });
   };
+
   return {
     ...importListener(file, (site) => {
       const { node, target, names, whole } = site;
+
       tellDeclaredOutside(site);
+
       if (target.kind !== 'package' || target.name !== AUTH) return;
       if (whole) tell({ node, messageId: 'authorizerImport', data: { name: 'the whole module' } });
+
       for (const decider of names.filter(decidesAccess)) tell({ node: decider.node, messageId: 'authorizerImport', data: { name: decider.name } });
     }),
     MemberExpression(node) {
@@ -81,11 +93,12 @@ function presentation(file: LintedFile, sourceCode: Source, tell: Tell): TSESLin
 }
 
 /**
- * In a declared-style project the decorators of access and the `ACCESS` token are within reach of
- * every layer: they stay in application/. `ACCESS` in presentation/ is already an `authorizerImport`.
+ * In a declared-style project the decorators of access and the `Access` port are within reach of
+ * every layer: they stay in application/. `Access` in presentation/ is already an `authorizerImport`.
  */
 function declaredOutside(file: LintedFile, layer: 'presentation' | 'infrastructure', tell: Tell): (site: ImportSite) => void {
   const declares = isDeclaredStyle(file);
+
   return (site) => {
     for (const taken of declares ? takenOutside(layer, site) : []) tell({ node: taken.node, messageId: 'declaredOutside', data: { layer, name: taken.name, specifier: site.specifier } });
   };
@@ -93,8 +106,10 @@ function declaredOutside(file: LintedFile, layer: 'presentation' | 'infrastructu
 
 function takenOutside(layer: 'presentation' | 'infrastructure', { specifier, target, names }: ImportSite): ImportedName[] {
   if (specifier === DECLARATIONS_ENTRY) return names.filter((taken) => ACCESS_DECLARATIONS.has(taken.name));
+
   const fromAuth = target.kind === 'package' && target.name === AUTH;
-  return layer === 'infrastructure' && fromAuth ? names.filter((taken) => taken.name === 'ACCESS') : [];
+
+  return layer === 'infrastructure' && fromAuth ? names.filter((taken) => ACCESS_PORTS.has(taken.name)) : [];
 }
 
 function decidesAccess(imported: ImportedName): boolean {
@@ -111,13 +126,16 @@ function isText(node: TSESTree.Node): boolean {
 
 function infrastructure(file: LintedFile, sourceCode: Source, tell: Tell): TSESLint.RuleListener {
   const imports = importListener(file, declaredOutside(file, 'infrastructure', tell));
+
   return {
     ...imports,
     CallExpression(node) {
       imports.CallExpression?.(node);
       const { callee } = node;
+
       if (callee.type !== AST_NODE_TYPES.MemberExpression || !DECISIONS.has(propertyName(callee) ?? '')) return;
       if (!isAuthorizer(sourceCode, callee.object) || isAuthorizerAdapter(node)) return;
+
       tell({ node, messageId: 'decision', data: { call: sourceCode.getText(callee) } });
     },
     NewExpression(node) {
@@ -134,8 +152,10 @@ function isAuthorizer(sourceCode: Source, node: TSESTree.Node): boolean {
 function isAuthorizerAdapter(node: TSESTree.Node): boolean {
   for (const parent of ancestors(node)) {
     if (parent.type !== AST_NODE_TYPES.ClassDeclaration && parent.type !== AST_NODE_TYPES.ClassExpression) continue;
+
     return parent.implements.some((port) => port.expression.type === AST_NODE_TYPES.Identifier && port.expression.name.endsWith('Authorizer'));
   }
+
   return false;
 }
 
@@ -145,6 +165,7 @@ function domain(file: LintedFile, sourceCode: Source, tell: Tell): TSESLint.Rule
       if (target.kind !== 'package') return;
       if (target.name === AUTH) tell({ node, messageId: 'authInDomain' });
       if (target.name !== KERNEL) return;
+
       for (const actor of names.filter((imported) => ACTOR_MODEL.has(imported.name))) tell({ node: actor.node, messageId: 'actorInDomain', data: { name: actor.name } });
     }),
     MemberExpression(node) {

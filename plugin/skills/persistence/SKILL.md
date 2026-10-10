@@ -1,86 +1,82 @@
 ---
 name: persistence
 description: >-
-  Implements or reviews the persistence of a bounded context behind repository interfaces.
-  Drizzle on PostgreSQL by default (schema per context, mappers, unit of work, optimistic
-  concurrency, transactional outbox, migrations); Knex, Prisma or TypeORM through their
-  adapter packages; any other mature ORM or database as an adapter of the same ports. Use
-  when adding a table, a repository adapter, a read model or a migration, when choosing or
-  replacing an ORM or database, or when persistence types leak out of infrastructure.
+  Implements or reviews the persistence of a bounded context behind repository ports.
+  Repository port, ORM adapter, mapper, fake and contract suite, unit of work, optimistic
+  concurrency, audit and tenant columns, read models, migrations, on Drizzle, Knex, Prisma,
+  TypeORM or a custom store. Use when adding a table, a repository, a lookup, a read model
+  or a migration, when replacing the in-memory adapter by a real one, when choosing an ORM,
+  or when persistence types leak out of infrastructure.
 argument-hint: "<context> <Aggregate>"
 allowed-tools:
+  - Read
+  - Edit
   - Bash(npx ddd-ts-kit generate *)
   - Bash(npx ddd-ts-kit check *)
   - Bash(npx ddd-ts-kit list *)
+  - Bash(npm test *)
 ---
 
 # Persistence
 
 Subject: `$ARGUMENTS`
 
-The domain declares the repository interface; everything about storage lives in
-`infrastructure/persistence/` and nowhere else.
-
 ```bash
-npx ddd-ts-kit generate repository <ctx> <Aggregate> --json
+npx ddd-ts-kit generate repository <ctx> <Aggregate> [--tenant-scoped] --json
 ```
 
-creates the interface, the in-memory fake, the adapter for the project's ORM, the mapper and
-the contract suite both must pass.
+writes the port (an abstract class extending the kernel `Repository<Aggregate>` in
+`domain/repositories/`), the adapter of the project's ORM with its mapper and table in
+`infrastructure/persistence/`, the fake, and one `repositoryContract` spec that both must
+pass. `generate command --aggregate` creates it when missing. Fill the `next` places: the
+lookups of the port, the columns, the mapper.
 
 ## Rules, whatever the technology
 
-- **One repository per aggregate root**, whole-aggregate load and save. No repository for an
-  inner entity.
-- **Rows stay inside.** A mapper translates row to aggregate (`rehydrate`) and back. No ORM
-  entity, row type or query builder crosses the repository interface.
-- **Each context owns its tables**, in its own database schema. No foreign key and no join
-  across contexts: reference by identifier, read through a published contract or a local
-  projection fed by integration events.
-- **Transactions belong to the application.** The `UnitOfWork` opens them (a bus middleware
-  does it for every command); a repository picks up the current transaction from the
-  context, it never receives one as a parameter and never commits.
-- **Optimistic concurrency** on the aggregate's `version`: update where version matches,
-  raise a concurrency conflict when no row was touched.
-- **Outbox in the same transaction** as the business write, so an event is published if and
-  only if the change is committed.
-- **Queries may skip aggregates**: a query handler reads through a port whose adapter
-  queries tables or a read model directly and returns the shape the port declares.
-- **Migrations** are generated from the schema, committed, forward-only, and compatible with
-  the version still running (expand, migrate, contract over several releases).
+- **One repository per aggregate root**, whole-aggregate load and save. Add only the lookups
+  a use case needs, named in the ubiquitous language; a screen reads through a read port.
+- **Rows stay inside.** The mapper translates row to aggregate (`rehydrate`) and back; it is
+  the one place where a type assertion is acceptable. No ORM type crosses the port.
+- **Each context owns its tables**, in its own database schema. No foreign key, join or
+  query across contexts: reference by identifier, read through a published contract or a
+  local projection fed by integration events (`context/extractable`).
+- **Transactions belong to the application.** The unit of work is a middleware of the command
+  bus; a repository picks up the ambient transaction, never receives one, never commits.
+- **Optimistic concurrency** on the aggregate's `version`: a conflicting save raises
+  `ConcurrencyError`.
+- **Audit and tenant columns are standard**: `created_at`, `created_by`, `updated_at`,
+  `updated_by`, and `tenant_id` with `--tenant-scoped`, stamped by the adapter from the
+  `ExecutionScope` and the `Clock` through the kernel helpers. The domain does not know them.
+- **Outbox in the same transaction** as the business write (`events/outbox-required`).
+- **Lists** use the kernel `Page` and `PageRequest`; a cursor ends on a unique tie-breaker.
+- **Queries may skip aggregates**: `generate query` writes a read port and an in-memory
+  reader; replace the reader by an adapter that queries the tables and returns the shape of
+  the port.
+- **Migrations** are generated from the schema with the ORM's own tool (`npm run
+  db:generate`, `npm run db:migrate`), committed, forward-only, and compatible with the
+  version still running. Their order is shared: in parallel work they are generated on the
+  trunk (skill `ddd-ts-kit:parallel-work`).
 
-## Default: Drizzle on PostgreSQL
+## By ORM
 
-`@ddd-ts-kit/drizzle/postgres` provides the unit of work with an ambient transaction, the
-outbox and processed-event stores and their tables, and `contextSchema('<ctx>')` for one
-PostgreSQL schema per context. Tables are declared in
-`infrastructure/persistence/<ctx>.schema.ts`. Never name a table in raw SQL: interpolate the
-Drizzle table object so the schema qualification follows.
+`stack.orm` decides what is generated. Each package provides the unit of work with an
+ambient transaction, the outbox store and the processed-event store, and documents its
+dialects: `@ddd-ts-kit/drizzle` (the default, PostgreSQL, one schema per context),
+`@ddd-ts-kit/knex`, `@ddd-ts-kit/prisma`, `@ddd-ts-kit/typeorm`. With `none` or `custom` the
+generated adapter is in-memory, held to the same contract suite, behind a `TODO(platform)`.
 
-Fast adapter specs run on PGlite (PostgreSQL in process); the Docker Compose stack provides
-the real server for `npm run dev` and for a final integration run.
+Anything else (another query builder, a document store) is `stack.orm: custom`: provide in
+`src/platform/database/` a `UnitOfWork`, an `OutboxStore` and a `ProcessedEventStore`, each
+passing its contract suite of `@ddd-ts-kit/testing/contracts`, then the repository adapters.
+Nothing in `domain/` or `application/` changes: that is the test of the boundary. A niche
+store needs a decision record.
 
-## Knex, Prisma, TypeORM
+## Tests
 
-`@ddd-ts-kit/knex`, `@ddd-ts-kit/prisma` and `@ddd-ts-kit/typeorm` provide the same pieces as
-the Drizzle package: unit of work with an ambient transaction, outbox store, processed-event
-store, table definitions for the ORM's own migration tooling. Set `stack.orm` in the config;
-the scaffolder then generates repository adapters for that ORM. Each package's README states
-which database dialects its tests cover.
+The contract spec in `test/integration/` runs the fake and the adapter through the same
+suite; adapter specs run on an in-process PostgreSQL unless a database URL is given. Add
+what is specific to the adapter: every column mapped, the tenant filter, a rollback.
 
-## Anything else
-
-Another ORM, query builder or database (Kysely, MikroORM, MongoDB, ...) fits as long as the
-rules above hold. Set `stack.orm` to `custom`, then provide in `src/platform/`:
-
-1. a `UnitOfWork` adapter with an ambient transaction (`AsyncLocalStorage`);
-2. an `OutboxStore` and a `ProcessedEventStore` adapter, each passing the contract suite of
-   `@ddd-ts-kit/testing/contracts`;
-3. the repository adapters, each passing `repositoryContract`.
-
-Nothing in `domain/` or `application/` changes: that is the test of whether the boundary held.
-Prefer mature, maintained, widely used libraries on their current stable or LTS version; a
-niche store needs an ADR.
-
-Finish with `npx ddd-ts-kit check --rule layer/domain-purity --rule layer/application-inward --rule composition/only-in-module`
-and the integration specs.
+Finish with
+`npx ddd-ts-kit check --rule layer/domain-purity --rule context/extractable --rule ports/implements-never-extends`
+and the integration specs of the context.

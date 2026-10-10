@@ -3,9 +3,6 @@ import { describe, expect, it } from '{{tests.module}}';
 import { AuthorizationMap, RoleBasedAuthorizer, authorizationMiddleware, requires } from '@ddd-ts-kit/auth';
 import { anActor } from '@ddd-ts-kit/auth/testing';
 {{/if}}
-{{#if command.hasAggregate}}
-import { InMemoryDomainEventDispatcher } from '@ddd-ts-kit/kernel';
-{{/if}}
 import { createTestBuses } from '@ddd-ts-kit/testing';
 {{#if access.protected}}
 import { {{context.camel}}Permissions } from '../../application/authorization/{{context.kebab}}.permissions.js';
@@ -21,6 +18,7 @@ const holders = authorizationMiddleware({
   authorizer: new RoleBasedAuthorizer({ roles: { holder: [{{context.camel}}Permissions['{{access.permission}}']] } }),
   map: AuthorizationMap.of(requires({{name.pascal}}Command, {{context.camel}}Permissions['{{access.permission}}'])),
 });
+
 const holder = anActor().withRole('holder').build();
 {{/if}}
 
@@ -52,7 +50,7 @@ describe('{{name.title}}', () => {
 {{/if}}
 
 {{#if command.hasAggregate}}
-  // TODO(domain): replace each entry below by a test named after the business behaviour of "{{name.words}}": arrange with the builders of test/builders and the fakes, execute through the bus, assert the stored {{aggregate.words}}, the published events and the answer.
+  // TODO(domain): replace each entry below by a test named after the business behaviour of "{{name.words}}": arrange with the builders of test/builders and the fakes, execute through the bus, assert the stored {{aggregate.words}}, the facts announced with the save (`domainEvents.on('<name>', ...)` registered in `arrange`) and the answer.
   it.todo('applies the business decision to the {{aggregate.words}}');
 {{/if}}
 {{#unless command.hasAggregate}}
@@ -65,14 +63,19 @@ describe('{{name.title}}', () => {
 
 function arrange() {
 {{#if command.hasAggregate}}
-  const { commandBus, clock, ids } = createTestBuses({ idPrefix: '{{aggregate.kebab}}' });
-  const {{aggregate.camel}}Repository = new Fake{{aggregate.pascal}}Repository();
-  commandBus{{spec.guard}}.register({{name.pascal}}Command, new {{name.pascal}}Handler({{aggregate.camel}}Repository, new InMemoryDomainEventDispatcher(), ids, clock));
-  return { commandBus, {{aggregate.camel}}Repository };
+  const { commandBus, clock, ids, dispatching, domainEvents } = createTestBuses({ idPrefix: '{{aggregate.kebab}}' });
+  // As the application hands it to the handler: the save announces the events of the {{aggregate.words}} to `domainEvents`.
+  const {{aggregate.camel}}Repository = dispatching(new Fake{{aggregate.pascal}}Repository());
+
+  commandBus{{spec.guard}}.register({{name.pascal}}Command, new {{name.pascal}}Handler({{aggregate.camel}}Repository, ids, clock));
+
+  return { commandBus, {{aggregate.camel}}Repository, domainEvents };
 {{/if}}
 {{#unless command.hasAggregate}}
   const { commandBus } = createTestBuses();
+
   commandBus{{spec.guard}}.register({{name.pascal}}Command, new {{name.pascal}}Handler());
+
   return { commandBus };
 {{/unless}}
 }

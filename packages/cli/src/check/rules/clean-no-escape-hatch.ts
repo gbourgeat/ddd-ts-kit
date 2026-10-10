@@ -1,10 +1,16 @@
-import type { Rule, SourceFile, Violation } from '../types.js';
-import { commentLines } from '../comments.js';
-import { reporter } from './helpers.js';
+import { commentLines } from '../comments/comment-lines.js';
+import type { Rule } from '../model/rule.js';
+import type { SourceFile } from '../model/source-file.js';
+import type { Violation } from '../model/violation.js';
+import type { Report } from '../model/report.js';
+import { reporter } from '../support/reporter.js';
 
 const ANY = /:\s*any(?![\w$])|(?<![\w$.])as\s+any(?![\w$])|<\s*any\s*[>,]|,\s*any\s*>|(?<![\w$.])any\s*\[\]/g;
 const NON_NULL = /(?<=[\w$)\]])!(?=\s*(?:[.;,)\]}:]|\[|$))(?!\s*==?)/gm;
 const SILENCER = /^@ts-(ignore|nocheck|expect-error)\b(.*)$|^(eslint-disable(?:-next-line|-line)?)\b(.*)$/;
+const ANY_FIX = 'Give the real type, or `unknown` narrowed by a check: any switches the compiler off for everything that touches the value.';
+const NON_NULL_FIX = 'Handle the absent case: narrow with a check, give a default, or throw an error that says what was expected.';
+const SILENCER_FIX = 'Fix the diagnostic; if it cannot be fixed, use @ts-expect-error or eslint-disable-next-line <rule> followed by the reason and its decision record (`-- ADR-NNNN: why`).';
 
 export const cleanNoEscapeHatch: Rule = {
   id: 'clean/no-escape-hatch',
@@ -12,43 +18,41 @@ export const cleanNoEscapeHatch: Rule = {
   scope: 'file',
   run(project) {
     const report = reporter(project, this.id);
-    const violations: Violation[] = [];
-    for (const file of project.files) {
-      for (const { line, found } of anyViolations(file)) {
-        const violation = report({ file: file.path, line }, `The type any is used (${found}).`, 'Give the real type, or `unknown` narrowed by a check: any switches the compiler off for everything that touches the value.');
-        // In a test, an untyped value cannot reach production: it advises instead of blocking.
-        violations.push(file.isTest ? { ...violation, severity: 'warn' } : violation);
-      }
-      for (const match of file.scan.code.matchAll(NON_NULL)) {
-        violations.push(
-          report({ file: file.path, line: file.scan.lineAt(match.index) }, 'A non-null assertion (!) silences the compiler.', 'Handle the absent case: narrow with a check, give a default, or throw an error that says what was expected.'),
-        );
-      }
-      for (const comment of commentLines(file)) {
-        const problem = silencerProblem(comment.text);
-        if (problem === undefined) continue;
-        violations.push(
-          report(
-            { file: file.path, line: comment.line },
-            `${problem}.`,
-            'Fix the diagnostic; if it cannot be fixed, use @ts-expect-error or eslint-disable-next-line <rule> followed by the reason and its decision record (`-- ADR-NNNN: why`).',
-          ),
-        );
-      }
-    }
-    return violations;
+
+    return project.files.flatMap((file) => [...untyped(file, report), ...asserted(file, report), ...silenced(file, report)]);
   },
 };
 
-function silencerProblem(text: string): string | undefined {
-  const match = SILENCER.exec(text);
-  if (match === null) return undefined;
-  if (match[1] === 'ignore' || match[1] === 'nocheck') return `@ts-${match[1]} hides every diagnostic`;
-  const reason = (match[1] === 'expect-error' ? match[2] : match[4]) ?? '';
-  const explained = match[1] === 'expect-error' ? reason.replace(/^[\s:-]+/, '').length > 0 : /--\s*\S/.test(reason);
-  return explained ? undefined : `${match[1] === 'expect-error' ? '@ts-expect-error' : match[3]} gives no reason`;
+/** In a test, an untyped value cannot reach production: it advises instead of blocking. */
+function untyped(file: SourceFile, report: Report): Violation[] {
+  return [...file.scan.code.matchAll(ANY)].map((match) => {
+    const violation = report({ file: file.path, line: file.scan.lineAt(match.index) }, `The type any is used (${match[0].trim()}).`, ANY_FIX);
+
+    return file.isTest ? { ...violation, severity: 'warn' } : violation;
+  });
 }
 
-function anyViolations(file: SourceFile): { line: number; found: string }[] {
-  return [...file.scan.code.matchAll(ANY)].map((match) => ({ line: file.scan.lineAt(match.index), found: match[0].trim() }));
+function asserted(file: SourceFile, report: Report): Violation[] {
+  return [...file.scan.code.matchAll(NON_NULL)].map((match) => report({ file: file.path, line: file.scan.lineAt(match.index) }, 'A non-null assertion (!) silences the compiler.', NON_NULL_FIX));
+}
+
+function silenced(file: SourceFile, report: Report): Violation[] {
+  return commentLines(file).flatMap((comment) => {
+    const problem = silencerProblem(comment.text);
+
+    return problem === undefined ? [] : [report({ file: file.path, line: comment.line }, `${problem}.`, SILENCER_FIX)];
+  });
+}
+
+function silencerProblem(text: string): string | undefined {
+  const match = SILENCER.exec(text);
+
+  if (match === null) return undefined;
+  if (match[1] === 'ignore' || match[1] === 'nocheck') return `@ts-${match[1]} hides every diagnostic`;
+
+  const expectsError = match[1] === 'expect-error';
+  const reason = (expectsError ? match[2] : match[4]) ?? '';
+  const explained = expectsError ? reason.replace(/^[\s:-]+/, '').length > 0 : /--\s*\S/.test(reason);
+
+  return explained ? undefined : `${expectsError ? '@ts-expect-error' : (match[3] ?? '')} gives no reason`;
 }

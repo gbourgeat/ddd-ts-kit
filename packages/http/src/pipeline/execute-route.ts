@@ -1,3 +1,4 @@
+import type { ExecutionContext } from '@ddd-ts-kit/kernel';
 import { createErrorMapper } from '../error/create-error-mapper.js';
 import { toProblem } from '../error/to-problem.js';
 import type { RequestContext } from '../route/request-context.js';
@@ -20,6 +21,8 @@ interface Call {
   readonly options: ExecuteOptions;
   readonly requestId: string;
   readonly correlationId: string;
+  /** Filled as the request advances, for the error hook to say how far it went. */
+  readonly reached: { execution?: ExecutionContext };
 }
 
 const defaultErrorMapper = createErrorMapper();
@@ -33,8 +36,13 @@ export async function executeRoute(
 ): Promise<RouteResponse> {
   const requestId = (options.requestId ?? defaultRequestId)(request);
   const correlationId = correlationIdOf(request.headers, requestId);
-  const call: Call = { route, request, options, requestId, correlationId };
+  const call: Call = { route, request, options, requestId, correlationId, reached: {} };
+  const respond = (): Promise<RouteResponse> => responded(call);
 
+  return options.around === undefined ? respond() : options.around(route, respond);
+}
+
+async function responded(call: Call): Promise<RouteResponse> {
   try {
     return answer(await handled(call), call);
   } catch (error) {
@@ -52,6 +60,8 @@ async function handled(call: Call): Promise<RouteOutput> {
   const input = validateRequest(route, request);
   const { headers } = request;
   const execution = executionOfRequest({ correlationId, headers, principal, deadline: deadlineOf(options) });
+
+  call.reached.execution = execution;
 
   const context: RequestContext = {
     requestId,
@@ -109,6 +119,7 @@ function identifierHeaders({ requestId, correlationId }: Call): Record<string, s
 
 function refusal(error: unknown, call: Call): RouteResponse {
   const { route, options, requestId, correlationId } = call;
+  const { execution } = call.reached;
   const problem = toProblem(error, options.errorMapper ?? defaultErrorMapper, requestId);
 
   notify(options, error, {
@@ -118,6 +129,7 @@ function refusal(error: unknown, call: Call): RouteResponse {
     method: route.method,
     path: route.path,
     problem,
+    ...(execution === undefined ? {} : { execution }),
   });
 
   return {

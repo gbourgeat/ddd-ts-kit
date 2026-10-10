@@ -1,10 +1,14 @@
 import { ASTUtils, AST_NODE_TYPES, TSESLint, type TSESTree } from '@typescript-eslint/utils';
-import { calleeName, methodChain, missingKeys } from '../support/calls.js';
-import { className, type ClassNode } from '../support/classes.js';
-import { declarationReader, isDeclaredStyle, writtenName, type Declaration } from '../support/declarations.js';
-import { defineRule } from '../support/define-rule.js';
-import { propertyName } from '../support/globals.js';
-import { inContext } from '../support/imports.js';
+import { calleeName } from '../support/calls/callee-name.js';
+import { methodChain } from '../support/calls/method-chain.js';
+import { missingKeys } from '../support/calls/missing-keys.js';
+import { className, type ClassNode } from '../support/classes/class-name.js';
+import { declarationReader, type Declaration } from '../support/declarations/declaration-reader.js';
+import { isDeclaredStyle } from '../support/declarations/is-declared-style.js';
+import { writtenName } from '../support/declarations/written-name.js';
+import { defineRule } from '../support/rule/define-rule.js';
+import { propertyName } from '../support/globals/property-name.js';
+import { inContext } from '../support/imports/in-context.js';
 
 type MessageId = 'consumerName' | 'declaredName' | 'subscription' | 'directSubscribe';
 type Finding = TSESLint.ReportDescriptor<MessageId> | undefined;
@@ -22,25 +26,32 @@ export const eventsConsumerIdempotent = defineRule<MessageId>({
   description: 'Every consumer of an integration event is registered or declared with a stable consumer name and a processed-event store.',
   messages: {
     consumerName: `This consumer is declared without a name. ${WHY} Write \`.on(<definition>, { consumer: '{{context}}.<reaction>' })\`: the name is the idempotency scope and must never change.`,
-    declaredName: `{{className}} is declared with \`@IntegrationEventHandler\` but its \`consumer\` is {{problem}}. ${WHY} Write \`@IntegrationEventHandler(<definition>, { consumer: '{{context}}.<reaction>' }, [<tokens>])\` with the name as a string literal: it is the idempotency scope and must never change.`,
+    declaredName: `{{className}} is declared with \`@IntegrationEventHandler\` but its \`consumer\` is {{problem}}. ${WHY} Write \`@IntegrationEventHandler(<definition>, { consumer: '{{context}}.<reaction>' }, [<ports>])\` with the name as a string literal: it is the idempotency scope and must never change.`,
     subscription: `This subscription gives no {{missing}}. ${WHY} Pass \`{ consumer: '{{context}}.<reaction>', processed: <the processed-event store> }\` as third argument, or use \`consume\`, which also commits the mark with the handler.`,
     directSubscribe: `{{call}}() subscribes a handler that nothing deduplicates. ${WHY} Declare the consumer with \`builder.on(<definition>, { consumer })\` in the module, or wrap the handler with \`on\` or \`consume\` of ${EVENTS}.`,
   },
   create({ file, sourceCode, report }) {
     const here = inContext(file);
+
     if (here === undefined || file.isTest) return {};
+
     const subscribesHere = here.layer === 'application' || here.layer === 'module';
+
     const tell = (finding: Finding): void => {
       if (finding !== undefined) report({ ...finding, data: { ...finding.data, context: here.context } });
     };
+
     const declarationsOf = isDeclaredStyle(file) ? declarationReader(sourceCode.ast) : undefined;
+
     const judgeClass = (node: ClassNode): void => {
       for (const declaration of declarationsOf?.(node) ?? []) tell(unnamedHandler(node, declaration));
     };
+
     return {
       CallExpression(node) {
         tell(unnamedConsumer(node));
         tell(unprotectedSubscription(node, sourceCode));
+
         if (subscribesHere) tell(directSubscription(node, sourceCode));
       },
       ClassDeclaration: judgeClass,
@@ -52,34 +63,46 @@ export const eventsConsumerIdempotent = defineRule<MessageId>({
 /** `@IntegrationEventHandler(definition, { consumer: 'billing.price-list' }, [...])`: the class is its own registration. */
 function unnamedHandler(node: ClassNode, declaration: Declaration): Finding {
   if (declaration.name !== 'IntegrationEventHandler') return undefined;
+
   const consumer = writtenName(declaration.arguments[1], 'consumer');
+
   return 'value' in consumer ? undefined : { node: declaration.node, messageId: 'declaredName', data: { className: className(node), problem: consumer.problem } };
 }
 
 /** `builder.on(definition, options).handledBy(Handler)`: the chain tells this `on` from the one of an event emitter. */
 function unnamedConsumer(node: TSESTree.CallExpression): Finding {
   if (node.callee.type !== AST_NODE_TYPES.MemberExpression || !HANDLER_BINDINGS.has(calleeName(node) ?? '')) return undefined;
+
   const [declaration] = methodChain(node);
+
   if (declaration?.name !== 'on' || missingKeys(declaration.call.arguments[1], ['consumer']).length === 0) return undefined;
+
   return { node: declaration.call, messageId: 'consumerName' };
 }
 
 function unprotectedSubscription(node: TSESTree.CallExpression, sourceCode: Source): Finding {
   if (node.callee.type !== AST_NODE_TYPES.Identifier || !isImportOf(sourceCode, node.callee, 'on')) return undefined;
+
   const missing = missingKeys(node.arguments[2], ['consumer', 'processed']);
+
   return missing.length === 0 ? undefined : { node, messageId: 'subscription', data: { missing: missing.map((key) => `\`${key}\``).join(' and ') } };
 }
 
 function isImportOf(sourceCode: Source, identifier: TSESTree.Identifier, exported: string): boolean {
   const definition = ASTUtils.findVariable(sourceCode.getScope(identifier), identifier.name)?.defs[0];
+
   if (definition?.type !== TSESLint.Scope.DefinitionType.ImportBinding || definition.node.type !== AST_NODE_TYPES.ImportSpecifier) return false;
+
   const { imported } = definition.node;
+
   return definition.parent.type === AST_NODE_TYPES.ImportDeclaration && definition.parent.source.value === EVENTS && imported.type === AST_NODE_TYPES.Identifier && imported.name === exported;
 }
 
 function directSubscription(node: TSESTree.CallExpression, sourceCode: Source): Finding {
   const { callee } = node;
+
   if (callee.type !== AST_NODE_TYPES.MemberExpression || propertyName(callee) !== 'subscribe' || node.arguments.some(isDeduplicated)) return undefined;
+
   return { node, messageId: 'directSubscribe', data: { call: sourceCode.getText(callee) } };
 }
 

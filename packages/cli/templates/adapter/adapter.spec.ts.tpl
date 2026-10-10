@@ -3,31 +3,38 @@ import { describe, expect, it } from '{{tests.module}}';
 import { createAspectFakes, withAspectRuntime } from '@ddd-ts-kit/aspects/testing';
 {{/if}}
 import { Remote{{name.pascal}} } from '../../infrastructure/external/{{adapter.file}}.js';
+{{#if adapter.decorated}}
+
+class Flaky{{name.pascal}} extends Remote{{name.pascal}} {
+  calls = 0;
+
+  protected override async transport(): Promise<unknown> {
+    this.calls += 1;
+
+    if (this.calls === 1) throw new Error('unreachable');
+
+    return 'answered';
+  }
+}
+{{/if}}
 
 describe('Remote{{name.pascal}}', () => {
 {{#if adapter.decorated}}
   it('sends again a call the outside system failed, and answers once it succeeds', async () => {
     const fakes = createAspectFakes();
-    let calls = 0;
-    const adapter = new Remote{{name.pascal}}(async () => {
-      calls += 1;
-      if (calls === 1) throw new Error('unreachable');
-      return 'answered';
-    });
-
+    const adapter = new Flaky{{name.pascal}}();
     const pending = withAspectRuntime(fakes, () => adapter.send({ operation: 'ping', payload: {} }));
+
     await new Promise((resolve) => setImmediate(resolve));
     fakes.scheduler.advance(30_000);
 
     expect(await pending).toBe('answered');
-    expect(calls).toBe(2);
+    expect(adapter.calls).toBe(2);
   });
 {{/if}}
 {{#unless adapter.decorated}}
-  it('is an adapter of the port, with a transport given by the composition root', () => {
-    const adapter = new Remote{{name.pascal}}(async () => 'answered');
-
-    expect(adapter.transport).toBeDefined();
+  it('is an adapter of the port, built without argument until its transport is written', () => {
+    expect(new Remote{{name.pascal}}()).toBeInstanceOf(Remote{{name.pascal}});
   });
 {{/unless}}
 

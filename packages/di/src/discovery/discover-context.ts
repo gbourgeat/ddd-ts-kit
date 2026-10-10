@@ -5,7 +5,7 @@ import { contextModule } from '../declared/context-module.js';
 import { rememberFile } from '../declared/discovered-files.js';
 import { WiringError } from '../errors/wiring-error.js';
 import type { ContextModule } from '../module/context-module.js';
-import { roleFilesOf, type RoleFile } from './role-files.js';
+import { roleFilesOf, type RoleFile } from './role-files-of.js';
 
 export interface DiscoveryOptions {
   /**

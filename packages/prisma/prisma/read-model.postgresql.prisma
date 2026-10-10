@@ -1,0 +1,26 @@
+// The model of a read model of @ddd-ts-kit/prisma for PostgreSQL: a template. Copy it into
+// your schema.prisma, name it after your read model, replace the example fields by the fields
+// of your row, and keep the four last fields as they are: `PrismaReadModelStore` is typed
+// against their names, and the rebuild of a projection against their columns.
+//
+// A text field that is sorted or compared by range follows the collation of its column, and
+// criteria order strings by code point: add `COLLATE "C"` to those columns in the migration
+// (`ALTER TABLE ... ALTER COLUMN room TYPE text COLLATE "C"`), which the schema cannot say.
+//
+// A unique index of your own leaves the deleted rows out: `WHERE NOT deleted`.
+
+model AppointmentRow {
+  id               String   @id
+  status           String
+  startsAt         DateTime @map("starts_at") @db.Timestamptz(3)
+  /// The event that last changed the row: an older one changes nothing.
+  lastEventId      String   @map("last_event_id")
+  lastEventAt      DateTime @map("last_event_at") @db.Timestamptz(3)
+  /// The per-key version of that event, when the upstream context gives one.
+  lastEventVersion BigInt?  @map("last_event_version")
+  /// The trace of a removed row, so that a late event does not bring it back.
+  deleted          Boolean  @default(false)
+
+  @@map("appointment_list")
+  @@schema("scheduling")
+}

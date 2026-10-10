@@ -1,16 +1,15 @@
+import { inspect } from 'node:util';
 import { KafkaJS } from '@confluentinc/kafka-javascript';
-import type { GlobalConfig } from '@confluentinc/kafka-javascript';
 import { BrokerUnavailableError } from '../errors/broker-unavailable-error.js';
 import { EventBusClosedError } from '../errors/event-bus-closed-error.js';
 import { failureCode } from '../errors/failure-code.js';
 import { within } from '../errors/within.js';
 import { ignore } from '../ignore.js';
+import { conceal } from '../secrecy/conceal.js';
 import type { TopicDescription } from '../topology/topic-description.js';
 import type { Rebalance } from './rebalance.js';
 
 export interface LinkSettings {
-  readonly brokers: string[];
-  readonly client: GlobalConfig;
   readonly createTopics: boolean;
   readonly startFromEarliest: boolean;
   readonly publishTimeoutMs: number;
@@ -25,6 +24,7 @@ interface Connectable {
 
 const UNKNOWN_TOPIC = 'ERR_UNKNOWN_TOPIC_OR_PART';
 const ASSIGNED = KafkaJS.ErrorCodes.ERR__ASSIGN_PARTITIONS;
+const DESCRIPTION = 'BrokerLink [clients concealed]';
 
 /**
  * The cluster as the bus sees it: it builds the clients with the settings every one of them
@@ -34,18 +34,18 @@ const ASSIGNED = KafkaJS.ErrorCodes.ERR__ASSIGN_PARTITIONS;
 export class BrokerLink {
   private readonly kafka: KafkaJS.Kafka;
 
+  private readonly settings: LinkSettings;
+
   private readonly known = new Set<string>();
 
   private adminClient: Promise<KafkaJS.Admin> | undefined;
 
   private closed = false;
 
-  constructor(private readonly settings: LinkSettings) {
-    // The client logs the message and the stack of what it catches: its logs stay off, and
-    // failures are reported through `onFailure`, by code.
-    const quiet = { brokers: settings.brokers, logLevel: KafkaJS.logLevel.NOTHING };
-
-    this.kafka = new KafkaJS.Kafka({ ...settings.client, kafkaJS: quiet });
+  constructor(kafka: KafkaJS.Kafka, settings: LinkSettings) {
+    this.kafka = kafka;
+    this.settings = settings;
+    conceal(this);
   }
 
   /** Idempotent and acknowledged by every in-sync replica: what an outbox relay needs. */
@@ -135,6 +135,14 @@ export class BrokerLink {
 
     this.adminClient = undefined;
     await admin?.disconnect().catch(ignore);
+  }
+
+  toJSON(): string {
+    return DESCRIPTION;
+  }
+
+  [inspect.custom](): string {
+    return DESCRIPTION;
   }
 }
 

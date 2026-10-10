@@ -1,67 +1,84 @@
 import type { Knex } from 'knex';
+{{#if style.declared}}
+{{#if tenant.scoped}}
+import { Clock, ExecutionScope, stampCreation, stampUpdate, tenantScopeOf } from '@ddd-ts-kit/kernel';
+{{/if}}
+{{#unless tenant.scoped}}
+import { Clock, ExecutionScope, stampCreation, stampUpdate } from '@ddd-ts-kit/kernel';
+{{/unless}}
+import { Repository } from '@ddd-ts-kit/kernel/declarations';
+{{/if}}
+{{#unless style.declared}}
 {{#if tenant.scoped}}
 import { stampCreation, stampUpdate, tenantScopeOf, type Clock, type ExecutionScope } from '@ddd-ts-kit/kernel';
-import { auditRow, insertIgnoringConflict, optimisticUpdate, tenantRow, type TenantRow } from '@ddd-ts-kit/knex';
 {{/if}}
 {{#unless tenant.scoped}}
 import { stampCreation, stampUpdate, type Clock, type ExecutionScope } from '@ddd-ts-kit/kernel';
-import { auditRow, insertIgnoringConflict, optimisticUpdate } from '@ddd-ts-kit/knex';
 {{/unless}}
-{{#if style.declared}}
-import { CLOCK, EXECUTION_SCOPE, Repository } from '@ddd-ts-kit/kernel/declarations';
-import { {{aggregate.constant}}_REPOSITORY } from '../../application/ports/{{context.kebab}}.ports.js';
+{{/unless}}
+{{#if tenant.scoped}}
+import { {{storage.knexImport}}, auditRow, insertIgnoringConflict, optimisticUpdate, tenantRow, type TenantRow } from '@ddd-ts-kit/knex';
 {{/if}}
+{{#unless tenant.scoped}}
+import { {{storage.knexImport}}, auditRow, insertIgnoringConflict, optimisticUpdate } from '@ddd-ts-kit/knex';
+{{/unless}}
 import type { {{aggregate.pascal}} } from '../../domain/aggregates/{{aggregate.kebab}}.aggregate.js';
-import type { {{aggregate.pascal}}Repository } from '../../domain/repositories/{{aggregate.kebab}}.repository.js';
-import type { DatabaseContext } from '{{paths.persistenceToPlatform}}/database/database.js';
 {{#if style.declared}}
-import { DATABASE } from '{{paths.persistenceToPlatform}}/tokens.js';
+import { {{aggregate.pascal}}Repository } from '../../domain/repositories/{{aggregate.kebab}}.repository.js';
 {{/if}}
-import { {{context.constant}}_SCHEMA, type {{aggregate.pascal}}Columns, type {{aggregate.pascal}}Row } from './{{context.kebab}}.schema.js';
+{{#unless style.declared}}
+import type { {{aggregate.pascal}}Repository } from '../../domain/repositories/{{aggregate.kebab}}.repository.js';
+{{/unless}}
+import { {{context.constant}}_SCHEMA } from './{{context.kebab}}.schema.js';
 import { {{aggregate.pascal}}Mapper } from './{{aggregate.kebab}}.mapper.js';
+import type { {{aggregate.pascal}}Columns, {{aggregate.pascal}}Row } from './{{aggregate.kebab}}-row.schema.js';
 
 type Versioned{{aggregate.pascal}} = {{aggregate.pascal}}Columns & { readonly version: number };
 
 {{#if style.declared}}
-@Repository({{aggregate.constant}}_REPOSITORY, [DATABASE, EXECUTION_SCOPE, CLOCK])
+@Repository({{aggregate.pascal}}Repository, [KnexContext, ExecutionScope, Clock])
 {{/if}}
 export class Knex{{aggregate.pascal}}Repository implements {{aggregate.pascal}}Repository {
   constructor(
-    private readonly database: DatabaseContext,
+    private readonly database: KnexContext,
     private readonly scope: ExecutionScope,
     private readonly clock: Clock,
   ) {}
 
   async findById(id: string): Promise<{{aggregate.pascal}} | undefined> {
-    const row = await this.#table().where({ id{{#if tenant.scoped}}, ...this.#ownTenant(){{/if}} }).first();
+    const row = await tableOf(this.database).where({ id{{#if tenant.scoped}}, ...this.ownTenant(){{/if}} }).first();
+
     return row === undefined ? undefined : {{aggregate.pascal}}Mapper.toDomain(row);
   }
 
   async save(saved: {{aggregate.pascal}}): Promise<void> {
     await optimisticUpdate(saved, async ({ expected, next }) => {
       const state = { ...{{aggregate.pascal}}Mapper.toRow(saved), version: next };
-      return expected === 0 ? this.#insert(state) : this.#update(state, expected);
+
+      return expected === 0 ? this.insert(state) : this.update(state, expected);
     });
   }
 
-  async #insert(state: Versioned{{aggregate.pascal}}): Promise<number> {
-    const row = { ...state, {{#if tenant.scoped}}...this.#ownTenant(), {{/if}}...auditRow(stampCreation(this.scope, this.clock)) };
-    return (await insertIgnoringConflict(this.database.executor(), this.#table(), { row, conflict: 'id' })) ? 1 : 0;
+  private async insert(state: Versioned{{aggregate.pascal}}): Promise<number> {
+    const row = { ...state, {{#if tenant.scoped}}...this.ownTenant(), {{/if}}...auditRow(stampCreation(this.scope, this.clock)) };
+
+    return (await insertIgnoringConflict(this.database.executor(), tableOf(this.database), { row, conflict: 'id' })) ? 1 : 0;
   }
 
-  async #update(state: Versioned{{aggregate.pascal}}, expected: number): Promise<number> {
-    return this.#table()
-      .where({ id: state.id, version: expected{{#if tenant.scoped}}, ...this.#ownTenant(){{/if}} })
+  private async update(state: Versioned{{aggregate.pascal}}, expected: number): Promise<number> {
+    return tableOf(this.database)
+      .where({ id: state.id, version: expected{{#if tenant.scoped}}, ...this.ownTenant(){{/if}} })
       .update({ ...state, ...auditRow(stampUpdate(this.scope, this.clock)) });
-  }
-
-  #table(): Knex.QueryBuilder<{{aggregate.pascal}}Row, {{aggregate.pascal}}Row[]> {
-    return this.database.executor()<{{aggregate.pascal}}Row, {{aggregate.pascal}}Row[]>('{{aggregate.table}}').withSchema({{context.constant}}_SCHEMA);
   }
 {{#if tenant.scoped}}
 
-  #ownTenant(): TenantRow {
+  private ownTenant(): TenantRow {
     return tenantRow(tenantScopeOf(this.scope));
   }
 {{/if}}
+}
+
+/** A function and not a method: a query builder is thenable, and a method that answers one is read as asynchronous by whatever wraps the adapter (tracing), which then answers a promise. */
+function tableOf(database: KnexContext): Knex.QueryBuilder<{{aggregate.pascal}}Row, {{aggregate.pascal}}Row[]> {
+  return database.executor()<{{aggregate.pascal}}Row, {{aggregate.pascal}}Row[]>('{{aggregate.table}}').withSchema({{context.constant}}_SCHEMA);
 }

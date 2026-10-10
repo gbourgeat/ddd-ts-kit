@@ -6,7 +6,9 @@ import type { IntegrationEventSubscriber } from './integration-event-subscriber.
 
 /** Any provider is an EventBus: in-memory, outbox and broker, queue service. */
 export abstract class EventBus implements IntegrationEventPublisher, IntegrationEventSubscriber {
-  static readonly tokenKey = 'kernel.EventBus';
+  static {
+    Object.defineProperty(this, 'tokenKey', { value: 'kernel.EventBus' });
+  }
 
   abstract publish(events: readonly IntegrationEvent[]): Promise<void>;
 

@@ -1,5 +1,5 @@
 import type { Metrics } from '@ddd-ts-kit/kernel';
-import { metricsOr } from '../runtime/collaborators.js';
+import { metricsOr } from '../runtime/metrics-or.js';
 import type { CircuitStateChange } from './circuit-state-change.js';
 import type { CircuitState } from './circuit-state.js';
 

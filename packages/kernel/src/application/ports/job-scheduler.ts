@@ -7,7 +7,9 @@ import type { JobRun } from '../scheduling/job-run.js';
  * schedules and instances. A failing job stops neither the scheduler nor the other jobs.
  */
 export abstract class JobScheduler {
-  static readonly tokenKey = 'kernel.JobScheduler';
+  static {
+    Object.defineProperty(this, 'tokenKey', { value: 'kernel.JobScheduler' });
+  }
 
   /** Throws `DuplicateJobError` for a name already registered, `InvalidJobScheduleError` for a schedule it cannot read. */
   abstract register(job: JobDefinition): void;

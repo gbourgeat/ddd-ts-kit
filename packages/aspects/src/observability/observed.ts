@@ -1,13 +1,11 @@
-import type { Clock } from '@ddd-ts-kit/kernel';
-import { describeError } from '../errors/describe-error.js';
-import type { ErrorDescription } from '../errors/error-description.js';
+import { identifyError, type Clock, type ErrorIdentity } from '@ddd-ts-kit/kernel';
 import { isBusinessRefusal } from '../errors/is-business-refusal.js';
 import { safely } from './safely.js';
 
 export interface CallOutcome {
   readonly durationMs: number;
   /** Present when the call failed. */
-  readonly error?: ErrorDescription;
+  readonly error?: ErrorIdentity;
   /** True when the failure is a business refusal rather than a fault. */
   readonly refused: boolean;
 }
@@ -24,7 +22,7 @@ export async function observed<T>(clock: Clock, call: () => Promise<T>, report: 
   try {
     result = await call();
   } catch (error) {
-    const outcome = { durationMs: elapsed(), error: describeError(error), refused: isBusinessRefusal(error) };
+    const outcome = { durationMs: elapsed(), error: identifyError(error), refused: isBusinessRefusal(error) };
 
     safely(() => {
       report(outcome);

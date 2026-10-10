@@ -1,11 +1,13 @@
 import { {{aggregate.pascal}} } from '../../domain/aggregates/{{aggregate.kebab}}.aggregate.js';
-import type { {{aggregate.pascal}}Columns, {{aggregate.pascal}}Row } from './{{context.kebab}}.schema.js';
+import type { {{aggregate.pascal}}Columns, {{aggregate.pascal}}Row } from './{{aggregate.kebab}}-row.schema.js';
 
 export const {{aggregate.pascal}}Mapper = {
   toDomain(row: {{aggregate.pascal}}Row): {{aggregate.pascal}} {
     // TODO(domain): rebuild each value object of {{aggregate.pascal}}State from its columns.
     const loaded = {{aggregate.pascal}}.rehydrate(row.id, { registeredAt: row.registered_at });
+
     loaded.version = row.version;
+
     return loaded;
   },
 

@@ -4,7 +4,9 @@ import type { Histogram } from '../metrics/histogram.js';
 
 /** Asking twice for the same name feeds the same series. */
 export abstract class Metrics {
-  static readonly tokenKey = 'kernel.Metrics';
+  static {
+    Object.defineProperty(this, 'tokenKey', { value: 'kernel.Metrics' });
+  }
 
   abstract counter(name: string): Counter;
 

@@ -84,6 +84,9 @@ const tracing: Aspect = (instance, info) =>
   info?.kind === undefined ? instance : traceDependency(instance, { kind: info.kind, ...(info.context === undefined ? {} : { context: info.context }) });
 ```
 
+An application on `kernelModule({ instrumentation: traceApplication() })` needs neither: the
+bindings are traced by the kernel module, outside the aspects given here.
+
 ### 3. As a decorator, on an adapter
 
 ```ts
@@ -190,6 +193,13 @@ The order that fits most adapters, outermost first:
 tracing, logged, timed, cached, retry, circuitBreaker, bulkhead, timeout, the adapter
 ```
 
+A repository has one more wrapper, put by `kernelModule()` between the `decorate` hook and the
+aspects of its binding: the dispatch of the domain events of what it saves. So the aspects of
+a binding (`.with(retry(...))`) are inside the dispatch, where a retried save dispatches once
+and a failing event handler is not retried as a failed save. A `retry` given to the `decorate`
+hook is outside of it and would run the save again after a handler failed, with no event left
+to dispatch: put the retry of a repository on its binding.
+
 ## The aspect runtime
 
 `logged`, `timed` and `cached` need a logger, metrics and a cache. They take them from their
@@ -237,18 +247,49 @@ const logger = new StdoutLogger({
 `logFieldsOf` of the kernel, the correlation id, actor and tenant of the current execution
 context. This package depends on neither. Fields cannot overwrite `time`, `level` or `message`.
 
+It implements the whole port, held by `loggerContract` like the pino and winston adapters:
+
+- **Errors.** An `Error` passed as a field (`logger.error('payment failed', { error })`) is
+  written as `describeError` of the kernel describes it: `type`, `code` for a `DomainError`,
+  `message`, `stack`, then `cause` the same way. `scrubMessages: true` writes
+  `[message removed]` for the message of every error that is not a `DomainError`: turn it on
+  when the logs leave your hands. `logged` and `loggingMiddleware` are not concerned: they
+  never pass an error, only `errorType` and `errorCode`.
+- **`isLevelEnabled(level)`** answers the threshold (`level`, default `info`). `logged` and
+  `loggingMiddleware` ask it first: below the threshold no field is built and the `fields`
+  function of `logged` is not called.
+- **`flush()`** resolves once the standard output took every line written so far, and never
+  rejects; the logger stays usable afterwards. `app.stop()` of the di package calls it last.
+- **A log call never throws.** Fields that cannot be read or serialized (a getter that throws,
+  a circular object), on an entry or on a child, give the entry without them, marked
+  `logError: "unserializable fields"`.
+
+It redacts no credential: `@ddd-ts-kit/pino` and `@ddd-ts-kit/winston` do.
+
 ## What wrapping guarantees
 
 - The instance is wrapped in place: same object, `instanceof`, `this` and `private` members
   intact. A frozen instance is fronted by a proxy of the same type, and its methods run with
   that proxy as `this`.
-- **Every asynchronous method reachable by name is advised, whatever its TypeScript
-  visibility**: `private` is erased by the compiler, so a `private async` method, and a field
-  that holds an asynchronous function, are wrapped like a public method. A method that calls
-  another through `this` goes through the advice of that other one, on a frozen instance as on
-  any other. Where that is not wanted (a retry around a public method and around the private
-  step it calls multiplies the attempts), select the methods: `when(forMethods('charge', 'refund'), retry(...))`,
-  or decorate them one by one.
+- **An aspect applied to an instance advises the calls that reach it from outside.** `private`
+  is erased by the compiler, and a name does not say whether a method is public (an underscore
+  is a habit, not a rule), so the public API cannot be picked out reliably: every asynchronous
+  method reachable by name, a `private async` method and a field holding an asynchronous
+  function included, is wrapped. What tells the calls apart is where they come from. While an
+  advised call is running on an instance, a call that instance makes on itself, to a public or
+  a `private` method, is the inside of that call and is not advised again by the same aspect:
+  `retry({ attempts: 3 })` around a public method that goes through a private step makes three
+  attempts, not nine, and `logged()` and `timed()` record one call. The guard is kept per
+  instance and per aspect, and follows the asynchronous flow of the call
+  (`AsyncLocalStorage`): two calls made from outside at the same time are both advised, and so
+  is whatever an advised call left behind (a timer, a listener) once that call is over.
+- What follows from it: a call that comes back to the instance from a collaborator while the
+  advised call is running is the inside of that call too; `cached` serves the callers from
+  outside, not a method reading another through `this`; `bulkhead` and `circuitBreaker` count
+  one call. A method decorator is not concerned: it advises the one method it is put on, at
+  every call, the ones made through `this` included.
+- Tracing differs on purpose: `traceDependency` of `@ddd-ts-kit/tracing` opens a child span for
+  a call an instance makes on itself. A span describes a step, where an advice acts on it.
 - A frozen instance stays frozen: its fields, `private` ones included, cannot be assigned. State
   it must change lives in an object it holds (a `Map`, an array).
 - Applying the same aspect twice to an instance is a no-op.

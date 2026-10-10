@@ -33,12 +33,172 @@ npm run dev
 `npm run dev` restarts the application when a source file changes. It runs `tsx watch`, which
 executes TypeScript directly; `--env-file-if-exists=.env` gives Node the variables of `.env`
 when the file is there, and `--import` loads `{{config.platformDir}}/tracing.ts` before
-everything else so that instrumentation is installed first. `src/platform/config.ts` validates
-the variables and refuses to start when one is wrong.
+everything else so that instrumentation is installed first.
+`{{config.platformDir}}/config/load-config.ts` validates the variables and refuses to start when
+one is wrong.
 {{#if docs.any}}
 
 The API documentation is served at `/docs` and the contract at `/openapi.json`, outside
 production unless `API_DOCS=true`.
+{{/if}}
+
+## How it is put together
+
+{{#if errors.none}}
+`{{config.sourceRoot}}/main.ts` is the composition root: tracing first, then the validated
+configuration, the storage, and `composeApplication` of `{{config.platformDir}}/compose-application.ts`.
+{{/if}}
+{{#if errors.sentry}}
+`{{config.sourceRoot}}/main.ts` is the composition root: tracing first, error reporting second
+(`{{config.platformDir}}/errors.ts`), then the validated configuration, the storage, and
+`composeApplication` of `{{config.platformDir}}/compose-application.ts`.
+{{/if}}
+
+- **A port is an abstract class, and the class is what is injected.** A repository port lives in
+  `domain/repositories/`, any other port in `application/ports/`, one per file; an adapter
+  `implements` its port. There is no token constant and no token file anywhere: a dependency list
+  names port classes (`[InvoiceRepository, Clock]`), the ports of the kernel included (`Clock`,
+  `IdGenerator`, `CommandBus`, `UnitOfWork`... of `@ddd-ts-kit/kernel`).
+{{#if di.tsyringe}}
+- **Three modules, then the contexts.** `kernelModule({...})` binds the ports of the kernel to what
+  this platform chose (one execution scope, one clock, the two buses with their middlewares);
+  `platformModule` (`{{config.platformDir}}/platform.module.ts`) rebinds what needs the storage{{#if broker.external}}, the broker{{/if}}{{#if cache.redis}} or the Redis protocol server{{/if}}
+  (`builder.rebind(UnitOfWork)`, `builder.bind({{persistence.tokenOrNone}})`...); the authorization
+  module binds the guard both buses ask first. Replacing a provider happens in the platform module
+  and nowhere else.
+{{/if}}
+{{#unless di.tsyringe}}
+- **One `Platform`, handed to each context.** `createPlatform` (`{{config.platformDir}}/create-platform.ts`)
+  builds the buses, the clock, the storage and the event ports once; the module file of a context
+  receives it and registers its handlers, adapters and jobs on it. Replacing a provider happens
+  there and nowhere else.
+{{/unless}}
+{{#if style.declared}}
+- **A context declares itself.** Each class says what it is with a decorator of
+  `@ddd-ts-kit/kernel/declarations` and is its own registration{{#if assembly.barrel}}; the composition root reads the
+  generated barrel `<context>.declarations.ts`{{/if}}{{#if assembly.discovery}}; the composition root discovers the role files of
+  each context at startup (`discoverContext`), publishers and jobs included{{/if}}.
+{{/if}}
+{{#if broker.external}}
+- **Behind the broker each context listens under its own name**: the platform module rebinds
+  `EventSubscribers` to `{ forContext: (name) => bus.forConsumer(name) }`, so a context keeps its
+  queues when it is extracted (`npx ddd-ts-kit generate service <context>`).
+{{/if}}
+- **Domain events leave with the save.** A handler writes `await repository.save(aggregate)` and
+  returns: the events the aggregate recorded are dispatched once the save resolved, inside the
+  unit of work of the command, so their handlers and the outbox commit or roll back with it.
+- **Cross-cutting behaviour stays outside the contexts**: one action is one trace (the request,
+  the use case, each repository or outbound call, the domain events and their handlers, the
+  outbox append, then the publication and each consumer), put around the application by
+  `traceApplication()` of `@ddd-ts-kit/tracing`, `tracedRoutes()` at the HTTP boundary and
+  `tracedPublisher` for the relay; what leaves the process gets retries and a time limit
+  (`{{config.platformDir}}/resilience/`), inside the span of the call.
+
+## Observability
+
+| Variable | Says |
+|---|---|
+| `LOG_LEVEL` | `debug`, `info`, `warn` or `error` |
+{{#if logger.stdout}}
+| `LOG_FORMAT` | `json` only: the logger writes JSON lines on the standard output and has no pretty format (`init --logger pino` or `--logger winston` brings one, and redacts credentials) |
+{{/if}}
+{{#unless logger.stdout}}
+| `LOG_FORMAT` | `json` (the default, everywhere) or `pretty` (a developer's terminal) |
+{{/unless}}
+| `LOG_SCRUB_MESSAGES` | `true` writes `[message removed]` for the message of every logged error that is not a `DomainError` |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | where spans go; left out, none leaves the process. `docker compose --profile observability up -d jaeger`, then `http://127.0.0.1:4318`, and the traces are on `http://127.0.0.1:16686` |
+| `TRACE_SAMPLE_RATIO` | the share of traces kept, 0 to 1; left out, every trace |
+| `TRACE_CONSUMERS` | `continue` (the default): a consumed event stays in the trace of the request that published it; `link`: each delivery starts a trace linked to it |
+
+Every log line carries the correlation id, the origin, the actor and the ids of the active trace
+(`{{config.platformDir}}/observability/create-logger.ts`). Stopping the application flushes the
+error reporter, then the logger, last: whatever logs has closed before.
+
+## Scheduled jobs
+
+`npx ddd-ts-kit generate job <context> <Name> --every 15m --command <UseCase>` writes a job in
+`application/scheduling/`: it sends one command, as the system actor `system:<context>.<name>`,
+and `execution.scheduledAt` says which period the work is for.
+
+| Variable | Says |
+|---|---|
+| `RUN_JOBS` | whether this process runs the jobs by time ({{#if worker.off}}`true` by default{{/if}}{{#if worker.on}}`false` by default: the worker runs them{{/if}}) |
+| `JOB_<CONTEXT>_<JOB>_ENABLED` | `false` switches one job off in one environment (`{{config.platformDir}}/job-settings.ts`, where a schedule or a timeout can be read from the environment too) |
+
+- **A dedicated worker**: `npx ddd-ts-kit generate worker` writes `{{config.sourceRoot}}/apps/worker/main.ts`
+  (the same modules as `main.ts`, no HTTP server, the jobs started whatever `RUN_JOBS` says), the
+  script `npm run start:worker` and a compose service, and makes `RUN_JOBS` default to `false`
+  for the API.{{#if events.outbox}} The worker runs no outbox relay: the events its commands store are relayed by the API.{{/if}}
+- **A context extracted as a service** (`generate service <context>`) takes its jobs with it.
+{{#if cache.redis}}
+- **Several instances**: the kernel `Lock` is bound to `RedisLock`, so one occurrence of a job
+  runs on one instance, best effort: it may still run twice or not at all (a paused holder, a
+  failover), which is why a job, or the command it sends, is idempotent.
+{{/if}}
+{{#unless cache.redis}}
+- **Limitation: one instance runs the jobs.** The kernel `Lock` is the in-memory one, which
+  excludes inside one process only: two instances started with their jobs on both run every
+  job. Run the jobs in a single process (one API instance, or one worker with `RUN_JOBS=false`
+  on the API), or initialise the project with `--cache redis`, which binds `RedisLock`, or bind a
+  lock between processes of your own to `Lock` in the platform.
+{{/unless}}
+{{#if errors.sentry}}
+
+## Error reporting
+
+Unexpected failures go to an error tracker through the kernel `ErrorReporter`, bound to
+`@ddd-ts-kit/sentry`: Sentry or GlitchTip, which speak the same protocol, so only the DSN differs.
+`{{config.platformDir}}/errors.ts` starts it, second import of every entry point, and nothing in
+`domain/` or `application/` reports anything: a handler throws, and what stands around it reports.
+
+| Variable | Says |
+|---|---|
+| `SENTRY_DSN` | where the events go. Empty or absent: the application starts and reports nothing. Anything else than a URL refuses the start |
+| `SENTRY_ENVIRONMENT` | the environment issues are filed under; `NODE_ENV` when left out |
+| `SENTRY_RELEASE` | the release issues are attached to; none when left out |
+| `SENTRY_SCRUB_MESSAGES` | `true` removes the message of every reported error that is not a `DomainError`: for a tracker hosted by a third party |
+
+| Reported | Not reported |
+|---|---|
+| a command or a query that fails with anything but a `DomainError` | a `DomainError`: a business refusal is an answer, not an incident |
+{{#if http.any}}
+| a request answered 5xx | a 4xx |
+{{/if}}
+| a scheduled run that failed, a timeout included | a skipped or missed occurrence |
+{{#if errors.broker}}
+| an integration event given up: retries exhausted, poison message{{#if events.outbox}}, publication of the outbox relay declared dead{{/if}} | a delivery that fails and is retried |
+{{/if}}
+{{#unless errors.broker}}
+{{#if events.outbox}}
+| an integration event whose publication the outbox relay declares dead | a publication that fails and is retried |
+{{/if}}
+{{/unless}}
+| `uncaughtException` and `unhandledRejection`, as `fatal`, before the process exits with code 1 | |
+
+One failure is one report: the first boundary that sees an error reports it, the others recognise
+it. Each report carries the trace id of the active span, which opens the trace in the tracing
+backend. What leaves the process is scrubbed first: no request body, header, cookie or query
+string, no local variable, no breadcrumb, no email or name (the actor id only), no tenant. The
+message of the error is sent: `scrubMessages: true` in `{{config.platformDir}}/errors.ts` removes
+it for everything that is not a `DomainError`, which is the setting for a tracker hosted by a
+third party. The README of `@ddd-ts-kit/sentry` has the full table and the other options
+(`sampleRate`, `tagTenant`, `beforeSend`).
+
+Stopping the application flushes the reporter, two seconds at most. The tools and the tests
+compose the application without a reporter: nothing is reported there.
+
+### A local GlitchTip
+
+```bash
+docker compose --profile errors up -d --wait    # GlitchTip 6, its PostgreSQL and its Valkey; the first start migrates, allow a few minutes
+docker compose logs glitchtip | grep 'DSN:'     # the DSN of the project it created
+```
+
+Put that DSN in `SENTRY_DSN` of `.env` (`http://<public-key>@localhost:8000/1`) and restart the
+application; from another container of the compose file, replace `localhost` with `glitchtip`.
+Sign in at http://localhost:8000 with `test@example.com` / `admin_pass`. `GLITCHTIP_PORT` moves
+the port, and the DSN the logs print then names it. This instance is for local development only:
+its secret key, its `DEBUG` mode and its account are public.
 {{/if}}
 
 ## Tooling
@@ -73,7 +233,7 @@ how the editor hook of the ddd-ts-kit plugin reacts when a file just written bre
 
 1. Define the vocabulary in the `CONTEXT.md` of the context, with the domain experts.
 2. Model: aggregates, value objects, events, in the words of that glossary.
-3. Scaffold with `npx ddd-ts-kit generate ...` and fill the `TODO(domain)` places it lists.
+3. Scaffold with `npx ddd-ts-kit generate ...` (`command`, `query`, `repository`, `port`, `route`, `job`...) and fill the `TODO(domain)` places it lists.
 4. Test: builders and fakes, no mocks. `npm test`, then `npm run test:e2e`.
 5. Verify: `npm run verify`.
 

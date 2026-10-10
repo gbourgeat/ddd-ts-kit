@@ -1,7 +1,10 @@
 import { AST_TOKEN_TYPES, type TSESLint, type TSESTree } from '@typescript-eslint/utils';
-import { commentLines, isDirective, isJsdoc, type CommentLine } from '../support/comments.js';
-import { defineRule } from '../support/define-rule.js';
-import { sameWord, splitWords } from '../support/words.js';
+import { commentLines, type CommentLine } from '../support/comments/comment-lines.js';
+import { isDirective } from '../support/comments/is-directive.js';
+import { isJsdoc } from '../support/comments/is-jsdoc.js';
+import { defineRule } from '../support/rule/define-rule.js';
+import { sameWord } from '../support/words/same-word.js';
+import { splitWords } from '../support/words/split-words.js';
 
 type Noise = 'banner' | 'closingBrace' | 'journal' | 'emptyTag' | 'ownerlessTodo';
 
@@ -36,13 +39,18 @@ export const cleanNoNoiseComment = defineRule<Noise | 'restatesName'>({
     return {
       Program() {
         const lines = commentLines(sourceCode).filter((line) => !line.sample && line.text !== '' && !isDirective(line.text));
+
         for (const line of lines) {
           const noise = noiseOf(line, sourceCode);
+
           if (noise !== undefined) report({ loc: line.loc, messageId: noise, data: { excerpt: line.text.slice(0, 60) } });
         }
+
         for (const description of descriptions(lines)) {
           const name = declaredAfter(sourceCode, description.last);
+
           if (name === undefined || !restatesName(description.text, name)) continue;
+
           report({ loc: description.first.loc, messageId: 'restatesName', data: { name, excerpt: description.text.slice(0, 60) } });
         }
       },
@@ -52,15 +60,18 @@ export const cleanNoNoiseComment = defineRule<Noise | 'restatesName'>({
 
 function noiseOf(line: CommentLine, sourceCode: Readonly<TSESLint.SourceCode>): Noise | undefined {
   const { text } = line;
+
   if (BANNER.test(text)) return 'banner';
   if (labelsClosingBrace(line, sourceCode)) return 'closingBrace';
   if (JOURNAL.test(text)) return 'journal';
   if (line.block && EMPTY_TAG.test(text)) return 'emptyTag';
+
   return OWNERLESS_TODO.test(text) && !REFERENCE.test(text) ? 'ownerlessTodo' : undefined;
 }
 
 function labelsClosingBrace(line: CommentLine, sourceCode: Readonly<TSESLint.SourceCode>): boolean {
   if (!line.trailing || !CLOSING.test(line.text) || line.text.split(' ').length > 3) return false;
+
   return sourceCode.getTokenBefore(line.comment)?.value === '}';
 }
 
@@ -74,23 +85,32 @@ interface Description {
 function descriptions(lines: readonly CommentLine[]): Description[] {
   const found: Description[] = [];
   let run: CommentLine[] = [];
+
   const close = (): void => {
     const [first] = run;
     const last = run.at(-1);
+
     if (first !== undefined && last !== undefined) found.push({ text: run.map((line) => line.text).join(' '), first, last: last.comment });
+
     run = [];
   };
+
   for (const line of lines.filter((candidate) => !candidate.trailing && (!candidate.block || (isJsdoc(candidate.comment) && !candidate.text.startsWith('@'))))) {
     const previous = run.at(-1);
+
     if (previous !== undefined && !belongsTogether(previous, line)) close();
+
     run.push(line);
   }
+
   close();
+
   return found;
 }
 
 function belongsTogether(previous: CommentLine, line: CommentLine): boolean {
   if (previous.block || line.block) return previous.comment === line.comment;
+
   return line.loc.start.line === previous.loc.start.line + 1;
 }
 
@@ -98,18 +118,25 @@ function belongsTogether(previous: CommentLine, line: CommentLine): boolean {
 function declaredAfter(sourceCode: Readonly<TSESLint.SourceCode>, comment: TSESTree.Comment): string | undefined {
   const tokens = sourceCode.getTokensAfter(comment, { count: 8 });
   const [first] = tokens;
+
   if (first === undefined || first.loc.start.line > comment.loc.end.line + 1) return undefined;
+
   const named = tokens.findIndex((token) => !MODIFIERS.has(token.value));
   // `get()` and `static()` are methods named like a modifier: the name is the word before the parenthesis.
   const name = tokens[named]?.value === '(' ? tokens[named - 1] : tokens[named];
+
   if (name === undefined || (!NAME_TOKENS.has(name.type) && !MODIFIERS.has(name.value))) return undefined;
+
   return name.type === AST_TOKEN_TYPES.PrivateIdentifier ? `#${name.value}` : name.value;
 }
 
 /** True when the description says nothing the name does not already say. */
 function restatesName(description: string, name: string): boolean {
   const said = splitWords(description.replace(/[.`'"]/g, ' '));
+
   if (said.length === 0 || said.length > 8) return false;
+
   const named = splitWords(name);
+
   return said.every((word) => [...FILLER, ...named].some((known) => sameWord(known, word)));
 }

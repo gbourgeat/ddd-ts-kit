@@ -1,5 +1,5 @@
-import type { Config } from '../config.js';
-import type { Workspace } from '../workspace.js';
+import type { Config } from '../config/index.js';
+import type { Workspace } from '../workspace/index.js';
 
 export interface KindFlags {
   readonly classification?: string;
@@ -11,8 +11,15 @@ export interface KindFlags {
   readonly aggregate?: string;
   readonly method?: string;
   readonly path?: string;
+  /** A route calls the command of the name, not its query. */
   readonly command: boolean;
   readonly query: boolean;
+  /** The use case a job sends, as `--command <UseCase>`. */
+  readonly commandName?: string;
+  /** The schedule of a job: an interval, or a cron expression read in a time zone. */
+  readonly every?: string;
+  readonly cron?: string;
+  readonly timeZone?: string;
   readonly version?: string;
   readonly allowName: boolean;
   /** The permission a use case requires, as `<aggregate>.<action>`. */
@@ -46,5 +53,9 @@ export interface Kind {
   readonly summary: string;
   /** Positional arguments after the kind, by name; all are required. */
   readonly positionals: readonly string[];
+  /** True when the kind may write outside the context it is given (config, composition root, registries of the platform, documentation): `SHARED_WRITES` says what and when. */
+  readonly writesShared: boolean;
+  /** The flags this kind reads as a text where the other kinds read a switch: `--command <UseCase>` of a job. */
+  readonly textFlags?: readonly string[];
   run(request: KindRequest): void;
 }

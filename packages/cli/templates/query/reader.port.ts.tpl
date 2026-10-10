@@ -1,5 +1,6 @@
-import type { {{name.pascal}}Query, {{name.pascal}}Result } from '../queries/{{name.kebab}}/{{name.kebab}}.query.js';
+import type { {{name.pascal}}Query } from '../queries/{{name.kebab}}/{{name.kebab}}.query.js';
+import type { {{name.pascal}}Result } from '../queries/{{name.kebab}}/{{name.kebab}}.result.js';
 
-export interface {{name.pascal}}Reader {
-  read(query: {{name.pascal}}Query): Promise<{{name.pascal}}Result>;
+export abstract class {{name.pascal}}Reader {
+  abstract read(query: {{name.pascal}}Query): Promise<{{name.pascal}}Result>;
 }

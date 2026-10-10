@@ -1,5 +1,13 @@
-import { LOG_LEVELS, type Clock, type LogFields, type LogLevel, type Logger } from '@ddd-ts-kit/kernel';
-import { clockOr } from '../runtime/collaborators.js';
+import {
+  LOG_LEVELS,
+  UNWRITABLE_FIELDS,
+  describeErrorFields,
+  type Clock,
+  type LogFields,
+  type LogLevel,
+  type Logger,
+} from '@ddd-ts-kit/kernel';
+import { clockOr } from '../runtime/clock-or.js';
 
 export interface StdoutLoggerOptions {
   /** Entries below it are not written. Default `info`. */
@@ -11,10 +19,21 @@ export interface StdoutLoggerOptions {
   readonly fields?: () => LogFields;
   /** Added to every entry: service name, version, environment. */
   readonly base?: LogFields;
+  /**
+   * Writes `SCRUBBED_MESSAGE` for the message of every logged error that is not a
+   * `DomainError`. Default `false`: see "StdoutLogger" in the README for the trade-off.
+   */
+  readonly scrubMessages?: boolean;
   /** Defaults to the clock of the aspect runtime, then to the system clock. */
   readonly clock?: Clock;
   /** Receives each line, newline included. Defaults to the standard output. */
   readonly write?: (line: string) => void;
+}
+
+interface Header {
+  readonly time: string;
+  readonly level: LogLevel;
+  readonly message: string;
 }
 
 /**
@@ -41,16 +60,47 @@ export class StdoutLogger implements Logger {
   }
 
   child(fields: LogFields): StdoutLogger {
-    return new StdoutLogger({ ...this.options, base: { ...this.options.base, ...fields } });
+    return new StdoutLogger({ ...this.options, base: this.boundWith(fields) });
+  }
+
+  isLevelEnabled(level: LogLevel): boolean {
+    return LOG_LEVELS.indexOf(level) >= LOG_LEVELS.indexOf(this.options.level ?? 'info');
+  }
+
+  /**
+   * Resolves once the standard output took every line written so far; at once with a `write`
+   * of the project, which is called before each log call returns. The logger stays usable.
+   */
+  flush(): Promise<void> {
+    if (this.options.write !== undefined) return Promise.resolve();
+
+    return new Promise((resolve) => {
+      try {
+        process.stdout.write('', () => {
+          resolve();
+        });
+      } catch {
+        resolve();
+      }
+    });
   }
 
   private writeEntry(level: LogLevel, message: string, fields: LogFields = {}): void {
-    if (LOG_LEVELS.indexOf(level) < LOG_LEVELS.indexOf(this.options.level ?? 'info')) return;
+    if (!this.isLevelEnabled(level)) return;
 
     const header = { time: clockOr(this.options.clock).now().toISOString(), level, message };
-    const entry = { ...header, ...this.options.base, ...this.ambientFields(), ...fields, ...header };
 
-    (this.options.write ?? writeToStdout)(`${serialized(entry, header)}\n`);
+    (this.options.write ?? writeToStdout)(`${this.serialized(header, fields)}\n`);
+  }
+
+  private serialized(header: Header, fields: LogFields): string {
+    try {
+      const written = describeErrorFields({ ...this.options.base, ...this.ambientFields(), ...fields }, this.options);
+
+      return JSON.stringify({ ...header, ...written, ...header });
+    } catch {
+      return JSON.stringify({ ...header, ...UNWRITABLE_FIELDS });
+    }
   }
 
   private ambientFields(): LogFields {
@@ -60,13 +110,13 @@ export class StdoutLogger implements Logger {
       return {};
     }
   }
-}
 
-function serialized(entry: LogFields, header: LogFields): string {
-  try {
-    return JSON.stringify(entry);
-  } catch {
-    return JSON.stringify({ ...header, logError: 'unserializable fields' });
+  private boundWith(fields: LogFields): LogFields {
+    try {
+      return { ...this.options.base, ...fields };
+    } catch {
+      return { ...this.options.base, ...UNWRITABLE_FIELDS };
+    }
   }
 }
 

@@ -1,15 +1,17 @@
 import { describe, expect, it } from '{{tests.module}}';
-import { Access, AuthorizationMap, RoleBasedAuthorizer, authorizationMiddleware, requires } from '@ddd-ts-kit/auth';
+import { AuthorizationMap, PolicyAccess, RoleBasedAuthorizer, authorizationMiddleware, requires } from '@ddd-ts-kit/auth';
 import { anActor } from '@ddd-ts-kit/auth/testing';
 import { FixedClock, offsetPage } from '@ddd-ts-kit/kernel';
 import { createTestBuses } from '@ddd-ts-kit/testing';
 import { {{context.camel}}Permissions } from '../../application/authorization/{{context.kebab}}.permissions.js';
 import { {{name.pascal}}Handler } from '../../application/queries/{{name.kebab}}/{{name.kebab}}.handler.js';
-import { {{name.pascal}}Query, type {{name.pascal}}Item } from '../../application/queries/{{name.kebab}}/{{name.kebab}}.query.js';
+import { {{name.pascal}}Query } from '../../application/queries/{{name.kebab}}/{{name.kebab}}.query.js';
+import type { {{name.pascal}}Item } from '../../application/queries/{{name.kebab}}/{{name.kebab}}.result.js';
 import { Fake{{name.pascal}}Reader } from '../fakes/{{name.kebab}}-reader.fake.js';
 
 const authorizer = new RoleBasedAuthorizer({ roles: { holder: [{{context.camel}}Permissions['{{access.permission}}']] } });
 const holders = authorizationMiddleware({ authorizer, map: AuthorizationMap.of(requires({{name.pascal}}Query, {{context.camel}}Permissions['{{access.permission}}'])) });
+
 const holder = anActor().withRole('holder').build();
 const LINES: readonly {{name.pascal}}Item[] = [{ id: '{{list.resource}}-1' }, { id: '{{list.resource}}-2' }, { id: '{{list.resource}}-3' }];
 
@@ -35,6 +37,7 @@ describe('{{name.title}}', () => {
 
 function arrange(lines: readonly {{name.pascal}}Item[]) {
   const { queryBus } = createTestBuses();
-  const access = new Access({ authorizer, clock: new FixedClock(new Date('2026-01-01T00:00:00.000Z')) });
+  const access = new PolicyAccess({ authorizer, clock: new FixedClock(new Date('2026-01-01T00:00:00.000Z')) });
+
   return queryBus.use(holders).register({{name.pascal}}Query, new {{name.pascal}}Handler(new Fake{{name.pascal}}Reader(lines), access));
 }

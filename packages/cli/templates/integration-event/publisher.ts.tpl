@@ -8,7 +8,7 @@ export class {{publisher.pascal}}Publisher {
     private readonly ids: IdGenerator,
   ) {}
 
-  async publish(event: {{event.pascal}}): Promise<void> {
+  async handle(event: {{event.pascal}}): Promise<void> {
     const published = {{event.camel}}V{{event.version}}.create(
       {
         {{aggregate.camel}}Id: event.aggregateId,
@@ -16,6 +16,7 @@ export class {{publisher.pascal}}Publisher {
       },
       { id: this.ids.next(), occurredAt: event.occurredAt },
     );
+
     await this.publisher.publish([published]);
   }
 }

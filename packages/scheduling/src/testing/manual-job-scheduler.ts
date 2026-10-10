@@ -29,12 +29,12 @@ export class ManualJobScheduler extends InProcessJobScheduler {
       ...options,
       timers,
       random: () => 0,
-      onRun: (run, error) => {
+      onRun: (run, error, detail) => {
         runs.push(run);
 
         if (run.outcome === 'failed') failures.push(error);
 
-        options.onRun?.(run, error);
+        options.onRun?.(run, error, detail);
       },
     });
 

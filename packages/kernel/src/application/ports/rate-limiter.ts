@@ -7,7 +7,9 @@ import type { RateLimit } from '../rate-limit/rate-limit.js';
  * route and an address together.
  */
 export abstract class RateLimiter {
-  static readonly tokenKey = 'kernel.RateLimiter';
+  static {
+    Object.defineProperty(this, 'tokenKey', { value: 'kernel.RateLimiter' });
+  }
 
   abstract consume(key: string, limit: RateLimit): Promise<RateLimitDecision>;
 }

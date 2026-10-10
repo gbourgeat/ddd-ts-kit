@@ -14,6 +14,7 @@ export class {{name.pascal}} extends ValueObject<{{name.pascal}}Props> {
     if (value.trim().length === 0) {
       return err(new InvariantViolation('{{name.title}} must not be empty.'));
     }
+
     return ok(new {{name.pascal}}({ value }));
   }
 

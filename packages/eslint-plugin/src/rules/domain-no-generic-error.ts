@@ -1,6 +1,6 @@
 import { AST_NODE_TYPES } from '@typescript-eslint/utils';
-import { defineRule } from '../support/define-rule.js';
-import { ambientName } from '../support/globals.js';
+import { defineRule } from '../support/rule/define-rule.js';
+import { ambientName } from '../support/globals/ambient-name.js';
 
 export const domainNoGenericError = defineRule<'generic'>({
   id: 'domain/no-generic-error',
@@ -13,10 +13,13 @@ export const domainNoGenericError = defineRule<'generic'>({
   },
   create({ file, sourceCode, report }) {
     const { location } = file;
+
     if (location.area !== 'context' || file.isTest || (location.layer !== 'domain' && location.layer !== 'application')) return {};
+
     return {
       ThrowStatement(node) {
         const thrown = node.argument;
+
         if (thrown.type !== AST_NODE_TYPES.NewExpression && thrown.type !== AST_NODE_TYPES.CallExpression) return;
         if (ambientName(sourceCode, thrown.callee) === 'Error') report({ node: thrown, messageId: 'generic', data: { context: location.context } });
       },

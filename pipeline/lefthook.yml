@@ -9,6 +9,8 @@ pre-commit:
     - name: architecture
       glob: "src/**/*.{ts,mts,cts}"
       run: npx --no -- ddd-ts-kit check {staged_files}
+    - name: commit size
+      run: npx --no -- ddd-ts-kit check --commit-size --staged
 
 pre-push:
   jobs:

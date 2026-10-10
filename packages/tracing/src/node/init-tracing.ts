@@ -10,12 +10,13 @@
  * `@opentelemetry/instrumentation` loader hook; CommonJS packages and Node built-ins
  * do not.
  */
-import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { NodeSDK, resources, tracing } from '@opentelemetry/sdk-node';
 import { LocalRootTracker } from '../local-root/local-root-tracker.js';
+import { AttributeAllowList } from '../processors/attribute-allow-list.js';
 import { ErrorMessageScrubber } from '../processors/error-message-scrubber.js';
 import { UrlSecretSpanProcessor } from '../processors/url-secret-span-processor.js';
+import { defaultInstrumentations, type AutoInstrumentationSettings } from './default-instrumentations.js';
 
 type NodeSdkOptions = NonNullable<ConstructorParameters<typeof NodeSDK>[0]>;
 
@@ -30,10 +31,22 @@ export interface InitTracingOptions {
    * variables are honoured; with none of them, nothing is exported.
    */
   readonly exporterUrl?: string;
-  /** Share of new traces sampled, 0 to 1. A sampled parent is always followed. */
+  /**
+   * Share of new traces sampled, 0 to 1, decided where a trace starts: a sampled parent is
+   * always followed, so a trace is kept or dropped whole, across processes. Without it, the
+   * standard `OTEL_TRACES_SAMPLER` and `OTEL_TRACES_SAMPLER_ARG` variables are honoured, and
+   * by default every trace is kept. Keeping the traces that end in error whatever the ratio is
+   * tail sampling, which is the work of a collector: sample everything here and decide there.
+   */
   readonly sampleRatio?: number;
-  /** Replaces the Node auto-instrumentations. */
+  /** Replaces the default instrumentations altogether. */
   readonly instrumentations?: NonNullable<NodeSdkOptions['instrumentations']>;
+  /** Changes the settings of the default instrumentations, one by one: turns one on, or off, or configures it. */
+  readonly autoInstrumentations?: AutoInstrumentationSettings;
+  /** Paths whose incoming requests get no span. Default `NOISE_PATHS`: probes, metrics, documentation. */
+  readonly ignoredPaths?: readonly string[];
+  /** Attribute names, or prefixes ending with a dot, kept on spans besides `DEFAULT_ALLOWED_ATTRIBUTES`. */
+  readonly allowedAttributes?: readonly string[];
   /** Run after the built-in scrubbing processors and before the exporter. */
   readonly extraSpanProcessors?: readonly tracing.SpanProcessor[];
   readonly enabled?: boolean;
@@ -53,7 +66,7 @@ export function initTracing(options: InitTracingOptions): TracingHandle {
     serviceName: options.serviceName,
     resource: resourceOf(options),
     spanProcessors: spanProcessorsOf(options),
-    instrumentations: options.instrumentations ?? [getNodeAutoInstrumentations()],
+    instrumentations: options.instrumentations ?? [instrumentationsOf(options)],
     ...(options.sampleRatio === undefined
       ? {}
       : {
@@ -66,6 +79,13 @@ export function initTracing(options: InitTracingOptions): TracingHandle {
   sdk.start();
 
   return { shutdown: () => sdk.shutdown() };
+}
+
+function instrumentationsOf({ ignoredPaths, autoInstrumentations }: InitTracingOptions): ReturnType<typeof defaultInstrumentations> {
+  return defaultInstrumentations({
+    ...(ignoredPaths === undefined ? {} : { ignoredPaths }),
+    ...(autoInstrumentations === undefined ? {} : { settings: autoInstrumentations }),
+  });
 }
 
 function resourceOf(options: InitTracingOptions): resources.Resource {
@@ -86,6 +106,7 @@ function spanProcessorsOf(options: InitTracingOptions): tracing.SpanProcessor[] 
     new LocalRootTracker(),
     new UrlSecretSpanProcessor(),
     new ErrorMessageScrubber(),
+    new AttributeAllowList(options.allowedAttributes === undefined ? {} : { alsoAllowed: options.allowedAttributes }),
     ...(options.extraSpanProcessors ?? []),
     ...(exporter === undefined ? [] : [new tracing.BatchSpanProcessor(exporter)]),
   ];

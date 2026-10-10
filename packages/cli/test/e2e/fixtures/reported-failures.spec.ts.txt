@@ -1,0 +1,128 @@
+import { createServer, type IncomingMessage, type Server } from 'node:http';
+import type { AddressInfo } from 'node:net';
+import { gunzipSync } from 'node:zlib';
+import { InMemoryErrorReporter, type ErrorReporter } from '@ddd-ts-kit/kernel';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { createCredentials } from '../test/e2e/support/create-credentials.js';
+import { testEnvironment } from '../test/e2e/support/test-environment.js';
+import { composeApplication } from './platform/compose-application.js';
+import { loadConfig } from './platform/config/load-config.js';
+import { openPersistence } from './platform/database/open-persistence.js';
+import { inProcessEvents } from './platform/events/in-process-events.js';
+import { startHttpServer } from './platform/http/start-http-server.js';
+
+interface Answers {
+  readonly failing: number;
+  readonly missing: number;
+  readonly credential: string;
+}
+
+/** The whole application behind its HTTP server: one request whose query fails, one for a route that does not exist, then a graceful stop. */
+async function failingRequest(errors?: ErrorReporter): Promise<Answers> {
+  const credentials = await createCredentials();
+  const headers = await credentials.headersOf({ id: 'user-1', roles: ['admin'] });
+  const application = composeApplication(openPersistence(), { events: inProcessEvents(), authenticator: credentials.authenticator, ...(errors === undefined ? {} : { errors }) });
+
+  await application.start();
+
+  const server = await startHttpServer(application, loadConfig(testEnvironment()));
+  const failing = await fetch('http://127.0.0.1:' + server.port + '/orders/order-1?secret=query-string-value', { headers });
+  const missing = await fetch('http://127.0.0.1:' + server.port + '/nowhere', { headers });
+
+  await server.close();
+  await application.stop();
+
+  return { failing: failing.status, missing: missing.status, credential: Object.values(headers).join(' ') };
+}
+
+async function bodyOf(request: IncomingMessage): Promise<string> {
+  const chunks: Buffer[] = [];
+
+  for await (const chunk of request) chunks.push(Buffer.from(chunk));
+
+  const body = Buffer.concat(chunks);
+
+  return (request.headers['content-encoding'] === 'gzip' ? gunzipSync(body) : body).toString('utf8');
+}
+
+/** An ingestion endpoint on the loopback interface: what the SDK really sends, read back as text. Nothing leaves the machine. */
+async function tracker(received: string[]): Promise<Server> {
+  const server = createServer((request, response) => {
+    void bodyOf(request).then((body) => {
+      received.push(body);
+      response.writeHead(200, { 'content-type': 'application/json' }).end('{}');
+    });
+  });
+
+  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+
+  return server;
+}
+
+function dsnOf(server: Server): string {
+  const address: AddressInfo | string | null = server.address();
+
+  return 'http://publickey@127.0.0.1:' + String(typeof address === 'object' && address !== null ? address.port : 0) + '/1';
+}
+
+async function reporterOf(environment: Record<string, string>): Promise<ErrorReporter> {
+  vi.resetModules();
+  Object.assign(process.env, testEnvironment(environment));
+
+  const { errors } = await import('./platform/errors.js');
+
+  return errors;
+}
+
+/** The error events of the envelopes received: one JSON line each, after the two header lines. */
+function eventsIn(received: readonly string[]): unknown[] {
+  const lines = received.flatMap((body) => body.split('\n').filter((line) => line.includes('"exception"')));
+
+  return lines.map((line): unknown => JSON.parse(line));
+}
+
+describe('the failures of the application', () => {
+  afterEach(() => {
+    delete process.env['SENTRY_DSN'];
+  });
+
+  it('are reported once, by the bus that saw them first, and flushed when the application stops', async () => {
+    const errors = new InMemoryErrorReporter();
+    const flush = vi.spyOn(errors, 'flush');
+    const answers = await failingRequest(errors);
+
+    expect(answers).toMatchObject({ failing: 500, missing: 404 });
+    expect(errors.reports).toHaveLength(1);
+    expect(errors.reports[0]?.report).toMatchObject({ origin: 'http', operation: 'TrackOrderQuery', actorId: 'user-1' });
+    expect(flush).toHaveBeenCalledTimes(1);
+  });
+
+  it('go nowhere without a DSN: the application starts, answers and stops', async () => {
+    expect(loadConfig(testEnvironment({ SENTRY_DSN: '' })).errorReporting).toEqual({ environment: 'test', scrubMessages: false });
+    expect(() => loadConfig(testEnvironment({ SENTRY_DSN: 'not a url' }))).toThrow('SENTRY_DSN must be a URL');
+
+    const errors = await reporterOf({ SENTRY_DSN: '' });
+
+    expect(errors.constructor.name).toBe('NoopErrorReporter');
+    expect(await failingRequest(errors)).toMatchObject({ failing: 500, missing: 404 });
+    expect(await failingRequest()).toMatchObject({ failing: 500, missing: 404 });
+  });
+
+  it('reach the tracker of the DSN as one scrubbed event, linked to its release and environment', async () => {
+    const received: string[] = [];
+    const server = await tracker(received);
+    const errors = await reporterOf({ SENTRY_DSN: dsnOf(server), SENTRY_RELEASE: 'proof@1.0.0' });
+    const answers = await failingRequest(errors);
+
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+
+    const events = eventsIn(received);
+
+    expect(errors.constructor.name).toBe('SentryErrorReporter');
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({ environment: 'test', release: 'proof@1.0.0', tags: { origin: 'http', operation: 'TrackOrderQuery' }, user: { id: 'user-1' } });
+    expect(events[0]).not.toHaveProperty('request');
+    expect(received.join('\n')).not.toContain(answers.credential);
+    expect(received.join('\n')).not.toContain('query-string-value');
+  });
+});

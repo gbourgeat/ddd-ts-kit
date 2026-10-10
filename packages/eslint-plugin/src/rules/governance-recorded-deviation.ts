@@ -1,5 +1,5 @@
 import type { TSESTree } from '@typescript-eslint/utils';
-import { defineRule } from '../support/define-rule.js';
+import { defineRule } from '../support/rule/define-rule.js';
 
 interface Directive {
   /** `eslint-disable`, `eslint-disable-line`, `eslint-disable-next-line` or their `ddd-ts-kit-` twins. */
@@ -30,7 +30,9 @@ export const governanceRecordedDeviation = defineRule<'unrecorded' | 'blanket'>(
         for (const comment of sourceCode.getAllComments()) {
           const directive = parseDirective(comment.value);
           const messageId = directive === undefined ? undefined : judge(directive);
+
           if (directive === undefined || messageId === undefined) continue;
+
           report({ loc: reportedAt(comment, directive), messageId, data: { directive: `${directive.keyword} ${directive.rules}`.trim(), line: comment.loc.start.line } });
         }
       },
@@ -40,15 +42,20 @@ export const governanceRecordedDeviation = defineRule<'unrecorded' | 'blanket'>(
 
 function parseDirective(comment: string): Directive | undefined {
   const match = DIRECTIVE.exec(comment.trim());
+
   if (match === null) return undefined;
+
   const [, keyword = '', rest = ''] = match;
   const separator = REASON.exec(rest);
+
   if (separator === null) return { keyword, rules: rest.trim(), reason: '' };
+
   return { keyword, rules: rest.slice(0, separator.index).trim(), reason: rest.slice(separator.index + separator[0].length) };
 }
 
 function judge(directive: Directive): 'unrecorded' | 'blanket' | undefined {
   if (directive.rules === '') return 'blanket';
+
   return DECISION_RECORD.test(directive.reason) ? undefined : 'unrecorded';
 }
 
@@ -60,6 +67,7 @@ function judge(directive: Directive): 'unrecorded' | 'blanket' | undefined {
 function reportedAt(comment: TSESTree.Comment, directive: Directive): TSESTree.SourceLocation | TSESTree.Position {
   if (!silencesThisRule(directive)) return comment.loc;
   if (directive.keyword === 'eslint-disable') return { line: 1, column: -1 };
+
   return directive.keyword === 'eslint-disable-line' ? { line: comment.loc.start.line - 1, column: 0 } : comment.loc;
 }
 

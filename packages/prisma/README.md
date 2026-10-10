@@ -407,6 +407,94 @@ The rules these examples hold, and that the tests of this package check on a rea
 - **An offset page answers `total`**, a cursor page `nextCursor`. Offer the offset form for
   small, browsable lists and the cursor form for anything that grows.
 
+## Criteria
+
+`criteriaToPrisma(plan, fields?)` turns a criteria plan of the kernel into the arguments of a
+`findMany`: `where` (the filters, the scope of the actor and the keyset of a cursor page),
+`counted` (the filters and the scope alone, for a `count`), `orderBy` (the total order ended
+by the tie-breaker), `take` and `skip`. `predicateToPrisma(predicate, fields?)` gives one
+`where`. They are data, never text: Prisma binds every value. The fields of the read model
+are the fields of the model; `fields` renames those that differ. The text of `contains` and
+`startsWith` has its `%`, `_` and `\` escaped, which Prisma does not do.
+
+```ts
+// infrastructure/persistence/prisma-appointment.queries.ts
+async list(criteria: ScopedCriteria<AppointmentRow>): Promise<Page<AppointmentRow>> {
+  const plan = planCriteria(appointmentCriteria, criteria);
+
+  if (plan.empty) return pageOfPlan(plan, []);
+
+  const { where, orderBy, take, skip } = criteriaToPrisma(plan);
+
+  return pageOfPlan(plan, await this.database.client().appointmentRow.findMany({ where, orderBy, take, skip }));
+}
+```
+
+A cursor page is fetched one row longer than asked, which is how `pageOfPlan` knows whether
+another follows; an offset page takes its total from `count({ where: counted })`. A field
+declared `nullable` is ordered `{ sort, nulls }`: last ascending, first descending.
+
+**Strings.** A text column is ordered and compared by range in the collation of the column;
+criteria order strings by code point. Declare the text columns that are sorted or compared
+with `gt`, `lt` or `between` with `COLLATE "C"`, in the migration since the Prisma schema cannot say it (`ALTER TABLE ... ALTER COLUMN room TYPE text COLLATE "C"`): the index then serves the sort, and the
+order is the same as in the fake. **Decimals** are a `Decimal` field and a string in the row: the store reads them back as
+plain digits, without trailing zeros or exponent. **Instants** are `timestamptz` and a `Date`.
+A `BigInt` field reads back as a number.
+
+## Read models
+
+The model of a read model is yours; `prisma/read-model.postgresql.prisma` of this package is
+the template, with the four fields that order the events of a projection.
+
+```prisma
+model AppointmentRow {
+  id               String   @id
+  status           String
+  startsAt         DateTime @map("starts_at") @db.Timestamptz(3)
+  lastEventId      String   @map("last_event_id")
+  lastEventAt      DateTime @map("last_event_at") @db.Timestamptz(3)
+  lastEventVersion BigInt?  @map("last_event_version")
+  deleted          Boolean  @default(false)
+
+  @@map("appointment_list")
+  @@schema("scheduling")
+}
+```
+
+```ts
+// infrastructure/persistence/prisma-appointment-list.adapter.ts
+@Adapter(AppointmentList, [Database])
+export class PrismaAppointmentList extends PrismaReadModelStore<AppointmentRow, Prisma.TransactionClient> implements AppointmentList {
+  constructor(database: Database) {
+    super(database, {
+      delegate: (client) => client.appointmentRow,
+      schema: 'scheduling',
+      table: 'appointment_list',
+      columns: { id: 'id', status: 'status', startsAt: 'starts_at' },
+      definition: appointmentCriteria,
+    });
+  }
+}
+```
+
+Every write goes through `TableReadModelStore` of the kernel: a row is written only if its
+event is newer than the one it holds, on the executor of the unit of work, so the row and the
+processed-event mark commit together. A removed row stays in the table with `deleted` set:
+a query of your own on the table leaves those rows out, and so does a unique index
+(`WHERE NOT deleted`). `store.table` is what `ProjectionRebuild` takes; the rebuild is
+PostgreSQL only (a copy `<table>__rebuild` made `LIKE ... INCLUDING ALL`, the keys written
+meanwhile in `<table>__touched`, the swap by rename in one transaction) and its guarantees
+and limits are in the README of `@ddd-ts-kit/kernel` ("Rebuild"). The store passes
+`criteriaContract` and `readModelStoreContract` of `@ddd-ts-kit/testing/contracts`, on PGlite
+and on PostgreSQL 18.
+Criteria and read models were never run on MySQL or SQLite.
+
+The table is reached through its model, and the copy of a rebuild, which has no model,
+through `$queryRawUnsafe` with quoted identifiers and `$n` parameters: that is why the table,
+the schema and the column of each field are named. The arguments given to the model are built
+from the fields of the row at run time, so `PrismaReadModelDelegate` types them as objects and
+it is the generated client that validates them.
+
 ## Outbox and idempotency
 
 `claim` is required, because a Prisma client does not tell which database it talks to:

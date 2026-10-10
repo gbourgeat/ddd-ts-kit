@@ -1,0 +1,214 @@
+# Audit trail
+
+**Summary.** An audit trail answers "who did what, on what, when, with what outcome, on whose
+behalf" to somebody who does not trust the application: an auditor, a customer, a regulator.
+In this kit it is recorded around the use cases, never by them: authorization decisions,
+executed commands and integration events already pass through three places, and the entries
+are written there. Entries are append-only and hash-chained, so a change, a removal or a
+reordering is detectable; they hold identifiers and codes, never content, which is also what
+lets an append-only chain coexist with the right to erasure. The chain proves that what was
+recorded was not rewritten. It does not prove that everything was recorded.
+
+## What it is not
+
+| It is not | Because |
+|---|---|
+| a log | logs are sampled, rotated, filtered by level and lost; nobody can prove a line was not removed |
+| event sourcing | it does not rebuild state; it records that something happened and how it ended |
+| audit columns | `created_by` and `updated_by` name the last writer of a row, not the history, and not the refusals |
+| a debugging tool | it carries no payload, no message, no stack trace |
+
+The four can coexist, each with its own retention and readers. Mixing them is how a log ends
+up holding personal data for ten years, or an audit trail ends up unreadable.
+
+## Why handlers never write it
+
+A handler that must remember to call the audit will one day forget, and nothing will fail. An
+aggregate that calls it has stopped being a model. So the kit records from three places every
+unit of work already crosses, wired once in the platform:
+
+| Source | Records | Mechanism |
+|---|---|---|
+| authorization decisions | every denial; every allowed action that is not a read; the allowed reads you declare sensitive | the decision hook of the authorization middleware |
+| commands | each command with `succeeded` or `failed` and the code of the error | a bus middleware placed before the unit of work |
+| integration events | that an event of a given type occurred, from its envelope only | one idempotent subscription |
+
+A fourth, exceptional source exists for what none of the three can see: an explicit record
+written by infrastructure, such as a bulk export. A call to the trail from `domain/` or
+`application/` is the defect the design exists to prevent.
+
+Who acted, in which session, impersonated by whom, for which tenant, with which correlation id
+and from which origin: all of it comes from the execution scope
+([The actor and the execution scope](actor-and-execution-scope.md)), never threaded through a
+use case.
+
+### The transaction problem
+
+Two requirements pull in opposite directions. The entry of a failed command must survive the
+rollback. The entry of a succeeded command must not exist if its transaction did not commit.
+
+```mermaid
+sequenceDiagram
+  participant B as Command bus
+  participant Z as Authorization
+  participant A as Audit middleware
+  participant U as Unit of work
+  participant H as Handler
+  B->>Z: CancelAppointment
+  Z-->>B: denied: one "authorization denied" entry, no transaction
+  B->>Z: CancelAppointment
+  Z->>A: allowed
+  A->>U: open the transaction
+  U->>H: execute
+  alt handler succeeds
+    H-->>A: ok
+    A->>U: write "succeeded" in the same transaction, commit
+  else handler throws
+    H-->>A: CancellationWindowPassed
+    U-->>A: rolled back
+    A->>A: write "failed" with the code, outside the transaction
+  end
+```
+
+A middleware inside the unit of work loses the failures; one outside loses atomicity for the
+successes. Hence the arrangement above: the audit middleware sits before the unit of work and
+opens it itself. A success and its entry commit together or neither exists; if the entry cannot
+be written, the command fails. Recording through the outbox would be atomic for successes too,
+but an outbox row shares the fate of its transaction and cannot carry the failures.
+
+Order matters for the same reason: authorization first, so a refused command leaves one
+`denied` entry and opens no transaction.
+
+## The entry
+
+An entry names a category (`authorization`, `command`, `integration-event`, `data-access`, ...),
+an action (a permission id, a command name, an event type), an outcome (`allowed`, `denied`,
+`succeeded`, `failed`), a stable reason code, the actor, the tenant, an optional resource, the
+correlation and causation ids, the origin, and its place in a chain. For the running domain:
+
+| category | action | outcome | reason | resource |
+|---|---|---|---|---|
+| authorization | `appointments:appointment.cancel` | denied | `NO_MATCHING_ROLE` | appointment 8f2 |
+| command | `CancelAppointment` | failed | `CANCELLATION_WINDOW_PASSED` | appointment 8f2 |
+| command | `RescheduleAppointment` | succeeded | | appointment 8f2 |
+| integration-event | `appointments.appointment.rescheduled` | succeeded | | |
+
+## Redaction: identifiers and codes, never content
+
+By default an entry carries no payload at all. A value enters only when the project declares
+it, field by field, for one command: the new `startsAt` of a rescheduled appointment, for
+instance. A field that is not declared is never read.
+
+Personal data that must be correlated ("every entry about this client") is stored masked: a
+keyed hash of the value. Two entries about the same email carry the same mask, so the question
+can be answered by masking the email again, while the email itself is not there and a guess
+cannot be checked without the secret. A plain hash would not do: an email or a phone number is
+guessed in seconds.
+
+What never goes in, declared or not: free text typed by a user, credentials and tokens (even
+hashed), whole payloads or aggregates, error messages and stack traces (the code is recorded),
+and special categories of personal data unless a decision record says why. In a health-related
+scheduling product, the reason of an appointment belongs to that last group.
+
+## The hash chain
+
+Each entry stores the hash of the previous one and its own hash, computed over a canonical form
+that any program in any language can recompute. Changing, removing or reordering an entry
+breaks the chain at a place the verification names: altered content, a missing entry, or a
+reordering.
+
+The kit keeps one chain per tenant by default. A tenant can then be verified, exported and
+handed over without the entries of the others, appends of different tenants do not wait for
+each other, and an offboarded tenant leaves chains that still verify. The price: the order
+between entries of two tenants is given by their timestamps only, not proven by a hash.
+
+The store refuses update and delete at the database level too (triggers), and the application's
+database role should own neither the table nor the triggers.
+
+## Verification and anchoring
+
+A chain protects against whoever can change some rows. Whoever can rewrite the whole table (a
+database administrator, an attacker holding the owner role) can recompute every hash from the
+altered entry onwards, and the result is a perfectly valid chain. The only defence is a copy of
+some hashes where that person cannot write. That is anchoring: at intervals, a checkpoint (the
+hash at a given position) leaves for somewhere else, such as another database under another
+role, an object store with retention lock, a transparency log or a signed timestamp. Later
+verification compares the chain with those checkpoints. A truncated tail is only seen by
+comparing with a later checkpoint.
+
+Verification should run on a schedule and alert; a chain nobody verifies proves nothing in
+practice.
+
+## The right to erasure and an append-only chain
+
+An entry cannot be deleted without breaking its chain, and a regulation such as the GDPR
+(article 17) may require erasure of personal data. The two coexist as long as the chain never
+holds the data:
+
+1. **Keep personal data out.** An actor id, a resource id and a permission id are identifiers.
+   If the identifiers are themselves personal (an email used as user id), fix that first.
+2. **Mask what must be correlated.** A masked value is unreadable but still linked to a person
+   for whoever holds the secret.
+3. **Crypto-shredding for erasure.** Derive one masking key per data subject from a key store.
+   Erasing a person is deleting their key: the masks become tokens nobody can recompute, the
+   entries stay, the hashes stay valid.
+
+What remains after erasure is "an actor with this opaque id did this at that time". Whether
+that is acceptable is a legal question for the project, to be answered before the first entry
+is written. The key store then becomes the system to protect; the kit does not provide one.
+
+## Reading it
+
+Reading the audit trail is itself a sensitive act. It is exposed as a use case like any other:
+its own permission, pagination, the filter narrowed to the tenant of the actor, and its reads
+recorded. Whoever reads the trail leaves an entry in it. Support staff acting as a user appear
+as such: the impersonator is on the entry.
+
+## Limits and when not to use it
+
+These are stated by [`@ddd-ts-kit/audit`](../../packages/audit/README.md):
+
+- **Integrity, not completeness.** A fact that never reached a source (a script writing to the
+  database, a route bypassing the bus) is not in the trail. Keeping every route on the bus is
+  what [`authz/declared`](../ARCHITECTURE.md#3-dependency-rules) and the dependency rules are
+  for.
+- **PostgreSQL only** for the SQL stores shipped (Knex and Drizzle). With Prisma, TypeORM, a
+  custom ORM or no ORM, the generated project starts on an in-memory trail behind a
+  `TODO(platform)`; another database is another adapter held to the contract suite.
+- **Appends to one chain are serialized.** The head of a chain stays locked until the commit; a
+  handler that records by hand early and then works for long makes the other writers of its
+  tenant wait.
+- **The timestamp is the clock of the instance that recorded.** Inside a chain the order is the
+  sequence.
+- **No retention or archiving policy** is provided. How long entries are kept and where old
+  chains go is a decision of the project.
+- **Anchoring is a hook, not a service.** Without checkpoints kept elsewhere, a full rewrite of
+  the table is undetectable.
+- **Verification reads its range into memory**: verify long chains by ranges.
+- **When not to use it.** A prototype, or a system with no accountability requirement, pays the
+  serialized append and the storage for nothing: the trail can be switched off in the config
+  (see [Configuration](../CONFIG.md)). If what you want is to reconstruct state or debug a
+  request, you want event sourcing or tracing, not this.
+
+## Sources
+
+- Bruce Schneier and John Kelsey, "Secure Audit Logs to Support Computer Forensics", ACM
+  Transactions on Information and System Security, 1999: hash-chained log entries.
+- Scott A. Crosby and Dan S. Wallach, "Efficient Data Structures for Tamper-Evident Logging",
+  USENIX Security Symposium, 2009.
+- Regulation (EU) 2016/679 (GDPR), article 17 (right to erasure) and article 5(1)(c) (data
+  minimisation).
+- NIST Special Publication 800-92, Guide to Computer Security Log Management, 2006.
+- Martin Fowler, "Event Sourcing" and "Audit Log", martinfowler.com: what an audit log is next
+  to event sourcing.
+- [`@ddd-ts-kit/audit`](../../packages/audit/README.md): the entry, the sources, the stores and
+  the limits quoted above.
+
+## See also
+
+- [Authentication and authorization](authentication-and-authorization.md)
+- [The actor and the execution scope](actor-and-execution-scope.md)
+- [Observability](observability.md)
+- [Transactional outbox](transactional-outbox.md)
+- [Scheduled jobs](scheduled-jobs.md): where the periodic verification runs
+- [Architecture reference](../ARCHITECTURE.md): "Standard interfaces", "Cross-cutting behaviour"

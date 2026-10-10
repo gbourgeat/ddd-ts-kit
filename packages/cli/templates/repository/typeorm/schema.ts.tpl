@@ -1,6 +1,7 @@
-import type { AuditStamp } from '@ddd-ts-kit/kernel';
+// ddd-ts-kit:imports
 import { EntitySchema } from 'typeorm';
 import { auditColumns, schemaNameOf } from '@ddd-ts-kit/typeorm';
+// /ddd-ts-kit:imports
 
 const {{context.constant}}_SCHEMA = schemaNameOf('{{context.kebab}}');
 

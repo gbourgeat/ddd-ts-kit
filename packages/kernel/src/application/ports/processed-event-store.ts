@@ -1,6 +1,8 @@
 /** Idempotency guard: at-least-once delivery is the rule, so every consumer needs one. */
 export abstract class ProcessedEventStore {
-  static readonly tokenKey = 'kernel.ProcessedEventStore';
+  static {
+    Object.defineProperty(this, 'tokenKey', { value: 'kernel.ProcessedEventStore' });
+  }
 
   /** Returns true the first time `(consumer, eventId)` is seen, false afterwards. */
   abstract markProcessed(consumer: string, eventId: string): Promise<boolean>;

@@ -1,10 +1,10 @@
-import type { IdGenerator, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
-import { DomainEventHandler, EVENT_PUBLISHER, ID_GENERATOR } from '@ddd-ts-kit/kernel/declarations';
+import { IdGenerator, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
+import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
 import { {{event.pascal}} } from '../../../domain/events/{{event.kebab}}.event.js';
 import { {{event.camel}}V{{event.version}} } from '../../../published-language/{{event.kebab}}.v{{event.version}}.integration-event.js';
 
-@DomainEventHandler({{event.pascal}}, { name: '{{event.name}}' }, [EVENT_PUBLISHER, ID_GENERATOR])
-export class {{publisher.pascal}}Publisher {
+@DomainEventHandler({{event.pascal}}, { name: '{{event.name}}' }, [IntegrationEventPublisher, IdGenerator])
+export class {{publisher.pascal}}Publisher implements DomainEventHandler<{{event.pascal}}> {
   constructor(
     private readonly publisher: IntegrationEventPublisher,
     private readonly ids: IdGenerator,
@@ -18,6 +18,7 @@ export class {{publisher.pascal}}Publisher {
       },
       { id: this.ids.next(), occurredAt: event.occurredAt },
     );
+
     await this.publisher.publish([published]);
   }
 }

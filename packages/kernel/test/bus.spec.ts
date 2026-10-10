@@ -90,3 +90,26 @@ describe('InMemoryCommandBus', () => {
     expect(opened).toBe(1);
   });
 });
+
+describe('what a middleware is told of a message', () => {
+  it('is its kind, its name, and the bounded context the handler was registered with', async () => {
+    const seen: unknown[] = [];
+
+    const bus = new InMemoryCommandBus().use((_message, next, info) => {
+      seen.push(info);
+
+      return next();
+    });
+
+    bus.register(PlaceOrder, { execute: async () => 'order-1' }, { context: 'ordering' });
+    bus.register(CancelOrder, { execute: async () => undefined });
+
+    await bus.execute(new PlaceOrder('book'));
+    await bus.execute(new CancelOrder('order-1'));
+
+    expect(seen).toEqual([
+      { kind: 'command', name: 'PlaceOrder', context: 'ordering' },
+      { kind: 'command', name: 'CancelOrder' },
+    ]);
+  });
+});

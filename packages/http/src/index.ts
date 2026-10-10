@@ -1,3 +1,7 @@
+export { criteriaFrom } from './criteria/criteria-from.js';
+export { criteriaParameters } from './criteria/criteria-parameters.js';
+export type { CriteriaQueryOptions } from './criteria/criteria-query-options.js';
+export { criteriaQuerySchema } from './criteria/criteria-query-schema.js';
 export { createErrorMapper, type ErrorMapperOptions } from './error/create-error-mapper.js';
 export { DEFAULT_ERROR_MAPPING } from './error/default-error-mapping.js';
 export { ErrorMapper } from './error/error-mapper.js';
@@ -21,6 +25,8 @@ export type { ErrorContext } from './pipeline/error-context.js';
 export type { ExecuteOptions } from './pipeline/execute-options.js';
 export { executeRoute } from './pipeline/execute-route.js';
 export type { RawRequest } from './pipeline/raw-request.js';
+export type { RouteAround } from './pipeline/route-around.js';
+export { reportHttpErrors } from './pipeline/report-http-errors.js';
 export type { RouteResponse } from './pipeline/route-response.js';
 export { serializeBody } from './pipeline/serialize-body.js';
 export { assertUniqueRoutes } from './route/assert-unique-routes.js';

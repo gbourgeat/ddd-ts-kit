@@ -1,0 +1,51 @@
+import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
+import { authorizationModule } from '@ddd-ts-kit/auth/di';
+import { contextModule, createTestApplication, fake, type TestApplication } from '@ddd-ts-kit/di';
+import { InMemoryOutboxStore, OutboxPublisher } from '@ddd-ts-kit/events';
+import { eventually } from '@ddd-ts-kit/testing/e2e';
+import { describe, expect, it } from 'vitest';
+import { billingPermissions } from './contexts/billing/application/authorization/billing.permissions.js';
+import * as billing from './contexts/billing/billing.declarations.js';
+import { InvoiceRepository } from './contexts/billing/domain/repositories/invoice.repository.js';
+import { invoiceIssuedV2 } from './contexts/billing/published-language/invoice-issued.v2.integration-event.js';
+import { startOutboxRelay } from './platform/events/start-outbox-relay.js';
+import { platformTestModule } from './platform/platform-test.module.js';
+
+const authorization = authorizationModule({ authorizer: new RoleBasedAuthorizer({ roles: { scheduler: [billingPermissions['invoice.issue']] }, systemRole: 'scheduler' }) });
+
+describe('what fails outside of a request', () => {
+  it('a job whose command fails is reported once, as the work of the schedule, under the name of the command', async () => {
+    const application = arrange();
+
+    await expect(application.jobs.runNow('billing.issue-invoices-monthly')).rejects.toThrow('The storage is down.');
+
+    expect(application.errors.reports).toHaveLength(1);
+    expect(application.errors.reports[0]?.report).toMatchObject({ origin: 'schedule', operation: 'IssueInvoiceCommand', actorId: 'system:billing.issue-invoices-monthly' });
+  });
+
+  it('an event whose publication the outbox relay gives up is reported as a dead letter, by the relay the project starts', async () => {
+    const application = arrange();
+    const store = new InMemoryOutboxStore();
+    const broker = { publish: () => Promise.reject(new Error('The broker is down.')) };
+
+    await new OutboxPublisher(store).publish([invoiceIssuedV2.create({ invoiceId: 'invoice-1' }, { id: 'event-1', occurredAt: application.clock.now() })]);
+
+    const relay = startOutboxRelay({ store, publisher: broker, intervalMs: 5, maxAttempts: 1, logger: application.logger, errors: application.errors });
+
+    await eventually(() => {
+      expect(application.errors.reports).toHaveLength(1);
+    });
+
+    await relay.stop();
+
+    expect(application.errors.reports[0]?.report).toMatchObject({ origin: 'event' });
+    expect(await store.stats()).toMatchObject({ dead: 1 });
+  });
+});
+
+/** The billing context on the test application, its storage down: saving fails with something nobody planned. */
+function arrange(): TestApplication {
+  const down = { findById: () => Promise.resolve(undefined), save: () => Promise.reject(new Error('The storage is down.')) };
+
+  return createTestApplication({ modules: [platformTestModule, contextModule('billing', billing), authorization], fakes: [fake(InvoiceRepository, down)] });
+}

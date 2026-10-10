@@ -3,7 +3,8 @@ import type { AdviceFactory } from '../aspect/advice-factory.js';
 import type { Aspect } from '../aspect/aspect.js';
 import { defineAspect } from '../aspect/define-aspect.js';
 import type { JoinPoint } from '../aspect/join-point.js';
-import { clockOr, metricsOr } from '../runtime/collaborators.js';
+import { clockOr } from '../runtime/clock-or.js';
+import { metricsOr } from '../runtime/metrics-or.js';
 import { timeCall } from './time-call.js';
 
 export interface TimedOptions {

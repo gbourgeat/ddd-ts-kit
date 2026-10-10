@@ -46,12 +46,14 @@ export type { Decorate } from './application/decorate.js';
 export { overrideForTests } from './application/override-for-tests.js';
 export { override, type Override } from './application/override.js';
 export type {
+  AppliedEventDescription,
   BindingDescription,
   DomainEventHandlerDescription,
   HandlerDescription,
   IntegrationEventHandlerDescription,
   OriginDescription,
   PolicyDescription,
+  ProjectionDescription,
   ScheduledJobDescription,
   WiringDescription,
 } from './description/wiring-description.js';
@@ -62,6 +64,7 @@ export type { UseCaseAccess } from './authorization/use-case-access.js';
 export type { UseCaseDeclaration } from './authorization/use-case-declaration.js';
 export { UseCaseDeclarations } from './authorization/use-case-declarations.js';
 export { UseCaseGuard } from './authorization/use-case-guard.js';
+export { Instrumentation, type InstrumentedConsumer, type InstrumentedJob } from './kernel/instrumentation.js';
 export type { KernelModuleOptions } from './kernel/kernel-module-options.js';
 export { kernelModule } from './kernel/kernel-module.js';
 export type { Provided } from './kernel/provided.js';

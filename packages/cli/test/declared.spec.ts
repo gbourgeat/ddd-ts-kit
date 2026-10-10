@@ -1,11 +1,14 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { argumentsOf, classesOf, literalIn, optionOf } from '../src/check/declarations.js';
-import { runCheck } from '../src/check/engine.js';
-import { loadProject } from '../src/check/project.js';
-import { scan } from '../src/check/scanner.js';
-import { renderBarrel } from '../src/declared/roles.js';
+import { argumentsOf } from '../src/check/declarations/arguments-of.js';
+import { classesOf } from '../src/check/declarations/classes-of.js';
+import { literalIn } from '../src/check/declarations/literal-in.js';
+import { optionOf } from '../src/check/declarations/option-of.js';
+import { runCheck } from '../src/check/engine/run-check.js';
+import { loadProject } from '../src/check/project/load-project.js';
+import { scan } from '../src/check/scan/scan.js';
+import { renderBarrel } from '../src/declared/index.js';
 import { cli, tempDir } from './helpers.js';
 
 const BILLING = 'src/contexts/billing';
@@ -27,12 +30,12 @@ const SOURCES = {
   [COMMAND]: `import { Requires } from ${DECLARATIONS};\n\n@Requires(billingPermissions['invoice.issue'])\nexport class IssueInvoiceCommand {}\n`,
   [HANDLER]: `import { CommandHandler } from ${DECLARATIONS};\n\n@CommandHandler(IssueInvoiceCommand, [])\nexport class IssueInvoiceHandler {}\n`,
   [QUERY]: `import { Public } from ${DECLARATIONS};\n\n@Public()\nexport class ListInvoicesQuery {}\n`,
-  [INTEGRATION_HANDLER]: `import { IntegrationEventHandler } from ${DECLARATIONS};\n\n@IntegrationEventHandler(\n  productListedV1,\n  { consumer: 'billing.product-listed' },\n  [],\n)\nexport class ProductListedHandler {}\n`,
+  [INTEGRATION_HANDLER]: `import { IntegrationEventHandler } from ${DECLARATIONS};\n\n@IntegrationEventHandler(\n  productListedV1,\n  { consumer: 'billing.product-listed' },\n  [],\n)\nexport class ProductListedIntegrationHandler {}\n`,
   [EVENT]: "export class InvoiceIssued {\n  readonly name = 'billing.invoice.issued';\n}\n",
   [EVENT_HANDLER]: `import { DomainEventHandler } from ${DECLARATIONS};\nimport { InvoiceIssued } from '../../domain/events/invoice-issued.event.js';\n\n@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued' })\nexport class InvoiceIssuedEventHandler {}\n`,
   [POLICY]: `import { Policy } from ${DECLARATIONS};\n\n@Policy(billingPermissions['invoice.void'], { name: 'billing.only-issuer-voids' })\nexport class OnlyIssuerVoidsPolicy {}\n`,
-  [REPOSITORY]: `import { Repository } from ${DECLARATIONS};\n\n@Repository(INVOICE_REPOSITORY, [DATABASE])\nexport class KnexInvoiceRepository {}\n`,
-  [GATEWAY]: `import { Gateway } from ${DECLARATIONS};\n\n@Gateway(PRICE_CATALOG_GATEWAY, [PRICE_CATALOG_UPSTREAM])\nexport class InProcessPriceCatalogGateway {}\n`,
+  [REPOSITORY]: `import { Repository } from ${DECLARATIONS};\n\n@Repository(InvoiceRepository, [Database])\nexport class KnexInvoiceRepository implements InvoiceRepository {}\n`,
+  [GATEWAY]: `import { Gateway } from ${DECLARATIONS};\n\n@Gateway(PriceCatalogGateway, [PriceCatalogUpstream])\nexport class InProcessPriceCatalogGateway implements PriceCatalogGateway {}\n`,
 };
 
 describe('reading declarations at text level', () => {
@@ -44,7 +47,7 @@ describe('reading declarations at text level', () => {
       `import { Adapter, Public, Requires } from ${DECLARATIONS};`,
       "@Requires(\n  permissions['a.b'],\n  { resource: (command: A) => ({ type: 'a', id: command.id }) },\n)\nexport class A {}",
       'export @Public class B {}',
-      '@injectable()\n@Adapter(TOKEN)\nexport default class C {}',
+      '@injectable()\n@Adapter(Port)\nexport default class C {}',
       'class D {}',
     ].join('\n');
 
@@ -60,7 +63,7 @@ describe('reading declarations at text level', () => {
   });
 
   it('leaves the decorators of members and of nested classes alone', () => {
-    const source = `import { Adapter } from ${DECLARATIONS};\nexport class A {\n  @Adapter(TOKEN)\n  run(): void {}\n}\nexport function make(): unknown {\n  @Adapter(TOKEN)\n  class Inner {}\n  return Inner;\n}\n`;
+    const source = `import { Adapter } from ${DECLARATIONS};\nexport class A {\n  @Adapter(Port)\n  run(): void {}\n}\nexport function make(): unknown {\n  @Adapter(Port)\n  class Inner {}\n  return Inner;\n}\n`;
 
     expect(carried(source)).toEqual([]);
   });
@@ -79,6 +82,7 @@ describe('reading declarations at text level', () => {
       const source = scan(`import { Policy } from ${DECLARATIONS};\n@Policy(permission, ${options})\nexport class A {}\n`);
       const [decoration] = classesOf(source)[0]?.decorations ?? [];
       const value = decoration === undefined ? undefined : optionOf(source, decoration, 'name');
+
       return value === undefined ? 'absent' : value.literal;
     };
 
@@ -120,7 +124,7 @@ describe('the declared style in check and check-file', () => {
     });
 
     expect(messages(root, POLICY)).toEqual(['The name of @Policy on OnlyIssuerVoidsPolicy is empty.']);
-    expect(messages(root, INTEGRATION_HANDLER)).toEqual(['The consumer of @IntegrationEventHandler on ProductListedHandler is not a string literal.', 'The consumer name of ProductListedHandler is not a string literal.']);
+    expect(messages(root, INTEGRATION_HANDLER)).toEqual(['The consumer of @IntegrationEventHandler on ProductListedIntegrationHandler is not a string literal.', 'The consumer name of ProductListedIntegrationHandler is not a string literal.']);
   });
 
   it('accepts a decorated message registered in an explicit module, read from disk in check-file', () => {
@@ -140,7 +144,7 @@ describe('the declared style in check and check-file', () => {
       [EVENT_HANDLER]: SOURCES[EVENT_HANDLER].replace(/DomainEventHandler/g, 'QueryHandler'),
     });
 
-    expect(messages(root, INTEGRATION_HANDLER)).toEqual(['ProductListedHandler carries @CommandHandler, but a *.integration-handler.ts file under application/integration/handlers/ declares @IntegrationEventHandler.']);
+    expect(messages(root, INTEGRATION_HANDLER)).toEqual(['ProductListedIntegrationHandler carries @CommandHandler, but a *.integration-handler.ts file under application/integration/handlers/ declares @IntegrationEventHandler.']);
     expect(messages(root, EVENT_HANDLER)).toEqual(['InvoiceIssuedEventHandler carries @QueryHandler, but a *.event-handler.ts file under application/event-handlers/ declares @DomainEventHandler.']);
   });
 
@@ -153,14 +157,33 @@ describe('the declared style in check and check-file', () => {
 
   it('knows both declaration rules in rules, explain and the config', () => {
     const root = declaredProject(SOURCES, {}, { rules: { 'declarations/role-declared': 'warn', 'declarations/barrel-current': 'off' }, deviations: [] });
-    const rules = cli(root, 'rules', '--json').json() as { id: string; severity: string }[];
+    const listed = [expect.objectContaining({ id: 'declarations/role-declared', severity: 'warn' }), expect.objectContaining({ id: 'declarations/barrel-current', severity: 'off' })];
 
-    expect(rules.filter(({ id }) => id.startsWith('declarations/'))).toEqual([expect.objectContaining({ id: 'declarations/role-declared', severity: 'warn' }), expect.objectContaining({ id: 'declarations/barrel-current', severity: 'off' })]);
+    expect(cli(root, 'rules', '--json').json()).toEqual(expect.arrayContaining(listed));
     expect(cli(root, 'explain', 'declarations/barrel-current').stdout).toContain('ddd-ts-kit docs');
     expect(reported(root).filter((line) => line.startsWith('config/valid'))).toEqual([]);
     expect(cli(tempDir('defaults'), 'rules').stdout).toMatch(/declarations\/role-declared\s+error/);
   });
 });
+
+/** What `list --json` says of the declared billing context. */
+const BILLING_LISTED = {
+    commands: ['IssueInvoice'],
+    queries: ['ListInvoices'],
+    integrationEventHandlers: ['ProductListedIntegrationHandler'],
+    policies: ['billing.only-issuer-voids'],
+    gateways: ['InProcessPriceCatalogGateway'],
+    declarations: {
+      useCases: [
+        { kind: 'command', name: 'IssueInvoice', requires: 'invoice.issue' },
+        { kind: 'query', name: 'ListInvoices', requires: 'public' },
+      ],
+      integrationEventHandlers: [{ name: 'ProductListedIntegrationHandler', consumer: 'billing.product-listed', event: 'productListedV1' }],
+      policies: [{ name: 'billing.only-issuer-voids', permission: 'invoice.void' }],
+      gateways: [{ name: 'InProcessPriceCatalogGateway', token: 'PriceCatalogGateway' }],
+      adapters: [{ name: 'KnexInvoiceRepository', token: 'InvoiceRepository' }],
+    },
+};
 
 describe('list in the declared style', () => {
   it('reads use cases, handlers, policies, gateways and adapters from the decorators', () => {
@@ -168,37 +191,20 @@ describe('list in the declared style', () => {
     const text = cli(root, 'list').stdout;
 
     expect(text).toContain('  commands: IssueInvoice (requires invoice.issue)\n  queries: ListInvoices (public)\n');
-    expect(text).toContain('  integration event handlers: ProductListedHandler (consumer billing.product-listed, on productListedV1)\n');
-    expect(text).toContain('  policies: billing.only-issuer-voids (on invoice.void)\n  gateways: InProcessPriceCatalogGateway (PRICE_CATALOG_GATEWAY)\n  adapters: KnexInvoiceRepository (INVOICE_REPOSITORY)\n');
-    const [billing] = (cli(root, 'list', '--json').json() as { contexts: Record<string, unknown>[] }).contexts;
-    expect(billing).toMatchObject({
-      commands: ['IssueInvoice'],
-      queries: ['ListInvoices'],
-      integrationEventHandlers: ['ProductListedHandler'],
-      policies: ['billing.only-issuer-voids'],
-      gateways: ['InProcessPriceCatalogGateway'],
-      declarations: {
-        useCases: [
-          { kind: 'command', name: 'IssueInvoice', requires: 'invoice.issue' },
-          { kind: 'query', name: 'ListInvoices', requires: 'public' },
-        ],
-        integrationEventHandlers: [{ name: 'ProductListedHandler', consumer: 'billing.product-listed', event: 'productListedV1' }],
-        policies: [{ name: 'billing.only-issuer-voids', permission: 'invoice.void' }],
-        gateways: [{ name: 'InProcessPriceCatalogGateway', token: 'PRICE_CATALOG_GATEWAY' }],
-        adapters: [{ name: 'KnexInvoiceRepository', token: 'INVOICE_REPOSITORY' }],
-      },
-    });
+    expect(text).toContain('  integration event handlers: ProductListedIntegrationHandler (consumer billing.product-listed, on productListedV1)\n');
+    expect(text).toContain('  policies: billing.only-issuer-voids (on invoice.void)\n  gateways: InProcessPriceCatalogGateway (PriceCatalogGateway)\n  adapters: KnexInvoiceRepository (InvoiceRepository)\n');
+
+    expect(cli(root, 'list', '--json').json()).toMatchObject({ contexts: [BILLING_LISTED] });
   });
 
   it('leaves out a message that declares nothing, and reads no decorator in the explicit style', () => {
     const undeclared = declaredProject({ ...SOURCES, [QUERY]: 'export class ListInvoicesQuery {}\n' });
     const explicit = explicitProject(SOURCES);
-    const [billing] = (cli(explicit, 'list', '--json').json() as { contexts: Record<string, unknown>[] }).contexts;
 
     expect(cli(undeclared, 'list').stdout).toContain('  queries: none\n');
     expect(cli(explicit, 'list').stdout).toContain('  commands: IssueInvoice\n  queries: ListInvoices\n  domain events: InvoiceIssued\n  published events: none\n  integration event handlers: ProductListed\n');
     expect(cli(explicit, 'list').stdout).not.toContain('adapters:');
-    expect(billing).not.toHaveProperty('declarations');
+    expect(cli(explicit, 'list', '--json').json()).not.toHaveProperty('contexts[0].declarations');
   });
 });
 
@@ -206,6 +212,7 @@ type Files = Readonly<Record<string, string>>;
 
 function declaredProject(files: Files, overrides: Files = {}, config: Record<string, unknown> = {}): string {
   const barrel = renderBarrel(Object.keys(files).flatMap((file) => (file.startsWith(`${BILLING}/`) ? [file.slice(BILLING.length + 1)] : [])));
+
   return projectWith({ [BARREL]: barrel, ...files, ...overrides }, { stack: { style: 'declared' }, ...config });
 }
 
@@ -216,10 +223,12 @@ function explicitProject(files: Files): string {
 function projectWith(files: Files, config: Record<string, unknown>): string {
   const root = tempDir('declared');
   const written = { [CONFIG]: JSON.stringify({ contexts: { billing: { classification: 'core', upstreams: [] } }, ...config }, null, 2), ...files };
+
   for (const [file, content] of Object.entries(written)) {
     fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
     fs.writeFileSync(path.join(root, file), content);
   }
+
   return root;
 }
 
@@ -235,5 +244,6 @@ function messages(root: string, onlyFile: string): string[] {
 
 function violations(root: string, onlyFile?: string): ReturnType<typeof runCheck>['violations'] {
   const project = onlyFile === undefined ? loadProject(root) : loadProject(root, { onlyFile });
+
   return runCheck(project, { rules: JUDGED, fileScopeOnly: onlyFile !== undefined }).violations;
 }

@@ -8,7 +8,9 @@ export const {{aggregate.pascal}}Mapper = {
   toDomain(row: {{aggregate.pascal}}Row): {{aggregate.pascal}} {
     // TODO(domain): rebuild each value object of {{aggregate.pascal}}State from its fields.
     const loaded = {{aggregate.pascal}}.rehydrate(row.id, { registeredAt: row.registeredAt });
+
     loaded.version = row.version;
+
     return loaded;
   },
 

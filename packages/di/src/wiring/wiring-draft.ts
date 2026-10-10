@@ -5,8 +5,10 @@ import type { Binding } from './binding.js';
 import type { DomainEventHandling } from './domain-event-handling.js';
 import type { EventConsumption } from './event-consumption.js';
 import type { JobRegistration } from './job-registration.js';
+import type { KindAspect } from './kind-aspect.js';
 import type { MessageHandling } from './message-handling.js';
 import type { PolicyBinding } from './policy-binding.js';
+import type { ProjectionRegistration } from './projection-registration.js';
 import { whereOf } from './where-of.js';
 import type { Wiring } from './wiring.js';
 
@@ -23,6 +25,10 @@ export class WiringDraft {
   private readonly policies: PolicyBinding[] = [];
 
   private readonly jobs: JobRegistration[] = [];
+
+  private readonly projections: ProjectionRegistration[] = [];
+
+  private readonly kindAspects: KindAspect[] = [];
 
   addBinding(binding: Binding): void {
     const existing = this.bindings.get(binding.token);
@@ -91,12 +97,29 @@ export class WiringDraft {
     this.jobs.push(registration);
   }
 
+  addProjection(registration: ProjectionRegistration): void {
+    const existing = this.projections.find((other) => other.name === registration.name);
+
+    if (existing !== undefined) {
+      throw new WiringError(
+        'DUPLICATE_PROJECTION',
+        `Projection "${registration.name}" is declared twice: in ${whereOf(existing)} and in ${whereOf(registration)}. The name of a projection is the consumer its events are subscribed as: it is unique in an application.`,
+      );
+    }
+
+    this.projections.push(registration);
+  }
+
   addDomainEventHandler(handling: DomainEventHandling): void {
     this.domainEventHandlers.push(handling);
   }
 
   addPolicy(policy: PolicyBinding): void {
     this.policies.push(policy);
+  }
+
+  addKindAspect(aspect: KindAspect): void {
+    this.kindAspects.push(aspect);
   }
 
   wiring(modules: readonly string[]): Wiring {
@@ -108,6 +131,8 @@ export class WiringDraft {
       domainEventHandlers: this.domainEventHandlers,
       policies: this.policies,
       jobs: this.jobs,
+      projections: this.projections,
+      kindAspects: this.kindAspects,
     };
   }
 }
