@@ -37,7 +37,7 @@
     "ci:docs": "npm run check:dashes",
     "ci:audit": "npm audit --omit=dev --audit-level=high",
     "ci:build": "npm run package:check",
-    "typecheck:tests": "for p in kernel di kafka redis rabbitmq nats events auth aspects tracing audit drizzle knex prisma typeorm sentry scheduling http testing eslint-plugin pino winston; do node node_modules/@typescript/native/bin/tsc -p packages/$p/tsconfig.test.json || exit 1; done && for p in cli validation; do node node_modules/@typescript/native/bin/tsc -p packages/$p/test/tsconfig.json || exit 1; done"
+    "typecheck:tests": "tsx packages/prisma/test/support/generate-client.ts && for p in kernel di kafka redis rabbitmq nats events auth aspects tracing audit drizzle knex prisma typeorm sentry scheduling http testing eslint-plugin pino winston; do node node_modules/@typescript/native/bin/tsc -p packages/$p/tsconfig.test.json || exit 1; done && for p in cli validation; do node node_modules/@typescript/native/bin/tsc -p packages/$p/test/tsconfig.json || exit 1; done"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",
@@ -56,6 +56,7 @@
     "knip": "^6.41.0",
     "lefthook": "^2.2.1",
     "publint": "^0.3.25",
+    "tsx": "^4.23.15",
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.71.1",
     "vitest": "^5.0.3"
