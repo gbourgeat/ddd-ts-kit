@@ -12,14 +12,14 @@ import {
 } from '@ddd-ts-kit/kernel';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
 import { KnexContext } from '@ddd-ts-kit/knex';
-import { SearchNotificationsReader } from '@/contexts/notification/application/ports/search-notifications-reader.port.js';
+import { SearchNotificationsReader } from '@/contexts/notification/application/ports/search-notifications-reader.port';
 import type {
   SearchNotificationsItem,
   SearchNotificationsResult,
   SearchNotificationsSort,
-} from '@/contexts/notification/application/queries/search-notifications/search-notifications.result.js';
-import { NOTIFICATION_SCHEMA } from '@/contexts/notification/infrastructure/persistence/notification.schema.js';
-import type { NotificationRow } from '@/contexts/notification/infrastructure/persistence/notification-row.schema.js';
+} from '@/contexts/notification/application/queries/search-notifications/search-notifications.result';
+import { NOTIFICATION_SCHEMA } from '@/contexts/notification/infrastructure/persistence/notification.schema';
+import type { NotificationRow } from '@/contexts/notification/infrastructure/persistence/notification-row.schema';
 
 interface Position {
   readonly sentAt: Date;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from '{{tests.module}}';
 import { InMemoryCommandBus, InMemoryQueryBus } from '@ddd-ts-kit/kernel';
-import { {{context.camel}}Routes } from '{{alias.context}}/presentation/http/{{context.kebab}}.routes.js';
+import { {{context.camel}}Routes } from '{{alias.context}}/presentation/http/{{context.kebab}}.routes{{alias.ext}}';
 
 describe('The routes of {{context.kebab}}', () => {
   it('answer each method and path once, each under an operation of its own', () => {

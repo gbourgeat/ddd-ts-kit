@@ -1,8 +1,8 @@
 import { Type } from 'class-transformer';
 import { IsArray, IsString, ValidateNested } from 'class-validator';
-import { CalendarDayAppointmentTypeDto } from '@/contexts/scheduling/presentation/http/calendar-day-appointment-type.dto.js';
-import { CalendarDayBusyDto } from '@/contexts/scheduling/presentation/http/calendar-day-busy.dto.js';
-import { CalendarDaySpanDto } from '@/contexts/scheduling/presentation/http/calendar-day-span.dto.js';
+import { CalendarDayAppointmentTypeDto } from '@/contexts/scheduling/presentation/http/calendar-day-appointment-type.dto';
+import { CalendarDayBusyDto } from '@/contexts/scheduling/presentation/http/calendar-day-busy.dto';
+import { CalendarDaySpanDto } from '@/contexts/scheduling/presentation/http/calendar-day-span.dto';
 
 export class GetCalendarDayAnswer {
   @IsString()

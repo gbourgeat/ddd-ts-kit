@@ -1,8 +1,8 @@
 {{#if command.hasAggregate}}
 import type { Clock, CommandHandler, IdGenerator } from '@ddd-ts-kit/kernel';
-import { {{aggregate.pascal}} } from '{{alias.context}}/domain/aggregates/{{aggregate.kebab}}.aggregate.js';
-import type { {{aggregate.pascal}}Repository } from '{{alias.context}}/domain/repositories/{{aggregate.kebab}}.repository.js';
-import type { {{name.pascal}}Command } from '{{alias.context}}/application/commands/{{name.kebab}}/{{name.kebab}}.command.js';
+import { {{aggregate.pascal}} } from '{{alias.context}}/domain/aggregates/{{aggregate.kebab}}.aggregate{{alias.ext}}';
+import type { {{aggregate.pascal}}Repository } from '{{alias.context}}/domain/repositories/{{aggregate.kebab}}.repository{{alias.ext}}';
+import type { {{name.pascal}}Command } from '{{alias.context}}/application/commands/{{name.kebab}}/{{name.kebab}}.command{{alias.ext}}';
 
 export class {{name.pascal}}Handler implements CommandHandler<{{name.pascal}}Command> {
   constructor(
@@ -23,7 +23,7 @@ export class {{name.pascal}}Handler implements CommandHandler<{{name.pascal}}Com
 {{/if}}
 {{#unless command.hasAggregate}}
 import type { CommandHandler } from '@ddd-ts-kit/kernel';
-import type { {{name.pascal}}Command } from '{{alias.context}}/application/commands/{{name.kebab}}/{{name.kebab}}.command.js';
+import type { {{name.pascal}}Command } from '{{alias.context}}/application/commands/{{name.kebab}}/{{name.kebab}}.command{{alias.ext}}';
 
 export class {{name.pascal}}Handler implements CommandHandler<{{name.pascal}}Command> {
   async execute(command: {{name.pascal}}Command): Promise<void> {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { InMemoryCommandBus, InMemoryQueryBus } from '@ddd-ts-kit/kernel';
-import { notificationRoutes } from '@/contexts/notification/presentation/http/notification.routes.js';
+import { notificationRoutes } from '@/contexts/notification/presentation/http/notification.routes';
 
 describe('The routes of notification', () => {
   it('answer each method and path once, each under an operation of its own', () => {

@@ -4,12 +4,12 @@ import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { anActor } from '@ddd-ts-kit/auth/testing';
 import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
 import { Criteria, offsetPage } from '@ddd-ts-kit/kernel';
-import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations.js';
-import { platformTestModule } from '@/platform/platform-test.module.js';
-import { Agenda, type AgendaEntry } from '@/contexts/scheduling/application/ports/agenda.port.js';
-import { SearchAppointmentsQuery } from '@/contexts/scheduling/application/queries/search-appointments/search-appointments.query.js';
-import { anAgendaEntry } from '@/contexts/scheduling/test/builders/agenda-entry.builder.js';
-import { FakeAgenda } from '@/contexts/scheduling/test/fakes/agenda.fake.js';
+import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations';
+import { platformTestModule } from '@/platform/platform-test.module';
+import { Agenda, type AgendaEntry } from '@/contexts/scheduling/application/ports/agenda.port';
+import { SearchAppointmentsQuery } from '@/contexts/scheduling/application/queries/search-appointments/search-appointments.query';
+import { anAgendaEntry } from '@/contexts/scheduling/test/builders/agenda-entry.builder';
+import { FakeAgenda } from '@/contexts/scheduling/test/fakes/agenda.fake';
 
 // As the relationships would answer: anybody signed in may list, and reads the appointments related to them.
 const READABLE: Readonly<Record<string, readonly string[]>> = {

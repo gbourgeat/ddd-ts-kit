@@ -15,7 +15,7 @@ describe('the composition root init writes, on tsyringe', () => {
       .split('\n')
       .find((line) => line.trim() !== '' && !line.startsWith('//'));
 
-    expect(firstStatement).toBe("import { tracing } from '@/platform/tracing.js';");
+    expect(firstStatement).toBe("import { tracing } from '@/platform/tracing';");
     expect(platform(root, 'tracing.ts').split('\n')[0]).toBe("import { initTracing } from '@ddd-ts-kit/tracing/node';");
   });
 
@@ -64,7 +64,7 @@ describe('the composition root init writes, on tsyringe', () => {
     );
 
     expect(module).toContain('builder.bind(ErrorMapper).toValue(createErrorMapper());');
-    expect(module).toContain("import { Database } from '@/platform/database/database.js';");
+    expect(module).toContain("import { Database } from '@/platform/database/database';");
   });
 
   it('observes the application through the kernel module, the policy of what leaves the process inside the span of each call', () => {

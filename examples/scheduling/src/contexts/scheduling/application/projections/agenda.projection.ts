@@ -1,15 +1,15 @@
 import { stampOf, type DomainEvent, type EventStamp, type ReadModelWrite } from '@ddd-ts-kit/kernel';
 import { On, Projection } from '@ddd-ts-kit/kernel/declarations';
-import { AppointmentBooked } from '@/contexts/scheduling/domain/events/appointment-booked.event.js';
-import { AppointmentCancelled } from '@/contexts/scheduling/domain/events/appointment-cancelled.event.js';
-import { AppointmentCompleted } from '@/contexts/scheduling/domain/events/appointment-completed.event.js';
-import { AppointmentConfirmed } from '@/contexts/scheduling/domain/events/appointment-confirmed.event.js';
-import { AppointmentExpired } from '@/contexts/scheduling/domain/events/appointment-expired.event.js';
-import { AppointmentMarkedNoShow } from '@/contexts/scheduling/domain/events/appointment-marked-no-show.event.js';
-import { AppointmentRescheduled } from '@/contexts/scheduling/domain/events/appointment-rescheduled.event.js';
-import type { Booking } from '@/contexts/scheduling/domain/value-objects/booking.vo.js';
-import { storableStamp } from '@/shared-kernel/storable-stamp.js';
-import { Agenda, type AgendaEntry } from '@/contexts/scheduling/application/ports/agenda.port.js';
+import { AppointmentBooked } from '@/contexts/scheduling/domain/events/appointment-booked.event';
+import { AppointmentCancelled } from '@/contexts/scheduling/domain/events/appointment-cancelled.event';
+import { AppointmentCompleted } from '@/contexts/scheduling/domain/events/appointment-completed.event';
+import { AppointmentConfirmed } from '@/contexts/scheduling/domain/events/appointment-confirmed.event';
+import { AppointmentExpired } from '@/contexts/scheduling/domain/events/appointment-expired.event';
+import { AppointmentMarkedNoShow } from '@/contexts/scheduling/domain/events/appointment-marked-no-show.event';
+import { AppointmentRescheduled } from '@/contexts/scheduling/domain/events/appointment-rescheduled.event';
+import type { Booking } from '@/contexts/scheduling/domain/value-objects/booking.vo';
+import { storableStamp } from '@/shared-kernel/storable-stamp';
+import { Agenda, type AgendaEntry } from '@/contexts/scheduling/application/ports/agenda.port';
 
 /** Where a fact comes in the life of an appointment, for two facts of the same millisecond: an end is always the last word. */
 const RANK: Readonly<Record<string, number>> = {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { InvalidDisplayNameError } from '@/contexts/identity/domain/errors/invalid-display-name.error.js';
+import { InvalidDisplayNameError } from '@/contexts/identity/domain/errors/invalid-display-name.error';
 
 describe('InvalidDisplayNameError', () => {
   it('carries its stable code', () => {

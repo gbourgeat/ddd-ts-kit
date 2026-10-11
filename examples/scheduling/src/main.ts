@@ -1,16 +1,16 @@
 // Imported first on purpose: instrumentation has to be installed before any module it patches is loaded.
-import { tracing } from '@/platform/tracing.js';
+import { tracing } from '@/platform/tracing';
 // Imported second on purpose: a failure while the rest of the application loads is already reported.
-import { errors } from '@/platform/errors.js';
-import { createAuthenticator } from '@/platform/auth/create-authenticator.js';
-import { composeApplication } from '@/platform/compose-application.js';
-import { loadConfig } from '@/platform/config/load-config.js';
-import { openPersistence } from '@/platform/database/open-persistence.js';
-import { createEventProvider } from '@/platform/events/create-event-provider.js';
-import { startOutboxRelay } from '@/platform/events/start-outbox-relay.js';
-import { startHttpServer } from '@/platform/http/start-http-server.js';
-import { jobSettings } from '@/platform/job-settings.js';
-import { openRedis } from '@/platform/redis/open-redis.js';
+import { errors } from '@/platform/errors';
+import { createAuthenticator } from '@/platform/auth/create-authenticator';
+import { composeApplication } from '@/platform/compose-application';
+import { loadConfig } from '@/platform/config/load-config';
+import { openPersistence } from '@/platform/database/open-persistence';
+import { createEventProvider } from '@/platform/events/create-event-provider';
+import { startOutboxRelay } from '@/platform/events/start-outbox-relay';
+import { startHttpServer } from '@/platform/http/start-http-server';
+import { jobSettings } from '@/platform/job-settings';
+import { openRedis } from '@/platform/redis/open-redis';
 
 const config = loadConfig(process.env);
 const persistence = openPersistence(config);

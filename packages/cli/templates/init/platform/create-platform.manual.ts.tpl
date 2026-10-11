@@ -48,27 +48,27 @@ import {
   type TracedApplication,
 } from '@ddd-ts-kit/tracing';
 {{#if audit.on}}
-import { createAudit } from '{{alias.platform}}/audit/create-audit.js';
+import { createAudit } from '{{alias.platform}}/audit/create-audit{{alias.ext}}';
 {{/if}}
-import { accessPolicies } from '{{alias.platform}}/auth/access-policies.js';
-import { createAuthorizer } from '{{alias.platform}}/auth/create-authorizer.js';
+import { accessPolicies } from '{{alias.platform}}/auth/access-policies{{alias.ext}}';
+import { createAuthorizer } from '{{alias.platform}}/auth/create-authorizer{{alias.ext}}';
 {{#unless audit.on}}
-import { logDecisions } from '{{alias.platform}}/auth/log-decisions.js';
+import { logDecisions } from '{{alias.platform}}/auth/log-decisions{{alias.ext}}';
 {{/unless}}
-import { UseCaseProtection } from '{{alias.platform}}/auth/use-case-protection.js';
-import type { Persistence } from '{{alias.platform}}/database/persistence.js';
-import type { EventProvider } from '{{alias.platform}}/events/event-provider.js';
-import { ConfiguredJobScheduler } from '{{alias.platform}}/jobs/configured-job-scheduler.js';
-import { createLogger, type LogSettings } from '{{alias.platform}}/observability/create-logger.js';
-import { createMetrics } from '{{alias.platform}}/observability/create-metrics.js';
-import type { Platform } from '{{alias.platform}}/platform.js';
+import { UseCaseProtection } from '{{alias.platform}}/auth/use-case-protection{{alias.ext}}';
+import type { Persistence } from '{{alias.platform}}/database/persistence{{alias.ext}}';
+import type { EventProvider } from '{{alias.platform}}/events/event-provider{{alias.ext}}';
+import { ConfiguredJobScheduler } from '{{alias.platform}}/jobs/configured-job-scheduler{{alias.ext}}';
+import { createLogger, type LogSettings } from '{{alias.platform}}/observability/create-logger{{alias.ext}}';
+import { createMetrics } from '{{alias.platform}}/observability/create-metrics{{alias.ext}}';
+import type { Platform } from '{{alias.platform}}/platform{{alias.ext}}';
 {{#if cache.redis}}
-import type { RedisServices } from '{{alias.platform}}/redis/open-redis.js';
+import type { RedisServices } from '{{alias.platform}}/redis/open-redis{{alias.ext}}';
 {{/if}}
-import { adapterAspects } from '{{alias.platform}}/resilience/adapter-aspects.js';
-import { defaultResilience } from '{{alias.platform}}/resilience/default-resilience.js';
-import { ownPolicy } from '{{alias.platform}}/resilience/own-policy.js';
-import type { ResilienceSettings } from '{{alias.platform}}/resilience/resilience-settings.js';
+import { adapterAspects } from '{{alias.platform}}/resilience/adapter-aspects{{alias.ext}}';
+import { defaultResilience } from '{{alias.platform}}/resilience/default-resilience{{alias.ext}}';
+import { ownPolicy } from '{{alias.platform}}/resilience/own-policy{{alias.ext}}';
+import type { ResilienceSettings } from '{{alias.platform}}/resilience/resilience-settings{{alias.ext}}';
 
 interface JobsOptions {
   readonly start?: boolean;

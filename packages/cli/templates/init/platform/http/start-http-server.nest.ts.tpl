@@ -1,14 +1,14 @@
 import 'reflect-metadata';
 import { Server } from 'node:http';
 import { NestFactory } from '@nestjs/core';
-import type { Application } from '{{alias.platform}}/compose-application.js';
-import type { AppConfig } from '{{alias.platform}}/config/app-config.js';
-import { createAppModule } from '{{alias.platform}}/http/create-app-module.js';
+import type { Application } from '{{alias.platform}}/compose-application{{alias.ext}}';
+import type { AppConfig } from '{{alias.platform}}/config/app-config{{alias.ext}}';
+import { createAppModule } from '{{alias.platform}}/http/create-app-module{{alias.ext}}';
 {{#if cache.rateLimit}}
-import { refusalFor } from '{{alias.platform}}/http/refusal-for.js';
+import { refusalFor } from '{{alias.platform}}/http/refusal-for{{alias.ext}}';
 {{/if}}
 {{#if docs.any}}
-import { withDocumentation } from '{{alias.platform}}/http/with-documentation.js';
+import { withDocumentation } from '{{alias.platform}}/http/with-documentation{{alias.ext}}';
 {{/if}}
 
 export interface HttpServer {

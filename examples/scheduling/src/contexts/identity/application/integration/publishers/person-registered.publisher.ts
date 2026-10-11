@@ -1,7 +1,7 @@
 import { IdGenerator, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
-import { PersonRegistered } from '@/contexts/identity/domain/events/person-registered.event.js';
-import { personRegisteredV1 } from '@/contexts/identity/published-language/person-registered.v1.integration-event.js';
+import { PersonRegistered } from '@/contexts/identity/domain/events/person-registered.event';
+import { personRegisteredV1 } from '@/contexts/identity/published-language/person-registered.v1.integration-event';
 
 @DomainEventHandler(PersonRegistered, { name: 'identity.person.registered' }, [IntegrationEventPublisher, IdGenerator])
 export class PersonRegisteredPublisher implements DomainEventHandler<PersonRegistered> {

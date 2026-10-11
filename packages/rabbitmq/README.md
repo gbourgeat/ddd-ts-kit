@@ -75,7 +75,7 @@ export class InvoiceOnOrderPlacedIntegrationHandler {
 import { contextModule, createApplication, kernelModule } from '@ddd-ts-kit/di';
 import { Clock } from '@ddd-ts-kit/kernel';
 import { OutboxRelay, OutboxStore } from '@ddd-ts-kit/events';
-import { bus, messagingModule } from '@/platform/messaging.module.js';
+import { bus, messagingModule } from '@/platform/messaging.module';
 
 const app = createApplication({
   modules: [

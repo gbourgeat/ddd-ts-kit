@@ -3,17 +3,17 @@ import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { RelationTupleStore } from '@ddd-ts-kit/auth/rebac';
 import { anActor } from '@ddd-ts-kit/auth/testing';
 import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
-import * as analyticsDeclarations from '@/contexts/analytics/analytics.declarations.js';
+import * as analyticsDeclarations from '@/contexts/analytics/analytics.declarations';
 import { Criteria, offsetPage } from '@ddd-ts-kit/kernel';
-import { createAuthorizer } from '@/platform/auth/create-authorizer.js';
-import { platformTestModule } from '@/platform/platform-test.module.js';
-import { OccupancyReader, type Occupancy } from '@/contexts/analytics/application/ports/occupancy-reader.port.js';
-import { OutcomeRegister, type Outcome } from '@/contexts/analytics/application/ports/outcome-register.port.js';
-import { SearchOccupancyQuery } from '@/contexts/analytics/application/queries/search-occupancy/search-occupancy.query.js';
-import { anOccupancy } from '@/contexts/analytics/test/builders/occupancy.builder.js';
-import { anOutcome } from '@/contexts/analytics/test/builders/outcome.builder.js';
-import { FakeOccupancyReader } from '@/contexts/analytics/test/fakes/occupancy-reader.fake.js';
-import { FakeOutcomeRegister } from '@/contexts/analytics/test/fakes/outcome-register.fake.js';
+import { createAuthorizer } from '@/platform/auth/create-authorizer';
+import { platformTestModule } from '@/platform/platform-test.module';
+import { OccupancyReader, type Occupancy } from '@/contexts/analytics/application/ports/occupancy-reader.port';
+import { OutcomeRegister, type Outcome } from '@/contexts/analytics/application/ports/outcome-register.port';
+import { SearchOccupancyQuery } from '@/contexts/analytics/application/queries/search-occupancy/search-occupancy.query';
+import { anOccupancy } from '@/contexts/analytics/test/builders/occupancy.builder';
+import { anOutcome } from '@/contexts/analytics/test/builders/outcome.builder';
+import { FakeOccupancyReader } from '@/contexts/analytics/test/fakes/occupancy-reader.fake';
+import { FakeOutcomeRegister } from '@/contexts/analytics/test/fakes/outcome-register.fake';
 
 /** The relationships of the platform decide, as in the application: practice-1 has two desks, practice-2 one. */
 const relationships = authorizationModule({ authorizer: (resolve) => createAuthorizer(resolve(RelationTupleStore)) });

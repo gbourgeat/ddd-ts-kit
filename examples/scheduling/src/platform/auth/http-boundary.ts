@@ -2,7 +2,7 @@ import type { Authenticator } from '@ddd-ts-kit/auth';
 import { reportHttpErrors, type ErrorContext, type ErrorMapper, type RouteAround } from '@ddd-ts-kit/http';
 import type { Clock, ErrorReporter, ExecutionScope, Logger, Session } from '@ddd-ts-kit/kernel';
 import { tracedRoutes } from '@ddd-ts-kit/tracing';
-import { principalOf } from '@/platform/auth/principal-of.js';
+import { principalOf } from '@/platform/auth/principal-of';
 
 /** What the HTTP adapter needs at the edge of the application: spread into its mount options, for every route. */
 export interface HttpBoundary {

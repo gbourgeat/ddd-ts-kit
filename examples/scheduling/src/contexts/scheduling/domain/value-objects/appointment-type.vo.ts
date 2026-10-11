@@ -1,6 +1,6 @@
 import { ValueObject, err, ok, type Result } from '@ddd-ts-kit/kernel';
-import { InvalidAppointmentTypeError } from '@/contexts/scheduling/domain/errors/invalid-appointment-type.error.js';
-import { Slot } from '@/contexts/scheduling/domain/value-objects/slot.vo.js';
+import { InvalidAppointmentTypeError } from '@/contexts/scheduling/domain/errors/invalid-appointment-type.error';
+import { Slot } from '@/contexts/scheduling/domain/value-objects/slot.vo';
 
 export type AppointmentTypeProps = {
   readonly id: string;

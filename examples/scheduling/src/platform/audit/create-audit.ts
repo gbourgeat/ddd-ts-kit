@@ -10,11 +10,11 @@ import { KnexAuditTrail } from '@ddd-ts-kit/audit/knex';
 import type { OnDecision } from '@ddd-ts-kit/auth';
 import type { EventSubscription } from '@ddd-ts-kit/events';
 import type { BusMiddleware } from '@ddd-ts-kit/kernel';
-import type { Persistence } from '@/platform/database/persistence.js';
-import { AUDIT_SCHEMA } from '@/platform/database/schema.js';
-import { auditPermissions } from '@/platform/audit/audit.permissions.js';
-import { auditedEvents } from '@/platform/audit/audited-events.js';
-import { SearchAuditEntriesQuery } from '@/platform/audit/search-audit-entries.query.js';
+import type { Persistence } from '@/platform/database/persistence';
+import { AUDIT_SCHEMA } from '@/platform/database/schema';
+import { auditPermissions } from '@/platform/audit/audit.permissions';
+import { auditedEvents } from '@/platform/audit/audited-events';
+import { SearchAuditEntriesQuery } from '@/platform/audit/search-audit-entries.query';
 
 /** The name the audit trail consumes integration events under: its idempotency scope, and its queues behind a broker. */
 const consumer = 'audit';

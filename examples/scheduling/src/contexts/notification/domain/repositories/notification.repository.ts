@@ -1,5 +1,5 @@
 import { Repository } from '@ddd-ts-kit/kernel';
-import type { Notification } from '@/contexts/notification/domain/aggregates/notification.aggregate.js';
+import type { Notification } from '@/contexts/notification/domain/aggregates/notification.aggregate';
 
 export abstract class NotificationRepository extends Repository<Notification> {
   /** The notification already sent to this recipient for this cause, if any: a cause is told once to each recipient. */

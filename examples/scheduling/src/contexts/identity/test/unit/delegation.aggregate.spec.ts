@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { given } from '@ddd-ts-kit/testing';
-import { Delegation } from '@/contexts/identity/domain/aggregates/delegation.aggregate.js';
-import { DelegationEndsInThePastError } from '@/contexts/identity/domain/errors/delegation-ends-in-the-past.error.js';
-import { DelegationNotActiveError } from '@/contexts/identity/domain/errors/delegation-not-active.error.js';
-import { Desk } from '@/contexts/identity/domain/value-objects/desk.vo.js';
-import { aDelegation } from '@/contexts/identity/test/builders/delegation.builder.js';
+import { Delegation } from '@/contexts/identity/domain/aggregates/delegation.aggregate';
+import { DelegationEndsInThePastError } from '@/contexts/identity/domain/errors/delegation-ends-in-the-past.error';
+import { DelegationNotActiveError } from '@/contexts/identity/domain/errors/delegation-not-active.error';
+import { Desk } from '@/contexts/identity/domain/value-objects/desk.vo';
+import { aDelegation } from '@/contexts/identity/test/builders/delegation.builder';
 
 const grantedAt = new Date('2026-03-01T00:00:00.000Z');
 const end = new Date('2026-04-01T00:00:00.000Z');

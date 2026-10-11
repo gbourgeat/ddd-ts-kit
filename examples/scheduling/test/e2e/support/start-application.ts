@@ -1,21 +1,21 @@
 import { RelationTupleStore, type RelationTuple } from '@ddd-ts-kit/auth/rebac';
 import type { ErrorReporter, IntegrationEventSubscriber } from '@ddd-ts-kit/kernel';
 import { createHttpClient, type HttpClient } from '@ddd-ts-kit/testing/e2e';
-import { relateSystemActors } from '@/platform/auth/relate-system-actors.js';
-import { composeApplication, type Application } from '@/platform/compose-application.js';
-import type { AppConfig } from '@/platform/config/app-config.js';
-import { loadConfig } from '@/platform/config/load-config.js';
-import type { Persistence } from '@/platform/database/persistence.js';
-import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database.js';
-import { createEventProvider } from '@/platform/events/create-event-provider.js';
-import type { EventProvider } from '@/platform/events/event-provider.js';
-import { inProcessEvents } from '@/platform/events/in-process-events.js';
-import { startOutboxRelay, type RunningRelay } from '@/platform/events/start-outbox-relay.js';
-import type { LogSettings } from '@/platform/observability/create-logger.js';
-import { startHttpServer, type HttpServer } from '@/platform/http/start-http-server.js';
-import { openRedis, type RedisServices } from '@/platform/redis/open-redis.js';
-import { createCredentials, type TestActor } from '$test/e2e/support/create-credentials.js';
-import { noRedis, testEnvironment } from '$test/e2e/support/test-environment.js';
+import { relateSystemActors } from '@/platform/auth/relate-system-actors';
+import { composeApplication, type Application } from '@/platform/compose-application';
+import type { AppConfig } from '@/platform/config/app-config';
+import { loadConfig } from '@/platform/config/load-config';
+import type { Persistence } from '@/platform/database/persistence';
+import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database';
+import { createEventProvider } from '@/platform/events/create-event-provider';
+import type { EventProvider } from '@/platform/events/event-provider';
+import { inProcessEvents } from '@/platform/events/in-process-events';
+import { startOutboxRelay, type RunningRelay } from '@/platform/events/start-outbox-relay';
+import type { LogSettings } from '@/platform/observability/create-logger';
+import { startHttpServer, type HttpServer } from '@/platform/http/start-http-server';
+import { openRedis, type RedisServices } from '@/platform/redis/open-redis';
+import { createCredentials, type TestActor } from '$test/e2e/support/create-credentials';
+import { noRedis, testEnvironment } from '$test/e2e/support/test-environment';
 
 /** The whole application, real adapters included, as a client and another context see it. */
 export interface RunningApplication {

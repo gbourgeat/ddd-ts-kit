@@ -1,4 +1,4 @@
 @@imports
-import { {{name.camel}} } from '{{alias.context}}/application/authorization/{{name.kebab}}.policy.js';
+import { {{name.camel}} } from '{{alias.context}}/application/authorization/{{name.kebab}}.policy{{alias.ext}}';
 @@policies
 {{name.camel}},

@@ -13,7 +13,7 @@ import {
 } from '@ddd-ts-kit/kernel';
 {{/if}}
 {{#if broker.kafka}}
-import { aggregateKeyOf } from '{{alias.platform}}/events/aggregate-key-of.js';
+import { aggregateKeyOf } from '{{alias.platform}}/events/aggregate-key-of{{alias.ext}}';
 {{/if}}
 
 export interface OutboxRelayOptions {

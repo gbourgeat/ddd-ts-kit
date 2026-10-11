@@ -1,7 +1,7 @@
 import { describe, expect, it } from '{{tests.module}}';
 import { cursorPage, encodeCursor, offsetPage } from '@ddd-ts-kit/kernel';
-import type { {{name.pascal}}Sort } from '{{alias.context}}/application/queries/{{name.kebab}}/{{name.kebab}}.result.js';
-import { Fake{{name.pascal}}Reader } from '{{alias.context}}/test/fakes/{{name.kebab}}-reader.fake.js';
+import type { {{name.pascal}}Sort } from '{{alias.context}}/application/queries/{{name.kebab}}/{{name.kebab}}.result{{alias.ext}}';
+import { Fake{{name.pascal}}Reader } from '{{alias.context}}/test/fakes/{{name.kebab}}-reader.fake{{alias.ext}}';
 
 const LINES = [{ id: '{{name.kebab}}-1' }, { id: '{{name.kebab}}-2' }, { id: '{{name.kebab}}-3' }];
 const [first, second, third] = LINES;

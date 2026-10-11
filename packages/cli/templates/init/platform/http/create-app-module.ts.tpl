@@ -1,7 +1,7 @@
 import { Module, type DynamicModule } from '@nestjs/common';
 import type { Route } from '@ddd-ts-kit/http';
 import { createRoutesModule } from '@ddd-ts-kit/http/nest';
-import type { HttpBoundary } from '{{alias.platform}}/auth/http-boundary.js';
+import type { HttpBoundary } from '{{alias.platform}}/auth/http-boundary{{alias.ext}}';
 
 @Module({})
 class AppModule {}

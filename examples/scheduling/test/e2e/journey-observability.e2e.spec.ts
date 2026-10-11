@@ -3,17 +3,17 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from
 import { InMemoryErrorReporter } from '@ddd-ts-kit/kernel';
 import { eventually, expectProblem, expectStatus, type HttpClient } from '@ddd-ts-kit/testing/e2e';
 import { expectSpanTree, installTestTracing, type ExpectedSpan, type SpanNode } from '@ddd-ts-kit/tracing/testing';
-import type { LogSettings } from '@/platform/observability/create-logger.js';
-import { bookAppointment } from '$test/e2e/support/book-appointment.js';
-import type { Listed } from '$test/e2e/support/listed.js';
-import { LogLines } from '$test/e2e/support/log-lines.js';
-import { openStaffedPractice } from '$test/e2e/support/open-staffed-practice.js';
-import { registerPeople } from '$test/e2e/support/register-people.js';
-import { slotStarting } from '$test/e2e/support/slot-starting.js';
-import type { StaffedPractice } from '$test/e2e/support/staffed-practice.js';
-import { startApplication, type RunningApplication } from '$test/e2e/support/start-application.js';
-import { StorageOutage } from '$test/e2e/support/storage-outage.js';
-import { storyOf } from '$test/e2e/support/story-of.js';
+import type { LogSettings } from '@/platform/observability/create-logger';
+import { bookAppointment } from '$test/e2e/support/book-appointment';
+import type { Listed } from '$test/e2e/support/listed';
+import { LogLines } from '$test/e2e/support/log-lines';
+import { openStaffedPractice } from '$test/e2e/support/open-staffed-practice';
+import { registerPeople } from '$test/e2e/support/register-people';
+import { slotStarting } from '$test/e2e/support/slot-starting';
+import type { StaffedPractice } from '$test/e2e/support/staffed-practice';
+import { startApplication, type RunningApplication } from '$test/e2e/support/start-application';
+import { StorageOutage } from '$test/e2e/support/storage-outage';
+import { storyOf } from '$test/e2e/support/story-of';
 
 describe('One booking, followed from outside: its trace, its log lines, its error report', () => {
   const tracing = installTestTracing();

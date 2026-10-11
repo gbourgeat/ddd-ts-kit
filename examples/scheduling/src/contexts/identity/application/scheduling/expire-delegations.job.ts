@@ -1,6 +1,6 @@
 import { CommandBus, systemActor } from '@ddd-ts-kit/kernel';
 import { Scheduled, type JobExecution, type ScheduledJob } from '@ddd-ts-kit/kernel/declarations';
-import { ExpireDelegationsCommand } from '@/contexts/identity/application/commands/expire-delegations/expire-delegations.command.js';
+import { ExpireDelegationsCommand } from '@/contexts/identity/application/commands/expire-delegations/expire-delegations.command';
 
 @Scheduled('identity.expire-delegations', { every: '5m' }, [CommandBus])
 export class ExpireDelegationsJob implements ScheduledJob {

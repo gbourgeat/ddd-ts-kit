@@ -9,7 +9,7 @@ import {
   type ListRequest,
 } from '@ddd-ts-kit/auth';
 import { isAnonymous, isSystem, type Actor } from '@ddd-ts-kit/kernel';
-import type { RoleGrant } from '@/platform/auth/role-grant.js';
+import type { RoleGrant } from '@/platform/auth/role-grant';
 
 /** What decides when no role does: it must be able to enumerate. */
 type Relationships = Required<Pick<Authorizer, 'check' | 'listAccessible'>>;

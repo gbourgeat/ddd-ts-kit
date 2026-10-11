@@ -1,9 +1,9 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { Criteria, scoped } from '@ddd-ts-kit/kernel';
-import type { PractitionerEntry } from '@/contexts/scheduling/application/ports/practitioner-directory.port.js';
-import { KnexPractitionerDirectory } from '@/contexts/scheduling/infrastructure/persistence/knex-practitioner-directory.repository.js';
-import { storableStamp } from '@/shared-kernel/storable-stamp.js';
-import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database.js';
+import type { PractitionerEntry } from '@/contexts/scheduling/application/ports/practitioner-directory.port';
+import { KnexPractitionerDirectory } from '@/contexts/scheduling/infrastructure/persistence/knex-practitioner-directory.repository';
+import { storableStamp } from '@/shared-kernel/storable-stamp';
+import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database';
 
 let database: TestDatabase;
 let practitioners: KnexPractitionerDirectory;

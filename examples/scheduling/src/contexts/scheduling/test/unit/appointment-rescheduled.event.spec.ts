@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { AppointmentRescheduled } from '@/contexts/scheduling/domain/events/appointment-rescheduled.event.js';
-import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder.js';
+import { AppointmentRescheduled } from '@/contexts/scheduling/domain/events/appointment-rescheduled.event';
+import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder';
 
 const held = anAppointment().identifiedBy('appointment-1').build();
 const before = anAppointment().startingAt(new Date('2026-03-01T23:30:00.000Z')).onDay('2026-03-02').build();

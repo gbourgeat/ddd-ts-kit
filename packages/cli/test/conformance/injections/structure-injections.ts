@@ -1,6 +1,7 @@
 import type { Injection } from '../injection.js';
 import { PATHS } from '../paths.js';
 import { SOURCE_ALIAS } from '../source-alias.js';
+import { SOURCE_SUFFIX } from '../source-suffix.js';
 
 const { AGGREGATE, BARREL, BUILDER, CONFIG, CONTEXT_DOC, EVENT, HANDLER, NOTIFICATION, READER } = PATHS;
 const { ROUTE, VALUE_OBJECT, VALUE_OBJECT_SPEC } = PATHS;
@@ -13,7 +14,7 @@ const TWO_EXPORTS = 'Two exported classes in one file break the rule of the role
 
 const DECLARED_TWICE = `import { defineIntegrationEvent } from '@ddd-ts-kit/events';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
-import { AppointmentExpiredV1Payload } from '${SOURCE_ALIAS}contexts/scheduling/published-language/appointment-expired.v1.payload.js';
+import { AppointmentExpiredV1Payload } from '${SOURCE_ALIAS}contexts/scheduling/published-language/appointment-expired.v1.payload${SOURCE_SUFFIX}';
 
 export const appointmentExpiredV1 = defineIntegrationEvent({
   type: 'scheduling.appointment.expired',
@@ -26,7 +27,7 @@ export const appointmentExpiredV1 = defineIntegrationEvent({
 const MANAGER_SPEC = `${NOTIFICATION}/test/unit/reminder-manager.service.spec.ts`;
 
 const SPEC_OF = (subject: string, file: string): string =>
-  `import { expect, it } from 'vitest';\nimport { ${subject} } from '${SOURCE_ALIAS}${file.replace(/^src\//, '').replace(/\.ts$/, '.js')}';\n\nit('exists', () => {\n  expect(${subject}).toBeDefined();\n});\n`;
+  `import { expect, it } from 'vitest';\nimport { ${subject} } from '${SOURCE_ALIAS}${file.replace(/^src\//, '').replace(/\.ts$/, '')}${SOURCE_SUFFIX}';\n\nit('exists', () => {\n  expect(${subject}).toBeDefined();\n});\n`;
 
 /** The tree, the names, the language, the tests and the configuration: what the checker holds alone. */
 export const STRUCTURE_INJECTIONS: readonly Injection[] = [
@@ -149,7 +150,7 @@ export const STRUCTURE_INJECTIONS: readonly Injection[] = [
     changes: [
       {
         file: BARREL,
-        from: `export * from '${SOURCE_ALIAS}contexts/notification/application/commands/withdraw-reminder/withdraw-reminder.handler.js';\n`,
+        from: `export * from '${SOURCE_ALIAS}contexts/notification/application/commands/withdraw-reminder/withdraw-reminder.handler${SOURCE_SUFFIX}';\n`,
         to: '',
       },
     ],

@@ -7,9 +7,9 @@ import {
   type PracticeMemberAddedV1Payload,
   practiceOpenedV1,
   type PracticeOpenedV1Payload,
-} from '@/contexts/identity/published-language/index.js';
-import { startApplication, type RunningApplication } from '$test/e2e/support/start-application.js';
-import { storyOf } from '$test/e2e/support/story-of.js';
+} from '@/contexts/identity/published-language/index';
+import { startApplication, type RunningApplication } from '$test/e2e/support/start-application';
+import { storyOf } from '$test/e2e/support/story-of';
 
 describe('Open practice, end to end', () => {
   const tracing = installTestTracing();

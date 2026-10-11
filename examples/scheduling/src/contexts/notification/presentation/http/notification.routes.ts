@@ -1,7 +1,7 @@
 import type { Route } from '@ddd-ts-kit/http';
 import type { CommandBus, QueryBus } from '@ddd-ts-kit/kernel';
 // ddd-ts-kit:imports
-import { searchNotificationsRoute } from '@/contexts/notification/presentation/http/search-notifications.route.js';
+import { searchNotificationsRoute } from '@/contexts/notification/presentation/http/search-notifications.route';
 // /ddd-ts-kit:imports
 
 export function notificationRoutes(commands: CommandBus, queries: QueryBus): readonly Route[] {

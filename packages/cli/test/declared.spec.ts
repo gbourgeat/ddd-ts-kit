@@ -12,7 +12,8 @@ import { renderBarrel } from '../src/declared/index.js';
 import { cli, tempDir } from './helpers.js';
 
 const BILLING = 'src/contexts/billing';
-const BILLING_ALIAS = '@/contexts/billing';
+/** As a new project writes it: an import names its file without an extension. */
+const inBilling = (file: string): string => `@/contexts/billing/${file.replace(/\.ts$/, '')}`;
 const CONFIG = 'ddd-ts-kit.config.json';
 const DECLARATIONS = "'@ddd-ts-kit/kernel/declarations'";
 const COMMAND = `${BILLING}/application/commands/issue-invoice/issue-invoice.command.ts`;
@@ -33,7 +34,7 @@ const SOURCES = {
   [QUERY]: `import { Public } from ${DECLARATIONS};\n\n@Public()\nexport class SearchInvoicesQuery {}\n`,
   [INTEGRATION_HANDLER]: `import { IntegrationEventHandler } from ${DECLARATIONS};\n\n@IntegrationEventHandler(\n  productListedV1,\n  { consumer: 'billing.product-listed' },\n  [],\n)\nexport class ProductListedIntegrationHandler {}\n`,
   [EVENT]: "export class InvoiceIssued {\n  readonly name = 'billing.invoice.issued';\n}\n",
-  [EVENT_HANDLER]: `import { DomainEventHandler } from ${DECLARATIONS};\nimport { InvoiceIssued } from '@/contexts/billing/domain/events/invoice-issued.event.js';\n\n@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued' })\nexport class InvoiceIssuedEventHandler {}\n`,
+  [EVENT_HANDLER]: `import { DomainEventHandler } from ${DECLARATIONS};\nimport { InvoiceIssued } from '@/contexts/billing/domain/events/invoice-issued.event';\n\n@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued' })\nexport class InvoiceIssuedEventHandler {}\n`,
   [POLICY]: `import { Policy } from ${DECLARATIONS};\n\n@Policy(billingPermissions['invoice.void'], { name: 'billing.only-issuer-voids' })\nexport class OnlyIssuerVoidsPolicy {}\n`,
   [REPOSITORY]: `import { Repository } from ${DECLARATIONS};\n\n@Repository(InvoiceRepository, [Database])\nexport class KnexInvoiceRepository implements InvoiceRepository {}\n`,
   [GATEWAY]: `import { Gateway } from ${DECLARATIONS};\n\n@Gateway(PriceCatalogGateway, [PriceCatalogUpstream])\nexport class InProcessPriceCatalogGateway implements PriceCatalogGateway {}\n`,
@@ -212,7 +213,7 @@ describe('the declared style in check and check-file', () => {
   it('compares the barrel whatever its line endings, and skips a directory the config does not declare', () => {
     const barrel = renderBarrel(
       Object.keys(SOURCES).map((file) => file.slice(BILLING.length + 1)),
-      BILLING_ALIAS,
+      inBilling,
     );
 
     const root = declaredProject(SOURCES, {
@@ -301,7 +302,7 @@ type Files = Readonly<Record<string, string>>;
 function declaredProject(files: Files, overrides: Files = {}, config: Record<string, unknown> = {}): string {
   const barrel = renderBarrel(
     Object.keys(files).flatMap((file) => (file.startsWith(`${BILLING}/`) ? [file.slice(BILLING.length + 1)] : [])),
-    BILLING_ALIAS,
+    inBilling,
   );
 
   return projectWith({ [BARREL]: barrel, ...files, ...overrides }, { stack: { style: 'declared' }, ...config });
@@ -314,10 +315,8 @@ function explicitProject(files: Files): string {
 function projectWith(files: Files, config: Record<string, unknown>): string {
   const root = tempDir('declared');
 
-  const written = {
-    [CONFIG]: JSON.stringify({ contexts: { billing: { classification: 'core', upstreams: [] } }, ...config }, null, 2),
-    ...files,
-  };
+  const contexts = { billing: { classification: 'core', upstreams: [] } };
+  const written = { [CONFIG]: JSON.stringify({ importExtension: 'none', contexts, ...config }, null, 2), ...files };
 
   for (const [file, content] of Object.entries(written)) {
     fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });

@@ -214,15 +214,19 @@ to it because ESLint and dependency-cruiser read sources through the compiler AP
 native version does not ship: do not use `npx tsc`, it would run version 6.
 
 Every file of the project is imported by an alias from the project root, never by a relative
-path: `{{alias.platform}}/config/load-config.js` for `{{config.platformDir}}/config/load-config.ts`,
-`{{alias.test}}/...` for `test/`, `{{alias.scripts}}/...` for `scripts/`. The alias is declared
+path: `{{alias.platform}}/config/load-config{{alias.ext}}` for `{{config.platformDir}}/config/load-config.ts`,
+`{{alias.test}}/...` for `test/`, `{{alias.scripts}}/...` for `scripts/`.{{#if alias.extensionless}} An import names its
+file without an extension (`"importExtension": "none"` in `ddd-ts-kit.config.json`), and never a
+directory: `.../published-language/index`.{{/if}}{{#unless alias.extensionless}} An import ends with the `.js` of the file the
+compiler emits (`"importExtension": "js"` in `ddd-ts-kit.config.json`).{{/unless}} The alias is declared
 once, under `paths` in `tsconfig.json`, which the compiler, `npm run dev`, the tests, knip and
-the import graph read. Node reads no alias: `npm run build` compiles, then
-`ddd-ts-kit build-aliases` rewrites each alias of `dist/` into a relative path, so `npm start`
-is plain `node`. `npm run lint:fix` turns a relative import into its alias, and
-`npm run check:arch` reports a declaration that no longer follows `importAlias` of
+the import graph read. Node reads no alias and needs the extension: `npm run build` compiles,
+then `ddd-ts-kit build-aliases` rewrites each alias of `dist/` into a relative path ending in
+`.js`, so `npm start` is plain `node`. `npm run lint:fix` turns a relative import into its alias
+and gives an import the ending the config asks for, and `npm run check:arch` reports a
+declaration that no longer follows `importAlias` and `importExtension` of
 `ddd-ts-kit.config.json`, or a build that skips the rewrite (`imports/alias-only`,
-`imports/alias-declared`).
+`imports/extension`, `imports/alias-declared`).
 
 | Gate | Script | Tool |
 |---|---|---|

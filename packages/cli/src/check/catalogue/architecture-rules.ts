@@ -31,6 +31,7 @@ import { eventsOutboxRequired } from '../rules/events-outbox-required.js';
 import { governanceRecordedDeviation } from '../rules/governance-recorded-deviation.js';
 import { importsAliasDeclared } from '../rules/imports-alias-declared.js';
 import { importsAliasOnly } from '../rules/imports-alias-only.js';
+import { importsExtension } from '../rules/imports-extension.js';
 import { languageGlossaryTerm } from '../rules/language-glossary-term.js';
 import { languageNoTechnicalName } from '../rules/language-no-technical-name.js';
 import { layerApplicationInward } from '../rules/layer-application-inward.js';
@@ -119,5 +120,6 @@ export const ARCHITECTURE_RULES: readonly Rule[] = [
   schedulingJobTriggersUseCase,
   schedulingJobName,
   importsAliasOnly,
+  importsExtension,
   importsAliasDeclared,
 ];

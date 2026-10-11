@@ -9,6 +9,9 @@ const COMPILE = 'node node_modules/@typescript/native/bin/tsc -p tsconfig.build.
 const BUILD = `${COMPILE} && ddd-ts-kit build-aliases`;
 const JEST_MAPPER = String.raw`moduleNameMapper: { '^\\$app/(.*)\\.js$': '<rootDir>/src/$1.ts', '^\\$test/(.*)\\.js$': '<rootDir>/test/$1.ts', '^\\$scripts/(.*)\\.js$': '<rootDir>/scripts/$1.ts' }`;
 
+const BARE_JEST_MAPPER = String.raw`moduleNameMapper: { '^@/(.*)$': '<rootDir>/src/$1.ts', '^\\$test/(.*)$': '<rootDir>/test/$1.ts', '^\\$scripts/(.*)$': '<rootDir>/scripts/$1.ts' }`;
+const BUNDLER = { module: 'ESNext', moduleResolution: 'Bundler', customConditions: ['node'] };
+
 export const ALIAS_DECLARED_FIXTURES: readonly Fixture[] = [
   { ruleId: RULE, name: 'one declaration, and every tool pointed at it', expect: 'pass', files: aliasDeclarations() },
   {
@@ -20,6 +23,16 @@ export const ALIAS_DECLARED_FIXTURES: readonly Fixture[] = [
       'tsconfig.json': tsconfig({ ...PATHS, '@/*': undefined, '$app/*': ['./src/*'] }),
       'jest.config.js': `export default { ${JEST_MAPPER}, ...governedJestCoverage() };\n`,
       'jest.e2e.config.js': "import base from './jest.config.js';\nexport default { ...base };\n",
+    }),
+  },
+  {
+    ruleId: RULE,
+    name: 'imports written without an extension: the compiler resolves as a bundler, jest maps the specifier as written',
+    expect: 'pass',
+    files: aliasDeclarations({
+      [CONFIG_FILE]: config({ importAlias: '@/', importExtension: 'none' }),
+      'tsconfig.json': tsconfig(PATHS, BUNDLER),
+      'jest.config.js': `export default { ${BARE_JEST_MAPPER}, ...governedJestCoverage() };\n`,
     }),
   },
   failing('a Node subpath import as the alias', CONFIG_FILE, config({ importAlias: '#app/' })),
@@ -77,10 +90,59 @@ export const ALIAS_DECLARED_FIXTURES: readonly Fixture[] = [
     "module.exports = { options: { enhancedResolveOptions: { conditionNames: ['import'] } } };\n",
   ),
   failing('a knip config that maps the alias', 'knip.json', json({ paths: { '@/*': ['./src/*'] } })),
+  failing(
+    'imports written with ".js" and a compiler that resolves as a bundler',
+    'tsconfig.json',
+    tsconfig(PATHS, BUNDLER),
+  ),
+  failing(
+    'imports written with ".js" and a module resolution that does not require it',
+    'tsconfig.json',
+    tsconfig(PATHS, { moduleResolution: 'Bundler' }),
+  ),
+  bare('a compiler that resolves as Node does', 'tsconfig.json', tsconfig(PATHS)),
+  bare(
+    'a module resolution that requires the extension',
+    'tsconfig.json',
+    tsconfig(PATHS, { ...BUNDLER, moduleResolution: 'NodeNext' }),
+  ),
+  bare(
+    'a bundler resolution that no longer reads the entry a package has for Node',
+    'tsconfig.json',
+    tsconfig(PATHS, { ...BUNDLER, customConditions: [] }),
+  ),
+  bare(
+    'a module format that is not the one the build completes',
+    'tsconfig.json',
+    tsconfig(PATHS, { ...BUNDLER, module: 'CommonJS' }),
+  ),
+  bare(
+    'a build config that resolves another way than the type check',
+    'tsconfig.build.json',
+    json({ extends: './tsconfig.json', compilerOptions: { module: 'NodeNext', moduleResolution: 'NodeNext' } }),
+  ),
+  bare(
+    'a jest config that still maps the specifier with ".js"',
+    'jest.config.js',
+    `export default { ${JEST_MAPPER.replace(String.raw`\\$app`, '@')}, ...governedJestCoverage() };\n`,
+  ),
+  bare('a build that compiles and does not rewrite the aliases', 'package.json', manifest({ build: COMPILE })),
 ];
 
 function tsconfig(paths: unknown, more: Record<string, unknown> = {}): string {
-  return json({ compilerOptions: { rootDir: '.', outDir: 'dist', paths, ...more } });
+  return json({ compilerOptions: { module: 'NodeNext', rootDir: '.', outDir: 'dist', paths, ...more } });
+}
+
+/** A failing fixture of a project that writes its imports without an extension, everything else as `init` writes it. */
+function bare(name: string, file: string, content: string): Fixture {
+  const files = aliasDeclarations({
+    [CONFIG_FILE]: config({ importAlias: '@/', importExtension: 'none' }),
+    'tsconfig.json': tsconfig(PATHS, BUNDLER),
+    'jest.config.js': `export default { ${BARE_JEST_MAPPER}, ...governedJestCoverage() };\n`,
+    [file]: content,
+  });
+
+  return { ruleId: RULE, name: `without an extension: ${name}`, expect: { file }, files };
 }
 
 function manifest(scripts: Record<string, string>): string {

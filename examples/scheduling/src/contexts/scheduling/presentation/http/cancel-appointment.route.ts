@@ -2,10 +2,10 @@ import { actorOf } from '@ddd-ts-kit/auth';
 import { defineRoute, type Route } from '@ddd-ts-kit/http';
 import type { CommandBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
-import { CancelAppointmentCommand } from '@/contexts/scheduling/application/commands/cancel-appointment/cancel-appointment.command.js';
-import { CancelAppointmentParams } from '@/contexts/scheduling/presentation/http/cancel-appointment-params.dto.js';
-import { CancelAppointmentBody } from '@/contexts/scheduling/presentation/http/cancel-appointment-body.dto.js';
-import { CancelAppointmentAccepted } from '@/contexts/scheduling/presentation/http/cancel-appointment-accepted.dto.js';
+import { CancelAppointmentCommand } from '@/contexts/scheduling/application/commands/cancel-appointment/cancel-appointment.command';
+import { CancelAppointmentParams } from '@/contexts/scheduling/presentation/http/cancel-appointment-params.dto';
+import { CancelAppointmentBody } from '@/contexts/scheduling/presentation/http/cancel-appointment-body.dto';
+import { CancelAppointmentAccepted } from '@/contexts/scheduling/presentation/http/cancel-appointment-accepted.dto';
 
 const params = classSchema(CancelAppointmentParams);
 const body = classSchema(CancelAppointmentBody);

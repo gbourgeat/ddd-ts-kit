@@ -1,5 +1,5 @@
 import { Repository } from '@ddd-ts-kit/kernel';
-import type { Appointment } from '@/contexts/scheduling/domain/aggregates/appointment.aggregate.js';
+import type { Appointment } from '@/contexts/scheduling/domain/aggregates/appointment.aggregate';
 
 export abstract class AppointmentRepository extends Repository<Appointment> {
   /** The active appointments of a calendar that hold an instant between `from` and `until`, buffer included. */

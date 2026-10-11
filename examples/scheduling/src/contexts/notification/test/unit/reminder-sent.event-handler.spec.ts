@@ -2,19 +2,19 @@ import { describe, expect, it } from 'vitest';
 import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
-import * as notificationDeclarations from '@/contexts/notification/notification.declarations.js';
-import { platformTestModule } from '@/platform/platform-test.module.js';
-import { notificationPermissions } from '@/contexts/notification/application/authorization/notification.permissions.js';
-import { Contacts } from '@/contexts/notification/application/ports/contacts.port.js';
-import { Mailer } from '@/contexts/notification/application/ports/mailer.port.js';
-import { NotificationRepository } from '@/contexts/notification/domain/repositories/notification.repository.js';
-import { ReminderRepository } from '@/contexts/notification/domain/repositories/reminder.repository.js';
-import { aReminder } from '@/contexts/notification/test/builders/reminder.builder.js';
-import { FakeContacts } from '@/contexts/notification/test/fakes/contacts.fake.js';
-import { FakeMailer } from '@/contexts/notification/test/fakes/mailer.fake.js';
-import { FakeNotificationRepository } from '@/contexts/notification/test/fakes/notification.repository.fake.js';
-import { FakeReminderRepository } from '@/contexts/notification/test/fakes/reminder.repository.fake.js';
-import { ReminderSent } from '@/contexts/notification/domain/events/reminder-sent.event.js';
+import * as notificationDeclarations from '@/contexts/notification/notification.declarations';
+import { platformTestModule } from '@/platform/platform-test.module';
+import { notificationPermissions } from '@/contexts/notification/application/authorization/notification.permissions';
+import { Contacts } from '@/contexts/notification/application/ports/contacts.port';
+import { Mailer } from '@/contexts/notification/application/ports/mailer.port';
+import { NotificationRepository } from '@/contexts/notification/domain/repositories/notification.repository';
+import { ReminderRepository } from '@/contexts/notification/domain/repositories/reminder.repository';
+import { aReminder } from '@/contexts/notification/test/builders/reminder.builder';
+import { FakeContacts } from '@/contexts/notification/test/fakes/contacts.fake';
+import { FakeMailer } from '@/contexts/notification/test/fakes/mailer.fake';
+import { FakeNotificationRepository } from '@/contexts/notification/test/fakes/notification.repository.fake';
+import { FakeReminderRepository } from '@/contexts/notification/test/fakes/reminder.repository.fake';
+import { ReminderSent } from '@/contexts/notification/domain/events/reminder-sent.event';
 
 const authorization = authorizationModule({
   authorizer: new RoleBasedAuthorizer({

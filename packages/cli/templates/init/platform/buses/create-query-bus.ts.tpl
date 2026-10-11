@@ -6,7 +6,7 @@ import { InMemoryQueryBus } from '@ddd-ts-kit/kernel';
 {{#if errors.sentry}}
 import { ErrorReporter, InMemoryQueryBus, errorReportingMiddleware } from '@ddd-ts-kit/kernel';
 {{/if}}
-import type { Foundations } from '{{alias.platform}}/lay-foundations.js';
+import type { Foundations } from '{{alias.platform}}/lay-foundations{{alias.ext}}';
 
 /** Around every query, outermost first: {{#if errors.sentry}}the report of an unexpected failure, {{/if}}its log entry, its measure, the permission, its span{{#if audit.on}}, the audit entry of the reads that leave one{{/if}}. */
 export function createQueryBus(resolve: Resolve, foundations: Foundations): InMemoryQueryBus {

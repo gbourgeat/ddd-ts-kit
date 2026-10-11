@@ -2,16 +2,16 @@ import { describe, expect, it } from 'vitest';
 import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
-import * as identityDeclarations from '@/contexts/identity/identity.declarations.js';
+import * as identityDeclarations from '@/contexts/identity/identity.declarations';
 import type { Message } from '@ddd-ts-kit/kernel';
-import { platformTestModule } from '@/platform/platform-test.module.js';
-import { identityPermissions } from '@/contexts/identity/application/authorization/identity.permissions.js';
-import { ExpireDelegationsCommand } from '@/contexts/identity/application/commands/expire-delegations/expire-delegations.command.js';
-import { IdentityRelationships } from '@/contexts/identity/application/ports/identity-relationships.port.js';
-import { DelegationRepository } from '@/contexts/identity/domain/repositories/delegation.repository.js';
-import { aDelegation } from '@/contexts/identity/test/builders/delegation.builder.js';
-import { FakeDelegationRepository } from '@/contexts/identity/test/fakes/delegation.repository.fake.js';
-import { FakeIdentityRelationships } from '@/contexts/identity/test/fakes/identity-relationships.fake.js';
+import { platformTestModule } from '@/platform/platform-test.module';
+import { identityPermissions } from '@/contexts/identity/application/authorization/identity.permissions';
+import { ExpireDelegationsCommand } from '@/contexts/identity/application/commands/expire-delegations/expire-delegations.command';
+import { IdentityRelationships } from '@/contexts/identity/application/ports/identity-relationships.port';
+import { DelegationRepository } from '@/contexts/identity/domain/repositories/delegation.repository';
+import { aDelegation } from '@/contexts/identity/test/builders/delegation.builder';
+import { FakeDelegationRepository } from '@/contexts/identity/test/fakes/delegation.repository.fake';
+import { FakeIdentityRelationships } from '@/contexts/identity/test/fakes/identity-relationships.fake';
 
 const authorization = authorizationModule({
   authorizer: new RoleBasedAuthorizer({

@@ -27,30 +27,30 @@ import {
   type IntegrationEventSubscriber,
 } from '@ddd-ts-kit/kernel';
 import { tracedPublisher } from '@ddd-ts-kit/tracing';
-import { auditModule } from '@/platform/audit/audit.module.js';
-import { searchAuditEntriesRoute } from '@/platform/audit/search-audit-entries.route.js';
-import { authorization } from '@/platform/auth/authorization.js';
-import { httpBoundary, type HttpBoundary } from '@/platform/auth/http-boundary.js';
-import { relateSystemActors } from '@/platform/auth/relate-system-actors.js';
-import { createCommandBus } from '@/platform/buses/create-command-bus.js';
-import { createQueryBus } from '@/platform/buses/create-query-bus.js';
-import type { Persistence } from '@/platform/database/persistence.js';
-import { layFoundations, type Foundations } from '@/platform/lay-foundations.js';
-import { platformModule, type PlatformOptions } from '@/platform/platform.module.js';
+import { auditModule } from '@/platform/audit/audit.module';
+import { searchAuditEntriesRoute } from '@/platform/audit/search-audit-entries.route';
+import { authorization } from '@/platform/auth/authorization';
+import { httpBoundary, type HttpBoundary } from '@/platform/auth/http-boundary';
+import { relateSystemActors } from '@/platform/auth/relate-system-actors';
+import { createCommandBus } from '@/platform/buses/create-command-bus';
+import { createQueryBus } from '@/platform/buses/create-query-bus';
+import type { Persistence } from '@/platform/database/persistence';
+import { layFoundations, type Foundations } from '@/platform/lay-foundations';
+import { platformModule, type PlatformOptions } from '@/platform/platform.module';
 // The barrels do not list projections yet (docs/adr/0002): they are named here, or they are not subscribed.
-import { OutcomesProjection } from '@/contexts/analytics/application/projections/outcomes.projection.js';
-import { ContactsProjection } from '@/contexts/notification/application/projections/contacts.projection.js';
-import { AgendaProjection } from '@/contexts/scheduling/application/projections/agenda.projection.js';
-import { PractitionersProjection } from '@/contexts/scheduling/application/projections/practitioners.projection.js';
+import { OutcomesProjection } from '@/contexts/analytics/application/projections/outcomes.projection';
+import { ContactsProjection } from '@/contexts/notification/application/projections/contacts.projection';
+import { AgendaProjection } from '@/contexts/scheduling/application/projections/agenda.projection';
+import { PractitionersProjection } from '@/contexts/scheduling/application/projections/practitioners.projection';
 // ddd-ts-kit:imports
-import * as identityDeclarations from '@/contexts/identity/identity.declarations.js';
-import { identityRoutes } from '@/contexts/identity/presentation/http/identity.routes.js';
-import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations.js';
-import { schedulingRoutes } from '@/contexts/scheduling/presentation/http/scheduling.routes.js';
-import * as notificationDeclarations from '@/contexts/notification/notification.declarations.js';
-import { notificationRoutes } from '@/contexts/notification/presentation/http/notification.routes.js';
-import * as analyticsDeclarations from '@/contexts/analytics/analytics.declarations.js';
-import { analyticsRoutes } from '@/contexts/analytics/presentation/http/analytics.routes.js';
+import * as identityDeclarations from '@/contexts/identity/identity.declarations';
+import { identityRoutes } from '@/contexts/identity/presentation/http/identity.routes';
+import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations';
+import { schedulingRoutes } from '@/contexts/scheduling/presentation/http/scheduling.routes';
+import * as notificationDeclarations from '@/contexts/notification/notification.declarations';
+import { notificationRoutes } from '@/contexts/notification/presentation/http/notification.routes';
+import * as analyticsDeclarations from '@/contexts/analytics/analytics.declarations';
+import { analyticsRoutes } from '@/contexts/analytics/presentation/http/analytics.routes';
 // /ddd-ts-kit:imports
 
 export interface ApplicationOptions extends PlatformOptions {

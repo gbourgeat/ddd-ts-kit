@@ -1,11 +1,11 @@
 import { Clock, IdGenerator, unwrap } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
-import { Calendar } from '@/contexts/scheduling/domain/aggregates/calendar.aggregate.js';
-import { UnknownPractitionerError } from '@/contexts/scheduling/domain/errors/unknown-practitioner.error.js';
-import { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository.js';
-import { TimeZone } from '@/contexts/scheduling/domain/value-objects/time-zone.vo.js';
-import { PractitionerDirectory } from '@/contexts/scheduling/application/ports/practitioner-directory.port.js';
-import { CreateCalendarCommand } from '@/contexts/scheduling/application/commands/create-calendar/create-calendar.command.js';
+import { Calendar } from '@/contexts/scheduling/domain/aggregates/calendar.aggregate';
+import { UnknownPractitionerError } from '@/contexts/scheduling/domain/errors/unknown-practitioner.error';
+import { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository';
+import { TimeZone } from '@/contexts/scheduling/domain/value-objects/time-zone.vo';
+import { PractitionerDirectory } from '@/contexts/scheduling/application/ports/practitioner-directory.port';
+import { CreateCalendarCommand } from '@/contexts/scheduling/application/commands/create-calendar/create-calendar.command';
 
 @CommandHandler(CreateCalendarCommand, [CalendarRepository, PractitionerDirectory, IdGenerator, Clock])
 export class CreateCalendarHandler implements CommandHandler<CreateCalendarCommand> {

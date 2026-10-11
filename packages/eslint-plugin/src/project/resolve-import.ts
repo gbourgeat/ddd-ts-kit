@@ -12,6 +12,9 @@ export type ImportTarget =
 
 const SOURCE = /\.(?:ts|mts|cts)$/;
 
+/** A file that is not a module of the project, named with its own extension. */
+const ASSET = /\.(?:json|node|wasm|[jt]sx)$/;
+
 const BUILTINS = new Set(builtinModules);
 
 export function resolveImport(config: Config, fromFile: string, specifier: string): ImportTarget {
@@ -38,7 +41,8 @@ export function resolveImport(config: Config, fromFile: string, specifier: strin
 
 function fileTarget(config: Config, target: string): ImportTarget {
   const clean = path.posix.normalize(target).replace(/\.(?:js|mjs|cjs)$/, '.ts');
-  const withExtension = SOURCE.test(clean) || path.posix.extname(clean) !== '' ? clean : `${clean}.ts`;
+  // Written without its extension, a module is named by what remains, dots included: `invoice.aggregate` is `invoice.aggregate.ts`.
+  const withExtension = SOURCE.test(clean) || ASSET.test(clean) ? clean : `${clean}.ts`;
 
   return { kind: 'file', path: withExtension, location: locate(config, withExtension) };
 }

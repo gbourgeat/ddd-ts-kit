@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { executeRoute } from '@ddd-ts-kit/http';
 import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';
-import { AddMemberCommand } from '@/contexts/identity/application/commands/add-member/add-member.command.js';
-import { AlreadyMemberError } from '@/contexts/identity/domain/errors/already-member.error.js';
-import { PersonNotRegisteredError } from '@/contexts/identity/domain/errors/person-not-registered.error.js';
-import { PracticeNotFoundError } from '@/contexts/identity/domain/errors/practice-not-found.error.js';
-import { UnknownRoleError } from '@/contexts/identity/domain/errors/unknown-role.error.js';
-import { addMemberRoute } from '@/contexts/identity/presentation/http/add-member.route.js';
+import { AddMemberCommand } from '@/contexts/identity/application/commands/add-member/add-member.command';
+import { AlreadyMemberError } from '@/contexts/identity/domain/errors/already-member.error';
+import { PersonNotRegisteredError } from '@/contexts/identity/domain/errors/person-not-registered.error';
+import { PracticeNotFoundError } from '@/contexts/identity/domain/errors/practice-not-found.error';
+import { UnknownRoleError } from '@/contexts/identity/domain/errors/unknown-role.error';
+import { addMemberRoute } from '@/contexts/identity/presentation/http/add-member.route';
 
 const params = { practiceId: 'practice-1' };
 const body = { personId: 'person-2', role: 'assistant' };

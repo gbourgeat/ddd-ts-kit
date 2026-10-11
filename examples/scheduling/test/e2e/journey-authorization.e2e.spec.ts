@@ -1,13 +1,13 @@
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { eventually, expectProblem, expectStatus, type HttpClient, type HttpResponse } from '@ddd-ts-kit/testing/e2e';
-import { bookAppointment } from '$test/e2e/support/book-appointment.js';
-import type { Listed } from '$test/e2e/support/listed.js';
-import { openStaffedPractice } from '$test/e2e/support/open-staffed-practice.js';
-import { registerPeople } from '$test/e2e/support/register-people.js';
-import { slotStarting } from '$test/e2e/support/slot-starting.js';
-import type { StaffedPractice } from '$test/e2e/support/staffed-practice.js';
-import { startApplication, type RunningApplication } from '$test/e2e/support/start-application.js';
+import { bookAppointment } from '$test/e2e/support/book-appointment';
+import type { Listed } from '$test/e2e/support/listed';
+import { openStaffedPractice } from '$test/e2e/support/open-staffed-practice';
+import { registerPeople } from '$test/e2e/support/register-people';
+import { slotStarting } from '$test/e2e/support/slot-starting';
+import type { StaffedPractice } from '$test/e2e/support/staffed-practice';
+import { startApplication, type RunningApplication } from '$test/e2e/support/start-application';
 
 interface Identified {
   readonly id: string;

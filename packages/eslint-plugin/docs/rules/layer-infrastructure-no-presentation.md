@@ -16,13 +16,13 @@ Incorrect:
 
 ```ts
 // src/contexts/billing/infrastructure/persistence/drizzle-invoice.repository.ts
-import type { IssueInvoiceBody } from '@/contexts/billing/presentation/http/issue-invoice.dto.js';
+import type { IssueInvoiceBody } from '@/contexts/billing/presentation/http/issue-invoice.dto';
 ```
 
 Correct:
 
 ```ts
-import type { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository.js';
+import type { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository';
 ```
 
 ## Details

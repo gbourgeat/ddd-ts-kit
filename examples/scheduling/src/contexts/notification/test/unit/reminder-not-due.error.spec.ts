@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { ReminderNotDueError } from '@/contexts/notification/domain/errors/reminder-not-due.error.js';
+import { ReminderNotDueError } from '@/contexts/notification/domain/errors/reminder-not-due.error';
 
 describe('ReminderNotDueError', () => {
   it('carries its stable code', () => {

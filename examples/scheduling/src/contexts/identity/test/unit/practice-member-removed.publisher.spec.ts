@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { InMemoryEventBus, SequentialIdGenerator } from '@ddd-ts-kit/kernel';
-import { PracticeMemberRemovedPublisher } from '@/contexts/identity/application/integration/publishers/practice-member-removed.publisher.js';
-import { PracticeMemberRemoved } from '@/contexts/identity/domain/events/practice-member-removed.event.js';
+import { PracticeMemberRemovedPublisher } from '@/contexts/identity/application/integration/publishers/practice-member-removed.publisher';
+import { PracticeMemberRemoved } from '@/contexts/identity/domain/events/practice-member-removed.event';
 
 describe('Publishing "practice member removed" to other contexts', () => {
   it('publishes, with every field of the public payload, version 1 of identity.practice.member-removed', async () => {

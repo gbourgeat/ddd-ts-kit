@@ -2,9 +2,9 @@ import { actorOf } from '@ddd-ts-kit/auth';
 import { defineRoute, type Route } from '@ddd-ts-kit/http';
 import type { CommandBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
-import { CreateCalendarCommand } from '@/contexts/scheduling/application/commands/create-calendar/create-calendar.command.js';
-import { CreateCalendarBody } from '@/contexts/scheduling/presentation/http/create-calendar-body.dto.js';
-import { CreateCalendarAccepted } from '@/contexts/scheduling/presentation/http/create-calendar-accepted.dto.js';
+import { CreateCalendarCommand } from '@/contexts/scheduling/application/commands/create-calendar/create-calendar.command';
+import { CreateCalendarBody } from '@/contexts/scheduling/presentation/http/create-calendar-body.dto';
+import { CreateCalendarAccepted } from '@/contexts/scheduling/presentation/http/create-calendar-accepted.dto';
 
 const body = classSchema(CreateCalendarBody);
 const accepted = classSchema(CreateCalendarAccepted);

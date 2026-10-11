@@ -1,8 +1,8 @@
 import { ValueObject, err, ok, type Result } from '@ddd-ts-kit/kernel';
-import { InvalidDayError } from '@/contexts/scheduling/domain/errors/invalid-day.error.js';
-import { InvalidRangeError } from '@/contexts/scheduling/domain/errors/invalid-range.error.js';
-import { Range } from '@/contexts/scheduling/domain/value-objects/range.vo.js';
-import { TimeZone } from '@/contexts/scheduling/domain/value-objects/time-zone.vo.js';
+import { InvalidDayError } from '@/contexts/scheduling/domain/errors/invalid-day.error';
+import { InvalidRangeError } from '@/contexts/scheduling/domain/errors/invalid-range.error';
+import { Range } from '@/contexts/scheduling/domain/value-objects/range.vo';
+import { TimeZone } from '@/contexts/scheduling/domain/value-objects/time-zone.vo';
 
 export type ExceptionProps = {
   readonly day: string;

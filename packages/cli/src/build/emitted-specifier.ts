@@ -1,27 +1,19 @@
 import path from 'node:path';
 import type { EmittedPlace } from './emitted-place.js';
+import { emittedTarget } from './emitted-target.js';
 
 const DECLARATION = /\.d\.[cm]?ts$/;
 
 /**
  * The relative specifier that names, from an emitted file, the emitted file an alias specifier
- * stands for, with its `.js` extension; nothing when the build emitted no such file. Both files
- * are given from the project root.
+ * stands for, always with its `.js` extension: Node resolves no other spelling. Nothing when the
+ * build emitted no such file, or when the specifier is not written as the project writes its
+ * imports. Both files are given from the project root.
  */
 export function emittedSpecifier(place: EmittedPlace, file: string, specifier: string): string | undefined {
-  const root = place.roots.find(({ prefix }) => specifier.startsWith(prefix));
+  const target = emittedTarget(place, specifier);
 
-  if (root === undefined) {
-    return undefined;
-  }
-
-  const { rootDir, outDir } = place.layout;
-  const directory = path.posix.join(outDir, path.posix.relative(rootDir, root.directory));
-  const named = path.posix.join(directory, specifier.slice(root.prefix.length));
-  const emitted = (candidate: string): boolean => place.isFile(candidate) || declared(place, file, candidate);
-  const target = [named, `${named}.js`, `${named}/index.js`].find(emitted);
-
-  if (target === undefined) {
+  if (target === undefined || !(place.isFile(target) || declared(place, file, target))) {
     return undefined;
   }
 

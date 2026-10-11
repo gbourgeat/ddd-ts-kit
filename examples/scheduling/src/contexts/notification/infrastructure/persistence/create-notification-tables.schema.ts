@@ -1,6 +1,6 @@
 // ddd-ts-kit:imports
 import type { Knex } from 'knex';
-import { NOTIFICATION_SCHEMA } from '@/contexts/notification/infrastructure/persistence/notification.schema.js';
+import { NOTIFICATION_SCHEMA } from '@/contexts/notification/infrastructure/persistence/notification.schema';
 import { auditColumns, readModelColumns } from '@ddd-ts-kit/knex';
 // /ddd-ts-kit:imports
 

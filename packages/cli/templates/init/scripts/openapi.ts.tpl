@@ -1,11 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { checkOpenApiDrift, generateOpenApi, stringifyOpenApi } from '@ddd-ts-kit/http/openapi';
-import { offlineAuthenticator } from '{{alias.platform}}/auth/offline-authenticator.js';
-import { securitySchemes } from '{{alias.platform}}/auth/security-schemes.js';
-import { composeApplication } from '{{alias.platform}}/compose-application.js';
-import { inertPersistence } from '{{alias.platform}}/database/inert-persistence.js';
-import { inProcessEvents } from '{{alias.platform}}/events/in-process-events.js';
+import { offlineAuthenticator } from '{{alias.platform}}/auth/offline-authenticator{{alias.ext}}';
+import { securitySchemes } from '{{alias.platform}}/auth/security-schemes{{alias.ext}}';
+import { composeApplication } from '{{alias.platform}}/compose-application{{alias.ext}}';
+import { inertPersistence } from '{{alias.platform}}/database/inert-persistence{{alias.ext}}';
+import { inProcessEvents } from '{{alias.platform}}/events/in-process-events{{alias.ext}}';
 
 // Generates openapi/openapi.json from the route definitions; with --check, fails when the
 // committed file differs. The file is a build product: never edit it by hand.

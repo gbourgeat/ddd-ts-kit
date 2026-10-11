@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { given } from '@ddd-ts-kit/testing';
-import { Notification } from '@/contexts/notification/domain/aggregates/notification.aggregate.js';
-import { aNotification } from '@/contexts/notification/test/builders/notification.builder.js';
+import { Notification } from '@/contexts/notification/domain/aggregates/notification.aggregate';
+import { aNotification } from '@/contexts/notification/test/builders/notification.builder';
 
 describe('Notification', () => {
   it('is born with its identity', () => {

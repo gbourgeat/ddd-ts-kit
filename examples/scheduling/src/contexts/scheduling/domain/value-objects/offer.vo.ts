@@ -1,7 +1,7 @@
 import { ValueObject, err, ok, type Result } from '@ddd-ts-kit/kernel';
-import { InvalidOfferError } from '@/contexts/scheduling/domain/errors/invalid-offer.error.js';
-import type { Slot } from '@/contexts/scheduling/domain/value-objects/slot.vo.js';
-import type { Waiter } from '@/contexts/scheduling/domain/value-objects/waiter.vo.js';
+import { InvalidOfferError } from '@/contexts/scheduling/domain/errors/invalid-offer.error';
+import type { Slot } from '@/contexts/scheduling/domain/value-objects/slot.vo';
+import type { Waiter } from '@/contexts/scheduling/domain/value-objects/waiter.vo';
 
 export type OfferProps = {
   readonly waiter: Waiter;

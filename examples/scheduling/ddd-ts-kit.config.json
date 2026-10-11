@@ -4,6 +4,7 @@
   "sharedKernelDir": "src/shared-kernel",
   "platformDir": "src/platform",
   "importAlias": "@/",
+  "importExtension": "none",
   "stack": {
     "http": "express",
     "validation": "class-validator",

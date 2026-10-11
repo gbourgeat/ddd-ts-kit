@@ -97,7 +97,7 @@ class, which is then the injection token:
 ```ts
 // platform/database/database.ts
 import { PrismaContext } from '@ddd-ts-kit/prisma';
-import type { Prisma } from '$generated/prisma/client.js';
+import type { Prisma } from '$generated/prisma/client';
 
 export abstract class Database extends PrismaContext<Prisma.TransactionClient> {}
 ```
@@ -116,8 +116,8 @@ import {
   PrismaOutboxStore,
   PrismaProcessedEventStore,
 } from '@ddd-ts-kit/prisma';
-import { PrismaClient } from '$generated/prisma/client.js';
-import { Database } from '@/platform/database/database.js';
+import { PrismaClient } from '$generated/prisma/client';
+import { Database } from '@/platform/database/database';
 
 const prisma = new PrismaClient({
   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),

@@ -16,13 +16,13 @@ Incorrect:
 
 ```ts
 // src/contexts/billing/application/...
-import { Product } from '@/contexts/catalog/domain/aggregates/product.aggregate.js';
+import { Product } from '@/contexts/catalog/domain/aggregates/product.aggregate';
 ```
 
 Correct:
 
 ```ts
-import type { ProductListedV1 } from '@/contexts/catalog/published-language/index.js';
+import type { ProductListedV1 } from '@/contexts/catalog/published-language/index';
 ```
 
 ## Details

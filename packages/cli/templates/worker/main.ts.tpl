@@ -1,19 +1,19 @@
 // Imported first on purpose: instrumentation has to be installed before any module it patches is loaded.
-import { tracing } from '{{alias.platform}}/tracing.js';
+import { tracing } from '{{alias.platform}}/tracing{{alias.ext}}';
 {{#if errors.sentry}}
 // Imported second on purpose: a failure while the rest of the application loads is already reported.
-import { errors } from '{{alias.platform}}/errors.js';
+import { errors } from '{{alias.platform}}/errors{{alias.ext}}';
 {{/if}}
 {{#if http.any}}
-import { createAuthenticator } from '{{alias.platform}}/auth/create-authenticator.js';
+import { createAuthenticator } from '{{alias.platform}}/auth/create-authenticator{{alias.ext}}';
 {{/if}}
-import { composeApplication } from '{{alias.platform}}/compose-application.js';
-import { loadConfig } from '{{alias.platform}}/config/load-config.js';
-import { openPersistence } from '{{alias.platform}}/database/open-persistence.js';
-import { {{events.providerName}} } from '{{alias.platform}}/events/{{events.providerFile}}.js';
-import { jobSettings } from '{{alias.platform}}/job-settings.js';
+import { composeApplication } from '{{alias.platform}}/compose-application{{alias.ext}}';
+import { loadConfig } from '{{alias.platform}}/config/load-config{{alias.ext}}';
+import { openPersistence } from '{{alias.platform}}/database/open-persistence{{alias.ext}}';
+import { {{events.providerName}} } from '{{alias.platform}}/events/{{events.providerFile}}{{alias.ext}}';
+import { jobSettings } from '{{alias.platform}}/job-settings{{alias.ext}}';
 {{#if cache.redis}}
-import { openRedis } from '{{alias.platform}}/redis/open-redis.js';
+import { openRedis } from '{{alias.platform}}/redis/open-redis{{alias.ext}}';
 {{/if}}
 
 // The scheduled jobs in a process of their own: the same modules as `main.ts`, no HTTP server{{#if events.outbox}}, no outbox relay (the API keeps the one relay){{/if}}.

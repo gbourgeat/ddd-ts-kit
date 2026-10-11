@@ -42,7 +42,7 @@ describe('scheduled jobs in the platform', () => {
         'jobs: { start: config.runJobs, settings: jobSettings(process.env) },',
       );
 
-      expect(read(root, 'src/main.ts')).toContain("import { jobSettings } from '@/platform/job-settings.js';");
+      expect(read(root, 'src/main.ts')).toContain("import { jobSettings } from '@/platform/job-settings';");
     },
   );
 

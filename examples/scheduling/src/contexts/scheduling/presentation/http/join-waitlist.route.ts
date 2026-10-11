@@ -2,10 +2,10 @@ import { actorOf } from '@ddd-ts-kit/auth';
 import { defineRoute, type Route } from '@ddd-ts-kit/http';
 import type { CommandBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
-import { JoinWaitlistCommand } from '@/contexts/scheduling/application/commands/join-waitlist/join-waitlist.command.js';
-import { JoinWaitlistParams } from '@/contexts/scheduling/presentation/http/join-waitlist-params.dto.js';
-import { JoinWaitlistBody } from '@/contexts/scheduling/presentation/http/join-waitlist-body.dto.js';
-import { JoinWaitlistAccepted } from '@/contexts/scheduling/presentation/http/join-waitlist-accepted.dto.js';
+import { JoinWaitlistCommand } from '@/contexts/scheduling/application/commands/join-waitlist/join-waitlist.command';
+import { JoinWaitlistParams } from '@/contexts/scheduling/presentation/http/join-waitlist-params.dto';
+import { JoinWaitlistBody } from '@/contexts/scheduling/presentation/http/join-waitlist-body.dto';
+import { JoinWaitlistAccepted } from '@/contexts/scheduling/presentation/http/join-waitlist-accepted.dto';
 
 const params = classSchema(JoinWaitlistParams);
 const body = classSchema(JoinWaitlistBody);

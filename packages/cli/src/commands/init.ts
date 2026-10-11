@@ -25,14 +25,11 @@ const STACK_FLAGS = [
   'assembly',
 ] as const;
 
+const OTHER_TEXT_FLAGS = ['docs-ui', 'allow-no-outbox', 'import-alias', 'import-extension', 'package-manager'];
+
 export const initCommand: Command = (argv, io) => {
   const args = Arguments.parse(argv, {
-    ...Object.fromEntries(
-      [...STACK_FLAGS, 'docs-ui', 'allow-no-outbox', 'import-alias', 'package-manager'].map((flag) => [
-        flag,
-        { type: 'string' as const },
-      ]),
-    ),
+    ...Object.fromEntries([...STACK_FLAGS, ...OTHER_TEXT_FLAGS].map((flag) => [flag, { type: 'string' as const }])),
     context: { type: 'string', multiple: true },
     'dry-run': { type: 'boolean', default: false },
     force: { type: 'boolean', default: false },
@@ -65,6 +62,7 @@ function stackOptions(args: Arguments) {
   const docsUi = args.text('docs-ui');
   const allowNoOutbox = args.text('allow-no-outbox');
   const importAlias = args.text('import-alias');
+  const importExtension = args.text('import-extension');
   const packageManager = args.text('package-manager');
 
   return {
@@ -72,6 +70,7 @@ function stackOptions(args: Arguments) {
     ...(docsUi === undefined ? {} : { docsUi }),
     ...(allowNoOutbox === undefined ? {} : { allowNoOutbox }),
     ...(importAlias === undefined ? {} : { importAlias }),
+    ...(importExtension === undefined ? {} : { importExtension }),
     ...(packageManager === undefined ? {} : { packageManager }),
   };
 }

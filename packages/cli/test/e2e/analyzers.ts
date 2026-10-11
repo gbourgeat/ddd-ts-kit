@@ -27,6 +27,7 @@ export const NEW_ESLINT_RULES = [
   'ddd-ts-kit/scheduling-job-triggers-use-case',
   'ddd-ts-kit/scheduling-job-name',
   'ddd-ts-kit/imports-alias-only',
+  'ddd-ts-kit/imports-extension',
   '@stylistic/padding-line-between-statements',
   '@stylistic/lines-between-class-members',
 ];

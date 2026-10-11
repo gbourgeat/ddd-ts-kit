@@ -1,7 +1,7 @@
 import { IdGenerator, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
-import { {{event.pascal}} } from '{{alias.context}}/domain/events/{{event.kebab}}.event.js';
-import { {{event.camel}}V{{event.version}} } from '{{alias.context}}/published-language/{{event.kebab}}.v{{event.version}}.integration-event.js';
+import { {{event.pascal}} } from '{{alias.context}}/domain/events/{{event.kebab}}.event{{alias.ext}}';
+import { {{event.camel}}V{{event.version}} } from '{{alias.context}}/published-language/{{event.kebab}}.v{{event.version}}.integration-event{{alias.ext}}';
 
 @DomainEventHandler({{event.pascal}}, { name: '{{event.name}}' }, [IntegrationEventPublisher, IdGenerator])
 export class {{publisher.pascal}}Publisher implements DomainEventHandler<{{event.pascal}}> {

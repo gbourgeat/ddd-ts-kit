@@ -1,8 +1,8 @@
 import { AuthorizedQuery, type Actor, type Criteria } from '@ddd-ts-kit/kernel';
 import { Requires } from '@ddd-ts-kit/kernel/declarations';
-import { analyticsPermissions } from '@/contexts/analytics/application/authorization/analytics.permissions.js';
-import type { Occupancy } from '@/contexts/analytics/application/ports/occupancy-reader.port.js';
-import type { SearchOccupancyResult } from '@/contexts/analytics/application/queries/search-occupancy/search-occupancy.result.js';
+import { analyticsPermissions } from '@/contexts/analytics/application/authorization/analytics.permissions';
+import type { Occupancy } from '@/contexts/analytics/application/ports/occupancy-reader.port';
+import type { SearchOccupancyResult } from '@/contexts/analytics/application/queries/search-occupancy/search-occupancy.result';
 
 @Requires(analyticsPermissions['occupancy.read'], {
   resource: (query: SearchOccupancyQuery) => ({ type: 'practice', id: query.practiceId }),

@@ -1,8 +1,8 @@
 import { Clock } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
-import { AppointmentNotFoundError } from '@/contexts/scheduling/domain/errors/appointment-not-found.error.js';
-import { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository.js';
-import { MarkAppointmentNoShowCommand } from '@/contexts/scheduling/application/commands/mark-appointment-no-show/mark-appointment-no-show.command.js';
+import { AppointmentNotFoundError } from '@/contexts/scheduling/domain/errors/appointment-not-found.error';
+import { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository';
+import { MarkAppointmentNoShowCommand } from '@/contexts/scheduling/application/commands/mark-appointment-no-show/mark-appointment-no-show.command';
 
 @CommandHandler(MarkAppointmentNoShowCommand, [AppointmentRepository, Clock])
 export class MarkAppointmentNoShowHandler implements CommandHandler<MarkAppointmentNoShowCommand> {

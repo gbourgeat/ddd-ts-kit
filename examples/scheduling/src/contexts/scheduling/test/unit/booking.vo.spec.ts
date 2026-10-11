@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { unwrap } from '@ddd-ts-kit/kernel';
-import { Booking, type BookingProps } from '@/contexts/scheduling/domain/value-objects/booking.vo.js';
-import { Slot } from '@/contexts/scheduling/domain/value-objects/slot.vo.js';
+import { Booking, type BookingProps } from '@/contexts/scheduling/domain/value-objects/booking.vo';
+import { Slot } from '@/contexts/scheduling/domain/value-objects/slot.vo';
 
 const morning: BookingProps = {
   calendarId: 'calendar-1',

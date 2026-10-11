@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { InvalidOfferError } from '@/contexts/scheduling/domain/errors/invalid-offer.error.js';
+import { InvalidOfferError } from '@/contexts/scheduling/domain/errors/invalid-offer.error';
 
 describe('InvalidOfferError', () => {
   it('carries its stable code', () => {

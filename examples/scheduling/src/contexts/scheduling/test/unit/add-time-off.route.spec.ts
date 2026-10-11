@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { executeRoute } from '@ddd-ts-kit/http';
 import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';
-import { AddTimeOffCommand } from '@/contexts/scheduling/application/commands/add-time-off/add-time-off.command.js';
-import { TimeOffOverAppointmentsError } from '@/contexts/scheduling/domain/errors/time-off-over-appointments.error.js';
-import { addTimeOffRoute } from '@/contexts/scheduling/presentation/http/add-time-off.route.js';
+import { AddTimeOffCommand } from '@/contexts/scheduling/application/commands/add-time-off/add-time-off.command';
+import { TimeOffOverAppointmentsError } from '@/contexts/scheduling/domain/errors/time-off-over-appointments.error';
+import { addTimeOffRoute } from '@/contexts/scheduling/presentation/http/add-time-off.route';
 
 const valid = { startsAt: '2026-08-03T00:00:00.000Z', endsAt: '2026-08-17T00:00:00.000+02:00' };
 

@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { executeRoute } from '@ddd-ts-kit/http';
 import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';
-import { RemoveMemberCommand } from '@/contexts/identity/application/commands/remove-member/remove-member.command.js';
-import { NotAMemberError } from '@/contexts/identity/domain/errors/not-a-member.error.js';
-import { PracticeLeftUnmanagedError } from '@/contexts/identity/domain/errors/practice-left-unmanaged.error.js';
-import { PracticeNotFoundError } from '@/contexts/identity/domain/errors/practice-not-found.error.js';
-import { removeMemberRoute } from '@/contexts/identity/presentation/http/remove-member.route.js';
+import { RemoveMemberCommand } from '@/contexts/identity/application/commands/remove-member/remove-member.command';
+import { NotAMemberError } from '@/contexts/identity/domain/errors/not-a-member.error';
+import { PracticeLeftUnmanagedError } from '@/contexts/identity/domain/errors/practice-left-unmanaged.error';
+import { PracticeNotFoundError } from '@/contexts/identity/domain/errors/practice-not-found.error';
+import { removeMemberRoute } from '@/contexts/identity/presentation/http/remove-member.route';
 
 const params = { practiceId: 'practice-1', personId: 'person-2' };
 const body = undefined;

@@ -2,10 +2,10 @@ import { actorOf } from '@ddd-ts-kit/auth';
 import { defineRoute, type Route } from '@ddd-ts-kit/http';
 import type { CommandBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
-import { AddMemberCommand } from '@/contexts/identity/application/commands/add-member/add-member.command.js';
-import { AddMemberParams } from '@/contexts/identity/presentation/http/add-member-params.dto.js';
-import { AddMemberBody } from '@/contexts/identity/presentation/http/add-member-body.dto.js';
-import { AddMemberAccepted } from '@/contexts/identity/presentation/http/add-member-accepted.dto.js';
+import { AddMemberCommand } from '@/contexts/identity/application/commands/add-member/add-member.command';
+import { AddMemberParams } from '@/contexts/identity/presentation/http/add-member-params.dto';
+import { AddMemberBody } from '@/contexts/identity/presentation/http/add-member-body.dto';
+import { AddMemberAccepted } from '@/contexts/identity/presentation/http/add-member-accepted.dto';
 
 const params = classSchema(AddMemberParams);
 const body = classSchema(AddMemberBody);

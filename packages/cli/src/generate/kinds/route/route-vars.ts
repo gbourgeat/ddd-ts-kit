@@ -1,4 +1,4 @@
-import { contextAlias } from '../../../alias/index.js';
+import { specifierOf } from '../../../alias/index.js';
 import { toName, type Name } from '../../../naming/index.js';
 import type { RenderContext } from '../../../templating/index.js';
 import type { Scope } from '../../scope.js';
@@ -15,7 +15,8 @@ export interface RouteParts {
 /** What the templates of a route read: its endpoint, the use case it calls and how the stack validates. */
 export function routeVars(scope: Scope, { name, endpoint, useCase }: RouteParts): RenderContext {
   const hasBody = ['POST', 'PUT', 'PATCH'].includes(endpoint.method);
-  const alias = contextAlias(scope.config, scope.context.kebab);
+  const { config, context } = scope;
+  const inContext = (file: string): string => specifierOf(config, `${config.contextsDir}/${context.kebab}/${file}`);
 
   return {
     method: endpoint.method,
@@ -32,11 +33,11 @@ export function routeVars(scope: Scope, { name, endpoint, useCase }: RouteParts)
     dtoImports: dtoClasses(endpoint, useCase)
       .map(
         (role) =>
-          `import { ${name.pascal}${toName(role).pascal} } from '${alias}/presentation/http/${name.kebab}-${role}.dto.js';`,
+          `import { ${name.pascal}${toName(role).pascal} } from '${inContext(`presentation/http/${name.kebab}-${role}.dto.ts`)}';`,
       )
       .join('\n'),
     ...requestVars(scope, endpoint, hasBody),
-    ...busVars(useCase, alias),
+    ...busVars(useCase, inContext(`${useCase.messageFile}.ts`)),
     ...securityVars(scope, useCase),
     ...parameterVars(endpoint.parameters),
   };
@@ -66,8 +67,8 @@ function successStatus(endpoint: Endpoint, useCase: UseCase): number {
   return endpoint.method === 'POST' ? 201 : 200;
 }
 
-function busVars(useCase: UseCase, alias: string): RenderContext {
-  const message = `import { ${useCase.message} } from '${alias}/${useCase.messageFile}.js';`;
+function busVars(useCase: UseCase, messageFile: string): RenderContext {
+  const message = `import { ${useCase.message} } from '${messageFile}';`;
 
   return {
     input: useCase.message,

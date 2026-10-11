@@ -1,9 +1,9 @@
 import { unwrap } from '@ddd-ts-kit/kernel';
 import { Builder, sequence, type Defaults } from '@ddd-ts-kit/testing';
-import { Practice } from '@/contexts/identity/domain/aggregates/practice.aggregate.js';
-import { DisplayName } from '@/contexts/identity/domain/value-objects/display-name.vo.js';
-import { Role, type RoleName } from '@/contexts/identity/domain/value-objects/role.vo.js';
-import { TimeZone } from '@/contexts/identity/domain/value-objects/time-zone.vo.js';
+import { Practice } from '@/contexts/identity/domain/aggregates/practice.aggregate';
+import { DisplayName } from '@/contexts/identity/domain/value-objects/display-name.vo';
+import { Role, type RoleName } from '@/contexts/identity/domain/value-objects/role.vo';
+import { TimeZone } from '@/contexts/identity/domain/value-objects/time-zone.vo';
 
 interface PracticeIngredients {
   readonly id: string;

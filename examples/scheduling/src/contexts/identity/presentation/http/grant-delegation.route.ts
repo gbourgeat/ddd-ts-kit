@@ -2,10 +2,10 @@ import { actorOf } from '@ddd-ts-kit/auth';
 import { defineRoute, type Route } from '@ddd-ts-kit/http';
 import type { CommandBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
-import { GrantDelegationCommand } from '@/contexts/identity/application/commands/grant-delegation/grant-delegation.command.js';
-import { GrantDelegationParams } from '@/contexts/identity/presentation/http/grant-delegation-params.dto.js';
-import { GrantDelegationBody } from '@/contexts/identity/presentation/http/grant-delegation-body.dto.js';
-import { GrantDelegationAccepted } from '@/contexts/identity/presentation/http/grant-delegation-accepted.dto.js';
+import { GrantDelegationCommand } from '@/contexts/identity/application/commands/grant-delegation/grant-delegation.command';
+import { GrantDelegationParams } from '@/contexts/identity/presentation/http/grant-delegation-params.dto';
+import { GrantDelegationBody } from '@/contexts/identity/presentation/http/grant-delegation-body.dto';
+import { GrantDelegationAccepted } from '@/contexts/identity/presentation/http/grant-delegation-accepted.dto';
 
 const params = classSchema(GrantDelegationParams);
 const body = classSchema(GrantDelegationBody);

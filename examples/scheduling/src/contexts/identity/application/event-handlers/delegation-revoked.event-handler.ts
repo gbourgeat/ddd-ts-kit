@@ -1,6 +1,6 @@
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
-import { DelegationRevoked } from '@/contexts/identity/domain/events/delegation-revoked.event.js';
-import { IdentityRelationships } from '@/contexts/identity/application/ports/identity-relationships.port.js';
+import { DelegationRevoked } from '@/contexts/identity/domain/events/delegation-revoked.event';
+import { IdentityRelationships } from '@/contexts/identity/application/ports/identity-relationships.port';
 
 /** When a delegation ends, whatever the cause, the platform forgets that the assistant is a delegate on that desk. */
 @DomainEventHandler(DelegationRevoked, { name: 'identity.delegation.revoked' }, [IdentityRelationships])

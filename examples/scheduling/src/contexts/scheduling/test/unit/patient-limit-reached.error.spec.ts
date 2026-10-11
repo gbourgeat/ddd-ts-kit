@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { PatientLimitReachedError } from '@/contexts/scheduling/domain/errors/patient-limit-reached.error.js';
+import { PatientLimitReachedError } from '@/contexts/scheduling/domain/errors/patient-limit-reached.error';
 
 describe('PatientLimitReachedError', () => {
   it('carries its stable code', () => {

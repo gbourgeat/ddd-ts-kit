@@ -1,5 +1,5 @@
 import { describe, expect, it } from '{{tests.module}}';
-import { {{name.pascal}}Service } from '{{alias.context}}/domain/services/{{name.kebab}}.service.js';
+import { {{name.pascal}}Service } from '{{alias.context}}/domain/services/{{name.kebab}}.service{{alias.ext}}';
 
 describe('{{name.pascal}}Service', () => {
   it('holds no state of its own', () => {

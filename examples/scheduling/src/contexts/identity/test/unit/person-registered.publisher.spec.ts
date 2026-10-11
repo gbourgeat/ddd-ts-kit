@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { InMemoryEventBus, SequentialIdGenerator } from '@ddd-ts-kit/kernel';
-import { PersonRegisteredPublisher } from '@/contexts/identity/application/integration/publishers/person-registered.publisher.js';
-import { PersonRegistered } from '@/contexts/identity/domain/events/person-registered.event.js';
+import { PersonRegisteredPublisher } from '@/contexts/identity/application/integration/publishers/person-registered.publisher';
+import { PersonRegistered } from '@/contexts/identity/domain/events/person-registered.event';
 
 describe('Publishing "person registered" to other contexts', () => {
   it('publishes, with every field of the public payload, version 1 of identity.person.registered', async () => {

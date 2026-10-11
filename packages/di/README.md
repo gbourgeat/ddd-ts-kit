@@ -102,7 +102,7 @@ export class GetInvoiceHandler implements QueryHandler<GetInvoice> { /* ... */ }
 // contexts/billing/application/integration/handlers/invoice-on-order-placed.integration-handler.ts
 import { CommandBus, systemActor, type IntegrationEvent } from '@ddd-ts-kit/kernel';
 import { IntegrationEventHandler } from '@ddd-ts-kit/kernel/declarations';
-import { OrderPlaced, type OrderPlacedPayload } from '@/contexts/ordering/published-language/index.js';
+import { OrderPlaced, type OrderPlacedPayload } from '@/contexts/ordering/published-language/index';
 
 @IntegrationEventHandler(OrderPlaced, { consumer: 'billing.invoice-on-order-placed' }, [CommandBus])
 export class InvoiceOnOrderPlaced implements IntegrationEventHandler<OrderPlacedPayload> {
@@ -165,7 +165,7 @@ const invoiceId = await app.resolve(CommandBus).execute(new IssueInvoice(actor, 
 ```ts
 // main.ts, listed: one generated barrel per context and nothing else
 import { contextModule } from '@ddd-ts-kit/di';
-import * as billing from '@/contexts/billing/billing.declarations.js';
+import * as billing from '@/contexts/billing/billing.declarations';
 
 const app = createApplication({ modules: [kernelModule(), platformModule, contextModule('billing', billing)] });
 ```
@@ -381,7 +381,7 @@ in the same files.
 // contexts/ordering/ordering.module.ts
 import { Clock, CommandBus, IdGenerator, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
 import { defineContextModule } from '@ddd-ts-kit/di';
-import { PaymentCaptured } from '@/contexts/billing/published-language/index.js';
+import { PaymentCaptured } from '@/contexts/billing/published-language/index';
 
 export const orderingModule = defineContextModule({
   name: 'ordering',

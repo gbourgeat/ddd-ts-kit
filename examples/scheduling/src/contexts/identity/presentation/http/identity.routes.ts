@@ -1,12 +1,12 @@
 import type { Route } from '@ddd-ts-kit/http';
 import type { CommandBus, QueryBus } from '@ddd-ts-kit/kernel';
 // ddd-ts-kit:imports
-import { registerPersonRoute } from '@/contexts/identity/presentation/http/register-person.route.js';
-import { openPracticeRoute } from '@/contexts/identity/presentation/http/open-practice.route.js';
-import { addMemberRoute } from '@/contexts/identity/presentation/http/add-member.route.js';
-import { removeMemberRoute } from '@/contexts/identity/presentation/http/remove-member.route.js';
-import { grantDelegationRoute } from '@/contexts/identity/presentation/http/grant-delegation.route.js';
-import { revokeDelegationRoute } from '@/contexts/identity/presentation/http/revoke-delegation.route.js';
+import { registerPersonRoute } from '@/contexts/identity/presentation/http/register-person.route';
+import { openPracticeRoute } from '@/contexts/identity/presentation/http/open-practice.route';
+import { addMemberRoute } from '@/contexts/identity/presentation/http/add-member.route';
+import { removeMemberRoute } from '@/contexts/identity/presentation/http/remove-member.route';
+import { grantDelegationRoute } from '@/contexts/identity/presentation/http/grant-delegation.route';
+import { revokeDelegationRoute } from '@/contexts/identity/presentation/http/revoke-delegation.route';
 // /ddd-ts-kit:imports
 
 export function identityRoutes(commands: CommandBus, queries: QueryBus): readonly Route[] {

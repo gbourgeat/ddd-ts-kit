@@ -5,6 +5,7 @@ import {
   CONFIG_FILE,
   FUNCTION_LINES_CEILING,
   GUARD_MODES,
+  IMPORT_EXTENSIONS,
   isOneOf,
   RELATIONSHIPS,
   SEVERITIES,
@@ -83,6 +84,23 @@ export class ConfigInspection {
         'guard',
         `"guard" is "${guard}".`,
         `Use one of: ${GUARD_MODES.join(', ')} (how the editor hook reacts to a violation: refuse the write, only report it, or stay silent).`,
+      ),
+    ];
+  }
+
+  /** Another value is read as `js`: the config says something no tool does. */
+  importExtension(): Violation[] {
+    const { importExtension } = this.project.config;
+
+    if (isOneOf(IMPORT_EXTENSIONS, importExtension)) {
+      return [];
+    }
+
+    return [
+      this.inConfig(
+        'importExtension',
+        `"importExtension" is "${importExtension}".`,
+        `Use one of: ${IMPORT_EXTENSIONS.join(', ')} (whether an import of a file of the project is written without an extension, or with the ".js" of the file the compiler emits; a config without the key is read as "js").`,
       ),
     ];
   }

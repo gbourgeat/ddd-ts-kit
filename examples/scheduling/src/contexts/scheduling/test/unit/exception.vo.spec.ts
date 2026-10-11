@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { unwrap } from '@ddd-ts-kit/kernel';
-import { InvalidDayError } from '@/contexts/scheduling/domain/errors/invalid-day.error.js';
-import { InvalidRangeError } from '@/contexts/scheduling/domain/errors/invalid-range.error.js';
-import { Exception } from '@/contexts/scheduling/domain/value-objects/exception.vo.js';
-import { Range } from '@/contexts/scheduling/domain/value-objects/range.vo.js';
+import { InvalidDayError } from '@/contexts/scheduling/domain/errors/invalid-day.error';
+import { InvalidRangeError } from '@/contexts/scheduling/domain/errors/invalid-range.error';
+import { Exception } from '@/contexts/scheduling/domain/value-objects/exception.vo';
+import { Range } from '@/contexts/scheduling/domain/value-objects/range.vo';
 
 describe('Exception', () => {
   it('is equal to another exception of the same day with the same ranges', () => {

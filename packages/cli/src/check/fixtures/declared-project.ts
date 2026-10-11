@@ -15,7 +15,10 @@ export function declaredProject(files: FixtureFiles, overrides: FixtureFiles = {
       file.startsWith(directory) ? [file.slice(directory.length)] : [],
     );
 
-    return [`${directory}${barrelFile(context)}`, renderBarrel(inside, `@/contexts/${context}`)];
+    return [
+      `${directory}${barrelFile(context)}`,
+      renderBarrel(inside, (entry) => `@/contexts/${context}/${entry.replace(/\.ts$/, '.js')}`),
+    ];
   });
 
   return { ...written, ...Object.fromEntries(barrels), ...overrides };

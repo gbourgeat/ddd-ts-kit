@@ -2,8 +2,8 @@
 import { DeadLetterReports, NoopErrorReporter, type ErrorReporter } from '@ddd-ts-kit/kernel';
 {{/if}}
 import { NatsEventBus } from '@ddd-ts-kit/nats';
-import type { AppConfig } from '{{alias.platform}}/config/app-config.js';
-import type { EventProvider } from '{{alias.platform}}/events/event-provider.js';
+import type { AppConfig } from '{{alias.platform}}/config/app-config{{alias.ext}}';
+import type { EventProvider } from '{{alias.platform}}/events/event-provider{{alias.ext}}';
 
 /**
  * NATS JetStream: the relay of the outbox publishes to one stream and marks a record published

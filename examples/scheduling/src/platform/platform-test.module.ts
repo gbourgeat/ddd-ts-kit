@@ -1,10 +1,10 @@
 import { InMemoryRelationTupleStore, RelationTupleStore, SchemaCheckedTupleStore } from '@ddd-ts-kit/auth/rebac';
 import { defineContextModule } from '@ddd-ts-kit/di';
 import { KnexContext } from '@ddd-ts-kit/knex';
-import { relationshipSchema } from '@/platform/auth/relationship-schema.js';
+import { relationshipSchema } from '@/platform/auth/relationship-schema';
 // ddd-ts-kit:imports
-import { PersonDirectoryContract } from '@/contexts/identity/published-language/index.js';
-import { AppointmentExportContract } from '@/contexts/scheduling/published-language/index.js';
+import { PersonDirectoryContract } from '@/contexts/identity/published-language/index';
+import { AppointmentExportContract } from '@/contexts/scheduling/published-language/index';
 // /ddd-ts-kit:imports
 
 /** The platform of a handler spec: no storage behind it, so every repository a test touches has to be faked. */

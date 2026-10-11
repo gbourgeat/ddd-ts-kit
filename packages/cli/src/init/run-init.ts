@@ -1,11 +1,12 @@
 import path from 'node:path';
-import { CONFIG_FILE, serializeConfig, type Config } from '../config/index.js';
+import { CONFIG_FILE, restackConfigText, serializeConfig, type Config } from '../config/index.js';
 import { DEPCRUISE_FILE } from '../depcruise/depcruise-file.js';
 import { renderCruiseFile } from '../depcruise/render-cruise-file.js';
 import { writeDocs } from '../docs/write-docs.js';
 import { declareContextEntries } from '../generate/kinds/declare-context-entries.js';
+import { wireContext } from '../generate/kinds/wire-context.js';
 import { formatJson } from '../json/format-json.js';
-import { toName } from '../naming/index.js';
+import { parseContextName, toName } from '../naming/index.js';
 import { inDialect } from '../package-manager/in-dialect.js';
 import { readTemplate, renderTemplate } from '../templating/index.js';
 import { Workspace, type WorkspaceReport } from '../workspace/index.js';
@@ -33,13 +34,17 @@ export function runInit(root: string, options: InitOptions): WorkspaceReport {
   const config = recordNoOutbox(ws, resolveStack(root, options), options.allowNoOutbox);
   const projectName = existingName(root) ?? (toName(path.basename(path.resolve(root))).kebab || 'app');
 
-  ws.create(CONFIG_FILE, serializeConfig(config));
+  ws.create(CONFIG_FILE, configText(ws, config));
   writeManifest(ws, { config, projectName, force: options.force });
   writeTypeScriptConfigs(ws, config);
   writeFiles(ws, config, projectName);
   ws.create(DEPCRUISE_FILE, renderCruiseFile(config));
   writeAgentSettings(ws);
   ws.create(`${config.sharedKernelDir}/.gitkeep`, '');
+
+  if (options.force) {
+    rewireContexts(ws, config);
+  }
 
   const withContexts = addContexts(ws, config, options.contexts);
 
@@ -53,6 +58,37 @@ export function runInit(root: string, options: InitOptions): WorkspaceReport {
   }
 
   return report;
+}
+
+/** A new project gets its config whole; one that is initialised again with --force keeps what its team wrote around the stack. */
+function configText(ws: Workspace, config: Config): string {
+  const recorded = ws.read(CONFIG_FILE);
+
+  try {
+    return recorded === undefined ? serializeConfig(config) : restackConfigText(recorded, config);
+  } catch {
+    return serializeConfig(config);
+  }
+}
+
+/**
+ * `--force` just rewrote the composition root, the proof that each context wires alone and the
+ * registry of permissions from their templates: the contexts the config declares, which it kept,
+ * are wired into them again. What another generator had added to a file of the platform (the
+ * value a gateway is given, the settings of a job) is not known here, and is said.
+ */
+function rewireContexts(ws: Workspace, config: Config): void {
+  const present = Object.entries(config.contexts).filter(([name]) => ws.exists(`${config.contextsDir}/${name}`));
+
+  for (const [name, { classification, upstreams }] of present) {
+    wireContext(ws, { config, context: parseContextName(name), request: { name, classification, upstreams } });
+  }
+
+  if (present.length > 0) {
+    ws.note(
+      `--force rewrote the files of the platform from their templates and wired the declared contexts again (${present.map(([name]) => name).join(', ')}). What a generator had added to one of those files besides (the value of a gateway, the settings of a job, a policy of its own) is gone: run \`npm run verify\`, and generate again what it reports missing.`,
+    );
+  }
 }
 
 /** The contexts asked of this run, then what every context of the project needs from the analyzers: one that is initialised again keeps its own. */

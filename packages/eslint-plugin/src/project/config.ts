@@ -47,6 +47,8 @@ export interface Config {
   readonly sharedKernelDir: string;
   readonly platformDir: string;
   readonly importAlias: string;
+  /** `none` or `js`: whether an import of a file of the project ends with the extension of the emitted file. */
+  readonly importExtension: string;
   readonly contexts: Readonly<Record<string, ContextConfig>>;
   readonly rules: Readonly<Record<string, string>>;
   readonly domainAllowedPackages: readonly string[];

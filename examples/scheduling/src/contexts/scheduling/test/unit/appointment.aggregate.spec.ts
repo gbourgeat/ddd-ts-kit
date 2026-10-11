@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { unwrap } from '@ddd-ts-kit/kernel';
 import { given } from '@ddd-ts-kit/testing';
-import { Appointment } from '@/contexts/scheduling/domain/aggregates/appointment.aggregate.js';
-import { AppointmentAlreadyConfirmedError } from '@/contexts/scheduling/domain/errors/appointment-already-confirmed.error.js';
-import { AppointmentEndedError } from '@/contexts/scheduling/domain/errors/appointment-ended.error.js';
-import { AppointmentNotStartedError } from '@/contexts/scheduling/domain/errors/appointment-not-started.error.js';
-import { Cancellation } from '@/contexts/scheduling/domain/value-objects/cancellation.vo.js';
-import { Slot } from '@/contexts/scheduling/domain/value-objects/slot.vo.js';
-import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder.js';
+import { Appointment } from '@/contexts/scheduling/domain/aggregates/appointment.aggregate';
+import { AppointmentAlreadyConfirmedError } from '@/contexts/scheduling/domain/errors/appointment-already-confirmed.error';
+import { AppointmentEndedError } from '@/contexts/scheduling/domain/errors/appointment-ended.error';
+import { AppointmentNotStartedError } from '@/contexts/scheduling/domain/errors/appointment-not-started.error';
+import { Cancellation } from '@/contexts/scheduling/domain/value-objects/cancellation.vo';
+import { Slot } from '@/contexts/scheduling/domain/value-objects/slot.vo';
+import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder';
 
 const bornAt = new Date('2026-03-01T00:00:00.000Z');
 const deadline = new Date('2026-03-01T12:00:00.000Z');

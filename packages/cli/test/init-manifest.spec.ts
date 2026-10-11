@@ -131,16 +131,25 @@ describe('the package.json init writes', () => {
 });
 
 describe('the tsconfig.json init writes, and the import alias', () => {
-  it('writes a strict NodeNext tsconfig, and decorator flags only when the stack needs them', () => {
+  it('writes a strict tsconfig that resolves an import without its extension, and decorator flags only when the stack needs them', () => {
     const plain = jsonAt(readJson(initProject(...NPM), 'tsconfig.json'), 'compilerOptions');
     const nest = jsonAt(readJson(initProject(...NPM, '--http', 'nest'), 'tsconfig.json'), 'compilerOptions');
 
     expect(plain).toMatchObject({
       strict: true,
-      module: 'NodeNext',
-      moduleResolution: 'NodeNext',
+      module: 'ESNext',
+      moduleResolution: 'Bundler',
+      customConditions: ['node'],
+      verbatimModuleSyntax: true,
       rootDir: '.',
       outDir: 'dist',
+    });
+
+    expect(
+      jsonAt(readJson(initProject(...NPM, '--import-extension', 'js'), 'tsconfig.json'), 'compilerOptions'),
+    ).toMatchObject({
+      module: 'NodeNext',
+      moduleResolution: 'NodeNext',
     });
 
     expect(plain).not.toHaveProperty('baseUrl');

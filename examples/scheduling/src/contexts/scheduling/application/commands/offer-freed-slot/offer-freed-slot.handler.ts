@@ -1,16 +1,16 @@
 import { Clock, IdGenerator, unwrap } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
-import { Appointment } from '@/contexts/scheduling/domain/aggregates/appointment.aggregate.js';
-import type { Calendar } from '@/contexts/scheduling/domain/aggregates/calendar.aggregate.js';
-import { Waitlist } from '@/contexts/scheduling/domain/aggregates/waitlist.aggregate.js';
-import { UnknownCalendarError } from '@/contexts/scheduling/domain/errors/unknown-calendar.error.js';
-import { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository.js';
-import { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository.js';
-import { WaitlistRepository } from '@/contexts/scheduling/domain/repositories/waitlist.repository.js';
-import { Booking } from '@/contexts/scheduling/domain/value-objects/booking.vo.js';
-import type { Offer } from '@/contexts/scheduling/domain/value-objects/offer.vo.js';
-import { Slot } from '@/contexts/scheduling/domain/value-objects/slot.vo.js';
-import { OfferFreedSlotCommand } from '@/contexts/scheduling/application/commands/offer-freed-slot/offer-freed-slot.command.js';
+import { Appointment } from '@/contexts/scheduling/domain/aggregates/appointment.aggregate';
+import type { Calendar } from '@/contexts/scheduling/domain/aggregates/calendar.aggregate';
+import { Waitlist } from '@/contexts/scheduling/domain/aggregates/waitlist.aggregate';
+import { UnknownCalendarError } from '@/contexts/scheduling/domain/errors/unknown-calendar.error';
+import { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository';
+import { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository';
+import { WaitlistRepository } from '@/contexts/scheduling/domain/repositories/waitlist.repository';
+import { Booking } from '@/contexts/scheduling/domain/value-objects/booking.vo';
+import type { Offer } from '@/contexts/scheduling/domain/value-objects/offer.vo';
+import { Slot } from '@/contexts/scheduling/domain/value-objects/slot.vo';
+import { OfferFreedSlotCommand } from '@/contexts/scheduling/application/commands/offer-freed-slot/offer-freed-slot.command';
 
 /**
  * The waitlist decides who the freed slot goes to; the offer is then a requested appointment

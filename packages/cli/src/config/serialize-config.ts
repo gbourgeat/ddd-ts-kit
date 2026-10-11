@@ -1,7 +1,7 @@
 import type { Config } from './config.js';
 import { DEFAULT_COMMIT_LIMITS } from './default-commit-limits.js';
 import { isReferenceCoverage } from './is-reference-coverage.js';
-import type { Stack } from './stack.js';
+import { writtenStack } from './written-stack.js';
 import { formatJson } from '../json/format-json.js';
 
 /** The config as written to disk: defaults are spelled out so the file documents itself. */
@@ -12,6 +12,7 @@ export function serializeConfig(config: Config): string {
     sharedKernelDir,
     platformDir,
     importAlias,
+    importExtension,
     rules,
     domainAllowedPackages,
     applicationAllowedPackages,
@@ -23,6 +24,7 @@ export function serializeConfig(config: Config): string {
     sharedKernelDir,
     platformDir,
     importAlias,
+    importExtension,
     stack: writtenStack(config.stack),
     contexts: writtenContexts(config),
     rules,
@@ -61,11 +63,4 @@ function optionalKeys(config: Config): Record<string, unknown> {
     ...(sized ? { commit } : {}),
     ...(worker ? { worker } : {}),
   };
-}
-
-/** The assembly is a choice of the declared style only: an explicit project has a module file and nothing to assemble. */
-function writtenStack(stack: Stack): Partial<Stack> {
-  const { assembly, packageManager, ...rest } = stack;
-
-  return stack.style === 'declared' ? { ...rest, assembly, packageManager } : { ...rest, packageManager };
 }

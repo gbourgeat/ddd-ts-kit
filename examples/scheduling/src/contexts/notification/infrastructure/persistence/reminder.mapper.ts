@@ -1,8 +1,8 @@
-import { Reminder } from '@/contexts/notification/domain/aggregates/reminder.aggregate.js';
+import { Reminder } from '@/contexts/notification/domain/aggregates/reminder.aggregate';
 import type {
   ReminderColumns,
   ReminderRow,
-} from '@/contexts/notification/infrastructure/persistence/reminder-row.schema.js';
+} from '@/contexts/notification/infrastructure/persistence/reminder-row.schema';
 
 export const ReminderMapper = {
   toDomain(row: ReminderRow): Reminder {

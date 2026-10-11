@@ -1,9 +1,9 @@
 import { unwrap } from '@ddd-ts-kit/kernel';
 import { Builder, sequence, type Defaults } from '@ddd-ts-kit/testing';
-import { Appointment } from '@/contexts/scheduling/domain/aggregates/appointment.aggregate.js';
-import { Booking } from '@/contexts/scheduling/domain/value-objects/booking.vo.js';
-import { Cancellation } from '@/contexts/scheduling/domain/value-objects/cancellation.vo.js';
-import { Slot } from '@/contexts/scheduling/domain/value-objects/slot.vo.js';
+import { Appointment } from '@/contexts/scheduling/domain/aggregates/appointment.aggregate';
+import { Booking } from '@/contexts/scheduling/domain/value-objects/booking.vo';
+import { Cancellation } from '@/contexts/scheduling/domain/value-objects/cancellation.vo';
+import { Slot } from '@/contexts/scheduling/domain/value-objects/slot.vo';
 
 const MINUTE = 60_000;
 

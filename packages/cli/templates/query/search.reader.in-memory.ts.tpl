@@ -2,16 +2,16 @@ import type { AccessScope } from '@ddd-ts-kit/auth';
 import { InvalidPageRequestError, decodeCursor, encodeCursor, pageOf, type PageRequest } from '@ddd-ts-kit/kernel';
 {{#if style.declared}}
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
-import { {{name.pascal}}Reader } from '{{alias.context}}/application/ports/{{name.kebab}}-reader.port.js';
+import { {{name.pascal}}Reader } from '{{alias.context}}/application/ports/{{name.kebab}}-reader.port{{alias.ext}}';
 {{/if}}
 {{#unless style.declared}}
-import type { {{name.pascal}}Reader } from '{{alias.context}}/application/ports/{{name.kebab}}-reader.port.js';
+import type { {{name.pascal}}Reader } from '{{alias.context}}/application/ports/{{name.kebab}}-reader.port{{alias.ext}}';
 {{/unless}}
 import type {
   {{name.pascal}}Item,
   {{name.pascal}}Result,
   {{name.pascal}}Sort,
-} from '{{alias.context}}/application/queries/{{name.kebab}}/{{name.kebab}}.result.js';
+} from '{{alias.context}}/application/queries/{{name.kebab}}/{{name.kebab}}.result{{alias.ext}}';
 
 {{#if style.declared}}
 @Repository({{name.pascal}}Reader)

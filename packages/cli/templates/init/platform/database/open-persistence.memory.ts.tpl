@@ -5,7 +5,7 @@ import { InMemoryOutboxStore, InMemoryRelaySignal } from '@ddd-ts-kit/events';
 import { InMemoryOutboxStore } from '@ddd-ts-kit/events';
 {{/unless}}
 import { InMemoryProcessedEventStore, InMemoryUnitOfWork } from '@ddd-ts-kit/kernel';
-import type { Persistence } from '{{alias.platform}}/database/persistence.js';
+import type { Persistence } from '{{alias.platform}}/database/persistence{{alias.ext}}';
 
 {{#if orm.custom}}
 /**

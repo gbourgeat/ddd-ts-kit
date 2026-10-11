@@ -1,7 +1,7 @@
 import { LOG_LEVELS, type LogLevel } from '@ddd-ts-kit/kernel';
-import type { AppConfig } from '@/platform/config/app-config.js';
-import { ConfigError } from '@/platform/config/config-error.js';
-import { readTracing } from '@/platform/config/read-tracing.js';
+import type { AppConfig } from '@/platform/config/app-config';
+import { ConfigError } from '@/platform/config/config-error';
+import { readTracing } from '@/platform/config/read-tracing';
 
 const environments = ['development', 'test', 'production'] as const;
 

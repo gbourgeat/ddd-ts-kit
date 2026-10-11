@@ -12,11 +12,11 @@ paths:
 - Audit columns and the tenant column are stamped from the execution scope with the kernel helpers (`stampCreation`, `stampUpdate`, `tenantScopeOf`), never handed over by a use case.
 {{#if style.declared}}
 - An adapter declares itself on its class, one per file (`declarations/role-declared`): `@Repository(InvoiceRepository, [{{persistence.tokenOrNone}}, ExecutionScope, Clock])`, `@Gateway(Port, [Ports])` or `@Adapter(Port, { kind }, [Ports])`.
-- Retry, timeout and cache go on the declaration (`aspects: [ownPolicy(retry(...), timeout(...))]`) or, when the policy is part of what the adapter is, as decorators of `@ddd-ts-kit/aspects/decorators` (`aspects/outside-in`). Kinds `external` and `gateway` get the default policy of the platform otherwise. `ownPolicy` is the helper of `{{alias.platform}}/resilience/own-policy.js`, which `generate adapter` writes when the platform does not have it yet.
+- Retry, timeout and cache go on the declaration (`aspects: [ownPolicy(retry(...), timeout(...))]`) or, when the policy is part of what the adapter is, as decorators of `@ddd-ts-kit/aspects/decorators` (`aspects/outside-in`). Kinds `external` and `gateway` get the default policy of the platform otherwise. `ownPolicy` is the helper of `{{alias.platform}}/resilience/own-policy{{alias.ext}}`, which `generate adapter` writes when the platform does not have it yet.
 {{/if}}
 {{#if style.explicit}}
 - An adapter is bound to its port in `<context>.module.ts` only (`composition/only-in-module`), with its kind (`repository`, `gateway`, `external`).
-- Retry, timeout and cache go on the binding (`ownPolicy(retry(...), timeout(...))`) or, when the policy is part of what the adapter is, as decorators of `@ddd-ts-kit/aspects/decorators` (`aspects/outside-in`). Kinds `external` and `gateway` get the default policy of the platform otherwise. `ownPolicy` is the helper of `{{alias.platform}}/resilience/own-policy.js`, which `generate adapter` writes when the platform does not have it yet.
+- Retry, timeout and cache go on the binding (`ownPolicy(retry(...), timeout(...))`) or, when the policy is part of what the adapter is, as decorators of `@ddd-ts-kit/aspects/decorators` (`aspects/outside-in`). Kinds `external` and `gateway` get the default policy of the platform otherwise. `ownPolicy` is the helper of `{{alias.platform}}/resilience/own-policy{{alias.ext}}`, which `generate adapter` writes when the platform does not have it yet.
 {{/if}}
 - A repository only persists: no `pullEvents()`, no dispatcher (`domain-events/dispatched-on-save`). A removal that announces an event takes the aggregate, not its id.
 - Infrastructure faults are plain errors (a 5xx, reported from outside); business refusals are `DomainError`s raised by the domain.

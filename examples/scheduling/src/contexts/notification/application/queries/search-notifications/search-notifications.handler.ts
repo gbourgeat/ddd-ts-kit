@@ -1,9 +1,9 @@
 import { Access } from '@ddd-ts-kit/auth';
 import { QueryHandler } from '@ddd-ts-kit/kernel/declarations';
-import { notificationPermissions } from '@/contexts/notification/application/authorization/notification.permissions.js';
-import { SearchNotificationsReader } from '@/contexts/notification/application/ports/search-notifications-reader.port.js';
-import { SearchNotificationsQuery } from '@/contexts/notification/application/queries/search-notifications/search-notifications.query.js';
-import type { SearchNotificationsResult } from '@/contexts/notification/application/queries/search-notifications/search-notifications.result.js';
+import { notificationPermissions } from '@/contexts/notification/application/authorization/notification.permissions';
+import { SearchNotificationsReader } from '@/contexts/notification/application/ports/search-notifications-reader.port';
+import { SearchNotificationsQuery } from '@/contexts/notification/application/queries/search-notifications/search-notifications.query';
+import type { SearchNotificationsResult } from '@/contexts/notification/application/queries/search-notifications/search-notifications.result';
 
 @QueryHandler(SearchNotificationsQuery, [SearchNotificationsReader, Access])
 export class SearchNotificationsHandler implements QueryHandler<SearchNotificationsQuery> {

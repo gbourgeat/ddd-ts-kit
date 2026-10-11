@@ -2,9 +2,9 @@ import { actorOf } from '@ddd-ts-kit/auth';
 import { defineRoute, type Route } from '@ddd-ts-kit/http';
 import type { CommandBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
-import { RevokeDelegationCommand } from '@/contexts/identity/application/commands/revoke-delegation/revoke-delegation.command.js';
-import { RevokeDelegationParams } from '@/contexts/identity/presentation/http/revoke-delegation-params.dto.js';
-import { RevokeDelegationAccepted } from '@/contexts/identity/presentation/http/revoke-delegation-accepted.dto.js';
+import { RevokeDelegationCommand } from '@/contexts/identity/application/commands/revoke-delegation/revoke-delegation.command';
+import { RevokeDelegationParams } from '@/contexts/identity/presentation/http/revoke-delegation-params.dto';
+import { RevokeDelegationAccepted } from '@/contexts/identity/presentation/http/revoke-delegation-accepted.dto';
 
 const params = classSchema(RevokeDelegationParams);
 const accepted = classSchema(RevokeDelegationAccepted);

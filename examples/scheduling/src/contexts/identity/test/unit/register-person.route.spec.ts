@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { executeRoute } from '@ddd-ts-kit/http';
 import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';
-import { RegisterPersonCommand } from '@/contexts/identity/application/commands/register-person/register-person.command.js';
-import { InvalidDisplayNameError } from '@/contexts/identity/domain/errors/invalid-display-name.error.js';
-import { InvalidEmailError } from '@/contexts/identity/domain/errors/invalid-email.error.js';
-import { registerPersonRoute } from '@/contexts/identity/presentation/http/register-person.route.js';
+import { RegisterPersonCommand } from '@/contexts/identity/application/commands/register-person/register-person.command';
+import { InvalidDisplayNameError } from '@/contexts/identity/domain/errors/invalid-display-name.error';
+import { InvalidEmailError } from '@/contexts/identity/domain/errors/invalid-email.error';
+import { registerPersonRoute } from '@/contexts/identity/presentation/http/register-person.route';
 
 const params = {};
 const body = { displayName: 'Ada Lovelace', email: 'ada@example.com' };

@@ -2,7 +2,7 @@ import type {
   AppointmentExportContract,
   ExportedAppointment,
   ExportedAppointmentPage,
-} from '@/contexts/scheduling/published-language/index.js';
+} from '@/contexts/scheduling/published-language/index';
 
 const PAGE_SIZE = 2;
 

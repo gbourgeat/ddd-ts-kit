@@ -1,4 +1,4 @@
-import { platformAlias } from '../alias/index.js';
+import { specifierOf } from '../alias/index.js';
 import type { Config } from '../config/index.js';
 import type { RenderContext } from '../templating/index.js';
 import { isDeclared } from './is-declared.js';
@@ -18,7 +18,7 @@ export function storageVars(config: Config): RenderContext {
   const provided = PACKAGE_TOKENS[config.stack.orm];
   const token = provided?.token ?? 'Database';
 
-  const from = provided?.from ?? `${platformAlias(config)}/database/database.js`;
+  const from = provided?.from ?? specifierOf(config, `${config.platformDir}/database/database.ts`);
   const named = isDeclared(config) ? token : `type ${token}`;
 
   return {

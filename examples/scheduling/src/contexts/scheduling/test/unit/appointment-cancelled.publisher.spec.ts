@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { InMemoryEventBus, SequentialIdGenerator, unwrap } from '@ddd-ts-kit/kernel';
-import { AppointmentCancelledPublisher } from '@/contexts/scheduling/application/integration/publishers/appointment-cancelled.publisher.js';
-import { AppointmentCancelled } from '@/contexts/scheduling/domain/events/appointment-cancelled.event.js';
-import { Cancellation } from '@/contexts/scheduling/domain/value-objects/cancellation.vo.js';
-import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder.js';
+import { AppointmentCancelledPublisher } from '@/contexts/scheduling/application/integration/publishers/appointment-cancelled.publisher';
+import { AppointmentCancelled } from '@/contexts/scheduling/domain/events/appointment-cancelled.event';
+import { Cancellation } from '@/contexts/scheduling/domain/value-objects/cancellation.vo';
+import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder';
 
 const held = anAppointment()
   .identifiedBy('appointment-1')

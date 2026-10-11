@@ -3,14 +3,14 @@ import type { Authorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { anActor } from '@ddd-ts-kit/auth/testing';
 import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
-import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations.js';
-import { platformTestModule } from '@/platform/platform-test.module.js';
-import { Agenda, type AgendaEntry } from '@/contexts/scheduling/application/ports/agenda.port.js';
-import { GetAppointmentQuery } from '@/contexts/scheduling/application/queries/get-appointment/get-appointment.query.js';
-import { PersonDirectoryGateway } from '@/contexts/scheduling/application/ports/person-directory-gateway.port.js';
-import { anAgendaEntry } from '@/contexts/scheduling/test/builders/agenda-entry.builder.js';
-import { FakeAgenda } from '@/contexts/scheduling/test/fakes/agenda.fake.js';
-import { FakePersonDirectoryGateway } from '@/contexts/scheduling/test/fakes/person-directory-gateway.fake.js';
+import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations';
+import { platformTestModule } from '@/platform/platform-test.module';
+import { Agenda, type AgendaEntry } from '@/contexts/scheduling/application/ports/agenda.port';
+import { GetAppointmentQuery } from '@/contexts/scheduling/application/queries/get-appointment/get-appointment.query';
+import { PersonDirectoryGateway } from '@/contexts/scheduling/application/ports/person-directory-gateway.port';
+import { anAgendaEntry } from '@/contexts/scheduling/test/builders/agenda-entry.builder';
+import { FakeAgenda } from '@/contexts/scheduling/test/fakes/agenda.fake';
+import { FakePersonDirectoryGateway } from '@/contexts/scheduling/test/fakes/person-directory-gateway.fake';
 
 // As the relationships would answer: the patient of an appointment, and whoever runs its calendar, read it.
 const READABLE: Readonly<Record<string, readonly string[]>> = {

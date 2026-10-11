@@ -41,11 +41,11 @@ export function remember(currency: string, rate: number): void {
 }
 
 // billing/billing.module.ts
-import { ProductReader } from '@/contexts/catalog/application/ports/product-reader.port.js';
+import { ProductReader } from '@/contexts/catalog/application/ports/product-reader.port';
 builder.query(GetPrice).public().handledBy(GetPriceHandler, [ProductReader]);
 
 // declared style: billing/application/queries/get-price/get-price.handler.ts
-import { ProductReader } from '@/contexts/catalog/application/ports/product-reader.port.js';
+import { ProductReader } from '@/contexts/catalog/application/ports/product-reader.port';
 
 @QueryHandler(GetPriceQuery, [ProductReader])
 export class GetPriceHandler {}
@@ -62,7 +62,7 @@ builder.bind(PriceSource).toClass(InProcessPriceSource, [QueryBus]).as('gateway'
 builder.query(GetPrice).public().handledBy(GetPriceHandler, [PriceSource]);
 
 // declared style: the port is one of billing, its gateway calls catalog
-import { PriceCatalog } from '@/contexts/billing/application/ports/price-catalog.port.js';
+import { PriceCatalog } from '@/contexts/billing/application/ports/price-catalog.port';
 
 @QueryHandler(GetPriceQuery, [PriceCatalog])
 export class GetPriceHandler {}

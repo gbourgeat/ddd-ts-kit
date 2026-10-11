@@ -1,6 +1,7 @@
 import type { Injection } from '../injection.js';
 import { PATHS } from '../paths.js';
 import { SOURCE_ALIAS } from '../source-alias.js';
+import { SOURCE_SUFFIX } from '../source-suffix.js';
 
 const { ADAPTER, ANALYTICS, CONFIG, DUE_HANDLER, NOTIFICATION, OCCUPANCY_ROUTE, PLAN_HANDLER, PUBLISHED } = PATHS;
 const { SENT_AGGREGATE } = PATHS;
@@ -18,7 +19,7 @@ export const BOUNDARY_INJECTIONS: readonly Injection[] = [
       {
         file: SENT_AGGREGATE,
         where: 'start',
-        to: `import '${ALIAS}/infrastructure/persistence/reminder.mapper.js';\n`,
+        to: `import '${ALIAS}/infrastructure/persistence/reminder.mapper${SOURCE_SUFFIX}';\n`,
       },
     ],
     checker: true,
@@ -32,7 +33,7 @@ export const BOUNDARY_INJECTIONS: readonly Injection[] = [
       {
         file: PLAN_HANDLER,
         where: 'start',
-        to: `import '${ALIAS}/infrastructure/persistence/knex-reminder.repository.js';\n`,
+        to: `import '${ALIAS}/infrastructure/persistence/knex-reminder.repository${SOURCE_SUFFIX}';\n`,
       },
     ],
     checker: true,
@@ -46,7 +47,7 @@ export const BOUNDARY_INJECTIONS: readonly Injection[] = [
       {
         file: OCCUPANCY_ROUTE,
         where: 'start',
-        to: `import '${SOURCE_ALIAS}contexts/analytics/infrastructure/persistence/knex-occupancy-reader.repository.js';\n`,
+        to: `import '${SOURCE_ALIAS}contexts/analytics/infrastructure/persistence/knex-occupancy-reader.repository${SOURCE_SUFFIX}';\n`,
       },
     ],
     checker: true,
@@ -57,7 +58,11 @@ export const BOUNDARY_INJECTIONS: readonly Injection[] = [
     what: 'an adapter that imports a response body of the HTTP boundary',
     file: ADAPTER,
     changes: [
-      { file: ADAPTER, where: 'start', to: `import '${ALIAS}/presentation/http/search-notifications-line.dto.js';\n` },
+      {
+        file: ADAPTER,
+        where: 'start',
+        to: `import '${ALIAS}/presentation/http/search-notifications-line.dto${SOURCE_SUFFIX}';\n`,
+      },
     ],
     checker: true,
     eslint: 'ddd-ts-kit/layer-infrastructure-no-presentation',
@@ -70,7 +75,7 @@ export const BOUNDARY_INJECTIONS: readonly Injection[] = [
       {
         file: DUE_HANDLER,
         where: 'start',
-        to: `import '${SOURCE_ALIAS}contexts/scheduling/domain/aggregates/appointment.aggregate.js';\n`,
+        to: `import '${SOURCE_ALIAS}contexts/scheduling/domain/aggregates/appointment.aggregate${SOURCE_SUFFIX}';\n`,
       },
     ],
     checker: true,
@@ -84,7 +89,7 @@ export const BOUNDARY_INJECTIONS: readonly Injection[] = [
       {
         file: OCCUPANCY_HANDLER,
         where: 'start',
-        to: `import '${SOURCE_ALIAS}contexts/identity/published-language/index.js';\n`,
+        to: `import '${SOURCE_ALIAS}contexts/identity/published-language/index${SOURCE_SUFFIX}';\n`,
       },
     ],
     checker: true,
@@ -98,7 +103,7 @@ export const BOUNDARY_INJECTIONS: readonly Injection[] = [
       {
         file: PUBLISHED,
         where: 'start',
-        to: `import '${SOURCE_ALIAS}contexts/scheduling/domain/aggregates/appointment.aggregate.js';\n`,
+        to: `import '${SOURCE_ALIAS}contexts/scheduling/domain/aggregates/appointment.aggregate${SOURCE_SUFFIX}';\n`,
       },
     ],
     checker: true,

@@ -1,6 +1,6 @@
 import { CommandBus{{job.systemActorImport}} } from '@ddd-ts-kit/kernel';
 import { Scheduled, type JobExecution, type ScheduledJob } from '@ddd-ts-kit/kernel/declarations';
-import { {{job.command}}Command } from '{{alias.context}}/application/commands/{{job.commandKebab}}/{{job.commandKebab}}.command.js';
+import { {{job.command}}Command } from '{{alias.context}}/application/commands/{{job.commandKebab}}/{{job.commandKebab}}.command{{alias.ext}}';
 
 @Scheduled('{{job.name}}', {{job.schedule}}, [CommandBus])
 export class {{name.pascal}}Job implements ScheduledJob {

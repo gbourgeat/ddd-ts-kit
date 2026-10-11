@@ -1,7 +1,7 @@
 import { defineIntegrationEvent } from '@ddd-ts-kit/events';
 import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
-import { PracticeMemberRemovedV1Payload } from '@/contexts/identity/published-language/practice-member-removed.v1.payload.js';
+import { PracticeMemberRemovedV1Payload } from '@/contexts/identity/published-language/practice-member-removed.v1.payload';
 
 export const practiceMemberRemovedV1 = defineIntegrationEvent({
   type: 'identity.practice.member-removed',

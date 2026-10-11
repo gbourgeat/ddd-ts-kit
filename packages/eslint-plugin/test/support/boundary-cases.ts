@@ -12,7 +12,8 @@ export interface BoundaryCase {
 }
 
 /**
- * One forbidden import per boundary rule, written twice: by a relative path and by the alias.
+ * One forbidden import per boundary rule, written twice: by a relative path and by the alias,
+ * and replayed in each spelling of `SPELLINGS`.
  * The same table is replayed against the CLI checker (packages/cli/test/alias-boundaries.spec.ts).
  */
 export const BOUNDARY_CASES: readonly BoundaryCase[] = [
@@ -93,4 +94,10 @@ export const BOUNDARY_CASES: readonly BoundaryCase[] = [
     relative: '../../../../catalog/published-language/index.js',
     alias: '@/contexts/catalog/published-language/index.js',
   },
+];
+
+/** How a project writes an import, and the same specifier in that spelling: the table above is written with `.js`. */
+export const SPELLINGS: readonly (readonly [string, (specifier: string) => string])[] = [
+  ['js', (specifier) => specifier],
+  ['none', (specifier) => specifier.replace(/\.js$/, '')],
 ];

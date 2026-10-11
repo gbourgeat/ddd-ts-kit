@@ -1,4 +1,4 @@
-import type { Persistence } from '@/platform/database/persistence.js';
+import type { Persistence } from '@/platform/database/persistence';
 
 /**
  * An infrastructure fault a spec switches on and off: while it lasts, the storage refuses to

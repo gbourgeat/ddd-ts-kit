@@ -1,9 +1,9 @@
 import { describe, expect, it } from '{{tests.module}}';
 import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';
 {{#if upstream.known}}
-import { {{upstream.definition}} } from '{{alias.contexts}}/{{upstream.kebab}}/published-language/index.js';
+import { {{upstream.definition}} } from '{{alias.contexts}}/{{upstream.kebab}}/published-language/index{{alias.ext}}';
 {{/if}}
-import { {{name.pascal}}IntegrationHandler } from '{{alias.context}}/application/integration/handlers/{{name.kebab}}.integration-handler.js';
+import { {{name.pascal}}IntegrationHandler } from '{{alias.context}}/application/integration/handlers/{{name.kebab}}.integration-handler{{alias.ext}}';
 
 describe('When {{upstream.kebab}} publishes {{upstream.eventName}}', () => {
   it('listens to the type {{upstream.kebab}} publishes', () => {

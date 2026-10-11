@@ -20,6 +20,82 @@ interface Mutation {
 
 const swap = (from: string | RegExp, to: string) => (text: string) => text.replace(from, to);
 
+const RESOLUTION = /"module" and "moduleResolution" of tsconfig\.json are not what "importExtension" gives/;
+const WITH_JS = ['--import-extension', 'js'];
+
+/** The three declarations derived from "importExtension": how the compiler resolves, what jest maps, what the build writes. */
+const EXTENSION_MUTATIONS: readonly Mutation[] = [
+  {
+    what: 'tsconfig.json resolves as Node does although the imports carry no extension',
+    file: 'tsconfig.json',
+    change: swap('"moduleResolution": "Bundler"', '"moduleResolution": "NodeNext"'),
+    finding: RESOLUTION,
+  },
+  {
+    what: 'tsconfig.json emits another module format than the one the build completes',
+    file: 'tsconfig.json',
+    change: swap('"module": "ESNext"', '"module": "CommonJS"'),
+    finding: RESOLUTION,
+  },
+  {
+    what: 'tsconfig.json no longer gives the compiler the entry a package has for Node',
+    file: 'tsconfig.json',
+    change: swap('"customConditions": ["node"]', '"customConditions": []'),
+    finding: RESOLUTION,
+  },
+  {
+    what: 'tsconfig.build.json resolves another way than the type check',
+    file: 'tsconfig.build.json',
+    change: swap(
+      '"extends": "./tsconfig.json",',
+      '"extends": "./tsconfig.json",\n  "compilerOptions": { "module": "NodeNext", "moduleResolution": "NodeNext" },',
+    ),
+    finding: /"module" and "moduleResolution" of tsconfig\.build\.json are not what "importExtension" gives/,
+  },
+  {
+    what: 'the config asks for ".js" and tsconfig.json does not follow',
+    file: 'ddd-ts-kit.config.json',
+    change: swap('"importExtension": "none"', '"importExtension": "js"'),
+    reportedIn: 'tsconfig.json',
+    finding: RESOLUTION,
+  },
+  {
+    what: 'the config drops the extension and tsconfig.json does not follow',
+    file: 'ddd-ts-kit.config.json',
+    change: swap('"importExtension": "js"', '"importExtension": "none"'),
+    reportedIn: 'tsconfig.json',
+    finding: RESOLUTION,
+    flags: WITH_JS,
+  },
+  {
+    what: 'tsconfig.json resolves as a bundler although the imports end with ".js"',
+    file: 'tsconfig.json',
+    change: swap('"moduleResolution": "NodeNext"', '"moduleResolution": "Bundler"'),
+    finding: RESOLUTION,
+    flags: WITH_JS,
+  },
+  {
+    what: 'the jest config maps a specifier with ".js" although the imports carry none',
+    file: 'jest.config.js',
+    change: swap("'^@/(.*)$'", String.raw`'^@/(.*)\.js$'`),
+    finding: /jest\.config\.js does not map the import alias "\^@\/\(\.\*\)\$"/,
+    flags: JEST,
+  },
+  {
+    what: 'the jest config maps a specifier without ".js" although the imports end with it',
+    file: 'jest.config.js',
+    change: swap(String.raw`'^@/(.*)\\.js$'`, "'^@/(.*)$'"),
+    finding: /jest\.config\.js does not map the import alias "\^@\/\(\.\*\)\\\.js\$"/,
+    flags: [...JEST, ...WITH_JS],
+  },
+  {
+    what: 'the build script of a project without extensions loses the step that writes them',
+    file: 'package.json',
+    change: swap(' && ddd-ts-kit build-aliases', ''),
+    finding: /The script "build" compiles and does not run `ddd-ts-kit build-aliases` afterwards/,
+  },
+];
+
 /** Each declaration a tool reads, moved away from the one the config gives: `check` names the file and what to write. */
 const MUTATIONS: readonly Mutation[] = [
   {
@@ -94,8 +170,8 @@ const MUTATIONS: readonly Mutation[] = [
   {
     what: 'the jest config loses the mapping of the source root',
     file: 'jest.config.js',
-    change: swap(/\n\s*'\^@\/\(\.\*\)\\\\\.js\$': '<rootDir>\/src\/\$1\.ts',/, ''),
-    finding: /jest\.config\.js does not map the import alias "\^@\/\(\.\*\)\\\.js\$"/,
+    change: swap(/\n\s*'\^@\/\(\.\*\)\$': '<rootDir>\/src\/\$1\.ts',/, ''),
+    finding: /jest\.config\.js does not map the import alias "\^@\/\(\.\*\)\$"/,
     flags: JEST,
   },
   {
@@ -145,10 +221,11 @@ const MUTATIONS: readonly Mutation[] = [
   {
     what: 'the jest config loses the mapping of the tests',
     file: 'jest.config.js',
-    change: swap(/\n\s*'\^\\\\\$test\/\(\.\*\)\\\\\.js\$': '<rootDir>\/test\/\$1\.ts',/, ''),
+    change: swap(/\n\s*'\^\\\\\$test\/\(\.\*\)\$': '<rootDir>\/test\/\$1\.ts',/, ''),
     finding: /jest\.config\.js does not map the import alias "\^\\\$test\//,
     flags: JEST,
   },
+  ...EXTENSION_MUTATIONS,
 ];
 
 describe('the import alias has one declaration', () => {
@@ -158,6 +235,8 @@ describe('the import alias has one declaration', () => {
     [['--orm', 'prisma']],
     [['--http', 'nest']],
     [['--http', 'none', '--orm', 'none']],
+    [WITH_JS],
+    [[...JEST, ...WITH_JS]],
   ])('which init writes consistently (%j)', (flags) => {
     const found = checkJsonOf(cli(initProject(...flags), 'check', '--json')).violations;
 

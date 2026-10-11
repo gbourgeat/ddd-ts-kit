@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { AlreadyMemberError } from '@/contexts/identity/domain/errors/already-member.error.js';
+import { AlreadyMemberError } from '@/contexts/identity/domain/errors/already-member.error';
 
 describe('AlreadyMemberError', () => {
   it('carries its stable code', () => {

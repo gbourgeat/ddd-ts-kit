@@ -1,5 +1,5 @@
 import { Builder, sequence, type Defaults } from '@ddd-ts-kit/testing';
-import { Reminder } from '@/contexts/notification/domain/aggregates/reminder.aggregate.js';
+import { Reminder } from '@/contexts/notification/domain/aggregates/reminder.aggregate';
 
 interface ReminderIngredients {
   readonly id: string;

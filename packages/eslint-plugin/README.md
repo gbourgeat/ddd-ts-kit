@@ -129,6 +129,7 @@ is an error whatever the configured limit). `strict` sets every rule to `error`.
 | [`scheduling/job-triggers-use-case`](docs/rules/scheduling-job-triggers-use-case.md) | `ddd-ts-kit/scheduling-job-triggers-use-case` | a job lives in `application/scheduling/*.job.ts`, implements `ScheduledJob`, sends a command, and touches neither a repository nor the model | `error` | custom |
 | [`scheduling/job-name`](docs/rules/scheduling-job-name.md) | `ddd-ts-kit/scheduling-job-name` | a job is named `<context>.<job-name>` by a string literal, and its `systemActor` carries that name | `error` | custom |
 | [`imports/alias-only`](docs/rules/imports-alias-only.md) | `ddd-ts-kit/imports-alias-only` | a file of the project is imported by its alias (`@/...`, `$test/...`, `$scripts/...`), never by a relative path, the same directory included; no `.` or `..` segment in an alias path; fixable | `error` | custom |
+| [`imports/extension`](docs/rules/imports-extension.md) | `ddd-ts-kit/imports-extension` | an import of a file of the project ends as `importExtension` of the config says: no extension under `none`, `.js` under `js`; fixable | `error` | custom |
 
 `domain/*` and `application/*` ids are added by this plugin: the shape of a class needs a syntax
 tree, so the CLI checker has no equivalent. The `domain-events/*` ids are not among them: both tools

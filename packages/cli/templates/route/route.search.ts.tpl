@@ -18,7 +18,7 @@ import { classSchema } from '@ddd-ts-kit/validation/class-validator';
 {{/if}}
 {{route.useCaseImport}}
 {{#if validation.classValidator}}
-import { {{name.pascal}}Line } from '{{alias.context}}/presentation/http/{{name.kebab}}-line.dto.js';
+import { {{name.pascal}}Line } from '{{alias.context}}/presentation/http/{{name.kebab}}-line.dto{{alias.ext}}';
 {{/if}}
 
 // TODO(domain): list here the fields of {{name.pascal}}Sort a client may sort by, and bound the size of a page.

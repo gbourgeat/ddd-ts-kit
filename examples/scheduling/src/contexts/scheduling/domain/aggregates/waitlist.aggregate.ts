@@ -1,13 +1,13 @@
 import { AggregateRoot, DomainError, unwrap } from '@ddd-ts-kit/kernel';
-import { AlreadyWaitingError } from '@/contexts/scheduling/domain/errors/already-waiting.error.js';
-import { InvalidDayError } from '@/contexts/scheduling/domain/errors/invalid-day.error.js';
-import { WaitlistJoined } from '@/contexts/scheduling/domain/events/waitlist-joined.event.js';
-import { WaitlistSlotOffered } from '@/contexts/scheduling/domain/events/waitlist-slot-offered.event.js';
-import { Offer } from '@/contexts/scheduling/domain/value-objects/offer.vo.js';
-import type { Slot } from '@/contexts/scheduling/domain/value-objects/slot.vo.js';
-import { TimeZone } from '@/contexts/scheduling/domain/value-objects/time-zone.vo.js';
-import type { Waiter } from '@/contexts/scheduling/domain/value-objects/waiter.vo.js';
-import type { Calendar } from '@/contexts/scheduling/domain/aggregates/calendar.aggregate.js';
+import { AlreadyWaitingError } from '@/contexts/scheduling/domain/errors/already-waiting.error';
+import { InvalidDayError } from '@/contexts/scheduling/domain/errors/invalid-day.error';
+import { WaitlistJoined } from '@/contexts/scheduling/domain/events/waitlist-joined.event';
+import { WaitlistSlotOffered } from '@/contexts/scheduling/domain/events/waitlist-slot-offered.event';
+import { Offer } from '@/contexts/scheduling/domain/value-objects/offer.vo';
+import type { Slot } from '@/contexts/scheduling/domain/value-objects/slot.vo';
+import { TimeZone } from '@/contexts/scheduling/domain/value-objects/time-zone.vo';
+import type { Waiter } from '@/contexts/scheduling/domain/value-objects/waiter.vo';
+import type { Calendar } from '@/contexts/scheduling/domain/aggregates/calendar.aggregate';
 
 export interface WaitlistState {
   readonly registeredAt: Date;

@@ -2,10 +2,10 @@ import { actorOf } from '@ddd-ts-kit/auth';
 import { defineRoute, type Route } from '@ddd-ts-kit/http';
 import type { CommandBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
-import { AddTimeOffCommand } from '@/contexts/scheduling/application/commands/add-time-off/add-time-off.command.js';
-import { AddTimeOffParams } from '@/contexts/scheduling/presentation/http/add-time-off-params.dto.js';
-import { AddTimeOffBody } from '@/contexts/scheduling/presentation/http/add-time-off-body.dto.js';
-import { AddTimeOffAccepted } from '@/contexts/scheduling/presentation/http/add-time-off-accepted.dto.js';
+import { AddTimeOffCommand } from '@/contexts/scheduling/application/commands/add-time-off/add-time-off.command';
+import { AddTimeOffParams } from '@/contexts/scheduling/presentation/http/add-time-off-params.dto';
+import { AddTimeOffBody } from '@/contexts/scheduling/presentation/http/add-time-off-body.dto';
+import { AddTimeOffAccepted } from '@/contexts/scheduling/presentation/http/add-time-off-accepted.dto';
 
 const params = classSchema(AddTimeOffParams);
 const body = classSchema(AddTimeOffBody);

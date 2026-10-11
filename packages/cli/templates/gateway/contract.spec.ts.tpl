@@ -1,7 +1,7 @@
 import { describe, expect, it } from '{{tests.module}}';
-import type { {{name.pascal}}Gateway } from '{{alias.context}}/application/ports/{{name.kebab}}-gateway.port.js';
-import { InProcess{{name.pascal}}Gateway } from '{{alias.context}}/infrastructure/external/in-process-{{name.kebab}}.gateway.js';
-import { Fake{{name.pascal}}Gateway } from '{{alias.context}}/test/fakes/{{name.kebab}}-gateway.fake.js';
+import type { {{name.pascal}}Gateway } from '{{alias.context}}/application/ports/{{name.kebab}}-gateway.port{{alias.ext}}';
+import { InProcess{{name.pascal}}Gateway } from '{{alias.context}}/infrastructure/external/in-process-{{name.kebab}}.gateway{{alias.ext}}';
+import { Fake{{name.pascal}}Gateway } from '{{alias.context}}/test/fakes/{{name.kebab}}-gateway.fake{{alias.ext}}';
 
 const ADAPTERS: readonly (readonly [string, () => {{name.pascal}}Gateway])[] = [
   ['the fake', () => new Fake{{name.pascal}}Gateway()],

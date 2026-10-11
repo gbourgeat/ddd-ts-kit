@@ -1,9 +1,9 @@
 import { PGlite } from '@electric-sql/pglite';
 import { PGLiteSocketServer } from '@electric-sql/pglite-socket';
 import type { DataSource } from 'typeorm';
-import { createDataSource } from '{{alias.platform}}/database/create-data-source.js';
-import { persistenceOver } from '{{alias.platform}}/database/persistence-over.js';
-import type { Persistence } from '{{alias.platform}}/database/persistence.js';
+import { createDataSource } from '{{alias.platform}}/database/create-data-source{{alias.ext}}';
+import { persistenceOver } from '{{alias.platform}}/database/persistence-over{{alias.ext}}';
+import type { Persistence } from '{{alias.platform}}/database/persistence{{alias.ext}}';
 
 export interface TestDatabase {
   readonly persistence: Persistence;

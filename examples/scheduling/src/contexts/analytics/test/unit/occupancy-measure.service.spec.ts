@@ -3,7 +3,7 @@ import {
   OccupancyMeasureService,
   type MeasuredOutcome,
   type OutcomeState,
-} from '@/contexts/analytics/domain/services/occupancy-measure.service.js';
+} from '@/contexts/analytics/domain/services/occupancy-measure.service';
 
 const measure = new OccupancyMeasureService();
 

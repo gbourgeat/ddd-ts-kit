@@ -1,5 +1,5 @@
 import { ValueObject, err, ok, type Result } from '@ddd-ts-kit/kernel';
-import { InvalidTimeOffError } from '@/contexts/scheduling/domain/errors/invalid-time-off.error.js';
+import { InvalidTimeOffError } from '@/contexts/scheduling/domain/errors/invalid-time-off.error';
 
 export type TimeOffProps = {
   readonly startsAt: Date;

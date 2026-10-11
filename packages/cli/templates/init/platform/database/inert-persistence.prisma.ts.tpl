@@ -1,6 +1,6 @@
-import { createClient } from '{{alias.platform}}/database/create-client.js';
-import { persistenceOver } from '{{alias.platform}}/database/persistence-over.js';
-import type { Persistence } from '{{alias.platform}}/database/persistence.js';
+import { createClient } from '{{alias.platform}}/database/create-client{{alias.ext}}';
+import { persistenceOver } from '{{alias.platform}}/database/persistence-over{{alias.ext}}';
+import type { Persistence } from '{{alias.platform}}/database/persistence{{alias.ext}}';
 
 /**
  * For the script that only lists routes: the client connects on the first query,

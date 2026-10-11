@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { PersonNotRegisteredError } from '@/contexts/identity/domain/errors/person-not-registered.error.js';
+import { PersonNotRegisteredError } from '@/contexts/identity/domain/errors/person-not-registered.error';
 
 describe('PersonNotRegisteredError', () => {
   it('carries its stable code', () => {

@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { unwrap } from '@ddd-ts-kit/kernel';
 import { given } from '@ddd-ts-kit/testing';
-import { Person } from '@/contexts/identity/domain/aggregates/person.aggregate.js';
-import { DisplayName } from '@/contexts/identity/domain/value-objects/display-name.vo.js';
-import { Email } from '@/contexts/identity/domain/value-objects/email.vo.js';
-import { aPerson } from '@/contexts/identity/test/builders/person.builder.js';
+import { Person } from '@/contexts/identity/domain/aggregates/person.aggregate';
+import { DisplayName } from '@/contexts/identity/domain/value-objects/display-name.vo';
+import { Email } from '@/contexts/identity/domain/value-objects/email.vo';
+import { aPerson } from '@/contexts/identity/test/builders/person.builder';
 
 describe('Person', () => {
   it('is born with its identity', () => {

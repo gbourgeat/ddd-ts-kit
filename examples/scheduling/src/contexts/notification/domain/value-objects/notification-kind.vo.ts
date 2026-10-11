@@ -1,5 +1,5 @@
 import { ValueObject, err, ok, type Result } from '@ddd-ts-kit/kernel';
-import { InvalidNotificationKindError } from '@/contexts/notification/domain/errors/invalid-notification-kind.error.js';
+import { InvalidNotificationKindError } from '@/contexts/notification/domain/errors/invalid-notification-kind.error';
 
 const KINDS = ['request', 'confirmation', 'rescheduling', 'cancellation', 'reminder'] as const;
 

@@ -1,6 +1,6 @@
 import type { IdGenerator, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
-import type { {{event.pascal}} } from '{{alias.context}}/domain/events/{{event.kebab}}.event.js';
-import { {{event.camel}}V{{event.version}} } from '{{alias.context}}/published-language/{{event.kebab}}.v{{event.version}}.integration-event.js';
+import type { {{event.pascal}} } from '{{alias.context}}/domain/events/{{event.kebab}}.event{{alias.ext}}';
+import { {{event.camel}}V{{event.version}} } from '{{alias.context}}/published-language/{{event.kebab}}.v{{event.version}}.integration-event{{alias.ext}}';
 
 export class {{publisher.pascal}}Publisher {
   constructor(

@@ -50,11 +50,19 @@ describe('init and the import alias', () => {
   it('gives jest, which does not read tsconfig, the same mapping to the sources', () => {
     const config = read(initProject('--tests', 'jest'), 'jest.config.js');
 
+    expect(config).toContain("'^@/(.*)$': '<rootDir>/src/$1.ts',");
+    expect(config).toContain("'^\\\\$test/(.*)$': '<rootDir>/test/$1.ts',");
+    expect(config).toContain("'^\\\\$scripts/(.*)$': '<rootDir>/scripts/$1.ts',");
+    expect(config).not.toContain('dist');
+    expect(config).not.toContain('customExportConditions');
+  });
+
+  it('gives jest the mapping with the extension in a project that writes it', () => {
+    const config = read(initProject('--tests', 'jest', '--import-extension', 'js'), 'jest.config.js');
+
     expect(config).toContain("'^@/(.*)\\\\.js$': '<rootDir>/src/$1.ts',");
     expect(config).toContain("'^\\\\$test/(.*)\\\\.js$': '<rootDir>/test/$1.ts',");
     expect(config).toContain("'^\\\\$scripts/(.*)\\\\.js$': '<rootDir>/scripts/$1.ts',");
-    expect(config).not.toContain('dist');
-    expect(config).not.toContain('customExportConditions');
   });
 
   it('writes no relative import, whatever the kind generated, and every file imports by an alias', () => {
@@ -86,7 +94,7 @@ describe('init and the import alias', () => {
 
     expect(written.filter((file) => /['"]@\//.test(read(root, file)))).toEqual([]);
     expect(written.filter((file) => RELATIVE.test(read(root, file)))).toEqual([]);
-    expect(read(root, 'src/main.ts')).toContain("from '$app/platform/compose-application.js';");
+    expect(read(root, 'src/main.ts')).toContain("from '$app/platform/compose-application';");
     expect(report.violations).toEqual([]);
     expect(cli(root, 'docs', '--check').code).toBe(0);
   });

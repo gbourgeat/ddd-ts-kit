@@ -1,6 +1,7 @@
 import type { Injection } from '../injection.js';
 import { PATHS } from '../paths.js';
 import { SOURCE_ALIAS } from '../source-alias.js';
+import { SOURCE_SUFFIX } from '../source-suffix.js';
 
 const { AGGREGATE, COMMAND, DUE_HANDLER, EVENT_HANDLER, HANDLER_SPEC, INTEGRATION_HANDLER, PLAN_HANDLER } = PATHS;
 const { SEND_HANDLER, SENT_AGGREGATE } = PATHS;
@@ -129,7 +130,7 @@ export const BEHAVIOUR_INJECTIONS: readonly Injection[] = [
       { file: COMMAND, from: "import { Requires } from '@ddd-ts-kit/kernel/declarations';\n", to: '' },
       {
         file: COMMAND,
-        from: `import { notificationPermissions } from '${SOURCE_ALIAS}contexts/notification/application/authorization/notification.permissions.js';\n`,
+        from: `import { notificationPermissions } from '${SOURCE_ALIAS}contexts/notification/application/authorization/notification.permissions${SOURCE_SUFFIX}';\n`,
         to: '',
       },
       {

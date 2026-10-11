@@ -3,8 +3,11 @@ import {
   aliasProblem,
   aliasRoots,
   compilerPaths,
+  compilerResolutionOf,
   directoryAlias,
   moduleNameMapper,
+  specifierOf,
+  specifierSuffix,
   toAlias,
 } from '../src/alias/index.js';
 import { parseConfig } from '../src/config/index.js';
@@ -41,15 +44,61 @@ describe('the import alias', () => {
 
     expect(compilerPaths(nested)['$api/*']).toEqual(['./apps/api/src/*']);
 
-    expect(moduleNameMapper(nested)).toEqual({
+    expect(moduleNameMapper(nested, '.js')).toEqual({
       '^\\$api/(.*)\\.js$': '<rootDir>/apps/api/src/$1.ts',
       '^\\$test/(.*)\\.js$': '<rootDir>/test/$1.ts',
       '^\\$scripts/(.*)\\.js$': '<rootDir>/scripts/$1.ts',
     });
 
-    expect(new RegExp(Object.keys(moduleNameMapper(ROOTS))[0] ?? '').exec('@/platform/errors.js')?.[1]).toBe(
+    expect(new RegExp(Object.keys(moduleNameMapper(ROOTS, '.js'))[0] ?? '').exec('@/platform/errors.js')?.[1]).toBe(
       'platform/errors',
     );
+  });
+
+  it('gives jest a mapping without the extension when the imports are written without one, and still answers the TypeScript source alone', () => {
+    const mapper = moduleNameMapper(ROOTS, '');
+    const [pattern = '', target] = Object.entries(mapper)[0] ?? [];
+
+    expect(mapper).toEqual({
+      '^@/(.*)$': '<rootDir>/src/$1.ts',
+      '^\\$test/(.*)$': '<rootDir>/test/$1.ts',
+      '^\\$scripts/(.*)$': '<rootDir>/scripts/$1.ts',
+    });
+
+    expect(new RegExp(pattern).exec('@/contexts/billing/domain/aggregates/invoice.aggregate')?.[1]).toBe(
+      'contexts/billing/domain/aggregates/invoice.aggregate',
+    );
+
+    expect(target).toBe('<rootDir>/src/$1.ts');
+    expect(new RegExp(pattern).test('@ddd-ts-kit/kernel')).toBe(false);
+    expect(new RegExp(pattern).test('@scope/package/file.js')).toBe(false);
+  });
+});
+
+describe('the ending of an import and the names the alias gives', () => {
+  it('reads "importExtension": a config without the key writes ".js", "none" writes nothing, and a wrong value is read as "js"', () => {
+    expect(DEFAULT.importExtension).toBe('js');
+    expect(specifierSuffix(DEFAULT.importExtension)).toBe('.js');
+    expect(specifierSuffix('none')).toBe('');
+    expect(specifierSuffix('ts')).toBe('.js');
+
+    expect(compilerResolutionOf('none')).toEqual({
+      module: 'ESNext',
+      moduleResolution: 'Bundler',
+      customConditions: ['node'],
+    });
+
+    expect(compilerResolutionOf('js')).toEqual({ module: 'NodeNext', moduleResolution: 'NodeNext' });
+    expect(compilerResolutionOf('ts')).toEqual(compilerResolutionOf('js'));
+  });
+
+  it('names a file for a generator as the config writes its imports, and refuses one no alias reaches', () => {
+    const bare = parseConfig({ importExtension: 'none' });
+
+    expect(specifierOf(bare, 'src/platform/database/database.ts')).toBe('@/platform/database/database');
+    expect(specifierOf(DEFAULT, 'src/platform/database/database.ts')).toBe('@/platform/database/database.js');
+    expect(specifierOf(bare, 'test/e2e/support/start-application.ts')).toBe('$test/e2e/support/start-application');
+    expect(() => specifierOf(bare, 'lib/x.ts')).toThrow('lib/x.ts is under no directory an import alias names.');
   });
 
   it.each([
@@ -65,7 +114,8 @@ describe('the import alias', () => {
     ['srcs/x.ts', undefined],
     ['generated/prisma/client.ts', undefined],
   ])('names %s as %s', (file, alias) => {
-    expect(toAlias(ROOTS, file)).toBe(alias);
+    expect(toAlias(ROOTS, file, '.js')).toBe(alias);
+    expect(toAlias(ROOTS, file, '')).toBe(alias?.replace(/\.js$/, ''));
   });
 
   it('names a directory of the project without a final slash, and refuses one no alias reaches', () => {

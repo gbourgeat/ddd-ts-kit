@@ -4,20 +4,20 @@ import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { AllowAll, anActor } from '@ddd-ts-kit/auth/testing';
 import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
 import { unwrap } from '@ddd-ts-kit/kernel';
-import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations.js';
-import { platformTestModule } from '@/platform/platform-test.module.js';
-import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions.js';
-import { OfferFreedSlotCommand } from '@/contexts/scheduling/application/commands/offer-freed-slot/offer-freed-slot.command.js';
-import { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository.js';
-import { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository.js';
-import { WaitlistRepository } from '@/contexts/scheduling/domain/repositories/waitlist.repository.js';
-import { Cancellation } from '@/contexts/scheduling/domain/value-objects/cancellation.vo.js';
-import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder.js';
-import { aCalendar } from '@/contexts/scheduling/test/builders/calendar.builder.js';
-import { aWaitlist } from '@/contexts/scheduling/test/builders/waitlist.builder.js';
-import { FakeAppointmentRepository } from '@/contexts/scheduling/test/fakes/appointment.repository.fake.js';
-import { FakeCalendarRepository } from '@/contexts/scheduling/test/fakes/calendar.repository.fake.js';
-import { FakeWaitlistRepository } from '@/contexts/scheduling/test/fakes/waitlist.repository.fake.js';
+import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations';
+import { platformTestModule } from '@/platform/platform-test.module';
+import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
+import { OfferFreedSlotCommand } from '@/contexts/scheduling/application/commands/offer-freed-slot/offer-freed-slot.command';
+import { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository';
+import { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository';
+import { WaitlistRepository } from '@/contexts/scheduling/domain/repositories/waitlist.repository';
+import { Cancellation } from '@/contexts/scheduling/domain/value-objects/cancellation.vo';
+import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder';
+import { aCalendar } from '@/contexts/scheduling/test/builders/calendar.builder';
+import { aWaitlist } from '@/contexts/scheduling/test/builders/waitlist.builder';
+import { FakeAppointmentRepository } from '@/contexts/scheduling/test/fakes/appointment.repository.fake';
+import { FakeCalendarRepository } from '@/contexts/scheduling/test/fakes/calendar.repository.fake';
+import { FakeWaitlistRepository } from '@/contexts/scheduling/test/fakes/waitlist.repository.fake';
 
 const holders = authorizationModule({
   authorizer: new RoleBasedAuthorizer({ roles: { holder: [schedulingPermissions['waitlist.offer']] } }),

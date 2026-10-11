@@ -8,6 +8,7 @@ import type { EmittedPlace } from './emitted-place.js';
 import { emittedSpecifier } from './emitted-specifier.js';
 import type { RewriteReport } from './rewrite-report.js';
 import { rewriteSpecifiers } from './rewrite-specifiers.js';
+import { unresolvedProblem } from './unresolved-problem.js';
 
 const EMITTED = /\.(?:[cm]?js|d\.[cm]?ts)$/;
 const SHOWN = 20;
@@ -15,34 +16,35 @@ const SHOWN = 20;
 export interface RewriteRequest {
   readonly root: string;
   readonly roots: readonly AliasRoot[];
+  /** What an alias specifier ends with in the sources: `.js`, or nothing. */
+  readonly suffix: string;
   /** The tsconfig the build compiled with, from the project root. */
   readonly project: string;
 }
 
 /**
  * Rewrites, under the output directory of a build, every alias specifier of the emitted
- * JavaScript and declaration files into the relative path of the emitted file it names, so that
- * plain `node` runs the output. Nothing is written when one specifier cannot be rewritten.
+ * JavaScript and declaration files into the relative path of the emitted file it names, with its
+ * `.js` extension whether or not the sources write one, so that plain `node` runs the output. Nothing is written when one specifier cannot be rewritten.
  */
-export function rewriteAliases({ root, roots, project }: RewriteRequest): RewriteReport {
+export function rewriteAliases({ root, roots, suffix, project }: RewriteRequest): RewriteReport {
   const layout = buildLayoutOf({ root }, project);
 
   if (layout === undefined || !isDirectory(path.join(root, layout.outDir))) {
-    throw new CliError(
-      `${project} names no output directory that exists.`,
-      'Compile first (`npm run build` chains the compiler and this command), or name the tsconfig of the build with --project.',
-    );
+    throw noOutput(project);
   }
 
-  const place: EmittedPlace = { roots, layout, isFile: (file) => isFile(path.join(root, file)) };
+  const place: EmittedPlace = { roots, layout, suffix, isFile: (file) => isFile(path.join(root, file)) };
   const files = emittedUnder(root, layout.outDir);
   const prefixes = roots.map(({ prefix }) => prefix);
+
+  const problemOf = (specifier: string): string => unresolvedProblem(place, specifier);
 
   const rewritten = files.map((file) => {
     const source = fs.readFileSync(path.join(root, file), 'utf8');
     const relativeOf = (specifier: string): string | undefined => emittedSpecifier(place, file, specifier);
 
-    return { file, source, ...rewriteSpecifiers(source, { prefixes, relativeOf }) };
+    return { file, source, ...rewriteSpecifiers(source, { prefixes, relativeOf, problemOf }) };
   });
 
   refuse(rewritten.flatMap(({ file, problems }) => problems.map((problem) => `${file}, ${problem}`)));
@@ -59,6 +61,13 @@ export function rewriteAliases({ root, roots, project }: RewriteRequest): Rewrit
   };
 }
 
+function noOutput(project: string): CliError {
+  return new CliError(
+    `${project} names no output directory that exists.`,
+    'Compile first (`npm run build` chains the compiler and this command), or name the tsconfig of the build with --project.',
+  );
+}
+
 function refuse(problems: readonly string[]): void {
   if (problems.length === 0) {
     return;
@@ -68,7 +77,7 @@ function refuse(problems: readonly string[]): void {
 
   throw new CliError(
     `${problems.length} alias specifier(s) of the compiled output cannot be rewritten; nothing was written:\n  ${problems.slice(0, SHOWN).join('\n  ')}${more}`,
-    'Import a file the build emits, and give `import()` a string literal: an alias completed at run time names a file only Node could look for, and Node does not know the alias.',
+    'Import a file the build emits, by its path with the ending "importExtension" asks for, and give `import()` a string literal: an alias completed at run time names a file only Node could look for, and Node does not know the alias.',
   );
 }
 

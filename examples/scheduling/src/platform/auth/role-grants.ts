@@ -1,5 +1,5 @@
 import type { AuthorizationContext } from '@ddd-ts-kit/auth';
-import type { RoleGrant } from '@/platform/auth/role-grant.js';
+import type { RoleGrant } from '@/platform/auth/role-grant';
 
 /**
  * What a role of the token grants before any relationship is read. Kept short on purpose: a

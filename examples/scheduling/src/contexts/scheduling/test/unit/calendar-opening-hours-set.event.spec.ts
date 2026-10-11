@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CalendarOpeningHoursSet } from '@/contexts/scheduling/domain/events/calendar-opening-hours-set.event.js';
+import { CalendarOpeningHoursSet } from '@/contexts/scheduling/domain/events/calendar-opening-hours-set.event';
 
 describe('CalendarOpeningHoursSet', () => {
   it('is named after the context, the aggregate and the fact', () => {

@@ -1,4 +1,4 @@
-import type { SchedulingRelationships } from '@/contexts/scheduling/application/ports/scheduling-relationships.port.js';
+import type { SchedulingRelationships } from '@/contexts/scheduling/application/ports/scheduling-relationships.port';
 
 type RecordedCalendar = Parameters<SchedulingRelationships['recordCalendar']>[0];
 type RecordedAppointment = Parameters<SchedulingRelationships['recordAppointment']>[0];

@@ -10,31 +10,31 @@ import { Logged } from '@ddd-ts-kit/aspects/decorators';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';`,
     good: `// domain/aggregates/invoice.aggregate.ts
 import { AggregateRoot } from '@ddd-ts-kit/kernel';
-import { Money } from '@/contexts/billing/domain/value-objects/money.vo.js';`,
+import { Money } from '@/contexts/billing/domain/value-objects/money.vo';`,
   },
   'layer/application-inward': {
     why: 'A use case orchestrates the domain and talks to the outside through ports. If it imports an adapter, a framework or a driver, the technical choice can no longer be replaced or faked, and the handler cannot be unit tested with plain fakes. Cross-cutting behaviour reaches a use case from outside: @ddd-ts-kit/aspects, audit, redis, scheduling, sentry and tracing are refused whatever `applicationAllowedPackages` says, their place is the composition root, a bus middleware or an adapter. The declarations of the kernel (@ddd-ts-kit/kernel/declarations) are part of the kernel and belong here: a handler, a job or a policy says what it is and names the ports it depends on, which are abstract classes, without knowing a container.',
     bad: `// application/commands/issue-invoice/issue-invoice.handler.ts
-import { PgInvoiceRepository } from '@/contexts/billing/infrastructure/persistence/pg-invoice.repository.js';
+import { PgInvoiceRepository } from '@/contexts/billing/infrastructure/persistence/pg-invoice.repository';
 import { RedisCache } from '@ddd-ts-kit/redis';
 import { retry } from '@ddd-ts-kit/aspects';`,
     good: `// application/commands/issue-invoice/issue-invoice.handler.ts
 import { Cache, Clock } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
-import { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository.js';`,
+import { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository';`,
   },
   'layer/presentation-no-infrastructure': {
     why: 'A route translates a transport request into a command or a query and maps the answer back. Reaching an adapter directly skips the use case, so the business rule that guards the operation is skipped too.',
     bad: `// presentation/http/issue-invoice.route.ts
-import { PgInvoiceRepository } from '@/contexts/billing/infrastructure/persistence/pg-invoice.repository.js';`,
+import { PgInvoiceRepository } from '@/contexts/billing/infrastructure/persistence/pg-invoice.repository';`,
     good: `// presentation/http/issue-invoice.route.ts
-import type { IssueInvoiceHandler } from '@/contexts/billing/application/commands/issue-invoice/issue-invoice.handler.js';`,
+import type { IssueInvoiceHandler } from '@/contexts/billing/application/commands/issue-invoice/issue-invoice.handler';`,
   },
   'layer/infrastructure-no-presentation': {
     why: 'Adapters implement ports declared inward. An adapter that knows a DTO or a route depends on one transport, and both outer layers start changing together.',
     bad: `// infrastructure/persistence/pg-invoice.repository.ts
-import type { InvoiceDto } from '@/contexts/billing/presentation/http/invoice.dto.js';`,
+import type { InvoiceDto } from '@/contexts/billing/presentation/http/invoice.dto';`,
     good: `// infrastructure/persistence/pg-invoice.repository.ts
-import { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository.js';`,
+import { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository';`,
   },
 };

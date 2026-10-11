@@ -23,7 +23,7 @@ Incorrect:
 import { eq } from 'drizzle-orm';
 import { retry } from '@ddd-ts-kit/aspects';
 import { RedisCache } from '@ddd-ts-kit/redis';
-import { DrizzleInvoiceRepository } from '@/contexts/billing/infrastructure/persistence/drizzle-invoice.repository.js';
+import { DrizzleInvoiceRepository } from '@/contexts/billing/infrastructure/persistence/drizzle-invoice.repository';
 ```
 
 Correct:
@@ -31,8 +31,8 @@ Correct:
 ```ts
 // a port is an abstract class: the type of the dependency and its injection token
 import { Cache, Clock } from '@ddd-ts-kit/kernel';
-import { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository.js';
-import { PaymentGateway } from '@/contexts/billing/application/ports/payment-gateway.port.js';
+import { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository';
+import { PaymentGateway } from '@/contexts/billing/application/ports/payment-gateway.port';
 
 // declared style
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
