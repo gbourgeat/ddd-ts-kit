@@ -143,7 +143,14 @@ describe('discovery', () => {
     const failure = await wiringRejection(discoverContext('billing', contextWith({ 'notes/readme.mjs': '' })));
 
     expect(failure.code).toBe('DISCOVERY_FAILED');
-    expect(failure.message).toContain('holds neither application/ nor infrastructure/');
+    expect(failure.message).toContain('holds no layer of a bounded context (application/, infrastructure/, domain/, ');
+  });
+
+  it('discovers a context that was just declared as an empty one: its published language is there, no role yet', async () => {
+    const module = await discoverContext('billing', contextWith({ 'published-language/index.mjs': '' }));
+
+    expect(module.name).toBe('billing');
+    expect(() => createApplication({ modules: [kernelModule(), module] })).not.toThrow();
   });
 });
 

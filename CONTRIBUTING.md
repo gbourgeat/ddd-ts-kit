@@ -64,5 +64,24 @@ The tag starts the `Release` workflow: it checks that the tag is the version eve
 states, builds, checks the tarballs, publishes each package to the npm registry with provenance
 and creates the GitHub release. A version with a pre-release part (`0.2.0-rc.1`) is published
 under the `next` tag. A run that stopped half-way is run again: what is already published is
-skipped. The workflow needs the `NPM_TOKEN` secret of the `npm` environment.
+skipped. The notes of the GitHub release are generated from the merged pull requests;
+`CHANGELOG.md` at the root says in a few lines what a version changes for a user, and is
+written in the pull request that sets the version.
+
+**No secret.** The workflow publishes through trusted publishing (OIDC): each package names
+`release.yml` of this repository, in its `npm` environment, as its trusted publisher, and
+`npm publish` exchanges the identity token of the job for a token that lives for that one
+publication. The job keeps `id-token: write` and `environment: npm`, and needs npm 11.5.1 or
+later, which it checks. No `NPM_TOKEN` is stored anywhere.
+
+**A new package.** Trust is declared per package, and only for a package that exists on the
+registry. A package added to `packages/` is therefore published once by a maintainer (or by a
+run given a short-lived granular token), then trusted:
+
+```bash
+npm trust github <package> --file release.yml --repository gbourgeat/ddd-ts-kit --environment npm --allow-publish
+```
+
+From then on the workflow publishes it like the others. Until that is done the release fails on
+that package alone, and running it again after the declaration finishes it.
 

@@ -13,6 +13,8 @@ export default defineConfig(({ mode }) => ({
   // An import alias is resolved from the "paths" of tsconfig.json, which name the sources.
   resolve: { tsconfigPaths: true },
   test: {
+    // The integration project has no spec before the first repository or adapter of the project: its run passes until then.
+    passWithNoTests: mode === INTEGRATION_MODE,
     projects: [
       {
         extends: true,

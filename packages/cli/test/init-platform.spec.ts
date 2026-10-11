@@ -13,7 +13,6 @@ const SHARED: readonly Export[] = [
   ['config/load-config.ts', 'export function loadConfig('],
   ['config/config-error.ts', 'export class ConfigError'],
   ['observability/create-logger.ts', 'export function createLogger('],
-  ['resilience/own-policy.ts', 'export function ownPolicy('],
   ['events/event-provider.ts', 'export interface EventProvider'],
   ['events/in-process-events.ts', 'export function inProcessEvents('],
   ['events/start-outbox-relay.ts', 'export function startOutboxRelay('],
@@ -40,6 +39,7 @@ const TSYRINGE: readonly Export[] = [
 ];
 
 const MANUAL: readonly Export[] = [
+  ['resilience/own-policy.ts', 'export function ownPolicy('],
   ['platform.ts', 'export interface Platform'],
   [
     'create-platform.ts',

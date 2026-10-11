@@ -9,6 +9,7 @@ import type { Kind, KindFlags } from '../generate/kind.js';
 import { KINDS } from '../generate/kinds.js';
 import { refreshBarrels } from '../generate/refresh-barrels.js';
 import { refuseSharedWrites } from '../generate/refuse-shared-writes.js';
+import { stopIgnoringValidation } from '../generate/stop-ignoring-validation.js';
 import { toName } from '../naming/index.js';
 import { Workspace } from '../workspace/index.js';
 import { Arguments } from './arguments.js';
@@ -29,6 +30,9 @@ export const generateCommand: Command = (argv, io) => {
 
   if (args.flag('local-only')) {
     refuseSharedWrites(ws, config, kind.positionals[0] === 'context' ? toName(rest[0] ?? '').kebab : undefined);
+  } else {
+    // A worker confined to its context leaves knip.json alone: the next command on the trunk, or `docs`, does this.
+    stopIgnoringValidation(ws, config);
   }
 
   printReport(io, args, ws.commit(args.flag('dry-run')));

@@ -6,6 +6,7 @@ import { jsonAt } from './support/json-at.js';
 import { stringsAt } from './support/strings-at.js';
 
 const SHARED_KINDS = [
+  'adapter',
   'context',
   'repository',
   'command',

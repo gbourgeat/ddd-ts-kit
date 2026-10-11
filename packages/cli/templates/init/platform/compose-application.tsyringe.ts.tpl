@@ -3,18 +3,12 @@ import { installAspectRuntime } from '@ddd-ts-kit/aspects';
 import { Authenticator } from '@ddd-ts-kit/auth';
 {{/if}}
 import {
-{{#if assembly.barrel}}
-  contextModule,
-{{/if}}
   createApplication,
   kernelModule,
   type Application as Container,
   type ContextModule,
   type JobsOptions,
 } from '@ddd-ts-kit/di';
-{{#if assembly.discovery}}
-import { discoverContext } from '@ddd-ts-kit/di/discovery';
-{{/if}}
 {{#if events.outbox}}
 import { OutboxPublisher } from '@ddd-ts-kit/events';
 {{/if}}

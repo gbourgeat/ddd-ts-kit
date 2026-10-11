@@ -7,6 +7,7 @@ The rules are in `CLAUDE.md` and `.claude/rules/`; `npx ddd-ts-kit explain <rule
 
 ```bash
 npm install
+npm run verify          # every gate of the pipeline: green before the first line of business code
 cp .env.example .env
 {{#if database.server}}
 npm run infra:up        # the database, in Docker; add --profile observability for Jaeger

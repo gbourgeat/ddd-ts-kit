@@ -106,7 +106,7 @@ describe('worker-scope', () => {
       'event-handler',
       'acl',
       'e2e',
-      'adapter',
+      'adapter (once the project has its first adapter)',
     ]);
 
     expect(String(jsonAt(scope, 'briefing'))).toContain(

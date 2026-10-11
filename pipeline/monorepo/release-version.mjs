@@ -12,12 +12,19 @@ const ROOT = path.resolve(import.meta.dirname, '../..');
 const SEMVER = /^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$/;
 const KIT = /^(@ddd-ts-kit\/|ddd-ts-kit$)/;
 const SECTIONS = ['dependencies', 'peerDependencies', 'devDependencies', 'optionalDependencies'];
-const SOURCES = ['packages/cli/src/version.ts', 'packages/cli/src/init/manifest/versions.ts'];
+const SOURCES = [
+  'packages/cli/src/version.ts',
+  'packages/cli/src/init/manifest/versions.ts',
+  'packages/eslint-plugin/src/version.ts',
+];
 const MANIFESTS = [
   'package.json',
+  'pipeline/package-scripts.json',
   'packages/cli/templates/pipeline/package-scripts.json',
   'examples/scheduling/package.json',
 ];
+/** The contracts the example generates state its version, which is the one of the kit: they follow it, or its documents check fails. */
+const GENERATED = ['examples/scheduling/openapi/openapi.json', 'examples/scheduling/docs/integration/asyncapi.json'];
 
 process.exit(main(process.argv.slice(2)));
 
@@ -51,7 +58,7 @@ function set(version) {
 
   const [current] = [...new Set(stated().map((entry) => entry.version))];
 
-  for (const file of [...packageManifests(), ...MANIFESTS, ...SOURCES]) {
+  for (const file of [...packageManifests(), ...MANIFESTS, ...SOURCES, ...GENERATED]) {
     const absolute = path.join(ROOT, file);
 
     fs.writeFileSync(absolute, restated(fs.readFileSync(absolute, 'utf8'), current, version));

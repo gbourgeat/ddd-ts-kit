@@ -224,7 +224,8 @@ managers:
       - DDD_TS_KIT_PACKAGE_MANAGER: [npm, pnpm]
   script:
     - corepack enable
-    # The default stack and a heavy one, installed for real from the packed kit, built and held to verify.
+    # Installed for real from the packed kit and held to verify: every kind generated on the default stack and a heavy one;
+    # from the first minute, the quick start of the README and the other proven stacks.
     - npm run ci:test:managers
 
 example:

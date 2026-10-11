@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { exists, read } from './helpers.js';
+import { cli, exists, read, write } from './helpers.js';
 import { initProject } from './support/init-project.js';
 import { jsonAt } from './support/json-at.js';
 import { keysAt } from './support/keys-at.js';
@@ -124,19 +124,29 @@ describe('pipeline templates', () => {
 });
 
 describe('the knip config init writes', () => {
+  const BILLING = ['--context', 'billing:core'];
   const entries = (root: string): string[] => stringsAt(readJson(root, 'knip.json'), 'entry');
 
-  it('of an explicit project differs from the source by the fakes kept as entry points and by what the stack does not have', () => {
-    const generated = readJson(initProject('--ci', 'gitlab', '--style', 'explicit'), 'knip.json');
+  it('of an explicit project differs from the source by the fakes and the architecture specs its test runner enters by, and by what the stack does not have', () => {
+    const generated = readJson(
+      initProject('--ci', 'gitlab', '--style', 'explicit', '--context', 'billing:core'),
+      'knip.json',
+    );
+
     const expected: unknown = JSON.parse(source('knip.json'));
-    const fakes = 'src/contexts/*/test/fakes/*.ts';
 
-    // A fake is test support kept ready for the specs to come: with it, the port it implements is in use.
-    expect(stringsAt(generated, 'entry')).toEqual(stringsAt(expected, 'entry').toSpliced(2, 0, fakes));
+    expect(stringsAt(generated, 'entry')).toEqual(stringsAt(expected, 'entry'));
 
+    // A fake is test support kept ready for the specs to come: with it, the port it implements is in use. It is an
+    // entry of the test runner, which reports no pattern left without a match before the first fake.
     // The proof that each context wires alone is a spec outside the source root.
     expect(stringsAt(generated, 'vitest', 'entry')).toEqual(
-      stringsAt(expected, 'vitest', 'entry').toSpliced(1, 0, 'test/architecture/**/*.spec.ts'),
+      stringsAt(expected, 'vitest', 'entry').toSpliced(
+        1,
+        0,
+        'src/contexts/*/test/fakes/*.ts',
+        'test/architecture/**/*.spec.ts',
+      ),
     );
 
     for (const key of ['$schema', 'project', 'ignoreDependencies', 'ignoreExportsUsedInFile']) {
@@ -148,19 +158,45 @@ describe('the knip config init writes', () => {
   });
 
   it('of a declared project has no module file to enter by: the barrel of each context is imported by the composition root', () => {
-    const explicit = entries(initProject('--style', 'explicit'));
+    const explicit = entries(initProject('--style', 'explicit', ...BILLING));
 
     expect(explicit).toContain('src/contexts/*/*.module.ts');
-    expect(entries(initProject())).toEqual(explicit.filter((entry) => entry !== 'src/contexts/*/*.module.ts'));
+
+    expect(entries(initProject(...BILLING))).toEqual(
+      explicit.filter((entry) => entry !== 'src/contexts/*/*.module.ts'),
+    );
+  });
+
+  it('names no context before the first one: a pattern that matches nothing is reported by knip, and each comes with what it matches', () => {
+    const root = initProject('--style', 'explicit');
+
+    expect(entries(root)).toEqual(['scripts/*.ts', 'test/e2e/**/*.ts']);
+
+    cli(root, 'generate', 'context', 'billing', '--classification', 'core');
+    cli(root, 'generate', 'context', 'shipping', '--classification', 'supporting');
+
+    expect(entries(root)).toEqual(entries(initProject('--style', 'explicit', ...BILLING)));
+
+    // Initialised again, the project keeps its contexts, and knip what it was told about them.
+    write(root, 'knip.json', JSON.stringify({ entry: ['scripts/*.ts'] }));
+
+    expect(cli(root, 'init').code).toBe(0);
+
+    expect(entries(root)).toEqual([
+      'src/contexts/*/*.module.ts',
+      'src/contexts/*/published-language/index.ts',
+      'scripts/*.ts',
+    ]);
   });
 
   it('enters by the role files under discovery, jobs and publishers included, with or without a broker', () => {
     const discovered =
-      'src/contexts/*/{application,infrastructure}/**/*.{command,query,handler,integration-handler,event-handler,publisher,policy,job,repository,gateway,adapter}.ts';
+      'src/contexts/*/{published-language/index,{application,infrastructure}/**/*.{command,query,handler,integration-handler,event-handler,publisher,policy,job,repository,gateway,adapter}}.ts';
 
-    expect(entries(initProject('--assembly', 'discovery'))).toContain(discovered);
-    expect(entries(initProject('--assembly', 'discovery', '--broker', 'kafka'))).toContain(discovered);
-    expect(entries(initProject())).not.toContain(discovered);
+    expect(entries(initProject('--assembly', 'discovery', ...BILLING))).toContain(discovered);
+    expect(entries(initProject('--assembly', 'discovery', '--broker', 'kafka', ...BILLING))).toContain(discovered);
+    expect(entries(initProject(...BILLING))).not.toContain(discovered);
+    expect(entries(initProject(...BILLING))).toContain('src/contexts/*/published-language/index.ts');
   });
 });
 

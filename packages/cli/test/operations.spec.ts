@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { cli, exists, read, tempDir } from './helpers.js';
+import { KIT_RANGE } from './support/kit-range.js';
 
 const manifest = (root: string): { dependencies: Record<string, string>; scripts: Record<string, string> } =>
   JSON.parse(read(root, 'package.json')) as { dependencies: Record<string, string>; scripts: Record<string, string> };
@@ -32,7 +33,7 @@ describe('init --cache', () => {
       /\n {2}cache:\n {4}image: docker\.dragonflydb\.io\/dragonflydb\/dragonfly:v2\.0\.2\n[\s\S]*healthcheck:\n {6}test: \["CMD", "redis-cli", "ping"\]/,
     );
 
-    expect(manifest(root).dependencies).toMatchObject({ '@ddd-ts-kit/redis': '^0.1.0', ioredis: '^6.0.0' });
+    expect(manifest(root).dependencies).toMatchObject({ '@ddd-ts-kit/redis': KIT_RANGE, ioredis: '^6.0.0' });
   });
 
   it('none leaves the cache in the process and writes nothing about Redis', () => {
@@ -119,7 +120,7 @@ describe('init --audit', () => {
     expect(read(root, 'src/platform/audit/search-audit-entries.route.ts')).toContain("path: '/audit/entries'");
     expect(read(root, 'src/platform/audit/audit.module.ts')).toContain(".requires(auditPermissions['trail.read'])");
     expect(exists(root, 'src/platform/auth/log-decisions.ts')).toBe(false);
-    expect(manifest(root).dependencies).toMatchObject({ '@ddd-ts-kit/audit': '^0.1.0' });
+    expect(manifest(root).dependencies).toMatchObject({ '@ddd-ts-kit/audit': KIT_RANGE });
   });
 
   it('keeps the trail in memory behind a TODO where the audit package has no store, and is off without a database', () => {

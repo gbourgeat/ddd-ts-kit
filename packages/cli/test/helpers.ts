@@ -3,6 +3,10 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterAll } from 'vitest';
 import { run } from '../src/run.js';
+import { initFlags } from './support/init-flags.js';
+import type { StackFlags } from './support/stack-flags.js';
+
+export type { StackFlags } from './support/stack-flags.js';
 
 export interface CliResult {
   readonly code: number;
@@ -70,25 +74,6 @@ export function walk(root: string, directory = ''): string[] {
   return found.sort();
 }
 
-export interface StackFlags {
-  readonly http: string;
-  readonly validation: string;
-  readonly di: string;
-  readonly tests: string;
-  readonly orm: string;
-  readonly events: string;
-  readonly authn?: string;
-  readonly authz?: string;
-  readonly broker?: string;
-  readonly ci?: string;
-  readonly cache?: string;
-  readonly audit?: string;
-  readonly errors?: string;
-  readonly logger?: string;
-  readonly style?: string;
-  readonly assembly?: string;
-}
-
 export const DEFAULT_STACK: StackFlags = {
   http: 'express',
   validation: 'zod',
@@ -108,13 +93,7 @@ export function scaffoldEverything(root: string, stack = DEFAULT_STACK, more: re
 
   const withHttp = stack.http !== 'none';
 
-  // Leaving the outbox out with a database is a deviation: it has to be given its reason.
-  const noOutbox =
-    stack.orm !== 'none' && stack.events !== 'outbox'
-      ? ['--allow-no-outbox', 'A single process with no consumer that has to survive a crash']
-      : [];
-
-  step('init', ...Object.entries(stack).flatMap(([key, value]) => [`--${key}`, String(value)]), ...noOutbox, ...more);
+  step('init', ...initFlags(stack), ...more);
   scaffoldBilling(step, withHttp);
   scaffoldDecoratedAdapter(step);
   scaffoldShipping(step, isDeclared(stack));

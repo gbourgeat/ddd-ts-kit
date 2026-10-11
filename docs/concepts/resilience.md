@@ -159,7 +159,10 @@ The kit applies the same policy in three ways, in this order of preference:
 1. **On one binding.** In the declared style the declaration of the adapter states it,
    `@Adapter(SmsSender, { kind: 'external', aspects: [ownPolicy(retry(...), timeout(2000))] })`,
    which is what `ddd-ts-kit generate adapter` writes; in an explicit module the binding does,
-   `.with(retry(...), timeout(...))`. The methods of the class contain no policy.
+   `.with(retry(...), timeout(...))`. The methods of the class contain no policy. `ownPolicy`
+   is a helper of the project (`src/platform/resilience/own-policy.ts`): on tsyringe the first
+   `generate adapter` writes it, so that a project without an adapter holds no file nothing
+   imports; wired by hand, `init` writes it, because the platform itself uses it.
 2. **On every binding of a kind, in the platform module**:
    `builder.around(['external', 'gateway'], ...)`. The generated platform
    (`src/platform/resilience/`) gives every adapter that leaves the process and states no

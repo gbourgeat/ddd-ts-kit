@@ -205,7 +205,7 @@ moments: at each file write in an agent session (the plugin's hook), on staged f
 | When | What | Why |
 |---|---|---|
 | first hour | read `docs/context-map.md`, then the `CONTEXT.md` of the context they join; run `npx ddd-ts-kit list` and `npx ddd-ts-kit describe <context>` | the map before the territory |
-| second hour | `npm install`, `npm run infra:up`, `npm run dev`, open `/docs`; run `npm run verify` | prove the machine works before changing anything |
+| second hour | `npm install`, `npm run infra:up`, `npm run dev`, open `/docs`; run `npm run verify` (on pnpm, the default of `init`: `pnpm install`, `pnpm run <script>`; the README of the project says them as its package manager does) | prove the machine works before changing anything |
 | morning | read one existing slice top down: route, command, handler, aggregate, their specs | the tree is the same in every context, so one slice teaches all |
 | after lunch | with the owner, pick a small real use case; restate it in the glossary's words | the first conversation is about language |
 | afternoon | build it with the generator: fill the `TODO(domain)` places, replace the `it.todo` entries, break a rule on purpose and run `npx ddd-ts-kit explain <rule-id>` | the checks teach the architecture faster than a document |

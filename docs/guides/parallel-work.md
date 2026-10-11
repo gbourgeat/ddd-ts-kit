@@ -33,9 +33,9 @@ until the other exists, and the two meet in every file.
 | two use case folders of one context | different workers | mostly | they meet in the aggregate, the barrel and the routes file: merge often |
 | `ddd-ts-kit.config.json` | `init`, `generate context`, `generate service`, `generate worker`, `generate adr --deviation` | **no** | create all contexts and relationships in the bootstrap; later changes one at a time, by the platform owner |
 | `src/platform/compose-application.ts`, `src/platform/platform.module.ts`, `src/platform/platform-test.module.ts` | `generate context` (the first), `generate gateway` (the two modules), hand edits | **no** | registration regions are written between markers; two branches adding a context both touch them |
-| the registries of the platform: `src/platform/database/schema.ts` (with Prisma, `prisma/schema.prisma`), `src/platform/audit/audited-events.ts`, `src/platform/job-settings.ts`, the grants under `src/platform/auth/` | `generate repository` (the first of a context; every one with Prisma), `generate integration-event`, `generate job` | **no** | run these generators on the trunk before the workers start; `generate --help --json` says which kinds write shared files (`writesShared`) |
+| the registries of the platform: `src/platform/database/schema.ts` (with Prisma, `prisma/schema.prisma`), `src/platform/audit/audited-events.ts`, `src/platform/job-settings.ts`, the grants under `src/platform/auth/`, and the helper `src/platform/resilience/own-policy.ts` | `generate repository` (the first of a context; every one with Prisma), `generate integration-event`, `generate job`, `generate adapter` (the first of a project wired on tsyringe) | **no** | run these generators on the trunk before the workers start; `generate --help --json` says which kinds write shared files (`writesShared`) |
 | `src/main.ts` | hand edits | **no** | the platform owner |
-| `test/architecture/extractable.spec.ts` | `generate context` | **no** | same: written with each context |
+| `test/architecture/extractable.spec.ts`, `knip.json` (the first context) | `init`, `generate context` | **no** | same: written with each context |
 | `<context>.declarations.ts` (the barrel) | every `generate` in that context, and `docs` | per context | derived: never merge by hand, regenerate (below) |
 | `docs/context-map.md`, the generated lists of each `CONTEXT.md` | `ddd-ts-kit docs`, every `generate` | **no**, but cheap | derived: regenerate after merging |
 | `openapi/openapi.json`, `docs/integration/asyncapi.json`, `docs/integration/event-catalog.md` | `npm run docs:generate` | **no**, but cheap | derived and deterministic: regenerate after merging |
@@ -179,7 +179,7 @@ flowchart TD
 ```bash
 npx ddd-ts-kit init --context calendars:supporting --context appointments:core \
   --context availability:supporting --context notifications:supporting
-npm install && npm run verify
+pnpm install && pnpm run verify   # npm install && npm run verify with --package-manager npm
 ```
 
 Then, still sequentially, because each of these edits the config or a shared registration:

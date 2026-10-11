@@ -44,7 +44,11 @@ function onDatabase(orm: string, opening: string): Variants {
 }
 
 const TOOLING: Readonly<Record<string, InitFile[]>> = {
-  drizzle: [['drizzle.config.ts', 'init/platform/database/drizzle.config.ts.tpl']],
+  drizzle: [
+    ['drizzle.config.ts', 'init/platform/database/drizzle.config.ts.tpl'],
+    // The journal of drizzle-kit, with no migration yet: `db:migrate` applies nothing instead of failing on a project that has generated none, and `db:generate` writes the first one from it.
+    ['migrations/meta/_journal.json', 'init/platform/database/journal.drizzle.json'],
+  ],
   knex: [
     ['knexfile.js', 'init/platform/database/knexfile.js.tpl'],
     ['migrations/0001_initial.js', 'init/platform/database/migration.knex.js.tpl'],

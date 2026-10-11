@@ -22,6 +22,12 @@ npx ddd-ts-kit generate route billing IssueInvoice --method POST --path /invoice
 npx ddd-ts-kit check
 ```
 
+`init` ends by saying what to run next: `pnpm install`, then `pnpm run verify` (`npm install`,
+then `npm run verify` with `--package-manager npm`). A new project passes that whole gate before
+anything is generated, with no context, with one and with several: the end-to-end suite installs
+it for real and runs it, on both package managers and on every proven stack. After the install the
+CLI is the one the project pins: `pnpm exec ddd-ts-kit <command>`, or `npx ddd-ts-kit <command>`.
+
 Every command accepts `--json` (machine-readable output, errors included) and `--cwd <dir>`.
 Commands other than `init` look for `ddd-ts-kit.config.json` in the directory and its parents.
 Exit codes: `0` success, `1` violations, stale documentation or, under `--strict`, a commit over
@@ -48,7 +54,11 @@ ddd-ts-kit init [--http express|fastify|nest|none]
 ```
 
 Works in an empty directory or an existing project. An existing file is never replaced without
-`--force`; it is reported as skipped. An existing `package.json` is merged: missing scripts and
+`--force`; it is reported as skipped. `init` also writes the generated contracts as the scripts
+of the project write them for a project without a route or an integration event of its own
+(`openapi/openapi.json`, `docs/integration/asyncapi.json` and `event-catalog.md`), so that the
+first commit holds them and `docs:check` passes at once; a contract that is already there is
+left alone, `--force` included. An existing `package.json` is merged: missing scripts and
 dependencies are added, yours are kept and mentioned in the notes. Run again later, `init` keeps
 the stack recorded in the config.
 
@@ -726,8 +736,8 @@ npm run clean:self --workspace ddd-ts-kit       # the clean/* rules on this pack
 npm run clean:packages --workspace ddd-ts-kit   # the same rules on the sources of every other package
 ```
 
-The slow suite lives in `test/e2e/`, in seven spec files and their support files; it
-generates every project with every kind, a job on an interval and one on a cron expression with a
+The slow suite lives in `test/e2e/`, in its spec files and their support files; but for the
+`first-minute` specs it generates every project with every kind, a job on an interval and one on a cron expression with a
 time zone, `adapter --decorators`, `generate service` and `generate worker` included. It runs in
 the process, without a container:
 
@@ -751,6 +761,23 @@ the process, without a container:
   `--authz rebac --broker rabbitmq --ci gitlab`; and hand wiring (`--di manual`) on
   `--authz abac --orm knex` and on
   `--http fastify --orm knex --broker rabbitmq --cache redis --errors sentry --logger winston`.
+- `first-minute.spec.ts`, `first-minute-proven.spec.ts`, `first-minute-no-context.spec.ts` and
+  `first-minute-two-contexts.spec.ts`: a
+  project is green from its first minute, before anything is generated. The first runs the quick
+  start of the root README line by line as it is written, on pnpm and, in the words the README
+  gives for it, on npm: `init` alone, the install and the `verify` the note of `init` names (also
+  held to the README and the `CLAUDE.md` of the project), then a context, a second one downstream
+  of it, a use case with its route, `docs:generate`, with a `verify` at each step; and the
+  sequence the defect of 0.1.0 was reported with, contexts asked of `init`. The second does the
+  same on the seven other proven stacks, one package manager each in turn: no context, one, two
+  with an upstream, a first use case. Both install for real from the packed kit and run in the
+  package manager jobs of the pipeline (`ci:test:managers`). The last two take every stack the
+  workspace can run, installed as a published kit would be, with no context and with two: no
+  finding of the four analyzers, specs that pass, a build, and the contracts `init` wrote equal to
+  what the scripts of the project generate.
+- `package-managers.spec.ts`: one project per package manager on the default stack and on NestJS
+  with Prisma, every kind generated, installed for real from the packed kit: the frozen install of
+  a pipeline, the build, `verify`, and `affected` from the installed CLI.
 - `first-class.spec.ts`: the first-class stack, `--validation class-validator --orm knex --authn
   keycloak --authz rebac --cache redis --audit on --errors sentry --logger pino --style declared`
   (legacy decorator mode), three times, with `--broker redis` (one server for the cache and the

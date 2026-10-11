@@ -175,4 +175,13 @@ export function label(stack: StackFlags): string {
     .join(', ');
 }
 
+/**
+ * The stacks the workspace can run as generated. Left out, as for the type check: jest (not
+ * installed in this workspace), prisma (its client has to be generated first) and typeorm (not
+ * installed at the workspace root).
+ */
+export const RUNNABLE: readonly StackFlags[] = STACKS.filter(
+  (stack) => stack.tests === 'vitest' && stack.orm !== 'prisma' && stack.orm !== 'typeorm',
+);
+
 export const SLOW = process.env['DDD_TS_KIT_E2E'] === '1';

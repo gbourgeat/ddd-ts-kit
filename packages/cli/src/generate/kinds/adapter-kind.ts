@@ -12,6 +12,7 @@ import { requireFile } from '../require-file.js';
 import type { Scope } from '../scope.js';
 import { vars } from '../vars.js';
 import { wire } from '../wire.js';
+import { writeOwnPolicy } from './write-own-policy.js';
 
 const ADAPTER_KINDS = ['external', 'gateway'];
 
@@ -22,7 +23,7 @@ export const adapterKind: Kind = {
   summary:
     'An infrastructure adapter of an existing port towards an outside system, its spec and its registration with a retry and timeout policy; with --decorators its outbound method carries the policy itself.',
   positionals: ['context', 'Port'],
-  writesShared: false,
+  writesShared: true,
   run: (request) => {
     const scope = openScope(request);
     const name = label(scope, request.args[1] ?? '', { what: 'port', strip: ['port'] });
@@ -115,13 +116,15 @@ interface Registration {
 /**
  * A declared adapter binds itself. Otherwise it is bound by the generator where the module
  * declares its bindings, and said in a note where the wiring is by hand or the port already has
- * an adapter.
+ * an adapter. The first adapter that names `ownPolicy` brings the helper to the platform.
  */
 function register(scope: Scope, context: RenderContext, { port, kind, decorated }: Registration): void {
   const module = `${scope.context.kebab}.module.ts`;
   const about = `{ kind: '${kind}', context: '${scope.context.kebab}' }`;
 
   if (isDeclared(scope.config)) {
+    writeOwnPolicy(scope, context);
+
     return;
   }
 
@@ -131,6 +134,7 @@ function register(scope: Scope, context: RenderContext, { port, kind, decorated 
     );
   } else if (scope.config.stack.di === 'tsyringe') {
     wire(scope, 'adapter', context);
+    writeOwnPolicy(scope, context);
   } else {
     const wrapped = decorated
       ? `platform.selfGoverned(new Remote${port}(), ${about})`

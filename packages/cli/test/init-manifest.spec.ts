@@ -6,6 +6,7 @@ import { jsonAt } from './support/json-at.js';
 import { readJson } from './support/read-json.js';
 import { stringsAt } from './support/strings-at.js';
 import { textsAt } from './support/texts-at.js';
+import { KIT_RANGE } from './support/kit-range.js';
 
 const manifest = (root: string): unknown => readJson(root, 'package.json');
 
@@ -51,16 +52,16 @@ describe('the package.json init writes', () => {
     const dependencies = textsAt(manifest(root), 'dependencies');
 
     expect(dependencies).toMatchObject({
-      '@ddd-ts-kit/kernel': '^0.1.0',
-      '@ddd-ts-kit/validation': '^0.1.0',
-      '@ddd-ts-kit/http': '^0.1.0',
-      '@ddd-ts-kit/tracing': '^0.1.0',
-      '@ddd-ts-kit/di': '^0.1.0',
+      '@ddd-ts-kit/kernel': KIT_RANGE,
+      '@ddd-ts-kit/validation': KIT_RANGE,
+      '@ddd-ts-kit/http': KIT_RANGE,
+      '@ddd-ts-kit/tracing': KIT_RANGE,
+      '@ddd-ts-kit/di': KIT_RANGE,
     });
 
     expect(dependencies).toMatchObject({
-      '@ddd-ts-kit/drizzle': '^0.1.0',
-      '@ddd-ts-kit/events': '^0.1.0',
+      '@ddd-ts-kit/drizzle': KIT_RANGE,
+      '@ddd-ts-kit/events': KIT_RANGE,
       '@opentelemetry/api': '^1.9.1',
       express: '^5.3.0',
       tsyringe: '^4.10.0',
@@ -79,15 +80,15 @@ describe('the package.json init writes', () => {
     const tools = textsAt(manifest(root), 'devDependencies');
 
     expect(tools).toMatchObject({
-      'ddd-ts-kit': '^0.1.0',
+      'ddd-ts-kit': KIT_RANGE,
       typescript: '~6.0.3',
       '@typescript/native': 'npm:typescript@~7.0.2',
       vitest: '^5.0.3',
-      '@ddd-ts-kit/testing': '^0.1.0',
+      '@ddd-ts-kit/testing': KIT_RANGE,
     });
 
     expect(tools).toMatchObject({
-      '@ddd-ts-kit/eslint-plugin': '^0.1.0',
+      '@ddd-ts-kit/eslint-plugin': KIT_RANGE,
       eslint: '^10.12.0',
       '@eslint/js': '^10.0.1',
       'typescript-eslint': '^8.71.1',
@@ -109,7 +110,7 @@ describe('the package.json init writes', () => {
         '@nestjs/core': '^12.1.2',
         'class-validator': '^0.15.1',
         'class-transformer': '^0.5.1',
-        '@ddd-ts-kit/scheduling': '^0.1.0',
+        '@ddd-ts-kit/scheduling': KIT_RANGE,
       },
     ],
   ])('adds the dependencies of %s with %s', (http, validation, di, expected) => {
