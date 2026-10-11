@@ -1,4 +1,4 @@
-import { governedCoverage } from '@ddd-ts-kit/testing/coverage';
+import { governedCoverage, unaffectedContexts } from '@ddd-ts-kit/testing/coverage';
 {{#if decorators.standard}}
 import { decorators } from '@ddd-ts-kit/testing/vitest';
 {{/if}}
@@ -9,6 +9,8 @@ import { defineConfig } from 'vitest/config';
 
 const INTEGRATION_SPECS = '{{config.contextsDir}}/*/test/integration/**/*.spec.ts';
 const INTEGRATION_MODE = 'integration';
+// A pull request names the contexts its change reaches (DDD_TS_KIT_AFFECTED, from `ddd-ts-kit affected`): the specs of the others are left to the default branch.
+const NOT_AFFECTED = unaffectedContexts().map((directory) => `${directory}**`);
 
 export default defineConfig(({ mode }) => ({
   {{#if decorators.standard}}
@@ -32,10 +34,10 @@ export default defineConfig(({ mode }) => ({
         test: {
           name: 'unit',
           include: ['{{config.sourceRoot}}/**/*.spec.ts', 'test/architecture/**/*.spec.ts'],
-          exclude: [INTEGRATION_SPECS],
+          exclude: [INTEGRATION_SPECS, ...NOT_AFFECTED],
         },
       },
-      { extends: true, test: { name: INTEGRATION_MODE, include: [INTEGRATION_SPECS] } },
+      { extends: true, test: { name: INTEGRATION_MODE, include: [INTEGRATION_SPECS], exclude: NOT_AFFECTED } },
     ],
     coverage: {
       provider: 'v8',

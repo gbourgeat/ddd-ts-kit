@@ -18,6 +18,7 @@ export interface StackOptions {
   readonly logger?: string;
   readonly style?: string;
   readonly assembly?: string;
+  readonly packageManager?: string;
   /** The prefix of the source root in imports, when it is not the default. */
   readonly importAlias?: string;
   /** The reason given for running an ORM without the transactional outbox. */

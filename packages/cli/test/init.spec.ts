@@ -164,6 +164,7 @@ describe('init, the choices it records and the ones it refuses', () => {
       errors: 'none',
       logger: 'stdout',
       style: 'explicit',
+      packageManager: 'pnpm',
     });
 
     expect(jsonAt(config, 'contexts')).toMatchObject({

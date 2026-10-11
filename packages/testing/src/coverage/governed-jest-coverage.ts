@@ -1,6 +1,7 @@
 import type { CoverageRates } from './coverage-rates.js';
 import { governedSettings } from './governed-settings.js';
 import { heldLayers } from './held-layers.js';
+import { measuredFiles } from './measured-files.js';
 import { measuredLayers } from './measured-layers.js';
 
 /** The part of a Jest config that the config file of a project governs. */
@@ -25,7 +26,7 @@ export function governedJestCoverage(root: string = process.cwd()): GovernedJest
   const held = heldLayers(root, contextsDir, layers);
 
   return {
-    collectCoverageFrom: layers.map((layer) => `<rootDir>/${contextsDir}/*/${layer}/**/*.ts`),
+    collectCoverageFrom: measuredFiles(contextsDir, layers).map((files) => `<rootDir>/${files}`),
     coverageThreshold: Object.fromEntries(
       held.map(({ layer, directory }) => [`./${directory}/`, { ...thresholds[layer] }]),
     ),

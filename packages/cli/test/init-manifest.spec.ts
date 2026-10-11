@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { cli, read, tempDir } from './helpers.js';
 import { initProject } from './support/init-project.js';
+import { NPM } from './support/npm.js';
 import { jsonAt } from './support/json-at.js';
 import { readJson } from './support/read-json.js';
 import { stringsAt } from './support/strings-at.js';
@@ -36,7 +37,7 @@ const DEFAULT_SCRIPTS = {
 
 describe('the package.json init writes', () => {
   it('declares the scripts of the default stack, and no worker until the project has one', () => {
-    const root = initProject();
+    const root = initProject(...NPM);
     const scripts = textsAt(manifest(root), 'scripts');
 
     expect(jsonAt(manifest(root), 'type')).toBe('module');
@@ -46,7 +47,7 @@ describe('the package.json init writes', () => {
   });
 
   it('declares the dependency ranges of the default stack', () => {
-    const root = initProject();
+    const root = initProject(...NPM);
     const dependencies = textsAt(manifest(root), 'dependencies');
 
     expect(dependencies).toMatchObject({
@@ -74,7 +75,7 @@ describe('the package.json init writes', () => {
   });
 
   it('declares the tools of the default stack, and what the lint preset needs beyond the plugin', () => {
-    const root = initProject();
+    const root = initProject(...NPM);
     const tools = textsAt(manifest(root), 'devDependencies');
 
     expect(tools).toMatchObject({
@@ -112,13 +113,13 @@ describe('the package.json init writes', () => {
       },
     ],
   ])('adds the dependencies of %s with %s', (http, validation, di, expected) => {
-    const root = initProject('--http', http, '--validation', validation, '--di', di);
+    const root = initProject(...NPM, '--http', http, '--validation', validation, '--di', di);
 
     expect(textsAt(manifest(root), 'dependencies')).toMatchObject(expected);
   });
 
   it('reads the data source of TypeORM where the project keeps its platform', () => {
-    const scripts = textsAt(manifest(initProject('--orm', 'typeorm')), 'scripts');
+    const scripts = textsAt(manifest(initProject(...NPM, '--orm', 'typeorm')), 'scripts');
 
     expect(scripts['db:migrate']).toBe('typeorm migration:run -d dist/src/platform/database/data-source.js');
 
@@ -130,8 +131,8 @@ describe('the package.json init writes', () => {
 
 describe('the tsconfig.json init writes, and the import alias', () => {
   it('writes a strict NodeNext tsconfig, and decorator flags only when the stack needs them', () => {
-    const plain = jsonAt(readJson(initProject(), 'tsconfig.json'), 'compilerOptions');
-    const nest = jsonAt(readJson(initProject('--http', 'nest'), 'tsconfig.json'), 'compilerOptions');
+    const plain = jsonAt(readJson(initProject(...NPM), 'tsconfig.json'), 'compilerOptions');
+    const nest = jsonAt(readJson(initProject(...NPM, '--http', 'nest'), 'tsconfig.json'), 'compilerOptions');
 
     expect(plain).toMatchObject({
       strict: true,
@@ -147,7 +148,7 @@ describe('the tsconfig.json init writes, and the import alias', () => {
   });
 
   it('declares the alias under "paths" of tsconfig.json, which the build config extends, and leaves no "imports" in package.json', () => {
-    const root = initProject();
+    const root = initProject(...NPM);
 
     expect(jsonAt(readJson(root, 'tsconfig.json'), 'compilerOptions', 'paths')).toEqual({
       '@/*': ['./src/*'],
@@ -160,7 +161,12 @@ describe('the tsconfig.json init writes, and the import alias', () => {
     expect(jsonAt(manifest(root), 'imports')).toBeUndefined();
 
     expect(
-      jsonAt(readJson(initProject('--orm', 'prisma'), 'tsconfig.json'), 'compilerOptions', 'paths', '$generated/*'),
+      jsonAt(
+        readJson(initProject(...NPM, '--orm', 'prisma'), 'tsconfig.json'),
+        'compilerOptions',
+        'paths',
+        '$generated/*',
+      ),
     ).toEqual(['./generated/*']);
   });
 });
@@ -199,7 +205,7 @@ describe('the local infrastructure init writes', () => {
       ]),
     );
 
-    expect(jsonAt(readJson(initProject(), 'ddd-ts-kit.config.json'), 'stack')).toMatchObject({
+    expect(jsonAt(readJson(initProject(...NPM), 'ddd-ts-kit.config.json'), 'stack')).toMatchObject({
       orm: 'drizzle',
       database: 'postgres',
       events: 'outbox',
@@ -207,7 +213,7 @@ describe('the local infrastructure init writes', () => {
   });
 
   it('pins the local infrastructure and keeps its ports configurable', () => {
-    const root = initProject();
+    const root = initProject(...NPM);
     const compose = read(root, 'docker-compose.yml');
     const dockerfile = read(root, 'Dockerfile');
 

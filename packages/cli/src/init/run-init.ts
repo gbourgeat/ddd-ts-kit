@@ -4,6 +4,7 @@ import { DEPCRUISE_FILE } from '../depcruise/depcruise-file.js';
 import { renderCruiseFile } from '../depcruise/render-cruise-file.js';
 import { writeDocs } from '../docs/write-docs.js';
 import { toName } from '../naming/index.js';
+import { inDialect } from '../package-manager/in-dialect.js';
 import { readTemplate, renderTemplate } from '../templating/index.js';
 import { Workspace, type WorkspaceReport } from '../workspace/index.js';
 import { addContext } from './add-context.js';
@@ -43,7 +44,7 @@ export function runInit(root: string, options: InitOptions): WorkspaceReport {
   const report = ws.commit(options.dryRun);
 
   if (!options.dryRun && report.created.includes('package.json')) {
-    report.notes.push('Run `npm install`, then `npm run verify`.');
+    report.notes.push(inDialect('Run `npm install`, then `npm run verify`.', config.stack.packageManager));
   }
 
   return report;

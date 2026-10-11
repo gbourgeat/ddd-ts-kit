@@ -26,11 +26,13 @@ export function cruiseConfiguration(config: Config): CruiseConfiguration {
  * its tools next to the native compiler: it tells type-only imports apart. An import alias is
  * resolved from the `paths` of tsconfig.json, which name the sources: without `tsConfig` the
  * graph would hold an unresolved module for each alias and no boundary rule would see the import.
+ * A `generated` directory (the client Prisma writes) is a build product: an import of it is in
+ * the graph, what it imports in turn is not the project's to answer for.
  */
 function cruiseOptions(): Record<string, unknown> {
   return {
     parser: 'tsc',
-    doNotFollow: { path: ['node_modules'] },
+    doNotFollow: { path: ['node_modules', '^generated/'] },
     exclude: { path: ['^dist/', '^coverage/'] },
     tsPreCompilationDeps: true,
     tsConfig: { fileName: 'tsconfig.json' },

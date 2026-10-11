@@ -17,6 +17,7 @@ import {
   HTTP_STACKS,
   LOGGERS,
   ORM_STACKS,
+  PACKAGE_MANAGERS,
   STYLES,
   TEST_STACKS,
   VALIDATION_STACKS,
@@ -42,6 +43,7 @@ export function parseStack(stack: Record<string, unknown>): Stack {
     docsUi: choose('docsUi', DOCS_UIS, http === 'none' ? 'none' : 'swagger'),
     ci: choose('ci', CI_PLATFORMS, 'github'),
     ...parseChoices(choose, orm),
+    packageManager: choose('packageManager', PACKAGE_MANAGERS, 'npm'),
   };
 }
 

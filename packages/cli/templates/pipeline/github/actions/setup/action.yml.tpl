@@ -1,0 +1,37 @@
+name: Setup
+description: Node, then the dependencies of the lockfile, restored from the cache when a run already installed them.
+
+inputs:
+  node-version:
+    description: The Node.js release line the pipeline runs on.
+    default: '24'
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v7
+      with:
+        node-version: ${{ inputs.node-version }}
+{{#if pm.corepack}}
+    - name: The package manager package.json pins
+      shell: bash
+      run: corepack enable
+{{/if}}
+    # One install per lockfile, shared by every job and every run. The key holds the lockfile and
+    # package.json: a hit is what a fresh install of that lockfile gives, and a manifest that left
+    # its lockfile behind is installed again, which refuses it.
+    - name: Dependencies, as a run already installed them for this lockfile
+      id: modules
+      uses: actions/cache@v6
+      with:
+        path: node_modules
+        key: modules-${{ runner.os }}-${{ runner.arch }}-node${{ inputs.node-version }}-${{ hashFiles('package-lock.json', 'package.json') }}
+    - name: Install (no run installed this lockfile yet, or the cache was evicted)
+      if: steps.modules.outputs.cache-hit != 'true'
+      shell: bash
+      run: npm ci
+{{#if orm.prisma}}
+    - name: The Prisma client and the schema of the tests, build products of prisma/schema.prisma
+      shell: bash
+      run: npm run db:client
+{{/if}}

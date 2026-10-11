@@ -13,7 +13,7 @@ export function applyWiring(ws: Workspace, file: string, wiring: string): void {
 
   let content = original;
 
-  for (const [region, block] of parseWiring(wiring)) {
+  for (const [region, block] of parseWiring(ws.spoken(wiring))) {
     if (block.trim() === '') {
       continue;
     }

@@ -4,6 +4,8 @@ workflow:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    # A pipeline schedule (Build > Pipeline schedules, every night on the default branch) runs everything.
+    - if: $CI_PIPELINE_SOURCE == "schedule"
 
 include:
   - template: Jobs/SAST.gitlab-ci.yml
@@ -14,37 +16,52 @@ include:
 
 stages:
   - install
-  - static
   - test
   - security
-  - package
   - gate
 
 variables:
   AST_ENABLE_MR_PIPELINES: 'true'
   NODE_VERSION: '24'
+  # Behind the dependency proxy of a group, a registry that rate-limits is never asked twice:
+  # POSTGRES_IMAGE: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/postgres:18
   POSTGRES_IMAGE: postgres:18
 
 default:
+  # A newer commit of a merge request supersedes the pipeline in progress; the default branch finishes every pipeline.
   interruptible: true
+  # An image that could not be pulled (a registry that rate-limits once) or a runner that failed is tried again; a failing script is not.
+  retry:
+    max: 2
+    when: [runner_system_failure, stuck_or_timeout_failure, scheduler_failure]
 
+# One install per lockfile and Node line, shared by every job and every pipeline: the key holds
+# the lockfile and the root manifest, so a hit is what `npm ci` gives for them. A job that finds
+# no cache installs.
 .node:
   image: node:${NODE_VERSION}-bookworm-slim
   cache:
     key:
+      prefix: node-$NODE_VERSION
       files:
         - package-lock.json
+        - package.json
     paths:
-      - .npm/
+      - node_modules/
+      - packages/*/node_modules/
+      - examples/*/node_modules/
     policy: pull
   before_script:
-    - npm ci --cache .npm --prefer-offline
+    - test -d node_modules || npm ci
 
+# One build per pipeline: the install job builds the packages and hands dist/ and the build
+# info over as artifacts. A job that received none builds.
 .built:
   extends: .node
+  needs: [install]
   before_script:
-    - npm ci --cache .npm --prefer-offline
-    - npm run build
+    - test -d node_modules || npm ci
+    - test -d packages/kernel/dist || npm run build
 
 .junit:
   artifacts:
@@ -56,36 +73,51 @@ default:
 install:
   extends: .node
   stage: install
+  # The image with git: what a merge request covers is read from the difference with its target.
+  image: node:${NODE_VERSION}-bookworm
   cache:
     key:
+      prefix: node-$NODE_VERSION
       files:
         - package-lock.json
+        - package.json
     paths:
-      - .npm/
+      - node_modules/
+      - packages/*/node_modules/
+      - examples/*/node_modules/
     policy: pull-push
   script:
-    - node --version && npm --version
+    - node --version
+    - npm run build
+    - if [ -n "${CI_MERGE_REQUEST_DIFF_BASE_SHA:-}" ]; then git fetch --quiet --depth=1 origin "$CI_MERGE_REQUEST_DIFF_BASE_SHA"; fi
+    # Everything on the default branch and on a schedule, the affected packages on a merge request.
+    - node pipeline/monorepo/affected-packages.mjs --base "${CI_MERGE_REQUEST_DIFF_BASE_SHA:-}" --format github | sed 's/^/AFFECTED_/' | tee affected.env
+  artifacts:
+    expire_in: 1 day
+    paths:
+      - packages/*/dist/
+      - packages/*/tsconfig.tsbuildinfo
+    reports:
+      dotenv: affected.env
 
 merge-request-title:
   extends: .node
-  stage: static
-  needs: [install]
+  stage: test
+  needs: []
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
   script:
     - printf '%s\n' "$CI_MERGE_REQUEST_TITLE" | sed -E 's/^(\[Draft\]|Draft:|\(Draft\)|WIP:) *//I' | npx --no -- commitlint --verbose
 
 typecheck:
-  extends: .node
-  stage: static
-  needs: [install]
+  extends: .built
+  stage: test
   script:
     - npm run ci:typecheck
 
 lint:
   extends: .built
-  stage: static
-  needs: [install]
+  stage: test
   variables:
     ESLINT_CODE_QUALITY_REPORT: reports/gl-code-quality-eslint.json
   script:
@@ -100,36 +132,32 @@ lint:
 
 architecture:
   extends: .built
-  stage: static
-  needs: [install]
+  stage: test
   script:
     - npm run ci:arch
 
 deadcode:
   extends: .built
-  stage: static
-  needs: [install]
+  stage: test
   script:
     - npm run ci:deadcode
 
 docs:
-  extends: .node
-  stage: static
-  needs: [install]
+  stage: test
+  needs: []
+  image: node:${NODE_VERSION}-bookworm-slim
   script:
+    # The script needs no dependency.
     - npm run ci:docs
 
 unit:
   extends: [.built, .junit]
   stage: test
-  needs: [typecheck, lint, architecture, deadcode, docs]
-  parallel:
-    matrix:
-      - NODE_VERSION: ['22', '24']
   script:
-    - npm run ci:test:unit -- --reporter=default --reporter=junit --outputFile.junit=reports/junit.xml
-    # The import alias at run time on this Node: every stack built, run compiled with plain node, from sources under tsx and vitest.
-    - npm run ci:test:alias
+    - if [ "$AFFECTED_scope" = "none" ]; then echo "Only documents changed, no spec to run."; exit 0; fi
+    - export KIT_AFFECTED="$AFFECTED_packages"
+    # Each package held to its coverage floor (vitest.config.ts); coverage is measured once, on this Node line.
+    - npm run ci:test:unit -- --reporter=default --reporter=junit --outputFile.junit=reports/junit.xml $AFFECTED_filters
   coverage: '/All files[^|]*\|[^|]*\s+([\d\.]+)/'
   artifacts:
     when: always
@@ -140,10 +168,32 @@ unit:
         coverage_format: cobertura
         path: coverage/cobertura-coverage.xml
 
+unit-oldest:
+  extends: [.built, .junit]
+  stage: test
+  variables:
+    NODE_VERSION: '22'
+  # The install job fills the cache of its own Node line: this job fills the one of Node 22.
+  cache:
+    policy: pull-push
+  script:
+    - if [ "$AFFECTED_scope" = "none" ]; then echo "Only documents changed, no spec to run."; exit 0; fi
+    # The same specs on the oldest supported Node.
+    - npm test -- --reporter=default --reporter=junit --outputFile.junit=reports/junit.xml $AFFECTED_filters
+
+alias:
+  extends: .built
+  stage: test
+  parallel:
+    matrix:
+      - NODE_VERSION: ['22', '24']
+  script:
+    # The import alias at run time on this Node: every stack built, run compiled with plain node, from sources under tsx and vitest.
+    - npm run ci:test:alias
+
 integration:
   extends: [.built, .junit]
   stage: test
-  needs: [unit]
   services:
     - name: $POSTGRES_IMAGE
       alias: postgres
@@ -153,20 +203,33 @@ integration:
     POSTGRES_DB: app
     DDD_TS_KIT_TEST_DATABASE_URL: postgres://app:app@postgres:5432/app
   script:
+    - if [ "$AFFECTED_integration" != "true" ]; then echo "No adapter package is reached, no spec to run."; exit 0; fi
     - npm run ci:test:integration -- --reporter=default --reporter=junit --outputFile.junit=reports/junit.xml
 
 e2e:
   extends: [.built, .junit]
   stage: test
-  needs: [integration]
   timeout: 30 minutes
+  parallel: 4
   script:
-    - npm run ci:test:e2e -- --reporter=default --reporter=junit --outputFile.junit=reports/junit.xml
+    # Every stack generated and held to its own pipeline, a quarter of the spec files on each runner.
+    - npm run ci:test:e2e:stacks -- --shard=$CI_NODE_INDEX/$CI_NODE_TOTAL --reporter=default --reporter=junit --outputFile.junit=reports/junit.xml
+
+managers:
+  extends: .built
+  stage: test
+  timeout: 30 minutes
+  parallel:
+    matrix:
+      - DDD_TS_KIT_PACKAGE_MANAGER: [npm, pnpm]
+  script:
+    - corepack enable
+    # The default stack and a heavy one, installed for real from the packed kit, built and held to verify.
+    - npm run ci:test:managers
 
 example:
   extends: .built
   stage: test
-  needs: [unit]
   services:
     - name: ${POSTGRES_IMAGE}
       alias: postgres
@@ -175,17 +238,24 @@ example:
     POSTGRES_PASSWORD: app
     POSTGRES_DB: app
   script:
-    # Its own gate with the coverage thresholds, then every rule of the catalogue broken once in a copy of it (example:conformance).
-    - npm run example:verify
+    # Its own gate with the coverage thresholds.
+    - npm run verify --workspace examples/scheduling
     # The adapter specs again, on a server: two concurrent bookings meet real transactions.
     - export DATABASE_URL=postgres://app:app@postgres:5432/app
     - npm run db:migrate --workspace examples/scheduling
     - npm run test:postgres --workspace examples/scheduling
 
+conformance:
+  extends: .built
+  stage: test
+  script:
+    # Every rule of the catalogue broken once in a copy of the example.
+    - npm run example:conformance
+
 audit:
   extends: .node
   stage: security
-  needs: [install]
+  needs: []
   script:
     - npm run ci:audit
 
@@ -202,8 +272,7 @@ secrets:
 
 package:
   extends: .built
-  stage: package
-  needs: [unit]
+  stage: test
   script:
     - npm run ci:build
 

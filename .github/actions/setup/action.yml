@@ -1,0 +1,49 @@
+name: Setup
+description: Node, the dependencies of the lockfile and the built packages, each restored from the cache when a run already produced it.
+
+inputs:
+  node-version:
+    description: The Node.js release line of the job.
+    default: '24'
+  build:
+    description: Whether the job needs the built packages (dist/).
+    default: 'true'
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      with:
+        node-version: ${{ inputs.node-version }}
+    # One install per lockfile, shared by every job and every run. The key holds the lockfile
+    # and every manifest: a hit is what `npm ci` gives for them, and a manifest that left the
+    # lockfile behind is installed again, which refuses it.
+    - name: Dependencies, as a run already installed them for this lockfile
+      id: modules
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: |
+          node_modules
+          packages/*/node_modules
+          examples/*/node_modules
+        key: modules-${{ runner.os }}-${{ runner.arch }}-node${{ inputs.node-version }}-${{ hashFiles('package-lock.json', 'package.json', 'packages/*/package.json', 'examples/*/package.json') }}
+    - name: Install (no run installed this lockfile yet, or the cache was evicted)
+      if: steps.modules.outputs.cache-hit != 'true'
+      shell: bash
+      run: npm ci
+    # One build per state of the sources, shared the same way. The key holds every input of the
+    # compiler, so a hit is the output of these sources and of no others; the build info comes
+    # with it, and a later `tsc -b` finds it current.
+    - name: Built packages, as a run already built them from these sources
+      if: inputs.build == 'true'
+      id: dist
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: |
+          packages/*/dist
+          packages/*/tsconfig.tsbuildinfo
+        key: dist-${{ runner.os }}-${{ hashFiles('packages/*/src/**', 'packages/*/tsconfig.json', 'packages/*/package.json', 'tsconfig.base.json', 'package-lock.json') }}
+    - name: Build (no run built these sources yet, or the cache was evicted)
+      if: inputs.build == 'true' && steps.dist.outputs.cache-hit != 'true'
+      shell: bash
+      run: npm run build

@@ -1,5 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { affectedContexts } from './affected-contexts.js';
+import { contextsIn } from './contexts-in.js';
 import type { CoverageLayer } from './coverage-layer.js';
 
 const SOURCE = /(?<!\.d)\.[cm]?ts$/;
@@ -16,26 +18,20 @@ export interface HeldLayer {
 /**
  * The layers a threshold applies to, among `layers`: one per context that has a source file in
  * it. An empty layer (a context with no route yet, a project just initialised) is held to nothing,
- * and is held to its threshold from its first source file.
+ * and is held to its threshold from its first source file. A partial run (`DDD_TS_KIT_AFFECTED`)
+ * holds the contexts it names, each to its whole threshold, since it runs every spec of each;
+ * the others are measured by the run of everything.
  */
 export function heldLayers(root: string, contextsDir: string, layers: readonly CoverageLayer[]): HeldLayer[] {
-  return contextsIn(path.join(root, contextsDir)).flatMap((context) =>
-    layers
-      .map((layer) => ({ context, layer, directory: `${contextsDir}/${context}/${layer}` }))
-      .filter(({ directory }) => holdsASource(path.join(root, directory))),
-  );
-}
+  const affected = affectedContexts();
 
-function contextsIn(directory: string): string[] {
-  if (!fs.existsSync(directory)) {
-    return [];
-  }
-
-  return fs
-    .readdirSync(directory, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
-    .map((entry) => entry.name)
-    .sort();
+  return contextsIn(path.join(root, contextsDir))
+    .filter((context) => affected === undefined || affected.includes(context))
+    .flatMap((context) =>
+      layers
+        .map((layer) => ({ context, layer, directory: `${contextsDir}/${context}/${layer}` }))
+        .filter(({ directory }) => holdsASource(path.join(root, directory))),
+    );
 }
 
 function holdsASource(directory: string): boolean {

@@ -1,13 +1,17 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { afterAll, describe, expect, it } from 'vitest';
-import { governedCoverage, governedJestCoverage, REFERENCE_COVERAGE } from '../src/coverage.js';
+import { afterAll, afterEach, describe, expect, it, vi } from 'vitest';
+import { governedCoverage, governedJestCoverage, REFERENCE_COVERAGE, unaffectedContexts } from '../src/coverage.js';
 
 const workspace = mkdtempSync(path.join(os.tmpdir(), 'ddd-ts-kit-coverage-'));
 
 afterAll(() => {
   rmSync(workspace, { recursive: true, force: true });
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
 });
 
 /** A project on disk: its config file and some files, given from its root. */
@@ -121,5 +125,78 @@ describe('governedJestCoverage(), the same in the options of Jest', () => {
         './src/contexts/billing/infrastructure/': REFERENCE_COVERAGE.infrastructure,
       },
     });
+  });
+});
+
+/** billing, catalog and shipping, each with a domain; shipping also has an adapter. */
+const THREE_CONTEXTS = [
+  'src/contexts/billing/domain/aggregates/invoice.aggregate.ts',
+  'src/contexts/catalog/domain/aggregates/item.aggregate.ts',
+  'src/contexts/shipping/domain/aggregates/parcel.aggregate.ts',
+  'src/contexts/shipping/infrastructure/persistence/knex-parcel.repository.ts',
+];
+
+describe('a partial run, which DDD_TS_KIT_AFFECTED narrows to the contexts a pull request reaches', () => {
+  it('leaves nothing out when the variable is unset or empty: the default branch runs everything', () => {
+    const root = projectWith({}, THREE_CONTEXTS);
+
+    expect(unaffectedContexts(root)).toEqual([]);
+
+    vi.stubEnv('DDD_TS_KIT_AFFECTED', ' , ');
+
+    expect(unaffectedContexts(root)).toEqual([]);
+    expect(governedCoverage('test', root).include).toContain('src/contexts/*/domain/**/*.ts');
+  });
+
+  it('names the directory of every context it leaves out, wherever the project keeps its contexts', () => {
+    vi.stubEnv('DDD_TS_KIT_AFFECTED', 'billing, shipping');
+
+    expect(unaffectedContexts(projectWith({}, THREE_CONTEXTS))).toEqual(['src/contexts/catalog/']);
+
+    expect(
+      unaffectedContexts(
+        projectWith({ contextsDir: 'app/modules' }, [
+          'app/modules/billing/domain/a.ts',
+          'app/modules/catalog/domain/b.ts',
+        ]),
+      ),
+    ).toEqual(['app/modules/catalog/']);
+  });
+
+  it('measures the contexts it names and holds each of them to its whole threshold, the others to nothing', () => {
+    const root = projectWith({}, THREE_CONTEXTS);
+
+    vi.stubEnv('DDD_TS_KIT_AFFECTED', 'shipping');
+
+    expect(governedCoverage('integration', root)).toEqual({
+      include: ['src/contexts/shipping/infrastructure/**/*.ts'],
+      thresholds: { 'src/contexts/shipping/infrastructure/**/*.ts': REFERENCE_COVERAGE.infrastructure },
+    });
+
+    expect(Object.keys(governedCoverage('unit', root).thresholds)).toEqual(['src/contexts/shipping/domain/**/*.ts']);
+
+    expect(governedJestCoverage(root)).toMatchObject({
+      collectCoverageFrom: expect.arrayContaining(['<rootDir>/src/contexts/shipping/domain/**/*.ts']),
+      coverageThreshold: {
+        './src/contexts/shipping/domain/': REFERENCE_COVERAGE.domain,
+        './src/contexts/shipping/infrastructure/': REFERENCE_COVERAGE.infrastructure,
+      },
+    });
+
+    expect(governedJestCoverage(root).collectCoverageFrom).not.toContain(
+      '<rootDir>/src/contexts/billing/domain/**/*.ts',
+    );
+  });
+
+  it('holds the same floor on a partial run as on a run of everything: a context is never held to less', () => {
+    const root = projectWith({ coverage: { domain: { lines: 100 } } }, THREE_CONTEXTS);
+    const whole = governedCoverage('test', root).thresholds;
+
+    vi.stubEnv('DDD_TS_KIT_AFFECTED', 'billing');
+
+    const partial = governedCoverage('test', root).thresholds;
+
+    expect(partial).toEqual({ 'src/contexts/billing/domain/**/*.ts': whole['src/contexts/billing/domain/**/*.ts'] });
+    expect(partial['src/contexts/billing/domain/**/*.ts']).toMatchObject({ lines: 100 });
   });
 });

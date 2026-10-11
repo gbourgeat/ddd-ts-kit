@@ -39,7 +39,7 @@ function reportStale(): void {
     const committed = fs.existsSync(path.join(target, file)) ? fs.readFileSync(path.join(target, file), 'utf8') : '';
 
     if (committed.replaceAll('\r\n', '\n') !== content) {
-      console.error('docs/integration/' + file + ' is out of date: run `npm run docs:generate` and commit the result.');
+      console.error('docs/integration/' + file + ' is out of date: run the script `docs:generate` and commit it.');
       process.exitCode = 1;
     }
   }

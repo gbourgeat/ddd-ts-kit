@@ -1,4 +1,5 @@
 import type { CoverageRates } from './coverage-rates.js';
+import { measuredFiles } from './measured-files.js';
 import { governedSettings } from './governed-settings.js';
 import { heldLayers } from './held-layers.js';
 import { measuredLayers } from './measured-layers.js';
@@ -15,7 +16,8 @@ export interface GovernedCoverage {
  * What a Vitest run measures and the floor it is held to, read from the `coverage` key of
  * `ddd-ts-kit.config.json` (the reference when the key is absent): the one place a threshold is
  * written. `mode` is the mode of the run: `unit` measures domain, application and presentation,
- * `integration` measures infrastructure, any other mode measures the four layers.
+ * `integration` measures infrastructure, any other mode measures the four layers. A partial run
+ * (`DDD_TS_KIT_AFFECTED`) measures and holds the contexts it names, and no other.
  *
  *     // vitest.config.ts
  *     import { governedCoverage } from '@ddd-ts-kit/testing/coverage';
@@ -29,7 +31,7 @@ export function governedCoverage(mode: string, root: string = process.cwd()): Go
   const held = heldLayers(root, contextsDir, layers);
 
   return {
-    include: layers.map((layer) => `${contextsDir}/*/${layer}/**/*.ts`),
+    include: measuredFiles(contextsDir, layers),
     thresholds: Object.fromEntries(
       held.map(({ layer, directory }) => [`${directory}/**/*.ts`, { ...thresholds[layer] }]),
     ),

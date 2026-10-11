@@ -16,6 +16,7 @@ export const CACHE_STACKS = ['none', 'redis'] as const;
 export const AUDIT_MODES = ['on', 'off'] as const;
 export const ERROR_REPORTERS = ['none', 'sentry'] as const;
 export const LOGGERS = ['stdout', 'pino', 'winston'] as const;
+export const PACKAGE_MANAGERS = ['npm', 'pnpm'] as const;
 
 export type ValidationStack = (typeof VALIDATION_STACKS)[number];
 export type OrmStack = (typeof ORM_STACKS)[number];
@@ -55,4 +56,10 @@ export interface Stack {
   readonly style: (typeof STYLES)[number];
   /** How a declared context reaches the composition root: one generated barrel, or discovery of its role files at startup. */
   readonly assembly: (typeof ASSEMBLIES)[number];
+  /**
+   * What installs the dependencies and runs the scripts: every command the CLI writes (scripts,
+   * pipelines, hooks, Dockerfile, guidance) is in its dialect. A config that says nothing was
+   * written before the choice existed: it is npm.
+   */
+  readonly packageManager: (typeof PACKAGE_MANAGERS)[number];
 }

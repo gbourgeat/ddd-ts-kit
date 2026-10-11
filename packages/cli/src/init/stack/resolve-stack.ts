@@ -14,6 +14,7 @@ import {
   ERROR_REPORTERS,
   HTTP_STACKS,
   LOGGERS,
+  PACKAGE_MANAGERS,
   parseConfig,
   readConfig,
   TEST_STACKS,
@@ -21,6 +22,7 @@ import {
   type Config,
 } from '../../config/index.js';
 import { aliasProblem } from '../../alias/index.js';
+import { DEFAULT_PACKAGE_MANAGER } from '../../package-manager/default-package-manager.js';
 import { CliError } from '../../cli-error.js';
 import { choose } from './choose.js';
 import { resolvePersistence } from './resolve-persistence.js';
@@ -120,11 +122,14 @@ function resolveBroker(options: StackOptions, orm: string): string {
   );
 }
 
-function resolveTooling(options: StackOptions): { validation: string; tests: string; ci: string } {
+type Tooling = Record<'validation' | 'tests' | 'ci' | 'packageManager', string>;
+
+function resolveTooling(options: StackOptions): Tooling {
   return {
     validation: choose(VALIDATION_STACKS, options.validation, 'validation') ?? 'zod',
     tests: choose(TEST_STACKS, options.tests, 'tests') ?? 'vitest',
     ci: choose(CI_PLATFORMS, options.ci, 'ci') ?? 'github',
+    packageManager: choose(PACKAGE_MANAGERS, options.packageManager, 'package-manager') ?? DEFAULT_PACKAGE_MANAGER,
   };
 }
 

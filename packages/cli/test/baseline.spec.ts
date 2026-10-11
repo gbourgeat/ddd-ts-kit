@@ -19,9 +19,11 @@ function scriptsOf(root: string): Record<string, string> {
   return scripts;
 }
 
-/** The scripts a pipeline file runs, with or without the flags it passes them. */
+/** The scripts a pipeline file runs, with or without the flags it passes them, whatever the package manager. */
 function runBy(pipeline: string): string[] {
-  return [...pipeline.matchAll(/npm run (?:--silent )?([\w:-]+)/g)].map((match) => match[1] ?? '');
+  return [...pipeline.matchAll(/(?:npm|pnpm) (?:--silent )?run (?:--silent )?([\w:-]+)/g)].map(
+    (match) => match[1] ?? '',
+  );
 }
 
 function expectBaseline(root: string): void {
@@ -31,7 +33,7 @@ function expectBaseline(root: string): void {
   const gitlab = runBy(read(root, '.gitlab-ci.yml'));
 
   for (const { gate, verify: script, pipeline } of BASELINE) {
-    expect(verify, `verify: ${gate}`).toContain(`npm run ${script}`);
+    expect(verify, `verify: ${gate}`).toContainEqual(expect.stringMatching(new RegExp(`^(npm|pnpm) run ${script}$`)));
     expect(scripts[script], `script of ${gate}`).toEqual(expect.any(String));
     expect(github, `GitHub: ${gate}`).toEqual(expect.arrayContaining([...pipeline]));
     expect(gitlab, `GitLab: ${gate}`).toEqual(expect.arrayContaining([...pipeline]));
@@ -64,7 +66,7 @@ describe('the quality baseline', () => {
     const gitlab = runBy(read(root, '.gitlab-ci.yml'));
 
     for (const { gate, verify: script, pipeline } of BASELINE.filter((held) => held.verify !== 'test:e2e')) {
-      expect(verify, gate).toContain(`npm run ${script}`);
+      expect(verify, gate).toMatch(new RegExp(`(npm|pnpm) run ${script}( |$)`));
       expect(github, gate).toEqual(expect.arrayContaining([...pipeline]));
       expect(gitlab, gate).toEqual(expect.arrayContaining([...pipeline]));
     }
@@ -93,8 +95,125 @@ describe('the quality baseline', () => {
     expect(beforeCommit).toContain('eslint --no-warn-ignored {staged_files}');
     expect(beforeCommit).toContain('biome format --no-errors-on-unmatched {staged_files}');
     expect(beforeCommit).toContain('ddd-ts-kit check {staged_files}');
-    expect(beforeCommit).not.toMatch(/coverage|vitest|jest|npm run/);
-    expect(beforePush).toContain('npm run ci:typecheck');
-    expect(beforePush).toContain('npm run ci:test:unit');
+    expect(beforeCommit).not.toMatch(/coverage|vitest|jest|(npm|pnpm) run/);
+    expect(beforePush).toMatch(/(npm|pnpm) run ci:typecheck/);
+    expect(beforePush).toMatch(/(npm|pnpm) run ci:test:unit/);
+  });
+
+  it.each(['npm', 'pnpm'])('holds every gate in the three places whatever the package manager (%s)', (manager) => {
+    expectBaseline(initProject('--ci', 'both', '--package-manager', manager));
+  });
+});
+
+/** One job of a GitHub workflow, from its key to the next job. */
+function githubJob(workflow: string, job: string): string {
+  return new RegExp(`\\n  ${job}:\\n[\\s\\S]*?(?=\\n  [\\w-]+:\\n|$)`).exec(workflow)?.[0] ?? '';
+}
+
+/** One job of a GitLab pipeline, from its key to the next top-level key. */
+function gitlabJob(pipeline: string, job: string): string {
+  return new RegExp(`\\n${job}:\\n[\\s\\S]*?(?=\\n[\\w.-]+:\\n|$)`).exec(pipeline)?.[0] ?? '';
+}
+
+/**
+ * What runs where. The default branch and the nightly run hold the whole baseline. A pull or
+ * merge request narrows three runs to the contexts its change reaches through the context map
+ * (unit specs, integration specs, lint) and nothing else: the gates that read the project as a
+ * whole stay whole.
+ */
+describe('what a pull request runs, against the default branch', () => {
+  const root = initProject('--ci', 'both', '--package-manager', 'npm');
+  const github = read(root, '.github/workflows/ci.yml');
+  const gitlab = read(root, '.gitlab-ci.yml');
+
+  /** The gates no selection may narrow: the project is one type program, one import graph, one set of exports, one application. */
+  const WHOLE = [
+    ['typecheck', 'ci:typecheck'],
+    ['lint', 'ci:format'],
+    ['architecture', 'ci:arch:check'],
+    ['architecture', 'ci:arch:graph'],
+    ['deadcode', 'ci:deadcode'],
+    ['e2e', 'ci:test:e2e'],
+    ['build', 'ci:build'],
+    ['build', 'ci:docs'],
+  ] as const;
+
+  /** The runs a selection narrows, with what carries the selection into each. */
+  const NARROWED = [
+    ['unit', 'ci:test:unit', 'DDD_TS_KIT_AFFECTED'],
+    ['integration', 'ci:test:integration', 'DDD_TS_KIT_AFFECTED'],
+    ['lint', 'ci:lint', 'LINT'],
+  ] as const;
+
+  it('computes the selection once, from the difference with the base on a pull request and from nothing anywhere else: the default branch and the schedule get everything', () => {
+    expect(githubJob(github, 'install')).toContain(
+      "BASE: ${{ github.event_name == 'pull_request' && 'HEAD^1' || '' }}",
+    );
+
+    expect(githubJob(github, 'install')).toContain('ddd-ts-kit affected --base "$BASE" --format github');
+    expect(github).toMatch(/on:\n {2}push:\n {4}branches: \[main\]\n {2}pull_request:\n {2}schedule:\n/);
+
+    expect(gitlabJob(gitlab, 'install')).toContain(
+      'ddd-ts-kit affected --base "${CI_MERGE_REQUEST_DIFF_BASE_SHA:-}" --format env | tee affected.env',
+    );
+
+    expect(gitlab).toContain('- if: $CI_PIPELINE_SOURCE == "schedule"');
+  });
+
+  it.each(WHOLE)('never narrows %s (%s): no variable of the selection reaches it', (job, script) => {
+    for (const [pipeline, text] of [
+      ['GitHub', githubJob(github, job)],
+      ['GitLab', gitlabJob(gitlab, job)],
+    ] as const) {
+      const line =
+        text.split('\n').find((candidate) => new RegExp(`npm run (--silent )?${script}\\b`).test(candidate)) ?? '';
+
+      expect(line, `${pipeline}: ${job} runs ${script}`).not.toBe('');
+      expect(line, pipeline).not.toMatch(/AFFECTED|PARTIAL|LINT/);
+    }
+
+    if (job !== 'lint' && job !== 'e2e') {
+      expect(githubJob(github, job)).not.toMatch(/outputs\.(contexts|args|lint)|outputs\.scope/);
+      expect(gitlabJob(gitlab, job)).not.toContain('AFFECTED_');
+    }
+  });
+
+  it.each(NARROWED)('narrows %s (%s) to the affected contexts, through %s', (job, script, carrier) => {
+    expect(githubJob(github, job)).toContain(`npm run ${script} -- $`);
+    expect(githubJob(github, job)).toContain(carrier);
+    expect(gitlabJob(gitlab, job)).toMatch(new RegExp(`npm run ${script} -- .*\\$AFFECTED_(ARGS|LINT)`));
+  });
+
+  it('skips the specs, and only the specs, when nothing that runs changed: the end-to-end specs run for any other change', () => {
+    for (const job of ['unit', 'integration', 'e2e']) {
+      expect(githubJob(github, job), job).toContain("if: ${{ needs.install.outputs.scope != 'none' }}");
+      expect(gitlabJob(gitlab, job), job).toContain('if [ "$AFFECTED_SCOPE" = "none" ]');
+    }
+
+    expect(github.match(/outputs\.scope != 'none'/g)).toHaveLength(7);
+    expect(gitlab.match(/AFFECTED_SCOPE/g)).toHaveLength(3);
+  });
+
+  it('holds the coverage thresholds of every context a partial run names, and of all of them otherwise: the runner config reads the selection', () => {
+    const config = read(root, 'vitest.config.ts');
+
+    expect(config).toContain('const NOT_AFFECTED = unaffectedContexts().map((directory) => `${directory}**`);');
+    expect(config).toContain('exclude: [INTEGRATION_SPECS, ...NOT_AFFECTED]');
+    expect(config).toContain('...governedCoverage(mode),');
+
+    expect(read(initProject('--tests', 'jest', '--orm', 'custom'), 'jest.config.js')).toContain(
+      "testPathIgnorePatterns: ['/node_modules/', ...unaffectedContexts().map((directory) => `/${directory}`)],",
+    );
+  });
+
+  it('needs every job in the gate, cancels a superseded run of a pull request only, and installs once', () => {
+    const jobs = [...github.matchAll(/\n {2}([\w-]+):\n {4}name:/g)].map((match) => match[1] ?? '');
+    const needed = /needs: \[([^\]]+)\]\n {4}runs-on: ubuntu-latest\n {4}timeout-minutes: 5/.exec(github)?.[1] ?? '';
+
+    expect(needed.split(', ')).toEqual(jobs.filter((job) => job !== 'gate'));
+    expect(github).toContain("cancel-in-progress: ${{ github.event_name == 'pull_request' }}");
+    expect(github).not.toMatch(/npm ci|cache: npm/);
+    expect(github.match(/uses: \.\/\.github\/actions\/setup/g)).toHaveLength(jobs.length - 2);
+    expect(gitlab.match(/npm ci/g)).toHaveLength(1);
   });
 });

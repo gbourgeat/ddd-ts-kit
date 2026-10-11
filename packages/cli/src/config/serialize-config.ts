@@ -65,7 +65,7 @@ function optionalKeys(config: Config): Record<string, unknown> {
 
 /** The assembly is a choice of the declared style only: an explicit project has a module file and nothing to assemble. */
 function writtenStack(stack: Stack): Partial<Stack> {
-  const { assembly, ...rest } = stack;
+  const { assembly, packageManager, ...rest } = stack;
 
-  return stack.style === 'declared' ? { ...rest, assembly } : rest;
+  return stack.style === 'declared' ? { ...rest, assembly, packageManager } : { ...rest, packageManager };
 }

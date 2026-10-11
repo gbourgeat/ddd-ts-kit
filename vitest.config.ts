@@ -34,15 +34,24 @@ const FLOORS: Readonly<Record<string, readonly [number, number, number, number]>
   winston: [96, 95, 94, 97],
 };
 
+/**
+ * A pull request runs the specs of the packages its change reaches and of the packages that
+ * depend on them (`pipeline/monorepo/affected-packages.mjs`, handed over as KIT_AFFECTED): those
+ * are measured and held to their floor, which the same specs give them in a run of everything.
+ * Unset, every package is: that is the default branch, the nightly run and a laptop.
+ */
+const AFFECTED = (process.env['KIT_AFFECTED'] ?? '').split(',').filter((name) => name !== '');
+const MEASURED = Object.entries(FLOORS).filter(([name]) => AFFECTED.length === 0 || AFFECTED.includes(name));
+
 export default defineConfig({
   test: {
     include: ['packages/*/test/**/*.spec.ts'],
     coverage: {
       provider: 'v8',
-      include: ['packages/*/src/**'],
+      include: AFFECTED.length === 0 ? ['packages/*/src/**'] : AFFECTED.map((name) => `packages/${name}/src/**`),
       reporter: ['text', 'cobertura', 'lcov'],
       thresholds: Object.fromEntries(
-        Object.entries(FLOORS).map(([name, [statements, branches, functions, lines]]) => [
+        MEASURED.map(([name, [statements, branches, functions, lines]]) => [
           `packages/${name}/src/**`,
           { statements, branches, functions, lines },
         ]),

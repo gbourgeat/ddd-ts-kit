@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { read } from './helpers.js';
 import { initProject } from './support/init-project.js';
+import { NPM } from './support/npm.js';
 import { parseFrontmatter } from './support/parse-frontmatter.js';
 
 const RULE_FILES = [
@@ -43,7 +44,7 @@ const GUIDANCE = ['CLAUDE.md', 'README.md', ...RULE_FILES.map((rule) => `.claude
 
 describe('the guidance init writes', () => {
   it('writes a slim project guide: commands, the three reading rules, the map of the rule files, generated files, the TypeScript note, the plan and the plugin skills by their current names', () => {
-    const guide = read(initProject(), 'CLAUDE.md');
+    const guide = read(initProject(...NPM), 'CLAUDE.md');
 
     const commands = [
       'npm run verify',
@@ -94,13 +95,13 @@ describe('the guidance init writes', () => {
   });
 
   it('says the shape every file takes in the guide, and leaves what belongs to a layer to its rule file', () => {
-    const root = initProject();
+    const root = initProject(...NPM);
     const guide = read(root, 'CLAUDE.md');
 
     expect(guide).toContain('one exported class, interface or function per file, named after it in kebab-case');
     expect(guide).toContain('`private` members, never `#name`');
     expect(guide).toContain('Never edit `<context>.declarations.ts`');
-    expect(read(initProject('--style', 'explicit'), 'CLAUDE.md')).not.toContain('declarations.ts');
+    expect(read(initProject(...NPM, '--style', 'explicit'), 'CLAUDE.md')).not.toContain('declarations.ts');
 
     expect(read(root, '.claude/rules/application.md')).toContain(
       'A port is an abstract class in `ports/<name>.port.ts` and its own injection token',
@@ -111,7 +112,7 @@ describe('the guidance init writes', () => {
   });
 
   it('teaches that events leave with the save and that tracing stays in the platform, in the layers concerned', () => {
-    const root = initProject();
+    const root = initProject(...NPM);
     const rule = (name: string): string => read(root, `.claude/rules/${name}.md`);
 
     expect(rule('application')).toContain(
@@ -128,7 +129,7 @@ describe('the guidance init writes', () => {
 
     expect(rule('platform')).toContain('spans through `kernelModule({ instrumentation })`');
 
-    expect(read(initProject('--di', 'manual'), '.claude/rules/platform.md')).toContain(
+    expect(read(initProject(...NPM, '--di', 'manual'), '.claude/rules/platform.md')).toContain(
       'spans through the members of `traceApplication()`',
     );
 
@@ -137,13 +138,16 @@ describe('the guidance init writes', () => {
     );
 
     expect(rule('tests')).toContain("await application.jobs.runNow('<context>.<job>')");
-    expect(read(initProject('--di', 'manual'), '.claude/rules/tests.md')).toContain('await job.run(occurrence)');
+
+    expect(read(initProject(...NPM, '--di', 'manual'), '.claude/rules/tests.md')).toContain(
+      'await job.run(occurrence)',
+    );
   });
 });
 
 describe('the rule files and the README init writes', () => {
   it.each(RULE_STACKS)('renders rule files whose frontmatter holds only `paths` (%s)', (stack) => {
-    const root = initProject(...flagsOf(stack));
+    const root = initProject(...NPM, ...flagsOf(stack));
 
     for (const rule of RULE_FILES) {
       const text = read(root, `.claude/rules/${rule}.md`);
@@ -164,7 +168,7 @@ describe('the rule files and the README init writes', () => {
   });
 
   it.each(RULE_STACKS)('teaches nothing of the former style (%s)', (stack) => {
-    const root = initProject(...flagsOf(stack));
+    const root = initProject(...NPM, ...flagsOf(stack));
 
     for (const file of GUIDANCE) {
       for (const former of FORMER_STYLE) {
@@ -174,7 +178,7 @@ describe('the rule files and the README init writes', () => {
   });
 
   it('names the rules of the ports and of the jobs where they apply', () => {
-    const root = initProject();
+    const root = initProject(...NPM);
     const rule = (name: string): string => read(root, `.claude/rules/${name}.md`);
 
     expect(rule('domain')).toContain('an abstract class extending the kernel `Repository<Aggregate>`');
@@ -184,14 +188,14 @@ describe('the rule files and the README init writes', () => {
     expect(rule('infrastructure')).toContain('`ports/implements-never-extends`');
     expect(rule('infrastructure')).toContain('@Repository(InvoiceRepository, [Database, ExecutionScope, Clock])');
 
-    expect(read(initProject('--orm', 'knex'), '.claude/rules/infrastructure.md')).toContain(
+    expect(read(initProject(...NPM, '--orm', 'knex'), '.claude/rules/infrastructure.md')).toContain(
       '[KnexContext, ExecutionScope, Clock]',
     );
   });
 
   it('explains in the README how the application is put together, for the family of the stack', () => {
-    const declared = read(initProject('--broker', 'rabbitmq'), 'README.md');
-    const byHand = read(initProject('--di', 'manual'), 'README.md');
+    const declared = read(initProject(...NPM, '--broker', 'rabbitmq'), 'README.md');
+    const byHand = read(initProject(...NPM, '--di', 'manual'), 'README.md');
 
     expect(declared).toContain('**A port is an abstract class, and the class is what is injected.**');
     expect(declared).toContain('`kernelModule({...})` binds the ports of the kernel');

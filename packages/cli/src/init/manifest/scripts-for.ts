@@ -1,13 +1,24 @@
 import type { Config } from '../../config/index.js';
 import { DEPCRUISE_FILE } from '../../depcruise/depcruise-file.js';
+import { inDialect } from '../../package-manager/in-dialect.js';
 import { BASELINE } from './baseline.js';
 import { databaseScripts } from './database-scripts.js';
 import { documentationScripts } from './documentation-scripts.js';
 import { pipelineManifest } from './pipeline-manifest.js';
 import { testScripts } from './test-scripts.js';
 
-/** The scripts of a project: the `ci:*` ones of the pipeline, then what a developer runs, and `verify`, which chains every gate the stack has. */
+/**
+ * The scripts of a project: the `ci:*` ones of the pipeline, then what a developer runs, and
+ * `verify`, which chains every gate the stack has. A script that calls another does so through
+ * the package manager of the project.
+ */
 export function scriptsFor(config: Config): Record<string, string> {
+  const written = Object.entries(scriptsOf(config));
+
+  return Object.fromEntries(written.map(([name, script]) => [name, inDialect(script, config.stack.packageManager)]));
+}
+
+function scriptsOf(config: Config): Record<string, string> {
   const scripts = {
     ...pipelineManifest().scripts,
     ...runScripts(config),

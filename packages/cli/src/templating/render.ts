@@ -1,7 +1,8 @@
 import type { RenderContext } from './render-context.js';
 import { Rendering } from './rendering.js';
 
-const TAG = /\{\{\s*(#if|#unless|\/if|\/unless)?\s*([A-Za-z0-9_.]*)\s*\}\}/g;
+/** `${{ ... }}` is an expression of a GitHub workflow, never a tag of a template. */
+const TAG = /(?<!\$)\{\{\s*(#if|#unless|\/if|\/unless)?\s*([A-Za-z0-9_.]*)\s*\}\}/g;
 /** A block tag alone on its line leaves no blank line behind. */
 const STANDALONE_BLOCK_TAG = /^[ \t]*(\{\{\s*[#/](?:if|unless)[^}\n]*\}\})[ \t]*\r?\n/gm;
 
