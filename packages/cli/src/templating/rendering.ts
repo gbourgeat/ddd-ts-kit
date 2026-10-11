@@ -36,7 +36,7 @@ export class Rendering {
       throw this.failure('an "{{#if}}" block is never closed');
     }
 
-    const leftover = /\{\{[^}]*\}\}/.exec(this.output);
+    const leftover = /(?<!\$)\{\{[^}]*\}\}/.exec(this.output);
 
     if (leftover !== null) {
       throw this.failure(`leftover placeholder "${leftover[0]}"`);

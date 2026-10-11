@@ -11,6 +11,8 @@ export function documentationScripts(config: Config): Record<string, string> {
 
   return {
     ...(hasHttp ? openApi : {}),
+    // The pipeline builds once: its documents job compares them from the build the step before it made.
+    'ci:docs': `ddd-ts-kit docs --check && ${generated.map((command) => `${command} --check`).join(' && ')}`,
     'events:generate': 'npm run build && node dist/scripts/events.js',
     'events:check': 'npm run build && node dist/scripts/events.js --check',
     'docs:generate': `ddd-ts-kit docs && npm run build && ${generated.join(' && ')}`,

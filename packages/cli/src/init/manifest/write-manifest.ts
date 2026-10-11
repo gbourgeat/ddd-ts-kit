@@ -3,6 +3,7 @@ import { CliError } from '../../cli-error.js';
 import type { Workspace } from '../../workspace/index.js';
 import { dependenciesFor, type Packages } from './dependencies-for.js';
 import { formatJson } from '../../json/format-json.js';
+import { PINNED_PACKAGE_MANAGERS } from '../../package-manager/pinned-package-managers.js';
 import { isRecord } from '../is-record.js';
 import { scriptsFor } from './scripts-for.js';
 import { VERSIONS } from './versions.js';
@@ -43,20 +44,39 @@ export function writeManifest(ws: Workspace, request: ManifestRequest): void {
     ws.note('package.json is not "type": "module"; the generated code is written as ES modules.');
   }
 
+  pinPackageManager(ws, manifest, request);
   ws.update('package.json', serialize(manifest));
 }
 
+/** corepack reads `packageManager`: an existing project that pins another release keeps it, and is told. */
+function pinPackageManager(ws: Workspace, manifest: Record<string, unknown>, { config, force }: ManifestRequest): void {
+  const pinned = PINNED_PACKAGE_MANAGERS[config.stack.packageManager];
+
+  if (pinned === undefined || manifest['packageManager'] === pinned) {
+    return;
+  }
+
+  if (manifest['packageManager'] === undefined || force) {
+    manifest['packageManager'] = pinned;
+  } else {
+    ws.note(`package.json keeps its own "packageManager"; the kit was proven with ${pinned}.`);
+  }
+}
+
 function newManifest(
-  { projectName }: ManifestRequest,
+  { projectName, config }: ManifestRequest,
   scripts: Record<string, string>,
   wanted: Packages,
 ): Record<string, unknown> {
+  const pinned = PINNED_PACKAGE_MANAGERS[config.stack.packageManager];
+
   return {
     name: projectName,
     version: '0.1.0',
     private: true,
     type: 'module',
     engines: { node: '>=22.12.0' },
+    ...(pinned === undefined ? {} : { packageManager: pinned }),
     scripts,
     ...wanted,
   };

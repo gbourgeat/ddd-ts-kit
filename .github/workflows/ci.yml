@@ -4,28 +4,40 @@ on:
   push:
     branches: [main]
   pull_request:
+  schedule:
+    # Every night, everything, on both Node lines: a pull request runs the unit specs of the packages its change reaches.
+    - cron: '0 3 * * *'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # A newer commit of a pull request supersedes the run in progress; the default branch finishes every run.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
 
 jobs:
   install:
-    name: Install
+    name: Install and build
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    outputs:
+      scope: ${{ steps.affected.outputs.scope }}
+      packages: ${{ steps.affected.outputs.packages }}
+      filters: ${{ steps.affected.outputs.filters }}
+      integration: ${{ steps.affected.outputs.integration }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version: 24
-          cache: npm
-      - run: npm ci
+          # A pull request is checked out as its merge commit, whose first parent is the base it is compared with.
+          fetch-depth: 2
+      - uses: ./.github/actions/setup
+      - name: What this run covers (everything on the default branch and at night, the affected packages on a pull request)
+        id: affected
+        env:
+          BASE: ${{ github.event_name == 'pull_request' && 'HEAD^1' || '' }}
+        run: node pipeline/monorepo/affected-packages.mjs --base "$BASE" --format github | tee -a "$GITHUB_OUTPUT"
 
   typecheck:
     name: Typecheck
@@ -36,11 +48,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version: 24
-          cache: npm
-      - run: npm ci
+      - uses: ./.github/actions/setup
       - run: npm run ci:typecheck
 
   lint:
@@ -52,12 +60,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version: 24
-          cache: npm
-      - run: npm ci
-      - run: npm run build
+      - uses: ./.github/actions/setup
       - run: npm run ci:format
       - run: npm run ci:lint
 
@@ -70,13 +73,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version: 24
-          cache: npm
-      - run: npm ci
-      - run: npm run build
-      - name: Rule fixtures (check --self) and dependency graph
+      - uses: ./.github/actions/setup
+      - name: Rule fixtures (check --self), dependency graph, the guard and the affected selection
         run: npm run ci:arch
 
   deadcode:
@@ -88,17 +86,11 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version: 24
-          cache: npm
-      - run: npm ci
-      - run: npm run build
+      - uses: ./.github/actions/setup
       - run: npm run ci:deadcode
 
   docs:
     name: Docs
-    needs: install
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -108,14 +100,54 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24
-          cache: npm
-      - run: npm ci
-      - name: No em dash or en dash
+      - name: No em dash or en dash (the script needs no dependency)
         run: npm run ci:docs
 
   unit:
-    name: Unit tests (Node ${{ matrix.node }})
-    needs: [typecheck, lint, architecture, deadcode, docs]
+    name: Unit tests (Node 24, coverage floors)
+    needs: install
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - name: Unit specs, each package held to its coverage floor (vitest.config.ts)
+        if: ${{ needs.install.outputs.scope != 'none' }}
+        env:
+          KIT_AFFECTED: ${{ needs.install.outputs.packages }}
+          FILTERS: ${{ needs.install.outputs.filters }}
+        run: npm run ci:test:unit -- $FILTERS
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: coverage
+          path: coverage
+          if-no-files-found: ignore
+          retention-days: 14
+
+  unit-oldest:
+    name: Unit tests (Node 22)
+    needs: install
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+        with:
+          node-version: 22
+      - name: The same specs on the oldest supported Node (coverage is measured once, on Node 24)
+        if: ${{ needs.install.outputs.scope != 'none' }}
+        env:
+          FILTERS: ${{ needs.install.outputs.filters }}
+        run: npm test -- $FILTERS
+
+  alias:
+    name: Import alias at run time (Node ${{ matrix.node }})
+    needs: install
     runs-on: ubuntu-latest
     timeout-minutes: 25
     strategy:
@@ -126,111 +158,101 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      - uses: ./.github/actions/setup
         with:
           node-version: ${{ matrix.node }}
-          cache: npm
-      - run: npm ci
-      - run: npm run build
-      - name: Unit specs, each package held to its coverage floor (vitest.config.ts)
-        run: npm run ci:test:unit
-      - name: Import alias at run time on this Node (every stack built, run compiled with plain node, from sources under tsx and vitest)
+      - name: Every stack built, run compiled with plain node, from sources under tsx and vitest
         run: npm run ci:test:alias
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        if: ${{ !cancelled() && matrix.node == 24 }}
-        with:
-          name: coverage
-          path: coverage
-          if-no-files-found: ignore
-          retention-days: 14
 
   integration:
     name: Integration tests
-    needs: unit
+    needs: install
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
       DDD_TS_KIT_TEST_DATABASE_URL: postgres://app:app@localhost:5432/app
-    services:
-      postgres:
-        image: public.ecr.aws/docker/library/postgres:18
-        env:
-          POSTGRES_USER: app
-          POSTGRES_PASSWORD: app
-          POSTGRES_DB: app
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U app -d app"
-          --health-interval 2s
-          --health-timeout 3s
-          --health-retries 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version: 24
-          cache: npm
-      - run: npm ci
-      - run: npm run build
-      - run: npm run ci:test:integration
+      - uses: ./.github/actions/setup
+      - name: PostgreSQL (pulled with retries, from the next registry when one refuses)
+        if: ${{ needs.install.outputs.integration == 'true' }}
+        run: sh pipeline/github/scripts/start-postgres.sh
+      - name: Adapter specs on a server (skipped when no adapter package is reached)
+        if: ${{ needs.install.outputs.integration == 'true' }}
+        run: npm run ci:test:integration
 
   e2e:
-    name: End-to-end tests
-    needs: integration
+    name: End-to-end tests (${{ matrix.shard }}/4)
+    needs: install
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      - uses: ./.github/actions/setup
+      - name: Every stack generated and held to its own pipeline, a quarter of the spec files on each runner
+        run: npm run ci:test:e2e:stacks -- --shard=${{ matrix.shard }}/4
+
+  managers:
+    name: Generated project on ${{ matrix.manager }}
+    needs: install
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        manager: [npm, pnpm]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          node-version: 24
-          cache: npm
-      - run: npm ci
-      - run: npm run build
-      - run: npm run ci:test:e2e
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - name: The package manager a generated project pins
+        run: corepack enable
+      - name: The default stack and a heavy one, installed for real from the packed kit, built and held to verify
+        env:
+          DDD_TS_KIT_PACKAGE_MANAGER: ${{ matrix.manager }}
+        run: npm run ci:test:managers
 
   example:
     name: Example application (examples/scheduling)
-    needs: unit
+    needs: install
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    services:
-      postgres:
-        image: public.ecr.aws/docker/library/postgres:18
-        env:
-          POSTGRES_USER: app
-          POSTGRES_PASSWORD: app
-          POSTGRES_DB: app
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U app -d app"
-          --health-interval 2s
-          --health-timeout 3s
-          --health-retries 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version: 24
-          cache: npm
-      - run: npm ci
-      - run: npm run build
-      - name: The example's own gate (types, lint, format, tests with the coverage thresholds, end to end, architecture, graph, dead code, documents), then every rule of the catalogue broken once in a copy of it (example:conformance)
-        run: npm run example:verify
+      - uses: ./.github/actions/setup
+      - name: The example's own gate (types, lint, format, tests with the coverage thresholds, end to end, architecture, graph, dead code, documents)
+        run: npm run verify --workspace examples/scheduling
+      - name: PostgreSQL (pulled with retries, from the next registry when one refuses)
+        run: sh pipeline/github/scripts/start-postgres.sh
       - name: The example's adapter specs on a PostgreSQL server (two concurrent bookings meet real transactions)
         env:
           DATABASE_URL: postgres://app:app@localhost:5432/app
         run: |
           npm run db:migrate --workspace examples/scheduling
           npm run test:postgres --workspace examples/scheduling
+
+  conformance:
+    name: Every rule broken once in a copy of the example
+    needs: install
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - run: npm run example:conformance
 
   security:
     name: Security
@@ -242,11 +264,9 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      - uses: ./.github/actions/setup
         with:
-          node-version: 24
-          cache: npm
-      - run: npm ci
+          build: 'false'
       - name: Production dependencies audit
         run: npm run ci:audit
       - name: Dependency review
@@ -260,26 +280,21 @@ jobs:
 
   package:
     name: Packages
-    needs: unit
+    needs: install
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version: 24
-          cache: npm
-      - run: npm ci
-      - run: npm run build
+      - uses: ./.github/actions/setup
       - name: Pack, publint, arethetypeswrong
         run: npm run ci:build
 
   gate:
     name: gate
     if: ${{ always() }}
-    needs: [install, typecheck, lint, architecture, deadcode, docs, unit, integration, e2e, example, security, package]
+    needs: [install, typecheck, lint, architecture, deadcode, docs, unit, unit-oldest, alias, integration, e2e, managers, example, conformance, security, package]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

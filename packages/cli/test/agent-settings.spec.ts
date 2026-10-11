@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { cli, read, tempDir, write } from './helpers.js';
 import { initProject } from './support/init-project.js';
+import { NPM } from './support/npm.js';
 import { jsonAt } from './support/json-at.js';
 import { keysAt } from './support/keys-at.js';
 import { readJson } from './support/read-json.js';
@@ -34,7 +35,7 @@ const ASKED = [
 
 describe('agent settings', () => {
   it('holds permissions only: what runs without asking, what never happens, what is asked', () => {
-    const root = initProject();
+    const root = initProject(...NPM);
 
     const allowed = [
       'Bash(npx ddd-ts-kit check *)',
@@ -67,7 +68,7 @@ describe('agent settings', () => {
       }),
     );
 
-    const report = cli(root, 'init', '--json').json();
+    const report = cli(root, 'init', ...NPM, '--json').json();
 
     expect(stringsAt(report, 'updated')).toContain(SETTINGS);
     expect(jsonAt(readJson(root, SETTINGS), 'model')).toBe('a-model');

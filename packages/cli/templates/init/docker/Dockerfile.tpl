@@ -2,14 +2,21 @@
 
 FROM node:24-slim AS build
 WORKDIR /app
-COPY package.json package-lock.json ./
+{{#if pm.corepack}}
+# corepack provides the release of the package manager that package.json pins.
+RUN corepack enable
+{{/if}}
+COPY package.json package-lock.json{{#if pm.pnpm}} pnpm-workspace.yaml{{/if}} ./
 RUN npm ci
 COPY . .
 RUN npm run build
 
 FROM node:24-slim AS dependencies
 WORKDIR /app
-COPY package.json package-lock.json ./
+{{#if pm.corepack}}
+RUN corepack enable
+{{/if}}
+COPY package.json package-lock.json{{#if pm.pnpm}} pnpm-workspace.yaml{{/if}} ./
 RUN npm ci --omit=dev
 
 FROM node:24-slim

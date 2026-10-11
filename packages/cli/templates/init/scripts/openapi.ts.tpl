@@ -40,7 +40,7 @@ function reportDrift(): void {
     return;
   }
 
-  console.error('openapi/openapi.json is out of date: run `npm run docs:generate` and commit the result.');
+  console.error('openapi/openapi.json is out of date: run the script `docs:generate` and commit it.');
   process.exitCode = 1;
 }
 

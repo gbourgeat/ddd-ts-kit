@@ -47,7 +47,7 @@ describe('the formatter configuration', () => {
 
 describe('a project init writes', () => {
   it('carries the configuration of the kit, the two scripts, the gate and the hook', () => {
-    const root = initProject();
+    const root = initProject('--package-manager', 'npm');
     const scripts = textsAt(readJson(root, 'package.json'), 'scripts');
 
     expect(read(root, 'biome.json')).toBe(inRepository('biome.json'));
@@ -58,7 +58,9 @@ describe('a project init writes', () => {
   });
 
   it.each(['.github/workflows/ci.yml', '.gitlab-ci.yml'])('checks the format in the lint job of %s', (file) => {
-    expect(read(initProject('--ci', 'both'), file)).toMatch(/npm run ci:format\n\s+(- )?(run: )?npm run ci:lint/);
+    expect(read(initProject('--ci', 'both', '--package-manager', 'npm'), file)).toMatch(
+      /npm run ci:format\n(\s+(- name|env|LINT|#).*\n)*\s+(- )?(run: )?npm run ci:lint/,
+    );
   });
 
   it('holds the same gate in the example and in the kit', () => {

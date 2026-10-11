@@ -1,4 +1,5 @@
 import type { Config } from '../config/index.js';
+import { packageManagerVars } from '../package-manager/package-manager-vars.js';
 import { stackVars } from '../stack/stack-vars.js';
 import { WITH_DATABASE } from '../stack/with-database.js';
 import type { RenderContext } from '../templating/index.js';
@@ -14,6 +15,7 @@ export function templateVars(config: Config, projectName: string): RenderContext
   return {
     ...stackVars(config),
     project: { name: projectName },
+    pm: packageManagerVars(config),
     docs: { any: docsUi !== 'none', ui: docsUi },
     knip: knipVars(config),
     ci: { github: ci === 'github' || ci === 'both', gitlab: ci === 'gitlab' || ci === 'both', any: ci !== 'none' },

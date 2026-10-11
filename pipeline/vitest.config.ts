@@ -1,9 +1,11 @@
-import { governedCoverage } from '@ddd-ts-kit/testing/coverage';
+import { governedCoverage, unaffectedContexts } from '@ddd-ts-kit/testing/coverage';
 import { decorators } from '@ddd-ts-kit/testing/vitest';
 import { defineConfig } from 'vitest/config';
 
 const INTEGRATION_SPECS = 'src/contexts/*/test/integration/**/*.spec.ts';
 const INTEGRATION_MODE = 'integration';
+// A pull request names the contexts its change reaches (DDD_TS_KIT_AFFECTED, from `ddd-ts-kit affected`): the specs of the others are left to the default branch.
+const NOT_AFFECTED = unaffectedContexts().map((directory) => `${directory}**`);
 
 export default defineConfig(({ mode }) => ({
   // Vitest does not lower standard (TC39) decorators, which every class of a declared context carries: the compiler the project builds with does.
@@ -12,8 +14,11 @@ export default defineConfig(({ mode }) => ({
   resolve: { tsconfigPaths: true },
   test: {
     projects: [
-      { extends: true, test: { name: 'unit', include: ['src/**/*.spec.ts'], exclude: [INTEGRATION_SPECS] } },
-      { extends: true, test: { name: INTEGRATION_MODE, include: [INTEGRATION_SPECS] } },
+      {
+        extends: true,
+        test: { name: 'unit', include: ['src/**/*.spec.ts'], exclude: [INTEGRATION_SPECS, ...NOT_AFFECTED] },
+      },
+      { extends: true, test: { name: INTEGRATION_MODE, include: [INTEGRATION_SPECS], exclude: NOT_AFFECTED } },
     ],
     coverage: {
       provider: 'v8',

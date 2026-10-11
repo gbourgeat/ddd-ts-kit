@@ -290,7 +290,8 @@ module.exports = {
     "parser": "tsc",
     "doNotFollow": {
       "path": [
-        "node_modules"
+        "node_modules",
+        "^generated/"
       ]
     },
     "exclude": {

@@ -1,4 +1,4 @@
-import { governedJestCoverage } from '@ddd-ts-kit/testing/coverage';
+import { governedJestCoverage, unaffectedContexts } from '@ddd-ts-kit/testing/coverage';
 
 export default {
   testEnvironment: 'node',
@@ -7,6 +7,8 @@ export default {
     {{alias.jestMapper}}
   },
   testMatch: ['<rootDir>/{{config.sourceRoot}}/**/*.spec.ts', '<rootDir>/test/architecture/**/*.spec.ts'],
+  // A pull request names the contexts its change reaches (DDD_TS_KIT_AFFECTED, from `ddd-ts-kit affected`): the specs of the others are left to the default branch.
+  testPathIgnorePatterns: ['/node_modules/', ...unaffectedContexts().map((directory) => `/${directory}`)],
   extensionsToTreatAsEsm: ['.ts'],
   transform: {
     '^.+\\.ts$': [

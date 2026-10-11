@@ -11,7 +11,7 @@ const CONFIG = 'ddd-ts-kit.config.json';
 let root: string;
 
 beforeAll(() => {
-  root = committedProject('shop', '--context', 'billing:core');
+  root = committedProject('shop', '--context', 'billing:core', '--package-manager', 'npm');
 });
 
 describe('check --commit-size', () => {

@@ -11,6 +11,13 @@ import { textsAt } from './support/texts-at.js';
 const source = (file: string): string => pipelineAsset('source', file);
 const template = (file: string): string => pipelineAsset('template', file);
 
+/** Without the architecture specs the unit project of the source is shorter: the formatter lays it out on fewer lines. */
+/** What a template adds for one package manager or one ORM, between its tags. */
+const OPTIONAL_STEPS = /\{\{#if (?:pm\.corepack|orm\.prisma)\}\}\n[\s\S]*?\{\{\/if\}\}\n/g;
+
+const UNIT_PROJECT_OF_THE_SOURCE =
+  "{\n        extends: true,\n        test: { name: 'unit', include: ['src/**/*.spec.ts'], exclude: [INTEGRATION_SPECS, ...NOT_AFFECTED] },\n      },";
+
 /**
  * The CLI ships its own copy of the pipeline assets so that the published package is
  * self-contained. These tests are what keeps a copy from drifting: a template equals its
@@ -23,6 +30,7 @@ describe('pipeline templates', () => {
     ['renovate.json', 'renovate.json'],
     ['package-scripts.json', 'package-scripts.json'],
     ['github/workflows/ci.yml', 'github/workflows/ci.yml'],
+    ['github/scripts/start-postgres.sh', 'github/scripts/start-postgres.sh'],
     ['github/workflows/codeql.yml', 'github/workflows/codeql.yml'],
     ['github/workflows/pr-title.yml', 'github/workflows/pr-title.yml'],
     ['github/dependabot.yml', 'github/dependabot.yml'],
@@ -32,14 +40,33 @@ describe('pipeline templates', () => {
     expect(template(copy)).toBe(source(file));
   });
 
-  it('the GitLab pipeline differs only by the architecture report, which the checker now writes itself', () => {
+  it('the setup action of the GitHub pipeline is the source, plus the step that asks corepack for pnpm and the one that generates the Prisma client', () => {
+    expect(template('github/actions/setup/action.yml.tpl').replaceAll(OPTIONAL_STEPS, '')).toBe(
+      source('github/actions/setup/action.yml'),
+    );
+
+    expect(read(initProject('--package-manager', 'npm'), '.github/actions/setup/action.yml')).toBe(
+      source('github/actions/setup/action.yml'),
+    );
+
+    expect(read(initProject('--orm', 'prisma'), '.github/actions/setup/action.yml')).toContain(
+      'run: pnpm run db:client',
+    );
+  });
+
+  it('the GitLab pipeline differs only by the architecture report, which the checker now writes itself, by the line that asks corepack for pnpm and by the one that generates the Prisma client', () => {
     const expected = source('gitlab/.gitlab-ci.yml').replace(
       '    - npm run --silent ci:arch:check -- --format json > reports/arch.json || true\n    - node .gitlab/arch-to-codequality.mjs reports/arch.json reports/gl-code-quality-arch.json\n',
       '    - npm run --silent ci:arch:check -- --format gitlab > reports/gl-code-quality-arch.json\n',
     );
 
     expect(expected).not.toBe(source('gitlab/.gitlab-ci.yml'));
-    expect(template('gitlab/gitlab-ci.yml')).toBe(expected);
+    expect(template('gitlab/gitlab-ci.yml.tpl').replaceAll(OPTIONAL_STEPS, '')).toBe(expected);
+    expect(read(initProject('--package-manager', 'npm', '--ci', 'gitlab'), '.gitlab-ci.yml')).toBe(expected);
+
+    expect(read(initProject('--orm', 'prisma', '--ci', 'gitlab'), '.gitlab-ci.yml')).toContain(
+      '    - test -d node_modules || pnpm install --frozen-lockfile\n    # The Prisma client and the schema of the tests are build products of prisma/schema.prisma.\n    - pnpm run db:client\n',
+    );
   });
 
   it('the vitest config differs by the placeholders of the source root and the contexts directory, by the architecture specs it runs, by the decorators plugin, which is written for the standard decorator mode only, by the coverage plugin of the legacy mode, and by the inlined package under discovery', () => {
@@ -52,8 +79,8 @@ describe('pipeline templates', () => {
       .replaceAll('{{config.sourceRoot}}', 'src')
       // With the architecture specs the unit project no longer fits one line: the formatter gives it several.
       .replace(
-        "{\n        extends: true,\n        test: {\n          name: 'unit',\n          include: ['src/**/*.spec.ts'],\n          exclude: [INTEGRATION_SPECS],\n        },\n      },",
-        "{ extends: true, test: { name: 'unit', include: ['src/**/*.spec.ts'], exclude: [INTEGRATION_SPECS] } },",
+        "{\n        extends: true,\n        test: {\n          name: 'unit',\n          include: ['src/**/*.spec.ts'],\n          exclude: [INTEGRATION_SPECS, ...NOT_AFFECTED],\n        },\n      },",
+        UNIT_PROJECT_OF_THE_SOURCE,
       );
 
     expect(rendered).toBe(source('vitest.config.ts'));
@@ -80,13 +107,16 @@ describe('pipeline templates', () => {
   });
 
   it('carries every script and every analyzer of the pipeline into package.json', () => {
-    const manifest = readJson(initProject('--ci', 'both'), 'package.json');
+    const manifest = readJson(initProject('--ci', 'both', '--package-manager', 'npm'), 'package.json');
     const shipped: unknown = JSON.parse(source('package-scripts.json'));
 
     // The import graph is cruised with the file the CLI generates from the config, after checking that it is current.
+    // The documents are compared from the build the step before made: the pipeline of a project builds once.
     expect(textsAt(manifest, 'scripts')).toMatchObject({
       ...textsAt(shipped, 'scripts'),
       'ci:arch:graph': 'npm run depcruise',
+      'ci:docs':
+        'ddd-ts-kit docs --check && node dist/scripts/openapi.js --check && node dist/scripts/events.js --check',
     });
 
     expect(textsAt(manifest, 'devDependencies')).toMatchObject(textsAt(shipped, 'devDependencies'));
@@ -139,6 +169,8 @@ describe('init --ci', () => {
     '.github/workflows/ci.yml',
     '.github/workflows/codeql.yml',
     '.github/workflows/pr-title.yml',
+    '.github/actions/setup/action.yml',
+    '.github/scripts/start-postgres.sh',
     '.github/dependabot.yml',
     '.github/branch-protection.md',
   ];
@@ -178,7 +210,7 @@ describe('init --ci', () => {
   });
 
   it('defaults to GitHub and stores the documentation page chosen', () => {
-    const root = initProject('--docs-ui', 'redoc');
+    const root = initProject('--docs-ui', 'redoc', '--package-manager', 'npm');
 
     expect(readJson(root, 'ddd-ts-kit.config.json')).toMatchObject({ stack: { ci: 'github', docsUi: 'redoc' } });
     expect(read(root, '.github/workflows/ci.yml')).toContain('npm run ci:arch:check -- --format github');
@@ -188,7 +220,7 @@ describe('init --ci', () => {
     const vitest = read(initProject(), 'vitest.config.ts');
     const jest = read(initProject('--tests', 'jest'), 'jest.config.js');
 
-    expect(vitest).toContain("import { governedCoverage } from '@ddd-ts-kit/testing/coverage';");
+    expect(vitest).toContain("import { governedCoverage, unaffectedContexts } from '@ddd-ts-kit/testing/coverage';");
     expect(vitest).toContain('...governedCoverage(mode),');
     expect(jest).toContain('...governedJestCoverage(),');
 

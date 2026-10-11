@@ -13,7 +13,11 @@ const SEMVER = /^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$/;
 const KIT = /^(@ddd-ts-kit\/|ddd-ts-kit$)/;
 const SECTIONS = ['dependencies', 'peerDependencies', 'devDependencies', 'optionalDependencies'];
 const SOURCES = ['packages/cli/src/version.ts', 'packages/cli/src/init/manifest/versions.ts'];
-const MANIFESTS = ['packages/cli/templates/pipeline/package-scripts.json', 'examples/scheduling/package.json'];
+const MANIFESTS = [
+  'package.json',
+  'packages/cli/templates/pipeline/package-scripts.json',
+  'examples/scheduling/package.json',
+];
 
 process.exit(main(process.argv.slice(2)));
 

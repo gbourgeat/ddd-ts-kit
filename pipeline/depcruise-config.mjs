@@ -298,7 +298,7 @@ function escape(text) {
 function cruiseOptions(parser) {
   return {
     parser,
-    doNotFollow: { path: ['node_modules'] },
+    doNotFollow: { path: ['node_modules', '^generated/'] },
     exclude: { path: ['^dist/', '^coverage/'] },
     tsPreCompilationDeps: true,
     // An import alias is resolved from the "paths" of tsconfig.json, which name the sources.

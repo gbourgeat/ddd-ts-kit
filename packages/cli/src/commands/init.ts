@@ -28,7 +28,10 @@ const STACK_FLAGS = [
 export const initCommand: Command = (argv, io) => {
   const args = Arguments.parse(argv, {
     ...Object.fromEntries(
-      [...STACK_FLAGS, 'docs-ui', 'allow-no-outbox', 'import-alias'].map((flag) => [flag, { type: 'string' as const }]),
+      [...STACK_FLAGS, 'docs-ui', 'allow-no-outbox', 'import-alias', 'package-manager'].map((flag) => [
+        flag,
+        { type: 'string' as const },
+      ]),
     ),
     context: { type: 'string', multiple: true },
     'dry-run': { type: 'boolean', default: false },
@@ -62,11 +65,13 @@ function stackOptions(args: Arguments) {
   const docsUi = args.text('docs-ui');
   const allowNoOutbox = args.text('allow-no-outbox');
   const importAlias = args.text('import-alias');
+  const packageManager = args.text('package-manager');
 
   return {
     ...args.texts(STACK_FLAGS),
     ...(docsUi === undefined ? {} : { docsUi }),
     ...(allowNoOutbox === undefined ? {} : { allowNoOutbox }),
     ...(importAlias === undefined ? {} : { importAlias }),
+    ...(packageManager === undefined ? {} : { packageManager }),
   };
 }

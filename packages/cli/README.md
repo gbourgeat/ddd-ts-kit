@@ -41,6 +41,7 @@ ddd-ts-kit init [--http express|fastify|nest|none]
                 [--broker none|rabbitmq|kafka|nats|redis|custom] [--cache none|redis] [--audit on|off]
                 [--errors none|sentry] [--logger stdout|pino|winston]
                 [--style declared|explicit] [--assembly barrel|discovery]
+                [--package-manager npm|pnpm]
                 [--allow-no-outbox "<reason>"] [--import-alias '$<name>/']
                 [--context <name>:<core|supporting|generic>]...
                 [--dry-run] [--force]
@@ -56,6 +57,18 @@ Defaults: `express`, `zod`, `tsyringe` (`nest` with `--http nest`, and only then
 the cache in the process, the audit trail `on` when there is an ORM, unexpected failures reported
 nowhere (`--errors none`), JSON lines on the standard output (`--logger stdout`), and the
 `declared` style with a `barrel` wherever the declarations are read: with `--di tsyringe`.
+
+**Package manager.** `pnpm` unless `--package-manager npm`: every script, pipeline, hook, the
+Dockerfile, the guidance and the agent permissions are written in the dialect of the one chosen,
+recorded under `stack.packageManager`. pnpm is pinned in `package.json` and provided by corepack;
+`pnpm-workspace.yaml` says that no dependency runs a build script unless allowed by name. Both are
+proven by a real install of a generated project, its build and its `verify`. The kit is installed
+from the registry either way.
+
+**Pipelines.** A pull or merge request runs the unit specs, the integration specs and the lint of
+the contexts its change reaches through the context map (`ddd-ts-kit affected`); types,
+architecture, import graph, dead code, end to end, build and documents always run on the whole
+project, and the default branch and the nightly schedule run everything.
 
 **Two styles.** In the `declared` style each class says what it is with a decorator of
 `@ddd-ts-kit/kernel/declarations` (`@Requires` or `@Public` on a command or a query,

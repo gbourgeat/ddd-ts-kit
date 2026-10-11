@@ -1,5 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { CONFIG_FILE } from '../config/index.js';
+import { inDialect } from '../package-manager/in-dialect.js';
+import { packageManagerOf } from '../package-manager/package-manager-of.js';
 import type { NextStep } from './next-step.js';
 import type { TodoLocation } from './todo-location.js';
 import { todosIn } from './todos-in.js';
@@ -13,6 +16,8 @@ interface Pending {
 /**
  * Every generator writes through this overlay, so a command either lands as a whole
  * plan or (with --dry-run) not at all, and later steps see the files of earlier ones.
+ * What it writes and notes is said in the dialect of the package manager the config
+ * file of the project names: the templates are written for npm.
  */
 export class Workspace {
   readonly notes: string[] = [];
@@ -80,12 +85,13 @@ export class Workspace {
       return false;
     }
 
-    this.pending.set(file, { content, existed: onDisk });
+    this.pending.set(file, { content: this.spoken(content), existed: onDisk });
 
     return true;
   }
 
-  update(file: string, content: string): void {
+  update(file: string, written: string): void {
+    const content = this.spoken(written);
     const pending = this.pending.get(file);
 
     if (pending !== undefined) {
@@ -99,6 +105,11 @@ export class Workspace {
     }
 
     this.pending.set(file, { content, existed: true });
+  }
+
+  /** A text written for npm, as the package manager of the project says it: what is compared with a file is compared in its dialect. */
+  spoken(text: string): string {
+    return inDialect(text, packageManagerOf(this.read(CONFIG_FILE)));
   }
 
   note(message: string): void {
@@ -136,7 +147,7 @@ export class Workspace {
       skipped: [...this.skipped].sort(),
       next: todos.map((todo) => `${todo.file}:${todo.line}`),
       todos,
-      notes: this.notes,
+      notes: this.notes.map((note) => this.spoken(note)),
     };
   }
 

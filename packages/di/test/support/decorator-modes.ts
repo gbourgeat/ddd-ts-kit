@@ -7,6 +7,8 @@ import { promisify } from 'node:util';
 const run = promisify(execFile);
 const MODULES = path.resolve(import.meta.dirname, '../../../../node_modules');
 const KERNEL = '@ddd-ts-kit/kernel';
+/** The built kernel, read where the workspace keeps it: where a package manager links it differs from one to the next. */
+const KERNEL_PACKAGE = path.resolve(import.meta.dirname, '../../../kernel');
 
 const COMPILERS = {
   'TypeScript 7 (native)': path.join(MODULES, '@typescript/native/bin/tsc'),
@@ -80,9 +82,9 @@ function copyKernelInto(output: string): void {
   const copy = path.join(output, 'node_modules', KERNEL);
 
   mkdirSync(copy, { recursive: true });
-  cpSync(path.join(MODULES, KERNEL, 'package.json'), path.join(copy, 'package.json'));
+  cpSync(path.join(KERNEL_PACKAGE, 'package.json'), path.join(copy, 'package.json'));
 
-  cpSync(path.join(MODULES, KERNEL, 'dist'), path.join(copy, 'dist'), {
+  cpSync(path.join(KERNEL_PACKAGE, 'dist'), path.join(copy, 'dist'), {
     recursive: true,
     filter: (source) => !source.endsWith('.map') && !source.endsWith('.d.ts'),
   });

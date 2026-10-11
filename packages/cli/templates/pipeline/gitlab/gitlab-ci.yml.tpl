@@ -4,6 +4,8 @@ workflow:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    # A pipeline schedule (Build > Pipeline schedules, every night on the default branch) runs everything.
+    - if: $CI_PIPELINE_SOURCE == "schedule"
 
 include:
   - template: Jobs/SAST.gitlab-ci.yml
@@ -14,32 +16,47 @@ include:
 
 stages:
   - install
-  - static
   - test
-  - verify
   - security
-  - package
   - gate
 
 variables:
   AST_ENABLE_MR_PIPELINES: 'true'
   NODE_IMAGE: node:24-bookworm-slim
+  # Behind the dependency proxy of a group, a registry that rate-limits is never asked twice:
+  # POSTGRES_IMAGE: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/postgres:18
   POSTGRES_IMAGE: postgres:18
 
 default:
+  # A newer commit of a merge request supersedes the pipeline in progress; the default branch finishes every pipeline.
   interruptible: true
+  # An image that could not be pulled (a registry that rate-limits once) or a runner that failed is tried again; a failing script is not.
+  retry:
+    max: 2
+    when: [runner_system_failure, stuck_or_timeout_failure, scheduler_failure]
 
+# One install per lockfile, shared by every job and every pipeline. The key holds the lockfile
+# and package.json: a hit is what a fresh install of that lockfile gives. A job that finds no
+# cache installs.
 .node:
   image: $NODE_IMAGE
   cache:
     key:
       files:
         - package-lock.json
+        - package.json
     paths:
-      - .npm/
+      - node_modules/
     policy: pull
   before_script:
-    - npm ci --cache .npm --prefer-offline
+{{#if pm.corepack}}
+    - corepack enable
+{{/if}}
+    - test -d node_modules || npm ci
+{{#if orm.prisma}}
+    # The Prisma client and the schema of the tests are build products of prisma/schema.prisma.
+    - npm run db:client
+{{/if}}
 
 .postgres:
   services:
@@ -61,19 +78,28 @@ default:
 install:
   extends: .node
   stage: install
+  # The image with git: what a merge request covers is read from the difference with its target.
+  image: node:24-bookworm
   cache:
     key:
       files:
         - package-lock.json
+        - package.json
     paths:
-      - .npm/
+      - node_modules/
     policy: pull-push
   script:
-    - node --version && npm --version
+    - node --version
+    - if [ -n "${CI_MERGE_REQUEST_DIFF_BASE_SHA:-}" ]; then git fetch --quiet --depth=1 origin "$CI_MERGE_REQUEST_DIFF_BASE_SHA"; fi
+    # Everything on the default branch and on a schedule, the affected contexts on a merge request.
+    - npx --no -- ddd-ts-kit affected --base "${CI_MERGE_REQUEST_DIFF_BASE_SHA:-}" --format env | tee affected.env
+  artifacts:
+    reports:
+      dotenv: affected.env
 
 merge-request-title:
   extends: .node
-  stage: static
+  stage: test
   needs: [install]
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
@@ -82,21 +108,22 @@ merge-request-title:
 
 typecheck:
   extends: .node
-  stage: static
+  stage: test
   needs: [install]
   script:
     - npm run ci:typecheck
 
 lint:
   extends: .node
-  stage: static
+  stage: test
   needs: [install]
   variables:
     ESLINT_CODE_QUALITY_REPORT: reports/gl-code-quality-eslint.json
   script:
     - mkdir -p reports
     - npm run ci:format
-    - npm run ci:lint -- --format gitlab
+    # The contexts a merge request does not reach are left to the default branch.
+    - npm run ci:lint -- --format gitlab $AFFECTED_LINT
   artifacts:
     when: always
     expire_in: 14 days
@@ -105,7 +132,7 @@ lint:
 
 architecture:
   extends: .node
-  stage: static
+  stage: test
   needs: [install]
   script:
     - mkdir -p reports
@@ -119,7 +146,7 @@ architecture:
 
 deadcode:
   extends: .node
-  stage: static
+  stage: test
   needs: [install]
   script:
     - npm run ci:deadcode
@@ -127,9 +154,11 @@ deadcode:
 unit:
   extends: [.node, .junit]
   stage: test
-  needs: [typecheck, lint, architecture, deadcode]
+  needs: [install]
   script:
-    - npm run ci:test:unit -- --reporter=default --reporter=junit --outputFile.junit=reports/junit.xml
+    - if [ "$AFFECTED_SCOPE" = "none" ]; then echo "Only documents changed, no spec to run."; exit 0; fi
+    - export DDD_TS_KIT_AFFECTED="$AFFECTED_CONTEXTS"
+    - npm run ci:test:unit -- --reporter=default --reporter=junit --outputFile.junit=reports/junit.xml $AFFECTED_ARGS
   coverage: '/All files[^|]*\|[^|]*\s+([\d\.]+)/'
   artifacts:
     when: always
@@ -143,24 +172,30 @@ unit:
 integration:
   extends: [.node, .postgres, .junit]
   stage: test
-  needs: [unit]
+  needs: [install]
   script:
+    - if [ "$AFFECTED_SCOPE" = "none" ]; then echo "Only documents changed, no spec to run."; exit 0; fi
+    - export DDD_TS_KIT_AFFECTED="$AFFECTED_CONTEXTS"
     - npm run db:migrate
-    - npm run ci:test:integration -- --reporter=default --reporter=junit --outputFile.junit=reports/junit.xml
+    - npm run ci:test:integration -- --reporter=default --reporter=junit --outputFile.junit=reports/junit.xml $AFFECTED_ARGS
 
 e2e:
   extends: [.node, .postgres, .junit]
   stage: test
-  needs: [integration]
+  needs: [install]
   script:
+    - if [ "$AFFECTED_SCOPE" = "none" ]; then echo "Only documents changed, no spec to run."; exit 0; fi
     - npm run db:migrate
+    # The whole application, whatever the contexts a change reaches.
     - npm run ci:test:e2e -- --reporter=default --reporter=junit --outputFile.junit=reports/junit.xml
 
-docs:
+build:
   extends: .node
-  stage: verify
-  needs: [typecheck, lint, architecture, deadcode]
+  stage: test
+  needs: [install]
   script:
+    - npm run ci:build
+    # The generated documents and contracts, from that build.
     - npm run ci:docs
 
 audit:
@@ -181,16 +216,9 @@ secrets:
   script:
     - gitleaks git . --redact --no-banner
 
-build:
-  extends: .node
-  stage: package
-  needs: [e2e]
-  script:
-    - npm run ci:build
-
 image:
-  stage: package
-  needs: [build]
+  stage: test
+  needs: []
   image:
     name: moby/buildkit:v0.34.0-rootless
     entrypoint: ['']
