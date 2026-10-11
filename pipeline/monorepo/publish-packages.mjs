@@ -59,7 +59,7 @@ function published(entry) {
   }
 
   const tag = version.includes('-') ? 'next' : 'latest';
-  const run = spawnSync('npm', ['publish', '--tag', tag, ...(dryRun ? ['--dry-run'] : [])], {
+  const run = spawnSync('npm', ['publish', '--tag', tag, ...target, ...(dryRun ? ['--dry-run'] : [])], {
     cwd: entry.directory,
     stdio: 'inherit',
   });
