@@ -2,7 +2,9 @@ name: Release
 
 # Publishes every package of `packages/` to the npm registry, under one version, when a tag
 # `v<version>` is pushed. A run that stopped half-way is run again: a package already on the
-# registry at this version is skipped.
+# registry at this version is skipped. No secret is involved: each package names this workflow
+# and its `npm` environment as its trusted publisher, and npm exchanges the identity token of
+# the job (`id-token: write`) for a publish token that lives for that one publication.
 on:
   push:
     tags: ['v[0-9]+.[0-9]+.[0-9]+*']
@@ -40,9 +42,15 @@ jobs:
       - run: npm run build
       - name: The tarballs are what a consumer can install
         run: npm run package:check
-      - name: Publish
+      - name: The npm of this runner exchanges an identity token (trusted publishing needs 11.5.1 or later)
+        run: |
+          npm --version
+          node -e "const [major, minor, patch] = process.argv[1].split('.').map(Number); process.exit(major > 11 || (major === 11 && (minor > 5 || (minor === 5 && patch >= 1))) ? 0 : 1)" "$(npm --version)"
+      # setup-node writes an `.npmrc` whose token line reads NODE_AUTH_TOKEN and gives the variable a
+      # placeholder: reading the registry ignores it, and `npm publish` replaces it with the token
+      # it gets for the identity of this job, so the step sets none.
+      - name: Publish (trusted publishing through OIDC, with provenance)
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           TAG: ${{ github.ref_name }}
         run: node pipeline/monorepo/publish-packages.mjs "${TAG#v}"
       - name: GitHub release

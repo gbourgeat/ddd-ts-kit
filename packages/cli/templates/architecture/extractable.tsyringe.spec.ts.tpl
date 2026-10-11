@@ -15,6 +15,12 @@ const contexts: readonly (readonly [string, ContextModule])[] = [
 ];
 
 describe('A bounded context is a deployable unit in waiting', () => {
+  it('the platform wires alone, before the first context joins it', () => {
+    expect(() =>
+      createTestApplication({ modules: [platformTestModule, authorization], authorization: 'optional' }),
+    ).not.toThrow();
+  });
+
   it.each(contexts)('%s wires alone, on the kernel and the platform, with no other context', (_name, module) => {
     expect(() =>
       createTestApplication({ modules: [platformTestModule, authorization, module], authorization: 'optional' }),

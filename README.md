@@ -23,29 +23,41 @@ PostgreSQL and Vitest.
 
 ```bash
 mkdir orders-api && cd orders-api
-npx ddd-ts-kit init --http express --validation zod --di tsyringe --orm drizzle \
-  --context ordering:core --context billing:supporting
-npm install
-npm run infra:up      # PostgreSQL (and a tracing backend with the observability profile)
-npm run dev           # auto reload; API documentation on /docs
-npm run verify        # types, lint, format, tests, e2e, architecture, import graph, dead code, documentation drift
+npx ddd-ts-kit init
+pnpm install
+pnpm run verify           # types, lint, format, tests, e2e, architecture, import graph, dead code, documentation drift
 ```
 
-Then, the ubiquitous language first, code second:
+`init` without a flag takes the default stack and pnpm, which corepack provides at the release
+`package.json` pins (`corepack enable`, once per machine). The project is green from that first
+`verify`, before a line of business code, and stays so at every step. Then, the ubiquitous
+language first, code second:
 
 ```bash
-npx ddd-ts-kit generate aggregate ordering Order --term "Order=A customer's request to buy products"
-npx ddd-ts-kit generate repository ordering Order
-npx ddd-ts-kit generate command ordering PlaceOrder --permission order.place --aggregate Order \
-  --term "Place=To submit an order for fulfilment"
-npx ddd-ts-kit generate route ordering PlaceOrder --method POST --path /orders
-npx ddd-ts-kit status     # what is left: TODO(domain), TODO(platform) and it.todo per context
+pnpm exec ddd-ts-kit generate context ordering --classification core \
+  --term "Order=A customer's request to buy products" --term "Place=To submit an order for fulfilment"
+pnpm exec ddd-ts-kit generate context billing --classification supporting --upstream ordering:customer-supplier
+pnpm exec ddd-ts-kit generate aggregate ordering Order
+pnpm exec ddd-ts-kit generate repository ordering Order
+pnpm exec ddd-ts-kit generate command ordering PlaceOrder --permission order.place --aggregate Order
+pnpm exec ddd-ts-kit generate route ordering PlaceOrder --method POST --path /orders
+pnpm run docs:generate    # the OpenAPI contract follows the new route
+pnpm run verify
+pnpm exec ddd-ts-kit status   # what is left: TODO(domain), TODO(platform) and it.todo per context
 ```
 
-Each command writes the file, its spec, its fake or builder and its registration, and lists
+These two blocks are run as they are written, line by line, by the end-to-end suite of this
+repository, on pnpm and on npm. With `npx ddd-ts-kit init --package-manager npm` the same lines
+read `npm install`, `npm run <script>` and `npx ddd-ts-kit <command>`; the note `init` prints
+and the README it writes say them in the words of the manager chosen. To see the application
+run: `cp .env.example .env`, `pnpm run infra:up` (PostgreSQL, in Docker), `pnpm run db:generate`,
+`pnpm run db:migrate`, then `pnpm run dev` (auto reload; API documentation on `/docs`).
+
+Each `generate` writes the file, its spec, its fake or builder and its registration, and lists
 the `TODO(domain)` places where a business decision is expected. A name that is not in the
 context's glossary is refused, and so is a command or a query that declares neither a
-permission nor `--public`. `npx ddd-ts-kit generate --help` lists the 25 kinds.
+permission nor `--public`. `pnpm exec ddd-ts-kit generate --help` lists the 25 kinds. What
+changes from one version to the next: [CHANGELOG.md](CHANGELOG.md).
 
 ## The Claude Code plugin
 

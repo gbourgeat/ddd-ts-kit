@@ -5,6 +5,7 @@ import { initProject } from './support/init-project.js';
 import { jsonAt } from './support/json-at.js';
 import { readJson } from './support/read-json.js';
 import { textsAt } from './support/texts-at.js';
+import { KIT_RANGE } from './support/kit-range.js';
 
 const SENTRY = ['--errors', 'sentry'];
 
@@ -239,14 +240,14 @@ describe('the configuration of error reporting', () => {
     const dependencies = textsAt(readJson(reported(), 'package.json'), 'dependencies');
 
     expect(dependencies).toMatchObject({
-      '@ddd-ts-kit/sentry': '^0.1.0',
+      '@ddd-ts-kit/sentry': KIT_RANGE,
       '@sentry/node': '^11.6.0',
       '@opentelemetry/api': '^1.9.1',
     });
 
     expect(textsAt(readJson(reported('--di', 'manual'), 'package.json'), 'dependencies')).toMatchObject({
-      '@ddd-ts-kit/sentry': '^0.1.0',
-      '@ddd-ts-kit/scheduling': '^0.1.0',
+      '@ddd-ts-kit/sentry': KIT_RANGE,
+      '@ddd-ts-kit/scheduling': KIT_RANGE,
     });
   });
 });

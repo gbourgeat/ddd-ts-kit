@@ -11,6 +11,7 @@ import { CliError } from '../../cli-error.js';
 import { parseContextName, type Name } from '../../naming/index.js';
 import type { Workspace } from '../../workspace/index.js';
 import type { ContextRequest } from './context-request.js';
+import { declareContextEntries } from './declare-context-entries.js';
 import { writeContextFiles } from './write-context-files.js';
 
 /** Shared by `generate context` and `init`, so both create exactly the same context. */
@@ -29,6 +30,7 @@ export function generateContext(ws: Workspace, config: Config, request: ContextR
   }
 
   writeContextFiles(ws, { config: next, context, request });
+  declareContextEntries(ws, next);
 
   // An upstream gains a downstream line in its own CONTEXT.md.
   for (const upstream of entry.upstreams) {

@@ -166,7 +166,9 @@ Each value of `stack` in the config should be defensible in one sentence.
 
 `/ddd-ts-kit:bootstrap` is run by a person, not started by the agent on its own. It previews
 with `--dry-run`, runs `ddd-ts-kit init` with the chosen flags, installs, and proves the
-result with `npm run verify`. An existing project is adopted: existing files are skipped
+result with `npm run verify` (`pnpm install` and `pnpm run verify` on pnpm, the default: `init`
+prints the two commands in the words of the package manager chosen, and the bare project passes
+the whole gate before its first context). An existing project is adopted: existing files are skipped
 unless `--force` is given.
 
 This step is the one that must be finished, merged and shared before any parallel work

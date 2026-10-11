@@ -23,6 +23,8 @@ interface Candidate extends RoleFile {
 }
 
 const SCANNED_LAYERS = ['application', 'infrastructure'];
+/** What a context holds before its first use case: enough to know the directory is one. */
+const OTHER_LAYERS = ['domain', 'presentation', 'published-language'];
 
 /** The role files of a context, sorted by path, so that two machines and two runs wire it in the same order. */
 export async function roleFilesOf(root: string, selection: Selection): Promise<RoleFile[]> {
@@ -48,14 +50,21 @@ export async function roleFilesOf(root: string, selection: Selection): Promise<R
 async function sourcesOf(root: string): Promise<string[]> {
   const layers = await Promise.all(SCANNED_LAYERS.map((layer) => filesUnder(root, layer)));
 
-  if (layers.every((layer) => layer === undefined)) {
+  if (layers.every((layer) => layer === undefined) && !(await holdsAnotherLayer(root))) {
     throw new WiringError(
       'DISCOVERY_FAILED',
-      `${root} holds neither application/ nor infrastructure/: it is not the directory of a bounded context.`,
+      `${root} holds no layer of a bounded context (${[...SCANNED_LAYERS, ...OTHER_LAYERS].join('/, ')}/): it is not the directory of one.`,
     );
   }
 
   return layers.flatMap((layer) => layer ?? []);
+}
+
+/** A context that was just declared has a published language, and nothing to wire yet: it is discovered as empty. */
+async function holdsAnotherLayer(root: string): Promise<boolean> {
+  const layers = await Promise.all(OTHER_LAYERS.map((layer) => filesUnder(root, layer)));
+
+  return layers.some((layer) => layer !== undefined);
 }
 
 async function filesUnder(root: string, layer: string): Promise<string[] | undefined> {

@@ -1,6 +1,6 @@
 {
   "name": "@ddd-ts-kit/audit",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Tamper-evident audit trail fed from outside the use cases: authorization decisions, executed commands and integration events, as hash-chained append-only entries.",
   "license": "MIT",
   "repository": {
@@ -38,12 +38,12 @@
     "dist"
   ],
   "dependencies": {
-    "@ddd-ts-kit/kernel": "0.1.0"
+    "@ddd-ts-kit/kernel": "0.1.1"
   },
   "peerDependencies": {
     "knex": "^3.0.0",
     "drizzle-orm": ">=0.40.0",
-    "@ddd-ts-kit/testing": "0.1.0"
+    "@ddd-ts-kit/testing": "0.1.1"
   },
   "peerDependenciesMeta": {
     "knex": {
@@ -63,10 +63,10 @@
     "@types/pg": "^8.23.1",
     "@electric-sql/pglite": "^0.5.8",
     "@electric-sql/pglite-socket": "^0.2.11",
-    "@ddd-ts-kit/auth": "0.1.0",
-    "@ddd-ts-kit/events": "0.1.0",
-    "@ddd-ts-kit/knex": "0.1.0",
-    "@ddd-ts-kit/drizzle": "0.1.0",
-    "@ddd-ts-kit/testing": "0.1.0"
+    "@ddd-ts-kit/auth": "0.1.1",
+    "@ddd-ts-kit/events": "0.1.1",
+    "@ddd-ts-kit/knex": "0.1.1",
+    "@ddd-ts-kit/drizzle": "0.1.1",
+    "@ddd-ts-kit/testing": "0.1.1"
   }
 }

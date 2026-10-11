@@ -17,7 +17,8 @@
       "!**/package-lock.json",
       "!**/.dependency-cruiser.cjs",
       "!**/openapi/*.json",
-      "!**/asyncapi.json"
+      "!**/asyncapi.json",
+      "!**/migrations/meta"
     ]
   },
   "formatter": {

@@ -11,6 +11,7 @@ import { permissionsFile } from '../permissions-file.js';
 import { relativeTo } from '../relative-to.js';
 import { wiringFamily } from '../wiring-family.js';
 import type { ContextRequest } from './context-request.js';
+import { importAssembler } from './import-assembler.js';
 
 const GLOSSARY_TODO =
   'TODO(domain): define the ubiquitous language first: one row per term the domain experts use here, with the meaning it has in this context only. Every class, method and event is then named after these terms.';
@@ -43,8 +44,16 @@ export function writeContextFiles(ws: Workspace, plan: ContextPlan): void {
     ws.create(PROOF, renderTemplate(`architecture/extractable.${family}.spec.ts.tpl`, vars));
   }
 
-  applyWiring(ws, PROOF, renderTemplate(`architecture/wiring.${family}.tpl`, vars));
-  applyWiring(ws, `${config.platformDir}/${COMPOSITION}`, renderTemplate(`context/wiring.${family}.tpl`, vars));
+  for (const [file, wiring] of [
+    [PROOF, `architecture/wiring.${family}.tpl`],
+    [`${config.platformDir}/${COMPOSITION}`, `context/wiring.${family}.tpl`],
+  ] as const) {
+    if (family === 'declared') {
+      importAssembler(ws, config, file);
+    }
+
+    applyWiring(ws, file, renderTemplate(wiring, vars));
+  }
 }
 
 function planVars({ config, context, request }: ContextPlan): RenderContext {

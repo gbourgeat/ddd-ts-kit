@@ -24,6 +24,7 @@ export const SHARED_WRITES: Readonly<Record<string, SharedWrite>> = {
       'the CONTEXT.md of each upstream',
       'docs/context-map.md',
       '.dependency-cruiser.cjs',
+      'knip.json (the first context)',
     ],
   },
   repository: { files: STORAGE, when: STORED },
@@ -35,6 +36,11 @@ export const SHARED_WRITES: Readonly<Record<string, SharedWrite>> = {
   'integration-event': {
     files: ['the audited events registry (<platformDir>/audit/audited-events.ts)', 'docs/context-map.md'],
     when: 'the audit trail is wired, or the event type is new',
+  },
+  adapter: {
+    files: ['<platformDir>/resilience/own-policy.ts'],
+    when: 'the adapter is the first of a project wired on tsyringe to state its own policy (the helper joins the platform)',
+    worker: 'once the project has its first adapter',
   },
   job: { files: ['<platformDir>/job-settings.ts', 'the grant of its system actor (<platformDir>/auth/)'] },
   policy: {

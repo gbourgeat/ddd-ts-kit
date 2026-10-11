@@ -24,6 +24,8 @@ export default defineConfig(({ mode }) => ({
   // An import alias is resolved from the "paths" of tsconfig.json, which name the sources.
   resolve: { tsconfigPaths: true },
   test: {
+    // The integration project has no spec before the first repository or adapter of the project: its run passes until then.
+    passWithNoTests: mode === INTEGRATION_MODE,
     {{#if assembly.discovery}}
     // Discovery imports the role files of a context itself: inlined, the package loads them through the runner, which compiles them.
     server: { deps: { inline: ['@ddd-ts-kit/di'] } },

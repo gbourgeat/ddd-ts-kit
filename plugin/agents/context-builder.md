@@ -25,9 +25,10 @@ worktree (`cd <worktree> && ...`).
 - You run the generators that stay inside your context, always with `--local-only`:
   `aggregate`, `builder`, `entity`, `value-object`, `domain-event`, `domain-error`,
   `domain-service`, `command` (on an aggregate whose repository exists), `query`, `port`,
-  `route`, `integration-handler`, `event-handler`, `acl`, `e2e`, `adapter`. The conductor
-  runs `context`, `repository`, `integration-event`, `job`, `gateway`, `policy`, and adds
-  dependencies.
+  `route`, `integration-handler`, `event-handler`, `acl`, `e2e`, `adapter` (once the project
+  has its first adapter: the first one brings a helper to the platform). The conductor
+  runs `context`, `repository`, `integration-event`, `job`, `gateway`, `policy`, the first
+  `adapter` of the project, and adds dependencies.
 - When you need something outside your scope (a field in an upstream contract, a new
   aggregate, a dependency, a platform binding): do not work around it and do not retry a
   refused write. Finish the slices that do not depend on it and put the need in your report.

@@ -1,4 +1,5 @@
 import type { Config } from '../../config/index.js';
+import { architectureFiles } from './architecture-files.js';
 import { auditFiles } from './audit-files.js';
 import { authFiles } from './auth-files.js';
 import { endToEndFiles } from './end-to-end-files.js';
@@ -19,6 +20,7 @@ export function initFiles(config: Config, projectName: string): InitFile[] {
     ...persistenceFiles(config),
     ...scriptFiles(config),
     ...endToEndFiles(config),
+    ...architectureFiles(config),
     ...pipelineFiles(config),
     ...guidanceFiles(),
   ];

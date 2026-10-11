@@ -1,5 +1,6 @@
 import { readConfig } from '../config/index.js';
 import { writeDocs } from '../docs/write-docs.js';
+import { stopIgnoringValidation } from '../generate/stop-ignoring-validation.js';
 import { Workspace } from '../workspace/index.js';
 import { Arguments } from './arguments.js';
 import type { Command } from './command.js';
@@ -17,6 +18,7 @@ export const docsCommand: Command = (argv, io) => {
   writeDocs(ws, readConfig(root).config);
 
   if (!args.flag('check')) {
+    stopIgnoringValidation(ws, readConfig(root).config);
     printReport(io, args, ws.commit(args.flag('dry-run')));
 
     return 0;

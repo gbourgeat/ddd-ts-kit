@@ -6,6 +6,7 @@ import { initProject } from './support/init-project.js';
 import { jsonAt } from './support/json-at.js';
 import { readJson } from './support/read-json.js';
 import { textsAt } from './support/texts-at.js';
+import { KIT_RANGE } from './support/kit-range.js';
 
 const platform = (root: string, file: string): string => read(root, `src/platform/${file}`);
 const logger = (root: string): string => platform(root, 'observability/create-logger.ts');
@@ -43,8 +44,8 @@ describe('init --logger', () => {
     const pino = dependencies(initProject('--logger', 'pino'));
     const winston = dependencies(initProject('--logger', 'winston'));
 
-    expect(pino).toMatchObject({ '@ddd-ts-kit/pino': '^0.1.0', pino: '^10.4.0', 'pino-pretty': '^13.2.0' });
-    expect(winston).toMatchObject({ '@ddd-ts-kit/winston': '^0.1.0', winston: '^3.19.0' });
+    expect(pino).toMatchObject({ '@ddd-ts-kit/pino': KIT_RANGE, pino: '^10.4.0', 'pino-pretty': '^13.2.0' });
+    expect(winston).toMatchObject({ '@ddd-ts-kit/winston': KIT_RANGE, winston: '^3.19.0' });
     expect(Object.keys(pino)).not.toContain('winston');
     expect(Object.keys(dependencies(initProject())).filter((name) => /pino|winston/.test(name))).toEqual([]);
   });

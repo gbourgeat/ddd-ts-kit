@@ -56,7 +56,9 @@ sides' lines; otherwise, one context, one worker, slices in sequence.
    downstream starts only against a committed contract. Route paths and methods of each
    context are the ones written in the slices table.
 2. **Skeleton next.** Run every `skeleton` row: `generate aggregate` with its
-   `generate repository`, `generate job`, `generate policy`, and any new `generate context`.
+   `generate repository`, `generate job`, `generate policy`, any new `generate context`, and,
+   when a slice plans an adapter and the project has none yet, the first `generate adapter`
+   (it writes `platform/resilience/own-policy.ts`, which the next ones only import).
    These kinds write shared files (`generate --help --json` says which, under
    `writesShared`); run on the trunk, they never conflict. Leave the `TODO(domain)` markers
    to the workers.

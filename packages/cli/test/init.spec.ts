@@ -6,6 +6,7 @@ import { jsonAt } from './support/json-at.js';
 import { readJson } from './support/read-json.js';
 import { stringsAt } from './support/strings-at.js';
 import { textsAt } from './support/texts-at.js';
+import { KIT_RANGE } from './support/kit-range.js';
 
 const BOOTSTRAPPED = [
   'ddd-ts-kit.config.json',
@@ -100,7 +101,10 @@ describe('init', () => {
       "await discoverContext('billing', new URL('../contexts/billing/', import.meta.url)),",
     );
 
-    expect(read(root, 'knip.json')).toContain(`"src/contexts/*/{application,infrastructure}/**/*.{${suffixes}}.ts"`);
+    expect(read(root, 'knip.json')).toContain(
+      `"src/contexts/*/{published-language/index,{application,infrastructure}/**/*.{${suffixes}}}.ts"`,
+    );
+
     expect(read(root, '.dependency-cruiser.cjs')).toContain(`(${suffixes.replaceAll(',', '|')})`);
   });
 });
@@ -241,7 +245,7 @@ describe('init in a project that already exists', () => {
     expect(textsAt(merged, 'dependencies')).toMatchObject({
       express: '^4.0.0',
       lodash: '^4.17.0',
-      '@ddd-ts-kit/kernel': '^0.1.0',
+      '@ddd-ts-kit/kernel': KIT_RANGE,
     });
 
     expect(stringsAt(report, 'notes').join('\n')).toContain('keeps its own "test" script');

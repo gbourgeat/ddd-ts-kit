@@ -3,6 +3,7 @@ import { exists, read } from './helpers.js';
 import { initProject } from './support/init-project.js';
 import { textsAt } from './support/texts-at.js';
 import { readJson } from './support/read-json.js';
+import { KIT_RANGE } from './support/kit-range.js';
 
 const platform = (root: string, file: string): string => read(root, `src/platform/${file}`);
 
@@ -156,7 +157,7 @@ describe('the storage token of each ORM', () => {
 
     expect(exists(root, 'src/platform/database/persistence.ts')).toBe(true);
     expect(exists(root, 'src/platform/database/inert-persistence.ts')).toBe(true);
-    expect(textsAt(readJson(root, 'package.json'), 'dependencies')[dependency]).toBe('^0.1.0');
+    expect(textsAt(readJson(root, 'package.json'), 'dependencies')[dependency]).toBe(KIT_RANGE);
   });
 
   it('keeps the test database out of the build and out of production imports', () => {
@@ -191,7 +192,7 @@ describe('the composition root init writes, by hand', () => {
     );
 
     expect(textsAt(readJson(root, 'package.json'), 'dependencies')).toMatchObject({
-      '@ddd-ts-kit/scheduling': '^0.1.0',
+      '@ddd-ts-kit/scheduling': KIT_RANGE,
     });
   });
 

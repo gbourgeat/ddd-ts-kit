@@ -5,6 +5,7 @@ import { initProject } from './support/init-project.js';
 import { jsonAt } from './support/json-at.js';
 import { readJson } from './support/read-json.js';
 import { textsAt } from './support/texts-at.js';
+import { KIT_RANGE } from './support/kit-range.js';
 
 const platform = (root: string, file: string): string => read(root, `src/platform/${file}`);
 
@@ -24,7 +25,7 @@ describe('integration events', () => {
     expect(read(root, 'docker-compose.yml')).toContain('image: rabbitmq:4-management-alpine');
 
     expect(textsAt(readJson(root, 'package.json'), 'dependencies')).toMatchObject({
-      '@ddd-ts-kit/rabbitmq': '^0.1.0',
+      '@ddd-ts-kit/rabbitmq': KIT_RANGE,
       amqplib: '^2.2.0',
     });
   });
