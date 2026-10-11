@@ -48,3 +48,21 @@ gh pr merge --auto --squash
 Workflows pin each action to a commit, with its version in a comment; Dependabot proposes the
 updates. A vulnerability is reported privately: see [SECURITY.md](SECURITY.md). Conduct:
 [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
+
+## Releasing
+
+The packages of `packages/` are released together, under one version.
+
+```bash
+node pipeline/monorepo/release-version.mjs --set 0.2.0   # every manifest and the versions the CLI writes
+npm install --package-lock-only
+# pull request, merge, then on main:
+git tag v0.2.0 && git push origin v0.2.0
+```
+
+The tag starts the `Release` workflow: it checks that the tag is the version every package
+states, builds, checks the tarballs, publishes each package to the npm registry with provenance
+and creates the GitHub release. A version with a pre-release part (`0.2.0-rc.1`) is published
+under the `next` tag. A run that stopped half-way is run again: what is already published is
+skipped. The workflow needs the `NPM_TOKEN` secret of the `npm` environment.
+

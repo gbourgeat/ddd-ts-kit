@@ -3,6 +3,17 @@
   "version": "0.1.0",
   "description": "Kafka provider for integration events: idempotent keyed publishing for the outbox relay, one consumer group per consumer, offsets committed after handling, bounded retries and a dead-letter topic.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gbourgeat/ddd-ts-kit.git",
+    "directory": "packages/kafka"
+  },
+  "homepage": "https://github.com/gbourgeat/ddd-ts-kit/tree/main/packages/kafka#readme",
+  "bugs": "https://github.com/gbourgeat/ddd-ts-kit/issues",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "type": "module",
   "sideEffects": false,
   "exports": {
