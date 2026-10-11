@@ -3,6 +3,17 @@
   "version": "0.1.0",
   "description": "NATS JetStream provider for integration events: acknowledged publishing with message deduplication for the outbox relay, one durable consumer per consumer, explicit acknowledgement, bounded redelivery and a dead-letter subject.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gbourgeat/ddd-ts-kit.git",
+    "directory": "packages/nats"
+  },
+  "homepage": "https://github.com/gbourgeat/ddd-ts-kit/tree/main/packages/nats#readme",
+  "bugs": "https://github.com/gbourgeat/ddd-ts-kit/issues",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "type": "module",
   "sideEffects": false,
   "exports": {

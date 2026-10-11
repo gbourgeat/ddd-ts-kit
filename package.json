@@ -23,6 +23,8 @@
     "knip": "knip",
     "depcruise": "depcruise packages --config .dependency-cruiser.cjs",
     "package:check": "node pipeline/monorepo/package-check.mjs",
+    "release:version": "node pipeline/monorepo/release-version.mjs",
+    "release:publish": "node pipeline/monorepo/publish-packages.mjs",
     "check:dashes": "node pipeline/monorepo/no-dashes.mjs",
     "quality": "npm run format:check && npm run lint && npm run knip && npm run depcruise && npm run package:check",
     "ci:typecheck": "npm run build && npm run typecheck:tests",

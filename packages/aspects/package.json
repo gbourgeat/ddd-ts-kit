@@ -3,6 +3,17 @@
   "version": "0.1.0",
   "description": "Cross-cutting behaviour applied from outside: logging, metrics, retry, timeout, circuit breaker and caching as composable wrappers at the composition root, as bus middlewares, or as standard decorators on adapters. The domain stays clean.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gbourgeat/ddd-ts-kit.git",
+    "directory": "packages/aspects"
+  },
+  "homepage": "https://github.com/gbourgeat/ddd-ts-kit/tree/main/packages/aspects#readme",
+  "bugs": "https://github.com/gbourgeat/ddd-ts-kit/issues",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "type": "module",
   "sideEffects": false,
   "exports": {
