@@ -3,6 +3,17 @@
   "version": "0.1.0",
   "description": "Error reporting to Sentry or GlitchTip behind the kernel ErrorReporter port: unexpected failures only, correlated with traces, scrubbed before sending.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gbourgeat/ddd-ts-kit.git",
+    "directory": "packages/sentry"
+  },
+  "homepage": "https://github.com/gbourgeat/ddd-ts-kit/tree/main/packages/sentry#readme",
+  "bugs": "https://github.com/gbourgeat/ddd-ts-kit/issues",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "type": "module",
   "sideEffects": false,
   "exports": {

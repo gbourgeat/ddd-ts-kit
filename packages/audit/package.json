@@ -3,6 +3,17 @@
   "version": "0.1.0",
   "description": "Tamper-evident audit trail fed from outside the use cases: authorization decisions, executed commands and integration events, as hash-chained append-only entries.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gbourgeat/ddd-ts-kit.git",
+    "directory": "packages/audit"
+  },
+  "homepage": "https://github.com/gbourgeat/ddd-ts-kit/tree/main/packages/audit#readme",
+  "bugs": "https://github.com/gbourgeat/ddd-ts-kit/issues",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "type": "module",
   "sideEffects": false,
   "exports": {

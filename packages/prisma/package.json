@@ -3,6 +3,17 @@
   "version": "0.1.0",
   "description": "Prisma adapters for the kernel ports: unit of work, transactional outbox store, processed-event store.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gbourgeat/ddd-ts-kit.git",
+    "directory": "packages/prisma"
+  },
+  "homepage": "https://github.com/gbourgeat/ddd-ts-kit/tree/main/packages/prisma#readme",
+  "bugs": "https://github.com/gbourgeat/ddd-ts-kit/issues",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "type": "module",
   "sideEffects": false,
   "exports": {
