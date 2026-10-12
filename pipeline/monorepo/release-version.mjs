@@ -82,7 +82,20 @@ function statesTheKit(line) {
 }
 
 function stated() {
-  return [...packageManifests().flatMap(ofPackage), ...MANIFESTS.flatMap(ofDependencies), ...SOURCES.flatMap(ofSource)];
+  return [
+    ...packageManifests().flatMap(ofPackage),
+    ...MANIFESTS.flatMap(ofDependencies),
+    ...SOURCES.flatMap(ofSource),
+    ...GENERATED.flatMap(ofContract),
+  ];
+}
+
+/** The version of the contract's `info`, the first `version` two spaces in, in YAML or in JSON. */
+function ofContract(file) {
+  const text = fs.readFileSync(path.join(ROOT, file), 'utf8');
+  const match = /^ {2}"?version"?:\s*["']?([^"',\s]+)/m.exec(text);
+
+  return match === null ? [{ version: 'missing', where: file }] : [{ version: match[1], where: file }];
 }
 
 function packageManifests() {

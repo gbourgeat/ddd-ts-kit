@@ -27,6 +27,11 @@ updates:
           - '@typescript-eslint/*'
           - 'knip'
           - 'dependency-cruiser'
+      # pglite-socket pins the exact pglite it was built for: the two move together.
+      pglite:
+        patterns:
+          - '@electric-sql/pglite'
+          - '@electric-sql/pglite-*'
       test:
         patterns:
           - 'vitest'

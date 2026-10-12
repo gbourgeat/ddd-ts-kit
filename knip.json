@@ -1,7 +1,13 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "ignoreWorkspaces": ["examples/*"],
-  "ignoreDependencies": ["@arethetypeswrong/cli", "publint", "eslint-formatter-gitlab"],
+  "ignoreDependencies": [
+    "@arethetypeswrong/cli",
+    "publint",
+    "eslint-formatter-gitlab",
+    "@electric-sql/pglite",
+    "@electric-sql/pglite-socket"
+  ],
   "workspaces": {
     ".": {
       "entry": ["pipeline/monorepo/*.mjs", "plugin/hooks/*.mjs"],
