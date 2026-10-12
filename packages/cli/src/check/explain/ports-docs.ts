@@ -47,22 +47,22 @@ builder.bind(PaymentGateway).toClass(StripePaymentGateway, [PaymentSettings]);`,
   'ports/no-concrete-dependency': {
     why: 'A dependency list says what a class needs, not who provides it. A list that names an adapter of infrastructure/ or a fake of test/fakes/ ties the use case to one implementation: the adapter can no longer be replaced at the composition root, and a test can no longer give its fake. The list names the port, the constructor parameter is typed by it, and the choice of the implementation stays in one place.',
     bad: `// application/commands/issue-invoice/issue-invoice.handler.ts
-import { KnexInvoiceRepository } from '@/contexts/billing/infrastructure/persistence/knex-invoice.repository.js';
+import { KnexInvoiceRepository } from '@/contexts/billing/infrastructure/persistence/knex-invoice.repository';
 
 @CommandHandler(IssueInvoiceCommand, [KnexInvoiceRepository, Clock])`,
     good: `// application/commands/issue-invoice/issue-invoice.handler.ts
-import { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository.js';
+import { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository';
 
 @CommandHandler(IssueInvoiceCommand, [InvoiceRepository, Clock])`,
   },
   'ports/value-import': {
     why: 'A port named in a dependency list or given to bind is used as a value: the class itself is looked up in the container. `import type` erases the import when the file is compiled, so the list would hold undefined at run time, or the file would not compile. The import of a token is a plain import; `import type` stays right for a class that only types a parameter.',
-    bad: `import type { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository.js';
+    bad: `import type { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository';
 import { type Clock } from '@ddd-ts-kit/kernel';
 
 @CommandHandler(IssueInvoiceCommand, [InvoiceRepository, Clock])`,
     good: `import { Clock } from '@ddd-ts-kit/kernel';
-import { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository.js';
+import { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository';
 
 @CommandHandler(IssueInvoiceCommand, [InvoiceRepository, Clock])`,
   },

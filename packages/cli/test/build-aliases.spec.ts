@@ -192,25 +192,137 @@ describe('ddd-ts-kit build-aliases, its refusals and its options', () => {
 
     write(root, 'ddd-ts-kit.config.json', JSON.stringify({ importAlias: '$app/', contexts: {} }));
     write(root, 'tsconfig.build.json', JSON.stringify({ compilerOptions: { rootDir: 'src', outDir: 'lib' } }));
-
-    write(
-      root,
-      'lib/main.js',
-      "import { a } from '$app/deep/a';\nimport { b } from '$app/deep';\nimport '@/kept.js';\n",
-    );
-
+    write(root, 'lib/main.js', "import { a } from '$app/deep/a.js';\nimport '@/kept.js';\n");
     write(root, 'lib/deep/a.js', 'export const a = 1;\n');
     write(root, 'lib/deep/index.js', "export { a as b } from '$app/deep/a.js';\n");
     write(root, 'lib/types.d.ts', "export type { A } from '$app/only-declared.js';\n");
     write(root, 'lib/only-declared.d.ts', 'export type A = 1;\n');
 
     expect(cli(root, 'build-aliases').code).toBe(0);
-
-    expect(read(root, 'lib/main.js')).toBe(
-      "import { a } from './deep/a.js';\nimport { b } from './deep/index.js';\nimport '@/kept.js';\n",
-    );
-
+    expect(read(root, 'lib/main.js')).toBe("import { a } from './deep/a.js';\nimport '@/kept.js';\n");
     expect(read(root, 'lib/deep/index.js')).toBe("export { a as b } from './a.js';\n");
     expect(read(root, 'lib/types.d.ts')).toBe("export type { A } from './only-declared.js';\n");
+  });
+});
+
+const BARE_SOURCES: Readonly<Record<string, string>> = Object.fromEntries(
+  Object.entries(SOURCES).map(([file, content]) => [file, content.replaceAll(".js'", "'")]),
+);
+
+const BARE = {
+  'ddd-ts-kit.config.json': JSON.stringify({ importExtension: 'none', contexts: {} }),
+  'tsconfig.json': TSCONFIG.replaceAll('"NodeNext"', '"ESNext"').replace(
+    '"moduleResolution":"ESNext"',
+    '"moduleResolution":"Bundler"',
+  ),
+  ...BARE_SOURCES,
+};
+
+describe('ddd-ts-kit build-aliases, in a project that writes its imports without an extension', () => {
+  it('compiles under the bundler resolution, stops under plain node until the rewrite, then runs: the rewrite writes the ".js" Node needs', () => {
+    const root = compiled(BARE);
+    const before = node(root, 'dist/src/main.js');
+
+    expect(read(root, 'src/main.ts')).toContain("from '@/platform/place';");
+    expect(read(root, 'dist/src/main.js')).toContain("from '@/platform/place';");
+    expect(before.status).not.toBe(0);
+    expect(before.output).toMatch(/ERR_MODULE_NOT_FOUND|Cannot find package '@\//);
+
+    expect(cli(root, 'build-aliases', '--json').json()).toEqual({
+      outDir: 'dist',
+      files: 10,
+      changed: 5,
+      specifiers: 8,
+    });
+
+    expect(node(root, 'dist/src/main.js')).toEqual({ status: 0, output: 'hello world later\n\n' });
+    expect(node(root, 'dist/scripts/print.js')).toEqual({ status: 0, output: 'hello script\n\n' });
+    expect(cli(root, 'build-aliases', '--json').json()).toMatchObject({ changed: 0, specifiers: 0 });
+  });
+
+  it('writes the full relative path with ".js" for a static import, a dynamic one, a type import and typeof import() of a declaration', () => {
+    const root = compiled(BARE);
+
+    cli(root, 'build-aliases');
+
+    expect(read(root, 'dist/src/main.js')).toContain("from './contexts/billing/domain/greeting.js';");
+    expect(read(root, 'dist/src/main.js')).toContain("await import('./platform/later.js')");
+    expect(read(root, 'dist/src/contexts/billing/domain/greeting.js')).toContain("from '../../../platform/place.js';");
+    expect(read(root, 'dist/src/platform/later.d.ts')).toContain("from '../contexts/billing/domain/greeting.js';");
+
+    expect(read(root, 'dist/src/contexts/billing/domain/greeting.d.ts')).toMatch(
+      /Promise<typeof import\(["']\.\.\/\.\.\/\.\.\/platform\/place\.js["']\)>/,
+    );
+
+    expect(Object.values({ ...emitted(root, '.js'), ...emitted(root, '.d.ts') }).join('\n')).not.toMatch(/['"]@\//);
+  });
+
+  it('never touches a package, whatever its subpath ends with: a look-alike of a file name is left as written', () => {
+    const root = tempDir('build-aliases');
+
+    const packages =
+      "import 'zod/v4/core.js';\nimport '@scope/package/file.js';\nimport '@ddd-ts-kit/kernel/declarations';\nimport 'node:fs';\nimport '@scope/src/platform/place';\n";
+
+    write(root, 'ddd-ts-kit.config.json', JSON.stringify({ importExtension: 'none', contexts: {} }));
+    write(root, 'tsconfig.build.json', JSON.stringify({ compilerOptions: { rootDir: '.', outDir: 'dist' } }));
+    write(root, 'dist/src/main.js', `${packages}import '@/platform/place';\n`);
+    write(root, 'dist/src/platform/place.js', 'export {};\n');
+
+    expect(cli(root, 'build-aliases', '--json').json()).toMatchObject({ changed: 1, specifiers: 1 });
+    expect(read(root, 'dist/src/main.js')).toBe(`${packages}import './platform/place.js';\n`);
+  });
+
+  it('refuses a directory, an extension the config does not write, and a missing file, and says what to write instead', () => {
+    const root = tempDir('build-aliases');
+
+    write(root, 'ddd-ts-kit.config.json', JSON.stringify({ importExtension: 'none', contexts: {} }));
+    write(root, 'tsconfig.build.json', JSON.stringify({ compilerOptions: { rootDir: '.', outDir: 'dist' } }));
+
+    write(
+      root,
+      'dist/src/main.js',
+      "import '@/contexts/billing/published-language';\nimport '@/platform/place.js';\nimport '@/platform/absent';\n",
+    );
+
+    write(root, 'dist/src/contexts/billing/published-language/index.js', 'export {};\n');
+    write(root, 'dist/src/platform/place.js', 'export {};\n');
+
+    const before = read(root, 'dist/src/main.js');
+    const result = cli(root, 'build-aliases');
+
+    expect(result.code).toBe(2);
+
+    expect(result.stderr).toContain(
+      'line 1: "@/contexts/billing/published-language" names a directory: an alias names one file, write "@/contexts/billing/published-language/index"',
+    );
+
+    expect(result.stderr).toContain(
+      'line 2: "@/platform/place.js" has an extension although "importExtension" is "none": write "@/platform/place" (`eslint --fix` does)',
+    );
+
+    expect(result.stderr).toContain('line 3: "@/platform/absent" names no file the build emitted');
+    expect(read(root, 'dist/src/main.js')).toBe(before);
+  });
+
+  it('refuses, in a project that writes ".js", an import without it and a directory: one spelling names a file', () => {
+    const root = tempDir('build-aliases');
+
+    write(root, 'ddd-ts-kit.config.json', JSON.stringify({ importExtension: 'js', contexts: {} }));
+    write(root, 'tsconfig.build.json', JSON.stringify({ compilerOptions: { rootDir: '.', outDir: 'dist' } }));
+    write(root, 'dist/src/main.js', "import '@/platform/place';\nimport '@/platform';\n");
+    write(root, 'dist/src/platform/place.js', 'export {};\n');
+    write(root, 'dist/src/platform/index.js', 'export {};\n');
+
+    const result = cli(root, 'build-aliases');
+
+    expect(result.code).toBe(2);
+
+    expect(result.stderr).toContain(
+      'line 1: "@/platform/place" has no extension although "importExtension" is "js": write "@/platform/place.js" (`eslint --fix` does)',
+    );
+
+    expect(result.stderr).toContain(
+      'line 2: "@/platform" names a directory: an alias names one file, write "@/platform/index.js"',
+    );
   });
 });

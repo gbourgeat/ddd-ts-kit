@@ -39,6 +39,8 @@ export function parseConfig(raw: unknown): Config {
     sharedKernelDir: posix(text(source['sharedKernelDir'], `${sourceRoot}/shared-kernel`)),
     platformDir: posix(text(source['platformDir'], `${sourceRoot}/platform`)),
     importAlias: text(source['importAlias'], '@/'),
+    // A config without the key was written before it existed: its imports end with `.js`.
+    importExtension: text(source['importExtension'], 'js'),
     contexts: mapEntries(source['contexts'], parseContext),
     rules: mapEntries(source['rules'], String),
     domainAllowedPackages: strings(source['domainAllowedPackages'], KERNEL),

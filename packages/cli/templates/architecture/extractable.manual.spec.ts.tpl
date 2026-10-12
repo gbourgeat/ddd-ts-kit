@@ -1,8 +1,8 @@
 import { describe, expect, it } from '{{tests.module}}';
-import { createPlatform } from '{{alias.platform}}/create-platform.js';
-import { inertPersistence } from '{{alias.platform}}/database/inert-persistence.js';
-import { inProcessEvents } from '{{alias.platform}}/events/in-process-events.js';
-import type { Platform } from '{{alias.platform}}/platform.js';
+import { createPlatform } from '{{alias.platform}}/create-platform{{alias.ext}}';
+import { inertPersistence } from '{{alias.platform}}/database/inert-persistence{{alias.ext}}';
+import { inProcessEvents } from '{{alias.platform}}/events/in-process-events{{alias.ext}}';
+import type { Platform } from '{{alias.platform}}/platform{{alias.ext}}';
 // ddd-ts-kit:imports
 // /ddd-ts-kit:imports
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { OffGridError } from '@/contexts/scheduling/domain/errors/off-grid.error.js';
+import { OffGridError } from '@/contexts/scheduling/domain/errors/off-grid.error';
 
 describe('OffGridError', () => {
   it('carries its stable code', () => {

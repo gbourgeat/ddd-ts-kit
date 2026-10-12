@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { InvalidSlotError } from '@/contexts/scheduling/domain/errors/invalid-slot.error.js';
+import { InvalidSlotError } from '@/contexts/scheduling/domain/errors/invalid-slot.error';
 
 describe('InvalidSlotError', () => {
   it('carries its stable code', () => {

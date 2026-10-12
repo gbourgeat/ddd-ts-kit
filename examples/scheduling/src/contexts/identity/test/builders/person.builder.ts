@@ -1,8 +1,8 @@
 import { unwrap } from '@ddd-ts-kit/kernel';
 import { Builder, sequence, type Defaults } from '@ddd-ts-kit/testing';
-import { Person } from '@/contexts/identity/domain/aggregates/person.aggregate.js';
-import { DisplayName } from '@/contexts/identity/domain/value-objects/display-name.vo.js';
-import { Email } from '@/contexts/identity/domain/value-objects/email.vo.js';
+import { Person } from '@/contexts/identity/domain/aggregates/person.aggregate';
+import { DisplayName } from '@/contexts/identity/domain/value-objects/display-name.vo';
+import { Email } from '@/contexts/identity/domain/value-objects/email.vo';
 
 interface PersonIngredients {
   readonly id: string;

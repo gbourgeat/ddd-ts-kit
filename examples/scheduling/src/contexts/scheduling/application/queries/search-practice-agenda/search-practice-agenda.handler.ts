@@ -1,10 +1,10 @@
 import { Access } from '@ddd-ts-kit/auth';
 import { scoped } from '@ddd-ts-kit/kernel';
 import { QueryHandler } from '@ddd-ts-kit/kernel/declarations';
-import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions.js';
-import { Agenda } from '@/contexts/scheduling/application/ports/agenda.port.js';
-import { SearchPracticeAgendaQuery } from '@/contexts/scheduling/application/queries/search-practice-agenda/search-practice-agenda.query.js';
-import type { SearchPracticeAgendaResult } from '@/contexts/scheduling/application/queries/search-practice-agenda/search-practice-agenda.result.js';
+import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
+import { Agenda } from '@/contexts/scheduling/application/ports/agenda.port';
+import { SearchPracticeAgendaQuery } from '@/contexts/scheduling/application/queries/search-practice-agenda/search-practice-agenda.query';
+import type { SearchPracticeAgendaResult } from '@/contexts/scheduling/application/queries/search-practice-agenda/search-practice-agenda.result';
 
 @QueryHandler(SearchPracticeAgendaQuery, [Agenda, Access])
 export class SearchPracticeAgendaHandler implements QueryHandler<SearchPracticeAgendaQuery> {

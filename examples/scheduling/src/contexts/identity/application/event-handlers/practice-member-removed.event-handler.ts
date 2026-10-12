@@ -1,7 +1,7 @@
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
-import { PracticeMemberRemoved } from '@/contexts/identity/domain/events/practice-member-removed.event.js';
-import { DelegationRepository } from '@/contexts/identity/domain/repositories/delegation.repository.js';
-import { IdentityRelationships } from '@/contexts/identity/application/ports/identity-relationships.port.js';
+import { PracticeMemberRemoved } from '@/contexts/identity/domain/events/practice-member-removed.event';
+import { DelegationRepository } from '@/contexts/identity/domain/repositories/delegation.repository';
+import { IdentityRelationships } from '@/contexts/identity/application/ports/identity-relationships.port';
 
 /**
  * When a member is removed, the platform forgets their role and their desk, and the delegations

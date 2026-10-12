@@ -1,8 +1,8 @@
 import { AuthorizedQuery, type Actor, type Criteria } from '@ddd-ts-kit/kernel';
 import { Requires } from '@ddd-ts-kit/kernel/declarations';
-import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions.js';
-import type { AgendaEntry } from '@/contexts/scheduling/application/ports/agenda.port.js';
-import type { SearchPracticeAgendaResult } from '@/contexts/scheduling/application/queries/search-practice-agenda/search-practice-agenda.result.js';
+import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
+import type { AgendaEntry } from '@/contexts/scheduling/application/ports/agenda.port';
+import type { SearchPracticeAgendaResult } from '@/contexts/scheduling/application/queries/search-practice-agenda/search-practice-agenda.result';
 
 /** The agenda of one practice, for its members: the appointments of the calendars the actor runs. Filters, sort and page are the criteria of the agenda. */
 @Requires(schedulingPermissions['agenda.read'], {

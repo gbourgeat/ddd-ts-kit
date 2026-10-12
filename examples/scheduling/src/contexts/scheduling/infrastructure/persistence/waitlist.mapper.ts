@@ -1,10 +1,10 @@
 import { unwrap } from '@ddd-ts-kit/kernel';
-import { Waitlist } from '@/contexts/scheduling/domain/aggregates/waitlist.aggregate.js';
-import { Waiter } from '@/contexts/scheduling/domain/value-objects/waiter.vo.js';
+import { Waitlist } from '@/contexts/scheduling/domain/aggregates/waitlist.aggregate';
+import { Waiter } from '@/contexts/scheduling/domain/value-objects/waiter.vo';
 import type {
   WaitlistColumns,
   WaitlistRow,
-} from '@/contexts/scheduling/infrastructure/persistence/waitlist-row.schema.js';
+} from '@/contexts/scheduling/infrastructure/persistence/waitlist-row.schema';
 
 type StoredWaiter = { readonly patientId: string; readonly appointmentTypeId: string; readonly joinedAt: string };
 

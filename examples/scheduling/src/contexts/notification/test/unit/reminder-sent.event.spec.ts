@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ReminderSent } from '@/contexts/notification/domain/events/reminder-sent.event.js';
+import { ReminderSent } from '@/contexts/notification/domain/events/reminder-sent.event';
 
 describe('ReminderSent', () => {
   it('is named after the context, the aggregate and the fact', () => {

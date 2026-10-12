@@ -2,11 +2,11 @@ import type { Knex } from 'knex';
 import { Clock, ExecutionScope, stampCreation, stampUpdate } from '@ddd-ts-kit/kernel';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
 import { KnexContext, auditRow, insertIgnoringConflict, optimisticUpdate } from '@ddd-ts-kit/knex';
-import type { Person } from '@/contexts/identity/domain/aggregates/person.aggregate.js';
-import { PersonRepository } from '@/contexts/identity/domain/repositories/person.repository.js';
-import { IDENTITY_SCHEMA } from '@/contexts/identity/infrastructure/persistence/identity.schema.js';
-import { PersonMapper } from '@/contexts/identity/infrastructure/persistence/person.mapper.js';
-import type { PersonColumns, PersonRow } from '@/contexts/identity/infrastructure/persistence/person-row.schema.js';
+import type { Person } from '@/contexts/identity/domain/aggregates/person.aggregate';
+import { PersonRepository } from '@/contexts/identity/domain/repositories/person.repository';
+import { IDENTITY_SCHEMA } from '@/contexts/identity/infrastructure/persistence/identity.schema';
+import { PersonMapper } from '@/contexts/identity/infrastructure/persistence/person.mapper';
+import type { PersonColumns, PersonRow } from '@/contexts/identity/infrastructure/persistence/person-row.schema';
 
 type VersionedPerson = PersonColumns & { readonly version: number };
 

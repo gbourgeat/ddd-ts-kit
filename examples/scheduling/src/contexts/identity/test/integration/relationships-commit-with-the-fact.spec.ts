@@ -8,13 +8,13 @@ import {
   executionContext,
   type Actor,
 } from '@ddd-ts-kit/kernel';
-import { PersonRegisteredEventHandler } from '@/contexts/identity/application/event-handlers/person-registered.event-handler.js';
-import { PersonRegistered } from '@/contexts/identity/domain/events/person-registered.event.js';
-import { KnexPersonRepository } from '@/contexts/identity/infrastructure/persistence/knex-person.repository.js';
-import { TupleIdentityRelationships } from '@/contexts/identity/infrastructure/persistence/tuple-identity-relationships.repository.js';
-import { createTupleStore } from '@/platform/auth/create-tuple-store.js';
-import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database.js';
-import { aPerson } from '@/contexts/identity/test/builders/person.builder.js';
+import { PersonRegisteredEventHandler } from '@/contexts/identity/application/event-handlers/person-registered.event-handler';
+import { PersonRegistered } from '@/contexts/identity/domain/events/person-registered.event';
+import { KnexPersonRepository } from '@/contexts/identity/infrastructure/persistence/knex-person.repository';
+import { TupleIdentityRelationships } from '@/contexts/identity/infrastructure/persistence/tuple-identity-relationships.repository';
+import { createTupleStore } from '@/platform/auth/create-tuple-store';
+import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database';
+import { aPerson } from '@/contexts/identity/test/builders/person.builder';
 
 class DirectoryDown extends Error {}
 

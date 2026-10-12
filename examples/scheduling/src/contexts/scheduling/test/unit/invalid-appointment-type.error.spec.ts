@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { InvalidAppointmentTypeError } from '@/contexts/scheduling/domain/errors/invalid-appointment-type.error.js';
+import { InvalidAppointmentTypeError } from '@/contexts/scheduling/domain/errors/invalid-appointment-type.error';
 
 describe('InvalidAppointmentTypeError', () => {
   it('carries its stable code', () => {

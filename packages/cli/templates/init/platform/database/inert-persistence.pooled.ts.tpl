@@ -1,5 +1,5 @@
-import { openPersistence } from '{{alias.platform}}/database/open-persistence.js';
-import type { Persistence } from '{{alias.platform}}/database/persistence.js';
+import { openPersistence } from '{{alias.platform}}/database/open-persistence{{alias.ext}}';
+import type { Persistence } from '{{alias.platform}}/database/persistence{{alias.ext}}';
 
 /**
  * For the script that only lists routes: the pool connects on the first query,

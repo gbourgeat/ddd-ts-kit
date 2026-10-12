@@ -1,5 +1,5 @@
 import { describe, expect, it } from '{{tests.module}}';
-import { {{name.pascal}} } from '{{alias.context}}/domain/entities/{{name.kebab}}.entity.js';
+import { {{name.pascal}} } from '{{alias.context}}/domain/entities/{{name.kebab}}.entity{{alias.ext}}';
 
 describe('{{name.pascal}}', () => {
   it('is identified by its id, not by its attributes', () => {

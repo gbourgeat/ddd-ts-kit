@@ -4,12 +4,12 @@ import { contextModule, createTestApplication, fake, type TestApplication } from
 import { InMemoryOutboxStore, OutboxPublisher } from '@ddd-ts-kit/events';
 import { eventually } from '@ddd-ts-kit/testing/e2e';
 import { describe, expect, it } from 'vitest';
-import { billingPermissions } from '@/contexts/billing/application/authorization/billing.permissions.js';
-import * as billing from '@/contexts/billing/billing.declarations.js';
-import { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository.js';
-import { invoiceIssuedV2 } from '@/contexts/billing/published-language/invoice-issued.v2.integration-event.js';
-import { startOutboxRelay } from '@/platform/events/start-outbox-relay.js';
-import { platformTestModule } from '@/platform/platform-test.module.js';
+import { billingPermissions } from '@/contexts/billing/application/authorization/billing.permissions';
+import * as billing from '@/contexts/billing/billing.declarations';
+import { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository';
+import { invoiceIssuedV2 } from '@/contexts/billing/published-language/invoice-issued.v2.integration-event';
+import { startOutboxRelay } from '@/platform/events/start-outbox-relay';
+import { platformTestModule } from '@/platform/platform-test.module';
 
 const authorization = authorizationModule({ authorizer: new RoleBasedAuthorizer({ roles: { scheduler: [billingPermissions['invoice.issue']] }, systemRole: 'scheduler' }) });
 

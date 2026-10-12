@@ -3,15 +3,15 @@ import { ALLOWED, deny, type AccessScope, type Authorizer } from '@ddd-ts-kit/au
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { anActor } from '@ddd-ts-kit/auth/testing';
 import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
-import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations.js';
-import { platformTestModule } from '@/platform/platform-test.module.js';
-import { Agenda } from '@/contexts/scheduling/application/ports/agenda.port.js';
-import { GetCalendarDayQuery } from '@/contexts/scheduling/application/queries/get-calendar-day/get-calendar-day.query.js';
-import { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository.js';
-import { anAgendaEntry } from '@/contexts/scheduling/test/builders/agenda-entry.builder.js';
-import { aCalendar } from '@/contexts/scheduling/test/builders/calendar.builder.js';
-import { FakeAgenda } from '@/contexts/scheduling/test/fakes/agenda.fake.js';
-import { FakeCalendarRepository } from '@/contexts/scheduling/test/fakes/calendar.repository.fake.js';
+import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations';
+import { platformTestModule } from '@/platform/platform-test.module';
+import { Agenda } from '@/contexts/scheduling/application/ports/agenda.port';
+import { GetCalendarDayQuery } from '@/contexts/scheduling/application/queries/get-calendar-day/get-calendar-day.query';
+import { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository';
+import { anAgendaEntry } from '@/contexts/scheduling/test/builders/agenda-entry.builder';
+import { aCalendar } from '@/contexts/scheduling/test/builders/calendar.builder';
+import { FakeAgenda } from '@/contexts/scheduling/test/fakes/agenda.fake';
+import { FakeCalendarRepository } from '@/contexts/scheduling/test/fakes/calendar.repository.fake';
 
 const holder = anActor().withRole('holder').build();
 const monday = '2026-03-02';

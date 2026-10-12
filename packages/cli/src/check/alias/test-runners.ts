@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import { moduleNameMapper } from '../../alias/index.js';
+import { moduleNameMapper, specifierSuffix } from '../../alias/index.js';
 import type { Violation } from '../model/violation.js';
 import { escapeRegExp } from '../text/escape-reg-exp.js';
 import { ALIAS_FILES } from './alias-files.js';
@@ -43,8 +43,8 @@ function vitest({ report }: Inspected, file: string, text: string): Violation[] 
   ];
 }
 
-function jest({ report, roots }: Inspected, file: string, text: string): Violation[] {
-  return Object.entries(moduleNameMapper(roots))
+function jest({ report, roots, project }: Inspected, file: string, text: string): Violation[] {
+  return Object.entries(moduleNameMapper(roots, specifierSuffix(project.config.importExtension)))
     .filter(([pattern, target]) => !mapped(text, pattern, target))
     .map(([pattern, target]) => {
       const entry = `'${pattern.replaceAll('\\', '\\\\')}': '${target}'`;
@@ -52,7 +52,7 @@ function jest({ report, roots }: Inspected, file: string, text: string): Violati
       return report(
         { file, line: 1 },
         `${file} does not map the import alias "${pattern}" as ${TYPE_CHECK} declares it.`,
-        `Write ${entry} under "moduleNameMapper": jest does not read tsconfig, so the mapping is repeated there, and a spec would otherwise fail on its first alias import or load another file.`,
+        `Write ${entry} under "moduleNameMapper": jest does not read tsconfig, so the mapping is repeated there, with the ending "importExtension" gives an import, and a spec would otherwise fail on its first alias import or load another file.`,
       );
     });
 }

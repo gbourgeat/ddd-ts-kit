@@ -1,7 +1,7 @@
 @@imports
 import { DomainEventDispatcher } from '@ddd-ts-kit/kernel';
-import { {{event.pascal}}EventHandler } from '{{alias.context}}/application/event-handlers/{{event.kebab}}.event-handler.js';
-import { {{event.pascal}} } from '{{alias.context}}/domain/events/{{event.kebab}}.event.js';
+import { {{event.pascal}}EventHandler } from '{{alias.context}}/application/event-handlers/{{event.kebab}}.event-handler{{alias.ext}}';
+import { {{event.pascal}} } from '{{alias.context}}/domain/events/{{event.kebab}}.event{{alias.ext}}';
 @@registrations
 builder.bind({{event.pascal}}EventHandler).toClass({{event.pascal}}EventHandler).as('domain-event-handler');
 @@start

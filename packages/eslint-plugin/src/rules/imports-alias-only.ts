@@ -1,8 +1,10 @@
 import path from 'node:path';
 import type { TSESLint, TSESTree } from '@typescript-eslint/utils';
-import type { AliasRoot } from '../project/alias-root.js';
 import { aliasRoots } from '../project/alias-roots.js';
+import { isJudged } from '../project/is-judged.js';
+import type { AliasRoot } from '../project/alias-root.js';
 import type { LintedFile } from '../project/linted-file.js';
+import { specifierSuffix } from '../project/specifier-suffix.js';
 import { toAlias } from '../project/to-alias.js';
 import { importListener } from '../support/imports/import-listener.js';
 import { defineRule } from '../support/rule/define-rule.js';
@@ -11,8 +13,6 @@ type MessageId = 'relative' | 'unnamed' | 'segment';
 
 const RELATIVE = /^\.{1,2}(?:\/|$)/;
 const DOT_SEGMENT = /\/\.{1,2}(?:\/|$)/;
-/** Written by a tool and never linted as project code. */
-const BUILD_PRODUCTS = ['generated'];
 
 export const importsAliasOnly = defineRule<MessageId>({
   id: 'imports/alias-only',
@@ -37,7 +37,7 @@ export const importsAliasOnly = defineRule<MessageId>({
     }
 
     return importListener(file, ({ node, specifier }) => {
-      const finding = RELATIVE.test(specifier) ? relative(roots, file, specifier) : dotSegment(roots, specifier);
+      const finding = RELATIVE.test(specifier) ? relative(file, specifier) : dotSegment(roots, specifier);
 
       if (finding !== undefined) {
         report({ node, ...finding, ...fixOf(node, finding) });
@@ -51,13 +51,10 @@ interface Found {
   readonly data: Readonly<Record<string, string>>;
 }
 
-/** A source under an aliased tree the team writes: the source root, the tests and the scripts. */
-function isJudged(roots: readonly AliasRoot[], file: LintedFile): boolean {
-  return roots.some(({ directory }) => !BUILD_PRODUCTS.includes(directory) && file.path.startsWith(`${directory}/`));
-}
-
-function relative(roots: readonly AliasRoot[], file: LintedFile, specifier: string): Found {
-  const alias = toAlias(roots, path.posix.join(path.posix.dirname(file.path), specifier));
+function relative(file: LintedFile, specifier: string): Found {
+  const roots = aliasRoots(file.config);
+  const suffix = specifierSuffix(file.config.importExtension);
+  const alias = toAlias(roots, path.posix.join(path.posix.dirname(file.path), specifier), suffix);
 
   if (alias !== undefined) {
     return { messageId: 'relative', data: { specifier, alias } };

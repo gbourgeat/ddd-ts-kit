@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { createErrorMapper, executeRoute } from '@ddd-ts-kit/http';
 import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';
-import { errorStatuses } from '@/platform/http/error-statuses.js';
-import { ConfirmAppointmentCommand } from '@/contexts/scheduling/application/commands/confirm-appointment/confirm-appointment.command.js';
-import { AppointmentAlreadyConfirmedError } from '@/contexts/scheduling/domain/errors/appointment-already-confirmed.error.js';
-import { AppointmentEndedError } from '@/contexts/scheduling/domain/errors/appointment-ended.error.js';
-import { AppointmentNotFoundError } from '@/contexts/scheduling/domain/errors/appointment-not-found.error.js';
-import { confirmAppointmentRoute } from '@/contexts/scheduling/presentation/http/confirm-appointment.route.js';
+import { errorStatuses } from '@/platform/http/error-statuses';
+import { ConfirmAppointmentCommand } from '@/contexts/scheduling/application/commands/confirm-appointment/confirm-appointment.command';
+import { AppointmentAlreadyConfirmedError } from '@/contexts/scheduling/domain/errors/appointment-already-confirmed.error';
+import { AppointmentEndedError } from '@/contexts/scheduling/domain/errors/appointment-ended.error';
+import { AppointmentNotFoundError } from '@/contexts/scheduling/domain/errors/appointment-not-found.error';
+import { confirmAppointmentRoute } from '@/contexts/scheduling/presentation/http/confirm-appointment.route';
 
 // The one table of the platform: a code it does not name answers 422.
 const errorMapper = createErrorMapper(errorStatuses);

@@ -14,6 +14,7 @@ import { mapEntries } from './values/map-entries.js';
 import { posix } from './values/posix.js';
 import { strings } from './values/strings.js';
 import { text } from './values/text.js';
+import { UNWRITTEN_IMPORT_EXTENSION } from './unwritten-import-extension.js';
 
 /**
  * Tolerant on purpose: a wrong classification or an unknown upstream is reported by
@@ -33,6 +34,7 @@ export function parseConfig(raw: unknown): Config {
     sharedKernelDir: posix(text(raw['sharedKernelDir'], `${sourceRoot}/shared-kernel`)),
     platformDir: posix(text(raw['platformDir'], `${sourceRoot}/platform`)),
     importAlias: text(raw['importAlias'], DEFAULT_IMPORT_ALIAS),
+    importExtension: text(raw['importExtension'], UNWRITTEN_IMPORT_EXTENSION),
     stack,
     contexts: mapEntries(raw['contexts'], parseContext),
     rules: mapEntries(raw['rules'], String),

@@ -131,7 +131,7 @@ declarations into bindings is the job of `@ddd-ts-kit/di` (`contextModule`,
 ```ts
 // contexts/ordering/domain/repositories/order.repository.ts
 import { Repository } from '@ddd-ts-kit/kernel';
-import type { Order } from '@/contexts/ordering/domain/aggregates/order.aggregate.js';
+import type { Order } from '@/contexts/ordering/domain/aggregates/order.aggregate';
 
 export abstract class OrderRepository extends Repository<Order> {
   abstract findOpenOf(customerId: string): Promise<readonly Order[]>;
@@ -142,8 +142,8 @@ export abstract class OrderRepository extends Repository<Order> {
 // contexts/ordering/application/commands/place-order/place-order.handler.ts
 import { Clock } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
-import { OrderRepository } from '@/contexts/ordering/domain/repositories/order.repository.js';
-import { PlaceOrder } from '@/contexts/ordering/application/commands/place-order/place-order.command.js';
+import { OrderRepository } from '@/contexts/ordering/domain/repositories/order.repository';
+import { PlaceOrder } from '@/contexts/ordering/application/commands/place-order/place-order.command';
 
 @CommandHandler(PlaceOrder, [OrderRepository, Clock])
 export class PlaceOrderHandler implements CommandHandler<PlaceOrder> {
@@ -160,8 +160,8 @@ export class PlaceOrderHandler implements CommandHandler<PlaceOrder> {
 // contexts/ordering/infrastructure/persistence/knex-order.repository.ts
 import { Clock, ExecutionScope } from '@ddd-ts-kit/kernel';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
-import { Database } from '@/contexts/ordering/application/ports/database.port.js';
-import { OrderRepository } from '@/contexts/ordering/domain/repositories/order.repository.js';
+import { Database } from '@/contexts/ordering/application/ports/database.port';
+import { OrderRepository } from '@/contexts/ordering/domain/repositories/order.repository';
 
 @Repository(OrderRepository, [Database, ExecutionScope, Clock])
 export class KnexOrderRepository implements OrderRepository {

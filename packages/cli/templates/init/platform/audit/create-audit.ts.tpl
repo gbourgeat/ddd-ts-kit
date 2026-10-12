@@ -28,16 +28,16 @@ import { DrizzleAuditTrail } from '@ddd-ts-kit/audit/drizzle';
 import type { OnDecision } from '@ddd-ts-kit/auth';
 import type { EventSubscription } from '@ddd-ts-kit/events';
 import type { BusMiddleware } from '@ddd-ts-kit/kernel';
-import type { Persistence } from '{{alias.platform}}/database/persistence.js';
+import type { Persistence } from '{{alias.platform}}/database/persistence{{alias.ext}}';
 {{#if audit.sql}}
-import { AUDIT_SCHEMA } from '{{alias.platform}}/database/schema.js';
+import { AUDIT_SCHEMA } from '{{alias.platform}}/database/schema{{alias.ext}}';
 {{/if}}
 {{#if audit.route}}
-import { auditPermissions } from '{{alias.platform}}/audit/audit.permissions.js';
+import { auditPermissions } from '{{alias.platform}}/audit/audit.permissions{{alias.ext}}';
 {{/if}}
-import { auditedEvents } from '{{alias.platform}}/audit/audited-events.js';
+import { auditedEvents } from '{{alias.platform}}/audit/audited-events{{alias.ext}}';
 {{#if audit.route}}
-import { SearchAuditEntriesQuery } from '{{alias.platform}}/audit/search-audit-entries.query.js';
+import { SearchAuditEntriesQuery } from '{{alias.platform}}/audit/search-audit-entries.query{{alias.ext}}';
 {{/if}}
 
 /** The name the audit trail consumes integration events under: its idempotency scope, and its queues behind a broker. */

@@ -2,10 +2,10 @@ import { actorOf } from '@ddd-ts-kit/auth';
 import { defineRoute, type Route } from '@ddd-ts-kit/http';
 import type { Actor, CommandBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
-import { RescheduleAppointmentCommand } from '@/contexts/scheduling/application/commands/reschedule-appointment/reschedule-appointment.command.js';
-import { RescheduleAppointmentParams } from '@/contexts/scheduling/presentation/http/reschedule-appointment-params.dto.js';
-import { RescheduleAppointmentBody } from '@/contexts/scheduling/presentation/http/reschedule-appointment-body.dto.js';
-import { RescheduleAppointmentAccepted } from '@/contexts/scheduling/presentation/http/reschedule-appointment-accepted.dto.js';
+import { RescheduleAppointmentCommand } from '@/contexts/scheduling/application/commands/reschedule-appointment/reschedule-appointment.command';
+import { RescheduleAppointmentParams } from '@/contexts/scheduling/presentation/http/reschedule-appointment-params.dto';
+import { RescheduleAppointmentBody } from '@/contexts/scheduling/presentation/http/reschedule-appointment-body.dto';
+import { RescheduleAppointmentAccepted } from '@/contexts/scheduling/presentation/http/reschedule-appointment-accepted.dto';
 
 const params = classSchema(RescheduleAppointmentParams);
 const body = classSchema(RescheduleAppointmentBody);

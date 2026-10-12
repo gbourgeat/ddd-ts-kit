@@ -3,15 +3,15 @@ import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { anActor } from '@ddd-ts-kit/auth/testing';
 import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
-import * as identityDeclarations from '@/contexts/identity/identity.declarations.js';
-import { platformTestModule } from '@/platform/platform-test.module.js';
-import { identityPermissions } from '@/contexts/identity/application/authorization/identity.permissions.js';
-import { RegisterPersonCommand } from '@/contexts/identity/application/commands/register-person/register-person.command.js';
-import { IdentityRelationships } from '@/contexts/identity/application/ports/identity-relationships.port.js';
-import { PersonRepository } from '@/contexts/identity/domain/repositories/person.repository.js';
-import { aPerson } from '@/contexts/identity/test/builders/person.builder.js';
-import { FakeIdentityRelationships } from '@/contexts/identity/test/fakes/identity-relationships.fake.js';
-import { FakePersonRepository } from '@/contexts/identity/test/fakes/person.repository.fake.js';
+import * as identityDeclarations from '@/contexts/identity/identity.declarations';
+import { platformTestModule } from '@/platform/platform-test.module';
+import { identityPermissions } from '@/contexts/identity/application/authorization/identity.permissions';
+import { RegisterPersonCommand } from '@/contexts/identity/application/commands/register-person/register-person.command';
+import { IdentityRelationships } from '@/contexts/identity/application/ports/identity-relationships.port';
+import { PersonRepository } from '@/contexts/identity/domain/repositories/person.repository';
+import { aPerson } from '@/contexts/identity/test/builders/person.builder';
+import { FakeIdentityRelationships } from '@/contexts/identity/test/fakes/identity-relationships.fake';
+import { FakePersonRepository } from '@/contexts/identity/test/fakes/person.repository.fake';
 
 const holders = authorizationModule({
   authorizer: new RoleBasedAuthorizer({ roles: { holder: [identityPermissions['person.register']] } }),

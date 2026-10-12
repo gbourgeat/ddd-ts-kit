@@ -42,7 +42,7 @@ describe('init --errors', () => {
   ])('goes with every other choice of the stack (%j)', (flags) => {
     const root = reported(...flags);
 
-    expect(read(root, 'src/main.ts')).toContain("import { errors } from '@/platform/errors.js';");
+    expect(read(root, 'src/main.ts')).toContain("import { errors } from '@/platform/errors';");
     expect(platform(root, 'errors.ts')).toContain('initSentry(');
 
     expect(platform(root, 'config/load-config.ts')).toContain(
@@ -68,8 +68,8 @@ describe('the composition root of a project that reports to Sentry or GlitchTip'
     const root = reported();
     const [first, , second] = read(root, 'src/main.ts').split('\n').slice(1);
 
-    expect(first).toBe("import { tracing } from '@/platform/tracing.js';");
-    expect(second).toBe("import { errors } from '@/platform/errors.js';");
+    expect(first).toBe("import { tracing } from '@/platform/tracing';");
+    expect(second).toBe("import { errors } from '@/platform/errors';");
 
     expect(platform(root, 'errors.ts')).toContain(
       "import { reportProcessFailures } from '@ddd-ts-kit/kernel';\nimport { initSentry } from '@ddd-ts-kit/sentry';",
@@ -307,9 +307,9 @@ describe('the other entry points of a project that reports', () => {
     const worker = read(root, 'src/apps/worker/main.ts');
 
     expect(worker.split('\n').slice(1, 4)).toEqual([
-      "import { tracing } from '@/platform/tracing.js';",
+      "import { tracing } from '@/platform/tracing';",
       '// Imported second on purpose: a failure while the rest of the application loads is already reported.',
-      "import { errors } from '@/platform/errors.js';",
+      "import { errors } from '@/platform/errors';",
     ]);
 
     expect(worker).toContain('  events: createEventProvider(config, errors),\n  errors,\n');
@@ -325,7 +325,7 @@ describe('the other entry points of a project that reports', () => {
 
       const service = read(root, 'src/apps/billing/main.ts');
 
-      expect(service.split('\n')[3]).toBe("import { errors } from '@/platform/errors.js';");
+      expect(service.split('\n')[3]).toBe("import { errors } from '@/platform/errors';");
       expect(service).toContain('    events: inProcessEvents(),\n    errors,\n');
       expect(service).toContain('  logger: application.logger,\n  errors,\n});');
     },

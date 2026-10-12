@@ -7,11 +7,11 @@ import {
   type ExecutionContext,
 } from '@ddd-ts-kit/kernel';
 import { repositoryContract } from '@ddd-ts-kit/testing/contracts';
-import type { Notification } from '@/contexts/notification/domain/aggregates/notification.aggregate.js';
-import { KnexNotificationRepository } from '@/contexts/notification/infrastructure/persistence/knex-notification.repository.js';
-import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database.js';
-import { aNotification } from '@/contexts/notification/test/builders/notification.builder.js';
-import { FakeNotificationRepository } from '@/contexts/notification/test/fakes/notification.repository.fake.js';
+import type { Notification } from '@/contexts/notification/domain/aggregates/notification.aggregate';
+import { KnexNotificationRepository } from '@/contexts/notification/infrastructure/persistence/knex-notification.repository';
+import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database';
+import { aNotification } from '@/contexts/notification/test/builders/notification.builder';
+import { FakeNotificationRepository } from '@/contexts/notification/test/fakes/notification.repository.fake';
 
 const runner = { describe, it, expect, beforeEach, afterEach };
 

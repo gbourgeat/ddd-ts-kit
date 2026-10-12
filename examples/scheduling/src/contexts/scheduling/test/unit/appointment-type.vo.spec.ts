@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { unwrap } from '@ddd-ts-kit/kernel';
-import { InvalidAppointmentTypeError } from '@/contexts/scheduling/domain/errors/invalid-appointment-type.error.js';
-import { AppointmentType } from '@/contexts/scheduling/domain/value-objects/appointment-type.vo.js';
+import { InvalidAppointmentTypeError } from '@/contexts/scheduling/domain/errors/invalid-appointment-type.error';
+import { AppointmentType } from '@/contexts/scheduling/domain/value-objects/appointment-type.vo';
 
 const consultation = {
   id: 'type-1',

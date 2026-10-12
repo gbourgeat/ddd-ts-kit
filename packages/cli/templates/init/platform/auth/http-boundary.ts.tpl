@@ -8,7 +8,7 @@ import { reportHttpErrors, type ErrorContext, type ErrorMapper, type RouteAround
 import type { Clock, ErrorReporter, ExecutionScope, Logger, Session } from '@ddd-ts-kit/kernel';
 {{/if}}
 import { tracedRoutes } from '@ddd-ts-kit/tracing';
-import { principalOf } from '{{alias.platform}}/auth/principal-of.js';
+import { principalOf } from '{{alias.platform}}/auth/principal-of{{alias.ext}}';
 
 /** What the HTTP adapter needs at the edge of the application: spread into its mount options, for every route. */
 export interface HttpBoundary {

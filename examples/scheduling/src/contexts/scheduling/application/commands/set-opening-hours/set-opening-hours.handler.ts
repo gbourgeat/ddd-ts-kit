@@ -1,10 +1,10 @@
 import { Clock, unwrap } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
-import { UnknownCalendarError } from '@/contexts/scheduling/domain/errors/unknown-calendar.error.js';
-import { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository.js';
-import { OpeningHours, type Weekday } from '@/contexts/scheduling/domain/value-objects/opening-hours.vo.js';
-import { Range } from '@/contexts/scheduling/domain/value-objects/range.vo.js';
-import { SetOpeningHoursCommand } from '@/contexts/scheduling/application/commands/set-opening-hours/set-opening-hours.command.js';
+import { UnknownCalendarError } from '@/contexts/scheduling/domain/errors/unknown-calendar.error';
+import { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository';
+import { OpeningHours, type Weekday } from '@/contexts/scheduling/domain/value-objects/opening-hours.vo';
+import { Range } from '@/contexts/scheduling/domain/value-objects/range.vo';
+import { SetOpeningHoursCommand } from '@/contexts/scheduling/application/commands/set-opening-hours/set-opening-hours.command';
 
 @CommandHandler(SetOpeningHoursCommand, [CalendarRepository, Clock])
 export class SetOpeningHoursHandler implements CommandHandler<SetOpeningHoursCommand> {

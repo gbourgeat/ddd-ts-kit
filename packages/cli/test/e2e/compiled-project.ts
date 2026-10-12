@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { aliasRoots } from '../../src/alias/index.js';
+import { aliasRoots, specifierSuffix } from '../../src/alias/index.js';
 import { readConfig } from '../../src/config/index.js';
 import { read, REPO_ROOT, scaffoldEverything, type StackFlags, tempDir, write } from '../helpers.js';
 import { installAsPublished } from './install-as-published.js';
@@ -39,7 +39,6 @@ export interface Rewritten {
  */
 export function compiledOnly(stack: StackFlags, more: readonly string[] = []): string {
   const root = tempDir('alias');
-  const alias = more.at(-1) ?? '@/';
   const framework = stack.tests === 'jest' ? '@jest/globals' : 'vitest';
 
   scaffoldEverything(root, stack, more);
@@ -49,7 +48,7 @@ export function compiledOnly(stack: StackFlags, more: readonly string[] = []): s
   write(
     root,
     PROBE_SPEC,
-    `import { expect, it } from '${framework}';\nimport { location } from '${alias}alias-probe.js';\n\nit('loads the source the alias names, not its compiled copy', () => {\n  expect(location).toMatch(/\\/src\\/alias-probe\\.ts$/);\n});\n`,
+    `import { expect, it } from '${framework}';\nimport { location } from '${spelled(root, '@/alias-probe')}';\n\nit('loads the source the alias names, not its compiled copy', () => {\n  expect(location).toMatch(/\\/src\\/alias-probe\\.ts$/);\n});\n`,
   );
 
   if (stack.orm === 'prisma') {
@@ -60,6 +59,16 @@ export function compiledOnly(stack: StackFlags, more: readonly string[] = []): s
   runIn(root, { command: process.execPath, args: [NATIVE_COMPILER, '-p', 'tsconfig.build.json'] });
 
   return root;
+}
+
+/**
+ * A specifier as the project writes it: given under `@/` and without an extension, it takes the
+ * alias of the source root and the ending the config asks for (nothing, or `.js`).
+ */
+export function spelled(root: string, specifier: string): string {
+  const { importAlias, importExtension } = readConfig(root).config;
+
+  return `${specifier.replace(/^@\//, importAlias)}${specifierSuffix(importExtension)}`;
 }
 
 /** The second half of the `build` script: the aliases of the compiled output become relative paths. */

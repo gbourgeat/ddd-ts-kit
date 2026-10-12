@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, onTestFailed } from 'vitest';
 import { expectProblem, expectStatus } from '@ddd-ts-kit/testing/e2e';
 import { reportSeedOnFailure } from '@ddd-ts-kit/testing/faker';
-import { startApplication, type RunningApplication } from '$test/e2e/support/start-application.js';
+import { startApplication, type RunningApplication } from '$test/e2e/support/start-application';
 
 describe('Search notifications, end to end', () => {
   let application: RunningApplication;

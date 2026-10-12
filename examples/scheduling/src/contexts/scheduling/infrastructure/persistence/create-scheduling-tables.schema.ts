@@ -1,7 +1,7 @@
 // ddd-ts-kit:imports
 import type { Knex } from 'knex';
-import { SCHEDULING_SCHEMA } from '@/contexts/scheduling/infrastructure/persistence/scheduling.schema.js';
-import { APPOINTMENT_SLOT_HELD_ONCE } from '@/contexts/scheduling/infrastructure/persistence/appointment-row.schema.js';
+import { SCHEDULING_SCHEMA } from '@/contexts/scheduling/infrastructure/persistence/scheduling.schema';
+import { APPOINTMENT_SLOT_HELD_ONCE } from '@/contexts/scheduling/infrastructure/persistence/appointment-row.schema';
 import { auditColumns, readModelColumns } from '@ddd-ts-kit/knex';
 // /ddd-ts-kit:imports
 

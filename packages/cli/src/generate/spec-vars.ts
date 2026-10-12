@@ -1,4 +1,4 @@
-import { contextAlias } from '../alias/index.js';
+import { specifierOf } from '../alias/index.js';
 import type { RenderContext } from '../templating/index.js';
 import { assembledContext } from './assembled-context.js';
 import { isDeclared } from './is-declared.js';
@@ -36,15 +36,15 @@ export function specVars(scope: Scope, access: RenderContext): RenderContext {
 
 function contextImports(scope: Scope): string {
   const { config, context } = scope;
-  const alias = contextAlias(config, context.kebab);
+  const inContext = (file: string): string => specifierOf(config, `${config.contextsDir}/${context.kebab}/${file}`);
 
   if (!isDeclared(config)) {
-    return `import { ${context.camel}Module } from '${alias}/${context.kebab}.module.js';`;
+    return `import { ${context.camel}Module } from '${inContext(`${context.kebab}.module.ts`)}';`;
   }
 
   if (config.stack.assembly === 'discovery') {
     return "import { discoverContext } from '@ddd-ts-kit/di/discovery';";
   }
 
-  return `import * as ${context.camel}Declarations from '${alias}/${context.kebab}.declarations.js';`;
+  return `import * as ${context.camel}Declarations from '${inContext(`${context.kebab}.declarations.ts`)}';`;
 }

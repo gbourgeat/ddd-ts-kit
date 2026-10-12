@@ -1,12 +1,12 @@
 import { Access } from '@ddd-ts-kit/auth';
 import { Criteria, hydrate, scoped } from '@ddd-ts-kit/kernel';
 import { QueryHandler } from '@ddd-ts-kit/kernel/declarations';
-import { AppointmentNotFoundError } from '@/contexts/scheduling/domain/errors/appointment-not-found.error.js';
-import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions.js';
-import { Agenda, type AgendaEntry } from '@/contexts/scheduling/application/ports/agenda.port.js';
-import { PersonDirectoryGateway } from '@/contexts/scheduling/application/ports/person-directory-gateway.port.js';
-import { GetAppointmentQuery } from '@/contexts/scheduling/application/queries/get-appointment/get-appointment.query.js';
-import type { GetAppointmentResult } from '@/contexts/scheduling/application/queries/get-appointment/get-appointment.result.js';
+import { AppointmentNotFoundError } from '@/contexts/scheduling/domain/errors/appointment-not-found.error';
+import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
+import { Agenda, type AgendaEntry } from '@/contexts/scheduling/application/ports/agenda.port';
+import { PersonDirectoryGateway } from '@/contexts/scheduling/application/ports/person-directory-gateway.port';
+import { GetAppointmentQuery } from '@/contexts/scheduling/application/queries/get-appointment/get-appointment.query';
+import type { GetAppointmentResult } from '@/contexts/scheduling/application/queries/get-appointment/get-appointment.result';
 
 /** How long the name of the patient is waited for before the appointment is shown without it. */
 const NAME_TIMEOUT_MS = 300;

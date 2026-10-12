@@ -11,14 +11,14 @@ import { anActor } from '@ddd-ts-kit/auth/testing';
 {{spec.diPlain}}
 {{/unless}}
 {{spec.contextImports}}
-import { platformTestModule } from '{{alias.platform}}/platform-test.module.js';
+import { platformTestModule } from '{{alias.platform}}/platform-test.module{{alias.ext}}';
 {{#if access.protected}}
-import { {{context.camel}}Permissions } from '{{alias.context}}/application/authorization/{{context.kebab}}.permissions.js';
+import { {{context.camel}}Permissions } from '{{alias.context}}/application/authorization/{{context.kebab}}.permissions{{alias.ext}}';
 {{/if}}
-import { {{name.pascal}}Command } from '{{alias.context}}/application/commands/{{name.kebab}}/{{name.kebab}}.command.js';
+import { {{name.pascal}}Command } from '{{alias.context}}/application/commands/{{name.kebab}}/{{name.kebab}}.command{{alias.ext}}';
 {{#if command.hasAggregate}}
-import { {{aggregate.pascal}}Repository } from '{{alias.context}}/domain/repositories/{{aggregate.kebab}}.repository.js';
-import { Fake{{aggregate.pascal}}Repository } from '{{alias.context}}/test/fakes/{{aggregate.kebab}}.repository.fake.js';
+import { {{aggregate.pascal}}Repository } from '{{alias.context}}/domain/repositories/{{aggregate.kebab}}.repository{{alias.ext}}';
+import { Fake{{aggregate.pascal}}Repository } from '{{alias.context}}/test/fakes/{{aggregate.kebab}}.repository.fake{{alias.ext}}';
 {{/if}}
 {{#if access.protected}}
 

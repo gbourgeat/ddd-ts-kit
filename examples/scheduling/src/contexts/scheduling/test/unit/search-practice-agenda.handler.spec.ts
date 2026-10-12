@@ -4,12 +4,12 @@ import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { anActor } from '@ddd-ts-kit/auth/testing';
 import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
 import { Criteria, offsetPage } from '@ddd-ts-kit/kernel';
-import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations.js';
-import { platformTestModule } from '@/platform/platform-test.module.js';
-import { Agenda, type AgendaEntry } from '@/contexts/scheduling/application/ports/agenda.port.js';
-import { SearchPracticeAgendaQuery } from '@/contexts/scheduling/application/queries/search-practice-agenda/search-practice-agenda.query.js';
-import { anAgendaEntry } from '@/contexts/scheduling/test/builders/agenda-entry.builder.js';
-import { FakeAgenda } from '@/contexts/scheduling/test/fakes/agenda.fake.js';
+import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations';
+import { platformTestModule } from '@/platform/platform-test.module';
+import { Agenda, type AgendaEntry } from '@/contexts/scheduling/application/ports/agenda.port';
+import { SearchPracticeAgendaQuery } from '@/contexts/scheduling/application/queries/search-practice-agenda/search-practice-agenda.query';
+import { anAgendaEntry } from '@/contexts/scheduling/test/builders/agenda-entry.builder';
+import { FakeAgenda } from '@/contexts/scheduling/test/fakes/agenda.fake';
 
 // As the relationships would answer: a member reads the agenda of their practice, narrowed to the calendars they run.
 const MEMBERS: Readonly<Record<string, string>> = {

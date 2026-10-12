@@ -15,10 +15,10 @@ import {
   type AppointmentExpiredV1,
   type AppointmentMarkedNoShowV1,
   type AppointmentRescheduledV1,
-} from '@/contexts/scheduling/published-language/index.js';
-import { storableStamp } from '@/shared-kernel/storable-stamp.js';
-import type { OutcomeState } from '@/contexts/analytics/domain/services/occupancy-measure.service.js';
-import { OutcomeRegister } from '@/contexts/analytics/application/ports/outcome-register.port.js';
+} from '@/contexts/scheduling/published-language/index';
+import { storableStamp } from '@/shared-kernel/storable-stamp';
+import type { OutcomeState } from '@/contexts/analytics/domain/services/occupancy-measure.service';
+import { OutcomeRegister } from '@/contexts/analytics/application/ports/outcome-register.port';
 
 /** What every fact scheduling announces of an appointment says of it. */
 type Announced = {

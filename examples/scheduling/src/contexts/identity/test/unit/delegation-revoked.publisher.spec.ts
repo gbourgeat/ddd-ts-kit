@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { InMemoryEventBus, SequentialIdGenerator } from '@ddd-ts-kit/kernel';
-import { DelegationRevokedPublisher } from '@/contexts/identity/application/integration/publishers/delegation-revoked.publisher.js';
-import { DelegationRevoked } from '@/contexts/identity/domain/events/delegation-revoked.event.js';
+import { DelegationRevokedPublisher } from '@/contexts/identity/application/integration/publishers/delegation-revoked.publisher';
+import { DelegationRevoked } from '@/contexts/identity/domain/events/delegation-revoked.event';
 
 describe('Publishing "delegation revoked" to other contexts', () => {
   it('publishes, with every field of the public payload, version 1 of identity.delegation.revoked', async () => {

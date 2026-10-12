@@ -1,6 +1,6 @@
 import { AggregateRoot } from '@ddd-ts-kit/kernel';
-import { ReminderNotDueError } from '@/contexts/notification/domain/errors/reminder-not-due.error.js';
-import { ReminderSent } from '@/contexts/notification/domain/events/reminder-sent.event.js';
+import { ReminderNotDueError } from '@/contexts/notification/domain/errors/reminder-not-due.error';
+import { ReminderSent } from '@/contexts/notification/domain/events/reminder-sent.event';
 
 const NOTICE_MS = 24 * 60 * 60 * 1000;
 

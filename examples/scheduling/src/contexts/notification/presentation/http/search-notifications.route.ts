@@ -2,9 +2,9 @@ import { actorOf } from '@ddd-ts-kit/auth';
 import { defineRoute, pageQuerySchema, pageResponse, pageSchemaOf, type Route } from '@ddd-ts-kit/http';
 import type { QueryBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
-import { SearchNotificationsQuery } from '@/contexts/notification/application/queries/search-notifications/search-notifications.query.js';
-import type { SearchNotificationsItem } from '@/contexts/notification/application/queries/search-notifications/search-notifications.result.js';
-import { SearchNotificationsLine } from '@/contexts/notification/presentation/http/search-notifications-line.dto.js';
+import { SearchNotificationsQuery } from '@/contexts/notification/application/queries/search-notifications/search-notifications.query';
+import type { SearchNotificationsItem } from '@/contexts/notification/application/queries/search-notifications/search-notifications.result';
+import { SearchNotificationsLine } from '@/contexts/notification/presentation/http/search-notifications-line.dto';
 
 const query = pageQuerySchema({ sortable: ['sentAt'], maxSize: 100 });
 

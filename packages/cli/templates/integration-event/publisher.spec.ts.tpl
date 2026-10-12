@@ -1,7 +1,7 @@
 import { describe, expect, it } from '{{tests.module}}';
 import { InMemoryEventBus, SequentialIdGenerator } from '@ddd-ts-kit/kernel';
-import { {{publisher.pascal}}Publisher } from '{{alias.context}}/application/integration/publishers/{{publisher.kebab}}.publisher.js';
-import { {{event.pascal}} } from '{{alias.context}}/domain/events/{{event.kebab}}.event.js';
+import { {{publisher.pascal}}Publisher } from '{{alias.context}}/application/integration/publishers/{{publisher.kebab}}.publisher{{alias.ext}}';
+import { {{event.pascal}} } from '{{alias.context}}/domain/events/{{event.kebab}}.event{{alias.ext}}';
 
 describe('Publishing "{{event.words}}" to other contexts', () => {
   it('publishes version {{event.version}} of {{event.name}}', async () => {

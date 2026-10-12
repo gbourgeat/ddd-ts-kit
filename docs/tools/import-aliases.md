@@ -1,15 +1,16 @@
 # Import aliases: tsconfig `paths`, rewritten at build
 
 **Summary.** A project built with the kit imports its own files by an alias, never by a
-relative path: `@/contexts/billing/domain/aggregates/invoice.aggregate.js` instead of
-`../../../domain/aggregates/invoice.aggregate.js`. The alias of the source root is `@/`. It is
-declared once, under `paths` in `tsconfig.json`, which the compiler, the dev runner, the test
-runner, knip and dependency-cruiser read. Node reads no `tsconfig.json`, so the build has a
-second step: `ddd-ts-kit build-aliases` rewrites every alias of the compiled output into a
-relative path, and production runs with plain `node dist/src/main.js`, without a loader, a flag
-or a runtime dependency. Two rules hold it: `imports/alias-only` (every import uses the alias,
-ESLint fixes it) and `imports/alias-declared` (the declaration, everything that has to follow
-it, and the build step agree).
+relative path, and without an extension: `@/contexts/billing/domain/aggregates/invoice.aggregate`
+instead of `../../../domain/aggregates/invoice.aggregate.js`. The alias of the source root is
+`@/`. It is declared once, under `paths` in `tsconfig.json`, which the compiler, the dev runner,
+the test runner, knip and dependency-cruiser read. Node reads no `tsconfig.json` and completes
+no extension, so the build has a second step: `ddd-ts-kit build-aliases` rewrites every alias of
+the compiled output into a relative path ending in `.js`, and production runs with plain
+`node dist/src/main.js`, without a loader, a flag or a runtime dependency. Three rules hold it:
+`imports/alias-only` (every import uses the alias, ESLint fixes it), `imports/extension` (every
+import ends as the config says, ESLint fixes it) and `imports/alias-declared` (the declarations,
+everything that has to follow them, and the build step agree).
 
 ## What is being decided
 
@@ -40,6 +41,44 @@ it for the compiler and removes it before Node sees it.
 | A stale `dist/` loaded by a dev tool | impossible: `paths` only names sources | possible when a condition is forgotten | impossible |
 
 The kit takes the first column. The rewrite is a command of the kit, not a third-party package.
+
+## The extension: written nowhere, or `.js`
+
+`importExtension` in `ddd-ts-kit.config.json` says how an import of a file of the project ends.
+`init` writes `none`; `--import-extension js` asks for the other spelling, which is also what a
+config without the key means, so a project generated before the key existed keeps working
+untouched.
+
+| | `none` (default of a new project) | `js` |
+|---|---|---|
+| An import | `'@/contexts/billing/domain/aggregates/invoice.aggregate'` | `'@/contexts/billing/domain/aggregates/invoice.aggregate.js'` |
+| `tsconfig.json` | `"module": "ESNext"`, `"moduleResolution": "Bundler"`, `"customConditions": ["node"]` | `"module": "NodeNext"`, `"moduleResolution": "NodeNext"` |
+| What the compiler accepts | both spellings, and a directory that holds an `index.ts` | `.js` only (`TS2835` otherwise) |
+| Who refuses the other spelling | `imports/extension` (checker and ESLint), then `build-aliases` | the compiler, `imports/extension`, then `build-aliases` |
+| A file that does not exist | `TS2307`, by both compilers | `TS2307`, by both compilers |
+| What the compiler emits | ECMAScript modules, the specifier as written | ECMAScript modules, the specifier as written |
+| What `build-aliases` writes | `'../../../domain/aggregates/invoice.aggregate.js'` | the same |
+
+**Why Node needs the extension.** The loader of ECMAScript modules resolves a relative
+specifier as a URL: `./invoice.aggregate` is the file of that exact name, and nothing tries
+`.js` or an `index.js` behind it (`ERR_MODULE_NOT_FOUND`, `ERR_UNSUPPORTED_DIR_IMPORT`). Only
+the sources can leave the extension out, because every tool that reads them resolves through
+`paths`, which completes it. The compiler never rewrites a specifier, so the step that already
+turns an alias into a relative path is the one that writes the extension. Since every import of
+the project is an alias (`imports/alias-only` refuses a relative one), that step sees them all.
+
+**An import names a file, never a directory.** Under `none` the compiler would resolve
+`@/contexts/billing/published-language` to its `index.ts`. The kit does not allow it: the import
+is written `@/contexts/billing/published-language/index`, in both spellings. One specifier then
+names one file, a file `x.ts` next to a directory `x/` is never ambiguous, and the build has
+nothing to guess. `ddd-ts-kit check` reports a directory import (`imports/extension`: it is the
+one case that needs the disk, so ESLint does not see it) and `build-aliases` refuses it.
+
+**A dot is not an extension.** `invoice.aggregate`, `issue-invoice.command` and `main` are all
+written as they are. Only `.js`, `.mjs`, `.cjs`, `.ts`, `.mts` and `.cts` are read as an
+extension, and only on a specifier that starts with an alias of the project: a package subpath
+that ends like a file name (`zod/v4/core.js`, `@scope/package/file.js`) is never judged and
+never rewritten.
 
 ## The declaration
 
@@ -88,18 +127,18 @@ forms: `@/`, or `$`, one name in lower case (letters, digits, hyphens) and `/`. 
 
 | Tool | What it reads | What the kit writes for it |
 |---|---|---|
-| TypeScript 6 and 7 (type check, build, the editor) | `paths` of `tsconfig.json` | the entries above |
-| `ddd-ts-kit build-aliases` (second step of `npm run build`) | `importAlias` and `sourceRoot` of the config, `rootDir` and `outDir` of `tsconfig.build.json` | the `build` script chains it after the compiler |
+| TypeScript 6 and 7 (type check, build, the editor) | `paths`, `module` and `moduleResolution` of `tsconfig.json` | the entries above, and the resolution `importExtension` asks for |
+| `ddd-ts-kit build-aliases` (second step of `npm run build`) | `importAlias`, `importExtension` and `sourceRoot` of the config, `rootDir` and `outDir` of `tsconfig.build.json` | the `build` script chains it after the compiler |
 | `node` (production, `npm start`, the Docker image) | nothing: the output holds relative paths only | nothing |
 | tsx (`npm run dev`) | `paths`, by itself, also for a file loaded with `--import` | nothing: the script has no flag for it |
 | vitest | `paths`, once told to | `resolve: { tsconfigPaths: true }` in its configs (native to vite 8, no plugin) |
-| jest | nothing of tsconfig | `moduleNameMapper`, the same entries: `'^@/(.*)\\.js$': '<rootDir>/src/$1.ts'` |
+| jest | nothing of tsconfig | `moduleNameMapper`, the same entries, each pattern ending as the imports do: `'^@/(.*)$': '<rootDir>/src/$1.ts'` under `none`, `'^@/(.*)\\.js$': '<rootDir>/src/$1.ts'` under `js`. The target is always the TypeScript source |
 | dependency-cruiser | `paths`, once told to | `tsConfig: { fileName: 'tsconfig.json' }` in the generated `.dependency-cruiser.cjs` |
 | knip | `paths`, by itself | nothing |
 | drizzle-kit (`npm run db:generate`) | `paths`, by itself, when it loads the TypeScript schema | nothing: the script is plain `drizzle-kit generate` |
 | knex and TypeORM CLIs | the compiled output (`npm run build` first) | a knex migration is a JavaScript file at the project root: it names the compiled schema by its relative path under `dist/` |
 | Prisma CLI | `prisma.config.ts`, which imports no file of the project | nothing |
-| ESLint with `@ddd-ts-kit/eslint-plugin`, `ddd-ts-kit check` | `importAlias` and `sourceRoot` of the config | they classify an import by its path and never load a file |
+| ESLint with `@ddd-ts-kit/eslint-plugin`, `ddd-ts-kit check` | `importAlias`, `importExtension` and `sourceRoot` of the config | they classify an import by its path and never load a file: with or without its extension, a specifier names the same source, and the boundary rules judge it the same |
 | Biome | nothing | it formats; a fixed import that passes the line width is wrapped by `npm run format` |
 
 ## The build step
@@ -111,13 +150,17 @@ npm run build   =   tsc -p tsconfig.build.json && ddd-ts-kit build-aliases
 `ddd-ts-kit build-aliases [--project <tsconfig>]` (default `tsconfig.build.json`) reads the
 output directory of that tsconfig and, in every `.js`, `.mjs`, `.cjs`, `.d.ts`, `.d.mts` and
 `.d.cts` under it, turns each alias specifier into the relative path of the emitted file it
-names, with its `.js` extension:
+names, always with its `.js` extension, whichever spelling the sources use:
 
 ```js
 // dist/src/contexts/billing/application/commands/issue-invoice/issue-invoice.handler.js
-import { Invoice } from '@/contexts/billing/domain/aggregates/invoice.aggregate.js'; // emitted by the compiler
+import { Invoice } from '@/contexts/billing/domain/aggregates/invoice.aggregate'; // emitted by the compiler
 import { Invoice } from '../../../domain/aggregates/invoice.aggregate.js'; // after the rewrite
 ```
+
+The file a specifier names is computed, not searched: under `none`, `@/x` is `x.js` of the
+output; under `js`, `@/x.js` is. Nothing else is tried: no `index.js` behind a directory, no
+extension added to or removed from a specifier written the other way.
 
 What it rewrites: the specifier of `import ... from`, `export ... from`, a bare `import '...'`,
 `import('...')` with a string literal (attributes included), `require('...')`,
@@ -134,12 +177,16 @@ then looked up on disk.
 
 It fails, exits 2 and writes nothing when:
 
-- an alias names no emitted file (`"@/x.js" names no file the build emitted`): a typo the
+- an alias names no emitted file (`"@/x" names no file the build emitted`): a typo the
   compiler already reported, or a module that only has a declaration;
+- an alias names a directory (`"@/x" names a directory: an alias names one file, write
+  "@/x/index"`);
+- an alias is written in the spelling the config does not ask for (`"@/x.js" has an extension
+  although "importExtension" is "none": write "@/x"`, and the reverse under `js`);
 - `import()` or `require()` is given an alias completed at run time
-  (`` import(`@/handlers/${name}.js`) ``, `import('@/handlers/' + name)`): no tool can know the
+  (`` import(`@/handlers/${name}`) ``, `import('@/handlers/' + name)`): no tool can know the
   file, and Node knows no alias. Build the path from `import.meta.url` instead, as the
-  generated `scripts/events.ts` does;
+  generated `scripts/events.ts` does (that path names a compiled file and keeps its `.js`);
 - the tsconfig names no output directory that exists.
 
 It is idempotent: a second run finds nothing to rewrite. A rewrite never adds or removes a
@@ -151,30 +198,41 @@ import) moves by the difference of length, which the map does not record.
 
 On Node 24.21.0, TypeScript 6.0.3 and the native TypeScript 7.0.2, tsx 4.23.15, vitest 5.0.3
 (vite 8.3.4), knip 6.41.0, dependency-cruiser 18.5.0; by hand, outside the workspace, jest
-30.5.2 and drizzle-kit 0.31.11. The end-to-end suite replays it on every stack, and CI runs
-its run-time part on Node 22 as well (`npm run ci:test:alias`).
+30.5.2, drizzle-kit 0.31.11 and TypeORM 1.1.2. The end-to-end suite replays it on every stack
+in the default spelling, without an extension, and on three stacks written with `.js`; the
+proofs about one tool are replayed in both spellings. CI runs the run-time part on Node 22 as
+well (`npm run ci:test:alias`).
 
 - **Compiled and not rewritten, the output does not run**: plain `node` stops at the first
   alias. **Rewritten, it runs**: every compiled module of a generated project and of the
   example links, the application, the worker and a context run alone start, and no alias is
-  left in a `.js` or a `.d.ts`.
-- **Both compilers** map `@/x.js` to `src/x.ts` (`--explainFiles`), and never to `dist/`.
-- **tsx** resolves `@/x.js` to `src/x.ts` with no flag, also when a compiled copy exists and
-  also for a module loaded by `--import ./src/platform/tracing.ts`.
+  left in a `.js` or a `.d.ts`. Node itself completes no extension: `import('./dist/src/main')`
+  fails where `./dist/src/main.js` loads.
+- **Both compilers** map `@/x` to `src/x.ts` under `Bundler`, and `@/x.js` to `src/x.ts` under
+  `NodeNext` (`--explainFiles`), never to `dist/`; both report `TS2307` for a specifier that
+  names no file, in both spellings; both type-check every stack and both decorator modes.
+- **tsx** resolves `@/x` (and `@/x.js`) to `src/x.ts` with no flag, also when a compiled copy
+  exists and also for a module loaded by `--import ./src/platform/tracing.ts`.
 - **vitest** with `resolve.tsconfigPaths` runs a spec on the source although a compiled copy
-  exists; without it the spec fails on its first import.
+  exists; without it the spec fails on its first import. The decorator plugin of
+  `@ddd-ts-kit/testing/vitest` compiles a file whose imports carry no extension as it did before.
 - **jest** with the generated `moduleNameMapper` loads the source although a compiled copy
-  exists; without it, "Cannot find module".
+  exists, in both spellings; without it, "Cannot find module '@/alias-probe'".
 - **dependency-cruiser** follows the alias to the source and holds no module under `dist/`;
-  the boundary rules report an alias import exactly as a relative one.
+  the boundary rules report an alias import exactly as a relative one, with or without its
+  extension.
 - **knip** reports an unused file and an unused export behind the alias, and nothing for a
   file that is only imported by its alias.
 - **drizzle-kit** generates a migration from a schema that re-exports tables by their alias,
-  and fails once `paths` is removed.
+  written without an extension, and fails once `paths` is removed.
+- **TypeORM, knex and Prisma** read no TypeScript of the project through an alias: the TypeORM
+  CLI loads the compiled data source (rewritten, so plain `node` loads it), a knex migration is
+  a JavaScript file that names the compiled schema by a relative path with its `.js`, and
+  `prisma.config.ts` imports no file of the project.
 - A stale `dist/` cannot be loaded by a dev tool: `paths` names sources only, and a tool that
   ignores `paths` fails instead of falling back.
 
-## The two rules
+## The three rules
 
 `imports/alias-only`: under the source root, `test/` and `scripts/`, an `import`, an
 `export ... from` or an `import()` of a file of the project uses the alias. A relative
@@ -183,6 +241,12 @@ segment. `eslint --fix` rewrites a relative import: it computes the alias from t
 the file and the config. Not judged: a JavaScript file at the project root (a tool config, a
 knex migration, which Node runs as written and which therefore uses relative paths), and the
 client under `generated/`. A directory given to `discoverContext` as a URL is not an import.
+
+`imports/extension`: in the same three trees, an alias specifier ends as `importExtension`
+says. Under `none` it carries none of `.js`, `.mjs`, `.cjs`, `.ts`, `.mts`, `.cts`, and names
+no directory (the checker alone sees that one); under `js` it ends with `.js`. `eslint --fix`
+removes or writes the extension. Under `js` the compiler holds the same thing (`TS2835`); under
+`none` nothing else does before the build, since the bundler resolution accepts both.
 
 `imports/alias-declared`, held by `ddd-ts-kit check`:
 
@@ -193,10 +257,11 @@ client under `generated/`. A directory given to `discoverContext` as a URL is no
 | another `paths` entry under an alias of the project | the build rewrites from `importAlias` alone: the output would load another file than the one that was checked |
 | a `baseUrl` | every `paths` target would be resolved from it |
 | a `tsconfig.build.json` whose `paths` or `baseUrl` differ from `tsconfig.json` | the build would not compile what was checked |
-| a script that compiles (`tsc` without `--noEmit`) and does not run `build-aliases` afterwards | the output would stop under `node` at its first import |
+| `module` and `moduleResolution` of `tsconfig.json`, or of a `tsconfig.build.json` that sets its own, that are not what `importExtension` gives (`ESNext`, `Bundler` and `customConditions` holding `node` under `none`; under `js`, a written value that is not `Node16`, `Node18`, `Node20` or `NodeNext`) | under the other resolution the compiler refuses every import of the project, or accepts a spelling the build does not rewrite; another module format would not be the ECMAScript modules the build completes |
+| a script that compiles (`tsc` without `--noEmit`) and does not run `build-aliases` afterwards | the output would stop under `node` at its first import: no alias, and under `none` no extension either |
 | a script that runs `tsx` with `--tsconfig` on another file | the dev runner would read a declaration nothing compares |
 | a `vitest` config at the project root without `tsconfigPaths: true` (one that extends another config of the project is read as carrying it) | the specs would not resolve an alias |
-| a `jest` config that lacks one of the derived `moduleNameMapper` entries, or maps it elsewhere | jest reads no tsconfig: it is the one repeated mapping |
+| a `jest` config that lacks one of the derived `moduleNameMapper` entries, maps it elsewhere, or whose pattern does not end as the imports do | jest reads no tsconfig: it is the one repeated mapping |
 | a `.dependency-cruiser.cjs` without `tsConfig: { fileName: 'tsconfig.json' }` | the boundary rules would see nothing; `ddd-ts-kit depcruise-config --check` reports the same file |
 | a `paths` entry of `knip.json` under an alias | a second declaration |
 
@@ -207,8 +272,28 @@ against both, in both spellings.
 An alias that names no file is reported by the compiler (`TS2307`), by dependency-cruiser (the
 module resolves to nothing), by knip (unresolved import) and by `build-aliases`.
 
+## Moving an existing project to imports without an extension
+
+A project generated before `importExtension` existed has no such key: it is read as `js`, and
+nothing has to change. To move it: set `"importExtension": "none"`, write the `module`,
+`moduleResolution` and `customConditions` that `ddd-ts-kit check` then asks for (and the jest mapping, on jest), run
+`eslint --fix` and `npm run format`, then `ddd-ts-kit docs` for the declarations barrels and
+`npm run verify`. On the example application of this repository the fix rewrote 2101 imports in
+561 files, and the formatter then joined the few statements that fit on one line again.
+
 ## Limits
 
+- Under `none` the compiler resolves as a bundler does, not as Node does. It still checks that
+  every import names a file and every name exists, but it no longer models how Node loads a
+  CommonJS package from an ECMAScript module: a default import of a package that Node would hand
+  over as `{ default: ... }` type-checks and fails at run time, where `NodeNext` reports it.
+  What holds it is the run: the specs execute on Node, and the end-to-end suite links every
+  compiled module of every stack under plain `node`. A team that wants the compiler to model
+  Node exactly keeps `"importExtension": "js"`.
+- The bundler resolution reads the `exports` of a package without the `node` condition: a
+  package that publishes one entry for Node and another for the rest would be type-checked
+  against the wrong one (measured on both compilers). The generated `tsconfig.json` therefore
+  sets `"customConditions": ["node"]`, and `imports/alias-declared` reports its removal.
 - Only a module the build emits can be named by an alias in shipped code. A JSON file or
   another asset is read at run time, not imported.
 - A JavaScript file Node runs as written (a config, a knex migration) cannot use the alias:
@@ -226,6 +311,7 @@ module resolves to nothing), by knip (unresolved import) and by `build-aliases`.
 
 ## Recommendation
 
-Keep `@/`. Pass `--import-alias '$<name>/'` to `init` only when `@/` is already taken by
-something else in the project. Run `eslint --fix` then `npm run format` to move existing code,
+Keep `@/`, and keep the default spelling, without an extension. Pass `--import-alias '$<name>/'`
+to `init` only when `@/` is already taken by something else in the project, and
+`--import-extension js` only when the compiler has to resolve exactly as Node does. Run `eslint --fix` then `npm run format` to move existing code,
 and let `ddd-ts-kit check` say what is left.

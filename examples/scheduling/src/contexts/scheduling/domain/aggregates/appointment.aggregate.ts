@@ -1,17 +1,17 @@
 import { AggregateRoot, unwrap } from '@ddd-ts-kit/kernel';
-import { AppointmentAlreadyConfirmedError } from '@/contexts/scheduling/domain/errors/appointment-already-confirmed.error.js';
-import { AppointmentEndedError } from '@/contexts/scheduling/domain/errors/appointment-ended.error.js';
-import { AppointmentNotStartedError } from '@/contexts/scheduling/domain/errors/appointment-not-started.error.js';
-import { AppointmentBooked } from '@/contexts/scheduling/domain/events/appointment-booked.event.js';
-import { AppointmentCancelled } from '@/contexts/scheduling/domain/events/appointment-cancelled.event.js';
-import { AppointmentCompleted } from '@/contexts/scheduling/domain/events/appointment-completed.event.js';
-import { AppointmentConfirmed } from '@/contexts/scheduling/domain/events/appointment-confirmed.event.js';
-import { AppointmentExpired } from '@/contexts/scheduling/domain/events/appointment-expired.event.js';
-import { AppointmentMarkedNoShow } from '@/contexts/scheduling/domain/events/appointment-marked-no-show.event.js';
-import { AppointmentRescheduled } from '@/contexts/scheduling/domain/events/appointment-rescheduled.event.js';
-import type { Booking } from '@/contexts/scheduling/domain/value-objects/booking.vo.js';
-import type { Cancellation } from '@/contexts/scheduling/domain/value-objects/cancellation.vo.js';
-import type { Slot } from '@/contexts/scheduling/domain/value-objects/slot.vo.js';
+import { AppointmentAlreadyConfirmedError } from '@/contexts/scheduling/domain/errors/appointment-already-confirmed.error';
+import { AppointmentEndedError } from '@/contexts/scheduling/domain/errors/appointment-ended.error';
+import { AppointmentNotStartedError } from '@/contexts/scheduling/domain/errors/appointment-not-started.error';
+import { AppointmentBooked } from '@/contexts/scheduling/domain/events/appointment-booked.event';
+import { AppointmentCancelled } from '@/contexts/scheduling/domain/events/appointment-cancelled.event';
+import { AppointmentCompleted } from '@/contexts/scheduling/domain/events/appointment-completed.event';
+import { AppointmentConfirmed } from '@/contexts/scheduling/domain/events/appointment-confirmed.event';
+import { AppointmentExpired } from '@/contexts/scheduling/domain/events/appointment-expired.event';
+import { AppointmentMarkedNoShow } from '@/contexts/scheduling/domain/events/appointment-marked-no-show.event';
+import { AppointmentRescheduled } from '@/contexts/scheduling/domain/events/appointment-rescheduled.event';
+import type { Booking } from '@/contexts/scheduling/domain/value-objects/booking.vo';
+import type { Cancellation } from '@/contexts/scheduling/domain/value-objects/cancellation.vo';
+import type { Slot } from '@/contexts/scheduling/domain/value-objects/slot.vo';
 
 export interface AppointmentState {
   readonly registeredAt: Date;

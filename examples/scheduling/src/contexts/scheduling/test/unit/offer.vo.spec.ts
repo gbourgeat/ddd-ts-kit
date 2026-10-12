@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { unwrap } from '@ddd-ts-kit/kernel';
-import { InvalidOfferError } from '@/contexts/scheduling/domain/errors/invalid-offer.error.js';
-import { Offer } from '@/contexts/scheduling/domain/value-objects/offer.vo.js';
-import { Slot } from '@/contexts/scheduling/domain/value-objects/slot.vo.js';
-import { Waiter } from '@/contexts/scheduling/domain/value-objects/waiter.vo.js';
+import { InvalidOfferError } from '@/contexts/scheduling/domain/errors/invalid-offer.error';
+import { Offer } from '@/contexts/scheduling/domain/value-objects/offer.vo';
+import { Slot } from '@/contexts/scheduling/domain/value-objects/slot.vo';
+import { Waiter } from '@/contexts/scheduling/domain/value-objects/waiter.vo';
 
 const waiter = unwrap(
   Waiter.create({

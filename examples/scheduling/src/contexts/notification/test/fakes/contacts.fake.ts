@@ -1,9 +1,5 @@
 import { InMemoryReadModelStore } from '@ddd-ts-kit/kernel';
-import {
-  contactCriteria,
-  type Contact,
-  type Contacts,
-} from '@/contexts/notification/application/ports/contacts.port.js';
+import { contactCriteria, type Contact, type Contacts } from '@/contexts/notification/application/ports/contacts.port';
 
 export class FakeContacts extends InMemoryReadModelStore<Contact> implements Contacts {
   constructor() {

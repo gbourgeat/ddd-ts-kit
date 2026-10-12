@@ -3,7 +3,7 @@ import { {{access.queryBase}} } from '@ddd-ts-kit/kernel';
 import { {{access.decorator}} } from '@ddd-ts-kit/kernel/declarations';
 {{access.useCasePermissionsImport}}
 {{/if}}
-import type { {{name.pascal}}Result } from '{{alias.context}}/application/queries/{{name.kebab}}/{{name.kebab}}.result.js';
+import type { {{name.pascal}}Result } from '{{alias.context}}/application/queries/{{name.kebab}}/{{name.kebab}}.result{{alias.ext}}';
 
 {{#if style.declared}}
 @{{access.decoration}}

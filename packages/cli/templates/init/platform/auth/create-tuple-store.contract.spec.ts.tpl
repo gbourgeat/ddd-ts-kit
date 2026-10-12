@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from '{{tests.module}}';
 import { relationTupleStoreContract } from '@ddd-ts-kit/auth/testing';
-import { createTupleStore } from '{{alias.platform}}/auth/create-tuple-store.js';
+import { createTupleStore } from '{{alias.platform}}/auth/create-tuple-store{{alias.ext}}';
 
 relationTupleStoreContract(
   { describe, it, expect, beforeEach },

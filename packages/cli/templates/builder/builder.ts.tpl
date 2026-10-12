@@ -1,5 +1,5 @@
 import { Builder, sequence, type Defaults } from '@ddd-ts-kit/testing';
-import { {{aggregate.pascal}} } from '{{alias.context}}/domain/aggregates/{{aggregate.kebab}}.aggregate.js';
+import { {{aggregate.pascal}} } from '{{alias.context}}/domain/aggregates/{{aggregate.kebab}}.aggregate{{alias.ext}}';
 
 interface {{aggregate.pascal}}Ingredients {
   readonly id: string;

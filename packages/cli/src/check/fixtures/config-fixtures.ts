@@ -65,6 +65,12 @@ export const CONFIG_FIXTURES: readonly Fixture[] = [
   },
   {
     ruleId: 'config/valid',
+    name: 'an unknown import extension',
+    expect: { file: CONFIG_FILE },
+    files: project({}, { [CONFIG_FILE]: config({ importExtension: 'ts' }) }),
+  },
+  {
+    ruleId: 'config/valid',
     name: 'an unknown rule id',
     expect: { file: CONFIG_FILE },
     files: project({}, { [CONFIG_FILE]: config({ rules: { 'naming/sufix': 'warn' } }) }),

@@ -3,13 +3,13 @@ import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { anActor } from '@ddd-ts-kit/auth/testing';
 import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
-import * as notificationDeclarations from '@/contexts/notification/notification.declarations.js';
-import { platformTestModule } from '@/platform/platform-test.module.js';
-import { notificationPermissions } from '@/contexts/notification/application/authorization/notification.permissions.js';
-import { PlanReminderCommand } from '@/contexts/notification/application/commands/plan-reminder/plan-reminder.command.js';
-import { ReminderRepository } from '@/contexts/notification/domain/repositories/reminder.repository.js';
-import { aReminder } from '@/contexts/notification/test/builders/reminder.builder.js';
-import { FakeReminderRepository } from '@/contexts/notification/test/fakes/reminder.repository.fake.js';
+import * as notificationDeclarations from '@/contexts/notification/notification.declarations';
+import { platformTestModule } from '@/platform/platform-test.module';
+import { notificationPermissions } from '@/contexts/notification/application/authorization/notification.permissions';
+import { PlanReminderCommand } from '@/contexts/notification/application/commands/plan-reminder/plan-reminder.command';
+import { ReminderRepository } from '@/contexts/notification/domain/repositories/reminder.repository';
+import { aReminder } from '@/contexts/notification/test/builders/reminder.builder';
+import { FakeReminderRepository } from '@/contexts/notification/test/fakes/reminder.repository.fake';
 
 const holders = authorizationModule({
   authorizer: new RoleBasedAuthorizer({ roles: { holder: [notificationPermissions['reminder.plan']] } }),

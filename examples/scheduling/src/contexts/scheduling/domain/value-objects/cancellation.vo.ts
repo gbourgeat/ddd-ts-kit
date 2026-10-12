@@ -1,5 +1,5 @@
 import { ValueObject, err, ok, type Result } from '@ddd-ts-kit/kernel';
-import { ReasonRequiredError } from '@/contexts/scheduling/domain/errors/reason-required.error.js';
+import { ReasonRequiredError } from '@/contexts/scheduling/domain/errors/reason-required.error';
 
 export type CancellationProps = {
   readonly by: 'patient' | 'practice';

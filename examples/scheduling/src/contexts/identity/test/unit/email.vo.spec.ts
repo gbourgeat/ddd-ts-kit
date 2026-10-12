@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { unwrap } from '@ddd-ts-kit/kernel';
-import { Email } from '@/contexts/identity/domain/value-objects/email.vo.js';
+import { Email } from '@/contexts/identity/domain/value-objects/email.vo';
 
 describe('Email', () => {
   it('is equal to another email with the same value', () => {

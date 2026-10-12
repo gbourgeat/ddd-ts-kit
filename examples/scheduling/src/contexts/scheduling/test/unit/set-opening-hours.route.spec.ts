@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { executeRoute } from '@ddd-ts-kit/http';
 import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';
-import { SetOpeningHoursCommand } from '@/contexts/scheduling/application/commands/set-opening-hours/set-opening-hours.command.js';
-import { InvalidRangeError } from '@/contexts/scheduling/domain/errors/invalid-range.error.js';
-import { setOpeningHoursRoute } from '@/contexts/scheduling/presentation/http/set-opening-hours.route.js';
+import { SetOpeningHoursCommand } from '@/contexts/scheduling/application/commands/set-opening-hours/set-opening-hours.command';
+import { InvalidRangeError } from '@/contexts/scheduling/domain/errors/invalid-range.error';
+import { setOpeningHoursRoute } from '@/contexts/scheduling/presentation/http/set-opening-hours.route';
 
 const valid = { ranges: [{ weekday: 'monday', start: '09:00', end: '12:00' }] };
 

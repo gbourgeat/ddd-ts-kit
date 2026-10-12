@@ -22,10 +22,10 @@ import type {
   {{/if}}
 } from '@ddd-ts-kit/kernel';
 {{#if audit.on}}
-import type { Audit } from '{{alias.platform}}/audit/create-audit.js';
+import type { Audit } from '{{alias.platform}}/audit/create-audit{{alias.ext}}';
 {{/if}}
-import type { UseCaseProtection } from '{{alias.platform}}/auth/use-case-protection.js';
-import type { Persistence } from '{{alias.platform}}/database/persistence.js';
+import type { UseCaseProtection } from '{{alias.platform}}/auth/use-case-protection{{alias.ext}}';
+import type { Persistence } from '{{alias.platform}}/database/persistence{{alias.ext}}';
 
 /** Wraps an adapter from outside: a span for its kind and, for what leaves the process, the default policy unless it states its own. */
 type Adapt = <T extends object>(instance: T, info: AspectInfo) => T;

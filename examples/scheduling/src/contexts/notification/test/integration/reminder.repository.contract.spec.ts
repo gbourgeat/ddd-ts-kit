@@ -7,11 +7,11 @@ import {
   type ExecutionContext,
 } from '@ddd-ts-kit/kernel';
 import { repositoryContract } from '@ddd-ts-kit/testing/contracts';
-import type { Reminder } from '@/contexts/notification/domain/aggregates/reminder.aggregate.js';
-import { KnexReminderRepository } from '@/contexts/notification/infrastructure/persistence/knex-reminder.repository.js';
-import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database.js';
-import { aReminder } from '@/contexts/notification/test/builders/reminder.builder.js';
-import { FakeReminderRepository } from '@/contexts/notification/test/fakes/reminder.repository.fake.js';
+import type { Reminder } from '@/contexts/notification/domain/aggregates/reminder.aggregate';
+import { KnexReminderRepository } from '@/contexts/notification/infrastructure/persistence/knex-reminder.repository';
+import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database';
+import { aReminder } from '@/contexts/notification/test/builders/reminder.builder';
+import { FakeReminderRepository } from '@/contexts/notification/test/fakes/reminder.repository.fake';
 
 const runner = { describe, it, expect, beforeEach, afterEach };
 

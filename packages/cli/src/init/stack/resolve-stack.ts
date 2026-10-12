@@ -9,10 +9,12 @@ import {
   CI_PLATFORMS,
   CONFIG_FILE,
   DEFAULT_IMPORT_ALIAS,
+  DEFAULT_IMPORT_EXTENSION,
   DI_STACKS,
   DOCS_UIS,
   ERROR_REPORTERS,
   HTTP_STACKS,
+  IMPORT_EXTENSIONS,
   LOGGERS,
   PACKAGE_MANAGERS,
   parseConfig,
@@ -25,18 +27,65 @@ import { aliasProblem } from '../../alias/index.js';
 import { DEFAULT_PACKAGE_MANAGER } from '../../package-manager/default-package-manager.js';
 import { CliError } from '../../cli-error.js';
 import { choose } from './choose.js';
+import { recordedOptions } from './recorded-options.js';
 import { resolvePersistence } from './resolve-persistence.js';
 import { resolveStyle } from './resolve-style.js';
 import type { StackOptions } from './stack-options.js';
 
 export type { StackOptions } from './stack-options.js';
 
-/** The stack of the project: the one its config records when it is already initialised, else the one the flags ask for. */
+/**
+ * The config of the project. Already initialised, it is the one on disk: `init` run again keeps
+ * it, and `init --force` changes in it the choices its flags name and nothing else, so the
+ * contexts, the rules and every other key a team declared survive. A new project gets the stack
+ * the flags ask for.
+ */
 export function resolveStack(root: string, options: StackOptions): Config {
-  if (fs.existsSync(path.join(root, CONFIG_FILE)) && !options.force) {
-    return supportedAlias(readConfig(root).config);
+  const recorded = recordedConfig(root, options.force);
+
+  if (recorded !== undefined && !options.force) {
+    return supportedAlias(recorded);
   }
 
+  const asked = recorded === undefined ? options : { ...recordedOptions(recorded), ...options };
+  const fresh = parseConfig({ ...spelling(asked, recorded), stack: stackOf(asked), contexts: {}, rules: {} });
+  const { importAlias, importExtension } = fresh;
+  // No flag and nothing to ask again: the config publishes its events in a way `init` does not offer, written by hand.
+  const events = recorded !== undefined && asked.events === undefined ? recorded.stack.events : fresh.stack.events;
+  const stack = { ...fresh.stack, events };
+  const config = supportedAlias({ ...(recorded ?? fresh), importAlias, importExtension, stack });
+
+  return { ...config, worker: config.worker || hasWorker(root, config) };
+}
+
+/** Nothing for a new project, and for a config `--force` is about to replace because it cannot be read. */
+function recordedConfig(root: string, force: boolean): Config | undefined {
+  if (!fs.existsSync(path.join(root, CONFIG_FILE))) {
+    return undefined;
+  }
+
+  try {
+    return readConfig(root).config;
+  } catch (error) {
+    if (force) {
+      return undefined;
+    }
+
+    throw error;
+  }
+}
+
+/** How the imports are written: what a flag asks, else what the project already does, else the defaults of a new project. */
+function spelling(options: StackOptions, recorded: Config | undefined): Record<string, string> {
+  const extension = choose(IMPORT_EXTENSIONS, options.importExtension, 'import-extension');
+
+  return {
+    importAlias: options.importAlias ?? recorded?.importAlias ?? DEFAULT_IMPORT_ALIAS,
+    importExtension: extension ?? recorded?.importExtension ?? DEFAULT_IMPORT_EXTENSION,
+  };
+}
+
+function stackOf(options: StackOptions): Record<string, string> {
   const http = choose(HTTP_STACKS, options.http, 'http') ?? 'express';
   const di = choose(DI_STACKS, options.di, 'di') ?? (http === 'nest' ? 'nest' : 'tsyringe');
 
@@ -46,7 +95,7 @@ export function resolveStack(root: string, options: StackOptions): Config {
   const persistence = resolvePersistence(options);
   const broker = resolveBroker(options, persistence.orm);
 
-  const stack = {
+  return {
     http,
     di,
     ...resolveTooling(options),
@@ -57,11 +106,6 @@ export function resolveStack(root: string, options: StackOptions): Config {
     ...resolveOperations(options, persistence.orm),
     ...resolveStyle(options, di),
   };
-
-  const alias = options.importAlias === undefined ? {} : { importAlias: options.importAlias };
-  const config = supportedAlias(parseConfig({ ...alias, stack, contexts: {}, rules: {} }));
-
-  return { ...config, worker: hasWorker(root, config) };
 }
 
 /** Every file `init` writes imports by the alias: one that some tool cannot resolve is refused before anything is written. */
@@ -78,7 +122,7 @@ function supportedAlias(config: Config): Config {
   );
 }
 
-/** `--force` writes the project anew: a worker that is already there keeps the jobs, so the API still starts with its jobs off. */
+/** A worker that is already there keeps the jobs, so the API still starts with its jobs off, whatever the config says of it. */
 function hasWorker(root: string, config: Config): boolean {
   return fs.existsSync(path.join(root, config.sourceRoot, 'apps/worker/main.ts'));
 }

@@ -12,7 +12,7 @@ The alias is declared once, under `paths` in `tsconfig.json`, which the compiler
 
 ## Reported
 
-- a relative specifier, `./x.js` or `../x.js`, the same directory included: fixed to the alias of the file
+- a relative specifier, `./x` or `../x`, with or without an extension, the same directory included: fixed to the alias of the file
 - a relative specifier that names a file under no aliased directory (a manifest, a build product): reported, not fixed
 - an alias specifier with a `.` or `..` segment, which could name a file outside the directory of the alias: reported, not fixed
 
@@ -20,22 +20,22 @@ Incorrect:
 
 ```ts
 // src/contexts/billing/application/commands/issue-invoice/issue-invoice.handler.ts
-import { Invoice } from '../../../domain/aggregates/invoice.aggregate.js';
-import { IssueInvoiceCommand } from './issue-invoice.command.js';
+import { Invoice } from '../../../domain/aggregates/invoice.aggregate';
+import { IssueInvoiceCommand } from './issue-invoice.command';
 
 // test/e2e/issue-invoice.e2e.spec.ts
-import { startApplication } from './support/start-application.js';
+import { startApplication } from './support/start-application';
 ```
 
 Correct:
 
 ```ts
 // src/contexts/billing/application/commands/issue-invoice/issue-invoice.handler.ts
-import { IssueInvoiceCommand } from '@/contexts/billing/application/commands/issue-invoice/issue-invoice.command.js';
-import { Invoice } from '@/contexts/billing/domain/aggregates/invoice.aggregate.js';
+import { IssueInvoiceCommand } from '@/contexts/billing/application/commands/issue-invoice/issue-invoice.command';
+import { Invoice } from '@/contexts/billing/domain/aggregates/invoice.aggregate';
 
 // test/e2e/issue-invoice.e2e.spec.ts
-import { startApplication } from '$test/e2e/support/start-application.js';
+import { startApplication } from '$test/e2e/support/start-application';
 ```
 
 ## Details
@@ -51,7 +51,7 @@ The aliases of a project:
 | `$scripts/` | `scripts/` | fixed |
 | `$generated/` | `generated/`, with `stack.orm` `prisma` only | fixed |
 
-The fix computes the alias from the place of the file and the config: the relative specifier is resolved from the directory of the file, and the result is written from the directory its alias names, with a `.js` extension. It keeps the quotes of the specifier. A fixed import is often longer than the line: run the formatter after the fix (`npm run format`). Fixing twice changes nothing.
+The fix computes the alias from the place of the file and the config: the relative specifier is resolved from the directory of the file, and the result is written from the directory its alias names, ending as `importExtension` of the config says: with nothing under `none`, with `.js` under `js` (a config without the key). It keeps the quotes of the specifier. A fixed import is often longer than the line: run the formatter after the fix (`npm run format`). Fixing twice changes nothing.
 
 Not judged: a file outside the three directories (a config file at the project root, a JavaScript migration), the client under `generated/`, which a tool writes, and a specifier that is neither relative nor one of the aliases (a package, a Node built-in).
 
@@ -59,13 +59,14 @@ An alias that names no file is not this rule's concern: the compiler reports it 
 
 ## Options
 
-None. `sourceRoot` and `importAlias` of `ddd-ts-kit.config.json` say what the alias of the sources is.
+None. `sourceRoot` and `importAlias` of `ddd-ts-kit.config.json` say what the alias of the sources is, `importExtension` what the fixed specifier ends with.
 
 `rules."imports/alias-only"` in `ddd-ts-kit.config.json` set to `off` silences the rule, and `// ddd-ts-kit-disable-next-line imports/alias-only -- <reason>` silences one line, exactly as for `ddd-ts-kit check`.
 
 ## Limits
 
 - Only a module the build emits can be named by the alias: a JSON file or another asset is read at run time instead of imported.
+- The ending of an alias specifier is the business of [`imports/extension`](imports-extension.md).
 - The rule does not check that `tsconfig.json` declares the alias, nor that the build rewrites it: `imports/alias-declared` of `ddd-ts-kit check` does, with everything else that has to follow the one declaration.
 
 ## With the CLI checker

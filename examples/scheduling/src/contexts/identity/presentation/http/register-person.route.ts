@@ -2,9 +2,9 @@ import { actorOf } from '@ddd-ts-kit/auth';
 import { defineRoute, type Route } from '@ddd-ts-kit/http';
 import type { CommandBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
-import { RegisterPersonCommand } from '@/contexts/identity/application/commands/register-person/register-person.command.js';
-import { RegisterPersonBody } from '@/contexts/identity/presentation/http/register-person-body.dto.js';
-import { RegisterPersonAccepted } from '@/contexts/identity/presentation/http/register-person-accepted.dto.js';
+import { RegisterPersonCommand } from '@/contexts/identity/application/commands/register-person/register-person.command';
+import { RegisterPersonBody } from '@/contexts/identity/presentation/http/register-person-body.dto';
+import { RegisterPersonAccepted } from '@/contexts/identity/presentation/http/register-person-accepted.dto';
 
 const body = classSchema(RegisterPersonBody);
 const accepted = classSchema(RegisterPersonAccepted);

@@ -1,6 +1,7 @@
 import type { Change } from './injection.js';
 import { PATHS } from './paths.js';
 import { SOURCE_ALIAS } from './source-alias.js';
+import { SOURCE_SUFFIX } from './source-suffix.js';
 
 const { HANDLER_SPEC, NOTIFICATION, ROUTE } = PATHS;
 const SERVICE = 'src/contexts/analytics/domain/services/occupancy-measure.service.ts';
@@ -22,7 +23,7 @@ export const DELEGATED_PROOFS: readonly DelegatedProof[] = [
       {
         file: ROUTE,
         where: 'end',
-        to: `\nexport * from '${SOURCE_ALIAS}contexts/notification/infrastructure/persistence/notification.mapper.js';\n`,
+        to: `\nexport * from '${SOURCE_ALIAS}contexts/notification/infrastructure/persistence/notification.mapper${SOURCE_SUFFIX}';\n`,
       },
     ],
     prints: [

@@ -18,7 +18,7 @@ immutable, and it carries the facts a reaction needs, never the aggregate itself
 ```ts
 // contexts/appointments/domain/events/appointment-cancelled.event.ts
 import type { DomainEvent } from '@ddd-ts-kit/kernel';
-import type { CancellationReason } from '@/contexts/appointments/domain/value-objects/cancellation-reason.vo.js';
+import type { CancellationReason } from '@/contexts/appointments/domain/value-objects/cancellation-reason.vo';
 
 export class AppointmentCancelled implements DomainEvent {
   readonly name = 'appointments.appointment.cancelled';
@@ -89,9 +89,9 @@ application layer decide business matters. A domain service is the third place.
 
 ```ts
 // contexts/appointments/domain/services/booking-eligibility.service.ts
-import { OutsideWorkingHours } from '@/contexts/appointments/domain/errors/outside-working-hours.error.js';
-import type { PractitionerSchedule } from '@/contexts/appointments/domain/value-objects/practitioner-schedule.vo.js';
-import type { TimeSlot } from '@/contexts/appointments/domain/value-objects/time-slot.vo.js';
+import { OutsideWorkingHours } from '@/contexts/appointments/domain/errors/outside-working-hours.error';
+import type { PractitionerSchedule } from '@/contexts/appointments/domain/value-objects/practitioner-schedule.vo';
+import type { TimeSlot } from '@/contexts/appointments/domain/value-objects/time-slot.vo';
 
 export class BookingEligibilityService {
   assertBookable(slot: TimeSlot, schedule: PractitionerSchedule): void {
@@ -134,7 +134,7 @@ domain declares what it needs; infrastructure decides how it is stored.
 ```ts
 // contexts/appointments/domain/repositories/appointment.repository.ts
 import { Repository } from '@ddd-ts-kit/kernel';
-import type { Appointment } from '@/contexts/appointments/domain/aggregates/appointment.aggregate.js';
+import type { Appointment } from '@/contexts/appointments/domain/aggregates/appointment.aggregate';
 
 export abstract class AppointmentRepository extends Repository<Appointment> {
   abstract findUpcomingOf(clientId: string, after: Date): Promise<readonly Appointment[]>;

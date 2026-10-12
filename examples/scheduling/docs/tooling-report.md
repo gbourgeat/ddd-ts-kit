@@ -683,3 +683,60 @@ Frictions:
    written, outside the TypeScript sources the rule reads.
 4. **`docs/demo-transcript.md` and `docs/tooling/` are recordings** made before this change and
    were left as recorded.
+
+## 2026-10-12: imports without the `.js` extension
+
+The owner of the kit prefers an import that names its file and nothing else:
+`@/contexts/identity/domain/repositories/person.repository`, not `.../person.repository.js`.
+The kit now has a setting for it, `importExtension` (`none` or `js`), `none` for a new project,
+and a config without the key is read as `js`. This application was moved with the tools a team
+would use, in the order the checker gives:
+
+1. `"importExtension": "none"` added to `ddd-ts-kit.config.json`, by hand. `ddd-ts-kit check`
+   then reported 2106 findings and each one said what to do: 2101 `imports/extension` (one per
+   import, in 561 files), 4 `declarations/barrel-current` (the barrels no longer matched what
+   the generator writes) and 1 `imports/alias-declared` on `tsconfig.json`.
+2. `tsconfig.json`, by hand, as that last finding dictates: `"module": "ESNext"`,
+   `"moduleResolution": "Bundler"`, `"customConditions": ["node"]`.
+3. `npx eslint . --fix`, 45 seconds: the autofix of `imports/extension` rewrote the 2101
+   imports (2023 under `src/`, 73 under `test/`, 5 under `scripts/`), the four barrels included,
+   since a barrel is a file of `export * from` lines.
+4. `npm run format` at the root of the repository: 4 files changed in the whole tree, where a statement fits on
+   one line again now that its specifier is three characters shorter.
+5. `npm run build` at the root, then `npm run docs:generate` here: `ddd-ts-kit docs` answered
+   "Nothing to do" (the fix had already written the barrels as the generator does), and the
+   OpenAPI and AsyncAPI documents came out identical.
+6. `CLAUDE.md` and the "Imports" section of the README, by hand, as `init` now writes them.
+
+Nothing else changed: no file under `migrations/` (JavaScript that Node runs as written keeps
+its `.js`), no script, no test configuration (`vitest` reads `paths`, which complete the
+extension), not `scripts/events.ts`, whose one `index.js` is a path of the compiled output
+built from `import.meta.url`.
+
+Checked after it: `npm run verify` (types under the bundler resolution, lint, format, 1290 unit
+and adapter specs with the coverage thresholds, 57 end-to-end specs, the checker with 0 finding
+in 724 files, dependency-cruiser on 763 modules and 3429 dependencies, knip, `docs:check`),
+then every rule id of the kit broken once in a copy of this application (75 specs, the new
+`imports/extension` among them, written in the spelling the config of the example does not
+ask for). The build still rewrites 800 specifiers in 247 of the 467 emitted files, and now
+completes each with `.js`; plain `node` links every compiled module and starts
+`dist/src/main.js` and the worker up to their configuration on Node 24.21
+(`alias-example.spec.ts`, which CI also runs on Node 22). Zero import of a file of the project
+ends with `.js`, `.ts` or `.mjs` under `src/`, `test/` and `scripts/`, of 2101.
+
+Frictions:
+
+1. **The compiler no longer refuses the old spelling.** Under the bundler resolution
+   `.../person.repository.js` still type-checks. Only `imports/extension` (checker, ESLint) and
+   then the build refuse it, so a project that turns the rule off loses the single spelling.
+2. **The compiler no longer models Node for packages.** A default import of a CommonJS package
+   that Node hands over as `{ default }` type-checks under `Bundler` and fails at run time; this
+   application has none, and its specs and the linking of every compiled module would show it.
+   The `node` condition is given back to the compiler (`customConditions`), so the entry it
+   reads in a package is the one Node loads.
+3. **An import can name a directory for the compiler, not for the build.** `.../published-language`
+   would resolve to its `index.ts`; the build refuses it and the checker reports it. This
+   application always wrote `.../published-language/index`, so nothing had to change.
+4. **The postgres run and the full start with the compose services were not replayed** for this
+   change: `test:postgres` and `infra:up` need the services, and nothing they exercise reads
+   an import specifier.

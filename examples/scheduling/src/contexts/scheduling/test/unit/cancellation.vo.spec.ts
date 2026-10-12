@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { unwrap } from '@ddd-ts-kit/kernel';
-import { Cancellation } from '@/contexts/scheduling/domain/value-objects/cancellation.vo.js';
+import { Cancellation } from '@/contexts/scheduling/domain/value-objects/cancellation.vo';
 
 describe('Cancellation', () => {
   it('is equal to another cancellation by the same side for the same reason', () => {

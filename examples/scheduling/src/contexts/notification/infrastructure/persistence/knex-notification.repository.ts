@@ -2,14 +2,14 @@ import type { Knex } from 'knex';
 import { Clock, ExecutionScope, stampCreation, stampUpdate } from '@ddd-ts-kit/kernel';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
 import { KnexContext, auditRow, insertIgnoringConflict, optimisticUpdate } from '@ddd-ts-kit/knex';
-import type { Notification } from '@/contexts/notification/domain/aggregates/notification.aggregate.js';
-import { NotificationRepository } from '@/contexts/notification/domain/repositories/notification.repository.js';
-import { NOTIFICATION_SCHEMA } from '@/contexts/notification/infrastructure/persistence/notification.schema.js';
-import { NotificationMapper } from '@/contexts/notification/infrastructure/persistence/notification.mapper.js';
+import type { Notification } from '@/contexts/notification/domain/aggregates/notification.aggregate';
+import { NotificationRepository } from '@/contexts/notification/domain/repositories/notification.repository';
+import { NOTIFICATION_SCHEMA } from '@/contexts/notification/infrastructure/persistence/notification.schema';
+import { NotificationMapper } from '@/contexts/notification/infrastructure/persistence/notification.mapper';
 import type {
   NotificationColumns,
   NotificationRow,
-} from '@/contexts/notification/infrastructure/persistence/notification-row.schema.js';
+} from '@/contexts/notification/infrastructure/persistence/notification-row.schema';
 
 type VersionedNotification = NotificationColumns & { readonly version: number };
 

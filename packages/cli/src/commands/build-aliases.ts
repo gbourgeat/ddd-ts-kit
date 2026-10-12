@@ -1,4 +1,4 @@
-import { aliasRoots } from '../alias/index.js';
+import { aliasRoots, specifierSuffix } from '../alias/index.js';
 import { rewriteAliases } from '../build/index.js';
 import { readConfig } from '../config/index.js';
 import { Arguments } from './arguments.js';
@@ -10,8 +10,10 @@ const BUILD_PROJECT = 'tsconfig.build.json';
 export const buildAliasesCommand: Command = (argv, io) => {
   const args = Arguments.parse(argv, { project: { type: 'string' } });
   const root = args.projectRoot;
-  const roots = aliasRoots(readConfig(root).config);
-  const report = rewriteAliases({ root, roots, project: args.text('project') ?? BUILD_PROJECT });
+  const { config } = readConfig(root);
+  const suffix = specifierSuffix(config.importExtension);
+  const project = args.text('project') ?? BUILD_PROJECT;
+  const report = rewriteAliases({ root, roots: aliasRoots(config), suffix, project });
 
   io.out(
     args.json

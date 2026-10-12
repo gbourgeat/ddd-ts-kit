@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { DelegationEndsInThePastError } from '@/contexts/identity/domain/errors/delegation-ends-in-the-past.error.js';
+import { DelegationEndsInThePastError } from '@/contexts/identity/domain/errors/delegation-ends-in-the-past.error';
 
 describe('DelegationEndsInThePastError', () => {
   it('carries its stable code', () => {

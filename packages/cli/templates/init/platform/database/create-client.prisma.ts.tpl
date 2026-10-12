@@ -1,5 +1,5 @@
 import { PrismaPg } from '@prisma/adapter-pg';
-import { PrismaClient } from '{{alias.generated}}/prisma/client.js';
+import { PrismaClient } from '{{alias.generated}}/prisma/client{{alias.ext}}';
 
 export interface ConnectionOptions {
   /** A single-session database (the in-process one of the tests) needs 1. */

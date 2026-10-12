@@ -1,4 +1,4 @@
-import { contextAlias } from '../alias/index.js';
+import { specifierOf } from '../alias/index.js';
 import type { Config } from '../config/index.js';
 import { barrelFile, renderBarrel } from '../declared/index.js';
 import type { Workspace } from '../workspace/index.js';
@@ -22,7 +22,7 @@ export function refreshBarrels(ws: Workspace, config: Config): void {
 
     const directory = `${config.contextsDir}/${context}`;
     const file = `${directory}/${barrelFile(context)}`;
-    const content = renderBarrel(filesUnder(ws, directory), contextAlias(config, context));
+    const content = renderBarrel(filesUnder(ws, directory), (entry) => specifierOf(config, `${directory}/${entry}`));
 
     if (ws.exists(file)) {
       ws.update(file, content);

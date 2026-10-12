@@ -1,14 +1,14 @@
 import { PGlite } from '@electric-sql/pglite';
 import { PGLiteSocketServer } from '@electric-sql/pglite-socket';
 import type { Knex } from 'knex';
-import { connectToDatabase } from '{{alias.platform}}/database/connect-to-database.js';
-import { persistenceOver } from '{{alias.platform}}/database/persistence-over.js';
-import type { Persistence } from '{{alias.platform}}/database/persistence.js';
+import { connectToDatabase } from '{{alias.platform}}/database/connect-to-database{{alias.ext}}';
+import { persistenceOver } from '{{alias.platform}}/database/persistence-over{{alias.ext}}';
+import type { Persistence } from '{{alias.platform}}/database/persistence{{alias.ext}}';
 {{#if audit.on}}
-import { AUDIT_SCHEMA, createTables } from '{{alias.platform}}/database/schema.js';
+import { AUDIT_SCHEMA, createTables } from '{{alias.platform}}/database/schema{{alias.ext}}';
 {{/if}}
 {{#unless audit.on}}
-import { createTables } from '{{alias.platform}}/database/schema.js';
+import { createTables } from '{{alias.platform}}/database/schema{{alias.ext}}';
 {{/unless}}
 
 export interface TestDatabase {

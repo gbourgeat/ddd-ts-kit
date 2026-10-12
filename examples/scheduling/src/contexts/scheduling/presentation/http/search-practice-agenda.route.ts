@@ -2,10 +2,10 @@ import { actorOf } from '@ddd-ts-kit/auth';
 import { criteriaQuerySchema, defineRoute, pageResponse, pageSchemaOf, type Route } from '@ddd-ts-kit/http';
 import type { QueryBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
-import { agendaCriteria, type AgendaEntry } from '@/contexts/scheduling/application/ports/agenda.port.js';
-import { SearchPracticeAgendaQuery } from '@/contexts/scheduling/application/queries/search-practice-agenda/search-practice-agenda.query.js';
-import { SearchPracticeAgendaLine } from '@/contexts/scheduling/presentation/http/search-practice-agenda-line.dto.js';
-import { SearchPracticeAgendaParams } from '@/contexts/scheduling/presentation/http/search-practice-agenda-params.dto.js';
+import { agendaCriteria, type AgendaEntry } from '@/contexts/scheduling/application/ports/agenda.port';
+import { SearchPracticeAgendaQuery } from '@/contexts/scheduling/application/queries/search-practice-agenda/search-practice-agenda.query';
+import { SearchPracticeAgendaLine } from '@/contexts/scheduling/presentation/http/search-practice-agenda-line.dto';
+import { SearchPracticeAgendaParams } from '@/contexts/scheduling/presentation/http/search-practice-agenda-params.dto';
 
 const params = classSchema(SearchPracticeAgendaParams);
 // The filters (`filter[day]=2026-03-02`), the sort and the page the agenda declares; anything else is answered 422.

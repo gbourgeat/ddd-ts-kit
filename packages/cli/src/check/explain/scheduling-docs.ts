@@ -4,7 +4,7 @@ export const SCHEDULING_DOCS: Readonly<Record<string, RuleDoc>> = {
   'scheduling/job-triggers-use-case': {
     why: 'A job says when something happens, a use case says what. A job that loads an aggregate, calls a repository or an adapter is a use case nobody can send by another way: no permission, no unit of work, no audit entry, no test through the bus. Kept to one command sent through the CommandBus port, the job is a line of schedule, and the work is a handler like any other. It lives in application/scheduling/*.job.ts, implements ScheduledJob, and depends on buses and ports only.',
     bad: `// application/scheduling/send-reminders.job.ts
-import { Invoice } from '@/contexts/billing/domain/aggregates/invoice.aggregate.js';
+import { Invoice } from '@/contexts/billing/domain/aggregates/invoice.aggregate';
 
 @Scheduled('billing.send-reminders', { every: '15m' }, [InvoiceRepository, Mailer])
 export class SendRemindersJob {

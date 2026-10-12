@@ -2,10 +2,10 @@ import { AuditReader, AuditTrail } from '@ddd-ts-kit/audit';
 import { defineContextModule, type ContextModule } from '@ddd-ts-kit/di';
 import { subscribeAll } from '@ddd-ts-kit/events';
 import { EventSubscribers } from '@ddd-ts-kit/kernel';
-import { auditPermissions } from '@/platform/audit/audit.permissions.js';
-import type { Audit } from '@/platform/audit/create-audit.js';
-import { SearchAuditEntriesHandler } from '@/platform/audit/search-audit-entries.handler.js';
-import { SearchAuditEntriesQuery } from '@/platform/audit/search-audit-entries.query.js';
+import { auditPermissions } from '@/platform/audit/audit.permissions';
+import type { Audit } from '@/platform/audit/create-audit';
+import { SearchAuditEntriesHandler } from '@/platform/audit/search-audit-entries.handler';
+import { SearchAuditEntriesQuery } from '@/platform/audit/search-audit-entries.query';
 
 /**
  * The audit trail as a capability of the platform, not a bounded context: the store behind its

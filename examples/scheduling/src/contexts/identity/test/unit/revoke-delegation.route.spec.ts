@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { executeRoute } from '@ddd-ts-kit/http';
 import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';
-import { RevokeDelegationCommand } from '@/contexts/identity/application/commands/revoke-delegation/revoke-delegation.command.js';
-import { DelegationNotActiveError } from '@/contexts/identity/domain/errors/delegation-not-active.error.js';
-import { DelegationNotFoundError } from '@/contexts/identity/domain/errors/delegation-not-found.error.js';
-import { revokeDelegationRoute } from '@/contexts/identity/presentation/http/revoke-delegation.route.js';
+import { RevokeDelegationCommand } from '@/contexts/identity/application/commands/revoke-delegation/revoke-delegation.command';
+import { DelegationNotActiveError } from '@/contexts/identity/domain/errors/delegation-not-active.error';
+import { DelegationNotFoundError } from '@/contexts/identity/domain/errors/delegation-not-found.error';
+import { revokeDelegationRoute } from '@/contexts/identity/presentation/http/revoke-delegation.route';
 
 const params = { practiceId: 'practice-1', practitionerId: 'person-2', delegationId: 'delegation-1' };
 const body = undefined;

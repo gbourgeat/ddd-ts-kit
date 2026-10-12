@@ -3,11 +3,16 @@ import { isTestFile as cliIsTestFile } from '../../cli/src/check/project/is-test
 import { locate as cliLocate } from '../../cli/src/check/project/locate.js';
 import { resolveImport as cliResolveImport } from '../../cli/src/check/project/resolve-import.js';
 import { parallelNames as cliParallelNames } from '../../cli/src/check/standard/parallel-names.js';
-import { aliasRoots as cliAliasRoots, toAlias as cliToAlias } from '../../cli/src/alias/index.js';
+import {
+  aliasRoots as cliAliasRoots,
+  specifierSuffix as cliSpecifierSuffix,
+  toAlias as cliToAlias,
+} from '../../cli/src/alias/index.js';
 import { parseConfig as cliParseConfig } from '../../cli/src/config/parse-config.js';
 import { isTestFile } from '../src/project/is-test-file.js';
 import { locate } from '../src/project/locate.js';
 import { resolveImport } from '../src/project/resolve-import.js';
+import { specifierSuffix } from '../src/project/specifier-suffix.js';
 import { aliasRoots } from '../src/project/alias-roots.js';
 import { parseConfig } from '../src/project/parse-config.js';
 import { toAlias } from '../src/project/to-alias.js';
@@ -43,6 +48,10 @@ const RAW_CONFIGS: readonly Record<string, unknown>[] = [
   { stack: { style: 'declared', assembly: 'discovery' } },
   { stack: { style: 'explicit', orm: 'none' } },
   { importAlias: '$app/' },
+  { importExtension: 'none' },
+  { importExtension: 'js', importAlias: '$app/' },
+  { importExtension: 'ts' },
+  { importExtension: 7 },
   { stack: { orm: 'prisma' }, sourceRoot: 'apps/api/src' },
   {
     contexts: {
@@ -94,6 +103,14 @@ const SPECIFIERS = [
   './legacy.cjs',
   '@/contexts/catalog/domain/aggregates/product.aggregate.js',
   '@/shared-kernel/money.vo.js',
+  '@/shared-kernel/money.vo',
+  '@/contexts/catalog/domain/aggregates/product.aggregate',
+  '@/contexts/catalog/published-language/index',
+  '@/contexts/catalog/published-language',
+  '$test/e2e/support/start-application',
+  '../value-objects/amount.vo',
+  '@/platform/config.ts',
+  '@/platform/worker.mjs',
   '$app/shared-kernel/money.vo.js',
   '$test/e2e/support/start-application.js',
   '$scripts/openapi.js',
@@ -140,9 +157,38 @@ describe('the plugin classifies files exactly like the CLI checker', () => {
 
     expect(roots).toEqual(cliRoots.map(({ prefix, directory }) => ({ prefix, directory })));
 
+    const suffix = specifierSuffix(parseConfig(raw).importExtension);
+
+    expect(suffix).toBe(cliSpecifierSuffix(cliParseConfig(raw).importExtension));
+    expect(suffix).toBe(raw['importExtension'] === 'none' ? '' : '.js');
+
     for (const file of PATHS) {
-      expect(toAlias(roots, file), file).toBe(cliToAlias(cliRoots, file));
+      expect(toAlias(roots, file, suffix), file).toBe(cliToAlias(cliRoots, file, suffix));
     }
+  });
+
+  it('names the same source file whether the import carries its extension or not, dots of the file name included', () => {
+    const config = parseConfig({ contexts: { catalog: { classification: 'core', upstreams: [] } } });
+    const from = 'src/contexts/billing/application/commands/issue-invoice/issue-invoice.handler.ts';
+    const resolved = (specifier: string): unknown => resolveImport(config, from, specifier);
+
+    for (const bare of [
+      '@/contexts/catalog/domain/aggregates/product.aggregate',
+      '../../../domain/events/issued.event',
+    ]) {
+      expect(resolved(bare)).toEqual(resolved(`${bare}.js`));
+      expect(resolved(bare)).toEqual(resolved(`${bare}.ts`));
+    }
+
+    expect(resolved('@/contexts/catalog/domain/aggregates/product.aggregate')).toMatchObject({
+      kind: 'file',
+      path: 'src/contexts/catalog/domain/aggregates/product.aggregate.ts',
+      location: { area: 'context', context: 'catalog', layer: 'domain' },
+    });
+
+    expect(resolved('@/platform/data.json')).toMatchObject({ kind: 'file', path: 'src/platform/data.json' });
+    expect(resolved('zod/v4/core.js')).toEqual({ kind: 'package', name: 'zod' });
+    expect(resolved('@scope/package/file.js')).toEqual({ kind: 'package', name: '@scope/package' });
   });
 
   it.each(RAW_CONFIGS)('resolves every sample import the same way under %j', (raw) => {

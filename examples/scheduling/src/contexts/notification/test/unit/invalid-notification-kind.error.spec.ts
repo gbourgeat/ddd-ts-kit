@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { InvalidNotificationKindError } from '@/contexts/notification/domain/errors/invalid-notification-kind.error.js';
+import { InvalidNotificationKindError } from '@/contexts/notification/domain/errors/invalid-notification-kind.error';
 
 describe('InvalidNotificationKindError', () => {
   it('carries its stable code', () => {

@@ -4,41 +4,41 @@ import type { RelationTuple } from '@ddd-ts-kit/auth/rebac';
 import type { IntegrationEventSubscriber } from '@ddd-ts-kit/kernel';
 import { createHttpClient, type HttpClient } from '@ddd-ts-kit/testing/e2e';
 {{#if authz.rebac}}
-import { relationTuples } from '{{alias.platform}}/auth/relation-tuples.js';
+import { relationTuples } from '{{alias.platform}}/auth/relation-tuples{{alias.ext}}';
 {{/if}}
-import { composeApplication } from '{{alias.platform}}/compose-application.js';
+import { composeApplication } from '{{alias.platform}}/compose-application{{alias.ext}}';
 {{#if broker.provided}}
-import type { AppConfig } from '{{alias.platform}}/config/app-config.js';
+import type { AppConfig } from '{{alias.platform}}/config/app-config{{alias.ext}}';
 {{/if}}
-import { loadConfig } from '{{alias.platform}}/config/load-config.js';
-import { openPersistence } from '{{alias.platform}}/database/open-persistence.js';
+import { loadConfig } from '{{alias.platform}}/config/load-config{{alias.ext}}';
+import { openPersistence } from '{{alias.platform}}/database/open-persistence{{alias.ext}}';
 {{#if broker.provided}}
-import { createEventProvider } from '{{alias.platform}}/events/create-event-provider.js';
-import type { EventProvider } from '{{alias.platform}}/events/event-provider.js';
+import { createEventProvider } from '{{alias.platform}}/events/create-event-provider{{alias.ext}}';
+import type { EventProvider } from '{{alias.platform}}/events/event-provider{{alias.ext}}';
 {{/if}}
-import { inProcessEvents } from '{{alias.platform}}/events/in-process-events.js';
+import { inProcessEvents } from '{{alias.platform}}/events/in-process-events{{alias.ext}}';
 {{#if events.outbox}}
-import { startOutboxRelay } from '{{alias.platform}}/events/start-outbox-relay.js';
+import { startOutboxRelay } from '{{alias.platform}}/events/start-outbox-relay{{alias.ext}}';
 {{/if}}
-import { startHttpServer } from '{{alias.platform}}/http/start-http-server.js';
+import { startHttpServer } from '{{alias.platform}}/http/start-http-server{{alias.ext}}';
 {{#if cache.redis}}
-import { openRedis } from '{{alias.platform}}/redis/open-redis.js';
+import { openRedis } from '{{alias.platform}}/redis/open-redis{{alias.ext}}';
 {{/if}}
-import { createCredentials, type Credentials, type TestActor } from '{{alias.test}}/e2e/support/create-credentials.js';
+import { createCredentials, type Credentials, type TestActor } from '{{alias.test}}/e2e/support/create-credentials{{alias.ext}}';
 {{#if broker.addressed}}
 {{#if redis.server}}
-import { noBroker, noRedis, testEnvironment } from '{{alias.test}}/e2e/support/test-environment.js';
+import { noBroker, noRedis, testEnvironment } from '{{alias.test}}/e2e/support/test-environment{{alias.ext}}';
 {{/if}}
 {{#unless redis.server}}
-import { noBroker, testEnvironment } from '{{alias.test}}/e2e/support/test-environment.js';
+import { noBroker, testEnvironment } from '{{alias.test}}/e2e/support/test-environment{{alias.ext}}';
 {{/unless}}
 {{/if}}
 {{#unless broker.addressed}}
 {{#if redis.server}}
-import { noRedis, testEnvironment } from '{{alias.test}}/e2e/support/test-environment.js';
+import { noRedis, testEnvironment } from '{{alias.test}}/e2e/support/test-environment{{alias.ext}}';
 {{/if}}
 {{#unless redis.server}}
-import { testEnvironment } from '{{alias.test}}/e2e/support/test-environment.js';
+import { testEnvironment } from '{{alias.test}}/e2e/support/test-environment{{alias.ext}}';
 {{/unless}}
 {{/unless}}
 

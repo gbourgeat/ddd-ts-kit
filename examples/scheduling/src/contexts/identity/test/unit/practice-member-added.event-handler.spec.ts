@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { PracticeMemberAddedEventHandler } from '@/contexts/identity/application/event-handlers/practice-member-added.event-handler.js';
-import { PracticeMemberAdded } from '@/contexts/identity/domain/events/practice-member-added.event.js';
-import { FakeIdentityRelationships } from '@/contexts/identity/test/fakes/identity-relationships.fake.js';
+import { PracticeMemberAddedEventHandler } from '@/contexts/identity/application/event-handlers/practice-member-added.event-handler';
+import { PracticeMemberAdded } from '@/contexts/identity/domain/events/practice-member-added.event';
+import { FakeIdentityRelationships } from '@/contexts/identity/test/fakes/identity-relationships.fake';
 
 const at = new Date('2026-01-01T00:00:00.000Z');
 

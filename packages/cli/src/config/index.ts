@@ -9,14 +9,17 @@ export type { Config, ContextConfig, Deviation, Limits, Upstream } from './confi
 export { CONFIG_FILE } from './config-file.js';
 export { defaultAllowedPackages } from './default-allowed-packages.js';
 export { DEFAULT_IMPORT_ALIAS } from './default-import-alias.js';
+export { DEFAULT_IMPORT_EXTENSION } from './default-import-extension.js';
 export { editConfigText } from './edit-config-text.js';
 export { FUNCTION_LINES_CEILING } from './function-lines-ceiling.js';
 export { GUARD_MODES } from './guard-modes.js';
+export { IMPORT_EXTENSIONS } from './import-extensions.js';
 export { isOneOf } from './is-one-of.js';
 export { parseConfig } from './parse-config.js';
 export { readConfig } from './read-config.js';
 export { REFERENCE_COVERAGE } from './reference-coverage.js';
 export { RELATIONSHIPS } from './relationships.js';
+export { restackConfigText } from './restack-config-text.js';
 export { serializeConfig } from './serialize-config.js';
 export { SEVERITIES, type Severity } from './severities.js';
 export {

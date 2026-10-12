@@ -4,8 +4,8 @@ import type { AuditStamp, TenantScoped } from '@ddd-ts-kit/kernel';
 {{#unless tenant.scoped}}
 import type { AuditStamp } from '@ddd-ts-kit/kernel';
 {{/unless}}
-import { {{aggregate.pascal}} } from '{{alias.context}}/domain/aggregates/{{aggregate.kebab}}.aggregate.js';
-import type { {{aggregate.tableCamel}} } from '{{alias.context}}/infrastructure/persistence/{{context.kebab}}.schema.js';
+import { {{aggregate.pascal}} } from '{{alias.context}}/domain/aggregates/{{aggregate.kebab}}.aggregate{{alias.ext}}';
+import type { {{aggregate.tableCamel}} } from '{{alias.context}}/infrastructure/persistence/{{context.kebab}}.schema{{alias.ext}}';
 
 type {{aggregate.pascal}}Row = typeof {{aggregate.tableCamel}}.$inferSelect;
 

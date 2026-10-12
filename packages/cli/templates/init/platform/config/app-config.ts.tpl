@@ -4,8 +4,8 @@ import type { LogLevel, RateLimit } from '@ddd-ts-kit/kernel';
 {{#unless cache.rateLimit}}
 import type { LogLevel } from '@ddd-ts-kit/kernel';
 {{/unless}}
-import type { ResilienceSettings } from '{{alias.platform}}/resilience/resilience-settings.js';
-import type { TracingConfig } from '{{alias.platform}}/config/read-tracing.js';
+import type { ResilienceSettings } from '{{alias.platform}}/resilience/resilience-settings{{alias.ext}}';
+import type { TracingConfig } from '{{alias.platform}}/config/read-tracing{{alias.ext}}';
 
 /** The validated configuration of the process: `loadConfig` is the only reader of the environment. */
 export interface AppConfig {

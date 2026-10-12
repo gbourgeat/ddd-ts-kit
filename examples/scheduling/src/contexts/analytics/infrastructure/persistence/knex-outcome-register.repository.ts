@@ -4,8 +4,8 @@ import {
   OutcomeRegister,
   outcomeCriteria,
   type Outcome,
-} from '@/contexts/analytics/application/ports/outcome-register.port.js';
-import { ANALYTICS_SCHEMA } from '@/contexts/analytics/infrastructure/persistence/analytics.schema.js';
+} from '@/contexts/analytics/application/ports/outcome-register.port';
+import { ANALYTICS_SCHEMA } from '@/contexts/analytics/infrastructure/persistence/analytics.schema';
 
 @Repository(OutcomeRegister, [KnexContext])
 export class KnexOutcomeRegister extends KnexReadModelStore<Outcome> implements OutcomeRegister {

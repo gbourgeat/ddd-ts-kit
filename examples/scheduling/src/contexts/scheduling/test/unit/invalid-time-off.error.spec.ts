@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { InvalidTimeOffError } from '@/contexts/scheduling/domain/errors/invalid-time-off.error.js';
+import { InvalidTimeOffError } from '@/contexts/scheduling/domain/errors/invalid-time-off.error';
 
 describe('InvalidTimeOffError', () => {
   it('carries its stable code', () => {

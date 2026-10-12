@@ -24,7 +24,7 @@ Incorrect:
 import { z } from 'zod';
 import { randomUUID } from 'node:crypto';
 import { Logged } from '@ddd-ts-kit/aspects/decorators';
-import type { InvoiceRow } from '@/contexts/billing/infrastructure/persistence/billing.schema.js';
+import type { InvoiceRow } from '@/contexts/billing/infrastructure/persistence/billing.schema';
 ```
 
 Correct:
@@ -32,8 +32,8 @@ Correct:
 ```ts
 // src/contexts/billing/domain/aggregates/invoice.aggregate.ts
 import { AggregateRoot } from '@ddd-ts-kit/kernel';
-import type { Amount } from '@/contexts/billing/domain/value-objects/amount.vo.js';
-import { Money } from '@/shared-kernel/money.vo.js';
+import type { Amount } from '@/contexts/billing/domain/value-objects/amount.vo';
+import { Money } from '@/shared-kernel/money.vo';
 ```
 
 ## Details

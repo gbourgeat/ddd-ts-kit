@@ -229,15 +229,18 @@ sub-directory, and the root pipeline has an `example` job instead. The rules for
 
 ## Imports
 
-Every file is imported by an alias from the project root, never by a relative path:
-`@/contexts/scheduling/domain/aggregates/appointment.aggregate.js`, `$test/e2e/support/...`,
-`$scripts/...`. The alias is declared once, under `paths` in `tsconfig.json`, which the
-compiler, `npm run dev` (tsx), vitest, knip and dependency-cruiser read: they all load `src/`.
-Node reads no alias: `npm run build` compiles, then `ddd-ts-kit build-aliases` rewrites each
-alias of `dist/` into a relative path, so `npm start` and the Docker image are plain `node` on
-`dist/`. `npm run lint:fix` turns a relative import into its alias; `npm run check:arch`
-reports a declaration that no longer follows `importAlias` of `ddd-ts-kit.config.json`, or a
-build that skips the rewrite. The reasons and
+Every file is imported by an alias from the project root, never by a relative path, and
+without an extension: `@/contexts/scheduling/domain/aggregates/appointment.aggregate`,
+`$test/e2e/support/...`, `$scripts/...` (`"importExtension": "none"` in
+`ddd-ts-kit.config.json`). An import names a file, never a directory:
+`.../published-language/index`. The alias is declared once, under `paths` in `tsconfig.json`,
+which the compiler, `npm run dev` (tsx), vitest, knip and dependency-cruiser read: they all
+load `src/`. Node reads no alias and needs the extension: `npm run build` compiles, then
+`ddd-ts-kit build-aliases` rewrites each alias of `dist/` into a relative path ending in `.js`,
+so `npm start` and the Docker image are plain `node` on `dist/`. `npm run lint:fix` turns a
+relative import into its alias and removes an extension; `npm run check:arch` reports a
+declaration that no longer follows `importAlias` and `importExtension` of
+`ddd-ts-kit.config.json`, or a build that skips the rewrite. The reasons and
 what was measured: [docs/tools/import-aliases.md](../../docs/tools/import-aliases.md).
 
 ## What is not built

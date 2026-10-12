@@ -4,9 +4,9 @@ import { authorizationModule } from '@ddd-ts-kit/auth/di';
 {{spec.diPlain}}
 {{spec.contextImports}}
 import type { Message } from '@ddd-ts-kit/kernel';
-import { platformTestModule } from '{{alias.platform}}/platform-test.module.js';
+import { platformTestModule } from '{{alias.platform}}/platform-test.module{{alias.ext}}';
 {{job.permissionsImport}}
-import { {{job.command}}Command } from '{{alias.context}}/application/commands/{{job.commandKebab}}/{{job.commandKebab}}.command.js';
+import { {{job.command}}Command } from '{{alias.context}}/application/commands/{{job.commandKebab}}/{{job.commandKebab}}.command{{alias.ext}}';
 
 const authorization = authorizationModule({
   authorizer: new RoleBasedAuthorizer({

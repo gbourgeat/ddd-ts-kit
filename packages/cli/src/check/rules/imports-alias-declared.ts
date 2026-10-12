@@ -1,6 +1,7 @@
 import { aliasRoots } from '../../alias/index.js';
 import { buildScripts } from '../alias/build-scripts.js';
 import { compilerPaths } from '../alias/compiler-paths.js';
+import { compilerResolution } from '../alias/compiler-resolution.js';
 import { configuredAlias } from '../alias/configured-alias.js';
 import { graphTools } from '../alias/graph-tools.js';
 import type { Inspected } from '../alias/inspected.js';
@@ -12,7 +13,7 @@ import { reporter } from '../support/reporter.js';
 export const importsAliasDeclared: Rule = {
   id: 'imports/alias-declared',
   description:
-    'The import alias has one source, "importAlias", and every tool follows it: tsconfig "paths" is exactly what it gives, vitest and dependency-cruiser read tsconfig, jest repeats the same mapping, no knip "paths" adds another, and the build rewrites the aliases after the compiler.',
+    'The import alias has one source, "importAlias", and the ending of an import another, "importExtension"; every tool follows them: tsconfig "paths" is exactly what the alias gives, "module" and "moduleResolution" are what the ending needs, vitest and dependency-cruiser read tsconfig, jest repeats the same mapping, no knip "paths" adds another, and the build rewrites the aliases after the compiler.',
   scope: 'project',
   run(project) {
     const inspected: Inspected = { project, roots: aliasRoots(project.config), report: reporter(project, this.id) };
@@ -24,6 +25,7 @@ export const importsAliasDeclared: Rule = {
 
     return [
       ...compilerPaths(inspected),
+      ...compilerResolution(inspected),
       ...buildScripts(inspected),
       ...sourceRunners(inspected),
       ...testRunners(inspected),

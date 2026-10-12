@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { ReasonRequiredError } from '@/contexts/scheduling/domain/errors/reason-required.error.js';
+import { ReasonRequiredError } from '@/contexts/scheduling/domain/errors/reason-required.error';
 
 describe('ReasonRequiredError', () => {
   it('carries its stable code', () => {

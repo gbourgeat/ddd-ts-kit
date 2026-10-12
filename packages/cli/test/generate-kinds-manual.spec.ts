@@ -22,7 +22,7 @@ describe('a context wired by hand', () => {
   it('is a function of the platform, named after its file, that registers on the buses and answers what it declares', () => {
     const module = read(root, `${BILLING}/billing.module.ts`);
 
-    expect(module).toContain("import type { Platform } from '@/platform/platform.js';");
+    expect(module).toContain("import type { Platform } from '@/platform/platform';");
     expect(module).toContain('export function billingModule(platform: Platform): BillingWiring {');
 
     expect(module).toContain(
@@ -67,7 +67,7 @@ describe('a context wired by hand', () => {
     );
 
     expect(read(root, 'src/platform/database/schema.ts')).toContain(
-      "from '@/contexts/billing/infrastructure/persistence/create-billing-tables.schema.js';",
+      "from '@/contexts/billing/infrastructure/persistence/create-billing-tables.schema';",
     );
   });
 
@@ -82,7 +82,7 @@ describe('a context wired by hand', () => {
     ]);
 
     expect(read(root, `${http}/issue-invoice.route.ts`)).toContain(
-      "import { IssueInvoiceBody } from '@/contexts/billing/presentation/http/issue-invoice-body.dto.js';\nimport { IssueInvoiceAccepted } from '@/contexts/billing/presentation/http/issue-invoice-accepted.dto.js';",
+      "import { IssueInvoiceBody } from '@/contexts/billing/presentation/http/issue-invoice-body.dto';\nimport { IssueInvoiceAccepted } from '@/contexts/billing/presentation/http/issue-invoice-accepted.dto';",
     );
 
     expect(read(root, `${BILLING}/published-language/invoice-issued.v1.payload.ts`)).toContain(
@@ -90,7 +90,7 @@ describe('a context wired by hand', () => {
     );
 
     expect(read(root, `${BILLING}/published-language/index.ts`)).toContain(
-      "export * from '@/contexts/billing/published-language/invoice-issued.v1.payload.js';\nexport * from '@/contexts/billing/published-language/invoice-issued.v1.integration-event.js';",
+      "export * from '@/contexts/billing/published-language/invoice-issued.v1.payload';\nexport * from '@/contexts/billing/published-language/invoice-issued.v1.integration-event';",
     );
   });
 });

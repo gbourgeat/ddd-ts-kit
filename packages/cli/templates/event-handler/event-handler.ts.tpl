@@ -1,4 +1,4 @@
-import type { {{event.pascal}} } from '{{alias.context}}/domain/events/{{event.kebab}}.event.js';
+import type { {{event.pascal}} } from '{{alias.context}}/domain/events/{{event.kebab}}.event{{alias.ext}}';
 
 export class {{event.pascal}}EventHandler {
   async handle(event: {{event.pascal}}): Promise<void> {

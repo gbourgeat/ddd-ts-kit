@@ -1,6 +1,6 @@
-import { connectToDatabase } from '{{alias.platform}}/database/connect-to-database.js';
-import { persistenceOver } from '{{alias.platform}}/database/persistence-over.js';
-import type { Persistence } from '{{alias.platform}}/database/persistence.js';
+import { connectToDatabase } from '{{alias.platform}}/database/connect-to-database{{alias.ext}}';
+import { persistenceOver } from '{{alias.platform}}/database/persistence-over{{alias.ext}}';
+import type { Persistence } from '{{alias.platform}}/database/persistence{{alias.ext}}';
 
 export function openPersistence(config: { readonly databaseUrl: string }): Persistence {
   const connection = connectToDatabase(config.databaseUrl);

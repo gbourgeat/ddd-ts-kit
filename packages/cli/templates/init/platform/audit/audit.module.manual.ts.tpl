@@ -1,10 +1,10 @@
 import { requires, type UseCaseDeclaration } from '@ddd-ts-kit/auth';
 import type { Route } from '@ddd-ts-kit/http';
-import type { Platform } from '{{alias.platform}}/platform.js';
-import { auditPermissions } from '{{alias.platform}}/audit/audit.permissions.js';
-import { SearchAuditEntriesHandler } from '{{alias.platform}}/audit/search-audit-entries.handler.js';
-import { SearchAuditEntriesQuery } from '{{alias.platform}}/audit/search-audit-entries.query.js';
-import { searchAuditEntriesRoute } from '{{alias.platform}}/audit/search-audit-entries.route.js';
+import type { Platform } from '{{alias.platform}}/platform{{alias.ext}}';
+import { auditPermissions } from '{{alias.platform}}/audit/audit.permissions{{alias.ext}}';
+import { SearchAuditEntriesHandler } from '{{alias.platform}}/audit/search-audit-entries.handler{{alias.ext}}';
+import { SearchAuditEntriesQuery } from '{{alias.platform}}/audit/search-audit-entries.query{{alias.ext}}';
+import { searchAuditEntriesRoute } from '{{alias.platform}}/audit/search-audit-entries.route{{alias.ext}}';
 
 interface AuditWiring {
   readonly name: string;

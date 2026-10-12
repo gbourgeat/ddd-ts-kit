@@ -76,7 +76,7 @@ export function writeAgentSettings(ws: Workspace): void {
     return;
   }
 
-  const merged = mergePermissions(settings);
+  const merged = mergePermissions(settings, (rule) => ws.spoken(rule));
 
   ws.update(AGENT_SETTINGS, serialize(merged.settings));
 
@@ -97,14 +97,20 @@ function parse(text: string): Record<string, unknown> | undefined {
   }
 }
 
-function mergePermissions(settings: Record<string, unknown>): { settings: Record<string, unknown>; added: string[] } {
+interface Merged {
+  readonly settings: Record<string, unknown>;
+  readonly added: string[];
+}
+
+/** A rule is compared as the project says it: its settings name the package manager it runs, not npm. */
+function mergePermissions(settings: Record<string, unknown>, spoken: (rule: string) => string): Merged {
   const current = isRecord(settings['permissions']) ? settings['permissions'] : {};
   const added: string[] = [];
   const permissions: Record<string, unknown> = { ...current };
 
   for (const [kind, wanted] of Object.entries(PERMISSIONS)) {
     const present: unknown[] = Array.isArray(current[kind]) ? current[kind] : [];
-    const missing = wanted.filter((rule) => !present.includes(rule));
+    const missing = wanted.map(spoken).filter((rule) => !present.includes(rule));
 
     permissions[kind] = [...present, ...missing];
     added.push(...missing.map((rule) => `${kind} ${rule}`));

@@ -49,6 +49,7 @@ ddd-ts-kit init [--http express|fastify|nest|none]
                 [--style declared|explicit] [--assembly barrel|discovery]
                 [--package-manager npm|pnpm]
                 [--allow-no-outbox "<reason>"] [--import-alias '$<name>/']
+                [--import-extension none|js]
                 [--context <name>:<core|supporting|generic>]...
                 [--dry-run] [--force]
 ```
@@ -61,6 +62,22 @@ first commit holds them and `docs:check` passes at once; a contract that is alre
 left alone, `--force` included. An existing `package.json` is merged: missing scripts and
 dependencies are added, yours are kept and mentioned in the notes. Run again later, `init` keeps
 the stack recorded in the config.
+
+`init --force` on a project that is already initialised rewrites the files `init` owns and keeps
+the config: the contexts and their upstreams, the rules, the limits, the deviations and every
+other key stay as written, and the stack changes only where a flag names a choice
+(`init --force --logger pino` changes the logger; a combination the recorded stack cannot take
+is refused as for a new project). The composition root, the proof that each context wires alone
+and the registry of permissions are rewritten from their templates, then the declared contexts
+are wired into them again; what another generator had added to a file of the platform (the
+value of a gateway, the settings of a job) is not, and a note says so. A config that cannot be
+read is replaced.
+
+An import of a file of the project is written without an extension
+(`@/contexts/billing/domain/aggregates/invoice.aggregate`): `init` records
+`"importExtension": "none"`, and `--import-extension js` asks for the `.js` of the emitted file
+instead. A config without the key is read as `js`, so a project generated before the key
+existed keeps its spelling. See [docs/CONFIG.md](../../docs/CONFIG.md).
 
 Defaults: `express`, `zod`, `tsyringe` (`nest` with `--http nest`, and only then), `vitest`,
 `drizzle` on `postgres`, `outbox` when there is an ORM, `swagger`, `github`, `jwt`, `rbac`, no broker,
@@ -164,7 +181,7 @@ to its lists, everything else is kept, and the notes of the command list what wa
 denied and `Read(!./.env.example)`, a negation placed after it in the same list, takes the
 example file back out.
 
-Every `.ts` file `init` and `generate` write imports by the alias (`@/platform/errors.js`),
+Every `.ts` file `init` and `generate` write imports by the alias (`@/platform/errors`),
 never by a relative path; the barrel and a published-language index re-export by it too.
 
 Scripts: `dev` (`tsx watch`, which resolves an alias from the `paths` of `tsconfig.json`,
@@ -378,10 +395,14 @@ ddd-ts-kit build-aliases [--project <tsconfig>]
 ```
 
 The second step of `npm run build`, after the compiler. The compiler emits an import alias as
-it was written (`@/platform/errors.js`), and Node resolves no alias: this command rewrites, in
-every `.js`, `.mjs`, `.cjs`, `.d.ts`, `.d.mts` and `.d.cts` under the output directory of the
-tsconfig (`tsconfig.build.json` by default), each alias specifier into the relative path of the
-emitted file it names, so that `node dist/src/main.js` runs with no loader and no flag.
+it was written (`@/platform/errors`), and Node resolves no alias and completes no extension:
+this command rewrites, in every `.js`, `.mjs`, `.cjs`, `.d.ts`, `.d.mts` and `.d.cts` under the
+output directory of the tsconfig (`tsconfig.build.json` by default), each alias specifier into
+the relative path of the emitted file it names, with its `.js` extension
+(`../../platform/errors.js`), so that `node dist/src/main.js` runs with no loader and no flag.
+It reads `importAlias` and `importExtension` of the config: `@/platform/errors` names
+`platform/errors.js` under `none`, `@/platform/errors.js` names it under `js`, and no other
+spelling is guessed.
 
 - Rewritten: the specifier of `import ... from`, `export ... from`, a bare `import`,
   `import('...')` and `require('...')` with a string literal, `import.meta.resolve('...')`, and
@@ -390,9 +411,13 @@ emitted file it names, so that `node dist/src/main.js` runs with no loader and n
   code, a comment, a template or a regular expression, is left alone. Lines never move and the
   source maps are not touched.
 - Idempotent: a second run rewrites nothing.
-- It exits 2 and writes nothing when an alias names no emitted file, when `import()` is given
-  an alias completed at run time (a template with an interpolation, a concatenation), or when
-  the output directory does not exist.
+- It exits 2 and writes nothing when an alias names no emitted file, when it names a directory
+  (an alias names one file: `.../published-language/index`), when it is written in the spelling
+  the config does not ask for, when `import()` is given an alias completed at run time (a
+  template with an interpolation, a concatenation), or when the output directory does not
+  exist. Each refusal says the file, the line and what to write instead.
+- A package is never touched, whatever its subpath ends with (`zod/v4/core.js`,
+  `@scope/package/file.js`, `node:fs`).
 
 `--json` answers `{ outDir, files, changed, specifiers }`. `ddd-ts-kit check` reports a script
 that compiles without this step (`imports/alias-declared`). The whole mechanism:
@@ -559,8 +584,9 @@ saying what to do instead. Exit code 1 when there is at least one error.
 | `clean/file-size` | a file of more than 350 lines, sources and tests; a path with a segment `generated` and declaration files are exempt |
 | `composition/only-in-module` | `new X`, or `bind(..).toClass(X, ..)` and `rebind(..).toClass(X, ..)`, of a class imported from `infrastructure/`, outside the module file, `main.ts`, the platform and tests; in a file importing `@ddd-ts-kit/di`, a call of `contextModule`, `discoverContext` or `.include(` outside those places and `apps/<context>/main.ts` |
 | `imports/alias-only` | under the source root, `test/` and `scripts/`: an `import`, `export ... from` or `import()` with a relative specifier, the same directory included (the fix names the alias to write; `eslint --fix` writes it); an alias specifier with a `.` or `..` segment |
-| `imports/alias-declared` | an `importAlias` that is not `@/` or `$<name>/`, or that is `$test/`, `$scripts/`, `$generated/`; a `paths` entry of `tsconfig.json` missing or different from what `importAlias` gives (the fix gives the entry); another `paths` entry under an alias; a `baseUrl`; a `tsconfig.build.json` whose `paths` differ; `paths` of `knip.json` mapping an alias; a script that compiles (`tsc` without `--noEmit`) and does not run `ddd-ts-kit build-aliases` afterwards; a script running `tsx --tsconfig` on another file; a `vitest` config at the root without `tsconfigPaths: true`, a `jest` config without the derived `moduleNameMapper` entries, or `.dependency-cruiser.cjs` without `tsConfig`. A project without `package.json` is not judged |
-| `config/valid` | unknown upstream, classification, relationship, rule id or `guard` mode; a context missing on disk or in the config; a `commit` limit that is not a positive integer |
+| `imports/extension` | under the source root, `test/` and `scripts/`: with `importExtension` `none`, an alias specifier that ends with `.js`, `.mjs`, `.cjs`, `.ts`, `.mts` or `.cts`, or that names a directory holding an `index.ts`; with `js` (or no key), an alias specifier that does not end with `.js` (the fix names the specifier to write; `eslint --fix` writes it). A package subpath is never judged |
+| `imports/alias-declared` | an `importAlias` that is not `@/` or `$<name>/`, or that is `$test/`, `$scripts/`, `$generated/`; a `paths` entry of `tsconfig.json` missing or different from what `importAlias` gives (the fix gives the entry); another `paths` entry under an alias; a `baseUrl`; a `tsconfig.build.json` whose `paths` differ; `paths` of `knip.json` mapping an alias; a script that compiles (`tsc` without `--noEmit`) and does not run `ddd-ts-kit build-aliases` afterwards; a script running `tsx --tsconfig` on another file; a `vitest` config at the root without `tsconfigPaths: true`, a `jest` config without the derived `moduleNameMapper` entries, or `.dependency-cruiser.cjs` without `tsConfig`; `module` and `moduleResolution` of `tsconfig.json` (or of a `tsconfig.build.json` that sets its own) that are not what `importExtension` gives: `ESNext`, `Bundler` and `customConditions` holding `node` under `none`, and under `js` a written value that is not a Node resolution; a jest mapping whose pattern does not end as the imports do. A project without `package.json` is not judged |
+| `config/valid` | unknown upstream, classification, relationship, rule id, `guard` mode or `importExtension`; a context missing on disk or in the config; a `commit` limit that is not a positive integer |
 | `config/suppression-needs-reason` | a suppression without a rule id or a reason (kept as an alias next to `governance/recorded-deviation`, which judges the reason) |
 | `authz/declared` | in a module file, `builder.command(X)` or `builder.query(X)` without `.requires(` or `.public(` in its chain, unless the message class carries `@Requires` or `@Public` of `@ddd-ts-kit/kernel/declarations`; with manual or nest wiring, a command or query class absent from every `requires(X, ...)` and `publicUseCase(X)` of the module file and of `application/authorization/`; a `defineRoute` without `security` (the route type refuses it already, and an empty list too: this is the text-level net for a definition built loosely); in the declared style, the exported class of a `*.command.ts` or `*.query.ts` file carrying neither `@Requires` nor `@Public` |
 | `authz/in-application` | `presentation/`: a test on roles, `isAdmin`, the import of an authorizer or of `Access`; `infrastructure/`: `authorize(` or `check(` on an authorizer or access, `ForbiddenError`; `domain/`: any import of `@ddd-ts-kit/auth`, of the actor types of the kernel (`Actor`, `ActorContext`, `Session`, `ExecutionContext`, the authorized messages), a read of `.roles` or `.permissions` on an actor. The request glue of `@ddd-ts-kit/auth` (`actorOf`, `sessionOf`, `resolveSession`, `SessionAuthenticator`) is free in `presentation/`. `presentation/` and `infrastructure/`: the import of `Requires`, `Public` or `Policy` from `@ddd-ts-kit/kernel/declarations`, or of the ports `Access` and `PolicyAccess` from `@ddd-ts-kit/auth`; they are free in `application/` |

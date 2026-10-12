@@ -1,12 +1,12 @@
 @@imports
 {{#if upstream.known}}
 import { CommandBus } from '@ddd-ts-kit/kernel';
-import { {{upstream.definition}} as {{name.camel}}Definition } from '{{alias.contexts}}/{{upstream.kebab}}/published-language/index.js';
+import { {{upstream.definition}} as {{name.camel}}Definition } from '{{alias.contexts}}/{{upstream.kebab}}/published-language/index{{alias.ext}}';
 {{/if}}
 {{#unless upstream.known}}
 import { CommandBus, EventSubscribers, ExecutionScope, ProcessedEventStore, idempotent, inEventScope } from '@ddd-ts-kit/kernel';
 {{/unless}}
-import { {{name.pascal}}IntegrationHandler } from '{{alias.context}}/application/integration/handlers/{{name.kebab}}.integration-handler.js';
+import { {{name.pascal}}IntegrationHandler } from '{{alias.context}}/application/integration/handlers/{{name.kebab}}.integration-handler{{alias.ext}}';
 @@registrations
 {{#if upstream.known}}
 builder.on({{name.camel}}Definition, { consumer: '{{context.kebab}}.{{name.kebab}}' }).handledBy({{name.pascal}}IntegrationHandler, [CommandBus]);

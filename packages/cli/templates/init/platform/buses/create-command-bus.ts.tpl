@@ -31,9 +31,9 @@ import {
 } from '@ddd-ts-kit/kernel';
 {{/unless}}
 {{/if}}
-import type { Foundations } from '{{alias.platform}}/lay-foundations.js';
+import type { Foundations } from '{{alias.platform}}/lay-foundations{{alias.ext}}';
 {{#if cache.relaySignal}}
-import type { RedisServices } from '{{alias.platform}}/redis/open-redis.js';
+import type { RedisServices } from '{{alias.platform}}/redis/open-redis{{alias.ext}}';
 
 interface Signalled {
   readonly redis?: RedisServices;

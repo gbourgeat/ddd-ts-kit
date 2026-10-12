@@ -36,7 +36,7 @@ describe.runIf(SLOW)('a violation written into a generated project', () => {
   }, 120_000);
 
   it('dependency-cruiser catches a domain that imports its infrastructure', () => {
-    project.prepend(SERVICE, "import '@/contexts/billing/infrastructure/persistence/invoice.mapper.js';\n");
+    project.prepend(SERVICE, "import '@/contexts/billing/infrastructure/persistence/invoice.mapper';\n");
 
     expect(findingsOf(project.root, DEPCRUISE)).toContain('layer-domain-purity');
   }, 120_000);
@@ -65,7 +65,7 @@ describe.runIf(SLOW)('a violation written into a generated project', () => {
   it('the checker catches a barrel that a role file written by hand left behind, and so does the documentation check', () => {
     project.edit(
       BARREL,
-      "export * from '@/contexts/billing/application/commands/issue-invoice/issue-invoice.handler.js';\n",
+      "export * from '@/contexts/billing/application/commands/issue-invoice/issue-invoice.handler';\n",
       '',
     );
 

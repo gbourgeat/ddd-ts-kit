@@ -1,6 +1,7 @@
 import type { Injection } from '../injection.js';
 import { PATHS } from '../paths.js';
 import { SOURCE_ALIAS } from '../source-alias.js';
+import { SOURCE_SUFFIX } from '../source-suffix.js';
 
 const { ADAPTER, DUE_HANDLER, EVENT_HANDLER, JOB, OCCUPANCY_ROUTE, PLAN_HANDLER, PORT, SEND_HANDLER } = PATHS;
 
@@ -8,7 +9,9 @@ const CONCRETE =
   'What implements a port lives outside the application layer: naming it there is also an import that leaves the layer.';
 
 const ALIAS = `${SOURCE_ALIAS}contexts/notification`;
-const PORT_IMPORT = `import { ReminderRepository } from '${ALIAS}/domain/repositories/reminder.repository.js';`;
+/** The ending the example does not write: `.js` when its config says `none`, nothing otherwise. */
+const OTHER_SUFFIX = SOURCE_SUFFIX === '' ? '.js' : '';
+const PORT_IMPORT = `import { ReminderRepository } from '${ALIAS}/domain/repositories/reminder.repository${SOURCE_SUFFIX}';`;
 const USER_CONTEXT = 'src/shared-kernel/user-context.ts';
 
 /** How classes are declared, wired and scheduled, and what stays outside the contexts. */
@@ -65,7 +68,7 @@ export const WIRING_INJECTIONS: readonly Injection[] = [
       {
         file: SEND_HANDLER,
         where: 'start',
-        to: `import { FakeNotificationRepository } from '${ALIAS}/test/fakes/notification.repository.fake.js';\n`,
+        to: `import { FakeNotificationRepository } from '${ALIAS}/test/fakes/notification.repository.fake${SOURCE_SUFFIX}';\n`,
       },
       { file: SEND_HANDLER, from: '[NotificationRepository, Contacts', to: '[FakeNotificationRepository, Contacts' },
     ],
@@ -118,12 +121,26 @@ export const WIRING_INJECTIONS: readonly Injection[] = [
     changes: [
       {
         file: PLAN_HANDLER,
-        from: `from '${ALIAS}/application/commands/plan-reminder/plan-reminder.command.js';`,
-        to: "from './plan-reminder.command.js';",
+        from: `from '${ALIAS}/application/commands/plan-reminder/plan-reminder.command${SOURCE_SUFFIX}';`,
+        to: `from './plan-reminder.command${SOURCE_SUFFIX}';`,
       },
     ],
     checker: true,
     eslint: 'ddd-ts-kit/imports-alias-only',
+  },
+  {
+    rule: 'imports/extension',
+    what: 'an import written in the spelling the config does not ask for',
+    file: PLAN_HANDLER,
+    changes: [
+      {
+        file: PLAN_HANDLER,
+        from: `from '${ALIAS}/application/commands/plan-reminder/plan-reminder.command${SOURCE_SUFFIX}';`,
+        to: `from '${ALIAS}/application/commands/plan-reminder/plan-reminder.command${OTHER_SUFFIX}';`,
+      },
+    ],
+    checker: true,
+    eslint: 'ddd-ts-kit/imports-extension',
   },
   {
     rule: 'aspects/outside-in',

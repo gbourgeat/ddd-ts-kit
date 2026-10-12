@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { unwrap } from '@ddd-ts-kit/kernel';
-import { InvalidSlotError } from '@/contexts/scheduling/domain/errors/invalid-slot.error.js';
-import { Slot } from '@/contexts/scheduling/domain/value-objects/slot.vo.js';
+import { InvalidSlotError } from '@/contexts/scheduling/domain/errors/invalid-slot.error';
+import { Slot } from '@/contexts/scheduling/domain/value-objects/slot.vo';
 
 describe('Slot', () => {
   it('is equal to another slot with the same instants', () => {

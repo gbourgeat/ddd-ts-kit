@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { InvalidWaiterError } from '@/contexts/scheduling/domain/errors/invalid-waiter.error.js';
+import { InvalidWaiterError } from '@/contexts/scheduling/domain/errors/invalid-waiter.error';
 
 describe('InvalidWaiterError', () => {
   it('carries its stable code', () => {

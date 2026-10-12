@@ -1,10 +1,10 @@
 import { Clock, unwrap } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
-import { Person } from '@/contexts/identity/domain/aggregates/person.aggregate.js';
-import { PersonRepository } from '@/contexts/identity/domain/repositories/person.repository.js';
-import { DisplayName } from '@/contexts/identity/domain/value-objects/display-name.vo.js';
-import { Email } from '@/contexts/identity/domain/value-objects/email.vo.js';
-import { RegisterPersonCommand } from '@/contexts/identity/application/commands/register-person/register-person.command.js';
+import { Person } from '@/contexts/identity/domain/aggregates/person.aggregate';
+import { PersonRepository } from '@/contexts/identity/domain/repositories/person.repository';
+import { DisplayName } from '@/contexts/identity/domain/value-objects/display-name.vo';
+import { Email } from '@/contexts/identity/domain/value-objects/email.vo';
+import { RegisterPersonCommand } from '@/contexts/identity/application/commands/register-person/register-person.command';
 
 @CommandHandler(RegisterPersonCommand, [PersonRepository, Clock])
 export class RegisterPersonHandler implements CommandHandler<RegisterPersonCommand> {

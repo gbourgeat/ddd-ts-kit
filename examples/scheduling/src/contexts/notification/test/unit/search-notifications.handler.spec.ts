@@ -3,14 +3,14 @@ import { RoleBasedAuthorizer, type AccessScope, type Authorizer } from '@ddd-ts-
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { anActor } from '@ddd-ts-kit/auth/testing';
 import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
-import * as notificationDeclarations from '@/contexts/notification/notification.declarations.js';
+import * as notificationDeclarations from '@/contexts/notification/notification.declarations';
 import { cursorPage, offsetPage } from '@ddd-ts-kit/kernel';
-import { platformTestModule } from '@/platform/platform-test.module.js';
-import { notificationPermissions } from '@/contexts/notification/application/authorization/notification.permissions.js';
-import { SearchNotificationsReader } from '@/contexts/notification/application/ports/search-notifications-reader.port.js';
-import { SearchNotificationsQuery } from '@/contexts/notification/application/queries/search-notifications/search-notifications.query.js';
-import type { SearchNotificationsItem } from '@/contexts/notification/application/queries/search-notifications/search-notifications.result.js';
-import { FakeSearchNotificationsReader } from '@/contexts/notification/test/fakes/search-notifications-reader.fake.js';
+import { platformTestModule } from '@/platform/platform-test.module';
+import { notificationPermissions } from '@/contexts/notification/application/authorization/notification.permissions';
+import { SearchNotificationsReader } from '@/contexts/notification/application/ports/search-notifications-reader.port';
+import { SearchNotificationsQuery } from '@/contexts/notification/application/queries/search-notifications/search-notifications.query';
+import type { SearchNotificationsItem } from '@/contexts/notification/application/queries/search-notifications/search-notifications.result';
+import { FakeSearchNotificationsReader } from '@/contexts/notification/test/fakes/search-notifications-reader.fake';
 
 const roles = new RoleBasedAuthorizer({ roles: { holder: [notificationPermissions['notification.read']] } });
 const holder = anActor().withRole('holder').build();

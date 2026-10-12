@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { AppointmentAlreadyConfirmedError } from '@/contexts/scheduling/domain/errors/appointment-already-confirmed.error.js';
+import { AppointmentAlreadyConfirmedError } from '@/contexts/scheduling/domain/errors/appointment-already-confirmed.error';
 
 describe('AppointmentAlreadyConfirmedError', () => {
   it('carries its stable code', () => {

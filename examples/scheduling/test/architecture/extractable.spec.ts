@@ -2,12 +2,12 @@ import { describe, expect, it } from 'vitest';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { AllowAll } from '@ddd-ts-kit/auth/testing';
 import { contextModule, createTestApplication, type ContextModule } from '@ddd-ts-kit/di';
-import { platformTestModule } from '@/platform/platform-test.module.js';
+import { platformTestModule } from '@/platform/platform-test.module';
 // ddd-ts-kit:imports
-import * as identityDeclarations from '@/contexts/identity/identity.declarations.js';
-import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations.js';
-import * as notificationDeclarations from '@/contexts/notification/notification.declarations.js';
-import * as analyticsDeclarations from '@/contexts/analytics/analytics.declarations.js';
+import * as identityDeclarations from '@/contexts/identity/identity.declarations';
+import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations';
+import * as notificationDeclarations from '@/contexts/notification/notification.declarations';
+import * as analyticsDeclarations from '@/contexts/analytics/analytics.declarations';
 // /ddd-ts-kit:imports
 
 /** The authorization of the platform, with a model that grants everything: this proof is about wiring, not about rights. */

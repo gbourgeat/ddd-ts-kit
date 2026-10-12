@@ -3,19 +3,19 @@ import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { anActor } from '@ddd-ts-kit/auth/testing';
 import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
-import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations.js';
-import { platformTestModule } from '@/platform/platform-test.module.js';
-import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions.js';
-import { BookAppointmentCommand } from '@/contexts/scheduling/application/commands/book-appointment/book-appointment.command.js';
-import { SchedulingRelationships } from '@/contexts/scheduling/application/ports/scheduling-relationships.port.js';
-import type { Appointment } from '@/contexts/scheduling/domain/aggregates/appointment.aggregate.js';
-import { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository.js';
-import { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository.js';
-import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder.js';
-import { aCalendar } from '@/contexts/scheduling/test/builders/calendar.builder.js';
-import { FakeAppointmentRepository } from '@/contexts/scheduling/test/fakes/appointment.repository.fake.js';
-import { FakeCalendarRepository } from '@/contexts/scheduling/test/fakes/calendar.repository.fake.js';
-import { FakeSchedulingRelationships } from '@/contexts/scheduling/test/fakes/scheduling-relationships.fake.js';
+import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations';
+import { platformTestModule } from '@/platform/platform-test.module';
+import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
+import { BookAppointmentCommand } from '@/contexts/scheduling/application/commands/book-appointment/book-appointment.command';
+import { SchedulingRelationships } from '@/contexts/scheduling/application/ports/scheduling-relationships.port';
+import type { Appointment } from '@/contexts/scheduling/domain/aggregates/appointment.aggregate';
+import { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository';
+import { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository';
+import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder';
+import { aCalendar } from '@/contexts/scheduling/test/builders/calendar.builder';
+import { FakeAppointmentRepository } from '@/contexts/scheduling/test/fakes/appointment.repository.fake';
+import { FakeCalendarRepository } from '@/contexts/scheduling/test/fakes/calendar.repository.fake';
+import { FakeSchedulingRelationships } from '@/contexts/scheduling/test/fakes/scheduling-relationships.fake';
 
 const holders = authorizationModule({
   authorizer: new RoleBasedAuthorizer({ roles: { holder: [schedulingPermissions['appointment.book']] } }),

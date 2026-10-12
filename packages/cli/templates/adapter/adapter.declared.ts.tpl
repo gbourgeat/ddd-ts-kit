@@ -5,8 +5,8 @@ import { retry, timeout } from '@ddd-ts-kit/aspects';
 import { Retry, Timeout } from '@ddd-ts-kit/aspects/decorators';
 {{/if}}
 import { {{adapter.decorator}} } from '@ddd-ts-kit/kernel/declarations';
-import { {{name.pascal}} } from '{{alias.context}}/application/ports/{{name.kebab}}.port.js';
-import { ownPolicy } from '{{alias.platform}}/resilience/own-policy.js';
+import { {{name.pascal}} } from '{{alias.context}}/application/ports/{{name.kebab}}.port{{alias.ext}}';
+import { ownPolicy } from '{{alias.platform}}/resilience/own-policy{{alias.ext}}';
 
 interface OutboundCall {
   readonly operation: string;

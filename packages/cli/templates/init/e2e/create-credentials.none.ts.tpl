@@ -1,7 +1,7 @@
 import type { Authenticator } from '@ddd-ts-kit/auth';
 import type { HttpHeaders } from '@ddd-ts-kit/testing/e2e';
-import { developmentActorHeader } from '{{alias.platform}}/auth/development-actor-header.js';
-import { DevelopmentHeaderAuthenticator } from '{{alias.platform}}/auth/development-header-authenticator.js';
+import { developmentActorHeader } from '{{alias.platform}}/auth/development-actor-header{{alias.ext}}';
+import { DevelopmentHeaderAuthenticator } from '{{alias.platform}}/auth/development-header-authenticator{{alias.ext}}';
 
 /** Who a test calls as: the identity, the roles and the tenant the development header carries. */
 export interface TestActor {

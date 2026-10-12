@@ -1,7 +1,7 @@
 import { AuthorizedCommand, type Actor } from '@ddd-ts-kit/kernel';
 import { Requires } from '@ddd-ts-kit/kernel/declarations';
-import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions.js';
-import type { AppointmentTypeProps } from '@/contexts/scheduling/domain/value-objects/appointment-type.vo.js';
+import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
+import type { AppointmentTypeProps } from '@/contexts/scheduling/domain/value-objects/appointment-type.vo';
 
 @Requires(schedulingPermissions['calendar.define-appointment-type'], {
   resource: (command: DefineAppointmentTypeCommand) => ({ type: 'calendar', id: command.calendarId }),

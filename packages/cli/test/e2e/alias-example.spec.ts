@@ -44,7 +44,7 @@ describe.runIf(SLOW)('the import alias at run time (the example application)', (
   }, 120_000);
 
   it('the dev runner is answered its sources, although the compiled copy now exists', () => {
-    expect(resolvedBy(EXAMPLE, DEV_RUNNER, '@/main.js')).toBe('src/main.ts');
-    expect(resolvedBy(EXAMPLE, DEV_RUNNER, '$scripts/openapi.js')).toBe('scripts/openapi.ts');
+    expect(resolvedBy(EXAMPLE, DEV_RUNNER, '@/main')).toBe('src/main.ts');
+    expect(resolvedBy(EXAMPLE, DEV_RUNNER, '$scripts/openapi')).toBe('scripts/openapi.ts');
   }, 120_000);
 });

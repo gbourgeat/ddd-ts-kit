@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { InMemoryCommandBus, InMemoryQueryBus } from '@ddd-ts-kit/kernel';
-import { schedulingRoutes } from '@/contexts/scheduling/presentation/http/scheduling.routes.js';
+import { schedulingRoutes } from '@/contexts/scheduling/presentation/http/scheduling.routes';
 
 describe('The routes of scheduling', () => {
   it('answer each method and path once, each under an operation of its own', () => {

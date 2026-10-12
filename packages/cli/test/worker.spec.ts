@@ -12,8 +12,8 @@ describe('generate worker', () => {
   it('writes an entry point with the modules of main.ts, no HTTP server, and the jobs started whatever RUN_JOBS says', () => {
     const worker = read(withWorker(), WORKER);
 
-    expect(worker.split('\n')[1]).toBe("import { tracing } from '@/platform/tracing.js';");
-    expect(worker).toContain("import { composeApplication } from '@/platform/compose-application.js';");
+    expect(worker.split('\n')[1]).toBe("import { tracing } from '@/platform/tracing';");
+    expect(worker).toContain("import { composeApplication } from '@/platform/compose-application';");
     expect(worker).toContain('jobs: { start: true, settings: jobSettings(process.env) },');
     expect(worker).toContain('authenticator: createAuthenticator(config),');
     expect(worker).not.toContain('startHttpServer');
@@ -183,11 +183,9 @@ describe('generate service', () => {
     const service = read(root, 'src/apps/billing/main.ts');
 
     expect(service).toContain("import { contextModule } from '@ddd-ts-kit/di';");
-    expect(service).toContain("import * as billingDeclarations from '@/contexts/billing/billing.declarations.js';");
+    expect(service).toContain("import * as billingDeclarations from '@/contexts/billing/billing.declarations';");
 
-    expect(service).toContain(
-      "import { billingRoutes } from '@/contexts/billing/presentation/http/billing.routes.js';",
-    );
+    expect(service).toContain("import { billingRoutes } from '@/contexts/billing/presentation/http/billing.routes';");
 
     expect(read(root, 'docker-compose.yml')).toContain('\n  billing:\n');
   });

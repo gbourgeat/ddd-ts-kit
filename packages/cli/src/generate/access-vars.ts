@@ -1,4 +1,4 @@
-import { contextAlias } from '../alias/index.js';
+import { specifierOf } from '../alias/index.js';
 import { CliError } from '../cli-error.js';
 import { fitStatement } from '../layout/index.js';
 import type { RenderContext } from '../templating/index.js';
@@ -72,8 +72,8 @@ function publicAccess(useCase: UseCaseMessage): RenderContext {
 
 function protectedAccess(scope: Scope, useCase: UseCaseMessage, permission: string): RenderContext {
   const set = `${scope.context.camel}Permissions`;
-  const file = permissionsFile(scope.context).replace(/\.ts$/, '.js');
-  const permissions = `import { ${set} } from '${contextAlias(scope.config, scope.context.kebab)}/${file}';`;
+  const file = `${scope.config.contextsDir}/${scope.context.kebab}/${permissionsFile(scope.context)}`;
+  const permissions = `import { ${set} } from '${specifierOf(scope.config, file)}';`;
   const requirement = `${set}['${permission}']${resourceOption(scope)}`;
 
   return {

@@ -1,5 +1,5 @@
 import { ValueObject, err, ok, type Result } from '@ddd-ts-kit/kernel';
-import { InvalidEmailError } from '@/contexts/identity/domain/errors/invalid-email.error.js';
+import { InvalidEmailError } from '@/contexts/identity/domain/errors/invalid-email.error';
 
 export type EmailProps = {
   readonly value: string;

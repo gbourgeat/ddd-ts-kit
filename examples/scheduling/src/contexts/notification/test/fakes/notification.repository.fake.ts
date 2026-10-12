@@ -1,6 +1,6 @@
 import { InMemoryRepository, snapshots } from '@ddd-ts-kit/testing';
-import { Notification } from '@/contexts/notification/domain/aggregates/notification.aggregate.js';
-import type { NotificationRepository } from '@/contexts/notification/domain/repositories/notification.repository.js';
+import { Notification } from '@/contexts/notification/domain/aggregates/notification.aggregate';
+import type { NotificationRepository } from '@/contexts/notification/domain/repositories/notification.repository';
 
 export class FakeNotificationRepository extends InMemoryRepository<Notification> implements NotificationRepository {
   constructor() {

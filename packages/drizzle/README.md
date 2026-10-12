@@ -71,8 +71,8 @@ import {
   DrizzleOutboxStore,
   DrizzleProcessedEventStore,
 } from '@ddd-ts-kit/drizzle/postgres';
-import { Database } from '@/platform/database/database.js';
-import { outbox, processedEvents } from '@/platform/database/schema.js';
+import { Database } from '@/platform/database/database';
+import { outbox, processedEvents } from '@/platform/database/schema';
 
 const db: PgDatabase<PgQueryResultHKT> = drizzle(process.env.DATABASE_URL);
 const unitOfWork = createDrizzleUnitOfWork(db);

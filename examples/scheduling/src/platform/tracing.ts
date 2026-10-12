@@ -1,6 +1,6 @@
 import { initTracing } from '@ddd-ts-kit/tracing/node';
-import { ConfigError } from '@/platform/config/config-error.js';
-import { readTracing } from '@/platform/config/read-tracing.js';
+import { ConfigError } from '@/platform/config/config-error';
+import { readTracing } from '@/platform/config/read-tracing';
 
 // Evaluated before the rest of the application (see main.ts): it validates the variables of its
 // own and reads the two names directly, so that no module an instrumentation patches is loaded

@@ -5,14 +5,14 @@ import { RelationTupleStore } from '@ddd-ts-kit/auth/rebac';
 import { anActor } from '@ddd-ts-kit/auth/testing';
 import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
 import type { DomainEvent } from '@ddd-ts-kit/kernel';
-import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations.js';
-import { platformTestModule } from '@/platform/platform-test.module.js';
-import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions.js';
-import { CreateCalendarCommand } from '@/contexts/scheduling/application/commands/create-calendar/create-calendar.command.js';
-import { PractitionerDirectory } from '@/contexts/scheduling/application/ports/practitioner-directory.port.js';
-import { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository.js';
-import { FakeCalendarRepository } from '@/contexts/scheduling/test/fakes/calendar.repository.fake.js';
-import { FakePractitionerDirectory } from '@/contexts/scheduling/test/fakes/practitioner-directory.fake.js';
+import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations';
+import { platformTestModule } from '@/platform/platform-test.module';
+import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
+import { CreateCalendarCommand } from '@/contexts/scheduling/application/commands/create-calendar/create-calendar.command';
+import { PractitionerDirectory } from '@/contexts/scheduling/application/ports/practitioner-directory.port';
+import { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository';
+import { FakeCalendarRepository } from '@/contexts/scheduling/test/fakes/calendar.repository.fake';
+import { FakePractitionerDirectory } from '@/contexts/scheduling/test/fakes/practitioner-directory.fake';
 
 const holders = authorizationModule({
   authorizer: new RoleBasedAuthorizer({ roles: { holder: [schedulingPermissions['calendar.create']] } }),

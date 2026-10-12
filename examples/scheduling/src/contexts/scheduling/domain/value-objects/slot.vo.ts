@@ -1,5 +1,5 @@
 import { ValueObject, err, ok, unwrap, type Result } from '@ddd-ts-kit/kernel';
-import { InvalidSlotError } from '@/contexts/scheduling/domain/errors/invalid-slot.error.js';
+import { InvalidSlotError } from '@/contexts/scheduling/domain/errors/invalid-slot.error';
 
 export type SlotProps = {
   readonly startsAt: Date;

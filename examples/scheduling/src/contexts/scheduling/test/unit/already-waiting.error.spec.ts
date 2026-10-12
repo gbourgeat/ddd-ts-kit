@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { AlreadyWaitingError } from '@/contexts/scheduling/domain/errors/already-waiting.error.js';
+import { AlreadyWaitingError } from '@/contexts/scheduling/domain/errors/already-waiting.error';
 
 describe('AlreadyWaitingError', () => {
   it('carries its stable code', () => {

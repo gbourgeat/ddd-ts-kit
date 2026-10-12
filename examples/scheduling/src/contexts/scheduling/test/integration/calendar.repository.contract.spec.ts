@@ -8,13 +8,13 @@ import {
   type ExecutionContext,
 } from '@ddd-ts-kit/kernel';
 import { repositoryContract } from '@ddd-ts-kit/testing/contracts';
-import type { Calendar } from '@/contexts/scheduling/domain/aggregates/calendar.aggregate.js';
-import { Exception } from '@/contexts/scheduling/domain/value-objects/exception.vo.js';
-import { Range } from '@/contexts/scheduling/domain/value-objects/range.vo.js';
-import { KnexCalendarRepository } from '@/contexts/scheduling/infrastructure/persistence/knex-calendar.repository.js';
-import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database.js';
-import { aCalendar } from '@/contexts/scheduling/test/builders/calendar.builder.js';
-import { FakeCalendarRepository } from '@/contexts/scheduling/test/fakes/calendar.repository.fake.js';
+import type { Calendar } from '@/contexts/scheduling/domain/aggregates/calendar.aggregate';
+import { Exception } from '@/contexts/scheduling/domain/value-objects/exception.vo';
+import { Range } from '@/contexts/scheduling/domain/value-objects/range.vo';
+import { KnexCalendarRepository } from '@/contexts/scheduling/infrastructure/persistence/knex-calendar.repository';
+import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database';
+import { aCalendar } from '@/contexts/scheduling/test/builders/calendar.builder';
+import { FakeCalendarRepository } from '@/contexts/scheduling/test/fakes/calendar.repository.fake';
 
 const runner = { describe, it, expect, beforeEach, afterEach };
 

@@ -8,6 +8,8 @@ export interface Rewrite {
   readonly prefixes: readonly string[];
   /** The relative specifier an alias specifier becomes, or nothing when it names no emitted file. */
   readonly relativeOf: (specifier: string) => string | undefined;
+  /** Why a specifier has no relative form, when more is known than that it names no emitted file. */
+  readonly problemOf?: (specifier: string) => string;
 }
 
 interface Edit {
@@ -21,7 +23,7 @@ interface Edit {
  * a module specifier position are touched; a line never gains or loses a line break, so the
  * source map of the file keeps naming the right lines. A file without an alias comes back as is.
  */
-export function rewriteSpecifiers(source: string, { prefixes, relativeOf }: Rewrite): Rewritten {
+export function rewriteSpecifiers(source: string, { prefixes, relativeOf, problemOf = unknown }: Rewrite): Rewritten {
   const scanned = scan(source);
   const edits: Edit[] = [];
 
@@ -38,7 +40,7 @@ export function rewriteSpecifiers(source: string, { prefixes, relativeOf }: Rewr
     const relative = whole ? relativeOf(literal.value) : undefined;
 
     if (relative === undefined) {
-      problems.push(`line ${literal.line}: ${whole ? unknown(literal.value) : computed(literal.value)}`);
+      problems.push(`line ${literal.line}: ${whole ? problemOf(literal.value) : computed(literal.value)}`);
     } else {
       edits.push({ start: literal.start + 1, end: literal.end - 1, text: relative });
     }

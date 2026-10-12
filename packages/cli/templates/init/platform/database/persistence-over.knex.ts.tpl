@@ -1,7 +1,7 @@
 import type { Knex } from 'knex';
 import { createKnexUnitOfWork, KnexOutboxStore, KnexProcessedEventStore } from '@ddd-ts-kit/knex';
-import type { Persistence } from '{{alias.platform}}/database/persistence.js';
-import { MESSAGING } from '{{alias.platform}}/database/schema.js';
+import type { Persistence } from '{{alias.platform}}/database/persistence{{alias.ext}}';
+import { MESSAGING } from '{{alias.platform}}/database/schema{{alias.ext}}';
 
 /** One object is the unit of work and what repositories query through; the stores write in its transaction. */
 export function persistenceOver(db: Knex, close: () => Promise<void>): Persistence {

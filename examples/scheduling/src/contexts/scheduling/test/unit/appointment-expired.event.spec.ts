@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { AppointmentExpired } from '@/contexts/scheduling/domain/events/appointment-expired.event.js';
-import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder.js';
+import { AppointmentExpired } from '@/contexts/scheduling/domain/events/appointment-expired.event';
+import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder';
 
 const held = anAppointment().identifiedBy('appointment-1').build();
 

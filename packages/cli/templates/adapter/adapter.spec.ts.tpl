@@ -2,7 +2,7 @@ import { describe, expect, it } from '{{tests.module}}';
 {{#if adapter.decorated}}
 import { createAspectFakes, withAspectRuntime } from '@ddd-ts-kit/aspects/testing';
 {{/if}}
-import { Remote{{name.pascal}} } from '{{alias.context}}/infrastructure/external/{{adapter.file}}.js';
+import { Remote{{name.pascal}} } from '{{alias.context}}/infrastructure/external/{{adapter.file}}{{alias.ext}}';
 {{#if adapter.decorated}}
 
 class Flaky{{name.pascal}} extends Remote{{name.pascal}} {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from '@ddd-ts-kit/kernel';
-import { InvalidDayError } from '@/contexts/scheduling/domain/errors/invalid-day.error.js';
+import { InvalidDayError } from '@/contexts/scheduling/domain/errors/invalid-day.error';
 
 describe('InvalidDayError', () => {
   it('carries its stable code', () => {
