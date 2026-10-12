@@ -106,16 +106,57 @@ function withoutTrailingSlashes(url: string): string {
   return url.slice(0, end);
 }
 
-/** A status the contract does not declare for the operation: the server and its contract disagree. */
+/**
+ * A status the contract does not declare for the operation: a fault of the server (a 500, which
+ * the kit answers with a problem document, its `code` `INTERNAL_ERROR` and its `requestId` the
+ * reference of the request in the logs of the server), a proxy in between, or a server and a
+ * contract that disagree. A problem document answered with it is read: `code` and `requestId`.
+ */
 export class UnexpectedResponseError extends Error {
+  readonly status: number;
+  /** The problem document of the answer (`application/problem+json`), none when it answered another body. */
+  readonly problem: Readonly<Record<string, unknown>> | undefined;
+  readonly code: string | undefined;
+  /** What to quote to the team of the API: the reference of the request in its logs. */
+  readonly requestId: string | undefined;
+
   constructor(
-    readonly status: number,
-    readonly body: string,
     readonly response: Response,
+    readonly body: string,
   ) {
-    super(`The API answered ${status}, a status its contract does not declare for this operation.`);
+    const problem = problemOf(response, body);
+    const code = codeOf(problem);
+    const requestId = textOf(problem?.['requestId']);
+
+    super(unexpectedMessage(response.status, code, requestId));
     this.name = 'UnexpectedResponseError';
+    this.status = response.status;
+    this.problem = problem;
+    this.code = code;
+    this.requestId = requestId;
   }
+}
+
+function problemOf(response: Response, body: string): Readonly<Record<string, unknown>> | undefined {
+  if (!(response.headers.get('content-type') ?? '').includes('json')) {
+    return undefined;
+  }
+
+  try {
+    const parsed: unknown = JSON.parse(body);
+
+    return typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed) ? { ...parsed } : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function unexpectedMessage(status: number, code: string | undefined, requestId: string | undefined): string {
+  const named = `${status}${code === undefined ? '' : ` ${code}`}${requestId === undefined ? '' : ` (request ${requestId})`}`;
+
+  return status >= 500
+    ? `The API failed with ${named}.`
+    : `The API answered ${named}, a status its contract does not declare for this operation.`;
 }
 
 /** A refusal the contract declares, thrown by `unwrap`: its status, its problem document and its code. */
@@ -150,7 +191,7 @@ export async function unwrap(result: Promise<Outcome>): Promise<unknown> {
 /**
  * Sends a call and reads its answer as the outcome its operation declares. The body is not
  * validated: it is the one the contract describes, which the drift check of the project keeps
- * equal to what the server answers.
+ * equal to the routes. A status it does not declare throws an `UnexpectedResponseError`.
  */
 export function send<Result extends Outcome>(
   connection: Connection,
@@ -158,7 +199,7 @@ export function send<Result extends Outcome>(
   request: CallRequest,
 ): Promise<Result>;
 export async function send(connection: Connection, operation: Operation, request: CallRequest): Promise<Outcome> {
-  const headers = new Headers({ ...connection.headers, ...texts(request.header), ...request.headers });
+  const headers = mergedHeaders([connection.headers, texts(request.header), request.headers ?? {}]);
   const query = queryOf(request.query);
 
   await authenticate(connection, operation.security, { headers, query });
@@ -181,6 +222,19 @@ export async function send(connection: Connection, operation: Operation, request
 
 function signalOf(request: CallRequest): { signal?: AbortSignal } {
   return request.signal === undefined ? {} : { signal: request.signal };
+}
+
+/** Each set over the one before, whatever the case of its names: a header of the call replaces the one of the client. */
+function mergedHeaders(sets: readonly Readonly<Record<string, string>>[]): Headers {
+  const headers = new Headers();
+
+  for (const set of sets) {
+    for (const [name, value] of Object.entries(set)) {
+      headers.set(name, value);
+    }
+  }
+
+  return headers;
 }
 
 function texts(values: CallRequest['header']): Record<string, string> {
@@ -242,6 +296,7 @@ function attach(carrier: SchemeCarrier | undefined, value: string | undefined, c
   if (carrier.in === 'query') {
     carried.query.set(carrier.name, value);
   } else if (carrier.in === 'cookie') {
+    // Outside a browser only: a browser drops a Cookie header and sends its own cookies (`credentials: 'include'`).
     const cookie = carried.headers.get('cookie');
 
     carried.headers.set('cookie', `${cookie === null ? '' : `${cookie}; `}${carrier.name}=${encodeURIComponent(value)}`);
@@ -254,12 +309,13 @@ async function outcomeOf(operation: Operation, response: Response): Promise<Outc
   const read = operation.responses[response.status];
 
   if (read === undefined) {
-    throw new UnexpectedResponseError(response.status, await response.text(), response);
+    throw new UnexpectedResponseError(response, await response.text());
   }
 
   const body = await bodyOf(response, read);
 
-  return response.ok
+  // A status below 400 is a success, as the types of the outcome say: a 304, a 302 under `redirect: 'manual'`.
+  return response.status < 400
     ? { ok: true, status: response.status, data: body, response }
     : { ok: false, status: response.status, problem: body, response };
 }
@@ -283,5 +339,9 @@ function codeOf(problem: unknown): string | undefined {
     return undefined;
   }
 
-  return typeof problem.code === 'string' ? problem.code : undefined;
+  return textOf(problem.code);
+}
+
+function textOf(value: unknown): string | undefined {
+  return typeof value === 'string' ? value : undefined;
 }

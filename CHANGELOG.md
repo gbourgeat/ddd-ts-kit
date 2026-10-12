@@ -11,7 +11,9 @@ list the pull requests behind it.
 under `clients/<document>` with no runtime dependency: each operation answers its outcome typed
 by status, a refusal typed by the error codes its contract declares (`problem.code` is
 `'UNKNOWN_TIME_ZONE' | 'VALIDATION_FAILED'`, not `string`), credentials are given per security
-scheme, and `unwrap` with `isProblem` serve the code that prefers exceptions. The command
+scheme, and `unwrap` with `isProblem` serve the code that prefers exceptions. A status the
+contract does not declare throws `UnexpectedResponseError`, which reads the problem document of
+a fault of the server: its `code` (`INTERNAL_ERROR`) and its `requestId`. The command
 records `"sdk"` in the config (`sdk.name`, `sdk.access`, see `docs/CONFIG.md`) and wires the
 project: `docs:generate` regenerates the clients, `docs:check` fails while one differs from the
 contract, `ci:build` builds them, so the GitHub and GitLab pipelines check them; publishing stays

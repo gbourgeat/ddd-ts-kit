@@ -140,12 +140,20 @@ try {
 
 - A method never throws for a status its contract declares: the outcome is a union keyed by
   `ok` and `status`. `unwrap` turns a refusal into a thrown `ProblemError`.
-- A status the contract does not declare throws `UnexpectedResponseError`: the server and its
-  contract disagree, which the drift check is there to prevent.
+- A status the contract does not declare throws `UnexpectedResponseError`. The common one is a
+  fault of the server: the kit answers any unexpected error with a 500 problem document
+  (`code` `INTERNAL_ERROR`, `requestId`) that no operation declares, and the error reads it:
+  `error.code`, `error.requestId` (the reference to quote to the team of the API, which finds
+  the request in its logs) and `error.problem`. A gateway in between (502, 503) and a server that
+  disagrees with its contract end there too; the drift check keeps the contract equal to the
+  routes, not to every answer of the server.
+- A declared status below 400 is a success (`ok: true`), a 304 or a 302 under
+  `redirect: 'manual'` included; 400 and above a refusal.
 - A credential is given per security scheme, as a value or as a function asked before each
   request. An operation sends the credentials of the first alternative of its security that has
   all of them, nothing when it allows anonymous calls and none is given.
-- `headers` adds headers to every request, `fetch` replaces the global one (a test, a retry).
+- `headers` adds headers to every request, and a header of the call replaces the one of the
+  client whatever the case of its name; `fetch` replaces the global one (a test, a retry).
 - Each operation is also a function, `getAppointment(connect(options), input)`, so that a bundle
   holds only the operations it calls.
 - The body is not validated against its schema: the client trusts the contract, and
@@ -156,7 +164,10 @@ try {
 - Request bodies are JSON. A route of another media type (an upload) is generated without its
   body type; send it with `fetch`.
 - A `default` response or a range (`4XX`) is not typed: the kit writes neither.
-- Cookie parameters are not generated; a cookie scheme is.
+- Cookie parameters are not generated; a cookie scheme is, sent as a `Cookie` header, which only
+  a caller outside a browser can set. A browser drops it and sends its own cookies: there, give a
+  `fetch` that calls the global one with `credentials: 'include'`, and no credential for that
+  scheme.
 - A component schema named like a type the generated files use (`Array`, `Record`) gets a
   trailing `_`.
 

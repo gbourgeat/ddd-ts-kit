@@ -13,28 +13,15 @@ interface Sent {
 /** The generated module, loaded as its consumer loads it: its exports are what the spec calls. */
 type ShopModule = Record<string, unknown>;
 
+let shop: ShopModule;
+
+beforeAll(async () => {
+  const root = writtenClient(SHOP_CONTRACT, 'shop-api-client');
+
+  shop = (await import(path.join(root, 'src/index.ts'))) as ShopModule;
+});
+
 describe('a generated client, called', () => {
-  let shop: ShopModule;
-
-  beforeAll(async () => {
-    const root = writtenClient(SHOP_CONTRACT, 'shop-api-client');
-
-    shop = (await import(path.join(root, 'src/index.ts'))) as ShopModule;
-  });
-
-  function client(answer: () => Response, credentials: Record<string, unknown> = {}) {
-    const fake = fakeFetch(answer);
-
-    const create = shop['createClient'] as (
-      options: unknown,
-    ) => Record<string, (...args: unknown[]) => Promise<unknown>>;
-
-    return {
-      api: create({ baseUrl: 'https://shop.test/v1/', credentials, fetch: fake.fetch, headers: { 'x-app': 'spec' } }),
-      sent: fake.sent,
-    };
-  }
-
   it('sends the path, the query and the declared headers, with the credentials the security names', async () => {
     const { api, sent } = client(() => json(200, { lines: [] }), { bearer: async () => 'token' });
 
@@ -79,6 +66,16 @@ describe('a generated client, called', () => {
     expect(keyed.sent[0]?.url).toBe('https://shop.test/v1/orders/1?api_key=k+1');
   });
 
+  it('lets a header of the call replace the one of the client, whatever the case of its name', async () => {
+    const { api, sent } = client(() => json(200, { lines: [] }));
+
+    await api['getOrder']?.({ path: { orderId: '1' } }, { headers: { 'X-App': 'call' } });
+
+    expect(sent[0]?.headers['x-app']).toBe('call');
+  });
+});
+
+describe('a generated client, answered', () => {
   it('answers a declared refusal as its problem document, and unwrap throws it with its code', async () => {
     const problem = { code: 'ORDER_NOT_FOUND', status: 404 };
     const { api } = client(() => json(404, problem, 'application/problem+json'));
@@ -108,13 +105,44 @@ describe('a generated client, called', () => {
   });
 
   it('throws on a status the contract does not declare', async () => {
-    const { api } = client(() => new Response('boom', { status: 500 }));
+    const { api } = client(() => new Response('boom', { status: 418 }));
 
     await expect(api['getHealth']?.()).rejects.toMatchObject({
       name: 'UnexpectedResponseError',
-      status: 500,
+      message: 'The API answered 418, a status its contract does not declare for this operation.',
+      status: 418,
       body: 'boom',
+      problem: undefined,
+      code: undefined,
     });
+  });
+
+  it('reads the problem document of a fault of the server: its code and the reference of the request', async () => {
+    const problem = { type: 'about:blank', title: 'Internal Server Error', status: 500, code: 'INTERNAL_ERROR' };
+    const { api } = client(() => json(500, { ...problem, requestId: 'r-1' }, 'application/problem+json'));
+
+    await expect(api['getHealth']?.()).rejects.toMatchObject({
+      name: 'UnexpectedResponseError',
+      message: 'The API failed with 500 INTERNAL_ERROR (request r-1).',
+      status: 500,
+      problem: { ...problem, requestId: 'r-1' },
+      code: 'INTERNAL_ERROR',
+      requestId: 'r-1',
+    });
+
+    const gateway = client(() => new Response('<html>Bad gateway</html>', { status: 502 }));
+
+    await expect(gateway.api['getHealth']?.()).rejects.toMatchObject({
+      message: 'The API failed with 502.',
+      problem: undefined,
+      requestId: undefined,
+    });
+  });
+
+  it('answers a declared status below 400 as a success, as its type says', async () => {
+    const { api } = client(() => new Response(null, { status: 304 }));
+
+    expect(await api['getOrder']?.({ path: { orderId: '1' } })).toMatchObject({ ok: true, status: 304 });
   });
 
   it('calls the global fetch when it is given none, and can be used one operation at a time', async () => {
@@ -131,6 +159,18 @@ describe('a generated client, called', () => {
     }
   });
 });
+
+/** A client of the shop on a fake fetch, with a header of its own for every request. */
+function client(answer: () => Response, credentials: Record<string, unknown> = {}) {
+  const fake = fakeFetch(answer);
+
+  const create = shop['createClient'] as (options: unknown) => Record<string, (...args: unknown[]) => Promise<unknown>>;
+
+  return {
+    api: create({ baseUrl: 'https://shop.test/v1/', credentials, fetch: fake.fetch, headers: { 'x-app': 'spec' } }),
+    sent: fake.sent,
+  };
+}
 
 /** A fetch that records what it is given and answers what the spec says, a new response each time. */
 function fakeFetch(answer: () => Response): { fetch: (request: Request) => Promise<Response>; sent: Sent[] } {

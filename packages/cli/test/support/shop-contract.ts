@@ -42,6 +42,7 @@ const ORDER = {
         description: 'Found.',
         content: { 'application/json': { schema: { $ref: '#/components/schemas/Order' } } },
       },
+      '304': { description: 'Not modified since the copy the caller holds.' },
       '404': refusal(['ORDER_NOT_FOUND']),
     },
   },

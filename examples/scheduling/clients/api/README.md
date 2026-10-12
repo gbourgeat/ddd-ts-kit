@@ -15,9 +15,9 @@ const api = createClient({ baseUrl: 'https://api.example.com',
 const result = await api.searchAppointments();
 ```
 
-Every method answers the outcome its contract declares, never throws for a declared status: `result.ok` and `result.status` narrow it to its body (`result.data`) or its problem document (`result.problem`, whose `code` is one of the codes of that status). `unwrap(api.someOperation(...))` answers the body of a success and throws a refusal as a `ProblemError`, which `isProblem(error, 'SOME_CODE')` narrows. A status the contract does not declare throws an `UnexpectedResponseError`.
+Every method answers the outcome its contract declares, never throws for a declared status: `result.ok` and `result.status` narrow it to its body (`result.data`) or its problem document (`result.problem`, whose `code` is one of the codes of that status). `unwrap(api.someOperation(...))` answers the body of a success and throws a refusal as a `ProblemError`, which `isProblem(error, 'SOME_CODE')` narrows. A status the contract does not declare throws an `UnexpectedResponseError`: a fault of the server (a 500 answered as a problem document, whose `code` and `requestId`, the reference to quote to the team of the API, it reads), a proxy, or a server and a contract that disagree.
 
-A credential is given per security scheme of the contract, as a value or as a function asked before each request; an operation sends the credentials its security names. `headers` adds headers to every request, `fetch` replaces the global one. `connect(options)` and the functions of each operation (`searchAppointments(connection, input)`) are the same calls for a bundle that imports only what it calls.
+A credential is given per security scheme of the contract, as a value or as a function asked before each request; an operation sends the credentials its security names. A cookie scheme is sent as a `Cookie` header, which only a server-side caller can set: in a browser, the browser sends its own cookies (`fetch` with `credentials: 'include'`). `headers` adds headers to every request, `fetch` replaces the global one. `connect(options)` and the functions of each operation (`searchAppointments(connection, input)`) are the same calls for a bundle that imports only what it calls.
 
 ## Operations
 
