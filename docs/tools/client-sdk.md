@@ -93,6 +93,10 @@ clients/
       runtime.ts         the same for every contract: request, credentials, answer
 ```
 
+A split contract (`openapi.documents`) gives `clients/<name>` for each document, a document
+named `openapi` included; two contract files that would write one client (`openapi.yaml` and a
+stray `api.yaml` in a contract that is not split) are refused with both names.
+
 Every file but package.json is rewritten by each run; package.json keeps its version and every
 key the team adds, and only the name, the entry points, the build script and
 `publishConfig.access` follow the config.

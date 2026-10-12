@@ -141,6 +141,28 @@ describe('ddd-ts-kit sdk', () => {
     expect(cli(root, 'sdk', '--check').stdout).toContain('stale  clients/api');
   });
 
+  it('names the client of each document of a split contract after it, and refuses two documents for one client', () => {
+    const root = initProject('--sdk');
+
+    write(root, 'openapi/api.yaml', toYaml(SHOP_CONTRACT));
+
+    const shared = cli(root, 'sdk');
+
+    expect(shared.code).toBe(2);
+
+    expect(shared.stderr).toContain(
+      'openapi/api.yaml and openapi/openapi.yaml would both write the client clients/api.',
+    );
+
+    const documents = ['openapi', 'api'].map((name) => ({ name, title: name, tags: ['orders'] }));
+
+    changeConfig(root, { openapi: { documents } });
+
+    expect(cli(root, 'sdk').code).toBe(0);
+    expect(read(root, 'clients/openapi/README.md')).toContain('# ');
+    expect(read(root, 'clients/api/src/operations.ts')).toContain('export function placeOrder(');
+  });
+
   it('says which contract it cannot read', () => {
     const root = initProject('--sdk');
 
