@@ -87,6 +87,20 @@ Three rules hold whatever the strategy:
   line; the audit trail keeps one hash chain per tenant (`tenant:<id>`), so that a tenant's
   history can be handed over and verified alone.
 
+## Resolution at the edge
+
+The HTTP pipeline names the tenant of a request with a resolver of `@ddd-ts-kit/http`: the
+subdomain (`acme.app.example.com`), a header (`x-tenant-id`), a path segment
+(`/tenants/:tenantId/...`) or the claim of the token, or the first of several. Whatever names
+it, the pipeline checks it against the memberships of the caller before anything runs, and
+answers 403 to a caller that does not belong to it: the tenant a client asks for is a request,
+never an authority. The guard `TenantMember` keeps a group of routes for the members of the tenant
+of the request.
+
+Which to choose: the claim alone when a user belongs to one tenant; a subdomain when tenants
+have their own address (and their own cookies); a path segment or a header when one user works in
+several tenants and picks one per request, the token then listing every membership.
+
 ## Platform staff: elevation, never implicit
 
 Support and operations sometimes need to read across tenants. The kit refuses to infer it from a

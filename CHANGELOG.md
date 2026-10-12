@@ -43,6 +43,12 @@ list the pull requests behind it.
 - Prisma and TypeORM get the `tenant_id` column and the kernel helpers, applied by hand; no
   helper, no row-level security, no contract run yet.
 
+**The tenant of a request is resolved at the edge** (`@ddd-ts-kit/http`): `resolveTenant` with
+`tenantFromSubdomain`, `tenantFromHeader`, `tenantFromPath`, `tenantFromClaim` or `firstTenantOf`;
+the pipeline answers 403 to an authenticated caller that does not belong to the tenant named,
+before any guard or handler. The guard `TenantMember` keeps routes for the members of the tenant
+of the request. Without `resolveTenant` the tenant is the actor's, as before.
+
 ## 0.5.0
 
 **Migrations are named by a timestamp and what they do.** The generated `drizzle.config.ts`

@@ -1,5 +1,6 @@
 import type { Clock, ExecutionScope } from '@ddd-ts-kit/kernel';
 import type { ErrorMapper } from '../error/error-mapper.js';
+import type { TenantResolver } from '../tenancy/tenant-resolver.js';
 import type { ErrorContext } from './error-context.js';
 import type { RawRequest } from './raw-request.js';
 import type { RouteAround } from './route-around.js';
@@ -24,6 +25,13 @@ export interface ExecuteOptions {
    * scoping read the execution context of the request. Opened outside of `withPrincipal`.
    */
   readonly executionScope?: ExecutionScope;
+  /**
+   * Names the tenant of each request (`tenantFromSubdomain`, `tenantFromHeader`, `tenantFromPath`,
+   * `tenantFromClaim`, or `firstTenantOf` several). The pipeline refuses with 403 an authenticated
+   * caller that does not belong to it, before any handler. Absent, or naming none: the tenant of
+   * the actor, as before.
+   */
+  readonly resolveTenant?: TenantResolver;
   /**
    * Gives every request a `deadline` in its execution context, this many milliseconds after it
    * arrived. The pipeline does not interrupt a handler: what honours the deadline reads it.

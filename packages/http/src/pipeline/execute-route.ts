@@ -12,6 +12,7 @@ import type { ExecuteOptions } from './execute-options.js';
 import { executionOfRequest } from './execution-of-request.js';
 import type { RawRequest } from './raw-request.js';
 import type { RouteResponse } from './route-response.js';
+import { resolvedTenant } from '../tenancy/resolved-tenant.js';
 import { validateRequest } from './validate-request.js';
 import { wellFormedIdentifier } from './well-formed-identifier.js';
 
@@ -55,11 +56,11 @@ function defaultRequestId(request: RawRequest): string {
 }
 
 async function handled(call: Call): Promise<RouteOutput> {
-  const { route, request, options, requestId, correlationId } = call;
+  const { route, request, options, requestId } = call;
   const principal = await options.resolvePrincipal?.(request.raw);
   const input = validateRequest(route, request);
   const { headers } = request;
-  const execution = executionOfRequest({ correlationId, headers, principal, deadline: deadlineOf(options) });
+  const execution = executionOf(call, principal, input.params);
 
   call.reached.execution = execution;
 
@@ -80,6 +81,18 @@ async function handled(call: Call): Promise<RouteOutput> {
   }
 
   return result;
+}
+
+/** The execution context of the request, in the tenant it names once the caller is known to belong to it. */
+function executionOf({ request, options, correlationId }: Call, principal: unknown, params: unknown): ExecutionContext {
+  const { headers } = request;
+  const deadline = deadlineOf(options);
+  const execution = executionOfRequest({ correlationId, headers, principal, deadline });
+  const tenantId = resolvedTenant({ resolver: options.resolveTenant, headers, params, actor: execution.actor });
+
+  return tenantId === undefined || tenantId === execution.tenantId
+    ? execution
+    : executionOfRequest({ correlationId, headers, principal, deadline, tenantId });
 }
 
 function deadlineOf(options: ExecuteOptions): Date | undefined {
