@@ -68,6 +68,12 @@ export async function up(knex: Knex): Promise<void> {
 `processed_events` has `(consumer, event_id)` as its primary key. `occurred_at` is text on
 purpose: the envelope comes back exactly as published, offset included.
 
+A multi-tenant project keeps the tenant of each event, so that its consumers run in that tenant:
+`createOutboxTables(knex, { schema: 'messaging', tenant: true })` adds a nullable `tenant_id`
+(`addOutboxTenantColumn(knex, { schema: 'messaging' })` is the migration of a project that becomes
+multi-tenant), and `new KnexOutboxStore(context, { schema: 'messaging', tenant: true })` writes
+it. A table that has the column is read back either way.
+
 One schema per bounded context: `schemaNameOf('order-management')` gives `order_management`,
 to pass to `knex.schema.createSchemaIfNotExists`, `knex.schema.withSchema` and
 `.withSchema(...)` on queries. Contexts never join each other's tables.

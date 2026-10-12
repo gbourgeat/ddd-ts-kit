@@ -10,6 +10,7 @@ interface Envelope {
   readonly payload?: unknown;
   readonly traceparent?: unknown;
   readonly correlationId?: unknown;
+  readonly tenantId?: unknown;
 }
 
 /** The envelope exactly as published, or `undefined` for an entry that does not hold one (poison). */
@@ -28,6 +29,7 @@ export function decode(entry: Entry): IntegrationEvent | undefined {
     payload: body.payload,
     ...(typeof body.traceparent === 'string' ? { traceparent: body.traceparent } : {}),
     ...(typeof body.correlationId === 'string' ? { correlationId: body.correlationId } : {}),
+    ...(typeof body.tenantId === 'string' ? { tenantId: body.tenantId } : {}),
   };
 }
 

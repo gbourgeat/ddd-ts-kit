@@ -152,9 +152,10 @@ Retries and dead letters travel through the default exchange of the broker (rout
 queue name), so there is one exchange to manage and no binding besides the one above.
 
 A message is the envelope as JSON (`id`, `type`, `version`, `occurredAt`, `payload`,
-`traceparent`, `correlationId`), persistent, with the routing key and the `type` property set
-to the event type, `messageId` to the event id, `correlationId` to the correlation id, and the
-headers `traceparent`, `x-correlation-id` and `x-event-version`. Any AMQP client can consume it.
+`traceparent`, `correlationId`, `tenantId`), persistent, with the routing key and the `type`
+property set to the event type, `messageId` to the event id, `correlationId` to the correlation
+id, and the headers `traceparent`, `x-correlation-id`, `x-tenant-id` and `x-event-version`. Any
+AMQP client can consume it.
 
 Two consumers of one type have a queue each and both receive every event. Two instances of
 one consumer share its queue: each event goes to one of them.

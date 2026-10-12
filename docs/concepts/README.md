@@ -79,27 +79,30 @@ of tools.
     attributes, relationships, with a decision table.
 22. [Actor and execution scope](actor-and-execution-scope.md): who acts, explicitly, and what
     every unit of work carries.
-23. [Audit trail](audit-trail.md): who did what, recorded from outside the use cases.
-24. [Observability](observability.md): tracing, logs, metrics, error reporting, and the
+23. [Multitenancy](multitenancy.md): one deployment, many customers, and no read or write
+    that crosses from one to another.
+24. [Audit trail](audit-trail.md): who did what, recorded from outside the use cases.
+25. [Observability](observability.md): tracing, logs, metrics, error reporting, and the
     correlation id that ties them.
-25. [Resilience](resilience.md): retry, timeout, circuit breaker, bulkhead, cache, and how
+26. [Resilience](resilience.md): retry, timeout, circuit breaker, bulkhead, cache, and how
     each one fails.
-26. [Scheduled jobs](scheduled-jobs.md): work triggered by time, and why it must be
+27. [Scheduled jobs](scheduled-jobs.md): work triggered by time, and why it must be
     idempotent.
 
 ## 6. Code and tests
 
-27. [Clean code](clean-code.md): naming, small functions, stepdown, comments, testability by
+28. [Clean code](clean-code.md): naming, small functions, stepdown, comments, testability by
     construction.
-28. [Testing strategy](testing-strategy.md): fakes rather than mocks, builders, contract
+29. [Testing strategy](testing-strategy.md): fakes rather than mocks, builders, contract
     tests, the four levels.
 
 ## Shorter paths
 
 - **A product person or a newcomer to DDD:** 1, 2, 3, 5, then 18.
-- **Before writing a first use case:** 3, 7, 9, 11, 13, 28.
+- **Before writing a first use case:** 3, 7, 9, 11, 13, 29.
 - **Before making two contexts talk:** 4, 15, 16, 17, 20.
-- **Before putting the system in production:** 21, 24, 25, 26, then the
+- **Before serving several customers from one deployment:** 21, 22, 23.
+- **Before putting the system in production:** 21, 25, 26, 27, then the
   [tools pages](../README.md#tools-one-page-per-decision).
 
 ## Limits and when not to use it

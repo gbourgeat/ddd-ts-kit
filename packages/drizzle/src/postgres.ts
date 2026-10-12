@@ -9,6 +9,7 @@ export * from './postgres/unit-of-work/drizzle-context.js';
 export * from './postgres/unit-of-work/create-drizzle-unit-of-work.js';
 export * from './postgres/schema/context-schema.js';
 export * from './postgres/outbox/outbox-table.js';
+export * from './postgres/outbox/tenant-outbox-table.js';
 export * from './postgres/outbox/processed-events-table.js';
 export * from './postgres/outbox/drizzle-outbox-store.js';
 export * from './postgres/outbox/drizzle-processed-event-store.js';

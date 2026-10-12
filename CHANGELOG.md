@@ -4,6 +4,26 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
+## Unreleased
+
+**The tenant travels with every unit of work** ([Multitenancy](docs/concepts/multitenancy.md)).
+
+- `IntegrationEvent.tenantId`: `scopedPublisher` stamps the tenant of the work on every event
+  published without one, `executionContextOfEvent` runs the consumer in it, and the four brokers
+  carry it in the envelope and in a header (`x-tenant-id`; `tenant-id` for Redis Streams). The
+  outbox keeps it where asked: `createOutboxTables(knex, { tenant: true })` or
+  `addOutboxTenantColumn` with `KnexOutboxStore`'s `tenant: true`, `tenantOutboxTable()` for
+  Drizzle. Without them nothing changes: the tenant is not stored, as before.
+- Jobs state `tenancy: 'global'` (the default, as before) or `'per-tenant'`: the in-process
+  scheduler, given a `TenantDirectory` (`tenants`), runs a per-tenant job once per tenant, each
+  run in that tenant's scope, and `JobExecution.tenantId` says which.
+- Kernel: `tenantReachOf`, `tenantsOf`, `isTenantMember`, `tenantKey`, `tenantCacheKey`,
+  `TenantDirectory` and `InMemoryTenantDirectory`, and `acrossTenants`, the explicit elevation of
+  platform staff over tenants, refused without a reason and written to the audit trail before
+  the work runs (`ExecutionContext.elevation`, logged as `elevation`).
+- `@ddd-ts-kit/testing`: `eventBusContract` checks that the tenant of an envelope arrives intact;
+  `outboxStoreContract` does with `carriesTenant: true`.
+
 ## 0.5.0
 
 **Migrations are named by a timestamp and what they do.** The generated `drizzle.config.ts`

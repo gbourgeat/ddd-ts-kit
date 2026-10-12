@@ -1,6 +1,12 @@
 import { headers as emptyHeaders } from '@nats-io/transport-node';
 import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
-import { CORRELATION_HEADER, EVENT_TYPE_HEADER, EVENT_VERSION_HEADER, TRACEPARENT_HEADER } from './headers.js';
+import {
+  CORRELATION_HEADER,
+  EVENT_TYPE_HEADER,
+  EVENT_VERSION_HEADER,
+  TENANT_HEADER,
+  TRACEPARENT_HEADER,
+} from './headers.js';
 import type { Publication } from './publication.js';
 
 /**
@@ -19,6 +25,10 @@ export function encode(event: IntegrationEvent): Publication {
 
   if (event.correlationId !== undefined) {
     headers.set(CORRELATION_HEADER, event.correlationId);
+  }
+
+  if (event.tenantId !== undefined) {
+    headers.set(TENANT_HEADER, event.tenantId);
   }
 
   return { data: JSON.stringify(event), messageId: event.id, headers };

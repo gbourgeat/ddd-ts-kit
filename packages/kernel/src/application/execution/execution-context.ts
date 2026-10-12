@@ -1,5 +1,6 @@
 import type { Actor } from '../actor/actor.js';
 import type { Session } from '../session/session.js';
+import type { TenantElevation } from '../tenancy/tenant-elevation.js';
 import type { ExecutionContextExtensionValues } from './execution-context-extension-values.js';
 import type { ExecutionOrigin } from './execution-origin.js';
 
@@ -15,6 +16,8 @@ export interface ExecutionContext {
   readonly actor: Actor;
   readonly session?: Session;
   readonly tenantId?: string;
+  /** Platform staff reading over tenants, opened by `acrossTenants` and audited. Absent otherwise. */
+  readonly elevation?: TenantElevation;
   readonly locale?: string;
   /** The instant after which the result is useless to the caller. */
   readonly deadline?: Date;

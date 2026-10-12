@@ -16,6 +16,7 @@ export function decode(data: Uint8Array): IntegrationEvent | undefined {
     payload: body.payload,
     ...(typeof body.traceparent === 'string' ? { traceparent: body.traceparent } : {}),
     ...(typeof body.correlationId === 'string' ? { correlationId: body.correlationId } : {}),
+    ...(typeof body.tenantId === 'string' ? { tenantId: body.tenantId } : {}),
   };
 }
 
@@ -27,6 +28,7 @@ interface Envelope {
   readonly payload?: unknown;
   readonly traceparent?: unknown;
   readonly correlationId?: unknown;
+  readonly tenantId?: unknown;
 }
 
 function parsed(data: Uint8Array): unknown {

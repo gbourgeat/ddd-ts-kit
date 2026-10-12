@@ -11,6 +11,7 @@ export * from './outbox/table-names.js';
 export * from './outbox/outbox-tables-options.js';
 export * from './outbox/create-outbox-tables.js';
 export * from './outbox/drop-outbox-tables.js';
+export * from './outbox/add-outbox-tenant-column.js';
 export * from './outbox/knex-outbox-store.js';
 export * from './outbox/knex-processed-event-store.js';
 export * from './columns/audit-columns.js';

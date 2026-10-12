@@ -168,9 +168,9 @@ A durable name holds neither dot nor wildcard: every character of the consumer n
 the type outside `[A-Za-z0-9_-]` becomes `_`.
 
 A message is the envelope as JSON (`id`, `type`, `version`, `occurredAt`, `payload`,
-`traceparent`, `correlationId`) with the headers `Nats-Msg-Id` (the event id),
-`x-event-type`, `x-event-version`, `traceparent` and `x-correlation-id`. Any NATS client can
-consume it.
+`traceparent`, `correlationId`, `tenantId`) with the headers `Nats-Msg-Id` (the event id),
+`x-event-type`, `x-event-version`, `traceparent`, `x-correlation-id` and `x-tenant-id`. Any NATS
+client can consume it.
 
 Two consumers of one type have a durable consumer each and both receive every event. Two
 instances of one consumer pull from the same durable consumer: each event goes to one of them.

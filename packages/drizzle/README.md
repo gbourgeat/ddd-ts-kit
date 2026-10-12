@@ -460,6 +460,10 @@ and on PostgreSQL 18.
 - `DrizzleProcessedEventStore.markProcessed` is an `INSERT ... ON CONFLICT DO NOTHING`. Run
   the consumer inside the unit of work: the mark then commits with the effects of the handler,
   and disappears with them if it fails.
+- A multi-tenant project declares `tenantOutboxTable('messaging')` instead of `outboxTable`: the
+  same table and a nullable `tenant_id`, which the store, given that table, fills from the tenant
+  of each event, so that its consumers run in that tenant. Switching an existing project is one
+  generated migration that adds the column.
 
 ## Testing an adapter
 

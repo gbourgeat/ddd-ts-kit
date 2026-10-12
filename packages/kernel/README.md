@@ -561,8 +561,8 @@ what it received as a principal.
 ### ExecutionContext and ExecutionScope
 
 What every unit of work carries, whatever started it: `correlationId`, `causationId?`, `actor`,
-`session?`, `tenantId?`, `locale?`, `deadline?`, `scheduledAt?` (for a scheduled job, the instant it
-was due), `origin` (`http`, `event`, `schedule`, `cli`, or a string of the project) and `extensions`. `executionContext(init)` builds one and takes the tenant
+`session?`, `tenantId?`, `elevation?` (platform staff reading over tenants, see "Tenancy"),
+`locale?`, `deadline?`, `scheduledAt?` (for a scheduled job, the instant it was due), `origin` (`http`, `event`, `schedule`, `cli`, or a string of the project) and `extensions`. `executionContext(init)` builds one and takes the tenant
 of the actor; `withActor(context, actor)` is the same work seen as another actor.
 
 `ExecutionScope` (`current()`, `require()`, `run(context, work)`) gives the context of the work
@@ -584,11 +584,13 @@ tenant scoping and outgoing headers.
 
 A consumed event opens its own context: `executionContextOfEvent(event, { consumer })` has
 origin `event`, the correlation of the event (its id when it names none), the event as
-`causationId` and `systemActor(consumer)` as actor; `inEventScope(scope, { consumer }, handler)`
+`causationId`, `systemActor(consumer)` as actor and the `tenantId` of the event, so the
+consumer reads and writes in that tenant only; `inEventScope(scope, { consumer }, handler)`
 wraps a handler with it. The standard envelope carries no actor, so that no personal data
 travels by default: a project whose envelopes name one passes `actorOf`. On the way out,
-`scopedPublisher(publisher, scope)` stamps the correlation of the work in progress on every
-event published without one, so everything one stimulus causes is found again across processes.
+`scopedPublisher(publisher, scope)` stamps the correlation and the tenant of the work in
+progress on every event published without them, so everything one stimulus causes is found
+again across processes and stays in its tenant.
 
 `ActorContext` stays, unchanged. `ScopedActorContext` implements it on top of a scope: the
 current actor is the actor of the current execution context, so the two cannot disagree.
@@ -701,7 +703,8 @@ const hit: Quote | undefined = await cache.get(quoteKey('EUR-USD'));
 ```
 
 The key carries the type of its value. `InMemoryCache(clock, { maxEntries? })` expires by the
-`Clock` and is bounded.
+`Clock` and is bounded. `tenantCacheKey<Quote>(scope, 'quote', pair)` is the same key confined to
+the tenant of the work in progress: what one tenant cached is never served to another.
 
 ### Lock
 
@@ -748,9 +751,10 @@ instead of rejecting: only an unknown name rejects (`UnknownJobError`), and a na
 twice throws (`DuplicateJobError`).
 
 A run happens inside `ExecutionScope`, in the context `executionContextOfJob(name, { correlationId,
-scheduledAt, deadline? })` builds: origin `schedule`, `systemActor(name)`, a correlation of its
+scheduledAt, deadline?, tenantId? })` builds: origin `schedule`, `systemActor(name)`, a correlation of its
 own, and `scheduledAt`, the instant the run was due, which `ExecutionContext` carries for this
-origin.
+origin. A job is `global` by default and runs in no tenant; `tenancy: 'per-tenant'` makes the
+scheduler run it once per tenant of a `TenantDirectory`, each run in that tenant.
 
 `parseJobSchedule(schedule)` validates a schedule and answers the form occurrences are
 computed from (`InvalidJobScheduleError`, code `INVALID_JOB_SCHEDULE`, otherwise);
@@ -770,11 +774,33 @@ if (!decision.allowed) {
 
 A sliding window: at any instant, at most `limit` allowed calls in the `windowMs` before it. A
 `RateLimitDecision` is `{ allowed, remaining, retryAfterMs }`; a refused call is not counted.
-The key is whatever is limited: a client, a tenant, a route and an address together.
+The key is whatever is limited: a client, a tenant, a route and an address together. In a
+multi-tenant project, `tenantKey(scope, 'password-reset', accountId)` confines it to the tenant of
+the work in progress (`tenant:<id>:password-reset:<account>`) and refuses work that names none.
 
 `InMemoryRateLimiter(clock)` counts inside one process; the adapter shared by several instances
 is in `@ddd-ts-kit/redis`. `rateLimitDecisionOf(counted, limit)` turns what an adapter counted
 into the decision.
+
+### Tenancy
+
+The tenant of the work is `ExecutionContext.tenantId`, set at the boundary and read by
+infrastructure only, like the rest of the context. The kernel holds what every strategy shares;
+the isolation itself (tenant column, row-level security, schema or database per tenant) is in the
+persistence packages, and the whole picture in
+[Multitenancy](../../docs/concepts/multitenancy.md).
+
+| Concept | What it does |
+|---|---|
+| `tenantScopeOf(scope)` | the one tenant a write names; `NoCurrentTenantError` for work that names none |
+| `tenantReachOf(scope)` | what a read may see: `{ kind: 'tenant', tenantId }`, or `{ kind: 'elevated', tenants }` under an elevation |
+| `tenantsOf(actor)`, `isTenantMember(actor, tenantId)` | the tenants an actor belongs to: its `tenantId` and its `tenants` attribute |
+| `acrossTenants({ scope, trail, clock, ids }, { reason, tenants }, work)` | platform staff reading over tenants: refused without a reason or a tenant, recorded in the `AuditTrail` (action `tenancy:elevate`) before the work runs; writes still name one tenant |
+| `tenantKey(scope, ...segments)`, `tenantCacheKey(scope, ...segments)` | keys of rate limits, locks and caches confined to the tenant |
+| `TenantDirectory`, `InMemoryTenantDirectory` | the tenants that exist, for per-tenant jobs, provisioning and migrations |
+
+An elevation is never implied by a role: the platform decides the permission to elevate (a use
+case or a guard), then calls `acrossTenants`. A trail that fails to record it refuses it.
 
 ### Page and PageRequest
 

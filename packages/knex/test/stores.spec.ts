@@ -4,6 +4,7 @@ import { outboxStoreContract, processedEventStoreContract } from '@ddd-ts-kit/te
 import {
   KnexOutboxStore,
   KnexProcessedEventStore,
+  addOutboxTenantColumn,
   createKnexUnitOfWork,
   createOutboxTables,
   dropOutboxTables,
@@ -19,8 +20,18 @@ beforeAll(async () => {
     async (knex) => {
       await createOutboxTables(knex, { schema: 'messaging' });
       await createOutboxTables(knex);
+      await createOutboxTables(knex, { schema: 'tenanted', tenant: true });
+      await createOutboxTables(knex, { schema: 'upgraded' });
+      await addOutboxTenantColumn(knex, { schema: 'upgraded' });
     },
-    ['messaging.outbox', 'messaging.processed_events', 'outbox', 'processed_events'],
+    [
+      'messaging.outbox',
+      'messaging.processed_events',
+      'outbox',
+      'processed_events',
+      'tenanted.outbox',
+      'upgraded.outbox',
+    ],
   );
 });
 
@@ -66,6 +77,28 @@ outboxStoreContract(runner, {
     await database.truncate();
 
     return new KnexOutboxStore(context(), { schema: 'messaging', claim: 'compare-and-set' });
+  },
+});
+
+outboxStoreContract(runner, {
+  name: 'KnexOutboxStore keeping the tenant of each event',
+  leaseMs: 30_000,
+  carriesTenant: true,
+  createStore: async () => {
+    await database.truncate();
+
+    return new KnexOutboxStore(context(), { schema: 'tenanted', tenant: true });
+  },
+});
+
+outboxStoreContract(runner, {
+  name: 'KnexOutboxStore on an outbox given its tenant column by a later migration',
+  leaseMs: 30_000,
+  carriesTenant: true,
+  createStore: async () => {
+    await database.truncate();
+
+    return new KnexOutboxStore(context(), { schema: 'upgraded', tenant: true });
   },
 });
 

@@ -5,6 +5,7 @@ import {
   type IdGenerator,
   type JobRun,
   type Lock,
+  type TenantDirectory,
 } from '@ddd-ts-kit/kernel';
 import { JobLockUnavailableError } from './errors/job-lock-unavailable-error.js';
 import { JobTimeoutError } from './errors/job-timeout-error.js';
@@ -24,6 +25,15 @@ export interface RunnerOptions {
   readonly lockTtlMs: number;
   /** How long after its instant another instance may still try an occurrence. */
   readonly lateAfterMs: number;
+  /** Where a per-tenant job finds its tenants. */
+  readonly tenants?: TenantDirectory;
+}
+
+/** One run of an occurrence, in a tenant for a per-tenant job. */
+interface TenantRun {
+  readonly started: StartedRun;
+  readonly signal: AbortSignal;
+  readonly tenantId?: string;
 }
 
 /** Runs one occurrence: the lock of the occurrence, the execution scope, the timeout. */
@@ -32,6 +42,10 @@ export class JobRunner {
     private readonly options: RunnerOptions,
     private readonly recorder: JobRecorder,
   ) {}
+
+  knowsTenants(): boolean {
+    return this.options.tenants !== undefined;
+  }
 
   /** Answers what became of the occurrence. Never rejects. */
   async run(job: RegisteredJob, occurrence: Occurrence): Promise<JobRun> {
@@ -101,20 +115,57 @@ export class JobRunner {
     });
   }
 
-  private inScope(job: RegisteredJob, started: StartedRun, signal: AbortSignal): Promise<void> {
+  private async inScope(job: RegisteredJob, started: StartedRun, signal: AbortSignal): Promise<void> {
+    if (job.policy.tenancy === 'global' || this.options.tenants === undefined) {
+      return this.inTenant(job, { started, signal });
+    }
+
+    await eachTenant(await this.options.tenants.tenants(), signal, (tenantId) =>
+      this.inTenant(job, { started, signal, tenantId }),
+    );
+  }
+
+  private inTenant(job: RegisteredJob, { started, signal, tenantId }: TenantRun): Promise<void> {
     const { occurrence, startedAt, correlationId } = started;
     const { scheduledAt } = occurrence;
     const { timeoutMs } = job.policy;
+    const tenant = tenantId === undefined ? {} : { tenantId };
 
     const context = executionContextOfJob(job.name, {
       correlationId,
       scheduledAt,
       ...(timeoutMs === undefined ? {} : { deadline: new Date(startedAt.getTime() + timeoutMs) }),
+      ...tenant,
     });
 
-    const execution = { scheduledAt, startedAt, attempt: 1, signal };
+    const execution = { scheduledAt, startedAt, attempt: 1, signal, ...tenant };
 
     return this.options.scope.run(context, async () => job.definition.run(execution));
+  }
+}
+
+/**
+ * One run per tenant, one after the other, so that a job never holds more than one tenant's
+ * work at a time. A tenant that fails does not stop the others; the occurrence then fails with
+ * the first error, once every tenant had its run. An aborted signal stops before the next tenant.
+ */
+async function eachTenant(
+  tenants: readonly string[],
+  signal: AbortSignal,
+  run: (tenantId: string) => Promise<void>,
+): Promise<void> {
+  const failures: unknown[] = [];
+
+  for (const tenantId of tenants) {
+    if (signal.aborted) {
+      return;
+    }
+
+    await run(tenantId).catch((error: unknown) => failures.push(error));
+  }
+
+  if (failures.length > 0) {
+    throw failures[0];
   }
 }
 
