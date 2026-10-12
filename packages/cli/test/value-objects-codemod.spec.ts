@@ -28,7 +28,9 @@ const AMOUNT = lines(
   '  }',
   '',
   '  pairs(): Result<Map<string, [number, number]>, InvoiceError> {',
-  "    return ok(new Map([['cents', [this.props.cents, 0]]]));",
+  '    return ok(',
+  "      new Map([['cents', [this.props.cents, 0]]]),",
+  '    );',
   '  }',
   '}',
 );
@@ -97,6 +99,7 @@ describe('value-objects', () => {
     expect(vo).toContain('return new Amount({ cents });');
     expect(vo).toContain('plus(other: Amount): Amount {');
     expect(vo).toContain('pairs(): Map<string, [number, number]> {');
+    expect(vo).toContain("return new Map([['cents', [this.props.cents, 0]]]);");
 
     expect(vo).toContain(
       'if (/^\\d+$/.test(text)) {\n      return new Amount({ cents: Number(text) });\n    }\n\n    throw InvoiceError.unreadable(text);',

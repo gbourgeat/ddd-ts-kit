@@ -52,7 +52,14 @@ function branchAt(code: string, source: string, from: number): Branch | undefine
   const close = matchingBracket(code, open);
   const after = code.slice(close + 1).search(/\S/);
 
-  return { helper: call[1] ?? '', value: source.slice(open + 1, close).trim(), end: close + 1 + Math.max(after, 0) };
+  return {
+    helper: call[1] ?? '',
+    value: source
+      .slice(open + 1, close)
+      .trim()
+      .replace(/,$/, ''),
+    end: close + 1 + Math.max(after, 0),
+  };
 }
 
 /** The `?` of a conditional at the top level of the statement; `?.` and `??` are not one. */

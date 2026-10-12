@@ -78,6 +78,13 @@ function returnsOf({ code, source }: Texts, helper: 'err' | 'ok', keyword: strin
     const open = found.index + found[0].length - 1;
     const close = matchingBracket(code, open);
 
-    return { start: found.index, end: close + 1, text: `${keyword}${source.slice(open + 1, close).trim()}` };
+    return {
+      start: found.index,
+      end: close + 1,
+      text: `${keyword}${source
+        .slice(open + 1, close)
+        .trim()
+        .replace(/,$/, '')}`,
+    };
   });
 }
