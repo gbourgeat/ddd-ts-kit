@@ -2,6 +2,7 @@ import type { Config } from '../config/index.js';
 import { packageManagerVars } from '../package-manager/package-manager-vars.js';
 import { stackVars } from '../stack/stack-vars.js';
 import { WITH_DATABASE } from '../stack/with-database.js';
+import { AGENT_INSTRUCTION } from '../sdk/agent-instruction.js';
 import type { RenderContext } from '../templating/index.js';
 import { knipVars } from './knip-vars.js';
 
@@ -22,7 +23,7 @@ export function templateVars(config: Config, projectName: string): RenderContext
     extras: extrasVars(config.ci.extras),
     needs: { url: readsUrl(config), text: readsText(config) },
     keycloak: { version: KEYCLOAK_VERSION },
-    sdk: { on: config.sdk !== undefined },
+    sdk: { on: config.sdk !== undefined, instruction: AGENT_INSTRUCTION },
     compose: {
       volumes:
         database === 'postgres' ||

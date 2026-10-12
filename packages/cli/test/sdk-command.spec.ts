@@ -9,6 +9,7 @@ import { jsonAt } from './support/json-at.js';
 import { SHOP_CONTRACT } from './support/shop-contract.js';
 
 const CONFIG = 'ddd-ts-kit.config.json';
+const AGENT_RULE = 'Never edit the clients under `clients/`';
 
 describe('init --sdk', () => {
   it('records "sdk", generates the client of the pristine contract and wires the project around it', () => {
@@ -16,6 +17,8 @@ describe('init --sdk', () => {
     const manifest = json(root, 'package.json');
 
     expect(jsonAt(json(root, CONFIG), 'sdk')).toEqual({ name: '{project}-{document}-client' });
+    expect(read(root, 'CLAUDE.md').split(AGENT_RULE)).toHaveLength(2);
+    expect(read(root, '.claude/rules/presentation.md')).toContain('"clients/**"');
     expect(jsonAt(json(root, 'clients/api/package.json'), 'name')).toBe(`${projectName(root)}-api-client`);
     expect(read(root, 'clients/api/src/runtime.ts')).toContain('export function send');
     expect(jsonAt(manifest, 'workspaces')).toEqual(['clients/*']);
@@ -55,7 +58,12 @@ describe('ddd-ts-kit sdk', () => {
     const root = initProject();
 
     expect(cli(root, 'sdk', '--check').stdout).toContain('asks for no client');
-    expect(cli(root, 'sdk').stdout).toContain('updated      ddd-ts-kit.config.json');
+
+    const enabled = cli(root, 'sdk').stdout;
+
+    expect(enabled).toContain('updated      ddd-ts-kit.config.json');
+    expect(enabled).toContain('note: .claude/rules/presentation.md: add "clients/**" to its paths');
+    expect(read(root, 'CLAUDE.md').split(AGENT_RULE)).toHaveLength(2);
     expect(cli(root, 'sdk').stdout).toBe('Nothing to do.');
 
     write(root, 'openapi/openapi.yaml', toYaml(SHOP_CONTRACT));

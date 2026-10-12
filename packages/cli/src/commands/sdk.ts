@@ -7,7 +7,7 @@ import {
   readConfig,
   type Config,
 } from '../config/index.js';
-import { setUpSdk } from '../sdk/index.js';
+import { instructAgents, setUpSdk } from '../sdk/index.js';
 import { Workspace } from '../workspace/index.js';
 import { Arguments } from './arguments.js';
 import type { Command } from './command.js';
@@ -64,13 +64,14 @@ function generate(io: Io, args: Arguments, { ws, config }: Run): number {
   return 0;
 }
 
-/** Records "sdk" with its default name: the clients are asked for from now on. */
+/** Records "sdk" with its default name, and tells the agents: the clients are asked for from now on. */
 function enable(ws: Workspace): Config {
   const text = editConfigText(ws.read(CONFIG_FILE) ?? '{}', (raw) => {
     raw['sdk'] = { name: DEFAULT_SDK_NAME };
   });
 
   ws.update(CONFIG_FILE, text);
+  instructAgents(ws);
 
   return parseConfig(JSON.parse(text));
 }
