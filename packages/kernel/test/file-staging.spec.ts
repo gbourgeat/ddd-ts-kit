@@ -7,6 +7,7 @@ import {
   InMemoryErrorReporter,
   InMemoryFileStorage,
   InMemoryUnitOfWork,
+  PurgeStagedFiles,
   stagedKeyOf,
   type FileScanner,
   type ScanVerdict,
@@ -155,5 +156,17 @@ describe('FileStaging', () => {
     await storage.put(stagedKeyOf(KEY), Readable.from([PDF]), { mediaType: 'application/pdf' });
     expect(await codeOf(staging.confirm(KEY, { ...PDF_ONLY, maxBytes: 4 }))).toBe('FILE_TOO_LARGE');
     expect(await codeOf(staging.confirm(KEY, PDF_ONLY))).toBe('FILE_NOT_FOUND');
+  });
+
+  it('is purged every hour by the job of the platform, of what was staged a day ago or more', async () => {
+    const { staging, storage, clock } = aDesk();
+    const job = new PurgeStagedFiles(staging, clock);
+
+    await staging.stage(KEY, Readable.from([PDF]), { mediaType: 'application/pdf' });
+    await job.run();
+    clock.advance(86_400_001);
+    await job.run();
+
+    expect(storage.keys()).toEqual([]);
   });
 });

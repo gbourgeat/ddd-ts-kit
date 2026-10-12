@@ -31,6 +31,7 @@ deviation.
     "authz": "rbac",
     "broker": "none",
     "cache": "none",
+    "storage": "local",
     "audit": "on",
     "errors": "none",
     "logger": "stdout",
@@ -128,6 +129,7 @@ outside the list stops every command with the list of accepted values.
 | `stack.authz` | `rbac`, `abac`, `rebac`, `custom` | `rbac` |
 | `stack.broker` | `none`, `rabbitmq`, `kafka`, `nats`, `redis` (Redis Streams), `custom`; `init` refuses a broker without an ORM, since a broker is reached through the outbox | `none` |
 | `stack.cache` | `none`, `redis`: what backs the kernel `Cache` port, the wake-up of the outbox relay, the rate limiter and the lock of the scheduled jobs | `none` |
+| `stack.storage` | `local`, `s3`, `none`: where the content of files lives, never in the database. `local`: a directory in development (`FILES_DIRECTORY`, `.data/files`), the memory of the process in the tests and the tools, the signed links answered by the application under `/files`; `s3`: a bucket of any provider of the S3 protocol (`@ddd-ts-kit/s3`, MinIO in the compose stack, `S3_*` variables), the memory in the tests; `none`: no file storage wired. Either way `platform/files/` binds `FileStorage`, `FileKeys`, `FileScanner` and `FileStaging`, registers the hourly purge of staged files and mounts the upload reader; `generate file-upload` needs it. See [file storage](concepts/file-storage.md) | `local` in what `init` writes; `none` when the key is absent |
 | `stack.audit` | `on`, `off`: whether the audit trail is wired | `on` when an ORM is set, `off` otherwise |
 | `stack.errors` | `none`, `sentry`: where unexpected failures are reported; `sentry` binds the kernel `ErrorReporter` to `@ddd-ts-kit/sentry` (Sentry or GlitchTip) | `none` |
 | `stack.logger` | `stdout`, `pino`, `winston`: what implements the kernel `Logger` port | `stdout` |
@@ -137,7 +139,7 @@ outside the list stops every command with the list of accepted values.
 | `stack.refusals` | `factories`, `classes`: how a domain error is written. `factories`: one error class per concept of the model, each refusal built by a static factory named in the words of the business (`AppointmentError.slotTaken(..)`), held by the `errors/*` rules, and `generate error <context> <Concept> <refusal>` adds one. `classes`: one class per error, built with `new`, as 0.1 and 0.2 wrote them; `generate domain-error` writes one, and no `errors/*` rule judges. Both forms run in either: `ConceptError` and `DomainError` are one family | `factories` |
 | `stack.routes` | `controllers`, `functions`: how a route is written. `controllers`: one class per route carrying `@Controller` of `@ddd-ts-kit/http`, in a folder of its own under `presentation/http/<resource>/<use-case>/`, behind the guards of its `@RouteGroup`; `generate route` writes it, with `--mapper` and `--serializer` when asked. `functions`: one `defineRoute` function per route, listed in `<context>.routes.ts`, as 0.1 to 0.3 wrote them. Both forms run in either, and in one project during a migration: `generate controller` writes a controller whatever the key says, and `ddd-ts-kit controllers` turns the function routes of a context into controllers | `controllers` |
 
-A config file that omits a `stack` key is read with the same defaults, with four exceptions:
+A config file that omits a `stack` key is read with the same defaults, with five exceptions:
 without `stack.style` the project is read as `explicit`, whatever `stack.di` says, because
 such a file was written before the declared style existed; and without `stack.dependencies`
 a declared project is read as `listed`, because such a file was written when every decorator
@@ -173,6 +175,12 @@ What the command leaves to you is printed: run the formatter and `ddd-ts-kit doc
 helpers a controller kept to a mapper or a serializer, give the groups their guards, and, in a
 project initialised before 0.4, add the line that mounts the declared controllers to
 `compose-application.ts`.
+
+The fifth: without `stack.storage` the project is read as `none`, because such a file was
+written before the kit kept files: nothing is wired, nothing changes. To add file storage:
+`npx ddd-ts-kit init --force --storage local` (or `s3`) records the key and writes the files of
+`platform/files/` and `platform/config/read-files.ts` with the files `init` owns; then
+`npx ddd-ts-kit generate file-upload <context> <UseCase>` writes the first upload.
 
 ## Pipeline
 
@@ -221,7 +229,7 @@ The contexts of the config and the directories of `contextsDir` must be the same
 | `applicationAllowedPackages` | packages `application/` may import | `["@ddd-ts-kit/kernel", "@ddd-ts-kit/auth"]` |
 | `publishedLanguageAllowedPackages` | packages `published-language/` may import | `@ddd-ts-kit/kernel`, `@ddd-ts-kit/events`, `@ddd-ts-kit/validation` and the schema library of `stack.validation` (`zod`; `class-validator` with `class-transformer`; none for `standard-schema` and `none`) |
 
-`@ddd-ts-kit/aspects`, `@ddd-ts-kit/audit`, `@ddd-ts-kit/redis`, `@ddd-ts-kit/scheduling`,
+`@ddd-ts-kit/aspects`, `@ddd-ts-kit/audit`, `@ddd-ts-kit/redis`, `@ddd-ts-kit/s3`, `@ddd-ts-kit/scheduling`,
 `@ddd-ts-kit/sentry` and `@ddd-ts-kit/tracing` stay refused in `domain/` and `application/`
 even when listed in an allow-list.
 

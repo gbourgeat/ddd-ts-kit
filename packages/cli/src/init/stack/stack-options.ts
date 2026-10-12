@@ -15,6 +15,7 @@ export interface StackOptions {
   readonly authz?: string;
   readonly broker?: string;
   readonly cache?: string;
+  readonly storage?: string;
   readonly audit?: string;
   readonly errors?: string;
   readonly logger?: string;

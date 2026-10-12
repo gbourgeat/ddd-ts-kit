@@ -8,6 +8,9 @@ import {
   InMemoryCache,
   InMemoryCommandBus,
   InMemoryDomainEventDispatcher,
+{{#if files.any}}
+  InMemoryFileStorage,
+{{/if}}
   InMemoryLock,
   InMemoryQueryBus,
 {{#if cache.rateLimit}}
@@ -28,6 +31,9 @@ import {
   type DomainEventDispatcher,
 {{#if errors.sentry}}
   type ErrorReporter,
+{{/if}}
+{{#if files.any}}
+  type FileStorage,
 {{/if}}
   type JobSettings,
 } from '@ddd-ts-kit/kernel';
@@ -58,6 +64,9 @@ import { logDecisions } from '{{alias.platform}}/auth/log-decisions{{alias.ext}}
 import { UseCaseProtection } from '{{alias.platform}}/auth/use-case-protection{{alias.ext}}';
 import type { Persistence } from '{{alias.platform}}/database/persistence{{alias.ext}}';
 import type { EventProvider } from '{{alias.platform}}/events/event-provider{{alias.ext}}';
+{{#if files.any}}
+import { createFiles } from '{{alias.platform}}/files/create-files{{alias.ext}}';
+{{/if}}
 import { ConfiguredJobScheduler } from '{{alias.platform}}/jobs/configured-job-scheduler{{alias.ext}}';
 import { createLogger, type LogSettings } from '{{alias.platform}}/observability/create-logger{{alias.ext}}';
 import { createMetrics } from '{{alias.platform}}/observability/create-metrics{{alias.ext}}';
@@ -95,6 +104,10 @@ export interface PlatformOptions {
 {{#if cache.redis}}
   /** The Redis protocol server; left out, the cache, the lock and the limiter stay in the memory of the process. */
   readonly redis?: RedisServices;
+{{/if}}
+{{#if files.any}}
+  /** Where the content of files lives: the storage of `main.ts`; left out (the tools, the tests), the memory of the process. */
+  readonly files?: FileStorage;
 {{/if}}
 }
 
@@ -139,6 +152,14 @@ export function createPlatform(persistence: Persistence, options: PlatformOption
     adapter,
     selfGoverned: (instance, info) => adapter(ownPolicy()(instance, info), info),
     protection,
+{{#if files.any}}
+{{#if errors.none}}
+    files: createFiles(options.files ?? new InMemoryFileStorage(), { ...foundations, errors: new NoopErrorReporter() }),
+{{/if}}
+{{#if errors.sentry}}
+    files: createFiles(options.files ?? new InMemoryFileStorage(), foundations),
+{{/if}}
+{{/if}}
   };
 }
 

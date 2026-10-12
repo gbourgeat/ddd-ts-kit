@@ -1,11 +1,25 @@
 import type { Authenticator } from '@ddd-ts-kit/auth';
 {{#if errors.none}}
-import type { ErrorContext, ErrorMapper, RouteAround } from '@ddd-ts-kit/http';
+import type { ErrorContext, ErrorMapper, RouteAround{{#if files.http}}, UploadReader{{/if}} } from '@ddd-ts-kit/http';
 import type { Clock, ExecutionScope, Logger, Session } from '@ddd-ts-kit/kernel';
 {{/if}}
 {{#if errors.sentry}}
+{{#if files.http}}
+import {
+  reportHttpErrors,
+  type ErrorContext,
+  type ErrorMapper,
+  type RouteAround,
+  type UploadReader,
+} from '@ddd-ts-kit/http';
+{{/if}}
+{{#unless files.http}}
 import { reportHttpErrors, type ErrorContext, type ErrorMapper, type RouteAround } from '@ddd-ts-kit/http';
+{{/unless}}
 import type { Clock, ErrorReporter, ExecutionScope, Logger, Session } from '@ddd-ts-kit/kernel';
+{{/if}}
+{{#if files.http}}
+import { multipartUploads } from '@ddd-ts-kit/http/uploads';
 {{/if}}
 import { tracedRoutes } from '@ddd-ts-kit/tracing';
 import { principalOf } from '{{alias.platform}}/auth/principal-of{{alias.ext}}';
@@ -21,6 +35,10 @@ export interface HttpBoundary {
   readonly onError: (error: unknown, context: ErrorContext) => void;
   /** The span of a request, named by its route template; probes and documentation routes make none. */
   readonly around: RouteAround;
+{{#if files.http}}
+  /** Reads the file of a controller that declares an upload, as it streams: its size and media types are checked on the way. */
+  readonly uploads: UploadReader;
+{{/if}}
 }
 
 interface Edge {
@@ -57,6 +75,9 @@ export function httpBoundary({
     errorMapper,
     clock,
     around: tracedRoutes(),
+{{#if files.http}}
+    uploads: multipartUploads(),
+{{/if}}
     // The message of the error may quote data: only the code and the route are logged.
 {{#if errors.none}}
     onError: (_error, context) => {

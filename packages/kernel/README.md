@@ -756,7 +756,7 @@ A write to the storage is not rolled back with a transaction. `FileStaging(stora
 reporter)` gives the order that keeps both consistent: `stage` writes under `staging/<key>` and
 scans; the aggregate records the final key; `promoteAfterCommit` moves the file once the unit of
 work has committed (`afterCommit`, never on a rollback, a failure reported); `purge(olderThan)`,
-run by a scheduled job, removes what a rolled-back or crashed command left in `staging/`. For a
+run by `PurgeStagedFiles` (the platform registers it as `files.purge-staged`, every hour), removes what a rolled-back or crashed command left in `staging/`. A file received from a client travels in a command as a `ReceivedFile` (its name, its declared media type, its stream). For a
 large file the client uploads straight to the storage: `uploadUrl(key, options)` signs the
 staged key, and `confirm(key, { mediaType, accepted, maxBytes })` reads what arrived, checks its
 media type on its bytes (`contentMatches`) and its size, scans it, and answers the `StoredFile`.

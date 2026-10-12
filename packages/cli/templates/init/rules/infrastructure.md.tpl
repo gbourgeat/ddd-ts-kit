@@ -8,6 +8,7 @@ paths:
 - An adapter `implements` a port of `application/ports/` or a repository port of `domain/repositories/`, and never `extends` it (`ports/implements-never-extends`). It never imports `presentation/` (`layer/infrastructure-no-presentation`).
 - `persistence/` holds repository adapters, mappers and rows, `external/` the adapters of outside systems, `anti-corruption/` the translators of another model.
 - Rows never leave `persistence/`: a mapper translates to and from the aggregate, and is the only place for a type assertion (`clean/no-escape-hatch`).
+- The content of a file never goes in a table: no binary or base64 column (`persistence/no-file-content`). The file lives in the `FileStorage` port; a row keeps the key, size, media type and checksum of its `StoredFile`.
 - Own tables, in the schema of the context: no join, foreign key or transaction across contexts (`context/extractable`).
 - Audit columns and the tenant column are stamped from the execution scope with the kernel helpers (`stampCreation`, `stampUpdate`, `tenantScopeOf`), never handed over by a use case.
 {{#if style.declared}}

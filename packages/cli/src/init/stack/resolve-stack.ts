@@ -19,6 +19,7 @@ import {
   REFUSAL_FORMS,
   ROUTE_FORMS,
   PACKAGE_MANAGERS,
+  STORAGE_STACKS,
   parseConfig,
   readConfig,
   TEST_STACKS,
@@ -132,7 +133,8 @@ function hasWorker(root: string, config: Config): boolean {
 }
 
 /**
- * The cache stays in the process unless asked otherwise; the audit trail is on as soon as there
+ * The cache stays in the process unless asked otherwise; files are kept in a local directory
+ * unless an object store is asked for; the audit trail is on as soon as there
  * is a database to keep it in; unexpected failures are reported nowhere unless asked; the logger
  * writes JSON lines on the standard output unless pino or winston is asked for. Error
  * reporting hangs on the buses, the HTTP boundary, the jobs and the process, which every stack
@@ -141,9 +143,11 @@ function hasWorker(root: string, config: Config): boolean {
 function resolveOperations(
   options: StackOptions,
   orm: string,
-): Record<'cache' | 'audit' | 'errors' | 'logger' | 'refusals' | 'routes', string> {
+): Record<'cache' | 'storage' | 'audit' | 'errors' | 'logger' | 'refusals' | 'routes', string> {
   return {
     cache: choose(CACHE_STACKS, options.cache, 'cache') ?? 'none',
+    // A new project keeps the content of its files in a directory while it is developed, in memory in its tests; a recorded one says what it chose, or none.
+    storage: choose(STORAGE_STACKS, options.storage, 'storage') ?? 'local',
     audit: choose(AUDIT_MODES, options.audit, 'audit') ?? (orm === 'none' ? 'off' : 'on'),
     errors: choose(ERROR_REPORTERS, options.errors, 'errors') ?? 'none',
     logger: choose(LOGGERS, options.logger, 'logger') ?? 'stdout',

@@ -174,6 +174,7 @@ describe('init, the choices it records and the ones it refuses', () => {
       logger: 'stdout',
       refusals: 'factories',
       routes: 'controllers',
+      storage: 'local',
       style: 'explicit',
       packageManager: 'pnpm',
     });

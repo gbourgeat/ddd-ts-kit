@@ -13,6 +13,7 @@ import { e2eKind } from './kinds/e2e-kind.js';
 import { errorKind } from './kinds/error-kind.js';
 import { entityKind } from './kinds/entity-kind.js';
 import { eventHandlerKind } from './kinds/event-handler-kind.js';
+import { fileUploadKind } from './kinds/file-upload-kind.js';
 import { gatewayKind } from './kinds/gateway-kind.js';
 import { guardKind } from './kinds/guard-kind.js';
 import { integrationEventKind } from './kinds/integration-event-kind.js';
@@ -46,6 +47,7 @@ export const KINDS: readonly Kind[] = [
   portKind,
   routeKind,
   controllerKind,
+  fileUploadKind,
   routeGroupKind,
   guardKind,
   integrationEventKind,

@@ -11,6 +11,9 @@ import { subscribeAll } from '@ddd-ts-kit/events';
 {{#if http.any}}
 import { createErrorMapper, defineRoutes, type Route } from '@ddd-ts-kit/http';
 {{/if}}
+{{#if files.any}}
+import { PurgeStagedFiles } from '@ddd-ts-kit/kernel';
+{{/if}}
 {{#if cache.rateLimit}}
 import type { IntegrationEventPublisher, IntegrationEventSubscriber, Logger, RateLimiter } from '@ddd-ts-kit/kernel';
 {{/if}}
@@ -28,6 +31,9 @@ import { relateSystemActors } from '{{alias.platform}}/auth/relate-system-actors
 {{/if}}
 import { createPlatform, type PlatformOptions } from '{{alias.platform}}/create-platform{{alias.ext}}';
 import type { Persistence } from '{{alias.platform}}/database/persistence{{alias.ext}}';
+{{#if files.http}}
+import { fileRoutes } from '{{alias.platform}}/files/file-routes{{alias.ext}}';
+{{/if}}
 import type { Platform } from '{{alias.platform}}/platform{{alias.ext}}';
 // ddd-ts-kit:imports
 // /ddd-ts-kit:imports
@@ -65,6 +71,10 @@ export interface Application {
   /** Authenticates every request and runs it inside the execution scope. */
   readonly boundary: HttpBoundary;
 {{/if}}
+{{#if files.http}}
+  /** The routes that answer the signed links of a storage the application serves itself; mounted before any body parser. */
+  readonly fileRoutes: readonly Route[];
+{{/if}}
 {{#unless http.any}}
   readonly routes: readonly never[];
   readonly contexts: readonly ContextWiring[];
@@ -101,6 +111,9 @@ export function composeApplication(
   const { logger, metrics, cache, clock } = platform;
 
   installAspectRuntime({ logger, metrics, cache, clock });
+{{#if files.any}}
+  purgeStagedFiles(platform);
+{{/if}}
 
 {{#if audit.route}}
   const contexts = [...selection, auditModule].map((module) => module(platform));
@@ -129,6 +142,9 @@ export function composeApplication(
     routes: [],
     contexts,
 {{/unless}}
+{{#if files.http}}
+    fileRoutes: fileRoutes(platform.files.storage),
+{{/if}}
     eventBus: platform.eventBus,
 {{#if broker.external}}
     // Behind a broker a listener has queues of its own, under its own name.
@@ -185,3 +201,12 @@ async function stop(platform: Platform, options: ApplicationOptions): Promise<vo
 {{/if}}
   await platform.logger.flush();
 }
+{{#if files.any}}
+
+/** What rolled-back commands left in `staging/`, removed every hour by the process that runs the jobs. */
+function purgeStagedFiles(platform: Platform): void {
+  const purge = new PurgeStagedFiles(platform.files.staging, platform.clock);
+
+  platform.jobs.register({ name: 'files.purge-staged', schedule: { every: '1h' }, run: () => purge.run() });
+}
+{{/if}}

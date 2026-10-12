@@ -30,6 +30,19 @@ optional peer). `FILE_TOO_LARGE` answers 413, `UNSUPPORTED_MEDIA_TYPE` 415 and `
 404 by default. `signedFileRoutes(storage)` answers the signed links of the local and in-memory
 storages, and a handler may answer a stream.
 
+**A generated project keeps files, from its first day.** `init --storage local|s3|none` (new key
+`stack.storage`, `local` in what `init` writes, `none` when a config does not say it, so an
+existing project changes nothing) writes `platform/files/` and `platform/config/read-files.ts`:
+a local directory in development, a bucket of the S3 protocol with a MinIO service in
+`docker-compose.yml` for `s3`, the memory in the tests; the ports bound, the hourly purge of
+staged files, the routes that answer the links of a served storage and the upload reader.
+`generate file-upload <context> <UseCase> --path ...` writes the controller that declares the
+file, the command that carries it, the handler that stages and promotes it, and their specs.
+Two rules: `persistence/no-file-content` (no binary or base64 column in a schema or a
+migration) and `files/port-not-connector` (the model and the use cases name the port, never a
+connector); `@ddd-ts-kit/s3` is refused in `domain/` and `application/`. To add files to an
+existing project: `npx ddd-ts-kit init --force --storage local`.
+
 ## 0.5.0
 
 **Migrations are named by a timestamp and what they do.** The generated `drizzle.config.ts`

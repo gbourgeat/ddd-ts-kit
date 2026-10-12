@@ -10,6 +10,7 @@ import { eventVars } from './event-vars.js';
 import { one } from './one.js';
 import { persistenceVars } from './persistence-vars.js';
 import { redisVars } from './redis-vars.js';
+import { filesVars } from './files-vars.js';
 import { usesLegacyDecorators } from './uses-legacy-decorators.js';
 
 /** The choices of the stack as template variables: what every template of `init` and of `generate` reads. */
@@ -30,6 +31,7 @@ export function stackVars(config: Config): RenderContext {
     authz: one(authz, ['rbac', 'abac', 'rebac', 'custom']),
     broker: brokerVars(config),
     cache: cacheVars(config),
+    files: filesVars(config),
     redis: redisVars(config),
     audit: auditVars(config),
     errors: errorVars(config),

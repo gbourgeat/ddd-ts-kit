@@ -19,7 +19,7 @@ export interface HttpServer {
 }
 
 /** What the server needs of the application: its routes and what stands at its edge. */
-type Served = Pick<Application, 'routes' | 'boundary'{{#if cache.rateLimit}} | 'rateLimiter' | 'ready'{{/if}}>;
+type Served = Pick<Application, 'routes' | 'boundary'{{#if cache.rateLimit}} | 'rateLimiter' | 'ready'{{/if}}{{#if files.http}} | 'fileRoutes'{{/if}}>;
 
 export async function startHttpServer(served: Served, config: AppConfig): Promise<HttpServer> {
   const app = express();
@@ -27,6 +27,10 @@ export async function startHttpServer(served: Served, config: AppConfig): Promis
   app.disable('x-powered-by');
 {{#if cache.rateLimit}}
   guardTheDoor(app, served, config);
+{{/if}}
+{{#if files.http}}
+  // Before the JSON parser, which would read first a JSON file sent through a signed link.
+  mountExpress(app, served.fileRoutes, served.boundary);
 {{/if}}
   app.use(express.json());
 {{#if docs.any}}

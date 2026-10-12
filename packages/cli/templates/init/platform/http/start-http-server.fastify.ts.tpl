@@ -17,13 +17,16 @@ export interface HttpServer {
 }
 
 /** What the server needs of the application: its routes and what stands at its edge. */
-type Served = Pick<Application, 'routes' | 'boundary'{{#if cache.rateLimit}} | 'rateLimiter' | 'ready'{{/if}}>;
+type Served = Pick<Application, 'routes' | 'boundary'{{#if cache.rateLimit}} | 'rateLimiter' | 'ready'{{/if}}{{#if files.http}} | 'fileRoutes'{{/if}}>;
 
 export async function startHttpServer(served: Served, config: AppConfig): Promise<HttpServer> {
   const app = Fastify();
 
 {{#if cache.rateLimit}}
   guardTheDoor(app, served, config);
+{{/if}}
+{{#if files.http}}
+  mountFastify(app, served.fileRoutes, served.boundary);
 {{/if}}
 {{#if docs.any}}
   mountFastify(app, withDocumentation(served.routes, config), served.boundary);

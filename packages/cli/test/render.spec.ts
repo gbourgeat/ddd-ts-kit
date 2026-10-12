@@ -78,6 +78,7 @@ describe('shipped templates', () => {
         'entity',
         'error',
         'event-handler',
+        'file-upload',
         'init',
         'integration-event',
         'integration-handler',
