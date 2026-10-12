@@ -930,7 +930,7 @@ own specs. `PersonError.invalidEmail` quotes the address it refuses in its messa
 now reads `Invalid email.` as `detail`, and the spec of the controller holds that the address
 does not leave.
 
-## 2026-10-13: refusals at the edge in the audit trail, and a practice is not a tenant
+## 2026-10-13: refusals at the edge in the audit trail, and the tenancy of the application
 
 Two changes of the kit reached this application.
 
@@ -946,12 +946,14 @@ session and the correlation of the request. Three files changed here, as `init` 
 `Clock` and `IdGenerator`). `identity-open-practice.e2e.spec.ts` now holds that the refusal of
 a person who is not a platform admin is in the trail, under `http:openPractice`.
 
-**The tenancy of this application is stated, not enforced by the storage.** The kit can now
+**The tenancy of this application is proposed, not yet decided.** The kit can now
 confine every statement to a tenant (`"stack.tenancy": "shared-table"`, row-level security, a
 schema or a database per tenant). The data here is grouped by practice, but a practice is not a
 tenant: a patient books in several practices with one account and lists their appointments across
 them, and the boundary between practices is the relationship model, decided per element and
-narrowing every search. ADR-0003 records it. The config says nothing of tenancy, so the new rule
+narrowing every search. ADR-0003 proposes it; the owner had asked for a tenancy made explicit
+and enforced, so the record stays `proposed` until the owner chooses between it and one network
+as a tenant on shared tables. Until then the config says nothing of tenancy, so the new rule
 `tenancy/scoped-statement` has nothing to judge: it is the one entry of `NOT_APPLICABLE` of the
 conformance suite, with that reason, and the kit proves the rule both ways in its own fixtures and
 on the shared-table stacks of its end-to-end matrix.
@@ -969,3 +971,24 @@ Frictions:
 2. **The tenant of the realm token is not the practice.** The `tenant_id` claim still names the
    chain of the audit trail of an actor; a reader who expects it to bound what a user sees will
    be surprised. ADR-0003 says where the boundary is instead.
+
+## 2026-10-13 (later): what a review of the tenancy changed here
+
+A review of the kit's multitenancy found holes the application does not reach, since its config
+says nothing of tenancy, and two that it does:
+
+- **A refusal of a caller without a credential is no longer recorded.** The trail of
+  `http:openPractice` keeps the refusal of an authenticated person who is not a platform admin
+  (what `identity-open-practice.e2e.spec.ts` holds); an anonymous request answered 401 writes
+  nothing, so unauthenticated traffic cannot grow the trail.
+- **A guard that fails is not a refusal.** A guard of this application that threw something other
+  than a `DomainError` would now answer 500 and leave no denied decision.
+
+ADR-0003 went back to `proposed`: the owner asked for an enforced tenancy, and the record says the
+opposite, so the owner decides. Nothing else changed in the code of the application.
+
+Frictions:
+
+1. **A tenant id has one grammar now** (letters, digits, `_`, `-`, at most 63). The `tenant_id`
+   claim of the realm names a practice by its id, which fits; a realm whose ids held a `.` would
+   be refused at the first request.

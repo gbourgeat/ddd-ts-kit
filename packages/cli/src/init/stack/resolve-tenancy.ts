@@ -8,7 +8,7 @@ const SHARED_TABLE_ORMS = ['knex', 'drizzle'];
 
 /** What the persistence packages offer at run time, without `init` generating it yet: where to read how. */
 const NOT_GENERATED: Readonly<Record<string, string>> = {
-  'row-level-security': 'enableTenantIsolation or tenantPolicy, and tenantSession on the unit of work',
+  'row-level-security': 'enableTenantIsolation or tenantPolicies, and tenantSession on the unit of work',
   'schema-per-tenant': 'tenantSchemaTable and migrateTenantSchema of @ddd-ts-kit/knex',
   'database-per-tenant': 'TenantDatabases and createTenantRoutedUnitOfWork of @ddd-ts-kit/knex',
 };

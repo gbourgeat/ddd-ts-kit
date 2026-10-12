@@ -1,7 +1,12 @@
 # ADR-0003: A practice is not a tenant
 
-- Status: accepted
+- Status: proposed (awaiting the decision of the owner of the kit)
 - Date: 2026-10-13
+
+The owner asked for the tenant strategy of this application to be made explicit and enforced.
+This record proposes instead that the application has no tenancy; it is not accepted until the
+owner decides between it and the second alternative below (one network as a tenant, enforced on
+shared tables), which follows the request as asked.
 
 ## Context
 
@@ -45,5 +50,9 @@ tenant of the actor) and in the log fields.
   mismatch refused at the edge. Refused: a patient's list of appointments spans practices, and a
   practitioner of two practices would need two sessions; the relationship model already decides
   per element what a tenant boundary would decide per row.
-- **One network as a tenant now.** Possible, and harmless with one network, but it would add a
-  column and a condition to every table for a boundary nobody crosses yet.
+- **One network as a tenant now.** What the owner asked for: `"stack.tenancy": "shared-table"`,
+  a `tenant_id` column on every table of the contexts, every repository through `tenantTable` and
+  `ownTenantTable`, the outbox and the read models keeping the tenant, `tenancy/scoped-statement`
+  judging the adapters, and practices kept as relationships inside the network. Harmless with
+  one network, at the price of a column and a condition on every table, and of a token claim
+  that names the network rather than the practice it names today.
