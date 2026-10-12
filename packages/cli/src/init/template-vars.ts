@@ -22,6 +22,7 @@ export function templateVars(config: Config, projectName: string): RenderContext
     extras: extrasVars(config.ci.extras),
     needs: { url: readsUrl(config), text: readsText(config) },
     keycloak: { version: KEYCLOAK_VERSION },
+    sdk: { on: config.sdk !== undefined },
     compose: {
       volumes:
         database === 'postgres' ||

@@ -53,7 +53,7 @@ ddd-ts-kit init [--http express|fastify|nest|none]
                 [--routes controllers|functions]
                 [--package-manager npm|pnpm]
                 [--allow-no-outbox "<reason>"] [--import-alias '$<name>/']
-                [--import-extension none|js]
+                [--import-extension none|js] [--sdk]
                 [--context <name>:<core|supporting|generic>]...
                 [--dry-run] [--force]
 ```
@@ -431,6 +431,25 @@ Regenerates what is derived from the config and the code, and nothing else:
 `--check` writes nothing, names each stale file and exits 1. The event catalog and the
 AsyncAPI document need the code of the project to run, so they are produced by
 `scripts/events.ts` (`npm run events:generate`, part of `npm run docs:generate`).
+
+## sdk
+
+```
+ddd-ts-kit sdk [--check] [--dry-run]
+```
+
+Generates the typed client of each document of the OpenAPI contract, read from the committed
+`openapi/*.yaml` (or `.json`): a workspace package under `clients/<document>` (`clients/api` for
+the whole contract), with no runtime dependency. Each operation is a method of `createClient()`
+and a function of its own; its outcome is typed by status, a refusal by the error codes the
+contract lists for it (`x-error-codes`); a credential is given per security scheme. The first
+run records `"sdk"` in the config (`init --sdk` does it for a new project) and wires the
+project: the workspace, the `paths` entry of each client in `tsconfig.json`, the exclusions of
+Biome and knip, the scripts `sdk:generate` and `sdk:build`, and `docs:generate`, `docs:check`,
+`ci:docs`, `ci:build` extended. The package.json of a client keeps its version and the keys a
+team adds. `--check` writes nothing, names each stale file and exits 1. The comparison with
+openapi-typescript, hey-api and orval, and how to publish a client:
+[docs/tools/client-sdk.md](../../docs/tools/client-sdk.md).
 
 ## depcruise-config
 

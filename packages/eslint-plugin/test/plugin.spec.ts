@@ -103,6 +103,14 @@ describe('the dddTsKit helper', () => {
     }
   });
 
+  it('leaves out the build products and the generated sources of the clients, and the ignores a project adds', () => {
+    const ignores = dddTsKit({ typeChecked: false, ignores: ['generated/**'] }).find(
+      (entry) => entry.name === 'ddd-ts-kit/ignores',
+    )?.ignores;
+
+    expect(ignores).toEqual(expect.arrayContaining(['**/dist/**', 'clients/*/src/**', 'generated/**']));
+  });
+
   it('enables curly at the severity of clean/braces, in TypeScript and in scripts, and leaves it out when it is off', () => {
     const braces = (rules: Record<string, string>): unknown[] =>
       inProject({ rules }, (root) => {

@@ -30,5 +30,7 @@ export interface StackOptions {
   readonly importExtension?: string;
   /** The reason given for running an ORM without the transactional outbox. */
   readonly allowNoOutbox?: string;
+  /** `--sdk`: the typed clients of the contract are generated with the project. */
+  readonly sdk?: boolean;
   readonly force: boolean;
 }

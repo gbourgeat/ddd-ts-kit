@@ -38,7 +38,15 @@ export interface DddTsKitOptions {
 
 export const TYPESCRIPT_FILES = ['**/*.ts', '**/*.mts', '**/*.cts'];
 
-const DEFAULT_IGNORES = ['**/dist/**', '**/coverage/**', '**/node_modules/**', '**/reports/**', '**/*.d.ts'];
+/** Build products, and the sources of the clients `ddd-ts-kit sdk` generates from the contract, which no tsconfig of the project includes. */
+const DEFAULT_IGNORES = [
+  '**/dist/**',
+  '**/coverage/**',
+  '**/node_modules/**',
+  '**/reports/**',
+  '**/*.d.ts',
+  'clients/*/src/**',
+];
 
 /** The architecture id whose severity drives the layout rules of `@stylistic/eslint-plugin`. */
 const LAYOUT_ID = 'clean/blank-lines';
