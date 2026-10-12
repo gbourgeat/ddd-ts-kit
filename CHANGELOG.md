@@ -18,8 +18,8 @@ contract, `ci:build` builds them, so the GitHub and GitLab pipelines check them;
 a manual step. Under npm, while `package-lock.json` does not list a client, the command says to
 run `npm install` and `sdk --check` fails, before `npm ci` refuses the lock in the pipeline. openapi-typescript with openapi-fetch, hey-api and orval were measured on the
 example contract first: none reads the error codes, and the first refuses TypeScript 6
-(`docs/tools/client-sdk.md`). A project without the key is unchanged. The ESLint preset now
-ignores `clients/*/src/**`.
+(`docs/tools/client-sdk.md`). A project without the key is unchanged: only with it does the
+ESLint preset leave out `clients/*/src/**`, and the command add `!**/clients/*/src` to Biome.
 
 ## 0.5.0
 

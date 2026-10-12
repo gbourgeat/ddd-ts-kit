@@ -38,15 +38,10 @@ export interface DddTsKitOptions {
 
 export const TYPESCRIPT_FILES = ['**/*.ts', '**/*.mts', '**/*.cts'];
 
-/** Build products, and the sources of the clients `ddd-ts-kit sdk` generates from the contract, which no tsconfig of the project includes. */
-const DEFAULT_IGNORES = [
-  '**/dist/**',
-  '**/coverage/**',
-  '**/node_modules/**',
-  '**/reports/**',
-  '**/*.d.ts',
-  'clients/*/src/**',
-];
+const DEFAULT_IGNORES = ['**/dist/**', '**/coverage/**', '**/node_modules/**', '**/reports/**', '**/*.d.ts'];
+
+/** The sources of the clients `ddd-ts-kit sdk` generates from the contract, in a project whose config asks for them ("sdk"). */
+const CLIENT_SOURCES = 'clients/*/src/**';
 
 /** The architecture id whose severity drives the layout rules of `@stylistic/eslint-plugin`. */
 const LAYOUT_ID = 'clean/blank-lines';
@@ -71,7 +66,7 @@ export function createDddTsKit(plugin: Plugin, options: DddTsKitOptions = {}): C
     options.typeChecked === false ? untyped() : typed(root, options.allowDefaultProject ?? DEFAULT_PROJECT_FILES);
 
   return [
-    { name: 'ddd-ts-kit/ignores', ignores: [...DEFAULT_IGNORES, ...(options.ignores ?? [])] },
+    { name: 'ddd-ts-kit/ignores', ignores: ignoresOf(config, options) },
     js.configs.recommended,
     ...standard.presets,
     { name: 'ddd-ts-kit/clean-code', files: TYPESCRIPT_FILES, rules: standard.rules },
@@ -86,6 +81,10 @@ export function createDddTsKit(plugin: Plugin, options: DddTsKitOptions = {}): C
     { name: 'ddd-ts-kit/aggregates', files: aggregateFiles(config), rules: standard.aggregateRules },
     { name: 'ddd-ts-kit/tests', files: testFiles(config), rules: standard.testRules },
   ];
+}
+
+function ignoresOf(config: Config, options: DddTsKitOptions): string[] {
+  return [...DEFAULT_IGNORES, ...(config.sdk !== undefined ? [CLIENT_SOURCES] : []), ...(options.ignores ?? [])];
 }
 
 interface StandardRules {

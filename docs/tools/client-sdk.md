@@ -108,8 +108,9 @@ The command also wires the project, and running it again changes nothing:
 - the name of each client resolves to its sources in the `paths` of `tsconfig.json`, which the
   type check, Vitest, tsx and knip read: a spec imports the client by its package name, as a
   consumer would, without a build first;
-- their sources are left out of Biome, knip and the ESLint preset, which would read generated
-  code as code written by hand;
+- their sources are left out of Biome and knip, which would read generated code as code written
+  by hand, and of the ESLint preset, which does so when the config has `"sdk"`: a project
+  without the key keeps linting and formatting whatever it has under `clients/`;
 - the scripts: `sdk:generate`, `sdk:build`; `docs:generate` regenerates the clients after the
   contract, `docs:check` and `ci:docs` compare them, `ci:build` builds them.
 
