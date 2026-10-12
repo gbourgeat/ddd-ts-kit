@@ -33,6 +33,11 @@
       "semanticCommitType": "ci"
     },
     {
+      "description": "pglite-socket pins the exact pglite it was built for: the two move together.",
+      "groupName": "pglite",
+      "matchPackageNames": ["@electric-sql/pglite", "@electric-sql/pglite-*"]
+    },
+    {
       "groupName": "tests",
       "matchPackageNames": ["vitest", "@vitest/**", "@faker-js/faker"]
     },
