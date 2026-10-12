@@ -126,7 +126,7 @@ describes.
 | Where tuples live | a table of the project, written in the transaction of the command | the datastore of the OpenFGA server, through its API |
 | A tuple and its aggregate | commit together, or not at all | two steps: the aggregate commits, then the tuple is written (after commit, retried, idempotent) |
 | Evaluation | in the API process, sequential, bounded by a depth limit | in the server, parallel, with its caches |
-| Listing | reverse expansion, one read per reached subject, refused beyond 10000 | `ListObjects`, the server's index of the model |
+| Listing | reverse expansion, one read per reached subject, refused beyond 10000 | `ListObjects`, evaluated in the server; capped by `OPENFGA_LIST_OBJECTS_MAX_RESULTS` (1000) and `OPENFGA_LIST_OBJECTS_DEADLINE` (3 s), which cut the list without an error: the adapter refuses an answer at the cap, and a cut by the deadline is not visible |
 | Consistency | that of the database: what committed is seen | a preference per request; no token is carried by the kit |
 | Shared with other services | no: one application's data | yes: any service, any language, asks the same server |
 | Operations | nothing more to run | a stateful service on the path of every request, its datastore, its upgrades |
@@ -173,7 +173,7 @@ permission. See
 | New project, rights follow job functions (client, practitioner, administrator) | in-process roles, the default of `init` |
 | A few per-element rules: only the client who booked or the practitioner may cancel | roles plus instance policies; still no tuple store |
 | Sharing per element: delegated assistants, clinics owning calendars | in-process relationships with a SQL tuple store written in the handler |
-| Lists over large shared hierarchies, or reverse expansion hitting its limit | a projection of accessible ids first; then `@ddd-ts-kit/openfga` behind the port, or SpiceDB by hand |
+| Lists over large shared hierarchies, or reverse expansion hitting its limit | a projection of accessible ids first; then `@ddd-ts-kit/openfga` behind the port (its `ListObjects` is capped too, 1000 objects by default, refused at the cap) or SpiceDB by hand |
 | Several services and languages asking about the same objects | OpenFGA (`@ddd-ts-kit/openfga`) or SpiceDB as a shared service; choose on consistency needs, datastore and governance |
 | Attribute rules owned by a security team, reviewed as policy | Cedar (embedded) or OPA, behind the port, with attributes supplied by a projection |
 | Already on one cloud provider and wanting no engine to run | Amazon Verified Permissions, accepting the remote call and the vendor |

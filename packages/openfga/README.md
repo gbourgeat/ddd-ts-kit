@@ -63,6 +63,17 @@ const authorizer = new OpenFgaAuthorizer({ client, mapping: permissionMapping() 
   `NO_RELATION`): `Check` decides, `ListObjects` gives the scope of a search (`{ kind: 'ids' }`).
   A project moves between the two by binding, nothing else changes.
 
+**The limits of `ListObjects`.** The server answers at most `OPENFGA_LIST_OBJECTS_MAX_RESULTS`
+objects (1000 by default) and stops at `OPENFGA_LIST_OBJECTS_DEADLINE` (3 seconds by default),
+and in both cases returns the objects found so far **without an error**. A search narrowed by a
+cut list would lose elements in silence, so `OpenFgaAuthorizer` refuses an answer as long as
+`listObjectsLimit` (default 1000: set it to the server's value) with
+`ReverseExpansionLimitError`, as the in-process authorizer does beyond its own limit. A list cut
+by the deadline cannot be told from a complete one by its answer: give the server a deadline
+above the slowest listing you expect, and watch its latency. When the lists are that long,
+narrow them first (a projection of the accessible ids, a coarser parent such as the clinic)
+rather than raising the limits.
+
 **A write is a call to a service.** It does not join the transaction of the unit of work: an
 aggregate can commit without its tuple, or a tuple be written for an aggregate whose transaction
 rolled back. Write tuples after the commit, from a domain event handler of phase `after-commit`

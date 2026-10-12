@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { ReverseExpansionLimitError } from '@ddd-ts-kit/auth/rebac';
 import { anonymousActor, type Actor } from '@ddd-ts-kit/kernel';
 import { OpenFgaAuthorizer, type OpenFgaApi, type OpenFgaTupleKey } from '../src/index.js';
 import { docsPermissions, mapping } from './support/documents.js';
@@ -11,7 +12,10 @@ const edit = docsPermissions['document.edit'];
 class AnsweringOpenFga extends InMemoryOpenFga implements OpenFgaApi {
   readonly asked: OpenFgaTupleKey[] = [];
 
-  constructor(private readonly allowed: readonly string[]) {
+  constructor(
+    private readonly allowed: readonly string[],
+    private readonly listed: readonly string[] = ['document:2', 'document:1'],
+  ) {
     super();
   }
 
@@ -26,7 +30,7 @@ class AnsweringOpenFga extends InMemoryOpenFga implements OpenFgaApi {
     relation: string;
     type: string;
   }): Promise<{ objects: readonly string[] }> {
-    return Promise.resolve({ objects: ['document:2', 'document:1'] });
+    return Promise.resolve({ objects: this.listed });
   }
 }
 
@@ -88,5 +92,30 @@ describe('OpenFgaAuthorizer', () => {
     expect(await authorizer.listAccessible({ actor: ada, permission: edit, resourceType: 'folder' })).toEqual({
       kind: 'none',
     });
+  });
+
+  it('refuses a listing as long as the server allows, which the server may have cut without saying so', async () => {
+    const truncating = new AnsweringOpenFga([], ['document:1', 'document:2', 'document:3']);
+    const request = { actor: ada, permission: edit, resourceType: 'document' };
+
+    await expect(
+      new OpenFgaAuthorizer({ client: truncating, mapping, listObjectsLimit: 3 }).listAccessible(request),
+    ).rejects.toThrow(ReverseExpansionLimitError);
+
+    expect(
+      await new OpenFgaAuthorizer({ client: truncating, mapping, listObjectsLimit: 4 }).listAccessible(request),
+    ).toEqual({
+      kind: 'ids',
+      ids: ['1', '2', '3'],
+    });
+
+    const atTheDefault = new AnsweringOpenFga(
+      [],
+      Array.from({ length: 1000 }, (_, index) => `document:${index}`),
+    );
+
+    await expect(new OpenFgaAuthorizer({ client: atTheDefault, mapping }).listAccessible(request)).rejects.toThrow(
+      ReverseExpansionLimitError,
+    );
   });
 });

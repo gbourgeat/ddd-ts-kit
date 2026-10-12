@@ -1,3 +1,4 @@
+import { ReverseExpansionLimitError } from '@ddd-ts-kit/auth/rebac';
 import {
   ALLOWED,
   DenialReason,
@@ -11,10 +12,15 @@ import {
 import { isAnonymous, type Actor } from '@ddd-ts-kit/kernel';
 import type { OpenFgaAuthorizerOptions } from './open-fga-authorizer-options.js';
 
+/** `OPENFGA_LIST_OBJECTS_MAX_RESULTS` of a server that leaves it at its default. */
+const SERVER_LIST_OBJECTS_LIMIT = 1000;
+
 /**
  * The `Authorizer` port of `@ddd-ts-kit/auth` answered by OpenFGA: `Check` for a decision,
  * `ListObjects` for the scope of a search. The same permissions, mapping and denial codes as the
- * in-process `RelationBasedAuthorizer`, so a project moves from one to the other by binding.
+ * in-process `RelationBasedAuthorizer`, so a project moves from one to the other by binding. Like
+ * it, a listing that may be incomplete is refused: an answer as long as `listObjectsLimit` may
+ * have been cut by the server, and a search narrowed by it would lose elements in silence.
  */
 export class OpenFgaAuthorizer implements Authorizer {
   constructor(private readonly options: OpenFgaAuthorizerOptions) {}
@@ -52,6 +58,12 @@ export class OpenFgaAuthorizer implements Authorizer {
       relation,
       type: resourceType,
     });
+
+    const limit = this.options.listObjectsLimit ?? SERVER_LIST_OBJECTS_LIMIT;
+
+    if (objects.length >= limit) {
+      throw new ReverseExpansionLimitError(limit);
+    }
 
     return { kind: 'ids', ids: objects.map((object) => object.slice(resourceType.length + 1)).sort() };
   }
