@@ -191,6 +191,14 @@ const INJECTIONS: readonly Injection[] = [
     from: "@Scheduled('billing.cancel-stale-invoices'",
     to: "@Scheduled('CancelStale'",
   },
+  {
+    rule: 'language/declared-vocabulary',
+    eslint: 'ddd-ts-kit/language-declared-vocabulary',
+    what: 'a role written as a string where the Role vocabulary of the platform declares it',
+    file: SERVICE,
+    from: '',
+    to: "\nexport const ISSUER_ROLE = 'admin';\n",
+  },
 ];
 
 /** Slow, opt-in (DDD_TS_KIT_E2E=1): one deliberate violation per rule of this wave, caught by the checker and by ESLint with the preset. */
@@ -231,6 +239,12 @@ describe.runIf(SLOW)('a violation of a rule of this wave, written into a generat
     expect(project.checked().filter((violation) => violation.ruleId === 'clean/function-size')).toEqual([
       expect.objectContaining({ severity: 'error', file: SERVICE }),
     ]);
+  }, 120_000);
+
+  it('ESLint catches a number without a name in the domain, a rule the checker leaves to it', () => {
+    project.append(SERVICE, '\nexport function minutesIn(hours: number): number {\n  return hours * 60;\n}\n');
+
+    expect(project.linted(SERVICE)).toContain('ddd-ts-kit/clean-no-magic-number');
   }, 120_000);
 
   it('the checker catches a padded block, the approximation of the layout the formatter holds', () => {

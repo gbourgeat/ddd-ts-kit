@@ -13,6 +13,16 @@ export class IssueInvoiceCommand {}`,
     bad: `export class InvoiceManager {}`,
     good: `export class InvoiceNumbering {}`,
   },
+  'language/declared-vocabulary': {
+    why: 'A status, a kind, a role or a permission is a word of the language whose values are a closed list. Spelled again as a string wherever it is compared, granted or stored, each copy can drift: a typo compiles, a renamed value leaves its old spelling behind, and nothing completes it in the editor. Declared once, as an object `as const` and the union type of its name (a permission set for permissions), it is read by its key, completed by the editor, and a parameter typed with it accepts nothing else. The value stays the same string on the wire and in the database. A quoted key counts, and is written as a computed key, `[AppointmentStatus.NoShow]: ..`. Tests and published languages are not judged: a test sends the values a client sends, and a published language names the values of its contract itself.',
+    bad: `// domain/vocabularies/appointment-status.vocabulary.ts declares AppointmentStatus
+if (appointment.status === 'no-show') {
+  grants.push('billing:invoice.issue');
+}`,
+    good: `if (appointment.status === AppointmentStatus.NoShow) {
+  grants.push(billingPermissions['invoice.issue']);
+}`,
+  },
   'purity/no-system-clock': {
     why: 'Code that reads the clock gives a different answer every time it runs, so its tests are either flaky or need a mocked module. Passing the instant in, from the Clock port, makes every rule about time testable with a fixed date and replayable in production.',
     bad: `isOverdue(): boolean { return this.dueDate < new Date(); }`,

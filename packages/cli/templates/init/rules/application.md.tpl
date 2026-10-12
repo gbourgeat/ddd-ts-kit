@@ -27,5 +27,6 @@ paths:
 - A job (`scheduling/*.job.ts`) and an integration event handler (`integration/handlers/`) only build one command and send it as a system actor; both are safe to repeat (`scheduling/job-triggers-use-case`, `events/consumer-idempotent`).
 - A query never saves, deletes or publishes (`application/command-query-separation`); it hands the access scope of the actor to its read port and never filters after loading.
 - A read that takes criteria, a scope or a page is a search, never a list (`naming/search-not-list`): `Search<Things>Query` in `queries/search-<things>/` (`generate query ... --search`), `search...` on the port, its adapters and its fakes; one element or none stays `findById` or `findBy...`.
+- A permission, a role or a status is read from its declaration, `billingPermissions['invoice.issue']`, `InvoiceStatus.Issued`, never written as a string (`language/declared-vocabulary`); a number has a name (`clean/no-magic-number`).
 - Time through `Clock`, identifiers through `IdGenerator`, no `process.env` (`purity/*`). No logging, tracing, retry or audit call: they are applied from outside (`aspects/outside-in`, `tracing/platform-only`).
 - A whole feature with `/ddd-ts-kit:use-case`. Create with `npx ddd-ts-kit generate command|query|port|policy|job|event-handler|integration-handler ... --json`, then fill the `TODO(domain)` places.

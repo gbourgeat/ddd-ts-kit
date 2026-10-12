@@ -713,6 +713,7 @@ saying what to do instead. Exit code 1 when there is at least one error.
 | `events/name-format` | an event name that is not `<context>.<aggregate>.<fact>` in kebab-case with the right context |
 | `events/defined-in-published-language` | `defineIntegrationEvent` outside a published language, without a payload, twice for one version; an event described by hand |
 | `language/glossary-term` | a class of the model named with a word the glossary of its context does not define; an empty glossary; under `"stack.refusals": "factories"`, an error class of `domain/errors/` too |
+| `language/declared-vocabulary` | a string literal whose value is a value of a closed vocabulary the project declares (an object `as const` exported with the union type of its name, a permission set of `definePermissions`), outside the file that declares it; tests and published languages are not judged |
 | `language/no-technical-name` | `Manager`, `Helper`, `Util`, `Utils`, `Data`, `Info`, `Processor`, `Wrapper`, `Impl`, `Base`, `Abstract`, `Dto`, `Entity`, `Model` in a type declared under `domain/` or in a use case folder |
 | `purity/no-system-clock` | `new Date()` without argument, `Date.now()`, `performance.now()` in `domain/` or `application/` |
 | `purity/no-ambient-randomness` | `Math.random`, the random source of `crypto`, an id library |
@@ -759,10 +760,11 @@ saying what to do instead. Exit code 1 when there is at least one error.
 | `errors/code-unique` | under `"stack.refusals": "factories"`, in the `domain/errors/` of a context: a code set a second time, by a factory (`refusal('CODE', ..)`) or by a class (`readonly code = 'CODE'`), with the file and line of the first. The same code in two contexts is not reported |
 | `errors/known-code` | under `"stack.refusals": "factories"`, in a `*.route.ts`: a code of the `errors` list that no refusal of the context of the route sets, that no class outside the contexts sets, and that is not a code of the kit |
 
-Five more ids belong to `@ddd-ts-kit/eslint-plugin`, which reads the syntax tree where this
+More ids belong to `@ddd-ts-kit/eslint-plugin`, which reads the syntax tree where this
 checker reads text: `domain/aggregate-encapsulation`, `domain/value-object-immutability`,
-`domain/no-generic-error`, `application/handler-shape` and
-`application/command-query-separation`. `rules` and `explain` show them as "checked by
+`domain/no-generic-error`, `application/handler-shape`,
+`application/command-query-separation` and `clean/no-magic-number` among them (`ddd-ts-kit rules`
+lists them all). `rules` and `explain` show them as "checked by
 @ddd-ts-kit/eslint-plugin", the config accepts them under `rules`, and `check --rule` on one of
 them answers with `npm run lint`. One id, `clean/formatted`, belongs to the formatter: `rules`
 and `explain` show it as "checked by Biome", and `check --rule` on it answers with

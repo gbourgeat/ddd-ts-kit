@@ -71,6 +71,7 @@ the domain expert, not a placeholder name.
 | the generator | refuses a name with an undefined word, a technical word, or an event fact that does not read as past tense |
 | `--term "<Term>=<meaning>"` | adds the glossary rows in the same command that needs them, repeatable |
 | `events/name-format` | events are named `<context>.<aggregate>.<fact>` |
+| `language/declared-vocabulary` | a value of a closed vocabulary (a status, a role, a permission id) is read through its declaration, never written again as a string |
 | `tree/context-doc` | the `CONTEXT.md` and its sections exist |
 
 The exact lists and conditions are in [ARCHITECTURE.md](../ARCHITECTURE.md), section 3, and
@@ -129,6 +130,19 @@ scheduling AppointmentStatus --value requested --value booked --value no-show` w
 credential carries are the vocabulary `Role` of the platform (`<platformDir>/auth/role.ts`),
 written by `init` and completed by `generate route-group --role <role>`; a permission is read
 from the permission set of its context (`billingPermissions['invoice.issue']`), never by its id.
+
+`language/declared-vocabulary` holds it, in the checker and in ESLint: a string literal whose
+value a vocabulary declares is reported with the key to write instead, a quoted key included
+(`[AppointmentStatus.NoShow]: 'No show'`). A vocabulary of a context is judged in that context
+only, since each context speaks its own language; the vocabularies of the platform in the
+platform and in the route groups, where a guard names a role; a permission id everywhere. Tests,
+published languages and the relationship schema of the access model are not judged: they name
+their values on purpose. A value two vocabularies share is reported with both.
+
+A list of two common words is not always worth a vocabulary. In the example, who cancelled an
+appointment is `'patient' | 'practice'`, and both words are also the names of a type of resource
+and of a relation of the access model, and a field of a read model: declared, the vocabulary would
+report each of those homonyms. It stays a union of literal types, which the compiler holds.
 
 Why not a TypeScript `enum`: it is not erasable syntax. Measured with the toolchain the kit
 supports, on Node 24.21: Node's own type stripping refuses it

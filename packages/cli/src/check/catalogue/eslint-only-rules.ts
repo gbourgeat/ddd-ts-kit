@@ -32,6 +32,11 @@ export const ESLINT_ONLY_RULES: readonly { readonly id: string; readonly descrip
       'Under "stack.refusals": "factories", a static factory of an error class is named after the refusal, never `create`, `make`, `of` or `error1`, and its code is that name in constant case, alone or with the name of the concept.',
   },
   {
+    id: 'clean/no-magic-number',
+    description:
+      'No number literal in domain/ and application/ but 0, 1, -1, an index, a type and the initializer of a module constant or a `static readonly`.',
+  },
+  {
     id: 'application/handler-shape',
     description: 'A *.handler.ts file exports one class with a single public method, execute.',
   },
