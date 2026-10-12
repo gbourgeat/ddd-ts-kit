@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
+import { parseConfig } from '../../src/project/parse-config.js';
 import { languageDeclaredVocabulary } from '../../src/rules/language-declared-vocabulary.js';
 import { projectVocabularies } from '../../src/support/vocabularies/project-vocabularies.js';
 import { BILLING, ruleTester, SAMPLE_CONFIG } from '../support/rule-tester.js';
@@ -102,7 +103,7 @@ ruleTester.run('language-declared-vocabulary', languageDeclaredVocabulary, {
 
 describe('the vocabularies of a project', () => {
   it('are read again once their reading is older than a few seconds', () => {
-    const project = { root, config: { ...SAMPLE_CONFIG, sourceRoot: 'src' } } as const;
+    const project = { root, config: parseConfig(SAMPLE_CONFIG) };
     const first = projectVocabularies(project, 1);
 
     onDisk(
