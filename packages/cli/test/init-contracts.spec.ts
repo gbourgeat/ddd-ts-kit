@@ -3,10 +3,11 @@ import { cli, exists, read, tempDir, write } from './helpers.js';
 import { initProject } from './support/init-project.js';
 import { jsonAt } from './support/json-at.js';
 import { keysAt } from './support/keys-at.js';
+import { readContract } from './support/read-contract.js';
 import { readJson } from './support/read-json.js';
 
-const OPENAPI = 'openapi/openapi.json';
-const ASYNCAPI = 'docs/integration/asyncapi.json';
+const OPENAPI = 'openapi/openapi.yaml';
+const ASYNCAPI = 'docs/integration/asyncapi.yaml';
 const CATALOG = 'docs/integration/event-catalog.md';
 
 /**
@@ -17,7 +18,7 @@ const CATALOG = 'docs/integration/event-catalog.md';
 describe('the contracts init writes', () => {
   it('holds the route of the audit trail behind the bearer scheme, the problem schema, and no event, under the name and version of the manifest', () => {
     const root = initProject();
-    const openapi = readJson(root, OPENAPI);
+    const openapi = readContract(root, OPENAPI);
     const manifest = readJson(root, 'package.json');
 
     expect(jsonAt(openapi, 'info')).toEqual({ title: jsonAt(manifest, 'name'), version: '0.1.0' });
@@ -25,8 +26,8 @@ describe('the contracts init writes', () => {
     expect(jsonAt(openapi, 'paths', '/audit/entries', 'get', 'security')).toEqual([{ bearer: [] }]);
     expect(keysAt(jsonAt(openapi, 'components', 'schemas'))).toEqual(['Problem']);
     expect(keysAt(jsonAt(openapi, 'components', 'securitySchemes'))).toEqual(['bearer']);
-    expect(jsonAt(readJson(root, ASYNCAPI), 'info')).toEqual(jsonAt(openapi, 'info'));
-    expect(jsonAt(readJson(root, ASYNCAPI), 'channels')).toEqual({});
+    expect(jsonAt(readContract(root, ASYNCAPI), 'info')).toEqual(jsonAt(openapi, 'info'));
+    expect(jsonAt(readContract(root, ASYNCAPI), 'channels')).toEqual({});
 
     expect(read(root, CATALOG)).toBe(
       '# Event catalog\n\nGenerated from the integration event declarations. Do not edit by hand: regenerate.\n',
@@ -40,7 +41,7 @@ describe('the contracts init writes', () => {
   ])(
     'follows the stack (%j): the audit route only when the trail has one, the scheme of the authentication',
     (flags, paths, scheme) => {
-      const openapi = readJson(initProject(...flags), OPENAPI);
+      const openapi = readContract(initProject(...flags), OPENAPI);
 
       expect(keysAt(jsonAt(openapi, 'paths'))).toEqual(paths);
       expect(keysAt(jsonAt(openapi, 'components', 'securitySchemes'))).toEqual([scheme]);
@@ -54,7 +55,7 @@ describe('the contracts init writes', () => {
   );
 
   it('names the header of the development actor where nobody signs a token', () => {
-    const openapi = readJson(initProject('--authn', 'none'), OPENAPI);
+    const openapi = readContract(initProject('--authn', 'none'), OPENAPI);
 
     expect(jsonAt(openapi, 'components', 'securitySchemes', 'developmentActor')).toEqual({
       type: 'apiKey',
@@ -82,19 +83,46 @@ describe('the contracts init writes', () => {
     cli(versioned, 'init');
     cli(bare, 'init');
 
-    expect(jsonAt(readJson(versioned, OPENAPI), 'info')).toEqual({ title: 'orders-api', version: '3.2.1' });
-    expect(jsonAt(readJson(bare, ASYNCAPI), 'info')).toMatchObject({ version: '0.0.0' });
-    expect(read(bare, 'scripts/openapi.ts')).toContain(`'${String(jsonAt(readJson(bare, OPENAPI), 'info', 'title'))}'`);
+    expect(jsonAt(readContract(versioned, OPENAPI), 'info')).toEqual({ title: 'orders-api', version: '3.2.1' });
+    expect(jsonAt(readContract(bare, ASYNCAPI), 'info')).toMatchObject({ version: '0.0.0' });
+
+    expect(read(bare, 'scripts/openapi.ts')).toContain(
+      `'${String(jsonAt(readContract(bare, OPENAPI), 'info', 'title'))}'`,
+    );
   });
 
   it('leaves a contract that is already there alone, even with --force: the scripts of the project keep it current', () => {
     const root = initProject();
 
-    write(root, OPENAPI, '{ "paths": { "/invoices": {} } }\n');
+    write(root, OPENAPI, 'paths:\n  /invoices: {}\n');
     write(root, CATALOG, '# Event catalog\n\n## billing.invoice.issued\n');
 
     expect(cli(root, 'init', '--force').code).toBe(0);
-    expect(read(root, OPENAPI)).toBe('{ "paths": { "/invoices": {} } }\n');
+    expect(read(root, OPENAPI)).toBe('paths:\n  /invoices: {}\n');
     expect(read(root, CATALOG)).toBe('# Event catalog\n\n## billing.invoice.issued\n');
+  });
+
+  it('writes them in YAML by default, in JSON when the config asks for it, and no file of the other format', () => {
+    const [yaml, json] = [tempDir('contracts'), tempDir('contracts')];
+
+    for (const root of [yaml, json]) {
+      write(root, 'package.json', JSON.stringify({ name: 'orders-api', version: '3.2.1' }));
+    }
+
+    write(json, 'ddd-ts-kit.config.json', JSON.stringify({ openapi: { format: 'json' } }));
+    expect([cli(yaml, 'init').code, cli(json, 'init').code]).toEqual([0, 0]);
+
+    expect(read(yaml, OPENAPI)).toMatch(/^openapi: '3\.1\.0'\ninfo:\n {2}title: orders-api\n/);
+    expect(exists(yaml, 'openapi/openapi.json')).toBe(false);
+    expect(readJson(json, 'openapi/openapi.json')).toEqual(readContract(yaml, OPENAPI));
+    expect(readJson(json, 'docs/integration/asyncapi.json')).toEqual(readContract(yaml, ASYNCAPI));
+    expect(exists(json, OPENAPI)).toBe(false);
+    expect(read(json, 'openapi/openapi.json')).toMatch(/^\{\n {2}"openapi": "3\.1\.0",\n/);
+  });
+
+  it('writes the module of the split of the contract, empty: one document', () => {
+    expect(read(initProject(), 'src/platform/http/openapi-documents.ts')).toBe(
+      '// Generated by `ddd-ts-kit docs` from "openapi.documents" of ddd-ts-kit.config.json: never edit it.\nimport type { OpenApiDocumentSelection } from \'@ddd-ts-kit/http/openapi\';\n\nexport const OPENAPI_DOCUMENTS: readonly OpenApiDocumentSelection[] = [];\n',
+    );
   });
 });

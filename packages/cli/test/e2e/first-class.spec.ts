@@ -1,11 +1,15 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { writeBusinessDecisions } from '../first-class-proof.js';
-import { read, scaffoldEverything, tempDir } from '../helpers.js';
+import { changeConfig, CONFIG } from '../check-support.js';
+import { cli, read, scaffoldEverything, tempDir, walk } from '../helpers.js';
+import { jsonAt } from '../support/json-at.js';
+import { keysAt } from '../support/keys-at.js';
 import { buildAndCheckDocuments } from './build-and-check-documents.js';
 import { expectNoFinding } from './expect-no-finding.js';
 import { installAsPublished } from './install-as-published.js';
-import { bin, runIn } from './run-in.js';
+import { bin, findingsOf, runIn } from './run-in.js';
 import { FIRST_CLASS, FIRST_CLASS_BROKERS, SLOW } from './stacks.js';
+import { NATIVE_COMPILER } from './type-errors.js';
 import { REPORTED_WORK_PROOF, writeReportedWorkProof } from './write-reported-work-proof.js';
 
 const DECORATED = 'src/contexts/billing/infrastructure/external/remote-tax-rates.adapter.ts';
@@ -74,7 +78,43 @@ describe.runIf(SLOW).each(FIRST_CLASS_BROKERS)('the first-class stack, events on
   it('builds, and its generated documents are current, the audit route in the contract', () => {
     buildAndCheckDocuments(root);
 
-    expect(read(root, 'openapi/openapi.json')).toContain('"/audit/entries"');
+    expect(read(root, 'openapi/openapi.yaml')).toContain('\n  /audit/entries:\n');
+  }, 240_000);
+
+  it('splits its contract between the documents of the config, refuses a route left out, and joins it again', () => {
+    const contexts = keysAt(jsonAt(JSON.parse(read(root, CONFIG)), 'contexts')).filter((name) => name !== 'billing');
+
+    const generate = (): string => findingsOf(root, { command: process.execPath, args: ['dist/scripts/openapi.js'] });
+
+    const documented = (documents: readonly object[]): void => {
+      changeConfig(root, { openapi: { documents } });
+      expect(cli(root, 'docs').code).toBe(0);
+      runIn(root, { command: process.execPath, args: [NATIVE_COMPILER, '-p', 'tsconfig.build.json'] });
+      expect(cli(root, 'build-aliases').code).toBe(0);
+    };
+
+    documented([{ name: 'billing', title: 'Billing', contexts: ['billing'] }]);
+
+    expect(generate()).toContain('GET /audit/entries (searchAuditEntries)');
+
+    documented([
+      { name: 'billing', title: 'Billing', contexts: ['billing'] },
+      { name: 'operations', title: 'Operations', contexts, tags: ['audit'] },
+    ]);
+
+    expect(generate()).toBe('');
+    expect(walk(root, 'openapi')).toEqual(['openapi/billing.yaml', 'openapi/operations.yaml']);
+    expect(read(root, 'openapi/billing.yaml')).toMatch(/^info:\n {2}title: Billing\n/m);
+    expect(read(root, 'openapi/billing.yaml')).toContain('\n  /invoices:\n');
+    expect(read(root, 'openapi/billing.yaml')).not.toContain('/audit/entries');
+    expect(read(root, 'openapi/operations.yaml')).toContain('\n  /audit/entries:\n');
+    expect(findingsOf(root, { command: process.execPath, args: ['dist/scripts/openapi.js', '--check'] })).toBe('');
+    expect(cli(root, 'docs', '--check').code).toBe(0);
+
+    documented([]);
+
+    expect(generate()).toBe('');
+    expect(walk(root, 'openapi')).toEqual(['openapi/openapi.yaml']);
   }, 240_000);
 
   it('passes its end-to-end proof', () => {

@@ -28,7 +28,7 @@ change nothing and run no command that writes.
    invariants per aggregate, relationships.
 3. `docs/context-map.md` for why a relationship has its pattern;
    `docs/integration/event-catalog.md` for the payload of an event and who consumes it;
-   `openapi/openapi.json` for a route (search it with `grep`, do not read it whole).
+   `openapi/openapi.yaml` (or the document of `openapi/` that holds it) for a route (search it with `grep`, do not read it whole).
 4. Only then one source file, found from its role: the canonical tree puts a use case in
    `application/commands|queries/<use-case>/`, a contract in `published-language/`, an
    aggregate in `domain/aggregates/<name>.aggregate.ts`. Read the range that answers.

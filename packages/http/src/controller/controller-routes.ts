@@ -40,6 +40,7 @@ function routeOf(resolved: ResolvedController, options: ControllerRoutesOptions)
     summary: spec.summary,
     ...(spec.description === undefined ? {} : { description: spec.description }),
     ...(declared.tags.length === 0 ? {} : { tags: declared.tags }),
+    ...(declared.groups.length === 0 ? {} : { groups: declared.groups }),
     ...requestOf(spec),
     responses: { [status]: { description: description ?? defaultDescription(body), ...bodyOf(body) } },
     errors: [...new Set([...declared.errors, ...resolved.guards.flatMap((guard) => guard.documents?.errors ?? [])])],

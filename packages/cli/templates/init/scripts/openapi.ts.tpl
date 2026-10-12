@@ -1,47 +1,76 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { checkOpenApiDrift, generateOpenApi, stringifyOpenApi } from '@ddd-ts-kit/http/openapi';
+import { generateOpenApi, routesByDocument } from '@ddd-ts-kit/http/openapi';
+import { contractFormat, stringifyContract } from 'ddd-ts-kit/dist/contracts.js';
 import { offlineAuthenticator } from '{{alias.platform}}/auth/offline-authenticator{{alias.ext}}';
 import { securitySchemes } from '{{alias.platform}}/auth/security-schemes{{alias.ext}}';
 import { composeApplication } from '{{alias.platform}}/compose-application{{alias.ext}}';
 import { inertPersistence } from '{{alias.platform}}/database/inert-persistence{{alias.ext}}';
 import { inProcessEvents } from '{{alias.platform}}/events/in-process-events{{alias.ext}}';
+import { OPENAPI_DOCUMENTS } from '{{alias.platform}}/http/openapi-documents{{alias.ext}}';
 
-// Generates openapi/openapi.json from the route definitions; with --check, fails when the
-// committed file differs. The file is a build product: never edit it by hand.
-const target = path.resolve('openapi/openapi.json');
+// Generates the contract from the route definitions: openapi/openapi.yaml, or one file per
+// document of "openapi.documents" in ddd-ts-kit.config.json, in the format of "openapi.format";
+// with --check, fails when a committed file differs. Build products: never edit them by hand.
+const directory = path.resolve('openapi');
+const format = contractFormat();
 
 const application = composeApplication(inertPersistence(), {
   events: inProcessEvents(),
   authenticator: offlineAuthenticator,
 });
 
-const document = generateOpenApi({
-  info: {
-    title: manifestField('name', '{{project.name}}'),
-    version: manifestField('version', '0.0.0'),
-  },
-  routes: application.routes,
-  securitySchemes,
-  errorMapper: application.boundary.errorMapper,
-});
+const generated = new Map(
+  routesByDocument(application.routes, OPENAPI_DOCUMENTS).map(({ name, title, routes }) => [
+    `${name}.${format}`,
+    stringifyContract(
+      generateOpenApi({
+        info: { title: title ?? manifestField('name', '{{project.name}}'), version: manifestField('version', '0.0.0') },
+        routes,
+        securitySchemes,
+        errorMapper: application.boundary.errorMapper,
+      }),
+      format,
+    ),
+  ]),
+);
 
 if (process.argv.includes('--check')) {
   reportDrift();
 } else {
-  fs.mkdirSync(path.dirname(target), { recursive: true });
-  fs.writeFileSync(target, stringifyOpenApi(document));
+  fs.mkdirSync(directory, { recursive: true });
+
+  for (const file of staleFiles()) {
+    fs.rmSync(path.join(directory, file));
+  }
+
+  for (const [file, content] of generated) {
+    fs.writeFileSync(path.join(directory, file), content);
+  }
 }
 
 function reportDrift(): void {
-  const committed = fs.existsSync(target) ? fs.readFileSync(target, 'utf8') : '';
+  for (const [file, content] of generated) {
+    const target = path.join(directory, file);
+    const committed = fs.existsSync(target) ? fs.readFileSync(target, 'utf8') : '';
 
-  if (!checkOpenApiDrift(document, committed).drift) {
-    return;
+    if (committed.replaceAll('\r\n', '\n') !== content) {
+      console.error(`openapi/${file} is out of date: run the script \`docs:generate\` and commit it.`);
+      process.exitCode = 1;
+    }
   }
 
-  console.error('openapi/openapi.json is out of date: run the script `docs:generate` and commit it.');
-  process.exitCode = 1;
+  for (const file of staleFiles()) {
+    console.error(`openapi/${file} is no document of the contract any more: run the script \`docs:generate\`.`);
+    process.exitCode = 1;
+  }
+}
+
+/** The contracts left by another format or by a document that is gone. */
+function staleFiles(): string[] {
+  const present = fs.existsSync(directory) ? fs.readdirSync(directory) : [];
+
+  return present.filter((file) => /\.(?:json|yaml)$/.test(file) && !generated.has(file));
 }
 
 function manifestField(name: string, fallback: string): string {

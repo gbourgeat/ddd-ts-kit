@@ -1,4 +1,5 @@
 import type { Config } from '../config/index.js';
+import { stringifyContract } from '../contracts/stringify-contract.js';
 import { stackVars } from '../stack/stack-vars.js';
 import { readTemplate, renderTemplate, type RenderContext } from '../templating/index.js';
 import type { Workspace } from '../workspace/index.js';
@@ -14,14 +15,19 @@ const INTEGRATION = 'docs/integration';
  */
 export function writeContracts(ws: Workspace, config: Config, projectName: string): void {
   const context = { ...stackVars(config), document: documentVars(ws, projectName) };
+  const format = config.openapi.format === 'json' ? 'json' : 'yaml';
+
+  const written = (template: string): string =>
+    stringifyContract(JSON.parse(renderTemplate(template, context)), format);
 
   const contracts: (readonly [string, string])[] = [
-    [`${INTEGRATION}/asyncapi.json`, renderTemplate('docs/asyncapi.json.tpl', context)],
+    [`${INTEGRATION}/asyncapi.${format}`, written('docs/asyncapi.json.tpl')],
     [`${INTEGRATION}/event-catalog.md`, readTemplate('docs/event-catalog.md')],
   ];
 
-  if (config.stack.http !== 'none') {
-    contracts.push(['openapi/openapi.json', renderTemplate('docs/openapi.json.tpl', context)]);
+  // A contract split into documents is written by its script, which knows the route groups.
+  if (config.stack.http !== 'none' && config.openapi.documents.length === 0) {
+    contracts.push([`openapi/openapi.${format}`, written('docs/openapi.json.tpl')]);
   }
 
   for (const [file, content] of contracts) {

@@ -71,7 +71,7 @@ Needed, and specific in what is said and when, but it decides nothing: a simple 
 ## Reference
 
 <!-- ddd-ts-kit:reference -->
-Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-kit describe notification --json`. The fields of each schema are in the generated contracts: [OpenAPI](../../../openapi/openapi.json), [event catalog](../../../docs/integration/event-catalog.md).
+Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-kit describe notification --json`. The fields of each schema are in the generated contracts: [OpenAPI](../../../openapi/openapi.yaml), [event catalog](../../../docs/integration/event-catalog.md).
 
 **Dependencies**: upstreams: `scheduling` (published-language), `identity` (published-language); downstreams: none.
 

@@ -37,8 +37,8 @@ const PERMISSIONS: Permissions = {
     'Read(./.env)',
     'Read(./.env.*)',
     'Read(!./.env.example)',
-    'Edit(./openapi/openapi.json)',
-    'Edit(./docs/integration/asyncapi.json)',
+    'Edit(./openapi/**)',
+    'Edit(./docs/integration/asyncapi.*)',
     'Edit(./docs/integration/event-catalog.md)',
   ],
   // Then the files that hold the rules and the pipeline: changing one is a decision of the

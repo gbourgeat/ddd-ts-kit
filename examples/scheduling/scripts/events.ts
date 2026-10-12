@@ -1,22 +1,30 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { createEventRegistry, generateEventCatalog, type AnyIntegrationEventDefinition } from '@ddd-ts-kit/events';
-import { generateAsyncApi, stringifyAsyncApi } from '@ddd-ts-kit/events/asyncapi';
+import { generateAsyncApi } from '@ddd-ts-kit/events/asyncapi';
+import { contractFormat, stringifyContract } from 'ddd-ts-kit/dist/contracts.js';
 
-// Generates docs/integration/asyncapi.json and docs/integration/event-catalog.md from the
-// declarations of every published language; with --check, fails when a committed file
-// differs. Both files are build products: never edit them by hand.
+// Generates docs/integration/asyncapi.yaml (asyncapi.json under "openapi.format": "json" in
+// ddd-ts-kit.config.json) and docs/integration/event-catalog.md from the declarations of every
+// published language; with --check, fails when a committed file differs. Both files are build
+// products: never edit them by hand.
 const contextsDirectory = 'src/contexts';
 const target = path.resolve('docs/integration');
+const format = contractFormat();
+const other = format === 'yaml' ? 'asyncapi.json' : 'asyncapi.yaml';
 
 const registry = createEventRegistry(await declaredEvents());
 
 const generated: Readonly<Record<string, string>> = {
-  'asyncapi.json': stringifyAsyncApi(
+  [`asyncapi.${format}`]: stringifyContract(
     generateAsyncApi({
-      info: { title: manifestField('name', 'scheduling'), version: manifestField('version', '0.0.0') },
+      info: {
+        title: manifestField('name', 'scheduling'),
+        version: manifestField('version', '0.0.0'),
+      },
       registry,
     }),
+    format,
   ),
   'event-catalog.md': generateEventCatalog(registry, { consumers: consumersByEventType() }),
 };
@@ -25,6 +33,7 @@ if (process.argv.includes('--check')) {
   reportStale();
 } else {
   fs.mkdirSync(target, { recursive: true });
+  fs.rmSync(path.join(target, other), { force: true });
 
   for (const [file, content] of Object.entries(generated)) {
     fs.writeFileSync(path.join(target, file), content);
@@ -40,9 +49,14 @@ function reportStale(): void {
       process.exitCode = 1;
     }
   }
+
+  if (fs.existsSync(path.join(target, other))) {
+    console.error('docs/integration/' + other + ' is in the other format: run the script `docs:generate`.');
+    process.exitCode = 1;
+  }
 }
 
-/** Every declaration exported by a published language. Read from the compiled modules next to this script, so that a new context needs no registration. */
+/** Every declaration exported by a published language. Read from the compiled modules next to this script, so that a new context needs no registration: a path completed at run time cannot be an import alias, which the build rewrites. */
 async function declaredEvents(): Promise<AnyIntegrationEventDefinition[]> {
   const declarations: AnyIntegrationEventDefinition[] = [];
 

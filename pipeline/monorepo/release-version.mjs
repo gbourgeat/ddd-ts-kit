@@ -24,7 +24,7 @@ const MANIFESTS = [
   'examples/scheduling/package.json',
 ];
 /** The contracts the example generates state its version, which is the one of the kit: they follow it, or its documents check fails. */
-const GENERATED = ['examples/scheduling/openapi/openapi.json', 'examples/scheduling/docs/integration/asyncapi.json'];
+const GENERATED = ['examples/scheduling/openapi/openapi.yaml', 'examples/scheduling/docs/integration/asyncapi.yaml'];
 
 process.exit(main(process.argv.slice(2)));
 
@@ -69,7 +69,7 @@ function set(version) {
   return 0;
 }
 
-/** Only the version of the kit is replaced: a line that states it names the kit or is the `version` of a kit package. */
+/** Only the version of the kit is replaced: a line that states it names the kit or is a `version`, in JSON or in YAML. */
 function restated(text, current, version) {
   return text
     .split('\n')
@@ -78,7 +78,7 @@ function restated(text, current, version) {
 }
 
 function statesTheKit(line) {
-  return /ddd-ts-kit|"version"|VERSION/.test(line);
+  return /ddd-ts-kit|"version"|^\s*version:|VERSION/.test(line);
 }
 
 function stated() {

@@ -1,5 +1,6 @@
 export { run } from './run.js';
 export { VERSION } from './version.js';
+export { contractFormat, stringifyContract, toYaml } from './contracts.js';
 export type { Io } from './commands/io.js';
 export { RULE_IDS } from './check/catalogue/rule-ids.js';
 export { RULES } from './check/catalogue/rules.js';

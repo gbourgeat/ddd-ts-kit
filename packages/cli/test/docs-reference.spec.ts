@@ -20,7 +20,7 @@ describe('docs: the reference of a CONTEXT.md', () => {
     );
 
     expect(doc).toContain(
-      '[OpenAPI](../../../openapi/openapi.json), [event catalog](../../../docs/integration/event-catalog.md)',
+      '[OpenAPI](../../../openapi/openapi.yaml), [event catalog](../../../docs/integration/event-catalog.md)',
     );
 
     expect(doc.trimEnd().endsWith('<!-- /ddd-ts-kit:reference -->')).toBe(true);

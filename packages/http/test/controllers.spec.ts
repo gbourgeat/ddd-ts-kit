@@ -58,6 +58,18 @@ function describeTheFrontDesk(label: string, load: () => Promise<FrontDesk>): vo
       expect(hours?.responses[200]?.description).toBe('The answer.');
     });
 
+    it('carry the names of their group and of the groups above it, which a split contract selects by', () => {
+      const [book, , cancel, hours] = routes;
+
+      expect(book?.groups).toEqual(['VisitRoutes']);
+      expect(cancel?.groups).toEqual(['ClinicVisitRoutes', 'VisitRoutes']);
+      expect(hours?.groups).toBeUndefined();
+
+      expect(JSON.stringify(generateOpenApi({ info: { title: 'Desk', version: '1' }, routes }))).not.toContain(
+        'VisitRoutes',
+      );
+    });
+
     it('answer the declared status with what handle returned, through the mapper and the actor of the request', async () => {
       const response = await call('bookVisit', { body: { patientId: 'patient-7', day: '2026-03-02' }, as: nurse });
 

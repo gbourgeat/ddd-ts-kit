@@ -18,5 +18,5 @@ paths:
 - Request and response types are presentation types, one class or schema per file next to the controller (`*.body.ts`, `*.params.ts`, `*.answer.ts`...; `*.dto.ts` for function routes and under `shared/`): never an aggregate, never a row.
 - Never put the message of an unexpected failure in a response or a log.
 - Files: the canonical tree of `presentation/http/` (`naming/suffix`, `tree/closed`): a folder per controller, `*.routes.ts` for the groups, `guards/`, `shared/`; function routes stay flat (`*.route.ts`, `*.dto.ts`).
-- After a change, `npm run docs:generate` regenerates `openapi/openapi.json`, committed with the route; CI fails on a difference. Never edit it by hand.
+- After a change, `npm run docs:generate` regenerates the contract, `openapi/openapi.yaml` (one file per document when `openapi.documents` of `ddd-ts-kit.config.json` splits it; JSON under `openapi.format: json`), committed with the route; CI fails on a difference. Never edit it by hand.
 - Contract with `/ddd-ts-kit:document`. Create with `npx ddd-ts-kit generate route <context> <UseCase> --method <M> --path <p> [--group <Name>] [--mapper] [--serializer] --json`, then `generate e2e <context> <UseCase>`; `generate route-group` and `generate guard` write a group and a guard.

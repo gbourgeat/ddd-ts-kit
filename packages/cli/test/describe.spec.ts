@@ -153,7 +153,7 @@ describe.each(STYLES)('describe, in a %s project, beyond its use cases and event
       doc: 'src/contexts/shipping/CONTEXT.md',
       upstreams: [{ context: 'billing', relationship: 'customer-supplier' }],
       downstreams: [],
-      contracts: { openapi: 'openapi/openapi.json', eventCatalog: 'docs/integration/event-catalog.md' },
+      contracts: { openapi: 'openapi/openapi.yaml', eventCatalog: 'docs/integration/event-catalog.md' },
     });
 
     expect(JSON.stringify(shipping)).not.toContain(root);

@@ -35,7 +35,7 @@ that thing has a natural size: **one slice**.
 Always in the same commit as what caused them: the files the generator wrote and updated
 (the `created` and `updated` lists of its output), the regenerated barrel
 `<context>.declarations.ts`, the generated lists of `CONTEXT.md`, the glossary row a new
-name needed, `openapi/openapi.json`, the event catalog, `docs/context-map.md`. A generated
+name needed, the contracts under `openapi/`, the event catalog, `docs/context-map.md`. A generated
 file committed alone, or left for later, breaks `docs --check` on one side of the history.
 
 Never in the same commit: two use cases, two contexts (except a contract and its first

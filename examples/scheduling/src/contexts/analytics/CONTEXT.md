@@ -93,7 +93,7 @@ No scheduled job.
 ## Reference
 
 <!-- ddd-ts-kit:reference -->
-Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-kit describe analytics --json`. The fields of each schema are in the generated contracts: [OpenAPI](../../../openapi/openapi.json), [event catalog](../../../docs/integration/event-catalog.md).
+Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-kit describe analytics --json`. The fields of each schema are in the generated contracts: [OpenAPI](../../../openapi/openapi.yaml), [event catalog](../../../docs/integration/event-catalog.md).
 
 **Dependencies**: upstreams: `scheduling` (conformist); downstreams: none.
 

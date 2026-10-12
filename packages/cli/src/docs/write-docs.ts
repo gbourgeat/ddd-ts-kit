@@ -9,6 +9,7 @@ import { CONTEXT_MAP } from './context-map-file.js';
 import { contextMapLines } from './context-map-lines.js';
 import { readContexts } from './read-contexts.js';
 import { refreshContextDoc } from './refresh-context-doc.js';
+import { writeOpenApiDocuments } from './write-open-api-documents.js';
 
 const INTEGRATION_README = 'docs/integration/README.md';
 
@@ -28,6 +29,7 @@ export function writeDocs(ws: Workspace, config: Config): void {
 
   writeContextMap(ws, contextMapLines(contexts));
   refreshBarrels(ws, config);
+  writeOpenApiDocuments(ws, config);
 
   // Written by people from here on: never replaced, not even with --force.
   if (!ws.exists(INTEGRATION_README)) {

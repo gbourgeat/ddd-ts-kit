@@ -272,7 +272,7 @@ A trace tells the story of an action and nothing else. The defaults, and the opt
 
 | What | Default | Option |
 |---|---|---|
-| Probes, metrics, documentation | no span for `/health`, `/healthz`, `/live`, `/livez`, `/ready`, `/readyz`, `/startup`, `/metrics`, `/docs`, `/openapi.json`, `/favicon.ico` and what is below them; no span for the documentation routes of `@ddd-ts-kit/http` wherever they are mounted | `initTracing({ ignoredPaths })`, `tracedRoutes({ ignore })` |
+| Probes, metrics, documentation | no span for `/health`, `/healthz`, `/live`, `/livez`, `/ready`, `/readyz`, `/startup`, `/metrics`, `/docs`, `/openapi.json`, `/openapi` (the documents of a split contract), `/favicon.ico` and what is below them; no span for the documentation routes of `@ddd-ts-kit/http` wherever they are mounted | `initTracing({ ignoredPaths })`, `tracedRoutes({ ignore })` |
 | Outbox relay | no span per tick, none when nothing is published; the queries of its polling make no span (see the drivers) | |
 | Instrumentations on | `http` and `undici` and `grpc` (the two sides of a request), `pg`, `mysql2`, `mysql`, `mongodb`, `ioredis`, `redis` | `initTracing({ autoInstrumentations })`, or `instrumentations` to replace them all |
 | Database drivers | the statement as written, with its placeholders, never the values bound to them; only inside a trace (`requireParentSpan`), so a poller or a pool makes no trace of its own; no connection or pool checkout span (`ignoreConnectSpans`) | `autoInstrumentations` |

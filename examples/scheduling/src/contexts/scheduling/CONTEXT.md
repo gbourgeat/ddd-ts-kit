@@ -143,7 +143,7 @@ a persistence adapter, in `infrastructure/persistence/`, for the reasons given i
 ## Reference
 
 <!-- ddd-ts-kit:reference -->
-Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-kit describe scheduling --json`. The fields of each schema are in the generated contracts: [OpenAPI](../../../openapi/openapi.json), [event catalog](../../../docs/integration/event-catalog.md).
+Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-kit describe scheduling --json`. The fields of each schema are in the generated contracts: [OpenAPI](../../../openapi/openapi.yaml), [event catalog](../../../docs/integration/event-catalog.md).
 
 **Dependencies**: upstreams: `identity` (customer-supplier); downstreams: `notification` (published-language), `analytics` (conformist).
 

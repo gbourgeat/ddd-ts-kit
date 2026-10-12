@@ -1,8 +1,9 @@
 import { isNoisePath } from './is-noise-path.js';
 
-const DOCUMENTATION_OPERATIONS = new Set(['getOpenApiDocument', 'getOpenApiUi']);
+/** The operations of the documentation routes of `@ddd-ts-kit/http`, one per document of a split contract (`getOpenApiUi_backOffice`). */
+const DOCUMENTATION_OPERATION = /^(?:getOpenApiDocument|getOpenApiUi)(?:_\w+)?$/;
 
 /** A route nobody follows in a trace: probes, metrics, and the documentation routes of the kit. */
 export function isNoiseRoute(route: { readonly path: string; readonly operationId: string }): boolean {
-  return DOCUMENTATION_OPERATIONS.has(route.operationId) || isNoisePath(route.path);
+  return DOCUMENTATION_OPERATION.test(route.operationId) || isNoisePath(route.path);
 }

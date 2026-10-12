@@ -131,11 +131,19 @@ test('editing an existing role file and creating an ordinary file are allowed', 
   );
 });
 
-test('a generated contract is never edited by hand', () => {
+test('a generated contract is never edited by hand, in YAML, in JSON or split into documents', () => {
   const root = project();
-  const { output } = run('pre-write', write(join(root, 'openapi/openapi.json')));
-  assert.equal(output.hookSpecificOutput.permissionDecision, 'deny');
-  assert.match(output.hookSpecificOutput.permissionDecisionReason, /docs:generate/);
+  for (const file of [
+    'openapi/openapi.yaml',
+    'openapi/openapi.json',
+    'openapi/back-office.yaml',
+    'docs/integration/asyncapi.yaml',
+    'src/platform/http/openapi-documents.ts',
+  ]) {
+    const { output } = run('pre-write', write(join(root, file)));
+    assert.equal(output.hookSpecificOutput.permissionDecision, 'deny', file);
+    assert.match(output.hookSpecificOutput.permissionDecisionReason, /docs:generate/);
+  }
 });
 
 test('the test writer agent cannot touch production code', () => {
@@ -482,8 +490,9 @@ test('generated files are not counted in the size of a commit', () => {
   put(root, 'docs/a.md', 'a\n');
   for (const path of [
     'src/contexts/ordering/ordering.declarations.ts',
-    'openapi/openapi.json',
-    'docs/integration/asyncapi.json',
+    'openapi/openapi.yaml',
+    'openapi/back-office.yaml',
+    'docs/integration/asyncapi.yaml',
     'docs/context-map.md',
     'package-lock.json',
     '.dependency-cruiser.cjs',
