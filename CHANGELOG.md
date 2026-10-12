@@ -73,6 +73,17 @@ for now. `generate repository --tenant-scoped` writes the same helpers. A config
   a project initialised before adds `refusals: auditGuardRefusals(trail, { clock, ids })` to the
   call of `httpBoundary` and `onGuardRefusal: refusals` to what it answers, as `init --force` writes.
 
+**`@ddd-ts-kit/openfga`, a new package: relationships on OpenFGA.** `OpenFgaRelationTupleStore`
+and `OpenFgaAuthorizer` answer the `RelationTupleStore` and `Authorizer` ports of
+`@ddd-ts-kit/auth` on an OpenFGA server (OpenFGA 1.10 or later), with the mapping and the denial
+codes of `RelationBasedAuthorizer`. The authorization model is generated from the relationship
+schema (`authorizationModelOf`), written when it differs (`ensureAuthorizationModel`) and
+compared (`modelDrift`): the schema stays the one source. `@openfga/sdk` 0.9.7 is an optional
+peer, imported by the `/sdk` entry (`openFgaClient`). Both adapters pass the contract suites of
+the in-process ones, in memory and against `openfga/openfga` v1.22.0 in the integration job.
+[Authorization engines](docs/tools/authorization-engines.md) says when to move from the
+PostgreSQL tuple store to OpenFGA.
+
 ## 0.5.0
 
 **Migrations are named by a timestamp and what they do.** The generated `drizzle.config.ts`
