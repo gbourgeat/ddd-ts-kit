@@ -9,7 +9,7 @@ export const USAGE = `Usage
                   [--broker none|rabbitmq|kafka|nats|redis|custom] [--cache none|redis] [--audit on|off]
                   [--errors none|sentry] [--logger stdout|pino|winston] [--style declared|explicit] [--assembly barrel|discovery]
                   [--dependencies signature|listed] [--refusals factories|classes]
-                  [--routes controllers|functions] [--value-objects throwing|result]
+                  [--routes controllers|functions] [--value-objects throwing|result] [--literals named|free]
                   [--package-manager npm|pnpm] [--allow-no-outbox "<reason>"] [--import-alias '$<name>/']
                   [--import-extension none|js]
                   [--context <name>:<core|supporting|generic>]... [--dry-run] [--force]

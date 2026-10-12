@@ -13,7 +13,7 @@ export const cleanNoMagicNumber = defineRule<MessageId, Options>({
   type: 'suggestion',
   recommended: 'error',
   description:
-    'No number literal in domain/ and application/ but 0, 1, -1 and an index: a duration, a limit or a rate is a named constant of the module or a value object.',
+    'Under "stack.literals": "named", no number literal in domain/ and application/ but 0, 1, -1 and an index: a duration, a limit or a rate is a named constant of the module or a value object.',
   messages: {
     magic:
       '{{value}} is a number without a name. Name it where it is decided: a constant of the module (`const LONGEST_ADDRESS = 254;`, `const MINUTES_PER_HOUR = 60;`), a `static readonly` of the class, or a value object when it is a duration, an amount or a limit of the business. The rule allows {{allowed}}, an index and a type.',
@@ -27,7 +27,7 @@ export const cleanNoMagicNumber = defineRule<MessageId, Options>({
   ],
   defaultOptions: [{}],
   create({ file, options, report }) {
-    if (!isJudged(file)) {
+    if (file.config.stack.literals !== 'named' || !isJudged(file)) {
       return {};
     }
 

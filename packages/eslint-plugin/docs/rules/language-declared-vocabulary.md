@@ -2,7 +2,7 @@
 
 Architecture id: `language/declared-vocabulary`. Default severity: `error`.
 
-Applies to: every source under the source root; tests, published languages and the file that declares a value excluded.
+Applies to: every source under the source root of a project whose config says `"stack.literals": "named"`, which `init` writes (a config that does not say, as before 0.6, keeps the rule silent); tests, published languages, the relationship schema of the access model and the file that declares a value excluded.
 
 ## Why
 
@@ -31,6 +31,17 @@ if (appointment.status === AppointmentStatus.NoShow) {
 }
 ```
 
+## Where a value is judged
+
+A word means one thing in one context, and may mean something else next door; the rule follows the language of each place.
+
+| Declared in | Judged in |
+|---|---|
+| a context (`domain/vocabularies/` of `billing`) | that context only: `issued` in `catalog` is another word |
+| the platform (the `Role` of `<platformDir>/auth/role.ts`) | the platform, and the route groups `*.routes.ts` of the contexts, where a guard names a role |
+| the shared kernel | everywhere |
+| a permission set (`definePermissions`) | everywhere: a permission id names one permission of one context |
+
 ## Details
 
 A quoted key is a value spelled again and is reported: write it as a computed key, `[AppointmentStatus.NoShow]: 'No show'`, which also types the object by the vocabulary. An identifier key and the specifier of an import or an export are names and are not judged. A test spells the values a client sends on purpose, and a published language names the values of its contract itself: neither is judged. The message names the vocabulary, the file that declares it and what to write instead.
@@ -44,7 +55,8 @@ None.
 ## Limits
 
 - The vocabularies are read from the files of the source root on disk, again once a reading is five seconds old: an editor sees a new value after a few seconds, a lint run reads the project about once.
-- The declaration is read by its text: an object whose values are not all string literals, or without the union type of its name, declares nothing.
+- The declaration is parsed: an exported `const` whose value is an object `as const` (or `as const satisfies ..`), each entry a key (a name or a quoted string) and a string literal, in either quote, comments allowed, next to `export type X = (typeof X)[keyof typeof X]` written that way. An object with a number, a spread, a method or a computed entry, or without that union type, declares nothing. `generate vocabulary` writes the form that is read.
+- A value of the platform is matched by its value in every file of the platform: with the `Role` of an rbac project, `actor.type === 'system'` in the platform is reported although it compares a kind of actor, not a role. Declare that word in its own vocabulary (`ActorType.System`) and read it there, or silence the line with its reason.
 - A value two vocabularies share is reported with both: the message names each and what to write for each.
 
 ## With the CLI checker

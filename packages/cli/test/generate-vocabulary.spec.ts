@@ -48,6 +48,10 @@ describe('generate vocabulary', () => {
       failure(cli(root, 'generate', 'vocabulary', 'billing', 'Channel', '--value', "o'clock", '--json')).message,
     ).toContain('cannot be a value');
 
+    expect(failure(cli(root, 'generate', 'vocabulary', 'billing', 'Channel', '--value', '1', '--json')).fix).toContain(
+      'starts with a letter',
+    );
+
     expect(
       failure(
         cli(root, 'generate', 'vocabulary', 'billing', 'Channel', '--value', 'e-mail', '--value', 'e mail', '--json'),

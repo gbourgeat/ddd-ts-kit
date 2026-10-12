@@ -32,10 +32,16 @@ grant `generate job` gives a system actor names the permission through its set
 string literal whose value a vocabulary of the project declares, an object `as const` with the
 union type of its name or a permission set of `definePermissions`, and names the key to write
 instead: a vocabulary of a context in that context, the one of the platform in the platform and
-in the route groups, a permission id everywhere; tests, published languages and the relationship
-schema are not judged. `clean/no-magic-number` (ESLint) reports a number in `domain/` and
-`application/` other than 0, 1, -1, an index, a type or the initializer of a module constant or a
-`static readonly`; the `allow` option changes the list. The example declares 8 vocabularies and
+in the route groups, a permission id and a vocabulary of the shared kernel everywhere; tests,
+published languages and the relationship schema are not judged. A vocabulary is parsed, so a
+documented entry, double quotes and `as const satisfies ..` are read. `clean/no-magic-number`
+(ESLint) reports a number in `domain/` and `application/` other than 0, 1, -1, an index, a type or
+the initializer of a module constant or a `static readonly`; the `allow` option changes the list.
+Both rules hold under `"stack.literals": "named"`, which `init` writes (`--literals free` leaves
+them out). A config without the key reads as `free`: an existing project upgrades without a
+change, including the grants `generate job` wrote by their permission id, which a job generated
+again recognises instead of granting twice. To turn the rules on, set the key and follow the fix
+each finding gives ([Configuration](docs/CONFIG.md#stack)). The example declares 8 vocabularies and
 replaced 227 raw values and 8 numbers, its OpenAPI contract unchanged.
 
 ## 0.5.0

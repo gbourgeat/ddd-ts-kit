@@ -16,6 +16,7 @@ export const DEPENDENCY_STATEMENTS = ['signature', 'listed'] as const;
 export const REFUSAL_FORMS = ['factories', 'classes'] as const;
 export const ROUTE_FORMS = ['controllers', 'functions'] as const;
 export const VALUE_OBJECT_FORMS = ['throwing', 'result'] as const;
+export const LITERAL_FORMS = ['named', 'free'] as const;
 export const CACHE_STACKS = ['none', 'redis'] as const;
 export const AUDIT_MODES = ['on', 'off'] as const;
 export const ERROR_REPORTERS = ['none', 'sentry'] as const;
@@ -90,6 +91,13 @@ export interface Stack {
    * that says nothing was written when every value object returned a `Result`: it is `result`.
    */
   readonly valueObjects: (typeof VALUE_OBJECT_FORMS)[number];
+  /**
+   * How the code writes a closed value and a number: `named`, a value a closed vocabulary of the
+   * project declares is read through it (`language/declared-vocabulary`) and a number of the
+   * domain or the application has a name (`clean/no-magic-number`, ESLint); `free`, both rules
+   * are silent. A config that says nothing was written before the rules existed: it is `free`.
+   */
+  readonly literals: (typeof LITERAL_FORMS)[number];
   /**
    * What installs the dependencies and runs the scripts: every command the CLI writes (scripts,
    * pipelines, hooks, Dockerfile, guidance) is in its dialect. A config that says nothing was

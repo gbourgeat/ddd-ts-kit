@@ -2,7 +2,7 @@
 
 Architecture id: `clean/no-magic-number`. Default severity: `error`.
 
-Applies to: `domain/` and `application/` of every context; tests excluded.
+Applies to: `domain/` and `application/` of every context of a project whose config says `"stack.literals": "named"`, which `init` writes (a config that does not say, as before 0.6, keeps the rule silent); tests excluded.
 
 ## Why
 

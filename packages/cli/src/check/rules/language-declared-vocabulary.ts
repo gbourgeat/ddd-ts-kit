@@ -13,9 +13,13 @@ const MODULE_SPECIFIER = /\b(?:from|import)\s*$/;
 export const languageDeclaredVocabulary: Rule = {
   id: 'language/declared-vocabulary',
   description:
-    'A value of a closed vocabulary the project declares (an object `as const` with the union type of its name, a permission set of definePermissions) is read through it, never written again as a string literal outside its declaration, a quoted key included: the vocabulary of a context in that context, the one of the platform in the platform and the route groups of the contexts, a permission id everywhere; tests, published languages and the relationship schema are not judged.',
+    'Under "stack.literals": "named", a value of a closed vocabulary the project declares (an object `as const` with the union type of its name, a permission set of definePermissions) is read through it, never written again as a string literal outside its declaration, a quoted key included: the vocabulary of a context in that context, the one of the platform in the platform and the route groups of the contexts, a permission id and one of the shared kernel everywhere; tests, published languages and the relationship schema are not judged; an object is read when each entry is a key and a string literal.',
   scope: 'project',
   run(project) {
+    if (project.config.stack.literals !== 'named') {
+      return [];
+    }
+
     const declared = declaredVocabularies(project.files);
 
     return perFile(project, this.id, (file) => (isJudged(file) ? rawValues(file, declared) : []));

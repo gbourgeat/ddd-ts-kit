@@ -27,7 +27,8 @@
     "dependencies": "signature",
     "refusals": "factories",
     "routes": "controllers",
-    "valueObjects": "throwing"
+    "valueObjects": "throwing",
+    "literals": "named"
   },
   "contexts": {
     "identity": {

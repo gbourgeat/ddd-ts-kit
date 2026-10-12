@@ -1,7 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import type { TSESLint } from '@typescript-eslint/utils';
 import type { Project } from '../../project/linted-file.js';
 import { locate } from '../../project/locate.js';
+import { parseSource } from '../parse/parse-source.js';
 import type { DeclaredValue } from './declared-value.js';
 import { valuesDeclaredIn } from './values-declared-in.js';
 
@@ -9,6 +11,8 @@ import { valuesDeclaredIn } from './values-declared-in.js';
 const FRESH_FOR_MS = 5000;
 const SKIPPED = new Set(['node_modules', 'dist', 'generated', 'test']);
 const DECLARING = /as\s+const|definePermissions\(/;
+
+type Parser = TSESLint.FlatConfig.Parser;
 
 interface Reading {
   readonly at: number;
@@ -19,9 +23,14 @@ const readings = new Map<string, Reading>();
 
 /**
  * The closed vocabularies the sources of the project declare, by value: the source root read on
- * disk, tests left out; a value two vocabularies share is listed under both.
+ * disk and parsed with the parser of the run, tests left out; a value two vocabularies share is
+ * listed under both. Without a parser, or for a file it cannot parse, nothing is declared.
  */
-export function projectVocabularies(project: Project, now = Date.now()): ReadonlyMap<string, readonly DeclaredValue[]> {
+export function projectVocabularies(
+  project: Project,
+  parser: Parser | undefined,
+  now = Date.now(),
+): ReadonlyMap<string, readonly DeclaredValue[]> {
   const key = path.join(project.root, project.config.sourceRoot);
   const known = readings.get(key);
 
@@ -31,24 +40,23 @@ export function projectVocabularies(project: Project, now = Date.now()): Readonl
 
   const values = new Map<string, DeclaredValue[]>();
 
-  for (const file of sourcesUnder(key)) {
-    const text = fs.readFileSync(file, 'utf8');
-
-    if (DECLARING.test(text)) {
-      const relative = path.relative(project.root, file).split(path.sep).join('/');
-
-      for (const [value, declared] of valuesDeclaredIn(
-        { path: relative, location: locate(project.config, relative) },
-        text,
-      )) {
-        values.set(value, [...(values.get(value) ?? []), declared]);
-      }
-    }
+  for (const [value, declared] of sourcesUnder(key).flatMap((file) => declaredIn(project, file, parser))) {
+    values.set(value, [...(values.get(value) ?? []), declared]);
   }
 
   readings.set(key, { at: now, values });
 
   return values;
+}
+
+function declaredIn(project: Project, file: string, parser: Parser | undefined): [string, DeclaredValue][] {
+  const text = fs.readFileSync(file, 'utf8');
+  const program = DECLARING.test(text) && parser !== undefined ? parseSource(text, file, parser) : undefined;
+  const relative = path.relative(project.root, file).split(path.sep).join('/');
+
+  return program === undefined
+    ? []
+    : valuesDeclaredIn({ path: relative, location: locate(project.config, relative) }, program);
 }
 
 function sourcesUnder(directory: string): string[] {

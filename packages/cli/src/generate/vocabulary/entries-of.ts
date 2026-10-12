@@ -2,15 +2,16 @@ import { CliError } from '../../cli-error.js';
 import { toName } from '../../naming/index.js';
 import type { VocabularyEntry } from './vocabulary-entry.js';
 
-const VALUE = /^[A-Za-z0-9][A-Za-z0-9 _.:/-]*$/;
+const VALUE = /^[A-Za-z][A-Za-z0-9 _.:/-]*$/;
+const KEY = /^[A-Za-z][\w$]*$/;
 
-/** The entries of the values asked for, each keyed by its value in PascalCase; a value that has no key, or two values under one key, are refused. */
+/** The entries of the values asked for, each keyed by its value in PascalCase; a value whose key would not be an identifier (`1`, `o'clock`), or two values under one key, are refused. */
 export function entriesOf(values: readonly string[]): VocabularyEntry[] {
   const entries = [...new Set(values)].map((value) => {
-    if (!VALUE.test(value)) {
+    if (!VALUE.test(value) || !KEY.test(toName(value).pascal)) {
       throw new CliError(
         `"${value}" cannot be a value of a vocabulary.`,
-        'Pass each value with --value, starting with a letter or a digit, without quotes: --value requested --value no-show.',
+        'Pass each value with --value, starting with a letter, without quotes: --value requested --value no-show. The key of each is its value in PascalCase, and a key starts with a letter.',
       );
     }
 

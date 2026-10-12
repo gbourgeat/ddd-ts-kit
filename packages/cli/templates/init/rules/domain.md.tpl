@@ -10,8 +10,10 @@ paths:
 - Names come from the glossary of `CONTEXT.md`, written first (`language/glossary-term`); no `Manager`, `Helper`, `Data`, `Info`, `Model` (`language/no-technical-name`).
 - Aggregate: private constructor, `create` for birth, `rehydrate` for loading, state changed by methods named after the business intention, no setter, no public mutable property (`domain/aggregate-encapsulation`). One aggregate per transaction; another one is referenced by its id.
 - Value objects are immutable, validated in `create`, compared with `equals` (`domain/value-object-immutability`). An email, an amount, a period are types, not strings.
+{{#if literals.named}}
 - A closed list of values (a status, a kind, a role of the model) is a vocabulary, `npx ddd-ts-kit generate vocabulary <context> <Name> --value <value>...`: code reads `AppointmentStatus.NoShow`, never the string (`language/declared-vocabulary`).
 - No number without a name: 0, 1, -1 and an index only; a duration, a limit or a rate is a constant of the module (`const MINUTES_PER_HOUR = 60;`) or a value object (`clean/no-magic-number`).
+{{/if}}
 {{#if refusals.factories}}
 - A violated invariant throws a refusal built by a static factory of the error class of its concept, never `new` and never a bare `Error`: `throw InvoiceError.alreadyIssued(this.id)` (`errors/through-factory`, `domain/no-generic-error`). One class per concept of the glossary in `domain/errors/`, extending `ConceptError`, no constructor (`errors/constructor-not-public`); a factory is named after the refusal and its code says the same words (`errors/factory-name`), one code per refusal of the context (`errors/code-unique`).
 - A factory takes the facts of the refusal as typed parameters and gives them to `refusal(code, message, facts)`. Facts are private: one reaches a client only when the factory names it, `.exposing('<fact>')`, and never when it identifies a person.

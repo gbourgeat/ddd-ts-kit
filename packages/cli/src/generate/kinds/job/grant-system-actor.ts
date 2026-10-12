@@ -1,3 +1,4 @@
+import { escapeRegExp } from '../../../check/text/escape-reg-exp.js';
 import { insertInRegion } from '../../../markers/index.js';
 import { withImport } from '../../with-import.js';
 import { permissionOf, type PermissionReference } from './permission-of.js';
@@ -23,6 +24,8 @@ interface Placement {
   readonly check: string;
   /** The import the line needs, added to the file when it does not have it. */
   readonly needs?: string;
+  /** The same grant as 0.5 wrote it, the permission by its id: a file that holds it already has the grant. */
+  readonly writtenBefore?: RegExp;
 }
 
 /**
@@ -56,6 +59,7 @@ function placementOf(scope: Scope, job: string, permission: string): Placement |
         line: `${read.written},`,
         anchor: `${read.written},`,
         needs: read.importLine,
+        writtenBefore: new RegExp(`'${escapeRegExp(permission)}',`),
         check: `check this grant: the role \`system\`, which every system actor holds, now gives \`${actor}\` the permission \`${permission}\` its command requires.`,
       };
     case 'abac':
@@ -64,6 +68,7 @@ function placementOf(scope: Scope, job: string, permission: string): Placement |
         line: `permit('system-${job}', [${read.written}], ({ actor }) => actor.id === '${actor}'),`,
         anchor: `'system-${job}',`,
         needs: read.importLine,
+        writtenBefore: new RegExp(`'system-${escapeRegExp(job)}',\\s*\\['${escapeRegExp(permission)}'\\]`),
         check: `check this rule: it permits \`${actor}\`, and nobody else, the permission \`${permission}\` its command requires.`,
       };
     case 'rebac':
@@ -90,10 +95,9 @@ function operatorOfContext(scope: Scope, actor: string, permission: string): Pla
   };
 }
 
-function written(scope: Scope, { file, line, anchor, check, needs }: Placement): boolean {
-  const content = scope.ws.read(file);
-  const inserted = content === undefined ? undefined : insertInRegion(content, REGION, line);
-  const next = inserted === undefined || needs === undefined ? inserted : withImport(inserted, needs);
+function written(scope: Scope, placement: Placement): boolean {
+  const { file, anchor, check } = placement;
+  const next = withGrant(scope.ws.read(file), placement);
 
   if (next === undefined) {
     return false;
@@ -103,4 +107,14 @@ function written(scope: Scope, { file, line, anchor, check, needs }: Placement):
   scope.ws.step({ file, anchor, text: check });
 
   return true;
+}
+
+function withGrant(content: string | undefined, { line, needs, writtenBefore }: Placement): string | undefined {
+  if (content !== undefined && writtenBefore?.test(content) === true) {
+    return content;
+  }
+
+  const inserted = content === undefined ? undefined : insertInRegion(content, REGION, line);
+
+  return inserted === undefined || needs === undefined ? inserted : withImport(inserted, needs);
 }

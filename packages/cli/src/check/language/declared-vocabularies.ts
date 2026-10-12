@@ -1,11 +1,13 @@
 import type { SourceFile } from '../model/source-file.js';
+import { BRACKETS } from '../text/brackets.js';
 import { matchingBracket } from '../text/matching-bracket.js';
 import type { DeclaredValue } from './declared-value.js';
 
-const AS_CONST = /export\s+const\s+([A-Z][\w$]*)\s*=\s*\{([^{}]*)\}\s*as\s+const\s*;/g;
-const ENTRY = /^\s*([A-Za-z_$][\w$]*)\s*:\s*'([^'\\]*)'\s*$/;
-const PERMISSION_SET = /export\s+const\s+([a-z][\w$]*)\s*=\s*definePermissions\(\s*'([a-z0-9-]+)'\s*,\s*\{/g;
-const PERMISSION_KEY = /'([a-z0-9.-]+)'\s*:/g;
+const AS_CONST = /export\s+const\s+([A-Z][\w$]*)\s*=\s*\{/g;
+const CONST_ASSERTION = /^\s*as\s+const\b/;
+const ENTRY = /^\s*(?:([A-Za-z_$][\w$]*)|#(\d+)#)\s*:\s*#(\d+)#\s*$/;
+const IDENTIFIER = /^[A-Za-z_$][\w$]*$/;
+const PERMISSION_SET = /export\s+const\s+([a-z][\w$]*)\s*=\s*definePermissions\(\s*/g;
 
 /**
  * The closed vocabularies the project declares, by value: every object `as const` of string
@@ -27,24 +29,58 @@ export function declaredVocabularies(files: readonly SourceFile[]): Map<string, 
 }
 
 function objectValues(file: SourceFile): DeclaredValue[] {
-  return [...file.text.matchAll(AS_CONST)].flatMap((found) => {
+  const { code } = file.scan;
+
+  return [...code.matchAll(AS_CONST)].flatMap((found) => {
     const name = found[1] ?? '';
+    const open = found.index + found[0].length - 1;
+    const close = matchingBracket(code, open);
+    const entries = CONST_ASSERTION.test(code.slice(close + 1)) ? objectEntries(file, { open, close }) : [];
 
-    const entries = (found[2] ?? '')
-      .split(',')
-      .filter((entry) => entry.trim().length > 0)
-      .map((entry) => ENTRY.exec(entry));
-
-    if (!hasUnionType(file.text, name) || entries.length === 0 || entries.some((entry) => entry === null)) {
+    if (!hasUnionType(code, name)) {
       return [];
     }
 
     const declared = { vocabulary: name, file: file.path, readBy: readerOf(file) };
 
-    return entries.flatMap((entry) =>
-      entry === null ? [] : [{ ...declared, value: entry[2] ?? '', written: `${name}.${entry[1] ?? ''}` }],
-    );
+    return entries.map(({ key, value }) => ({ ...declared, value, written: writtenAs(name, key) }));
   });
+}
+
+/**
+ * The entries of the object between two braces, each `Key: 'value'` or `'key': "value"`, read on
+ * the scanned code: comments are blanked, and a comma or a brace inside a string is not one. When
+ * one entry is something else (a number, a spread, a computed key), the object is no vocabulary.
+ */
+function objectEntries(file: SourceFile, { open, close }: { open: number; close: number }): Entry[] {
+  const literals = file.scan.strings.filter(({ start, end }) => start > open && end <= close);
+
+  const body = literals.reduceRight(
+    (text, literal, index) => `${text.slice(0, literal.start - open)}#${index}#${text.slice(literal.end - open)}`,
+    file.scan.code.slice(open, close),
+  );
+
+  const entries = body
+    .slice(1)
+    .split(',')
+    .filter((entry) => entry.trim().length > 0)
+    .map((entry) => ENTRY.exec(entry));
+
+  return entries.every((entry) => entry !== null)
+    ? entries.map(([, key, quoted, value]) => ({
+        key: key ?? literals[Number(quoted)]?.value ?? '',
+        value: literals[Number(value)]?.value ?? '',
+      }))
+    : [];
+}
+
+interface Entry {
+  readonly key: string;
+  readonly value: string;
+}
+
+function writtenAs(name: string, key: string): string {
+  return IDENTIFIER.test(key) ? `${name}.${key}` : `${name}['${key}']`;
 }
 
 /** A context speaks its own language; the shared kernel is read by every layer; the platform by itself and by the edges of the contexts. */
@@ -63,17 +99,40 @@ function hasUnionType(text: string, name: string): boolean {
 }
 
 function permissionValues(file: SourceFile): DeclaredValue[] {
-  return [...file.text.matchAll(PERMISSION_SET)].flatMap((found) => {
-    const [, set = '', context = ''] = found;
-    const open = found.index + found[0].length - 1;
-    const body = file.text.slice(open, matchingBracket(file.scan.code, open));
+  const { code, strings } = file.scan;
 
-    return [...body.matchAll(PERMISSION_KEY)].map(([, key = '']) => ({
-      value: `${context}:${key}`,
-      written: `${set}['${key}']`,
-      vocabulary: set,
-      file: file.path,
-      readBy: 'everywhere' as const,
-    }));
+  return [...code.matchAll(PERMISSION_SET)].flatMap((found) => {
+    const at = found.index + found[0].length;
+    const context = strings.find(({ start }) => start === at)?.value;
+    const open = code.indexOf('{', at);
+    const close = matchingBracket(code, open);
+
+    const keys = strings.filter(
+      ({ start, end }) =>
+        start > open && end < close && /^\s*:/.test(code.slice(end)) && depthAt(code, open, start) === 1,
+    );
+
+    return context === undefined || open === -1
+      ? []
+      : keys.map(({ value: key }) => ({
+          value: `${context}:${key}`,
+          written: `${found[1] ?? ''}['${key}']`,
+          vocabulary: found[1] ?? '',
+          file: file.path,
+          readBy: 'everywhere' as const,
+        }));
   });
+}
+
+/** How many brackets are open at an offset, counted from the one at `from`. */
+function depthAt(code: string, from: number, offset: number): number {
+  let depth = 0;
+
+  for (let i = from; i < offset; i += 1) {
+    const char = code.charAt(i);
+
+    depth += BRACKETS.openers.includes(char) ? 1 : BRACKETS.closers.includes(char) ? -1 : 0;
+  }
+
+  return depth;
 }

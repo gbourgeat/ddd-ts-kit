@@ -24,6 +24,7 @@ import {
   TEST_STACKS,
   VALIDATION_STACKS,
   VALUE_OBJECT_FORMS,
+  LITERAL_FORMS,
   type Config,
 } from '../../config/index.js';
 import { aliasProblem } from '../../alias/index.js';
@@ -142,7 +143,7 @@ function hasWorker(root: string, config: Config): boolean {
 function resolveOperations(
   options: StackOptions,
   orm: string,
-): Record<'cache' | 'audit' | 'errors' | 'logger' | 'refusals' | 'routes' | 'valueObjects', string> {
+): Record<'cache' | 'audit' | 'errors' | 'logger' | 'refusals' | 'routes' | 'valueObjects' | 'literals', string> {
   return {
     cache: choose(CACHE_STACKS, options.cache, 'cache') ?? 'none',
     audit: choose(AUDIT_MODES, options.audit, 'audit') ?? (orm === 'none' ? 'off' : 'on'),
@@ -154,6 +155,8 @@ function resolveOperations(
     routes: choose(ROUTE_FORMS, options.routes, 'routes') ?? 'controllers',
     // A new project throws the refusals of its value objects; a recorded one keeps the form it says, or the Result of 0.5.
     valueObjects: choose(VALUE_OBJECT_FORMS, options.valueObjects, 'value-objects') ?? 'throwing',
+    // A new project names its closed values and its numbers; a recorded one keeps the form it says, or the free literals of 0.5.
+    literals: choose(LITERAL_FORMS, options.literals, 'literals') ?? 'named',
   };
 }
 

@@ -39,7 +39,8 @@ deviation.
     "dependencies": "signature",
     "refusals": "factories",
     "routes": "controllers",
-    "valueObjects": "throwing"
+    "valueObjects": "throwing",
+    "literals": "named"
   },
   "contexts": {
     "billing": { "classification": "core", "upstreams": [] },
@@ -138,6 +139,7 @@ outside the list stops every command with the list of accepted values.
 | `stack.refusals` | `factories`, `classes`: how a domain error is written. `factories`: one error class per concept of the model, each refusal built by a static factory named in the words of the business (`AppointmentError.slotTaken(..)`), held by the `errors/*` rules, and `generate error <context> <Concept> <refusal>` adds one. `classes`: one class per error, built with `new`, as 0.1 and 0.2 wrote them; `generate domain-error` writes one, and no `errors/*` rule judges. Both forms run in either: `ConceptError` and `DomainError` are one family | `factories` |
 | `stack.routes` | `controllers`, `functions`: how a route is written. `controllers`: one class per route carrying `@Controller` of `@ddd-ts-kit/http`, in a folder of its own under `presentation/http/<resource>/<use-case>/`, behind the guards of its `@RouteGroup`; `generate route` writes it, with `--mapper` and `--serializer` when asked. `functions`: one `defineRoute` function per route, listed in `<context>.routes.ts`, as 0.1 to 0.3 wrote them. Both forms run in either, and in one project during a migration: `generate controller` writes a controller whatever the key says, and `ddd-ts-kit controllers` turns the function routes of a context into controllers | `controllers` |
 | `stack.valueObjects` | `throwing`, `result`: how the factory of a value object refuses. `throwing`: `create` returns the value object or throws the refusal built by the static factory of its concept (`throw PersonError.invalidEmail(raw)`), as an aggregate refuses; a caller takes the value as it is, and a spec asserts `expectRefusal(() => Email.create(raw), 'INVALID_EMAIL')`. `result`: `create` returns a `Result` of the kernel, `err(PersonError.invalidEmail(raw))`, that a caller unwraps with `unwrap(..)`, as 0.1 to 0.5 wrote them. `generate value-object` writes the form the key says; `Result`, `ok`, `err` and `unwrap` stay in the kernel for a project that keeps them. Validation at the edge (the schema of a request) is not concerned: a value refused there never reaches the factory | `throwing` |
+| `stack.literals` | `named`, `free`: how the code writes a closed value and a number. `named`: a value a closed vocabulary of the project declares is read through it, `AppointmentStatus.NoShow`, `billingPermissions['invoice.issue']`, `Role.Admin`, never written again as a string (`language/declared-vocabulary`, checker and ESLint), and a number of `domain/` or `application/` other than 0, 1, -1 and an index has a name (`clean/no-magic-number`, ESLint). `free`: both rules are silent, as 0.1 to 0.5 wrote code. The rules templates `init` writes say the rules under `named` only | `named` |
 
 A config file that omits a `stack` key is read with the same defaults, with five exceptions:
 without `stack.style` the project is read as `explicit`, whatever `stack.di` says, because
@@ -192,6 +194,19 @@ it is now called, and the key is set. What is left to a person is printed with i
 refusal asserted with its facts, a caller that branched on `.ok` or read `.error`, an `err(..)`
 that was not returned. The example application was moved by it: 28 refusals thrown, 168
 `unwrap` removed, 31 assertions rewritten, nothing left by hand.
+
+The sixth: without `stack.literals` the project is read as `free`, because such a file was
+written before the two rules existed, and code the kit generated then spells some values raw:
+`generate job` wrote the grant of a system actor by its permission id (`'billing:invoice.cancel',`
+in `roles.ts`, `permit('system-..', ['billing:invoice.cancel'], ..)` in `attribute-policies.ts`).
+Nothing is reported there, and a job generated again finds that grant and does not add a second
+one. To name the literals: set `"stack.literals": "named"` and run `npx ddd-ts-kit check` and
+ESLint. Each value is reported with what to write instead (`billingPermissions['invoice.cancel']`,
+imported from the permissions file of the context); a closed list of your own becomes a
+vocabulary with `npx ddd-ts-kit generate vocabulary <context> <Name> --value ..`, and the roles
+an object `Role` in `<platformDir>/auth/role.ts` written the same way. A number of the model
+becomes a constant of the module or a `static readonly`. Until it is done, a rule can stay at
+`warn` under `rules`, recorded in `deviations`.
 
 ## Pipeline
 

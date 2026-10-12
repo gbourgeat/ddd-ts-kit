@@ -34,7 +34,7 @@ export const ESLINT_ONLY_RULES: readonly { readonly id: string; readonly descrip
   {
     id: 'clean/no-magic-number',
     description:
-      'No number literal in domain/ and application/ but 0, 1, -1, an index, a type and the initializer of a module constant or a `static readonly`.',
+      'Under "stack.literals": "named", no number literal in domain/ and application/ but 0, 1, -1, an index, a type and the initializer of a module constant or a `static readonly`.',
   },
   {
     id: 'application/handler-shape',

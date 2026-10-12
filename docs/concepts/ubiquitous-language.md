@@ -135,9 +135,13 @@ from the permission set of its context (`billingPermissions['invoice.issue']`), 
 value a vocabulary declares is reported with the key to write instead, a quoted key included
 (`[AppointmentStatus.NoShow]: 'No show'`). A vocabulary of a context is judged in that context
 only, since each context speaks its own language; the vocabularies of the platform in the
-platform and in the route groups, where a guard names a role; a permission id everywhere. Tests,
-published languages and the relationship schema of the access model are not judged: they name
-their values on purpose. A value two vocabularies share is reported with both.
+platform and in the route groups, where a guard names a role; a permission id and a vocabulary of
+the shared kernel everywhere. Tests, published languages and the relationship schema of the access
+model are not judged: they name their values on purpose. A value two vocabularies share is
+reported with both. A vocabulary is read when each entry is a key and a string literal, comments,
+either quote and `as const satisfies ..` allowed; the rule holds under `"stack.literals":
+"named"`, which `init` writes, and stays silent in a project whose config does not say, as 0.5
+wrote it ([Configuration](../CONFIG.md#stack)).
 
 A list of two common words is not always worth a vocabulary. In the example, who cancelled an
 appointment is `'patient' | 'practice'`, and both words are also the names of a type of resource

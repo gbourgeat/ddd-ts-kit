@@ -14,16 +14,16 @@ export const languageDeclaredVocabulary = defineRule<MessageId>({
   type: 'suggestion',
   recommended: 'error',
   description:
-    'A value of a closed vocabulary the project declares is read through it, never written again as a string literal: in its context, in the platform and the route groups for the platform, everywhere for a permission id.',
+    'Under "stack.literals": "named", a value of a closed vocabulary the project declares is read through it, never written again as a string literal: in its context, in the platform and the route groups for the platform, everywhere for a permission id.',
   messages: {
     raw: '"{{value}}" is a value of {{vocabularies}}. Write {{written}}, as a computed key `[..]:` for a key: the value is declared once, the editor completes it and a typo stops the build.',
   },
-  create({ file, sourceCode, report }) {
-    if (!isJudged(file) || RELATIONSHIP_SCHEMA.test(sourceCode.text)) {
+  create({ context, file, sourceCode, report }) {
+    if (file.config.stack.literals !== 'named' || !isJudged(file) || RELATIONSHIP_SCHEMA.test(sourceCode.text)) {
       return {};
     }
 
-    const declared = projectVocabularies(file);
+    const declared = projectVocabularies(file, context.languageOptions.parser);
 
     const judge = (node: TSESTree.Node, value: string): void => {
       const known = (declared.get(value) ?? []).filter((candidate) => isReadBy(file, candidate));

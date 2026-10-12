@@ -25,6 +25,8 @@ export interface Stack {
   readonly dependencies: 'signature' | 'listed';
   /** How a domain error is written: static factories on one class per concept, or a class per error. A config that does not say is `classes`. */
   readonly refusals: 'factories' | 'classes';
+  /** `named`: a value of a declared vocabulary and a number of the model are read through a name. A config that does not say is `free`, and both rules are silent. */
+  readonly literals: 'named' | 'free';
   /** Kept as written: with `prisma` the generated client under `generated/` has an import alias of its own. */
   readonly orm: string;
 }
