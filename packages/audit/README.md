@@ -186,7 +186,11 @@ belong to) never reaches a use case, so the authorization middleware does not se
 pipeline reports it to `onGuardRefusal`, and `auditGuardRefusals(trail, { clock, ids })` records
 it: category `authorization`, action `http:<operationId>`, outcome `denied`, the code of the
 refusal as `reason` (`FORBIDDEN`, `UNAUTHORIZED`), and the actor, session, tenant and correlation
-of the request.
+of the request. A caller without a credential is not recorded: it is no one to hold to account,
+the tenant it addressed is its own choice, and recording it would let unauthenticated traffic
+write to the trail (and open hash chains) without bound; those refusals belong to the access log
+and to rate limiting. A recorded refusal is in the tenant of the caller's credential. A guard
+that fails instead of refusing (a lookup that threw, not a `DomainError`) is not reported.
 
 ```ts
 mountExpress(app, routes, { ...boundary, onGuardRefusal: auditGuardRefusals(trail, { clock, ids }) });

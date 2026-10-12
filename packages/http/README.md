@@ -181,8 +181,10 @@ controller (`HasRole`, `HasScope`, `TenantMember`, a guard of the project, and a
 does not belong to): its operation, its problem and its execution context. Those refusals reach
 no use case, so the authorization hook of `@ddd-ts-kit/auth` never sees them;
 `auditGuardRefusals(trail, { clock, ids })` of `@ddd-ts-kit/audit` writes each one to the audit
-trail as a denied decision. A refusal of a handler is not reported there, and a hook that fails
-does not change the answer.
+trail as a denied decision (an anonymous caller's excepted). Only a refusal is reported, a
+`DomainError` such as `UnauthorizedError` or `ForbiddenError`: a guard that fails with another
+error is a fault, answered 500 and not reported. A refusal of a handler is not reported there,
+and a hook that fails does not change the answer.
 
 `around(route, respond)` wraps the whole handling of a request, from authentication to the
 answer, refusals included, and is told the route that was matched (`method`, `path` as

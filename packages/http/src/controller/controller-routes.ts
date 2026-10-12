@@ -1,4 +1,5 @@
 import type { Schema } from '@ddd-ts-kit/validation';
+import { DomainError } from '@ddd-ts-kit/kernel';
 import { assertUniqueRoutes } from '../route/assert-unique-routes.js';
 import type { RequestSchemas } from '../route/request-schemas.js';
 import type { RouteInput } from '../route/route-input.js';
@@ -57,14 +58,21 @@ function routeOf(resolved: ResolvedController, options: ControllerRoutesOptions)
   };
 }
 
-/** Every guard, in order; what one throws is marked as a refusal at the edge before it goes on to the pipeline. */
+/**
+ * Every guard, in order. A refusal one throws (a `DomainError`: `UnauthorizedError`,
+ * `ForbiddenError` or one of the project) is marked as a refusal at the edge before it goes on to
+ * the pipeline; a fault (a lookup that failed) is not, and is never audited as a decision.
+ */
 async function passedGuards(guards: readonly Guard[], request: GuardRequest): Promise<void> {
   try {
     for (const guard of guards) {
       await guard.check(request);
     }
   } catch (error) {
-    guardRefusals.mark(error);
+    if (error instanceof DomainError) {
+      guardRefusals.mark(error);
+    }
+
     throw error;
   }
 }

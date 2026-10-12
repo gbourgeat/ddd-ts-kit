@@ -125,4 +125,35 @@ describe('a refusal at the edge', () => {
 
     expect(response.status).toBe(403);
   });
+
+  it('is not reported when a guard fails instead of refusing', async () => {
+    class FaultyRoutes {}
+
+    class FaultyController {
+      handle(): Promise<void> {
+        return Promise.resolve();
+      }
+    }
+
+    const failing = { check: () => Promise.reject(new Error('directory down')) };
+
+    RouteGroup({ prefix: '/faulty', guards: [failing] })(FaultyRoutes);
+
+    Controller({ group: FaultyRoutes, method: 'GET', path: '/', summary: 'Faulty', response: { status: 204 } })(
+      FaultyController,
+    );
+
+    const [route] = controllerRoutes([new FaultyController()]);
+    const refusals: GuardRefusal[] = [];
+
+    const response = await executeRoute(route ?? routeOf(), request(), {
+      resolvePrincipal: () => sessionOf(),
+      onGuardRefusal: (refusal) => {
+        refusals.push(refusal);
+      },
+    });
+
+    expect(response.status).toBe(500);
+    expect(refusals).toEqual([]);
+  });
 });

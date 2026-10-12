@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FixedClock, SequentialIdGenerator, executionContext, type Actor } from '@ddd-ts-kit/kernel';
+import { FixedClock, SequentialIdGenerator, anonymousActor, executionContext, type Actor } from '@ddd-ts-kit/kernel';
 import { InMemoryAuditTrail, auditGuardRefusals } from '../src/index.js';
 
 const ada: Actor = { id: 'ada', type: 'user', tenantId: 'acme', roles: [], attributes: {} };
@@ -31,5 +31,22 @@ describe('auditGuardRefusals', () => {
       },
       { reason: 'UNAUTHORIZED' },
     ]);
+  });
+
+  it('records nothing for a caller without a credential, whatever tenant it addressed', async () => {
+    const trail = new InMemoryAuditTrail();
+
+    const record = auditGuardRefusals(trail, {
+      clock: new FixedClock(new Date(0)),
+      ids: new SequentialIdGenerator('a'),
+    });
+
+    for (const tenantId of ['acme', 'tenant-0', 'tenant-1']) {
+      const execution = executionContext({ correlationId: 'c', actor: anonymousActor(), origin: 'http', tenantId });
+
+      await record({ operationId: 'listInvoices', problem: { status: 401, code: 'UNAUTHORIZED' }, execution });
+    }
+
+    expect(trail.entries).toEqual([]);
   });
 });

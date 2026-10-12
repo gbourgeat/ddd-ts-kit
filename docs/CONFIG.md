@@ -128,7 +128,7 @@ outside the list stops every command with the list of accepted values.
 | `stack.authz` | `rbac`, `abac`, `rebac`, `custom` | `rbac` |
 | `stack.broker` | `none`, `rabbitmq`, `kafka`, `nats`, `redis` (Redis Streams), `custom`; `init` refuses a broker without an ORM, since a broker is reached through the outbox | `none` |
 | `stack.cache` | `none`, `redis`: what backs the kernel `Cache` port, the wake-up of the outbox relay, the rate limiter and the lock of the scheduled jobs | `none` |
-| `stack.audit` | `on`, `off`: whether the audit trail is wired | `on` when an ORM is set, `off` otherwise |
+| `stack.audit` | `on`, `off`: whether the audit trail is wired; `on` also records the refusals of the guards at the edge of authenticated callers (`onGuardRefusal`), never those of a caller without a credential | `on` when an ORM is set, `off` otherwise |
 | `stack.errors` | `none`, `sentry`: where unexpected failures are reported; `sentry` binds the kernel `ErrorReporter` to `@ddd-ts-kit/sentry` (Sentry or GlitchTip) | `none` |
 | `stack.logger` | `stdout`, `pino`, `winston`: what implements the kernel `Logger` port | `stdout` |
 | `stack.style` | `declared`: each class declares what it is with a decorator and a context has no module file; `explicit`: every binding is written in `<context>.module.ts`. `init` accepts `declared` with `di: tsyringe` only | `declared` with `di: tsyringe`, `explicit` otherwise |
