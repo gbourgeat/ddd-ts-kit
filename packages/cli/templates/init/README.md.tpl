@@ -13,7 +13,7 @@ cp .env.example .env
 npm run infra:up        # the database, in Docker; add --profile observability for Jaeger
 {{/if}}
 {{#if orm.drizzle}}
-npm run db:generate     # SQL migrations from the Drizzle schema
+npm run db:generate initial   # migrations/<timestamp>_initial.sql, from the Drizzle schema
 npm run db:migrate
 {{/if}}
 {{#if orm.knex}}
@@ -21,16 +21,22 @@ npm run db:migrate      # builds, then applies migrations/ (the first one create
 {{/if}}
 {{#if orm.prisma}}
 npm run db:client       # the Prisma client and the schema of the tests, from prisma/schema.prisma
-npm run db:generate     # a migration from the schema
+npm run db:generate initial   # prisma/migrations/<timestamp>_initial/, from the schema
 npm run db:migrate
 {{/if}}
 {{#if orm.typeorm}}
-npm run build && npm run db:generate   # a migration from the entity schemas
+npm run build && npm run db:generate migrations/initial   # migrations/<timestamp>-initial.ts, from the entity schemas
 npm run db:migrate
 {{/if}}
 npm run dev
 ```
 
+{{#if persistence.hasDatabase}}
+Every migration is named `<timestamp>_<what-it-does>`: `npm run db:generate` refuses to run
+without a name, so two branches never write the same file, and `npm run check:arch` reports
+migrations that a merge left out of order (`npx ddd-ts-kit explain persistence/migration-history`).
+
+{{/if}}
 `npm run dev` restarts the application when a source file changes. It runs `tsx watch`, which
 executes TypeScript directly and resolves an import alias from the `paths` of `tsconfig.json`;
 `--env-file-if-exists=.env` gives Node the variables of `.env`
@@ -41,7 +47,9 @@ one is wrong.
 {{#if docs.any}}
 
 The API documentation is served at `/docs` and the contract at `/openapi.json`, outside
-production unless `API_DOCS=true`.
+production unless `API_DOCS=true`; a contract split into documents (`openapi.documents` of
+`ddd-ts-kit.config.json`) is served at `/openapi/<name>.json`, and the page offers each one.
+`npm run docs:generate` commits it as `openapi/openapi.yaml` (or one file per document).
 {{/if}}
 
 ## How it is put together
@@ -250,13 +258,31 @@ The pipeline calls the same `ci:*` scripts; what makes it binding is described i
 how the editor hook of the ddd-ts-kit plugin reacts when a file just written breaks a rule
 (refuse it, only say so, or stay silent).
 
-## Work on it
+## Recommended steps
 
-1. Define the vocabulary in the `CONTEXT.md` of the context, with the domain experts.
-2. Model: aggregates, value objects, events, in the words of that glossary.
-3. Scaffold with `npx ddd-ts-kit generate ...` (`command`, `query`, `repository`, `port`, `route`, `job`...) and fill the `TODO(domain)` places it lists.
-4. Test: builders and fakes, no mocks. `npm test`, then `npm run test:e2e`.
-5. Verify: `npm run verify`.
+Follow them in order: it is the path the kit supports, and each step leaves what the next one
+reads. With the ddd-ts-kit plugin of Claude Code, `/ddd-ts-kit:start` conducts steps 1 to 7 and
+records them in `docs/architecture/plan.md`; `npx ddd-ts-kit status` says which step is next.
+
+1. **Discover the domain** (`/ddd-ts-kit:discover-domain`): actors, commands, events and
+   policies in `docs/architecture/discovery.md`.
+2. **Find the bounded contexts** (`/ddd-ts-kit:bounded-contexts`): `docs/architecture/contexts.md`.
+3. **Write the glossaries** (`/ddd-ts-kit:glossary`) before any code: the generators refuse a
+   name the glossary of its context does not hold.
+4. **Draw the context map** (`/ddd-ts-kit:context-map`): who is upstream, by which pattern.
+5. **Bootstrap**: done by `init`. Declare each context with its language and its upstreams,
+   upstreams first: `npx ddd-ts-kit generate context <name> --classification <core|supporting|generic> --term "<Term>=<meaning>" --upstream <context>:<pattern>`.
+6. **Plan the slices** (`/ddd-ts-kit:plan-slices`): one use case per slice, in
+   `docs/architecture/slices.md`.
+7. **Build slice by slice** (`/ddd-ts-kit:use-case`): `npx ddd-ts-kit generate ...`, then the
+   `TODO(domain)` places it lists (`npx ddd-ts-kit todo <context>`); builders and fakes, no mocks.
+8. **Pass the gate** (`/ddd-ts-kit:quality-gate`): `npm run verify` before each merge.
+9. **Document** (`/ddd-ts-kit:document`): `npm run docs:generate`, committed with the code.
+
+A step skipped costs later: boundaries drawn from the tables, a glossary written after the
+code, a first integration made by a direct import the checker then refuses. The method, step by
+step: https://github.com/gbourgeat/ddd-ts-kit/blob/main/docs/guides/methodology.md; the command
+for each moment of the project: https://github.com/gbourgeat/ddd-ts-kit/blob/main/docs/guides/commands.md.
 
 | Script | Does |
 |---|---|

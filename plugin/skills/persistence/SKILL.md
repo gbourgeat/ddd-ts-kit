@@ -54,10 +54,14 @@ lookups of the port, the columns, the mapper.
 - **Queries may skip aggregates**: `generate query` writes a read port and an in-memory
   reader; replace the reader by an adapter that queries the tables and returns the shape of
   the port.
-- **Migrations** are generated from the schema with the ORM's own tool (`npm run
-  db:generate`, `npm run db:migrate`), committed, forward-only, and compatible with the
-  version still running. Their order is shared: in parallel work they are generated on the
-  trunk (skill `ddd-ts-kit:parallel-work`).
+- **Migrations** are generated from the schema with the ORM's own tool, named by what they
+  do (`npm run db:generate add-invoices`, which writes `<timestamp>_add-invoices`; it refuses
+  to run without the name), applied with `npm run db:migrate`, committed, forward-only, and
+  compatible with the version still running. When a merge brings a migration from the main
+  branch before yours is merged, delete yours (and, under drizzle-kit, its snapshot and journal
+  entry) and generate it again on top: `persistence/migration-history` reports the forked or
+  unordered history otherwise, which drizzle's migrator would skip silently. Procedure and
+  measurements: `docs/tools/persistence.md`, "Migrations: names, merges and order".
 
 ## By ORM
 

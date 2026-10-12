@@ -207,4 +207,29 @@ export const STRUCTURE_INJECTIONS: readonly Injection[] = [
       },
     ],
   },
+  {
+    rule: 'persistence/migration-history',
+    what: 'a migration written by hand, without the timestamp that orders it',
+    file: 'migrations/add-appointment-note.js',
+    changes: [
+      {
+        file: 'migrations/add-appointment-note.js',
+        to: [
+          'export const up = async (knex) => {',
+          "  await knex.schema.alterTable('appointments', (table) => {",
+          "    table.text('note');",
+          '  });',
+          '};',
+          '',
+          'export const down = async (knex) => {',
+          "  await knex.schema.alterTable('appointments', (table) => {",
+          "    table.dropColumn('note');",
+          '  });',
+          '};',
+          '',
+        ].join('\n'),
+      },
+    ],
+    checker: true,
+  },
 ];

@@ -1,11 +1,10 @@
-import { ok } from '@ddd-ts-kit/kernel';
-import { customSchema } from '@ddd-ts-kit/validation';
 import type { OpenApiDocument } from '../openapi/open-api-document.js';
 import { stringifyOpenApi } from '../openapi/stringify-open-api.js';
-import { defineRoute } from '../route/define-route.js';
 import type { Route } from '../route/route.js';
+import { DEFAULT_ASSETS } from './default-assets.js';
 import { docsPage } from './docs-page.js';
 import type { DocsUi } from './docs-ui.js';
+import { textRoute } from './text-route.js';
 
 export interface DocsRoutesOptions {
   /** Where the JSON contract is served. Default `/openapi.json`. */
@@ -20,23 +19,6 @@ export interface DocsRoutesOptions {
   readonly assetsUrl?: string;
   readonly title?: string;
 }
-
-interface TextRoute {
-  readonly path: string;
-  readonly operationId: string;
-  readonly summary: string;
-  readonly description: string;
-  readonly contentType: string;
-  readonly body: string;
-}
-
-const DEFAULT_ASSETS: Record<DocsUi, string> = {
-  swagger: 'https://cdn.jsdelivr.net/npm/swagger-ui-dist@5',
-  scalar: 'https://cdn.jsdelivr.net/npm/@scalar/api-reference@1',
-  redoc: 'https://cdn.jsdelivr.net/npm/redoc@2/bundles',
-};
-
-const text = customSchema<string>((input) => ok(String(input)), { type: 'string' });
 
 /**
  * Two routes serving the generated contract and an interactive page for it. Mount them next
@@ -71,18 +53,4 @@ export function openApiDocsRoutes(document: OpenApiDocument, options: DocsRoutes
       body: html,
     }),
   ];
-}
-
-function textRoute(route: TextRoute): Route {
-  return defineRoute(
-    {
-      method: 'GET',
-      path: route.path,
-      operationId: route.operationId,
-      summary: route.summary,
-      responses: { 200: { description: route.description, body: text } },
-      security: false,
-    },
-    async () => ({ status: 200, body: route.body, headers: { 'content-type': route.contentType } }),
-  );
 }

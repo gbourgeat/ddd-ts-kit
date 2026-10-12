@@ -10,5 +10,6 @@ export const NOISE_PATHS: readonly string[] = [
   '/metrics',
   '/docs',
   '/openapi.json',
+  '/openapi',
   '/favicon.ico',
 ];

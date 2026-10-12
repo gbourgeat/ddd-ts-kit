@@ -7,7 +7,7 @@ import { NATIVE_COMPILER } from './type-errors.js';
 
 const INTEGRATION = [
   'docs/integration/README.md',
-  'docs/integration/asyncapi.json',
+  'docs/integration/asyncapi.yaml',
   'docs/integration/event-catalog.md',
 ];
 
@@ -36,5 +36,5 @@ export function buildAndCheckDocuments(root: string): void {
   node('dist/scripts/openapi.js');
   node('dist/scripts/openapi.js', '--check');
 
-  expect(read(root, 'openapi/openapi.json')).toContain('"securitySchemes"');
+  expect(read(root, 'openapi/openapi.yaml')).toContain('\n  securitySchemes:\n');
 }

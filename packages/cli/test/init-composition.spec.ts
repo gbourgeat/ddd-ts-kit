@@ -134,7 +134,7 @@ describe('the storage token of each ORM', () => {
   it.each([
     [
       'knex',
-      ['knexfile.js', 'migrations/0001_initial.js', 'src/platform/database/connect-to-database.ts'],
+      ['knexfile.js', 'migrations/00000000000000_initial.js', 'src/platform/database/connect-to-database.ts'],
       '@ddd-ts-kit/knex',
     ],
     [

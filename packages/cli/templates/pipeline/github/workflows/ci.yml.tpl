@@ -173,11 +173,14 @@ jobs:
       - uses: ./.github/actions/setup
       - name: Production dependencies audit
         run: npm run ci:audit
+{{#if extras.dependencyReview}}
+      # Opt-in (--ci-extras dependency-review): free on a public repository, GitHub Code Security on a private one.
       - name: Dependency review
         if: ${{ github.event_name == 'pull_request' && !cancelled() }}
         uses: actions/dependency-review-action@v5.0.0
         with:
           fail-on-severity: high
+{{/if}}
       - name: Secrets
         if: ${{ !cancelled() }}
         run: docker run --rm --volume "$GITHUB_WORKSPACE:/repo" ghcr.io/gitleaks/gitleaks:v8.30.1 git /repo --redact --no-banner

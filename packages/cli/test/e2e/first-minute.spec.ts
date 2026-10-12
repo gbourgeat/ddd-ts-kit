@@ -64,7 +64,7 @@ describe.runIf(SLOW).each(managers)('the quick start of the README, typed on %s'
       }
     }
 
-    expect(read(root, 'openapi/openapi.json')).toContain('"/orders"');
+    expect(read(root, 'openapi/openapi.yaml')).toContain('\n  /orders:\n');
   }, 1_200_000);
 });
 

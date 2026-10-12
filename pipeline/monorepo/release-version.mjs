@@ -24,7 +24,7 @@ const MANIFESTS = [
   'examples/scheduling/package.json',
 ];
 /** The contracts the example generates state its version, which is the one of the kit: they follow it, or its documents check fails. */
-const GENERATED = ['examples/scheduling/openapi/openapi.json', 'examples/scheduling/docs/integration/asyncapi.json'];
+const GENERATED = ['examples/scheduling/openapi/openapi.yaml', 'examples/scheduling/docs/integration/asyncapi.yaml'];
 
 process.exit(main(process.argv.slice(2)));
 
@@ -69,7 +69,7 @@ function set(version) {
   return 0;
 }
 
-/** Only the version of the kit is replaced: a line that states it names the kit or is the `version` of a kit package. */
+/** Only the version of the kit is replaced: a line that states it names the kit or is a `version`, in JSON or in YAML. */
 function restated(text, current, version) {
   return text
     .split('\n')
@@ -78,11 +78,24 @@ function restated(text, current, version) {
 }
 
 function statesTheKit(line) {
-  return /ddd-ts-kit|"version"|VERSION/.test(line);
+  return /ddd-ts-kit|"version"|^\s*version:|VERSION/.test(line);
 }
 
 function stated() {
-  return [...packageManifests().flatMap(ofPackage), ...MANIFESTS.flatMap(ofDependencies), ...SOURCES.flatMap(ofSource)];
+  return [
+    ...packageManifests().flatMap(ofPackage),
+    ...MANIFESTS.flatMap(ofDependencies),
+    ...SOURCES.flatMap(ofSource),
+    ...GENERATED.flatMap(ofContract),
+  ];
+}
+
+/** The version of the contract's `info`, the first `version` two spaces in, in YAML or in JSON. */
+function ofContract(file) {
+  const text = fs.readFileSync(path.join(ROOT, file), 'utf8');
+  const match = /^ {2}"?version"?:\s*["']?([^"',\s]+)/m.exec(text);
+
+  return match === null ? [{ version: 'missing', where: file }] : [{ version: match[1], where: file }];
 }
 
 function packageManifests() {

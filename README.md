@@ -19,6 +19,34 @@ RabbitMQ, Kafka, NATS JetStream or Redis Streams; JWT or Keycloak; roles, attrib
 relationships. `ddd-ts-kit init` without a flag takes Express, zod, tsyringe, Drizzle on
 PostgreSQL and Vitest.
 
+## Start a project
+
+Follow these steps in order: it is the supported path, and the tools are built to hold it. Each
+step is a skill of the plugin (`/ddd-ts-kit:<skill>`), or a command, and leaves a file the next
+one reads. `/ddd-ts-kit:start` conducts steps 1 to 7 one at a time, records them in
+`docs/architecture/plan.md`, and `npx ddd-ts-kit status` says at any time which step is next.
+
+| # | Step | Skill or command | Produces |
+|---|---|---|---|
+| 1 | Discover the domain | `discover-domain` | `docs/architecture/discovery.md`: actors, commands, events, policies |
+| 2 | Find the bounded contexts | `bounded-contexts` | `docs/architecture/contexts.md`: each boundary and its reason |
+| 3 | Write the glossaries | `glossary` | the ubiquitous language of each context |
+| 4 | Draw the context map | `context-map` | who is upstream of whom, and by which pattern |
+| 5 | Choose the stack and bootstrap | `bootstrap`, `ddd-ts-kit init`, `generate context` | the project, green on `verify`, one `CONTEXT.md` per context |
+| 6 | Plan the slices | `plan-slices` | `docs/architecture/slices.md`: one use case per slice, in order |
+| 7 | Build slice by slice | `use-case` (`parallel-work` for several workers) | the code and its tests, one commit per slice |
+| 8 | Pass the quality gate | `quality-gate`, `npm run verify` | a green gate before each merge |
+| 9 | Document | `document`, `npm run docs:generate` | current contracts, context map and decision records |
+
+Skipping a step costs later, and the cost is known: without steps 1 to 4 the boundaries are
+drawn from the database tables, and every rename crosses contexts; a glossary written after
+the code describes the code instead of the business, and the generators refuse its names
+until it exists; without the context map the first integration is a direct import that the
+checker then refuses; without the slices plan the work comes as layers, and nothing is
+demonstrable before the end. The [methodology](docs/guides/methodology.md) is the reference
+for each step; [which command, when](docs/guides/commands.md) gives the command for each
+moment of a project, with a first feature from zero.
+
 ## Quick start
 
 ```bash
@@ -50,7 +78,7 @@ These two blocks are run as they are written, line by line, by the end-to-end su
 repository, on pnpm and on npm. With `npx ddd-ts-kit init --package-manager npm` the same lines
 read `npm install`, `npm run <script>` and `npx ddd-ts-kit <command>`; the note `init` prints
 and the README it writes say them in the words of the manager chosen. To see the application
-run: `cp .env.example .env`, `pnpm run infra:up` (PostgreSQL, in Docker), `pnpm run db:generate`,
+run: `cp .env.example .env`, `pnpm run infra:up` (PostgreSQL, in Docker), `pnpm run db:generate initial`,
 `pnpm run db:migrate`, then `pnpm run dev` (auto reload; API documentation on `/docs`).
 
 Each `generate` writes the file, its spec, its fake or builder and its registration, and lists
@@ -181,9 +209,10 @@ provider, ORM or HTTP framework is an adapter that passes the same contract suit
 `init --ci github|gitlab|both` installs the same gates on either platform, from the same npm
 scripts: type check, lint, architecture, dead code, unit tests with coverage thresholds,
 integration tests on PostgreSQL, end-to-end tests, documentation and contract drift, security
-(audit, secret scan, and each platform's own scanners), image build, and a single final gate
-to mark as required. Details and the GitHub and GitLab equivalence table:
-[pipeline/README.md](pipeline/README.md).
+(npm audit and gitleaks), image build, and a single final gate to mark as required. Every tool
+is free on any repository; CodeQL, dependency review and GitLab's scanners, which need a paid
+plan on a private repository, are opt-in (`--ci-extras`). Details and the GitHub and GitLab
+equivalence table: [pipeline/README.md](pipeline/README.md).
 
 ## Documentation
 
@@ -208,7 +237,7 @@ reading order for a newcomer to DDD, a tech lead adopting the kit and a contribu
   [observability](docs/tools/observability.md),
   [static analysis and pipeline](docs/tools/static-analysis-and-pipeline.md),
   [test runners](docs/tools/test-runners.md).
-- **Guides.** [Methodology](docs/guides/methodology.md),
+- **Guides.** [Methodology](docs/guides/methodology.md), [which command, when](docs/guides/commands.md),
   [team workflow](docs/guides/team-workflow.md), [parallel work](docs/guides/parallel-work.md),
   [commit discipline](docs/guides/commit-discipline.md),
   [when to extract microservices](docs/guides/when-to-extract-microservices.md),

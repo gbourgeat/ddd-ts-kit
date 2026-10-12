@@ -76,14 +76,15 @@ glab api "projects/:id/protected_branches/main" | jq '{name, allow_force_push, p
 
 | Piece | Free | Premium | Ultimate |
 |---|---|---|---|
-| SAST template (`Jobs/SAST.gitlab-ci.yml`, Semgrep rules for JavaScript and TypeScript) | job runs, report downloadable as an artifact | same | findings in the merge request, vulnerability management, Advanced SAST |
-| Secret Detection template (`Jobs/Secret-Detection.gitlab-ci.yml`) | job runs, report downloadable as an artifact | same | findings in the merge request and the security dashboard |
-| Dependency Scanning template (`Jobs/Dependency-Scanning.v2.gitlab-ci.yml`) | not available: the `include` is skipped | not available | available |
+| SAST template (`Jobs/SAST.gitlab-ci.yml`, Semgrep rules for JavaScript and TypeScript), `--ci-extras gitlab-sast` | job runs, report downloadable as an artifact | same | findings in the merge request, vulnerability management, Advanced SAST |
+| Secret Detection template (`Jobs/Secret-Detection.gitlab-ci.yml`), `--ci-extras gitlab-secret-detection` | job runs, report downloadable as an artifact | same | findings in the merge request and the security dashboard |
+| Dependency Scanning template (`Jobs/Dependency-Scanning.v2.gitlab-ci.yml`), `--ci-extras gitlab-dependency-scanning` | not available: the `include` is skipped | not available | available |
 | Code Quality report (ESLint and architecture) | merge request widget | plus the pipeline report tab | plus inline in the changes view |
 | JUnit report, coverage percentage, Cobertura coverage in the diff | available | available | available |
 | Push rules | no | yes | yes |
 | Required approvals | no | yes | yes |
 
-The template jobs are `allow_failure: true` by design of GitLab: on Free and Premium they never
-block a merge. What blocks, on every tier, is the `audit` job (`npm audit`, production
-dependencies, high and above) and the `secrets` job (gitleaks).
+The three templates are not in `.gitlab-ci.yml` unless `init --ci-extras` names them: on Free
+and Premium their findings reach no merge request, and their jobs are `allow_failure: true` by
+design of GitLab, so they never block a merge. What blocks, on every tier, is the `audit` job
+(`npm audit`, production dependencies, high and above) and the `secrets` job (gitleaks).

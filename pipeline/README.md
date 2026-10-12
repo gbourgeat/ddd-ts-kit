@@ -22,10 +22,10 @@ equivalent and cannot drift, and every gate runs on a laptop with the same comma
 | `commitlint.config.mjs` | `commitlint.config.mjs` | conventional commits, shared by the hook and both CI title checks |
 | `renovate.json` | `renovate.json` | dependency updates, on either platform |
 | `package-scripts.json` | merged into `package.json` | the `ci:*` scripts and the dev dependencies they need. In a project `ci:arch:graph` is `npm run depcruise`, that is `ddd-ts-kit depcruise-config --check && depcruise src --config .dependency-cruiser.cjs`; this file still names `depcruise-config.mjs` |
-| `github/workflows/*.yml` | `.github/workflows/` | `ci.yml`, `codeql.yml`, `pr-title.yml` |
+| `github/workflows/*.yml` | `.github/workflows/` | `ci.yml` and `pr-title.yml`; `codeql.yml` with `--ci-extras codeql` only. `ci.yml` here is the default: the CLI's template adds the dependency review step under `--ci-extras dependency-review` |
 | `github/dependabot.yml` | `.github/dependabot.yml` | GitHub-native alternative to Renovate |
 | `github/branch-protection.md` | read once | the settings that make the workflow binding |
-| `gitlab/.gitlab-ci.yml` | `.gitlab-ci.yml` | the same pipeline for GitLab. The installed file writes the architecture report with `ddd-ts-kit check --format gitlab`; the file here still converts a JSON report in two steps |
+| `gitlab/.gitlab-ci.yml` | `.gitlab-ci.yml` | the same pipeline for GitLab, without the opt-in templates of GitLab's scanners (`--ci-extras gitlab-sast,...` adds them). The installed file writes the architecture report with `ddd-ts-kit check --format gitlab`; the file here still converts a JSON report in two steps |
 | `gitlab/arch-to-codequality.mjs` | not installed | converts a saved `ddd-ts-kit check --format json` report to a Code Quality report; `check --format gitlab` makes it unnecessary in a pipeline |
 | `gitlab/merge-request-settings.md` | read once | the settings that make the pipeline binding |
 | `monorepo/` | not templated | scripts of this repository's own pipeline |
@@ -49,7 +49,7 @@ not a benchmark.
 | 3 | integration tests | `ci:test:integration` | adapters against a real PostgreSQL; coverage threshold of `infrastructure/`, per context (`--mode integration`) | tens of seconds |
 | 4 | end-to-end tests | `ci:test:e2e` | the whole application through HTTP and the event bus | tens of seconds |
 | 2 | docs and contract drift | `ci:docs` | a stale context map, `CONTEXT.md` list, OpenAPI document, AsyncAPI document or event catalog | a build |
-| 1 | security | `ci:audit`, gitleaks, platform scanners | a high or critical advisory in a production dependency, a committed secret | seconds |
+| 1 | security | `ci:audit`, gitleaks, and the opt-in scanners of the platform | a high or critical advisory in a production dependency, a committed secret | seconds |
 | 5 | build | `ci:build` | the production build | a build |
 | 6 | image | platform-native | the `Dockerfile` still builds; nothing is pushed | a minute |
 | last | gate | none | needs every job: the single required check | none |
@@ -145,21 +145,65 @@ title check (GitLab) run: with squash merges the title becomes the commit on the
 The only step that is not an npm script is the image build: the builder is the platform's.
 Report formats are the only arguments the YAML adds to a script.
 
-On one platform only:
+## Free by default, paid on request
+
+The pipelines `init` writes use only tools that cost nothing on any repository, public or
+private. A tool that needs a paid plan on a private repository, or whose findings only reach a
+merge request in a paid tier, is offered and never installed by default: `init --ci-extras
+<name>,...` adds it, and `ci.extras` of `ddd-ts-kit.config.json` records it ([CONFIG](../docs/CONFIG.md)).
+The kit's own repository is public: its own workflows keep CodeQL and dependency review, which
+cost nothing there.
+
+| Job or file | Tool | Class | Condition (source) |
+|---|---|---|---|
+| every job | GitHub Actions, GitLab CI | the platform | Actions is free on public repositories with standard runners; on a private one each account has included minutes and storage (GitHub Free: 2,000 minutes, 500 MB), beyond which use is billed [1]. GitLab compute minutes follow the plan of the namespace: not re-checked here |
+| typecheck, lint, format, architecture, dead code, tests, build, docs | TypeScript, ESLint, Biome, `ddd-ts-kit`, dependency-cruiser, knip, Vitest or Jest | free, open source, run in the job | none |
+| `security`, `audit` | `npm audit` (`pnpm audit`) | free, run in the job | asks the advisory database of the public npm registry |
+| `security`, `secrets` | gitleaks CLI, image `ghcr.io/gitleaks/gitleaks` | free, MIT, run in the job | none [2]. The `gitleaks/gitleaks-action` wrapper is not used: it asks organizations for a license key, which its README calls free; its own licence changed from MIT at 2.0 [3] |
+| `image` | Docker Buildx and `docker/build-push-action` (GitHub), BuildKit rootless (GitLab) | free, open source, run in the job | the GitHub cache (`type=gha`) counts against the cache storage of the account [1] |
+| test, coverage and Code Quality reports (GitLab) | `artifacts:reports` | free on every tier | Code Quality findings show in the merge request reports on every tier; the inline changes view is Ultimate [4] |
+| `dependabot.yml` | Dependabot version updates | GitHub-native | dependency graph and Dependabot alerts are included in all plans [5]; the cost of version updates on a private repository is not stated on the pages read, and was not verified |
+| `renovate.json` | Renovate | free, AGPL-3.0, self-hosted or the app hosted by Mend [6] | whether the hosted app is free on each platform was not verified |
+| opt-in `codeql` | CodeQL, `.github/workflows/codeql.yml` | free on public repositories only | a private repository needs a GitHub Code Security license [7][5] |
+| opt-in `dependency-review` | `actions/dependency-review-action`, a step of `security` | free on public repositories only | a private repository needs GitHub Code Security or GitHub Advanced Security [8] |
+| opt-in `gitlab-sast` | `Jobs/SAST.gitlab-ci.yml` | runs on every tier, report only in Free and Premium | Free and Premium: open-source analyzers and a downloadable JSON report; findings in the merge request and vulnerability management are Ultimate [9]. Its jobs never fail a pipeline |
+| opt-in `gitlab-secret-detection` | `Jobs/Secret-Detection.gitlab-ci.yml` | runs on every tier, report only in Free and Premium | JSON artifact on every tier; merge request reports and vulnerability management are Ultimate [10]. The `secrets` job (gitleaks) already blocks a leak on every tier |
+| opt-in `gitlab-dependency-scanning` | `Jobs/Dependency-Scanning.v2.gitlab-ci.yml` | Ultimate | the feature is Ultimate only [11]; the include is skipped where `GITLAB_FEATURES` lacks it |
+| not used | Codecov, Snyk, SonarQube Cloud, Chromatic and other hosted services | hosted services | none of them is installed or proposed by `init`; their terms were not read for this page |
+
+What stands in the place of each opt-in by default: committed secrets are blocked by gitleaks
+on both platforms; vulnerable dependencies by `npm audit` (production dependencies, high and
+above), which also replaces dependency review on a pull request; no static security analysis
+runs by default. That last gap is said rather than filled: the free engines that would fill it
+either need the paid plan above to report into a pull request (CodeQL, GitLab SAST) or carry
+rule licences that were not reviewed here (Semgrep's registry rules), and ESLint already holds
+the purity and escape-hatch rules of the kit. A public repository gets CodeQL for free with
+`--ci-extras codeql`.
+
+Sources, read on 2026-10-12:
+[1] GitHub Actions billing: https://docs.github.com/en/billing/concepts/product-billing/github-actions ;
+[2] gitleaks: https://github.com/gitleaks/gitleaks ;
+[3] gitleaks-action: https://github.com/gitleaks/gitleaks-action ;
+[4] GitLab Code Quality: https://docs.gitlab.com/ci/testing/code_quality/ ;
+[5] GitHub Advanced Security: https://docs.github.com/en/get-started/learning-about-github/about-github-advanced-security ;
+[6] Renovate: https://docs.renovatebot.com/ ;
+[7] code scanning: https://docs.github.com/en/code-security/code-scanning/introduction-to-code-scanning/about-code-scanning ;
+[8] dependency review: https://docs.github.com/en/code-security/supply-chain-security/understanding-your-software-supply-chain/about-dependency-review ;
+[9] GitLab SAST: https://docs.gitlab.com/user/application_security/sast/ ;
+[10] GitLab pipeline secret detection: https://docs.gitlab.com/user/application_security/secret_detection/pipeline/ ;
+[11] GitLab dependency scanning: https://docs.gitlab.com/user/application_security/dependency_scanning/ .
+
+On one platform only, whatever the plan:
 
 | Platform | Piece | Note |
 |---|---|---|
-| GitHub | CodeQL (`codeql.yml`) | free on public repositories, GitHub Code Security on private ones |
-| GitHub | dependency review on pull requests | needs the dependency graph, same licence condition |
 | GitHub | Dependabot | Renovate covers both platforms; keep one of the two |
 | GitHub | a required check per job | GitLab requires the pipeline as a whole |
-| GitLab | SAST and Secret Detection templates | run on every tier; findings in the merge request need Ultimate |
-| GitLab | Dependency Scanning template | Ultimate only; `npm audit` is the fallback on every tier |
 | GitLab | Code Quality, JUnit and coverage widgets in the merge request | every tier; the inline view of Code Quality needs Ultimate |
 | GitLab | push rules for commit messages | Premium and Ultimate; the hook and the title check hold the rule elsewhere |
 
-The GitLab template jobs never block a merge (`allow_failure` by design of GitLab). What blocks
-on every tier is `audit` (npm audit) and `secrets` (gitleaks), the same two checks as on GitHub.
+What blocks on every tier and every plan is `audit` (npm audit) and `secrets` (gitleaks), the
+same two checks on both platforms.
 
 Kaniko is not used for the image: its repository is archived. BuildKit is maintained and builds
 without a privileged daemon.

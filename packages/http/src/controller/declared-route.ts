@@ -13,16 +13,19 @@ export interface DeclaredRoute {
   readonly tags: readonly string[];
   readonly guards: readonly GuardReference[];
   readonly errors: readonly string[];
+  /** The class names of its route group and of every group above it, nearest first. */
+  readonly groups: readonly string[];
 }
 
 interface Inherited {
+  readonly groups: readonly string[];
   readonly prefix: string;
   readonly tags: readonly string[];
   readonly guards: readonly GuardReference[];
   readonly errors: readonly string[];
 }
 
-const NOTHING: Inherited = { prefix: '', tags: [], guards: [], errors: [] };
+const NOTHING: Inherited = { groups: [], prefix: '', tags: [], guards: [], errors: [] };
 
 /** Folds the groups of a controller into its declaration, and refuses one that cannot stand. */
 export function declaredRoute(className: string, spec: ControllerSpec): DeclaredRoute {
@@ -39,6 +42,7 @@ export function declaredRoute(className: string, spec: ControllerSpec): Declared
     tags: distinct([...inherited.tags, ...(spec.tags ?? [])]),
     guards,
     errors: distinct([...inherited.errors, ...(spec.errors ?? [])]),
+    groups: inherited.groups,
   };
 }
 
@@ -52,6 +56,7 @@ function inheritedFrom(className: string, group: RouteGroupClass): Inherited {
   const above = options.parent === undefined ? NOTHING : inheritedFrom(className, options.parent);
 
   return {
+    groups: [group.name, ...above.groups],
     prefix: `${above.prefix}${options.prefix ?? ''}`,
     tags: [...above.tags, ...(options.tags ?? [])],
     guards: [...above.guards, ...(options.guards ?? [])],

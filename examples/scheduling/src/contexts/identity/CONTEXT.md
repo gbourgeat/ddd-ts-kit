@@ -120,7 +120,7 @@ writes and deletions of a tuple are idempotent, and a relationship must not be l
 ## Reference
 
 <!-- ddd-ts-kit:reference -->
-Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-kit describe identity --json`. The fields of each schema are in the generated contracts: [OpenAPI](../../../openapi/openapi.json), [event catalog](../../../docs/integration/event-catalog.md).
+Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-kit describe identity --json`. The fields of each schema are in the generated contracts: [OpenAPI](../../../openapi/openapi.yaml), [event catalog](../../../docs/integration/event-catalog.md).
 
 **Dependencies**: upstreams: none; downstreams: `scheduling` (customer-supplier), `notification` (published-language).
 

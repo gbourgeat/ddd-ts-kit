@@ -69,7 +69,7 @@ describe('the guidance init writes', () => {
     for (const text of [
       ...commands,
       ...skills,
-      'openapi/openapi.json',
+      'openapi/openapi.yaml',
       'never `npx tsc`',
       'docs/architecture/plan.md',
     ]) {

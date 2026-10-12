@@ -37,11 +37,19 @@ describe('routes that tell no story', () => {
       await around({ method: 'GET', path: '/ready/database', operationId: 'readiness' }, ok);
       await around({ method: 'GET', path: '/api-docs', operationId: 'getOpenApiUi' }, ok);
       await around({ method: 'GET', path: '/contract.json', operationId: 'getOpenApiDocument' }, ok);
+
+      await around(
+        { method: 'GET', path: '/api/contracts/back-office.json', operationId: 'getOpenApiDocument_backOffice' },
+        ok,
+      );
+
+      await around({ method: 'GET', path: '/api/pages/back-office', operationId: 'getOpenApiUi_backOffice' }, ok);
     });
 
     expect(trace).toEqual([]);
     expect(NOISE_PATHS.every((path) => isNoisePath(`${path}?probe=1`))).toBe(true);
     expect(isNoisePath('/healthcare/patients')).toBe(false);
+    expect(isNoisePath('/openapi/back-office.json')).toBe(true);
   });
 
   it('are the choice of the application when it gives its own rule', async () => {

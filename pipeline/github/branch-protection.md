@@ -10,7 +10,7 @@ of `CI` on `main` (GitHub only offers a check as "required" once it has reported
 |---|---|---|
 | `gate` | `ci.yml` | Needs every other job of the workflow; a failed, cancelled or skipped job fails it. One required check, so adding a job never needs a settings change. |
 | `Conventional title` | `pr-title.yml` | The squash commit takes the pull request title. |
-| `Analyze` | `codeql.yml` | Optional: require it when code scanning is enabled on the repository. |
+| `Analyze` | `codeql.yml` | Only with `init --ci-extras codeql`: require it when code scanning is enabled on the repository. |
 
 ## Protect `main`
 
@@ -66,12 +66,13 @@ Expected: `{"checks":["gate","Conventional title"],"strict":true,"admins":true}`
 
 ## Notes
 
-- Dependency review needs the dependency graph: free on public repositories, GitHub Advanced
-  Security (or GitHub Code Security) on private ones. Without it the step fails with an explicit
-  message; remove the step and keep `npm run ci:audit`.
-- CodeQL is free on public repositories and needs GitHub Code Security on private ones.
+- Not installed by default, because they need a paid plan on a private repository:
+  dependency review (`--ci-extras dependency-review`: free on public repositories, GitHub Code
+  Security or GitHub Advanced Security on private ones) and CodeQL (`--ci-extras codeql`: free on
+  public repositories, GitHub Code Security on private ones). `npm run ci:audit` and gitleaks
+  hold dependencies and secrets on every plan.
 - Secret scanning in `ci.yml` runs the gitleaks container, which needs no licence. The
-  `gitleaks/gitleaks-action` wrapper is not used because it requires a licence key for
-  organization accounts.
+  `gitleaks/gitleaks-action` wrapper is not used: it asks organization accounts for a licence
+  key (free, by its README) and is no longer MIT.
 - Dependabot (`dependabot.yml`) is GitHub only. `renovate.json` works on both platforms; keep one
   of the two, not both.

@@ -206,7 +206,10 @@ describe('what the stack does not have', () => {
     const root = initProject('--docs-ui', 'scalar');
 
     expect(platform(root, 'config/load-config.ts')).toContain("databaseUrl: readUrl(env, 'DATABASE_URL', problems),");
-    expect(platform(root, 'http/with-documentation.ts')).toContain("openApiDocsRoutes(document, { ui: 'scalar' })");
+
+    expect(platform(root, 'http/with-documentation.ts')).toContain(
+      "openApiDocumentsRoutes(documents, { ui: 'scalar', title: config.serviceName })",
+    );
 
     expect(platform(root, 'http/start-http-server.ts')).toContain(
       'mountExpress(app, withDocumentation(served.routes, config), served.boundary);',

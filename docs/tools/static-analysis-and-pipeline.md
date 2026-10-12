@@ -107,13 +107,13 @@ only orchestrate. Every gate therefore runs on a laptop with the same command.
 | What makes it binding | one `gate` job as the required check | "pipelines must succeed" |
 | Dependency updates | Renovate or Dependabot | Renovate |
 
-Differences that depend on the plan, as the pipeline README lists them: CodeQL and dependency
-review are free on public GitHub repositories and need GitHub Code Security on private ones;
-GitLab's SAST and Secret Detection templates run on every tier but show findings in the merge
-request only on Ultimate, Dependency Scanning is Ultimate only, and push rules for commit
-messages need Premium or Ultimate. On both platforms the two checks that block on every plan
-are `npm audit` and gitleaks. The tier statements are those of the pipeline README; they were
-not re-checked against the vendors' current pricing pages for this page.
+The pipelines `init` writes use free tools only. What depends on a plan is opt-in
+(`init --ci-extras`, `ci.extras` in the config): CodeQL and dependency review, free on public
+GitHub repositories and paid on private ones; GitLab's SAST, Secret Detection (findings in the
+merge request on Ultimate only) and Dependency Scanning (Ultimate). On both platforms the two
+checks that block on every plan are `npm audit` and gitleaks. The table of every tool, its
+class and the vendors' pages it was read from is in
+[pipeline/README.md](../../pipeline/README.md#free-by-default-paid-on-request).
 
 Selection between the two is rarely a free choice: it follows where the code is hosted. The
 point of the design is that the choice costs nothing in the gates themselves.

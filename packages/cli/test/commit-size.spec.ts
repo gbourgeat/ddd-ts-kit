@@ -69,7 +69,10 @@ describe('check --commit-size', () => {
 
     for (const derived of [
       'package-lock.json',
-      'openapi/openapi.json',
+      'openapi/openapi.yaml',
+      'openapi/back-office.json',
+      'docs/integration/asyncapi.yaml',
+      'src/platform/http/openapi-documents.ts',
       'docs/integration/event-catalog.md',
       '.ddd-ts-kit/worker.json',
       'docs/context-map.md',

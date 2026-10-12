@@ -30,8 +30,8 @@ makes the history usable by `git bisect` and makes any single commit revertable.
 
 ## Generated files travel with what generated them
 
-Several files are outputs of the sources and are committed: `openapi/openapi.json`,
-`docs/integration/asyncapi.json`, `docs/integration/event-catalog.md`, `docs/context-map.md`
+Several files are outputs of the sources and are committed: `openapi/openapi.yaml`,
+`docs/integration/asyncapi.yaml`, `docs/integration/event-catalog.md`, `docs/context-map.md`
 and the generated lists of each `CONTEXT.md`, the barrel `<context>.declarations.ts`,
 `.dependency-cruiser.cjs`.
 

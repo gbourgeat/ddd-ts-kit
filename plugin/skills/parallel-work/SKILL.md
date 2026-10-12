@@ -83,7 +83,7 @@ its end-to-end specs, any generator that writes a shared file and any dependency
 |---|---|---|
 | `ddd-ts-kit.config.json`, `src/main.ts`, `src/platform/**`, `src/apps/**`, `src/shared-kernel/**` | conductor, on the trunk | workers report the need and wait for the trunk |
 | registries the generators fill between markers (composition root, database schema index, audited events, job settings, access policies) | generators, run by the conductor | skeleton first; at a merge, keep both sides' lines |
-| `<context>.declarations.ts`, `docs/context-map.md`, `openapi/openapi.json`, `docs/integration/*`, `.dependency-cruiser.cjs` | generators only | never merged by hand: take either side, then `npx ddd-ts-kit docs && npm run docs:generate && npx ddd-ts-kit depcruise-config --write` |
+| `<context>.declarations.ts`, `docs/context-map.md`, `openapi/*`, `docs/integration/*`, `.dependency-cruiser.cjs` | generators only | never merged by hand: take either side, then `npx ddd-ts-kit docs && npm run docs:generate && npx ddd-ts-kit depcruise-config --write` |
 | `package.json`, the lockfile | conductor | a worker asks for a dependency; after a conflict, `npm install` rewrites the lockfile |
 | migrations and their order | conductor | generated on the trunk after each merge, never in a worktree |
 | `docs/architecture/plan.md`, `slices.md` | conductor | workers report, the conductor marks |

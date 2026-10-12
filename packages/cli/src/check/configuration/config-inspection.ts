@@ -1,4 +1,6 @@
 import {
+  ciExtraProblems,
+  openApiProblems,
   CLASSIFICATIONS,
   commitLimitProblems,
   coverageProblems,
@@ -128,6 +130,22 @@ export class ConfigInspection {
   /** A commit limit that is not a positive integer is read as its default: the config says something nothing does. */
   commitLimits(): Violation[] {
     return commitLimitProblems(rawConfig(this.project)['commit']).map(({ key, message, fix }) =>
+      this.inConfig(key, message, fix),
+    );
+  }
+
+  /** An extra job the pipeline does not know is written by no `init`: the config says something no pipeline runs. */
+  ciExtras(): Violation[] {
+    return ciExtraProblems(rawConfig(this.project)['ci']).map(({ key, message, fix }) =>
+      this.inConfig(key, message, fix),
+    );
+  }
+
+  /** A format or a document the scripts cannot write as the config says. */
+  openApiSettings(): Violation[] {
+    const contexts = Object.keys(this.project.config.contexts);
+
+    return openApiProblems(rawConfig(this.project)['openapi'], contexts).map(({ key, message, fix }) =>
       this.inConfig(key, message, fix),
     );
   }

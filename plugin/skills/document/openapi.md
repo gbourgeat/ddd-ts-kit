@@ -1,8 +1,20 @@
 # The OpenAPI contract
 
-`openapi/openapi.json` is an output of the code: generated from the route definitions
+`openapi/openapi.yaml` is an output of the code: generated from the route definitions
 (`@ddd-ts-kit/http`), whatever the HTTP framework and the validation library, and committed.
 The API documentation is served on `/docs` (off in production unless `API_DOCS=true`).
+`openapi.format: "json"` in `ddd-ts-kit.config.json` writes JSON instead.
+
+## Split the contract
+
+When one document has too many routes, `openapi.documents` of the config splits it:
+`[{ "name": "public", "title": "Public API", "groups": ["PeopleRoutes"], "contexts":
+["scheduling"], "tags": ["audit"] }]`. A route belongs to a document when its route group (or a
+group above it), its context or one of its tags is listed; a route may be in several on
+purpose; a route in none stops `docs:generate` with its name. Each document is a file of its
+own, `openapi/<name>.yaml`, self-contained (the schemas it uses are copied into it), and the
+documentation page offers a selector between them. `npx ddd-ts-kit docs` writes the split into
+`<platform>/http/openapi-documents.ts`, which the script and the page read: never edit it.
 
 ## Change a route
 
@@ -18,8 +30,8 @@ The API documentation is served on `/docs` (off in production unless `API_DOCS=t
 3. Response schemas are presentation types. Never return an aggregate or an application
    object as is: map it, so the contract does not move when the model does.
 4. A field with a fixed set of values is an enum in the schema, so clients get a type.
-5. `npm run openapi:generate`, read `git diff -- openapi/`, commit code and contract
-   together. The pipeline runs `npm run openapi:check` and fails on drift.
+5. `npm run docs:generate`, read `git diff -- openapi/`, commit code and contract
+   together. The pipeline runs `npm run docs:check` and fails on drift.
 
 ## Breaking or not
 
@@ -36,6 +48,6 @@ deployed API breaks clients that sent what used to be tolerated.
 
 ## Clients
 
-Generate clients from the committed file with the tool of your choice
+Generate clients from the committed file (or one client per document) with the tool of your choice
 (`openapi-typescript`, `orval`, `openapi-generator`): generation is deterministic, so the
 file is a stable input.

@@ -28,7 +28,14 @@ const STACK_FLAGS = [
   'routes',
 ] as const;
 
-const OTHER_TEXT_FLAGS = ['docs-ui', 'allow-no-outbox', 'import-alias', 'import-extension', 'package-manager'];
+const OTHER_TEXT_FLAGS = [
+  'docs-ui',
+  'ci-extras',
+  'allow-no-outbox',
+  'import-alias',
+  'import-extension',
+  'package-manager',
+];
 
 export const initCommand: Command = (argv, io) => {
   const args = Arguments.parse(argv, {
@@ -63,6 +70,7 @@ export const initCommand: Command = (argv, io) => {
 
 function stackOptions(args: Arguments) {
   const docsUi = args.text('docs-ui');
+  const ciExtras = args.text('ci-extras');
   const allowNoOutbox = args.text('allow-no-outbox');
   const importAlias = args.text('import-alias');
   const importExtension = args.text('import-extension');
@@ -71,6 +79,7 @@ function stackOptions(args: Arguments) {
   return {
     ...args.texts(STACK_FLAGS),
     ...(docsUi === undefined ? {} : { docsUi }),
+    ...(ciExtras === undefined ? {} : { ciExtras }),
     ...(allowNoOutbox === undefined ? {} : { allowNoOutbox }),
     ...(importAlias === undefined ? {} : { importAlias }),
     ...(importExtension === undefined ? {} : { importExtension }),

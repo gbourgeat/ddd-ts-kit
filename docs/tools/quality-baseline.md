@@ -71,8 +71,9 @@ semicolons, parentheses around the parameter of an arrow function.
 - Formatted: `.ts`, `.mts`, `.cts`, `.js`, `.mjs`, `.cjs`, `.json`, `.jsonc`.
 - Not formatted: Markdown (a formatter would rewrap tables and prose) and YAML.
 - Left out in `biome.json`: build outputs, the lockfile, a `generated` directory, and the
-  artifacts their own check compares byte for byte (`openapi/*.json`, `asyncapi.json`,
-  `.dependency-cruiser.cjs`).
+  artifacts their own check compares byte for byte (`openapi/*.json` and `asyncapi.json` under
+  `openapi.format: json`, `.dependency-cruiser.cjs`); the YAML contracts are not formatted
+  anyway.
 
 What the CLI writes is already formatted: `npm run format:check` passes right after `init` and
 after every `generate`, and the end-to-end suite of the CLI holds that for every stack it

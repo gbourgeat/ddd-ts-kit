@@ -14,8 +14,8 @@ const DENIED = [
   'Read(./.env)',
   'Read(./.env.*)',
   'Read(!./.env.example)',
-  'Edit(./openapi/openapi.json)',
-  'Edit(./docs/integration/asyncapi.json)',
+  'Edit(./openapi/**)',
+  'Edit(./docs/integration/asyncapi.*)',
   'Edit(./docs/integration/event-catalog.md)',
 ];
 
@@ -75,7 +75,7 @@ describe('agent settings', () => {
     expect(permissions(root, 'allow').slice(0, 2)).toEqual(['Bash(make *)', 'Bash(npm run verify)']);
     expect(permissions(root, 'allow').filter((rule) => rule === 'Bash(npm run verify)')).toHaveLength(1);
     expect(permissions(root, 'deny')[0]).toBe('Read(./secrets/**)');
-    expect(permissions(root, 'deny')).toContain('Edit(./openapi/openapi.json)');
+    expect(permissions(root, 'deny')).toContain('Edit(./openapi/**)');
 
     expect(stringsAt(report, 'notes').join('\n')).toMatch(
       /\.claude\/settings\.json gained 33 permission\(s\): allow Bash\(npx ddd-ts-kit check \*\)/,

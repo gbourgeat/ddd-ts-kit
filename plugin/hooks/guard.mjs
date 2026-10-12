@@ -15,14 +15,13 @@ const SESSION_CONTEXT_LIMIT = 3000;
 const COMMIT_DEFAULTS = { maxFiles: 20, maxLines: 600 };
 const COUNTED_FILE_BYTES = 1_000_000;
 
-const GENERATED_DOCUMENTS = [
-  'openapi/openapi.json',
-  'docs/integration/asyncapi.json',
-  'docs/integration/event-catalog.md',
-];
+// The contracts in YAML or JSON (openapi/<document>, the AsyncAPI document), the event catalog
+// and the split of the contract that `ddd-ts-kit docs` writes in the platform.
+const GENERATED_DOCUMENT =
+  /^(?:openapi\/[^/]+|docs\/integration\/asyncapi)\.(?:ya?ml|json)$|^docs\/integration\/event-catalog\.md$|(?:^|\/)http\/openapi-documents\.ts$/;
 const LOCKFILES = ['package-lock.json', 'npm-shrinkwrap.json', 'pnpm-lock.yaml', 'yarn.lock', 'bun.lock', 'bun.lockb'];
 // Rewritten by a command: counted in no commit size, merged by regenerating.
-const DERIVED_FILES = [...GENERATED_DOCUMENTS, ...LOCKFILES, '.dependency-cruiser.cjs', 'docs/context-map.md'];
+const DERIVED_FILES = [...LOCKFILES, '.dependency-cruiser.cjs', 'docs/context-map.md'];
 
 const GENERATORS = [
   [/\.aggregate\.ts$/, 'aggregate <context> <Name>'],
@@ -327,8 +326,8 @@ function contextLine(context) {
 
 function generatedFileReason(project, file) {
   const path = projectPath(project, file);
-  if (GENERATED_DOCUMENTS.includes(path)) {
-    return `${path} is generated. Change the route or event declaration, then run \`npm run docs:generate\`.`;
+  if (GENERATED_DOCUMENT.test(path)) {
+    return `${path} is generated. Change the route or event declaration, or "openapi" in ${CONFIG}, then run \`npm run docs:generate\`.`;
   }
   if (path === '.dependency-cruiser.cjs') {
     return `${path} is generated from ${CONFIG}. Change the config, then run \`npx ddd-ts-kit depcruise-config --write\`.`;
@@ -581,7 +580,9 @@ function lineCount(file) {
 }
 
 function isDerived(project, path) {
-  return DERIVED_FILES.includes(path) || isBarrel(project, path) || path === WORKER_SCOPE;
+  return (
+    DERIVED_FILES.includes(path) || GENERATED_DOCUMENT.test(path) || isBarrel(project, path) || path === WORKER_SCOPE
+  );
 }
 
 function describeSlices(project, changes) {

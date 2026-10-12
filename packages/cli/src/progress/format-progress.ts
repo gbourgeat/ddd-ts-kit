@@ -3,10 +3,14 @@ import type { Slice } from './slice.js';
 
 const STATUS_ORDER = ['in progress', 'todo', 'done'];
 
+/** Said when the project keeps no plan: where the recommended path starts. */
+const NO_PLAN =
+  'no docs/architecture/plan.md with a `Next:` line. The recommended path starts with step 1, discover the domain, before any code: `/ddd-ts-kit:start` conducts the steps and writes the plan (docs/guides/methodology.md of ddd-ts-kit)';
+
 /** `status` for a reader: the next step, the slices that are not done by status, the count by owner, what is left to fill. */
 export function formatProgress(progress: Progress): string {
   return [
-    `Next: ${progress.next ?? 'no docs/architecture/plan.md with a `Next:` line (the skill ddd-ts-kit:start writes it)'}`,
+    `Next: ${progress.next ?? NO_PLAN}`,
     '',
     ...(progress.slices === null
       ? ['Slices: no docs/architecture/slices.md with a slices table (the skill ddd-ts-kit:plan-slices writes it)']

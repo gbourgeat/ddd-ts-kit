@@ -13,8 +13,7 @@ import { readPublishedEvents } from './read-published-events.js';
 import { readRoutes } from './read-routes.js';
 import { readUseCases } from './read-use-cases.js';
 
-/** Written by `npm run docs:generate` from the running application: the fields of each request, response and payload. */
-const CONTRACTS: Contracts = { openapi: 'openapi/openapi.json', eventCatalog: 'docs/integration/event-catalog.md' };
+const LEGACY_CONTRACT = 'openapi/openapi.json';
 
 /**
  * Everything the kit can say of one context without running it. `docs` and `describe` both
@@ -49,7 +48,21 @@ export function describeContext(ws: Workspace, config: Config, facts: ContextFac
     projections: readProjections(sources),
     gateways: gatewaysOf(ports, adapters),
     jobs: facts.jobs,
-    contracts: CONTRACTS,
+    contracts: contractsOf(ws, config),
+  };
+}
+
+/**
+ * Written by `npm run docs:generate` from the running application: the fields of each request,
+ * response and payload. A project whose scripts still write the JSON contract of 0.4 keeps it.
+ */
+function contractsOf(ws: Workspace, { openapi }: Config): Contracts {
+  const json = openapi.format === 'json' || (ws.exists(LEGACY_CONTRACT) && !ws.exists('openapi/openapi.yaml'));
+
+  return {
+    // A contract split into documents is the folder of its files.
+    openapi: openapi.documents.length > 0 ? 'openapi/' : json ? LEGACY_CONTRACT : 'openapi/openapi.yaml',
+    eventCatalog: 'docs/integration/event-catalog.md',
   };
 }
 

@@ -27,6 +27,10 @@ Needs stated: `$ARGUMENTS`
 You are the conductor. You write documents under `docs/architecture/`, run step skills and
 hand work out. You never write code: code comes from a generator and from the build step.
 
+The steps below are the supported path: lead the owner through them in order, and say so at
+the start. The reference of each step is `docs/guides/methodology.md` of ddd-ts-kit
+(https://github.com/gbourgeat/ddd-ts-kit/blob/main/docs/guides/methodology.md).
+
 ## 1. Find where the project stands
 
 Read `docs/architecture/plan.md`, and nothing else yet. In a bootstrapped project
@@ -38,8 +42,10 @@ the slices by status and by owner, the `TODO(domain)` and `it.todo` left in each
 - It does not exist: create it from [plan-template.md](plan-template.md), put the needs in it
   word for word, set `Next:` to step 1.
 - The directory already holds a `ddd-ts-kit.config.json` and no plan: the project was
-  bootstrapped without the method. Create the plan with steps 1 to 5 marked `skipped` and
-  resume at step 6, from `npx ddd-ts-kit list --json`.
+  bootstrapped without the method. Say so plainly: steps 1 to 4 were skipped, so the
+  boundaries and the glossaries were never argued. Offer to run them now on what exists
+  (`npx ddd-ts-kit list --json` as the input); on a no, create the plan with steps 1 to 5
+  marked `skipped`, the owner's reason under `## Decisions`, and resume at step 6.
 
 ## 2. Run the next step, one at a time
 
@@ -75,5 +81,8 @@ go on. Commit sizes: skill `ddd-ts-kit:commit-discipline`.
 - A question that changes nothing in the next artefact is not asked now.
 - Going back is normal: when a later step shows a boundary is wrong, reopen step 2, say what
   changes downstream, and record why.
+- Skipping is the owner's decision, never yours, and never silent. When the owner asks to jump
+  ahead, name each step skipped and what it costs (the table of `docs/guides/methodology.md`,
+  "This is the supported path"), ask once, then mark it `skipped` with the reason in the plan.
 - Keep every artefact short enough to be read in one go: tables, not prose.
 - Reading costs: follow [token-economy.md](token-economy.md) and make each worker follow it.

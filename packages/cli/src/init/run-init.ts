@@ -23,6 +23,10 @@ import { writeTypeScriptConfigs } from './write-type-script-configs.js';
 
 const KNIP_FILE = 'knip.json';
 
+/** What a new project does next: the recommended path, which the README of the project repeats. */
+const NEXT_STEP =
+  'Next, follow the recommended steps in order, the supported path: discover the domain, find the bounded contexts, write their glossaries and draw the context map before any code (`/ddd-ts-kit:start` in Claude Code conducts them), then declare each context with `npx ddd-ts-kit generate context`, plan the slices and build them one at a time. `npx ddd-ts-kit status` says which step is next; the steps are in README.md and at https://github.com/gbourgeat/ddd-ts-kit/blob/main/docs/guides/methodology.md.';
+
 export interface InitOptions extends StackOptions {
   /** `<name>:<classification>` entries. */
   readonly contexts: readonly string[];
@@ -55,6 +59,7 @@ export function runInit(root: string, options: InitOptions): WorkspaceReport {
 
   if (!options.dryRun && report.created.includes('package.json')) {
     report.notes.push(inDialect('Run `npm install`, then `npm run verify`.', config.stack.packageManager));
+    report.notes.push(inDialect(NEXT_STEP, config.stack.packageManager));
   }
 
   return report;

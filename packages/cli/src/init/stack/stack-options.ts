@@ -9,6 +9,8 @@ export interface StackOptions {
   readonly events?: string;
   readonly docsUi?: string;
   readonly ci?: string;
+  /** The extra jobs of the pipeline, comma-separated, or `none`. */
+  readonly ciExtras?: string;
   readonly authn?: string;
   readonly authz?: string;
   readonly broker?: string;

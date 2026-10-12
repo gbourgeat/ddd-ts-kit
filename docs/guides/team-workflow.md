@@ -65,7 +65,7 @@ on their own:
 |---|---|---|
 | integration event | a `defineIntegrationEvent` declaration in the producer's `published-language/` | producer and every consumer |
 | read contract for a synchronous need | an abstract class in the upstream's `published-language/` (`*.contract.ts`, written by `generate gateway`), behind a gateway port of the caller | upstream and caller |
-| HTTP API | route definitions, from which `openapi/openapi.json` is generated | the backend and its clients |
+| HTTP API | route definitions, from which `openapi/openapi.yaml` is generated | the backend and its clients |
 
 The practice:
 
@@ -210,6 +210,9 @@ moments: at each file write in an agent session (the plugin's hook), on staged f
 | after lunch | with the owner, pick a small real use case; restate it in the glossary's words | the first conversation is about language |
 | afternoon | build it with the generator: fill the `TODO(domain)` places, replace the `it.todo` entries, break a rule on purpose and run `npx ddd-ts-kit explain <rule-id>` | the checks teach the architecture faster than a document |
 | end of day | open the pull request; the owner reviews design, the gate has reviewed the rest | a merged change on day one |
+
+The command for each of these moments, and the reference of every flag:
+[Which command, when](commands.md).
 
 What makes this possible is not the newcomer's speed but the closed tree: a file of a given
 role is always in the same place under the same suffix, so knowledge of one context transfers

@@ -119,7 +119,7 @@ outside the list stops every command with the list of accepted values.
 | `stack.validation` | `zod`, `class-validator`, `standard-schema`, `none` | `zod` |
 | `stack.di` | `tsyringe`, `nest`, `manual`; `init` accepts `nest` with `http: nest` and only with it | `tsyringe` (`nest` when `http` is `nest`) |
 | `stack.events` | `in-memory`, `outbox`, `custom`; `init` offers `in-memory` and `outbox` | `outbox` when an ORM is set (anything else then needs a `stack.events` deviation), `in-memory` otherwise |
-| `stack.orm` | `drizzle`, `knex`, `prisma`, `typeorm`, `custom`, `none` | `drizzle` (`none` with `database: none`) |
+| `stack.orm` | `drizzle`, `knex`, `prisma`, `typeorm`, `custom`, `none`. With a migration tool, `npm run db:generate <what-it-does>` names every migration `<timestamp>_<what-it-does>` and `persistence/migration-history` checks their order ([persistence](tools/persistence.md#migrations-names-merges-and-order)) | `drizzle` (`none` with `database: none`) |
 | `stack.database` | `postgres`, `mysql`, `sqlite`, `mongodb`, `none`. The generated adapters are written for PostgreSQL: `init` refuses another database with `drizzle`, `knex`, `prisma` or `typeorm`, and its `--database` flag does not offer `mongodb` | `postgres` with one of the four ORMs, `none` otherwise |
 | `stack.tests` | `vitest`, `jest` | `vitest` |
 | `stack.docsUi` | `swagger`, `scalar`, `redoc`, `none` | `swagger` (`none` when `http` is `none`) |
@@ -173,6 +173,28 @@ What the command leaves to you is printed: run the formatter and `ddd-ts-kit doc
 helpers a controller kept to a mapper or a serializer, give the groups their guards, and, in a
 project initialised before 0.4, add the line that mounts the declared controllers to
 `compose-application.ts`.
+
+## Pipeline
+
+| Key | Values | Default |
+|---|---|---|
+| `ci.extras[]` | jobs added to the pipeline over the free gates, each needing a paid plan on a private repository or reporting into a merge request only in a paid tier: `codeql` (`.github/workflows/codeql.yml`; free on a public repository, GitHub Code Security on a private one), `dependency-review` (a step of the `security` job; free on a public repository, GitHub Code Security or Advanced Security on a private one), `gitlab-sast` and `gitlab-secret-detection` (GitLab's templates: they run on every tier, their findings reach a merge request on Ultimate only), `gitlab-dependency-scanning` (Ultimate). `init --ci-extras codeql,dependency-review` writes them and records the list; `--ci-extras none` removes them on `init --force`. `init` refuses an unknown name, or a job of a platform `stack.ci` does not cover; `config/valid` reports an unknown name written by hand. The table of every tool, its class and its source is in [pipeline/README.md](../pipeline/README.md#free-by-default-paid-on-request) | `[]`: none, the key is left out |
+
+## Contracts
+
+| Key | Values | Default |
+|---|---|---|
+| `openapi.format` | `yaml`, `json`: how `npm run docs:generate` writes the generated contracts, `openapi/openapi.yaml` and `docs/integration/asyncapi.yaml`, or their `.json` twins. Switching regenerates them under the new name and removes the old files; `docs:check` reports a contract left in the other format | `yaml` |
+| `openapi.documents[]` | `{ "name", "title"?, "groups"?, "contexts"?, "tags"? }`: splits the OpenAPI contract into documents, `openapi/<name>.yaml` each, when one would hold too many routes. A route belongs to a document when its route group or a group above it (`groups`, by class name), its context (`contexts`, read from the routes each context declares) or one of its tags (`tags`) is listed; a route may belong to several on purpose, and a route that belongs to none stops `docs:generate` with its method, path and operation. Each document is self-contained: the schemas it uses are copied into it, never referenced across files. `npx ddd-ts-kit docs` writes the split into `<platformDir>/http/openapi-documents.ts`, which the contract script and the documentation page read (`/openapi/<name>.json`, and a selector between the documents on `/docs`). `config/valid` reports a document without a file-safe name, two of one name, one that names nothing, and an unknown context | none: one document, `openapi/openapi.yaml` |
+
+```json
+"openapi": {
+  "documents": [
+    { "name": "public", "title": "Booking API", "contexts": ["scheduling"], "groups": ["PeopleRoutes"] },
+    { "name": "back-office", "title": "Back office", "contexts": ["identity", "analytics"], "tags": ["audit"] }
+  ]
+}
+```
 
 ## Contexts
 

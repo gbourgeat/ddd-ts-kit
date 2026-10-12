@@ -23,8 +23,8 @@
       "Read(./.env)",
       "Read(./.env.*)",
       "Read(!./.env.example)",
-      "Edit(./openapi/openapi.json)",
-      "Edit(./docs/integration/asyncapi.json)",
+      "Edit(./openapi/**)",
+      "Edit(./docs/integration/asyncapi.*)",
       "Edit(./docs/integration/event-catalog.md)"
     ],
     "ask": [

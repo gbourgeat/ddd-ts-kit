@@ -51,7 +51,7 @@ const TOOLING: Readonly<Record<string, InitFile[]>> = {
   ],
   knex: [
     ['knexfile.js', 'init/platform/database/knexfile.js.tpl'],
-    ['migrations/0001_initial.js', 'init/platform/database/migration.knex.js.tpl'],
+    ['migrations/00000000000000_initial.js', 'init/platform/database/migration.knex.js.tpl'],
   ],
   prisma: [
     ['prisma/schema.prisma', 'init/platform/database/schema.prisma.tpl'],

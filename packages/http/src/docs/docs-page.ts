@@ -1,4 +1,5 @@
 import type { DocsUi } from './docs-ui.js';
+import { escapeHtml } from './escape-html.js';
 
 interface DocsPage {
   readonly ui: DocsUi;
@@ -21,8 +22,4 @@ export function docsPage({ ui, title, specUrl, assets }: DocsPage): string {
     case 'redoc':
       return `${head}</head><body><redoc spec-url="${spec}"></redoc><script src="${base}/redoc.standalone.js"></script></body></html>`;
   }
-}
-
-function escapeHtml(value: string): string {
-  return value.replace(/[&<>"']/g, (char) => `&#${char.charCodeAt(0)};`);
 }
