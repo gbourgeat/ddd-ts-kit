@@ -57,6 +57,22 @@ and refuses row-level security, schema per tenant and database per tenant, which
 for now. `generate repository --tenant-scoped` writes the same helpers. A config without the key is
 `none`: nothing changes for an existing project.
 
+**Access control: a decision guide, scopes, and the refusals at the edge in the audit trail.**
+
+- [Choosing access control](docs/guides/choosing-access-control.md): five questions that pick
+  roles, attribute policies or relationships (Zanzibar), a worked preset for each (typed
+  permissions and roles, a policy on one element, a scoped search), the combined model of the
+  example, and where relationships are evaluated.
+- `Session.scopes`, filled by the JWT and Keycloak authenticators from `scope` (or `scp`);
+  `hasScope`, and `SessionScopes` to declare the vocabulary of a project; the guard `HasScope`
+  (`@ddd-ts-kit/http`) refuses a request whose session lacks a scope named.
+- A request refused by a guard (`HasRole`, `HasScope`, `TenantMember`, a tenant the caller does
+  not belong to) is reported to the new `onGuardRefusal` of the HTTP pipeline, and
+  `auditGuardRefusals` (`@ddd-ts-kit/audit`) records it as a denied decision. A generated project
+  with the audit trail wires it (`create-audit.ts`, `http-boundary.ts`, `compose-application.ts`);
+  a project initialised before adds `refusals: auditGuardRefusals(trail, { clock, ids })` to the
+  call of `httpBoundary` and `onGuardRefusal: refusals` to what it answers, as `init --force` writes.
+
 ## 0.5.0
 
 **Migrations are named by a timestamp and what they do.** The generated `drizzle.config.ts`

@@ -43,7 +43,7 @@ npx ddd-ts-kit generate query <ctx> <UseCase> --public --json
 - Nothing else for a plain permission: no check in the controller, none in the handler. The
   generated handler spec already proves that an actor without it is refused.
 - A guard is another thing: a control at the edge over a set of routes, named in `guards` of
-  a `@RouteGroup` or of a controller (`Authenticated`, `HasRole('auditor')`, `Public`, or a
+  a `@RouteGroup` or of a controller (`Authenticated`, `HasRole('auditor')`, `HasScope('invoices:read')`, `TenantMember`, `Public`, or a
   guard of the project in `presentation/http/guards/*.guard.ts`). It reads the caller and the
   request, answers 401 or 403 before the controller runs, and never loads an element
   (`presentation/guard-at-the-edge`). It never replaces the permission: a job or an event
@@ -85,7 +85,20 @@ port; the adapter turns it into the query.
 ## Choosing the model
 
 The owner's choice (`stack.authz`); all sit behind the one `Authorizer` port, so changing
-later replaces an adapter and the permission mapping, not the handlers.
+later replaces an adapter and the permission mapping, not the handlers. Ask, in order, and
+stop at the first answer that changes the model (the guide
+`docs/guides/choosing-access-control.md` of the kit has a worked preset for each):
+
+1. Does a right depend on **which element**? No: roles.
+2. Do users **share** elements, **delegate**, or inherit along a **hierarchy**, and must a list
+   show what each one reaches? Yes: relationships (Zanzibar), in the PostgreSQL tuple store of
+   the project, or OpenFGA once it outgrows it.
+3. Do rights follow **properties** or need **explicit refusals**? Yes: attribute policies over
+   roles. No: roles plus a policy per element rule.
+4. Do **third parties** act with a limited credential? Add scopes: `HasScope` on the routes,
+   the vocabulary in `SessionScopes`.
+5. Do **several customers** share the deployment? Add a tenancy strategy (skill
+   `ddd-ts-kit:persistence`), roles per tenant, `TenantMember` on the routes of tenant data.
 
 | Model | Fits when | Costs |
 |---|---|---|
@@ -107,4 +120,5 @@ later replaces an adapter and the permission mapping, not the handlers.
 Finish with
 `npx ddd-ts-kit check --rule authz/declared --rule authz/in-application --rule authz/actor-explicit`.
 Every decision, denials included, is recorded by the audit trail (skill
-`ddd-ts-kit:cross-cutting`).
+`ddd-ts-kit:cross-cutting`), the refusals of the guards at the edge too (`onGuardRefusal` of the
+HTTP boundary, wired to `auditGuardRefusals`).

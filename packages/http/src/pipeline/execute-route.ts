@@ -13,6 +13,7 @@ import { executionOfRequest } from './execution-of-request.js';
 import type { RawRequest } from './raw-request.js';
 import type { RouteResponse } from './route-response.js';
 import { resolvedTenant } from '../tenancy/resolved-tenant.js';
+import { guardRefusals } from '../controller/guard-refusals.js';
 import { validateRequest } from './validate-request.js';
 import { wellFormedIdentifier } from './well-formed-identifier.js';
 
@@ -47,7 +48,11 @@ async function responded(call: Call): Promise<RouteResponse> {
   try {
     return answer(await handled(call), call);
   } catch (error) {
-    return refusal(error, call);
+    const { response, context } = refusal(error, call);
+
+    await reportGuardRefusal(call.options, error, context);
+
+    return response;
   }
 }
 
@@ -61,8 +66,6 @@ async function handled(call: Call): Promise<RouteOutput> {
   const input = validateRequest(route, request);
   const { headers } = request;
   const execution = executionOf(call, principal, input.params);
-
-  call.reached.execution = execution;
 
   const context: RequestContext = {
     requestId,
@@ -84,15 +87,20 @@ async function handled(call: Call): Promise<RouteOutput> {
 }
 
 /** The execution context of the request, in the tenant it names once the caller is known to belong to it. */
-function executionOf({ request, options, correlationId }: Call, principal: unknown, params: unknown): ExecutionContext {
+function executionOf(call: Call, principal: unknown, params: unknown): ExecutionContext {
+  const { request, options, correlationId } = call;
   const { headers } = request;
   const deadline = deadlineOf(options);
   const execution = executionOfRequest({ correlationId, headers, principal, deadline });
-  const tenantId = resolvedTenant({ resolver: options.resolveTenant, headers, params, actor: execution.actor });
 
-  return tenantId === undefined || tenantId === execution.tenantId
-    ? execution
-    : executionOfRequest({ correlationId, headers, principal, deadline, tenantId });
+  call.reached.execution = execution;
+
+  const tenantId = resolvedTenant({ resolver: options.resolveTenant, headers, params, actor: execution.actor });
+  const named = tenantId === undefined || tenantId === execution.tenantId ? execution : undefined;
+
+  call.reached.execution = named ?? executionOfRequest({ correlationId, headers, principal, deadline, tenantId });
+
+  return call.reached.execution;
 }
 
 function deadlineOf(options: ExecuteOptions): Date | undefined {
@@ -133,12 +141,12 @@ function identifierHeaders({ requestId, correlationId }: Call): Record<string, s
   return { 'x-request-id': requestId, [CORRELATION_HEADER]: correlationId };
 }
 
-function refusal(error: unknown, call: Call): RouteResponse {
+function refusal(error: unknown, call: Call): { response: RouteResponse; context: ErrorContext } {
   const { route, options, requestId, correlationId } = call;
   const { execution } = call.reached;
   const problem = toProblem(error, options.errorMapper ?? defaultErrorMapper, requestId);
 
-  notify(options, error, {
+  const context: ErrorContext = {
     requestId,
     correlationId,
     operationId: route.operationId,
@@ -146,13 +154,27 @@ function refusal(error: unknown, call: Call): RouteResponse {
     path: route.path,
     problem,
     ...(execution === undefined ? {} : { execution }),
-  });
-
-  return {
-    status: problem.status,
-    headers: { 'content-type': PROBLEM_CONTENT_TYPE, ...identifierHeaders(call) },
-    body: problem,
   };
+
+  notify(options, error, context);
+
+  const headers = { 'content-type': PROBLEM_CONTENT_TYPE, ...identifierHeaders(call) };
+
+  return { response: { status: problem.status, headers, body: problem }, context };
+}
+
+async function reportGuardRefusal(options: ExecuteOptions, error: unknown, context: ErrorContext): Promise<void> {
+  const { execution } = context;
+
+  if (options.onGuardRefusal === undefined || execution === undefined || !guardRefusals.has(error)) {
+    return;
+  }
+
+  try {
+    await options.onGuardRefusal({ ...context, execution });
+  } catch {
+    // The request is refused either way: a failing hook must not turn the refusal into a fault.
+  }
 }
 
 function notify(options: ExecuteOptions, error: unknown, context: ErrorContext): void {

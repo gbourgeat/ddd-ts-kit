@@ -179,6 +179,19 @@ When the decision concerns another actor than the one of the execution context (
 sending a command on behalf of a user), the entry names the actor of the decision with type
 `unknown`: its type and tenant are not in what the hook receives.
 
+### a'. Refusals at the edge
+
+A request a guard refuses (`HasRole`, `HasScope`, `TenantMember`, a tenant the caller does not
+belong to) never reaches a use case, so the authorization middleware does not see it. The HTTP
+pipeline reports it to `onGuardRefusal`, and `auditGuardRefusals(trail, { clock, ids })` records
+it: category `authorization`, action `http:<operationId>`, outcome `denied`, the code of the
+refusal as `reason` (`FORBIDDEN`, `UNAUTHORIZED`), and the actor, session, tenant and correlation
+of the request.
+
+```ts
+mountExpress(app, routes, { ...boundary, onGuardRefusal: auditGuardRefusals(trail, { clock, ids }) });
+```
+
 ### b. Commands, and the unit of work
 
 `auditMiddleware` records each command with outcome `succeeded` or `failed`, and the `code` of

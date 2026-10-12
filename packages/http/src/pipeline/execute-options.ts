@@ -2,6 +2,7 @@ import type { Clock, ExecutionScope } from '@ddd-ts-kit/kernel';
 import type { ErrorMapper } from '../error/error-mapper.js';
 import type { TenantResolver } from '../tenancy/tenant-resolver.js';
 import type { ErrorContext } from './error-context.js';
+import type { GuardRefusal } from './guard-refusal.js';
 import type { RawRequest } from './raw-request.js';
 import type { RouteAround } from './route-around.js';
 
@@ -16,6 +17,13 @@ export interface ExecuteOptions {
   readonly withPrincipal?: <T>(principal: unknown, work: () => Promise<T>) => Promise<T>;
   /** Called for every error answered as a problem, expected or not. Meant for logging. */
   readonly onError?: (error: unknown, context: ErrorContext) => void;
+  /**
+   * Called, and awaited, for every request a guard of its route refused (`HasRole`, `HasScope`,
+   * `TenantMember`, a guard of the project): the refusals at the edge, which no use case sees.
+   * `auditGuardRefusals` of `@ddd-ts-kit/audit` writes each one to the audit trail as a denied
+   * decision. A hook that fails does not change the answer.
+   */
+  readonly onGuardRefusal?: (refusal: GuardRefusal) => void | Promise<void>;
   /** Checks each response against the route declaration. Meant for tests. */
   readonly validateResponses?: boolean;
   /** Defaults to the incoming `x-request-id` header when it is well formed, else a UUID. */

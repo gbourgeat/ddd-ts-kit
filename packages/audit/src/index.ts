@@ -41,6 +41,8 @@ export type { MaskingSubject } from './redaction/masking-subject.js';
 export { MissingMaskerError } from './redaction/missing-masker-error.js';
 export type { AllowedReads } from './sources/allowed-reads.js';
 export { auditDecisions, type AuditDecisionsOptions } from './sources/audit-decisions.js';
+export { auditGuardRefusals } from './sources/audit-guard-refusals.js';
+export type { GuardRefusalOfARoute } from './sources/guard-refusal-of-a-route.js';
 export type { AuditFact } from './sources/audit-fact.js';
 export { auditIntegrationEvents, type AuditIntegrationEventsOptions } from './sources/audit-integration-events.js';
 export { UNEXPECTED_ERROR, auditMiddleware, type AuditMiddlewareOptions } from './sources/audit-middleware.js';

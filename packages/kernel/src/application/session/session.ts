@@ -23,5 +23,11 @@ export interface Session {
   /** IANA time zone, for example `Europe/Paris`. */
   readonly timeZone?: string;
   readonly client?: SessionClient;
+  /**
+   * What the credential allows whoever presents it (the OAuth 2.0 `scope` of the token): a
+   * limit on the client, checked at the edge (`HasScope`), never what the actor may do, which
+   * stays a permission of the use case. Absent when the credential carries none.
+   */
+  readonly scopes?: readonly string[];
   readonly extensions: SessionExtensionValues;
 }

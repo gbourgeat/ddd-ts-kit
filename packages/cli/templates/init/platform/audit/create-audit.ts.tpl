@@ -1,22 +1,26 @@
 {{#if audit.sql}}
 import {
   auditDecisions,
+  auditGuardRefusals,
   auditIntegrationEvents,
   auditMiddleware,
   type AuditReader,
   type AuditSource,
   type AuditTrail,
+  type GuardRefusalOfARoute,
 } from '@ddd-ts-kit/audit';
 {{/if}}
 {{#if audit.memory}}
 import {
   InMemoryAuditTrail,
   auditDecisions,
+  auditGuardRefusals,
   auditIntegrationEvents,
   auditMiddleware,
   type AuditReader,
   type AuditSource,
   type AuditTrail,
+  type GuardRefusalOfARoute,
 } from '@ddd-ts-kit/audit';
 {{/if}}
 {{#if audit.knex}}
@@ -52,6 +56,8 @@ export interface Audit {
   readonly trail: AuditTrail & AuditReader;
   /** The `onDecision` hook of the authorization: who was allowed or refused what. */
   readonly decisions: OnDecision;
+  /** The `onGuardRefusal` hook of the HTTP pipeline: who a guard refused at the edge, before any use case. */
+  readonly refusals: (refusal: GuardRefusalOfARoute) => Promise<void>;
   /** On the command bus, before the unit of work: which command ran and how it ended. */
   readonly commands: BusMiddleware;
   /** On the query bus: whoever reads the trail leaves an entry in it. */
@@ -68,6 +74,7 @@ export function createAudit(persistence: Persistence, source: AuditSource): Audi
 
   return {
     trail,
+    refusals: auditGuardRefusals(trail, source),
 {{#if audit.route}}
     decisions: auditDecisions(trail, { ...source, sensitivePermissions: [auditPermissions['trail.read'].id] }),
     // TODO(platform): declare what may go into `changes` with `fields: [auditedFields(SomeCommand, ['status'])]`; by default an entry carries identifiers and codes only.

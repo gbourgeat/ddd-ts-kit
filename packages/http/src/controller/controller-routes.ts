@@ -8,6 +8,7 @@ import type { ControllerClass } from './controller-class.js';
 import type { ErasedController } from './erased-controller.js';
 import type { ControllerRoutesOptions } from './controller-routes-options.js';
 import type { GuardRequest } from './guard-request.js';
+import { guardRefusals } from './guard-refusals.js';
 import type { Guard } from './guard.js';
 import { resolvedController, type ResolvedController } from './resolved-controller.js';
 
@@ -47,15 +48,25 @@ function routeOf(resolved: ResolvedController, options: ControllerRoutesOptions)
     security: securityOf(resolved.guards, options.security ?? DEFAULT_SECURITY),
     ...(spec.deprecated === true ? { deprecated: true } : {}),
     async handle(input: RouteInput): Promise<RouteOutput> {
-      for (const guard of guards) {
-        await guard.check(guardRequest(identity, input));
-      }
+      await passedGuards(guards, guardRequest(identity, input));
 
       const answer: unknown = await controller.handle({ ...input, actor: input.context.execution.actor });
 
       return body === undefined ? { status } : { status, body: answer };
     },
   };
+}
+
+/** Every guard, in order; what one throws is marked as a refusal at the edge before it goes on to the pipeline. */
+async function passedGuards(guards: readonly Guard[], request: GuardRequest): Promise<void> {
+  try {
+    for (const guard of guards) {
+      await guard.check(request);
+    }
+  } catch (error) {
+    guardRefusals.mark(error);
+    throw error;
+  }
 }
 
 function requestOf(parts: RequestSchemas): { request?: RequestSchemas } {

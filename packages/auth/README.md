@@ -375,6 +375,7 @@ logging or serializing the object shows no key.
 | `authenticationStrength` | `mfa` when `amr` lists `mfa` (RFC 8176), `assuranceLevel` from `acr` |
 | `impersonatedBy` | the `sub` of the `act` claim (RFC 8693), or the claim named by `impersonatorClaim`: the id itself, or an object holding it under `sub` or `id` |
 | `locale`, `timeZone` | `locale`, `zoneinfo` |
+| `scopes` | `scope`, the space-separated list of OAuth 2.0, else `scp` as a list; absent when the token grants none. `HasScope` of `@ddd-ts-kit/http` reads them at the edge |
 | `extensions` | what `toSessionExtensions(claims)` answers |
 
 ```ts

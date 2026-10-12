@@ -87,7 +87,7 @@ const routes = controllerRoutes([PlaceOrderController], { resolve: application.r
 | `Controller(spec)` | the decorator of a controller: `group`, `method`, `path` (after the prefix of the group), `operationId` (the class name without `Controller` by default), `summary`, `description`, `tags`, `params`, `query`, `headers`, `body`, `response: { status, description?, body? }`, `errors`, `guards`, `deprecated` |
 | `RouteGroup({ parent, prefix, tags, guards, errors })` | names a set of routes on an empty class; a child inherits from its `parent` and adds |
 | `Guard` | the interface `{ documents?, check(request: GuardRequest) }`, and the decorator of a guard class that takes dependencies |
-| `Authenticated`, `Public`, `HasRole(...roles)`, `TenantMember` | the guards the package ships, over the `Actor` of the request: 401 to the anonymous caller, 403 without one of the roles or outside the tenant of the request; `Public` lets everybody in and stands alone |
+| `Authenticated`, `Public`, `HasRole(...roles)`, `HasScope(...scopes)`, `TenantMember` | the guards the package ships, over the `Actor` and the `Session` of the request: 401 to the anonymous caller, 403 without one of the roles, without every scope named (`Session.scopes`, typed by the `SessionScopes` of the project) or outside the tenant of the request; `Public` lets everybody in and stands alone. A refusal of a guard is reported to `onGuardRefusal` |
 | `RequestMapper<Request, Message>`, `Serializer<Result, Body>` | the interfaces of the two optional translators (`map`, `serialize`), and the decorators that declare them |
 | `HttpRequest<{ params, query, headers, body }>` | the request as `handle`, a mapper or a guard names it, with `actor` and `context` |
 | `controllerRoutes(controllers, { resolve, security, guards })` | the `Route` of each controller, given as a class (built by `resolve`) or as an instance; `security` names the schemes of the application (`['bearer']` by default); `guards: 'skip'` is for the spec of a controller alone |
@@ -175,6 +175,14 @@ const options: ExecuteOptions = {
   around: tracedRoutes(), // of @ddd-ts-kit/tracing: the span of the request, named by its route template
 };
 ```
+
+`onGuardRefusal(refusal)` is told, and awaited, every request a guard refused before its
+controller (`HasRole`, `HasScope`, `TenantMember`, a guard of the project, and a tenant the caller
+does not belong to): its operation, its problem and its execution context. Those refusals reach
+no use case, so the authorization hook of `@ddd-ts-kit/auth` never sees them;
+`auditGuardRefusals(trail, { clock, ids })` of `@ddd-ts-kit/audit` writes each one to the audit
+trail as a denied decision. A refusal of a handler is not reported there, and a hook that fails
+does not change the answer.
 
 `around(route, respond)` wraps the whole handling of a request, from authentication to the
 answer, refusals included, and is told the route that was matched (`method`, `path` as

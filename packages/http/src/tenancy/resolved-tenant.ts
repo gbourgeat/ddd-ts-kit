@@ -1,4 +1,5 @@
 import { isAnonymous, isTenantMember, type Actor } from '@ddd-ts-kit/kernel';
+import { guardRefusals } from '../controller/guard-refusals.js';
 import { ForbiddenError } from '../error/forbidden-error.js';
 import { isRecord } from '../support/is-record.js';
 import type { RawHeaders } from '../route/raw-headers.js';
@@ -24,5 +25,10 @@ export function resolvedTenant({ resolver, headers, params, actor }: TenantResol
     return tenantId;
   }
 
-  throw new ForbiddenError('The tenant of the request is not one the caller belongs to');
+  const refused = new ForbiddenError('The tenant of the request is not one the caller belongs to');
+
+  // Refused at the edge like a guard refuses, and reported as one (`onGuardRefusal`).
+  guardRefusals.mark(refused);
+
+  throw refused;
 }

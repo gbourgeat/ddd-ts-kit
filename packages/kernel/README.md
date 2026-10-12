@@ -552,7 +552,12 @@ The authenticated session of an actor, as plain data.
 | `authenticationStrength?` | `{ mfa?, assuranceLevel? }` |
 | `impersonatedBy?` | id of the support actor acting as `actor`; `logFieldsOf` carries it to every log line |
 | `locale?`, `timeZone?`, `client?` | BCP 47 tag, IANA zone, `{ ip?, userAgent? }` as opaque strings |
+| `scopes?` | what the credential allows whoever presents it (the OAuth 2.0 `scope`): a limit on the client, never what the actor may do |
 | `extensions` | the fields of the project |
+
+`hasScope(session, scope)` reads the scopes; a project names its scope vocabulary once by
+declaration merging of `SessionScopes` (`interface SessionScopes { readonly 'invoices:read': true }`),
+and `SessionScope`, the type a guard takes, is then that vocabulary instead of any string.
 
 `isExpired(session, clock.now())`, `isImpersonated(session)`, `anonymousSession()`,
 `systemSession(name, issuedAt?)`, and `isSession(value)`, the structural guard a boundary uses on
