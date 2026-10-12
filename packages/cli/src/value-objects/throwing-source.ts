@@ -1,10 +1,10 @@
 import { scan } from '../check/scan/scan.js';
 import { matchingBracket } from '../check/text/matching-bracket.js';
 import { closingAngle } from './closing-angle.js';
-import { firstTypeArgument } from './first-type-argument.js';
 import { ternaryReturns } from './ternary-returns.js';
 import { applyEdits } from './apply-edits.js';
 import type { Edit } from './edit.js';
+import { type Range, resultMethodDeclarations } from './result-method-declarations.js';
 
 /** A value object file once its factories throw, and the methods that changed. */
 export interface ThrowingSource {
@@ -17,24 +17,26 @@ export interface ThrowingSource {
 }
 
 const VALUE_OBJECT_CLASS = /\bclass\s+([A-Za-z_$][\w$]*)(?:<[^{]*>)?\s+extends\s+ValueObject\b/;
-const METHOD_HEADER = /(?<=^|\n)[ \t]*(?:(?:public|protected|private)\s+)?(static\s+)?([A-Za-z_$][\w$]*)\s*\(/g;
-const RESULT_TYPE = /^\s*:\s*Result\s*</;
 
 /**
- * Turns every method of a value object that returns `Result<T, E>` into one that returns `T`:
- * `return err(refusal)` becomes `throw refusal`, `return ok(value)` becomes `return value`.
+ * Turns every method of the value object class of a file that returns `Result<T, E>` into one
+ * that returns `T`: `return err(refusal)` becomes `throw refusal`, `return ok(value)` becomes
+ * `return value`, inside those methods only. A function or another class of the file keeps its
+ * `Result`.
  */
 export function throwingSource(source: string): ThrowingSource {
   const { code } = scan(source);
-  const className = VALUE_OBJECT_CLASS.exec(code)?.[1];
-  const changed = className === undefined ? [] : resultMethods(code, source);
-  const throws = changed.length === 0 ? [] : returnsOf({ code, source }, 'err', 'throw ');
-  const values = changed.length === 0 ? [] : returnsOf({ code, source }, 'ok', 'return ');
-  const ternaries = changed.length === 0 ? [] : ternaryReturns(code, source);
-  const edits = [...changed.map(({ edit }) => edit), ...throws, ...values, ...ternaries];
+  const declared = VALUE_OBJECT_CLASS.exec(code);
+  const className = declared?.[1];
+  const changed = declared === null ? [] : resultMethodDeclarations(code, source, classBody(code, declared));
+  const inside = (edit: Edit): boolean => changed.some(({ body }) => edit.start > body.start && edit.end <= body.end);
+  const texts = { code, source };
+  const throws = returnsOf(texts, 'err', 'throw ').filter(inside);
+  const values = returnsOf(texts, 'ok', 'return ').filter(inside);
+  const ternaries = ternaryReturns(code, source).filter(inside);
 
   return {
-    source: applyEdits(source, edits),
+    source: applyEdits(source, [...changed.map(({ edit }) => edit), ...throws, ...values, ...ternaries]),
     className,
     statics: changed.filter((method) => method.isStatic).map(({ name }) => `${className ?? ''}.${name}`),
     instance: changed.filter((method) => !method.isStatic).map(({ name }) => name),
@@ -42,28 +44,14 @@ export function throwingSource(source: string): ThrowingSource {
   };
 }
 
-interface ChangedMethod {
-  readonly name: string;
-  readonly isStatic: boolean;
-  readonly edit: Edit;
-}
+/** From the brace opening the body of the class to the one closing it, past the type arguments of `ValueObject<..>`. */
+function classBody(code: string, declared: RegExpExecArray): Range {
+  const after = declared.index + declared[0].length;
+  const typed = /^\s*</.exec(code.slice(after));
+  const from = typed === null ? after : closingAngle(code, after + typed[0].length - 1) + 1;
+  const start = code.indexOf('{', from);
 
-function resultMethods(code: string, source: string): ChangedMethod[] {
-  return [...code.matchAll(METHOD_HEADER)].flatMap((header) => {
-    const close = matchingBracket(code, header.index + header[0].length - 1);
-    const typed = RESULT_TYPE.exec(code.slice(close + 1));
-
-    if (typed === null) {
-      return [];
-    }
-
-    const open = close + typed[0].length;
-    const end = closingAngle(code, open) + 1;
-    const value = source.slice(open + 1, firstTypeArgument(code, open)).trim();
-    const start = close + 1 + typed[0].indexOf(':') + 1;
-
-    return [{ name: header[2] ?? '', isStatic: header[1] !== undefined, edit: { start, end, text: ` ${value}` } }];
-  });
+  return { start, end: start === -1 ? -1 : matchingBracket(code, start) };
 }
 
 /** A source, and its scanned code. */

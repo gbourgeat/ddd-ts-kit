@@ -133,6 +133,32 @@ describe('value-objects', () => {
     expect(outcome.manual[0]).toMatch(/amount\.vo\.spec\.ts:\d+ may still read a Result/);
   });
 
+  it('leaves a function of the file and a method of another class that keep their Result', () => {
+    const helper = lines(
+      '',
+      'export function tryParse(raw: string): Result<string, string> {',
+      "  return raw.length > 0 ? ok(raw) : err('empty');",
+      '}',
+      '',
+      'export class Ledger {',
+      '  plus(cents: number): Result<number, string> {',
+      "    return cents < 0 ? err('negative') : ok(cents);",
+      '  }',
+      '}',
+    );
+
+    write(root, `${VOS}/amount.vo.ts`, `${AMOUNT}${helper}`);
+    write(root, 'src/contexts/billing/domain/services/ledger-use.ts', 'export const use = unwrap(ledger.plus(1));\n');
+    expect(cli(root, 'value-objects').code).toBe(0);
+
+    const vo = read(root, `${VOS}/amount.vo.ts`);
+
+    expect(vo).toContain(helper);
+    expect(vo).toContain('static create(cents: number): Amount {');
+    expect(read(root, 'src/contexts/billing/domain/services/ledger-use.ts')).toContain('unwrap(ledger.plus(1))');
+    expect(read(root, `${TESTS}/amount.vo.spec.ts`)).toContain('unwrap(Amount.create(1).plus(');
+  });
+
   it('imports expectRefusal where an assertion now needs it, writes nothing on a dry run, and has nothing left to do after', () => {
     write(root, `${TESTS}/amount.vo.spec.ts`, SPEC);
     expect(cli(root, 'value-objects', '--dry-run').stdout).toContain(`would write   ${TESTS}/amount.vo.spec.ts`);

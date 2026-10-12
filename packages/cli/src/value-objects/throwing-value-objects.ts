@@ -3,7 +3,9 @@ import { isRecord } from '../config/values/is-record.js';
 import type { MigrationDraft } from '../refusals/migration-draft.js';
 import { projectSources } from '../refusals/project-sources.js';
 import type { Workspace } from '../workspace/index.js';
+import { scan } from '../check/scan/scan.js';
 import { leftovers } from './leftovers.js';
+import { resultMethodDeclarations } from './result-method-declarations.js';
 import type { ResultMethods } from './result-methods.js';
 import { throwingSource } from './throwing-source.js';
 import { rewriteUsages } from './rewrite-usages.js';
@@ -73,7 +75,30 @@ function convertValueObjects(sources: readonly string[], draft: MigrationDraft):
     throws += thrown.throws;
   }
 
-  return { methods: { statics, instance }, classes, converted, throws };
+  const ambiguous = stillResults(sources, draft);
+
+  return {
+    methods: { statics, instance: new Set([...instance].filter((name) => !ambiguous.has(name))) },
+    classes,
+    converted,
+    throws,
+  };
+}
+
+/**
+ * The names of the methods that still return a `Result` once the value objects changed: an
+ * aggregate's `add` keeps its `unwrap(order.add(..))` even when a value object's `add` now
+ * throws, since a call is matched by the name of its method alone. What stays is listed as left.
+ */
+function stillResults(sources: readonly string[], draft: MigrationDraft): ReadonlySet<string> {
+  return new Set(
+    sources.flatMap((file) => {
+      const source = draft.read(file) ?? '';
+      const { code } = scan(source);
+
+      return resultMethodDeclarations(code, source, { start: -1, end: code.length }).map(({ name }) => name);
+    }),
+  );
 }
 
 function sayThrowing(raw: Record<string, unknown>): void {
