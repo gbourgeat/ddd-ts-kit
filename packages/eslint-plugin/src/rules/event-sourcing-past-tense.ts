@@ -1,3 +1,4 @@
+import { AST_NODE_TYPES } from '@typescript-eslint/utils';
 import { isAggregateFile } from '../support/event-sourcing/is-aggregate-file.js';
 import { isEventSourcedClass } from '../support/event-sourcing/is-event-sourced-class.js';
 import { isPastParticiple } from '../support/event-sourcing/is-past-participle.js';
@@ -39,12 +40,19 @@ export const eventSourcingPastTense = defineRule<'presentTense'>({
         eventSourced ||= isEventSourcedClass(node);
       },
       'Program:exit'() {
-        for (const { name, node } of eventSourced ? events : []) {
+        for (const imported of eventSourced ? events : []) {
+          const name = localName(imported);
+
           if (!wordsOf(name).some(isPastParticiple)) {
-            report({ node, messageId: 'presentTense', data: { name } });
+            report({ node: imported.node, messageId: 'presentTense', data: { name } });
           }
         }
       },
     };
   },
 });
+
+/** The name the aggregate writes, as the checker reads it: the local one of a renamed import. */
+function localName({ name, node }: ImportedName): string {
+  return node.type === AST_NODE_TYPES.ImportSpecifier ? node.local.name : name;
+}

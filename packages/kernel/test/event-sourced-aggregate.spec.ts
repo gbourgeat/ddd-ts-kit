@@ -55,11 +55,11 @@ describe('EventSourcedAggregate', () => {
       await store.append('a1', expected, []);
     });
 
-    await appendChanges(account, async () => {
-      appended.push('nothing left');
+    await appendChanges(account, async ({ expected, events }) => {
+      appended.push(`${expected}: ${events.length} event`);
     });
 
-    expect(appended).toEqual(['0: bank.account.opened, bank.account.deposited']);
+    expect(appended).toEqual(['0: bank.account.opened, bank.account.deposited', '2: 0 event']);
     expect(account.version).toBe(2);
   });
 

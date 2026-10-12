@@ -14,17 +14,14 @@ export interface StreamChanges {
  * loaded to `append`, with the version its stream must still have. Once `append` resolves, the
  * aggregate is at the new version with nothing left to store, and can be saved again; when it
  * rejects (a ConcurrencyError: somebody else appended first), the aggregate is left as it was.
+ * An aggregate that recorded nothing still hands its version over, with no event: the store
+ * refuses it when the stream moved meanwhile, so a stale copy is never taken for a current one.
  */
 export async function appendChanges<E extends DomainEvent, S>(
   aggregate: EventSourcedAggregate<E, S>,
   append: (changes: StreamChanges) => Promise<void>,
 ): Promise<void> {
   const unstored = unstoredEvents.get(aggregate) ?? [];
-
-  if (unstored.length === 0) {
-    return;
-  }
-
   const events = [...unstored];
 
   await append({ expected: aggregate.version, events });

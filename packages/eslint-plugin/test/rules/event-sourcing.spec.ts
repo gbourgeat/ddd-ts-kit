@@ -63,6 +63,13 @@ ruleTester.run('event-sourcing-past-tense', eventSourcingPastTense, {
       ),
       errors: [{ messageId: 'presentTense', data: { name: 'PayInvoice' } }],
     },
+    {
+      ...at(
+        AGGREGATE,
+        "import { InvoicePaid as PayInvoice } from '@/contexts/billing/domain/events/invoice-paid.event';\nexport class Invoice extends EventSourcedAggregate<PayInvoice> {}",
+      ),
+      errors: [{ messageId: 'presentTense', data: { name: 'PayInvoice' } }],
+    },
   ],
 });
 

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { personalData } from '@ddd-ts-kit/kernel';
 import { expectSnapshotEquivalence, givenEvents } from '../src/index.js';
 import { Tally, TallyClosed, TallyClosedError, closed, counted } from './support/tally.js';
 
@@ -38,6 +39,27 @@ describe('expectSnapshotEquivalence', () => {
         policy: {
           encode: (tally) => tally.toState(),
           decode: (data) => ({ votes: data.number('votes'), closed: data.flag('closed') }),
+        },
+        state: (tally) => tally.toState(),
+      }),
+    ).not.toThrow();
+  });
+
+  it('reads a personal value of a snapshot back as given, as a cipher would', () => {
+    expect(() =>
+      expectSnapshotEquivalence({
+        events: history,
+        rehydrate,
+        policy: {
+          encode: (tally) => ({
+            votes: tally.toState().votes,
+            closed: tally.toState().closed,
+            by: [personalData('t1', 'Ada')],
+          }),
+          decode: (data) => ({
+            votes: data.number('votes'),
+            closed: data.flag('closed') && data.texts('by')[0] === 'Ada',
+          }),
         },
         state: (tally) => tally.toState(),
       }),
