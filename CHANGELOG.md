@@ -42,6 +42,15 @@ Two rules: `persistence/no-file-content` (no binary or base64 column in a schema
 migration) and `files/port-not-connector` (the model and the use cases name the port, never a
 connector); `@ddd-ts-kit/s3` is refused in `domain/` and `application/`. To add files to an
 existing project: `npx ddd-ts-kit init --force --storage local`.
+`FileStaging.deleteAfterCommit` deletes, once committed, a file an aggregate no longer
+references, and the refusals of a file are codes of the kit for `errors/known-code`.
+
+**The example keeps the documents of appointments.** A practice attaches a document (`POST
+/appointments/{appointmentId}/document`, multipart, at most 10 MiB of PDF, PNG or JPEG checked on
+its bytes), reads it through a link of five minutes (`GET`, every read recorded in the audit
+trail) and removes it (`DELETE`); the contract only gains these three operations. The local
+directory serves development and the memory the tests; MinIO waits behind the `files` profile
+of the compose stack.
 
 ## 0.5.0
 

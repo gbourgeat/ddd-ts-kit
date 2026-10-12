@@ -14,6 +14,7 @@ import { Cancellation } from '@/contexts/scheduling/domain/value-objects/cancell
 import { KnexAppointmentRepository } from '@/contexts/scheduling/infrastructure/persistence/knex-appointment.repository';
 import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database';
 import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder';
+import { anAttachedDocument } from '@/contexts/scheduling/test/builders/attached-document.builder';
 import { FakeAppointmentRepository } from '@/contexts/scheduling/test/fakes/appointment.repository.fake';
 
 const runner = { describe, it, expect, beforeEach, afterEach };
@@ -25,6 +26,9 @@ const expectations = {
       unwrap(Cancellation.create('practice', 'The practitioner is away.')),
       new Date('2026-01-02T00:00:00.000Z'),
     );
+
+    // The reference of a stored file round trips with the row: never its content.
+    changed.attachDocument(anAttachedDocument(), new Date('2026-01-02T00:00:00.000Z'));
   },
   idOf: (subject: Appointment) => subject.id,
   stateOf: (subject: Appointment) => subject.toState(),

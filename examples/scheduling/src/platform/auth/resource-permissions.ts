@@ -34,6 +34,9 @@ export const resourcePermissions: PermissionMapping = {
     'scheduling:appointment.confirm': 'change',
     'scheduling:appointment.complete': 'close',
     'scheduling:appointment.mark-no-show': 'close',
+    'scheduling:appointment.attach-document': 'change',
+    'scheduling:appointment.remove-document': 'change',
+    'scheduling:appointment.read-document': 'read',
   },
   person: {
     'notification:notification.read': 'be',

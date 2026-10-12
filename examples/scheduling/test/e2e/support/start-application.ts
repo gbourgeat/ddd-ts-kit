@@ -1,6 +1,6 @@
 import { RelationTupleStore, type RelationTuple } from '@ddd-ts-kit/auth/rebac';
 import type { ErrorReporter, IntegrationEventSubscriber } from '@ddd-ts-kit/kernel';
-import { createHttpClient, type HttpClient } from '@ddd-ts-kit/testing/e2e';
+import { createHttpClient, type HttpClient, type HttpHeaders } from '@ddd-ts-kit/testing/e2e';
 import { relateSystemActors } from '@/platform/auth/relate-system-actors';
 import { composeApplication, type Application } from '@/platform/compose-application';
 import type { AppConfig } from '@/platform/config/app-config';
@@ -23,8 +23,14 @@ export interface RunningApplication {
   /** Subscribe here (`collectEvents`) to assert the integration events the application publishes. */
   readonly events: IntegrationEventSubscriber;
 
+  /** Where the server listens, `http://127.0.0.1:<port>`: for a request the JSON client does not send, a multipart upload. */
+  readonly url: string;
+
   /** A client presenting the credential of `actor`; `client` itself presents none. */
   as(actor: TestActor): Promise<HttpClient>;
+
+  /** The headers that carry the credential of `actor`, for a request sent with `fetch`. */
+  headersOf(actor: TestActor): Promise<HttpHeaders>;
 
   /** Stores a relationship, as the application does when an element is created or shared. */
   relate(tuple: RelationTuple): Promise<void>;
@@ -69,14 +75,17 @@ export async function startApplication(options: StartOptions = {}): Promise<Runn
 
   const relay = relayOf(persistence, application);
   const server = await startHttpServer(application, config);
-  const client = createHttpClient('http://127.0.0.1:' + server.port);
+  const address = 'http://127.0.0.1:' + server.port;
+  const client = createHttpClient(address);
   // The store of the running application: what a test relates is what its authorizer reads.
   const tuples = application.container.resolve(RelationTupleStore);
 
   return {
     client,
+    url: address,
     events: application.eventSubscriber,
     as: async (actor) => client.withHeaders(await credentials.headersOf(actor)),
+    headersOf: (actor) => credentials.headersOf(actor),
     relate: (tuple) => tuples.write([tuple]),
     reset: () => relay.whileStopped(() => database.reset().then(() => relateSystemActors(tuples))),
     close: () => closeInOrder({ server, relay, application, redis, database }),

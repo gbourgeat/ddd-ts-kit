@@ -6,6 +6,7 @@ import { connectToDatabase } from '@/platform/database/connect-to-database';
 import { persistenceOver } from '@/platform/database/persistence-over';
 import type { Persistence } from '@/platform/database/persistence';
 import { AUDIT_SCHEMA, createTables } from '@/platform/database/schema';
+import { upgradeTables } from '@/platform/database/upgrade-tables';
 
 export interface TestDatabase {
   readonly persistence: Persistence;
@@ -38,6 +39,7 @@ async function openInProcess(): Promise<TestDatabase> {
   });
 
   await createTables(connection.db);
+  await upgradeTables(connection.db);
 
   const close = async (): Promise<void> => {
     await connection.close();

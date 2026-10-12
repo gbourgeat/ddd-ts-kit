@@ -91,6 +91,7 @@ of each is its user name.
 | A business definition and its SQL held equal by one contract | `analytics/domain/services/occupancy-measure.service.ts`, `analytics/test/integration/occupancy-reader.contract.spec.ts` |
 | A consumer with an outbound port, retry then dead letter | `notification/application/integration/handlers/`, `infrastructure/external/remote-mailer.adapter.ts`, `test/integration/mailer-outage.spec.ts` |
 | Resilience on the adapter class, and at the binding | the mailer above (`@Retry`, `@Timeout`); `src/platform/platform.module.ts` (`builder.around`) |
+| Files kept in a storage, never in the database: an upload streamed and checked, a short signed link, a removal after the commit, every read of a document audited | `scheduling/application/commands/attach-appointment-document/`, `queries/get-appointment-document/`, `domain/value-objects/attached-document.vo.ts`, `src/platform/files/`, `test/e2e/journey-documents.e2e.spec.ts` |
 | Scheduled jobs that only send a command, in a worker | `application/scheduling/` of `scheduling`, `identity` and `notification`, `src/apps/worker/main.ts` |
 | One trace per action, logs, audit, error report | `test/e2e/journey-observability.e2e.spec.ts` |
 | A deviation that was recorded, then retired when the kit made projections a role of its own | [ADR 0002](docs/adr/0002-keep-read-models-with-projections-in-application-projections.md), superseded |

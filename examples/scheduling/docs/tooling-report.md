@@ -929,3 +929,33 @@ No route of the application is public, so `Public` is not shown here: the kit ho
 own specs. `PersonError.invalidEmail` quotes the address it refuses in its message: the client
 now reads `Invalid email.` as `detail`, and the spec of the controller holds that the address
 does not leave.
+
+## 2026-10-13: documents of appointments, kept in the file storage
+
+A practice attaches a document to an appointment (a referral, a prescription, a report), a
+patient or the practice fetches it through a link of five minutes, and the practice removes
+it. The content never reaches the database: the appointment keeps the reference of the stored
+file (key, size, media type, checksum), its name and when it was attached.
+
+| | |
+|---|---|
+| Config | `"storage": "local"`: a directory in development (`.data/files`), the memory in the tests; MinIO in `docker-compose.yml` behind the `files` profile, for who wants an object store locally |
+| Platform | what `init --storage local` writes for this stack (`platform/files/`, `platform/config/read-files.ts`, the file routes mounted before `express.json()`, the upload reader of the HTTP boundary, the purge of staged files every hour), applied as the diff between `init --storage none` and `init --storage local` of the same stack, since `init --force` would have rewritten the hand-tuned files of the platform |
+| Generators | `generate value-object` (`AttachedDocument`), two `generate error` (`noDocument`, `documentNameTooLong`), `generate file-upload`, `generate command`, `generate query`, two `generate route`, then `docs` |
+| Written or rewritten by hand | the value object, the two refusals, the state and two methods of `Appointment`, the six columns of the mapper, the migration `20261013090000_add-appointment-documents.js` and `upgradeTables` for the in-process database of the tests, the three handlers, the three controllers, the specs, the end-to-end journey |
+| Routes added | `POST`, `GET` and `DELETE` `/appointments/{appointmentId}/document`; the rest of `openapi/openapi.yaml` is unchanged (228 lines added, none removed) |
+| Audit | `scheduling:appointment.read-document` is a sensitive permission of `auditDecisions`: every allowed read of a document is recorded |
+| Tests | 23 unit specs of the slice, the round trip of the reference in the contract of both appointment repositories, and `test/e2e/journey-documents.e2e.spec.ts`: an upload streamed through the multipart reader, a download through the link, a 415 for a disguised file, a 403 for another patient, the link that stops answering once the document is removed |
+
+What the generators did not fit, to change in the kit:
+
+- `generate file-upload` writes a controller without the schema of its path parameters: a
+  document attached to an appointment needs `appointmentId`, written by hand with its class
+  schema. The command it writes carries the file only; the identifier of the aggregate was added.
+- `generate query` wrote a reader port, its in-memory adapter and its fake: this query reads the
+  aggregate and signs a link, so the three files were removed.
+- `scripts/kit.mjs` of this example failed on any generator that creates a file (`NOT_A_FILE`
+  was declared after the call that read it); fixed here.
+- The integration specs of this example time out when vitest runs their files in parallel on a
+  loaded machine (PGlite per file); `npm run test:postgres` runs them one file at a time, and
+  passes.

@@ -1,5 +1,6 @@
 import { unwrap } from '@ddd-ts-kit/kernel';
 import { Appointment, type AppointmentState } from '@/contexts/scheduling/domain/aggregates/appointment.aggregate';
+import { AttachedDocument } from '@/contexts/scheduling/domain/value-objects/attached-document.vo';
 import { Booking } from '@/contexts/scheduling/domain/value-objects/booking.vo';
 import { Cancellation } from '@/contexts/scheduling/domain/value-objects/cancellation.vo';
 import { Slot } from '@/contexts/scheduling/domain/value-objects/slot.vo';
@@ -18,7 +19,7 @@ export const AppointmentMapper = {
   },
 
   toRow(saved: Appointment): AppointmentColumns {
-    const { registeredAt, changedAt, booking, status, confirmBefore, cancellation } = saved.toState();
+    const { registeredAt, changedAt, booking, status, confirmBefore, cancellation, document } = saved.toState();
 
     return {
       id: saved.id,
@@ -37,9 +38,46 @@ export const AppointmentMapper = {
       confirm_before: confirmBefore ?? null,
       cancelled_by: cancellation?.by ?? null,
       cancellation_reason: cancellation?.reason ?? null,
+      ...documentColumnsOf(document),
     };
   },
 };
+
+type DocumentColumns = Pick<
+  AppointmentColumns,
+  | 'document_key'
+  | 'document_size'
+  | 'document_media_type'
+  | 'document_checksum'
+  | 'document_name'
+  | 'document_attached_at'
+>;
+
+const NO_DOCUMENT: DocumentColumns = {
+  document_key: null,
+  document_size: null,
+  document_media_type: null,
+  document_checksum: null,
+  document_name: null,
+  document_attached_at: null,
+};
+
+function documentColumnsOf(document: AttachedDocument | undefined): DocumentColumns {
+  if (document === undefined) {
+    return NO_DOCUMENT;
+  }
+
+  const { file, name, attachedAt } = document;
+
+  return {
+    document_key: file.key,
+    document_size: file.size,
+    document_media_type: file.mediaType,
+    document_checksum: file.checksum,
+    document_name: name,
+    document_attached_at: attachedAt,
+  };
+}
 
 function stateOf(row: AppointmentRow): AppointmentState {
   const booking = unwrap(
@@ -63,5 +101,21 @@ function stateOf(row: AppointmentRow): AppointmentState {
     ...(row.cancelled_by === null
       ? {}
       : { cancellation: unwrap(Cancellation.create(row.cancelled_by, row.cancellation_reason ?? undefined)) }),
+    ...documentOf(row),
   };
+}
+
+function documentOf(row: AppointmentRow): Pick<AppointmentState, 'document'> {
+  if (row.document_key === null || row.document_attached_at === null) {
+    return {};
+  }
+
+  const file = {
+    key: row.document_key,
+    size: row.document_size ?? 0,
+    mediaType: row.document_media_type ?? 'application/octet-stream',
+    checksum: row.document_checksum ?? '',
+  };
+
+  return { document: unwrap(AttachedDocument.create(file, row.document_name ?? '', row.document_attached_at)) };
 }

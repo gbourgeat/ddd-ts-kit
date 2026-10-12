@@ -21,6 +21,8 @@ const logFile = path.join(stateDir, 'generator-log.jsonl');
 const lockFile = path.join(stateDir, 'generate.lock');
 const args = process.argv.slice(2);
 const command = args[0] === 'g' ? 'generate' : args[0];
+// Declared before `main()` runs: a file a generator is about to create does not exist yet.
+const NOT_A_FILE = ['ENOENT', 'ENOTDIR', 'EISDIR'];
 
 main();
 
@@ -148,8 +150,6 @@ function accumulate(file, previous) {
 
   fs.rmSync(beforeFile, { force: true });
 }
-
-const NOT_A_FILE = ['ENOENT', 'ENOTDIR', 'EISDIR'];
 
 function read(file) {
   try {
