@@ -25,7 +25,8 @@
     "style": "declared",
     "assembly": "barrel",
     "dependencies": "signature",
-    "refusals": "factories"
+    "refusals": "factories",
+    "routes": "controllers"
   },
   "contexts": {
     "identity": {

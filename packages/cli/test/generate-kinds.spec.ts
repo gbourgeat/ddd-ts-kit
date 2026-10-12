@@ -8,7 +8,7 @@ let root: string;
 
 beforeAll(() => {
   root = tempDir('kinds');
-  scaffoldEverything(root, EXPLICIT_STACK);
+  scaffoldEverything(root, EXPLICIT_STACK, ['--routes', 'functions']);
 });
 
 describe('authorization and gateway kinds', () => {

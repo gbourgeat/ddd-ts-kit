@@ -1,17 +1,26 @@
 import type { RequestPart, RouteFact, RouteResponse, UseCaseFact } from './context-description.js';
 import type { ContextSources } from './context-sources.js';
+import { readControllers } from './read-controllers.js';
 
 const FOLDER = 'presentation/http';
 
-/** The routes of a context, one per `*.route.ts` file, as its `defineRoute` call writes them. */
+/**
+ * The routes of a context: one per `*.route.ts` file, as its `defineRoute` call writes it, and
+ * one per `*.controller.ts` file, as its decorator and its groups say it.
+ */
 export function readRoutes(sources: ContextSources, useCases: readonly UseCaseFact[]): RouteFact[] {
   const { ws, directory } = sources;
 
-  return ws
+  const functions = ws
     .list(`${directory}/${FOLDER}`)
     .filter((file) => file.endsWith('.route.ts'))
-    .map((file) => routeOf(`${directory}/${FOLDER}/${file}`, ws.read(`${directory}/${FOLDER}/${file}`) ?? '', useCases))
-    .sort((left, right) => left.path.localeCompare(right.path) || left.method.localeCompare(right.method));
+    .map((file) =>
+      routeOf(`${directory}/${FOLDER}/${file}`, ws.read(`${directory}/${FOLDER}/${file}`) ?? '', useCases),
+    );
+
+  return [...functions, ...readControllers(sources, useCases)].sort(
+    (left, right) => left.path.localeCompare(right.path) || left.method.localeCompare(right.method),
+  );
 }
 
 function routeOf(file: string, source: string, useCases: readonly UseCaseFact[]): RouteFact {
@@ -24,6 +33,8 @@ function routeOf(file: string, source: string, useCases: readonly UseCaseFact[])
     method: field('method'),
     path: field('path'),
     operationId: field('operationId'),
+    group: '',
+    guards: [],
     useCase,
     permission: useCases.find((candidate) => candidate.kind === kind && candidate.name === useCase)?.permission ?? '',
     request: requestOf(source),

@@ -44,10 +44,11 @@ generated `npm run depcruise` starts with `depcruise-config --check`, which fail
 file.
 
 `ddd-ts-kit rules` lists every rule id with its default severity. Most code rules exist in
-both the checker (a fast approximation on text) and the ESLint plugin (the exact one). Five
+both the checker (a fast approximation on text) and the ESLint plugin (the exact one). Eight
 are held by the ESLint plugin only, and the listing says so: `domain/aggregate-encapsulation`,
 `domain/value-object-immutability`, `domain/no-generic-error`, `application/handler-shape`,
-`application/command-query-separation`. One, `clean/formatted`, is held by neither: the
+`application/command-query-separation`, `presentation/controller-shape`,
+`presentation/controller-delegates`, `presentation/guard-at-the-edge`. One, `clean/formatted`, is held by neither: the
 formatter of the project, Biome, lays out every file, and the listing says "checked by Biome".
 What every project gets, tool by tool, is on the [quality baseline](quality-baseline.md) page.
 

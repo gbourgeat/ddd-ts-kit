@@ -23,8 +23,9 @@ import { KnexContacts } from '@/contexts/notification/infrastructure/persistence
 import { KnexNotificationRepository } from '@/contexts/notification/infrastructure/persistence/knex-notification.repository';
 import { KnexReminderRepository } from '@/contexts/notification/infrastructure/persistence/knex-reminder.repository';
 import { KnexSearchNotificationsReader } from '@/contexts/notification/infrastructure/persistence/knex-search-notifications-reader.repository';
+import { SearchNotificationsController } from '@/contexts/notification/presentation/http/notifications/search-notifications/search-notifications.controller';
 import { Access } from '@ddd-ts-kit/auth';
-import { Clock, CommandBus, ExecutionScope, IdGenerator, Logger } from '@ddd-ts-kit/kernel';
+import { Clock, CommandBus, ExecutionScope, IdGenerator, Logger, QueryBus } from '@ddd-ts-kit/kernel';
 import { KnexContext } from '@ddd-ts-kit/knex';
 
 export * from '@/contexts/notification/application/commands/plan-reminder/plan-reminder.command';
@@ -51,6 +52,7 @@ export * from '@/contexts/notification/infrastructure/persistence/knex-contacts.
 export * from '@/contexts/notification/infrastructure/persistence/knex-notification.repository';
 export * from '@/contexts/notification/infrastructure/persistence/knex-reminder.repository';
 export * from '@/contexts/notification/infrastructure/persistence/knex-search-notifications-reader.repository';
+export * from '@/contexts/notification/presentation/http/notifications/search-notifications/search-notifications.controller';
 
 injected(PlanReminderHandler, [ReminderRepository, IdGenerator, Clock]);
 injected(SendDueRemindersHandler, [ReminderRepository]);
@@ -71,3 +73,4 @@ injected(KnexContacts, [KnexContext]);
 injected(KnexNotificationRepository, [KnexContext, ExecutionScope, Clock]);
 injected(KnexReminderRepository, [KnexContext, ExecutionScope, Clock]);
 injected(KnexSearchNotificationsReader, [KnexContext]);
+injected(SearchNotificationsController, [QueryBus]);

@@ -13,12 +13,13 @@ contexts/billing/billing.declarations.ts   // declared style only`,
     good: `## Purpose, ## Classification, ## Ubiquitous language, ## Aggregates, ## Published events, ## Relationships`,
   },
   'naming/suffix': {
-    why: 'The suffix states the role of a file before it is opened and lets the other rules know what they are looking at. Kebab-case avoids case-only renames that break on some file systems. A use case folder holds its message, its handler and, when it answers something, its result (*.result.ts); a job is application/scheduling/*.job.ts. One file is named after its context instead of a role: presentation/http/<context>.routes.ts, the list of its routes (a context wired by hand lists them in its module file).',
+    why: 'The suffix states the role of a file before it is opened and lets the other rules know what they are looking at. Kebab-case avoids case-only renames that break on some file systems. A use case folder holds its message, its handler and, when it answers something, its result (*.result.ts); a job is application/scheduling/*.job.ts. Under presentation/http/ a controller lives in a folder of its own, presentation/http/<resource>/<use-case>/, with the schemas of its request and of its answer (*.params.ts, *.query.ts, *.headers.ts, *.body.ts, *.accepted.ts, *.answer.ts, *.line.ts), its *.mapper.ts and its *.serializer.ts; a route group is presentation/http/<name>.routes.ts, a guard presentation/http/guards/*.guard.ts, and what several routes share is under presentation/http/shared/. Function routes stay flat: *.route.ts and *.dto.ts, listed in presentation/http/<context>.routes.ts.',
     bad: `domain/aggregates/Invoice.ts`,
     good: `domain/aggregates/invoice.aggregate.ts
 application/commands/issue-invoice/issue-invoice.result.ts
 application/scheduling/send-reminders.job.ts
-presentation/http/billing.routes.ts`,
+presentation/http/invoices.routes.ts
+presentation/http/invoices/issue-invoice/issue-invoice.controller.ts`,
   },
   'naming/search-not-list': {
     why: 'A read that takes criteria, a scope or a page is a search, and the whole project says so with one word: a port, its adapters, its fakes, the query and its folder. Two words for one thing make a reader wonder what the difference is, and a generated name then disagrees with a written one. Judged: a method named list, or list followed by an upper-case letter, in domain/repositories/*.repository.ts, application/ports/*.port.ts, infrastructure/ and test/fakes/ of a context (properties are not judged, nor listAccessible, which the Authorizer port of the kit requires); and under application/queries/, a folder or a file named list or starting with list- or list., and a class named List or starting with List followed by an upper-case letter. A read of one element or none stays findById or findBy...',

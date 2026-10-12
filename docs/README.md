@@ -35,6 +35,7 @@ Ordered as a reading path in [concepts/README.md](concepts/README.md).
 | [Anemic model](concepts/anemic-model.md) | how to recognise one, and when a thin model is fine |
 | [Layers and the dependency rule](concepts/layers-and-dependency-rule.md) | hexagonal, onion, clean: what they share, where they differ |
 | [Ports and composition](concepts/ports-and-composition.md) | ports as abstract classes, the composition root, declared or explicit wiring |
+| [The presentation layer](concepts/presentation-layer.md) | one controller class per route, route groups, guards at the edge and permissions on the use case, mapper and serializer |
 | [CQRS](concepts/cqrs.md) | command and query buses, no event sourcing: what it buys and what it does not |
 | [Modular monolith](concepts/modular-monolith.md) | one deployable, contexts kept extractable |
 | [Domain and integration events](concepts/domain-and-integration-events.md) | the two kinds of events and the translation between them |

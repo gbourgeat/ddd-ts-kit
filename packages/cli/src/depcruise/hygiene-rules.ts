@@ -1,5 +1,5 @@
 import type { Config } from '../config/index.js';
-import { DISCOVERED_SUFFIXES } from '../declared/index.js';
+import { DISCOVERED_SUFFIXES, EDGE_SUFFIXES } from '../declared/index.js';
 import type { CruiseRule } from './cruise-rule.js';
 import { escapePattern } from './escape-pattern.js';
 import { testFiles } from './test-files.js';
@@ -81,6 +81,7 @@ function discoveredFiles(config: Config): string[] {
 
   return [
     `^${escapePattern(config.contextsDir)}/[^/]+/(application|infrastructure)/.*\\.(${DISCOVERED_SUFFIXES.join('|')})\\.ts$`,
+    `^${escapePattern(config.contextsDir)}/[^/]+/presentation/.*\\.(${EDGE_SUFFIXES.join('|')})\\.ts$`,
     `^${escapePattern(config.contextsDir)}/[^/]+/[^/]+\\.dependencies\\.ts$`,
   ];
 }

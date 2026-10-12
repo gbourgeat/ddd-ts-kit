@@ -888,3 +888,44 @@ Same day, the ports and kernel types this application only uses as types are imp
 `import type` (114 import statements in 78 files), as the templates write them. The generated
 declarations did not change: the signature reader follows a type import to the class it names,
 and the generated file imports the value.
+
+## 2026-10-12: routes as controller classes, behind route groups and guards
+
+The 24 routes of the four contexts and the audit route of the platform became controller
+classes, with `ddd-ts-kit controllers` then by hand for what the command leaves to a person.
+
+| | Before | After |
+|---|---|---|
+| Form of a route | `defineRoute` function, listed in `<context>.routes.ts` | class carrying `@Controller`, one method, no list |
+| Files under `presentation/http/` and the audit route | 90, flat (61 in `scheduling`) | 98: one folder per route, 9 group files, 1 mapper, 2 serializers |
+| Lines of those files | 1967 | 1910 |
+| Hand-maintained lists of routes | 4, and their 4 specs | 0 |
+| Route groups | none | 9: `people`, `practices`, `practice-opening` (identity), `appointments`, `calendars`, `practices` (scheduling), `notifications`, `practices` (analytics), `audit` (platform) |
+| Lines of the route or controller specs | 1937 | 2088 |
+| `openapi/openapi.json` | | byte for byte the same |
+| End-to-end specs | 57 pass | 57 pass, unedited, span trees included |
+
+What the command did: the 24 controllers, the 8 groups of the contexts (each behind
+`Authenticated`, with `FORBIDDEN` said once), the 61 schema files moved under their route or
+under `shared/`, every import rewritten, the 24 specs moved, the 4 lists, their specs and
+their lines in the composition root removed. What was done by hand: the line that mounts the
+declared controllers and the audit controller in `compose-application.ts`, two integration
+specs that named the list of routes, one spec whose call spanned several lines, the audit
+controller (outside the contexts), and the config key, which the command leaves while a
+function route remains.
+
+Two groups ask for a role at the edge, `HasRole('platform-admin')`: `PracticeOpeningRoutes`,
+which refines `PracticesRoutes` of identity, and `AuditRoutes`. The permissions
+`identity:practice.open` and `audit:trail.read` are unchanged on their use cases. A caller
+without the role is now refused before the bus: the status and the code are the same, and the
+audit trail no longer records a denied decision for it, since no decision was asked.
+`BookAppointmentController` has a request mapper, `GetCalendarDayController` a serializer, and
+the two searches of the agenda share `AgendaEntrySerializer`, which removed a duplicated
+function. Six controllers still keep a small helper below their class (`grant-delegation`,
+`search-occupancy`, `reschedule-appointment`, `search-notifications`, `join-waitlist`,
+`get-appointment`): each is a mapper or a serializer to extract.
+
+No route of the application is public, so `Public` is not shown here: the kit holds it in its
+own specs. `PersonError.invalidEmail` quotes the address it refuses in its message: the client
+now reads `Invalid email.` as `detail`, and the spec of the controller holds that the address
+does not leave.

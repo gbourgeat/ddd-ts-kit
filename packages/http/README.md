@@ -50,6 +50,59 @@ export const orderRoutes = (orders: OrderQueries) =>
 - `defineRoutes` and every mount refuse a duplicate `operationId` or method and path.
 - `prefixRoutes('/api', routes)` moves routes under a prefix, for the server and the contract.
 
+## Controllers, route groups and guards
+
+A route may also be a class: one class per route, one method, `handle`. Its decorator is the
+declaration, and the compiler holds `handle` to it: a part the schemas do not produce, or
+another body than the declared response, is an error on the decorator.
+
+```ts
+import { Authenticated, Controller, RouteGroup, type HttpRequest } from '@ddd-ts-kit/http';
+
+@RouteGroup({ prefix: '/orders', tags: ['orders'], guards: [Authenticated], errors: ['FORBIDDEN'] })
+export class OrdersRoutes {}
+
+@Controller({
+  group: OrdersRoutes,
+  method: 'POST',
+  path: '/',
+  summary: 'Place an order',
+  body,
+  response: { status: 201, body: placed },
+  errors: ['OUT_OF_STOCK'],
+})
+export class PlaceOrderController {
+  constructor(private readonly commands: CommandBus) {}
+
+  async handle({ body, actor }: HttpRequest<{ body: Infer<typeof body> }>): Promise<Infer<typeof placed>> {
+    return { id: await this.commands.execute(new PlaceOrder(actor, body.customerId)) };
+  }
+}
+
+const routes = controllerRoutes([PlaceOrderController], { resolve: application.resolve });
+```
+
+| Export | What it is |
+|---|---|
+| `Controller(spec)` | the decorator of a controller: `group`, `method`, `path` (after the prefix of the group), `operationId` (the class name without `Controller` by default), `summary`, `description`, `tags`, `params`, `query`, `headers`, `body`, `response: { status, description?, body? }`, `errors`, `guards`, `deprecated` |
+| `RouteGroup({ parent, prefix, tags, guards, errors })` | names a set of routes on an empty class; a child inherits from its `parent` and adds |
+| `Guard` | the interface `{ documents?, check(request: GuardRequest) }`, and the decorator of a guard class that takes dependencies |
+| `Authenticated`, `Public`, `HasRole(...roles)` | the guards the package ships, over the `Actor` of the request: 401 to the anonymous caller, 403 without one of the roles; `Public` lets everybody in and stands alone |
+| `RequestMapper<Request, Message>`, `Serializer<Result, Body>` | the interfaces of the two optional translators (`map`, `serialize`), and the decorators that declare them |
+| `HttpRequest<{ params, query, headers, body }>` | the request as `handle`, a mapper or a guard names it, with `actor` and `context` |
+| `controllerRoutes(controllers, { resolve, security, guards })` | the `Route` of each controller, given as a class (built by `resolve`) or as an instance; `security` names the schemes of the application (`['bearer']` by default); `guards: 'skip'` is for the spec of a controller alone |
+| `controllerRoute(controller, options)` | the one route of one controller, for a spec |
+
+A controller with no group and no guard is refused when its class is defined. Guards run in
+order, after validation and before `handle`, inside the execution scope of the request, and
+what they throw is answered as a problem like any refusal. A guard is a control at the edge;
+a permission is declared on the use case (`@Requires`), where a job and an event handler meet
+it too. Controllers are declared classes of the edge (`Edge` of
+`@ddd-ts-kit/kernel/declarations`): `@ddd-ts-kit/di` binds each one under itself and lists them
+in `DeclaredEdges`. A controller has one response and answers its body: a route with several
+success statuses, response headers or a raw body stays a `defineRoute` function. The reasons
+are on the [presentation layer](../../docs/concepts/presentation-layer.md) page.
+
 ## Errors
 
 A handler throws a `DomainError`; its `code` is mapped to a status in one place and answered as
@@ -97,6 +150,13 @@ report it to the error tracker with `onError: reportHttpErrors(errorReporter)`: 
 answered 5xx goes to the kernel `ErrorReporter`, once, with the correlation, actor and tenant
 ids of its execution context (`context.execution`, present once the request got that far); a
 4xx never does.
+
+A refusal built by a factory (`ConceptError`) answers its message as `detail` unless the message
+quotes a fact the factory did not expose: then the client reads a sentence made from the code
+(`INVALID_EMAIL` gives `Invalid email.`) and the message stays in the logs and the error
+reports. A fact is found in the message as a text, a number or an ISO instant; a fact written
+another way (a formatted date, a part of an object) is not seen, so expose what a client may
+read and keep the rest out of the sentence.
 
 ## Options shared by the adapters
 

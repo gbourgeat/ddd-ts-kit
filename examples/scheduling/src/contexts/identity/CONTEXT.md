@@ -138,14 +138,14 @@ Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-ki
 
 ### Routes
 
-| Method | Path | Operation | Use case | Permission | Request | Responses | Errors |
-|---|---|---|---|---|---|---|---|
-| PUT | `/people/me` | `registerPerson` | `RegisterPerson` | `person.register` | body: `RegisterPersonBody` | 200: `RegisterPersonAccepted` | `UNAUTHORIZED`, `FORBIDDEN`, `INVALID_DISPLAY_NAME`, `INVALID_EMAIL` |
-| POST | `/practices` | `openPractice` | `OpenPractice` | `practice.open` | body: `OpenPracticeBody` | 201: `OpenPracticeAccepted` | `UNAUTHORIZED`, `FORBIDDEN`, `UNKNOWN_TIME_ZONE`, `PERSON_NOT_REGISTERED` |
-| POST | `/practices/:practiceId/desks/:practitionerId/delegations` | `grantDelegation` | `GrantDelegation` | `delegation.grant` | params: `GrantDelegationParams`, body: `GrantDelegationBody` | 201: `GrantDelegationAccepted` | `UNAUTHORIZED`, `FORBIDDEN`, `PRACTICE_NOT_FOUND`, `NOT_A_PRACTITIONER`, `NOT_AN_ASSISTANT`, `DELEGATION_ENDS_IN_THE_PAST`, `DELEGATION_ALREADY_ACTIVE` |
-| DELETE | `/practices/:practiceId/desks/:practitionerId/delegations/:delegationId` | `revokeDelegation` | `RevokeDelegation` | `delegation.revoke` | params: `RevokeDelegationParams` | 200: `RevokeDelegationAccepted` | `UNAUTHORIZED`, `FORBIDDEN`, `DELEGATION_NOT_FOUND`, `DELEGATION_NOT_ACTIVE` |
-| POST | `/practices/:practiceId/members` | `addMember` | `AddMember` | `member.add` | params: `AddMemberParams`, body: `AddMemberBody` | 201: `AddMemberAccepted` | `UNAUTHORIZED`, `FORBIDDEN`, `PRACTICE_NOT_FOUND`, `PERSON_NOT_REGISTERED`, `UNKNOWN_ROLE`, `ALREADY_MEMBER` |
-| DELETE | `/practices/:practiceId/members/:personId` | `removeMember` | `RemoveMember` | `member.remove` | params: `RemoveMemberParams` | 200: `RemoveMemberAccepted` | `UNAUTHORIZED`, `FORBIDDEN`, `PRACTICE_NOT_FOUND`, `NOT_A_MEMBER`, `LAST_MANAGER` |
+| Method | Path | Operation | Group | Guards | Use case | Permission | Request | Responses | Errors |
+|---|---|---|---|---|---|---|---|---|---|
+| PUT | `/people/me` | `registerPerson` | `PeopleRoutes` | `Authenticated` | `RegisterPerson` | `person.register` | body: `RegisterPersonBody` | 200: `RegisterPersonAccepted` | `UNAUTHORIZED`, `FORBIDDEN`, `INVALID_DISPLAY_NAME`, `INVALID_EMAIL` |
+| POST | `/practices` | `openPractice` | `PracticeOpeningRoutes` | `Authenticated`, `HasRole('platform-admin')` | `OpenPractice` | `practice.open` | body: `OpenPracticeBody` | 201: `OpenPracticeAccepted` | `UNAUTHORIZED`, `FORBIDDEN`, `UNKNOWN_TIME_ZONE`, `PERSON_NOT_REGISTERED` |
+| POST | `/practices/:practiceId/desks/:practitionerId/delegations` | `grantDelegation` | `PracticesRoutes` | `Authenticated` | `GrantDelegation` | `delegation.grant` | params: `GrantDelegationParams`, body: `GrantDelegationBody` | 201: `GrantDelegationAccepted` | `UNAUTHORIZED`, `FORBIDDEN`, `PRACTICE_NOT_FOUND`, `NOT_A_PRACTITIONER`, `NOT_AN_ASSISTANT`, `DELEGATION_ENDS_IN_THE_PAST`, `DELEGATION_ALREADY_ACTIVE` |
+| DELETE | `/practices/:practiceId/desks/:practitionerId/delegations/:delegationId` | `revokeDelegation` | `PracticesRoutes` | `Authenticated` | `RevokeDelegation` | `delegation.revoke` | params: `RevokeDelegationParams` | 200: `RevokeDelegationAccepted` | `UNAUTHORIZED`, `FORBIDDEN`, `DELEGATION_NOT_FOUND`, `DELEGATION_NOT_ACTIVE` |
+| POST | `/practices/:practiceId/members` | `addMember` | `PracticesRoutes` | `Authenticated` | `AddMember` | `member.add` | params: `AddMemberParams`, body: `AddMemberBody` | 201: `AddMemberAccepted` | `UNAUTHORIZED`, `FORBIDDEN`, `PRACTICE_NOT_FOUND`, `PERSON_NOT_REGISTERED`, `UNKNOWN_ROLE`, `ALREADY_MEMBER` |
+| DELETE | `/practices/:practiceId/members/:personId` | `removeMember` | `PracticesRoutes` | `Authenticated` | `RemoveMember` | `member.remove` | params: `RemoveMemberParams` | 200: `RemoveMemberAccepted` | `UNAUTHORIZED`, `FORBIDDEN`, `PRACTICE_NOT_FOUND`, `NOT_A_MEMBER`, `LAST_MANAGER` |
 
 ### Publishers
 

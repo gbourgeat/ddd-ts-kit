@@ -1,4 +1,5 @@
 import { CliError } from '../../cli-error.js';
+import { readControllers } from '../../describe/read-controllers.js';
 import { fitStatement } from '../../layout/index.js';
 import { toName, type Name } from '../../naming/index.js';
 import type { RenderContext } from '../../templating/index.js';
@@ -21,7 +22,7 @@ export const e2eKind: Kind = {
   writesShared: false,
   run: (request) => {
     const scope = openScope(request);
-    const name = label(scope, request.args[1] ?? '', { what: 'use case', strip: ['route', 'handler'] });
+    const name = label(scope, request.args[1] ?? '', { what: 'use case', strip: ['route', 'controller', 'handler'] });
 
     const endpoint = endpointOf(scope, name);
     const traced = tracedCommand(scope, name);
@@ -46,12 +47,19 @@ function spanTree(request: string, command: string): string {
   return fitStatement(element, '      ').join('\n').trimStart();
 }
 
+interface Declared {
+  readonly method: string;
+  readonly path: string;
+  readonly status: number;
+  readonly isProtected: boolean;
+}
+
 /** What the route of the use case declares: an end-to-end spec drives the application through it. */
 function endpointOf(scope: Scope, name: Name): RenderContext & { readonly method: string; readonly path: string } {
   const file = `${scope.dir}/presentation/http/${name.kebab}.route.ts`;
-  const route = scope.ws.read(file) ?? '';
-  const [, method, path] = /method: '([A-Z]+)',\s*path: '([^']+)'/.exec(route) ?? [];
-  const status = /responses: \{ (\d{3}):/.exec(route)?.[1];
+
+  const { method, path, status, isProtected } =
+    functionRoute(scope.ws.read(file) ?? '') ?? controllerOf(scope, name) ?? {};
 
   if (method === undefined || path === undefined || status === undefined) {
     throw noRoute(scope, name, file);
@@ -60,14 +68,44 @@ function endpointOf(scope: Scope, name: Name): RenderContext & { readonly method
   return {
     method,
     path,
-    status: Number(status),
+    status,
     call: method.toLowerCase(),
     body: ['POST', 'PUT', 'PATCH'].includes(method) ? ', {}' : '',
-    protected: !/security:\s*false/.test(route),
+    protected: isProtected === true,
     samplePath: path.replace(
       /:([A-Za-z_][A-Za-z0-9_]*)/g,
       (_match, parameter: string) => `${toName(parameter).kebab}-1`,
     ),
+  };
+}
+
+function functionRoute(route: string): Declared | undefined {
+  const [, method, path] = /method: '([A-Z]+)',\s*path: '([^']+)'/.exec(route) ?? [];
+  const status = /responses: \{ (\d{3}):/.exec(route)?.[1];
+
+  if (method === undefined || path === undefined || status === undefined) {
+    return undefined;
+  }
+
+  return { method, path, status: Number(status), isProtected: !/security:\s*false/.test(route) };
+}
+
+/** The controller of the use case, wherever its folder is, read with the prefix and the guards of its groups. */
+function controllerOf(scope: Scope, name: Name): Declared | undefined {
+  const { ws, config, context, dir } = scope;
+  const sources = { ws, config, name: context.kebab, directory: dir, module: '' };
+  const route = readControllers(sources, []).find(({ file }) => file.endsWith(`/${name.kebab}.controller.ts`));
+  const [response] = route?.responses ?? [];
+
+  if (route === undefined || response === undefined) {
+    return undefined;
+  }
+
+  return {
+    method: route.method,
+    path: route.path,
+    status: response.status,
+    isProtected: !route.guards.includes('Public'),
   };
 }
 

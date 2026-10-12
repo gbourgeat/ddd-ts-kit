@@ -2,6 +2,7 @@ import { routesFile } from '../../declared/index.js';
 import type { RenderContext } from '../../templating/index.js';
 import { renderTemplate } from '../../templating/index.js';
 import type { Workspace } from '../../workspace/index.js';
+import { listsRoutes } from '../lists-routes.js';
 import { permissionsFile } from '../permissions-file.js';
 import { wiringFamily } from '../wiring-family.js';
 import type { ContextPlan } from './context-plan.js';
@@ -23,9 +24,9 @@ export function writeContextFiles(ws: Workspace, plan: ContextPlan): void {
 
 /**
  * What assembles the context: its module file, or, when its classes declare themselves, nothing
- * (the barrel is derived from the tree at the end of the command). On tsyringe, in both styles,
- * the routes of the context are listed in one file of their own, with the spec that holds the list:
- * no route answers the method and path of another.
+ * (the barrel is derived from the tree at the end of the command). On tsyringe the routes of the
+ * context are listed in one file of their own, with the spec that holds the list: no route answers
+ * the method and path of another. Declared controllers need no list: each one is its own registration.
  */
 function writeAssembly(ws: Workspace, { config, context }: ContextPlan, vars: RenderContext): void {
   const dir = `${config.contextsDir}/${context.kebab}`;
@@ -35,7 +36,7 @@ function writeAssembly(ws: Workspace, { config, context }: ContextPlan, vars: Re
     ws.create(`${dir}/${context.kebab}.module.ts`, renderTemplate(`context/module.${family}.ts.tpl`, vars));
   }
 
-  if (family !== 'manual' && config.stack.http !== 'none') {
+  if (family !== 'manual' && listsRoutes(config)) {
     ws.create(`${dir}/${routesFile(context.kebab)}`, renderTemplate('context/routes.ts.tpl', vars));
     ws.create(`${dir}/test/unit/${context.kebab}.routes.spec.ts`, renderTemplate('context/routes.spec.ts.tpl', vars));
   }

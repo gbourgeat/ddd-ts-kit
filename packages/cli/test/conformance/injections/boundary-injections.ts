@@ -61,7 +61,7 @@ export const BOUNDARY_INJECTIONS: readonly Injection[] = [
       {
         file: ADAPTER,
         where: 'start',
-        to: `import '${ALIAS}/presentation/http/search-notifications-line.dto${SOURCE_SUFFIX}';\n`,
+        to: `import '${ALIAS}/presentation/http/notifications/search-notifications/search-notifications.line${SOURCE_SUFFIX}';\n`,
       },
     ],
     checker: true,

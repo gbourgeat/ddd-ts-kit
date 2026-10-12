@@ -69,6 +69,7 @@ describe('shipped templates', () => {
         'builder',
         'command',
         'context',
+        'controller',
         'docs',
         'domain-error',
         'domain-event',

@@ -203,7 +203,7 @@ function projectIn(style: string, stack: (typeof STYLES)[number][1]): string {
 
   const root = tempDir(`describe-${style}`);
 
-  scaffoldEverything(root, stack);
+  scaffoldEverything(root, stack, ['--routes', 'functions']);
   projects.set(style, root);
 
   return root;

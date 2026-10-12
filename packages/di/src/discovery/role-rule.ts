@@ -6,6 +6,8 @@ export interface RoleRule {
   /** Folders of the context, relative to it, the files of this suffix belong in. */
   readonly folders: readonly string[];
   readonly roles: readonly Declaration['role'][];
+  /** True for a role of the edge: the suffix is read under `presentation/` and nowhere else, where `*.mapper.ts` is a persistence mapper. */
+  readonly scoped?: boolean;
 }
 
 export const ROLE_RULES: readonly RoleRule[] = [
@@ -29,4 +31,8 @@ export const ROLE_RULES: readonly RoleRule[] = [
   { suffix: 'repository', folders: ['infrastructure/persistence'], roles: ['repository'] },
   { suffix: 'gateway', folders: ['infrastructure'], roles: ['gateway'] },
   { suffix: 'adapter', folders: ['infrastructure'], roles: ['adapter'] },
+  { suffix: 'controller', folders: ['presentation'], roles: ['edge'], scoped: true },
+  { suffix: 'guard', folders: ['presentation'], roles: ['edge'], scoped: true },
+  { suffix: 'mapper', folders: ['presentation'], roles: ['edge'], scoped: true },
+  { suffix: 'serializer', folders: ['presentation'], roles: ['edge'], scoped: true },
 ];

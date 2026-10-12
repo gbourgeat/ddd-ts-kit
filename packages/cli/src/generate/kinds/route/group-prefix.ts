@@ -1,0 +1,25 @@
+import { CliError } from '../../../cli-error.js';
+import { toName } from '../../../naming/index.js';
+import type { Scope } from '../../scope.js';
+import { groupFile } from './group-file.js';
+
+const MAX_DEPTH = 8;
+
+/** The prefix a group written on disk gives its controllers: its own after the ones of its parents, read from the sources. */
+export function groupPrefix(scope: Scope, kebab: string, depth = 0): string {
+  const file = `${scope.dir}/${groupFile(kebab)}.ts`;
+  const source = scope.ws.read(file) ?? '';
+
+  if (!/@RouteGroup\s*\(/.test(source) || depth > MAX_DEPTH) {
+    throw new CliError(
+      `${file} declares no route group.`,
+      'A route group is an empty class carrying @RouteGroup of @ddd-ts-kit/http: create one with `ddd-ts-kit generate route-group <context> <Name> --prefix <path>` and pass --group <Name>.',
+    );
+  }
+
+  const parent = /\bparent:\s*([A-Za-z_$][\w$]*)/.exec(source)?.[1];
+  const own = /\bprefix:\s*['"]([^'"]*)['"]/.exec(source)?.[1] ?? '';
+  const above = parent === undefined ? '' : groupPrefix(scope, toName(parent.replace(/Routes$/, '')).kebab, depth + 1);
+
+  return `${above}${own}`;
+}

@@ -9,7 +9,7 @@ describe('docs: the reference of a CONTEXT.md', () => {
 
   beforeAll(() => {
     root = tempDir('docs-reference');
-    scaffoldEverything(root);
+    scaffoldEverything(root, undefined, ['--routes', 'functions']);
   });
 
   it('is written by the generators, between its markers, under its own heading', () => {

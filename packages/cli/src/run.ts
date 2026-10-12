@@ -4,6 +4,7 @@ import { affectedCommand } from './commands/affected.js';
 import { buildAliasesCommand } from './commands/build-aliases.js';
 import { checkFileCommand, explainCommand, rulesCommand } from './commands/check.js';
 import { checksCommand } from './commands/checks.js';
+import { controllersCommand } from './commands/controllers.js';
 import { depcruiseConfigCommand } from './commands/depcruise-config.js';
 import { describeCommand } from './commands/describe.js';
 import { docsCommand } from './commands/docs.js';
@@ -33,6 +34,7 @@ const COMMANDS: Readonly<Record<string, Command>> = {
   'depcruise-config': depcruiseConfigCommand,
   'build-aliases': buildAliasesCommand,
   'error-factories': errorFactoriesCommand,
+  controllers: controllersCommand,
   check: checksCommand,
   'check-file': checkFileCommand,
   rules: rulesCommand,
@@ -48,6 +50,7 @@ const USAGE = `Usage
                   [--broker none|rabbitmq|kafka|nats|redis|custom] [--cache none|redis] [--audit on|off]
                   [--errors none|sentry] [--logger stdout|pino|winston] [--style declared|explicit] [--assembly barrel|discovery]
                   [--dependencies signature|listed] [--refusals factories|classes]
+                  [--routes controllers|functions]
                   [--package-manager npm|pnpm] [--allow-no-outbox "<reason>"] [--import-alias '$<name>/']
                   [--import-extension none|js]
                   [--context <name>:<core|supporting|generic>]... [--dry-run] [--force]
@@ -62,6 +65,7 @@ const USAGE = `Usage
   ddd-ts-kit depcruise-config [--check|--write]
   ddd-ts-kit build-aliases [--project <tsconfig>]
   ddd-ts-kit error-factories --plan | --apply [--dry-run]
+  ddd-ts-kit controllers [<context>] [--dry-run]
   ddd-ts-kit affected [--base <git-ref>] [--head <git-ref>] [--format text|json|github|env]
   ddd-ts-kit check [paths...] [--rule <id>]... [--format text|json|github|gitlab] [--changed-since <git-ref>] [--self]
   ddd-ts-kit check --clean-only <dir>... [--rule <id>]... [--format text|json|github]
@@ -80,6 +84,9 @@ const NOTES = `  affected         what a pull request has to run: the contexts a
   error-factories  moves a project from one class per error to static factories on one error class per
                    concept: --plan writes error-factories.plan.json, where each class is given its concept;
                    --apply follows it (classes, specs, every usage, "stack.refusals" in the config)
+  controllers      moves the function routes of a project, or of one context, to controller classes: each
+                   <name>.route.ts becomes <resource>/<name>/<name>.controller.ts behind the route group of
+                   its resource, its schema files and its spec follow; a context is turned whole or not at all
   describe         one context as facts: use cases, routes, events, ports, policies, gateways, dependencies
   status           the next step of docs/architecture/plan.md, the slices of docs/architecture/slices.md by
                    status and by owner, and the TODO(domain), TODO(platform) and it.todo left in each context

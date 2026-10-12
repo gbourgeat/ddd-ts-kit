@@ -20,6 +20,7 @@ import {
   ORM_STACKS,
   PACKAGE_MANAGERS,
   REFUSAL_FORMS,
+  ROUTE_FORMS,
   STYLES,
   TEST_STACKS,
   VALIDATION_STACKS,
@@ -46,6 +47,7 @@ export function parseStack(stack: Record<string, unknown>): Stack {
     ci: choose('ci', CI_PLATFORMS, 'github'),
     ...parseChoices(choose, orm),
     refusals: choose('refusals', REFUSAL_FORMS, 'classes'),
+    routes: choose('routes', ROUTE_FORMS, 'functions'),
     packageManager: choose('packageManager', PACKAGE_MANAGERS, 'npm'),
   };
 }

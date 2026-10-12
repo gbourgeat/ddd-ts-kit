@@ -15,6 +15,8 @@ import { passEveryMessage } from '../authorization/pass-every-message.js';
 import { UseCaseDeclarations } from '../authorization/use-case-declarations.js';
 import { UseCaseGuard } from '../authorization/use-case-guard.js';
 import { cycleError } from '../checks/cycle-error.js';
+import { DeclaredEdges } from '../declared/declared-edges.js';
+import { edgesOf } from '../declared/edges-of.js';
 import { describeWiring } from '../description/describe-wiring.js';
 import type { WiringDescription } from '../description/wiring-description.js';
 import { WiringError } from '../errors/wiring-error.js';
@@ -70,6 +72,7 @@ export class ContainerApplication implements Application {
     this.provide(UseCaseGuard, passEveryMessage);
     this.provide(UseCaseDeclarations, { list: declarationsOf(wiring) });
     this.provide(DeclaredPolicies, { list: wiring.policies });
+    this.provide(DeclaredEdges, edgesOf(wiring));
 
     for (const binding of wiring.bindings.values()) {
       this.register(binding);

@@ -9,7 +9,6 @@ import { openTestDatabase, type TestDatabase } from '@/platform/database/open-te
 import { inProcessEvents } from '@/platform/events/in-process-events';
 import { AgendaProjection } from '@/contexts/scheduling/application/projections/agenda.projection';
 import { KnexCalendarRepository } from '@/contexts/scheduling/infrastructure/persistence/knex-calendar.repository';
-import { schedulingRoutes } from '@/contexts/scheduling/presentation/http/scheduling.routes';
 import { aCalendar } from '@/contexts/scheduling/test/builders/calendar.builder';
 
 const DAY = 24 * 60 * 60_000;
@@ -48,7 +47,6 @@ beforeAll(async () => {
     { events: inProcessEvents(), authenticator },
     {
       modules: [contextModule('scheduling', { ...schedulingDeclarations, AgendaProjection })],
-      routes: [schedulingRoutes],
     },
   );
 

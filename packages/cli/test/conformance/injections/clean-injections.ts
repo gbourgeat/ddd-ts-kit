@@ -26,8 +26,8 @@ export const CLEAN_INJECTIONS: readonly Injection[] = [
       { file: ROUTE, from: `\n${TO_LINE}`, to: '' },
       {
         file: ROUTE,
-        from: 'export function searchNotificationsRoute(',
-        to: `${TO_LINE}\nexport function searchNotificationsRoute(`,
+        from: '@Controller({',
+        to: `${TO_LINE}\n@Controller({`,
       },
     ],
     checker: true,

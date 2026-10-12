@@ -116,7 +116,7 @@ function undeclaredRole(file: SourceFile, role: DeclaredRole, inside: string): F
     {
       line: exported[0]?.line ?? 1,
       message: `"${path.posix.basename(file.path)}" exports no class carrying ${expected}.`,
-      fix: `Put ${expected}(...) from ${DECLARATIONS_ENTRY} above the exported class: in the declared style a class is registered by its declaration, and a role file without one is wired nowhere.`,
+      fix: `Put ${expected}(...) from ${role.entry ?? DECLARATIONS_ENTRY} above the exported class: in the declared style a class is registered by its declaration, and a role file without one is wired nowhere.`,
     },
   ];
 }

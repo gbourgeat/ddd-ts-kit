@@ -26,6 +26,12 @@ import { KnexDelegationRepository } from '@/contexts/identity/infrastructure/per
 import { KnexPersonRepository } from '@/contexts/identity/infrastructure/persistence/knex-person.repository';
 import { KnexPracticeRepository } from '@/contexts/identity/infrastructure/persistence/knex-practice.repository';
 import { TupleIdentityRelationships } from '@/contexts/identity/infrastructure/persistence/tuple-identity-relationships.repository';
+import { RegisterPersonController } from '@/contexts/identity/presentation/http/people/register-person/register-person.controller';
+import { AddMemberController } from '@/contexts/identity/presentation/http/practices/add-member/add-member.controller';
+import { GrantDelegationController } from '@/contexts/identity/presentation/http/practices/grant-delegation/grant-delegation.controller';
+import { OpenPracticeController } from '@/contexts/identity/presentation/http/practices/open-practice/open-practice.controller';
+import { RemoveMemberController } from '@/contexts/identity/presentation/http/practices/remove-member/remove-member.controller';
+import { RevokeDelegationController } from '@/contexts/identity/presentation/http/practices/revoke-delegation/revoke-delegation.controller';
 import { RelationTupleStore } from '@ddd-ts-kit/auth/rebac';
 import { Clock, CommandBus, ExecutionScope, IdGenerator, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
 import { KnexContext } from '@ddd-ts-kit/knex';
@@ -60,6 +66,12 @@ export * from '@/contexts/identity/infrastructure/persistence/knex-delegation.re
 export * from '@/contexts/identity/infrastructure/persistence/knex-person.repository';
 export * from '@/contexts/identity/infrastructure/persistence/knex-practice.repository';
 export * from '@/contexts/identity/infrastructure/persistence/tuple-identity-relationships.repository';
+export * from '@/contexts/identity/presentation/http/people/register-person/register-person.controller';
+export * from '@/contexts/identity/presentation/http/practices/add-member/add-member.controller';
+export * from '@/contexts/identity/presentation/http/practices/grant-delegation/grant-delegation.controller';
+export * from '@/contexts/identity/presentation/http/practices/open-practice/open-practice.controller';
+export * from '@/contexts/identity/presentation/http/practices/remove-member/remove-member.controller';
+export * from '@/contexts/identity/presentation/http/practices/revoke-delegation/revoke-delegation.controller';
 
 injected(AddMemberHandler, [PracticeRepository, PersonRepository, Clock]);
 injected(ExpireDelegationsHandler, [DelegationRepository]);
@@ -84,3 +96,9 @@ injected(KnexDelegationRepository, [KnexContext, ExecutionScope, Clock]);
 injected(KnexPersonRepository, [KnexContext, ExecutionScope, Clock]);
 injected(KnexPracticeRepository, [KnexContext, ExecutionScope, Clock]);
 injected(TupleIdentityRelationships, [RelationTupleStore]);
+injected(RegisterPersonController, [CommandBus]);
+injected(AddMemberController, [CommandBus]);
+injected(GrantDelegationController, [CommandBus]);
+injected(OpenPracticeController, [CommandBus]);
+injected(RemoveMemberController, [CommandBus]);
+injected(RevokeDelegationController, [CommandBus]);

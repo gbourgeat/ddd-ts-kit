@@ -14,6 +14,15 @@ class BookingError extends ConceptError {
     return BookingError.refusal('PATIENT_LIMIT_REACHED', 'The patient holds too many appointments.', { patientId });
   }
 
+  static unknownPatient(patientId: string, seenAt: Date, attempts: readonly number[]) {
+    return BookingError.refusal('UNKNOWN_PATIENT', `No patient ${patientId} at ${seenAt.toISOString()}.`, {
+      patientId,
+      seenAt,
+      attempts,
+      urgent: true,
+    });
+  }
+
   static agendaUnreadable(shard: string) {
     return BookingError.refusal('AGENDA_UNREADABLE', 'The agenda cannot be read.', { shard }).exposing('shard');
   }
@@ -44,6 +53,18 @@ describe('the facts of a refusal in the problem document', () => {
 
     expect(problem).not.toHaveProperty('facts');
     expect(JSON.stringify(problem)).not.toContain('patient-7');
+  });
+
+  it('answers a sentence made from the code when the message quotes a fact the factory did not expose', () => {
+    const quoted = toProblem(BookingError.unknownPatient('patient-7', startsAt, []), mapper, 'req-1');
+    const byInstant = toProblem(BookingError.unknownPatient('', startsAt, []), mapper, 'req-1');
+    const byNumber = toProblem(BookingError.unknownPatient('', new Date(0), [2026]), mapper, 'req-1');
+    const unquoted = toProblem(BookingError.patientLimitReached('patient-7'), mapper, 'req-1');
+
+    expect([quoted.detail, byInstant.detail, byNumber.detail]).toEqual(Array(3).fill('Unknown patient.'));
+    expect(JSON.stringify(quoted)).not.toContain('patient-7');
+    expect(unquoted.detail).toBe('The patient holds too many appointments.');
+    expect(toProblem(new Error('boom'), mapper, 'req-1')).not.toHaveProperty('detail');
   });
 
   it('hides a refusal mapped to a server fault, its exposed facts included', () => {

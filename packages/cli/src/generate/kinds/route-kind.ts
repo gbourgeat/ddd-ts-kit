@@ -11,13 +11,19 @@ import { wire } from '../wire.js';
 import { dtoClasses } from './route/dto-classes.js';
 import { findUseCase } from './route/find-use-case.js';
 import { parseEndpoint } from './route/parse-endpoint.js';
+import { planController } from './route/plan-controller.js';
 import { routeVars, type RouteParts } from './route/route-vars.js';
+import { writeController } from './route/write-controller.js';
+
+const USAGE =
+  '<context> <UseCaseName> --method <GET|POST|PUT|PATCH|DELETE> --path <path> [--command|--query] [--group <Name>] [--mapper] [--serializer]';
 
 export const routeKind: Kind = {
   name: 'route',
   aliases: [],
-  usage: 'route <context> <UseCaseName> --method <GET|POST|PUT|PATCH|DELETE> --path <path> [--command|--query]',
-  summary: 'An HTTP route calling an existing use case through its bus, its spec and its registration.',
+  usage: `route ${USAGE}`,
+  summary:
+    'An HTTP route calling an existing use case through its bus, with its spec: under "stack.routes": "controllers", a controller class in its folder, behind the guards of its route group; under "functions", a defineRoute function and its registration.',
   positionals: ['context', 'UseCaseName'],
   writesShared: false,
   run: (request) => {
@@ -25,9 +31,15 @@ export const routeKind: Kind = {
 
     assertHttpStack(scope);
 
-    const name = label(scope, request.args[1] ?? '', { what: 'use case', strip: ['route', 'handler'] });
+    const name = label(scope, request.args[1] ?? '', { what: 'use case', strip: ['route', 'controller', 'handler'] });
     const parts = { name, endpoint: parseEndpoint(request.flags), useCase: findUseCase(scope, name, request.flags) };
-    const { validation } = scope.config.stack;
+    const { validation, routes } = scope.config.stack;
+
+    if (routes === 'controllers' || request.asController === true) {
+      writeController(scope, planController(scope, parts));
+
+      return;
+    }
 
     const context = vars(scope, {
       name: named(name),
@@ -61,3 +73,13 @@ function routeOutputs(scope: Scope, { name, endpoint, useCase }: RouteParts): Ou
     ['route/route.spec.ts.tpl', `test/unit/${name.kebab}.route.spec.ts`],
   ];
 }
+
+/** The same as `route`, always as a controller class: for a project of function routes that moves one route at a time. */
+export const controllerKind: Kind = {
+  ...routeKind,
+  name: 'controller',
+  usage: `controller ${USAGE}`,
+  summary:
+    'A controller class calling an existing use case through its bus, whatever "stack.routes" says: its folder, its schemas, its spec, and its route group when it is new.',
+  run: (request) => routeKind.run({ ...request, asController: true }),
+};

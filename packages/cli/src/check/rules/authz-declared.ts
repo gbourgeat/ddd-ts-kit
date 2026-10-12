@@ -37,6 +37,7 @@ export const authzDeclared: Rule = {
       ...undeclaredRegistrations(file, project),
       ...undeclaredMessages(file, project),
       ...routesWithoutSecurity(file),
+      ...unguardedControllers(file),
     ]);
   },
   /** Modules wired by hand list their use cases in an authorization map: every command and query has to be in it. */
@@ -133,6 +134,36 @@ function routesWithoutSecurity(file: SourceFile): Finding[] {
 
     return [
       { line: file.scan.lineAt(match.index), message: 'The route does not declare its security.', fix: SECURITY_FIX },
+    ];
+  });
+}
+
+const CONTROLLER = /@Controller\s*\(/g;
+const ACCESS = /(?<![\w$.])(?:group|guards)\s*[:,}]/;
+
+/** A controller of the kit names its route group or its own guards: a route is never open by omission. */
+function unguardedControllers(file: SourceFile): Finding[] {
+  const { code } = file.scan;
+
+  const ofTheKit = file.scan.imports.some(({ specifier }) => specifier === '@ddd-ts-kit/http');
+
+  if (file.isTest || !file.path.endsWith('.controller.ts') || !ofTheKit) {
+    return [];
+  }
+
+  return [...code.matchAll(CONTROLLER)].flatMap((match) => {
+    const declaration = firstArgument(code, match.index + match[0].length).trim();
+
+    if (!declaration.startsWith('{') || declaration.includes('...') || ACCESS.test(declaration)) {
+      return [];
+    }
+
+    return [
+      {
+        line: file.scan.lineAt(match.index),
+        message: 'The controller names no route group and no guard: nothing says who may call its route.',
+        fix: 'Add `group: <Name>Routes` (a class carrying @RouteGroup, whose guards stand before the controller), or `guards: [Public]` when anybody may call the route on purpose.',
+      },
     ];
   });
 }

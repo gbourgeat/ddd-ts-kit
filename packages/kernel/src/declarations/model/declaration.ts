@@ -1,4 +1,5 @@
 import type { DomainEventHandlerDeclaration } from './domain-event-handler-declaration.js';
+import type { EdgeDeclaration } from './edge-declaration.js';
 import type { HandlerDeclaration } from './handler-declaration.js';
 import type { IntegrationEventHandlerDeclaration } from './integration-event-handler-declaration.js';
 import type { JobDeclaration } from './job-declaration.js';
@@ -16,4 +17,5 @@ export type Declaration =
   | PortDeclaration
   | PolicyDeclaration
   | JobDeclaration
-  | ProjectionDeclaration;
+  | ProjectionDeclaration
+  | EdgeDeclaration;

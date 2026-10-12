@@ -87,9 +87,9 @@ Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-ki
 
 ### Routes
 
-| Method | Path | Operation | Use case | Permission | Request | Responses | Errors |
-|---|---|---|---|---|---|---|---|
-| GET | `/notifications` | `searchNotifications` | `SearchNotifications` | `notification.read` | query | 200: `page of SearchNotificationsLine` | `UNAUTHORIZED`, `FORBIDDEN` |
+| Method | Path | Operation | Group | Guards | Use case | Permission | Request | Responses | Errors |
+|---|---|---|---|---|---|---|---|---|---|
+| GET | `/notifications` | `searchNotifications` | `NotificationsRoutes` | `Authenticated` | `SearchNotifications` | `notification.read` | query | 200: `page of SearchNotificationsLine` | `UNAUTHORIZED`, `FORBIDDEN` |
 
 ### Consumed events
 

@@ -117,7 +117,7 @@ describe('init --audit', () => {
       /decisions: auditDecisions\([\s\S]*commands: auditMiddleware\([\s\S]*subscriptions: auditIntegrationEvents\(/,
     );
 
-    expect(read(root, 'src/platform/audit/search-audit-entries.route.ts')).toContain("path: '/audit/entries'");
+    expect(read(root, 'src/platform/audit/search-audit-entries.controller.ts')).toContain("path: '/audit/entries'");
     expect(read(root, 'src/platform/audit/audit.module.ts')).toContain(".requires(auditPermissions['trail.read'])");
     expect(exists(root, 'src/platform/auth/log-decisions.ts')).toBe(false);
     expect(manifest(root).dependencies).toMatchObject({ '@ddd-ts-kit/audit': KIT_RANGE });
@@ -188,9 +188,9 @@ describe('generate query --search and generate adapter', () => {
       'abstract search(scope: AccessScope, page: PageRequest<SearchInvoicesSort>): Promise<SearchInvoicesResult>;',
     );
 
-    expect(read(root, 'src/contexts/billing/presentation/http/search-invoices.route.ts')).toMatch(
-      /pageQuerySchema\([\s\S]*pageSchemaOf\(line\)[\s\S]*pageResponse\(page,/,
-    );
+    expect(
+      read(root, 'src/contexts/billing/presentation/http/invoices/search-invoices/search-invoices.controller.ts'),
+    ).toMatch(/pageQuerySchema\([\s\S]*pageSchemaOf\(line\)[\s\S]*pageResponse\(page,/);
 
     expect(
       cli(root, 'generate', 'query', 'billing', 'SearchInvoiceLines', '--public', '--search', '--allow-name').code,

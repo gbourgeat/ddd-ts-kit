@@ -4,6 +4,72 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
+## 0.4.0
+
+**A route is a controller class with one method.** One class per route; its decorator is the
+single statement of the route, and the compiler holds `handle` to it:
+
+```ts
+@RouteGroup({ prefix: '/appointments', tags: ['scheduling'], guards: [Authenticated], errors: ['FORBIDDEN'] })
+export class AppointmentsRoutes {}
+
+@Controller({
+  group: AppointmentsRoutes,
+  method: 'POST',
+  path: '/',
+  summary: 'Book appointment',
+  body,
+  response: { status: 201, body: accepted },
+  errors: ['SLOT_TAKEN'],
+})
+export class BookAppointmentController {
+  constructor(
+    private readonly commands: CommandBus,
+    private readonly mapper: BookAppointmentMapper,
+  ) {}
+
+  async handle(request: HttpRequest<{ body: BookAppointmentBody }>): Promise<BookAppointmentAccepted> {
+    return { id: await this.commands.execute(this.mapper.map(request)) };
+  }
+}
+```
+
+- `@ddd-ts-kit/http`: `Controller`, `RouteGroup`, `Guard`, `Authenticated`, `Public`, `HasRole`,
+  `RequestMapper`, `Serializer`, `HttpRequest`, `controllerRoutes`, `controllerRoute`. A
+  controller becomes a `Route`: the adapters, validation, problem documents, the error mapper
+  and tracing are unchanged. `defineRoute` stays supported, and both forms run in one project.
+- Route groups carry a prefix, tags, guards and error codes, and a child group inherits. A
+  guard is a control at the edge; permissions stay on the use cases (`@Requires`). A controller
+  with no group and no guard is refused: `guards: [Public]` says a route is open.
+- `"stack.routes": "controllers" | "functions"` in the config, `init --routes`. A new project
+  writes controllers; a config without the key is read as `functions` and nothing changes for
+  it. `generate route` follows the key (`--group`, `--mapper`, `--serializer`), `generate
+  controller` always writes a class, `generate route-group` and `generate guard` are new, and
+  `ddd-ts-kit controllers [<context>] [--dry-run]` turns the function routes of a context into
+  controllers, files moved and imports rewritten.
+- `presentation/http/` has one folder per route, `<resource>/<use-case>/`, with the controller,
+  its schemas (`*.params.ts`, `*.body.ts`, `*.accepted.ts`, `*.answer.ts`, `*.line.ts`), its
+  `*.mapper.ts` and `*.serializer.ts`; groups are `<name>.routes.ts`, guards
+  `guards/*.guard.ts`, shared schemas `shared/`.
+- Controllers, guards, mappers and serializers are declared classes: `Edge` in
+  `@ddd-ts-kit/kernel/declarations`, `DeclaredEdges` in `@ddd-ts-kit/di`, and discovery reads
+  `presentation/`. The generated file of a context registers what each one is given, and a
+  declared context lists no route.
+- Rules: `presentation/controller-shape`, `presentation/controller-delegates`,
+  `presentation/guard-at-the-edge`; `authz/declared` and `errors/known-code` read controllers.
+- `describe` and the reference tables of `CONTEXT.md` list each route with its group and its
+  guards, next to its use case and its permission.
+
+**To do when upgrading.** Nothing for a project that keeps its function routes. A project
+initialised before this version that writes its first controller adds one line to
+`compose-application.ts`, which `ddd-ts-kit controllers` prints.
+
+**The `detail` of a problem no longer quotes a private fact.** The message of a refusal built
+by a factory is answered as `detail` unless it quotes a fact the factory did not expose; then
+the client reads a sentence made from the code (`INVALID_EMAIL` gives `Invalid email.`), and the
+message stays in logs and error reports. A client that parsed such a `detail` reads the `code`
+and the exposed `facts` instead. `RequestContext` gains an optional `rawHeaders`.
+
 ## 0.3.0
 
 **A domain error is built by a static factory named in the words of the business.** One error

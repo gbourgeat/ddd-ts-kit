@@ -14,6 +14,7 @@ export const STYLES = ['declared', 'explicit'] as const;
 export const ASSEMBLIES = ['barrel', 'discovery'] as const;
 export const DEPENDENCY_STATEMENTS = ['signature', 'listed'] as const;
 export const REFUSAL_FORMS = ['factories', 'classes'] as const;
+export const ROUTE_FORMS = ['controllers', 'functions'] as const;
 export const CACHE_STACKS = ['none', 'redis'] as const;
 export const AUDIT_MODES = ['on', 'off'] as const;
 export const ERROR_REPORTERS = ['none', 'sentry'] as const;
@@ -73,6 +74,14 @@ export interface Stack {
    * class: it is `classes`, and both forms run in either.
    */
   readonly refusals: (typeof REFUSAL_FORMS)[number];
+  /**
+   * How a route is written: `controllers`, one class per route decorated with `@Controller`,
+   * under a folder of its own with its schemas, behind the guards of its `@RouteGroup`;
+   * `functions`, one `defineRoute` function per route, listed in `<context>.routes.ts`. A config
+   * that says nothing was written when every route was a function: it is `functions`, and both
+   * forms run in either.
+   */
+  readonly routes: (typeof ROUTE_FORMS)[number];
   /**
    * What installs the dependencies and runs the scripts: every command the CLI writes (scripts,
    * pipelines, hooks, Dockerfile, guidance) is in its dialect. A config that says nothing was

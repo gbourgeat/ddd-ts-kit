@@ -45,6 +45,9 @@ import { portsImplementsNeverExtends } from './ports-implements-never-extends.js
 import { portsNoConcreteDependency } from './ports-no-concrete-dependency.js';
 import { portsNoTokenConstant } from './ports-no-token-constant.js';
 import { portsValueImport } from './ports-value-import.js';
+import { presentationControllerDelegates } from './presentation-controller-delegates.js';
+import { presentationControllerShape } from './presentation-controller-shape.js';
+import { presentationGuardAtTheEdge } from './presentation-guard-at-the-edge.js';
 import { purityNoAmbientRandomness, purityNoEnvironment, purityNoSystemClock } from './purity.js';
 import { schedulingJobName } from './scheduling-job-name.js';
 import { schedulingJobTriggersUseCase } from './scheduling-job-triggers-use-case.js';
@@ -106,6 +109,9 @@ const ALL = [
   schedulingJobName,
   importsAliasOnly,
   importsExtension,
+  presentationControllerShape,
+  presentationControllerDelegates,
+  presentationGuardAtTheEdge,
 ];
 
 /** Keyed by ESLint name: the id of docs/ARCHITECTURE.md with its slash replaced by a dash, or the name of a companion rule. */

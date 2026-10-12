@@ -151,9 +151,17 @@ describe('generate worker, run again and refused', () => {
 
 describe('generate service', () => {
   it.each([
-    [[], "{ modules: [contextModule('billing', billingDeclarations)], routes: [billingRoutes] }"],
+    [[], "{ modules: [contextModule('billing', billingDeclarations)] }"],
+    [
+      ['--routes', 'functions'],
+      "{ modules: [contextModule('billing', billingDeclarations)], routes: [billingRoutes] }",
+    ],
     [
       ['--assembly', 'discovery', '--broker', 'rabbitmq'],
+      "{ modules: [await discoverContext('billing', new URL('../../contexts/billing/', import.meta.url))] }",
+    ],
+    [
+      ['--assembly', 'discovery', '--broker', 'rabbitmq', '--routes', 'functions'],
       "{\n    modules: [await discoverContext('billing', new URL('../../contexts/billing/', import.meta.url))],\n    routes: [billingRoutes],\n  }",
     ],
     [['--style', 'explicit'], '{ modules: [billingModule], routes: [billingRoutes] }'],
@@ -177,7 +185,7 @@ describe('generate service', () => {
   });
 
   it('imports what its selection names, from the context and nowhere else', () => {
-    const root = initProject('--context', 'billing:core');
+    const root = initProject('--routes', 'functions', '--context', 'billing:core');
 
     cli(root, 'generate', 'service', 'billing');
     const service = read(root, 'src/apps/billing/main.ts');

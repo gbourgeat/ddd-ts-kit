@@ -23,8 +23,10 @@ interface Candidate extends RoleFile {
 }
 
 const SCANNED_LAYERS = ['application', 'infrastructure'];
+/** Where the classes of the edge live: only the suffixes of the edge are read there. */
+const EDGE_LAYER = 'presentation';
 /** What a context holds before its first use case: enough to know the directory is one. */
-const OTHER_LAYERS = ['domain', 'presentation', 'published-language'];
+const OTHER_LAYERS = ['domain', EDGE_LAYER, 'published-language'];
 
 /** The role files of a context, sorted by path, so that two machines and two runs wire it in the same order. */
 export async function roleFilesOf(root: string, selection: Selection): Promise<RoleFile[]> {
@@ -57,7 +59,7 @@ async function sourcesOf(root: string): Promise<string[]> {
     );
   }
 
-  return layers.flatMap((layer) => layer ?? []);
+  return [...layers.flatMap((layer) => layer ?? []), ...((await filesUnder(root, EDGE_LAYER)) ?? [])];
 }
 
 /** A context that was just declared has a published language, and nothing to wire yet: it is discovered as empty. */
@@ -95,7 +97,8 @@ function candidateOf(root: string, relative: string, extensions: readonly string
   }
 
   const stem = relative.slice(0, -String(extensions[rank]).length);
-  const rule = ROLE_RULES.find(({ suffix }) => stem.endsWith(`.${suffix}`));
+  const atTheEdge = relative.startsWith(`${EDGE_LAYER}/`);
+  const rule = ROLE_RULES.find(({ suffix, scoped }) => stem.endsWith(`.${suffix}`) && (scoped === true) === atTheEdge);
 
   if (rule === undefined) {
     return undefined;

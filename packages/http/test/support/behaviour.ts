@@ -1,6 +1,7 @@
 import { describe } from 'vitest';
 import { adapterClient } from './adapter-client.js';
 import { answersAsDeclared } from './behaviour-answers.js';
+import { mountsControllers } from './behaviour-controllers.js';
 import { refusesDuplicates } from './behaviour-duplicates.js';
 import { carriesIdentifiers } from './behaviour-identifiers.js';
 import { answersProblems } from './behaviour-problems.js';
@@ -15,5 +16,6 @@ export function describeAdapter(name: string, start: StartServer, readAuthorizat
     carriesIdentifiers(client);
     answersProblems(client);
     refusesDuplicates(start);
+    mountsControllers(start, readAuthorization);
   });
 }

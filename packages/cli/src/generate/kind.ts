@@ -38,6 +38,16 @@ export interface KindFlags {
   readonly reason?: string;
   /** When a domain event handler runs: `before-commit`, the default, or `after-commit`. */
   readonly phase?: string;
+  /** The route group of a controller, or the parent of a group, by its name. */
+  readonly group?: string;
+  /** The path prefix of a route group. */
+  readonly prefix?: string;
+  /** The role a route group requires of its callers. */
+  readonly role?: string;
+  /** A controller gets a request mapper of its own. */
+  readonly mapper: boolean;
+  /** A controller of a query gets a serializer of its own. */
+  readonly serializer: boolean;
 }
 
 export interface KindRequest {
@@ -46,6 +56,8 @@ export interface KindRequest {
   /** Positional arguments after the kind. */
   readonly args: readonly string[];
   readonly flags: KindFlags;
+  /** `generate controller`: a controller class is written whatever the form of routes the config records. */
+  readonly asController?: boolean;
 }
 
 export interface Kind {

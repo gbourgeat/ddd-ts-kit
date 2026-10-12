@@ -28,7 +28,6 @@ const BOOTSTRAPPED = [
   '.claude/rules/tests.md',
   'src/contexts/billing/CONTEXT.md',
   'src/contexts/billing/billing.declarations.ts',
-  'src/contexts/billing/presentation/http/billing.routes.ts',
   'src/contexts/billing/published-language/index.ts',
 ];
 
@@ -45,6 +44,12 @@ describe('init', () => {
     expect(created).not.toContain('src/contexts/billing/billing.module.ts');
     expect(walk(root)).toEqual([...created].sort());
     expect(read(root, 'src/contexts/billing/billing.declarations.ts')).toBe('export {};\n');
+    // Controllers declare themselves: nothing lists the routes of a declared context, and the composition root mounts what the contexts declare.
+    expect(created).not.toContain('src/contexts/billing/presentation/http/billing.routes.ts');
+
+    expect(read(root, 'src/platform/compose-application.ts')).toContain(
+      "controllerRoutes(container.resolve(DeclaredEdges).of('controller'), { resolve: container.resolve, security }),",
+    );
 
     expect(read(root, 'src/platform/compose-application.ts')).toContain(
       "contextModule('billing', billingDeclarations),",
@@ -102,7 +107,7 @@ describe('init', () => {
     );
 
     expect(read(root, 'knip.json')).toContain(
-      `"src/contexts/*/{published-language/index,*.dependencies,{application,infrastructure}/**/*.{${suffixes}}}.ts"`,
+      `"src/contexts/*/{published-language/index,*.dependencies,{application,infrastructure}/**/*.{${suffixes}},presentation/**/*.{controller,guard,mapper,serializer}}.ts"`,
     );
 
     expect(read(root, '.dependency-cruiser.cjs')).toContain(`(${suffixes.replaceAll(',', '|')})`);
@@ -168,6 +173,7 @@ describe('init, the choices it records and the ones it refuses', () => {
       errors: 'none',
       logger: 'stdout',
       refusals: 'factories',
+      routes: 'controllers',
       style: 'explicit',
       packageManager: 'pnpm',
     });

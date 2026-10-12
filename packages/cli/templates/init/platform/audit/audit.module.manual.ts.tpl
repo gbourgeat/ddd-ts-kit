@@ -1,10 +1,21 @@
 import { requires, type UseCaseDeclaration } from '@ddd-ts-kit/auth';
+{{#if audit.controller}}
+import { controllerRoutes, type Route } from '@ddd-ts-kit/http';
+{{/if}}
+{{#if audit.functionRoute}}
 import type { Route } from '@ddd-ts-kit/http';
+{{/if}}
 import type { Platform } from '{{alias.platform}}/platform{{alias.ext}}';
 import { auditPermissions } from '{{alias.platform}}/audit/audit.permissions{{alias.ext}}';
 import { SearchAuditEntriesHandler } from '{{alias.platform}}/audit/search-audit-entries.handler{{alias.ext}}';
 import { SearchAuditEntriesQuery } from '{{alias.platform}}/audit/search-audit-entries.query{{alias.ext}}';
+{{#if audit.functionRoute}}
 import { searchAuditEntriesRoute } from '{{alias.platform}}/audit/search-audit-entries.route{{alias.ext}}';
+{{/if}}
+{{#if audit.controller}}
+import { SearchAuditEntriesController } from '{{alias.platform}}/audit/search-audit-entries.controller{{alias.ext}}';
+import { securitySchemes } from '{{alias.platform}}/auth/security-schemes{{alias.ext}}';
+{{/if}}
 
 interface AuditWiring {
   readonly name: string;
@@ -34,6 +45,13 @@ export function auditModule(platform: Platform): AuditWiring {
     {{#unless authz.rebac}}
     useCases: [requires(SearchAuditEntriesQuery, auditPermissions['trail.read'])],
     {{/unless}}
+{{#if audit.functionRoute}}
     routes: [searchAuditEntriesRoute(platform.queries)],
+{{/if}}
+{{#if audit.controller}}
+    routes: controllerRoutes([new SearchAuditEntriesController(platform.queries)], {
+      security: Object.keys(securitySchemes),
+    }),
+{{/if}}
   };
 }

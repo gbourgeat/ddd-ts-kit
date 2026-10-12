@@ -1,4 +1,7 @@
 import { spawn, type ChildProcess } from 'node:child_process';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { read, scaffoldEverything, tempDir, write } from '../helpers.js';
 import { installAsPublished } from './install-as-published.js';
@@ -10,6 +13,12 @@ const HANDLER = `${BILLING}/application/commands/cancel-invoice/cancel-invoice.h
 const HANDLER_ALIAS = '@/contexts/billing/application/commands/cancel-invoice/cancel-invoice.handler';
 const PATIENCE_MS = 60_000;
 const SETTLE_MS = 3_000;
+/**
+ * The watcher talks to the process it starts through a socket it creates under the temporary
+ * directory, and the path of a socket is limited to about a hundred characters: the watcher is
+ * given a short directory of its own, whatever TMPDIR this run was started with.
+ */
+const SHORT_ROOT = fs.existsSync('/tmp') ? '/tmp' : os.tmpdir();
 
 /** What the process printed so far, and the process, to stop it with everything it started. */
 interface Watched {
@@ -27,8 +36,10 @@ interface Watched {
 describe.runIf(SLOW)('npm run dev, when a dependency is added to a constructor', () => {
   let root: string;
   let watched: Watched | undefined;
+  let sockets: string | undefined;
 
   beforeAll(() => {
+    sockets = fs.mkdtempSync(path.join(SHORT_ROOT, 'kit-'));
     root = tempDir('dev-reload');
     scaffoldEverything(root);
     installAsPublished(root);
@@ -54,6 +65,10 @@ describe.runIf(SLOW)('npm run dev, when a dependency is added to a constructor',
     if (watched?.process.pid !== undefined) {
       process.kill(-watched.process.pid, 'SIGKILL');
     }
+
+    if (sockets !== undefined) {
+      fs.rmSync(sockets, { recursive: true, force: true });
+    }
   });
 
   it(
@@ -62,7 +77,7 @@ describe.runIf(SLOW)('npm run dev, when a dependency is added to a constructor',
       const generated = read(root, HANDLER);
 
       write(root, HANDLER, probed(generated, '', "'given nothing'"));
-      watched = watch(root);
+      watched = watch(root, sockets ?? os.tmpdir());
 
       await printed(watched, 'PROBE given nothing');
 
@@ -91,11 +106,11 @@ describe.runIf(SLOW)('npm run dev, when a dependency is added to a constructor',
   );
 });
 
-function watch(root: string): Watched {
+function watch(root: string, temporary: string): Watched {
   const child = spawn('npm', ['run', 'dev'], {
     cwd: root,
     detached: true,
-    env: { ...process.env, OTEL_SDK_DISABLED: 'true', NO_COLOR: '1' },
+    env: { ...process.env, TMPDIR: temporary, OTEL_SDK_DISABLED: 'true', NO_COLOR: '1' },
   });
 
   const watched: Watched = { process: child, output: '' };

@@ -104,6 +104,13 @@ keep `@Injectable()` out of `domain/` and `application/`.
 dependencies and cycles before anything is instantiated: a `WiringError` names the port and
 the module.
 
+Controllers, guards, request mappers and serializers are declared classes too (`@Controller`,
+`@Guard`, `@RequestMapper`, `@Serializer` of `@ddd-ts-kit/http`): the generated file of the
+context exports them and registers what each constructor takes, and the composition root mounts
+every controller with `controllerRoutes(resolve(DeclaredEdges).of('controller'), { resolve })`.
+No file lists the routes of a declared context. In the explicit style the list of routes
+builds each controller by hand: `...controllerRoutes([new IssueInvoiceController(commands)])`.
+
 ## Tests
 
 ```ts
