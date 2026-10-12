@@ -4,6 +4,7 @@ import { headerOf } from '../route/header-of.js';
 import type { RouteInput } from '../route/route-input.js';
 import type { RouteOutput } from '../route/route-output.js';
 import type { Route } from '../route/route.js';
+import { withoutTrailingSlashes } from '../route/without-trailing-slashes.js';
 import type { SignedFileRoutesOptions } from './signed-file-routes-options.js';
 
 /**
@@ -16,7 +17,7 @@ import type { SignedFileRoutesOptions } from './signed-file-routes-options.js';
  * JSON file sent through a link would then be refused.
  */
 export function signedFileRoutes(storage: ServedFileStorage, options: SignedFileRoutesOptions = {}): readonly Route[] {
-  const path = (options.prefix ?? '/files').replace(/\/+$/, '');
+  const path = withoutTrailingSlashes(options.prefix ?? '/files');
   const common = { path, security: false as const, errors: ['FORBIDDEN'] };
 
   return [

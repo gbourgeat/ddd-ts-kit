@@ -13,6 +13,7 @@ import { ServedFileStorage } from '../../application/ports/served-file-storage.j
 import { SystemClock } from '../clock/system-clock.js';
 import type { SignedLinkOptions } from './signed-link-options.js';
 import { SignedFileTokens } from './signed-file-tokens.js';
+import { withoutTrailingSlashes } from './without-trailing-slashes.js';
 
 /** The signed links of the storages the application serves itself: one token per link, under `baseUrl`. */
 export abstract class SelfSignedFileStorage extends ServedFileStorage {
@@ -28,7 +29,7 @@ export abstract class SelfSignedFileStorage extends ServedFileStorage {
       options.clock ?? new SystemClock(),
     );
 
-    this.baseUrl = (options.baseUrl ?? 'http://localhost:3000/files').replace(/\/+$/, '');
+    this.baseUrl = withoutTrailingSlashes(options.baseUrl ?? 'http://localhost:3000/files');
   }
 
   signedDownloadUrl(key: string, options: DownloadUrlOptions): Promise<SignedUrl> {
