@@ -456,15 +456,18 @@ another tenant, even to a statement that forgot its condition.
 
 ```ts
 // the migration that creates the table
-await enableTenantIsolation(knex, INVOICES); // enable, force on the owner, policy `tenant_isolation`
+await enableTenantIsolation(knex, INVOICES); // enable, force on the owner, one policy per command
 
 // the composition root
 const unitOfWork = createKnexUnitOfWork(knex, undefined, { begin: tenantSession(executionScope) });
 ```
 
-`tenantSession` sets `ddd_ts_kit.tenant_id` and `ddd_ts_kit.reach` for each transaction only
-(`set_config(..., true)`), so a pooled connection never carries a tenant into the next one; the
-policy shows a read the rows of the reach and lets a write name its tenant only.
+`tenantSession` sets the tenant settings for each transaction only (`set_config(..., true)`), so
+a pooled connection never carries a tenant into the next one: `ddd_ts_kit.tenant_id`, and for an
+elevation `ddd_ts_kit.reach` (the tenants listed) or `ddd_ts_kit.every_tenant`. There is one
+policy per command: a select sees the tenant of the work and what an elevation reaches; an
+insert, an update and a delete only ever touch the tenant of the work, so an elevated
+`delete from invoices` without a condition removes no other tenant's row.
 `tenantIsolationStatements(target)` gives the SQL for a migration written by hand. Three
 conditions hold it: the application connects with a role that is **not a superuser and has no
 `BYPASSRLS`** (both ignore every policy); every statement runs **inside the unit of work** (a

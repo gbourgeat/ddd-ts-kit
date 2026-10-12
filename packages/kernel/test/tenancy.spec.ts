@@ -176,6 +176,15 @@ describe('keys of shared stores', () => {
     expect(scope.run(ofAda, () => tenantCacheKey<number>(scope, 'quote', 'EUR')).name).toBe('tenant:acme:quote:EUR');
     expect(() => scope.run(ofStaff, () => tenantKey(scope, 'login'))).toThrow(NoCurrentTenantError);
   });
+
+  it('never meet for two lists of segments, whatever the segments hold', () => {
+    const scope = new AsyncLocalStorageExecutionScope();
+    const joined = scope.run(ofAda, () => tenantKey(scope, 'products:x'));
+    const split = scope.run(ofAda, () => tenantKey(scope, 'products', 'x'));
+
+    expect(joined).toBe('tenant:acme:products%3Ax');
+    expect(split).toBe('tenant:acme:products:x');
+  });
 });
 
 describe('per-tenant work', () => {

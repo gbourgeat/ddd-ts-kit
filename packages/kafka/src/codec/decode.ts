@@ -1,4 +1,4 @@
-import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
+import { isTenantId, type IntegrationEvent } from '@ddd-ts-kit/kernel';
 
 /** The envelope exactly as published, or `undefined` for a value that is not one (poison). */
 export function decode(value: Buffer | null): IntegrationEvent | undefined {
@@ -16,7 +16,7 @@ export function decode(value: Buffer | null): IntegrationEvent | undefined {
     payload: body.payload,
     ...(typeof body.traceparent === 'string' ? { traceparent: body.traceparent } : {}),
     ...(typeof body.correlationId === 'string' ? { correlationId: body.correlationId } : {}),
-    ...(typeof body.tenantId === 'string' ? { tenantId: body.tenantId } : {}),
+    ...(isTenantId(body.tenantId) ? { tenantId: body.tenantId } : {}),
   };
 }
 
@@ -49,7 +49,9 @@ function isEnvelope(body: unknown): body is Envelope {
     hasText(body, 'type') &&
     hasText(body, 'occurredAt') &&
     'version' in body &&
-    typeof body.version === 'number'
+    typeof body.version === 'number' &&
+    // A tenant outside the grammar could widen what the consumer reaches: the envelope is poison.
+    (!('tenantId' in body) || body.tenantId === undefined || isTenantId(body.tenantId))
   );
 }
 

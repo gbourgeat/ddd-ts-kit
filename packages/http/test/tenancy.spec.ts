@@ -137,6 +137,25 @@ describe('a request in the tenant it names', () => {
 
     expect(own.seen.execution?.tenantId).toBe('acme');
   });
+
+  it('answers 404 to a tenant id that could widen a read, anonymous or not, before any handler', async () => {
+    for (const [tenantId, principal] of [
+      ['*', undefined],
+      ['acme,globex', undefined],
+      ['acme:products', undefined],
+      ['*', ada],
+    ] as const) {
+      const { route, seen } = recordingRoute();
+
+      const response = await executeRoute(route, request({ 'x-tenant-id': tenantId }, { tenantId: 'x' }), {
+        resolveTenant: tenantFromHeader(),
+        ...(principal === undefined ? {} : { resolvePrincipal: () => principal }),
+      });
+
+      expect(response.status).toBe(404);
+      expect(seen.execution).toBeUndefined();
+    }
+  });
 });
 
 describe('TenantMember', () => {

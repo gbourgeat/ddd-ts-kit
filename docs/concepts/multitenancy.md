@@ -27,6 +27,13 @@ plans. It lives in tables without a tenant column, and the work that reads it na
 | Scheduled job | none for a `global` job; each tenant of the `TenantDirectory` in turn for a `per-tenant` one |
 | Platform staff | none of their own: they reach tenants through an explicit, audited elevation |
 
+A tenant id has one grammar, `isTenantId`: letters, digits, `_` and `-`, at most 63 characters
+(a slug or a UUID). Every entry refuses any other: the edge answers 404 to a request that names
+one, a broker treats an envelope that carries one as poison, and `executionContext`,
+`acrossTenants`, `InMemoryTenantDirectory` and the settings of row-level security throw
+`InvalidTenantIdError`. Nothing a tenant id holds can then be read as a wildcard (`*`), a list
+(`a,b`) or a part of a key (`a:b`).
+
 `tenantScopeOf(scope)` answers the one tenant a write names and refuses work that names none
 (`NoCurrentTenantError`): a statement cannot run unscoped by omission. `tenantReachOf(scope)` is
 the read side: the tenant of the work, or the tenants of an elevation.
@@ -49,7 +56,7 @@ on PostgreSQL:
 | Strategy | Knex | Drizzle | Prisma | TypeORM |
 |---|---|---|---|---|
 | Shared tables | `tenantTable`, `ownTenantTable`, `whereTenant`; read models with `tenant` | `tenantCondition`, `ownTenantCondition`; read models with `tenant` | by hand: `tenantScopeOf` and `tenantReachOf` in every statement, no helper, no contract run | by hand, as Prisma |
-| Row-level security | `enableTenantIsolation`, `tenantSession` | `tenantPolicy`, `forceRowLevelSecurity`, `tenantSession` | not shipped | not shipped |
+| Row-level security | `enableTenantIsolation`, `tenantSession` | `tenantPolicies`, `forceRowLevelSecurity`, `tenantSession` | not shipped | not shipped |
 | Schema per tenant | `tenantSchemaTable`, `migrateTenantSchema`, `tenantSearchPath` | not shipped: a drizzle table is bound to its schema where it is declared | not shipped | not shipped |
 | Database per tenant | `TenantDatabases`, `createTenantRoutedUnitOfWork`, `migrateEveryTenant` | not shipped | not shipped | not shipped |
 
@@ -66,7 +73,10 @@ Three rules hold whatever the strategy:
 
 - **Reads may widen, writes never.** An elevation widens what a read reaches; an update or a
   delete always names the one tenant of the work (`ownTenantTable`, `ownTenantCondition`), so a
-  staff session reading across tenants cannot write across them.
+  staff session reading across tenants cannot write across them. Under row-level security the
+  database holds it too: one policy per command, the select reading the reach, the insert, the
+  update and the delete only the tenant (`ddd_ts_kit.tenant_id`), and the reach of an elevation
+  kept in settings of its own that work which is not elevated leaves empty.
 - **No tenant, no data.** Work that names no tenant is refused before any SQL
   (`NoCurrentTenantError`) on shared tables and schemas, and reaches no database at all on
   database per tenant. Under row-level security, a statement without the tenant settings sees
@@ -86,8 +96,9 @@ Three rules hold whatever the strategy:
   per-tenant job runs once per tenant, one after the other, each run in that tenant's scope; one
   tenant failing does not stop the others.
 - **Caches, rate limits and locks.** A key of a shared store is confined to the tenant:
-  `tenantCacheKey(scope, ...)`, `tenantKey(scope, ...)`. A key built without it is shared by
-  every tenant, which is right for platform data only.
+  `tenantCacheKey(scope, ...)`, `tenantKey(scope, ...)`, each segment percent-encoded so that
+  two lists of segments never give one key. A key built without it is shared by every tenant,
+  which is right for platform data only.
 - **Logs, traces, error reports and the audit trail.** `logFieldsOf` writes `tenantId` on every
   line; the audit trail keeps one hash chain per tenant (`tenant:<id>`), so that a tenant's
   history can be handed over and verified alone.
@@ -99,7 +110,8 @@ subdomain (`acme.app.example.com`), a header (`x-tenant-id`), a path segment
 (`/tenants/:tenantId/...`) or the claim of the token, or the first of several. Whatever names
 it, the pipeline checks it against the memberships of the caller before anything runs, and
 answers 403 to a caller that does not belong to it: the tenant a client asks for is a request,
-never an authority. The guard `TenantMember` keeps a group of routes for the members of the tenant
+never an authority. An authenticated caller is held to its tenants on public routes too; an
+anonymous caller keeps the tenant it addressed there. The guard `TenantMember` keeps a group of routes for the members of the tenant
 of the request.
 
 Which to choose: the claim alone when a user belongs to one tenant; a subdomain when tenants

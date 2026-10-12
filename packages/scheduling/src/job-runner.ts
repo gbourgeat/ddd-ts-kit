@@ -125,7 +125,7 @@ export class JobRunner {
     );
   }
 
-  private inTenant(job: RegisteredJob, { started, signal, tenantId }: TenantRun): Promise<void> {
+  private async inTenant(job: RegisteredJob, { started, signal, tenantId }: TenantRun): Promise<void> {
     const { occurrence, startedAt, correlationId } = started;
     const { scheduledAt } = occurrence;
     const { timeoutMs } = job.policy;

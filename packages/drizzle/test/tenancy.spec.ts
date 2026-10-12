@@ -5,8 +5,9 @@ import { PgDialect, getTableConfig } from 'drizzle-orm/pg-core';
 import { drizzle, type PgliteQueryResultHKT } from 'drizzle-orm/pglite';
 import {
   AsyncLocalStorageExecutionScope,
+  InvalidTenantIdError,
   NoCurrentTenantError,
-  TENANT_ISOLATION_POLICY,
+  TENANT_ISOLATION_POLICIES,
   type UnitOfWork,
 } from '@ddd-ts-kit/kernel';
 import { anExecutionContext, asTenant, scoped } from '@ddd-ts-kit/testing';
@@ -16,7 +17,7 @@ import {
   DrizzleReadModelTable,
   createDrizzleUnitOfWork,
   forceRowLevelSecurity,
-  tenantPolicy,
+  tenantPolicies,
   tenantSession,
 } from '../src/postgres.js';
 import { Invoice } from './support/billing-core/domain/invoice.js';
@@ -32,17 +33,19 @@ const dialect = new PgDialect();
 const render = (fragment: SQL | undefined): string =>
   fragment === undefined ? '' : dialect.sqlToQuery(fragment.inlineParams()).sql;
 
-/** The policy as drizzle-kit would write it from `tenantPolicy`, then the statement it does not write. */
+/** The policies as drizzle-kit would write them from `tenantPolicies`, then the statement it does not write. */
 function rowLevelSecurityOf(): string[] {
-  const policy = tenantPolicy(invoices.tenantId);
   const { schema, name } = getTableConfig(invoices);
   const table = `"${schema ?? 'public'}"."${name}"`;
 
-  return [
-    `alter table ${table} enable row level security`,
-    `create policy "${policy.name}" on ${table} as permissive for all using (${render(policy.using)}) with check (${render(policy.withCheck)})`,
-    forceRowLevelSecurity(invoices),
-  ];
+  const policies = tenantPolicies(invoices.tenantId).map((policy) => {
+    const using = policy.using === undefined ? '' : ` using (${render(policy.using)})`;
+    const withCheck = policy.withCheck === undefined ? '' : ` with check (${render(policy.withCheck)})`;
+
+    return `create policy "${policy.name}" on ${table} as permissive for ${policy.for ?? 'all'}${using}${withCheck}`;
+  });
+
+  return [`alter table ${table} enable row level security`, ...policies, forceRowLevelSecurity(invoices)];
 }
 
 /** Shared tables, then the same tables under row-level security, each in a PGlite of its own. */
@@ -140,11 +143,52 @@ describe('row-level security on drizzle', () => {
     expect(await asTenant(scope, 'acme', () => secured.db.select({ id: invoices.id }).from(invoices))).toEqual([]);
   });
 
-  it('declares the policy drizzle-kit generates, and forces it on the owner', () => {
-    const policy = tenantPolicy(invoices.tenantId);
+  it('lets an elevated statement read every reached tenant, and update or delete none but its own', async () => {
+    const elevated = anExecutionContext().ofTenant('initech').elevatedOver('all');
+    const context = unitOfWork();
 
-    expect(policy.name).toBe(TENANT_ISOLATION_POLICY);
-    expect(render(policy.withCheck)).toBe(`"tenant_id" = current_setting('ddd_ts_kit.tenant_id', true)`);
+    const seen = await scoped(scope, elevated, () =>
+      context.run(async () => {
+        await context.executor().update(invoices).set({ tenantId: 'initech', amount: 0 });
+        await context.executor().delete(invoices);
+
+        return context
+          .executor()
+          .select({ id: invoices.id, amount: invoices.amount })
+          .from(invoices)
+          .orderBy(invoices.id);
+      }),
+    );
+
+    expect(seen).toEqual([
+      { id: 'inv-acme', amount: 1 },
+      { id: 'inv-globex', amount: 1 },
+    ]);
+  });
+
+  it('refuses a context whose tenant id could widen the reach, before any SQL', async () => {
+    for (const tenantId of ['*', 'acme,globex', 'acme:products']) {
+      const context = unitOfWork();
+      const forged = { ...anExecutionContext().build(), tenantId };
+
+      await expect(scoped(scope, forged, () => context.run(async () => undefined))).rejects.toThrow(
+        InvalidTenantIdError,
+      );
+    }
+  });
+
+  it('declares one policy per command, which drizzle-kit generates, and forces them on the owner', () => {
+    const policies = tenantPolicies(invoices.tenantId);
+    const write = `"tenant_id" = current_setting('ddd_ts_kit.tenant_id', true)`;
+
+    expect(policies.map((policy) => [policy.name, policy.for])).toEqual([
+      [TENANT_ISOLATION_POLICIES.select, 'select'],
+      [TENANT_ISOLATION_POLICIES.insert, 'insert'],
+      [TENANT_ISOLATION_POLICIES.update, 'update'],
+      [TENANT_ISOLATION_POLICIES.delete, 'delete'],
+    ]);
+
+    expect(render(policies[3]?.using)).toBe(write);
     expect(forceRowLevelSecurity(invoices)).toBe('alter table "billing_core"."invoices" force row level security;');
   });
 });

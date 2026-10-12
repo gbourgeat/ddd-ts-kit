@@ -81,3 +81,4 @@ export { tenantFromPath } from './tenancy/tenant-from-path.js';
 export { tenantFromSubdomain } from './tenancy/tenant-from-subdomain.js';
 export type { TenantRequest } from './tenancy/tenant-request.js';
 export type { TenantResolver } from './tenancy/tenant-resolver.js';
+export { UnknownTenantError } from './tenancy/unknown-tenant-error.js';

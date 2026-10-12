@@ -1,7 +1,5 @@
+import { isTenantId } from '@ddd-ts-kit/kernel';
 import { InvalidTenantIdentifierError } from './invalid-tenant-identifier-error.js';
-
-/** Letters, digits, `_` and `-`: what a slug or a UUID is made of, and nothing a schema name would have to escape. */
-const TENANT_IDENTIFIER = /^[A-Za-z0-9_-]+$/;
 
 /** The longest identifier PostgreSQL keeps whole: a longer one is truncated, and two tenants could meet. */
 const LONGEST_IDENTIFIER = 63;
@@ -9,12 +7,12 @@ const LONGEST_IDENTIFIER = 63;
 /**
  * The schema of a context for one tenant, under the schema-per-tenant strategy:
  * `tenantSchemaOf('billing', 'acme')` is `billing__acme`. A tenant id that a schema name could
- * not hold as it is (another character, or too long) is refused, never altered: two tenants
+ * not hold as it is (outside the grammar of `isTenantId`, or too long with the base) is refused, never altered: two tenants
  * must never share a schema.
  */
 export function tenantSchemaOf(base: string, tenantId: string): string {
-  if (!TENANT_IDENTIFIER.test(tenantId)) {
-    throw new InvalidTenantIdentifierError(tenantId, 'only letters, digits, "_" and "-" are kept as they are');
+  if (!isTenantId(tenantId)) {
+    throw new InvalidTenantIdentifierError(tenantId, 'it is outside the grammar of isTenantId');
   }
 
   const schema = `${base}__${tenantId}`;

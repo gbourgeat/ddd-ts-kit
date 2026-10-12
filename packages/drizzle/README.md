@@ -397,18 +397,19 @@ statement instead of one written by hand:
 Inserts spread `tenantScopeOf(this.scope)`. A read model of tenant data passes `tenant: { scope,
 column: table.tenantId }` to `DrizzleReadModelTable` and `DrizzleReadModelStore`.
 
-**Row-level security**, the second line: the policy is declared with the table, so drizzle-kit
-generates it, and the unit of work sets the tenant of each transaction.
+**Row-level security**, the second line: the policies (one per command: a select sees the reach of
+the work, an insert, an update and a delete only its one tenant) are declared with the table, so
+drizzle-kit generates them, and the unit of work sets the tenant of each transaction.
 
 ```ts
 export const invoices = billing
-  .table('invoices', { /* ... */ ...tenantColumn() }, (table) => [tenantPolicy(table.tenantId)])
+  .table('invoices', { /* ... */ ...tenantColumn() }, (table) => [...tenantPolicies(table.tenantId)])
   .enableRLS();
 
 const unitOfWork = createDrizzleUnitOfWork(db, undefined, { begin: tenantSession(executionScope) });
 ```
 
-drizzle-kit does not force a policy on the owner of the table: `forceRowLevelSecurity(invoices)`
+drizzle-kit does not force the policies on the owner of the table: `forceRowLevelSecurity(invoices)`
 is the statement of a custom migration (`drizzle-kit generate --custom`), or the application
 connects with a role that does not own the tables. In every case that role is not a superuser and
 has no `BYPASSRLS`, and every statement runs inside the unit of work: one outside of a transaction

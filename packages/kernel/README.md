@@ -797,13 +797,14 @@ persistence packages, and the whole picture in
 
 | Concept | What it does |
 |---|---|
+| `isTenantId(value)`, `assertTenantId(id)`, `InvalidTenantIdError` | the one grammar of a tenant id (letters, digits, `_`, `-`, at most 63): `executionContext`, `executionContextOfEvent`, `acrossTenants`, `InMemoryTenantDirectory`, `tenantScopeOf`, `tenantReachOf` and the row-level security settings refuse any other, so that no tenant id can be read as a wildcard, a list or a key separator |
 | `tenantScopeOf(scope)` | the one tenant a write names; `NoCurrentTenantError` for work that names none |
 | `tenantReachOf(scope)` | what a read may see: `{ kind: 'tenant', tenantId }`, or `{ kind: 'elevated', tenants }` under an elevation |
 | `tenantsOf(actor)`, `isTenantMember(actor, tenantId)` | the tenants an actor belongs to: its `tenantId` and its `tenants` attribute |
 | `acrossTenants({ scope, trail, clock, ids }, { reason, tenants }, work)` | platform staff reading over tenants: refused without a reason or a tenant, recorded in the `AuditTrail` (action `tenancy:elevate`) before the work runs; writes still name one tenant |
-| `tenantKey(scope, ...segments)`, `tenantCacheKey(scope, ...segments)` | keys of rate limits, locks and caches confined to the tenant |
+| `tenantKey(scope, ...segments)`, `tenantCacheKey(scope, ...segments)` | keys of rate limits, locks and caches confined to the tenant: `tenant:<id>:<segments>`, each segment percent-encoded, so that two lists of segments never give one key |
 | `TenantDirectory`, `InMemoryTenantDirectory` | the tenants that exist, for per-tenant jobs, provisioning and migrations |
-| `TENANT_SETTINGS`, `tenantSettingValues(context)`, `TENANT_ISOLATION_POLICY`, `tenantPolicyExpressions(column)` | what the row-level security of the persistence packages shares: the two settings of a transaction (`ddd_ts_kit.tenant_id`, `ddd_ts_kit.reach`), their values for the work in progress, the name and the expressions of the policy |
+| `TENANT_SETTINGS`, `tenantSettingValues(context)`, `TENANT_ISOLATION_POLICIES`, `tenantPolicyExpressions(column)` | what the row-level security of the persistence packages shares: the three settings of a transaction (`ddd_ts_kit.tenant_id`, and for an elevation only `ddd_ts_kit.reach` and `ddd_ts_kit.every_tenant`), their values for the work in progress, the names of the four policies (one per command) and their `read` and `write` expressions |
 
 An elevation is never implied by a role: the platform decides the permission to elevate (a use
 case or a guard), then calls `acrossTenants`. A trail that fails to record it refuses it.

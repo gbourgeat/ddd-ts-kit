@@ -25,6 +25,6 @@ export * from './postgres/read-model/drizzle-read-model-store.js';
 export * from './postgres/tenancy/sql-executor.js';
 export * from './postgres/tenancy/tenant-condition.js';
 export * from './postgres/tenancy/own-tenant-condition.js';
-export * from './postgres/tenancy/tenant-policy.js';
+export * from './postgres/tenancy/tenant-policies.js';
 export * from './postgres/tenancy/force-row-level-security.js';
 export * from './postgres/tenancy/tenant-session.js';

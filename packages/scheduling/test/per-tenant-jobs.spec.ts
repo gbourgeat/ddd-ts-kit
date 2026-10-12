@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { InMemoryTenantDirectory, InvalidJobScheduleError, type JobExecution } from '@ddd-ts-kit/kernel';
+import {
+  InMemoryTenantDirectory,
+  InvalidJobScheduleError,
+  TenantDirectory,
+  type JobExecution,
+} from '@ddd-ts-kit/kernel';
 import { aBench } from './support/a-bench.js';
 import { LedgerClosed } from './support/ledger-closed.js';
 import { MINUTE } from './support/durations.js';
@@ -59,6 +64,25 @@ describe('a job declared per tenant', () => {
     expect(scheduler.runs).toMatchObject([{ outcome: 'failed', errorCode: 'LEDGER_CLOSED' }]);
   });
 
+  it('refuses a tenant id of the directory outside the grammar, and runs the others', async () => {
+    const { scheduler } = aBench({ tenants: new ListedTenants(['acme', '*', 'globex']) });
+    const ran: string[] = [];
+
+    scheduler.register({
+      name: REMINDERS,
+      schedule: QUARTERLY,
+      tenancy: 'per-tenant',
+      run: async ({ tenantId = 'none' }) => {
+        ran.push(tenantId);
+      },
+    });
+
+    const run = await scheduler.runNow(REMINDERS);
+
+    expect(ran).toEqual(['acme', 'globex']);
+    expect(run).toMatchObject({ outcome: 'failed', errorCode: 'UNEXPECTED_ERROR' });
+  });
+
   it('stops before the next tenant once its run is aborted', async () => {
     const { scheduler } = aBench({ tenants: new InMemoryTenantDirectory(['acme', 'globex']) });
     const ran: string[] = [];
@@ -101,3 +125,14 @@ describe('a job declared per tenant', () => {
     expect(tenant).toBeUndefined();
   });
 });
+
+/** A directory backed by storage, which the kit does not trust to hold only well-formed ids. */
+class ListedTenants extends TenantDirectory {
+  constructor(private readonly ids: readonly string[]) {
+    super();
+  }
+
+  tenants(): Promise<readonly string[]> {
+    return Promise.resolve(this.ids);
+  }
+}

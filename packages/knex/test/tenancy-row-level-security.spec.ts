@@ -1,6 +1,6 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { Knex } from 'knex';
-import { AsyncLocalStorageExecutionScope, TENANT_ISOLATION_POLICY } from '@ddd-ts-kit/kernel';
+import { AsyncLocalStorageExecutionScope, InvalidTenantIdError, TENANT_ISOLATION_POLICIES } from '@ddd-ts-kit/kernel';
 import { anExecutionContext, asTenant, scoped } from '@ddd-ts-kit/testing';
 import { tenantIsolationContract } from '@ddd-ts-kit/testing/contracts';
 import { createKnexUnitOfWork, enableTenantIsolation, tenantSession, type KnexUnitOfWork } from '../src/index.js';
@@ -106,6 +106,36 @@ describe('row-level security', () => {
     expect(job).toEqual([]);
   });
 
+  it('lets an elevated statement read every reached tenant, and update or delete none but its own', async () => {
+    const context = unitOfWork();
+    const elevated = anExecutionContext().ofTenant('initech').elevatedOver(['acme', 'globex']);
+
+    const seen = await scoped(scope, elevated, () =>
+      context.run(async () => {
+        await invoicesIn(context).update({ tenant_id: 'initech', amount: 0 });
+        await invoicesIn(context).delete();
+
+        return invoicesIn(context).select('id', 'amount').orderBy('id');
+      }),
+    );
+
+    expect(seen).toEqual([
+      { id: 'inv-a', amount: 1 },
+      { id: 'inv-g', amount: 1 },
+    ]);
+  });
+
+  it('refuses a context whose tenant id could widen the reach, before any SQL', async () => {
+    for (const tenantId of ['*', 'acme,globex', 'acme:products']) {
+      const context = unitOfWork();
+      const forged = { ...anExecutionContext().build(), tenantId };
+
+      await expect(scoped(scope, forged, () => context.run(async () => undefined))).rejects.toThrow(
+        InvalidTenantIdError,
+      );
+    }
+  });
+
   it('sets the tenant for the transaction only, never for the next one on the connection', async () => {
     const context = unitOfWork();
 
@@ -120,9 +150,9 @@ describe('row-level security', () => {
 });
 
 describe('the policy of a table', () => {
-  it('is enabled, forced on the owner, and named', async () => {
-    const policies = await application.raw<{ rows: { policyname: string }[] }>(
-      "select policyname from pg_policies where schemaname = ? and tablename = 'invoices'",
+  it('is enabled, forced on the owner, and one per command', async () => {
+    const policies = await application.raw<{ rows: { policyname: string; cmd: string }[] }>(
+      "select policyname, cmd from pg_policies where schemaname = ? and tablename = 'invoices' order by policyname",
       [BILLING],
     );
 
@@ -131,7 +161,13 @@ describe('the policy of a table', () => {
       [`${BILLING}.invoices`],
     );
 
-    expect(policies.rows).toEqual([{ policyname: TENANT_ISOLATION_POLICY }]);
+    expect(policies.rows).toEqual([
+      { policyname: TENANT_ISOLATION_POLICIES.delete, cmd: 'DELETE' },
+      { policyname: TENANT_ISOLATION_POLICIES.insert, cmd: 'INSERT' },
+      { policyname: TENANT_ISOLATION_POLICIES.select, cmd: 'SELECT' },
+      { policyname: TENANT_ISOLATION_POLICIES.update, cmd: 'UPDATE' },
+    ]);
+
     expect(flags.rows).toEqual([{ relrowsecurity: true, relforcerowsecurity: true }]);
   });
 });

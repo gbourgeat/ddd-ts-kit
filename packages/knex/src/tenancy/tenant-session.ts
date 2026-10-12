@@ -9,13 +9,15 @@ import { TENANT_SETTINGS, tenantSettingValues, type ExecutionScope } from '@ddd-
  */
 export function tenantSession(scope: ExecutionScope): (transaction: Knex.Transaction) => Promise<void> {
   return async (transaction) => {
-    const { tenant, reach } = tenantSettingValues(scope.current());
+    const { tenant, reach, everyTenant } = tenantSettingValues(scope.current());
 
-    await transaction.raw('select set_config(?, ?, true), set_config(?, ?, true)', [
+    await transaction.raw('select set_config(?, ?, true), set_config(?, ?, true), set_config(?, ?, true)', [
       TENANT_SETTINGS.tenant,
       tenant,
       TENANT_SETTINGS.reach,
       reach,
+      TENANT_SETTINGS.everyTenant,
+      everyTenant,
     ]);
   };
 }

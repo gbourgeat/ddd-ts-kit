@@ -10,10 +10,10 @@ import type { SqlExecutor } from './sql-executor.js';
  */
 export function tenantSession(scope: ExecutionScope): (transaction: SqlExecutor) => Promise<void> {
   return async (transaction) => {
-    const { tenant, reach } = tenantSettingValues(scope.current());
+    const { tenant, reach, everyTenant } = tenantSettingValues(scope.current());
 
     await transaction.execute(
-      sql`select set_config(${TENANT_SETTINGS.tenant}, ${tenant}, true), set_config(${TENANT_SETTINGS.reach}, ${reach}, true)`,
+      sql`select set_config(${TENANT_SETTINGS.tenant}, ${tenant}, true), set_config(${TENANT_SETTINGS.reach}, ${reach}, true), set_config(${TENANT_SETTINGS.everyTenant}, ${everyTenant}, true)`,
     );
   };
 }

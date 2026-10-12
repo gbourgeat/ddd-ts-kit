@@ -1,5 +1,6 @@
 import type { Actor } from '../actor/actor.js';
 import type { Session } from '../session/session.js';
+import { assertTenantId } from '../tenancy/assert-tenant-id.js';
 import type { TenantElevation } from '../tenancy/tenant-elevation.js';
 import type { ExecutionContextExtensionValues } from './execution-context-extension-values.js';
 import type { ExecutionOrigin } from './execution-origin.js';
@@ -30,9 +31,13 @@ export interface ExecutionContext {
 export type ExecutionContextInit = Omit<ExecutionContext, 'extensions' | 'tenantId'> &
   Partial<Pick<ExecutionContext, 'extensions' | 'tenantId'>>;
 
-/** Fills what can be derived: the tenant of the actor, no extension. */
+/**
+ * Fills what can be derived: the tenant of the actor, no extension. A tenant id outside the
+ * grammar of `isTenantId` is refused (`InvalidTenantIdError`), whatever named it.
+ */
 export function executionContext(init: ExecutionContextInit): ExecutionContext {
-  const tenantId = init.tenantId ?? init.actor.tenantId;
+  const named = init.tenantId ?? init.actor.tenantId;
+  const tenantId = named === undefined ? undefined : assertTenantId(named);
 
   return Object.freeze({
     ...init,

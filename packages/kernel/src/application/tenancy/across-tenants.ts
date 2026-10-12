@@ -2,6 +2,7 @@ import type { AuditRecord } from '../audit/audit-record.js';
 import type { ExecutionContext } from '../execution/execution-context.js';
 import type { ElevationOptions } from './elevation-options.js';
 import { InvalidTenantElevationError } from './invalid-tenant-elevation-error.js';
+import { isTenantId } from './is-tenant-id.js';
 import type { TenantElevation } from './tenant-elevation.js';
 
 /** The action of the audit entry an elevation writes. */
@@ -34,6 +35,10 @@ function assertValid({ reason, tenants }: TenantElevation): void {
 
   if (tenants !== 'all' && tenants.length === 0) {
     throw new InvalidTenantElevationError('it names no tenant');
+  }
+
+  if (tenants !== 'all' && !tenants.every(isTenantId)) {
+    throw new InvalidTenantElevationError('it names a tenant id outside the grammar of isTenantId');
   }
 }
 

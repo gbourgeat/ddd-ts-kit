@@ -17,6 +17,10 @@ list the pull requests behind it.
 - Jobs state `tenancy: 'global'` (the default, as before) or `'per-tenant'`: the in-process
   scheduler, given a `TenantDirectory` (`tenants`), runs a per-tenant job once per tenant, each
   run in that tenant's scope, and `JobExecution.tenantId` says which.
+- One grammar for a tenant id, `isTenantId` (letters, digits, `_`, `-`, at most 63): the edge
+  answers 404 to any other, a broker treats an envelope carrying one as poison, and
+  `executionContext` throws `InvalidTenantIdError`. A project whose tenant ids hold other
+  characters (a `.`, a `:`) must map them before upgrading.
 - Kernel: `tenantReachOf`, `tenantsOf`, `isTenantMember`, `tenantKey`, `tenantCacheKey`,
   `TenantDirectory` and `InMemoryTenantDirectory`, and `acrossTenants`, the explicit elevation of
   platform staff over tenants, refused without a reason and written to the audit trail before
@@ -31,9 +35,10 @@ list the pull requests behind it.
   elevation, writes the one tenant of the work. The read model stores of both take `tenant`, and
   `TenantAuditReader` (`@ddd-ts-kit/audit`) confines every search of the trail to the tenant.
 - Row-level security on PostgreSQL, the second line: `enableTenantIsolation` and
-  `tenantIsolationStatements` (Knex), `tenantPolicy` and `forceRowLevelSecurity` (Drizzle), and
+  `tenantIsolationStatements` (Knex), `tenantPolicies` and `forceRowLevelSecurity` (Drizzle), and
   `tenantSession(scope)`, the new `begin` option of `createKnexUnitOfWork` and
-  `createDrizzleUnitOfWork`, which sets the tenant of each transaction only.
+  `createDrizzleUnitOfWork`, which sets the tenant of each transaction only. One policy per
+  command: an elevated update or delete still touches only the tenant of the work.
 - Schema per tenant (Knex): `tenantSchemaOf`, `tenantSchemaTable`, `migrateTenantSchema` with
   `tenantOfMigration`, `tenantSearchPath`. Database per tenant (Knex): `TenantDatabases` (one
   bounded pool per tenant, least recently used closed), `createTenantRoutedUnitOfWork`,

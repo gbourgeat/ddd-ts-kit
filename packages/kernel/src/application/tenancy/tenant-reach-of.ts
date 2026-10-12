@@ -1,5 +1,6 @@
 import { NoCurrentTenantError } from '../audit/no-current-tenant-error.js';
 import type { ExecutionScope } from '../ports/execution-scope.js';
+import { assertTenantId } from './assert-tenant-id.js';
 import type { TenantReach } from './tenant-reach.js';
 
 /**
@@ -11,12 +12,12 @@ export function tenantReachOf(scope: ExecutionScope): TenantReach {
   const { tenantId, elevation } = scope.require();
 
   if (elevation !== undefined) {
-    return { kind: 'elevated', tenants: elevation.tenants };
+    return { kind: 'elevated', tenants: elevation.tenants === 'all' ? 'all' : elevation.tenants.map(assertTenantId) };
   }
 
   if (tenantId === undefined) {
     throw new NoCurrentTenantError();
   }
 
-  return { kind: 'tenant', tenantId };
+  return { kind: 'tenant', tenantId: assertTenantId(tenantId) };
 }

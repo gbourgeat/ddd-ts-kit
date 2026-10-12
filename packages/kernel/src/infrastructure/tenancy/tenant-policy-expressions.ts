@@ -1,19 +1,16 @@
 import { TENANT_SETTINGS } from './tenant-settings.js';
 
-/** The name of the row-level security policy of a table of tenant data, in every adapter. */
-export const TENANT_ISOLATION_POLICY = 'tenant_isolation';
-
 /**
- * The two expressions of that policy on a column, quoted as SQL: a row is read when its tenant
- * is in `ddd_ts_kit.reach` (or the reach is `*`), and written only with the tenant of
- * `ddd_ts_kit.tenant_id`. Work that set neither reads nothing and writes nothing.
+ * The expressions of the row-level security policies on a column, quoted as SQL. `read`: the row
+ * belongs to `ddd_ts_kit.tenant_id`, to a tenant of `ddd_ts_kit.reach`, or
+ * `ddd_ts_kit.every_tenant` is `on`. `write`: the row belongs to `ddd_ts_kit.tenant_id`, whatever
+ * an elevation widened. Work that set nothing reads nothing and writes nothing.
  */
-export function tenantPolicyExpressions(column: string): { readonly using: string; readonly withCheck: string } {
-  const reach = `current_setting('${TENANT_SETTINGS.reach}', true)`;
-  const tenant = `current_setting('${TENANT_SETTINGS.tenant}', true)`;
+export function tenantPolicyExpressions(column: string): { readonly read: string; readonly write: string } {
+  const setting = (name: string): string => `current_setting('${name}', true)`;
+  const tenant = `${column} = ${setting(TENANT_SETTINGS.tenant)}`;
+  const reach = `${column} = any(string_to_array(${setting(TENANT_SETTINGS.reach)}, ','))`;
+  const everyTenant = `${setting(TENANT_SETTINGS.everyTenant)} = 'on'`;
 
-  return {
-    using: `${reach} = '*' or ${column} = any(string_to_array(${reach}, ','))`,
-    withCheck: `${column} = ${tenant}`,
-  };
+  return { read: `${tenant} or ${reach} or ${everyTenant}`, write: tenant };
 }
