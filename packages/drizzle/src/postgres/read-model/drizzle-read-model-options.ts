@@ -11,7 +11,9 @@ export interface DrizzleReadModelOptions<Row> {
   /**
    * For a read model of tenant data: every row is written with the tenant of the work in
    * progress, in `column`, and every read and write is confined to it, an elevation widening the
-   * reads only. Keys stay unique across tenants. Absent: one read model for every tenant.
+   * reads only. Keys stay unique across tenants (the conflict of an insert is on the key alone):
+   * a key that two tenants could share (a day, a slug) is a generated id, or carries the tenant
+   * (`acme:2026-03-01`). Absent: one read model for every tenant.
    */
   readonly tenant?: ReadModelTenant;
 }

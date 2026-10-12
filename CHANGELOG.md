@@ -41,8 +41,10 @@ list the pull requests behind it.
   command: an elevated update or delete still touches only the tenant of the work.
 - Schema per tenant (Knex): `tenantSchemaOf`, `tenantSchemaTable`, `migrateTenantSchema` with
   `tenantOfMigration`, `tenantSearchPath`. Database per tenant (Knex): `TenantDatabases` (one
-  bounded pool per tenant, least recently used closed), `createTenantRoutedUnitOfWork`,
-  `migrateEveryTenant`.
+  bounded pool per tenant held by a lease, at most `maxTenants` instances closing ones included,
+  an idle one closed first and work waiting rather than exceeding the bound),
+  `createTenantRoutedUnitOfWork` (statements inside the unit of work only, one tenant per
+  transaction), `migrateEveryTenant`.
 - `@ddd-ts-kit/testing`: `tenantIsolationContract`, run against every strategy above on PGlite
   and PostgreSQL; `asTenant(scope, tenantId, work)` and `anExecutionContext().elevatedOver(...)`.
 - Prisma and TypeORM get the `tenant_id` column and the kernel helpers, applied by hand; no
@@ -56,7 +58,7 @@ of the request. Without `resolveTenant` the tenant is the actor's, as before.
 
 **`init --tenancy shared-table`** (Knex or Drizzle) records `"stack.tenancy"` and generates every
 repository confined to the tenant through the helpers above, the outbox keeping the tenant of each
-event; the new rule `tenancy/scoped-statement` reports a statement of a context that reaches a table
+event, the search of the audit trail confined to the tenant of the work by `TenantAuditReader`; the new rule `tenancy/scoped-statement` reports a statement of a context that reaches a table
 straight from the executor. `init` refuses the strategy with Prisma, TypeORM, `custom` or no ORM,
 and refuses row-level security, schema per tenant and database per tenant, which are wired by hand
 for now. `generate repository --tenant-scoped` writes the same helpers. A config without the key is
@@ -73,7 +75,9 @@ for now. `generate repository --tenant-scoped` writes the same helpers. A config
   (`@ddd-ts-kit/http`) refuses a request whose session lacks a scope named.
 - A request refused by a guard (`HasRole`, `HasScope`, `TenantMember`, a tenant the caller does
   not belong to) is reported to the new `onGuardRefusal` of the HTTP pipeline, and
-  `auditGuardRefusals` (`@ddd-ts-kit/audit`) records it as a denied decision. A generated project
+  `auditGuardRefusals` (`@ddd-ts-kit/audit`) records it as a denied decision, except for a caller
+  without a credential, so that unauthenticated traffic cannot write to the trail without bound.
+  It is part of `--audit on` (`stack.audit`), with no key of its own. A generated project
   with the audit trail wires it (`create-audit.ts`, `http-boundary.ts`, `compose-application.ts`);
   a project initialised before adds `refusals: auditGuardRefusals(trail, { clock, ids })` to the
   call of `httpBoundary` and `onGuardRefusal: refusals` to what it answers, as `init --force` writes.
@@ -85,7 +89,9 @@ codes of `RelationBasedAuthorizer`. The authorization model is generated from th
 schema (`authorizationModelOf`), written when it differs (`ensureAuthorizationModel`) and
 compared (`modelDrift`): the schema stays the one source. `@openfga/sdk` 0.9.7 is an optional
 peer, imported by the `/sdk` entry (`openFgaClient`). Both adapters pass the contract suites of
-the in-process ones, in memory and against `openfga/openfga` v1.22.0 in the integration job.
+the in-process ones, in memory and against `openfga/openfga` v1.22.0 in the integration job. A
+`ListObjects` answer as long as the server's cap (`listObjectsLimit`, 1000 by default) is refused
+with `ReverseExpansionLimitError`, since the server cuts a longer list without an error.
 [Authorization engines](docs/tools/authorization-engines.md) says when to move from the
 PostgreSQL tuple store to OpenFGA.
 

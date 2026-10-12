@@ -101,7 +101,11 @@ Three rules hold whatever the strategy:
   which is right for platform data only.
 - **Logs, traces, error reports and the audit trail.** `logFieldsOf` writes `tenantId` on every
   line; the audit trail keeps one hash chain per tenant (`tenant:<id>`), so that a tenant's
-  history can be handed over and verified alone.
+  history can be handed over and verified alone. Its search is confined to the tenant of the work
+  by `TenantAuditReader`, which `init --tenancy shared-table` wires into the read side of the
+  trail: an actor that names no tenant reads nothing, and platform staff read another tenant's
+  trail only inside `acrossTenants`. A refusal at the edge of a caller without a credential is not
+  recorded, so that no unauthenticated request opens a chain.
 
 ## Resolution at the edge
 
@@ -134,7 +138,10 @@ every tenant. Instead:
 ## Limits and when not to use it
 
 - **One tenant per unit of work.** A request that must write to two tenants is two units of
-  work, on purpose: one transaction never spans tenants.
+  work, on purpose: one transaction never spans tenants. On database per tenant, work of another
+  tenant run inside an open unit of work is refused (`CrossTenantUnitOfWorkError`); on shared
+  tables and schemas it would join the first tenant's transaction, so open a unit of work per
+  tenant (an elevation reads only, and needs none).
 - **The tenant is infrastructure's.** A business rule that depends on the tenant (a plan, a
   setting) receives it as data in the command, like the actor; it does not read the scope.
 - **A single-customer product does not need any of this.** The strategies cost a column, a
