@@ -38,6 +38,30 @@ export interface OnePerFile {
   readonly allow: readonly OnePerFileAllowance[];
 }
 
+/** What the pipeline adds over the free gates: the jobs of `CI_EXTRAS` the team asked for. */
+export interface CiConfig {
+  readonly extras: readonly string[];
+}
+
+/** One document of the contract: the routes of the route groups, contexts and tags it names (any of them). */
+export interface OpenApiDocumentConfig {
+  /** The file name, `openapi/<name>.yaml`, and the name the documentation page shows. */
+  readonly name: string;
+  readonly title?: string;
+  /** Route groups by class name; a route belongs to its group and to every group above it. */
+  readonly groups: readonly string[];
+  readonly contexts: readonly string[];
+  readonly tags: readonly string[];
+}
+
+/** How the HTTP contract is written: the format of every generated contract, and its split into documents. */
+export interface OpenApiConfig {
+  /** `yaml` (the default) or `json`, for the OpenAPI and the AsyncAPI documents. Kept as written, `check` reports a wrong value. */
+  readonly format: string;
+  /** None: one document, `openapi/openapi.yaml`, with every route. */
+  readonly documents: readonly OpenApiDocumentConfig[];
+}
+
 export interface Config {
   readonly sourceRoot: string;
   readonly contextsDir: string;
@@ -65,4 +89,6 @@ export interface Config {
   readonly standardInterfaces: Readonly<Record<string, string | false>>;
   /** True once the project has a worker process under `apps/worker/main.ts`: the API then starts with its jobs off. */
   readonly worker: boolean;
+  readonly ci: CiConfig;
+  readonly openapi: OpenApiConfig;
 }

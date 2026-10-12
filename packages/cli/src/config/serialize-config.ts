@@ -62,5 +62,14 @@ function optionalKeys(config: Config): Record<string, unknown> {
     ...(onePerFile.allow.length > 0 ? { onePerFile } : {}),
     ...(sized ? { commit } : {}),
     ...(worker ? { worker } : {}),
+    ...pipelineKeys(config),
+  };
+}
+
+/** The extra jobs of the pipeline and the form of the contracts, when they are not the defaults. */
+function pipelineKeys({ ci, openapi }: Config): Record<string, unknown> {
+  return {
+    ...(ci.extras.length > 0 ? { ci } : {}),
+    ...(openapi.format !== 'yaml' || openapi.documents.length > 0 ? { openapi } : {}),
   };
 }

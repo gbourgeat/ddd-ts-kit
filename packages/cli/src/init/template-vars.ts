@@ -19,6 +19,7 @@ export function templateVars(config: Config, projectName: string): RenderContext
     docs: { any: docsUi !== 'none', ui: docsUi },
     knip: knipVars(config),
     ci: { github: ci === 'github' || ci === 'both', gitlab: ci === 'gitlab' || ci === 'both', any: ci !== 'none' },
+    extras: extrasVars(config.ci.extras),
     needs: { url: readsUrl(config), text: readsText(config) },
     keycloak: { version: KEYCLOAK_VERSION },
     compose: {
@@ -35,6 +36,21 @@ export function templateVars(config: Config, projectName: string): RenderContext
       sqlite: database === 'sqlite',
       server: database === 'postgres' || database === 'mysql',
     },
+  };
+}
+
+/** The extra jobs of the pipeline, by the name a template asks for. */
+function extrasVars(extras: readonly string[]): RenderContext {
+  const gitlab = ['gitlab-sast', 'gitlab-secret-detection', 'gitlab-dependency-scanning'];
+
+  return {
+    codeql: extras.includes('codeql'),
+    dependencyReview: extras.includes('dependency-review'),
+    gitlabSast: extras.includes('gitlab-sast'),
+    gitlabSecretDetection: extras.includes('gitlab-secret-detection'),
+    gitlabDependencyScanning: extras.includes('gitlab-dependency-scanning'),
+    gitlabSecurity: extras.some((extra) => gitlab.includes(extra)),
+    none: extras.length === 0,
   };
 }
 

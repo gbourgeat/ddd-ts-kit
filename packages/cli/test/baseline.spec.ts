@@ -11,6 +11,15 @@ const STACKS: readonly (readonly [string, readonly string[]])[] = [
   ['no HTTP boundary', ['--ci', 'both', '--http', 'none']],
   ['legacy decorators, on knex', ['--ci', 'both', '--validation', 'class-validator', '--orm', 'knex']],
   ['nest, without a database', ['--ci', 'both', '--http', 'nest', '--di', 'nest', '--validation', 'standard-schema']],
+  [
+    'every opt-in job of the pipeline',
+    [
+      '--ci',
+      'both',
+      '--ci-extras',
+      'codeql,dependency-review,gitlab-sast,gitlab-secret-detection,gitlab-dependency-scanning',
+    ],
+  ],
 ];
 
 describe('the quality baseline', () => {

@@ -15,6 +15,9 @@ const template = (file: string): string => pipelineAsset('template', file);
 /** What a template adds for one package manager or one ORM, between its tags. */
 const OPTIONAL_STEPS = /\{\{#if (?:pm\.corepack|orm\.prisma)\}\}\n[\s\S]*?\{\{\/if\}\}\n/g;
 
+/** An opt-in job of `--ci-extras`, innermost first: the source of a pipeline is what a project gets without any. */
+const EXTRA_BLOCK = /\{\{#if extras\.\w+\}\}\n(?:(?!\{\{#if)[\s\S])*?\{\{\/if\}\}\n/g;
+
 const UNIT_PROJECT_OF_THE_SOURCE =
   "{\n        extends: true,\n        test: { name: 'unit', include: ['src/**/*.spec.ts'], exclude: [INTEGRATION_SPECS, ...NOT_AFFECTED] },\n      },";
 
@@ -29,7 +32,6 @@ describe('pipeline templates', () => {
     ['commitlint.config.mjs', 'commitlint.config.mjs'],
     ['renovate.json', 'renovate.json'],
     ['package-scripts.json', 'package-scripts.json'],
-    ['github/workflows/ci.yml', 'github/workflows/ci.yml'],
     ['github/scripts/start-postgres.sh', 'github/scripts/start-postgres.sh'],
     ['github/workflows/codeql.yml', 'github/workflows/codeql.yml'],
     ['github/workflows/pr-title.yml', 'github/workflows/pr-title.yml'],
@@ -54,6 +56,14 @@ describe('pipeline templates', () => {
     );
   });
 
+  it('the GitHub workflow is the source, plus the opt-in dependency review step', () => {
+    expect(withoutExtras(template('github/workflows/ci.yml.tpl'))).toBe(source('github/workflows/ci.yml'));
+
+    expect(read(initProject('--package-manager', 'npm'), '.github/workflows/ci.yml')).toBe(
+      source('github/workflows/ci.yml'),
+    );
+  });
+
   it('the GitLab pipeline differs only by the architecture report, which the checker now writes itself, by the line that asks corepack for pnpm and by the one that generates the Prisma client', () => {
     const expected = source('gitlab/.gitlab-ci.yml').replace(
       '    - npm run --silent ci:arch:check -- --format json > reports/arch.json || true\n    - node .gitlab/arch-to-codequality.mjs reports/arch.json reports/gl-code-quality-arch.json\n',
@@ -61,7 +71,7 @@ describe('pipeline templates', () => {
     );
 
     expect(expected).not.toBe(source('gitlab/.gitlab-ci.yml'));
-    expect(template('gitlab/gitlab-ci.yml.tpl').replaceAll(OPTIONAL_STEPS, '')).toBe(expected);
+    expect(withoutExtras(template('gitlab/gitlab-ci.yml.tpl')).replaceAll(OPTIONAL_STEPS, '')).toBe(expected);
     expect(read(initProject('--package-manager', 'npm', '--ci', 'gitlab'), '.gitlab-ci.yml')).toBe(expected);
 
     expect(read(initProject('--orm', 'prisma', '--ci', 'gitlab'), '.gitlab-ci.yml')).toContain(
@@ -203,7 +213,6 @@ describe('the knip config init writes', () => {
 describe('init --ci', () => {
   const GITHUB = [
     '.github/workflows/ci.yml',
-    '.github/workflows/codeql.yml',
     '.github/workflows/pr-title.yml',
     '.github/actions/setup/action.yml',
     '.github/scripts/start-postgres.sh',
@@ -265,3 +274,10 @@ describe('init --ci', () => {
     }
   });
 });
+
+/** A template with its opt-in jobs removed, nested blocks first. */
+function withoutExtras(text: string): string {
+  const removed = text.replaceAll(EXTRA_BLOCK, '');
+
+  return removed === text ? text : withoutExtras(removed);
+}

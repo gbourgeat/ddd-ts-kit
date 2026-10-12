@@ -7,13 +7,22 @@ workflow:
     # A pipeline schedule (Build > Pipeline schedules, every night on the default branch) runs everything.
     - if: $CI_PIPELINE_SOURCE == "schedule"
 
+{{#if extras.gitlabSecurity}}
+# Opt-in (--ci-extras): these run on every tier, but their findings reach a merge request on Ultimate only.
 include:
+{{#if extras.gitlabSast}}
   - template: Jobs/SAST.gitlab-ci.yml
+{{/if}}
+{{#if extras.gitlabSecretDetection}}
   - template: Jobs/Secret-Detection.gitlab-ci.yml
+{{/if}}
+{{#if extras.gitlabDependencyScanning}}
   - template: Jobs/Dependency-Scanning.v2.gitlab-ci.yml
     rules:
       - if: $GITLAB_FEATURES =~ /\bdependency_scanning\b/
+{{/if}}
 
+{{/if}}
 stages:
   - install
   - test
@@ -21,7 +30,9 @@ stages:
   - gate
 
 variables:
+{{#if extras.gitlabSecurity}}
   AST_ENABLE_MR_PIPELINES: 'true'
+{{/if}}
   NODE_IMAGE: node:24-bookworm-slim
   # Behind the dependency proxy of a group, a registry that rate-limits is never asked twice:
   # POSTGRES_IMAGE: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/postgres:18

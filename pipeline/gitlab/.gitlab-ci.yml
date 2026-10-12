@@ -7,13 +7,6 @@ workflow:
     # A pipeline schedule (Build > Pipeline schedules, every night on the default branch) runs everything.
     - if: $CI_PIPELINE_SOURCE == "schedule"
 
-include:
-  - template: Jobs/SAST.gitlab-ci.yml
-  - template: Jobs/Secret-Detection.gitlab-ci.yml
-  - template: Jobs/Dependency-Scanning.v2.gitlab-ci.yml
-    rules:
-      - if: $GITLAB_FEATURES =~ /\bdependency_scanning\b/
-
 stages:
   - install
   - test
@@ -21,7 +14,6 @@ stages:
   - gate
 
 variables:
-  AST_ENABLE_MR_PIPELINES: 'true'
   NODE_IMAGE: node:24-bookworm-slim
   # Behind the dependency proxy of a group, a registry that rate-limits is never asked twice:
   # POSTGRES_IMAGE: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/postgres:18

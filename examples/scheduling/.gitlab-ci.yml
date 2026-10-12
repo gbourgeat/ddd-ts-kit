@@ -5,13 +5,6 @@ workflow:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 
-include:
-  - template: Jobs/SAST.gitlab-ci.yml
-  - template: Jobs/Secret-Detection.gitlab-ci.yml
-  - template: Jobs/Dependency-Scanning.v2.gitlab-ci.yml
-    rules:
-      - if: $GITLAB_FEATURES =~ /\bdependency_scanning\b/
-
 stages:
   - install
   - static
@@ -22,7 +15,6 @@ stages:
   - gate
 
 variables:
-  AST_ENABLE_MR_PIPELINES: 'true'
   NODE_IMAGE: node:24-bookworm-slim
   POSTGRES_IMAGE: postgres:18
 
