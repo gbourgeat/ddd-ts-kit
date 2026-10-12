@@ -1,4 +1,4 @@
-import { ValueObject, err, ok, type Result } from '@ddd-ts-kit/kernel';
+import { ValueObject } from '@ddd-ts-kit/kernel';
 import { AppointmentError } from '@/contexts/scheduling/domain/errors/appointment.error';
 import type { Slot } from '@/contexts/scheduling/domain/value-objects/slot.vo';
 
@@ -28,22 +28,22 @@ export class Booking extends ValueObject<BookingProps> {
     super(props);
   }
 
-  static create(props: BookingProps): Result<Booking, AppointmentError> {
+  static create(props: BookingProps): Booking {
     const unnamed = NAMED.find(([field]) => props[field].trim().length === 0);
 
     if (unnamed !== undefined) {
-      return err(AppointmentError.invalidBooking(unnamed[1]));
+      throw AppointmentError.invalidBooking(unnamed[1]);
     }
 
     if (!DAY.test(props.day)) {
-      return err(AppointmentError.invalidBooking('gives its day as a calendar date'));
+      throw AppointmentError.invalidBooking('gives its day as a calendar date');
     }
 
-    return ok(new Booking(props));
+    return new Booking(props);
   }
 
   /** The same booking on another slot of the same calendar. */
-  movedTo(slot: Slot, day: string): Result<Booking, AppointmentError> {
+  movedTo(slot: Slot, day: string): Booking {
     return Booking.create({ ...this.props, slot, day });
   }
 

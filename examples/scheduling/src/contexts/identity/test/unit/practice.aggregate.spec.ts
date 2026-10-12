@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { unwrap } from '@ddd-ts-kit/kernel';
 import { given } from '@ddd-ts-kit/testing';
 import { Practice } from '@/contexts/identity/domain/aggregates/practice.aggregate';
 import { DisplayName } from '@/contexts/identity/domain/value-objects/display-name.vo';
@@ -141,5 +140,5 @@ describe('Practice, by the role of its members', () => {
 });
 
 function newcomer(personId: string, role: RoleName) {
-  return { personId, role: unwrap(Role.create(role)), displayName: unwrap(DisplayName.create('Grace Hopper')) };
+  return { personId, role: Role.create(role), displayName: DisplayName.create('Grace Hopper') };
 }

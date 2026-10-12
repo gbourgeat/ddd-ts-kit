@@ -1,4 +1,4 @@
-import { AggregateRoot, unwrap } from '@ddd-ts-kit/kernel';
+import { AggregateRoot } from '@ddd-ts-kit/kernel';
 import { AppointmentError } from '@/contexts/scheduling/domain/errors/appointment.error';
 import { AppointmentBooked } from '@/contexts/scheduling/domain/events/appointment-booked.event';
 import { AppointmentCancelled } from '@/contexts/scheduling/domain/events/appointment-cancelled.event';
@@ -101,7 +101,7 @@ export class Appointment extends AggregateRoot<string> {
     this.refuseWhenEnded();
 
     const previous = this.state.booking;
-    const booking = unwrap(previous.movedTo(slot, day));
+    const booking = previous.movedTo(slot, day);
 
     this.state = { ...this.state, changedAt: now, booking };
     this.record(new AppointmentRescheduled(this.id, now, { booking, previous }));

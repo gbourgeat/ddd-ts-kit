@@ -1,4 +1,4 @@
-import { ValueObject, err, ok, type Result } from '@ddd-ts-kit/kernel';
+import { ValueObject } from '@ddd-ts-kit/kernel';
 import { CalendarError } from '@/contexts/scheduling/domain/errors/calendar.error';
 
 export type TimeZoneProps = {
@@ -16,15 +16,19 @@ export class TimeZone extends ValueObject<TimeZoneProps> {
   }
 
   /** An IANA zone name, as the runtime knows it (`Europe/Paris`). */
-  static create(name: string): Result<TimeZone, CalendarError> {
+  static create(name: string): TimeZone {
     const trimmed = name.trim();
 
     try {
       const canonical = new Intl.DateTimeFormat('en-US', { timeZone: trimmed }).resolvedOptions().timeZone;
 
-      return trimmed.length === 0 ? err(CalendarError.unknownTimeZone(name)) : ok(new TimeZone({ name: canonical }));
+      if (trimmed.length === 0) {
+        throw CalendarError.unknownTimeZone(name);
+      }
+
+      return new TimeZone({ name: canonical });
     } catch {
-      return err(CalendarError.unknownTimeZone(name));
+      throw CalendarError.unknownTimeZone(name);
     }
   }
 

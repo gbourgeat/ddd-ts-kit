@@ -1,4 +1,3 @@
-import { unwrap } from '@ddd-ts-kit/kernel';
 import { Waitlist } from '@/contexts/scheduling/domain/aggregates/waitlist.aggregate';
 import { Waiter } from '@/contexts/scheduling/domain/value-objects/waiter.vo';
 import type {
@@ -11,7 +10,7 @@ type StoredWaiter = { readonly patientId: string; readonly appointmentTypeId: st
 export const WaitlistMapper = {
   toDomain(row: WaitlistRow): Waitlist {
     const waiters = (JSON.parse(row.waiters) as StoredWaiter[]).map((stored) =>
-      unwrap(Waiter.create({ ...stored, joinedAt: new Date(stored.joinedAt) })),
+      Waiter.create({ ...stored, joinedAt: new Date(stored.joinedAt) }),
     );
 
     const loaded = Waitlist.rehydrate(row.id, {

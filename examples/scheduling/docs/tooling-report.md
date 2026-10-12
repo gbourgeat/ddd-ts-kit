@@ -929,3 +929,22 @@ No route of the application is public, so `Public` is not shown here: the kit ho
 own specs. `PersonError.invalidEmail` quotes the address it refuses in its message: the client
 now reads `Invalid email.` as `detail`, and the spec of the controller holds that the address
 does not leave.
+
+## 2026-10-12: value objects that throw their refusals
+
+The value objects of the four contexts moved from a `Result` to factories that return the value
+or throw, with `ddd-ts-kit value-objects` alone: `"stack.valueObjects": "throwing"` is set, and
+nothing was left to a person.
+
+| | Before | After |
+|---|---|---|
+| Methods returning a `Result` | 18 (17 `create`, `Booking#movedTo`) | 0 |
+| `return err(..)` and `ok(..)`/`err(..)` ternaries | 25 and 3 | 28 `throw`, 3 of them after an `if` |
+| `unwrap(..)` of a value object | 168, in handlers, aggregates, a domain service, mappers, builders and specs | 0 |
+| Assertions on a `Result` in the specs | 31 (`.ok`, `toMatchObject({ ok: false, error })`, `expectRefusal(result, ..)`) | `expectRefusal(() => .., code)` and `expect(() => ..).not.toThrow()` |
+| Files | | 82 sources and the config, 389 lines added, 498 removed |
+
+The HTTP contract did not move: `npm run docs:generate` rewrote `openapi/openapi.yaml`
+byte for byte, since a request is still validated at the edge by its schema before any value
+object is built, and a refusal of a factory still reaches the error mapper as the same
+`ConceptError` with the same code. The 1004 unit tests pass unchanged in number.

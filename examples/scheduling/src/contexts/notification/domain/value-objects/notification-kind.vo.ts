@@ -1,4 +1,4 @@
-import { ValueObject, err, ok, type Result } from '@ddd-ts-kit/kernel';
+import { ValueObject } from '@ddd-ts-kit/kernel';
 import { NotificationError } from '@/contexts/notification/domain/errors/notification.error';
 
 const KINDS = ['request', 'confirmation', 'rescheduling', 'cancellation', 'reminder'] as const;
@@ -14,15 +14,15 @@ export class NotificationKind extends ValueObject<NotificationKindProps> {
     super(props);
   }
 
-  static create(value: string): Result<NotificationKind, NotificationError> {
+  static create(value: string): NotificationKind {
     const normalized = value.trim().toLowerCase();
     const known = KINDS.find((kind) => kind === normalized);
 
     if (known === undefined) {
-      return err(NotificationError.invalidNotificationKind(value));
+      throw NotificationError.invalidNotificationKind(value);
     }
 
-    return ok(new NotificationKind({ value: known }));
+    return new NotificationKind({ value: known });
   }
 
   /** A request, a confirmation and a rescheduling all tell of an appointment that is still to come, at the start they name. */
