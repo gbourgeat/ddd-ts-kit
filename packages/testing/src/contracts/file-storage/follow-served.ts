@@ -5,12 +5,12 @@ import { readAll } from './read-all.js';
 import type { SignedRequest } from './signed-request.js';
 
 /**
- * Follows a link of a storage the application serves, without a server: the token is the last
- * segment of the path, answered the way `signedFileRoutes` of `@ddd-ts-kit/http` answers it.
+ * Follows a link of a storage the application serves, without a server: the token is the `token`
+ * parameter of the query, answered the way `signedFileRoutes` of `@ddd-ts-kit/http` answers it.
  */
 export function followServed(storage: ServedFileStorage): (request: SignedRequest) => Promise<FollowedResponse> {
   return async (request) => {
-    const token = new URL(request.url).pathname.split('/').at(-1) ?? '';
+    const token = new URL(request.url).searchParams.get('token') ?? '';
 
     if (request.method === 'GET') {
       const download = await storage.openSigned(token);

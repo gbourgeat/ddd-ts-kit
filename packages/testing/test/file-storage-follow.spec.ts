@@ -50,8 +50,8 @@ describe('following a signed link', () => {
   it('answers 403 for a link the application does not grant, whatever its form', async () => {
     const follow = followServed(new InMemoryFileStorage());
 
-    expect((await follow({ url: 'http://localhost/files/forged', method: 'GET' })).status).toBe(403);
-    expect((await follow({ url: 'http://localhost/files/forged', method: 'PUT' })).status).toBe(403);
+    expect((await follow({ url: 'http://localhost/files?token=forged', method: 'GET' })).status).toBe(403);
+    expect((await follow({ url: 'http://localhost/files?token=forged', method: 'PUT' })).status).toBe(403);
     expect((await follow({ url: 'http://localhost/', method: 'GET' })).status).toBe(403);
   });
 

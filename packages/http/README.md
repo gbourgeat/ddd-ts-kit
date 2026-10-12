@@ -494,9 +494,68 @@ one document at a time: `/docs` lists their pages); one document is served as
 `openApiDocsRoutes` serves it. A generated project reads the documents from
 `openapi.documents` of `ddd-ts-kit.config.json`, through `src/platform/http/openapi-documents.ts`.
 
+## Uploads and files
+
+A controller that receives a file declares it, and the declaration is the contract: the field,
+the most it may weigh and the media types it may be, which the OpenAPI document states
+(`multipart/form-data`, `x-max-bytes`, `x-media-types`, the 413, 415 and 422 refusals).
+
+```ts
+@Controller({
+  group: AppointmentRoutes,
+  method: 'POST',
+  path: '/:appointmentId/document',
+  summary: 'Attach a document to an appointment',
+  params,
+  body, // the text fields, sent before the file
+  upload: { field: 'document', maxBytes: 10_000_000, mediaTypes: ['application/pdf', 'image/*'] },
+  response: { status: 201, body: attached },
+})
+export class AttachDocumentController {
+  constructor(private readonly commands: CommandBus) {}
+
+  async handle({ params, upload, actor }: HttpRequest<{ params: Params; upload: IncomingFile }>) {
+    return this.commands.execute(new AttachDocument(params.appointmentId, upload.stream, upload.mediaType, upload.fileName));
+  }
+}
+```
+
+The routes are mounted with an upload reader, `multipartUploads()` of `@ddd-ts-kit/http/uploads`
+(on busboy, an optional peer: `npm i busboy`):
+
+```ts
+import { multipartUploads } from '@ddd-ts-kit/http/uploads';
+
+mountExpress(app, routes, { ...options, uploads: multipartUploads() });
+```
+
+The file reaches `handle` while it still streams, never held whole: the handler hands
+`upload.stream` to the storage (`FileStaging.stage` of the kernel). On its way the content is
+counted, and refused with `FILE_TOO_LARGE` (413) beyond `maxBytes`; its first bytes must prove
+the media type the client declared and that type must be accepted, or it is refused with
+`UNSUPPORTED_MEDIA_TYPE` (415), before a byte reaches the storage. A request announcing a body
+far larger than the file allowed is refused before it is read; a form without the file, 422.
+Text fields sent after the file are not read. `fileName` is shown back to people, never used as
+a key: the key is generated on the server.
+
+For a large file, the client uploads straight to the storage instead: a command signs an upload
+link (`FileStaging.uploadUrl`), the client sends the file to it, and a second command confirms
+(`FileStaging.confirm`, which checks the size and the media type on what arrived).
+
+`signedFileRoutes(storage, { prefix: '/files' })` answers the signed links of a storage the
+application serves itself, the local directory of development or the memory of the tests:
+`GET /files?token=` downloads (as an attachment, `nosniff`, `no-store`), `PUT /files?token=`
+uploads. They are public, the token being the grant, and are not part of the contract. With
+Express, mount them before `express.json()`: that parser reads a JSON body first. An object
+store answers its own links and needs no route.
+
+A handler may answer a stream (`Readable`) as its body: it is piped to the response, with its
+own `content-type`.
+
 ## Limits
 
 - A body the framework itself refuses (malformed JSON, payload too large) is answered by the
   framework's own error handler, before the pipeline runs.
-- Routes are JSON first. A handler may answer a string or bytes by setting its own
-  `content-type` header; streaming is out of scope.
+- Routes are JSON first. A handler may answer a string, bytes or a stream by setting its own
+  `content-type` header. A request body streams only as a declared upload or a raw body
+  (`rawBody`): server-sent events and WebSockets are written natively in the framework.

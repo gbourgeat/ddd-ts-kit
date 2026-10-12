@@ -1,7 +1,7 @@
 import type { Clock } from '../../application/ports/clock.js';
 
 export interface SignedLinkOptions {
-  /** Where `signedFileRoutes` of `@ddd-ts-kit/http` answers, as a client reaches it: `http://localhost:3000/files`. */
+  /** Where `signedFileRoutes` of `@ddd-ts-kit/http` answers, as a client reaches it: `http://localhost:3000/files`. A link is `<baseUrl>?token=<token>`. */
   readonly baseUrl?: string;
   /** Signs the links. Left out, a random one is drawn: the links then die with the process. */
   readonly secret?: string;

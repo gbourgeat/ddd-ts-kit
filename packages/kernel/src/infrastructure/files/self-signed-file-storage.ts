@@ -36,7 +36,7 @@ export abstract class SelfSignedFileStorage extends ServedFileStorage {
     const named = options.fileName === undefined ? grant : { ...grant, fileName: options.fileName };
     const { token, expiresAt } = this.tokens.sign(named, assertExpiry(options.expiresInSeconds));
 
-    return Promise.resolve({ url: `${this.baseUrl}/${token}`, expiresAt });
+    return Promise.resolve({ url: this.linkOf(token), expiresAt });
   }
 
   signedUploadUrl(key: string, options: UploadUrlOptions): Promise<SignedUpload> {
@@ -45,7 +45,7 @@ export abstract class SelfSignedFileStorage extends ServedFileStorage {
     const { token, expiresAt } = this.tokens.sign(grant, assertExpiry(options.expiresInSeconds));
 
     return Promise.resolve({
-      url: `${this.baseUrl}/${token}`,
+      url: this.linkOf(token),
       method: 'PUT',
       headers: { 'content-type': mediaType },
       expiresAt,
@@ -71,5 +71,10 @@ export abstract class SelfSignedFileStorage extends ServedFileStorage {
     }
 
     return this.put(grant.key, content, { mediaType: grant.mediaType });
+  }
+
+  /** The token travels in the query, where no router limits its length the way it limits a path parameter. */
+  private linkOf(token: string): string {
+    return `${this.baseUrl}?token=${token}`;
   }
 }

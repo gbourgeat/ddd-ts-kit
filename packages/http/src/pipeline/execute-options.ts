@@ -3,6 +3,7 @@ import type { ErrorMapper } from '../error/error-mapper.js';
 import type { ErrorContext } from './error-context.js';
 import type { RawRequest } from './raw-request.js';
 import type { RouteAround } from './route-around.js';
+import type { UploadReader } from './upload-reader.js';
 
 export interface ExecuteOptions {
   readonly errorMapper?: ErrorMapper;
@@ -37,4 +38,6 @@ export interface ExecuteOptions {
    * `@ddd-ts-kit/tracing` fits as it is.
    */
   readonly around?: RouteAround;
+  /** Reads the file of the routes that declare an upload: `multipartUploads()` of `@ddd-ts-kit/http/uploads`. */
+  readonly uploads?: UploadReader;
 }

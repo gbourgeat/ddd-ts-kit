@@ -22,6 +22,14 @@ copy and move by the service. The AWS SDK v3 packages are optional peers. The co
 MinIO in the integration job (`pgsty/minio`, pinned by digest: the upstream project no longer
 publishes images).
 
+**A controller declares the file it receives.** `upload: { field, maxBytes, mediaTypes }` on
+`@Controller` puts the multipart form, the size and the media types in the OpenAPI contract
+(with the 413, 415 and 422 refusals) and streams the file to `handle` as `upload`, checked on
+its way: `multipartUploads()` of the new `@ddd-ts-kit/http/uploads` entry reads it (busboy, an
+optional peer). `FILE_TOO_LARGE` answers 413, `UNSUPPORTED_MEDIA_TYPE` 415 and `FILE_NOT_FOUND`
+404 by default. `signedFileRoutes(storage)` answers the signed links of the local and in-memory
+storages, and a handler may answer a stream.
+
 ## 0.5.0
 
 **Migrations are named by a timestamp and what they do.** The generated `drizzle.config.ts`

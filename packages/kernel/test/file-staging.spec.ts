@@ -132,7 +132,12 @@ describe('FileStaging', () => {
     const { staging, storage } = aDesk();
     const upload = await staging.uploadUrl(KEY, { expiresInSeconds: 300, mediaType: 'application/pdf' });
 
-    await storage.acceptSigned(upload.url.split('/').at(-1) ?? '', Readable.from([PDF]), 'application/pdf');
+    await storage.acceptSigned(
+      new URL(upload.url).searchParams.get('token') ?? '',
+      Readable.from([PDF]),
+      'application/pdf',
+    );
+
     const file = await staging.confirm(KEY, { ...PDF_ONLY, maxBytes: 1_000 });
 
     expect(file).toMatchObject({ key: KEY, size: PDF.length, mediaType: 'application/pdf' });

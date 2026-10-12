@@ -1,3 +1,4 @@
+import type { Readable } from 'node:stream';
 import type { ExecutionContext } from '@ddd-ts-kit/kernel';
 import type { RawHeaders } from './raw-headers.js';
 
@@ -13,4 +14,6 @@ export interface RequestContext {
   readonly rawHeaders?: RawHeaders;
   /** The framework's own request object, for the rare case the neutral input is not enough. */
   readonly raw: unknown;
+  /** The body as it arrives, unparsed, for a route declared with `rawBody`. */
+  readonly stream?: Readable;
 }
