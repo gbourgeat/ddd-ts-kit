@@ -152,7 +152,7 @@ function isBlockText(text: string): boolean {
  * first line that holds something starts with a space, which a reader would take for indentation.
  */
 function literalBlock(text: string, indent: string): string {
-  const trailing = /\n*$/.exec(text)?.[0].length ?? 0;
+  const trailing = trailingLineBreaks(text);
   const chomping = trailing === 0 ? '-' : trailing === 1 ? '' : '+';
   const body = trailing === 0 ? text : text.slice(0, -1);
   const firstFilled = body.split('\n').find((line) => line !== '') ?? '';
@@ -160,4 +160,14 @@ function literalBlock(text: string, indent: string): string {
   const lines = body.split('\n').map((line) => (line === '' ? '' : `${indent}${line}`));
 
   return [`|${stated}${chomping}`, ...lines].join('\n');
+}
+
+function trailingLineBreaks(text: string): number {
+  let count = 0;
+
+  while (count < text.length && text[text.length - 1 - count] === '\n') {
+    count += 1;
+  }
+
+  return count;
 }

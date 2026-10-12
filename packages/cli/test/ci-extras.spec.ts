@@ -26,7 +26,8 @@ describe('init --ci-extras: the jobs that need a paid plan are opt-in', () => {
     expect(github).not.toContain(MARKS.dependencyReview);
     expect(github).toContain('ghcr.io/gitleaks/gitleaks:');
     expect(github).toContain('npm run ci:audit');
-    expect(gitlab).not.toMatch(/^include:|template: Jobs\/|AST_ENABLE_MR_PIPELINES/m);
+    expect(gitlab).not.toMatch(/^include:/m);
+    expect(gitlab).not.toMatch(/template: Jobs\/|AST_ENABLE_MR_PIPELINES/);
     expect(gitlab).toContain('gitleaks git . --redact --no-banner');
     expect(gitlab).toContain('npm run ci:audit');
     expect(readJson(root, 'ddd-ts-kit.config.json')).not.toHaveProperty('ci');
