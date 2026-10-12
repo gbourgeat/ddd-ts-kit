@@ -4,6 +4,15 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
+## 0.4.1
+
+- A project generated on a stack that tests against PGlite (knex, prisma, typeorm, audit) failed
+  `npm install` with `ERESOLVE`: `@electric-sql/pglite-socket` 0.2.12 requires exactly
+  `@electric-sql/pglite` 0.5.9, and both were written as caret ranges. The pair is now pinned to
+  exact, matching versions, and Dependabot and Renovate move it as one group. The workspace root
+  declares the pair as well: drizzle-orm and the copy of the example used by the conformance suite
+  resolve them from there.
+
 ## 0.4.0
 
 **A route is a controller class with one method.** One class per route; its decorator is the
