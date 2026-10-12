@@ -33,7 +33,7 @@ describe('Register person, end to end', () => {
   });
 
   it('is one trace: the request, the use case, what it saves and what follows the fact', async () => {
-    const ada = await application.apiAs({ id: 'ada' });
+    const ada = application.apiAs({ id: 'ada' });
 
     const trace = await tracing.traceOf(async () => {
       await unwrap(ada.registerPerson({ body: adaLovelace }));
@@ -43,7 +43,7 @@ describe('Register person, end to end', () => {
   });
 
   it('answers 200 to PUT /people/me for any signed-in person, with their own identifier', async () => {
-    const ada = await application.apiAs({ id: 'ada' });
+    const ada = application.apiAs({ id: 'ada' });
 
     const registered = expectAnswer(await ada.registerPerson({ body: adaLovelace }), 200);
 
@@ -52,7 +52,7 @@ describe('Register person, end to end', () => {
 
   it('publishes that the person is registered once, even when they register again with another name', async () => {
     const events = collectEvents(application.events, [personRegisteredV1]);
-    const ada = await application.apiAs({ id: 'ada' });
+    const ada = application.apiAs({ id: 'ada' });
 
     await unwrap(ada.registerPerson({ body: adaLovelace }));
 
@@ -62,7 +62,7 @@ describe('Register person, end to end', () => {
     );
 
     await unwrap(ada.registerPerson({ body: { displayName: 'Ada King', email: 'ada.king@example.com' } }));
-    const grace = await application.apiAs({ id: 'grace' });
+    const grace = application.apiAs({ id: 'grace' });
 
     await unwrap(grace.registerPerson({ body: { displayName: 'Grace Hopper', email: 'grace@example.com' } }));
     await events.waitFor<PersonRegisteredV1Payload>(personRegisteredV1, (event) => event.payload.personId === 'grace');
@@ -77,7 +77,7 @@ describe('Register person, end to end', () => {
   });
 
   it('answers the documented problem for each business refusal', async () => {
-    const ada = await application.apiAs({ id: 'ada' });
+    const ada = application.apiAs({ id: 'ada' });
 
     expectRefusal(
       await ada.registerPerson({ body: { displayName: '   ', email: 'ada@example.com' } }),

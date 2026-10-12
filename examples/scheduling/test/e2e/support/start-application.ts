@@ -29,8 +29,8 @@ export interface RunningApplication {
   /** A client presenting the credential of `actor`; `client` itself presents none. */
   as(actor: TestActor): Promise<HttpClient>;
 
-  /** The typed client presenting the credential of `actor`. */
-  apiAs(actor: TestActor): Promise<Client>;
+  /** The typed client presenting the credential of `actor`, given as the client is given it: a function asked before each request. */
+  apiAs(actor: TestActor): Client;
 
   /** Stores a relationship, as the application does when an element is created or shared. */
   relate(tuple: RelationTuple): Promise<void>;
@@ -85,7 +85,7 @@ export async function startApplication(options: StartOptions = {}): Promise<Runn
     api: createClient({ baseUrl }),
     events: application.eventSubscriber,
     as: async (actor) => client.withHeaders(await credentials.headersOf(actor)),
-    apiAs: async (actor) => createClient({ baseUrl, headers: await credentials.headersOf(actor) }),
+    apiAs: (actor) => createClient({ baseUrl, credentials: { bearer: () => credentials.bearerOf(actor) } }),
     relate: (tuple) => tuples.write([tuple]),
     reset: () => relay.whileStopped(() => database.reset().then(() => relateSystemActors(tuples))),
     close: () => closeInOrder({ server, relay, application, redis, database }),

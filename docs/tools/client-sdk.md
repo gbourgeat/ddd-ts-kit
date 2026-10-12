@@ -203,7 +203,9 @@ The scheduling example generates `clients/api` (`scheduling-api-client`). Its en
 of registering a person and opening a practice, and the helpers every journey sets its practice
 up with (`registerPeople`, `openStaffedPractice`), call the API through it
 (`application.apiAs(actor)` in `test/e2e/support/start-application.ts`, with `expectAnswer` and
-`expectRefusal`, which the compiler holds to the statuses and codes of each operation). The other
+`expectRefusal`, which the compiler holds to the statuses and codes of each operation).
+`apiAs` gives the token of the actor as the credential of the `bearer` scheme, a function asked
+before each request: the authentication of the client is proven against the real server. The other
 specs keep the HTTP helpers, which remain the tool for a request the contract does not describe:
 a body the client would refuse to compile is sent with them to prove `VALIDATION_FAILED`. The
 end-to-end spec `packages/cli/test/e2e/client-sdk.spec.ts` proves the loop on a fresh project:

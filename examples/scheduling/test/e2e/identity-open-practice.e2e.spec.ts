@@ -40,14 +40,14 @@ describe('Open practice, end to end', () => {
 
   it('answers 403 to a signed-in person who is not a platform admin', async () => {
     await registerPeople(application, 'ada');
-    const ada = await application.apiAs({ id: 'ada' });
+    const ada = application.apiAs({ id: 'ada' });
 
     expectRefusal(await ada.openPractice({ body: opening }), 403, 'FORBIDDEN');
   });
 
   it('is one trace: the request, the use case, what it saves and what follows the facts', async () => {
     await registerPeople(application, 'ada');
-    const root = await application.apiAs({ id: 'root', roles: ['platform-admin'] });
+    const root = application.apiAs({ id: 'root', roles: ['platform-admin'] });
 
     const trace = await tracing.traceOf(async () => {
       await unwrap(root.openPractice({ body: opening }));
@@ -62,10 +62,10 @@ describe('Open practice, end to end', () => {
 
   it('answers 201 to POST /practices for the platform admin, and the first manager manages the practice at once', async () => {
     await registerPeople(application, 'ada', 'grace');
-    const root = await application.apiAs({ id: 'root', roles: ['platform-admin'] });
+    const root = application.apiAs({ id: 'root', roles: ['platform-admin'] });
 
     const opened = expectAnswer(await root.openPractice({ body: opening }), 201);
-    const ada = await application.apiAs({ id: 'ada' });
+    const ada = application.apiAs({ id: 'ada' });
 
     expectAnswer(
       await ada.addMember({ path: { practiceId: opened.id }, body: { personId: 'grace', role: 'practitioner' } }),
@@ -77,7 +77,7 @@ describe('Open practice, end to end', () => {
     const events = collectEvents(application.events, [practiceOpenedV1, practiceMemberAddedV1]);
 
     await registerPeople(application, 'ada');
-    const root = await application.apiAs({ id: 'root', roles: ['platform-admin'] });
+    const root = application.apiAs({ id: 'root', roles: ['platform-admin'] });
 
     const opened = await unwrap(root.openPractice({ body: opening }));
 
@@ -105,7 +105,7 @@ describe('Open practice, end to end', () => {
 
   it('answers the documented problem for each business refusal', async () => {
     await registerPeople(application, 'ada');
-    const root = await application.apiAs({ id: 'root', roles: ['platform-admin'] });
+    const root = application.apiAs({ id: 'root', roles: ['platform-admin'] });
 
     expectRefusal(
       await root.openPractice({ body: { ...opening, timeZone: 'Europe/Atlantis' } }),

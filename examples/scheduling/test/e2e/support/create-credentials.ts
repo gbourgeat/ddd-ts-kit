@@ -25,6 +25,9 @@ export interface Credentials {
   readonly authenticator: Authenticator;
 
   headersOf(actor: TestActor): Promise<HttpHeaders>;
+
+  /** The bearer token of `actor`, without its scheme: what the typed client is given as the credential of `bearer`. */
+  bearerOf(actor: TestActor): Promise<string>;
 }
 
 /** Stands for the realm: one key pair made for this run, published the way Keycloak publishes its own. */
@@ -32,11 +35,13 @@ export async function createCredentials(): Promise<Credentials> {
   const { publicKey, privateKey } = await generateKeyPair('RS256');
   const baseUrl = await serveKeySet({ ...(await exportJWK(publicKey)), kid: keyId, alg: 'RS256', use: 'sig' });
 
+  const bearerOf = (actor: TestActor): Promise<string> =>
+    tokenOf(actor, { key: privateKey, issuer: baseUrl + '/realms/' + realm });
+
   return {
     authenticator: keycloakAuthenticator({ baseUrl, realm, audience, impersonatorClaim: IMPERSONATOR_CLAIM }),
-    headersOf: async (actor) => ({
-      authorization: 'Bearer ' + (await tokenOf(actor, { key: privateKey, issuer: baseUrl + '/realms/' + realm })),
-    }),
+    headersOf: async (actor) => ({ authorization: 'Bearer ' + (await bearerOf(actor)) }),
+    bearerOf,
   };
 }
 

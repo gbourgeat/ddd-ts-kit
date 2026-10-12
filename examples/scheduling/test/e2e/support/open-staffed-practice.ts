@@ -27,9 +27,9 @@ export async function openStaffedPractice(application: RunningApplication, staff
 
   await registerPeople(application, managerId, practitionerId, assistantId);
 
-  const root = await application.apiAs({ id: 'root', roles: ['platform-admin'] });
+  const root = application.apiAs({ id: 'root', roles: ['platform-admin'] });
   const { id: practiceId } = await unwrap(root.openPractice({ body: { name, timeZone: 'Europe/Paris', managerId } }));
-  const manager = await application.apiAs({ id: managerId });
+  const manager = application.apiAs({ id: managerId });
 
   await unwrap(manager.addMember({ path: { practiceId }, body: { personId: practitionerId, role: 'practitioner' } }));
   await unwrap(manager.addMember({ path: { practiceId }, body: { personId: assistantId, role: 'assistant' } }));
