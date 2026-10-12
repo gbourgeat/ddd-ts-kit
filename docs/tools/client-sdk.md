@@ -209,7 +209,12 @@ secret of the pipeline, and `npm publish --provenance` from GitHub Actions.
 
 ## In the example
 
-The scheduling example generates `clients/api` (`scheduling-api-client`). Its end-to-end specs
+The scheduling example generates `clients/api` (`scheduling-api-client`). Inside the kit's
+repository the example is itself a workspace of the root, and npm ignores a workspace's own
+`"workspaces"`: there the client is reached through the `paths` entry of `tsconfig.json` alone,
+which is what the specs and the type check use. Its workspace entry takes effect in a standalone
+copy of the example, the layout a generated project has, where `npm publish --workspace
+clients/api` works. Its end-to-end specs
 of registering a person and opening a practice, and the helpers every journey sets its practice
 up with (`registerPeople`, `openStaffedPractice`), call the API through it
 (`application.apiAs(actor)` in `test/e2e/support/start-application.ts`, with `expectAnswer` and
