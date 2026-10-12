@@ -1,4 +1,4 @@
-import { CommandBus, systemActor } from '@ddd-ts-kit/kernel';
+import { type CommandBus, systemActor } from '@ddd-ts-kit/kernel';
 import { Scheduled, type JobExecution, type ScheduledJob } from '@ddd-ts-kit/kernel/declarations';
 import { ExpireDelegationsCommand } from '@/contexts/identity/application/commands/expire-delegations/expire-delegations.command';
 

@@ -17,45 +17,6 @@ interface Watched {
   output: string;
 }
 
-function watch(root: string): Watched {
-  const child = spawn('npm', ['run', 'dev'], {
-    cwd: root,
-    detached: true,
-    env: { ...process.env, OTEL_SDK_DISABLED: 'true', NO_COLOR: '1' },
-  });
-
-  const watched: Watched = { process: child, output: '' };
-
-  for (const stream of [child.stdout, child.stderr]) {
-    stream.on('data', (chunk: Buffer) => {
-      watched.output += chunk.toString('utf8');
-    });
-  }
-
-  return watched;
-}
-
-/** Waits until the process printed `text`, and fails with everything it printed when it did not in time. */
-async function printed(watched: Watched, text: string): Promise<void> {
-  const deadline = Date.now() + PATIENCE_MS;
-
-  while (!watched.output.includes(text)) {
-    if (Date.now() > deadline) {
-      throw new Error(`"${text}" was not printed within ${PATIENCE_MS} ms:\n${watched.output}`);
-    }
-
-    await new Promise((resolve) => setTimeout(resolve, 200));
-  }
-}
-
-/** The handler as generated, with a method the probe of `main.ts` calls, and what it is given. */
-function probed(handler: string, constructorLines: string, answer: string): string {
-  return handler.replace(
-    /(export class CancelInvoiceHandler [^{]*\{\n)/,
-    `$1${constructorLines}  probe(): string {\n    return ${answer};\n  }\n\n`,
-  );
-}
-
 /**
  * Slow, opt-in (DDD_TS_KIT_E2E=1): in development the injected list follows the code without a
  * manual step. `npm run dev` of a project of the default stack runs under `tsx watch`, which
@@ -129,3 +90,42 @@ describe.runIf(SLOW)('npm run dev, when a dependency is added to a constructor',
     2 * PATIENCE_MS + 30_000,
   );
 });
+
+function watch(root: string): Watched {
+  const child = spawn('npm', ['run', 'dev'], {
+    cwd: root,
+    detached: true,
+    env: { ...process.env, OTEL_SDK_DISABLED: 'true', NO_COLOR: '1' },
+  });
+
+  const watched: Watched = { process: child, output: '' };
+
+  for (const stream of [child.stdout, child.stderr]) {
+    stream.on('data', (chunk: Buffer) => {
+      watched.output += chunk.toString('utf8');
+    });
+  }
+
+  return watched;
+}
+
+/** Waits until the process printed `text`, and fails with everything it printed when it did not in time. */
+async function printed(watched: Watched, text: string): Promise<void> {
+  const deadline = Date.now() + PATIENCE_MS;
+
+  while (!watched.output.includes(text)) {
+    if (Date.now() > deadline) {
+      throw new Error(`"${text}" was not printed within ${PATIENCE_MS} ms:\n${watched.output}`);
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 200));
+  }
+}
+
+/** The handler as generated, with a method the probe of `main.ts` calls, and what it is given. */
+function probed(handler: string, constructorLines: string, answer: string): string {
+  return handler.replace(
+    /(export class CancelInvoiceHandler [^{]*\{\n)/,
+    `$1${constructorLines}  probe(): string {\n    return ${answer};\n  }\n\n`,
+  );
+}

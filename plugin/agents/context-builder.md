@@ -23,7 +23,7 @@ worktree (`cd <worktree> && ...`).
   the lockfile, migrations, everything under `docs/`, generated documents. Another context
   is not yours either; its `published-language/` is read-only.
 - You run the generators that stay inside your context, always with `--local-only`:
-  `aggregate`, `builder`, `entity`, `value-object`, `domain-event`, `domain-error`,
+  `aggregate`, `builder`, `entity`, `value-object`, `domain-event`, `error`,
   `domain-service`, `command` (on an aggregate whose repository exists), `query`, `port`,
   `route`, `integration-handler`, `event-handler`, `projection`, `acl`, `e2e`, `adapter` (once the project
   has its first adapter: the first one brings a helper to the platform). The conductor

@@ -83,13 +83,13 @@ export class Appointment extends AggregateRoot<string> {
 
   private assertNotCancelled(): void {
     if (this.state.status === 'cancelled') {
-      throw new AppointmentAlreadyCancelled();
+      throw AppointmentError.alreadyCancelled(this.id);
     }
   }
 
   private assertCancellationStillFree(at: Date): void {
     if (this.state.slot.startsWithin(FREE_CANCELLATION_MS, at)) {
-      throw new CancellationWindowPassed();
+      throw AppointmentError.cancellationWindowPassed(this.id, this.state.slot.startsAt);
     }
   }
 }
@@ -103,8 +103,12 @@ the shape guarantees:
   (`domain/aggregate-encapsulation`). State changes only through `reschedule` and `cancel`.
 - **Birth versus loading.** `book` checks birth invariants and records the fact;
   `rehydrate` restores a stored state and records nothing.
-- **Refusals are named.** A violated invariant raises a `DomainError` subclass with a stable
-  code (`domain/no-generic-error`), never a generic error.
+- **Refusals are named.** A violated invariant raises a `DomainError` with a stable code,
+  never a generic error (`domain/no-generic-error`), and it is built by a static factory of the
+  error class of the concept, `AppointmentError`, so that the refusal reads as a sentence
+  (`errors/through-factory`). The factory writes the code (`APPOINTMENT_ALREADY_CANCELLED`),
+  the message and the facts once: see
+  [Invariants, permissions and validation](invariants-permissions-validation.md).
 - **Time is an argument.** The aggregate holds no clock; the handler passes `clock.now()`.
 - **Facts are recorded.** Each intention records a [domain event](domain-building-blocks.md),
   which the save hands over: it is dispatched at the end of the unit of work of the command,

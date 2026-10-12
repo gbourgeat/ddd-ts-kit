@@ -2,8 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { executeRoute } from '@ddd-ts-kit/http';
 import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';
 import { RegisterPersonCommand } from '@/contexts/identity/application/commands/register-person/register-person.command';
-import { InvalidDisplayNameError } from '@/contexts/identity/domain/errors/invalid-display-name.error';
-import { InvalidEmailError } from '@/contexts/identity/domain/errors/invalid-email.error';
+import { PersonError } from '@/contexts/identity/domain/errors/person.error';
 import { registerPersonRoute } from '@/contexts/identity/presentation/http/register-person.route';
 
 const params = {};
@@ -64,8 +63,8 @@ describe('PUT /people/me', () => {
   });
 
   it.each([
-    ['INVALID_DISPLAY_NAME', new InvalidDisplayNameError()],
-    ['INVALID_EMAIL', new InvalidEmailError('x')],
+    ['INVALID_DISPLAY_NAME', PersonError.invalidDisplayName()],
+    ['INVALID_EMAIL', PersonError.invalidEmail('x')],
   ])('answers 422 with the code %s when the use case refuses', async (code, refusal) => {
     const commands = new InMemoryCommandBus().register(RegisterPersonCommand, {
       execute: async () => {

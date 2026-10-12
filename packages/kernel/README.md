@@ -12,7 +12,7 @@ npm i @ddd-ts-kit/kernel
 
 | Area | Exports |
 |---|---|
-| Domain | `Entity`, `AggregateRoot` (version, recorded events), `ValueObject`, `DomainEvent`, `DomainError` with a stable `code` (`InvariantViolation`, `NotFoundError`, `ConflictError`, `ConcurrencyError`), `Result` with `ok`, `err`, `unwrap` |
+| Domain | `Entity`, `AggregateRoot` (version, recorded events), `ValueObject`, `DomainEvent`, `DomainError` with a stable `code`, `ConceptError` (the errors of one concept, each built by a static factory: see "Domain errors"), `isRefusal`, `CodeOf`, `RefusalOf`, `Refusal`, `RefusalFacts`, the generic `InvariantViolation`, `NotFoundError`, `ConflictError`, `ConcurrencyError`, `Result` with `ok`, `err`, `unwrap` |
 | Ports | `Clock`, `IdGenerator`, `UnitOfWork`, `Repository` (abstract classes: each one is its own injection token), `UseCase`, `DependencyKind` (the roles a binding declares, read by di, tracing and aspects: `repository`, `gateway`, `external`, `use-case`, `publisher`, `consumer`, `domain-event-handler`, `job`) |
 | Buses | `Command`, `Query`, `CommandBus`, `QueryBus`, `BusMiddleware`, the in-process `InMemoryCommandBus` and `InMemoryQueryBus` (`register(type, handler, { context })` names the bounded context in `MessageInfo`), `unitOfWorkMiddleware` |
 | Events | `IntegrationEvent`, `IntegrationEventPublisher`, `IntegrationEventSubscriber`, `EventBus` (both at once), `EventSubscribers` (the subscriber of each bounded context), `ProcessedEventStore`, `idempotent`, `InMemoryEventBus`, `DomainEventDispatcher`, `IntegrationEventCallback` and `DomainEventCallback` (the functions a subscriber and a dispatcher are given), `executionContextOfEvent`, `inEventScope`, `scopedPublisher`, `EventDelivery` (what a provider says of one delivery: attempt, last attempt, transport, source, consumer), `messagingSystemOf` |
@@ -27,6 +27,93 @@ npm i @ddd-ts-kit/kernel
 | Declarations (`@ddd-ts-kit/kernel/declarations`) | `Requires`, `Public`, `CommandHandler`, `QueryHandler`, `IntegrationEventHandler`, `DomainEventHandler`, `Scheduled`, `Projection`, `On`, `Repository`, `Gateway`, `Adapter`, `Policy`, `injected`, `injectedDependencies`, `declarationOf`, `listDeclarations`, `Token`, `describeToken`, `tokenIdentity`, `portDefect` |
 
 The rules these blocks serve are in `docs/ARCHITECTURE.md`.
+
+## Domain errors
+
+A business refusal is a `DomainError`: an answer the code planned for, known everywhere by its
+`code`. A context has one error class per concept of its language, and each refusal is a static
+factory of that class, named in the words of the business:
+
+```ts
+import { ConceptError } from '@ddd-ts-kit/kernel';
+
+export class AppointmentError extends ConceptError {
+  static slotTaken(calendarId: string, startsAt: Date) {
+    return AppointmentError.refusal(
+      'SLOT_TAKEN',
+      `The slot starting at ${startsAt.toISOString()} on calendar ${calendarId} is already held.`,
+      { calendarId, startsAt },
+    ).exposing('startsAt');
+  }
+
+  static notFound(appointmentId: string) {
+    return AppointmentError.refusal('APPOINTMENT_NOT_FOUND', `Appointment ${appointmentId} does not exist.`, {
+      appointmentId,
+    });
+  }
+}
+
+throw AppointmentError.slotTaken(calendar.id, slot.startsAt);
+```
+
+| Member | What it does |
+|---|---|
+| `protected static refusal(code, message, facts?)` | builds the refusal of a factory: an instance of the class it is called on, typed with that code and those facts. The constructor is protected and a subclass declares none, so outside its class a refusal exists only through a factory |
+| `protected exposing(...names)` | called on the refusal by its factory: these facts may leave the process. None does by default |
+| `protected causedBy(cause)` | called by its factory: the error this refusal translates, as `cause` |
+| `code`, `message`, `name`, `cause` | as on any `DomainError`; `name` is the class, `code` the identity of the refusal |
+| `facts` | every fact the factory was given, as plain data (`RefusalFacts`: text, numbers, booleans, dates, `null`, lists of them), for the code that catches the error and for the tests |
+| `exposedFacts` | the facts a client may read: what `@ddd-ts-kit/http` writes under `facts` in the problem document |
+| `toJSON()` | `{ name, code, message }`, plus `facts` when some are exposed: never the stack, the cause or a private fact |
+| `static is(error, code?)` | narrows what was caught to a refusal of this class, of this code when one is given |
+
+The codes of a class are a closed vocabulary the compiler derives from its factories, so a
+`switch` is exhaustive and each case knows its facts:
+
+```ts
+import { isRefusal, type CodeOf } from '@ddd-ts-kit/kernel';
+
+type AppointmentErrorCode = CodeOf<typeof AppointmentError>; // 'SLOT_TAKEN' | 'APPOINTMENT_NOT_FOUND'
+
+if (AppointmentError.is(error)) {
+  switch (error.code) {
+    case 'SLOT_TAKEN':
+      return retryAfter(error.facts.startsAt); // a Date
+    case 'APPOINTMENT_NOT_FOUND':
+      return forget(error.facts.appointmentId);
+  }
+}
+
+if (AppointmentError.is(error, 'SLOT_TAKEN')) {
+  error.facts.calendarId; // a string
+}
+
+isRefusal(error, 'SLOT_TAKEN'); // whatever the class: the code is what everything downstream keys on
+```
+
+`error instanceof AppointmentError && error.code === 'SLOT_TAKEN'` works too, without the facts
+of that code. A factory lets its return type be inferred: an annotation `: AppointmentError`
+would hide its code from `CodeOf`.
+
+**Facts are private.** A message is written for a human and answered to the client as `detail`;
+the facts are data, and stay in the process unless the factory names the ones that may leave.
+Never expose what identifies a person. The audit trail and the spans record the code alone.
+
+**One class per error** is the form of 0.1 and 0.2, and keeps working: `DomainError` is still
+abstract over `code`, its constructor still public, and `InvariantViolation`, `NotFoundError`,
+`ConflictError` and `ConcurrencyError`, each one refusal under a fixed code, are still built
+with `new`.
+
+```ts
+export class SlotTakenError extends DomainError {
+  readonly code = 'SLOT_TAKEN';
+}
+```
+
+A project says which form it writes with `"stack.refusals"` in `ddd-ts-kit.config.json`
+(`factories`, what `init` writes, or `classes`, what a config without the key means); the
+`errors/*` rules hold the first, and `ddd-ts-kit error-factories` moves a project from the
+second. Both forms can live in one project.
 
 ## Domain events and the unit of work
 

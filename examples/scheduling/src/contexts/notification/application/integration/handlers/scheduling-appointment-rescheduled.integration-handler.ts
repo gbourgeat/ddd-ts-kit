@@ -1,4 +1,4 @@
-import { CommandBus, systemActor } from '@ddd-ts-kit/kernel';
+import { type CommandBus, systemActor } from '@ddd-ts-kit/kernel';
 import { IntegrationEventHandler } from '@ddd-ts-kit/kernel/declarations';
 import {
   appointmentRescheduledV1,

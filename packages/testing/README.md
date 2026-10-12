@@ -161,7 +161,7 @@ it('records the payment of a placed order', () => {
 it('refuses to pay an order twice', () => {
   given(anOrder().paid())
     .when((order) => order.pay())
-    .thenError(OrderAlreadyPaid, 'ORDER_ALREADY_PAID')
+    .thenError('ORDER_ALREADY_PAID')
     .thenState((order) => expect(order.status).toBe('paid'));
 });
 ```
@@ -175,13 +175,33 @@ the same with the arrangement as a function, replayed from a fresh aggregate at 
 | `thenEvents([...])` | exactly these events, in order; each described by its name, its class, or the properties that matter |
 | `thenEventNames([...])` | exactly these names, in order |
 | `thenNoEvent()` | nothing was recorded |
-| `thenError(ErrorClass, code?)`, `thenError(code)` | the action threw that error |
+| `thenError(code)`, `thenError(code, facts)` | the action refused with that code, whatever the class of the error, carrying these facts when given (it may carry others) |
+| `thenError(ErrorClass, code?)` | the action threw an instance of that class: for an error that is one class, as 0.2 wrote them |
 | `thenState((aggregate) => ...)` | your own assertions on the aggregate pass |
 
 Failures are `AssertionError`s of `node:assert` with the expected and recorded events side by
 side, so they read well under any runner. An error raised by `when` is never swallowed: every
 assertion but `thenError` fails on it. When `when` (or the arrangement) is asynchronous, the
 chain is a promise: `await given(order).when(async (o) => ...).thenEventNames([...])`.
+
+## Refusals
+
+A business refusal is known by its code, and carries its facts as data: a test asserts both,
+never a message and never the class of one refusal.
+
+```ts
+import { expectRefusal } from '@ddd-ts-kit/testing';
+
+expectRefusal(() => calendar.slotFor('consultation', startsAt, now), 'BOOKING_TOO_LATE', { notice: 120 });
+expectRefusal(Email.create('ada@'), 'INVALID_EMAIL');
+await expectRefusal(() => commands.execute(command), 'SLOT_TAKEN', { calendarId: 'calendar-1' });
+```
+
+`expectRefusal(subject, code, facts?)` reads an action, which it runs, a `Result`, or an error
+already caught. An action that returns a promise gives a promise to await. It answers the
+error, and fails with an `AssertionError` that names what was refused instead, or the facts
+that differ, one line each. The facts given must be carried with those values; the refusal may
+carry others.
 
 ## Handlers
 
@@ -292,7 +312,7 @@ afterAll(() => server.close());
 | `client.get / post / put / patch / delete` | JSON in, `{ status, headers, body }` out; `body` is parsed when the content type is JSON, text otherwise; a 4xx or 5xx is a response, not an exception |
 | `client.post(path, body, { headers })`, `client.withHeaders(headers)` | headers for one call, or a client for another caller |
 | `expectStatus(response, 201)` | hands the response back, or fails showing the body, where the API says why |
-| `expectProblem(response, { status, code })` | asserts an RFC 9457 `application/problem+json` answer and returns the document |
+| `expectProblem(response, { status, code, facts })` | asserts an RFC 9457 `application/problem+json` answer and returns the document; `code` and `facts` are optional, and `facts` names the facts the document must expose, as JSON writes them (a date is its ISO text) |
 | `eventually(assertion, { timeoutMs = 2000, intervalMs = 20 })` | retries until the assertion passes; when the time is up, fails quoting the last error |
 | `collectEvents(subscriber, types)` | records published integration events: `received(type?)`, `waitFor(type, predicate?, options?)`, `stop()` |
 
@@ -349,7 +369,7 @@ levels of `docs/ARCHITECTURE.md` (the adapter level is the contract suites, belo
 it('refuses to pay an order twice', () => {
   given(anOrder().paid())
     .when((order) => order.pay(at))
-    .thenError(OrderAlreadyPaid, 'ORDER_ALREADY_PAID');
+    .thenError('ORDER_ALREADY_PAID');
 });
 
 // 2. Application: the real handler through the bus, fakes for the ports.

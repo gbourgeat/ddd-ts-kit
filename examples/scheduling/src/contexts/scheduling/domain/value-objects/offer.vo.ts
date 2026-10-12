@@ -1,5 +1,5 @@
 import { ValueObject, err, ok, type Result } from '@ddd-ts-kit/kernel';
-import { InvalidOfferError } from '@/contexts/scheduling/domain/errors/invalid-offer.error';
+import { WaitlistError } from '@/contexts/scheduling/domain/errors/waitlist.error';
 import type { Slot } from '@/contexts/scheduling/domain/value-objects/slot.vo';
 import type { Waiter } from '@/contexts/scheduling/domain/value-objects/waiter.vo';
 
@@ -16,13 +16,13 @@ export class Offer extends ValueObject<OfferProps> {
     super(props);
   }
 
-  static create(props: OfferProps): Result<Offer, InvalidOfferError> {
+  static create(props: OfferProps): Result<Offer, WaitlistError> {
     if (Number.isNaN(props.expiresAt.getTime())) {
-      return err(new InvalidOfferError('expires at a real instant'));
+      return err(WaitlistError.invalidOffer('expires at a real instant'));
     }
 
     if (props.expiresAt.getTime() > props.slot.startsAt.getTime()) {
-      return err(new InvalidOfferError('expires before its slot starts'));
+      return err(WaitlistError.invalidOffer('expires before its slot starts'));
     }
 
     return ok(new Offer({ ...props, expiresAt: new Date(props.expiresAt) }));

@@ -3,9 +3,7 @@ import { createErrorMapper, executeRoute } from '@ddd-ts-kit/http';
 import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';
 import { errorStatuses } from '@/platform/http/error-statuses';
 import { ConfirmAppointmentCommand } from '@/contexts/scheduling/application/commands/confirm-appointment/confirm-appointment.command';
-import { AppointmentAlreadyConfirmedError } from '@/contexts/scheduling/domain/errors/appointment-already-confirmed.error';
-import { AppointmentEndedError } from '@/contexts/scheduling/domain/errors/appointment-ended.error';
-import { AppointmentNotFoundError } from '@/contexts/scheduling/domain/errors/appointment-not-found.error';
+import { AppointmentError } from '@/contexts/scheduling/domain/errors/appointment.error';
 import { confirmAppointmentRoute } from '@/contexts/scheduling/presentation/http/confirm-appointment.route';
 
 // The one table of the platform: a code it does not name answers 422.
@@ -32,9 +30,9 @@ describe('POST /appointments/:appointmentId/confirmation', () => {
   });
 
   it.each([
-    [new AppointmentAlreadyConfirmedError('appointment-1'), 409, 'APPOINTMENT_ALREADY_CONFIRMED'],
-    [new AppointmentEndedError('appointment-1', 'expired'), 409, 'APPOINTMENT_ENDED'],
-    [new AppointmentNotFoundError('appointment-1'), 404, 'APPOINTMENT_NOT_FOUND'],
+    [AppointmentError.alreadyConfirmed('appointment-1'), 409, 'APPOINTMENT_ALREADY_CONFIRMED'],
+    [AppointmentError.ended('appointment-1', 'expired'), 409, 'APPOINTMENT_ENDED'],
+    [AppointmentError.notFound('appointment-1'), 404, 'APPOINTMENT_NOT_FOUND'],
   ])('answers the refusal %o with the status %i and the code %s', async (refusal, status, code) => {
     const commands = new InMemoryCommandBus().register(ConfirmAppointmentCommand, {
       execute: async () => {

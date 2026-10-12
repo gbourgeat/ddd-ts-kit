@@ -10,7 +10,7 @@ export const domainNoGenericError = defineRule<'generic'>({
     'No `throw new Error(...)` in domain/ or application/: an expected failure is a DomainError with a stable code.',
   messages: {
     generic:
-      'A generic Error says nothing a caller can act on. Throw a DomainError with a stable code (`ddd-ts-kit generate domain-error {{context}} <Name>`): presentation maps the code to a status in one place.',
+      'A generic Error says nothing a caller can act on. Throw a DomainError with a stable code, built by a factory of the error class of its concept (`ddd-ts-kit generate error {{context}} <Concept> <refusal>`): presentation maps the code to a status in one place.',
   },
   create({ file, sourceCode, report }) {
     const { location } = file;

@@ -36,7 +36,8 @@ deviation.
     "logger": "stdout",
     "style": "declared",
     "assembly": "barrel",
-    "dependencies": "signature"
+    "dependencies": "signature",
+    "refusals": "factories"
   },
   "contexts": {
     "billing": { "classification": "core", "upstreams": [] },
@@ -132,8 +133,9 @@ outside the list stops every command with the list of accepted values.
 | `stack.style` | `declared`: each class declares what it is with a decorator and a context has no module file; `explicit`: every binding is written in `<context>.module.ts`. `init` accepts `declared` with `di: tsyringe` only | `declared` with `di: tsyringe`, `explicit` otherwise |
 | `stack.assembly` | `barrel`, `discovery`: how a declared context reaches the composition root, one generated `<context>.declarations.ts` or a scan at startup. `init` accepts the flag in the declared style only | `barrel` |
 | `stack.dependencies` | `signature`, `listed`: where a declared class states what it depends on. `signature`: in its constructor and nowhere else; `ddd-ts-kit docs` reads the signatures into the generated file of each context, and a list left in a decorator is reported (`declarations/constructor-injection`, which ESLint fixes). `listed`: in the last argument of its decorator, as 0.1 wrote it. Both forms run in either: a class that lists is given its list, a class that does not is given what its constructor takes. `init` accepts the flag in the declared style only | `signature` |
+| `stack.refusals` | `factories`, `classes`: how a domain error is written. `factories`: one error class per concept of the model, each refusal built by a static factory named in the words of the business (`AppointmentError.slotTaken(..)`), held by the `errors/*` rules, and `generate error <context> <Concept> <refusal>` adds one. `classes`: one class per error, built with `new`, as 0.1 and 0.2 wrote them; `generate domain-error` writes one, and no `errors/*` rule judges. Both forms run in either: `ConceptError` and `DomainError` are one family | `factories` |
 
-A config file that omits a `stack` key is read with the same defaults, with two exceptions:
+A config file that omits a `stack` key is read with the same defaults, with three exceptions:
 without `stack.style` the project is read as `explicit`, whatever `stack.di` says, because
 such a file was written before the declared style existed; and without `stack.dependencies`
 a declared project is read as `listed`, because such a file was written when every decorator
@@ -142,6 +144,17 @@ the packages. To move it to constructor signatures: set `"dependencies": "signat
 `npx eslint . --fix` (the rule removes every list that repeats its constructor and reports
 the ones that differ), then `npx ddd-ts-kit docs`, and add
 `--import ddd-ts-kit/dist/refresh-declarations.js` to the `dev` script as `init` writes it.
+
+The third: without `stack.refusals` the project is read as `classes`, because such a file was
+written when a domain error was a class built with `new`. Nothing new is reported there. To
+move it to factories: `npx ddd-ts-kit error-factories --plan` writes
+`error-factories.plan.json`, one entry per error class with the concept proposed for it (the
+aggregate its name starts or ends with, nothing when none does); give each entry its concept,
+then `npx ddd-ts-kit error-factories --apply` writes the error classes of the concepts, moves
+each spec under the name of its factory, rewrites every usage (`new`, `thenError`, `toThrow`,
+`expect.any`, `toBeInstanceOf`, `instanceof`, imports and types) and sets the key. It ends
+with what is left to a person: the facts to expose, the factories that still take a sentence,
+the properties that became facts.
 
 ## Contexts
 

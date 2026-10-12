@@ -10,14 +10,6 @@ const BILLING = ['--context', 'billing:core'];
 
 const ignored = (root: string): string[] => stringsAt(readJson(root, 'knip.json'), 'ignoreDependencies');
 
-/** An aggregate, its command and the route of that command, in billing: the route is the first file that validates. */
-function routed(root: string, ...more: string[]): ReturnType<typeof cli> {
-  cli(root, 'generate', 'aggregate', 'billing', 'Invoice', '--allow-name');
-  cli(root, 'generate', 'command', 'billing', 'IssueInvoice', '--aggregate', 'Invoice', '--public', '--allow-name');
-
-  return cli(root, 'generate', 'route', 'billing', 'IssueInvoice', '--method', 'POST', '--path', '/invoices', ...more);
-}
-
 /**
  * What the dead-code gate is told about a project that uses nothing yet. A dependency every
  * generated route needs is installed from the start: where the route of the audit trail does not
@@ -116,3 +108,11 @@ describe('the database of the tests, in a project nothing drives through HTTP', 
     expect(testEntries(initProject('--http', 'none', '--orm', 'none'))).not.toContain(helper);
   });
 });
+
+/** An aggregate, its command and the route of that command, in billing: the route is the first file that validates. */
+function routed(root: string, ...more: string[]): ReturnType<typeof cli> {
+  cli(root, 'generate', 'aggregate', 'billing', 'Invoice', '--allow-name');
+  cli(root, 'generate', 'command', 'billing', 'IssueInvoice', '--aggregate', 'Invoice', '--public', '--allow-name');
+
+  return cli(root, 'generate', 'route', 'billing', 'IssueInvoice', '--method', 'POST', '--path', '/invoices', ...more);
+}

@@ -1,5 +1,7 @@
 import { AssertionError } from 'node:assert';
 import { isDeepStrictEqual } from 'node:util';
+import type { ExpectedFacts } from '../refusals/expected-facts.js';
+import { factMismatches } from '../refusals/fact-mismatches.js';
 import { describeEvent } from './describe-event.js';
 import type { ErrorClass } from './error-class.js';
 import type { EventMatcher } from './event-matcher.js';
@@ -82,9 +84,9 @@ export class ImmediateOutcome<A> implements Outcome<A> {
     return this;
   }
 
-  thenError(typeOrCode: ErrorClass | string, code?: string): this {
+  thenError(typeOrCode: ErrorClass | string, detail?: string | ExpectedFacts): this {
     const type = typeof typeOrCode === 'string' ? undefined : typeOrCode;
-    const expectedCode = typeof typeOrCode === 'string' ? typeOrCode : code;
+    const expectedCode = typeof typeOrCode === 'string' ? typeOrCode : codeIn(detail);
 
     const expected = [type?.name, expectedCode === undefined ? undefined : `code ${expectedCode}`]
       .filter((part) => part !== undefined)
@@ -103,6 +105,7 @@ export class ImmediateOutcome<A> implements Outcome<A> {
       });
     }
 
+    assertFacts(error, typeof detail === 'object' ? detail : {});
     this.errorAsserted = true;
 
     return this;
@@ -164,6 +167,23 @@ function describeMatcher(matcher: EventMatcher): string {
   }
 
   return typeof matcher === 'function' ? `instance of ${matcher.name}` : show(matcher);
+}
+
+function codeIn(detail: string | ExpectedFacts | undefined): string | undefined {
+  return typeof detail === 'string' ? detail : undefined;
+}
+
+function assertFacts(error: unknown, expected: ExpectedFacts): void {
+  const mismatches = factMismatches(error, expected);
+
+  if (mismatches.length > 0) {
+    throw new AssertionError({
+      message: ['The error does not carry the expected facts.', ...section('Difference', mismatches)].join('\n'),
+      actual: error,
+      expected,
+      operator: 'thenError',
+    });
+  }
 }
 
 function codeOf(error: unknown): string | undefined {

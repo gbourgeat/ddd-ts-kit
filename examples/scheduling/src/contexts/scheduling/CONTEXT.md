@@ -230,6 +230,37 @@ Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-ki
 | `PatientCancelsUntilNotice` | `appointment.cancel` |
 | `PatientReschedulesUntilNotice` | `appointment.reschedule` |
 
+### Errors
+
+| Error class | Refusal | Code | Exposed facts |
+|---|---|---|---|
+| `AppointmentError` | `alreadyConfirmed` | `APPOINTMENT_ALREADY_CONFIRMED` | none |
+| `AppointmentError` | `ended` | `APPOINTMENT_ENDED` | `status` |
+| `AppointmentError` | `notFound` | `APPOINTMENT_NOT_FOUND` | none |
+| `AppointmentError` | `notStarted` | `APPOINTMENT_NOT_STARTED` | `startsAt` |
+| `AppointmentError` | `bookingTooFar` | `BOOKING_TOO_FAR` | `horizon` |
+| `AppointmentError` | `bookingTooLate` | `BOOKING_TOO_LATE` | `notice` |
+| `AppointmentError` | `invalidBooking` | `INVALID_BOOKING` | none |
+| `AppointmentError` | `invalidSlot` | `INVALID_SLOT` | none |
+| `AppointmentError` | `offGrid` | `OFF_GRID` | `grid` |
+| `AppointmentError` | `outsideAvailability` | `OUTSIDE_AVAILABILITY` | `startsAt` |
+| `AppointmentError` | `patientLimitReached` | `PATIENT_LIMIT_REACHED` | `limit` |
+| `AppointmentError` | `reasonRequired` | `REASON_REQUIRED` | none |
+| `AppointmentError` | `slotTaken` | `SLOT_TAKEN` | `startsAt` |
+| `CalendarError` | `invalidAppointmentType` | `INVALID_APPOINTMENT_TYPE` | none |
+| `CalendarError` | `invalidBookingWindow` | `INVALID_BOOKING_WINDOW` | none |
+| `CalendarError` | `invalidDay` | `INVALID_DAY` | `day` |
+| `CalendarError` | `invalidRange` | `INVALID_RANGE` | none |
+| `CalendarError` | `invalidTimeOff` | `INVALID_TIME_OFF` | none |
+| `CalendarError` | `timeOffOverAppointments` | `TIME_OFF_OVER_APPOINTMENTS` | `held` |
+| `CalendarError` | `unknownAppointmentType` | `UNKNOWN_APPOINTMENT_TYPE` | none |
+| `CalendarError` | `unknown` | `UNKNOWN_CALENDAR` | none |
+| `CalendarError` | `unknownPractitioner` | `UNKNOWN_PRACTITIONER` | none |
+| `CalendarError` | `unknownTimeZone` | `UNKNOWN_TIME_ZONE` | none |
+| `WaitlistError` | `alreadyWaiting` | `ALREADY_WAITING` | none |
+| `WaitlistError` | `invalidOffer` | `INVALID_OFFER` | none |
+| `WaitlistError` | `invalidWaiter` | `INVALID_WAITER` | none |
+
 ### Gateways
 
 | Gateway | Upstream | Adapters |

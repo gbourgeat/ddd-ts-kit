@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { unwrap } from '@ddd-ts-kit/kernel';
+import { expectRefusal } from '@ddd-ts-kit/testing';
 import { NotificationKind } from '@/contexts/notification/domain/value-objects/notification-kind.vo';
 
 describe('NotificationKind', () => {
@@ -21,9 +22,7 @@ describe('NotificationKind', () => {
   });
 
   it('refuses a kind the business does not know, with the code INVALID_NOTIFICATION_KIND', () => {
-    const result = NotificationKind.create('newsletter');
-
-    expect(result).toMatchObject({ ok: false, error: { code: 'INVALID_NOTIFICATION_KIND', given: 'newsletter' } });
+    expectRefusal(NotificationKind.create('newsletter'), 'INVALID_NOTIFICATION_KIND', { given: 'newsletter' });
   });
 
   it('reads a kind whatever its case and the spaces around it', () => {

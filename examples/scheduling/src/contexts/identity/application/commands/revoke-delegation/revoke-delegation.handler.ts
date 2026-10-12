@@ -1,7 +1,7 @@
-import { Clock } from '@ddd-ts-kit/kernel';
+import type { Clock } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
-import { DelegationNotFoundError } from '@/contexts/identity/domain/errors/delegation-not-found.error';
-import { DelegationRepository } from '@/contexts/identity/domain/repositories/delegation.repository';
+import { DelegationError } from '@/contexts/identity/domain/errors/delegation.error';
+import type { DelegationRepository } from '@/contexts/identity/domain/repositories/delegation.repository';
 import { Desk } from '@/contexts/identity/domain/value-objects/desk.vo';
 import { RevokeDelegationCommand } from '@/contexts/identity/application/commands/revoke-delegation/revoke-delegation.command';
 
@@ -17,7 +17,7 @@ export class RevokeDelegationHandler implements CommandHandler<RevokeDelegationC
 
     // The right was decided on the desk of the path: a delegation of another desk is not there to be found.
     if (!target?.isOn(Desk.create(command.desk.practiceId, command.desk.practitionerId))) {
-      throw new DelegationNotFoundError(command.delegationId);
+      throw DelegationError.notFound(command.delegationId);
     }
 
     target.revoke(this.clock.now());

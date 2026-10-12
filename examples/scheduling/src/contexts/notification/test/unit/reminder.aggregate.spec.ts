@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { given } from '@ddd-ts-kit/testing';
 import { Reminder } from '@/contexts/notification/domain/aggregates/reminder.aggregate';
-import { ReminderNotDueError } from '@/contexts/notification/domain/errors/reminder-not-due.error';
 import { aReminder } from '@/contexts/notification/test/builders/reminder.builder';
 
 const startsAt = new Date('2026-03-10T09:00:00.000Z');
@@ -64,7 +63,7 @@ describe('Reminder', () => {
       .when((subject) => {
         subject.send(new Date('2026-03-08T09:00:00.000Z'));
       })
-      .thenError(ReminderNotDueError, 'REMINDER_NOT_DUE');
+      .thenError('REMINDER_NOT_DUE');
   });
 
   it('refuses to be sent twice for the same start', () => {
@@ -72,7 +71,7 @@ describe('Reminder', () => {
       .when((subject) => {
         subject.send(new Date('2026-03-09T09:15:00.000Z'));
       })
-      .thenError(ReminderNotDueError, 'REMINDER_NOT_DUE');
+      .thenError('REMINDER_NOT_DUE');
   });
 
   it('refuses to be sent once the appointment has started', () => {
@@ -80,7 +79,7 @@ describe('Reminder', () => {
       .when((subject) => {
         subject.send(startsAt);
       })
-      .thenError(ReminderNotDueError, 'REMINDER_NOT_DUE');
+      .thenError('REMINDER_NOT_DUE');
   });
 
   it('refuses to be sent once withdrawn', () => {
@@ -88,7 +87,7 @@ describe('Reminder', () => {
       .when((subject) => {
         subject.send(dayBefore);
       })
-      .thenError(ReminderNotDueError, 'REMINDER_NOT_DUE');
+      .thenError('REMINDER_NOT_DUE');
   });
 
   it('changes nothing when planned again for the same start, even once sent', () => {

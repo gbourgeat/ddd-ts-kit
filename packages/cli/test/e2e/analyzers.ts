@@ -28,6 +28,9 @@ export const NEW_ESLINT_RULES = [
   'ddd-ts-kit/scheduling-job-name',
   'ddd-ts-kit/imports-alias-only',
   'ddd-ts-kit/imports-extension',
+  'ddd-ts-kit/errors-through-factory',
+  'ddd-ts-kit/errors-constructor-not-public',
+  'ddd-ts-kit/errors-factory-name',
   '@stylistic/padding-line-between-statements',
   '@stylistic/lines-between-class-members',
 ];

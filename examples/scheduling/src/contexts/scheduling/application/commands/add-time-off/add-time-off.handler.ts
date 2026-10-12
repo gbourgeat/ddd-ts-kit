@@ -1,8 +1,8 @@
-import { Clock, unwrap } from '@ddd-ts-kit/kernel';
+import { type Clock, unwrap } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
-import { UnknownCalendarError } from '@/contexts/scheduling/domain/errors/unknown-calendar.error';
-import { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository';
-import { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository';
+import { CalendarError } from '@/contexts/scheduling/domain/errors/calendar.error';
+import type { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository';
+import type { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository';
 import { TimeOff } from '@/contexts/scheduling/domain/value-objects/time-off.vo';
 import { AddTimeOffCommand } from '@/contexts/scheduling/application/commands/add-time-off/add-time-off.command';
 
@@ -18,7 +18,7 @@ export class AddTimeOffHandler implements CommandHandler<AddTimeOffCommand> {
     const target = await this.calendarRepository.findById(command.calendarId);
 
     if (target === undefined) {
-      throw new UnknownCalendarError(command.calendarId);
+      throw CalendarError.unknown(command.calendarId);
     }
 
     const timeOff = unwrap(TimeOff.create(command.startsAt, command.endsAt));

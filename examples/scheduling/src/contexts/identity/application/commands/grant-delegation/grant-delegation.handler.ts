@@ -1,10 +1,10 @@
-import { Clock, IdGenerator } from '@ddd-ts-kit/kernel';
+import type { Clock, IdGenerator } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
 import { Delegation } from '@/contexts/identity/domain/aggregates/delegation.aggregate';
-import { DelegationAlreadyActiveError } from '@/contexts/identity/domain/errors/delegation-already-active.error';
-import { PracticeNotFoundError } from '@/contexts/identity/domain/errors/practice-not-found.error';
-import { DelegationRepository } from '@/contexts/identity/domain/repositories/delegation.repository';
-import { PracticeRepository } from '@/contexts/identity/domain/repositories/practice.repository';
+import { DelegationError } from '@/contexts/identity/domain/errors/delegation.error';
+import { PracticeError } from '@/contexts/identity/domain/errors/practice.error';
+import type { DelegationRepository } from '@/contexts/identity/domain/repositories/delegation.repository';
+import type { PracticeRepository } from '@/contexts/identity/domain/repositories/practice.repository';
 import { GrantDelegationCommand } from '@/contexts/identity/application/commands/grant-delegation/grant-delegation.command';
 
 @CommandHandler(GrantDelegationCommand)
@@ -20,7 +20,7 @@ export class GrantDelegationHandler implements CommandHandler<GrantDelegationCom
     const practice = await this.practiceRepository.findById(command.desk.practiceId);
 
     if (practice === undefined) {
-      throw new PracticeNotFoundError(command.desk.practiceId);
+      throw PracticeError.notFound(command.desk.practiceId);
     }
 
     const desk = practice.deskOf(command.desk.practitionerId);
@@ -28,7 +28,7 @@ export class GrantDelegationHandler implements CommandHandler<GrantDelegationCom
     const active = await this.delegationRepository.findActiveBetween(desk, assistantId);
 
     if (active !== undefined) {
-      throw new DelegationAlreadyActiveError(active.id);
+      throw DelegationError.alreadyActive(active.id);
     }
 
     const terms = {

@@ -96,6 +96,7 @@ describe('worker-scope', () => {
       'entity',
       'value-object',
       'domain-event',
+      'error',
       'domain-error',
       'domain-service',
       'command (on an aggregate that has its repository)',

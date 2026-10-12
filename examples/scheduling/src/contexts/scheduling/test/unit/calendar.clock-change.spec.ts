@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { OutsideAvailabilityError } from '@/contexts/scheduling/domain/errors/outside-availability.error';
 import { Slot } from '@/contexts/scheduling/domain/value-objects/slot.vo';
 import { aCalendar } from '@/contexts/scheduling/test/builders/calendar.builder';
 
@@ -16,7 +15,7 @@ describe('Calendar, on the days the clock of Europe/Paris changes', () => {
     expect(calendar.slotFor('consultation', instant(opening), booking)).toBeInstanceOf(Slot);
 
     expect(() => calendar.slotFor('consultation', new Date(instant(opening).getTime() - 30 * 60_000), booking)).toThrow(
-      OutsideAvailabilityError,
+      expect.objectContaining({ code: 'OUTSIDE_AVAILABILITY' }),
     );
   });
 
@@ -31,7 +30,9 @@ describe('Calendar, on the days the clock of Europe/Paris changes', () => {
       calendar.slotFor('consultation', new Date(instant(closing).getTime() - 30 * 60_000), booking),
     ).toBeInstanceOf(Slot);
 
-    expect(() => calendar.slotFor('consultation', instant(closing), booking)).toThrow(OutsideAvailabilityError);
+    expect(() => calendar.slotFor('consultation', instant(closing), booking)).toThrow(
+      expect.objectContaining({ code: 'OUTSIDE_AVAILABILITY' }),
+    );
   });
 
   it('takes no appointment that would end in the hour the clock skips', () => {
@@ -47,7 +48,7 @@ describe('Calendar, on the days the clock of Europe/Paris changes', () => {
 
     // 01:30 on the wall clock, an hour later the clock reads 03:30: past the closing time.
     expect(() => night.slotFor('consultation', instant('2026-03-29T00:30:00.000Z'), booking)).toThrow(
-      OutsideAvailabilityError,
+      expect.objectContaining({ code: 'OUTSIDE_AVAILABILITY' }),
     );
   });
 
@@ -59,7 +60,7 @@ describe('Calendar, on the days the clock of Europe/Paris changes', () => {
     expect(night.slotFor('consultation', instant('2026-10-25T01:30:00.000Z'), booking)).toBeInstanceOf(Slot);
 
     expect(() => night.slotFor('consultation', instant('2026-10-25T02:00:00.000Z'), booking)).toThrow(
-      OutsideAvailabilityError,
+      expect.objectContaining({ code: 'OUTSIDE_AVAILABILITY' }),
     );
   });
 });

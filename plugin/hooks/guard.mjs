@@ -29,7 +29,7 @@ const GENERATORS = [
   [/\.entity\.ts$/, 'entity <context> <Name>'],
   [/\.vo\.ts$/, 'value-object <context> <Name>'],
   [/\.event\.ts$/, 'domain-event <context> <Aggregate> <Fact>'],
-  [/\.error\.ts$/, 'domain-error <context> <Name>'],
+  [/\.error\.ts$/, 'error <context> <Concept> <refusal>'],
   [/\/domain\/services\/[^/]+\.service\.ts$/, 'domain-service <context> <Name>'],
   [/\/domain\/repositories\/[^/]+\.repository\.ts$/, 'repository <context> <Aggregate>'],
   [/\.command\.ts$/, 'command <context> <UseCase> (--permission <aggregate>.<action> | --public)'],

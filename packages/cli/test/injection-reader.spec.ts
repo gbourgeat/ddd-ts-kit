@@ -10,23 +10,6 @@ const DECLARATIONS = "import { Adapter, CommandHandler, Repository } from '@ddd-
 const HANDLER = `${BILLING}/application/commands/issue-invoice/issue-invoice.handler.ts`;
 const specifier = (file: string): string => `@/${file.replace(/^src\//, '').replace(/\.ts$/, '')}`;
 
-/** The injections of the role file `file` of a project made of `files`. */
-function injectionsOf(files: Readonly<Record<string, string>>, file = HANDLER) {
-  const sources = (path: string) => {
-    const text = files[path];
-
-    return text === undefined ? undefined : loadSourceFile(config, path, text);
-  };
-
-  const source = sources(file);
-
-  return source === undefined ? [] : readInjections(sources, source);
-}
-
-function handler(imports: string, heritage: string, body: string): string {
-  return `${DECLARATIONS}\n${imports}\n\n@CommandHandler(IssueInvoice)\nexport class IssueInvoiceHandler ${heritage}{\n${body}}\n`;
-}
-
 describe('what a constructor is read as', () => {
   it('names each token by the name its module exports it under, whatever the file calls it', () => {
     const [injection] = injectionsOf({
@@ -237,3 +220,20 @@ describe('what the generated file of a context holds', () => {
     expect(generatedDrift(`${barrel}\n`, barrel)).toBe('it is not laid out as the generator writes it');
   });
 });
+
+/** The injections of the role file `file` of a project made of `files`. */
+function injectionsOf(files: Readonly<Record<string, string>>, file = HANDLER) {
+  const sources = (path: string) => {
+    const text = files[path];
+
+    return text === undefined ? undefined : loadSourceFile(config, path, text);
+  };
+
+  const source = sources(file);
+
+  return source === undefined ? [] : readInjections(sources, source);
+}
+
+function handler(imports: string, heritage: string, body: string): string {
+  return `${DECLARATIONS}\n${imports}\n\n@CommandHandler(IssueInvoice)\nexport class IssueInvoiceHandler ${heritage}{\n${body}}\n`;
+}

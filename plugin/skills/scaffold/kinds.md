@@ -12,7 +12,8 @@ shared files each kind writes (`writesShared`, `shared`, `sharedWhen`).
 | `entity` | `<ctx> <Name>` | `domain/entities/`, spec |
 | `value-object` (`vo`) | `<ctx> <Name>` | `domain/value-objects/`, spec |
 | `domain-event` | `<ctx> <Aggregate> <Fact>` | `domain/events/`, named `<ctx>.<aggregate>.<fact>`, spec |
-| `domain-error` | `<ctx> <Name> [--code CODE]` | `domain/errors/`, spec |
+| `error` (`refusal`) | `<ctx> <Concept> <refusal> [--code CODE]` | a static factory on `domain/errors/<concept>.error.ts`, the error class of the concept (created when absent), and its spec case; run again, nothing changes |
+| `domain-error` | `<ctx> <Name> [--code CODE]` | one class per error in `domain/errors/`, spec: only in a project whose config says `"stack.refusals": "classes"` or nothing |
 | `domain-service` | `<ctx> <Name>` | `domain/services/`, spec |
 | `repository` | `<ctx> <Aggregate> [--tenant-scoped]` | port in `domain/repositories/`, adapter and mapper in `infrastructure/persistence/`, fake, contract suite |
 | `command` | `<ctx> <UseCase> (--permission <aggregate>.<action> \| --public) [--aggregate <Name>]` | `application/commands/<use-case>/`, handler spec |

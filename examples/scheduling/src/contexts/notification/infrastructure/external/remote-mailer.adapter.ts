@@ -1,5 +1,5 @@
 import { Retry, Timeout } from '@ddd-ts-kit/aspects/decorators';
-import { Logger } from '@ddd-ts-kit/kernel';
+import type { Logger } from '@ddd-ts-kit/kernel';
 import { Adapter } from '@ddd-ts-kit/kernel/declarations';
 import { Mailer } from '@/contexts/notification/application/ports/mailer.port';
 import type { Notification } from '@/contexts/notification/domain/aggregates/notification.aggregate';

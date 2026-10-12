@@ -24,6 +24,8 @@ export interface ContextDescription {
   readonly publishedEvents: readonly PublishedEventFact[];
   readonly ports: readonly PortFact[];
   readonly policies: readonly PolicyFact[];
+  /** The refusals of the domain, by error class and code. */
+  readonly errors: readonly ErrorFact[];
   /** The projectors, `application/projections/*.projection.ts`: each keeps one read model up to date. */
   readonly projections: readonly ProjectionFact[];
   readonly gateways: readonly GatewayFact[];
@@ -93,6 +95,17 @@ export interface PortFact {
 export interface PolicyFact {
   readonly name: string;
   readonly permission: string;
+  readonly file: string;
+}
+
+export interface ErrorFact {
+  /** The error class: the one of a concept, or the class of one error in the form of 0.2. */
+  readonly errorClass: string;
+  /** The static factory that builds the refusal; empty for a class per error. */
+  readonly refusal: string;
+  readonly code: string;
+  /** The facts the factory lets a client read, by name: the others stay in the process. */
+  readonly exposes: readonly string[];
   readonly file: string;
 }
 

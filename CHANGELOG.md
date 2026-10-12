@@ -4,6 +4,84 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
+## 0.3.0
+
+**A domain error is built by a static factory named in the words of the business.** One error
+class per concept of the language, one factory per refusal, instead of one class per error
+built with `new`:
+
+```ts
+// domain/errors/appointment.error.ts
+export class AppointmentError extends ConceptError {
+  static slotTaken(calendarId: string, startsAt: Date) {
+    return AppointmentError.refusal(
+      'SLOT_TAKEN',
+      `The slot starting at ${startsAt.toISOString()} on calendar ${calendarId} is already held.`,
+      { calendarId, startsAt },
+    ).exposing('startsAt');
+  }
+}
+
+throw AppointmentError.slotTaken(calendar.id, slot.startsAt);
+```
+
+- `ConceptError` is a new export of `@ddd-ts-kit/kernel`, a `DomainError`. Its constructor is
+  protected and a subclass declares none: a refusal exists only through a factory, which calls
+  the protected `refusal(code, message, facts?)`. The codes of a class are a closed vocabulary
+  the compiler derives from its factories: `CodeOf<typeof AppointmentError>`,
+  `RefusalOf<typeof AppointmentError, 'SLOT_TAKEN'>`, and `AppointmentError.is(error, code?)`
+  narrows to a union a `switch` on `error.code` exhausts, each case with its facts.
+  `isRefusal(error, code?)` knows a refusal by its code whatever its class.
+- The facts of a refusal travel with it, as data: `error.facts`. They are private. A factory
+  names the ones a client may read, `.exposing('startsAt')`, and `@ddd-ts-kit/http` writes
+  those, and no other, under `facts` in the problem document; the `Problem` schema of the
+  OpenAPI document gains that optional member, which is the one change of a regenerated
+  contract. `DomainError.toJSON()` answers `{ name, code, message }` and the exposed facts,
+  never the stack or the cause. The audit trail, the spans and the error reports are unchanged:
+  they key on the code.
+- `@ddd-ts-kit/testing`: `expectRefusal(subject, code, facts?)` on an action, a `Result` or a
+  caught error; `thenError(code, facts)` in a scenario; `expectProblem(response, { status,
+  code, facts })`.
+- `ddd-ts-kit generate error <context> <Concept> <refusal>` creates the error class of the
+  concept when it is absent and adds a factory when it is there, with its case in the spec;
+  run again, it changes nothing. The concept is a term of the glossary. It refuses a name such
+  as `create`, a code that says something else than the name, and a code already set in the
+  context.
+- Five rules, under `"stack.refusals": "factories"` only. ESLint:
+  `errors/through-factory` (no `new` of a class of `domain/errors/`),
+  `errors/constructor-not-public`, `errors/factory-name` (a business phrase, and a code that
+  says the same words: `slotTaken` setting `BOOKING_FAILED` is reported). `ddd-ts-kit check`:
+  `errors/code-unique` (one refusal per code in a context) and `errors/known-code` (a route
+  declares in `errors` only codes that exist). `language/glossary-term` now holds the name of
+  an error class too.
+- `CONTEXT.md` and `ddd-ts-kit describe` list the errors of a context: class, refusal, code
+  and exposed facts.
+
+**Nothing to do to upgrade.** `class SlotTakenError extends DomainError { readonly code =
+'SLOT_TAKEN' }` and `new SlotTakenError(..)` keep working: `DomainError` is unchanged but for
+`toJSON`. A config without `stack.refusals` is read as `classes`: `generate domain-error` still
+writes one class per error there, and no `errors/*` rule reports. `init` writes
+`"stack.refusals": "factories"` in a new project (`--refusals classes` for the other form),
+where `generate domain-error` points to `generate error`.
+
+**To move a project:** `npx ddd-ts-kit error-factories --plan` writes
+`error-factories.plan.json` with the concept it proposes for each class (the aggregate its name
+starts or ends with); give every entry its concept, then `npx ddd-ts-kit error-factories
+--apply` writes the classes of the concepts with a factory per error (same parameters, same
+message, the plain parameters as facts), merges the specs, rewrites every `new`, `thenError`,
+`toThrow`, `expect.any`, `toBeInstanceOf`, `instanceof`, import and type, and sets the key. Then
+`npm run format`. Left to a person, and listed by the command: which facts to expose, a
+property of an error that became a fact (`error.personId` is `error.facts.personId`), a class
+with members of its own.
+
+Also:
+
+- The `jest.config.js` that `init` writes compiled legacy decorators in every stack. It now
+  follows the stack: `decoratorVersion: '2022-03'` where nothing needs the legacy ones,
+  `legacyDecorator` and `decoratorMetadata` with class-validator or NestJS.
+- The example application imports with `import type` every port and kernel type it only uses
+  as a type, as the templates do; the generated declarations import the values.
+
 ## 0.2.0
 
 **A class states its dependencies once, in its constructor.** In the declared style a

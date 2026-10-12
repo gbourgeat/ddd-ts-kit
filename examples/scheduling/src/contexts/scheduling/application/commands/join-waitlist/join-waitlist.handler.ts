@@ -1,9 +1,9 @@
-import { Clock } from '@ddd-ts-kit/kernel';
+import type { Clock } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
 import { Waitlist } from '@/contexts/scheduling/domain/aggregates/waitlist.aggregate';
-import { UnknownCalendarError } from '@/contexts/scheduling/domain/errors/unknown-calendar.error';
-import { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository';
-import { WaitlistRepository } from '@/contexts/scheduling/domain/repositories/waitlist.repository';
+import { CalendarError } from '@/contexts/scheduling/domain/errors/calendar.error';
+import type { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository';
+import type { WaitlistRepository } from '@/contexts/scheduling/domain/repositories/waitlist.repository';
 import { JoinWaitlistCommand } from '@/contexts/scheduling/application/commands/join-waitlist/join-waitlist.command';
 
 /** Answers the identifier of the waitlist: the one of the calendar and the day, opened by its first waiter. */
@@ -19,7 +19,7 @@ export class JoinWaitlistHandler implements CommandHandler<JoinWaitlistCommand> 
     const calendar = await this.calendarRepository.findById(calendarId);
 
     if (calendar === undefined) {
-      throw new UnknownCalendarError(calendarId);
+      throw CalendarError.unknown(calendarId);
     }
 
     const now = this.clock.now();

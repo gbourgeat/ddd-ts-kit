@@ -1,10 +1,10 @@
 import { Access } from '@ddd-ts-kit/auth';
 import { Criteria, hydrate, scoped } from '@ddd-ts-kit/kernel';
 import { QueryHandler } from '@ddd-ts-kit/kernel/declarations';
-import { AppointmentNotFoundError } from '@/contexts/scheduling/domain/errors/appointment-not-found.error';
+import { AppointmentError } from '@/contexts/scheduling/domain/errors/appointment.error';
 import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
-import { Agenda, type AgendaEntry } from '@/contexts/scheduling/application/ports/agenda.port';
-import { PersonDirectoryGateway } from '@/contexts/scheduling/application/ports/person-directory-gateway.port';
+import type { Agenda, AgendaEntry } from '@/contexts/scheduling/application/ports/agenda.port';
+import type { PersonDirectoryGateway } from '@/contexts/scheduling/application/ports/person-directory-gateway.port';
 import { GetAppointmentQuery } from '@/contexts/scheduling/application/queries/get-appointment/get-appointment.query';
 import type { GetAppointmentResult } from '@/contexts/scheduling/application/queries/get-appointment/get-appointment.result';
 
@@ -39,7 +39,7 @@ export class GetAppointmentHandler implements QueryHandler<GetAppointmentQuery> 
     const [first] = named.items;
 
     if (first === undefined) {
-      throw new AppointmentNotFoundError(query.appointmentId);
+      throw AppointmentError.notFound(query.appointmentId);
     }
 
     const { patient, ...entry } = first;

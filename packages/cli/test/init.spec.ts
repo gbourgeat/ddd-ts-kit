@@ -167,6 +167,7 @@ describe('init, the choices it records and the ones it refuses', () => {
       audit: 'on',
       errors: 'none',
       logger: 'stdout',
+      refusals: 'factories',
       style: 'explicit',
       packageManager: 'pnpm',
     });

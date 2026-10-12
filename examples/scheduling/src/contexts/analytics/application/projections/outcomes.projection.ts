@@ -18,7 +18,7 @@ import {
 } from '@/contexts/scheduling/published-language/index';
 import { storableStamp } from '@/shared-kernel/storable-stamp';
 import type { OutcomeState } from '@/contexts/analytics/domain/services/occupancy-measure.service';
-import { OutcomeRegister } from '@/contexts/analytics/application/ports/outcome-register.port';
+import type { OutcomeRegister } from '@/contexts/analytics/application/ports/outcome-register.port';
 
 /** What every fact scheduling announces of an appointment says of it. */
 type Announced = {

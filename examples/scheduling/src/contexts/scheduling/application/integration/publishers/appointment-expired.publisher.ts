@@ -1,4 +1,4 @@
-import { IdGenerator, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
+import type { IdGenerator, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
 import { AppointmentExpired } from '@/contexts/scheduling/domain/events/appointment-expired.event';
 import { appointmentExpiredV1 } from '@/contexts/scheduling/published-language/appointment-expired.v1.integration-event';

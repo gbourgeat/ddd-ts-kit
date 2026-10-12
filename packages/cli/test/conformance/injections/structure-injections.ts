@@ -5,7 +5,7 @@ import { SOURCE_SUFFIX } from '../source-suffix.js';
 
 const { AGGREGATE, BARREL, BUILDER, CONFIG, CONTEXT_DOC, EVENT, HANDLER, NOTIFICATION, READER } = PATHS;
 const { ROUTE, VALUE_OBJECT, VALUE_OBJECT_SPEC } = PATHS;
-const ERROR = `${NOTIFICATION}/domain/errors/contact-missing.ts`;
+const ERROR = `${NOTIFICATION}/domain/errors/contact-error.ts`;
 const CHANNEL = `${NOTIFICATION}/domain/value-objects/channel.vo.ts`;
 const CHANNEL_SPEC = `${NOTIFICATION}/test/unit/channel.vo.spec.ts`;
 const MANAGER = `${NOTIFICATION}/domain/services/reminder-manager.service.ts`;
@@ -45,7 +45,7 @@ export const STRUCTURE_INJECTIONS: readonly Injection[] = [
     changes: [
       {
         file: ERROR,
-        to: "import { DomainError } from '@ddd-ts-kit/kernel';\n\nexport class ContactMissing extends DomainError {\n  readonly code = 'CONTACT_MISSING';\n}\n",
+        to: "import { ConceptError } from '@ddd-ts-kit/kernel';\n\nexport class ContactError extends ConceptError {}\n",
       },
     ],
     checker: true,

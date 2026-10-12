@@ -2,11 +2,6 @@ import { describe, expect, it } from 'vitest';
 import { unwrap } from '@ddd-ts-kit/kernel';
 import { given } from '@ddd-ts-kit/testing';
 import { Practice } from '@/contexts/identity/domain/aggregates/practice.aggregate';
-import { AlreadyMemberError } from '@/contexts/identity/domain/errors/already-member.error';
-import { NotAMemberError } from '@/contexts/identity/domain/errors/not-a-member.error';
-import { NotAPractitionerError } from '@/contexts/identity/domain/errors/not-a-practitioner.error';
-import { NotAnAssistantError } from '@/contexts/identity/domain/errors/not-an-assistant.error';
-import { PracticeLeftUnmanagedError } from '@/contexts/identity/domain/errors/practice-left-unmanaged.error';
 import { DisplayName } from '@/contexts/identity/domain/value-objects/display-name.vo';
 import { Role, type RoleName } from '@/contexts/identity/domain/value-objects/role.vo';
 import { aPractice } from '@/contexts/identity/test/builders/practice.builder';
@@ -78,7 +73,7 @@ describe('Practice', () => {
   it('refuses to add a person who is already a member, whatever the role asked', () => {
     given(aPractice().withPractitioner('person-2'))
       .when((practice) => practice.addMember(newcomer('person-2', 'assistant'), later))
-      .thenError(AlreadyMemberError, 'ALREADY_MEMBER');
+      .thenError('ALREADY_MEMBER');
   });
 
   it('removes a member and announces it with the role they had', () => {
@@ -98,13 +93,13 @@ describe('Practice', () => {
   it('refuses to remove someone who is not a member', () => {
     given(aPractice())
       .when((practice) => practice.removeMember('stranger', later))
-      .thenError(NotAMemberError, 'NOT_A_MEMBER');
+      .thenError('NOT_A_MEMBER');
   });
 
   it('refuses to remove its last manager', () => {
     given(aPractice().managedBy('person-1').withPractitioner('person-2'))
       .when((practice) => practice.removeMember('person-1', later))
-      .thenError(PracticeLeftUnmanagedError, 'LAST_MANAGER');
+      .thenError('LAST_MANAGER');
   });
 
   it('lets a manager go as long as another one remains', () => {
@@ -128,7 +123,7 @@ describe('Practice, by the role of its members', () => {
     (personId) => {
       given(aPractice().managedBy('person-1').withAssistant('person-3'))
         .when((practice) => practice.deskOf(personId))
-        .thenError(NotAPractitionerError, 'NOT_A_PRACTITIONER');
+        .thenError('NOT_A_PRACTITIONER');
     },
   );
 
@@ -141,7 +136,7 @@ describe('Practice, by the role of its members', () => {
   it.each(['person-1', 'person-2', 'stranger'])('does not take %s for one of its assistants', (personId) => {
     given(aPractice().managedBy('person-1').withPractitioner('person-2'))
       .when((practice) => practice.assistant(personId))
-      .thenError(NotAnAssistantError, 'NOT_AN_ASSISTANT');
+      .thenError('NOT_AN_ASSISTANT');
   });
 });
 

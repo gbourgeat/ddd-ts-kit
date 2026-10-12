@@ -2,7 +2,7 @@ import { stampOf } from '@ddd-ts-kit/kernel';
 import { On, Projection } from '@ddd-ts-kit/kernel/declarations';
 import { personRegisteredV1, type PersonRegisteredV1 } from '@/contexts/identity/published-language/index';
 import { storableStamp } from '@/shared-kernel/storable-stamp';
-import { Contacts } from '@/contexts/notification/application/ports/contacts.port';
+import type { Contacts } from '@/contexts/notification/application/ports/contacts.port';
 
 @Projection('notification.contacts')
 export class ContactsProjection {

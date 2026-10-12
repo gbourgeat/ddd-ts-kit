@@ -1,10 +1,10 @@
-import { Clock, IdGenerator, unwrap } from '@ddd-ts-kit/kernel';
+import { type Clock, type IdGenerator, unwrap } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
 import { Calendar } from '@/contexts/scheduling/domain/aggregates/calendar.aggregate';
-import { UnknownPractitionerError } from '@/contexts/scheduling/domain/errors/unknown-practitioner.error';
-import { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository';
+import { CalendarError } from '@/contexts/scheduling/domain/errors/calendar.error';
+import type { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository';
 import { TimeZone } from '@/contexts/scheduling/domain/value-objects/time-zone.vo';
-import { PractitionerDirectory } from '@/contexts/scheduling/application/ports/practitioner-directory.port';
+import type { PractitionerDirectory } from '@/contexts/scheduling/application/ports/practitioner-directory.port';
 import { CreateCalendarCommand } from '@/contexts/scheduling/application/commands/create-calendar/create-calendar.command';
 
 @CommandHandler(CreateCalendarCommand)
@@ -20,7 +20,7 @@ export class CreateCalendarHandler implements CommandHandler<CreateCalendarComma
     const practitioner = await this.practitioners.get(`${practiceId}.${practitionerId}`);
 
     if (practitioner === undefined) {
-      throw new UnknownPractitionerError(practiceId, practitionerId);
+      throw CalendarError.unknownPractitioner(practiceId, practitionerId);
     }
 
     // The calendar lives by the wall clock of its practice.

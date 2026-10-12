@@ -1,4 +1,4 @@
-import { DomainError } from '@ddd-ts-kit/kernel';
+import { ConceptError, DomainError, type RefusalFacts } from '@ddd-ts-kit/kernel';
 import { ValidationError } from '@ddd-ts-kit/validation';
 import type { ErrorMapper } from './error-mapper.js';
 import { INTERNAL_ERROR_CODE } from './internal-error-code.js';
@@ -24,8 +24,20 @@ export function toProblem(error: unknown, mapper: ErrorMapper, requestId: string
     code: error.code,
     detail: error.message,
     ...(error instanceof ValidationError ? { issues: error.issues } : {}),
+    ...exposedFacts(error),
     requestId,
   };
+}
+
+/** Only what the factory of the refusal exposed by name: a fact never leaves the process by default. */
+function exposedFacts(error: DomainError): { facts?: RefusalFacts } {
+  if (!(error instanceof ConceptError)) {
+    return {};
+  }
+
+  const facts = error.exposedFacts;
+
+  return Object.keys(facts).length === 0 ? {} : { facts };
 }
 
 // The message of an unexpected error quotes data and internals: it never leaves the process.

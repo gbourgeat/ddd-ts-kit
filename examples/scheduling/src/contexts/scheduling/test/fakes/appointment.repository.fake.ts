@@ -1,7 +1,7 @@
 import { InMemoryRepository } from '@ddd-ts-kit/testing';
 import { Appointment } from '@/contexts/scheduling/domain/aggregates/appointment.aggregate';
 import type { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository';
-import { SlotTakenError } from '@/contexts/scheduling/domain/errors/slot-taken.error';
+import { AppointmentError } from '@/contexts/scheduling/domain/errors/appointment.error';
 import { Slot } from '@/contexts/scheduling/domain/value-objects/slot.vo';
 
 export class FakeAppointmentRepository extends InMemoryRepository<Appointment> implements AppointmentRepository {
@@ -18,7 +18,7 @@ export class FakeAppointmentRepository extends InMemoryRepository<Appointment> i
     );
 
     if (taken) {
-      throw new SlotTakenError(saved.calendarId, saved.slot.startsAt);
+      throw AppointmentError.slotTaken(saved.calendarId, saved.slot.startsAt);
     }
 
     await super.save(saved);

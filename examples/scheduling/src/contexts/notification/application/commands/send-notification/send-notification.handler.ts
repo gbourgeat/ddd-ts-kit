@@ -1,11 +1,11 @@
-import { Clock, IdGenerator, unwrap } from '@ddd-ts-kit/kernel';
+import { type Clock, type IdGenerator, unwrap } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
 import { Notification } from '@/contexts/notification/domain/aggregates/notification.aggregate';
-import { ContactUnknownError } from '@/contexts/notification/domain/errors/contact-unknown.error';
-import { NotificationRepository } from '@/contexts/notification/domain/repositories/notification.repository';
+import { NotificationError } from '@/contexts/notification/domain/errors/notification.error';
+import type { NotificationRepository } from '@/contexts/notification/domain/repositories/notification.repository';
 import { NotificationKind } from '@/contexts/notification/domain/value-objects/notification-kind.vo';
-import { Contacts } from '@/contexts/notification/application/ports/contacts.port';
-import { Mailer } from '@/contexts/notification/application/ports/mailer.port';
+import type { Contacts } from '@/contexts/notification/application/ports/contacts.port';
+import type { Mailer } from '@/contexts/notification/application/ports/mailer.port';
 import { SendNotificationCommand } from '@/contexts/notification/application/commands/send-notification/send-notification.command';
 
 @CommandHandler(SendNotificationCommand)
@@ -30,7 +30,7 @@ export class SendNotificationHandler implements CommandHandler<SendNotificationC
     const contact = await this.contacts.get(recipientId);
 
     if (contact === undefined) {
-      throw new ContactUnknownError(recipientId);
+      throw NotificationError.contactUnknown(recipientId);
     }
 
     const target = Notification.create(this.ids.next(), { ...command.notice, kind }, this.clock.now());

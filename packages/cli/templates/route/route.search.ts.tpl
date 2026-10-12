@@ -62,7 +62,7 @@ export function {{name.camel}}Route(queries: QueryBus): Route {
       tags: ['{{context.kebab}}'],
       request: { query },
       responses: { 200: { description: 'One page of the search.', body: pageSchemaOf(line) } },
-      // TODO(domain): list the codes of the DomainErrors "{{name.words}}" can raise, so that they appear in the contract with their status.
+      // TODO(domain): list the codes of the refusals "{{name.words}}" can raise, as their factories set them, so that they appear in the contract with their status (`errors/known-code`).
       errors: ['UNAUTHORIZED', 'FORBIDDEN'],
       security: {{route.security}},
     },

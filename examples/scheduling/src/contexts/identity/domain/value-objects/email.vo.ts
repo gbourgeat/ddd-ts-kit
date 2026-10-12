@@ -1,5 +1,5 @@
 import { ValueObject, err, ok, type Result } from '@ddd-ts-kit/kernel';
-import { InvalidEmailError } from '@/contexts/identity/domain/errors/invalid-email.error';
+import { PersonError } from '@/contexts/identity/domain/errors/person.error';
 
 export type EmailProps = {
   readonly value: string;
@@ -13,11 +13,11 @@ export class Email extends ValueObject<EmailProps> {
     super(props);
   }
 
-  static create(value: string): Result<Email, InvalidEmailError> {
+  static create(value: string): Result<Email, PersonError> {
     const normalized = value.trim().toLowerCase();
 
     if (normalized.length > LONGEST_ADDRESS || !ADDRESS.test(normalized)) {
-      return err(new InvalidEmailError(value));
+      return err(PersonError.invalidEmail(value));
     }
 
     return ok(new Email({ value: normalized }));

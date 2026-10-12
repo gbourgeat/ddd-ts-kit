@@ -1,7 +1,7 @@
-import { Clock, IdGenerator } from '@ddd-ts-kit/kernel';
+import type { Clock, IdGenerator } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
 import { Reminder } from '@/contexts/notification/domain/aggregates/reminder.aggregate';
-import { ReminderRepository } from '@/contexts/notification/domain/repositories/reminder.repository';
+import type { ReminderRepository } from '@/contexts/notification/domain/repositories/reminder.repository';
 import { PlanReminderCommand } from '@/contexts/notification/application/commands/plan-reminder/plan-reminder.command';
 
 @CommandHandler(PlanReminderCommand)

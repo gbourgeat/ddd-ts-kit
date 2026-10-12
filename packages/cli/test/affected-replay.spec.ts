@@ -6,24 +6,6 @@ import { exists, REPO_ROOT, walk } from './helpers.js';
 const EXAMPLE = `${REPO_ROOT}/examples/scheduling`;
 const example = readConfig(EXAMPLE).config;
 
-/**
- * The oracle, written the other way round from the selection: a context depends on another when
- * walking up its declared upstreams reaches it. What must run for a changed context is that
- * context and every context that depends on it.
- */
-function dependsOn(config: Config, context: string, target: string, seen: readonly string[] = []): boolean {
-  const upstreams = (config.contexts[context]?.upstreams ?? []).map((upstream) => upstream.context);
-
-  return upstreams.some(
-    (upstream) =>
-      upstream === target || (!seen.includes(upstream) && dependsOn(config, upstream, target, [...seen, context])),
-  );
-}
-
-function mustRun(config: Config, changed: string): string[] {
-  return Object.keys(config.contexts).filter((context) => context === changed || dependsOn(config, context, changed));
-}
-
 /** Change sets as pull requests of the example made them: the files exist, and each names what must run at least. */
 const KNOWN_CHANGE_SETS: readonly (readonly [string, readonly string[], readonly string[]])[] = [
   [
@@ -136,3 +118,21 @@ describe('the affected selection is never narrower than the declared dependencie
     expect(selectAffected(config, ['src/contexts/a/domain/rule.ts']).contexts).toEqual(['a', 'b']);
   });
 });
+
+function mustRun(config: Config, changed: string): string[] {
+  return Object.keys(config.contexts).filter((context) => context === changed || dependsOn(config, context, changed));
+}
+
+/**
+ * The oracle, written the other way round from the selection: a context depends on another when
+ * walking up its declared upstreams reaches it. What must run for a changed context is that
+ * context and every context that depends on it.
+ */
+function dependsOn(config: Config, context: string, target: string, seen: readonly string[] = []): boolean {
+  const upstreams = (config.contexts[context]?.upstreams ?? []).map((upstream) => upstream.context);
+
+  return upstreams.some(
+    (upstream) =>
+      upstream === target || (!seen.includes(upstream) && dependsOn(config, upstream, target, [...seen, context])),
+  );
+}

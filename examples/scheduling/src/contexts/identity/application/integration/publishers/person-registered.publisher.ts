@@ -1,4 +1,4 @@
-import { IdGenerator, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
+import type { IdGenerator, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
 import { PersonRegistered } from '@/contexts/identity/domain/events/person-registered.event';
 import { personRegisteredV1 } from '@/contexts/identity/published-language/person-registered.v1.integration-event';

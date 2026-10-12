@@ -98,8 +98,9 @@ describe('generate, plans and refusals', () => {
     ).toContain('not declared');
 
     expect(
-      failure(cli(root, 'generate', 'domain-error', 'billing', 'Refused', '--code', 'lower', '--json')).message,
-    ).toContain('not a valid error code');
+      failure(cli(root, 'generate', 'error', 'billing', 'Invoice', 'alreadyIssued', '--code', 'lower', '--json'))
+        .message,
+    ).toContain('does not say what InvoiceError.alreadyIssued says');
 
     expect(failure(cli(root, 'generate', 'aggregate', 'billing', 'Invoice', '--unknown', '--json')).message).toContain(
       '--unknown',

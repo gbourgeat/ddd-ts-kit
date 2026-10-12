@@ -1,10 +1,6 @@
 import { AggregateRoot, unwrap } from '@ddd-ts-kit/kernel';
-import { BookingTooFarError } from '@/contexts/scheduling/domain/errors/booking-too-far.error';
-import { BookingTooLateError } from '@/contexts/scheduling/domain/errors/booking-too-late.error';
-import { OffGridError } from '@/contexts/scheduling/domain/errors/off-grid.error';
-import { OutsideAvailabilityError } from '@/contexts/scheduling/domain/errors/outside-availability.error';
-import { TimeOffOverAppointmentsError } from '@/contexts/scheduling/domain/errors/time-off-over-appointments.error';
-import { UnknownAppointmentTypeError } from '@/contexts/scheduling/domain/errors/unknown-appointment-type.error';
+import { AppointmentError } from '@/contexts/scheduling/domain/errors/appointment.error';
+import { CalendarError } from '@/contexts/scheduling/domain/errors/calendar.error';
 import { CalendarAppointmentTypeDefined } from '@/contexts/scheduling/domain/events/calendar-appointment-type-defined.event';
 import { CalendarCreated } from '@/contexts/scheduling/domain/events/calendar-created.event';
 import { CalendarExceptionAdded } from '@/contexts/scheduling/domain/events/calendar-exception-added.event';
@@ -98,7 +94,7 @@ export class Calendar extends AggregateRoot<string> {
     const covered = held.filter((slot) => timeOff.covers(slot.startsAt, slot.endsAt));
 
     if (covered.length > 0) {
-      throw new TimeOffOverAppointmentsError(covered.length);
+      throw CalendarError.timeOffOverAppointments(covered.length);
     }
 
     this.state = { ...this.state, timeOffs: [...this.state.timeOffs, timeOff] };
@@ -123,21 +119,21 @@ export class Calendar extends AggregateRoot<string> {
     const { bookingWindow, timeZone } = this.state;
 
     if (bookingWindow.isTooLate(startsAt, now)) {
-      throw new BookingTooLateError(bookingWindow.notice);
+      throw AppointmentError.bookingTooLate(bookingWindow.notice);
     }
 
     if (bookingWindow.isTooFar(startsAt, now)) {
-      throw new BookingTooFarError(bookingWindow.horizon);
+      throw AppointmentError.bookingTooFar(bookingWindow.horizon);
     }
 
     if (startsAt.getTime() % MINUTE !== 0 || !appointmentType.startsOn(timeZone.minuteOf(startsAt))) {
-      throw new OffGridError(appointmentType.grid);
+      throw AppointmentError.offGrid(appointmentType.grid);
     }
 
     const slot = appointmentType.slotAt(startsAt);
 
     if (!this.isOpenDuring(slot)) {
-      throw new OutsideAvailabilityError(startsAt);
+      throw AppointmentError.outsideAvailability(startsAt);
     }
 
     return slot;
@@ -198,7 +194,7 @@ export class Calendar extends AggregateRoot<string> {
     const appointmentType = this.state.appointmentTypes.find((known) => known.id === appointmentTypeId);
 
     if (appointmentType === undefined) {
-      throw new UnknownAppointmentTypeError(appointmentTypeId);
+      throw CalendarError.unknownAppointmentType(appointmentTypeId);
     }
 
     return appointmentType;

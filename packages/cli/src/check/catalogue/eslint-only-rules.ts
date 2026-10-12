@@ -17,6 +17,21 @@ export const ESLINT_ONLY_RULES: readonly { readonly id: string; readonly descrip
     description: 'domain/ and application/ never `throw new Error(...)`: a business failure is a DomainError subclass.',
   },
   {
+    id: 'errors/through-factory',
+    description:
+      'Under "stack.refusals": "factories", a domain error is built by a static factory of its concept class: no `new` of a class of domain/errors/ outside that class.',
+  },
+  {
+    id: 'errors/constructor-not-public',
+    description:
+      'Under "stack.refusals": "factories", the constructor of an error class of domain/errors/ is not public: the class extends ConceptError and declares none, or declares it private or protected.',
+  },
+  {
+    id: 'errors/factory-name',
+    description:
+      'Under "stack.refusals": "factories", a static factory of an error class is named after the refusal, never `create`, `make`, `of` or `error1`, and its code is that name in constant case, alone or with the name of the concept.',
+  },
+  {
     id: 'application/handler-shape',
     description: 'A *.handler.ts file exports one class with a single public method, execute.',
   },

@@ -1,4 +1,4 @@
-import { CommandBus, systemActor } from '@ddd-ts-kit/kernel';
+import { type CommandBus, systemActor } from '@ddd-ts-kit/kernel';
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
 import { AppointmentExpired } from '@/contexts/scheduling/domain/events/appointment-expired.event';
 import { OfferFreedSlotCommand } from '@/contexts/scheduling/application/commands/offer-freed-slot/offer-freed-slot.command';

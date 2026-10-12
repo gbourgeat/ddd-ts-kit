@@ -3,9 +3,7 @@ import { createErrorMapper, executeRoute } from '@ddd-ts-kit/http';
 import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';
 import { errorStatuses } from '@/platform/http/error-statuses';
 import { CancelAppointmentCommand } from '@/contexts/scheduling/application/commands/cancel-appointment/cancel-appointment.command';
-import { AppointmentEndedError } from '@/contexts/scheduling/domain/errors/appointment-ended.error';
-import { AppointmentNotFoundError } from '@/contexts/scheduling/domain/errors/appointment-not-found.error';
-import { ReasonRequiredError } from '@/contexts/scheduling/domain/errors/reason-required.error';
+import { AppointmentError } from '@/contexts/scheduling/domain/errors/appointment.error';
 import { cancelAppointmentRoute } from '@/contexts/scheduling/presentation/http/cancel-appointment.route';
 
 // The one table of the platform: a code it does not name answers 422.
@@ -47,9 +45,9 @@ describe('POST /appointments/:appointmentId/cancellation', () => {
   });
 
   it.each([
-    [new ReasonRequiredError(), 422, 'REASON_REQUIRED'],
-    [new AppointmentEndedError('appointment-1', 'completed'), 409, 'APPOINTMENT_ENDED'],
-    [new AppointmentNotFoundError('appointment-1'), 404, 'APPOINTMENT_NOT_FOUND'],
+    [AppointmentError.reasonRequired(), 422, 'REASON_REQUIRED'],
+    [AppointmentError.ended('appointment-1', 'completed'), 409, 'APPOINTMENT_ENDED'],
+    [AppointmentError.notFound('appointment-1'), 404, 'APPOINTMENT_NOT_FOUND'],
   ])('answers the refusal %o with the status %i and the code %s', async (refusal, status, code) => {
     const commands = new InMemoryCommandBus().register(CancelAppointmentCommand, {
       execute: async () => {

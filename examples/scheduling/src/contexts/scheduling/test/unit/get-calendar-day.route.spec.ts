@@ -3,7 +3,7 @@ import { executeRoute } from '@ddd-ts-kit/http';
 import { InMemoryQueryBus } from '@ddd-ts-kit/kernel';
 import { GetCalendarDayQuery } from '@/contexts/scheduling/application/queries/get-calendar-day/get-calendar-day.query';
 import type { GetCalendarDayResult } from '@/contexts/scheduling/application/queries/get-calendar-day/get-calendar-day.result';
-import { UnknownCalendarError } from '@/contexts/scheduling/domain/errors/unknown-calendar.error';
+import { CalendarError } from '@/contexts/scheduling/domain/errors/calendar.error';
 import { getCalendarDayRoute } from '@/contexts/scheduling/presentation/http/get-calendar-day.route';
 
 const shown: GetCalendarDayResult = {
@@ -86,7 +86,7 @@ describe('GET /calendars/:calendarId/days/:day', () => {
   it('answers the refusal of the use case with its code', async () => {
     const queries = new InMemoryQueryBus().register(GetCalendarDayQuery, {
       execute: async () => {
-        throw new UnknownCalendarError('calendar-1');
+        throw CalendarError.unknown('calendar-1');
       },
     });
 

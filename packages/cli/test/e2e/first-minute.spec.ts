@@ -12,19 +12,6 @@ const BUILT_CLI = `node ${path.join(REPO_ROOT, 'packages/cli/dist/bin.js')}`;
 const only = process.env['DDD_TS_KIT_PACKAGE_MANAGER'];
 const managers = (['pnpm', 'npm'] as const).filter((manager) => only === undefined || only === manager);
 
-/** A line a reader types in a shell, run in one. */
-function typed(root: string, line: string): string {
-  return runIn(root, { command: 'sh', args: ['-c', line], env: { COREPACK_ENABLE_DOWNLOAD_PROMPT: '0' } });
-}
-
-/** `init` as the registry will serve it once this tree is released: the CLI this workspace built, asked for its notes. */
-function initialised(root: string, line: string): string[] {
-  const printed = typed(root, `${line.replace(/^npx ddd-ts-kit\b/, BUILT_CLI)} --json`);
-  const { notes } = JSON.parse(printed) as { notes: string[] };
-
-  return notes;
-}
-
 /**
  * Slow, opt-in (DDD_TS_KIT_E2E=1): a project is green from its first minute. The quick start of
  * the root README is run line by line as it is written, on pnpm and, in the words the README
@@ -99,3 +86,16 @@ describe.runIf(SLOW).each(ASKED_OF_INIT.filter(([manager]) => managers.includes(
     }, 900_000);
   },
 );
+
+/** A line a reader types in a shell, run in one. */
+function typed(root: string, line: string): string {
+  return runIn(root, { command: 'sh', args: ['-c', line], env: { COREPACK_ENABLE_DOWNLOAD_PROMPT: '0' } });
+}
+
+/** `init` as the registry will serve it once this tree is released: the CLI this workspace built, asked for its notes. */
+function initialised(root: string, line: string): string[] {
+  const printed = typed(root, `${line.replace(/^npx ddd-ts-kit\b/, BUILT_CLI)} --json`);
+  const { notes } = JSON.parse(printed) as { notes: string[] };
+
+  return notes;
+}

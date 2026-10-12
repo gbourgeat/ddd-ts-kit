@@ -10,13 +10,6 @@ const CONFIG = 'ddd-ts-kit.config.json';
 const PROJECT_IMPORT = /(?:\bfrom|\bimport\(?)\s*['"]((?:@|\$[a-z][a-z0-9-]*)\/[^'"]*)['"]/g;
 const EXTENSION = /\.[cm]?[jt]s$/;
 
-/** Every import of a file of the project that the TypeScript sources of the three aliased trees write. */
-function projectImports(root: string): string[] {
-  return ['src', 'test', 'scripts']
-    .flatMap((tree) => walk(root, tree).filter((file) => file.endsWith('.ts')))
-    .flatMap((file) => [...read(root, file).matchAll(PROJECT_IMPORT)].map((found) => found[1] ?? ''));
-}
-
 const resolution = (root: string): unknown => {
   const options = jsonAt(readJson(root, 'tsconfig.json'), 'compilerOptions');
 
@@ -114,3 +107,10 @@ describe('init and the extension of an import', () => {
     expect(found[0]?.fix).toContain('Use one of: none, js');
   });
 });
+
+/** Every import of a file of the project that the TypeScript sources of the three aliased trees write. */
+function projectImports(root: string): string[] {
+  return ['src', 'test', 'scripts']
+    .flatMap((tree) => walk(root, tree).filter((file) => file.endsWith('.ts')))
+    .flatMap((file) => [...read(root, file).matchAll(PROJECT_IMPORT)].map((found) => found[1] ?? ''));
+}

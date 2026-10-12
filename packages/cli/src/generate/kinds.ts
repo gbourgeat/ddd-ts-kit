@@ -10,6 +10,7 @@ import { domainErrorKind } from './kinds/domain-error-kind.js';
 import { domainEventKind } from './kinds/domain-event-kind.js';
 import { domainServiceKind } from './kinds/domain-service-kind.js';
 import { e2eKind } from './kinds/e2e-kind.js';
+import { errorKind } from './kinds/error-kind.js';
 import { entityKind } from './kinds/entity-kind.js';
 import { eventHandlerKind } from './kinds/event-handler-kind.js';
 import { gatewayKind } from './kinds/gateway-kind.js';
@@ -34,6 +35,7 @@ export const KINDS: readonly Kind[] = [
   entityKind,
   valueObjectKind,
   domainEventKind,
+  errorKind,
   domainErrorKind,
   domainServiceKind,
   repositoryKind,

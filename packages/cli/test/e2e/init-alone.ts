@@ -6,22 +6,6 @@ import { installAsPublished } from './install-as-published.js';
 import { bin, runIn } from './run-in.js';
 import { NATIVE_COMPILER } from './type-errors.js';
 
-/** The documents of a project compared with what its own scripts generate, from the build the pipeline makes once. */
-function documentsAreCurrent(root: string): void {
-  const node = (...args: string[]): string => runIn(root, { command: process.execPath, args });
-
-  node(NATIVE_COMPILER, '-p', 'tsconfig.build.json');
-
-  expect(cli(root, 'build-aliases').code).toBe(0);
-  expect(cli(root, 'docs', '--check').code).toBe(0);
-
-  node('dist/scripts/events.js', '--check');
-
-  if (exists(root, 'scripts/openapi.ts')) {
-    node('dist/scripts/openapi.js', '--check');
-  }
-}
-
 /**
  * What `init` alone leaves on a stack, with the contexts it was asked for and nothing generated,
  * installed as a published kit would be (`npm run build` at the root first): no finding of the
@@ -43,4 +27,20 @@ export function initAloneIsGreen(stack: StackFlags, contexts: readonly string[])
   expect(runIn(root, { command: bin('vitest'), args: ['run'] })).toMatch(/Test Files\s+\d+ passed/);
 
   documentsAreCurrent(root);
+}
+
+/** The documents of a project compared with what its own scripts generate, from the build the pipeline makes once. */
+function documentsAreCurrent(root: string): void {
+  const node = (...args: string[]): string => runIn(root, { command: process.execPath, args });
+
+  node(NATIVE_COMPILER, '-p', 'tsconfig.build.json');
+
+  expect(cli(root, 'build-aliases').code).toBe(0);
+  expect(cli(root, 'docs', '--check').code).toBe(0);
+
+  node('dist/scripts/events.js', '--check');
+
+  if (exists(root, 'scripts/openapi.ts')) {
+    node('dist/scripts/openapi.js', '--check');
+  }
 }

@@ -1,5 +1,5 @@
 import { ValueObject, err, ok, type Result } from '@ddd-ts-kit/kernel';
-import { InvalidRangeError } from '@/contexts/scheduling/domain/errors/invalid-range.error';
+import { CalendarError } from '@/contexts/scheduling/domain/errors/calendar.error';
 
 export type RangeProps = {
   readonly startMinute: number;
@@ -15,16 +15,16 @@ export class Range extends ValueObject<RangeProps> {
     super(props);
   }
 
-  static create(start: string, end: string): Result<Range, InvalidRangeError> {
+  static create(start: string, end: string): Result<Range, CalendarError> {
     const startMinute = minuteOf(start);
     const endMinute = minuteOf(end);
 
     if (startMinute === undefined || endMinute === undefined) {
-      return err(new InvalidRangeError('is written with two times HH:MM of one day'));
+      return err(CalendarError.invalidRange('is written with two times HH:MM of one day'));
     }
 
     if (endMinute <= startMinute) {
-      return err(new InvalidRangeError('ends after it starts'));
+      return err(CalendarError.invalidRange('ends after it starts'));
     }
 
     return ok(new Range({ startMinute, endMinute }));

@@ -9,7 +9,7 @@ import { AppointmentMarkedNoShow } from '@/contexts/scheduling/domain/events/app
 import { AppointmentRescheduled } from '@/contexts/scheduling/domain/events/appointment-rescheduled.event';
 import type { Booking } from '@/contexts/scheduling/domain/value-objects/booking.vo';
 import { storableStamp } from '@/shared-kernel/storable-stamp';
-import { Agenda, type AgendaEntry } from '@/contexts/scheduling/application/ports/agenda.port';
+import type { Agenda, AgendaEntry } from '@/contexts/scheduling/application/ports/agenda.port';
 
 /** Where a fact comes in the life of an appointment, for two facts of the same millisecond: an end is always the last word. */
 const RANK: Readonly<Record<string, number>> = {

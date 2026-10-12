@@ -16,7 +16,14 @@ export default {
       {
         jsc: {
           parser: { syntax: 'typescript', decorators: true },
+{{#if decorators.legacy}}
+          // A library of the stack only has legacy decorators: the whole program is compiled in that mode, with the metadata it reads.
           transform: { legacyDecorator: true, decoratorMetadata: true },
+{{/if}}
+{{#if decorators.standard}}
+          // Standard decorators, as `tsc` emits them for this project: no `experimentalDecorators` in tsconfig.json.
+          transform: { decoratorVersion: '2022-03' },
+{{/if}}
           target: 'es2022',
         },
       },

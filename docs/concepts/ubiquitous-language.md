@@ -66,7 +66,7 @@ the domain expert, not a placeholder name.
 
 | Mechanism | What it does |
 |---|---|
-| `language/glossary-term` | every aggregate, entity, value object, domain service, domain event, command and query is named with terms of the glossary of its context |
+| `language/glossary-term` | every aggregate, entity, value object, domain service, domain event, command and query is named with terms of the glossary of its context, and an error class too once errors are built by factories (`AppointmentError`) |
 | `language/no-technical-name` | no `Manager`, `Helper`, `Data`, `Impl`, `Model` and the like in a name under `domain/` or in a use case name |
 | the generator | refuses a name with an undefined word, a technical word, or an event fact that does not read as past tense |
 | `--term "<Term>=<meaning>"` | adds the glossary rows in the same command that needs them, repeatable |

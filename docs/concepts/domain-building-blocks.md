@@ -170,7 +170,7 @@ A handler then reads as the use case:
 async execute(command: CancelAppointment): Promise<void> {
   const appointment = await this.appointments.findById(command.appointmentId);
   if (appointment === undefined) {
-    throw new AppointmentNotFound(command.appointmentId);
+    throw AppointmentError.notFound(command.appointmentId);
   }
 
   appointment.cancel(command.reason, this.clock.now());

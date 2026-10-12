@@ -1,12 +1,12 @@
-import { Clock, IdGenerator, unwrap } from '@ddd-ts-kit/kernel';
+import { type Clock, type IdGenerator, unwrap } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
 import { Appointment } from '@/contexts/scheduling/domain/aggregates/appointment.aggregate';
 import type { Calendar } from '@/contexts/scheduling/domain/aggregates/calendar.aggregate';
 import { Waitlist } from '@/contexts/scheduling/domain/aggregates/waitlist.aggregate';
-import { UnknownCalendarError } from '@/contexts/scheduling/domain/errors/unknown-calendar.error';
-import { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository';
-import { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository';
-import { WaitlistRepository } from '@/contexts/scheduling/domain/repositories/waitlist.repository';
+import { CalendarError } from '@/contexts/scheduling/domain/errors/calendar.error';
+import type { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository';
+import type { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository';
+import type { WaitlistRepository } from '@/contexts/scheduling/domain/repositories/waitlist.repository';
 import { Booking } from '@/contexts/scheduling/domain/value-objects/booking.vo';
 import type { Offer } from '@/contexts/scheduling/domain/value-objects/offer.vo';
 import { Slot } from '@/contexts/scheduling/domain/value-objects/slot.vo';
@@ -31,7 +31,7 @@ export class OfferFreedSlotHandler implements CommandHandler<OfferFreedSlotComma
     const calendar = await this.calendarRepository.findById(calendarId);
 
     if (calendar === undefined) {
-      throw new UnknownCalendarError(calendarId);
+      throw CalendarError.unknown(calendarId);
     }
 
     const slot = Slot.between(freed.startsAt, freed.endsAt, freed.heldUntil);

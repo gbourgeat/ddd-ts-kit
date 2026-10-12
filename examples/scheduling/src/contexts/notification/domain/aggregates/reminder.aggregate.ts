@@ -1,5 +1,5 @@
 import { AggregateRoot } from '@ddd-ts-kit/kernel';
-import { ReminderNotDueError } from '@/contexts/notification/domain/errors/reminder-not-due.error';
+import { ReminderError } from '@/contexts/notification/domain/errors/reminder.error';
 import { ReminderSent } from '@/contexts/notification/domain/events/reminder-sent.event';
 
 const NOTICE_MS = 24 * 60 * 60 * 1000;
@@ -69,7 +69,7 @@ export class Reminder extends AggregateRoot<string> {
 
   send(asOf: Date): void {
     if (!this.isDue(asOf)) {
-      throw new ReminderNotDueError(this.id);
+      throw ReminderError.notDue(this.id);
     }
 
     this.state = { ...this.state, status: 'sent' };

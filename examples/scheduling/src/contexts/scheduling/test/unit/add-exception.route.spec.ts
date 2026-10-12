@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { executeRoute } from '@ddd-ts-kit/http';
 import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';
 import { AddExceptionCommand } from '@/contexts/scheduling/application/commands/add-exception/add-exception.command';
-import { InvalidDayError } from '@/contexts/scheduling/domain/errors/invalid-day.error';
+import { CalendarError } from '@/contexts/scheduling/domain/errors/calendar.error';
 import { addExceptionRoute } from '@/contexts/scheduling/presentation/http/add-exception.route';
 
 const valid = { day: '2026-05-01', ranges: [{ start: '10:00', end: '12:00' }] };
@@ -43,7 +43,7 @@ describe('POST /calendars/:calendarId/exceptions', () => {
   it('answers the refusal of the use case with its code', async () => {
     const commands = new InMemoryCommandBus().register(AddExceptionCommand, {
       execute: async () => {
-        throw new InvalidDayError('2026-02-30');
+        throw CalendarError.invalidDay('2026-02-30');
       },
     });
 

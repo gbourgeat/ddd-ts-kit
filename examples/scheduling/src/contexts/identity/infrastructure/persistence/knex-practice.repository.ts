@@ -1,5 +1,5 @@
 import type { Knex } from 'knex';
-import { Clock, ExecutionScope, stampCreation, stampUpdate } from '@ddd-ts-kit/kernel';
+import { type Clock, type ExecutionScope, stampCreation, stampUpdate } from '@ddd-ts-kit/kernel';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
 import { KnexContext, auditRow, insertIgnoringConflict, optimisticUpdate } from '@ddd-ts-kit/knex';
 import type { Practice } from '@/contexts/identity/domain/aggregates/practice.aggregate';

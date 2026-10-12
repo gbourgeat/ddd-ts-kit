@@ -2,8 +2,6 @@ import { describe, expect, it } from 'vitest';
 import { unwrap } from '@ddd-ts-kit/kernel';
 import { given } from '@ddd-ts-kit/testing';
 import { Waitlist } from '@/contexts/scheduling/domain/aggregates/waitlist.aggregate';
-import { AlreadyWaitingError } from '@/contexts/scheduling/domain/errors/already-waiting.error';
-import { InvalidDayError } from '@/contexts/scheduling/domain/errors/invalid-day.error';
 import { Slot } from '@/contexts/scheduling/domain/value-objects/slot.vo';
 import { Waiter } from '@/contexts/scheduling/domain/value-objects/waiter.vo';
 import { aCalendar } from '@/contexts/scheduling/test/builders/calendar.builder';
@@ -47,7 +45,9 @@ describe('Waitlist', () => {
   });
 
   it.each(['2026-02-30', 'Monday', ''])('refuses to be born for %j, which is not a day', (day) => {
-    expect(() => Waitlist.create({ calendarId: 'calendar-1', day }, now)).toThrow(InvalidDayError);
+    expect(() => Waitlist.create({ calendarId: 'calendar-1', day }, now)).toThrow(
+      expect.objectContaining({ code: 'INVALID_DAY' }),
+    );
   });
 
   it('takes the patients who join in arrival order', () => {
@@ -62,7 +62,7 @@ describe('Waitlist', () => {
   it('refuses a patient who already waits, whatever the appointment type', () => {
     given(aWaitlist().joinedBy('patient-1'))
       .when((waitlist) => waitlist.join(waiter('patient-1', 'surgery'), now))
-      .thenError(AlreadyWaitingError, 'ALREADY_WAITING')
+      .thenError('ALREADY_WAITING')
       .thenState((waitlist) => expect(waitlist.waiters).toHaveLength(1));
   });
 });

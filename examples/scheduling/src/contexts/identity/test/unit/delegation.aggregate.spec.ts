@@ -1,8 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { given } from '@ddd-ts-kit/testing';
 import { Delegation } from '@/contexts/identity/domain/aggregates/delegation.aggregate';
-import { DelegationEndsInThePastError } from '@/contexts/identity/domain/errors/delegation-ends-in-the-past.error';
-import { DelegationNotActiveError } from '@/contexts/identity/domain/errors/delegation-not-active.error';
 import { Desk } from '@/contexts/identity/domain/value-objects/desk.vo';
 import { aDelegation } from '@/contexts/identity/test/builders/delegation.builder';
 
@@ -65,7 +63,9 @@ describe('Delegation', () => {
         endsAt,
       };
 
-      expect(() => Delegation.create('delegation-7', terms, grantedAt)).toThrow(DelegationEndsInThePastError);
+      expect(() => Delegation.create('delegation-7', terms, grantedAt)).toThrow(
+        expect.objectContaining({ code: 'DELEGATION_ENDS_IN_THE_PAST' }),
+      );
     },
   );
 });
@@ -88,7 +88,7 @@ describe('A granted delegation', () => {
   it('refuses to be revoked twice', () => {
     given(aDelegation().revokedAt(later))
       .when((delegation) => delegation.revoke(later))
-      .thenError(DelegationNotActiveError, 'DELEGATION_NOT_ACTIVE');
+      .thenError('DELEGATION_NOT_ACTIVE');
   });
 
   it('expires once its end is reached, at the instant it is asked for', () => {

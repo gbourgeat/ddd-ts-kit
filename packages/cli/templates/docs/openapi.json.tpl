@@ -328,6 +328,11 @@
               }
             }
           },
+          "facts": {
+            "type": "object",
+            "description": "The facts of the refusal its code exposes, by name. Absent when it exposes none.",
+            "additionalProperties": true
+          },
           "requestId": {
             "type": "string"
           }

@@ -1,5 +1,5 @@
 import { ValueObject, err, ok, type Result } from '@ddd-ts-kit/kernel';
-import { InvalidRangeError } from '@/contexts/scheduling/domain/errors/invalid-range.error';
+import { CalendarError } from '@/contexts/scheduling/domain/errors/calendar.error';
 import { Range } from '@/contexts/scheduling/domain/value-objects/range.vo';
 
 export type Weekday = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
@@ -17,13 +17,13 @@ export class OpeningHours extends ValueObject<OpeningHoursProps> {
   }
 
   /** The ranges of each weekday; a day left out is closed. The ranges of one day share no minute. */
-  static create(week: Partial<Record<Weekday, readonly Range[]>>): Result<OpeningHours, InvalidRangeError> {
+  static create(week: Partial<Record<Weekday, readonly Range[]>>): Result<OpeningHours, CalendarError> {
     const whole = wholeWeek((weekday) => sorted(week[weekday] ?? []));
     const crowded = WEEK.find((weekday) => !Range.disjoint(whole[weekday]));
 
     return crowded === undefined
       ? ok(new OpeningHours({ week: whole }))
-      : err(new InvalidRangeError(`shares no minute with another range of ${crowded}`));
+      : err(CalendarError.invalidRange(`shares no minute with another range of ${crowded}`));
   }
 
   /** Hours that open nothing: what a calendar has before its hours are set. */

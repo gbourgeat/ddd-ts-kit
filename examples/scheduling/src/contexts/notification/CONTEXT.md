@@ -116,4 +116,12 @@ Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-ki
 | `NotificationRepository` | repository | `KnexNotificationRepository` |
 | `ReminderRepository` | repository | `KnexReminderRepository` |
 | `SearchNotificationsReader` | repository | `KnexSearchNotificationsReader` |
+
+### Errors
+
+| Error class | Refusal | Code | Exposed facts |
+|---|---|---|---|
+| `NotificationError` | `contactUnknown` | `CONTACT_UNKNOWN` | none |
+| `NotificationError` | `invalidNotificationKind` | `INVALID_NOTIFICATION_KIND` | none |
+| `ReminderError` | `notDue` | `REMINDER_NOT_DUE` | none |
 <!-- /ddd-ts-kit:reference -->

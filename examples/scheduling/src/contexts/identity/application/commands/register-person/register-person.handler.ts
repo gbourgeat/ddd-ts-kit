@@ -1,7 +1,7 @@
-import { Clock, unwrap } from '@ddd-ts-kit/kernel';
+import { type Clock, unwrap } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
 import { Person } from '@/contexts/identity/domain/aggregates/person.aggregate';
-import { PersonRepository } from '@/contexts/identity/domain/repositories/person.repository';
+import type { PersonRepository } from '@/contexts/identity/domain/repositories/person.repository';
 import { DisplayName } from '@/contexts/identity/domain/value-objects/display-name.vo';
 import { Email } from '@/contexts/identity/domain/value-objects/email.vo';
 import { RegisterPersonCommand } from '@/contexts/identity/application/commands/register-person/register-person.command';

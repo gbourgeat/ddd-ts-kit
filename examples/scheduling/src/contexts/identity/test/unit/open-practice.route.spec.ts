@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { executeRoute } from '@ddd-ts-kit/http';
 import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';
 import { OpenPracticeCommand } from '@/contexts/identity/application/commands/open-practice/open-practice.command';
-import { PersonNotRegisteredError } from '@/contexts/identity/domain/errors/person-not-registered.error';
-import { UnknownTimeZoneError } from '@/contexts/identity/domain/errors/unknown-time-zone.error';
+import { PersonError } from '@/contexts/identity/domain/errors/person.error';
+import { PracticeError } from '@/contexts/identity/domain/errors/practice.error';
 import { openPracticeRoute } from '@/contexts/identity/presentation/http/open-practice.route';
 
 const params = {};
@@ -60,8 +60,8 @@ describe('POST /practices', () => {
   });
 
   it.each([
-    ['UNKNOWN_TIME_ZONE', new UnknownTimeZoneError('Mars/Olympus')],
-    ['PERSON_NOT_REGISTERED', new PersonNotRegisteredError('person-1')],
+    ['UNKNOWN_TIME_ZONE', PracticeError.unknownTimeZone('Mars/Olympus')],
+    ['PERSON_NOT_REGISTERED', PersonError.notRegistered('person-1')],
   ])('answers 422 with the code %s when the use case refuses', async (code, refusal) => {
     const commands = new InMemoryCommandBus().register(OpenPracticeCommand, {
       execute: async () => {

@@ -27,6 +27,9 @@ import { domainAggregateEncapsulation } from './domain-aggregate-encapsulation.j
 import { domainEventsDispatchedOnSave } from './domain-events-dispatched-on-save.js';
 import { domainEventsTransactionalBeforeCommit } from './domain-events-transactional-before-commit.js';
 import { domainNoGenericError } from './domain-no-generic-error.js';
+import { errorsConstructorNotPublic } from './errors-constructor-not-public.js';
+import { errorsFactoryName } from './errors-factory-name.js';
+import { errorsThroughFactory } from './errors-through-factory.js';
 import { domainValueObjectImmutability } from './domain-value-object-immutability.js';
 import { eventsConsumerIdempotent } from './events-consumer-idempotent.js';
 import { eventsNameFormat } from './events-name-format.js';
@@ -73,6 +76,9 @@ const ALL = [
   domainAggregateEncapsulation,
   domainValueObjectImmutability,
   domainNoGenericError,
+  errorsThroughFactory,
+  errorsConstructorNotPublic,
+  errorsFactoryName,
   applicationHandlerShape,
   applicationCommandQuerySeparation,
   domainEventsDispatchedOnSave,

@@ -1,7 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { unwrap } from '@ddd-ts-kit/kernel';
-import { InvalidDayError } from '@/contexts/scheduling/domain/errors/invalid-day.error';
-import { InvalidRangeError } from '@/contexts/scheduling/domain/errors/invalid-range.error';
 import { Exception } from '@/contexts/scheduling/domain/value-objects/exception.vo';
 import { Range } from '@/contexts/scheduling/domain/value-objects/range.vo';
 
@@ -25,13 +23,16 @@ describe('Exception', () => {
   });
 
   it.each(['2026-02-30', '01/05/2026', ''])('refuses %j, which is not a day', (day) => {
-    expect(Exception.create(day, [])).toMatchObject({ ok: false, error: expect.any(InvalidDayError) });
+    expect(Exception.create(day, [])).toMatchObject({
+      ok: false,
+      error: expect.objectContaining({ code: 'INVALID_DAY' }),
+    });
   });
 
   it('refuses ranges that share a minute', () => {
     const result = Exception.create('2026-05-01', [range('09:00', '12:00'), range('11:00', '13:00')]);
 
-    expect(result).toMatchObject({ ok: false, error: expect.any(InvalidRangeError) });
+    expect(result).toMatchObject({ ok: false, error: expect.objectContaining({ code: 'INVALID_RANGE' }) });
   });
 });
 

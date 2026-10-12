@@ -24,6 +24,7 @@ const STACK_FLAGS = [
   'style',
   'assembly',
   'dependencies',
+  'refusals',
 ] as const;
 
 const OTHER_TEXT_FLAGS = ['docs-ui', 'allow-no-outbox', 'import-alias', 'import-extension', 'package-manager'];

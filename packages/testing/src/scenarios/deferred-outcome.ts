@@ -1,4 +1,5 @@
 import type { AsyncOutcome } from './async-outcome.js';
+import type { ExpectedFacts } from '../refusals/expected-facts.js';
 import type { ErrorClass } from './error-class.js';
 import type { EventMatcher } from './event-matcher.js';
 import { ImmediateOutcome } from './immediate-outcome.js';
@@ -24,10 +25,8 @@ export class DeferredOutcome<A> implements AsyncOutcome<A> {
     return this.after((outcome) => outcome.thenNoEvent());
   }
 
-  thenError(typeOrCode: ErrorClass | string, code?: string): this {
-    return this.after((outcome) =>
-      typeof typeOrCode === 'string' ? outcome.thenError(typeOrCode) : outcome.thenError(typeOrCode, code),
-    );
+  thenError(typeOrCode: ErrorClass | string, detail?: string | ExpectedFacts): this {
+    return this.after((outcome) => outcome.thenError(typeOrCode, detail));
   }
 
   thenState(inspectState: (aggregate: A) => void): this {

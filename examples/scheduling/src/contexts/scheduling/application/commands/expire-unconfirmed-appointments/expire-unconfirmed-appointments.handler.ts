@@ -1,5 +1,5 @@
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
-import { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository';
+import type { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository';
 import { ExpireUnconfirmedAppointmentsCommand } from '@/contexts/scheduling/application/commands/expire-unconfirmed-appointments/expire-unconfirmed-appointments.command';
 
 @CommandHandler(ExpireUnconfirmedAppointmentsCommand)
