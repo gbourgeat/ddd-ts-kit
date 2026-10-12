@@ -25,6 +25,8 @@ const READ =
   "    const scope = await this.access.scope(actor, schedulingPermissions['appointment.read'], 'appointment');\n";
 
 /** What the domain and the use cases do: purity, the model, authorization, events. */
+const GUARD_FILE = 'src/contexts/notification/presentation/http/guards/own-reminder.guard.ts';
+
 export const BEHAVIOUR_INJECTIONS: readonly Injection[] = [
   {
     rule: 'purity/no-system-clock',
@@ -147,14 +149,70 @@ export const BEHAVIOUR_INJECTIONS: readonly Injection[] = [
     eslint: 'ddd-ts-kit/authz-declared',
   },
   {
-    rule: 'authz/in-application',
-    what: 'a route that tests a role of the actor',
+    rule: 'presentation/controller-shape',
+    what: 'a controller with a second public method',
     file: ROUTE,
     changes: [
       {
         file: ROUTE,
-        from: '    async (input) => {\n',
-        to: "    async (input) => {\n      if (!actorOf(input.context.principal).roles.includes('admin')) {\n        throw new Error('Reserved to administrators.');\n      }\n\n",
+        from: '  async handle(',
+        to: '  count(): number {\n    return 0;\n  }\n\n  async handle(',
+      },
+    ],
+    checker: false,
+    eslint: 'ddd-ts-kit/presentation-controller-shape',
+  },
+  {
+    rule: 'presentation/controller-delegates',
+    what: 'a controller of a GET route that is given the command bus',
+    file: ROUTE,
+    changes: [
+      { file: ROUTE, where: 'start', to: "import type { CommandBus } from '@ddd-ts-kit/kernel';\n" },
+      {
+        file: ROUTE,
+        from: '  constructor(private readonly queries: QueryBus) {}',
+        to: '  constructor(\n    private readonly queries: QueryBus,\n    private readonly commands: CommandBus,\n  ) {}',
+      },
+    ],
+    checker: false,
+    eslint: 'ddd-ts-kit/presentation-controller-delegates',
+    alsoReports: [
+      {
+        tool: 'checker',
+        rule: 'declarations/barrel-current',
+        reason: 'the generated file of the context still registers the constructor as it was',
+      },
+    ],
+  },
+  {
+    rule: 'presentation/guard-at-the-edge',
+    what: 'a guard that loads through a repository',
+    file: GUARD_FILE,
+    changes: [
+      {
+        file: GUARD_FILE,
+        to: `import { Guard, type GuardRequest } from '@ddd-ts-kit/http';\nimport type { ReminderRepository } from '${SOURCE_ALIAS}contexts/notification/domain/repositories/reminder.repository${SOURCE_SUFFIX}';\n\n@Guard()\nexport class OwnReminderGuard implements Guard {\n  constructor(private readonly reminderRepository: ReminderRepository) {}\n\n  async check({ params }: GuardRequest): Promise<void> {\n    await this.reminderRepository.findById(String(params['reminderId']));\n  }\n}\n`,
+      },
+    ],
+    checker: false,
+    eslint: 'ddd-ts-kit/presentation-guard-at-the-edge',
+    alsoReports: [
+      {
+        tool: 'checker',
+        rule: 'declarations/barrel-current',
+        reason: 'the guard is a new role file the generated file of its context does not export yet',
+      },
+    ],
+  },
+  {
+    rule: 'authz/in-application',
+    what: 'a controller that tests a role of the actor',
+    file: ROUTE,
+    changes: [
+      {
+        file: ROUTE,
+        from: '    const page = await this.queries.execute(',
+        to: "    if (!request.actor.roles.includes('admin')) {\n      throw new Error('Reserved to administrators.');\n    }\n\n    const page = await this.queries.execute(",
       },
     ],
     checker: true,

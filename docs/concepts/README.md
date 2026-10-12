@@ -56,6 +56,8 @@ of tools.
 12. [Ports and composition](ports-and-composition.md): ports as abstract classes, the
     composition root, declarations by decorators or explicit wiring.
 13. [CQRS](cqrs.md): command and query buses as used here, without event sourcing.
+    [The presentation layer](presentation-layer.md) comes with it: one controller class per
+    route, route groups, guards at the edge and permissions on the use case.
 14. [Modular monolith](modular-monolith.md): one deployable, real modules.
 
 ## 4. Messaging and consistency: how contexts collaborate

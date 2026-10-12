@@ -1,6 +1,7 @@
 import type { TokenMap } from '../token/token-map.js';
 import type { Binding } from './binding.js';
 import type { DomainEventHandling } from './domain-event-handling.js';
+import type { EdgeBinding } from './edge-binding.js';
 import type { EventConsumption } from './event-consumption.js';
 import type { JobRegistration } from './job-registration.js';
 import type { KindAspect } from './kind-aspect.js';
@@ -18,6 +19,7 @@ export interface Wiring {
   readonly policies: readonly PolicyBinding[];
   readonly jobs: readonly JobRegistration[];
   readonly projections: readonly ProjectionRegistration[];
+  readonly edges: readonly EdgeBinding[];
   /** Outermost first. */
   readonly kindAspects: readonly KindAspect[];
 }

@@ -1,4 +1,5 @@
 import type { ExecutionContext } from '@ddd-ts-kit/kernel';
+import type { RawHeaders } from './raw-headers.js';
 
 export interface RequestContext {
   readonly requestId: string;
@@ -8,6 +9,8 @@ export interface RequestContext {
    */
   readonly execution: ExecutionContext;
   readonly principal?: unknown;
+  /** The headers as they arrived, before any schema: where a guard reads a credential the application does not resolve. */
+  readonly rawHeaders?: RawHeaders;
   /** The framework's own request object, for the rare case the neutral input is not enough. */
   readonly raw: unknown;
 }

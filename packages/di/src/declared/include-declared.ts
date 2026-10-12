@@ -7,6 +7,7 @@ import {
   type DomainEventHandler,
   type DomainEventHandlerDeclaration,
   type DomainEventType,
+  type EdgeDeclaration,
   type EventContract,
   type HandlerDeclaration,
   type IntegrationEventHandler,
@@ -108,6 +109,10 @@ function register(registration: Registration, declaration: Declaration): void {
       return;
     case 'projection':
       registerProjection(registration, declaration);
+
+      return;
+    case 'edge':
+      registerEdge(registration, declaration);
 
       return;
     default:
@@ -241,6 +246,14 @@ function registerProjection(registration: Registration, declaration: ProjectionD
   for (const handling of wired.domainEventHandlers) {
     draft.addDomainEventHandler(handling);
   }
+}
+
+function registerEdge(registration: Registration, declaration: EdgeDeclaration): void {
+  const { draft, module, declaredBy } = registration;
+  const { part, implementation, dependencies } = declaration;
+
+  draft.addBinding(underItself(registration, { implementation, dependencies }));
+  draft.addEdge({ part, target: implementation, module, declaredBy });
 }
 
 function registerPort(registration: Registration, declaration: PortDeclaration): void {

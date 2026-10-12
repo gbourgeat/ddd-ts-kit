@@ -44,8 +44,13 @@ export interface UseCaseFact {
 
 export interface RouteFact {
   readonly method: string;
+  /** The whole path: under the prefixes of its groups, for a controller. */
   readonly path: string;
   readonly operationId: string;
+  /** The route group of a controller; empty for a function route and for a controller that names none. */
+  readonly group: string;
+  /** The guards before a controller, those of its groups first, as written; none for a function route. */
+  readonly guards: readonly string[];
   readonly useCase: string;
   readonly permission: string;
   readonly request: readonly RequestPart[];

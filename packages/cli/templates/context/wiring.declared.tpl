@@ -2,12 +2,12 @@
 {{#if assembly.barrel}}
 import * as {{context.camel}}Declarations from '{{alias.context}}/{{context.kebab}}.declarations{{alias.ext}}';
 {{/if}}
-{{#if http.any}}
+{{#if routes.listed}}
 import { {{context.camel}}Routes } from '{{alias.context}}/presentation/http/{{context.kebab}}.routes{{alias.ext}}';
 {{/if}}
 @@contexts
 {{assembled.module}},
-{{#if http.any}}
+{{#if routes.listed}}
 @@routes
 {{context.camel}}Routes,
 {{/if}}

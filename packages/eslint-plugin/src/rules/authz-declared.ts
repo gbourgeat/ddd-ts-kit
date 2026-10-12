@@ -17,7 +17,7 @@ import { staticString } from '../support/imports/static-string.js';
 import { classFinder, type ClassFinder } from '../support/classes/class-finder.js';
 import { parameterBinding } from '../support/types/parameter-binding.js';
 
-type MessageId = 'useCase' | 'message' | 'route' | 'emptySecurity' | 'actor';
+type MessageId = 'useCase' | 'message' | 'route' | 'emptySecurity' | 'controller' | 'actor';
 type Finding = TSESLint.ReportDescriptor<MessageId> | undefined;
 
 const REGISTRATIONS = new Set(['command', 'query']);
@@ -37,6 +37,8 @@ export const authzDeclared = defineRule<MessageId>({
     message: `The {{kind}} {{className}} says nothing about who may send it. Put \`@Requires(<a permission of application/authorization>)\` from "${DECLARATIONS_ENTRY}" on the class, or \`@Public()\` if anybody may: nothing is reachable by default.`,
     route:
       "The route {{route}} declares no `security`. Add `security: ['<scheme>']` with the security schemes that apply, or `security: false` if the route is public.",
+    controller:
+      'This controller names no `group` and no `guards`: nothing says who may call its route. Name its route group, whose guards stand before it, or write `guards: [Public]` when anybody may call it.',
     emptySecurity:
       'The route {{route}} declares `security: []`: no scheme applies, so it is public by accident. Name the schemes that apply, or write `security: false`.',
     actor:
@@ -67,6 +69,7 @@ export const authzDeclared = defineRule<MessageId>({
 
         tell(undeclaredRoute(node));
       },
+      Decorator: (node) => tell(unguardedController(node)),
       ClassDeclaration: judgeClass,
       ClassExpression: judgeClass,
     };
@@ -149,6 +152,28 @@ function undeclaredRoute(node: TSESTree.CallExpression): Finding {
   return messageId === undefined
     ? undefined
     : { node: propertyOf(spec, 'security') ?? spec, messageId, data: { route: routeLabel(spec) } };
+}
+
+/** `@Controller({ .. })` of @ddd-ts-kit/http names its group or its guards; a declaration built elsewhere is judged at run time. */
+function unguardedController({ expression }: TSESTree.Decorator): Finding {
+  if (expression.type !== AST_NODE_TYPES.CallExpression || calleeName(expression) !== 'Controller') {
+    return undefined;
+  }
+
+  const [spec] = expression.arguments;
+
+  if (spec?.type !== AST_NODE_TYPES.ObjectExpression || !isRouteDeclaration(spec)) {
+    return undefined;
+  }
+
+  return { node: spec, messageId: 'controller' };
+}
+
+/** A declaration of a route, with a `method` and a `response`, that names neither a group nor guards. */
+function isRouteDeclaration(spec: TSESTree.ObjectExpression): boolean {
+  const has = (key: string): boolean => propertyOf(spec, key) !== undefined;
+
+  return !hasSpread(spec) && has('method') && has('response') && !has('group') && !has('guards');
 }
 
 function judgeSecurity(spec: TSESTree.ObjectExpression): 'route' | 'emptySecurity' | undefined {

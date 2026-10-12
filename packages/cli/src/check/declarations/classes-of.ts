@@ -1,4 +1,4 @@
-import { DECLARATION_DECORATORS } from '../../declared/declared-role.js';
+import { DECLARATION_DECORATORS, DECORATOR_ENTRIES } from '../../declared/declared-role.js';
 import type { Scan } from '../scan/scan.js';
 import { braceDepthAt } from '../text/brace-depth-at.js';
 import { BRACKETS } from '../text/brackets.js';
@@ -14,8 +14,8 @@ const read = new WeakMap<Scan, readonly DeclaredClass[]>();
 
 /**
  * The classes declared at the top level of a source, each with the declaration decorators it
- * carries. A decorator counts when its name is imported, under that very name, from the
- * declarations entry of the kernel in the same file.
+ * carries. A decorator counts when its name is imported, under that very name, from its entry
+ * in the same file: the declarations entry of the kernel, or `@ddd-ts-kit/http` for the edge.
  */
 export function classesOf(scan: Scan): readonly DeclaredClass[] {
   const known = read.get(scan);
@@ -52,9 +52,9 @@ function readClasses(scan: Scan): DeclaredClass[] {
 }
 
 function importedDecorators(scan: Scan): ReadonlySet<string> {
-  const names = scan.imports
-    .filter(({ specifier }) => specifier === DECLARATIONS_ENTRY)
-    .flatMap(({ names: bound }) => bound);
+  const names = scan.imports.flatMap(({ specifier, names: bound }) =>
+    bound.filter((name) => specifier === (DECORATOR_ENTRIES[name] ?? DECLARATIONS_ENTRY)),
+  );
 
   return new Set(names.filter((name) => DECLARATION_DECORATORS.includes(name)));
 }

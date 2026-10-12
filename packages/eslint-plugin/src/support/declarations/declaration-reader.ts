@@ -6,6 +6,9 @@ import { DECLARED_ROLES } from './declared-roles.js';
 /** The entry of the kernel that holds the declaration decorators. */
 export const DECLARATIONS_ENTRY = '@ddd-ts-kit/kernel/declarations';
 
+/** The entry the decorators of the edge come from: a controller, a guard, a request mapper, a serializer. */
+const EDGE_ENTRY = '@ddd-ts-kit/http';
+
 const DECLARATION_DECORATORS: ReadonlySet<string> = new Set(DECLARED_ROLES.flatMap((role) => role.decorators));
 
 /** A declaration decorator a class carries, under the name the kernel exports it with. */
@@ -20,12 +23,14 @@ export type DeclarationReader = (node: ClassNode) => Declaration[];
 
 /**
  * Reads the declarations of the classes of one program. A decorator counts when its name is
- * imported from the declarations entry of the kernel in that program: `{ Repository }`, an alias
+ * imported from the declarations entry of the kernel, or from `@ddd-ts-kit/http` for the edge, in that program: `{ Repository }`, an alias
  * `{ Repository as Repo }` or a namespace `declarations.Repository`.
  */
 export function declarationReader(program: TSESTree.Program): DeclarationReader {
   const imports = program.body.filter(
-    (statement) => statement.type === AST_NODE_TYPES.ImportDeclaration && statement.source.value === DECLARATIONS_ENTRY,
+    (statement) =>
+      statement.type === AST_NODE_TYPES.ImportDeclaration &&
+      (statement.source.value === DECLARATIONS_ENTRY || statement.source.value === EDGE_ENTRY),
   );
 
   const specifiers = imports.flatMap((statement) =>

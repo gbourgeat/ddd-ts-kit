@@ -1,16 +1,15 @@
 import type { RequestSchemas } from './request-schemas.js';
 import type { ResponsesSpec } from './responses-spec.js';
+import { ROUTE_PATH_PATTERN } from './route-path-pattern.js';
 import type { RouteHandler } from './route-handler.js';
 import type { RouteSpec } from './route-spec.js';
 import type { Route } from './route.js';
-
-const PATH_PATTERN = /^\/$|^(\/(:[A-Za-z_][A-Za-z0-9_]*|[A-Za-z0-9._~-]+))+$/;
 
 export function defineRoute<const Request extends RequestSchemas, const Responses extends ResponsesSpec>(
   spec: RouteSpec<Request, Responses>,
   handler: RouteHandler<Request, Responses>,
 ): Route {
-  if (!PATH_PATTERN.test(spec.path)) {
+  if (!ROUTE_PATH_PATTERN.test(spec.path)) {
     throw new Error(
       `Route "${spec.operationId}": the path "${spec.path}" must be made of literal segments and ":name" parameters.`,
     );

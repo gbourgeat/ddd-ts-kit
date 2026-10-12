@@ -4,7 +4,7 @@ import { PATHS } from '../paths.js';
 const { SCHEDULING } = PATHS;
 const REMINDER_ERROR = 'src/contexts/notification/domain/errors/reminder.error.ts';
 const SCHEDULER = `${SCHEDULING}/domain/services/scheduler.service.ts`;
-const ROUTE = `${SCHEDULING}/presentation/http/get-appointment.route.ts`;
+const ROUTE = `${SCHEDULING}/presentation/http/appointments/get-appointment/get-appointment.controller.ts`;
 const CLOSING = '    );\n  }\n}\n';
 
 /** How a domain error is written: through a factory of its concept class, under a code of its own. */
@@ -60,7 +60,7 @@ export const ERROR_INJECTIONS: readonly Injection[] = [
   },
   {
     rule: 'errors/known-code',
-    what: 'a route declaring a code no refusal sets',
+    what: 'a controller declaring a code no refusal sets',
     file: ROUTE,
     changes: [{ file: ROUTE, from: "'APPOINTMENT_NOT_FOUND'", to: "'APPOINTMENT_MISSING'" }],
     checker: true,

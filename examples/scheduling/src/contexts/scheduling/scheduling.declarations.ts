@@ -49,9 +49,35 @@ import { KnexCalendarRepository } from '@/contexts/scheduling/infrastructure/per
 import { KnexPractitionerDirectory } from '@/contexts/scheduling/infrastructure/persistence/knex-practitioner-directory.repository';
 import { KnexWaitlistRepository } from '@/contexts/scheduling/infrastructure/persistence/knex-waitlist.repository';
 import { TupleSchedulingRelationships } from '@/contexts/scheduling/infrastructure/persistence/tuple-scheduling-relationships.repository';
+import { BookAppointmentController } from '@/contexts/scheduling/presentation/http/appointments/book-appointment/book-appointment.controller';
+import { BookAppointmentMapper } from '@/contexts/scheduling/presentation/http/appointments/book-appointment/book-appointment.mapper';
+import { CancelAppointmentController } from '@/contexts/scheduling/presentation/http/appointments/cancel-appointment/cancel-appointment.controller';
+import { CompleteAppointmentController } from '@/contexts/scheduling/presentation/http/appointments/complete-appointment/complete-appointment.controller';
+import { ConfirmAppointmentController } from '@/contexts/scheduling/presentation/http/appointments/confirm-appointment/confirm-appointment.controller';
+import { GetAppointmentController } from '@/contexts/scheduling/presentation/http/appointments/get-appointment/get-appointment.controller';
+import { MarkAppointmentNoShowController } from '@/contexts/scheduling/presentation/http/appointments/mark-appointment-no-show/mark-appointment-no-show.controller';
+import { RescheduleAppointmentController } from '@/contexts/scheduling/presentation/http/appointments/reschedule-appointment/reschedule-appointment.controller';
+import { SearchAppointmentsController } from '@/contexts/scheduling/presentation/http/appointments/search-appointments/search-appointments.controller';
+import { AddExceptionController } from '@/contexts/scheduling/presentation/http/calendars/add-exception/add-exception.controller';
+import { AddTimeOffController } from '@/contexts/scheduling/presentation/http/calendars/add-time-off/add-time-off.controller';
+import { CreateCalendarController } from '@/contexts/scheduling/presentation/http/calendars/create-calendar/create-calendar.controller';
+import { DefineAppointmentTypeController } from '@/contexts/scheduling/presentation/http/calendars/define-appointment-type/define-appointment-type.controller';
+import { GetCalendarDayController } from '@/contexts/scheduling/presentation/http/calendars/get-calendar-day/get-calendar-day.controller';
+import { GetCalendarDaySerializer } from '@/contexts/scheduling/presentation/http/calendars/get-calendar-day/get-calendar-day.serializer';
+import { JoinWaitlistController } from '@/contexts/scheduling/presentation/http/calendars/join-waitlist/join-waitlist.controller';
+import { SetOpeningHoursController } from '@/contexts/scheduling/presentation/http/calendars/set-opening-hours/set-opening-hours.controller';
+import { SearchPracticeAgendaController } from '@/contexts/scheduling/presentation/http/practices/search-practice-agenda/search-practice-agenda.controller';
+import { AgendaEntrySerializer } from '@/contexts/scheduling/presentation/http/shared/agenda-entry.serializer';
 import { Access } from '@ddd-ts-kit/auth';
 import { RelationTupleStore } from '@ddd-ts-kit/auth/rebac';
-import { Clock, CommandBus, ExecutionScope, IdGenerator, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
+import {
+  Clock,
+  CommandBus,
+  ExecutionScope,
+  IdGenerator,
+  IntegrationEventPublisher,
+  QueryBus,
+} from '@ddd-ts-kit/kernel';
 import { KnexContext } from '@ddd-ts-kit/knex';
 
 export * from '@/contexts/scheduling/application/authorization/patient-cancels-until-notice.policy';
@@ -116,6 +142,25 @@ export * from '@/contexts/scheduling/infrastructure/persistence/knex-calendar.re
 export * from '@/contexts/scheduling/infrastructure/persistence/knex-practitioner-directory.repository';
 export * from '@/contexts/scheduling/infrastructure/persistence/knex-waitlist.repository';
 export * from '@/contexts/scheduling/infrastructure/persistence/tuple-scheduling-relationships.repository';
+export * from '@/contexts/scheduling/presentation/http/appointments/book-appointment/book-appointment.controller';
+export * from '@/contexts/scheduling/presentation/http/appointments/book-appointment/book-appointment.mapper';
+export * from '@/contexts/scheduling/presentation/http/appointments/cancel-appointment/cancel-appointment.controller';
+export * from '@/contexts/scheduling/presentation/http/appointments/complete-appointment/complete-appointment.controller';
+export * from '@/contexts/scheduling/presentation/http/appointments/confirm-appointment/confirm-appointment.controller';
+export * from '@/contexts/scheduling/presentation/http/appointments/get-appointment/get-appointment.controller';
+export * from '@/contexts/scheduling/presentation/http/appointments/mark-appointment-no-show/mark-appointment-no-show.controller';
+export * from '@/contexts/scheduling/presentation/http/appointments/reschedule-appointment/reschedule-appointment.controller';
+export * from '@/contexts/scheduling/presentation/http/appointments/search-appointments/search-appointments.controller';
+export * from '@/contexts/scheduling/presentation/http/calendars/add-exception/add-exception.controller';
+export * from '@/contexts/scheduling/presentation/http/calendars/add-time-off/add-time-off.controller';
+export * from '@/contexts/scheduling/presentation/http/calendars/create-calendar/create-calendar.controller';
+export * from '@/contexts/scheduling/presentation/http/calendars/define-appointment-type/define-appointment-type.controller';
+export * from '@/contexts/scheduling/presentation/http/calendars/get-calendar-day/get-calendar-day.controller';
+export * from '@/contexts/scheduling/presentation/http/calendars/get-calendar-day/get-calendar-day.serializer';
+export * from '@/contexts/scheduling/presentation/http/calendars/join-waitlist/join-waitlist.controller';
+export * from '@/contexts/scheduling/presentation/http/calendars/set-opening-hours/set-opening-hours.controller';
+export * from '@/contexts/scheduling/presentation/http/practices/search-practice-agenda/search-practice-agenda.controller';
+export * from '@/contexts/scheduling/presentation/http/shared/agenda-entry.serializer';
 
 injected(AddExceptionHandler, [CalendarRepository, Clock]);
 injected(AddTimeOffHandler, [CalendarRepository, AppointmentRepository, Clock]);
@@ -159,3 +204,19 @@ injected(KnexCalendarRepository, [KnexContext, ExecutionScope, Clock]);
 injected(KnexPractitionerDirectory, [KnexContext]);
 injected(KnexWaitlistRepository, [KnexContext, ExecutionScope, Clock]);
 injected(TupleSchedulingRelationships, [RelationTupleStore]);
+injected(BookAppointmentController, [CommandBus, BookAppointmentMapper]);
+injected(CancelAppointmentController, [CommandBus]);
+injected(CompleteAppointmentController, [CommandBus]);
+injected(ConfirmAppointmentController, [CommandBus]);
+injected(GetAppointmentController, [QueryBus]);
+injected(MarkAppointmentNoShowController, [CommandBus]);
+injected(RescheduleAppointmentController, [CommandBus]);
+injected(SearchAppointmentsController, [QueryBus, AgendaEntrySerializer]);
+injected(AddExceptionController, [CommandBus]);
+injected(AddTimeOffController, [CommandBus]);
+injected(CreateCalendarController, [CommandBus]);
+injected(DefineAppointmentTypeController, [CommandBus]);
+injected(GetCalendarDayController, [QueryBus, GetCalendarDaySerializer]);
+injected(JoinWaitlistController, [CommandBus]);
+injected(SetOpeningHoursController, [CommandBus]);
+injected(SearchPracticeAgendaController, [QueryBus, AgendaEntrySerializer]);

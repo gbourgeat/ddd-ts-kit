@@ -34,12 +34,30 @@ export function stackVars(config: Config): RenderContext {
     audit: auditVars(config),
     errors: errorVars(config),
     refusals: one(refusals, ['factories', 'classes']),
+    routes: routeVars(config),
     logger: one(logger, ['stdout', 'pino', 'winston']),
     tests: { ...one(tests, ['vitest', 'jest']), module: tests === 'jest' ? '@jest/globals' : 'vitest' },
     worker: { on: config.worker, off: !config.worker },
     config: platformPaths(config),
     alias: aliasVars(config),
     persistence: persistenceVars(config),
+  };
+}
+
+/**
+ * `listed`: the routes of a context are a list written in `<context>.routes.ts`. Declared
+ * controllers reach the application by themselves, and the composition root mounts them in
+ * either form of routes, so a project of function routes can write its first controller.
+ */
+function routeVars(config: Config): RenderContext {
+  const { routes, style, http, audit } = config.stack;
+  const declaredControllers = http !== 'none' && style === 'declared';
+
+  return {
+    ...one(routes, ['controllers', 'functions']),
+    listed: http !== 'none' && !(style === 'declared' && routes === 'controllers'),
+    declaredControllers,
+    mountsControllers: declaredControllers || (http !== 'none' && audit === 'on' && routes === 'controllers'),
   };
 }
 

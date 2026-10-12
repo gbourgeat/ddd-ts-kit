@@ -1,6 +1,7 @@
 export { type AdapterOptions, Adapter } from './declarations/decorators/adapter.js';
 export { CommandHandler } from './declarations/decorators/command-handler.js';
 export { type DomainEventHandlerOptions, DomainEventHandler } from './declarations/decorators/domain-event-handler.js';
+export { Edge } from './declarations/decorators/edge.js';
 export { Gateway } from './declarations/decorators/gateway.js';
 export {
   type IntegrationEventHandlerOptions,
@@ -39,6 +40,7 @@ export type { DeclaredPolicy } from './declarations/model/declared-policy.js';
 export type { DomainEventHandlerDeclaration } from './declarations/model/domain-event-handler-declaration.js';
 export type { DomainEventHandlerUse } from './declarations/model/domain-event-handler-use.js';
 export type { DomainEventType } from './declarations/model/domain-event-type.js';
+export type { EdgeDeclaration } from './declarations/model/edge-declaration.js';
 export type { EventContract } from './declarations/model/event-contract.js';
 export type { HandlerDeclaration } from './declarations/model/handler-declaration.js';
 export type { IntegrationEventHandlerDeclaration } from './declarations/model/integration-event-handler-declaration.js';

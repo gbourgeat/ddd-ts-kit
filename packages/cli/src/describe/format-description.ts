@@ -66,7 +66,12 @@ function routeLine(route: RouteFact): string {
     .map(({ status, schema }) => (schema === '' ? String(status) : `${status} ${schema}`))
     .join(', ');
 
-  return `${route.method} ${route.path} ${route.operationId} -> ${known(route.useCase)} (${known(route.permission)}); request: ${request === '' ? 'none' : request}; responses: ${responses}; errors: ${route.errors.join(', ')}`;
+  const behind =
+    route.guards.length === 0
+      ? ''
+      : ` behind ${[route.group, route.guards.join(', ')].filter((part) => part !== '').join(': ')}`;
+
+  return `${route.method} ${route.path} ${route.operationId}${behind} -> ${known(route.useCase)} (${known(route.permission)}); request: ${request === '' ? 'none' : request}; responses: ${responses}; errors: ${route.errors.join(', ')}`;
 }
 
 function consumedEventLine(event: ConsumedEventFact): string {

@@ -6,11 +6,14 @@ The API documentation is served on `/docs` (off in production unless `API_DOCS=t
 
 ## Change a route
 
-1. Edit the route definition (or create it: `npx ddd-ts-kit generate route <ctx> <UseCase>
-   --method <M> --path <p>`): a stable, unique `operationId` (verb and noun), a `summary`,
-   request schemas, one entry per response status, `errors` listing every domain error code
-   the use case can raise, and `security` (the scheme of the project, or `false` for a public
-   route; the type refuses a route without it).
+1. Edit the declaration of the route (or create it: `npx ddd-ts-kit generate route <ctx>
+   <UseCase> --method <M> --path <p>`). For a controller, the `@Controller({ .. })` decorator:
+   a `summary`, the request schemas, the one `response` with its status, `errors` listing every
+   domain error code the use case can raise; the `operationId` is the class name without
+   `Controller`, and the security, the tags and the 401 and 403 responses come from its route
+   group and its guards (`guards: [Public]` for an open route). For a function route, the
+   `defineRoute` spec: `operationId`, one entry per response status, and `security` (the
+   scheme of the project, or `false` for a public route).
 2. Schemas describe shape and format only. Business rules stay in the domain.
 3. Response schemas are presentation types. Never return an aggregate or an application
    object as is: map it, so the contract does not move when the model does.

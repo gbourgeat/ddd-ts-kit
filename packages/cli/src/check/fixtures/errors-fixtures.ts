@@ -6,6 +6,7 @@ import { project } from './project.js';
 import { source } from './source.js';
 
 const { BILLING, ROUTE } = PATHS;
+const CONTROLLER = `${BILLING}/presentation/http/invoices/issue-invoice/issue-invoice.controller.ts`;
 
 const INVOICE_ERROR = `${BILLING}/domain/errors/invoice.error.ts`;
 const REMINDER_ERROR = `${BILLING}/domain/errors/reminder.error.ts`;
@@ -154,6 +155,19 @@ const KNOWN_CODE: readonly Fixture[] = [
     name: 'a project that does not say how it builds its refusals is not judged',
     expect: 'pass',
     files: project({ [ROUTE]: route('INVOICE_VOIDED') }),
+  },
+  {
+    ruleId: 'errors/known-code',
+    name: 'a controller declaring a code nothing sets',
+    expect: { file: CONTROLLER },
+    files: project(
+      {
+        [INVOICE_ERROR]: INVOICE,
+        [CONTROLLER]:
+          "import { Controller } from '@ddd-ts-kit/http';\n\n@Controller({\n  group: InvoicesRoutes,\n  method: 'POST',\n  path: '/',\n  errors: ['INVOICE_ALREADY_ISSUED', 'INVOICE_VOIDED'],\n})\nexport class IssueInvoiceController {}\n",
+      },
+      FACTORIES,
+    ),
   },
   {
     ruleId: 'errors/known-code',

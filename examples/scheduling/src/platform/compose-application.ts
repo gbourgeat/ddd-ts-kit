@@ -2,6 +2,7 @@ import { installAspectRuntime } from '@ddd-ts-kit/aspects';
 import { Authenticator } from '@ddd-ts-kit/auth';
 import { RelationTupleStore } from '@ddd-ts-kit/auth/rebac';
 import {
+  DeclaredEdges,
   contextModule,
   createApplication,
   kernelModule,
@@ -10,7 +11,7 @@ import {
   type JobsOptions,
 } from '@ddd-ts-kit/di';
 import { OutboxPublisher } from '@ddd-ts-kit/events';
-import { ErrorMapper, defineRoutes, type Route } from '@ddd-ts-kit/http';
+import { ErrorMapper, controllerRoutes, defineRoutes, type Route } from '@ddd-ts-kit/http';
 import {
   Cache,
   Clock,
@@ -28,8 +29,9 @@ import {
 } from '@ddd-ts-kit/kernel';
 import { tracedPublisher } from '@ddd-ts-kit/tracing';
 import { auditModule } from '@/platform/audit/audit.module';
-import { searchAuditEntriesRoute } from '@/platform/audit/search-audit-entries.route';
+import { SearchAuditEntriesController } from '@/platform/audit/search-audit-entries.controller';
 import { authorization } from '@/platform/auth/authorization';
+import { securitySchemes } from '@/platform/auth/security-schemes';
 import { httpBoundary, type HttpBoundary } from '@/platform/auth/http-boundary';
 import { relateSystemActors } from '@/platform/auth/relate-system-actors';
 import { createCommandBus } from '@/platform/buses/create-command-bus';
@@ -39,13 +41,9 @@ import { layFoundations, type Foundations } from '@/platform/lay-foundations';
 import { platformModule, type PlatformOptions } from '@/platform/platform.module';
 // ddd-ts-kit:imports
 import * as identityDeclarations from '@/contexts/identity/identity.declarations';
-import { identityRoutes } from '@/contexts/identity/presentation/http/identity.routes';
 import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations';
-import { schedulingRoutes } from '@/contexts/scheduling/presentation/http/scheduling.routes';
 import * as notificationDeclarations from '@/contexts/notification/notification.declarations';
-import { notificationRoutes } from '@/contexts/notification/presentation/http/notification.routes';
 import * as analyticsDeclarations from '@/contexts/analytics/analytics.declarations';
-import { analyticsRoutes } from '@/contexts/analytics/presentation/http/analytics.routes';
 // /ddd-ts-kit:imports
 
 export interface ApplicationOptions extends PlatformOptions {
@@ -78,8 +76,8 @@ export interface Application {
 /** The contexts an application hosts: all of them here, one alone in `apps/<context>/main.ts`. */
 export interface ContextSelection {
   readonly modules: readonly ContextModule[];
-  /** The routes of each context, given the two buses they call. */
-  readonly routes: readonly ((commands: CommandBus, queries: QueryBus) => readonly Route[])[];
+  /** The function routes of each context, given the two buses they call; controllers need no list. */
+  readonly routes?: readonly ((commands: CommandBus, queries: QueryBus) => readonly Route[])[];
 }
 
 const everyContext: ContextSelection = {
@@ -93,10 +91,6 @@ const everyContext: ContextSelection = {
   ],
   routes: [
     // ddd-ts-kit:routes
-    identityRoutes,
-    schedulingRoutes,
-    notificationRoutes,
-    analyticsRoutes,
     // /ddd-ts-kit:routes
   ],
 };
@@ -195,7 +189,13 @@ function routesOf(container: Container, contexts: ContextSelection): readonly Ro
   const commands = container.resolve(CommandBus);
   const queries = container.resolve(QueryBus);
 
-  return defineRoutes(...contexts.routes.map((routes) => routes(commands, queries)), [
-    searchAuditEntriesRoute(queries),
-  ]);
+  // Every route that is not public names these schemes in the contract.
+  const security = Object.keys(securitySchemes);
+
+  return defineRoutes(
+    ...(contexts.routes ?? []).map((routes) => routes(commands, queries)),
+    // The controllers the hosted contexts declare, each built from its constructor.
+    controllerRoutes(container.resolve(DeclaredEdges).of('controller'), { resolve: container.resolve, security }),
+    controllerRoutes([new SearchAuditEntriesController(queries)], { security }),
+  );
 }

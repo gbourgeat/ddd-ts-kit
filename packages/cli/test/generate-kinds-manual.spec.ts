@@ -9,14 +9,11 @@ describe('a context wired by hand', () => {
   beforeAll(() => {
     root = tempDir('manual');
 
-    scaffoldEverything(root, {
-      http: 'fastify',
-      validation: 'class-validator',
-      di: 'manual',
-      tests: 'vitest',
-      orm: 'knex',
-      events: 'outbox',
-    });
+    scaffoldEverything(
+      root,
+      { http: 'fastify', validation: 'class-validator', di: 'manual', tests: 'vitest', orm: 'knex', events: 'outbox' },
+      ['--routes', 'functions'],
+    );
   });
 
   it('is a function of the platform, named after its file, that registers on the buses and answers what it declares', () => {

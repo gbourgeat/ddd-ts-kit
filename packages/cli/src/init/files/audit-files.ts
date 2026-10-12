@@ -4,12 +4,7 @@ import type { InitFile } from './init-file.js';
 import { platformFile } from './platform-file.js';
 import { when } from './when.js';
 
-const READ_SIDE = [
-  'audit.permissions.ts',
-  'search-audit-entries.query.ts',
-  'search-audit-entries.handler.ts',
-  'search-audit-entries.route.ts',
-];
+const READ_SIDE = ['audit.permissions.ts', 'search-audit-entries.query.ts', 'search-audit-entries.handler.ts'];
 
 /**
  * The audit trail and its three sources, then its read side: a protected, paginated route. It
@@ -33,7 +28,9 @@ export function auditFiles(config: Config): InitFile[] {
     ...when(hasModule, [file('audit.module.ts', family)]),
     ...when(
       http !== 'none',
-      READ_SIDE.map((name) => file(name)),
+      [...READ_SIDE, `search-audit-entries.${config.stack.routes === 'controllers' ? 'controller' : 'route'}.ts`].map(
+        (name) => file(name),
+      ),
     ),
   ];
 }

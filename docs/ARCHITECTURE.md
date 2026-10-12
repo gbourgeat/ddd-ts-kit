@@ -68,13 +68,39 @@ src/
       external/                  adapters of outside systems
       anti-corruption/           translators of another context's or system's model
     presentation/
-      http/                      *.route.ts or *.controller.ts, *.dto.ts, <context>.routes.ts
+      http/                      <name>.routes.ts  (a route group: prefix, tags, guards)
+        <resource>/<use-case>/   *.controller.ts, its schemas (*.params.ts, *.query.ts, *.headers.ts, *.body.ts,
+                                 *.accepted.ts, *.answer.ts, *.line.ts), *.mapper.ts, *.serializer.ts
+        guards/                  *.guard.ts        (guards of the project: declared classes)
+        shared/                  schemas and serializers several routes use
+                                 function routes stay flat: *.route.ts, *.dto.ts, <context>.routes.ts (their list)
       cli/
     test/
       unit/  integration/
       fakes/                     in-memory implementations of ports and repositories
       builders/                  *.builder.ts      (test data builders, one per aggregate)
 ```
+
+Under `presentation/http/` one route is one folder. `"stack.routes": "controllers"` (the form of
+a new project) writes each route as a class carrying `@Controller` of `@ddd-ts-kit/http`, in
+`<resource>/<use-case>/` with the schemas of its request and of its answer; the resource is the
+first segment of its path, and the group of that resource, `<resource>.routes.ts`, gives the
+prefix, the tag and the guards. A schema file is named after its class, which is the name of the
+schema in the published contract: `book-appointment.accepted.ts` holds `BookAppointmentAccepted`.
+`"stack.routes": "functions"` keeps one `defineRoute` function per route, flat, listed in
+`<context>.routes.ts`. Both forms run in one project.
+
+**Guards and permissions are two things, and each has one place.** A guard is a control at the
+edge, over a set of routes: is the caller authenticated, does it hold a role, does the tenant of
+its token match the one of the path, is the key of the request known. It reads the caller and
+the request, runs before the controller, and answers 401 or 403; a route group or a controller
+names it in `guards`. A permission is a business right: it may depend on the element (who owns
+this appointment, is this invoice still a draft) and it is declared on the use case, with
+`@Requires` on the command or the query, decided by the bus through the `Authorizer` port. A
+job, an event handler and another transport send the same command and are held to the same
+permission; none of them passes a guard. So a guard never replaces a permission, never loads an
+aggregate (`presentation/guard-at-the-edge`), and every use case still says who may send it
+(`authz/declared`).
 
 The tree is **closed**: a directory not listed here is a design decision, added to
 `extraDirectories` in the config with a reason, not created ad hoc. The levels named
@@ -129,13 +155,16 @@ presentation ──▶ application ──▶ domain ◀── infrastructure
 | `errors/constructor-not-public` | Under `"stack.refusals": "factories"`, the constructor of an error class of `domain/errors/` is not public: the class extends `ConceptError` of the kernel, whose constructor is protected, and declares none; a constructor it declares is private or protected. Refused: a public constructor, and a class that extends `DomainError` without a constructor, which inherits a public one. An abstract class is not judged. |
 | `errors/factory-name` | Under `"stack.refusals": "factories"`, a factory (a public static method of an error class that calls `refusal(..)`) is named after the refusal, in the words of the business: never `create`, `make`, `of`, `from`, `build`, `new`, `error`, `failure`, `fail`, `refusal`, `refuse`, nor a name holding a digit. Its code is a string literal in constant case, and is the name of the factory in constant case, alone or with the name of the concept before or after it: `AppointmentError.notFound` sets `NOT_FOUND`, `APPOINTMENT_NOT_FOUND` or `NOT_FOUND_APPOINTMENT`; `slotTaken` setting `BOOKING_FAILED` is reported. |
 | `errors/code-unique` | Under `"stack.refusals": "factories"`, a code names one refusal of a context: no two factories, and no two error classes, of the `domain/errors/` of one context set the same code, whichever form writes it (the first argument of `refusal(..)`, a `readonly code` field). The same code in two contexts is allowed: each context owns its language, and the error mapper gives a code one status. |
-| `errors/known-code` | Under `"stack.refusals": "factories"`, every code a route (`*.route.ts`) declares in `errors` exists: a factory or an error class of the context of the route sets it, a class outside the contexts (the platform, the shared kernel) does, or it is a code of the kit (`VALIDATION_FAILED`, `NOT_FOUND`, `CONFLICT`, `INVARIANT_VIOLATION`, `UNAUTHORIZED`, `FORBIDDEN`, `CONCURRENCY_CONFLICT`, `INVALID_CRITERIA`, `INVALID_PAGE_REQUEST`, `TIMEOUT`, `CIRCUIT_OPEN`, `BULKHEAD_FULL`, `ATTEMPTS_EXHAUSTED`). A code another context sets does not count. |
+| `errors/known-code` | Under `"stack.refusals": "factories"`, every code a route (`*.route.ts`) or a controller (`*.controller.ts`) declares in `errors` exists: a factory or an error class of the context of the route sets it, a class outside the contexts (the platform, the shared kernel) does, or it is a code of the kit (`VALIDATION_FAILED`, `NOT_FOUND`, `CONFLICT`, `INVARIANT_VIOLATION`, `UNAUTHORIZED`, `FORBIDDEN`, `CONCURRENCY_CONFLICT`, `INVALID_CRITERIA`, `INVALID_PAGE_REQUEST`, `TIMEOUT`, `CIRCUIT_OPEN`, `BULKHEAD_FULL`, `ATTEMPTS_EXHAUSTED`). A code another context sets does not count. |
 | `application/handler-shape` | A `*.handler.ts` file exports one class with a single public method, `execute`. |
+| `presentation/controller-shape` | A `*.controller.ts` file whose class carries `@Controller` of `@ddd-ts-kit/http` exports that one class, with a single public method, `handle`: one class per route. |
+| `presentation/controller-delegates` | A controller decides nothing: its constructor takes the bus of its method (`CommandBus` for `POST`, `PUT`, `PATCH` and `DELETE`, `QueryBus` for `GET` and `HEAD`), a request mapper (`*Mapper`) and a serializer (`*Serializer`), and nothing else. |
+| `presentation/guard-at-the-edge` | A guard controls the caller at the edge: a `*.guard.ts` file imports nothing from `domain/` or `infrastructure/`, no repository, no unit of work and no command bus. A right that depends on an element of the model is a permission of the use case. |
 | `application/command-query-separation` | A query handler never saves, deletes or publishes. Default severity `warn`. |
 | `events/outbox-required` | With a database, integration events are published through the transactional outbox, never straight to a broker or a bus from a handler. `stack.events` is `outbox` whenever `stack.orm` is set. |
 | `events/consumer-idempotent` | Every integration event handler is declared (`@IntegrationEventHandler(definition, { consumer })`) or registered with a stable consumer name, unique in the project, and deduplicates through a processed-event store (bound once for the application, or given to the subscription). Never a bare `subscribe`. |
 | `context/extractable` | A context can run alone: its module and its declared classes wire nothing of another context, it reads no table or schema of another context, imports no repository nor port of one, and exports no mutable state. It calls another context only through a port of its own whose adapter could be remote. |
-| `authz/declared` | Every command, query and route declares the permission it requires, or declares itself public. Nothing is reachable by default. |
+| `authz/declared` | Every command, query and route declares the permission it requires, or declares itself public. Nothing is reachable by default: a function route declares its `security`, a controller names its route group or its own `guards`, `[Public]` when anybody may call it. |
 | `authz/in-application` | The permission is decided in the application layer through the `Authorizer` port. No role or ownership test in `presentation/`, no authorization in `infrastructure/`, no knowledge of the acting user's rights in `domain/` (a context whose model is access itself may hold roles as its own state). |
 | `authz/actor-explicit` | Use cases receive the actor in the command or query. `domain/` and `application/` never read the ambient `ExecutionScope` or `ActorContext`; only infrastructure and the platform may, for audit columns, tenant scoping and correlation. |
 | `governance/recorded-deviation` | A suppression, a lowered severity, a coverage threshold lowered under the reference, an extra directory or an extra allowed package carries a reason and points to a decision record in `docs/adr/`. Raising a threshold is free. |

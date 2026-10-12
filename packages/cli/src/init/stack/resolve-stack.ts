@@ -17,6 +17,7 @@ import {
   IMPORT_EXTENSIONS,
   LOGGERS,
   REFUSAL_FORMS,
+  ROUTE_FORMS,
   PACKAGE_MANAGERS,
   parseConfig,
   readConfig,
@@ -138,7 +139,7 @@ function hasWorker(root: string, config: Config): boolean {
 function resolveOperations(
   options: StackOptions,
   orm: string,
-): { cache: string; audit: string; errors: string; logger: string; refusals: string } {
+): Record<'cache' | 'audit' | 'errors' | 'logger' | 'refusals' | 'routes', string> {
   return {
     cache: choose(CACHE_STACKS, options.cache, 'cache') ?? 'none',
     audit: choose(AUDIT_MODES, options.audit, 'audit') ?? (orm === 'none' ? 'off' : 'on'),
@@ -146,6 +147,8 @@ function resolveOperations(
     logger: choose(LOGGERS, options.logger, 'logger') ?? 'stdout',
     // A new project builds its domain errors through factories; a recorded one keeps the form it says, or the one of 0.2.
     refusals: choose(REFUSAL_FORMS, options.refusals, 'refusals') ?? 'factories',
+    // A new project writes each route as a controller class; a recorded one keeps the form it says, or the functions of 0.3.
+    routes: choose(ROUTE_FORMS, options.routes, 'routes') ?? 'controllers',
   };
 }
 

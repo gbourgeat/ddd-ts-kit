@@ -67,6 +67,7 @@ async function handled(call: Call): Promise<RouteOutput> {
     requestId,
     execution,
     raw: request.raw,
+    rawHeaders: headers,
     ...(principal === undefined ? {} : { principal }),
   };
 

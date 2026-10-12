@@ -14,15 +14,19 @@ beforeAll(() => {
 
 /** The default way a project is written: each class declares what it is, and no file lists the bindings of a context. */
 describe('a context generated in the declared style', () => {
-  it('has no module file, no token file: the list of its routes and one generated barrel are all that assembles it', () => {
+  it('has no module file, no token file and no list of routes: one generated barrel is all that assembles it', () => {
     const billing = walk(root, BILLING).map((file) => file.replace(`${BILLING}/`, ''));
 
     expect(billing).not.toContain('billing.module.ts');
+    expect(billing).not.toContain('presentation/http/billing.routes.ts');
     expect(billing.filter((file) => file.endsWith('.ports.ts'))).toEqual([]);
-    expect(billing).toEqual(expect.arrayContaining(['billing.declarations.ts', 'presentation/http/billing.routes.ts']));
 
-    expect(read(root, `${BILLING}/presentation/http/billing.routes.ts`)).toContain(
-      'issueInvoiceRoute(commands),\n    cancelInvoiceRoute(commands),\n    searchInvoicesRoute(queries),',
+    expect(billing).toEqual(
+      expect.arrayContaining([
+        'billing.declarations.ts',
+        'presentation/http/invoices.routes.ts',
+        'presentation/http/invoices/issue-invoice/issue-invoice.controller.ts',
+      ]),
     );
   });
 
@@ -47,6 +51,9 @@ describe('a context generated in the declared style', () => {
       "export * from '@/contexts/billing/infrastructure/external/remote-tax-rates.adapter';",
       "export * from '@/contexts/billing/infrastructure/persistence/drizzle-invoice.repository';",
       "export * from '@/contexts/billing/infrastructure/persistence/in-memory-search-invoices-reader.repository';",
+      "export * from '@/contexts/billing/presentation/http/invoices/cancel-invoice/cancel-invoice.controller';",
+      "export * from '@/contexts/billing/presentation/http/invoices/issue-invoice/issue-invoice.controller';",
+      "export * from '@/contexts/billing/presentation/http/invoices/search-invoices/search-invoices.controller';",
     ]);
   });
 
@@ -56,7 +63,7 @@ describe('a context generated in the declared style', () => {
     expect(barrel.split('\n')[0]).toBe("import { injected } from '@ddd-ts-kit/kernel/declarations';");
 
     expect(barrel).toContain(
-      "import { Clock, CommandBus, ExecutionScope, IdGenerator, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';",
+      "import {\n  Clock,\n  CommandBus,\n  ExecutionScope,\n  IdGenerator,\n  IntegrationEventPublisher,\n  QueryBus,\n} from '@ddd-ts-kit/kernel';",
     );
 
     expect(barrel).toContain("import { Database } from '@/platform/database/database';");
@@ -64,6 +71,7 @@ describe('a context generated in the declared style', () => {
     expect(barrel).toContain('injected(SearchInvoicesHandler, [SearchInvoicesReader, Access]);');
     expect(barrel).toContain('injected(InvoiceIssuedPublisher, [IntegrationEventPublisher, IdGenerator]);');
     expect(barrel).toContain('injected(CancelStaleInvoicesJob, [CommandBus]);');
+    expect(barrel).toContain('injected(SearchInvoicesController, [QueryBus]);');
     expect(barrel).toContain('injected(DrizzleInvoiceRepository, [Database, ExecutionScope, Clock]);');
     expect(barrel).not.toContain('injected(CancelInvoiceHandler');
     expect(barrel).not.toContain('injected(OnlyIssuerCancelsPolicy');
@@ -223,10 +231,14 @@ describe('a declared context and what hosts it', () => {
       "    contextModule('billing', billingDeclarations),\n    contextModule('shipping', shippingDeclarations),\n    contextModule('order-fulfilment', orderFulfilmentDeclarations),",
     );
 
-    expect(composition).toContain('    billingRoutes,\n    shippingRoutes,\n    orderFulfilmentRoutes,');
+    expect(composition).not.toContain('billingRoutes');
+
+    expect(composition).toContain(
+      "controllerRoutes(container.resolve(DeclaredEdges).of('controller'), { resolve: container.resolve, security }),",
+    );
 
     expect(read(root, 'src/apps/shipping/main.ts')).toContain(
-      "{ modules: [contextModule('shipping', shippingDeclarations)], routes: [shippingRoutes] },",
+      "{ modules: [contextModule('shipping', shippingDeclarations)] },",
     );
 
     expect(read(root, 'test/architecture/extractable.spec.ts')).toContain(

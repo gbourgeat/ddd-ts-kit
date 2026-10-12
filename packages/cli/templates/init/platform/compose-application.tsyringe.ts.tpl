@@ -3,6 +3,9 @@ import { installAspectRuntime } from '@ddd-ts-kit/aspects';
 import { Authenticator } from '@ddd-ts-kit/auth';
 {{/if}}
 import {
+{{#if routes.declaredControllers}}
+  DeclaredEdges,
+{{/if}}
   createApplication,
   kernelModule,
   type Application as Container,
@@ -13,7 +16,12 @@ import {
 import { OutboxPublisher } from '@ddd-ts-kit/events';
 {{/if}}
 {{#if http.any}}
+{{#if routes.mountsControllers}}
+import { ErrorMapper, controllerRoutes, defineRoutes, type Route } from '@ddd-ts-kit/http';
+{{/if}}
+{{#unless routes.mountsControllers}}
 import { ErrorMapper, defineRoutes, type Route } from '@ddd-ts-kit/http';
+{{/unless}}
 {{/if}}
 import {
   Cache,
@@ -51,10 +59,16 @@ import { tracedPublisher } from '@ddd-ts-kit/tracing';
 {{#if audit.on}}
 import { auditModule } from '{{alias.platform}}/audit/audit.module{{alias.ext}}';
 {{/if}}
-{{#if audit.route}}
+{{#if audit.functionRoute}}
 import { searchAuditEntriesRoute } from '{{alias.platform}}/audit/search-audit-entries.route{{alias.ext}}';
 {{/if}}
+{{#if audit.controller}}
+import { SearchAuditEntriesController } from '{{alias.platform}}/audit/search-audit-entries.controller{{alias.ext}}';
+{{/if}}
 import { authorization } from '{{alias.platform}}/auth/authorization{{alias.ext}}';
+{{#if routes.mountsControllers}}
+import { securitySchemes } from '{{alias.platform}}/auth/security-schemes{{alias.ext}}';
+{{/if}}
 {{#if http.any}}
 import { httpBoundary, type HttpBoundary } from '{{alias.platform}}/auth/http-boundary{{alias.ext}}';
 {{/if}}
@@ -109,8 +123,8 @@ export interface Application {
 export interface ContextSelection {
   readonly modules: readonly ContextModule[];
 {{#if http.any}}
-  /** The routes of each context, given the two buses they call. */
-  readonly routes: readonly ((commands: CommandBus, queries: QueryBus) => readonly Route[])[];
+  /** The function routes of each context, given the two buses they call; controllers need no list. */
+  readonly routes?: readonly ((commands: CommandBus, queries: QueryBus) => readonly Route[])[];
 {{/if}}
 }
 
@@ -262,6 +276,26 @@ function routesOf(container: Container, contexts: ContextSelection): readonly Ro
   const commands = container.resolve(CommandBus);
   const queries = container.resolve(QueryBus);
 
-  return defineRoutes(...contexts.routes.map((routes) => routes(commands, queries)){{#if audit.route}}, [searchAuditEntriesRoute(queries)]{{/if}});
+{{#unless routes.mountsControllers}}
+  return defineRoutes(...(contexts.routes ?? []).map((routes) => routes(commands, queries)){{#if audit.route}}, [searchAuditEntriesRoute(queries)]{{/if}});
+{{/unless}}
+{{#if routes.mountsControllers}}
+  // Every route that is not public names these schemes in the contract.
+  const security = Object.keys(securitySchemes);
+
+  return defineRoutes(
+    ...(contexts.routes ?? []).map((routes) => routes(commands, queries)),
+{{#if routes.declaredControllers}}
+    // The controllers the hosted contexts declare, each built from its constructor.
+    controllerRoutes(container.resolve(DeclaredEdges).of('controller'), { resolve: container.resolve, security }),
+{{/if}}
+{{#if audit.functionRoute}}
+    [searchAuditEntriesRoute(queries)],
+{{/if}}
+{{#if audit.controller}}
+    controllerRoutes([new SearchAuditEntriesController(queries)], { security }),
+{{/if}}
+  );
+{{/if}}
 }
 {{/if}}

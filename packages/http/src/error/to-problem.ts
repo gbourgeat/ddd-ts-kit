@@ -22,11 +22,52 @@ export function toProblem(error: unknown, mapper: ErrorMapper, requestId: string
     title: statusTitle(status),
     status,
     code: error.code,
-    detail: error.message,
+    detail: publicDetail(error),
     ...(error instanceof ValidationError ? { issues: error.issues } : {}),
     ...exposedFacts(error),
     requestId,
   };
+}
+
+/**
+ * The sentence a client reads. The message of a refusal built by a factory may quote the facts
+ * it was given (an address, an identifier): it is answered unless it quotes one that the
+ * factory did not expose. Then the client reads a sentence made from the code alone, and the
+ * message stays where the error is logged and reported.
+ */
+function publicDetail(error: DomainError): string {
+  if (!(error instanceof ConceptError)) {
+    return error.message;
+  }
+
+  const exposed = error.exposedFacts;
+  const hidden = Object.entries(error.facts).filter(([name]) => !(name in exposed));
+
+  return hidden.some(([, value]) => quotes(error.message, value)) ? sentenceOf(error.code) : error.message;
+}
+
+/** Whether the text holds the value as a factory would write it: a text, a number, an instant, or one of what a list or a record holds. */
+function quotes(text: string, value: unknown): boolean {
+  if (typeof value === 'string') {
+    return value !== '' && text.includes(value);
+  }
+
+  if (typeof value === 'number' || typeof value === 'bigint') {
+    return text.includes(String(value));
+  }
+
+  if (value instanceof Date) {
+    return text.includes(value.toISOString()) || text.includes(String(value));
+  }
+
+  return typeof value === 'object' && value !== null && Object.values(value).some((part) => quotes(text, part));
+}
+
+/** `INVALID_EMAIL` read as `Invalid email.` */
+function sentenceOf(code: string): string {
+  const words = code.toLowerCase().replaceAll('_', ' ');
+
+  return `${words.charAt(0).toUpperCase()}${words.slice(1)}.`;
 }
 
 /** Only what the factory of the refusal exposed by name: a fact never leaves the process by default. */

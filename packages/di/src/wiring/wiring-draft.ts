@@ -3,6 +3,7 @@ import { WiringError } from '../errors/wiring-error.js';
 import { TokenMap } from '../token/token-map.js';
 import type { Binding } from './binding.js';
 import type { DomainEventHandling } from './domain-event-handling.js';
+import type { EdgeBinding } from './edge-binding.js';
 import type { EventConsumption } from './event-consumption.js';
 import type { JobRegistration } from './job-registration.js';
 import type { KindAspect } from './kind-aspect.js';
@@ -27,6 +28,8 @@ export class WiringDraft {
   private readonly jobs: JobRegistration[] = [];
 
   private readonly projections: ProjectionRegistration[] = [];
+
+  private readonly edges: EdgeBinding[] = [];
 
   private readonly kindAspects: KindAspect[] = [];
 
@@ -118,6 +121,10 @@ export class WiringDraft {
     this.policies.push(policy);
   }
 
+  addEdge(edge: EdgeBinding): void {
+    this.edges.push(edge);
+  }
+
   addKindAspect(aspect: KindAspect): void {
     this.kindAspects.push(aspect);
   }
@@ -132,6 +139,7 @@ export class WiringDraft {
       policies: this.policies,
       jobs: this.jobs,
       projections: this.projections,
+      edges: this.edges,
       kindAspects: this.kindAspects,
     };
   }

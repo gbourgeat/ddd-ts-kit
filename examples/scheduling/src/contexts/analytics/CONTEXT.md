@@ -105,9 +105,9 @@ Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-ki
 
 ### Routes
 
-| Method | Path | Operation | Use case | Permission | Request | Responses | Errors |
-|---|---|---|---|---|---|---|---|
-| GET | `/practices/:practiceId/occupancy` | `searchOccupancy` | `SearchOccupancy` | `occupancy.read` | params: `SearchOccupancyParams`, query | 200: `page of SearchOccupancyLine` | `UNAUTHORIZED`, `FORBIDDEN` |
+| Method | Path | Operation | Group | Guards | Use case | Permission | Request | Responses | Errors |
+|---|---|---|---|---|---|---|---|---|---|
+| GET | `/practices/:practiceId/occupancy` | `searchOccupancy` | `PracticesRoutes` | `Authenticated` | `SearchOccupancy` | `occupancy.read` | params: `SearchOccupancyParams`, query | 200: `page of SearchOccupancyLine` | `UNAUTHORIZED`, `FORBIDDEN` |
 
 ### Projections
 

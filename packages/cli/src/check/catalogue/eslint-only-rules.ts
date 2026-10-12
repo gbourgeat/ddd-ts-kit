@@ -36,4 +36,19 @@ export const ESLINT_ONLY_RULES: readonly { readonly id: string; readonly descrip
     description: 'A *.handler.ts file exports one class with a single public method, execute.',
   },
   { id: 'application/command-query-separation', description: 'A query handler never saves, deletes or publishes.' },
+  {
+    id: 'presentation/controller-shape',
+    description:
+      'A *.controller.ts file whose class carries @Controller exports that one class, whose single public method is handle.',
+  },
+  {
+    id: 'presentation/controller-delegates',
+    description:
+      'A controller takes the bus of its method (CommandBus for POST, PUT, PATCH, DELETE; QueryBus for GET, HEAD), a request mapper and a serializer, and nothing else.',
+  },
+  {
+    id: 'presentation/guard-at-the-edge',
+    description:
+      'A *.guard.ts file imports nothing from domain/ or infrastructure/, no repository, no unit of work and no command bus.',
+  },
 ];

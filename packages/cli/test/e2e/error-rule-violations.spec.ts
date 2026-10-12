@@ -5,7 +5,7 @@ import { SLOW } from './stacks.js';
 const BILLING = 'src/contexts/billing';
 const ERROR = `${BILLING}/domain/errors/invoice.error.ts`;
 const SERVICE = `${BILLING}/domain/services/pricing.service.ts`;
-const ROUTE = `${BILLING}/presentation/http/issue-invoice.route.ts`;
+const ROUTE = `${BILLING}/presentation/http/invoices/issue-invoice/issue-invoice.controller.ts`;
 const CLASS = 'export class InvoiceError extends ConceptError {\n';
 
 const AD_HOC =

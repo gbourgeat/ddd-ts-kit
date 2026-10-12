@@ -4,6 +4,7 @@ import { fitStatement } from '../../../layout/index.js';
 import { assembledContext } from '../../assembled-context.js';
 import { hostImports } from '../../host-imports.js';
 import { isDeclared } from '../../is-declared.js';
+import { listsRoutes } from '../../lists-routes.js';
 import { relativeTo } from '../../relative-to.js';
 import type { Scope } from '../../scope.js';
 
@@ -24,7 +25,7 @@ export function serviceSelection(scope: Scope): ServiceSelection {
     return { selection: argument(`[${module}]`), imports: moduleImports(scope, inContext).join('\n') };
   }
 
-  const withRoutes = config.stack.http !== 'none';
+  const withRoutes = listsRoutes(config);
 
   const routes = withRoutes
     ? [`import { ${context.camel}Routes } from '${inContext(routesFile(context.kebab))}';`]

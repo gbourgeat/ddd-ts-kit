@@ -61,9 +61,9 @@ describe('the validation packages of a project that validates nothing yet', () =
     expect(routed(root).code).toBe(0);
     expect(ignored(root)).toEqual(['eslint-formatter-gitlab']);
 
-    expect(read(root, 'src/contexts/billing/presentation/http/issue-invoice.route.ts')).toContain(
-      `from '${VALIDATION}/zod'`,
-    );
+    expect(
+      read(root, 'src/contexts/billing/presentation/http/invoices/issue-invoice/issue-invoice.controller.ts'),
+    ).toContain(`from '${VALIDATION}/zod'`);
   });
 
   it('leave no key behind when nothing else was ignored', () => {

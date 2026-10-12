@@ -33,6 +33,12 @@ Nothing is reachable by default. A command or a query that declares neither a pe
 that it is public is refused, at run time by the middleware and, when you ask for it, when the
 application is created.
 
+Guards are not a fourth place. A guard of `@ddd-ts-kit/http` (`Authenticated`, `HasRole(..)`, a
+guard of the project) is a control at the edge over a set of routes: it reads the caller and
+the request, and refuses before the controller runs. It never replaces the permission of a use
+case, which a job, an event handler or another transport meets without passing any guard, and
+it never loads an element to decide. The rule is `presentation/guard-at-the-edge`.
+
 ## A complete example
 
 ### 1. Permissions, declared by the context that owns them

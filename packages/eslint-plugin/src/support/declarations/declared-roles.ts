@@ -19,4 +19,8 @@ export const DECLARED_ROLES: readonly DeclaredRole[] = [
   { suffix: 'repository', folders: ['infrastructure/persistence'], decorators: ['Repository'] },
   { suffix: 'gateway', folders: ['infrastructure'], decorators: ['Gateway'] },
   { suffix: 'adapter', folders: ['infrastructure'], decorators: ['Adapter'] },
+  { suffix: 'controller', folders: ['presentation/http'], decorators: ['Controller'] },
+  { suffix: 'guard', folders: ['presentation/http'], decorators: ['Guard'] },
+  { suffix: 'mapper', folders: ['presentation/http'], decorators: ['RequestMapper'] },
+  { suffix: 'serializer', folders: ['presentation/http'], decorators: ['Serializer'] },
 ];

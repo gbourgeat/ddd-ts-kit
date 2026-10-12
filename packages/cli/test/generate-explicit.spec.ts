@@ -11,7 +11,7 @@ let results: CliResult[];
 
 beforeAll(() => {
   root = tempDir('generated');
-  results = scaffoldEverything(root, EXPLICIT_STACK);
+  results = scaffoldEverything(root, EXPLICIT_STACK, ['--routes', 'functions']);
 });
 
 describe('generated code, in the explicit style', () => {

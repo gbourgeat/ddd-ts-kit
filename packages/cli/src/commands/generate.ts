@@ -66,6 +66,11 @@ const OPTIONS = {
   decorators: SWITCH,
   deviation: TEXT,
   phase: TEXT,
+  group: TEXT,
+  prefix: TEXT,
+  role: TEXT,
+  mapper: SWITCH,
+  serializer: SWITCH,
   reason: TEXT,
   every: TEXT,
   cron: TEXT,
@@ -142,6 +147,9 @@ function flagsOf(args: Arguments): KindFlags {
       'every',
       'cron',
       'phase',
+      'group',
+      'prefix',
+      'role',
     ]),
     ...(timeZone === undefined ? {} : { timeZone }),
     ...(commandName === undefined ? {} : { commandName }),
@@ -151,7 +159,16 @@ function flagsOf(args: Arguments): KindFlags {
   };
 }
 
-type Switch = 'command' | 'query' | 'allowName' | 'public' | 'tenantScoped' | 'search' | 'decorators';
+type Switch =
+  | 'command'
+  | 'query'
+  | 'allowName'
+  | 'public'
+  | 'tenantScoped'
+  | 'search'
+  | 'decorators'
+  | 'mapper'
+  | 'serializer';
 
 function switchesOf(args: Arguments): Pick<KindFlags, Switch> {
   return {
@@ -162,5 +179,7 @@ function switchesOf(args: Arguments): Pick<KindFlags, Switch> {
     tenantScoped: args.flag('tenant-scoped'),
     search: args.flag('search'),
     decorators: args.flag('decorators'),
+    mapper: args.flag('mapper'),
+    serializer: args.flag('serializer'),
   };
 }

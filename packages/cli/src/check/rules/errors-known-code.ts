@@ -13,7 +13,7 @@ const ERRORS_LIST = /(?<![\w$.])errors\s*:\s*\[/g;
 export const errorsKnownCode: Rule = {
   id: 'errors/known-code',
   description:
-    'Under "stack.refusals": "factories", every code a route declares in `errors` exists: a factory or an error class of its context sets it, a class outside the contexts does, or it is a code of the kit.',
+    'Under "stack.refusals": "factories", every code a route or a controller declares in `errors` exists: a factory or an error class of its context sets it, a class outside the contexts does, or it is a code of the kit.',
   scope: 'project',
   run(project) {
     if (!buildsThroughFactories(project)) {
@@ -45,7 +45,7 @@ function knownCodes(project: Project): Map<string, Set<string>> {
 }
 
 function isRouteFile(file: SourceFile): boolean {
-  return !file.isTest && file.path.endsWith('.route.ts');
+  return !file.isTest && /\.(?:route|controller)\.ts$/.test(file.path);
 }
 
 function unknownCodes(file: SourceFile, known: Map<string, Set<string>>): Finding[] {

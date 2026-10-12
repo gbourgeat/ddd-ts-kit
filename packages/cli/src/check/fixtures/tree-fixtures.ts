@@ -165,10 +165,34 @@ export const TREE_FIXTURES: readonly Fixture[] = [
   },
   {
     ruleId: 'naming/suffix',
-    name: 'a routes file named after another context',
-    expect: { file: `${BILLING}/presentation/http/shipping.routes.ts` },
+    name: 'a controller in its folder with its schemas, mapper and serializer, behind a route group and a guard',
+    expect: 'pass',
     files: project({
-      [`${BILLING}/presentation/http/shipping.routes.ts`]: 'export const shippingRoutes = (): unknown[] => [];\n',
+      [`${BILLING}/presentation/http/invoices.routes.ts`]: 'export class InvoicesRoutes {}\n',
+      [`${BILLING}/presentation/http/guards/office-hours.guard.ts`]: 'export class OfficeHoursGuard {}\n',
+      [`${BILLING}/presentation/http/shared/money.ts`]: 'export class Money {}\n',
+      ...Object.fromEntries(
+        ['controller', 'params', 'query', 'body', 'accepted', 'mapper', 'serializer'].map((role) => [
+          `${BILLING}/presentation/http/invoices/issue-invoice/issue-invoice.${role}.ts`,
+          `export class IssueInvoice${role.charAt(0).toUpperCase()}${role.slice(1)} {}\n`,
+        ]),
+      ),
+    }),
+  },
+  {
+    ruleId: 'naming/suffix',
+    name: 'a file of another role in the folder of a controller',
+    expect: { file: `${BILLING}/presentation/http/invoices/issue-invoice/issue-invoice.dto.ts` },
+    files: project({
+      [`${BILLING}/presentation/http/invoices/issue-invoice/issue-invoice.dto.ts`]: 'export class IssueInvoiceDto {}\n',
+    }),
+  },
+  {
+    ruleId: 'tree/closed',
+    name: 'a file left in the folder of a resource, outside the folder of a controller',
+    expect: { file: `${BILLING}/presentation/http/invoices/issue-invoice.controller.ts` },
+    files: project({
+      [`${BILLING}/presentation/http/invoices/issue-invoice.controller.ts`]: 'export class IssueInvoiceController {}\n',
     }),
   },
   {

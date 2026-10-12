@@ -45,7 +45,7 @@ Run the `Start with` commands of the slice row, or for a typical command:
 npx ddd-ts-kit generate command <ctx> <UseCase> --aggregate <Aggregate> --permission <aggregate>.<action> --json
 npx ddd-ts-kit generate error <ctx> <Concept> <refusal> --json        # one per refusal: a factory on the error class of the concept
 npx ddd-ts-kit generate domain-event <ctx> <Aggregate> <Fact> --json  # the fact recorded
-npx ddd-ts-kit generate route <ctx> <UseCase> --method POST --path /<resource> --json
+npx ddd-ts-kit generate route <ctx> <UseCase> --method POST --path /<resource> --json   # [--group <Name>] [--mapper] [--serializer]
 ```
 
 A refusal is named in the words of the business, twice: `generate error scheduling Appointment
@@ -86,8 +86,15 @@ to open.
    commit: no `pullEvents()`, no dispatcher in a handler
    (`domain-events/dispatched-on-save`). Time and identifiers come from `Clock` and
    `IdGenerator`.
-3. **Presentation.** The route: input schema (shape only), mapping to the command with
-   `actorOf(...)`, response mapping, the `errors` it can answer.
+3. **Presentation.** The route, one controller class with one method
+   (`presentation/http/<resource>/<use-case>/<use-case>.controller.ts`): its decorator declares
+   the method, the path after the prefix of its route group, the schemas (shape only), the
+   response and the `errors` it can answer; `handle` builds the command with `request.actor`
+   and returns the body. Add `--mapper` or `--serializer` when the translation is more than a
+   line; the controller is given nothing but its bus and those two. Its group
+   (`<resource>.routes.ts`) holds the guards: a guard is a control at the edge, the permission
+   stays on the command. In a project of function routes (`"stack.routes": "functions"`, or no
+   key) the route is a `defineRoute` function with `actorOf(...)` and its `security`.
 4. **Infrastructure**, only when the slice added a port: the adapter and the fake pass the
    same contract suite (skills `ddd-ts-kit:persistence`, `ddd-ts-kit:cross-cutting`).
 

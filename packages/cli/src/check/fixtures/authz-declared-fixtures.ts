@@ -8,6 +8,8 @@ import { project } from './project.js';
 
 const { COMMAND, MODULE, QUERY, ROUTE } = PATHS;
 
+const HTTP = `${PATHS.BILLING}/presentation/http/invoices`;
+
 export const AUTHZ_DECLARED_FIXTURES: readonly Fixture[] = [
   {
     ruleId: 'authz/declared',
@@ -71,6 +73,28 @@ export const AUTHZ_DECLARED_FIXTURES: readonly Fixture[] = [
     expect: { file: ROUTE },
     files: project({
       [ROUTE]: "export const issueInvoiceRoute = defineRoute({ method: 'POST', path: '/invoices' }, issue);\n",
+    }),
+  },
+  {
+    ruleId: 'authz/declared',
+    name: 'a controller behind its route group, one that says it is public, and a controller of another framework',
+    expect: 'pass',
+    files: project({
+      [`${HTTP}/issue-invoice/issue-invoice.controller.ts`]:
+        "import { Controller } from '@ddd-ts-kit/http';\n\n@Controller({ group: InvoicesRoutes, method: 'POST', path: '/' })\nexport class IssueInvoiceController {}\n",
+      [`${HTTP}/get-rates/get-rates.controller.ts`]:
+        "import { Controller, Public } from '@ddd-ts-kit/http';\n\n@Controller({\n  method: 'GET',\n  path: '/rates',\n  guards: [Public],\n})\nexport class GetRatesController {}\n",
+      [`${HTTP}/nest/nest.controller.ts`]:
+        "import { Controller } from '@nestjs/common';\n\n@Controller({ path: 'invoices' })\nexport class NestController {}\n",
+    }),
+  },
+  {
+    ruleId: 'authz/declared',
+    name: 'a controller that names no route group and no guard',
+    expect: { file: `${HTTP}/get-rates/get-rates.controller.ts` },
+    files: project({
+      [`${HTTP}/get-rates/get-rates.controller.ts`]:
+        "import { Controller } from '@ddd-ts-kit/http';\n\n@Controller({ method: 'GET', path: '/rates' })\nexport class GetRatesController {}\n",
     }),
   },
   {

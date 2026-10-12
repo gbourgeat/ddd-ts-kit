@@ -37,7 +37,8 @@ deviation.
     "style": "declared",
     "assembly": "barrel",
     "dependencies": "signature",
-    "refusals": "factories"
+    "refusals": "factories",
+    "routes": "controllers"
   },
   "contexts": {
     "billing": { "classification": "core", "upstreams": [] },
@@ -134,8 +135,9 @@ outside the list stops every command with the list of accepted values.
 | `stack.assembly` | `barrel`, `discovery`: how a declared context reaches the composition root, one generated `<context>.declarations.ts` or a scan at startup. `init` accepts the flag in the declared style only | `barrel` |
 | `stack.dependencies` | `signature`, `listed`: where a declared class states what it depends on. `signature`: in its constructor and nowhere else; `ddd-ts-kit docs` reads the signatures into the generated file of each context, and a list left in a decorator is reported (`declarations/constructor-injection`, which ESLint fixes). `listed`: in the last argument of its decorator, as 0.1 wrote it. Both forms run in either: a class that lists is given its list, a class that does not is given what its constructor takes. `init` accepts the flag in the declared style only | `signature` |
 | `stack.refusals` | `factories`, `classes`: how a domain error is written. `factories`: one error class per concept of the model, each refusal built by a static factory named in the words of the business (`AppointmentError.slotTaken(..)`), held by the `errors/*` rules, and `generate error <context> <Concept> <refusal>` adds one. `classes`: one class per error, built with `new`, as 0.1 and 0.2 wrote them; `generate domain-error` writes one, and no `errors/*` rule judges. Both forms run in either: `ConceptError` and `DomainError` are one family | `factories` |
+| `stack.routes` | `controllers`, `functions`: how a route is written. `controllers`: one class per route carrying `@Controller` of `@ddd-ts-kit/http`, in a folder of its own under `presentation/http/<resource>/<use-case>/`, behind the guards of its `@RouteGroup`; `generate route` writes it, with `--mapper` and `--serializer` when asked. `functions`: one `defineRoute` function per route, listed in `<context>.routes.ts`, as 0.1 to 0.3 wrote them. Both forms run in either, and in one project during a migration: `generate controller` writes a controller whatever the key says, and `ddd-ts-kit controllers` turns the function routes of a context into controllers | `controllers` |
 
-A config file that omits a `stack` key is read with the same defaults, with three exceptions:
+A config file that omits a `stack` key is read with the same defaults, with four exceptions:
 without `stack.style` the project is read as `explicit`, whatever `stack.di` says, because
 such a file was written before the declared style existed; and without `stack.dependencies`
 a declared project is read as `listed`, because such a file was written when every decorator
@@ -155,6 +157,22 @@ each spec under the name of its factory, rewrites every usage (`new`, `thenError
 `expect.any`, `toBeInstanceOf`, `instanceof`, imports and types) and sets the key. It ends
 with what is left to a person: the facts to expose, the factories that still take a sentence,
 the properties that became facts.
+
+The fourth: without `stack.routes` the project is read as `functions`, because such a file was
+written when every route was a `defineRoute` function. Nothing changes there: the functions
+stay supported, `generate route` keeps writing one, and no rule about controllers reports
+anything. To move it: `npx ddd-ts-kit controllers --dry-run` says what would move, context by
+context; `npx ddd-ts-kit controllers` (or `controllers <context>`, one context at a time) turns
+each `<name>.route.ts` into `<resource>/<name>/<name>.controller.ts` behind the route group of
+its resource, moves its schema files and its spec with it, rewrites every import, removes the
+list of a declared context and sets `"routes": "controllers"` once no function route is left
+in the contexts. A context is turned whole or not at all: a route that answers several
+statuses, sets headers or is not written as `defineRoute(spec, async (input) => { .. })` is
+named with the reason, and stays a function, which keeps running next to the controllers.
+What the command leaves to you is printed: run the formatter and `ddd-ts-kit docs`, move the
+helpers a controller kept to a mapper or a serializer, give the groups their guards, and, in a
+project initialised before 0.4, add the line that mounts the declared controllers to
+`compose-application.ts`.
 
 ## Contexts
 

@@ -34,11 +34,7 @@ function tablesOf(context: ContextDescription): Table[] {
       columns: ['Use case', 'Kind', 'Permission'],
       rows: context.useCases.map((useCase) => [code(useCase.name), useCase.kind, code(useCase.permission)]),
     },
-    {
-      title: 'Routes',
-      columns: ['Method', 'Path', 'Operation', 'Use case', 'Permission', 'Request', 'Responses', 'Errors'],
-      rows: context.routes.map(routeRow),
-    },
+    routesTable(context.routes),
     ...eventTables(context),
     {
       title: 'Projections',
@@ -121,7 +117,19 @@ function errorTable(context: ContextDescription): Table {
   };
 }
 
-function routeRow(route: RouteFact): string[] {
+/** A project of controllers reads who stands before each route: its group and its guards, next to the permission of the use case. */
+function routesTable(routes: readonly RouteFact[]): Table {
+  const guarded = routes.some((route) => route.guards.length > 0);
+  const edge = guarded ? ['Group', 'Guards'] : [];
+
+  return {
+    title: 'Routes',
+    columns: ['Method', 'Path', 'Operation', ...edge, 'Use case', 'Permission', 'Request', 'Responses', 'Errors'],
+    rows: routes.map((route) => routeRow(route, guarded)),
+  };
+}
+
+function routeRow(route: RouteFact, guarded: boolean): string[] {
   const request = route.request
     .map(({ part, schema }) => (schema === part ? part : `${part}: \`${schema}\``))
     .join(', ');
@@ -134,6 +142,7 @@ function routeRow(route: RouteFact): string[] {
     route.method,
     code(route.path),
     code(route.operationId),
+    ...(guarded ? [route.group === '' ? '' : code(route.group), codes(route.guards)] : []),
     code(route.useCase),
     code(route.permission),
     request,

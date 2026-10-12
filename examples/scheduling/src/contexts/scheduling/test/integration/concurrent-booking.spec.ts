@@ -9,7 +9,6 @@ import { openTestDatabase, type TestDatabase } from '@/platform/database/open-te
 import { inProcessEvents } from '@/platform/events/in-process-events';
 import { KnexAppointmentRepository } from '@/contexts/scheduling/infrastructure/persistence/knex-appointment.repository';
 import { KnexCalendarRepository } from '@/contexts/scheduling/infrastructure/persistence/knex-calendar.repository';
-import { schedulingRoutes } from '@/contexts/scheduling/presentation/http/scheduling.routes';
 import { aCalendar } from '@/contexts/scheduling/test/builders/calendar.builder';
 
 const DAY = 24 * 60 * 60_000;
@@ -47,7 +46,7 @@ beforeAll(async () => {
   application = composeApplication(
     database.persistence,
     { events: inProcessEvents(), authenticator },
-    { modules: [contextModule('scheduling', schedulingDeclarations)], routes: [schedulingRoutes] },
+    { modules: [contextModule('scheduling', schedulingDeclarations)] },
   );
 
   await application.start();

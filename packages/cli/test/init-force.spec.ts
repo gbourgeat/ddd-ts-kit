@@ -24,8 +24,10 @@ describe('init --force on a project that is already initialised', () => {
     expect(read(root, COMPOSITION)).toContain("contextModule('billing', billingDeclarations),");
 
     expect(read(root, COMPOSITION)).toContain(
-      "import { shippingRoutes } from '@/contexts/shipping/presentation/http/shipping.routes';",
+      "import * as shippingDeclarations from '@/contexts/shipping/shipping.declarations';",
     );
+
+    expect(read(root, COMPOSITION)).not.toContain('shippingRoutes');
 
     expect(read(root, 'test/architecture/extractable.spec.ts')).toContain("['order-fulfilment', contextModule(");
     expect(readJson(root, CONFIG)).toEqual(before);

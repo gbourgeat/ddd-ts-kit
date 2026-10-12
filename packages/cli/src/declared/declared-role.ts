@@ -11,7 +11,12 @@ export interface DeclaredRole {
   readonly folders: readonly string[];
   /** The decorators one of which the exported class carries. */
   readonly decorators: readonly string[];
+  /** The package entry the decorators are imported from, when it is not the declarations entry of the kernel. */
+  readonly entry?: string;
 }
+
+/** Where the decorators of the edge come from: the transport declares its own classes on the kernel. */
+const HTTP = '@ddd-ts-kit/http';
 
 export const DECLARED_ROLES: readonly DeclaredRole[] = [
   { suffix: 'command', folders: ['application/commands'], decorators: ['Requires', 'Public'] },
@@ -31,12 +36,30 @@ export const DECLARED_ROLES: readonly DeclaredRole[] = [
   { suffix: 'repository', folders: ['infrastructure/persistence'], decorators: ['Repository'] },
   { suffix: 'gateway', folders: ['infrastructure'], decorators: ['Gateway'] },
   { suffix: 'adapter', folders: ['infrastructure'], decorators: ['Adapter'] },
+  { suffix: 'controller', folders: ['presentation/http'], decorators: ['Controller'], entry: HTTP },
+  { suffix: 'guard', folders: ['presentation/http'], decorators: ['Guard'], entry: HTTP },
+  { suffix: 'mapper', folders: ['presentation/http'], decorators: ['RequestMapper'], entry: HTTP },
+  { suffix: 'serializer', folders: ['presentation/http'], decorators: ['Serializer'], entry: HTTP },
 ];
 
-/** Every decorator of `@ddd-ts-kit/kernel/declarations`. */
+/** Every declaration decorator: those of `@ddd-ts-kit/kernel/declarations` and those of the edge. */
 export const DECLARATION_DECORATORS: readonly string[] = [
   ...new Set(DECLARED_ROLES.flatMap((role) => role.decorators)),
 ];
 
-/** The suffixes `discoverContext` loads: every role. */
-export const DISCOVERED_SUFFIXES: readonly string[] = [...new Set(DECLARED_ROLES.map((role) => role.suffix))];
+/** The entry each decorator is imported from, for the ones that do not come from the kernel. */
+export const DECORATOR_ENTRIES: Readonly<Record<string, string>> = Object.fromEntries(
+  DECLARED_ROLES.flatMap(({ entry, decorators }) =>
+    entry === undefined ? [] : decorators.map((name): [string, string] => [name, entry]),
+  ),
+);
+
+/** The suffixes `discoverContext` loads under `application/` and `infrastructure/`: every role but those of the edge. */
+export const DISCOVERED_SUFFIXES: readonly string[] = [
+  ...new Set(DECLARED_ROLES.filter((role) => role.entry === undefined).map((role) => role.suffix)),
+];
+
+/** The suffixes `discoverContext` loads under `presentation/`: the roles of the edge. */
+export const EDGE_SUFFIXES: readonly string[] = [
+  ...new Set(DECLARED_ROLES.filter((role) => role.entry !== undefined).map((role) => role.suffix)),
+];

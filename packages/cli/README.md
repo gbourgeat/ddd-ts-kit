@@ -48,6 +48,7 @@ ddd-ts-kit init [--http express|fastify|nest|none]
                 [--errors none|sentry] [--logger stdout|pino|winston]
                 [--style declared|explicit] [--assembly barrel|discovery]
                 [--dependencies signature|listed] [--refusals factories|classes]
+                [--routes controllers|functions]
                 [--package-manager npm|pnpm]
                 [--allow-no-outbox "<reason>"] [--import-alias '$<name>/']
                 [--import-extension none|js]
@@ -144,6 +145,13 @@ context has one error class per concept, extending `ConceptError` of the kernel,
 rules hold that form. `--refusals classes`, or a config without the key, keeps one class per
 error built with `new`, as 0.1 and 0.2 wrote them; `error-factories` moves a project from one
 to the other.
+
+**A route is a controller class.** `init` writes `"stack.routes": "controllers"`: each route is
+one class with one method, in a folder of its own, behind the guards of its route group, and a
+declared context lists no route: its controllers reach the application through its generated
+file. `--routes functions`, or a config without the key, keeps one `defineRoute` function per
+route, listed in `<context>.routes.ts`, as 0.1 to 0.3 wrote them; `controllers` moves a
+project from one to the other, a context at a time.
 
 **Domain events leave with the save.** A generated command handler builds or loads its aggregate,
 calls one intention method, `await repository.save(aggregate)` and returns: no `pullEvents()`, and
@@ -246,7 +254,10 @@ ddd-ts-kit generate --help --json
 | `command` | `<context> <UseCaseName> (--permission <aggregate>.<action> \| --public) [--aggregate <Name>]` | `<use-case>.command.ts` on `AuthorizedCommand` (plain `Command` when public), `<use-case>.handler.ts` (it builds the aggregate, saves it and answers: the events leave with the save), spec through the bus with the refusal of an actor who lacks the permission, registration with `.requires(...)` or `.public()` (and the repository when missing). A generated command answers `void` or the identifier of its aggregate, so no `<use-case>.result.ts` is written |
 | `query` | `<context> <UseCaseName> (--permission <aggregate>.<action> \| --public) [--search]` | `<use-case>.query.ts` on `AuthorizedQuery` (plain `Query` when public), `<use-case>.result.ts`, `<use-case>.handler.ts`, the read port `application/ports/<use-case>-reader.port.ts` (an abstract class), its in-memory adapter, fake, spec, registration on the query bus. With `--search` (needs `--permission`): a kernel `PageRequest` in the query, the item, the sort and `Page<Item>` in the result file, a handler that asks `Access.scope` and hands the scope to the read port, an in-memory reader paging by offset or cursor |
 | `port` | `<context> <Name>` | `application/ports/<name>.port.ts`, one abstract class, and its fake |
-| `route` | `<context> <UseCaseName> --method <GET\|POST\|PUT\|PATCH\|DELETE> --path <p> [--command\|--query]` | route depending on `CommandBus` or `QueryBus`, spec, registration in `<context>.routes.ts` (the module file with hand wiring); with class-validator one DTO class per file (`<use-case>-params.dto.ts`, `-body`, `-answer`, `-accepted`, `-line`) |
+| `route` | `<context> <UseCaseName> --method <GET\|POST\|PUT\|PATCH\|DELETE> --path <p> [--command\|--query] [--group <Name>] [--mapper] [--serializer]` | under `"stack.routes": "controllers"`: a controller class in `presentation/http/<resource>/<use-case>/` (the resource is the first segment of the path), depending on `CommandBus` or `QueryBus`, behind the route group of its resource, written with it when it is new (`<resource>.routes.ts`: prefix, tag, `Authenticated`); a public use case stands in no group and says `guards: [Public]`; with class-validator one class per file (`<use-case>.params.ts`, `.body.ts`, `.answer.ts`, `.accepted.ts`, `.line.ts`); `--mapper` and `--serializer` add a request mapper and a serializer the controller is given; a spec; no registration in a declared project, a controller built by hand in `<context>.routes.ts` (the module file with hand wiring) in an explicit one. Under `"functions"`: a `defineRoute` function, its spec, its registration in `<context>.routes.ts`, and `<use-case>-<role>.dto.ts` classes |
+| `controller` | the same arguments as `route` | the controller class, whatever `stack.routes` says: for a project of function routes that writes its next route as a class |
+| `route-group` (`group`) | `<context> <Name> [--prefix <path>] [--group <ParentName>] [--public \| --role <role>]` | `presentation/http/<name>.routes.ts`: an empty class carrying `@RouteGroup`, behind `Authenticated` unless `--public` or `--role` says otherwise; with `--group` it refines that group and inherits from it |
+| `guard` | `<context> <Name>` | `presentation/http/guards/<name>.guard.ts`: a declared guard class to fill, and its spec |
 | `integration-event` | `<context> <Aggregate> <Fact> [--version n]` | `defineIntegrationEvent` declaration in the published language (its payload in `<event>.v<n>.payload.ts` with class-validator or a schema of your own), index export, the publisher `application/integration/publishers/<event>.publisher.ts`, spec, registration, a line of `platform/audit/audited-events.ts` |
 | `integration-handler` (`consumer`) | `<context> <upstreamContext> <eventType>` | `application/integration/handlers/<name>.integration-handler.ts`, a class `<Name>IntegrationHandler` depending on `CommandBus`, its spec, its idempotent subscription under the consumer name `<context>.<name>`; refused unless the upstream is declared |
 | `event-handler` | `<context> <Aggregate> <Fact> [--phase after-commit]` | reaction to a domain event of the context, spec, subscription; before the commit of the unit of work by default, after it with `--phase after-commit` (an effect no transaction covers, at most once), and the spec runs the reaction in that phase |
@@ -421,6 +432,38 @@ Prints the dependency-cruiser configuration derived from `ddd-ts-kit.config.json
 published languages, declared upstreams, allowed packages, cycles and orphans. `--write` saves
 it as `.dependency-cruiser.cjs`; `--check` exits 1 when the file is missing or stale, which is
 what `npm run depcruise` runs first. Edit the config, not the file.
+
+## controllers
+
+```sh
+ddd-ts-kit controllers [<context>] [--dry-run]
+```
+
+Moves the function routes of a project, or of one context, to controller classes
+(`"stack.routes": "controllers"`). For each `presentation/http/<name>.route.ts`:
+
+- the controller is written to `presentation/http/<resource>/<name>/<name>.controller.ts`, the
+  resource being the first segment of its path: the declaration keeps the method, the summary,
+  the schemas, the one response with its description and the error codes; the handler becomes
+  `handle`, with the actor read from the request and the answer returned without its status;
+- one route group per resource is written (`<resource>.routes.ts`: its prefix, the tags of its
+  routes, `Authenticated`, and `FORBIDDEN` when every route declared it); a route with
+  `security: false` stands in no group and says `guards: [Public]`;
+- the schema files named after the route follow it (`<name>-body.dto.ts` becomes
+  `<name>.body.ts`), the others go to `shared/` under their name, and every import of a moved
+  file is rewritten;
+- the spec becomes `<name>.controller.spec.ts` and runs the controller without its guards;
+- in a declared project the list `<context>.routes.ts`, its spec and its line in the
+  composition root are removed; in an explicit one the list builds each controller by hand;
+- the config says `controllers` once no function route is left in the contexts.
+
+A context is turned whole or not at all. A route that is not written as
+`export function <name>Route(<bus>): Route { return defineRoute(spec, async (input) => { .. }); }`,
+that declares several responses, or whose handler answers anything else than
+`{ status, body }` is named with the reason and its context is left as it is: function routes
+keep running next to controllers. The command ends with what is left to a person: run the
+formatter and `ddd-ts-kit docs`, move the helpers a controller kept to a request mapper or a
+serializer, give the groups their guards, hold the guards in the specs.
 
 ## error-factories
 
