@@ -14,7 +14,7 @@ export async function migrateEveryTenant(
 ): Promise<void> {
   for (const tenantId of await directory.tenants()) {
     try {
-      await migrate(databases.knexOf(tenantId), tenantId);
+      await databases.lease(tenantId, (database) => migrate(database, tenantId));
     } catch (error) {
       throw new Error(`The migration of tenant "${tenantId}" failed`, { cause: error });
     }

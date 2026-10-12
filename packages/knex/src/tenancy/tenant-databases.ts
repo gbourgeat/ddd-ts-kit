@@ -1,71 +1,108 @@
 import knex, { type Knex } from 'knex';
+import { assertTenantId } from '@ddd-ts-kit/kernel';
 import type { TenantDatabasesOptions } from './tenant-databases-options.js';
-import { tenantSchemaOf } from './tenant-schema-of.js';
 
 const DEFAULT_MAX_TENANTS = 20;
 
+/** The knex instance of one tenant, and how many units of work hold it. */
+interface TenantPool {
+  readonly knex: Knex;
+  leases: number;
+}
+
 /**
  * One database per tenant: a knex instance (its own bounded pool) per tenant, opened on first
- * use and kept for the most recently used `maxTenants`. Closing a pool waits for the
- * connections it lent. `createTenantRoutedUnitOfWork` routes every statement to the database of
- * the tenant of the work.
+ * use. At most `maxTenants` instances exist at once, those being closed included, so the
+ * connections stay within `maxTenants * pool.max`. A tenant's work holds its instance by a lease
+ * (`lease`): an instance is closed only when no work holds it, the least recently used first,
+ * and work for another tenant waits for a place rather than opening beyond the bound.
+ * `createTenantRoutedUnitOfWork` takes a lease for each transaction.
  */
 export class TenantDatabases {
-  private readonly open = new Map<string, Knex>();
+  private readonly pools = new Map<string, TenantPool>();
 
-  private readonly closing = new Set<Promise<void>>();
+  private readonly draining = new Set<Promise<void>>();
+
+  private waiting: (() => void)[] = [];
 
   constructor(private readonly options: TenantDatabasesOptions) {}
 
-  knexOf(tenantId: string): Knex {
-    tenantSchemaOf('tenant', tenantId);
+  /** Runs `work` with the database of the tenant, held open until `work` settles. */
+  async lease<T>(tenantId: string, work: (database: Knex) => Promise<T>): Promise<T> {
+    const pool = await this.acquire(assertTenantId(tenantId));
 
-    const known = this.open.get(tenantId);
-
-    if (known !== undefined) {
-      this.open.delete(tenantId);
-      this.open.set(tenantId, known);
-
-      return known;
+    try {
+      return await work(pool.knex);
+    } finally {
+      pool.leases -= 1;
+      this.wake();
     }
-
-    return this.opened(tenantId);
   }
 
   /** The tenants whose pool is open, least recently used first. */
   tenants(): readonly string[] {
-    return [...this.open.keys()];
+    return [...this.pools.keys()];
   }
 
   async close(): Promise<void> {
-    const all = [...this.open.values()];
+    const all = [...this.pools.values()];
 
-    this.open.clear();
-    await Promise.all([...all.map((instance) => instance.destroy()), ...this.closing]);
+    this.pools.clear();
+    await Promise.all([...all.map((pool) => pool.knex.destroy()), ...this.draining]);
   }
 
-  private opened(tenantId: string): Knex {
-    const instance = (this.options.open ?? knex)(this.options.connectionOf(tenantId));
+  /** The instance of the tenant, most recently used now; once the bound has room for it when it has none. */
+  private async acquire(tenantId: string): Promise<TenantPool> {
+    const pool = this.pools.get(tenantId) ?? this.openedWithinBound(tenantId);
 
-    this.open.set(tenantId, instance);
-    this.evictBeyondLimit();
+    if (pool === undefined) {
+      await new Promise<void>((resolve) => this.waiting.push(resolve));
 
-    return instance;
+      return this.acquire(tenantId);
+    }
+
+    this.pools.delete(tenantId);
+    this.pools.set(tenantId, pool);
+    pool.leases += 1;
+
+    return pool;
   }
 
-  private evictBeyondLimit(): void {
+  /** A new instance when the bound has room, after closing an idle one if it must; `undefined` to wait. */
+  private openedWithinBound(tenantId: string): TenantPool | undefined {
     const limit = this.options.maxTenants ?? DEFAULT_MAX_TENANTS;
 
-    for (const [tenantId, instance] of this.open) {
-      if (this.open.size <= limit) {
-        return;
-      }
+    if (this.pools.size + this.draining.size < limit) {
+      return { knex: (this.options.open ?? knex)(this.options.connectionOf(tenantId)), leases: 0 };
+    }
 
-      this.open.delete(tenantId);
+    const idle = [...this.pools].find(([, pool]) => pool.leases === 0);
 
-      const closed = instance.destroy().finally(() => this.closing.delete(closed));
+    if (idle !== undefined) {
+      this.drain(idle[0], idle[1]);
+    }
 
-      this.closing.add(closed);
+    return undefined;
+  }
+
+  private drain(tenantId: string, pool: TenantPool): void {
+    this.pools.delete(tenantId);
+
+    const drained: Promise<void> = pool.knex.destroy().finally(() => {
+      this.draining.delete(drained);
+      this.wake();
+    });
+
+    this.draining.add(drained);
+  }
+
+  private wake(): void {
+    const waiting = this.waiting;
+
+    this.waiting = [];
+
+    for (const resolve of waiting) {
+      resolve();
     }
   }
 }

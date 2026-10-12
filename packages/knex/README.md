@@ -496,11 +496,17 @@ sets the search path of each transaction to the tenant's schemas only, for SQL t
 schema. An elevation does not reach several schemas at once: staff read one tenant at a time.
 
 **Database per tenant.** `new TenantDatabases({ connectionOf: (tenantId) => configOf(tenantId),
-maxTenants: 20 })` opens one knex (one bounded pool) per tenant on first use and closes the least
-recently used beyond `maxTenants`; the server must accept about `maxTenants * pool.max`
-connections per instance. `createTenantRoutedUnitOfWork(databases, scope)` is the unit of work
-and `KnexContext`: each transaction opens on the database of the tenant of the work, and work
-that names no tenant reaches no database. `migrateEveryTenant(databases, directory, migrate)`
+maxTenants: 20 })` opens one knex (one bounded pool) per tenant on first use. At most
+`maxTenants` instances exist at once, those still closing included, so the server never has to
+accept more than `maxTenants * pool.max` connections per instance of the application. Work holds
+the instance of its tenant by a lease (`databases.lease(tenantId, (knex) => ...)`): an instance is
+closed only when no work holds it, the least recently used first, and work for another tenant
+waits for a place instead of opening beyond the bound. `createTenantRoutedUnitOfWork(databases,
+scope)` is the unit of work and `KnexContext`: each transaction holds a lease on the database of
+the tenant of the work until it ends; every statement runs inside it
+(`StatementOutsideUnitOfWorkError` otherwise, so queries go through the unit of work too), work
+that names no tenant reaches no database, and work of another tenant never joins an open
+transaction (`CrossTenantUnitOfWorkError`). `migrateEveryTenant(databases, directory, migrate)`
 applies the migrations to every tenant of a `TenantDirectory`, stopping at the first failure and
 naming its tenant.
 

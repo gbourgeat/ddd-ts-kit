@@ -1,10 +1,17 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import knex, { type Knex } from 'knex';
-import { AsyncLocalStorageExecutionScope, InMemoryTenantDirectory, NoCurrentTenantError } from '@ddd-ts-kit/kernel';
+import {
+  AsyncLocalStorageExecutionScope,
+  InMemoryTenantDirectory,
+  InvalidTenantIdError,
+  NoCurrentTenantError,
+} from '@ddd-ts-kit/kernel';
 import { anExecutionContext, asTenant, scoped } from '@ddd-ts-kit/testing';
 import { tenantIsolationContract } from '@ddd-ts-kit/testing/contracts';
 import {
+  CrossTenantUnitOfWorkError,
   InvalidTenantIdentifierError,
+  StatementOutsideUnitOfWorkError,
   TenantDatabases,
   auditColumns,
   createKnexUnitOfWork,
@@ -22,6 +29,7 @@ import { createInvoicesTable } from './support/billing-core/infrastructure/persi
 import { createDatabase, type TestDatabase } from './support/database.js';
 import { startPostgres, type TestPostgres } from './support/postgres.js';
 import { DATABASE_PER_TENANT, SCHEMA_PER_TENANT } from './support/tenancy/invoice-tables.js';
+import { inUnitOfWork } from './support/tenancy/in-unit-of-work.js';
 import { StrategyInvoiceRepository } from './support/tenancy/strategy-invoice-repository.js';
 
 const runner = { describe, it, expect, beforeEach, afterEach };
@@ -106,14 +114,12 @@ tenantIsolationContract<Invoice>(runner, {
   name: 'knex, database per tenant',
   createRepository: async (scope) => {
     for (const tenantId of TENANTS) {
-      await databases.knexOf(tenantId).withSchema(BILLING).table('invoices').truncate();
+      await databases.lease(tenantId, (database) => database.withSchema(BILLING).table('invoices').truncate());
     }
 
-    return new StrategyInvoiceRepository({
-      context: createTenantRoutedUnitOfWork(databases, scope),
-      scope,
-      tables: DATABASE_PER_TENANT,
-    });
+    const context = createTenantRoutedUnitOfWork(databases, scope);
+
+    return inUnitOfWork(new StrategyInvoiceRepository({ context, scope, tables: DATABASE_PER_TENANT }), context);
   },
 });
 
@@ -155,12 +161,10 @@ describe('schema per tenant', () => {
 });
 
 describe('database per tenant', () => {
-  it('keeps a bounded number of pools open, closing the least recently used', async () => {
-    const opened: string[] = [];
-
-    const bounded = new TenantDatabases({
-      connectionOf: (tenantId) => ({ ...connectionOf(servers[TENANTS.indexOf(tenantId)]), pool: { min: 0, max: 1 } }),
-      maxTenants: 1,
+  const boundedTo = (maxTenants: number, opened: string[] = []) =>
+    new TenantDatabases({
+      connectionOf: () => ({ ...connectionOf(servers[0]), pool: { min: 0, max: 1 } }),
+      maxTenants,
       open: (config) => {
         opened.push(String(config.client));
 
@@ -168,16 +172,63 @@ describe('database per tenant', () => {
       },
     });
 
-    await bounded.knexOf('acme').raw('select 1');
-    await bounded.knexOf('globex').raw('select 1');
+  it('keeps a bounded number of pools open, closing the least recently used once idle', async () => {
+    const opened: string[] = [];
+    const bounded = boundedTo(1, opened);
+    const ping = (database: Knex) => database.raw('select 1');
+
+    await bounded.lease('acme', ping);
+    await bounded.lease('globex', ping);
     expect(bounded.tenants()).toEqual(['globex']);
 
-    await bounded.knexOf('acme').raw('select 1');
+    await bounded.lease('acme', ping);
     expect(bounded.tenants()).toEqual(['acme']);
     expect(opened).toHaveLength(3);
-    expect(() => bounded.knexOf('../etc')).toThrow(InvalidTenantIdentifierError);
+    await expect(bounded.lease('../etc', ping)).rejects.toThrow(InvalidTenantIdError);
 
     await bounded.close();
+  });
+
+  it('makes more active tenants than the bound wait, and never closes a pool in use', async () => {
+    const bounded = boundedTo(2);
+    const holding = new Set<string>();
+    let most = 0;
+
+    const work = (tenantId: string) =>
+      bounded.lease(tenantId, async (database) => {
+        holding.add(tenantId);
+        most = Math.max(most, holding.size);
+        await database.raw('select pg_sleep(0.02)');
+        await database.raw('select 1');
+        holding.delete(tenantId);
+
+        return tenantId;
+      });
+
+    const tenants = ['acme', 'globex', 'initech', 'umbrella'];
+    const done = await Promise.all([...tenants, ...tenants].map(work));
+
+    expect(done).toEqual([...tenants, ...tenants]);
+    expect(most).toBeLessThanOrEqual(2);
+    expect(bounded.tenants().length).toBeLessThanOrEqual(2);
+
+    await bounded.close();
+  });
+
+  it('refuses a statement outside of a transaction, and work of another tenant inside one', async () => {
+    const scope = new AsyncLocalStorageExecutionScope();
+    const unitOfWork = createTenantRoutedUnitOfWork(databases, scope);
+
+    await expect(asTenant(scope, 'acme', async () => unitOfWork.executor())).rejects.toThrow(
+      StatementOutsideUnitOfWorkError,
+    );
+
+    const crossing = asTenant(scope, 'acme', () =>
+      unitOfWork.run(() => asTenant(scope, 'globex', () => unitOfWork.run(async () => 1))),
+    );
+
+    await expect(crossing).rejects.toThrow(CrossTenantUnitOfWorkError);
+    expect(await asTenant(scope, 'acme', () => unitOfWork.run(() => unitOfWork.run(async () => 2)))).toBe(2);
   });
 
   it('reaches no database for work that names no tenant', async () => {

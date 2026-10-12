@@ -5,11 +5,11 @@ import { anExecutionContext, asTenant, scoped } from '@ddd-ts-kit/testing';
 import { tenantIsolationContract } from '@ddd-ts-kit/testing/contracts';
 import { createKnexUnitOfWork, enableTenantIsolation, tenantSession, type KnexUnitOfWork } from '../src/index.js';
 import { Invoice } from './support/billing-core/domain/invoice.js';
-import type { InvoiceRepository } from './support/billing-core/domain/repositories/invoice.repository.js';
 import { BILLING } from './support/billing-core/infrastructure/persistence/billing-schema.js';
 import { createInvoicesTable } from './support/billing-core/infrastructure/persistence/create-invoices-table.js';
 import { createDatabase, type TestDatabase } from './support/database.js';
 import { asApplicationRole } from './support/tenancy/as-role.js';
+import { inUnitOfWork } from './support/tenancy/in-unit-of-work.js';
 import { SHARED_TABLES } from './support/tenancy/invoice-tables.js';
 import { StrategyInvoiceRepository } from './support/tenancy/strategy-invoice-repository.js';
 
@@ -171,14 +171,6 @@ describe('the policy of a table', () => {
     expect(flags.rows).toEqual([{ relrowsecurity: true, relforcerowsecurity: true }]);
   });
 });
-
-/** Each call in a transaction of the unit of work, as the bus middleware runs commands and queries: under row-level security, a statement outside of one sees nothing. */
-function inUnitOfWork(repository: InvoiceRepository, unitOfWork: KnexUnitOfWork): InvoiceRepository {
-  return {
-    findById: (id) => unitOfWork.run(() => repository.findById(id)),
-    save: (invoice) => unitOfWork.run(() => repository.save(invoice)),
-  };
-}
 
 function invoiceRow(id: string, tenantId: string): Record<string, unknown> {
   const at = new Date('2026-03-01T10:00:00.000Z');

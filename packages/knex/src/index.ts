@@ -41,5 +41,7 @@ export * from './tenancy/tenant-of-migration.js';
 export * from './tenancy/migrate-tenant-schema.js';
 export * from './tenancy/tenant-databases-options.js';
 export * from './tenancy/tenant-databases.js';
+export * from './tenancy/cross-tenant-unit-of-work-error.js';
+export * from './tenancy/statement-outside-unit-of-work-error.js';
 export * from './tenancy/create-tenant-routed-unit-of-work.js';
 export * from './tenancy/migrate-every-tenant.js';
