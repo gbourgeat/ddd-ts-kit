@@ -3,23 +3,19 @@ import type { Rule } from '../model/rule.js';
 import type { SourceFile } from '../model/source-file.js';
 import { inLayers } from '../support/in-layers.js';
 import { perFile } from '../support/per-file.js';
-
-/** A Knex table reached straight from the executor: `executor()('invoices')`, `executor()<Row, Row[]>('invoices')`. */
-const KNEX_TABLE = /\.executor\s*\(\s*\)\s*(?:<[^()]*>)?\s*\(/g;
-
-/** A Drizzle statement on a table: `.from(table)`, `.update(table)`, `.delete(table)`. */
-const DRIZZLE_STATEMENT = /\.(?:from|update|delete)\s*\(/g;
-
-/** What confines a Drizzle statement to the tenant: the condition of a read, of a write, or the tenant of an insert. */
-const DRIZZLE_TENANT = /(?<![\w$.])(?:tenantCondition|ownTenantCondition)\s*\(/;
+import { drizzleUnscoped } from '../tenancy/drizzle-unscoped.js';
+import { knexUnscoped } from '../tenancy/knex-unscoped.js';
+import { unscopedReadModels } from '../tenancy/unscoped-read-models.js';
 
 const FIX =
-  'Reach tenant data through the helpers of the ORM package: `tenantTable` to read and `ownTenantTable` to write (Knex), `tenantCondition` and `ownTenantCondition` in the condition (Drizzle). A table that holds no tenant data is a deviation: `// ddd-ts-kit-disable-next-line tenancy/scoped-statement -- ADR-NNNN: <why>`.';
+  'Reach tenant data through the helpers of the ORM package: `tenantTable` to read and `ownTenantTable` to write (Knex), `tenantCondition` and `ownTenantCondition` in the where of each statement and `tenantScopeOf` in each inserted row (Drizzle), the `tenant` option of a read model store. A table that holds no tenant data is a deviation: `// ddd-ts-kit-disable-next-line tenancy/scoped-statement -- ADR-NNNN: <why>`.';
+
+const READ_MODEL = 'A read model store is built without the `tenant` option: its rows are shared by every tenant.';
 
 export const tenancyScopedStatement: Rule = {
   id: 'tenancy/scoped-statement',
   description:
-    'In a multi-tenant project ("stack.tenancy" other than "none"), a persistence adapter of a context confines every statement to the tenant of the work through the helpers of its ORM package, never a table reached straight from the executor.',
+    'In a multi-tenant project ("stack.tenancy" other than "none"), a persistence adapter of a context confines every statement to the tenant of the work through the helpers of its ORM package: never the executor used straight, raw SQL, a relational query, or a read model store without its tenant.',
   scope: 'file',
   run(project) {
     const { tenancy, orm } = project.config.stack;
@@ -37,25 +33,17 @@ function isAdapter(file: SourceFile): boolean {
   return !file.isTest && inLayers(file, ['infrastructure']) !== undefined;
 }
 
+const STATEMENTS: Readonly<Record<string, (file: SourceFile) => readonly { offset: number; message: string }[]>> = {
+  knex: knexUnscoped,
+  drizzle: drizzleUnscoped,
+};
+
 function unscoped(file: SourceFile, orm: string): Finding[] {
-  if (orm === 'knex') {
-    return matches(file, KNEX_TABLE, 'A table is reached straight from executor(), with no tenant condition.');
-  }
+  const statements = STATEMENTS[orm]?.(file) ?? [];
+  const readModels = unscopedReadModels(file).map((offset) => ({ offset, message: READ_MODEL }));
 
-  if (orm !== 'drizzle' || DRIZZLE_TENANT.test(file.scan.code) || !file.scan.code.includes('.executor(')) {
-    return [];
-  }
-
-  return matches(
-    file,
-    DRIZZLE_STATEMENT,
-    'A statement reaches a table, and no tenant condition is written in this adapter.',
-  );
-}
-
-function matches(file: SourceFile, pattern: RegExp, message: string): Finding[] {
-  return [...file.scan.code.matchAll(pattern)].map((match) => ({
-    line: file.scan.lineAt(match.index),
+  return [...statements, ...readModels].map(({ offset, message }) => ({
+    line: file.scan.lineAt(offset),
     message,
     fix: FIX,
   }));

@@ -53,6 +53,30 @@ describe('init --tenancy', () => {
     expect(drizzleAdapter).toContain('ownTenantCondition(invoices.tenantId, this.scope)');
   });
 
+  it('confines the search of the audit trail to the tenant of the work, never to the actor', () => {
+    const declared = initProject('--orm', 'knex', ...SHARED);
+    const explicit = initProject('--style', 'explicit', '--di', 'manual', ...SHARED);
+    const single = initProject();
+    const handler = 'src/platform/audit/search-audit-entries.handler.ts';
+
+    expect(read(declared, 'src/platform/audit/create-audit.ts')).toContain(
+      'reader: new TenantAuditReader(trail, source.scope),',
+    );
+
+    expect(read(declared, 'src/platform/audit/audit.module.ts')).toContain(
+      'builder.bind(AuditReader).toValue(audit.reader);',
+    );
+
+    expect(read(explicit, 'src/platform/audit/audit.module.ts')).toContain(
+      'new SearchAuditEntriesHandler(platform.audit.reader)',
+    );
+
+    expect(read(declared, handler)).toContain('return this.reader.search(query.filter, query.page);');
+    expect(read(declared, handler)).not.toContain('query.actor');
+    expect(read(single, handler)).toContain('const { tenantId } = query.actor;');
+    expect(read(single, 'src/platform/audit/create-audit.ts')).not.toContain('TenantAuditReader');
+  });
+
   it('refuses an ORM without the helpers, and the strategies it does not generate yet', () => {
     const prisma = initFailure('--orm', 'prisma', '--tenancy', 'shared-table');
     const rowLevel = initFailure('--tenancy', 'row-level-security');
