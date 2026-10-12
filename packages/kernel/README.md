@@ -1101,8 +1101,10 @@ the fakes, `KnexReadModelStore`, `DrizzleReadModelStore`, `PrismaReadModelStore`
 
 ### Rebuild
 
-The kit has no event store: a read model is rebuilt from the source of truth, the read
-contract the owning context publishes, behind a gateway port that answers stamped rows.
+A read model fed by events that no event store keeps is rebuilt from the source of truth, the
+read contract the owning context publishes, behind a gateway port that answers stamped rows. A
+read model of event-sourced aggregates is rebuilt from the store instead:
+[Fed by the event store](#fed-by-the-event-store).
 
 ```ts
 await new ProjectionRebuild({ table: appointments.table, source, unitOfWork }).run();
@@ -1136,6 +1138,40 @@ leaves the table as it was. On PostgreSQL the copy is made `LIKE ... INCLUDING A
 privileges granted on the table by name, row security policies and triggers are not copied
 and are restored by the migration that follows, and the indexes of the copy keep the names
 PostgreSQL derived for them.
+
+### Fed by the event store
+
+A projection of event-sourced aggregates can be fed by the store rather than where the domain
+events are dispatched: `@Projection('scheduling.attendance-history', { feed: 'event-store' })`.
+The dispatcher then never calls it (`@ddd-ts-kit/di` registers no handler for it); a catch-up
+subscription does, under the name of the projection, and the same projection rebuilds its read
+model from position zero.
+
+```ts
+const apply = applyingProjection(projection, serializer); // the @On methods, by event name
+
+const subscription = new CatchUpSubscription({ name: 'scheduling.attendance-history', store, checkpoints, unitOfWork, apply });
+
+await subscription.catchUp(); // or poll() from a job: one batch, one unit of work
+
+await new EventStoreProjectionRebuild({
+  table: history.table,
+  store,
+  unitOfWork,
+  applierOn: (copy) => applyingProjection(new AttendanceHistoryProjection(copy), serializer),
+}).run();
+```
+
+| Piece | What it does |
+|---|---|
+| `CatchUpSubscription` | Reads the store after the checkpoint of its subscriber (`CheckpointStore`), applies a batch and moves the checkpoint in one unit of work. A failure applies none of the batch; two runs of one subscriber never both move it (`ConcurrencyError`). A new projection starts at zero, so it catches up on the whole history |
+| `applyingProjection(projection, serializer)` | (`@ddd-ts-kit/kernel/declarations`) hands each stored event an `@On` method applies, read back by the serializer of its aggregate, to that method; passes over the rest of the store |
+| `storedStampOf(event)` | The stamp of an event read from the store: its id, instant and version in its stream, so the rows of one stream are ordered by the stream, not by clocks. `undefined` for an event that did not come from a store |
+| `EventStoreProjectionRebuild` | Fills an empty copy of the table by replaying the store from position zero through the projection built over the copy (`ShadowReadModelStore`); then, in one transaction, holds the writers, replays what was appended meanwhile and puts the copy in place of the table. The subscription goes on from its checkpoint; what it applies again is stale against the copy. A failed rebuild leaves the table as it was |
+
+A projection fed by the store applies the domain events of its context only: an integration
+event reaches a projection where it is consumed, and `@On(definition)` on such a projection
+throws when the file loads.
 
 ### Seen from outside
 

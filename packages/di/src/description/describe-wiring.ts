@@ -108,8 +108,9 @@ function describeProjection({
   name,
   projection,
   module,
+  feed,
   applies,
   declaredBy,
 }: ProjectionRegistration): ProjectionDescription {
-  return { name, projection: describeToken(projection), module, applies, ...originOf(declaredBy) };
+  return { name, projection: describeToken(projection), module, feed, applies, ...originOf(declaredBy) };
 }

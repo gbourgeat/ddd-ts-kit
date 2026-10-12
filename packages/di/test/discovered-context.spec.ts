@@ -156,6 +156,7 @@ function itFindsReactionsAndNamesFailures(found: () => Discovered): void {
         name: 'reporting.customer-orders',
         projection: 'CustomerOrdersProjection',
         module: 'reporting',
+        feed: 'dispatch',
         applies: [
           { kind: 'integration', event: 'ordering.order.placed', version: 1, method: 'orderPlaced' },
           { kind: 'domain', event: 'reporting.customer.forgotten', method: 'forgotten' },

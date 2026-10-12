@@ -1,4 +1,4 @@
-import type { Token } from '@ddd-ts-kit/kernel/declarations';
+import type { ProjectionFeed, Token } from '@ddd-ts-kit/kernel/declarations';
 import type { Declarer } from './declarer.js';
 
 /** One event a projection applies, by which method. */
@@ -19,4 +19,6 @@ export interface ProjectionRegistration {
   readonly module: string;
   readonly declaredBy?: Declarer;
   readonly applies: readonly AppliedEvent[];
+  /** `event-store`: its domain events come from a catch-up subscription, never from the dispatcher. */
+  readonly feed: ProjectionFeed;
 }
