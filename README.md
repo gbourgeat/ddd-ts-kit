@@ -183,7 +183,7 @@ compiler in strict mode complete the gate.
 | Package | What it gives |
 |---|---|
 | [`ddd-ts-kit`](packages/cli) | the CLI: `init`, `generate`, `check`, `docs`, `list`, `describe`, `status`, `todo`, `worker-scope`, `depcruise-config`, `rules`, `explain` |
-| [`@ddd-ts-kit/kernel`](packages/kernel) | entities, aggregates, value objects, domain errors, `Result`; ports as abstract classes; the declarations (`@CommandHandler`, `@Repository`, ...); command, query and event buses with in-memory implementations; the standard extensible interfaces: `Actor`, `Session`, `ExecutionContext`, `Logger`, `Metrics`, `Cache`, `Page`, `Clock`, `IdGenerator`, `UnitOfWork`, `ErrorReporter`; the read side: criteria, hydration and read models |
+| [`@ddd-ts-kit/kernel`](packages/kernel) | entities, aggregates, value objects, domain errors, `Result`; ports as abstract classes; the declarations (`@CommandHandler`, `@Repository`, ...); command, query and event buses with in-memory implementations; the standard extensible interfaces: `Actor`, `Session`, `ExecutionContext`, `Logger`, `Metrics`, `Cache`, `Page`, `Clock`, `IdGenerator`, `UnitOfWork`, `ErrorReporter`, `FileStorage`; the read side: criteria, hydration and read models |
 | [`@ddd-ts-kit/events`](packages/events) | typed integration event declarations, registry, transactional outbox and relay, AsyncAPI and event catalog generation |
 | [`@ddd-ts-kit/rabbitmq`](packages/rabbitmq), [`kafka`](packages/kafka), [`nats`](packages/nats), [`redis/event-bus`](packages/redis) | broker providers behind one contract: acknowledged publishing for the outbox relay, one durable subscription per consumer, bounded retries, dead letters |
 | [`@ddd-ts-kit/scheduling`](packages/scheduling) | jobs run by time that only trigger use cases: intervals and cron with time zones, one run across instances, each run in its own execution scope |
@@ -191,6 +191,7 @@ compiler in strict mode complete the gate.
 | [`@ddd-ts-kit/aspects`](packages/aspects) | logging, metrics, retry, timeout, circuit breaker, cache and bulkhead applied from outside: wrappers, bus middlewares, standard decorators |
 | [`@ddd-ts-kit/audit`](packages/audit) | hash-chained, append-only audit trail fed by authorization decisions, commands and integration events |
 | [`@ddd-ts-kit/redis`](packages/redis) | cache, lock, rate limiter and relay signal on Redis, Dragonfly or Valkey |
+| [`@ddd-ts-kit/s3`](packages/s3) | the kernel `FileStorage` port on AWS S3, MinIO, OVHcloud, Scaleway or Cloudflare R2: streamed uploads, short signed links; file content never in the database |
 | [`@ddd-ts-kit/http`](packages/http) | routes declared once, mounted on Express, Fastify or NestJS; RFC 9457 errors; OpenAPI 3.1 generation; Swagger UI, Scalar or Redoc |
 | [`@ddd-ts-kit/validation`](packages/validation) | one `Schema` port over zod, class-validator and Standard Schema |
 | [`@ddd-ts-kit/di`](packages/di) | context modules on tsyringe from the declarations of a context or from an explicit module, port classes as tokens, a test application with fakes |

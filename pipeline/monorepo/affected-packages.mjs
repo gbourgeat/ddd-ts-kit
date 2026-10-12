@@ -21,8 +21,8 @@ const READ_BY_THE_CLI_SPECS = ['docs/', 'pipeline/', 'examples/', 'plugin/', '.c
 /** Read by no spec: only the gates that always run (dashes, plugin validation) look at them. */
 const DOCUMENTS = /^[^/]+\.md$|^LICENSE$/;
 
-/** The packages whose adapter specs need the PostgreSQL server of the integration job. */
-const ON_A_SERVER = ['drizzle', 'knex', 'prisma', 'typeorm', 'audit'];
+/** The packages whose adapter specs need a server of the integration job: PostgreSQL, or MinIO for s3. */
+const ON_A_SERVER = ['drizzle', 'knex', 'prisma', 'typeorm', 'audit', 's3'];
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   main(process.argv.slice(2));

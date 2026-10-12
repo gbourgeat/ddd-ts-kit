@@ -15,6 +15,13 @@ file, promotes it after the commit (`afterCommit`) and purges what a rolled-back
 Media types are checked on the bytes. `InMemoryFileStorage` and `LocalFileStorage` pass the new
 `fileStorageContract` of `@ddd-ts-kit/testing/contracts`.
 
+**`@ddd-ts-kit/s3`, the connector of a deployment.** `S3FileStorage` holds files in a bucket of
+any provider of the S3 protocol (AWS, MinIO, OVHcloud, Scaleway, Cloudflare R2): multipart
+uploads streamed part by part, presigned links whose upload signature covers the media type,
+copy and move by the service. The AWS SDK v3 packages are optional peers. The contract runs on
+MinIO in the integration job (`pgsty/minio`, pinned by digest: the upstream project no longer
+publishes images).
+
 ## 0.5.0
 
 **Migrations are named by a timestamp and what they do.** The generated `drizzle.config.ts`

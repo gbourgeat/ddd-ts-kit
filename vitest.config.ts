@@ -4,8 +4,8 @@ import { defineConfig } from 'vitest/config';
  * The floor of each package, as [statements, branches, functions, lines]: what the unit run measured
  * on 2026-10-10, rounded down, so that the coverage of a package cannot fall without the gate
  * saying so. A floor is raised when the package gains tests, never lowered to make a change pass.
- * The four broker packages are low on purpose of the measure, not of the code: most of their specs
- * need a server and run in the integration job, which this run skips.
+ * The four broker packages and s3 are low on purpose of the measure, not of the code: most of their
+ * specs need a server (a broker, MinIO) and run in the integration job, which this run skips.
  */
 const FLOORS: Readonly<Record<string, readonly [number, number, number, number]>> = {
   aspects: [97, 95, 97, 97],
@@ -25,6 +25,7 @@ const FLOORS: Readonly<Record<string, readonly [number, number, number, number]>
   prisma: [95, 80, 100, 95],
   rabbitmq: [30, 29, 31, 30],
   redis: [57, 48, 60, 58],
+  s3: [50, 35, 52, 50],
   scheduling: [98, 94, 98, 98],
   sentry: [93, 84, 100, 93],
   testing: [92, 87, 93, 92],

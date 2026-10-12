@@ -1,5 +1,5 @@
 import { Readable } from 'node:stream';
-import type { ServedFileStorage } from '@ddd-ts-kit/kernel';
+import { contentDisposition, type ServedFileStorage } from '@ddd-ts-kit/kernel';
 import type { FollowedResponse } from './followed-response.js';
 import { readAll } from './read-all.js';
 import type { SignedRequest } from './signed-request.js';
@@ -32,5 +32,5 @@ function refused(): FollowedResponse {
 }
 
 function dispositionOf(fileName: string | undefined): Record<string, string> {
-  return fileName === undefined ? {} : { 'content-disposition': `attachment; filename="${fileName}"` };
+  return fileName === undefined ? {} : { 'content-disposition': contentDisposition(fileName) };
 }

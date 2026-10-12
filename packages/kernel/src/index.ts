@@ -152,6 +152,7 @@ export * from './application/criteria/evaluate-criteria.js';
 export * from './application/files/accepts-media-type.js';
 export * from './application/files/assert-expiry.js';
 export * from './application/files/confirm-options.js';
+export * from './application/files/content-disposition.js';
 export * from './application/files/content-expectation.js';
 export * from './application/files/content-matches.js';
 export * from './application/files/download-url-options.js';
