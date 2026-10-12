@@ -66,7 +66,33 @@ describe('ddd-ts-kit sdk', () => {
     expect(stale.stdout).toContain('stale  clients/api/src/operations.ts');
     expect(cli(root, 'sdk').code).toBe(0);
     expect(read(root, 'clients/api/src/operations.ts')).toContain('export function placeOrder(');
-    expect(cli(root, 'sdk', '--check', '--json').json()).toEqual({ ok: true, stale: [] });
+    expect(cli(root, 'sdk', '--check', '--json').json()).toEqual({ ok: true, stale: [], unlocked: [] });
+  });
+
+  it('says that npm must list a new client in its lockfile, and fails its check until it does', () => {
+    const root = initProject('--package-manager', 'npm');
+
+    const lock = (packages: object): string =>
+      JSON.stringify({ lockfileVersion: 3, packages: { '': {}, ...packages } });
+
+    write(root, 'package-lock.json', lock({}));
+
+    expect(cli(root, 'sdk').stdout).toContain(
+      'note: package-lock.json does not list clients/api yet: run `npm install` and commit package-lock.json',
+    );
+
+    const unlocked = cli(root, 'sdk', '--check');
+
+    expect(unlocked.code).toBe(1);
+    expect(unlocked.stdout).toMatch(/^package-lock\.json does not list clients\/api yet/);
+
+    write(
+      root,
+      'package-lock.json',
+      lock({ [`node_modules/${projectName(root)}-api-client`]: { resolved: 'clients/api', link: true } }),
+    );
+
+    expect(cli(root, 'sdk', '--check', '--json').json()).toEqual({ ok: true, stale: [], unlocked: [] });
   });
 
   it('keeps the version and the keys a team added to the package.json of a client, and writes the access asked for', () => {

@@ -447,7 +447,9 @@ run records `"sdk"` in the config (`init --sdk` does it for a new project) and w
 project: the workspace, the `paths` entry of each client in `tsconfig.json`, the exclusions of
 Biome and knip, the scripts `sdk:generate` and `sdk:build`, and `docs:generate`, `docs:check`,
 `ci:docs`, `ci:build` extended. The package.json of a client keeps its version and the keys a
-team adds. `--check` writes nothing, names each stale file and exits 1. The comparison with
+team adds. Under npm, while `package-lock.json` does not list a client yet, it says to run
+`npm install` and commit the lock, which `npm ci` would refuse. `--check` writes nothing, names
+each stale file (and a client the lock misses) and exits 1. The comparison with
 openapi-typescript, hey-api and orval, and how to publish a client:
 [docs/tools/client-sdk.md](../../docs/tools/client-sdk.md).
 

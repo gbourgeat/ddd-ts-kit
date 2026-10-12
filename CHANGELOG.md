@@ -15,7 +15,8 @@ scheme, and `unwrap` with `isProblem` serve the code that prefers exceptions. Th
 records `"sdk"` in the config (`sdk.name`, `sdk.access`, see `docs/CONFIG.md`) and wires the
 project: `docs:generate` regenerates the clients, `docs:check` fails while one differs from the
 contract, `ci:build` builds them, so the GitHub and GitLab pipelines check them; publishing stays
-a manual step. openapi-typescript with openapi-fetch, hey-api and orval were measured on the
+a manual step. Under npm, while `package-lock.json` does not list a client, the command says to
+run `npm install` and `sdk --check` fails, before `npm ci` refuses the lock in the pipeline. openapi-typescript with openapi-fetch, hey-api and orval were measured on the
 example contract first: none reads the error codes, and the first refuses TypeScript 6
 (`docs/tools/client-sdk.md`). A project without the key is unchanged. The ESLint preset now
 ignores `clients/*/src/**`.

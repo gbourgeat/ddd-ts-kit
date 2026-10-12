@@ -47,12 +47,16 @@ interface Run {
 
 function generate(io: Io, args: Arguments, { ws, config }: Run): number {
   const enabled = config.sdk === undefined ? enable(ws) : config;
-  const gone = setUpSdk(ws, enabled);
+  const { gone, unlocked } = setUpSdk(ws, enabled);
 
   for (const directory of gone) {
     ws.note(
       `${directory} is the client of a document the contract no longer has: delete it, and its package if it was published.`,
     );
+  }
+
+  if (unlocked.length > 0) {
+    ws.note(unlockedNote(unlocked));
   }
 
   printReport(io, args, ws.commit(args.flag('dry-run')));
@@ -73,22 +77,48 @@ function enable(ws: Workspace): Config {
 
 function check(io: Io, args: Arguments, { ws, config }: Run): number {
   if (config.sdk === undefined) {
-    io.out(args.json ? JSON.stringify({ ok: true, stale: [] }, null, 2) : `${CONFIG_FILE} asks for no client ("sdk").`);
+    io.out(
+      args.json
+        ? JSON.stringify({ ok: true, stale: [], unlocked: [] }, null, 2)
+        : `${CONFIG_FILE} asks for no client ("sdk").`,
+    );
 
     return 0;
   }
 
-  const gone = setUpSdk(ws, config);
+  const { gone, unlocked } = setUpSdk(ws, config);
   const report = ws.commit(true);
   const stale = [...report.created, ...report.updated, ...gone];
+  const ok = stale.length === 0 && unlocked.length === 0;
 
   if (args.json) {
-    io.out(JSON.stringify({ ok: stale.length === 0, stale }, null, 2));
-  } else if (stale.length === 0) {
+    io.out(JSON.stringify({ ok, stale, unlocked }, null, 2));
+  } else if (ok) {
     io.out('The clients are up to date with the contract.');
   } else {
-    io.out([...stale.map((file) => `stale  ${file}`), '', 'Run `ddd-ts-kit sdk` and commit the result.'].join('\n'));
+    io.out(staleText(stale, unlocked));
   }
 
-  return stale.length === 0 ? 0 : 1;
+  return ok ? 0 : 1;
+}
+
+function staleText(stale: readonly string[], unlocked: readonly string[]): string {
+  const parts: string[] = [];
+
+  if (stale.length > 0) {
+    parts.push(
+      [...stale.map((file) => `stale  ${file}`), '', 'Run `ddd-ts-kit sdk` and commit the result.'].join('\n'),
+    );
+  }
+
+  if (unlocked.length > 0) {
+    parts.push(unlockedNote(unlocked));
+  }
+
+  return parts.join('\n\n');
+}
+
+/** npm writes the workspace packages in its lockfile: `npm ci` refuses a lock that misses one. */
+function unlockedNote(unlocked: readonly string[]): string {
+  return `package-lock.json does not list ${unlocked.join(', ')} yet: run \`npm install\` and commit package-lock.json, or \`npm ci\` refuses it in the pipeline.`;
 }

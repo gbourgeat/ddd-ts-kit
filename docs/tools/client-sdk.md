@@ -100,7 +100,11 @@ key the team adds, and only the name, the entry points, the build script and
 The command also wires the project, and running it again changes nothing:
 
 - the clients are workspace packages (`"workspaces"` in package.json, `pnpm-workspace.yaml`
-  under pnpm);
+  under pnpm). npm lists each one in `package-lock.json`, and `npm ci` refuses a lock that
+  misses one: while the lock of an npm project does not list a client (the first run, a new
+  document of a split contract, a new `sdk.name`), the command says to run `npm install` and
+  commit the lock, and `sdk --check` fails. pnpm accepts a new workspace package in a frozen
+  install;
 - the name of each client resolves to its sources in the `paths` of `tsconfig.json`, which the
   type check, Vitest, tsx and knip read: a spec imports the client by its package name, as a
   consumer would, without a build first;
