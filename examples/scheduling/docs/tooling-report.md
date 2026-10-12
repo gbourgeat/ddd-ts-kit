@@ -960,3 +960,17 @@ each client.
 The three generators the kit did not take were measured on this contract
 (`docs/tools/client-sdk.md`): none types `problem.code` by the codes the contract lists, so
 `expectRefusal` could not have been written on their output.
+
+## 2026-10-13: the typed client after its review
+
+A review of the client found what the first pass had not met on this example. Each fix was made
+in the kit, then `npm run docs:generate` rewrote `clients/api`:
+
+| | |
+|---|---|
+| A 500 of the application | thrown as `UnexpectedResponseError` with the raw body; it now reads the problem document, `code` `INTERNAL_ERROR` and `requestId`, the reference a caller quotes |
+| `operations.ts` | each operation holds its own description inside its function: no module-level constant, so no two operation ids can clash (`listItems` and `list_items` once both gave `LIST_ITEMS`) |
+| `apiAs(actor)` | gave the token as a raw `authorization` header; it now gives it as the `bearer` credential, a function asked before each request, so the specs prove the authentication of the client against the real server, and it no longer needs `await` |
+| Lockfile | none in this directory, which is a workspace of the kit; a generated npm project is told to run `npm install` when its lock misses a client |
+
+The two changed spec files and the three journeys pass again in process (30 tests).
