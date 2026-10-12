@@ -3,6 +3,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { fromYaml } from '../src/yaml/from-yaml.js';
 import { read, REPO_ROOT, write } from './helpers.js';
+import { CLASHING_CONTRACT } from './support/clashing-contract.js';
 import { writtenClient } from './support/written-client.js';
 
 const COMPILER = path.join(REPO_ROOT, 'node_modules/@typescript/native/bin/tsc');
@@ -94,6 +95,16 @@ describe('the client of the example contract', () => {
     );
 
     expect(compile(path.join(root, 'consumer'), '-p', 'tsconfig.json')).toBe('');
+  });
+});
+
+describe('the client of a contract whose names would clash', () => {
+  it('compiles, each operation named apart and each schema kept apart from the exports of the client', () => {
+    const root = writtenClient(CLASHING_CONTRACT, 'clashes-api-client');
+
+    expect(compile(root, '-p', 'tsconfig.json')).toBe('');
+    expect(read(root, 'src/schemas.ts')).toContain('export type ErrorCode_ = string;');
+    expect(read(root, 'dist/index.d.ts')).toContain('createClient');
   });
 });
 

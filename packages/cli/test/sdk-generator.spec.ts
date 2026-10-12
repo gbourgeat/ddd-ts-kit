@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { clientFiles } from '../src/sdk/client-files.js';
 import { readClientDocument } from '../src/sdk/read-client-document.js';
 import { SchemaTypes } from '../src/sdk/schema-types.js';
+import { CLASHING_CONTRACT } from './support/clashing-contract.js';
 import { SHOP_CONTRACT } from './support/shop-contract.js';
 
 const SHOP = readClientDocument({ name: 'api', source: 'openapi/openapi.yaml' }, SHOP_CONTRACT);
@@ -13,6 +14,22 @@ describe('reading a contract for its client', () => {
       ['getOrder', 'GET', '/orders/{orderId}'],
       ['cancelOrder', 'DELETE', '/orders/{orderId}'],
       ['getHealth', 'GET', '/health'],
+    ]);
+  });
+
+  it('names apart an operation whose name is a reserved word, a name of the client, or the name of another', () => {
+    const clashing = readClientDocument({ name: 'api', source: 'openapi/openapi.yaml' }, CLASHING_CONTRACT);
+
+    expect(clashing.operations.map((operation) => operation.name)).toEqual([
+      'deleteOperation',
+      'defaultOperation',
+      'newOperation',
+      'send2',
+      'createClient2',
+      'unwrap2',
+      'listItems',
+      'ListItems2',
+      'list_items2',
     ]);
   });
 
@@ -130,7 +147,7 @@ describe('the files of a client', () => {
 
     expect(operations).toContain('export type GetHealthInput = Record<string, never>;');
     expect(operations).toContain('@deprecated The contract marks it deprecated.');
-    expect(operations).toContain("  security: [['key'], []],\n  responses: { 204: 'none', 401: 'none' },");
+    expect(operations).toContain("    security: [['key'], []],\n    responses: { 204: 'none', 401: 'none' },");
   });
 
   it('lists the error codes of the contract, and the schemes credentials are given for', () => {

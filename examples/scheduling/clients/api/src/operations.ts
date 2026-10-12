@@ -65,13 +65,6 @@ export type SearchAppointmentsResult =
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<422, 'INVALID_CRITERIA' | 'VALIDATION_FAILED', Schemas.Problem>;
 
-const SEARCH_APPOINTMENTS: Operation = {
-  method: 'GET',
-  path: '/appointments',
-  security: [['bearer']],
-  responses: { 200: 'json', 401: 'json', 403: 'json', 422: 'json' },
-};
-
 /**
  * Search appointments: `GET /appointments`.
  *
@@ -82,7 +75,14 @@ export function searchAppointments(
   input: SearchAppointmentsInput = {},
   options: CallOptions = {},
 ): Promise<SearchAppointmentsResult> {
-  return send<SearchAppointmentsResult>(connection, SEARCH_APPOINTMENTS, { ...input, ...options });
+  const operation: Operation = {
+    method: 'GET',
+    path: '/appointments',
+    security: [['bearer']],
+    responses: { 200: 'json', 401: 'json', 403: 'json', 422: 'json' },
+  };
+
+  return send<SearchAppointmentsResult>(connection, operation, { ...input, ...options });
 }
 
 export interface BookAppointmentInput {
@@ -104,13 +104,6 @@ export type BookAppointmentResult =
   | Failure<409, 'PATIENT_LIMIT_REACHED' | 'SLOT_TAKEN', Schemas.Problem>
   | Failure<422, 'BOOKING_TOO_FAR' | 'BOOKING_TOO_LATE' | 'OFF_GRID' | 'OUTSIDE_AVAILABILITY' | 'UNKNOWN_APPOINTMENT_TYPE' | 'VALIDATION_FAILED', Schemas.Problem>;
 
-const BOOK_APPOINTMENT: Operation = {
-  method: 'POST',
-  path: '/appointments',
-  security: [['bearer']],
-  responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 409: 'json', 422: 'json' },
-};
-
 /**
  * Book appointment: `POST /appointments`.
  *
@@ -121,7 +114,14 @@ export function bookAppointment(
   input: BookAppointmentInput,
   options: CallOptions = {},
 ): Promise<BookAppointmentResult> {
-  return send<BookAppointmentResult>(connection, BOOK_APPOINTMENT, { ...input, ...options });
+  const operation: Operation = {
+    method: 'POST',
+    path: '/appointments',
+    security: [['bearer']],
+    responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 409: 'json', 422: 'json' },
+  };
+
+  return send<BookAppointmentResult>(connection, operation, { ...input, ...options });
 }
 
 export interface GetAppointmentInput {
@@ -151,13 +151,6 @@ export type GetAppointmentResult =
   | Failure<404, 'APPOINTMENT_NOT_FOUND', Schemas.Problem>
   | Failure<422, 'VALIDATION_FAILED', Schemas.Problem>;
 
-const GET_APPOINTMENT: Operation = {
-  method: 'GET',
-  path: '/appointments/{appointmentId}',
-  security: [['bearer']],
-  responses: { 200: 'json', 401: 'json', 403: 'json', 404: 'json', 422: 'json' },
-};
-
 /**
  * Get appointment: `GET /appointments/{appointmentId}`.
  *
@@ -168,7 +161,14 @@ export function getAppointment(
   input: GetAppointmentInput,
   options: CallOptions = {},
 ): Promise<GetAppointmentResult> {
-  return send<GetAppointmentResult>(connection, GET_APPOINTMENT, { ...input, ...options });
+  const operation: Operation = {
+    method: 'GET',
+    path: '/appointments/{appointmentId}',
+    security: [['bearer']],
+    responses: { 200: 'json', 401: 'json', 403: 'json', 404: 'json', 422: 'json' },
+  };
+
+  return send<GetAppointmentResult>(connection, operation, { ...input, ...options });
 }
 
 export interface CancelAppointmentInput {
@@ -190,13 +190,6 @@ export type CancelAppointmentResult =
   | Failure<409, 'APPOINTMENT_ENDED', Schemas.Problem>
   | Failure<422, 'REASON_REQUIRED' | 'VALIDATION_FAILED', Schemas.Problem>;
 
-const CANCEL_APPOINTMENT: Operation = {
-  method: 'POST',
-  path: '/appointments/{appointmentId}/cancellation',
-  security: [['bearer']],
-  responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 409: 'json', 422: 'json' },
-};
-
 /**
  * Cancel appointment: `POST /appointments/{appointmentId}/cancellation`.
  *
@@ -207,7 +200,14 @@ export function cancelAppointment(
   input: CancelAppointmentInput,
   options: CallOptions = {},
 ): Promise<CancelAppointmentResult> {
-  return send<CancelAppointmentResult>(connection, CANCEL_APPOINTMENT, { ...input, ...options });
+  const operation: Operation = {
+    method: 'POST',
+    path: '/appointments/{appointmentId}/cancellation',
+    security: [['bearer']],
+    responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 409: 'json', 422: 'json' },
+  };
+
+  return send<CancelAppointmentResult>(connection, operation, { ...input, ...options });
 }
 
 export interface CompleteAppointmentInput {
@@ -226,13 +226,6 @@ export type CompleteAppointmentResult =
   | Failure<409, 'APPOINTMENT_ENDED', Schemas.Problem>
   | Failure<422, 'APPOINTMENT_NOT_STARTED' | 'VALIDATION_FAILED', Schemas.Problem>;
 
-const COMPLETE_APPOINTMENT: Operation = {
-  method: 'POST',
-  path: '/appointments/{appointmentId}/completion',
-  security: [['bearer']],
-  responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 409: 'json', 422: 'json' },
-};
-
 /**
  * Complete appointment: `POST /appointments/{appointmentId}/completion`.
  *
@@ -243,7 +236,14 @@ export function completeAppointment(
   input: CompleteAppointmentInput,
   options: CallOptions = {},
 ): Promise<CompleteAppointmentResult> {
-  return send<CompleteAppointmentResult>(connection, COMPLETE_APPOINTMENT, { ...input, ...options });
+  const operation: Operation = {
+    method: 'POST',
+    path: '/appointments/{appointmentId}/completion',
+    security: [['bearer']],
+    responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 409: 'json', 422: 'json' },
+  };
+
+  return send<CompleteAppointmentResult>(connection, operation, { ...input, ...options });
 }
 
 export interface ConfirmAppointmentInput {
@@ -262,13 +262,6 @@ export type ConfirmAppointmentResult =
   | Failure<409, 'APPOINTMENT_ALREADY_CONFIRMED' | 'APPOINTMENT_ENDED', Schemas.Problem>
   | Failure<422, 'VALIDATION_FAILED', Schemas.Problem>;
 
-const CONFIRM_APPOINTMENT: Operation = {
-  method: 'POST',
-  path: '/appointments/{appointmentId}/confirmation',
-  security: [['bearer']],
-  responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 409: 'json', 422: 'json' },
-};
-
 /**
  * Confirm appointment: `POST /appointments/{appointmentId}/confirmation`.
  *
@@ -279,7 +272,14 @@ export function confirmAppointment(
   input: ConfirmAppointmentInput,
   options: CallOptions = {},
 ): Promise<ConfirmAppointmentResult> {
-  return send<ConfirmAppointmentResult>(connection, CONFIRM_APPOINTMENT, { ...input, ...options });
+  const operation: Operation = {
+    method: 'POST',
+    path: '/appointments/{appointmentId}/confirmation',
+    security: [['bearer']],
+    responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 409: 'json', 422: 'json' },
+  };
+
+  return send<ConfirmAppointmentResult>(connection, operation, { ...input, ...options });
 }
 
 export interface MarkAppointmentNoShowInput {
@@ -298,13 +298,6 @@ export type MarkAppointmentNoShowResult =
   | Failure<409, 'APPOINTMENT_ENDED', Schemas.Problem>
   | Failure<422, 'APPOINTMENT_NOT_STARTED' | 'VALIDATION_FAILED', Schemas.Problem>;
 
-const MARK_APPOINTMENT_NO_SHOW: Operation = {
-  method: 'POST',
-  path: '/appointments/{appointmentId}/no-show',
-  security: [['bearer']],
-  responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 409: 'json', 422: 'json' },
-};
-
 /**
  * Mark appointment no show: `POST /appointments/{appointmentId}/no-show`.
  *
@@ -315,7 +308,14 @@ export function markAppointmentNoShow(
   input: MarkAppointmentNoShowInput,
   options: CallOptions = {},
 ): Promise<MarkAppointmentNoShowResult> {
-  return send<MarkAppointmentNoShowResult>(connection, MARK_APPOINTMENT_NO_SHOW, { ...input, ...options });
+  const operation: Operation = {
+    method: 'POST',
+    path: '/appointments/{appointmentId}/no-show',
+    security: [['bearer']],
+    responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 409: 'json', 422: 'json' },
+  };
+
+  return send<MarkAppointmentNoShowResult>(connection, operation, { ...input, ...options });
 }
 
 export interface RescheduleAppointmentInput {
@@ -337,13 +337,6 @@ export type RescheduleAppointmentResult =
   | Failure<409, 'APPOINTMENT_ENDED' | 'PATIENT_LIMIT_REACHED' | 'SLOT_TAKEN', Schemas.Problem>
   | Failure<422, 'BOOKING_TOO_FAR' | 'BOOKING_TOO_LATE' | 'OFF_GRID' | 'OUTSIDE_AVAILABILITY' | 'UNKNOWN_APPOINTMENT_TYPE' | 'VALIDATION_FAILED', Schemas.Problem>;
 
-const RESCHEDULE_APPOINTMENT: Operation = {
-  method: 'POST',
-  path: '/appointments/{appointmentId}/reschedule',
-  security: [['bearer']],
-  responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 409: 'json', 422: 'json' },
-};
-
 /**
  * Reschedule appointment: `POST /appointments/{appointmentId}/reschedule`.
  *
@@ -354,7 +347,14 @@ export function rescheduleAppointment(
   input: RescheduleAppointmentInput,
   options: CallOptions = {},
 ): Promise<RescheduleAppointmentResult> {
-  return send<RescheduleAppointmentResult>(connection, RESCHEDULE_APPOINTMENT, { ...input, ...options });
+  const operation: Operation = {
+    method: 'POST',
+    path: '/appointments/{appointmentId}/reschedule',
+    security: [['bearer']],
+    responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 409: 'json', 422: 'json' },
+  };
+
+  return send<RescheduleAppointmentResult>(connection, operation, { ...input, ...options });
 }
 
 export interface SearchAuditEntriesInput {
@@ -410,13 +410,6 @@ export type SearchAuditEntriesResult =
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<422, 'VALIDATION_FAILED', Schemas.Problem>;
 
-const SEARCH_AUDIT_ENTRIES: Operation = {
-  method: 'GET',
-  path: '/audit/entries',
-  security: [['bearer']],
-  responses: { 200: 'json', 401: 'json', 403: 'json', 422: 'json' },
-};
-
 /**
  * Search the entries of the audit trail: `GET /audit/entries`.
  *
@@ -427,7 +420,14 @@ export function searchAuditEntries(
   input: SearchAuditEntriesInput = {},
   options: CallOptions = {},
 ): Promise<SearchAuditEntriesResult> {
-  return send<SearchAuditEntriesResult>(connection, SEARCH_AUDIT_ENTRIES, { ...input, ...options });
+  const operation: Operation = {
+    method: 'GET',
+    path: '/audit/entries',
+    security: [['bearer']],
+    responses: { 200: 'json', 401: 'json', 403: 'json', 422: 'json' },
+  };
+
+  return send<SearchAuditEntriesResult>(connection, operation, { ...input, ...options });
 }
 
 export interface CreateCalendarInput {
@@ -445,13 +445,6 @@ export type CreateCalendarResult =
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<422, 'UNKNOWN_PRACTITIONER' | 'UNKNOWN_TIME_ZONE' | 'VALIDATION_FAILED', Schemas.Problem>;
 
-const CREATE_CALENDAR: Operation = {
-  method: 'POST',
-  path: '/calendars',
-  security: [['bearer']],
-  responses: { 201: 'json', 401: 'json', 403: 'json', 422: 'json' },
-};
-
 /**
  * Create calendar: `POST /calendars`.
  *
@@ -462,7 +455,14 @@ export function createCalendar(
   input: CreateCalendarInput,
   options: CallOptions = {},
 ): Promise<CreateCalendarResult> {
-  return send<CreateCalendarResult>(connection, CREATE_CALENDAR, { ...input, ...options });
+  const operation: Operation = {
+    method: 'POST',
+    path: '/calendars',
+    security: [['bearer']],
+    responses: { 201: 'json', 401: 'json', 403: 'json', 422: 'json' },
+  };
+
+  return send<CreateCalendarResult>(connection, operation, { ...input, ...options });
 }
 
 export interface DefineAppointmentTypeInput {
@@ -487,13 +487,6 @@ export type DefineAppointmentTypeResult =
   | Failure<404, 'UNKNOWN_CALENDAR', Schemas.Problem>
   | Failure<422, 'INVALID_APPOINTMENT_TYPE' | 'VALIDATION_FAILED', Schemas.Problem>;
 
-const DEFINE_APPOINTMENT_TYPE: Operation = {
-  method: 'POST',
-  path: '/calendars/{calendarId}/appointment-types',
-  security: [['bearer']],
-  responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 422: 'json' },
-};
-
 /**
  * Define appointment type: `POST /calendars/{calendarId}/appointment-types`.
  *
@@ -504,7 +497,14 @@ export function defineAppointmentType(
   input: DefineAppointmentTypeInput,
   options: CallOptions = {},
 ): Promise<DefineAppointmentTypeResult> {
-  return send<DefineAppointmentTypeResult>(connection, DEFINE_APPOINTMENT_TYPE, { ...input, ...options });
+  const operation: Operation = {
+    method: 'POST',
+    path: '/calendars/{calendarId}/appointment-types',
+    security: [['bearer']],
+    responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 422: 'json' },
+  };
+
+  return send<DefineAppointmentTypeResult>(connection, operation, { ...input, ...options });
 }
 
 export interface GetCalendarDayInput {
@@ -529,13 +529,6 @@ export type GetCalendarDayResult =
   | Failure<404, 'UNKNOWN_CALENDAR', Schemas.Problem>
   | Failure<422, 'INVALID_DAY' | 'VALIDATION_FAILED', Schemas.Problem>;
 
-const GET_CALENDAR_DAY: Operation = {
-  method: 'GET',
-  path: '/calendars/{calendarId}/days/{day}',
-  security: [['bearer']],
-  responses: { 200: 'json', 401: 'json', 403: 'json', 404: 'json', 422: 'json' },
-};
-
 /**
  * Get calendar day: `GET /calendars/{calendarId}/days/{day}`.
  *
@@ -546,7 +539,14 @@ export function getCalendarDay(
   input: GetCalendarDayInput,
   options: CallOptions = {},
 ): Promise<GetCalendarDayResult> {
-  return send<GetCalendarDayResult>(connection, GET_CALENDAR_DAY, { ...input, ...options });
+  const operation: Operation = {
+    method: 'GET',
+    path: '/calendars/{calendarId}/days/{day}',
+    security: [['bearer']],
+    responses: { 200: 'json', 401: 'json', 403: 'json', 404: 'json', 422: 'json' },
+  };
+
+  return send<GetCalendarDayResult>(connection, operation, { ...input, ...options });
 }
 
 export interface AddExceptionInput {
@@ -568,13 +568,6 @@ export type AddExceptionResult =
   | Failure<404, 'UNKNOWN_CALENDAR', Schemas.Problem>
   | Failure<422, 'INVALID_DAY' | 'INVALID_RANGE' | 'VALIDATION_FAILED', Schemas.Problem>;
 
-const ADD_EXCEPTION: Operation = {
-  method: 'POST',
-  path: '/calendars/{calendarId}/exceptions',
-  security: [['bearer']],
-  responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 422: 'json' },
-};
-
 /**
  * Add exception: `POST /calendars/{calendarId}/exceptions`.
  *
@@ -585,7 +578,14 @@ export function addException(
   input: AddExceptionInput,
   options: CallOptions = {},
 ): Promise<AddExceptionResult> {
-  return send<AddExceptionResult>(connection, ADD_EXCEPTION, { ...input, ...options });
+  const operation: Operation = {
+    method: 'POST',
+    path: '/calendars/{calendarId}/exceptions',
+    security: [['bearer']],
+    responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 422: 'json' },
+  };
+
+  return send<AddExceptionResult>(connection, operation, { ...input, ...options });
 }
 
 export interface SetOpeningHoursInput {
@@ -606,13 +606,6 @@ export type SetOpeningHoursResult =
   | Failure<404, 'UNKNOWN_CALENDAR', Schemas.Problem>
   | Failure<422, 'INVALID_RANGE' | 'VALIDATION_FAILED', Schemas.Problem>;
 
-const SET_OPENING_HOURS: Operation = {
-  method: 'PUT',
-  path: '/calendars/{calendarId}/opening-hours',
-  security: [['bearer']],
-  responses: { 200: 'json', 401: 'json', 403: 'json', 404: 'json', 422: 'json' },
-};
-
 /**
  * Set opening hours: `PUT /calendars/{calendarId}/opening-hours`.
  *
@@ -623,7 +616,14 @@ export function setOpeningHours(
   input: SetOpeningHoursInput,
   options: CallOptions = {},
 ): Promise<SetOpeningHoursResult> {
-  return send<SetOpeningHoursResult>(connection, SET_OPENING_HOURS, { ...input, ...options });
+  const operation: Operation = {
+    method: 'PUT',
+    path: '/calendars/{calendarId}/opening-hours',
+    security: [['bearer']],
+    responses: { 200: 'json', 401: 'json', 403: 'json', 404: 'json', 422: 'json' },
+  };
+
+  return send<SetOpeningHoursResult>(connection, operation, { ...input, ...options });
 }
 
 export interface AddTimeOffInput {
@@ -646,13 +646,6 @@ export type AddTimeOffResult =
   | Failure<409, 'TIME_OFF_OVER_APPOINTMENTS', Schemas.Problem>
   | Failure<422, 'INVALID_TIME_OFF' | 'VALIDATION_FAILED', Schemas.Problem>;
 
-const ADD_TIME_OFF: Operation = {
-  method: 'POST',
-  path: '/calendars/{calendarId}/time-off',
-  security: [['bearer']],
-  responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 409: 'json', 422: 'json' },
-};
-
 /**
  * Add time off: `POST /calendars/{calendarId}/time-off`.
  *
@@ -663,7 +656,14 @@ export function addTimeOff(
   input: AddTimeOffInput,
   options: CallOptions = {},
 ): Promise<AddTimeOffResult> {
-  return send<AddTimeOffResult>(connection, ADD_TIME_OFF, { ...input, ...options });
+  const operation: Operation = {
+    method: 'POST',
+    path: '/calendars/{calendarId}/time-off',
+    security: [['bearer']],
+    responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 409: 'json', 422: 'json' },
+  };
+
+  return send<AddTimeOffResult>(connection, operation, { ...input, ...options });
 }
 
 export interface JoinWaitlistInput {
@@ -687,13 +687,6 @@ export type JoinWaitlistResult =
   | Failure<409, 'ALREADY_WAITING', Schemas.Problem>
   | Failure<422, 'INVALID_DAY' | 'UNKNOWN_APPOINTMENT_TYPE' | 'VALIDATION_FAILED', Schemas.Problem>;
 
-const JOIN_WAITLIST: Operation = {
-  method: 'POST',
-  path: '/calendars/{calendarId}/waitlist',
-  security: [['bearer']],
-  responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 409: 'json', 422: 'json' },
-};
-
 /**
  * Join waitlist: `POST /calendars/{calendarId}/waitlist`.
  *
@@ -704,7 +697,14 @@ export function joinWaitlist(
   input: JoinWaitlistInput,
   options: CallOptions = {},
 ): Promise<JoinWaitlistResult> {
-  return send<JoinWaitlistResult>(connection, JOIN_WAITLIST, { ...input, ...options });
+  const operation: Operation = {
+    method: 'POST',
+    path: '/calendars/{calendarId}/waitlist',
+    security: [['bearer']],
+    responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 409: 'json', 422: 'json' },
+  };
+
+  return send<JoinWaitlistResult>(connection, operation, { ...input, ...options });
 }
 
 export interface SearchNotificationsInput {
@@ -738,13 +738,6 @@ export type SearchNotificationsResult =
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<422, 'VALIDATION_FAILED', Schemas.Problem>;
 
-const SEARCH_NOTIFICATIONS: Operation = {
-  method: 'GET',
-  path: '/notifications',
-  security: [['bearer']],
-  responses: { 200: 'json', 401: 'json', 403: 'json', 422: 'json' },
-};
-
 /**
  * Search notifications: `GET /notifications`.
  *
@@ -755,7 +748,14 @@ export function searchNotifications(
   input: SearchNotificationsInput = {},
   options: CallOptions = {},
 ): Promise<SearchNotificationsResult> {
-  return send<SearchNotificationsResult>(connection, SEARCH_NOTIFICATIONS, { ...input, ...options });
+  const operation: Operation = {
+    method: 'GET',
+    path: '/notifications',
+    security: [['bearer']],
+    responses: { 200: 'json', 401: 'json', 403: 'json', 422: 'json' },
+  };
+
+  return send<SearchNotificationsResult>(connection, operation, { ...input, ...options });
 }
 
 export interface RegisterPersonInput {
@@ -773,13 +773,6 @@ export type RegisterPersonResult =
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<422, 'INVALID_DISPLAY_NAME' | 'INVALID_EMAIL' | 'VALIDATION_FAILED', Schemas.Problem>;
 
-const REGISTER_PERSON: Operation = {
-  method: 'PUT',
-  path: '/people/me',
-  security: [['bearer']],
-  responses: { 200: 'json', 401: 'json', 403: 'json', 422: 'json' },
-};
-
 /**
  * Register person: `PUT /people/me`.
  *
@@ -790,7 +783,14 @@ export function registerPerson(
   input: RegisterPersonInput,
   options: CallOptions = {},
 ): Promise<RegisterPersonResult> {
-  return send<RegisterPersonResult>(connection, REGISTER_PERSON, { ...input, ...options });
+  const operation: Operation = {
+    method: 'PUT',
+    path: '/people/me',
+    security: [['bearer']],
+    responses: { 200: 'json', 401: 'json', 403: 'json', 422: 'json' },
+  };
+
+  return send<RegisterPersonResult>(connection, operation, { ...input, ...options });
 }
 
 export interface OpenPracticeInput {
@@ -810,13 +810,6 @@ export type OpenPracticeResult =
   | Failure<404, 'PERSON_NOT_REGISTERED', Schemas.Problem>
   | Failure<422, 'UNKNOWN_TIME_ZONE' | 'VALIDATION_FAILED', Schemas.Problem>;
 
-const OPEN_PRACTICE: Operation = {
-  method: 'POST',
-  path: '/practices',
-  security: [['bearer']],
-  responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 422: 'json' },
-};
-
 /**
  * Open practice: `POST /practices`.
  *
@@ -827,7 +820,14 @@ export function openPractice(
   input: OpenPracticeInput,
   options: CallOptions = {},
 ): Promise<OpenPracticeResult> {
-  return send<OpenPracticeResult>(connection, OPEN_PRACTICE, { ...input, ...options });
+  const operation: Operation = {
+    method: 'POST',
+    path: '/practices',
+    security: [['bearer']],
+    responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 422: 'json' },
+  };
+
+  return send<OpenPracticeResult>(connection, operation, { ...input, ...options });
 }
 
 export interface SearchPracticeAgendaInput {
@@ -882,13 +882,6 @@ export type SearchPracticeAgendaResult =
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<422, 'INVALID_CRITERIA' | 'VALIDATION_FAILED', Schemas.Problem>;
 
-const SEARCH_PRACTICE_AGENDA: Operation = {
-  method: 'GET',
-  path: '/practices/{practiceId}/agenda',
-  security: [['bearer']],
-  responses: { 200: 'json', 401: 'json', 403: 'json', 422: 'json' },
-};
-
 /**
  * Search practice agenda: `GET /practices/{practiceId}/agenda`.
  *
@@ -899,7 +892,14 @@ export function searchPracticeAgenda(
   input: SearchPracticeAgendaInput,
   options: CallOptions = {},
 ): Promise<SearchPracticeAgendaResult> {
-  return send<SearchPracticeAgendaResult>(connection, SEARCH_PRACTICE_AGENDA, { ...input, ...options });
+  const operation: Operation = {
+    method: 'GET',
+    path: '/practices/{practiceId}/agenda',
+    security: [['bearer']],
+    responses: { 200: 'json', 401: 'json', 403: 'json', 422: 'json' },
+  };
+
+  return send<SearchPracticeAgendaResult>(connection, operation, { ...input, ...options });
 }
 
 export interface GrantDelegationInput {
@@ -924,13 +924,6 @@ export type GrantDelegationResult =
   | Failure<409, 'DELEGATION_ALREADY_ACTIVE', Schemas.Problem>
   | Failure<422, 'DELEGATION_ENDS_IN_THE_PAST' | 'NOT_AN_ASSISTANT' | 'NOT_A_PRACTITIONER' | 'VALIDATION_FAILED', Schemas.Problem>;
 
-const GRANT_DELEGATION: Operation = {
-  method: 'POST',
-  path: '/practices/{practiceId}/desks/{practitionerId}/delegations',
-  security: [['bearer']],
-  responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 409: 'json', 422: 'json' },
-};
-
 /**
  * Grant delegation: `POST /practices/{practiceId}/desks/{practitionerId}/delegations`.
  *
@@ -941,7 +934,14 @@ export function grantDelegation(
   input: GrantDelegationInput,
   options: CallOptions = {},
 ): Promise<GrantDelegationResult> {
-  return send<GrantDelegationResult>(connection, GRANT_DELEGATION, { ...input, ...options });
+  const operation: Operation = {
+    method: 'POST',
+    path: '/practices/{practiceId}/desks/{practitionerId}/delegations',
+    security: [['bearer']],
+    responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 409: 'json', 422: 'json' },
+  };
+
+  return send<GrantDelegationResult>(connection, operation, { ...input, ...options });
 }
 
 export interface RevokeDelegationInput {
@@ -962,13 +962,6 @@ export type RevokeDelegationResult =
   | Failure<409, 'DELEGATION_NOT_ACTIVE', Schemas.Problem>
   | Failure<422, 'VALIDATION_FAILED', Schemas.Problem>;
 
-const REVOKE_DELEGATION: Operation = {
-  method: 'DELETE',
-  path: '/practices/{practiceId}/desks/{practitionerId}/delegations/{delegationId}',
-  security: [['bearer']],
-  responses: { 200: 'json', 401: 'json', 403: 'json', 404: 'json', 409: 'json', 422: 'json' },
-};
-
 /**
  * Revoke delegation: `DELETE /practices/{practiceId}/desks/{practitionerId}/delegations/{delegationId}`.
  *
@@ -979,7 +972,14 @@ export function revokeDelegation(
   input: RevokeDelegationInput,
   options: CallOptions = {},
 ): Promise<RevokeDelegationResult> {
-  return send<RevokeDelegationResult>(connection, REVOKE_DELEGATION, { ...input, ...options });
+  const operation: Operation = {
+    method: 'DELETE',
+    path: '/practices/{practiceId}/desks/{practitionerId}/delegations/{delegationId}',
+    security: [['bearer']],
+    responses: { 200: 'json', 401: 'json', 403: 'json', 404: 'json', 409: 'json', 422: 'json' },
+  };
+
+  return send<RevokeDelegationResult>(connection, operation, { ...input, ...options });
 }
 
 export interface AddMemberInput {
@@ -1002,13 +1002,6 @@ export type AddMemberResult =
   | Failure<409, 'ALREADY_MEMBER', Schemas.Problem>
   | Failure<422, 'UNKNOWN_ROLE' | 'VALIDATION_FAILED', Schemas.Problem>;
 
-const ADD_MEMBER: Operation = {
-  method: 'POST',
-  path: '/practices/{practiceId}/members',
-  security: [['bearer']],
-  responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 409: 'json', 422: 'json' },
-};
-
 /**
  * Add member: `POST /practices/{practiceId}/members`.
  *
@@ -1019,7 +1012,14 @@ export function addMember(
   input: AddMemberInput,
   options: CallOptions = {},
 ): Promise<AddMemberResult> {
-  return send<AddMemberResult>(connection, ADD_MEMBER, { ...input, ...options });
+  const operation: Operation = {
+    method: 'POST',
+    path: '/practices/{practiceId}/members',
+    security: [['bearer']],
+    responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 409: 'json', 422: 'json' },
+  };
+
+  return send<AddMemberResult>(connection, operation, { ...input, ...options });
 }
 
 export interface RemoveMemberInput {
@@ -1039,13 +1039,6 @@ export type RemoveMemberResult =
   | Failure<409, 'LAST_MANAGER', Schemas.Problem>
   | Failure<422, 'NOT_A_MEMBER' | 'VALIDATION_FAILED', Schemas.Problem>;
 
-const REMOVE_MEMBER: Operation = {
-  method: 'DELETE',
-  path: '/practices/{practiceId}/members/{personId}',
-  security: [['bearer']],
-  responses: { 200: 'json', 401: 'json', 403: 'json', 404: 'json', 409: 'json', 422: 'json' },
-};
-
 /**
  * Remove member: `DELETE /practices/{practiceId}/members/{personId}`.
  *
@@ -1056,7 +1049,14 @@ export function removeMember(
   input: RemoveMemberInput,
   options: CallOptions = {},
 ): Promise<RemoveMemberResult> {
-  return send<RemoveMemberResult>(connection, REMOVE_MEMBER, { ...input, ...options });
+  const operation: Operation = {
+    method: 'DELETE',
+    path: '/practices/{practiceId}/members/{personId}',
+    security: [['bearer']],
+    responses: { 200: 'json', 401: 'json', 403: 'json', 404: 'json', 409: 'json', 422: 'json' },
+  };
+
+  return send<RemoveMemberResult>(connection, operation, { ...input, ...options });
 }
 
 export interface SearchOccupancyInput {
@@ -1103,13 +1103,6 @@ export type SearchOccupancyResult =
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<422, 'VALIDATION_FAILED', Schemas.Problem>;
 
-const SEARCH_OCCUPANCY: Operation = {
-  method: 'GET',
-  path: '/practices/{practiceId}/occupancy',
-  security: [['bearer']],
-  responses: { 200: 'json', 401: 'json', 403: 'json', 422: 'json' },
-};
-
 /**
  * Search occupancy: `GET /practices/{practiceId}/occupancy`.
  *
@@ -1120,5 +1113,12 @@ export function searchOccupancy(
   input: SearchOccupancyInput,
   options: CallOptions = {},
 ): Promise<SearchOccupancyResult> {
-  return send<SearchOccupancyResult>(connection, SEARCH_OCCUPANCY, { ...input, ...options });
+  const operation: Operation = {
+    method: 'GET',
+    path: '/practices/{practiceId}/occupancy',
+    security: [['bearer']],
+    responses: { 200: 'json', 401: 'json', 403: 'json', 422: 'json' },
+  };
+
+  return send<SearchOccupancyResult>(connection, operation, { ...input, ...options });
 }

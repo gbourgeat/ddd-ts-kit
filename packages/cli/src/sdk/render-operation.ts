@@ -4,19 +4,19 @@ import { isInputOptional } from './is-input-optional.js';
 import { operationDescription } from './operation-description.js';
 import { renderInput } from './render-input.js';
 import { renderResult } from './render-result.js';
-import { toName } from '../naming/index.js';
 import { typeName } from './type-name.js';
 
-/** The types of one operation, what the client knows of it, and its function. */
+/**
+ * The types of one operation and its function, which holds what the client knows of it: no name
+ * of the module but its own, so that no two operations can clash.
+ */
 export function renderOperation(operation: ClientOperation): string {
   const prefix = typeName(operation.name);
-  const constant = toName(operation.name).constant;
   const input = isInputOptional(operation) ? `input: ${prefix}Input = {}` : `input: ${prefix}Input`;
 
   return [
     renderInput(operation),
     renderResult(operation),
-    `const ${constant}: Operation = ${operationLiteral(operation)};`,
     [
       ...docComment(operationDescription(operation), ''),
       `export function ${operation.name}(`,
@@ -24,7 +24,9 @@ export function renderOperation(operation: ClientOperation): string {
       `  ${input},`,
       '  options: CallOptions = {},',
       `): Promise<${prefix}Result> {`,
-      `  return send<${prefix}Result>(connection, ${constant}, { ...input, ...options });`,
+      `  const operation: Operation = ${operationLiteral(operation).replaceAll('\n', '\n  ')};`,
+      '',
+      `  return send<${prefix}Result>(connection, operation, { ...input, ...options });`,
       '}',
     ].join('\n'),
   ].join('\n\n');

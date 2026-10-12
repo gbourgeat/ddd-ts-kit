@@ -172,8 +172,12 @@ try {
   a caller outside a browser can set. A browser drops it and sends its own cookies: there, give a
   `fetch` that calls the global one with `credentials: 'include'`, and no credential for that
   scheme.
-- A component schema named like a type the generated files use (`Array`, `Record`) gets a
-  trailing `_`.
+- A component schema named like a type the generated files use (`Array`, `Record`) or like an
+  export of the client (`ErrorCode`, `Client`, `unwrap`...) gets a trailing `_`.
+- An operation is named after its `operationId`. A reserved word is followed by `Operation`
+  (`deleteOperation`); a name another operation already holds (`listItems` and `ListItems`), a
+  name of the client (`send`, `createClient`), or one whose types (`<Name>Input`,
+  `<Name>Result`) a schema holds, is followed by a number (`createClient2`).
 
 ## Checked by the pipeline
 
