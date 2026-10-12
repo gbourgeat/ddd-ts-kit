@@ -25,7 +25,8 @@ export async function withinUnitOfWork<T>(
     return transaction(work);
   }
 
-  const scope: UnitOfWorkScope = { kind: 'unit-of-work', stage: 'open', queue: [], dispatched: [] };
+  const committed: (() => Promise<void>)[] = [];
+  const scope: UnitOfWorkScope = { kind: 'unit-of-work', stage: 'open', queue: [], dispatched: [], committed };
 
   const result = await unitOfWorkScope
     .run(scope, () => transaction(() => thenDispatched(work, scope)))
@@ -35,6 +36,10 @@ export async function withinUnitOfWork<T>(
     });
 
   await dispatchAfterCommit(scope);
+
+  for (const work of committed) {
+    await work().catch(() => undefined);
+  }
 
   return result;
 }

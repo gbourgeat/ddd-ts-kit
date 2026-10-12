@@ -16,6 +16,12 @@ export {
   type EventBusContractOptions,
   type EventBusUnderContract,
 } from './contracts/event-bus-contract.js';
+export { fileStorageContract } from './contracts/file-storage-contract.js';
+export type { FileStorageContractOptions } from './contracts/file-storage/file-storage-contract-options.js';
+export { followServed } from './contracts/file-storage/follow-served.js';
+export { followWithFetch } from './contracts/file-storage/follow-with-fetch.js';
+export type { FollowedResponse } from './contracts/file-storage/followed-response.js';
+export type { SignedRequest } from './contracts/file-storage/signed-request.js';
 export {
   jobSchedulerContract,
   type JobSchedulerContractOptions,

@@ -4,6 +4,17 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
+## Unreleased
+
+**Files live in a storage, never in the database.** The kernel gains the ports `FileStorage`
+(streams in and out, `stat`, `delete`, `copy`, `move`, `list`, short signed download and upload
+links), `FileKeys` (keys generated on the server, under the tenant when there is one) and
+`FileScanner` (an antivirus or content check before a file is accepted), the reference an
+aggregate keeps, `StoredFile` (key, size, media type, checksum), and `FileStaging`, which stages a
+file, promotes it after the commit (`afterCommit`) and purges what a rolled-back command left.
+Media types are checked on the bytes. `InMemoryFileStorage` and `LocalFileStorage` pass the new
+`fileStorageContract` of `@ddd-ts-kit/testing/contracts`.
+
 ## 0.5.0
 
 **Migrations are named by a timestamp and what they do.** The generated `drizzle.config.ts`

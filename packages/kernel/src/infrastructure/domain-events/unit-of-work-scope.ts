@@ -20,6 +20,8 @@ export interface UnitOfWorkScope {
   readonly queue: QueuedDomainEvent[];
   /** Dispatched before the commit, in that order: what the `after-commit` phase is given. */
   readonly dispatched: QueuedDomainEvent[];
+  /** What `afterCommit` was handed in a unit of work: run after the `after-commit` handlers, never on a rollback. */
+  readonly committed?: (() => Promise<void>)[];
 }
 
 // Follows the asynchronous call chain of what opened it: concurrent commands never share a scope.

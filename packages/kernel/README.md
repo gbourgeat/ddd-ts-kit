@@ -727,6 +727,54 @@ the guard of an invariant: what must not happen twice is refused by a database c
 `Clock`: the fake, and enough for a single instance. The adapter between processes is in
 `@ddd-ts-kit/redis`. `acquiring(attempt, waitMs, waiting)` is the retry loop an adapter shares.
 
+### FileStorage, StoredFile, FileScanner
+
+```ts
+const key = fileKeys.next('appointment-documents');           // generated, never from the user
+const file: StoredFile = await staging.stage(key, upload.stream, { mediaType: 'application/pdf', maxBytes: 10_000_000 });
+appointment.attachDocument(file);                             // the aggregate keeps the reference
+await appointments.save(appointment);
+await staging.promoteAfterCommit(file.key);                   // visible once the transaction committed
+```
+
+`FileStorage` holds the content of files, never the database: `put` (a stream in, measured and
+hashed, refused with `FILE_TOO_LARGE` beyond `maxBytes`, leaving nothing), `get` (a stream out),
+`stat`, `delete`, `copy`, `move`, `list(prefix)`, and short signed links, `signedDownloadUrl` and
+`signedUploadUrl` (at most `MAX_SIGNED_URL_SECONDS`, one hour). No method takes or returns a
+whole file. A key is checked by `isFileKey` (segments of letters, digits, `.`, `-` and `_`, none
+starting with a dot) before anything is touched, and `FileKeys` generates it on the server:
+`TenantFileKeys(ids, clock, scope)` writes `tenants/<tenant>/<area>/<year>/<month>/<id>`, the
+tenant segment only when the work in progress names one.
+
+`StoredFile` is what an aggregate keeps: `key`, `size`, `mediaType`, `checksum` (`sha256:<hex>`),
+never the provider. `FileScanner` is the hook of an antivirus or a content check, called on the
+staged file before it is accepted; `AcceptEveryFileScanner` is the one of a project that has
+none yet. `FileError` carries the refusals: `FILE_TOO_LARGE`, `UNSUPPORTED_MEDIA_TYPE`,
+`FILE_NOT_FOUND`, `INVALID_FILE_KEY`, `FILE_REJECTED`, `INVALID_FILE_URL_EXPIRY`.
+
+A write to the storage is not rolled back with a transaction. `FileStaging(storage, scanner,
+reporter)` gives the order that keeps both consistent: `stage` writes under `staging/<key>` and
+scans; the aggregate records the final key; `promoteAfterCommit` moves the file once the unit of
+work has committed (`afterCommit`, never on a rollback, a failure reported); `purge(olderThan)`,
+run by a scheduled job, removes what a rolled-back or crashed command left in `staging/`. For a
+large file the client uploads straight to the storage: `uploadUrl(key, options)` signs the
+staged key, and `confirm(key, { mediaType, accepted, maxBytes })` reads what arrived, checks its
+media type on its bytes (`contentMatches`) and its size, scans it, and answers the `StoredFile`.
+
+`FileInspection` is the pass-through every connector streams through: it counts, hashes, and
+with an expectation holds back the first bytes until they prove the declared media type
+(`acceptsMediaType`, `contentMatches`: a PDF starts with `%PDF-`, office documents are zip
+archives, text is UTF-8 without control characters, SVG and unknown binary formats never
+match).
+
+Connectors: `InMemoryFileStorage` for the tests (`keys()` lists what it holds) and
+`LocalFileStorage({ directory, baseUrl, secret })` for development, both `ServedFileStorage`:
+their signed links point at the application, which answers them with `signedFileRoutes` of
+`@ddd-ts-kit/http`. The object store connector is `@ddd-ts-kit/s3`. Each passes
+`fileStorageContract` of `@ddd-ts-kit/testing/contracts`. Background import and export (row by
+row validation, an error report, resumption) needs a job queue the kit does not have yet: the
+ports are ready for it, see `docs/concepts/file-storage.md`.
+
 ### JobScheduler
 
 ```ts
