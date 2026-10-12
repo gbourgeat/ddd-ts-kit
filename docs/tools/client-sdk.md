@@ -117,6 +117,9 @@ The command also wires the project, and running it again changes nothing:
 - their sources are left out of Biome and knip, which would read generated code as code written
   by hand, and of the ESLint preset, which does so when the config has `"sdk"`: a project
   without the key keeps linting and formatting whatever it has under `clients/`;
+- knip.json names the root as a workspace of its own (`workspaces["."]`), which knip asks for
+  once package.json has workspaces; what knip.json said of the project moves there, and the
+  generators enter a new context or entry point there from then on;
 - the scripts: `sdk:generate`, `sdk:build`; `docs:generate` regenerates the clients after the
   contract, `docs:check` and `ci:docs` compare them, `ci:build` builds them.
 
