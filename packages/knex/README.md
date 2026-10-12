@@ -506,6 +506,28 @@ Criteria and read models were never run on MySQL or SQLite.
   `(consumer, event_id)`. Run the consumer inside the unit of work: the mark then commits with
   the effects of the handler, and disappears with them if it fails.
 
+## Event store
+
+```ts
+// a migration of the project
+export const up = (knex) => createEventStoreTables(knex, { schema: 'scheduling' });
+
+// the composition root
+const { events, snapshots, checkpoints, subjectKeys } = createKnexEventSourcing(unitOfWork, { schema: 'scheduling' });
+```
+
+`createEventStoreTables` runs `eventStoreTablesSql` of the kernel: `stored_events`,
+`stored_events_head`, `stream_snapshots`, `subscription_checkpoints` and `subject_keys`, in the
+schema of the context. `createKnexEventSourcing` refuses a knex that does not speak PostgreSQL.
+
+Each statement runs on the executor of the context: an append joins the transaction of the
+unit of work, so the stream and the outbox records its events publish commit together
+(`eventStoreUnitOfWorkContract`). Appends take the head of the store, a row locked until their
+transaction ends: positions are given in commit order, without gaps, and two appends never run
+side by side, whatever their streams. PostgreSQL only. The stores are the ones of the kernel
+(`PostgresEventStore` and its companions), held to `eventStoreContract` here; how an
+event-sourced aggregate uses them: the README of `@ddd-ts-kit/kernel`, section "Event sourcing".
+
 ## Dialect coverage
 
 What follows is about this package. The CLI generates for PostgreSQL only: `init --orm knex`

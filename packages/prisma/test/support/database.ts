@@ -22,6 +22,11 @@ const TABLES = [
   'messaging.processed_events',
   'billing_core.invoices',
   'read_side.criteria_contract',
+  'public.stored_events',
+  'public.stored_events_head',
+  'public.stream_snapshots',
+  'public.subscription_checkpoints',
+  'public.subject_keys',
 ];
 
 /** What the Prisma schema cannot say, and a migration of the project adds by hand: strings ordered by code point. */

@@ -461,6 +461,27 @@ and on PostgreSQL 18.
   the consumer inside the unit of work: the mark then commits with the effects of the handler,
   and disappears with them if it fails.
 
+## Event store
+
+```ts
+// src/contexts/scheduling/infrastructure/persistence/scheduling.schema.ts, read by drizzle-kit
+export const { events, head, snapshots, checkpoints, subjectKeys } = eventStoreTables('scheduling');
+
+// the composition root
+const stores = createDrizzleEventSourcing(database, { schema: 'scheduling' });
+```
+
+`eventStoreTables` declares the tables drizzle-kit creates in a migration of the project, with
+the columns of `eventStoreTablesSql` of the kernel.
+
+Each statement runs on the executor of the context: an append joins the transaction of the
+unit of work, so the stream and the outbox records its events publish commit together
+(`eventStoreUnitOfWorkContract`). Appends take the head of the store, a row locked until their
+transaction ends: positions are given in commit order, without gaps, and two appends never run
+side by side, whatever their streams. PostgreSQL only. The stores are the ones of the kernel
+(`PostgresEventStore` and its companions), held to `eventStoreContract` here; how an
+event-sourced aggregate uses them: the README of `@ddd-ts-kit/kernel`, section "Event sourcing".
+
 ## Testing an adapter
 
 The unit of work of this package passes `unitOfWorkContract`, and its stores

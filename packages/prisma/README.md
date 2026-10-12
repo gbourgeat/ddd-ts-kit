@@ -543,6 +543,26 @@ disappears with them if it fails.
 
 Delivery is at least once, unordered.
 
+## Event store
+
+Copy the models of `prisma/event-store.postgresql.prisma` into the schema; `prisma migrate dev`
+creates the tables. Keep their table and column names: the stores run raw statements on them.
+
+```ts
+const { events, snapshots, checkpoints, subjectKeys } = createPrismaEventSourcing(unitOfWork);
+```
+
+A context that keeps its event store in a schema of its own adds `@@schema("<context>")` to
+the copies, gives them model names of their own, and passes `{ schema: '<context>' }`.
+
+Each statement runs on the executor of the context: an append joins the transaction of the
+unit of work, so the stream and the outbox records its events publish commit together
+(`eventStoreUnitOfWorkContract`). Appends take the head of the store, a row locked until their
+transaction ends: positions are given in commit order, without gaps, and two appends never run
+side by side, whatever their streams. PostgreSQL only. The stores are the ones of the kernel
+(`PostgresEventStore` and its companions), held to `eventStoreContract` here; how an
+event-sourced aggregate uses them: the README of `@ddd-ts-kit/kernel`, section "Event sourcing".
+
 ## Dialect coverage
 
 What follows is about this package. The CLI generates for PostgreSQL only: `init --orm prisma`

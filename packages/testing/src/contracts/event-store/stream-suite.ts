@@ -59,6 +59,16 @@ export class StreamSuite extends ContractSuite<EventStore> {
       this.expect(after.map(({ id, version }) => `${id}@${version}`)).toEqual(['e2@2', 'e3@3']);
     });
 
+    this.it('appends nothing at the version the stream has, and refuses nothing at another one', async () => {
+      await this.subject.append('consignment-c1', 0, [eventOf('e1')]);
+
+      const unchanged = await this.subject.append('consignment-c1', 1, []);
+      const refused = await failureOf(() => this.subject.append('consignment-c1', 0, []));
+
+      this.expect(unchanged).toEqual({ version: 1, position: 1 });
+      this.expect(codeOf(refused)).toBe(CONCURRENCY_CONFLICT);
+    });
+
     this.it('reads an unknown stream as empty', async () => {
       this.expect(await this.subject.readStream('consignment-unknown')).toEqual([]);
     });

@@ -19,6 +19,21 @@ published for an append rolled back), `givenEvents` (given events, when a comman
 without a database) and `expectSnapshotEquivalence`. The other aggregates of a context keep
 their state in tables: nothing changes for a project that does not opt in.
 
+**An event store on PostgreSQL through every ORM adapter.** One implementation in the kernel
+(`PostgresEventStore`, with the snapshot, checkpoint and data-subject key stores), run by
+`createKnexEventSourcing`, `createDrizzleEventSourcing`, `createPrismaEventSourcing` and
+`createTypeOrmEventSourcing`, each held to `eventStoreContract` and to
+`eventStoreUnitOfWorkContract`. The tables come with the migrations of the project:
+`createEventStoreTables` (knex), `eventStoreTables` (drizzle-kit), the models of
+`prisma/event-store.postgresql.prisma`, `eventStoreEntities` (TypeORM), or the statements of
+`eventStoreTablesSql`. An append locks the head of the store until its transaction ends, so
+positions follow the commits without gaps; two appends never run side by side.
+
+**Projections fed by the event store.** `@Projection(name, { feed: 'event-store' })` is applied
+by a `CatchUpSubscription` with a stored checkpoint (one batch and its checkpoint per unit of
+work), never by the dispatcher, and rebuilt from position zero by
+`EventStoreProjectionRebuild` into a copy that takes the place of the table.
+
 ## 0.5.0
 
 **Migrations are named by a timestamp and what they do.** The generated `drizzle.config.ts`

@@ -1,7 +1,7 @@
 {
   "name": "@ddd-ts-kit/knex",
   "version": "0.5.0",
-  "description": "Knex adapters for the kernel ports: unit of work, transactional outbox store, processed-event store.",
+  "description": "Knex adapters for the kernel ports: unit of work, transactional outbox store, processed-event store, PostgreSQL event store.",
   "license": "MIT",
   "repository": {
     "type": "git",

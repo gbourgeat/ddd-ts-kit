@@ -6,6 +6,7 @@ import { eventOf } from './event-of.js';
 export class StoreSuite extends ContractSuite<EventStore> {
   protected tests(): void {
     this.readsInOrder();
+    this.givesConcurrentAppendsTheirOwnPositions();
     this.readsFromAPosition();
   }
 
@@ -27,6 +28,27 @@ export class StoreSuite extends ContractSuite<EventStore> {
 
       this.expect([empty, appended.position, await this.subject.head()]).toEqual([0, 2, 2]);
     });
+  }
+
+  private givesConcurrentAppendsTheirOwnPositions(): void {
+    this.it(
+      'gives concurrent appends to several streams positions of their own, without a gap, each stream in order',
+      async () => {
+        await Promise.all(
+          ['c1', 'c2', 'c3', 'c4', 'c5'].map((id) =>
+            this.subject.append(`consignment-${id}`, 0, [eventOf(`${id}-a`), eventOf(`${id}-b`)]),
+          ),
+        );
+
+        const all = await this.subject.readAll(0, 100);
+
+        this.expect(all.map(({ position }) => position)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+
+        this.expect(all.every((event, index) => event.version === 1 || all[index - 1]?.stream === event.stream)).toBe(
+          true,
+        );
+      },
+    );
   }
 
   private readsFromAPosition(): void {

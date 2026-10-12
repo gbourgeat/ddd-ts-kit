@@ -3,7 +3,10 @@ import {
   FixedClock,
   InMemoryCache,
   InMemoryEventBus,
+  InMemoryCheckpointStore,
   InMemoryEventStore,
+  InMemorySnapshotStore,
+  InMemorySubjectKeyStore,
   InMemoryLock,
   InMemoryProcessedEventStore,
   InMemoryRateLimiter,
@@ -84,6 +87,11 @@ outboxStoreContract(runner, {
 eventStoreContract(runner, {
   name: 'InMemoryEventStore',
   createStore: () => new InMemoryEventStore(),
+  createCompanions: () => ({
+    snapshots: new InMemorySnapshotStore(),
+    checkpoints: new InMemoryCheckpointStore(),
+    subjectKeys: new InMemorySubjectKeyStore(),
+  }),
 });
 
 processedEventStoreContract(runner, {
