@@ -14,6 +14,9 @@ export { ExecutionContextBuilder } from './execution/execution-context-builder.j
 export { scoped } from './execution/scoped.js';
 export { SessionBuilder } from './execution/session-builder.js';
 export { createTestBuses, type TestBuses, type TestBusesOptions } from './harness/create-test-buses.js';
+export { expectSnapshotEquivalence } from './event-sourcing/expect-snapshot-equivalence.js';
+export { givenEvents } from './event-sourcing/given-events.js';
+export type { SnapshotEquivalence } from './event-sourcing/snapshot-equivalence.js';
 export { expectRefusal } from './refusals/expect-refusal.js';
 export type { ExpectedFacts } from './refusals/expected-facts.js';
 export { InMemoryRepository, type InMemoryRepositoryOptions } from './repositories/in-memory-repository.js';

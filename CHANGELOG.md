@@ -4,6 +4,21 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
+## Unreleased
+
+**Event sourcing, chosen per aggregate.** `EventSourcedAggregate` in the kernel: a command
+checks its invariants and records an event, the state changes only in the apply method of each
+event, and the aggregate is rebuilt by replaying its stream, from a snapshot when one was
+taken. An `EventStore` port (append at an expected version, a concurrency conflict otherwise,
+each stream in order, the whole store by position), `InMemoryEventStore`, stored events
+declared with `defineStoredEvent` and read back through upcasters (a stored event is never
+rewritten), `EventSourcedRepository` for the adapters, snapshots per aggregate, and
+crypto-shredding of personal data (`personalData`, `PersonalDataCipher`, `SubjectKeyStore`).
+`@ddd-ts-kit/testing` adds `eventStoreContract`, `eventStoreUnitOfWorkContract` (nothing is
+published for an append rolled back), `givenEvents` (given events, when a command, then events,
+without a database) and `expectSnapshotEquivalence`. The other aggregates of a context keep
+their state in tables: nothing changes for a project that does not opt in.
+
 ## 0.5.0
 
 **Migrations are named by a timestamp and what they do.** The generated `drizzle.config.ts`

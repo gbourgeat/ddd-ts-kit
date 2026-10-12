@@ -3,6 +3,7 @@ import {
   FixedClock,
   InMemoryCache,
   InMemoryEventBus,
+  InMemoryEventStore,
   InMemoryLock,
   InMemoryProcessedEventStore,
   InMemoryRateLimiter,
@@ -17,6 +18,7 @@ import {
   criteriaContract,
   criteriaContractDefinition,
   eventBusContract,
+  eventStoreContract,
   lockContract,
   outboxStoreContract,
   processedEventStoreContract,
@@ -77,6 +79,11 @@ outboxStoreContract(runner, {
   name: 'InMemoryOutboxStore',
   leaseMs: 30_000,
   createStore: () => new InMemoryOutboxStore({ leaseMs: 30_000 }),
+});
+
+eventStoreContract(runner, {
+  name: 'InMemoryEventStore',
+  createStore: () => new InMemoryEventStore(),
 });
 
 processedEventStoreContract(runner, {

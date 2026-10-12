@@ -1146,6 +1146,106 @@ A projection is subscribed as a consumer under its name, so each delivery is one
 <projection>` span, with the calls to its read model below it, and an event buried after its
 retries reaches the error reporter as for any consumer.
 
+## Event sourcing
+
+Chosen per aggregate, never per project: the other aggregates of the context keep their state
+in tables. When to choose it and what it costs:
+[docs/concepts/event-sourcing.md](../../docs/concepts/event-sourcing.md).
+
+```ts
+// domain/aggregates/attendance-record.aggregate.ts
+type AttendanceEvent = AttendanceRecordOpened | NoShowNoted;
+
+export class AttendanceRecord extends EventSourcedAggregate<AttendanceEvent, AttendanceState> {
+  private state: AttendanceState = { noShows: 0 };
+
+  private constructor(id: string) {
+    super(id);
+  }
+
+  static open(id: string, now: Date): AttendanceRecord {
+    const record = new AttendanceRecord(id);
+
+    record.record(new AttendanceRecordOpened(id, now));
+
+    return record;
+  }
+
+  static rehydrate(id: string, history: AggregateHistory<AttendanceEvent, AttendanceState>): AttendanceRecord {
+    const record = new AttendanceRecord(id);
+
+    return record.replay(history, (state) => record.restore(state));
+  }
+
+  noteNoShow(appointmentId: string, now: Date): void {
+    if (this.state.noShows >= 3) {
+      throw AttendanceRecordError.alreadyBarred(this.id);
+    }
+
+    this.record(new NoShowNoted(this.id, now, appointmentId));
+  }
+
+  protected appliers(): Appliers<AttendanceEvent> {
+    return {
+      'scheduling.attendance-record.opened': () => undefined,
+      'scheduling.attendance-record.no-show-noted': (event) => this.applyNoShowNoted(event),
+    };
+  }
+
+  private restore(state: AttendanceState): void {
+    this.state = state;
+  }
+
+  private applyNoShowNoted(event: NoShowNoted): void {
+    this.state = { noShows: this.state.noShows + 1 };
+  }
+}
+```
+
+| Piece | What it does |
+|---|---|
+| `EventSourcedAggregate<E, S>` | A command checks its invariants on the state, then `record(event)`: the event is applied through the method `appliers()` names for it, and kept for the save. Only apply methods (and `restore`, for a snapshot) change the state (`event-sourcing/state-in-apply`). `appliers()` must name every event of the union, or it does not compile |
+| `replay(history, restore?)` | Rebuilds from `{ snapshot?, events }`, through the same apply methods, recording nothing. `version` is the number of events of the stream the aggregate reflects |
+| `appendChanges(aggregate, append)` | What a repository adapter calls: the events recorded since the load and the version the stream must still have; on success the aggregate is at the new version |
+| `EventStore` | The port: `append(stream, expectedVersion, events)` (a `ConcurrencyError` when somebody appended first, nothing kept of it), `readStream(stream, after?)`, `readAll(after, limit)` in the order the appends committed, `head()`. `InMemoryEventStore` here; PostgreSQL through every ORM adapter. Held to `eventStoreContract` |
+| `defineStoredEvent(Event, spec)` | How one event is stored: `version` of its shape, `encode(event): NamedData` (plain data, dates kept as ISO text), `decode(data, envelope)` reading each field by type (`data.text('x')`, `data.instant('at')`, `data.record('amount')`), and `upcasters` from each older version |
+| `EventSerializer<E>` | Every stored event of one aggregate (`StoredEventTypes<E>`: one entry per event, or it does not compile). A stored event is never rewritten: it is upcast when read. An event of a later shape than the release knows, or a version without upcaster, is an `UnreadableEventError` |
+| `EventSourcedRepository` | What the repository adapter delegates to: `findById` replays the stream `<category>-<id>` (from the last snapshot), `save` appends in the transaction of the unit of work; the events then leave with the save like any other |
+| `SnapshotPolicy` | Per aggregate: `every` so many events, a `version` of the shape (another one is ignored, the stream replayed), `encode` and `decode`. `expectSnapshotEquivalence` of `@ddd-ts-kit/testing` proves a snapshot rebuilds the state a full replay does |
+| `personalData(subject, value)` | Marks a personal value in `encode`. `PersonalDataCipher` over a `SubjectKeyStore` seals it with the key of its data subject (AES-256-GCM); `SubjectKeyStore.erase(subject)` destroys the key, and a replay then reads `ERASED_PERSONAL_DATA` |
+
+```ts
+// infrastructure/persistence/event-store-attendance-record.repository.ts
+@Repository(AttendanceRecordRepository)
+export class EventStoreAttendanceRecordRepository implements AttendanceRecordRepository {
+  private readonly streams: EventSourcedRepository<AttendanceRecord, AttendanceEvent, AttendanceState>;
+
+  constructor(store: EventStore, snapshots: SnapshotStore, cipher: PersonalDataCipher) {
+    this.streams = new EventSourcedRepository({
+      store,
+      category: 'scheduling.attendance-record',
+      serializer: new EventSerializer<AttendanceEvent>(attendanceRecordEvents, { cipher }),
+      rehydrate: (id, history) => AttendanceRecord.rehydrate(id, history),
+      snapshots: { store: snapshots, every: 50, version: 1, encode: (record) => record.toState(), decode: stateOf },
+    });
+  }
+
+  findById(id: string): Promise<AttendanceRecord | undefined> {
+    return this.streams.findById(id);
+  }
+
+  save(record: AttendanceRecord): Promise<void> {
+    return this.streams.save(record);
+  }
+}
+```
+
+**No double write.** The store joins the transaction of the unit of work, and the publisher of
+the integration events is a handler of the domain events that runs before the commit and
+writes the outbox: the stream and the outbox records commit together or not at all.
+`eventStoreUnitOfWorkContract` of `@ddd-ts-kit/testing` proves it for each transactional store:
+nothing is published for an append rolled back or refused by a concurrency conflict.
+
 ## How to extend
 
 `Session`, `ExecutionContext`, `Actor`, `AuditEntry` and `ErrorReport` each have an empty interface that a project fills by
