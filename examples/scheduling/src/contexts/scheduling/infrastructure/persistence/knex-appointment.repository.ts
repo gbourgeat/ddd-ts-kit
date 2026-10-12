@@ -12,10 +12,11 @@ import {
   type AppointmentColumns,
   type AppointmentRow,
 } from '@/contexts/scheduling/infrastructure/persistence/appointment-row.schema';
+import { AppointmentStatus } from '@/contexts/scheduling/domain/vocabularies/appointment-status.vocabulary';
 
 type VersionedAppointment = AppointmentColumns & { readonly version: number };
 
-const ACTIVE = ['requested', 'booked'];
+const ACTIVE = [AppointmentStatus.Requested, AppointmentStatus.Booked];
 /** The SQLSTATE of PostgreSQL for a violated exclusion constraint. */
 const EXCLUSION_VIOLATION = '23P01';
 /** The SQLSTATE of PostgreSQL for the transaction it ends to break a deadlock. */
@@ -58,7 +59,7 @@ export class KnexAppointmentRepository implements AppointmentRepository {
 
   async unconfirmedAt(instant: Date): Promise<readonly Appointment[]> {
     const rows = await tableOf(this.database)
-      .where({ status: 'requested' })
+      .where({ status: AppointmentStatus.Requested })
       .where('confirm_before', '<=', instant)
       .orderBy('confirm_before');
 

@@ -1,13 +1,12 @@
 import { ValueObject } from '@ddd-ts-kit/kernel';
 import { PracticeError } from '@/contexts/identity/domain/errors/practice.error';
-
-export type RoleName = 'manager' | 'practitioner' | 'assistant';
+import { RoleName } from '@/contexts/identity/domain/vocabularies/role-name.vocabulary';
 
 export type RoleProps = {
   readonly value: RoleName;
 };
 
-const ROLES: readonly RoleName[] = ['manager', 'practitioner', 'assistant'];
+const ROLES: readonly RoleName[] = Object.values(RoleName);
 
 export class Role extends ValueObject<RoleProps> {
   private constructor(props: RoleProps) {
@@ -26,7 +25,7 @@ export class Role extends ValueObject<RoleProps> {
   }
 
   static manager(): Role {
-    return new Role({ value: 'manager' });
+    return new Role({ value: RoleName.Manager });
   }
 
   is(name: RoleName): boolean {

@@ -7,7 +7,10 @@ export type RangeProps = {
 };
 
 const TIME_PATTERN = /^(\d{2}):(\d{2})$/;
-const END_OF_DAY = 24 * 60;
+const MINUTES_PER_HOUR = 60;
+const END_OF_DAY = 24 * MINUTES_PER_HOUR;
+/** The digits of an hour or of a minute written `HH:MM`. */
+const TWO_DIGITS = 2;
 
 /** A span of one day between two wall-clock times, written `HH:MM`; `24:00` is the end of the day. */
 export class Range extends ValueObject<RangeProps> {
@@ -68,11 +71,13 @@ function minuteOf(time: string): number | undefined {
     return undefined;
   }
 
-  const minute = Number(match[1]) * 60 + Number(match[2]);
+  const minute = Number(match[1]) * MINUTES_PER_HOUR + Number(match[2]);
 
-  return Number(match[2]) < 60 && minute <= END_OF_DAY ? minute : undefined;
+  return Number(match[2]) < MINUTES_PER_HOUR && minute <= END_OF_DAY ? minute : undefined;
 }
 
 function timeOf(minute: number): string {
-  return `${String(Math.floor(minute / 60)).padStart(2, '0')}:${String(minute % 60).padStart(2, '0')}`;
+  const hours = String(Math.floor(minute / MINUTES_PER_HOUR)).padStart(TWO_DIGITS, '0');
+
+  return `${hours}:${String(minute % MINUTES_PER_HOUR).padStart(TWO_DIGITS, '0')}`;
 }

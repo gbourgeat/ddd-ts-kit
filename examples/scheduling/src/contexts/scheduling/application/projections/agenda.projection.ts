@@ -10,6 +10,7 @@ import { AppointmentRescheduled } from '@/contexts/scheduling/domain/events/appo
 import type { Booking } from '@/contexts/scheduling/domain/value-objects/booking.vo';
 import { storableStamp } from '@/shared-kernel/storable-stamp';
 import type { Agenda, AgendaEntry } from '@/contexts/scheduling/application/ports/agenda.port';
+import { AppointmentStatus } from '@/contexts/scheduling/domain/vocabularies/appointment-status.vocabulary';
 
 /** Where a fact comes in the life of an appointment, for two facts of the same millisecond: an end is always the last word. */
 const RANK: Readonly<Record<string, number>> = {
@@ -38,13 +39,15 @@ export class AgendaProjection {
     return this.stands(
       event,
       booking,
-      confirmBefore === undefined ? { status: 'booked' } : { status: 'requested', confirmBefore },
+      confirmBefore === undefined
+        ? { status: AppointmentStatus.Booked }
+        : { status: AppointmentStatus.Requested, confirmBefore },
     );
   }
 
   @On(AppointmentConfirmed, { name: 'scheduling.appointment.confirmed' })
   async confirmed(event: AppointmentConfirmed): Promise<ReadModelWrite> {
-    return this.stands(event, event.booking, { status: 'booked' });
+    return this.stands(event, event.booking, { status: AppointmentStatus.Booked });
   }
 
   @On(AppointmentRescheduled, { name: 'scheduling.appointment.rescheduled' })
@@ -56,22 +59,25 @@ export class AgendaProjection {
 
   @On(AppointmentCancelled, { name: 'scheduling.appointment.cancelled' })
   async cancelled(event: AppointmentCancelled): Promise<ReadModelWrite> {
-    return this.stands(event, event.ended.booking, { status: 'cancelled', cancelledBy: event.ended.cancellation.by });
+    return this.stands(event, event.ended.booking, {
+      status: AppointmentStatus.Cancelled,
+      cancelledBy: event.ended.cancellation.by,
+    });
   }
 
   @On(AppointmentExpired, { name: 'scheduling.appointment.expired' })
   async expired(event: AppointmentExpired): Promise<ReadModelWrite> {
-    return this.stands(event, event.booking, { status: 'expired' });
+    return this.stands(event, event.booking, { status: AppointmentStatus.Expired });
   }
 
   @On(AppointmentCompleted, { name: 'scheduling.appointment.completed' })
   async completed(event: AppointmentCompleted): Promise<ReadModelWrite> {
-    return this.stands(event, event.booking, { status: 'completed' });
+    return this.stands(event, event.booking, { status: AppointmentStatus.Completed });
   }
 
   @On(AppointmentMarkedNoShow, { name: 'scheduling.appointment.marked-no-show' })
   async markedNoShow(event: AppointmentMarkedNoShow): Promise<ReadModelWrite> {
-    return this.stands(event, event.booking, { status: 'no-show' });
+    return this.stands(event, event.booking, { status: AppointmentStatus.NoShow });
   }
 
   private async stands(event: DomainEvent, booking: Booking, standing: Standing): Promise<ReadModelWrite> {

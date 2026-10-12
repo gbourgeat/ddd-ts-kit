@@ -1,7 +1,14 @@
 import { ValueObject } from '@ddd-ts-kit/kernel';
 import { NotificationError } from '@/contexts/notification/domain/errors/notification.error';
+import { NotificationKindName } from '@/contexts/notification/domain/vocabularies/notification-kind-name.vocabulary';
 
-const KINDS = ['request', 'confirmation', 'rescheduling', 'cancellation', 'reminder'] as const;
+const KINDS = [
+  NotificationKindName.Request,
+  NotificationKindName.Confirmation,
+  NotificationKindName.Rescheduling,
+  NotificationKindName.Cancellation,
+  NotificationKindName.Reminder,
+] as const;
 
 type KindName = (typeof KINDS)[number];
 
@@ -27,12 +34,16 @@ export class NotificationKind extends ValueObject<NotificationKindProps> {
 
   /** A request, a confirmation and a rescheduling all tell of an appointment that is still to come, at the start they name. */
   announcesAnAppointmentToCome(): boolean {
-    return this.props.value === 'request' || this.props.value === 'confirmation' || this.props.value === 'rescheduling';
+    return (
+      this.props.value === NotificationKindName.Request ||
+      this.props.value === NotificationKindName.Confirmation ||
+      this.props.value === NotificationKindName.Rescheduling
+    );
   }
 
   /** A cancellation tells that the appointment will not take place. */
   announcesTheEndOfAnAppointment(): boolean {
-    return this.props.value === 'cancellation';
+    return this.props.value === NotificationKindName.Cancellation;
   }
 
   get value(): string {

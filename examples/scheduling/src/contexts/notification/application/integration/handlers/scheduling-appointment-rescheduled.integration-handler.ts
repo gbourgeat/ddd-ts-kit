@@ -5,6 +5,7 @@ import {
   type AppointmentRescheduledV1,
 } from '@/contexts/scheduling/published-language/index';
 import { SendNotificationCommand } from '@/contexts/notification/application/commands/send-notification/send-notification.command';
+import { NotificationKindName } from '@/contexts/notification/domain/vocabularies/notification-kind-name.vocabulary';
 
 @IntegrationEventHandler(appointmentRescheduledV1, { consumer: 'notification.scheduling-appointment-rescheduled' })
 export class SchedulingAppointmentRescheduledIntegrationHandler {
@@ -20,7 +21,7 @@ export class SchedulingAppointmentRescheduledIntegrationHandler {
     await this.commands.execute(
       new SendNotificationCommand(this.actor, {
         recipientId: patientId,
-        kind: 'rescheduling',
+        kind: NotificationKindName.Rescheduling,
         appointmentId,
         startsAt: new Date(startsAt),
         cause: event.id,

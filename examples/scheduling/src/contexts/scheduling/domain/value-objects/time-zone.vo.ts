@@ -6,7 +6,10 @@ export type TimeZoneProps = {
 };
 
 const MINUTE = 60_000;
-const DAY = 24 * 60 * MINUTE;
+const MINUTES_PER_HOUR = 60;
+const DAY = 24 * MINUTES_PER_HOUR * MINUTE;
+/** A year is written with four digits, `YYYY`, whatever the calendar gives for the first centuries. */
+const YEAR_DIGITS = 4;
 const DAY_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
 
 /** The zone whose wall clock the practice lives by: it turns an instant into a day and a time of that clock, and back. */
@@ -56,7 +59,7 @@ export class TimeZone extends ValueObject<TimeZoneProps> {
   minuteOf(instant: Date): number {
     const parts = this.wallClockOf(instant);
 
-    return Number(parts.hour) * 60 + Number(parts.minute);
+    return Number(parts.hour) * MINUTES_PER_HOUR + Number(parts.minute);
   }
 
   /**
@@ -99,7 +102,7 @@ export class TimeZone extends ValueObject<TimeZoneProps> {
       format.formatToParts(instant).find((part) => part.type === type)?.value ?? '';
 
     return {
-      year: read('year').padStart(4, '0'),
+      year: read('year').padStart(YEAR_DIGITS, '0'),
       month: read('month'),
       day: read('day'),
       hour: read('hour'),

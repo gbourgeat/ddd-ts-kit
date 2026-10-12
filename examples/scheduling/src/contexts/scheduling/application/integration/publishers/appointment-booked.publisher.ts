@@ -2,6 +2,7 @@ import type { IdGenerator, IntegrationEventPublisher } from '@ddd-ts-kit/kernel'
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
 import { AppointmentBooked } from '@/contexts/scheduling/domain/events/appointment-booked.event';
 import { appointmentBookedV1 } from '@/contexts/scheduling/published-language/appointment-booked.v1.integration-event';
+import { AppointmentStatus } from '@/contexts/scheduling/domain/vocabularies/appointment-status.vocabulary';
 
 @DomainEventHandler(AppointmentBooked, { name: 'scheduling.appointment.booked' })
 export class AppointmentBookedPublisher implements DomainEventHandler<AppointmentBooked> {
@@ -23,7 +24,7 @@ export class AppointmentBookedPublisher implements DomainEventHandler<Appointmen
         startsAt: booking.slot.startsAt.toISOString(),
         endsAt: booking.slot.endsAt.toISOString(),
         day: booking.day,
-        status: event.held.confirmBefore === undefined ? 'booked' : 'requested',
+        status: event.held.confirmBefore === undefined ? AppointmentStatus.Booked : AppointmentStatus.Requested,
         ...(event.held.confirmBefore === undefined ? {} : { confirmBefore: event.held.confirmBefore.toISOString() }),
       },
       { id: this.ids.next(), occurredAt: event.occurredAt },

@@ -1,14 +1,21 @@
 import { ValueObject } from '@ddd-ts-kit/kernel';
 import { CalendarError } from '@/contexts/scheduling/domain/errors/calendar.error';
 import { Range } from '@/contexts/scheduling/domain/value-objects/range.vo';
-
-export type Weekday = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
+import { Weekday } from '@/contexts/scheduling/domain/vocabularies/weekday.vocabulary';
 
 export type OpeningHoursProps = {
   readonly week: Readonly<Record<Weekday, readonly Range[]>>;
 };
 
-const WEEK: readonly Weekday[] = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+const WEEK: readonly Weekday[] = [
+  Weekday.Sunday,
+  Weekday.Monday,
+  Weekday.Tuesday,
+  Weekday.Wednesday,
+  Weekday.Thursday,
+  Weekday.Friday,
+  Weekday.Saturday,
+];
 
 /** The weekly ranges, in the wall-clock time of the practice, during which a calendar takes appointments. */
 export class OpeningHours extends ValueObject<OpeningHoursProps> {
@@ -51,12 +58,12 @@ function sorted(ranges: readonly Range[]): readonly Range[] {
 
 function wholeWeek(rangesOf: (weekday: Weekday) => readonly Range[]): Record<Weekday, readonly Range[]> {
   return {
-    monday: rangesOf('monday'),
-    tuesday: rangesOf('tuesday'),
-    wednesday: rangesOf('wednesday'),
-    thursday: rangesOf('thursday'),
-    friday: rangesOf('friday'),
-    saturday: rangesOf('saturday'),
-    sunday: rangesOf('sunday'),
+    monday: rangesOf(Weekday.Monday),
+    tuesday: rangesOf(Weekday.Tuesday),
+    wednesday: rangesOf(Weekday.Wednesday),
+    thursday: rangesOf(Weekday.Thursday),
+    friday: rangesOf(Weekday.Friday),
+    saturday: rangesOf(Weekday.Saturday),
+    sunday: rangesOf(Weekday.Sunday),
   };
 }

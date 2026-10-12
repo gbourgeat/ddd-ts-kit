@@ -1,4 +1,5 @@
 import type { DomainEvent } from '@ddd-ts-kit/kernel';
+import type { DelegationEndCause } from '@/contexts/identity/domain/vocabularies/delegation-end-cause.vocabulary';
 
 export class DelegationRevoked implements DomainEvent {
   readonly name = 'identity.delegation.revoked';
@@ -10,7 +11,7 @@ export class DelegationRevoked implements DomainEvent {
       readonly practiceId: string;
       readonly practitionerId: string;
       readonly assistantId: string;
-      readonly cause: 'revoked' | 'expired' | 'member-removed';
+      readonly cause: DelegationEndCause;
     },
   ) {}
 }

@@ -5,7 +5,8 @@ import {
   type AppointmentTypeProps,
 } from '@/contexts/scheduling/domain/value-objects/appointment-type.vo';
 import { Exception } from '@/contexts/scheduling/domain/value-objects/exception.vo';
-import { OpeningHours, type Weekday } from '@/contexts/scheduling/domain/value-objects/opening-hours.vo';
+import { OpeningHours } from '@/contexts/scheduling/domain/value-objects/opening-hours.vo';
+import type { Weekday } from '@/contexts/scheduling/domain/vocabularies/weekday.vocabulary';
 import { Range } from '@/contexts/scheduling/domain/value-objects/range.vo';
 import { TimeOff } from '@/contexts/scheduling/domain/value-objects/time-off.vo';
 import { TimeZone } from '@/contexts/scheduling/domain/value-objects/time-zone.vo';

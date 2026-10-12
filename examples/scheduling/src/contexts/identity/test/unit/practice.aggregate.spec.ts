@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { given } from '@ddd-ts-kit/testing';
 import { Practice } from '@/contexts/identity/domain/aggregates/practice.aggregate';
 import { DisplayName } from '@/contexts/identity/domain/value-objects/display-name.vo';
-import { Role, type RoleName } from '@/contexts/identity/domain/value-objects/role.vo';
+import { Role } from '@/contexts/identity/domain/value-objects/role.vo';
+import type { RoleName } from '@/contexts/identity/domain/vocabularies/role-name.vocabulary';
 import { aPractice } from '@/contexts/identity/test/builders/practice.builder';
 
 const later = new Date('2026-02-01T00:00:00.000Z');
