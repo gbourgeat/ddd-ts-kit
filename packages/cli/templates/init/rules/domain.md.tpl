@@ -18,6 +18,7 @@ paths:
 - A violated invariant throws a `DomainError` of `domain/errors/` with a stable `code`, never a bare `Error` (`domain/no-generic-error`).
 {{/if}}
 - Domain events are named in the past tense, `<context>.<aggregate>.<fact>` (`events/name-format`), and recorded by the aggregate (`this.record(...)`). They leave with the save: nothing here dispatches them.
+- An aggregate whose history is the business can be event-sourced, chosen per aggregate (`generate aggregate <context> <Name> --event-sourced`): it extends `EventSourcedAggregate`, a command checks the invariants then `this.record(...)`, and only its `apply<Fact>` methods (and `restore`, for a snapshot) change the state (`event-sourcing/state-in-apply`). Its events are named in the past tense (`event-sourcing/past-tense`). The other aggregates keep their state in tables.
 - A repository here is a port: an abstract class extending the kernel `Repository<Aggregate>`, abstract members only (`ports/abstract-class`). A domain service is stateless.
 - Time and identifiers come in as parameters (`purity/*`); nothing here knows the acting user or its rights (`authz/in-application`).
 - One concept per file, with the suffix of its role: `.aggregate.ts`, `.entity.ts`, `.vo.ts`, `.event.ts`, `.error.ts`, `.repository.ts`, `.service.ts` (`naming/suffix`, `naming/one-concept-per-file`).

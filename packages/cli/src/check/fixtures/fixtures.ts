@@ -11,6 +11,7 @@ import { COVERAGE_FIXTURES } from './coverage-fixtures.js';
 import { DECLARATIONS_FIXTURES } from './declarations-fixtures.js';
 import { DOMAIN_EVENTS_FIXTURES } from './domain-events-fixtures.js';
 import { ERRORS_FIXTURES } from './errors-fixtures.js';
+import { EVENT_SOURCING_FIXTURES } from './event-sourcing-fixtures.js';
 import { EVENTS_FIXTURES } from './events-fixtures.js';
 import { EXTENSION_FIXTURES } from './extension-fixtures.js';
 import { EXTRACTABLE_FIXTURES } from './extractable-fixtures.js';
@@ -50,6 +51,7 @@ export const FIXTURES: readonly Fixture[] = [
   ...DECLARATIONS_FIXTURES,
   ...DOMAIN_EVENTS_FIXTURES,
   ...ERRORS_FIXTURES,
+  ...EVENT_SOURCING_FIXTURES,
   ...EVENTS_FIXTURES,
   ...EXTENSION_FIXTURES,
   ...EXTRACTABLE_FIXTURES,

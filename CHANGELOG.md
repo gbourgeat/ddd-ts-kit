@@ -34,6 +34,15 @@ by a `CatchUpSubscription` with a stored checkpoint (one batch and its checkpoin
 work), never by the dispatcher, and rebuilt from position zero by
 `EventStoreProjectionRebuild` into a copy that takes the place of the table.
 
+**Five rules for event-sourced aggregates**, in `ddd-ts-kit check` and in the ESLint plugin:
+`event-sourcing/state-in-apply` (the state changes only in apply methods, which record nothing),
+`event-sourcing/past-tense`, `event-sourcing/store-behind-repository` (the domain and the use
+cases never read the store), `event-sourcing/projection-never-appends` and
+`event-sourcing/upcaster-required`: the data of a stored event is a named type, a version above
+1 has an upcaster from each version below, and the shape of each version is recorded by
+`ddd-ts-kit docs` in `stored-events.lock.json`, so a shape changed in place is refused. They
+judge event-sourced code only: a project that has none sees no new finding.
+
 ## 0.5.0
 
 **Migrations are named by a timestamp and what they do.** The generated `drizzle.config.ts`
