@@ -384,7 +384,9 @@ named in the words of the business: the code that refuses reads as a sentence, a
 of a concept are read in one file. The refusal is about the concept the caller asked for, not
 the class that detects it: a calendar that finds no free slot refuses with
 `AppointmentError.slotTaken`. The refusals of a value object are factories of the concept it
-describes (`PersonError.invalidEmail(raw)`), and travel in the `Result` its `create` returns. A
+describes (`PersonError.invalidEmail(raw)`), thrown by its `create` as an aggregate throws its own
+(`"stack.valueObjects": "throwing"`, what `init` writes), or returned in a `Result` that the
+caller unwraps under `"result"`, the form of a config without the key. A
 factory takes the facts of the refusal as typed parameters, more than three as one typed object,
 writes the message, and sets one code.
 

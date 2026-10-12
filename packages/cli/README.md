@@ -50,7 +50,7 @@ ddd-ts-kit init [--http express|fastify|nest|none]
                 [--errors none|sentry] [--logger stdout|pino|winston]
                 [--style declared|explicit] [--assembly barrel|discovery]
                 [--dependencies signature|listed] [--refusals factories|classes]
-                [--routes controllers|functions]
+                [--routes controllers|functions] [--value-objects throwing|result]
                 [--package-manager npm|pnpm]
                 [--allow-no-outbox "<reason>"] [--import-alias '$<name>/']
                 [--import-extension none|js]
@@ -162,6 +162,12 @@ declared context lists no route: its controllers reach the application through i
 file. `--routes functions`, or a config without the key, keeps one `defineRoute` function per
 route, listed in `<context>.routes.ts`, as 0.1 to 0.3 wrote them; `controllers` moves a
 project from one to the other, a context at a time.
+
+**A value object throws its refusals.** `init` writes `"stack.valueObjects": "throwing"`:
+`generate value-object` writes a `create` that returns the value object or throws the refusal of
+its concept, and a spec that asserts it with `expectRefusal(() => ..)`. `--value-objects result`,
+or a config without the key, keeps a `create` returning a `Result` that the caller unwraps, as 0.1
+to 0.5 wrote it; `value-objects` moves a project from one to the other.
 
 **Domain events leave with the save.** A generated command handler builds or loads its aggregate,
 calls one intention method, `await repository.save(aggregate)` and returns: no `pullEvents()`, and
@@ -442,6 +448,16 @@ Prints the dependency-cruiser configuration derived from `ddd-ts-kit.config.json
 published languages, declared upstreams, allowed packages, cycles and orphans. `--write` saves
 it as `.dependency-cruiser.cjs`; `--check` exits 1 when the file is missing or stale, which is
 what `npm run depcruise` runs first. Edit the config, not the file.
+
+## value-objects
+
+```sh
+ddd-ts-kit value-objects [--dry-run]
+```
+
+Moves the value objects of a project from a `Result` to factories that return the value or
+throw (`"stack.valueObjects": "throwing"`). What it rewrites, and what it leaves to a person, is
+in [CONFIG.md](../../docs/CONFIG.md#stack).
 
 ## controllers
 

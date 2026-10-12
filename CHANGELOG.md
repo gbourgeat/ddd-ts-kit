@@ -4,6 +4,19 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
+## Unreleased
+
+**A value object throws its refusals.** `init` writes `"stack.valueObjects": "throwing"`:
+`generate value-object` writes a `create` that returns the value object or throws the refusal
+built by the static factory of its concept (`throw PersonError.invalidEmail(raw)`), as the rest
+of the domain refuses, and a spec that asserts it with `expectRefusal(() => Email.create(raw),
+code)`; a caller no longer unwraps anything. `Result`, `ok`, `err` and `unwrap` stay in the
+kernel: `--value-objects result`, or a config without the key, keeps the form of 0.5, so an
+existing project upgrades without a change. `ddd-ts-kit value-objects` moves a project from one
+to the other: it rewrites the factories, removes every `unwrap(..)` of them, turns the assertions
+on a `Result` into assertions on the factory, tidies the imports, sets the key, and prints what
+is left to a person.
+
 ## 0.5.0
 
 **Migrations are named by a timestamp and what they do.** The generated `drizzle.config.ts`
