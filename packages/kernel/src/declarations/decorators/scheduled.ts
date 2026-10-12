@@ -6,7 +6,8 @@ import { jobScheduleOf } from '../../application/scheduling/job-schedule-of.js';
 import type { JobSchedule } from '../../application/scheduling/job-schedule.js';
 import type { ScheduledJob } from '../../application/scheduling/scheduled-job.js';
 import type { ClassDeclarator } from '../dependencies/class-declarator.js';
-import type { Dependencies } from '../dependencies/dependencies.js';
+import type { DeclaredDependencies } from '../dependencies/declared-dependencies.js';
+import type { DependenciesFromSignature } from '../dependencies/dependencies-from-signature.js';
 import { DeclarationError } from '../registry/declaration-error.js';
 import { record } from '../registry/record.js';
 
@@ -15,11 +16,11 @@ export type ScheduledOptions = JobSchedule & JobOptions;
 
 /**
  * A job run by time, which triggers use cases and decides nothing, under a stable name:
- * `@Scheduled('billing.send-reminders', { cron: '0 7 * * 1-5', timeZone: 'Europe/Paris' }, [CommandBus])`.
+ * `@Scheduled('billing.send-reminders', { cron: '0 7 * * 1-5', timeZone: 'Europe/Paris' })`.
  * The name and the schedule are checked when the file loads: a name that is not
  * `<context>.<job-name>`, an unreadable cron, a zero interval or an unknown time zone throw.
  */
-export function Scheduled<const D extends Dependencies = readonly []>(
+export function Scheduled<const D extends DeclaredDependencies = DependenciesFromSignature>(
   name: `${string}.${string}`,
   settings: ScheduledOptions,
   dependencies?: D,
@@ -36,7 +37,7 @@ export function Scheduled<const D extends Dependencies = readonly []>(
   policyOf(name, options);
 
   return (target) => {
-    record(target, { role: 'job', name, schedule, options, implementation: target, dependencies: dependencies ?? [] });
+    record(target, { role: 'job', name, schedule, options, implementation: target, dependencies });
   };
 }
 

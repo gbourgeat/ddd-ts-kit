@@ -4,6 +4,8 @@ import path from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { createApplication, kernelModule } from '../src/index.js';
 import { discoverContext } from '../src/discovery.js';
+// What `ddd-ts-kit docs` generates next to the role files of a discovered context: here the stubbed loader answers the classes themselves, so their lists are registered the same way.
+import './fixtures/contexts/billing/billing.dependencies.js';
 import { InvoiceIssuedPublisher } from './fixtures/contexts/billing/application/integration/publishers/invoice-issued.publisher.js';
 import { IssueMonthlyInvoicesJob } from './fixtures/contexts/billing/application/scheduling/issue-monthly-invoices.job.js';
 import { InMemoryInvoiceRepository } from './fixtures/contexts/billing/infrastructure/persistence/in-memory-invoice.repository.js';

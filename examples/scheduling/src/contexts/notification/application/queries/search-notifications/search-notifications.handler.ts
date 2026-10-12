@@ -5,7 +5,7 @@ import { SearchNotificationsReader } from '@/contexts/notification/application/p
 import { SearchNotificationsQuery } from '@/contexts/notification/application/queries/search-notifications/search-notifications.query';
 import type { SearchNotificationsResult } from '@/contexts/notification/application/queries/search-notifications/search-notifications.result';
 
-@QueryHandler(SearchNotificationsQuery, [SearchNotificationsReader, Access])
+@QueryHandler(SearchNotificationsQuery)
 export class SearchNotificationsHandler implements QueryHandler<SearchNotificationsQuery> {
   constructor(
     private readonly reader: SearchNotificationsReader,

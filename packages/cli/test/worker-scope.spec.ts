@@ -104,6 +104,7 @@ describe('worker-scope', () => {
       'route',
       'integration-handler',
       'event-handler',
+      'projection',
       'acl',
       'e2e',
       'adapter (once the project has its first adapter)',

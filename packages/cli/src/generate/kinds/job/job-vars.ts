@@ -31,7 +31,9 @@ export function jobVars(scope: Scope, { name, schedule, command }: JobParts): Re
     commandWords: command.name.words,
     protected: command.isProtected,
     asActor: command.isProtected ? ' as the system actor of the job' : '',
-    systemActorImport: command.isProtected ? ', systemActor' : '',
+    kernelImport: command.isProtected
+      ? "import { systemActor, type CommandBus } from '@ddd-ts-kit/kernel';"
+      : "import type { CommandBus } from '@ddd-ts-kit/kernel';",
     systemActorValueImport: command.isProtected ? 'systemActor, ' : '',
     arguments: [...actor, ...(command.takesInstant ? ['execution.scheduledAt'] : [])].join(', '),
     todo: todoOf(command),

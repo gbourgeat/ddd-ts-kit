@@ -98,6 +98,70 @@ ruleTester.run('ports-no-token-constant', portsNoTokenConstant, {
   ],
 });
 
+const DECLARED_STYLE = {
+  contexts: { billing: { classification: 'core', upstreams: [] } },
+  stack: { style: 'declared', dependencies: 'signature' },
+};
+
+const taking = (imports: string, parameters: string, decorator = '@CommandHandler(IssueInvoiceCommand)'): string =>
+  `import { CommandHandler } from '${DECLARATIONS}';\n${imports}\n${decorator}\nexport class IssueInvoiceHandler {\n  constructor(${parameters}) {}\n}`;
+
+const KNEX =
+  "import type { KnexInvoiceRepository } from '../../../infrastructure/persistence/knex-invoice.repository.js';";
+
+const FAKE = "import type { FakeInvoiceRepository } from '../../../test/fakes/invoice.repository.fake.js';";
+
+ruleTester.run(
+  'ports-no-concrete-dependency, on a constructor that states the dependencies',
+  portsNoConcreteDependency,
+  {
+    valid: [
+      at(
+        HANDLER,
+        taking(
+          "import type { InvoiceRepository } from '../../../domain/repositories/invoice.repository.js';",
+          'private readonly invoices: InvoiceRepository, private readonly clock: Clock, raw: string | number',
+        ),
+        DECLARED_STYLE,
+      ),
+      // Outside the declared style a class is bound in the module file, whose list is judged.
+      at(HANDLER, taking(KNEX, 'private readonly invoices: KnexInvoiceRepository')),
+      at(SPEC, taking(FAKE, 'private readonly invoices: FakeInvoiceRepository'), DECLARED_STYLE),
+      at(
+        `${BILLING}/infrastructure/persistence/invoice.mapper.ts`,
+        taking(KNEX, 'a: KnexInvoiceRepository'),
+        DECLARED_STYLE,
+      ),
+    ],
+    invalid: [
+      {
+        ...at(
+          HANDLER,
+          taking(`${KNEX}\n${FAKE}`, 'private readonly invoices: KnexInvoiceRepository, fake: FakeInvoiceRepository'),
+          DECLARED_STYLE,
+        ),
+        errors: [
+          { messageId: 'typed', data: { name: 'KnexInvoiceRepository', where: 'infrastructure/' } },
+          { messageId: 'typed', data: { name: 'FakeInvoiceRepository', where: 'test/fakes/' } },
+        ],
+      },
+      {
+        // With a list, the list is what is injected: it is the one judged.
+        ...at(
+          HANDLER,
+          taking(
+            KNEX.replace('import type', 'import'),
+            'private readonly invoices: KnexInvoiceRepository',
+            '@CommandHandler(IssueInvoiceCommand, [KnexInvoiceRepository])',
+          ),
+          DECLARED_STYLE,
+        ),
+        errors: [{ messageId: 'concrete', data: { name: 'KnexInvoiceRepository', where: 'infrastructure/' } }],
+      },
+    ],
+  },
+);
+
 ruleTester.run('ports-no-concrete-dependency', portsNoConcreteDependency, {
   valid: [
     at(

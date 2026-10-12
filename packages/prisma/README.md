@@ -204,7 +204,7 @@ export abstract class InvoiceRepository extends Repository<Invoice> {}
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
 import { optimisticUpdate } from '@ddd-ts-kit/prisma';
 
-@Repository(InvoiceRepository, [Database])
+@Repository(InvoiceRepository)
 export class PrismaInvoiceRepository implements InvoiceRepository {
   constructor(private readonly database: Database) {}
 
@@ -287,7 +287,7 @@ Prisma's own attributes know nothing of who acts.
 import { Clock, ExecutionScope, stampCreation, stampUpdate, tenantScopeOf } from '@ddd-ts-kit/kernel';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
 
-@Repository(InvoiceRepository, [Database, ExecutionScope, Clock])
+@Repository(InvoiceRepository)
 export class PrismaInvoiceRepository implements InvoiceRepository {
   constructor(
     private readonly database: Database,
@@ -340,7 +340,7 @@ export abstract class InvoiceQueries {
 import { ExecutionScope, encodeCursor, pageOf, tenantScopeOf } from '@ddd-ts-kit/kernel';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
 
-@Repository(InvoiceQueries, [Database, ExecutionScope])
+@Repository(InvoiceQueries)
 export class PrismaInvoiceQueries implements InvoiceQueries {
   constructor(
     private readonly database: Database,
@@ -490,7 +490,7 @@ model AppointmentRow {
 
 ```ts
 // infrastructure/persistence/prisma-appointment-list.repository.ts
-@Repository(AppointmentList, [Database])
+@Repository(AppointmentList)
 export class PrismaAppointmentList extends PrismaReadModelStore<AppointmentRow, Prisma.TransactionClient> implements AppointmentList {
   constructor(database: Database) {
     super(database, {

@@ -31,7 +31,7 @@ type Announced = {
 };
 
 /** Keeps the outcome of each appointment: every fact sets the whole line, so a replay or a late delivery ends on the same one. */
-@Projection('analytics.outcomes', [OutcomeRegister])
+@Projection('analytics.outcomes')
 export class OutcomesProjection {
   constructor(private readonly outcomes: OutcomeRegister) {}
 

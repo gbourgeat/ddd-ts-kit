@@ -74,6 +74,15 @@ happy path, each failure by its error code, nothing saved or published on failur
 refusal of an actor without the permission (generated). Reactions: dispatch the event and
 assert the command's effect; an integration event handler run twice changes state once.
 
+Always assemble the context from its generated file: it is what registers what each
+constructor is injected, so neither the test nor the handler lists a dependency. To test one
+class alone, take it from that file,
+`contextModule('<context>', { PlaceOrderHandler: declarations.PlaceOrderHandler })`, never
+from its own import: a class handed over alone has no dependency list
+(`WiringError MISSING_DEPENDENCIES`). Every port a class of the assembled context takes is
+bound by the platform test module or by a `fake(Port, aFake)`, read models of projections
+included.
+
 ## Builders
 
 One per aggregate in `test/builders/` (`generate builder`, written with the aggregate):

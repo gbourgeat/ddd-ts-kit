@@ -14,6 +14,23 @@ const OTHER_SUFFIX = SOURCE_SUFFIX === '' ? '.js' : '';
 const PORT_IMPORT = `import { ReminderRepository } from '${ALIAS}/domain/repositories/reminder.repository${SOURCE_SUFFIX}';`;
 const USER_CONTEXT = 'src/shared-kernel/user-context.ts';
 
+const LISTED =
+  'A list in a decorator is a second statement of the dependencies in a project that states them in constructor signatures: the rule that holds the single statement reports it too.';
+
+const STALE =
+  'The generated list of a class is read from its constructor: a changed signature leaves the barrel stale until it is regenerated.';
+
+const SECOND_STATEMENT = [
+  { tool: 'checker', rule: 'declarations/constructor-injection', reason: LISTED },
+  { tool: 'eslint', rule: 'ddd-ts-kit/declarations-constructor-injection', reason: LISTED },
+  {
+    tool: 'checker',
+    rule: 'declarations/barrel-current',
+    reason:
+      'A class that lists its dependencies in its decorator is registered no list by the generated file, which still holds the one read from its constructor.',
+  },
+] as const;
+
 /** How classes are declared, wired and scheduled, and what stays outside the contexts. */
 export const WIRING_INJECTIONS: readonly Injection[] = [
   {
@@ -56,13 +73,20 @@ export const WIRING_INJECTIONS: readonly Injection[] = [
     rule: 'ports/no-token-constant',
     what: 'an upper-case constant in a dependency list',
     file: DUE_HANDLER,
-    changes: [{ file: DUE_HANDLER, from: '[ReminderRepository]', to: '[REMINDER_REPOSITORY]' }],
+    changes: [
+      {
+        file: DUE_HANDLER,
+        from: '@CommandHandler(SendDueRemindersCommand)',
+        to: '@CommandHandler(SendDueRemindersCommand, [REMINDER_REPOSITORY])',
+      },
+    ],
     checker: true,
     eslint: 'ddd-ts-kit/ports-no-token-constant',
+    alsoReports: SECOND_STATEMENT,
   },
   {
     rule: 'ports/no-concrete-dependency',
-    what: 'the fake of a repository named in a dependency list',
+    what: 'a constructor parameter typed by the fake of a repository',
     file: SEND_HANDLER,
     changes: [
       {
@@ -70,22 +94,50 @@ export const WIRING_INJECTIONS: readonly Injection[] = [
         where: 'start',
         to: `import { FakeNotificationRepository } from '${ALIAS}/test/fakes/notification.repository.fake${SOURCE_SUFFIX}';\n`,
       },
-      { file: SEND_HANDLER, from: '[NotificationRepository, Contacts', to: '[FakeNotificationRepository, Contacts' },
+      {
+        file: SEND_HANDLER,
+        from: '    private readonly notificationRepository: NotificationRepository,\n',
+        to: '    private readonly notificationRepository: NotificationRepository,\n    private readonly stored: FakeNotificationRepository,\n',
+      },
     ],
     checker: true,
     eslint: 'ddd-ts-kit/ports-no-concrete-dependency',
     alsoReports: [
       { tool: 'checker', rule: 'layer/application-inward', reason: CONCRETE },
       { tool: 'eslint', rule: 'ddd-ts-kit/layer-application-inward', reason: CONCRETE },
+      { tool: 'checker', rule: 'declarations/barrel-current', reason: STALE },
     ],
+  },
+  {
+    rule: 'declarations/constructor-injection',
+    what: 'a constructor parameter typed by a type of the language, which names nothing to inject',
+    file: PLAN_HANDLER,
+    changes: [
+      {
+        file: PLAN_HANDLER,
+        from: '    private readonly clock: Clock,\n',
+        to: '    private readonly clock: Clock,\n    private readonly retries: number,\n',
+      },
+    ],
+    checker: true,
+    eslint: 'ddd-ts-kit/declarations-constructor-injection',
+    alsoReports: [{ tool: 'checker', rule: 'declarations/barrel-current', reason: STALE }],
   },
   {
     rule: 'ports/value-import',
     what: 'a port of a dependency list imported as a type',
     file: PLAN_HANDLER,
-    changes: [{ file: PLAN_HANDLER, from: PORT_IMPORT, to: PORT_IMPORT.replace('import {', 'import type {') }],
+    changes: [
+      { file: PLAN_HANDLER, from: PORT_IMPORT, to: PORT_IMPORT.replace('import {', 'import type {') },
+      {
+        file: PLAN_HANDLER,
+        from: '@CommandHandler(PlanReminderCommand)',
+        to: '@CommandHandler(PlanReminderCommand, [ReminderRepository, IdGenerator, Clock])',
+      },
+    ],
     checker: true,
     eslint: 'ddd-ts-kit/ports-value-import',
+    alsoReports: SECOND_STATEMENT,
   },
   {
     rule: 'scheduling/job-triggers-use-case',
@@ -93,7 +145,6 @@ export const WIRING_INJECTIONS: readonly Injection[] = [
     file: JOB,
     changes: [
       { file: JOB, where: 'start', to: `${PORT_IMPORT}\n` },
-      { file: JOB, from: '[CommandBus]', to: '[CommandBus, ReminderRepository]' },
       {
         file: JOB,
         from: '  constructor(private readonly commands: CommandBus) {}',
@@ -102,6 +153,7 @@ export const WIRING_INJECTIONS: readonly Injection[] = [
     ],
     checker: true,
     eslint: 'ddd-ts-kit/scheduling-job-triggers-use-case',
+    alsoReports: [{ tool: 'checker', rule: 'declarations/barrel-current', reason: STALE }],
   },
   {
     rule: 'scheduling/job-name',

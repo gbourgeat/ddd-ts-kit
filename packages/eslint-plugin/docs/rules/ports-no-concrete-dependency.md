@@ -6,12 +6,13 @@ Applies to: every linted file.
 
 ## Why
 
-A dependency list names ports, never what implements them. A handler that lists `KnexInvoiceRepository` is wired to one technology, cannot be given a fake, and makes the application layer depend on infrastructure through its own registration.
+A dependency is named by its port, never by what implements it. A handler that is given `KnexInvoiceRepository` is wired to one technology, cannot be given a fake, and makes the application layer depend on infrastructure through its own registration. In the declared style a class states what it depends on in its constructor, so the types of its parameters are held like the entries of a list.
 
 ## Reported
 
 - a class named in a dependency list and imported from `infrastructure/` of a context
 - a class named in a dependency list and imported from `test/fakes/` of a context
+- in a declared-style project, in a role file: a class of either place that types a constructor parameter of a class carrying a declaration decorator without a list (`constructor(private readonly invoices: KnexInvoiceRepository) {}`)
 
 Incorrect:
 

@@ -14,7 +14,7 @@ import type {
 
 type VersionedDelegation = DelegationColumns & { readonly version: number };
 
-@Repository(DelegationRepository, [KnexContext, ExecutionScope, Clock])
+@Repository(DelegationRepository)
 export class KnexDelegationRepository implements DelegationRepository {
   constructor(
     private readonly database: KnexContext,

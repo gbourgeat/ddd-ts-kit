@@ -10,6 +10,7 @@ import {
   CACHE_STACKS,
   CI_PLATFORMS,
   DATABASE_STACKS,
+  DEPENDENCY_STATEMENTS,
   DI_STACKS,
   DOCS_UIS,
   ERROR_REPORTERS,
@@ -49,7 +50,7 @@ export function parseStack(stack: Record<string, unknown>): Stack {
 
 type Choices = Pick<
   Stack,
-  'authn' | 'authz' | 'broker' | 'cache' | 'audit' | 'errors' | 'logger' | 'style' | 'assembly'
+  'authn' | 'authz' | 'broker' | 'cache' | 'audit' | 'errors' | 'logger' | 'style' | 'assembly' | 'dependencies'
 >;
 
 function parseChoices(choose: Choose, orm: Stack['orm']): Choices {
@@ -63,6 +64,7 @@ function parseChoices(choose: Choose, orm: Stack['orm']): Choices {
     logger: choose('logger', LOGGERS, 'stdout'),
     style: choose('style', STYLES, 'explicit'),
     assembly: choose('assembly', ASSEMBLIES, 'barrel'),
+    dependencies: choose('dependencies', DEPENDENCY_STATEMENTS, 'listed'),
   };
 }
 

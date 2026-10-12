@@ -3,7 +3,7 @@ import { KnexContext, KnexReadModelStore } from '@ddd-ts-kit/knex';
 import { Agenda, agendaCriteria, type AgendaEntry } from '@/contexts/scheduling/application/ports/agenda.port';
 import { SCHEDULING_SCHEMA } from '@/contexts/scheduling/infrastructure/persistence/scheduling.schema';
 
-@Repository(Agenda, [KnexContext])
+@Repository(Agenda)
 export class KnexAgenda extends KnexReadModelStore<AgendaEntry> implements Agenda {
   constructor(context: KnexContext) {
     super(context, {

@@ -88,7 +88,7 @@ describe('init', () => {
     const root = initProject('--assembly', 'discovery', '--context', 'billing:core');
 
     const suffixes =
-      'command,query,handler,integration-handler,event-handler,publisher,policy,job,repository,gateway,adapter';
+      'command,query,handler,integration-handler,event-handler,publisher,policy,job,projection,repository,gateway,adapter';
 
     expect(jsonAt(readJson(root, 'ddd-ts-kit.config.json'), 'stack')).toMatchObject({
       style: 'declared',
@@ -102,7 +102,7 @@ describe('init', () => {
     );
 
     expect(read(root, 'knip.json')).toContain(
-      `"src/contexts/*/{published-language/index,{application,infrastructure}/**/*.{${suffixes}}}.ts"`,
+      `"src/contexts/*/{published-language/index,*.dependencies,{application,infrastructure}/**/*.{${suffixes}}}.ts"`,
     );
 
     expect(read(root, '.dependency-cruiser.cjs')).toContain(`(${suffixes.replaceAll(',', '|')})`);

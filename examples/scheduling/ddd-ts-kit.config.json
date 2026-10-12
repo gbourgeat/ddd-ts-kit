@@ -23,7 +23,8 @@
     "errors": "sentry",
     "logger": "pino",
     "style": "declared",
-    "assembly": "barrel"
+    "assembly": "barrel",
+    "dependencies": "signature"
   },
   "contexts": {
     "identity": {
@@ -36,12 +37,6 @@
         {
           "context": "identity",
           "relationship": "customer-supplier"
-        }
-      ],
-      "extraDirectories": [
-        {
-          "path": "application/projections",
-          "reason": "The kernel declares projections in application/projections; the checker does not know the directory yet (docs/adr/0002)"
         }
       ]
     },
@@ -56,12 +51,6 @@
           "context": "identity",
           "relationship": "published-language"
         }
-      ],
-      "extraDirectories": [
-        {
-          "path": "application/projections",
-          "reason": "The kernel declares projections in application/projections; the checker does not know the directory yet (docs/adr/0002)"
-        }
       ]
     },
     "analytics": {
@@ -71,12 +60,6 @@
           "context": "scheduling",
           "relationship": "conformist"
         }
-      ],
-      "extraDirectories": [
-        {
-          "path": "application/projections",
-          "reason": "The kernel declares projections in application/projections; the checker does not know the directory yet (docs/adr/0002)"
-        }
       ]
     }
   },
@@ -84,21 +67,5 @@
   "domainAllowedPackages": ["@ddd-ts-kit/kernel"],
   "applicationAllowedPackages": ["@ddd-ts-kit/kernel", "@ddd-ts-kit/auth"],
   "worker": true,
-  "deviations": [
-    {
-      "what": "contexts.scheduling.extraDirectories.application/projections",
-      "adr": "0002",
-      "reason": "The kernel declares projections in application/projections; the checker does not know the directory yet"
-    },
-    {
-      "what": "contexts.notification.extraDirectories.application/projections",
-      "adr": "0002",
-      "reason": "The kernel declares projections in application/projections; the checker does not know the directory yet"
-    },
-    {
-      "what": "contexts.analytics.extraDirectories.application/projections",
-      "adr": "0002",
-      "reason": "The kernel declares projections in application/projections; the checker does not know the directory yet"
-    }
-  ]
+  "deviations": []
 }

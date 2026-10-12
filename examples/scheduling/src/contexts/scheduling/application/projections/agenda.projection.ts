@@ -27,7 +27,7 @@ type Standing = Pick<AgendaEntry, 'status'> & Partial<Pick<AgendaEntry, 'confirm
  * carries the whole entry it leaves, so a fact applied twice or late ends on the same entry;
  * a move changes the place and keeps where the appointment stands.
  */
-@Projection('scheduling.agenda', [Agenda])
+@Projection('scheduling.agenda')
 export class AgendaProjection {
   constructor(private readonly agenda: Agenda) {}
 

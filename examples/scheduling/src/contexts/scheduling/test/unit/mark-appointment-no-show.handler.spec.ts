@@ -11,6 +11,8 @@ import { AppointmentRepository } from '@/contexts/scheduling/domain/repositories
 import type { Appointment } from '@/contexts/scheduling/domain/aggregates/appointment.aggregate';
 import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder';
 import { FakeAppointmentRepository } from '@/contexts/scheduling/test/fakes/appointment.repository.fake';
+import { Agenda } from '@/contexts/scheduling/application/ports/agenda.port';
+import { FakeAgenda } from '@/contexts/scheduling/test/fakes/agenda.fake';
 
 const holders = authorizationModule({
   authorizer: new RoleBasedAuthorizer({ roles: { holder: [schedulingPermissions['appointment.mark-no-show']] } }),
@@ -91,7 +93,7 @@ async function arrange(...stored: readonly Appointment[]) {
 
   const application = createTestApplication({
     modules: [platformTestModule, contextModule('scheduling', schedulingDeclarations), holders],
-    fakes: [fake(AppointmentRepository, appointmentRepository)],
+    fakes: [fake(AppointmentRepository, appointmentRepository), fake(Agenda, new FakeAgenda())],
     now: NOW,
   });
 

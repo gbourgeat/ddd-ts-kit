@@ -58,9 +58,10 @@ configuration, the storage, and `composeApplication` of `{{config.platformDir}}/
 
 - **A port is an abstract class, and the class is what is injected.** A repository port lives in
   `domain/repositories/`, any other port in `application/ports/`, one per file; an adapter
-  `implements` its port. There is no token constant and no token file anywhere: a dependency list
-  names port classes (`[InvoiceRepository, Clock]`), the ports of the kernel included (`Clock`,
-  `IdGenerator`, `CommandBus`, `UnitOfWork`... of `@ddd-ts-kit/kernel`).
+  `implements` its port. There is no token constant and no token file anywhere: a constructor
+  parameter typed by a port class names what is injected (`private readonly clock: Clock`), the
+  ports of the kernel included (`Clock`, `IdGenerator`, `CommandBus`, `UnitOfWork`... of
+  `@ddd-ts-kit/kernel`).
 {{#if di.tsyringe}}
 - **Three modules, then the contexts.** `kernelModule({...})` binds the ports of the kernel to what
   this platform chose (one execution scope, one clock, the two buses with their middlewares);

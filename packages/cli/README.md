@@ -118,9 +118,23 @@ A config written before `stack.style` existed is explicit.
 **A port is an abstract class and its own injection token.** `application/ports/<name>.port.ts`
 and `domain/repositories/<name>.repository.ts` hold one abstract class each. Generated code holds
 no `token()`, no UPPER_SNAKE injection constant, no `<context>.ports.ts` and no
-`platform/tokens.ts`: a dependency list names port classes (`[InvoiceRepository, IdGenerator, Clock]`),
-kernel ports are value imports wherever they are named in a list or a binding, an adapter
-`implements` its port. Every generated file exports one class, interface or function and is named
+`platform/tokens.ts`: a constructor parameter typed by a port class names what is injected
+(`private readonly clock: Clock`), kernel ports are value imports wherever they are named in a
+list or a binding and type imports where they only type a parameter, an adapter `implements`
+its port.
+
+**The constructor states the dependencies.** In the declared style a generated class lists
+nothing in its decorator (`@CommandHandler(IssueInvoiceCommand)`): each constructor parameter
+is typed by one class, its token (`declarations/constructor-injection`). `generate`, `docs` and
+the `dev` script read the signatures, with the zero-dependency scanner of the checker and no
+compiler, and write `injected(Class, [Tokens])` statements in the generated file of each
+context: the barrel `<context>.declarations.ts`, or `<context>.dependencies.ts` under
+discovery. `@ddd-ts-kit/di` injects from there. `emitDecoratorMetadata` is never relied on: it
+is absent with standard decorators and under `tsx`. `init` writes
+`"stack.dependencies": "signature"`; a config without the key is `listed`, the 0.1 form
+(`@CommandHandler(M, [Ports])`), which keeps working untouched, and
+`--dependencies listed` asks for it. The explicit style stays explicit: its module file lists
+what each class is given. Every generated file exports one class, interface or function and is named
 after it.
 
 **Domain events leave with the save.** A generated command handler builds or loads its aggregate,
@@ -227,6 +241,7 @@ ddd-ts-kit generate --help --json
 | `integration-event` | `<context> <Aggregate> <Fact> [--version n]` | `defineIntegrationEvent` declaration in the published language (its payload in `<event>.v<n>.payload.ts` with class-validator or a schema of your own), index export, the publisher `application/integration/publishers/<event>.publisher.ts`, spec, registration, a line of `platform/audit/audited-events.ts` |
 | `integration-handler` (`consumer`) | `<context> <upstreamContext> <eventType>` | `application/integration/handlers/<name>.integration-handler.ts`, a class `<Name>IntegrationHandler` depending on `CommandBus`, its spec, its idempotent subscription under the consumer name `<context>.<name>`; refused unless the upstream is declared |
 | `event-handler` | `<context> <Aggregate> <Fact> [--phase after-commit]` | reaction to a domain event of the context, spec, subscription; before the commit of the unit of work by default, after it with `--phase after-commit` (an effect no transaction covers, at most once), and the spec runs the reaction in that phase |
+| `projection` (`projector`) | `<context> <Name> <event-type>` | a projector in `application/projections/<name>.projection.ts`, declared with `@Projection('<context>.<name>')` and one `@On(definition)` method for the integration event, which the context itself or a declared upstream publishes, and its spec; declared style only. It keeps one read model: its port is received in the constructor |
 | `job` | `<context> <Name> (--every <duration> \| --cron "<expression>" [--time-zone <zone>]) --command <UseCaseName>` | `application/scheduling/<name>.job.ts`, a class `<Name>Job implements ScheduledJob` that sends the command, as `systemActor('<context>.<name>')` when it is protected, with `execution.scheduledAt` when the command takes it; `test/unit/<name>.job.spec.ts`, which runs the job (by name on tsyringe, `application.jobs.runNow`; `job.run(occurrence)` with hand wiring) and asserts the command it sent; its registration; its switch in `platform/job-settings.ts`; the grant of its system actor (below) |
 | `acl` | `<context> <upstreamOrSystemName>` | translator in `infrastructure/anti-corruption/`, spec |
 | `e2e` | `<context> <UseCaseName>` | `test/e2e/<use-case>.e2e.spec.ts` driving the route of the use case: 401 without a credential, 403 without the permission, the documented status with it; for a command, one more test asserts the trace of the request, exact on names and structure, with `installTestTracing()` and `expectSpanTree(storyOf(trace), [...])` of `@ddd-ts-kit/tracing/testing` (`POST /invoices`, then `command IssueInvoiceCommand`, then `repository InvoiceRepository.save`); needs the route |
@@ -239,17 +254,17 @@ ddd-ts-kit generate --help --json
 
 - **The declared style, kind by kind.** No token anywhere: a list names port classes. `command`
   and `query` put `@Requires(<permissions>[...])` or `@Public()` on the message and
-  `@CommandHandler(Message, [InvoiceRepository, IdGenerator, Clock])` or
+  `@CommandHandler(Message)` or
   `@QueryHandler(Message, [<UseCase>Reader])` on the handler; `repository` writes
   `@Repository(InvoiceRepository, [<storage>, ExecutionScope, Clock])`, the storage being
   `Database` of the platform (drizzle, prisma), `KnexContext` or `TypeOrmContext`; the in-memory
   adapter of a read port is `in-memory-<name>-reader.repository.ts`, a role file with
   `@Repository(<UseCase>Reader)`; `integration-handler` writes
-  `@IntegrationEventHandler(definition, { consumer }, [CommandBus])` and is refused when the
+  `@IntegrationEventHandler(definition, { consumer })` and is refused when the
   upstream does not declare the event; `event-handler` and the publisher of `integration-event`
   write `@DomainEventHandler(Event, { name })` (the publisher with
   `[IntegrationEventPublisher, IdGenerator]`), and both are found like any role file: the
-  composition root lists no publisher; `job` writes `@Scheduled('<context>.<name>', schedule, [CommandBus])`;
+  composition root lists no publisher; `job` writes `@Scheduled('<context>.<name>', schedule)`;
   `policy` writes a class with `@Policy(permission, { name })` and registers nothing; `gateway`
   writes `@Gateway(<Name>Gateway, [<Name>Contract])` and binds the upstream value in the marker
   regions of `platform/platform.module.ts` and `platform/platform-test.module.ts`: a value or a
@@ -288,8 +303,16 @@ ddd-ts-kit generate --help --json
   relationship schema or a permission the generator cannot read, nothing is written and the job
   file carries the `TODO(domain)` naming the actor and the permission.
 - **The barrel is derived.** `<context>.declarations.ts` holds one `export *` per role file, sorted
-  by path. Every `generate`, and `docs`, rewrite it; `docs --check` and `check`
-  (`declarations/barrel-current`) report one that a role file written by hand left behind.
+  by path, then one `injected(Class, [Tokens])` per class whose constructor takes something,
+  read from its signature, with the imports they need. Every `generate`, and `docs`, rewrite it;
+  `docs --check` and `check` (`declarations/barrel-current`) report one that a role file written
+  by hand left behind or whose constructor changed since, naming the class
+  (`stale  src/contexts/billing/billing.declarations.ts: the dependency list of IssueInvoiceHandler is stale: ...`).
+  The `dev` script loads `ddd-ts-kit/dist/refresh-declarations.js` before the application, on
+  every start and reload of `tsx watch`: a port added to a constructor is injected on the
+  reload that follows the save. The same module is the binary `ddd-ts-kit-refresh-declarations`.
+  It is laid out as Biome lays it out at a line width of 120; a project that formats at another
+  width leaves `**/*.declarations.ts` and `**/*.dependencies.ts` out of its formatter.
 - **Deny by default.** `command` and `query` are refused without `--permission` or `--public`. A new
   permission joins `<context>.permissions.ts`; its words are checked against the glossary like any
   other name. With `--authz rebac` the requirement names the context as its resource, a starting
@@ -366,7 +389,9 @@ Regenerates what is derived from the config and the code, and nothing else:
   kept; on first creation the four written sections are laid out with hints.
 - the generated lists of every `CONTEXT.md` (aggregates, published events, permissions, scheduled
   jobs as a table of name, schedule and command, relationships);
-- the barrel of every declared context, `<context>.declarations.ts`;
+- the generated file of every declared context: the barrel `<context>.declarations.ts`, with
+  what each constructor is injected, read from its signature, or under discovery
+  `<context>.dependencies.ts`, which holds that alone;
 - the reference of every `CONTEXT.md`: the facts of `describe`, as tables under `## Reference`,
   between `ddd-ts-kit:reference` markers; a `CONTEXT.md` that has no such section gets it after its
   last generated list;
@@ -601,11 +626,12 @@ saying what to do instead. Exit code 1 when there is at least one error.
 | `context/extractable` | a module file importing another context outside its published language; persistence importing another context's infrastructure or naming its schema; a handler importing another context's repository; `export let` or an exported `new Map`, `Set`, `WeakMap` at module level; `deployable: true` without `apps/<context>/main.ts`; in the declared style, a role file importing anything of a port file of another context |
 | `governance/recorded-deviation` | a `ddd-ts-kit-disable` or `eslint-disable` comment whose reason names no `ADR-<number>` with a file `docs/adr/<number>-*.md`; a rule set to `off` (or to `warn` below its default), an extra directory, an extra allowed package, a `guard` other than `enforce` or `stack.events` off the outbox, without a `deviations` entry `{ what, adr, reason }` pointing to an existing record |
 | `declarations/role-declared` | declared style only: a role file (other than `*.command.ts` and `*.query.ts`, held by `authz/declared`; `*.job.ts` under `application/scheduling/` with `@Scheduled` and `*.publisher.ts` with `@DomainEventHandler` are roles) exporting no class with the decorator of its suffix and folder, or one carrying another declaration; a declared class in a file that is not a role file; a `consumer` or `name` option that is missing, empty, a variable, a concatenation or a template with a substitution; a `@DomainEventHandler` name that differs from the `name` literal of the imported event class; any declaration decorator on a class under `domain/` |
-| `declarations/barrel-current` | declared style only: with `stack.assembly: barrel`, a missing `<context>.declarations.ts` or one that differs from one `export *` per role file sorted by path; with `discovery`, a barrel that still exists. It needs the tree, so `check-file` does not run it |
+| `declarations/barrel-current` | declared style only: with `stack.assembly: barrel`, a missing `<context>.declarations.ts` or one that differs from one `export *` per role file sorted by path followed by one `injected(Class, [Tokens])` per class whose constructor takes something (read from the signatures, with their imports); with `discovery`, a barrel that still exists, and a `<context>.dependencies.ts` that differs from those `injected` statements (absent is accepted while it would hold none). The message names the missing role file or the class whose list is stale. It needs the tree, so `check-file` does not run it |
+| `declarations/constructor-injection` | declared style only, in a role file: on a class whose decorator lists nothing, a constructor parameter that is optional, has a default value, is a rest parameter or is destructured, has no type, or is typed by anything but one class name (type arguments aside): a union, an intersection, an array, a qualified name, a type of the language, an interface, a type alias, an enum or an unexported class of the file or of the file of the project it is imported from; a class that inherits its constructor from a class the project cannot read. Under `stack.dependencies: signature`, a decorator that carries a list although the constructor can be read: one that repeats it, one that differs |
 | `ports/abstract-class` | in a port file (`domain/repositories/*.repository.ts`, `application/ports/*.port.ts`): a class that is not `abstract`; a member that is not an abstract method or property (`static readonly tokenKey = '<text>'` apart): a constructor, a body, an initializer, a `private`, `protected` or `#` member; an exported `interface` (a `type` alias, a data shape, is not reported) |
 | `ports/implements-never-extends` | a class carrying `@Repository(P)`, `@Gateway(P)` or `@Adapter(P)`, or given to `bind(P).toClass(C)` or `rebind(P).toClass(C)`, without `implements P` or with `extends P`; under `infrastructure/`, a class extending a class imported from a port file |
 | `ports/no-token-constant` | a call of `token` imported from a `@ddd-ts-kit/*` package; `Symbol(..)`, `Symbol.for(..)` or a string literal as the first argument of `bind`, `rebind`, `resolve`, `fake` or `override` in a file importing `@ddd-ts-kit/di`; an UPPER_SNAKE_CASE name in a dependency list; a file named `*.ports.ts` or `tokens.ts` |
-| `ports/no-concrete-dependency` | a dependency list naming a class imported from `infrastructure/` or from `test/fakes/` of a context |
+| `ports/no-concrete-dependency` | a dependency list naming a class imported from `infrastructure/` or from `test/fakes/` of a context; in the declared style, a constructor parameter of a declared class that lists nothing, typed by such a class |
 | `ports/value-import` | a class named in a dependency list, or given to `bind` or `rebind`, imported with `import type` or `import { type X }` |
 | `scheduling/job-triggers-use-case` | in `application/scheduling/*.job.ts`: an exported class that does not implement `ScheduledJob`; a `run` that sends no command (no `.execute(` call); a repository in the dependency list or the constructor; an import from `domain/aggregates/`, `domain/entities/`, `domain/services/` or `infrastructure/`. A `builder.job(..)` registration of a class that lives elsewhere |
 | `scheduling/job-name` | the first argument of `@Scheduled(..)` or `.job(..)` that is not a string literal `<context>.<job-name>` in lower-case kebab-case with the context of its file; a `systemActor(..)` of a job file passing another name; one job name used twice in the project |
@@ -718,6 +744,14 @@ import is judged by every boundary rule exactly as the relative path to the same
   `override` are binding calls only in a file that imports `@ddd-ts-kit/di`.
   `ports/implements-never-extends` reads the bound class through one direct relative or alias
   import; a class of a package or behind a barrel is not judged.
+- The constructor of a declared class is read as text, by the scanner of the checker: the
+  constructor of the exported class that carries the decorator of its role file, its own or
+  the nearest one it inherits through imports of the project. A type imported from a package
+  is trusted to be a class (the compiler judges the generated file, which imports it as a
+  value); a type reached through a barrel is trusted too. A constructor overloaded by
+  signatures without a body, or built by a mixin, is not read: write one plain constructor.
+  `declarations/barrel-current` compares text exactly, so the generated file is never
+  reformatted by hand.
 - `scheduling/job-triggers-use-case` takes any `.execute(` call in `run` for a command sent; a job
   that executes something else, or sends its command from a helper, is misjudged.
   `scheduling/job-name` compares literal names: a job registered under a computed name is reported

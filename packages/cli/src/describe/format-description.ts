@@ -20,6 +20,12 @@ export function formatDescription(context: ContextDescription): string {
     ['published events', context.publishedEvents.map(publishedEventLine)],
     ['ports', context.ports.map(portLine)],
     ['policies', context.policies.map((policy) => `${policy.name} (on ${known(policy.permission)})`)],
+    [
+      'projections',
+      context.projections.map(
+        (projection) => `${projection.name} (${projection.projector}, applies ${projection.applies.join(', ')})`,
+      ),
+    ],
     ['gateways', context.gateways.map(gatewayLine)],
     ['scheduled jobs', context.jobs.map((job) => `${job.name} (${job.schedule}, sends ${job.command})`)],
   ];

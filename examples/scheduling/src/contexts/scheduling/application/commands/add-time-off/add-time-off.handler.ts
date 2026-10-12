@@ -6,7 +6,7 @@ import { CalendarRepository } from '@/contexts/scheduling/domain/repositories/ca
 import { TimeOff } from '@/contexts/scheduling/domain/value-objects/time-off.vo';
 import { AddTimeOffCommand } from '@/contexts/scheduling/application/commands/add-time-off/add-time-off.command';
 
-@CommandHandler(AddTimeOffCommand, [CalendarRepository, AppointmentRepository, Clock])
+@CommandHandler(AddTimeOffCommand)
 export class AddTimeOffHandler implements CommandHandler<AddTimeOffCommand> {
   constructor(
     private readonly calendarRepository: CalendarRepository,

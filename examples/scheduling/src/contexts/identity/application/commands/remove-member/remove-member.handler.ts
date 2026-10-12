@@ -4,7 +4,7 @@ import { PracticeNotFoundError } from '@/contexts/identity/domain/errors/practic
 import { PracticeRepository } from '@/contexts/identity/domain/repositories/practice.repository';
 import { RemoveMemberCommand } from '@/contexts/identity/application/commands/remove-member/remove-member.command';
 
-@CommandHandler(RemoveMemberCommand, [PracticeRepository, Clock])
+@CommandHandler(RemoveMemberCommand)
 export class RemoveMemberHandler implements CommandHandler<RemoveMemberCommand> {
   constructor(
     private readonly practiceRepository: PracticeRepository,

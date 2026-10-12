@@ -8,7 +8,7 @@ import { Contacts } from '@/contexts/notification/application/ports/contacts.por
 import { Mailer } from '@/contexts/notification/application/ports/mailer.port';
 import { SendNotificationCommand } from '@/contexts/notification/application/commands/send-notification/send-notification.command';
 
-@CommandHandler(SendNotificationCommand, [NotificationRepository, Contacts, Mailer, IdGenerator, Clock])
+@CommandHandler(SendNotificationCommand)
 export class SendNotificationHandler implements CommandHandler<SendNotificationCommand> {
   constructor(
     private readonly notificationRepository: NotificationRepository,

@@ -11,6 +11,7 @@ import {
 import {
   Adapter,
   CommandHandler,
+  injected,
   DomainEventHandler,
   IntegrationEventHandler,
   On,
@@ -99,7 +100,7 @@ export class HandlerNamingAnAdapter {
   }
 }
 
-// @ts-expect-error -- no token list, and the constructor has parameters
+/** No list: the constructor states the dependency, and the generated file of the context registers it. */
 @CommandHandler(ScheduleVisit)
 export class HandlerWithoutItsList {
   constructor(readonly visits: VisitRepository) {}
@@ -202,7 +203,7 @@ export class JobWithAnotherRun {
   async run(_times: number): Promise<void> {}
 }
 
-// @ts-expect-error -- no token list, and the constructor has parameters
+/** No list here either: a job states what it is given in its constructor, as every declared class does. */
 @Scheduled('clinic.without-its-list', { every: '1h' })
 export class JobWithoutItsList {
   constructor(readonly commands: CommandBus) {}
@@ -259,3 +260,11 @@ export class ProjectionWithAWrongToken {
 
 // @ts-expect-error -- a projection name is <context>.<name>
 Projection('patients');
+
+injected(HandlerWithoutItsList, [VisitRepository]);
+
+// @ts-expect-error -- a registered list is checked like the list of a decorator: one token per parameter, by its port
+injected(HandlerWithoutItsList, [Clock]);
+
+// @ts-expect-error -- a constructor that takes a parameter is registered with its list
+injected(HandlerWithoutItsList);

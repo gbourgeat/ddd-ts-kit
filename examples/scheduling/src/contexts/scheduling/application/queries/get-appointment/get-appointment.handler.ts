@@ -12,7 +12,7 @@ import type { GetAppointmentResult } from '@/contexts/scheduling/application/que
 const NAME_TIMEOUT_MS = 300;
 const UNNAMED = { displayName: '' };
 
-@QueryHandler(GetAppointmentQuery, [Agenda, PersonDirectoryGateway, Access])
+@QueryHandler(GetAppointmentQuery)
 export class GetAppointmentHandler implements QueryHandler<GetAppointmentQuery> {
   constructor(
     private readonly agenda: Agenda,

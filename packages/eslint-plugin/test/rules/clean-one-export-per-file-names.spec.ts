@@ -117,8 +117,9 @@ ruleTester.run('clean-one-export-per-file: entry files', cleanOneExportPerFile, 
     at('packages/pino/src/index.ts', 'export {};', {}),
     at(
       `${BILLING}/billing.declarations.ts`,
-      "export * from './application/a.handler.js';\nexport * from './infrastructure/b.repository.js';",
+      "import { injected } from '@ddd-ts-kit/kernel/declarations';\nimport { A } from './application/a.handler.js';\nexport * from './application/a.handler.js';\nexport * from './infrastructure/b.repository.js';\ninjected(A, [B]);",
     ),
+    at(`${BILLING}/billing.dependencies.ts`, "import { A } from './application/a.handler.js';\ninjected(A, [B]);"),
     {
       ...at('packages/kernel/src/declarations.ts', "export * from './declarations/a.js';", {}),
       options: [{ entries: ['packages/*/src/declarations.ts'] }],
@@ -143,7 +144,6 @@ ruleTester.run('clean-one-export-per-file: entry files', cleanOneExportPerFile, 
         { messageId: 'entry', line: 3 },
       ],
     },
-    { ...at(`${BILLING}/billing.declarations.ts`, 'export class Late {}'), errors: [{ messageId: 'entry' }] },
     {
       ...at('packages/kernel/src/declarations.ts', 'export interface Token {}\nexport function token(): void {}', {}),
       options: [{ entries: ['packages/*/src/declarations.ts'] }],

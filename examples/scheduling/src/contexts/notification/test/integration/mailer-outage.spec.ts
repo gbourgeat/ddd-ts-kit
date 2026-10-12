@@ -13,7 +13,6 @@ import { notificationPermissions } from '@/contexts/notification/application/aut
 import { PlanReminderCommand } from '@/contexts/notification/application/commands/plan-reminder/plan-reminder.command';
 import { SendDueRemindersCommand } from '@/contexts/notification/application/commands/send-due-reminders/send-due-reminders.command';
 import { Mailer } from '@/contexts/notification/application/ports/mailer.port';
-import { ContactsProjection } from '@/contexts/notification/application/projections/contacts.projection';
 import { NotificationRepository } from '@/contexts/notification/domain/repositories/notification.repository';
 import { ReminderRepository } from '@/contexts/notification/domain/repositories/reminder.repository';
 import { FakeMailer } from '@/contexts/notification/test/fakes/mailer.fake';
@@ -43,13 +42,6 @@ const booked = appointmentBookedV1.create(
   },
   { id: 'event-booked', occurredAt: new Date('2026-01-02T08:00:00.000Z') },
 );
-
-const projections = defineContextModule({
-  name: 'notification-projections',
-  register(builder) {
-    builder.include(ContactsProjection);
-  },
-});
 
 let database: TestDatabase;
 
@@ -142,7 +134,7 @@ async function arrange() {
   const mailer = new FakeMailer();
 
   const application = createTestApplication({
-    modules: [storage(), contextModule('notification', notificationDeclarations), projections, authorization],
+    modules: [storage(), contextModule('notification', notificationDeclarations), authorization],
     fakes: [
       fake(Mailer, mailer),
       fake(UnitOfWork, database.persistence.unitOfWork),

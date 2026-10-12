@@ -101,6 +101,12 @@ Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-ki
 | `scheduling.appointment.expired` | 1 | `scheduling` | `SchedulingAppointmentExpiredIntegrationHandler` | `notification.scheduling-appointment-expired` |
 | `scheduling.appointment.rescheduled` | 1 | `scheduling` | `SchedulingAppointmentRescheduledIntegrationHandler` | `notification.scheduling-appointment-rescheduled` |
 
+### Projections
+
+| Projection | Class | Applies |
+|---|---|---|
+| `notification.contacts` | `ContactsProjection` | `personRegisteredV1` |
+
 ### Ports
 
 | Port | Kind | Adapters |

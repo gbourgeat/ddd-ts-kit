@@ -26,7 +26,7 @@ interface Position {
   readonly id: string;
 }
 
-@Repository(SearchNotificationsReader, [KnexContext])
+@Repository(SearchNotificationsReader)
 export class KnexSearchNotificationsReader implements SearchNotificationsReader {
   constructor(private readonly database: KnexContext) {}
 

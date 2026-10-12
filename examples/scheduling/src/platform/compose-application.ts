@@ -37,11 +37,6 @@ import { createQueryBus } from '@/platform/buses/create-query-bus';
 import type { Persistence } from '@/platform/database/persistence';
 import { layFoundations, type Foundations } from '@/platform/lay-foundations';
 import { platformModule, type PlatformOptions } from '@/platform/platform.module';
-// The barrels do not list projections yet (docs/adr/0002): they are named here, or they are not subscribed.
-import { OutcomesProjection } from '@/contexts/analytics/application/projections/outcomes.projection';
-import { ContactsProjection } from '@/contexts/notification/application/projections/contacts.projection';
-import { AgendaProjection } from '@/contexts/scheduling/application/projections/agenda.projection';
-import { PractitionersProjection } from '@/contexts/scheduling/application/projections/practitioners.projection';
 // ddd-ts-kit:imports
 import * as identityDeclarations from '@/contexts/identity/identity.declarations';
 import { identityRoutes } from '@/contexts/identity/presentation/http/identity.routes';
@@ -91,9 +86,9 @@ const everyContext: ContextSelection = {
   modules: [
     // ddd-ts-kit:contexts
     contextModule('identity', identityDeclarations),
-    contextModule('scheduling', { ...schedulingDeclarations, PractitionersProjection, AgendaProjection }),
-    contextModule('notification', { ...notificationDeclarations, ContactsProjection }),
-    contextModule('analytics', { ...analyticsDeclarations, OutcomesProjection }),
+    contextModule('scheduling', schedulingDeclarations),
+    contextModule('notification', notificationDeclarations),
+    contextModule('analytics', analyticsDeclarations),
     // /ddd-ts-kit:contexts
   ],
   routes: [

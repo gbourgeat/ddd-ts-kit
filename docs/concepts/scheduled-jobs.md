@@ -12,7 +12,7 @@ from the instant the run was due, never from the clock.
 
 ```ts
 // notifications/application/scheduling/send-reminders.job.ts
-@Scheduled('notifications.send-reminders', { cron: '0 7 * * *', timeZone: 'Europe/Paris' }, [CommandBus])
+@Scheduled('notifications.send-reminders', { cron: '0 7 * * *', timeZone: 'Europe/Paris' })
 export class SendRemindersJob implements ScheduledJob {
   constructor(private readonly commands: CommandBus) {}
 

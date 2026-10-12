@@ -2,7 +2,7 @@ import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
 import { ReminderRepository } from '@/contexts/notification/domain/repositories/reminder.repository';
 import { SendDueRemindersCommand } from '@/contexts/notification/application/commands/send-due-reminders/send-due-reminders.command';
 
-@CommandHandler(SendDueRemindersCommand, [ReminderRepository])
+@CommandHandler(SendDueRemindersCommand)
 export class SendDueRemindersHandler implements CommandHandler<SendDueRemindersCommand> {
   constructor(private readonly reminderRepository: ReminderRepository) {}
 

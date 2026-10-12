@@ -11,7 +11,7 @@ paths:
 - Own tables, in the schema of the context: no join, foreign key or transaction across contexts (`context/extractable`).
 - Audit columns and the tenant column are stamped from the execution scope with the kernel helpers (`stampCreation`, `stampUpdate`, `tenantScopeOf`), never handed over by a use case.
 {{#if style.declared}}
-- An adapter declares itself on its class, one per file (`declarations/role-declared`): `@Repository(InvoiceRepository, [{{persistence.tokenOrNone}}, ExecutionScope, Clock])`, `@Gateway(Port, [Ports])` or `@Adapter(Port, { kind }, [Ports])`.
+- An adapter declares itself on its class, one per file (`declarations/role-declared`): `@Repository(InvoiceRepository)`, `@Gateway(Port)` or `@Adapter(Port, { kind })`. What it is given is what its constructor takes, each parameter typed by one class (`{{persistence.tokenOrNone}}`, `ExecutionScope`, `Clock`, a port, an abstract class the platform binds to a value) and nothing listed in the decorator (`declarations/constructor-injection`); an adapter that extends a class of a package writes its own constructor.
 - Retry, timeout and cache go on the declaration (`aspects: [ownPolicy(retry(...), timeout(...))]`) or, when the policy is part of what the adapter is, as decorators of `@ddd-ts-kit/aspects/decorators` (`aspects/outside-in`). Kinds `external` and `gateway` get the default policy of the platform otherwise. `ownPolicy` is the helper of `{{alias.platform}}/resilience/own-policy{{alias.ext}}`, which `generate adapter` writes when the platform does not have it yet.
 {{/if}}
 {{#if style.explicit}}

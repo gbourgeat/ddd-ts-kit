@@ -59,10 +59,13 @@ describe('depcruise-config', () => {
     );
 
     expect(read(root, FILE)).not.toContain('integration-handler|event-handler|publisher|policy|job');
+    expect(read(root, FILE)).not.toContain('.dependencies');
 
     expect(read(discovered, FILE)).toContain(
-      '(command|query|handler|integration-handler|event-handler|publisher|policy|job|repository|gateway|adapter)',
+      '(command|query|handler|integration-handler|event-handler|publisher|policy|job|projection|repository|gateway|adapter)',
     );
+
+    expect(read(discovered, FILE)).toContain('/[^/]+/[^/]+\\\\.dependencies\\\\.ts$');
   });
 });
 

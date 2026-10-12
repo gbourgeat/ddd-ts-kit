@@ -11,6 +11,7 @@ export const FUNCTION_LINES_CEILING = 100;
 const STYLES: readonly Style[] = ['declared', 'explicit'];
 
 const ASSEMBLIES: readonly Assembly[] = ['barrel', 'discovery'];
+const DEPENDENCY_STATEMENTS: readonly Stack['dependencies'][] = ['signature', 'listed'];
 
 const KERNEL = ['@ddd-ts-kit/kernel'];
 
@@ -62,6 +63,7 @@ function parseStack(value: unknown): Stack {
   return {
     style: oneOf(STYLES, raw['style'], 'explicit'),
     assembly: oneOf(ASSEMBLIES, raw['assembly'], 'barrel'),
+    dependencies: oneOf(DEPENDENCY_STATEMENTS, raw['dependencies'], 'listed'),
     orm: text(raw['orm'], 'drizzle'),
   };
 }

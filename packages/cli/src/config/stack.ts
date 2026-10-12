@@ -12,6 +12,7 @@ export const AUTHZ_STACKS = ['rbac', 'abac', 'rebac', 'custom'] as const;
 export const BROKER_STACKS = ['none', 'rabbitmq', 'kafka', 'nats', 'redis', 'custom'] as const;
 export const STYLES = ['declared', 'explicit'] as const;
 export const ASSEMBLIES = ['barrel', 'discovery'] as const;
+export const DEPENDENCY_STATEMENTS = ['signature', 'listed'] as const;
 export const CACHE_STACKS = ['none', 'redis'] as const;
 export const AUDIT_MODES = ['on', 'off'] as const;
 export const ERROR_REPORTERS = ['none', 'sentry'] as const;
@@ -56,6 +57,13 @@ export interface Stack {
   readonly style: (typeof STYLES)[number];
   /** How a declared context reaches the composition root: one generated barrel, or discovery of its role files at startup. */
   readonly assembly: (typeof ASSEMBLIES)[number];
+  /**
+   * Where a declared class states what it depends on: `signature`, its constructor parameters and
+   * nowhere else (the generated file of its context registers the list read from them);
+   * `listed`, the last argument of its decorator. A config that says nothing was written when
+   * every decorator listed its dependencies: it is `listed`, and both forms run in either.
+   */
+  readonly dependencies: (typeof DEPENDENCY_STATEMENTS)[number];
   /**
    * What installs the dependencies and runs the scripts: every command the CLI writes (scripts,
    * pipelines, hooks, Dockerfile, guidance) is in its dialect. A config that says nothing was

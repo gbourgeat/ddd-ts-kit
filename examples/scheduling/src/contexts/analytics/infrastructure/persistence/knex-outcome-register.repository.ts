@@ -7,7 +7,7 @@ import {
 } from '@/contexts/analytics/application/ports/outcome-register.port';
 import { ANALYTICS_SCHEMA } from '@/contexts/analytics/infrastructure/persistence/analytics.schema';
 
-@Repository(OutcomeRegister, [KnexContext])
+@Repository(OutcomeRegister)
 export class KnexOutcomeRegister extends KnexReadModelStore<Outcome> implements OutcomeRegister {
   constructor(context: KnexContext) {
     super(context, {

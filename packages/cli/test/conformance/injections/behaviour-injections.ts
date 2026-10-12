@@ -14,7 +14,11 @@ const { PUBLISHED, ROUTE, SCHEDULING, VALUE_OBJECT } = PATHS;
 const CALENDAR_DAY = `${SCHEDULING}/application/queries/get-calendar-day/get-calendar-day.handler.ts`;
 const DUE = '  return new Date(startsAt.getTime() - NOTICE_MS);';
 const SAVED = '    await this.reminderRepository.save(target);\n';
-const DECLARED = "@DomainEventHandler(ReminderSent, { name: 'notification.reminder.sent' }, [CommandBus])";
+const TAKEN = '  constructor(private readonly commands: CommandBus) {}';
+
+const STALE =
+  'The generated list of a class is read from its constructor: a changed signature leaves the barrel stale until it is regenerated.';
+
 const KERNEL = "import { CommandBus, systemActor } from '@ddd-ts-kit/kernel';";
 
 const READ =
@@ -175,6 +179,7 @@ export const BEHAVIOUR_INJECTIONS: readonly Injection[] = [
     ],
     checker: true,
     eslint: 'ddd-ts-kit/authz-actor-explicit',
+    alsoReports: [{ tool: 'checker', rule: 'declarations/barrel-current', reason: STALE }],
   },
   {
     rule: 'events/name-format',
@@ -190,7 +195,6 @@ export const BEHAVIOUR_INJECTIONS: readonly Injection[] = [
     file: SEND_HANDLER,
     changes: [
       { file: SEND_HANDLER, where: 'start', to: "import { EventBus } from '@ddd-ts-kit/kernel';\n" },
-      { file: SEND_HANDLER, from: 'Mailer, IdGenerator, Clock])', to: 'Mailer, IdGenerator, Clock, EventBus])' },
       {
         file: SEND_HANDLER,
         from: '    private readonly clock: Clock,\n  ) {}',
@@ -200,6 +204,7 @@ export const BEHAVIOUR_INJECTIONS: readonly Injection[] = [
     ],
     checker: true,
     eslint: 'ddd-ts-kit/events-outbox-required',
+    alsoReports: [{ tool: 'checker', rule: 'declarations/barrel-current', reason: STALE }],
   },
   {
     rule: 'events/consumer-idempotent',
@@ -233,10 +238,15 @@ export const BEHAVIOUR_INJECTIONS: readonly Injection[] = [
     file: EVENT_HANDLER,
     changes: [
       { file: EVENT_HANDLER, from: KERNEL, to: KERNEL.replace('{ ', '{ Cache, ') },
-      { file: EVENT_HANDLER, from: DECLARED, to: DECLARED.replace('[CommandBus]', '[CommandBus, Cache]') },
+      {
+        file: EVENT_HANDLER,
+        from: TAKEN,
+        to: '  constructor(\n    private readonly commands: CommandBus,\n    private readonly cache: Cache,\n  ) {}',
+      },
     ],
     checker: true,
     eslint: 'ddd-ts-kit/domain-events-transactional-before-commit',
+    alsoReports: [{ tool: 'checker', rule: 'declarations/barrel-current', reason: STALE }],
   },
   {
     rule: 'test/no-mocks',

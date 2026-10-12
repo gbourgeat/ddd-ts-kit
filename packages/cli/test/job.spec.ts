@@ -55,14 +55,14 @@ describe('generate job, in the declared style', () => {
   it('declares a class that only sends its command, as the system actor of the job', () => {
     const job = read(root, JOB);
 
-    expect(job).toContain("import { CommandBus, systemActor } from '@ddd-ts-kit/kernel';");
+    expect(job).toContain("import { systemActor, type CommandBus } from '@ddd-ts-kit/kernel';");
 
     expect(job).toContain(
       "import { Scheduled, type JobExecution, type ScheduledJob } from '@ddd-ts-kit/kernel/declarations';",
     );
 
     expect(job).toContain(
-      "@Scheduled('billing.cancel-stale-invoices', { every: '15m' }, [CommandBus])\nexport class CancelStaleInvoicesJob implements ScheduledJob {\n  constructor(private readonly commands: CommandBus) {}",
+      "@Scheduled('billing.cancel-stale-invoices', { every: '15m' })\nexport class CancelStaleInvoicesJob implements ScheduledJob {\n  constructor(private readonly commands: CommandBus) {}",
     );
 
     expect(job).toContain(
@@ -134,7 +134,7 @@ describe('generate job, in the declared style', () => {
     const reminder = read(root, `${BILLING}/application/scheduling/remind-invoices-daily.job.ts`);
 
     expect(reminder).toContain(
-      "@Scheduled('billing.remind-invoices-daily', { cron: '0 7 * * 1-5', timeZone: 'Europe/Paris' }, [CommandBus])",
+      "@Scheduled('billing.remind-invoices-daily', { cron: '0 7 * * 1-5', timeZone: 'Europe/Paris' })\nexport class RemindInvoicesDailyJob implements ScheduledJob {\n  constructor(private readonly commands: CommandBus) {}",
     );
 
     expect(reminder).toContain('await this.commands.execute(new RemindInvoicesCommand());');

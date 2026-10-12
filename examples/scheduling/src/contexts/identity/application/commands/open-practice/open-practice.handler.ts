@@ -7,7 +7,7 @@ import { PracticeRepository } from '@/contexts/identity/domain/repositories/prac
 import { TimeZone } from '@/contexts/identity/domain/value-objects/time-zone.vo';
 import { OpenPracticeCommand } from '@/contexts/identity/application/commands/open-practice/open-practice.command';
 
-@CommandHandler(OpenPracticeCommand, [PracticeRepository, PersonRepository, IdGenerator, Clock])
+@CommandHandler(OpenPracticeCommand)
 export class OpenPracticeHandler implements CommandHandler<OpenPracticeCommand> {
   constructor(
     private readonly practiceRepository: PracticeRepository,

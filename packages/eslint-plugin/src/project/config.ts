@@ -21,6 +21,8 @@ export interface Stack {
   readonly style: Style;
   /** How a declared context reaches the composition root: one generated barrel, or discovery of its role files. */
   readonly assembly: Assembly;
+  /** Where a declared class states what it depends on: its constructor signature, or the list of its decorator. A config that does not say is `listed`. */
+  readonly dependencies: 'signature' | 'listed';
   /** Kept as written: with `prisma` the generated client under `generated/` has an import alias of its own. */
   readonly orm: string;
 }

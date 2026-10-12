@@ -7,7 +7,7 @@ import { WaitlistRepository } from '@/contexts/scheduling/domain/repositories/wa
 import { JoinWaitlistCommand } from '@/contexts/scheduling/application/commands/join-waitlist/join-waitlist.command';
 
 /** Answers the identifier of the waitlist: the one of the calendar and the day, opened by its first waiter. */
-@CommandHandler(JoinWaitlistCommand, [WaitlistRepository, CalendarRepository, Clock])
+@CommandHandler(JoinWaitlistCommand)
 export class JoinWaitlistHandler implements CommandHandler<JoinWaitlistCommand> {
   constructor(
     private readonly waitlistRepository: WaitlistRepository,

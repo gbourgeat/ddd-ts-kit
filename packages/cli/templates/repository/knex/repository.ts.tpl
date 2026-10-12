@@ -1,33 +1,14 @@
 import type { Knex } from 'knex';
-{{#if style.declared}}
-{{#if tenant.scoped}}
-import { Clock, ExecutionScope, stampCreation, stampUpdate, tenantScopeOf } from '@ddd-ts-kit/kernel';
-{{/if}}
-{{#unless tenant.scoped}}
-import { Clock, ExecutionScope, stampCreation, stampUpdate } from '@ddd-ts-kit/kernel';
-{{/unless}}
-import { Repository } from '@ddd-ts-kit/kernel/declarations';
-{{/if}}
-{{#unless style.declared}}
 {{#if tenant.scoped}}
 import { stampCreation, stampUpdate, tenantScopeOf, type Clock, type ExecutionScope } from '@ddd-ts-kit/kernel';
 {{/if}}
 {{#unless tenant.scoped}}
 import { stampCreation, stampUpdate, type Clock, type ExecutionScope } from '@ddd-ts-kit/kernel';
 {{/unless}}
-{{/unless}}
-{{#if tenant.scoped}}
 {{#if style.declared}}
-import {
-  KnexContext,
-  auditRow,
-  insertIgnoringConflict,
-  optimisticUpdate,
-  tenantRow,
-  type TenantRow,
-} from '@ddd-ts-kit/knex';
+import { Repository } from '@ddd-ts-kit/kernel/declarations';
 {{/if}}
-{{#unless style.declared}}
+{{#if tenant.scoped}}
 import {
   type KnexContext,
   auditRow,
@@ -36,10 +17,9 @@ import {
   tenantRow,
   type TenantRow,
 } from '@ddd-ts-kit/knex';
-{{/unless}}
 {{/if}}
 {{#unless tenant.scoped}}
-import { {{storage.knexImport}}, auditRow, insertIgnoringConflict, optimisticUpdate } from '@ddd-ts-kit/knex';
+import { type KnexContext, auditRow, insertIgnoringConflict, optimisticUpdate } from '@ddd-ts-kit/knex';
 {{/unless}}
 import type { {{aggregate.pascal}} } from '{{alias.context}}/domain/aggregates/{{aggregate.kebab}}.aggregate{{alias.ext}}';
 {{#if style.declared}}
@@ -55,7 +35,7 @@ import type { {{aggregate.pascal}}Columns, {{aggregate.pascal}}Row } from '{{ali
 type Versioned{{aggregate.pascal}} = {{aggregate.pascal}}Columns & { readonly version: number };
 
 {{#if style.declared}}
-@Repository({{aggregate.pascal}}Repository, [KnexContext, ExecutionScope, Clock])
+@Repository({{aggregate.pascal}}Repository)
 {{/if}}
 export class Knex{{aggregate.pascal}}Repository implements {{aggregate.pascal}}Repository {
   constructor(

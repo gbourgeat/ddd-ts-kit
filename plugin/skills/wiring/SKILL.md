@@ -3,11 +3,11 @@ name: wiring
 description: >-
   Explains how the classes of a bounded context reach the composition root in a ddd-ts-kit
   project. Ports as abstract classes used as injection tokens, the declared style
-  (decorators of the kernel and a generated barrel) or the explicit module file, values
-  bound in the platform, fakes in tests. Use when binding an adapter to a port, adding a
-  dependency to a handler, replacing an adapter by a fake, composing main.ts, or when a
-  WiringError, DeclarationError, ports/*, declarations/* or composition/only-in-module is
-  reported.
+  (decorators of the kernel, dependencies stated by the constructor signature, a generated
+  barrel) or the explicit module file, values bound in the platform, fakes in tests. Use
+  when binding an adapter to a port, adding a dependency to a handler, replacing an adapter
+  by a fake, composing main.ts, or when a WiringError, DeclarationError, ports/*,
+  declarations/* or composition/only-in-module is reported.
 allowed-tools:
   - Read
   - Bash(npx ddd-ts-kit generate *)
@@ -30,9 +30,9 @@ change it by hand.
   no constant, no `token()`, no `*.ports.ts` file (`ports/abstract-class`,
   `ports/no-token-constant`).
 - An adapter `implements` its port, never `extends` it (`ports/implements-never-extends`).
-- A dependency list names port classes, in the order of the constructor, imported as values
-  (`import { Clock }`, not `import type`): the compiler checks the list against the
-  constructor (`ports/no-concrete-dependency`, `ports/value-import`).
+- A dependency is named by the class of its port, never by an adapter or a fake
+  (`ports/no-concrete-dependency`). Where a list is written (the explicit style, a
+  `bind(Port)`), the port is imported as a value (`ports/value-import`).
 - A value that is not a port (settings, a database handle) is carried the same way: an
   abstract class with readonly members, bound to a plain object in the platform.
 
@@ -44,20 +44,40 @@ A class says what it is on its own file, and that is its registration. There is 
 | Class | Decorator of `@ddd-ts-kit/kernel/declarations` |
 |---|---|
 | command, query | `@Requires(permission)` or `@Public()` |
-| handler | `@CommandHandler(Message, [Ports])`, `@QueryHandler(Message, [Ports])` |
-| reaction to a domain event, publisher | `@DomainEventHandler(Event, { name }, [Ports])`; `{ name, phase: 'after-commit' }` for an effect outside the transaction (never a publisher) |
-| integration event handler | `@IntegrationEventHandler(definition, { consumer }, [Ports])` |
-| scheduled job | `@Scheduled('<context>.<job>', { every } or { cron, timeZone }, [CommandBus])` |
+| handler | `@CommandHandler(Message)`, `@QueryHandler(Message)` |
+| reaction to a domain event, publisher | `@DomainEventHandler(Event, { name })`; `{ name, phase: 'after-commit' }` for an effect outside the transaction (never a publisher) |
+| integration event handler | `@IntegrationEventHandler(definition, { consumer })` |
+| scheduled job | `@Scheduled('<context>.<job>', { every } or { cron, timeZone })` |
+| projector of a read model | `@Projection('<context>.<name>')`, with `@On(definition)` on each method that applies an event |
 | policy | `@Policy(permission, { name })` |
-| adapter | `@Repository(Port, [Ports])`, `@Gateway(Port, [Ports])`, `@Adapter(Port, { kind }, [Ports])` |
+| adapter | `@Repository(Port)`, `@Gateway(Port)`, `@Adapter(Port, { kind })` |
 
 - Nothing under `domain/` carries a decorator. Names (`consumer`, `name`) are string literals.
-- To add a dependency to a handler: add the constructor parameter and the port to the list,
-  same position. Nothing else.
-- The barrel `<context>.declarations.ts` holds one `export *` per role file. It is generated:
-  after adding, moving or deleting a role file by hand, run `npx ddd-ts-kit docs`
-  (`declarations/barrel-current`). Never edit it. With `stack.assembly: discovery` the
-  composition root reads the role files itself (`discoverContext`) instead of the barrel.
+- **The constructor states the dependencies, and nothing repeats it.** Each parameter is
+  typed by one class, which is its token: a port, a kernel port (`Clock`, `CommandBus`,
+  `Logger`...), another declared class, or an abstract class the platform binds to a value.
+  Never a union, an interface, a primitive, `?`, a default value, a rest parameter
+  (`declarations/constructor-injection`). A port that only types a parameter is imported with
+  `import type`.
+- To add a dependency to a handler: add the constructor parameter. Then `npx ddd-ts-kit docs`
+  (`npm run dev` does it by itself on every reload). Nothing else, and no list in the
+  decorator.
+- The generated file `<context>.declarations.ts` holds one `export *` per role file, then one
+  `injected(Class, [Tokens])` per class whose constructor takes something, read from the
+  source. After adding, moving or deleting a role file, or changing a constructor, by hand:
+  `npx ddd-ts-kit docs` (`declarations/barrel-current` names the class whose list is stale).
+  Never edit it. With `stack.assembly: discovery` the composition root reads the role files
+  itself (`discoverContext`) and the lists from the generated `<context>.dependencies.ts`.
+- `WiringError MISSING_DEPENDENCIES` or `DEPENDENCY_ARITY` at startup: the generated file is
+  stale or was not loaded. Run `npx ddd-ts-kit docs`; in a test, assemble the context from its
+  generated file (`contextModule('<context>', declarations)`), never from a class imported
+  alone.
+- Compiler metadata is never used: `emitDecoratorMetadata` is absent with standard
+  decorators and under `tsx`. Do not add `reflect-metadata` calls or `@Inject`.
+- `stack.dependencies: listed` (a 0.1 project; what a config without the key means): the
+  decorators list their dependencies, `@CommandHandler(Message, [Ports])`, in the order of the
+  constructor. Keep the form the project uses; to move to signatures, set
+  `"dependencies": "signature"`, `npx eslint . --fix`, `npx ddd-ts-kit docs`.
 - A value or a factory, which no decorator can say, is bound in
   `src/platform/platform.module.ts` (and its test twin): that file belongs to the platform,
   not to a context.
@@ -68,8 +88,10 @@ Every binding is written in `<context>.module.ts`, the only file of a context al
 know every layer (`composition/only-in-module`):
 `builder.bind(Port).toClass(Adapter, [Ports]).as('<kind>')`,
 `builder.command(Message).requires(permission).handledBy(Handler, [Ports])` (or `.public()`),
-`builder.on(definition, { consumer }).handledBy(Handler, [Ports])`. Generators add the lines
-between the markers. With NestJS or manual wiring the rule is the same in another syntax;
+`builder.on(definition, { consumer }).handledBy(Handler, [Ports])`. Explicit stays explicit:
+the list of each statement names the ports of the constructor, in order, and the compiler
+checks it; nothing is read from signatures here. Generators add the lines between the
+markers. With NestJS or manual wiring the rule is the same in another syntax;
 keep `@Injectable()` out of `domain/` and `application/`.
 
 ## Composition root

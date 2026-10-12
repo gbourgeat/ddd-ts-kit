@@ -27,6 +27,7 @@ export const DECLARED_ROLES: readonly DeclaredRole[] = [
   { suffix: 'publisher', folders: ['application/integration/publishers'], decorators: ['DomainEventHandler'] },
   { suffix: 'policy', folders: ['application/authorization'], decorators: ['Policy'] },
   { suffix: 'job', folders: ['application/scheduling'], decorators: ['Scheduled'] },
+  { suffix: 'projection', folders: ['application/projections'], decorators: ['Projection'] },
   { suffix: 'repository', folders: ['infrastructure/persistence'], decorators: ['Repository'] },
   { suffix: 'gateway', folders: ['infrastructure'], decorators: ['Gateway'] },
   { suffix: 'adapter', folders: ['infrastructure'], decorators: ['Adapter'] },

@@ -35,6 +35,7 @@ const LOCAL_RUNS: readonly (readonly string[])[] = [
   ['route', 'billing', 'SearchInvoices', '--method', 'GET', '--path', '/stale-invoices', '--query', '--force'],
   ['integration-handler', 'shipping', 'billing', 'billing.invoice.issued', '--force'],
   ['event-handler', 'billing', 'Invoice', 'Cancelled'],
+  ['projection', 'shipping', 'InvoicesToShip', 'billing.invoice.issued'],
   ['acl', 'billing', 'LegacyLedger', '--allow-name'],
   ['e2e', 'billing', 'SearchInvoices'],
 ];
@@ -81,6 +82,9 @@ describe('generate --help --json', () => {
   });
 });
 
+/** A projection declares itself, which only the declared style assembles: `projection.spec.ts` holds the refusal of the other. */
+const DECLARED_ONLY = ['projection'];
+
 describe.each([
   ['declared', undefined],
   ['explicit', EXPLICIT_STACK],
@@ -93,8 +97,11 @@ describe.each([
     cli(root, 'generate', 'port', 'billing', 'PriceList');
   });
 
-  it.each(LOCAL_RUNS)('%s stays inside its context and the end-to-end specs', (...args) => {
+  const runs = LOCAL_RUNS.filter(([kind = '']) => style === 'declared' || !DECLARED_ONLY.includes(kind));
+
+  it.each(runs)('%s stays inside its context and the end-to-end specs', (...args) => {
     const planned = cli(root, 'generate', ...args, '--local-only', '--dry-run', '--json');
+
     const written = [...stringsAt(planned.json(), 'created'), ...stringsAt(planned.json(), 'updated')];
 
     expect(planned.stderr).toBe('');

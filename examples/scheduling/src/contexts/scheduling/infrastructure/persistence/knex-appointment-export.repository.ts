@@ -19,7 +19,7 @@ const PAGE_SIZE = 100;
  * another projection being up to date. It takes the place of the empty answer the platform
  * binds to the contract until its owner implements it.
  */
-@Repository(AppointmentExportContract, { replaces: true }, [KnexContext])
+@Repository(AppointmentExportContract, { replaces: true })
 export class KnexAppointmentExport implements AppointmentExportContract {
   constructor(private readonly database: KnexContext) {}
 

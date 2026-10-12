@@ -13,7 +13,7 @@ import type {
 
 type VersionedReminder = ReminderColumns & { readonly version: number };
 
-@Repository(ReminderRepository, [KnexContext, ExecutionScope, Clock])
+@Repository(ReminderRepository)
 export class KnexReminderRepository implements ReminderRepository {
   constructor(
     private readonly database: KnexContext,

@@ -1,7 +1,8 @@
 import type { Actor } from '../../application/actor/actor.js';
 import type { IntegrationEvent } from '../../application/events/integration-event.js';
 import type { ClassDeclarator } from '../dependencies/class-declarator.js';
-import type { Dependencies } from '../dependencies/dependencies.js';
+import type { DeclaredDependencies } from '../dependencies/declared-dependencies.js';
+import type { DependenciesFromSignature } from '../dependencies/dependencies-from-signature.js';
 import type { EventContract } from '../model/event-contract.js';
 import type { IntegrationEventHandler as IntegrationEventHandlerShape } from '../model/integration-event-handler.js';
 import { record } from '../registry/record.js';
@@ -29,9 +30,13 @@ export type IntegrationEventHandler<Payload> = IntegrationEventHandlerShape<Payl
 
 /**
  * The handler of an integration event of another context, subscribed under a stable consumer name:
- * `@IntegrationEventHandler(OrderPlaced, { consumer: 'billing.invoice-on-order-placed' }, [CommandBus])`.
+ * `@IntegrationEventHandler(OrderPlaced, { consumer: 'billing.invoice-on-order-placed' })`.
  */
-export function IntegrationEventHandler<Payload, const Name extends string, const D extends Dependencies = readonly []>(
+export function IntegrationEventHandler<
+  Payload,
+  const Name extends string,
+  const D extends DeclaredDependencies = DependenciesFromSignature,
+>(
   contract: EventContract<Payload>,
   options: IntegrationEventHandlerOptions<Name> & Named<Name, 'consumer'>,
   dependencies?: D,
@@ -46,7 +51,7 @@ export function IntegrationEventHandler<Payload, const Name extends string, cons
       event: { type: contract.type, version: contract.version },
       consumer,
       ...(actorOf === undefined ? {} : { actorOf }),
-      dependencies: dependencies ?? [],
+      dependencies,
       pair: (use) => use(contract, target),
     });
   };

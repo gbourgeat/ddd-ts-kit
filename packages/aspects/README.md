@@ -51,7 +51,7 @@ builder
 The port is an abstract class and the class is what is bound. `StripeGateway` has no import
 from this package and no knowledge of the policy. In the declared style, the default of a
 generated project, there is no module file and the same policy is stated in the declaration
-of the adapter: `@Adapter(PaymentGateway, { kind: 'external', aspects: [retry({ attempts: 3 }), timeout(2000)] }, [PaymentSettings])`. Without a container an aspect is a function:
+of the adapter: `@Adapter(PaymentGateway, { kind: 'external', aspects: [retry({ attempts: 3 }), timeout(2000)] })`. Without a container an aspect is a function:
 `retry({ attempts: 3 })(new StripeGateway(settings), { kind: 'external' })`.
 
 ### 2. At the composition root, on every binding
@@ -365,7 +365,7 @@ source line.
   the Vitest config. Files wrapped at the composition root need nothing in either mode.
 - **With a declaration.** `@Adapter(...)` on the class and `@Retry(...)` on its methods
   compose, with the `aspects` of the declaration around the decorators of the methods:
-  `@Adapter(PaymentGateway, { kind: 'external' }, [PaymentSettings])`. A static method, a
+  `@Adapter(PaymentGateway, { kind: 'external' })`. A static method, a
   method named by a symbol and a hard-private (`#`) method are refused.
 
 The `./decorators` entry is separate: nothing else in the package imports it.

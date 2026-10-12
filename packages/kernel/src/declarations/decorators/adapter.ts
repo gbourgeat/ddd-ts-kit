@@ -1,5 +1,6 @@
 import type { ClassDeclarator } from '../dependencies/class-declarator.js';
-import type { Dependencies } from '../dependencies/dependencies.js';
+import type { DeclaredDependencies } from '../dependencies/declared-dependencies.js';
+import type { DependenciesFromSignature } from '../dependencies/dependencies-from-signature.js';
 import type { Token } from '../token/token.js';
 import { declaring } from './declaring.js';
 import { isDependencies } from './is-dependencies.js';
@@ -13,19 +14,19 @@ export interface AdapterOptions extends PortOptions {
 
 /**
  * The adapter of any other port of the application layer:
- * `@Adapter(PaymentGateway, { kind: 'external' }, [PaymentSettings])`.
+ * `@Adapter(PaymentGateway, { kind: 'external' })`.
  */
-export function Adapter<T, const D extends Dependencies = readonly []>(
+export function Adapter<T, const D extends DeclaredDependencies = DependenciesFromSignature>(
   port: Token<T>,
   dependencies?: D,
 ): ClassDeclarator<T, D>;
-export function Adapter<T, const D extends Dependencies = readonly []>(
+export function Adapter<T, const D extends DeclaredDependencies = DependenciesFromSignature>(
   port: Token<T>,
   options: AdapterOptions,
   dependencies?: D,
 ): ClassDeclarator<T, D>;
 
-export function Adapter<T, D extends Dependencies>(
+export function Adapter<T, D extends DeclaredDependencies>(
   port: Token<T>,
   ...settings: Settings<AdapterOptions, D>
 ): ClassDeclarator<T, D> {

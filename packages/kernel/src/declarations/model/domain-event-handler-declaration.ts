@@ -10,7 +10,8 @@ export interface DomainEventHandlerDeclaration {
   readonly name: string;
   readonly phase: DomainEventPhase;
   readonly event: DomainEventType<DomainEvent>;
-  readonly dependencies: readonly Token<unknown>[];
+  /** The list the decorator wrote; `undefined` when the constructor states the dependencies. */
+  readonly dependencies: readonly Token<unknown>[] | undefined;
   /** Hands the event type and the class to `use`, with the event type the two share. */
   pair<Outcome>(use: DomainEventHandlerUse<Outcome>): Outcome;
 }

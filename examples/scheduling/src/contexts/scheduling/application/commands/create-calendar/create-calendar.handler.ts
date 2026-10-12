@@ -7,7 +7,7 @@ import { TimeZone } from '@/contexts/scheduling/domain/value-objects/time-zone.v
 import { PractitionerDirectory } from '@/contexts/scheduling/application/ports/practitioner-directory.port';
 import { CreateCalendarCommand } from '@/contexts/scheduling/application/commands/create-calendar/create-calendar.command';
 
-@CommandHandler(CreateCalendarCommand, [CalendarRepository, PractitionerDirectory, IdGenerator, Clock])
+@CommandHandler(CreateCalendarCommand)
 export class CreateCalendarHandler implements CommandHandler<CreateCalendarCommand> {
   constructor(
     private readonly calendarRepository: CalendarRepository,

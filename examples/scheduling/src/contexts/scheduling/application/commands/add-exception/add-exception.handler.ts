@@ -6,7 +6,7 @@ import { Exception } from '@/contexts/scheduling/domain/value-objects/exception.
 import { Range } from '@/contexts/scheduling/domain/value-objects/range.vo';
 import { AddExceptionCommand } from '@/contexts/scheduling/application/commands/add-exception/add-exception.command';
 
-@CommandHandler(AddExceptionCommand, [CalendarRepository, Clock])
+@CommandHandler(AddExceptionCommand)
 export class AddExceptionHandler implements CommandHandler<AddExceptionCommand> {
   constructor(
     private readonly calendarRepository: CalendarRepository,

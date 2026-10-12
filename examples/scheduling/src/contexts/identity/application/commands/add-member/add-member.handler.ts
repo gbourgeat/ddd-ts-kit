@@ -7,7 +7,7 @@ import { PracticeRepository } from '@/contexts/identity/domain/repositories/prac
 import { Role } from '@/contexts/identity/domain/value-objects/role.vo';
 import { AddMemberCommand } from '@/contexts/identity/application/commands/add-member/add-member.command';
 
-@CommandHandler(AddMemberCommand, [PracticeRepository, PersonRepository, Clock])
+@CommandHandler(AddMemberCommand)
 export class AddMemberHandler implements CommandHandler<AddMemberCommand> {
   constructor(
     private readonly practiceRepository: PracticeRepository,

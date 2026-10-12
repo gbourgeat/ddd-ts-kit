@@ -1,6 +1,6 @@
 import type { DependencyKind } from '../../application/dependency-kind.js';
 import type { ClassDeclarator } from '../dependencies/class-declarator.js';
-import type { Dependencies } from '../dependencies/dependencies.js';
+import type { DeclaredDependencies } from '../dependencies/declared-dependencies.js';
 import type { PortDeclaration } from '../model/port-declaration.js';
 import { DeclarationError } from '../registry/declaration-error.js';
 import { record } from '../registry/record.js';
@@ -16,12 +16,12 @@ interface Port<T> {
   readonly token: Token<T>;
 }
 
-export function declaring<T, D extends Dependencies>(
+export function declaring<T, D extends DeclaredDependencies>(
   port: Port<T>,
   [first, second]: Settings<PortOptions, D>,
 ): ClassDeclarator<T, D> {
-  const options = isDependencies(first) ? {} : (first ?? {});
-  const dependencies = isDependencies(first) ? first : (second ?? []);
+  const options: PortOptions = isOptions(first) ? first : {};
+  const dependencies: DeclaredDependencies = isDependencies(first) ? first : second;
 
   return (target) => {
     assertImplements(port.token, target);
@@ -35,6 +35,10 @@ export function declaring<T, D extends Dependencies>(
       dependencies,
     });
   };
+}
+
+function isOptions(value: unknown): value is PortOptions {
+  return typeof value === 'object' && value !== null && !isDependencies(value);
 }
 
 function assertImplements(port: Token<unknown>, adapter: Token<unknown>): void {

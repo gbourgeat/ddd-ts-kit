@@ -19,7 +19,9 @@ export type WiringErrorCode =
   | 'DUPLICATE_JOB'
   | 'UNKNOWN_JOB'
   | 'INVALID_JOB_SETTINGS'
-  | 'DUPLICATE_PROJECTION';
+  | 'DUPLICATE_PROJECTION'
+  | 'MISSING_DEPENDENCIES'
+  | 'DEPENDENCY_ARITY';
 
 /** A mistake in the composition root. Never a business failure, hence not a DomainError. */
 export class WiringError extends Error {

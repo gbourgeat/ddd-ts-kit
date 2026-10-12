@@ -59,10 +59,10 @@ export class IssueInvoice extends AuthorizedCommand<string> {
 
 ```ts
 // contexts/billing/application/commands/issue-invoice/issue-invoice.handler.ts
-import { Clock, IdGenerator } from '@ddd-ts-kit/kernel';
+import type { Clock, IdGenerator } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
 
-@CommandHandler(IssueInvoice, [InvoiceRepository, PaymentGateway, IdGenerator, Clock])
+@CommandHandler(IssueInvoice)
 export class IssueInvoiceHandler implements CommandHandler<IssueInvoice> {
   constructor(
     private readonly invoices: InvoiceRepository,
@@ -94,7 +94,7 @@ export class GetInvoice extends Query<InvoiceView | undefined> {
   }
 }
 
-@QueryHandler(GetInvoice, [InvoiceRepository])
+@QueryHandler(GetInvoice)
 export class GetInvoiceHandler implements QueryHandler<GetInvoice> { /* ... */ }
 ```
 
@@ -104,7 +104,7 @@ import { CommandBus, systemActor, type IntegrationEvent } from '@ddd-ts-kit/kern
 import { IntegrationEventHandler } from '@ddd-ts-kit/kernel/declarations';
 import { OrderPlaced, type OrderPlacedPayload } from '@/contexts/ordering/published-language/index';
 
-@IntegrationEventHandler(OrderPlaced, { consumer: 'billing.invoice-on-order-placed' }, [CommandBus])
+@IntegrationEventHandler(OrderPlaced, { consumer: 'billing.invoice-on-order-placed' })
 export class InvoiceOnOrderPlaced implements IntegrationEventHandler<OrderPlacedPayload> {
   constructor(private readonly commands: CommandBus) {}
 
@@ -119,7 +119,7 @@ export class InvoiceOnOrderPlaced implements IntegrationEventHandler<OrderPlaced
 import { IdGenerator, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
 
-@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued' }, [IntegrationEventPublisher, IdGenerator])
+@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued' })
 export class InvoiceIssuedPublisher implements DomainEventHandler<InvoiceIssued> {
   constructor(
     private readonly publisher: IntegrationEventPublisher,
@@ -135,7 +135,7 @@ export class InvoiceIssuedPublisher implements DomainEventHandler<InvoiceIssued>
 import { Clock, ExecutionScope } from '@ddd-ts-kit/kernel';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
 
-@Repository(InvoiceRepository, [Database, ExecutionScope, Clock])
+@Repository(InvoiceRepository)
 export class KnexInvoiceRepository implements InvoiceRepository { /* ... */ }
 ```
 
@@ -144,7 +144,7 @@ export class KnexInvoiceRepository implements InvoiceRepository { /* ... */ }
 import { Gateway } from '@ddd-ts-kit/kernel/declarations';
 import { retry, timeout } from '@ddd-ts-kit/aspects';
 
-@Gateway(PaymentGateway, { aspects: [retry({ attempts: 3 }), timeout(2000)] }, [PaymentSettings])
+@Gateway(PaymentGateway, { aspects: [retry({ attempts: 3 }), timeout(2000)] })
 export class HttpPaymentGateway implements PaymentGateway { /* ... */ }
 ```
 
@@ -174,8 +174,9 @@ const app = createApplication({ modules: [kernelModule(), platformModule, contex
 
 ### A port is an abstract class
 
-The class names the dependency and carries its type: a dependency list is checked against a
-constructor, `app.resolve(Clock)` answers a `Clock`, and nothing else stands for the port. The
+The class names the dependency and carries its type: a constructor parameter typed by it
+names what is injected, `app.resolve(Clock)` answers a `Clock`, and nothing else stands for
+the port. The
 ports of the kernel (`Clock`, `IdGenerator`, `UnitOfWork`, `CommandBus`, `QueryBus`,
 `IntegrationEventPublisher`, `ExecutionScope`...) are abstract classes imported from
 `@ddd-ts-kit/kernel`; yours are written the same way.
@@ -226,18 +227,23 @@ Where the declaration or the statement is written, with no run:
 |---|---|
 | the class does not implement the port | `bind(Mailer).toClass(SmsSender)`, `@Repository(InvoiceRepository)` on a class missing `findById` |
 | the value does not have the shape of the port | `bind(Clock).toValue('noon')`, `fake(OrderRepository, { save })`, `override(Clock, 12)` |
-| the list names a port of another type | `handledBy(GetOrderHandler, [Clock])` for a constructor taking an `OrderRepository` |
-| the list is in another order than the constructor | `[IdGenerator, Clock]` for `(clock: Clock, ids: IdGenerator)` |
-| the list is missing, one short or one too many | `toClass(ReserveStock)` for a constructor with parameters |
-| the list names a concrete class where its port is expected | `[InMemoryOrderRepository]` for a parameter typed `OrderRepository` |
+| a list names a port of another type | `handledBy(GetOrderHandler, [Clock])` for a constructor taking an `OrderRepository` |
+| a list is in another order than the constructor | `[IdGenerator, Clock]` for `(clock: Clock, ids: IdGenerator)` |
+| a list is one short or one too many, or a statement of an explicit module has none | `toClass(ReserveStock)` for a constructor with parameters |
+| a list names a concrete class where its port is expected | `[InMemoryOrderRepository]` for a parameter typed `OrderRepository` |
 | the handler does not handle that message or answers another result | `command(PlaceOrder).handledBy(CancelOrderHandler, ...)` |
 | the event handler handles another payload | `on(ParcelShipped, ...).handledBy(InvoiceOnOrderPlaced, ...)` |
 | `.requires(...)` on a message that carries no actor | `query(GetCatalog).requires(permission)` |
 
+A list is the one of a statement of an explicit module (`toClass`, `handledBy`), of a
+generated `injected(Class, [..])`, or of a decorator that still writes one. A decorator
+without a list accepts any constructor: the signature is then the statement, and what the
+generated file registers from it is checked the same way (see "Constructor injection").
+
 Two limits of a structural type system. A concrete class is told apart from its port by what
 it adds: a class with no member of its own, private ones included, is the port for the
-compiler. And a constructor whose parameters are all optional still has parameters: it takes a
-dependency list.
+compiler. And a constructor whose parameters are all optional still has parameters: a
+statement of an explicit module gives it a list.
 
 ### Identity
 
@@ -267,15 +273,15 @@ The full list, with the options of each, is in the README of `@ddd-ts-kit/kernel
 | Declaration | Becomes |
 |---|---|
 | `@Requires(permission, options?)` / `@Public()` on a command or a query | the access of the use case: what `.requires(...)` and `.public()` say in an explicit module, read by `authorization: 'required'` and by the authorization module |
-| `@CommandHandler(Message, [ports])`, `@QueryHandler(Message, [ports])` | a singleton of kind `use-case`, registered on `CommandBus` or `QueryBus` |
-| `@IntegrationEventHandler(contract, { consumer }, [ports])` | a singleton of kind `consumer`, subscribed by `start()` on the subscriber of its context, idempotent per consumer name, run in the execution context of the event, its mark and its work in one unit of work |
-| `@DomainEventHandler(Event, { name, phase? }, [ports])` | a singleton of kind `domain-event-handler`, attached to `DomainEventDispatcher` when the application is created, in its phase: `before-commit` (default), at the end of the unit of work and inside its transaction, or `after-commit`, once it has committed; an event dispatched under the name and built from another class is left alone |
-| `@Projection(name, [ports])`, with `@On(definition)` or `@On(Event, { name })` on its methods | a singleton of kind `consumer`. Each integration event it applies is subscribed by `start()` under the name of the projection, exactly as a handler of integration events is: its own execution context, idempotent per name, its mark and its write in one unit of work. Each domain event of its own context is attached to `DomainEventDispatcher` and applied inside the save. See "Projections" |
-| `@Scheduled(name, schedule and options, [ports])` | a singleton of kind `job`, registered on `JobScheduler` when the application is created, started by `start()` after the consumers and stopped first by `stop()`; see "Scheduled jobs" |
-| `@Repository(Port, options?, [ports])` | the binding of the port, kind `repository`: its save hands the domain events of the aggregate to the unit of work, which dispatches them at its end |
-| `@Gateway(Port, options?, [ports])` | the binding of the port, kind `gateway` |
-| `@Adapter(Port, { kind? }, [ports])` | the binding of the port, kind `external` (default) or `publisher` |
-| `@Policy(permission, { name }, [ports])` | a singleton listed in `DeclaredPolicies`, which the authorization module evaluates |
+| `@CommandHandler(Message)`, `@QueryHandler(Message)` | a singleton of kind `use-case`, registered on `CommandBus` or `QueryBus` |
+| `@IntegrationEventHandler(contract, { consumer })` | a singleton of kind `consumer`, subscribed by `start()` on the subscriber of its context, idempotent per consumer name, run in the execution context of the event, its mark and its work in one unit of work |
+| `@DomainEventHandler(Event, { name, phase? })` | a singleton of kind `domain-event-handler`, attached to `DomainEventDispatcher` when the application is created, in its phase: `before-commit` (default), at the end of the unit of work and inside its transaction, or `after-commit`, once it has committed; an event dispatched under the name and built from another class is left alone |
+| `@Projection(name)`, with `@On(definition)` or `@On(Event, { name })` on its methods | a singleton of kind `consumer`. Each integration event it applies is subscribed by `start()` under the name of the projection, exactly as a handler of integration events is: its own execution context, idempotent per name, its mark and its write in one unit of work. Each domain event of its own context is attached to `DomainEventDispatcher` and applied inside the save. See "Projections" |
+| `@Scheduled(name, schedule and options)` | a singleton of kind `job`, registered on `JobScheduler` when the application is created, started by `start()` after the consumers and stopped first by `stop()`; see "Scheduled jobs" |
+| `@Repository(Port, options?)` | the binding of the port, kind `repository`: its save hands the domain events of the aggregate to the unit of work, which dispatches them at its end |
+| `@Gateway(Port, options?)` | the binding of the port, kind `gateway` |
+| `@Adapter(Port, { kind? })` | the binding of the port, kind `external` (default) or `publisher` |
+| `@Policy(permission, { name })` | a singleton listed in `DeclaredPolicies`, which the authorization module evaluates |
 
 A handler, a job, a policy and an event handler are bound under themselves: the class is what
 builds them, and `app.resolve(IssueInvoiceHandler)` answers the instance the bus runs. One
@@ -284,7 +290,7 @@ class is therefore one binding: listing a declared class in two modules is refus
 The options of a repository, a gateway and an adapter are the ones of an explicit binding:
 `transient: true` for `.transient()`, `aspects: [...]` for `.with(...)`, the first outermost,
 and `replaces: true` for `rebind`, which a platform adapter uses to take the place of a default
-of the kernel module (`@Adapter(UnitOfWork, { replaces: true }, [Database])`). The kind
+of the kernel module (`@Adapter(UnitOfWork, { replaces: true })`). The kind
 reaches the `decorate` hook, so tracing and global aspects see declared adapters as they see
 explicit ones. A handler is built on the first message it handles; nothing is built when a
 class is declared or when a module is created.
@@ -302,7 +308,8 @@ a bundler follows every class, and so does a dead-code analysis.
 From `@ddd-ts-kit/di/discovery`, the one entry of this package that reads the disk. It loads,
 in the order of their paths, every file under `application/` and `infrastructure/` of the
 context whose name ends with a role suffix, and keeps the exported classes that declare
-themselves:
+themselves; then `<name>.dependencies` of the same directory when it exists, the generated
+file that registers what their constructors take (see "Constructor injection"):
 
 | Suffix | Folder | Declares |
 |---|---|---|
@@ -353,6 +360,81 @@ Prefer `contextModule` with a barrel for anything bundled, for a serverless cold
 whenever the tooling should see the classes; prefer discovery when adding a file must be all
 it takes.
 
+## Constructor injection
+
+A declared class states what it depends on once, in its constructor, and its decorator lists
+nothing:
+
+```ts
+@CommandHandler(IssueInvoice)
+export class IssueInvoiceHandler implements CommandHandler<IssueInvoice> {
+  constructor(
+    private readonly invoices: InvoiceRepository,
+    private readonly ids: IdGenerator,
+    private readonly clock: Clock,
+  ) {}
+}
+```
+
+The container does not ask the compiler for those types: `design:paramtypes` exists only with
+legacy decorators compiled by `tsc` or swc, so it is absent with standard decorators and under
+`tsx` or esbuild, and it is `Object` for a port imported with `import type`. Instead
+`ddd-ts-kit docs` (and every `generate`, and every start of the `dev` script) reads the
+constructor signatures from the sources and writes, in the generated file of the context, what
+each class is given:
+
+```ts
+// contexts/billing/billing.declarations.ts (generated)
+import { injected } from '@ddd-ts-kit/kernel/declarations';
+// ... one import per class and per token
+
+export * from '@/contexts/billing/application/commands/issue-invoice/issue-invoice.handler';
+// ... one export per role file
+
+injected(IssueInvoiceHandler, [InvoiceRepository, IdGenerator, Clock]);
+```
+
+`injected` registers the list in a registry of the kernel, shared by every copy of the kernel
+a process loads, and is typed like the list of a statement: the compiler refuses a generated
+list that does not match the constructor. When a module is recorded, each declared class is
+given, in this order:
+
+1. the list of its decorator, when it wrote one (`@CommandHandler(IssueInvoice, [InvoiceRepository, IdGenerator, Clock])`:
+   the form 0.1 projects wrote, still supported, and it wins);
+2. the list `injected` registered for it;
+3. nothing, when its constructor takes no parameter.
+
+Anything else stops `createApplication` before a single instance is built:
+
+| Code | When | The message says |
+|---|---|---|
+| `MISSING_DEPENDENCIES` | the constructor takes parameters, the decorator lists nothing and no generated file that was loaded registered a list | the class, its file when discovery loaded it, the module, and to run `ddd-ts-kit docs` and assemble the context from the generated file |
+| `DEPENDENCY_ARITY` | the registered list has another length than the constructor (the file is stale), or the list of a decorator is shorter than the constructor (a cast, plain JavaScript) | both lengths, the tokens of the list, and the same command |
+
+So nothing is ever injected as `undefined`. Where the lists come from, per assembly:
+
+| | The lists are in | Loaded by |
+|---|---|---|
+| `contextModule('billing', billing)` with the barrel | `billing.declarations.ts`, after the exports | the `import * as billing` of the composition root, or of a test |
+| `discoverContext('billing', directory)` | `billing.dependencies.ts` (`.js` once compiled), next to the layers of the context | the scan, with the role files, under the preferred extension; a context whose classes take nothing has none |
+| an explicit module, `bind(..).toClass(C, [..])`, `handledBy(H, [..])` | the statement: explicit stays explicit, nothing is read from a signature | the module file |
+| `builder.include(SomeDeclaredClass)` in an explicit module | the list of its decorator, or the generated file of its context when that file is imported | the module file |
+
+A test assembles a context from its generated file, as the composition root does. To build
+one class alone, take it from that file:
+`contextModule('billing', { IssueInvoiceHandler: billing.IssueInvoiceHandler })`. A class
+imported from its own file and handed over alone has no list, and is refused by name.
+
+`declaredTokens(declared)` answers the token each declared class of a source is bound under
+(its port for an adapter, the class itself for a handler, a job, a policy or a projection):
+`declaredTokens(billing).map((token) => app.resolve(token))` builds every class of a
+context, which is how a test proves that none is left without what it takes.
+
+What keeps a generated list current is outside this package: `declarations/barrel-current`
+of `ddd-ts-kit check` and `ddd-ts-kit docs --check` fail, naming the class, when a constructor
+changed without regeneration, and `declarations/constructor-injection` refuses a parameter
+that names no single class.
+
 ## Decorator modes
 
 The declarations work under both decorator modes of TypeScript, with the same source line:
@@ -366,7 +448,8 @@ A declaration decorator is a function of the class alone. The legacy call hands 
 the standard call hands it the class and a context that it does not read, so the same
 function serves both and stores the declaration in a registry of the kernel, never in
 `Symbol.metadata`. Neither mode needs `emitDecoratorMetadata`, and no parameter decorator
-exists in either: the dependency list is the one mechanism. Vitest lowers legacy decorators by
+exists in either: what a constructor takes is read from the source and registered by a
+generated file, the one mechanism in both modes. Vitest lowers legacy decorators by
 itself; for standard ones add `decorators()` of `@ddd-ts-kit/testing/vitest` to the Vitest
 config.
 
@@ -548,15 +631,15 @@ without the kernel module needs one of the two bound, `IntegrationEventSubscribe
 ## Projections
 
 A projection is a class of `application/projections/`, in a `*.projection.ts` file, declared
-with `@Projection('<context>.<name>', [ports])`; the README of `@ddd-ts-kit/kernel`
+with `@Projection('<context>.<name>')`; the README of `@ddd-ts-kit/kernel`
 ("Projections") says what it may do and why its writes are idempotent and ordered. Here it is
 wired: `contextModule` and `discoverContext` find it like any declared class, and an explicit
 module takes it with `builder.include(AppointmentListProjection)`.
 
-The CLI does not know projections yet: `ddd-ts-kit check` refuses `application/projections/`
-(`tree/closed`) unless the directory is declared in `extraDirectories`, and refuses a line for
-a projection in the generated barrel (`declarations/barrel-current`). Until it does, a
-project held by the CLI registers a projection by discovery or with `builder.include(...)`.
+The CLI knows the role: `application/projections/` is a directory of the canonical tree,
+`ddd-ts-kit generate projection <context> <Name> <event-type>` writes one with its spec, the
+generated barrel exports it and registers what its constructor takes, and `describe` and the
+reference of `CONTEXT.md` list it with the events it applies.
 
 ```ts
 const app = createTestApplication({ modules: [contextModule('reporting', reporting)] });
@@ -659,8 +742,8 @@ barrel instead of discovery the two lines become `contextModule('ordering', orde
 | `RateLimiter` | `InMemoryRateLimiter` on `Clock`: this process only | `rateLimiter` |
 | `JobScheduler` | `InProcessJobScheduler` of `@ddd-ts-kit/scheduling` on `Clock`, `Lock`, `ExecutionScope`, `IdGenerator`, `Logger`, `Metrics` and `ErrorReporter` | `jobScheduler` |
 
-The ports are the abstract classes of `@ddd-ts-kit/kernel`: a handler names `Clock` in its
-dependency list without importing this package.
+The ports are the abstract classes of `@ddd-ts-kit/kernel`: a handler types a constructor
+parameter by `Clock` without importing this package.
 
 An option is an instance or a `(resolve) => instance` factory. An adapter with dependencies of
 its own reads better in the module that owns them:
@@ -690,7 +773,7 @@ else registers it.
 import { CommandBus, systemActor } from '@ddd-ts-kit/kernel';
 import { Scheduled, type JobExecution, type ScheduledJob } from '@ddd-ts-kit/kernel/declarations';
 
-@Scheduled('billing.send-reminders', { cron: '0 7 * * 1-5', timeZone: 'Europe/Paris' }, [CommandBus])
+@Scheduled('billing.send-reminders', { cron: '0 7 * * 1-5', timeZone: 'Europe/Paris' })
 export class SendRemindersJob implements ScheduledJob {
   constructor(private readonly commands: CommandBus) {}
 
@@ -842,6 +925,9 @@ never share instances.
 - `BUS_WITHOUT_REGISTER`: handlers declared for a bus that cannot receive them;
 - `UNKNOWN_FAKE`: see above;
 - `UNDECLARED_CLASS`: a class listed in `contextModule` or `include` without a declaration;
+- `MISSING_DEPENDENCIES`: a declared class whose constructor takes parameters and that no list
+  covers: its decorator names none and no generated file that was loaded registered one;
+- `DEPENDENCY_ARITY`: a list of another length than the constructor it is for;
 - `DUPLICATE_JOB`: two jobs sharing a name, both modules named: the name is the lock, the
   actor and the label of a job;
 - `UNKNOWN_JOB`: settings given for a job that no module declares;
@@ -939,7 +1025,7 @@ the database is an `after-commit` handler when it may be lost, an integration ev
 outbox when it must not:
 
 ```ts
-@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued', phase: 'after-commit' }, [Cache])
+@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued', phase: 'after-commit' })
 export class InvoiceIssuedEventHandler implements DomainEventHandler<InvoiceIssued> {
   constructor(private readonly cache: Cache) {}
 
@@ -1057,6 +1143,12 @@ takes an `actor` option, and lets every message through unless a listed module b
   written below the declaration, so that the declaration lands on the class that is exported.
   A decorator that only annotates, as `@Injectable()` does, composes in either order.
 - A declaration is not inherited: a subclass declares itself or is bound explicitly.
+- What a constructor takes reaches the container through a generated file, never through
+  compiler metadata: a declared class edited where nothing regenerates that file (`docs`,
+  `generate`, the `dev` script) is refused at composition time until it is.
+- A class that inherits its constructor has a `length` of zero, so a missing list for it
+  cannot be seen at run time: `declarations/constructor-injection` of `ddd-ts-kit check`
+  reads the base class of the project, and refuses one it cannot read.
 - A consumer name, a policy name, a job name and the name of a domain event are written in the
   declaration; they are not derived from the class, which a refactoring renames.
 - A port of your own is identified by its class: see "Identity" for a port loaded twice.
@@ -1065,12 +1157,12 @@ takes an `actor` option, and lets every message through unless a listed module b
 
   ```jsonc
   // knip.json
-  { "entry": ["src/main.ts", "src/contexts/*/{application,infrastructure}/**/*.{command,query,handler,integration-handler,publisher,event-handler,policy,job,projection,repository,gateway,adapter}.ts"] }
+  { "entry": ["src/main.ts", "src/contexts/*/{application,infrastructure}/**/*.{command,query,handler,integration-handler,publisher,event-handler,policy,job,projection,repository,gateway,adapter}.ts", "src/contexts/*/*.dependencies.ts"] }
   ```
 
   ```js
   // .dependency-cruiser.cjs, in the pathNot of the no-orphans rule
-  '\\.(command|query|handler|integration-handler|publisher|event-handler|policy|job|projection|repository|gateway|adapter)\\.ts$'
+  '\\.(command|query|handler|integration-handler|publisher|event-handler|policy|job|projection|repository|gateway|adapter|dependencies)\\.ts$'
   ```
 
   With a barrel and `contextModule` neither setting is needed.

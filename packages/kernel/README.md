@@ -24,7 +24,7 @@ npm i @ddd-ts-kit/kernel
 | Persistence helpers | `optimisticUpdate`, `schemaNameOf`, `stampCreation`, `stampUpdate`, `tenantScopeOf`, `encodeCursor`, `decodeCursor` |
 | Error reporting | `ErrorReporter`, `ErrorReport`, `errorReportOf`, `reportOnce`, `isUnexpectedError`, `errorReportingMiddleware`, `DeadLetterReports`, `reportProcessFailures`, `NoopErrorReporter` |
 | Doubles | `FixedClock`, `SequentialIdGenerator`, `InMemoryUnitOfWork`, `FixedActorContext`, `FixedExecutionScope`, `InMemoryLogger`, `InMemoryMetrics`, `InMemoryErrorReporter`, `InMemoryCache`, `InMemoryLock`, `InMemoryRateLimiter` |
-| Declarations (`@ddd-ts-kit/kernel/declarations`) | `Requires`, `Public`, `CommandHandler`, `QueryHandler`, `IntegrationEventHandler`, `DomainEventHandler`, `Scheduled`, `Projection`, `On`, `Repository`, `Gateway`, `Adapter`, `Policy`, `declarationOf`, `listDeclarations`, `Token`, `describeToken`, `tokenIdentity`, `portDefect` |
+| Declarations (`@ddd-ts-kit/kernel/declarations`) | `Requires`, `Public`, `CommandHandler`, `QueryHandler`, `IntegrationEventHandler`, `DomainEventHandler`, `Scheduled`, `Projection`, `On`, `Repository`, `Gateway`, `Adapter`, `Policy`, `injected`, `injectedDependencies`, `declarationOf`, `listDeclarations`, `Token`, `describeToken`, `tokenIdentity`, `portDefect` |
 
 The rules these blocks serve are in `docs/ARCHITECTURE.md`.
 
@@ -72,7 +72,7 @@ a repository adapter never call it. An aggregate is recognised by what it does (
 | `after-commit` | `dispatcher.on(name, callback, { phase: 'after-commit' })` | once the transaction has committed, never when it rolled back, in dispatch order, awaited before the command answers | never fails the command: reported, and the other handlers still run |
 
 With declarations the phase is an option of the decorator:
-`@DomainEventHandler(OrderPaid, { name: 'ordering.order.paid', phase: 'after-commit' }, [Cache])`.
+`@DomainEventHandler(OrderPaid, { name: 'ordering.order.paid', phase: 'after-commit' })`.
 
 The `after-commit` phase is at most once: a crash between the commit and the run loses it. What
 must not be lost goes through the outbox as an integration event. A `before-commit` handler
@@ -145,7 +145,7 @@ import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
 import { OrderRepository } from '@/contexts/ordering/domain/repositories/order.repository';
 import { PlaceOrder } from '@/contexts/ordering/application/commands/place-order/place-order.command';
 
-@CommandHandler(PlaceOrder, [OrderRepository, Clock])
+@CommandHandler(PlaceOrder)
 export class PlaceOrderHandler implements CommandHandler<PlaceOrder> {
   constructor(
     private readonly orders: OrderRepository,
@@ -163,7 +163,7 @@ import { Repository } from '@ddd-ts-kit/kernel/declarations';
 import { Database } from '@/contexts/ordering/application/ports/database.port';
 import { OrderRepository } from '@/contexts/ordering/domain/repositories/order.repository';
 
-@Repository(OrderRepository, [Database, ExecutionScope, Clock])
+@Repository(OrderRepository)
 export class KnexOrderRepository implements OrderRepository {
   constructor(
     private readonly database: Database,
@@ -182,7 +182,7 @@ imported by the adapter). No file needs both.
 ### Ports and tokens
 
 **A port is an abstract class, and the class is the injection token.** The class names the
-dependency and carries its type: a dependency list is checked against a constructor, and
+dependency and carries its type: a constructor parameter typed by it names what is injected, and
 `app.resolve(Clock)` answers a `Clock`. `Token<T>` is that type: `abstract new (...args: never) => T`.
 There is no token constant and no token file. A port has one place, one abstract class per file:
 
@@ -270,13 +270,46 @@ export abstract class BusinessClock extends Clock {
 }
 ```
 
+**What a class depends on is said by its constructor.** A decorator lists nothing: each
+constructor parameter is typed by one class, its token, and `ddd-ts-kit docs` reads the
+signatures from the sources into the generated file of the context, which registers them with
+`injected`:
+
+```ts
+@CommandHandler(PlaceOrder)
+export class PlaceOrderHandler implements CommandHandler<PlaceOrder> {
+  constructor(
+    private readonly orders: OrderRepository,
+    private readonly clock: Clock,
+  ) {}
+}
+
+// contexts/ordering/ordering.declarations.ts, generated
+injected(PlaceOrderHandler, [OrderRepository, Clock]);
+```
+
+`injected(Class, [Tokens])` records one token per constructor parameter, in order, in a
+registry shared by every copy of the kernel a process loads; `injectedDependencies(Class)`
+reads it back, and a container (`@ddd-ts-kit/di`) is what uses it. Nothing here reads
+`design:paramtypes`: that metadata exists only with legacy decorators compiled by `tsc` or
+swc, not with standard decorators nor under `tsx` or esbuild. A decorator still accepts a list
+as its last argument, `@CommandHandler(PlaceOrder, [OrderRepository, Clock])`: the form 0.1
+projects wrote. A declaration then carries it in `dependencies`, which is `undefined` when
+the constructor is the statement, and a container gives it precedence.
+
 **What the compiler refuses**, in both decorator modes:
 
-- a dependency list that does not name one port per constructor parameter, each of the type of
-  its parameter, in order: a missing list, a missing or extra entry, a wrong type, a wrong order;
+- a list, of `injected` or of a decorator, that does not name one port per constructor
+  parameter, each of the type of its parameter, in order: a missing or extra entry, a wrong
+  type, a wrong order; `injected(Class)` without a list for a constructor that takes something;
 - a class that does not implement the port it is declared the adapter of, and an abstract class;
 - a concrete class named where its port is expected: `[InMemoryOrderRepository, Clock]` for a
   parameter typed `OrderRepository`. A list names ports, never what implements them.
+
+What changed with the list becoming optional: a decorator without a list accepts any
+constructor, so the compiler no longer tells, at the decorator, a class whose list was
+forgotten. It does not have to: the list is derived from the constructor, checked where it is
+generated, and a class left without one is refused by name when the application is composed.
 
 **What is refused when the file loads**, with a `DeclarationError` from `@Repository`,
 `@Gateway` and `@Adapter`, because the compiler cannot see it:
@@ -296,16 +329,16 @@ left alone.
 |---|---|---|
 | `Requires(permission, options?)` | a command or query that carries its actor | `@Requires(permissions['visit.schedule'], { resource: (c: ScheduleVisit) => ({ type: 'patient', id: c.patientId }), audited: ['startsAt'] })` |
 | `Public(options?)` | a command or query anybody may send | `@Public()` |
-| `CommandHandler(Message, [ports])` | the one handler of a command | `@CommandHandler(PlaceOrder, [OrderRepository, Clock])` |
-| `QueryHandler(Message, [ports])` | the one handler of a query | `@QueryHandler(GetOrder, [OrderReadModel])` |
-| `IntegrationEventHandler(definition, { consumer, actorOf? }, [ports])` | the handler of an integration event of another context | `@IntegrationEventHandler(OrderPlaced, { consumer: 'billing.invoice-on-order-placed' }, [CommandBus])` |
-| `DomainEventHandler(Event, { name }, [ports])` | a handler of a domain event of its own context | `@DomainEventHandler(OrderPaid, { name: 'ordering.order.paid' }, [CommandBus])` |
-| `Scheduled(name, schedule and options, [ports])` | a job run by time, which triggers use cases | `@Scheduled('billing.send-reminders', { cron: '0 7 * * 1-5', timeZone: 'Europe/Paris' }, [CommandBus])` |
-| `Projection(name, [ports])` with `On(definition)` on its methods | a projector: the class that keeps one read model up to date | `@Projection('scheduling.appointment-list', [AppointmentList])`, `@On(PaymentCaptured)` |
-| `Repository(Port, options?, [ports])` | the adapter of a repository of the domain | `@Repository(OrderRepository, [Database, ExecutionScope, Clock])` |
-| `Gateway(Port, options?, [ports])` | the adapter of a port that calls another context | `@Gateway(StockGateway, [HttpClient])` |
-| `Adapter(Port, options?, [ports])` | the adapter of any other port | `@Adapter(PaymentGateway, { kind: 'external' }, [PaymentSettings])` |
-| `Policy(permission, { name }, [ports])` | a rule that needs the loaded element | `@Policy(permissions['invoice.void'], { name: 'billing.only-issuer-voids' })` |
+| `CommandHandler(Message)` | the one handler of a command | `@CommandHandler(PlaceOrder)` |
+| `QueryHandler(Message)` | the one handler of a query | `@QueryHandler(GetOrder)` |
+| `IntegrationEventHandler(definition, { consumer, actorOf? })` | the handler of an integration event of another context | `@IntegrationEventHandler(OrderPlaced, { consumer: 'billing.invoice-on-order-placed' })` |
+| `DomainEventHandler(Event, { name })` | a handler of a domain event of its own context | `@DomainEventHandler(OrderPaid, { name: 'ordering.order.paid' })` |
+| `Scheduled(name, schedule and options)` | a job run by time, which triggers use cases | `@Scheduled('billing.send-reminders', { cron: '0 7 * * 1-5', timeZone: 'Europe/Paris' })` |
+| `Projection(name)` with `On(definition)` on its methods | a projector: the class that keeps one read model up to date | `@Projection('scheduling.appointment-list')`, `@On(PaymentCaptured)` |
+| `Repository(Port, options?)` | the adapter of a repository of the domain | `@Repository(OrderRepository)` |
+| `Gateway(Port, options?)` | the adapter of a port that calls another context | `@Gateway(StockGateway)` |
+| `Adapter(Port, options?)` | the adapter of any other port | `@Adapter(PaymentGateway, { kind: 'external' })` |
+| `Policy(permission, { name })` | a rule that needs the loaded element | `@Policy(permissions['invoice.void'], { name: 'billing.only-issuer-voids' })` |
 
 - **Access is said on the message.** A command extends `Command` or `AuthorizedCommand`, a
   query `Query` or `AuthorizedQuery`: the base class already says which of the two it is, so
@@ -365,7 +398,7 @@ the integration event handlers of a context on `EventSubscribers.forContext(<con
 
 ```ts
 // contexts/billing/application/scheduling/send-reminders.job.ts
-@Scheduled('billing.send-reminders', { cron: '0 7 * * 1-5', timeZone: 'Europe/Paris' }, [CommandBus])
+@Scheduled('billing.send-reminders', { cron: '0 7 * * 1-5', timeZone: 'Europe/Paris' })
 export class SendRemindersJob implements ScheduledJob {
   constructor(private readonly commands: CommandBus) {}
 
@@ -376,7 +409,7 @@ export class SendRemindersJob implements ScheduledJob {
 ```
 
 A job lives in `application/scheduling/`, in a `*.job.ts` file, and only triggers use cases:
-it receives buses and ports by its dependency list and typically sends one command. The second
+it receives buses and ports by its constructor and typically sends one command. The second
 argument is the schedule and, next to it, the options:
 
 | Key | Default | |
@@ -399,7 +432,9 @@ are in the README of `@ddd-ts-kit/scheduling`.
 ### Decorator modes
 
 Every decorator of this entry works under both decorator modes of TypeScript, and the same
-source line type-checks under both, checks of the role and of the dependency list included.
+source line type-checks under both, checks of the role and of a dependency list included.
+Neither needs `emitDecoratorMetadata`, and what a constructor takes is known in both the same
+way: read from the source, registered by `injected`.
 
 | Stack | `tsconfig.json` |
 |---|---|
@@ -910,7 +945,7 @@ else: it sends no command and reads no other context.
 import { stampOf, type IntegrationEvent } from '@ddd-ts-kit/kernel';
 import { On, Projection } from '@ddd-ts-kit/kernel/declarations';
 
-@Projection('scheduling.appointment-list', [AppointmentList])
+@Projection('scheduling.appointment-list')
 export class AppointmentListProjection {
   constructor(private readonly appointments: AppointmentList) {}
 
@@ -933,8 +968,8 @@ export class AppointmentListProjection {
 }
 ```
 
-`@Projection('<context>.<name>', [ports])` is a declaration like the others: both decorator
-modes, the dependency list checked by the compiler, one class per file, in
+`@Projection('<context>.<name>')` is a declaration like the others: both decorator
+modes, its dependencies stated by its constructor, one class per file, in
 `application/projections/`, in a `*.projection.ts` file. `@On(definition)` on a method says
 "this method applies that integration event"; `@On(EventClass, { name })` says it for a domain
 event of the projection's own context. A method that takes another event is refused by the
@@ -942,13 +977,11 @@ compiler, a projection without any `@On` and an `@On` on a class without `@Proje
 when the file loads. A method answers what its store answered, which is how the application
 counts what was applied and what was stale.
 
-**Not known to the CLI yet.** The runtime packages hold projections; `ddd-ts-kit` has no
-generator for them and its canonical tree does not list `application/projections/`. In a
-project held by `ddd-ts-kit check`, the directory is refused by `tree/closed` until it is
-declared in `contexts.<name>.extraDirectories` with its decision record, and the generated
-barrel `<context>.declarations.ts` refuses a line for a `*.projection.ts` file
-(`declarations/barrel-current`): the projection is then registered by discovery or with
-`builder.include(...)`, see the README of `@ddd-ts-kit/di`.
+**A role of the CLI.** `application/projections/` is a directory of the canonical tree,
+`ddd-ts-kit generate projection <context> <Name> <event-type>` writes a projector with its
+spec, the generated barrel `<context>.declarations.ts` exports it and registers what its
+constructor takes, and `ddd-ts-kit describe` and the reference of `CONTEXT.md` list it with
+the events it applies.
 
 ### Idempotent and ordered by construction
 

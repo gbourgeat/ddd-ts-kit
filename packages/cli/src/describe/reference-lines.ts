@@ -40,6 +40,15 @@ function tablesOf(context: ContextDescription): Table[] {
       rows: context.routes.map(routeRow),
     },
     ...eventTables(context),
+    {
+      title: 'Projections',
+      columns: ['Projection', 'Class', 'Applies'],
+      rows: context.projections.map((projection) => [
+        code(projection.name),
+        code(projection.projector),
+        codes(projection.applies),
+      ]),
+    },
     ...adapterTables(context),
   ];
 }

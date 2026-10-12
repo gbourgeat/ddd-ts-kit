@@ -21,6 +21,7 @@ import {
   contextPublishedLanguageIsAContract,
   contextPublishedLanguageOnly,
 } from './context-boundaries.js';
+import { declarationsConstructorInjection } from './declarations-constructor-injection.js';
 import { declarationsRoleDeclared } from './declarations-role-declared.js';
 import { domainAggregateEncapsulation } from './domain-aggregate-encapsulation.js';
 import { domainEventsDispatchedOnSave } from './domain-events-dispatched-on-save.js';
@@ -89,6 +90,7 @@ const ALL = [
   standardNoParallelInterface,
   governanceRecordedDeviation,
   declarationsRoleDeclared,
+  declarationsConstructorInjection,
   portsAbstractClass,
   portsImplementsNeverExtends,
   portsNoTokenConstant,

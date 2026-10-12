@@ -56,7 +56,7 @@ export const cleanOneExportPerFile = defineRule<'several' | 'fileName' | 'entry'
   ],
   defaultOptions: [{}],
   create({ file, sourceCode, options: [options], report }) {
-    if (!isJudged(file)) {
+    if (!isJudged(file) || isGenerated(file)) {
       return {};
     }
 
@@ -94,10 +94,14 @@ export const cleanOneExportPerFile = defineRule<'several' | 'fileName' | 'entry'
 });
 
 function isEntryFile(file: LintedFile, options: Options): boolean {
-  return (
-    isIndex(file) ||
-    globMatcher([`${file.config.contextsDir}/*/*.declarations.ts`, ...(options.entries ?? [])])(file.path)
-  );
+  return isIndex(file) || globMatcher(options.entries ?? [])(file.path);
+}
+
+/** The generated files of a declared context: `declarations/barrel-current` of `ddd-ts-kit check` holds every line of them. */
+function isGenerated(file: LintedFile): boolean {
+  const { contextsDir } = file.config;
+
+  return globMatcher([`${contextsDir}/*/*.declarations.ts`, `${contextsDir}/*/*.dependencies.ts`])(file.path);
 }
 
 function isIndex(file: LintedFile): boolean {

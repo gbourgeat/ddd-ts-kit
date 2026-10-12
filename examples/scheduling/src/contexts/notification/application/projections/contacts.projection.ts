@@ -4,7 +4,7 @@ import { personRegisteredV1, type PersonRegisteredV1 } from '@/contexts/identity
 import { storableStamp } from '@/shared-kernel/storable-stamp';
 import { Contacts } from '@/contexts/notification/application/ports/contacts.port';
 
-@Projection('notification.contacts', [Contacts])
+@Projection('notification.contacts')
 export class ContactsProjection {
   constructor(private readonly contacts: Contacts) {}
 

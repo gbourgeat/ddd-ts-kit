@@ -3,7 +3,7 @@ import { IntegrationEventHandler } from '@ddd-ts-kit/kernel/declarations';
 import { appointmentBookedV1, type AppointmentBookedV1 } from '@/contexts/scheduling/published-language/index';
 import { SendNotificationCommand } from '@/contexts/notification/application/commands/send-notification/send-notification.command';
 
-@IntegrationEventHandler(appointmentBookedV1, { consumer: 'notification.scheduling-appointment-booked' }, [CommandBus])
+@IntegrationEventHandler(appointmentBookedV1, { consumer: 'notification.scheduling-appointment-booked' })
 export class SchedulingAppointmentBookedIntegrationHandler {
   static readonly eventType = 'scheduling.appointment.booked';
 

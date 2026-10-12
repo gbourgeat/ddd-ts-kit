@@ -167,7 +167,7 @@ export abstract class InvoiceRepository extends Repository<Invoice> {}
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
 import { insertIgnoringConflict, optimisticUpdate, TypeOrmContext } from '@ddd-ts-kit/typeorm';
 
-@Repository(InvoiceRepository, [TypeOrmContext])
+@Repository(InvoiceRepository)
 export class TypeOrmInvoiceRepository implements InvoiceRepository {
   constructor(private readonly context: TypeOrmContext) {}
 
@@ -250,7 +250,7 @@ export const invoices = new EntitySchema<InvoiceRow>({
 import { Clock, ExecutionScope, stampCreation, stampUpdate, tenantScopeOf } from '@ddd-ts-kit/kernel';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
 
-@Repository(InvoiceRepository, [TypeOrmContext, ExecutionScope, Clock])
+@Repository(InvoiceRepository)
 export class TypeOrmInvoiceRepository implements InvoiceRepository {
   constructor(
     private readonly context: TypeOrmContext,
@@ -305,7 +305,7 @@ import { LessThan, MoreThan, type FindOptionsWhere } from 'typeorm';
 import { ExecutionScope, encodeCursor, pageOf, tenantScopeOf } from '@ddd-ts-kit/kernel';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
 
-@Repository(InvoiceQueries, [TypeOrmContext, ExecutionScope])
+@Repository(InvoiceQueries)
 export class TypeOrmInvoiceQueries implements InvoiceQueries {
   constructor(
     private readonly context: TypeOrmContext,
@@ -449,7 +449,7 @@ export const appointmentList = new EntitySchema<AppointmentRow & ReadModelStamps
 });
 
 // infrastructure/persistence/type-orm-appointment-list.repository.ts
-@Repository(AppointmentList, [TypeOrmContext])
+@Repository(AppointmentList)
 export class TypeOrmAppointmentList extends TypeOrmReadModelStore<AppointmentRow> implements AppointmentList {
   constructor(context: TypeOrmContext) {
     super(context, { entity: appointmentList, definition: appointmentCriteria });

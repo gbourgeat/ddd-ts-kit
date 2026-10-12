@@ -3,7 +3,7 @@ import { PersonDirectoryContract } from '@/contexts/identity/published-language/
 import { PersonDirectoryGateway } from '@/contexts/scheduling/application/ports/person-directory-gateway.port';
 
 // TODO(platform): when identity runs as its own service, turn this class into the remote adapter of PersonDirectoryGateway (an HTTP or RPC client with a timeout, retries and a fallback): the declaration stays, nothing else changes.
-@Gateway(PersonDirectoryGateway, [PersonDirectoryContract])
+@Gateway(PersonDirectoryGateway)
 export class InProcessPersonDirectoryGateway implements PersonDirectoryGateway {
   constructor(readonly upstream: PersonDirectoryContract) {}
 

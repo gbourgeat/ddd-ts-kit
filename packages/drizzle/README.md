@@ -153,7 +153,7 @@ import { and, eq } from 'drizzle-orm';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
 import { optimisticUpdate } from '@ddd-ts-kit/drizzle/postgres';
 
-@Repository(OrderRepository, [Database])
+@Repository(OrderRepository)
 export class DrizzleOrderRepository implements OrderRepository {
   constructor(private readonly database: Database) {}
 
@@ -222,7 +222,7 @@ export const invoices = contextSchema('billing-core').table(
 import { Clock, ExecutionScope, stampCreation, stampUpdate, tenantScopeOf } from '@ddd-ts-kit/kernel';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
 
-@Repository(InvoiceRepository, [Database, ExecutionScope, Clock])
+@Repository(InvoiceRepository)
 export class DrizzleInvoiceRepository implements InvoiceRepository {
   constructor(
     private readonly database: Database,
@@ -282,7 +282,7 @@ export abstract class InvoiceQueries {
 import { ExecutionScope, decodeCursor, encodeCursor, pageOf } from '@ddd-ts-kit/kernel';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
 
-@Repository(InvoiceQueries, [Database, ExecutionScope])
+@Repository(InvoiceQueries)
 export class DrizzleInvoiceQueries implements InvoiceQueries {
   constructor(
     private readonly database: Database,
@@ -427,7 +427,7 @@ export const appointmentList = contextSchema('scheduling').table('appointment_li
 });
 
 // infrastructure/persistence/drizzle-appointment-list.repository.ts
-@Repository(AppointmentList, [Database])
+@Repository(AppointmentList)
 export class DrizzleAppointmentList extends DrizzleReadModelStore<AppointmentRow, PgQueryResultHKT> implements AppointmentList {
   constructor(database: Database) {
     super(database, {

@@ -183,13 +183,16 @@ describe('the rule files and the README init writes', () => {
 
     expect(rule('domain')).toContain('an abstract class extending the kernel `Repository<Aggregate>`');
     expect(rule('application')).toContain('`ports/abstract-class`');
-    expect(rule('application')).toContain("@Scheduled('<context>.<job>', schedule, [CommandBus])");
+    expect(rule('application')).toContain("@Scheduled('<context>.<job>', schedule)");
+    expect(rule('application')).toContain('`declarations/constructor-injection`');
+    expect(rule('application')).toContain('`npx ddd-ts-kit docs` reads the signature');
     expect(rule('application')).toContain('`scheduling/job-triggers-use-case`');
     expect(rule('infrastructure')).toContain('`ports/implements-never-extends`');
-    expect(rule('infrastructure')).toContain('@Repository(InvoiceRepository, [Database, ExecutionScope, Clock])');
+    expect(rule('infrastructure')).toContain('`@Repository(InvoiceRepository)`');
+    expect(rule('infrastructure')).toContain('typed by one class (`Database`, `ExecutionScope`, `Clock`');
 
     expect(read(initProject(...NPM, '--orm', 'knex'), '.claude/rules/infrastructure.md')).toContain(
-      '[KnexContext, ExecutionScope, Clock]',
+      'typed by one class (`KnexContext`, `ExecutionScope`, `Clock`',
     );
   });
 

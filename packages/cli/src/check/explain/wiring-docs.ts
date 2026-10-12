@@ -11,7 +11,7 @@ builder.include(billingDeclarations);`,
 const invoiceRepository = new PgInvoiceRepository();
 const issueInvoiceHandler = new IssueInvoiceHandler(invoiceRepository);
 // declared style: infrastructure/persistence/pg-invoice.repository.ts and src/main.ts
-@Repository(InvoiceRepository, [Database, ExecutionScope, Clock])
+@Repository(InvoiceRepository)
 export class PgInvoiceRepository implements InvoiceRepository {}
 contextModule('billing', billingDeclarations);`,
   },
@@ -25,21 +25,46 @@ export class IssueInvoiceHandler {}
 @Repository(InvoiceRepository)
 export class Invoice {}`,
     good: `// application/commands/issue-invoice/issue-invoice.handler.ts
-@CommandHandler(IssueInvoiceCommand, [InvoiceRepository, Clock])
+@CommandHandler(IssueInvoiceCommand)
 export class IssueInvoiceHandler {}
 // application/event-handlers/invoice-issued.event-handler.ts
 @DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued' })
 export class InvoiceIssuedEventHandler {}`,
   },
   'declarations/barrel-current': {
-    why: 'With stack.assembly set to barrel, the composition root assembles a context from <context>.declarations.ts and from nothing else. A role file added by hand and missing from the barrel compiles, passes its unit tests and is never registered. The barrel is derived from the tree, one export per role file sorted by path, so it is compared with what the tree says; with stack.assembly set to discovery the role files are found at startup and a barrel left behind is reported instead.',
-    bad: `// billing.declarations.ts, while application/authorization/only-issuer-voids.policy.ts exists
+    why: 'With stack.assembly set to barrel, the composition root assembles a context from <context>.declarations.ts and from nothing else. A role file added by hand and missing from the barrel compiles, passes its unit tests and is never registered. The same file registers what each constructor is injected, read from its signature: a constructor changed without regenerating would be given the dependencies of the old one. The file is derived from the tree, one export per role file sorted by path then one injected(Class, [Tokens]) per class that takes something, so it is compared with what the tree says, and the message names the class whose list is stale. With stack.assembly set to discovery the role files are found at startup, <context>.dependencies.ts holds the lists alone and is compared the same way, and a barrel left behind is reported.',
+    bad: `// billing.declarations.ts, while only-issuer-voids.policy.ts exists and IssueInvoiceHandler now also takes a Clock
 export * from '@/contexts/billing/application/commands/issue-invoice/issue-invoice.command';
-export * from '@/contexts/billing/application/commands/issue-invoice/issue-invoice.handler';`,
-    good: `// billing.declarations.ts, rewritten by \`ddd-ts-kit generate\` and \`ddd-ts-kit docs\`
+export * from '@/contexts/billing/application/commands/issue-invoice/issue-invoice.handler';
+
+injected(IssueInvoiceHandler, [InvoiceRepository]);`,
+    good: `// billing.declarations.ts, rewritten by \`ddd-ts-kit generate\`, \`ddd-ts-kit docs\` and \`npm run dev\`
 export * from '@/contexts/billing/application/authorization/only-issuer-voids.policy';
 export * from '@/contexts/billing/application/commands/issue-invoice/issue-invoice.command';
-export * from '@/contexts/billing/application/commands/issue-invoice/issue-invoice.handler';`,
+export * from '@/contexts/billing/application/commands/issue-invoice/issue-invoice.handler';
+
+injected(IssueInvoiceHandler, [InvoiceRepository, Clock]);`,
+  },
+  'declarations/constructor-injection': {
+    why: 'The constructor signature is the one statement of what a declared class depends on: `ddd-ts-kit docs` reads it and writes the list the composition root injects, so nothing is repeated in the decorator and nothing can disagree with the constructor. That only works when each parameter names exactly one injection token, and a token is a class: an interface, a type alias or a primitive is erased by the compiler, a union names two things, an optional or defaulted parameter says the container might not give a value, which it always does. A constructor inherited from a class of a package cannot be read at all. The compiler is not asked for the types at run time: `emitDecoratorMetadata` exists only with legacy decorators compiled by tsc or swc, not with standard decorators nor under tsx or esbuild. Under "stack.dependencies": "signature" a list left in a decorator is a second statement: it wins at run time, so it is removed when it repeats the constructor (ESLint fixes it) and reported when it differs. A project whose config does not say lists its dependencies in its decorators, as 0.1 did, and may keep doing so.',
+    bad: `@CommandHandler(IssueInvoiceCommand)
+export class IssueInvoiceHandler {
+  constructor(
+    private readonly invoices: InvoiceRepository | undefined,
+    private readonly settings: InvoiceSettings,   // an interface
+    private readonly retries = 3,
+  ) {}
+}
+// "stack.dependencies": "signature"
+@CommandHandler(IssueInvoiceCommand, [InvoiceRepository, Clock])`,
+    good: `@CommandHandler(IssueInvoiceCommand)
+export class IssueInvoiceHandler {
+  constructor(
+    private readonly invoices: InvoiceRepository,
+    private readonly settings: InvoiceSettings,   // an abstract class of application/ports, bound to a value in the platform
+    private readonly clock: Clock,
+  ) {}
+}`,
   },
   'config/valid': {
     why: 'Every other rule reads the config: a misspelled upstream or rule id silently disables a check. The contexts on disk and in the config have to be the same set, or part of the code is not checked at all. A function limit above the ceiling of 100 lines and an allowance without a file or a reason are read as something else than what is written, so they are reported too.',

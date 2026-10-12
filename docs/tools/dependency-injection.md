@@ -19,7 +19,7 @@ adapter stands behind which port.
 
 ```ts
 // contexts/appointments/application/commands/book-appointment/book-appointment.handler.ts
-@CommandHandler(BookAppointment, [AppointmentRepository, Clock, IdGenerator])
+@CommandHandler(BookAppointment)
 export class BookAppointmentHandler implements CommandHandler<BookAppointment> {
   constructor(
     private readonly appointments: AppointmentRepository,
@@ -32,9 +32,14 @@ export class BookAppointmentHandler implements CommandHandler<BookAppointment> {
 ```
 
 The decorator comes from `@ddd-ts-kit/kernel/declarations`. It is metadata only: it
-instantiates nothing and imports no container. The list names ports, in the order of the
-constructor, and the compiler checks it. The same handler class, without the decorator, is
-what NestJS or manual wiring would bind.
+instantiates nothing and imports no container. What the handler depends on is said once, by
+its constructor: `ddd-ts-kit docs` reads the signature from the source and writes the list
+the container injects into the generated file of the context
+([ports and composition](../concepts/ports-and-composition.md), "How the constructor reaches
+the composition root", compares this with a list in the decorator and with
+`emitDecoratorMetadata`, which holds in three of the ten compiler and runner combinations
+measured). The same handler class, without the decorator, is what NestJS or manual wiring
+would bind.
 
 ## Comparison
 
@@ -43,6 +48,7 @@ what NestJS or manual wiring would bind.
 | Who assembles a context | the kit, from declarations (generated barrel or discovery) or from an explicit module | as generated, the same `<context>Module(platform)` function as manual wiring; Nest providers by factory when you bind in Nest modules yourself | a `<context>Module(platform)` function in `<context>.module.ts`: plain calls to constructors, registrations between markers |
 | Style available (`stack.style`) | `declared` or `explicit`, mixable | `explicit` only | `explicit` only |
 | Injection token | the port class itself | Nest tokens; ports bound in the module | none: plain variables |
+| What a class is given | what its constructor takes, each parameter typed by a port: read from the source into a generated file, never reflected | whatever the provider factory passes, or Nest's own `design:paramtypes` and `@Inject` when you declare providers by class | the arguments of `new Handler(a, b)` |
 | Decorators in your classes | declarations in `application/` and `infrastructure/`, none in `domain/`; no parameter decorator, no reflection | `@Injectable()` kept out of `domain/` and `application/` by rule; providers declared by factory | none |
 | Decorator mode | standard or legacy | legacy | not concerned |
 | Errors found before start | duplicate binding, unbound dependency, cycle, duplicate handler, consumer or job, undeclared authorization, and more (`WiringError` with a code) | Nest's own resolution errors at bootstrap | the compiler, for constructors; nothing for a forgotten handler |
@@ -73,8 +79,9 @@ what NestJS or manual wiring would bind.
 
 ## Selection criteria
 
-1. **Do you want the declared style?** One decorator per class, no module file, a generated
-   barrel kept current by the generator (`declarations/barrel-current`). Only tsyringe gives
+1. **Do you want the declared style?** One decorator per class, no module file, no
+   dependency list: a generated barrel, which also registers what each constructor takes, kept
+   current by the generator (`declarations/barrel-current`). Only tsyringe gives
    it, and it is its default: the CLI refuses `--style declared` with `--di manual` and
    `--di nest`, which default to `explicit`. `--di nest` goes with `--http nest` and the
    reverse.
@@ -93,13 +100,16 @@ From [`packages/di/README.md`](../../packages/di/README.md),
 [`packages/kernel/README.md`](../../packages/kernel/README.md) and
 [`packages/cli/README.md`](../../packages/cli/README.md):
 
-- **Compile-time checks**, in both decorator modes: a dependency list that does not match the
+- **Constructor injection that holds whoever compiles**: both decorator modes, `tsc` 6 and 7,
+  `tsx`, Vitest and Jest with swc, because nothing is asked of the compiler at run time.
+- **Compile-time checks**, in both decorator modes: a generated or written dependency list that does not match the
   constructor, a class that does not implement the port it is declared the adapter of, a
   concrete class named where a port is expected.
 - **Load-time checks** (`DeclarationError`): a port with a body, an adapter that extends its
   port, two declarations on one class.
 - **Start-time checks** (`WiringError`): duplicate or missing bindings, cycles between class
-  bindings, duplicate handlers, consumers and jobs, `rebind` of nothing; with
+  bindings, duplicate handlers, consumers and jobs, `rebind` of nothing, a declared class
+  whose constructor takes parameters and that no list covers, or a list of another length; with
   `authorization: 'required'`, a use case that declares neither a permission nor that it is
   public, and declarations that no module enforces.
 - **`kernelModule()`** binds a working default for every kernel port (in-memory buses, unit of

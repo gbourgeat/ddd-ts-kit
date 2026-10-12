@@ -7,6 +7,7 @@ import { readAdapters, type AdapterFact } from './read-adapters.js';
 import { readConsumedEvents } from './read-consumed-events.js';
 import { readPolicies } from './read-policies.js';
 import { readPorts } from './read-ports.js';
+import { readProjections } from './read-projections.js';
 import { readPublishedEvents } from './read-published-events.js';
 import { readRoutes } from './read-routes.js';
 import { readUseCases } from './read-use-cases.js';
@@ -43,6 +44,7 @@ export function describeContext(ws: Workspace, config: Config, facts: ContextFac
     publishedEvents: readPublishedEvents(sources),
     ports,
     policies: readPolicies(sources),
+    projections: readProjections(sources),
     gateways: gatewaysOf(ports, adapters),
     jobs: facts.jobs,
     contracts: CONTRACTS,

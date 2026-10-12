@@ -13,7 +13,7 @@ import type {
 
 type VersionedCalendar = CalendarColumns & { readonly version: number };
 
-@Repository(CalendarRepository, [KnexContext, ExecutionScope, Clock])
+@Repository(CalendarRepository)
 export class KnexCalendarRepository implements CalendarRepository {
   constructor(
     private readonly database: KnexContext,

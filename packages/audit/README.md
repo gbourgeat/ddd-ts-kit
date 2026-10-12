@@ -520,7 +520,7 @@ auditMiddleware(trail, { ...source, queries: [SearchAuditEntriesQuery] });
 import { AuditReader, type AuditEntry, type Page } from '@ddd-ts-kit/kernel';
 import { QueryHandler } from '@ddd-ts-kit/kernel/declarations';
 
-@QueryHandler(SearchAuditEntriesQuery, [AuditReader])
+@QueryHandler(SearchAuditEntriesQuery)
 export class SearchAuditEntriesHandler {
   constructor(private readonly reader: AuditReader) {}
 

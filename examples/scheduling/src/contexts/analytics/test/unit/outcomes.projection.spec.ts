@@ -12,7 +12,7 @@ import {
   appointmentRescheduledV1,
 } from '@/contexts/scheduling/published-language/index';
 import { OutcomeRegister } from '@/contexts/analytics/application/ports/outcome-register.port';
-import { OutcomesProjection } from '@/contexts/analytics/application/projections/outcomes.projection';
+import * as analyticsDeclarations from '@/contexts/analytics/analytics.declarations';
 import { anAppointmentFact } from '@/contexts/analytics/test/builders/appointment-fact.builder';
 import { FakeOutcomeRegister } from '@/contexts/analytics/test/fakes/outcome-register.fake';
 
@@ -116,7 +116,10 @@ async function arrange() {
   const outcomes = new FakeOutcomeRegister();
 
   const application = createTestApplication({
-    modules: [platformTestModule, contextModule('analytics', { OutcomesProjection })],
+    modules: [
+      platformTestModule,
+      contextModule('analytics', { OutcomesProjection: analyticsDeclarations.OutcomesProjection }),
+    ],
     fakes: [fake(OutcomeRegister, outcomes)],
   });
 

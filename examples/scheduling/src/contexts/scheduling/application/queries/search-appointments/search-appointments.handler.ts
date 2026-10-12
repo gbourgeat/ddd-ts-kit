@@ -6,7 +6,7 @@ import { Agenda } from '@/contexts/scheduling/application/ports/agenda.port';
 import { SearchAppointmentsQuery } from '@/contexts/scheduling/application/queries/search-appointments/search-appointments.query';
 import type { SearchAppointmentsResult } from '@/contexts/scheduling/application/queries/search-appointments/search-appointments.result';
 
-@QueryHandler(SearchAppointmentsQuery, [Agenda, Access])
+@QueryHandler(SearchAppointmentsQuery)
 export class SearchAppointmentsHandler implements QueryHandler<SearchAppointmentsQuery> {
   constructor(
     private readonly agenda: Agenda,

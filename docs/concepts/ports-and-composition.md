@@ -5,8 +5,10 @@ In this kit a port is an abstract class with abstract members only, and that cla
 injection token: one name carries the type at compile time and the identity at run time.
 Adapters implement ports and never extend them. Objects are assembled in one place, the
 composition root, either from what classes declare about themselves with decorators (the
-declared style) or from bindings written by hand in a module file (the explicit style). This
-page explains the choices, what each style costs and where the limits are.
+declared style) or from bindings written by hand in a module file (the explicit style). In
+the declared style a class states what it depends on once, in its constructor signature,
+and the kit reads it from the source. This page explains the choices, what each style costs
+and where the limits are.
 
 ## A port, in the scheduling application
 
@@ -47,15 +49,14 @@ An abstract class is both things at once:
 | a type for the constructor parameter | the interface | the class |
 | a run-time identity to bind and resolve | a constant, in a second place | the class itself |
 | a typed `resolve` | a generic on the token, declared by hand | follows from the class |
-| a dependency list checked against the constructor | not possible without the generic | the compiler compares the list to the parameters, in order |
+| a constructor parameter that names what is injected | not possible: the type is erased, a token must be repeated next to it | the type of the parameter is the token |
 | renaming | two names to rename | one |
 
-So the handler below names its dependencies once, as ports, and the compiler refuses a missing,
-extra, misordered or wrongly typed entry (the kernel README lists what is refused at compile time
-and what is refused when the file loads):
+So the handler below names its dependencies once, as the ports that type its constructor
+parameters, and nowhere else:
 
 ```ts
-@CommandHandler(BookAppointment, [AppointmentRepository, WorkingHoursReader, Clock])
+@CommandHandler(BookAppointment)
 export class BookAppointmentHandler implements CommandHandler<BookAppointment> {
   constructor(
     private readonly appointments: AppointmentRepository,
@@ -68,7 +69,94 @@ export class BookAppointmentHandler implements CommandHandler<BookAppointment> {
 ```
 
 There is no parameter decorator, no `reflect-metadata` for the kit's own decorators and no
-`emitDecoratorMetadata`: dependencies are named, never reflected.
+`emitDecoratorMetadata`: the signature is read from the source by `ddd-ts-kit docs`, which
+writes what it read in the generated file of the context. The next section says why.
+
+## How the constructor reaches the composition root
+
+A container needs, at run time, the list of tokens a constructor takes. Three mechanisms can
+give it, and they were measured on the compilers and runners a project of the kit meets
+(TypeScript 6.0.3 and the native TypeScript 7.0.2, tsx 4, Vitest 5 with and without the
+decorator plugin of `@ddd-ts-kit/testing`, swc 1.16 as Jest runs it; a decorated class whose
+constructor takes two ports, read with `Reflect.getMetadata('design:paramtypes', ..)`):
+
+| Compiler or runner | Legacy decorators with `emitDecoratorMetadata` | Standard (TC39) decorators |
+|---|---|---|
+| `tsc` 6, `tsc` 7 (the build) | the two classes | no metadata |
+| `tsx` (the `dev` script, esbuild) | no metadata | no metadata |
+| Vitest 5, own transform | the two classes | does not parse the file |
+| Vitest 5 with the kit's plugin | the two classes | no metadata |
+| swc (Jest) with `decoratorMetadata` | the two classes | no metadata |
+| any of them, the port imported with `import type` | `Object`, `Object` (or `Function`): the type is erased | no metadata |
+
+| | A list in the decorator | Compiler metadata | A generated list |
+|---|---|---|---|
+| What the developer writes | the constructor, then the same ports again in `@CommandHandler(M, [..])` | the constructor | the constructor |
+| Works with standard decorators | yes | no: the proposal emits no parameter types | yes |
+| Works under `tsx`, esbuild | yes | no | yes |
+| Survives `import type` and `verbatimModuleSyntax` | no: the list needs the value (`ports/value-import`) | no: recorded as `Object` | yes: the generated file imports the value |
+| Can disagree with the constructor | the compiler refuses a mismatch, the repetition remains | no | no: derived; a stale file is refused by a gate and at startup |
+| Needs a generation step | no | no | yes: `ddd-ts-kit docs`, every `generate`, every start of `dev` |
+
+Compiler metadata is the only mechanism that needs neither a repetition nor a generated file,
+and it holds in three cells out of ten: it would make an application start in its build and
+its tests and fail under `npm run dev`, or work for a project on class-validator and not for
+one on zod. The kit therefore reads the signatures itself, statically, and writes them down:
+
+```ts
+// contexts/appointments/appointments.declarations.ts, generated: never edited
+import { injected } from '@ddd-ts-kit/kernel/declarations';
+import { BookAppointmentHandler } from '@/contexts/appointments/application/commands/book-appointment/book-appointment.handler';
+import { WorkingHoursReader } from '@/contexts/appointments/application/ports/working-hours.port';
+import { AppointmentRepository } from '@/contexts/appointments/domain/repositories/appointment.repository';
+import { Clock } from '@ddd-ts-kit/kernel';
+
+export * from '@/contexts/appointments/application/commands/book-appointment/book-appointment.command';
+export * from '@/contexts/appointments/application/commands/book-appointment/book-appointment.handler';
+
+injected(BookAppointmentHandler, [AppointmentRepository, WorkingHoursReader, Clock]);
+```
+
+`injected` is typed like the list of a decorator was: the compiler refuses a list that does not
+match the constructor, so a generated file is type-checked with the rest. Four things keep it
+from going stale silently:
+
+- **A gate.** `ddd-ts-kit check` (`declarations/barrel-current`) and `ddd-ts-kit docs --check`
+  compare the file with what the sources say and name the class whose constructor changed;
+  `verify` and both pipelines run them.
+- **Development.** `npm run dev` loads `ddd-ts-kit/dist/refresh-declarations.js` before the
+  application on every start and every reload of the watcher: add a port to a constructor,
+  save, and the process that restarts is given it.
+- **Startup.** A class that takes parameters and has no list, or a list of another length,
+  stops `createApplication` with a `WiringError` (`MISSING_DEPENDENCIES`, `DEPENDENCY_ARITY`)
+  that names the class and the command to run. Nothing is ever injected as `undefined`.
+- **A rule.** `declarations/constructor-injection` refuses a parameter that names no single
+  class: a union, an interface, a primitive, an optional or defaulted parameter.
+
+What a signature may say, and what it may not:
+
+| Parameter | |
+|---|---|
+| typed by a port, a kernel port (`Clock`, `CommandBus`, `Logger`...), another declared class | its token |
+| `private readonly`, `protected`, `public` parameter properties, a parameter decorator of another library | looked through |
+| typed by a generic class, `Cache<Session>` | the raw class `Cache` is the token: type arguments say nothing of what is bound |
+| a primitive, a value, a settings object | not a token: type the parameter by an abstract class with readonly members and bind it to the value in the platform module |
+| an interface, a type alias, a union, an intersection | refused, with the same answer: an abstract class |
+| optional (`?`), a default value, a rest parameter, destructured | refused: the container always gives every parameter a value |
+| no constructor, and no base class | zero dependencies, nothing is generated for the class |
+| a constructor inherited from a class of the project | read in the base class, through its imports |
+| a constructor inherited from a class of a package | refused: write the constructor in the class |
+
+There is deliberately no `@Inject(Token)` on a parameter. Parameter decorators do not exist
+in standard decorators, so such an escape would work in one decorator mode only; a property
+decorator would move a dependency off the constructor, which is the one place the kit reads.
+The escape for a parameter whose type is not a token is the one the kit already had for
+values: an abstract class, bound in the platform. A list written in the decorator,
+`@CommandHandler(BookAppointment, [AppointmentRepository, WorkingHoursReader, Clock])`, is
+the form 0.1 projects wrote. It is still read, it is checked by the compiler against the
+constructor and it wins over the signature; a project keeps it with
+`"stack.dependencies": "listed"` (what a config without the key means) and leaves it with
+`"signature"`, where ESLint removes every list that repeats its constructor.
 
 ### The port rule
 
@@ -80,8 +168,10 @@ by inheritance. A value that is not a port (settings, a database handle) is carr
 way, by an abstract class with readonly members bound to a plain object.
 
 The rules are `ports/abstract-class`, `ports/implements-never-extends`,
-`ports/no-token-constant`, `ports/no-concrete-dependency` and `ports/value-import` (a port named
-in a dependency list is imported as a value, never with `import type`: the class is the token).
+`ports/no-token-constant`, `ports/no-concrete-dependency` (a constructor parameter is typed by
+a port, never by an adapter or a fake) and `ports/value-import` (a port named in a dependency
+list or given to `bind` is imported as a value: the class is the token; a port that only types
+a constructor parameter may be imported with `import type`).
 The kernel also refuses a port with a body or an adapter extending its port when the file loads.
 
 ### The identity limit
@@ -97,7 +187,7 @@ compiled once into one program never needs it.
 
 ```ts
 // contexts/appointments/infrastructure/external/in-process-working-hours.gateway.ts
-@Gateway(WorkingHoursReader, [CalendarsReadContract])
+@Gateway(WorkingHoursReader)
 export class InProcessWorkingHoursReader implements WorkingHoursReader {
   /* reads through the published language of calendars */
 }
@@ -141,7 +231,9 @@ flowchart TB
 |---|---|---|
 | Where a binding is written | on the class, as a decorator of the kernel's declarations entry | in `<context>.module.ts`, one statement per binding |
 | Registration file per context | none by hand: a generated barrel, or discovery | the module file |
+| What a class is given | what its constructor takes, read from the source into the generated file | the list of `.toClass(Adapter, [Ports])` and `.handledBy(Handler, [Ports])`: explicit stays explicit |
 | Adding a use case | add the files; the barrel is regenerated | add the files and a statement |
+| Adding a dependency | add the constructor parameter | add the parameter, and the port to the list of the statement |
 | Reading the wiring of a context | spread over the classes; `ddd-ts-kit describe <context>` gathers it | one file |
 | Values, factories, conditional bindings | not expressible by a decorator: written in a module | native |
 | Containers | only `@ddd-ts-kit/di` (on tsyringe) turns declarations into bindings | tsyringe, NestJS providers or manual wiring |
@@ -160,10 +252,11 @@ A declared context reaches the root in one of two ways (`stack.assembly` in
 | | Generated barrel | Discovery |
 |---|---|---|
 | Mechanism | one generated file re-exporting every role file | a scan of the context's folders at startup |
+| Where the constructor lists are | in the barrel, after the exports | in a generated `<context>.dependencies.ts`, which the scan loads with the role files; never compiler metadata |
 | Static analysis | bundlers, knip and dependency-cruiser follow it | the loaded files are imported by nothing: the analyzers must be told they are entries |
 | Startup | nothing to read | reads directories and imports sequentially |
 | Bundled or serverless | fits | a bundler cannot follow it |
-| A file written by hand | must be in the barrel: `declarations/barrel-current` reports a stale one | picked up by itself |
+| A file written by hand | must be in the barrel: `declarations/barrel-current` reports a stale one | picked up by itself; its constructor still has to be in the dependencies file, which the same rule holds |
 | Under Vitest | nothing to configure | `@ddd-ts-kit/di` must be inlined (`server.deps.inline`), which the generated config does |
 
 ### What a decorator cannot express
@@ -172,7 +265,9 @@ A declared context reaches the root in one of two ways (`stack.assembly` in
 - an adapter implementing two ports (one declaration per class: bind it explicitly, once per
   port);
 - a binding that depends on configuration;
-- inheritance: a declaration is not inherited by a subclass.
+- inheritance: a declaration is not inherited by a subclass;
+- what a class is given when its constructor takes something that is not one class: see the
+  table above.
 
 For these, an explicit module includes the declared classes and adds the statements.
 
@@ -189,6 +284,16 @@ legacy decorators itself, and needs a plugin of the kit for standard ones.
 - **Declared wiring is implicit.** Nobody reads one file to see how a context is assembled. The
   generated barrel, `ddd-ts-kit describe` and the startup checks compensate; a team that wants the
   wiring in one reviewed file chooses the explicit style.
+- **Constructor injection needs a generated file.** What a constructor takes reaches the
+  container through a file `ddd-ts-kit docs` writes. It is committed, regenerated by `dev` and
+  compared by a gate, but a class edited outside those paths (a script that never runs `docs`,
+  a file loaded by nothing the generator reads) is refused at startup rather than injected.
+  Nest and manual wiring are not concerned: Nest injects by its own metadata and providers,
+  manual wiring calls `new Handler(a, b)`.
+- **A test assembles a context from its generated file**, as the composition root does:
+  `contextModule('ordering', orderingDeclarations)`, or one class taken from it,
+  `contextModule('ordering', { PlaceOrderHandler: orderingDeclarations.PlaceOrderHandler })`.
+  A class imported from its own file and handed to `contextModule` alone has no list.
 - **Ports cost files.** A port, an adapter and a fake for a dependency that will only ever have
   one implementation is overhead. The kit accepts it for anything that leaves the process,
   because the fake is what keeps handler tests fast; do not add ports between classes of the

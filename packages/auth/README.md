@@ -118,7 +118,7 @@ import { Requires } from '@ddd-ts-kit/kernel/declarations';
 export class VoidInvoice extends AuthorizedCommand { /* ... */ }
 
 // void-invoice.handler.ts: Access comes from '@ddd-ts-kit/auth', which the application layer may import
-@CommandHandler(VoidInvoice, [InvoiceRepository, Access, Clock])
+@CommandHandler(VoidInvoice)
 export class VoidInvoiceHandler implements CommandHandler<VoidInvoice> { /* ... */ }
 ```
 
@@ -129,7 +129,7 @@ the one of the message. A policy class declared with
 method, and `appliesTo(subject)` when it must tell its subjects apart) is evaluated by
 `Access` next to the policies given to `authorizationModule`.
 
-The ports of this package are abstract classes, and the class is what a dependency list, a
+The ports of this package are abstract classes, and the class is what a constructor parameter, a
 binding or a test names: `Authorizer`, `Access`, `Authenticator`, `SessionAuthenticator` and
 `ResourceAttributes` from `@ddd-ts-kit/auth`, `RelationTupleStore` from
 `@ddd-ts-kit/auth/rebac`. An adapter `implements` its port and never extends it; a plain
@@ -716,7 +716,7 @@ helpers of the kernel:
 // contexts/billing/infrastructure/persistence/drizzle-invoice.repository.ts
 import { stampCreation, stampUpdate, tenantScopeOf } from '@ddd-ts-kit/kernel';
 
-@Repository(InvoiceRepository, [Database, ExecutionScope, Clock])
+@Repository(InvoiceRepository)
 export class DrizzleInvoiceRepository implements InvoiceRepository {
   constructor(
     private readonly context: Database,

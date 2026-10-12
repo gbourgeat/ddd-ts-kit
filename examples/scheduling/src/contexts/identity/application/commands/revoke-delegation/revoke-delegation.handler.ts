@@ -5,7 +5,7 @@ import { DelegationRepository } from '@/contexts/identity/domain/repositories/de
 import { Desk } from '@/contexts/identity/domain/value-objects/desk.vo';
 import { RevokeDelegationCommand } from '@/contexts/identity/application/commands/revoke-delegation/revoke-delegation.command';
 
-@CommandHandler(RevokeDelegationCommand, [DelegationRepository, Clock])
+@CommandHandler(RevokeDelegationCommand)
 export class RevokeDelegationHandler implements CommandHandler<RevokeDelegationCommand> {
   constructor(
     private readonly delegationRepository: DelegationRepository,

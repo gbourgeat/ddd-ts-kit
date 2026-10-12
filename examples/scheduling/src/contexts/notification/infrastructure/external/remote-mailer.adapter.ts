@@ -14,7 +14,7 @@ interface OutboundCall {
  * The mailer of development: no provider behind it, the mail is written to the application log.
  * Identifiers only reach the log, never the address nor the body of a mail.
  */
-@Adapter(Mailer, { kind: 'external', aspects: [ownPolicy()] }, [Logger])
+@Adapter(Mailer, { kind: 'external', aspects: [ownPolicy()] })
 export class RemoteMailer implements Mailer {
   constructor(private readonly logger: Logger) {}
 

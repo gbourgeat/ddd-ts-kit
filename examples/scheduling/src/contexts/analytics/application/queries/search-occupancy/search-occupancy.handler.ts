@@ -6,7 +6,7 @@ import { OccupancyReader } from '@/contexts/analytics/application/ports/occupanc
 import { SearchOccupancyQuery } from '@/contexts/analytics/application/queries/search-occupancy/search-occupancy.query';
 import type { SearchOccupancyResult } from '@/contexts/analytics/application/queries/search-occupancy/search-occupancy.result';
 
-@QueryHandler(SearchOccupancyQuery, [OccupancyReader, Access])
+@QueryHandler(SearchOccupancyQuery)
 export class SearchOccupancyHandler implements QueryHandler<SearchOccupancyQuery> {
   constructor(
     private readonly occupancy: OccupancyReader,

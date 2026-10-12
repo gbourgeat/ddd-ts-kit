@@ -10,7 +10,7 @@ type Delegation = Parameters<IdentityRelationships['forgetDelegation']>[0];
  * (ADR-0001), written in the unit of work of the command. A relationship commits or rolls back
  * with the fact it follows, which is why its domain event handlers run before the commit.
  */
-@Repository(IdentityRelationships, [RelationTupleStore])
+@Repository(IdentityRelationships)
 export class TupleIdentityRelationships implements IdentityRelationships {
   constructor(private readonly tuples: RelationTupleStore) {}
 
