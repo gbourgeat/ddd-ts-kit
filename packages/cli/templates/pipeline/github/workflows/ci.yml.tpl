@@ -156,7 +156,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
-      - name: The production build
+      - name: The production build{{#if sdk.on}}, and the clients of the contract{{/if}}
         run: npm run ci:build
       - name: Generated documents and contracts, from that build
         run: npm run ci:docs
