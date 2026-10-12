@@ -8,7 +8,7 @@ import { writtenClient } from './support/written-client.js';
 const COMPILER = path.join(REPO_ROOT, 'node_modules/@typescript/native/bin/tsc');
 
 /** A consumer of the example's client, under the compiler options of a generated project: every narrowing it relies on. */
-const CONSUMER = `import { createClient, isProblem, unwrap, type ErrorCode } from 'scheduling-api-client';
+const CONSUMER = `import { createClient, isProblem, UnexpectedResponseError, unwrap, type ErrorCode } from 'scheduling-api-client';
 
 const api = createClient({ baseUrl: 'http://127.0.0.1:3000', credentials: { bearer: () => 'token' } });
 
@@ -40,12 +40,22 @@ export async function firstStatus(): Promise<string> {
       return code;
     }
 
+    if (error instanceof UnexpectedResponseError) {
+      const reference: string | undefined = error.requestId;
+
+      return reference ?? String(error.status);
+    }
+
     throw error;
   }
 }
 
-// @ts-expect-error a code the operation does not declare for this status
-export const wrong: Awaited<ReturnType<typeof api.openPractice>> = { ok: false, status: 404, problem: { code: 'SLOT_TAKEN' } };
+type NotFound = Extract<Awaited<ReturnType<typeof api.openPractice>>, { readonly status: 404 }>;
+
+export const declared: NotFound['problem']['code'] = 'PERSON_NOT_REGISTERED';
+
+// @ts-expect-error a code the operation does not declare for this status, the only error of the line
+export const wrong: NotFound['problem']['code'] = 'SLOT_TAKEN';
 `;
 
 describe('the client of the example contract', () => {
