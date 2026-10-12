@@ -1,4 +1,4 @@
-import { IdGenerator, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
+import type { IdGenerator, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
 import { AppointmentRescheduled } from '@/contexts/scheduling/domain/events/appointment-rescheduled.event';
 import { appointmentRescheduledV1 } from '@/contexts/scheduling/published-language/appointment-rescheduled.v1.integration-event';

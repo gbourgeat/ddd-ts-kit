@@ -128,7 +128,6 @@ export const WIRING_INJECTIONS: readonly Injection[] = [
     what: 'a port of a dependency list imported as a type',
     file: PLAN_HANDLER,
     changes: [
-      { file: PLAN_HANDLER, from: PORT_IMPORT, to: PORT_IMPORT.replace('import {', 'import type {') },
       {
         file: PLAN_HANDLER,
         from: '@CommandHandler(PlanReminderCommand)',

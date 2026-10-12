@@ -8,7 +8,7 @@ You build the bounded context `analytics` of the scheduling example. Worker name
 
 Scope
 - You may write: `src/contexts/analytics/**` and `test/e2e/analytics-*.e2e.spec.ts`.
-- Generators you may run: value-object, entity, domain-event, domain-error, domain-service,
+- Generators you may run: value-object, entity, domain-event, error, domain-service,
   command, query, route, port, adapter, event-handler, integration-handler, builder, e2e.
 
 Slices, in this order (rows of `docs/architecture/slices.md`, rules below its table): 35, 36, 37.

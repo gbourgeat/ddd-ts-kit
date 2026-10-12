@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { unwrap } from '@ddd-ts-kit/kernel';
-import { InvalidAppointmentTypeError } from '@/contexts/scheduling/domain/errors/invalid-appointment-type.error';
 import { AppointmentType } from '@/contexts/scheduling/domain/value-objects/appointment-type.vo';
 
 const consultation = {
@@ -31,7 +30,7 @@ describe('AppointmentType', () => {
   ])('refuses %s', (_case, facts) => {
     const result = AppointmentType.create({ ...consultation, ...facts });
 
-    expect(result).toMatchObject({ ok: false, error: expect.any(InvalidAppointmentTypeError) });
+    expect(result).toMatchObject({ ok: false, error: expect.objectContaining({ code: 'INVALID_APPOINTMENT_TYPE' }) });
   });
 
   it.each([5, 15, 20, 30, 45, 60, 90, 1440])('accepts a grid of %i minutes, which divides a day', (grid) => {

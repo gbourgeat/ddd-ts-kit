@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { executeRoute } from '@ddd-ts-kit/http';
 import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';
 import { JoinWaitlistCommand } from '@/contexts/scheduling/application/commands/join-waitlist/join-waitlist.command';
-import { AlreadyWaitingError } from '@/contexts/scheduling/domain/errors/already-waiting.error';
+import { WaitlistError } from '@/contexts/scheduling/domain/errors/waitlist.error';
 import { joinWaitlistRoute } from '@/contexts/scheduling/presentation/http/join-waitlist.route';
 
 const valid = { patientId: 'patient-1', appointmentTypeId: 'consultation', day: '2026-03-02' };
@@ -42,7 +42,7 @@ describe('POST /calendars/:calendarId/waitlist', () => {
   it('answers the refusal of the use case with its code', async () => {
     const commands = new InMemoryCommandBus().register(JoinWaitlistCommand, {
       execute: async () => {
-        throw new AlreadyWaitingError('patient-1');
+        throw WaitlistError.alreadyWaiting('patient-1');
       },
     });
 

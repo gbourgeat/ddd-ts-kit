@@ -1,9 +1,9 @@
-import { Clock, IdGenerator, unwrap } from '@ddd-ts-kit/kernel';
+import { type Clock, type IdGenerator, unwrap } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
 import { Practice } from '@/contexts/identity/domain/aggregates/practice.aggregate';
-import { PersonNotRegisteredError } from '@/contexts/identity/domain/errors/person-not-registered.error';
-import { PersonRepository } from '@/contexts/identity/domain/repositories/person.repository';
-import { PracticeRepository } from '@/contexts/identity/domain/repositories/practice.repository';
+import { PersonError } from '@/contexts/identity/domain/errors/person.error';
+import type { PersonRepository } from '@/contexts/identity/domain/repositories/person.repository';
+import type { PracticeRepository } from '@/contexts/identity/domain/repositories/practice.repository';
 import { TimeZone } from '@/contexts/identity/domain/value-objects/time-zone.vo';
 import { OpenPracticeCommand } from '@/contexts/identity/application/commands/open-practice/open-practice.command';
 
@@ -22,7 +22,7 @@ export class OpenPracticeHandler implements CommandHandler<OpenPracticeCommand> 
     const manager = await this.personRepository.findById(managerId);
 
     if (manager === undefined) {
-      throw new PersonNotRegisteredError(managerId);
+      throw PersonError.notRegistered(managerId);
     }
 
     const opening = { name, timeZone, manager: { personId: manager.id, displayName: manager.displayName } };

@@ -19,7 +19,7 @@ const TAKEN = '  constructor(private readonly commands: CommandBus) {}';
 const STALE =
   'The generated list of a class is read from its constructor: a changed signature leaves the barrel stale until it is regenerated.';
 
-const KERNEL = "import { CommandBus, systemActor } from '@ddd-ts-kit/kernel';";
+const KERNEL = "import { type CommandBus, systemActor } from '@ddd-ts-kit/kernel';";
 
 const READ =
   "    const scope = await this.access.scope(actor, schedulingPermissions['appointment.read'], 'appointment');\n";

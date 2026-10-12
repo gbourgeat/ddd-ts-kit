@@ -1,5 +1,5 @@
 import { ValueObject, err, ok, type Result } from '@ddd-ts-kit/kernel';
-import { UnknownRoleError } from '@/contexts/identity/domain/errors/unknown-role.error';
+import { PracticeError } from '@/contexts/identity/domain/errors/practice.error';
 
 export type RoleName = 'manager' | 'practitioner' | 'assistant';
 
@@ -14,12 +14,12 @@ export class Role extends ValueObject<RoleProps> {
     super(props);
   }
 
-  static create(value: string): Result<Role, UnknownRoleError> {
+  static create(value: string): Result<Role, PracticeError> {
     const normalized = value.trim().toLowerCase();
     const known = ROLES.find((role) => role === normalized);
 
     if (known === undefined) {
-      return err(new UnknownRoleError(value));
+      return err(PracticeError.unknownRole(value));
     }
 
     return ok(new Role({ value: known }));

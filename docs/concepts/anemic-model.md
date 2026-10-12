@@ -94,7 +94,7 @@ export class CancelAppointmentHandler implements CommandHandler<CancelAppointmen
   async execute(command: CancelAppointment): Promise<void> {
     const appointment = await this.appointments.findById(command.appointmentId);
     if (appointment === undefined) {
-      throw new AppointmentNotFound(command.appointmentId);
+      throw AppointmentError.notFound(command.appointmentId);
     }
 
     appointment.cancel(command.reason, this.clock.now());
@@ -174,7 +174,8 @@ is written for it, and so is a human review focused on the domain layer
 1. Pick one rule in one handler. Write the domain spec first: given a state, when the
    intention, then the event or the error.
 2. Add the intention method on the aggregate and move the condition into it. Name the refusal
-   with `generate domain-error`.
+   with `generate error <context> <Concept> <refusal>`, which adds a factory to the error class
+   of the concept.
 3. Replace the handler's branches by the single call. Its spec gets shorter: happy path, each
    error code, nothing saved or published on failure.
 4. Remove the setter or public property the handler was using. The compiler lists the other

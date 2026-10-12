@@ -31,7 +31,7 @@ const BILLING = [
   'domain/entities/invoice-line.entity.ts',
   'domain/value-objects/money.vo.ts',
   'domain/events/invoice-issued.event.ts',
-  'domain/errors/invoice-already-issued.error.ts',
+  'domain/errors/invoice.error.ts',
   'domain/services/pricing.service.ts',
   'domain/repositories/invoice.repository.ts',
   'infrastructure/external/remote-payment-gateway.adapter.ts',

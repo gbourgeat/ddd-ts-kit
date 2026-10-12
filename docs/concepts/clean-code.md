@@ -88,13 +88,13 @@ cancel(reason: CancellationReason, at: Date): void {
 
 private assertNotCancelled(): void {
   if (this.status.isCancelled) {
-    throw new AppointmentAlreadyCancelled(this.id);
+    throw AppointmentError.alreadyCancelled(this.id);
   }
 }
 
 private assertWithinCancellationWindow(at: Date): void {
   if (!this.slot.startsAfter(at, CANCELLATION_NOTICE)) {
-    throw new CancellationWindowPassed(this.id);
+    throw AppointmentError.cancellationWindowPassed(this.id, this.slot.startsAt);
   }
 }
 ```
@@ -106,7 +106,8 @@ Four rules met at once:
   ([Invariants, permissions and validation](invariants-permissions-validation.md)); if the
   business truly has two behaviours, they are two methods.
 - `domain/no-generic-error`: a business failure is a specific `DomainError` with a stable
-  code, not `new Error('too late')`.
+  code, not `new Error('too late')`. It is named twice in the words of the business, by the
+  factory that builds it and by its code (`errors/through-factory`, `errors/factory-name`).
 - `clean/no-noise-comment`: `// check state` restated the code; the extracted name says it.
 - Command or query, never both: `cancel` changes state and returns nothing.
 

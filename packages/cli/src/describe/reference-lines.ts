@@ -78,7 +78,7 @@ function eventTables(context: ContextDescription): Table[] {
   ];
 }
 
-/** The tables of what the context binds: its ports, its policies and its gateways. */
+/** The tables of what the context binds and answers: its ports, its policies, its errors and its gateways. */
 function adapterTables(context: ContextDescription): Table[] {
   return [
     {
@@ -95,6 +95,7 @@ function adapterTables(context: ContextDescription): Table[] {
       columns: ['Policy', 'Permission'],
       rows: context.policies.map((policy) => [code(policy.name), code(policy.permission)]),
     },
+    errorTable(context),
     {
       title: 'Gateways',
       columns: ['Gateway', 'Upstream', 'Adapters'],
@@ -105,6 +106,19 @@ function adapterTables(context: ContextDescription): Table[] {
       ]),
     },
   ];
+}
+
+function errorTable(context: ContextDescription): Table {
+  return {
+    title: 'Errors',
+    columns: ['Error class', 'Refusal', 'Code', 'Exposed facts'],
+    rows: context.errors.map((error) => [
+      code(error.errorClass),
+      error.refusal === '' ? 'the class itself' : code(error.refusal),
+      code(error.code),
+      error.exposes.length === 0 ? 'none' : codes(error.exposes),
+    ]),
+  };
 }
 
 function routeRow(route: RouteFact): string[] {

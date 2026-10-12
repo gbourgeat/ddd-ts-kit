@@ -1,4 +1,4 @@
-import { CommandBus, systemActor } from '@ddd-ts-kit/kernel';
+import { type CommandBus, systemActor } from '@ddd-ts-kit/kernel';
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
 import { ReminderSent } from '@/contexts/notification/domain/events/reminder-sent.event';
 import { SendNotificationCommand } from '@/contexts/notification/application/commands/send-notification/send-notification.command';

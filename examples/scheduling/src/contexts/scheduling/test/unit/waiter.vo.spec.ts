@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { unwrap } from '@ddd-ts-kit/kernel';
-import { InvalidWaiterError } from '@/contexts/scheduling/domain/errors/invalid-waiter.error';
 import { Waiter } from '@/contexts/scheduling/domain/value-objects/waiter.vo';
 
 const joinedAt = new Date('2026-03-01T08:00:00.000Z');
@@ -19,7 +18,10 @@ describe('Waiter', () => {
     ['without an appointment type', { appointmentTypeId: '' }],
     ['who joined at no real instant', { joinedAt: new Date('never') }],
   ])('refuses a waiter %s', (_case, facts) => {
-    expect(Waiter.create({ ...ada, ...facts })).toMatchObject({ ok: false, error: expect.any(InvalidWaiterError) });
+    expect(Waiter.create({ ...ada, ...facts })).toMatchObject({
+      ok: false,
+      error: expect.objectContaining({ code: 'INVALID_WAITER' }),
+    });
   });
 
   it('keeps who waits, for what and since when', () => {

@@ -3,14 +3,6 @@ import { parseConfig, REFERENCE_COVERAGE, serializeConfig } from '../src/config/
 import { changeConfig, checkJsonOf } from './check-support.js';
 import { cli, read, REPO_ROOT, tempDir, write } from './helpers.js';
 
-/** The reference the test runner applies, read from the source of `@ddd-ts-kit/testing`, which the CLI does not depend on. */
-function runnerReference(): unknown {
-  const source = read(REPO_ROOT, 'packages/testing/src/coverage/reference-coverage.ts');
-  const literal = /REFERENCE_COVERAGE = (\{[\s\S]*?\n\}) as const/.exec(source)?.[1] ?? '';
-
-  return JSON.parse(literal.replaceAll(/(\w+):/g, '"$1":').replaceAll(/,(\s*\})/g, '$1'));
-}
-
 describe('the coverage thresholds of the config', () => {
   it('are the reference when the config says nothing, and are not written to the file then', () => {
     const config = parseConfig({});
@@ -71,3 +63,11 @@ describe('the coverage thresholds of the config', () => {
     ]);
   });
 });
+
+/** The reference the test runner applies, read from the source of `@ddd-ts-kit/testing`, which the CLI does not depend on. */
+function runnerReference(): unknown {
+  const source = read(REPO_ROOT, 'packages/testing/src/coverage/reference-coverage.ts');
+  const literal = /REFERENCE_COVERAGE = (\{[\s\S]*?\n\}) as const/.exec(source)?.[1] ?? '';
+
+  return JSON.parse(literal.replaceAll(/(\w+):/g, '"$1":').replaceAll(/,(\s*\})/g, '$1'));
+}

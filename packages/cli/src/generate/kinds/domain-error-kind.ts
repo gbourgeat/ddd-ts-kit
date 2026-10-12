@@ -12,11 +12,19 @@ export const domainErrorKind: Kind = {
   name: 'domain-error',
   aliases: [],
   usage: 'domain-error <context> <Name> [--code CODE]',
-  summary: 'A DomainError with a stable code, and its spec.',
+  summary:
+    'One class per error, built with `new`, and its spec: the form of a project that does not say "stack.refusals": "factories".',
   positionals: ['context', 'Name'],
   writesShared: false,
   run: (request) => {
     const scope = openScope(request);
+
+    if (request.config.stack.refusals === 'factories') {
+      throw new CliError(
+        'This project builds its domain errors through static factories ("stack.refusals": "factories").',
+        `Add the refusal to the error class of its concept: \`ddd-ts-kit generate error ${scope.context.kebab} <Concept> <refusal>\`.`,
+      );
+    }
 
     const name = concept({ ...scope, flags: { ...scope.flags, allowName: true } }, request.args[1] ?? '', {
       what: 'domain error',

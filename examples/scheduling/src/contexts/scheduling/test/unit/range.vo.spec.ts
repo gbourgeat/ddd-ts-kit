@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { unwrap } from '@ddd-ts-kit/kernel';
-import { InvalidRangeError } from '@/contexts/scheduling/domain/errors/invalid-range.error';
 import { Range } from '@/contexts/scheduling/domain/value-objects/range.vo';
 
 describe('Range', () => {
@@ -25,7 +24,10 @@ describe('Range', () => {
     ['09:00', '24:30'],
     ['', '12:00'],
   ])('refuses %j to %j as an invalid range', (start, end) => {
-    expect(Range.create(start, end)).toMatchObject({ ok: false, error: expect.any(InvalidRangeError) });
+    expect(Range.create(start, end)).toMatchObject({
+      ok: false,
+      error: expect.objectContaining({ code: 'INVALID_RANGE' }),
+    });
   });
 
   it('is written back as its two times', () => {

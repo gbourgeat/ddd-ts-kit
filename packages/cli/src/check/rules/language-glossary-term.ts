@@ -1,6 +1,7 @@
 import { Glossaries } from '../language/glossaries.js';
 import type { Glossary } from '../language/parse-glossary.js';
 import { unknownWords } from '../language/unknown-words.js';
+import { buildsThroughFactories } from '../errors/builds-through-factories.js';
 import type { Finding } from '../model/finding.js';
 import type { Rule } from '../model/rule.js';
 import type { SourceFile } from '../model/source-file.js';
@@ -14,14 +15,15 @@ const DOMAIN_ROLES = new Set(['aggregates', 'entities', 'value-objects', 'servic
 export const languageGlossaryTerm: Rule = {
   id: 'language/glossary-term',
   description:
-    "Every aggregate, entity, value object, domain service, domain event, command and query is named with terms of the Ubiquitous language table of its context's CONTEXT.md.",
+    'Every aggregate, entity, value object, domain service, domain event, command and query is named with terms of the Ubiquitous language table of its context\'s CONTEXT.md, and under "stack.refusals": "factories" every error class of domain/errors/ too.',
   scope: 'file',
   run(project) {
     const report = reporter(project, this.id);
     const glossaries = new Glossaries(project.root, project.config.contextsDir);
+    const roles = buildsThroughFactories(project) ? new Set([...DOMAIN_ROLES, 'errors']) : DOMAIN_ROLES;
 
     return project.files.flatMap((file) => {
-      const context = conceptsContext(file);
+      const context = conceptsContext(file, roles);
       const classes = context === undefined ? [] : [...file.scan.code.matchAll(CLASS)];
 
       if (context === undefined || classes.length === 0) {
@@ -87,8 +89,8 @@ function undefinedNames(
   });
 }
 
-/** The context of a file whose classes are concepts of the model: the building blocks and the use case messages. */
-function conceptsContext(file: SourceFile): string | undefined {
+/** The context of a file whose classes are concepts of the model: the building blocks, the use case messages and, once errors are named after concepts, the error classes. */
+function conceptsContext(file: SourceFile, roles: ReadonlySet<string>): string | undefined {
   if (!inContext(file.location) || file.isTest) {
     return undefined;
   }
@@ -101,5 +103,5 @@ function conceptsContext(file: SourceFile): string | undefined {
     (folder === 'commands' || folder === 'queries') &&
     /\.(?:command|query)\.ts$/.test(file.path);
 
-  return (layer === 'domain' && DOMAIN_ROLES.has(folder)) || isMessage ? context : undefined;
+  return (layer === 'domain' && roles.has(folder)) || isMessage ? context : undefined;
 }

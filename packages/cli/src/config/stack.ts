@@ -13,6 +13,7 @@ export const BROKER_STACKS = ['none', 'rabbitmq', 'kafka', 'nats', 'redis', 'cus
 export const STYLES = ['declared', 'explicit'] as const;
 export const ASSEMBLIES = ['barrel', 'discovery'] as const;
 export const DEPENDENCY_STATEMENTS = ['signature', 'listed'] as const;
+export const REFUSAL_FORMS = ['factories', 'classes'] as const;
 export const CACHE_STACKS = ['none', 'redis'] as const;
 export const AUDIT_MODES = ['on', 'off'] as const;
 export const ERROR_REPORTERS = ['none', 'sentry'] as const;
@@ -64,6 +65,14 @@ export interface Stack {
    * every decorator listed its dependencies: it is `listed`, and both forms run in either.
    */
   readonly dependencies: (typeof DEPENDENCY_STATEMENTS)[number];
+  /**
+   * How a domain error is written: `factories`, one error class per concept of the model, each
+   * refusal built by a static factory named in the words of the business
+   * (`AppointmentError.slotTaken(..)`), which the `errors/*` rules hold; `classes`, one class per
+   * error, built with `new`. A config that says nothing was written when every error was a
+   * class: it is `classes`, and both forms run in either.
+   */
+  readonly refusals: (typeof REFUSAL_FORMS)[number];
   /**
    * What installs the dependencies and runs the scripts: every command the CLI writes (scripts,
    * pipelines, hooks, Dockerfile, guidance) is in its dialect. A config that says nothing was

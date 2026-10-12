@@ -9,17 +9,6 @@ const COMPOSITION = 'src/platform/compose-application.ts';
 const PROOF = 'test/architecture/extractable.spec.ts';
 const OWN_POLICY = 'src/platform/resilience/own-policy.ts';
 
-function context(root: string, name: string, ...more: string[]): void {
-  expect(cli(root, 'generate', 'context', name, '--classification', 'core', ...more).stderr).toBe('');
-}
-
-/** A port of billing and its remote adapter, the way a team asks for them; answers the result of the adapter. */
-function adapter(root: string, port: string, ...more: string[]): ReturnType<typeof cli> {
-  cli(root, 'generate', 'port', 'billing', port, '--allow-name');
-
-  return cli(root, 'generate', 'adapter', 'billing', port, '--allow-name', '--json', ...more);
-}
-
 /**
  * Nothing `init` writes waits for a later command to be used: what only the first context or
  * the first adapter names arrives with it, so that the linter and the dead-code gate of a
@@ -177,3 +166,14 @@ describe('what init says to do next', () => {
     expect(stringsAt(result.json(), 'notes')).toContain(note);
   });
 });
+
+function context(root: string, name: string, ...more: string[]): void {
+  expect(cli(root, 'generate', 'context', name, '--classification', 'core', ...more).stderr).toBe('');
+}
+
+/** A port of billing and its remote adapter, the way a team asks for them; answers the result of the adapter. */
+function adapter(root: string, port: string, ...more: string[]): ReturnType<typeof cli> {
+  cli(root, 'generate', 'port', 'billing', port, '--allow-name');
+
+  return cli(root, 'generate', 'adapter', 'billing', port, '--allow-name', '--json', ...more);
+}

@@ -48,7 +48,7 @@
     "@biomejs/biome": "2.5.15",
     "@commitlint/cli": "^21.2.3",
     "@commitlint/config-conventional": "^21.2.3",
-    "@ddd-ts-kit/eslint-plugin": "0.2.0",
+    "@ddd-ts-kit/eslint-plugin": "0.3.0",
     "@eslint/js": "^10.0.1",
     "@stylistic/eslint-plugin": "^5.10.0",
     "@types/node": "^24.0.0",

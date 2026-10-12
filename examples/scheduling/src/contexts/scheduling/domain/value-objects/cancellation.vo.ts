@@ -1,5 +1,5 @@
 import { ValueObject, err, ok, type Result } from '@ddd-ts-kit/kernel';
-import { ReasonRequiredError } from '@/contexts/scheduling/domain/errors/reason-required.error';
+import { AppointmentError } from '@/contexts/scheduling/domain/errors/appointment.error';
 
 export type CancellationProps = {
   readonly by: 'patient' | 'practice';
@@ -12,11 +12,11 @@ export class Cancellation extends ValueObject<CancellationProps> {
   }
 
   /** A patient may cancel without a word; the practice says why. */
-  static create(by: 'patient' | 'practice', reason?: string): Result<Cancellation, ReasonRequiredError> {
+  static create(by: 'patient' | 'practice', reason?: string): Result<Cancellation, AppointmentError> {
     const given = reason?.trim() ?? '';
 
     if (by === 'practice' && given.length === 0) {
-      return err(new ReasonRequiredError());
+      return err(AppointmentError.reasonRequired());
     }
 
     return ok(new Cancellation({ by, reason: given.length === 0 ? undefined : given }));

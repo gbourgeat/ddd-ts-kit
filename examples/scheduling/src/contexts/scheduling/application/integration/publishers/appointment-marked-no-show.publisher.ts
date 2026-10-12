@@ -1,4 +1,4 @@
-import { IdGenerator, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
+import type { IdGenerator, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
 import { AppointmentMarkedNoShow } from '@/contexts/scheduling/domain/events/appointment-marked-no-show.event';
 import { appointmentMarkedNoShowV1 } from '@/contexts/scheduling/published-language/appointment-marked-no-show.v1.integration-event';

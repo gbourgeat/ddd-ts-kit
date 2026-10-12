@@ -75,6 +75,7 @@ describe('shipped templates', () => {
         'domain-service',
         'e2e',
         'entity',
+        'error',
         'event-handler',
         'init',
         'integration-event',

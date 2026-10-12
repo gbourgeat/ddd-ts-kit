@@ -4,7 +4,7 @@ You build the bounded context `notification` of the scheduling example. Worker n
 
 Scope
 - You may write: `src/contexts/notification/**` and `test/e2e/notification-*.e2e.spec.ts`.
-- Generators you may run: value-object, entity, domain-event, domain-error, domain-service,
+- Generators you may run: value-object, entity, domain-event, error, domain-service,
   command, query, route, port, adapter, event-handler, integration-handler, builder, e2e.
 
 Slices, in this order (rows of `docs/architecture/slices.md`, rules below its table): 31, 32, 33,

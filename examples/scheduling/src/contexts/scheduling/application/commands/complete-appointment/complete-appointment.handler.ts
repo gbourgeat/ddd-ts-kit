@@ -1,7 +1,7 @@
-import { Clock } from '@ddd-ts-kit/kernel';
+import type { Clock } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
-import { AppointmentNotFoundError } from '@/contexts/scheduling/domain/errors/appointment-not-found.error';
-import { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository';
+import { AppointmentError } from '@/contexts/scheduling/domain/errors/appointment.error';
+import type { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository';
 import { CompleteAppointmentCommand } from '@/contexts/scheduling/application/commands/complete-appointment/complete-appointment.command';
 
 @CommandHandler(CompleteAppointmentCommand)
@@ -15,7 +15,7 @@ export class CompleteAppointmentHandler implements CommandHandler<CompleteAppoin
     const target = await this.appointmentRepository.findById(command.appointmentId);
 
     if (target === undefined) {
-      throw new AppointmentNotFoundError(command.appointmentId);
+      throw AppointmentError.notFound(command.appointmentId);
     }
 
     target.complete(this.clock.now());

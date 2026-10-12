@@ -1,4 +1,4 @@
-import { IdGenerator, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
+import type { IdGenerator, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
 import { CalendarCreated } from '@/contexts/scheduling/domain/events/calendar-created.event';
 import { calendarCreatedV1 } from '@/contexts/scheduling/published-language/calendar-created.v1.integration-event';

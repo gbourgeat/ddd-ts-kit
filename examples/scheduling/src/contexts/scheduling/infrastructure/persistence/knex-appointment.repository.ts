@@ -1,12 +1,12 @@
 import type { Knex } from 'knex';
-import { Clock, ExecutionScope, stampCreation, stampUpdate } from '@ddd-ts-kit/kernel';
+import { type Clock, type ExecutionScope, stampCreation, stampUpdate } from '@ddd-ts-kit/kernel';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
 import { KnexContext, auditRow, insertIgnoringConflict, optimisticUpdate } from '@ddd-ts-kit/knex';
 import type { Appointment } from '@/contexts/scheduling/domain/aggregates/appointment.aggregate';
 import { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository';
 import { SCHEDULING_SCHEMA } from '@/contexts/scheduling/infrastructure/persistence/scheduling.schema';
 import { AppointmentMapper } from '@/contexts/scheduling/infrastructure/persistence/appointment.mapper';
-import { SlotTakenError } from '@/contexts/scheduling/domain/errors/slot-taken.error';
+import { AppointmentError } from '@/contexts/scheduling/domain/errors/appointment.error';
 import {
   APPOINTMENT_SLOT_HELD_ONCE,
   type AppointmentColumns,
@@ -75,7 +75,7 @@ export class KnexAppointmentRepository implements AppointmentRepository {
       });
     } catch (error) {
       if (isSlotHeldTwice(error) || (saved.isActive && isDeadlock(error))) {
-        throw new SlotTakenError(saved.calendarId, saved.slot.startsAt);
+        throw AppointmentError.slotTaken(saved.calendarId, saved.slot.startsAt);
       }
 
       throw error;

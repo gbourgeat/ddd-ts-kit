@@ -13,7 +13,7 @@ Scope
   `create-scheduling-tables.schema.ts`, `scheduling.schema.ts`, `scheduling.routes.ts`,
   `CONTEXT.md`): generators write them; when you edit one by hand, read it again just before and
   change only your lines.
-- Generators you may run: value-object, entity, domain-event, domain-error, domain-service,
+- Generators you may run: value-object, entity, domain-event, error, domain-service,
   command, query, route, port, adapter, event-handler, builder, e2e.
 
 The seam with `scheduling-appointment`, fixed: they generate the value object `Slot` first

@@ -1,4 +1,4 @@
-import { IdGenerator, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
+import type { IdGenerator, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
 import { PracticeMemberRemoved } from '@/contexts/identity/domain/events/practice-member-removed.event';
 import { practiceMemberRemovedV1 } from '@/contexts/identity/published-language/practice-member-removed.v1.integration-event';

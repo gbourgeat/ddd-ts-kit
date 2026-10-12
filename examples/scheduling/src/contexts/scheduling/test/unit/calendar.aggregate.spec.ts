@@ -2,12 +2,6 @@ import { describe, expect, it } from 'vitest';
 import { unwrap } from '@ddd-ts-kit/kernel';
 import { given } from '@ddd-ts-kit/testing';
 import { Calendar } from '@/contexts/scheduling/domain/aggregates/calendar.aggregate';
-import { BookingTooFarError } from '@/contexts/scheduling/domain/errors/booking-too-far.error';
-import { BookingTooLateError } from '@/contexts/scheduling/domain/errors/booking-too-late.error';
-import { OffGridError } from '@/contexts/scheduling/domain/errors/off-grid.error';
-import { OutsideAvailabilityError } from '@/contexts/scheduling/domain/errors/outside-availability.error';
-import { TimeOffOverAppointmentsError } from '@/contexts/scheduling/domain/errors/time-off-over-appointments.error';
-import { UnknownAppointmentTypeError } from '@/contexts/scheduling/domain/errors/unknown-appointment-type.error';
 import { AppointmentType } from '@/contexts/scheduling/domain/value-objects/appointment-type.vo';
 import { Exception } from '@/contexts/scheduling/domain/value-objects/exception.vo';
 import { OpeningHours } from '@/contexts/scheduling/domain/value-objects/opening-hours.vo';
@@ -79,11 +73,11 @@ describe('Calendar', () => {
 
     expect(() =>
       calendar.slotFor('consultation', instant('2026-03-02T09:00:00.000Z'), instant('2026-03-02T07:00:01.000Z')),
-    ).toThrow(BookingTooLateError);
+    ).toThrow(expect.objectContaining({ code: 'BOOKING_TOO_LATE' }));
 
     expect(() =>
       calendar.slotFor('consultation', instant('2026-05-31T08:00:00.000Z'), instant('2026-03-02T07:59:00.000Z')),
-    ).toThrow(BookingTooFarError);
+    ).toThrow(expect.objectContaining({ code: 'BOOKING_TOO_FAR' }));
 
     expect(
       calendar.slotFor('consultation', instant('2026-05-31T08:00:00.000Z'), instant('2026-03-02T08:00:00.000Z')),
@@ -147,7 +141,7 @@ describe('Calendar, its availability', () => {
 
     given(open())
       .when((calendar) => calendar.addTimeOff(timeOff, [held], now))
-      .thenError(TimeOffOverAppointmentsError, 'TIME_OFF_OVER_APPOINTMENTS')
+      .thenError('TIME_OFF_OVER_APPOINTMENTS')
       .thenState((calendar) => expect(calendar.timeOffs).toEqual([]));
   });
 
@@ -191,7 +185,7 @@ describe('Calendar, the slot of an appointment', () => {
 
   it('is refused for a type the calendar does not offer', () => {
     expect(() => open().build().slotFor('surgery', instant('2026-03-02T08:00:00.000Z'), now)).toThrow(
-      UnknownAppointmentTypeError,
+      expect.objectContaining({ code: 'UNKNOWN_APPOINTMENT_TYPE' }),
     );
   });
 
@@ -209,14 +203,16 @@ describe('Calendar, the slot of an appointment', () => {
     ['between the two ranges', '2026-03-02T12:00:00.000Z'],
     ['at night', '2026-03-02T22:00:00.000Z'],
   ])('is refused %s, outside the availability', (_case, startsAt) => {
-    expect(() => open().build().slotFor('consultation', instant(startsAt), now)).toThrow(OutsideAvailabilityError);
+    expect(() => open().build().slotFor('consultation', instant(startsAt), now)).toThrow(
+      expect.objectContaining({ code: 'OUTSIDE_AVAILABILITY' }),
+    );
   });
 
   it('must fit whole inside one range: an appointment does not span the lunch break', () => {
     const calendar = open().offering('surgery', { duration: 150, grid: 30 }).build();
 
     expect(() => calendar.slotFor('surgery', instant('2026-03-02T10:00:00.000Z'), now)).toThrow(
-      OutsideAvailabilityError,
+      expect.objectContaining({ code: 'OUTSIDE_AVAILABILITY' }),
     );
 
     expect(calendar.slotFor('surgery', instant('2026-03-02T13:00:00.000Z'), now)).toBeInstanceOf(Slot);
@@ -234,7 +230,9 @@ describe('Calendar, the slot of an appointment', () => {
     ['a start between two steps of the grid', '2026-03-02T08:10:00.000Z'],
     ['a start that is not a whole minute', '2026-03-02T08:00:30.000Z'],
   ])('is refused for %s', (_case, startsAt) => {
-    expect(() => open().build().slotFor('consultation', instant(startsAt), now)).toThrow(OffGridError);
+    expect(() => open().build().slotFor('consultation', instant(startsAt), now)).toThrow(
+      expect.objectContaining({ code: 'OFF_GRID' }),
+    );
   });
 
   it('counts the grid from midnight on the wall clock of the practice, not in UTC', () => {
@@ -245,18 +243,21 @@ describe('Calendar, the slot of an appointment', () => {
       .build();
 
     expect(calendar.slotFor('consultation', instant('2026-03-02T04:30:00.000Z'), now)).toBeInstanceOf(Slot);
-    expect(() => calendar.slotFor('consultation', instant('2026-03-02T05:00:00.000Z'), now)).toThrow(OffGridError);
+
+    expect(() => calendar.slotFor('consultation', instant('2026-03-02T05:00:00.000Z'), now)).toThrow(
+      expect.objectContaining({ code: 'OFF_GRID' }),
+    );
   });
 
   it('follows the exception of its day: closed, or opened on other hours', () => {
     const calendar = open().withException('2026-03-02').withException('2026-03-03', ['20:00', '21:00']).build();
 
     expect(() => calendar.slotFor('consultation', instant('2026-03-02T08:00:00.000Z'), now)).toThrow(
-      OutsideAvailabilityError,
+      expect.objectContaining({ code: 'OUTSIDE_AVAILABILITY' }),
     );
 
     expect(() => calendar.slotFor('consultation', instant('2026-03-03T08:00:00.000Z'), now)).toThrow(
-      OutsideAvailabilityError,
+      expect.objectContaining({ code: 'OUTSIDE_AVAILABILITY' }),
     );
 
     expect(calendar.slotFor('consultation', instant('2026-03-03T19:00:00.000Z'), now)).toBeInstanceOf(Slot);
@@ -266,11 +267,11 @@ describe('Calendar, the slot of an appointment', () => {
     const calendar = open().off(instant('2026-03-02T08:15:00.000Z'), instant('2026-03-02T09:00:00.000Z')).build();
 
     expect(() => calendar.slotFor('consultation', instant('2026-03-02T08:00:00.000Z'), now)).toThrow(
-      OutsideAvailabilityError,
+      expect.objectContaining({ code: 'OUTSIDE_AVAILABILITY' }),
     );
 
     expect(() => calendar.slotFor('consultation', instant('2026-03-02T08:30:00.000Z'), now)).toThrow(
-      OutsideAvailabilityError,
+      expect.objectContaining({ code: 'OUTSIDE_AVAILABILITY' }),
     );
 
     expect(calendar.slotFor('consultation', instant('2026-03-02T09:00:00.000Z'), now)).toBeInstanceOf(Slot);
@@ -281,11 +282,11 @@ describe('Calendar, the slot of an appointment', () => {
     const startsAt = instant('2026-03-02T08:00:00.000Z');
 
     expect(() => calendar.slotFor('consultation', startsAt, instant('2026-03-02T06:30:00.000Z'))).toThrow(
-      BookingTooLateError,
+      expect.objectContaining({ code: 'BOOKING_TOO_LATE' }),
     );
 
     expect(() => calendar.slotFor('consultation', startsAt, instant('2025-11-01T08:00:00.000Z'))).toThrow(
-      BookingTooFarError,
+      expect.objectContaining({ code: 'BOOKING_TOO_FAR' }),
     );
 
     expect(calendar.slotFor('consultation', startsAt, instant('2026-03-02T06:00:00.000Z'))).toBeInstanceOf(Slot);
@@ -304,7 +305,9 @@ describe('Calendar, the confirmation of an appointment', () => {
   });
 
   it('is refused for a type the calendar does not offer', () => {
-    expect(() => open().build().confirmationDeadlineFor('surgery', now)).toThrow(UnknownAppointmentTypeError);
+    expect(() => open().build().confirmationDeadlineFor('surgery', now)).toThrow(
+      expect.objectContaining({ code: 'UNKNOWN_APPOINTMENT_TYPE' }),
+    );
   });
 });
 

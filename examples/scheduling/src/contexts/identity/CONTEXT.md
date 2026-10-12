@@ -166,4 +166,24 @@ Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-ki
 | `IdentityRelationships` | repository | `TupleIdentityRelationships` |
 | `PersonRepository` | repository | `KnexPersonRepository` |
 | `PracticeRepository` | repository | `KnexPracticeRepository` |
+
+### Errors
+
+| Error class | Refusal | Code | Exposed facts |
+|---|---|---|---|
+| `DelegationError` | `alreadyActive` | `DELEGATION_ALREADY_ACTIVE` | none |
+| `DelegationError` | `endsInThePast` | `DELEGATION_ENDS_IN_THE_PAST` | `endsAt` |
+| `DelegationError` | `notActive` | `DELEGATION_NOT_ACTIVE` | none |
+| `DelegationError` | `notFound` | `DELEGATION_NOT_FOUND` | none |
+| `PersonError` | `invalidDisplayName` | `INVALID_DISPLAY_NAME` | none |
+| `PersonError` | `invalidEmail` | `INVALID_EMAIL` | none |
+| `PersonError` | `notRegistered` | `PERSON_NOT_REGISTERED` | none |
+| `PracticeError` | `alreadyMember` | `ALREADY_MEMBER` | none |
+| `PracticeError` | `notAMember` | `NOT_A_MEMBER` | none |
+| `PracticeError` | `notAPractitioner` | `NOT_A_PRACTITIONER` | none |
+| `PracticeError` | `notAnAssistant` | `NOT_AN_ASSISTANT` | none |
+| `PracticeError` | `lastManager` | `LAST_MANAGER` | none |
+| `PracticeError` | `notFound` | `PRACTICE_NOT_FOUND` | none |
+| `PracticeError` | `unknownRole` | `UNKNOWN_ROLE` | none |
+| `PracticeError` | `unknownTimeZone` | `UNKNOWN_TIME_ZONE` | none |
 <!-- /ddd-ts-kit:reference -->

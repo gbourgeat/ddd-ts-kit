@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { unwrap } from '@ddd-ts-kit/kernel';
-import { InvalidTimeOffError } from '@/contexts/scheduling/domain/errors/invalid-time-off.error';
 import { TimeOff } from '@/contexts/scheduling/domain/value-objects/time-off.vo';
 
 describe('TimeOff', () => {
@@ -16,7 +15,10 @@ describe('TimeOff', () => {
     ['ends before it starts', at('09:00'), at('08:00')],
     ['starts at no real instant', new Date('never'), at('08:00')],
   ])('refuses a period that %s', (_case, startsAt, endsAt) => {
-    expect(TimeOff.create(startsAt, endsAt)).toMatchObject({ ok: false, error: expect.any(InvalidTimeOffError) });
+    expect(TimeOff.create(startsAt, endsAt)).toMatchObject({
+      ok: false,
+      error: expect.objectContaining({ code: 'INVALID_TIME_OFF' }),
+    });
   });
 
   it.each([

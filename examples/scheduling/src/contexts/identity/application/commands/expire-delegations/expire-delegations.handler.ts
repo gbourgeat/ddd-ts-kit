@@ -1,5 +1,5 @@
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
-import { DelegationRepository } from '@/contexts/identity/domain/repositories/delegation.repository';
+import type { DelegationRepository } from '@/contexts/identity/domain/repositories/delegation.repository';
 import { ExpireDelegationsCommand } from '@/contexts/identity/application/commands/expire-delegations/expire-delegations.command';
 
 @CommandHandler(ExpireDelegationsCommand)

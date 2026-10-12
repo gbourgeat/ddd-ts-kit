@@ -60,10 +60,13 @@ given(anOrder().withLine(aLine()).build())
 
 given(anOrder().paid().build())
   .when((order) => order.pay(clock.now()))
-  .thenError(OrderAlreadyPaid);
+  .thenError('ORDER_ALREADY_PAID', { orderId: 'order-1' });
 ```
 
-One intention per test. Assert events, errors, and state through the public API only.
+One intention per test. Assert events, errors, and state through the public API only. A
+refusal is asserted by its code and its facts, never by a message or the class of one error:
+`thenError(code, facts)` on an aggregate, `expectRefusal(subject, code, facts)` on an action, a
+`Result` or a caught error, `expectProblem(response, { status, code, facts })` end to end.
 
 ## Handler specs
 

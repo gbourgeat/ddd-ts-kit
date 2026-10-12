@@ -1,6 +1,5 @@
 import { AggregateRoot } from '@ddd-ts-kit/kernel';
-import { DelegationEndsInThePastError } from '@/contexts/identity/domain/errors/delegation-ends-in-the-past.error';
-import { DelegationNotActiveError } from '@/contexts/identity/domain/errors/delegation-not-active.error';
+import { DelegationError } from '@/contexts/identity/domain/errors/delegation.error';
 import { DelegationGranted } from '@/contexts/identity/domain/events/delegation-granted.event';
 import { DelegationRevoked } from '@/contexts/identity/domain/events/delegation-revoked.event';
 import type { Desk } from '@/contexts/identity/domain/value-objects/desk.vo';
@@ -31,7 +30,7 @@ export class Delegation extends AggregateRoot<string> {
     now: Date,
   ): Delegation {
     if (terms.endsAt !== undefined && terms.endsAt.getTime() <= now.getTime()) {
-      throw new DelegationEndsInThePastError(terms.endsAt);
+      throw DelegationError.endsInThePast(terms.endsAt);
     }
 
     const created = new Delegation(id, { ...terms, registeredAt: now, ended: undefined });
@@ -56,7 +55,7 @@ export class Delegation extends AggregateRoot<string> {
   /** Withdrawn by hand before its end: only an active delegation can be. */
   revoke(now: Date): void {
     if (!this.isActive) {
-      throw new DelegationNotActiveError(this.id);
+      throw DelegationError.notActive(this.id);
     }
 
     this.end('revoked', now);

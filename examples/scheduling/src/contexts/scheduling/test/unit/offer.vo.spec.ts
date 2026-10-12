@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { unwrap } from '@ddd-ts-kit/kernel';
-import { InvalidOfferError } from '@/contexts/scheduling/domain/errors/invalid-offer.error';
 import { Offer } from '@/contexts/scheduling/domain/value-objects/offer.vo';
 import { Slot } from '@/contexts/scheduling/domain/value-objects/slot.vo';
 import { Waiter } from '@/contexts/scheduling/domain/value-objects/waiter.vo';
@@ -28,14 +27,14 @@ describe('Offer', () => {
 
     expect(Offer.create({ waiter, slot, expiresAt: at('09:01') })).toMatchObject({
       ok: false,
-      error: expect.any(InvalidOfferError),
+      error: expect.objectContaining({ code: 'INVALID_OFFER' }),
     });
   });
 
   it('refuses a hold that ends at no real instant', () => {
     expect(Offer.create({ waiter, slot, expiresAt: new Date('never') })).toMatchObject({
       ok: false,
-      error: expect.any(InvalidOfferError),
+      error: expect.objectContaining({ code: 'INVALID_OFFER' }),
     });
   });
 

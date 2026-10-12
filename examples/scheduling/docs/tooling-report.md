@@ -814,3 +814,77 @@ Frictions:
    application, whose start needs its services.
 5. **The full start with the compose services and the postgres run were not replayed** for
    this change: `infra:up` and `test:postgres` need the services.
+
+## 2026-10-12: errors built by a factory of their concept
+
+The owner's decision: the code that refuses reads as a sentence, and the errors of one concept
+live together. `throw new SlotTakenError(calendar.id, slot.startsAt)` became
+`throw AppointmentError.slotTaken(calendar.id, slot.startsAt)`.
+
+| | Before | After |
+|---|---|---|
+| error classes (`domain/errors/*.error.ts`) | 44 files, 400 lines | 8 files, 293 lines |
+| their specs (`test/unit/*.error.spec.ts`) | 44 files, 541 lines | 8 files, 458 lines |
+| refusals | 44 classes, one code each | 44 factories on 8 classes, the same 44 codes |
+| places that build one | 164 `new ...Error(..)` | 164 factory calls |
+| facts a test can read as data | the parameters kept as properties, on 16 classes | every parameter, on every refusal |
+| facts a client can read as data | none (the message only) | 11 refusals expose one, by name |
+
+The concepts come from the glossaries, one per aggregate: `PracticeError` (8 refusals),
+`DelegationError` (4), `PersonError` (3) in identity; `AppointmentError` (13), `CalendarError`
+(10), `WaitlistError` (3) in scheduling; `NotificationError` (2), `ReminderError` (1) in
+notification. A refusal goes to the concept the caller asked for: the calendar and the
+scheduler detect that a slot is held, and refuse with `AppointmentError.slotTaken`. The
+refusals of a value object go to the concept it describes: `PersonError.invalidEmail`,
+`CalendarError.invalidRange`. No value object has an error class of its own, and none could
+be named `RangeError`.
+
+How it was done, in this order:
+
+1. `ddd-ts-kit error-factories --plan` proposed a concept for 15 of the 44 classes, the ones
+   named after an aggregate (`AppointmentNotFoundError`, `UnknownCalendarError`). The 29 others
+   were given theirs by hand in the plan file: this is the decision of the model.
+2. `ddd-ts-kit error-factories --apply` wrote 101 files and removed 88: the 8 error classes,
+   each factory with the parameters and the message of the constructor it replaces and its
+   plain parameters as facts; the 8 specs, the cases of each old spec under the name of its
+   factory; and every usage, among them the assertions on a class, turned into assertions on a
+   code (`toThrow(OutsideAvailabilityError)` is
+   `toThrow(expect.objectContaining({ code: 'OUTSIDE_AVAILABILITY' }))`). It set
+   `"stack.refusals": "factories"`. Then `npm run format`.
+3. By hand: the facts a client may read (`startsAt` of a slot, `notice`, `horizon`, `grid`,
+   `limit`, the `status` of an ended appointment, `held`, the `day` and the `endsAt` that were
+   sent), never an identifier of a person; the 8 specs rewritten as one table per class that
+   asserts the code, the message, the facts and the exposed facts of each factory; one spec
+   that read `error.given`, now `expectRefusal(result, 'INVALID_NOTIFICATION_KIND', { given })`.
+
+What the tools said:
+
+- The first run of the codemod sent `UnknownTimeZoneError` of scheduling to `PracticeError`,
+  the concept of the class of the same name in identity: a move was applied by class name
+  across the project. The type check caught it in one file. The codemod now applies a move to
+  the files of its own context, and elsewhere to the files that import the class from there;
+  a test holds it.
+- An assertion written over three lines, `toThrow(\n  OutsideAvailabilityError,\n)`, was first
+  left to the last pass, which turned it into `toThrow(AppointmentError)`: a weaker assertion,
+  green. The patterns now accept a trailing comma, and a class left as a value is reported.
+- The HTTP contract did not move: `openapi/openapi.json`, regenerated, differs from the
+  previous one by five added lines, the optional `facts` member of the `Problem` schema. Every
+  path, status and `x-error-codes` list is the same, and the end-to-end specs were not edited.
+- `CONTEXT.md` of the three contexts gained an `Errors` table: class, refusal, code, exposed
+  facts.
+
+Left as it is, on purpose:
+
+- Ten factories still take a sentence: `CalendarError.invalidRange(rule)`,
+  `AppointmentError.invalidSlot(reason)`. The message is written by the caller, as it was
+  before. Each is a candidate for one factory per rule, which would change nothing for a
+  client (same code) and is a change of the model, not of the form.
+- `UNKNOWN_TIME_ZONE` is set in identity and in scheduling. A code is unique in its context;
+  both are answered 422 by the one error mapper.
+- `LAST_MANAGER` kept its code and its factory is `PracticeError.lastManager()`: the class was
+  `PracticeLeftUnmanagedError`, whose name said something else than its code.
+
+Same day, the ports and kernel types this application only uses as types are imported with
+`import type` (114 import statements in 78 files), as the templates write them. The generated
+declarations did not change: the signature reader follows a type import to the class it names,
+and the generated file imports the value.

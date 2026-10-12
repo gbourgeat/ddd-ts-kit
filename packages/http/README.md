@@ -60,6 +60,27 @@ A handler throws a `DomainError`; its `code` is mapped to a status in one place 
   "detail": "Order 7 does not exist.", "requestId": "..." }
 ```
 
+A refusal built by a factory of a `ConceptError` carries facts, and they are private: the
+document holds, under `facts`, only the ones its factory exposed by name, and no `facts` member
+when it exposed none.
+
+```ts
+static slotTaken(calendarId: string, startsAt: Date) {
+  return AppointmentError.refusal('SLOT_TAKEN', 'The slot is already held.', { calendarId, startsAt }).exposing('startsAt');
+}
+```
+
+```json
+{ "type": "urn:problem:slot-taken", "title": "Conflict", "status": 409, "code": "SLOT_TAKEN",
+  "detail": "The slot is already held.", "facts": { "startsAt": "2026-03-02T09:00:00.000Z" }, "requestId": "..." }
+```
+
+`facts` is an optional object of the `Problem` schema of the OpenAPI document. A client
+branches on `code` and reads data from `facts`, never from `detail`, which is a sentence for a
+human and may change. The message is answered as it was written: it says nothing the caller
+did not send, and nothing about another person. A refusal mapped to a 5xx answers neither its
+message nor its facts.
+
 Defaults: `VALIDATION_FAILED` 422 (with `issues`, paths prefixed by the part:
 `body.items.0.sku`), `NOT_FOUND` 404, `CONFLICT` 409, `INVARIANT_VIOLATION` 422, `UNAUTHORIZED`
 401, `FORBIDDEN` 403. A domain code that is not mapped answers 422.

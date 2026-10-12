@@ -72,3 +72,26 @@ describe('a project init writes', () => {
     expect(inRepository('.gitlab-ci.yml')).toContain('npm run ci:format');
   });
 });
+
+describe('the jest config init writes', () => {
+  const jestConfig = (...flags: string[]): string => read(initProject('--tests', 'jest', ...flags), 'jest.config.js');
+
+  it('compiles standard decorators when no library of the stack needs the legacy ones', () => {
+    const config = jestConfig();
+
+    expect(config).toContain("transform: { decoratorVersion: '2022-03' },");
+    expect(config).not.toContain('legacyDecorator');
+    expect(config).not.toContain('decoratorMetadata');
+    expect(config).not.toContain('{{');
+  });
+
+  it.each([
+    ['--validation', 'class-validator'],
+    ['--http', 'nest'],
+  ])('compiles legacy decorators with %s %s', (...flags) => {
+    const config = jestConfig(...flags);
+
+    expect(config).toContain('transform: { legacyDecorator: true, decoratorMetadata: true },');
+    expect(config).not.toContain('decoratorVersion');
+  });
+});

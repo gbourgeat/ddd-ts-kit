@@ -2,6 +2,7 @@ import type { Upstream } from '../config/index.js';
 import type {
   ConsumedEventFact,
   ContextDescription,
+  ErrorFact,
   GatewayFact,
   PortFact,
   PublishedEventFact,
@@ -20,6 +21,7 @@ export function formatDescription(context: ContextDescription): string {
     ['published events', context.publishedEvents.map(publishedEventLine)],
     ['ports', context.ports.map(portLine)],
     ['policies', context.policies.map((policy) => `${policy.name} (on ${known(policy.permission)})`)],
+    ['errors', context.errors.map(errorLine)],
     [
       'projections',
       context.projections.map(
@@ -35,6 +37,12 @@ export function formatDescription(context: ContextDescription): string {
     ...blocks.flatMap(([label, values]) => blockLines(label, values)),
     `  contracts: ${context.contracts.openapi}, ${context.contracts.eventCatalog}`,
   ].join('\n');
+}
+
+function errorLine({ errorClass, refusal, code, exposes }: ErrorFact): string {
+  const built = refusal === '' ? errorClass : `${errorClass}.${refusal}`;
+
+  return `${code} (${built}${exposes.length === 0 ? '' : `, exposes ${exposes.join(', ')}`})`;
 }
 
 function headingLines(context: ContextDescription): string[] {

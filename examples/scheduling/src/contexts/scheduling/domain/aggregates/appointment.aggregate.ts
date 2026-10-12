@@ -1,7 +1,5 @@
 import { AggregateRoot, unwrap } from '@ddd-ts-kit/kernel';
-import { AppointmentAlreadyConfirmedError } from '@/contexts/scheduling/domain/errors/appointment-already-confirmed.error';
-import { AppointmentEndedError } from '@/contexts/scheduling/domain/errors/appointment-ended.error';
-import { AppointmentNotStartedError } from '@/contexts/scheduling/domain/errors/appointment-not-started.error';
+import { AppointmentError } from '@/contexts/scheduling/domain/errors/appointment.error';
 import { AppointmentBooked } from '@/contexts/scheduling/domain/events/appointment-booked.event';
 import { AppointmentCancelled } from '@/contexts/scheduling/domain/events/appointment-cancelled.event';
 import { AppointmentCompleted } from '@/contexts/scheduling/domain/events/appointment-completed.event';
@@ -71,7 +69,7 @@ export class Appointment extends AggregateRoot<string> {
     this.refuseWhenEnded();
 
     if (this.state.status === 'booked') {
-      throw new AppointmentAlreadyConfirmedError(this.id);
+      throw AppointmentError.alreadyConfirmed(this.id);
     }
 
     this.state = {
@@ -211,13 +209,13 @@ export class Appointment extends AggregateRoot<string> {
 
   private refuseWhenEnded(): void {
     if (!this.isActive) {
-      throw new AppointmentEndedError(this.id, this.state.status);
+      throw AppointmentError.ended(this.id, this.state.status);
     }
   }
 
   private refuseBeforeStart(now: Date): void {
     if (this.state.booking.slot.startsAfter(now)) {
-      throw new AppointmentNotStartedError(this.id, this.state.booking.slot.startsAt);
+      throw AppointmentError.notStarted(this.id, this.state.booking.slot.startsAt);
     }
   }
 }

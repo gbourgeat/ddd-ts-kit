@@ -13,34 +13,6 @@ const STACKS: readonly (readonly [string, readonly string[]])[] = [
   ['nest, without a database', ['--ci', 'both', '--http', 'nest', '--di', 'nest', '--validation', 'standard-schema']],
 ];
 
-function scriptsOf(root: string): Record<string, string> {
-  const { scripts } = JSON.parse(read(root, 'package.json')) as { scripts: Record<string, string> };
-
-  return scripts;
-}
-
-/** The scripts a pipeline file runs, with or without the flags it passes them, whatever the package manager. */
-function runBy(pipeline: string): string[] {
-  return [...pipeline.matchAll(/(?:npm|pnpm) (?:--silent )?run (?:--silent )?([\w:-]+)/g)].map(
-    (match) => match[1] ?? '',
-  );
-}
-
-function expectBaseline(root: string): void {
-  const scripts = scriptsOf(root);
-  const verify = (scripts['verify'] ?? '').split(' && ');
-  const github = runBy(read(root, '.github/workflows/ci.yml'));
-  const gitlab = runBy(read(root, '.gitlab-ci.yml'));
-
-  for (const { gate, verify: script, pipeline } of BASELINE) {
-    expect(verify, `verify: ${gate}`).toContainEqual(expect.stringMatching(new RegExp(`^(npm|pnpm) run ${script}$`)));
-    expect(scripts[script], `script of ${gate}`).toEqual(expect.any(String));
-    expect(github, `GitHub: ${gate}`).toEqual(expect.arrayContaining([...pipeline]));
-    expect(gitlab, `GitLab: ${gate}`).toEqual(expect.arrayContaining([...pipeline]));
-    expect(Object.keys(scripts), `pipeline scripts of ${gate}`).toEqual(expect.arrayContaining([...pipeline]));
-  }
-}
-
 describe('the quality baseline', () => {
   it.each(STACKS)(
     'runs every gate in verify, in the GitHub pipeline and in the GitLab pipeline (%s)',
@@ -104,16 +76,6 @@ describe('the quality baseline', () => {
     expectBaseline(initProject('--ci', 'both', '--package-manager', manager));
   });
 });
-
-/** One job of a GitHub workflow, from its key to the next job. */
-function githubJob(workflow: string, job: string): string {
-  return new RegExp(`\\n  ${job}:\\n[\\s\\S]*?(?=\\n  [\\w-]+:\\n|$)`).exec(workflow)?.[0] ?? '';
-}
-
-/** One job of a GitLab pipeline, from its key to the next top-level key. */
-function gitlabJob(pipeline: string, job: string): string {
-  return new RegExp(`\\n${job}:\\n[\\s\\S]*?(?=\\n[\\w.-]+:\\n|$)`).exec(pipeline)?.[0] ?? '';
-}
 
 /**
  * What runs where. The default branch and the nightly run hold the whole baseline. A pull or
@@ -217,3 +179,41 @@ describe('what a pull request runs, against the default branch', () => {
     expect(gitlab.match(/npm ci/g)).toHaveLength(1);
   });
 });
+
+function scriptsOf(root: string): Record<string, string> {
+  const { scripts } = JSON.parse(read(root, 'package.json')) as { scripts: Record<string, string> };
+
+  return scripts;
+}
+
+/** The scripts a pipeline file runs, with or without the flags it passes them, whatever the package manager. */
+function runBy(pipeline: string): string[] {
+  return [...pipeline.matchAll(/(?:npm|pnpm) (?:--silent )?run (?:--silent )?([\w:-]+)/g)].map(
+    (match) => match[1] ?? '',
+  );
+}
+
+function expectBaseline(root: string): void {
+  const scripts = scriptsOf(root);
+  const verify = (scripts['verify'] ?? '').split(' && ');
+  const github = runBy(read(root, '.github/workflows/ci.yml'));
+  const gitlab = runBy(read(root, '.gitlab-ci.yml'));
+
+  for (const { gate, verify: script, pipeline } of BASELINE) {
+    expect(verify, `verify: ${gate}`).toContainEqual(expect.stringMatching(new RegExp(`^(npm|pnpm) run ${script}$`)));
+    expect(scripts[script], `script of ${gate}`).toEqual(expect.any(String));
+    expect(github, `GitHub: ${gate}`).toEqual(expect.arrayContaining([...pipeline]));
+    expect(gitlab, `GitLab: ${gate}`).toEqual(expect.arrayContaining([...pipeline]));
+    expect(Object.keys(scripts), `pipeline scripts of ${gate}`).toEqual(expect.arrayContaining([...pipeline]));
+  }
+}
+
+/** One job of a GitHub workflow, from its key to the next job. */
+function githubJob(workflow: string, job: string): string {
+  return new RegExp(`\\n  ${job}:\\n[\\s\\S]*?(?=\\n  [\\w-]+:\\n|$)`).exec(workflow)?.[0] ?? '';
+}
+
+/** One job of a GitLab pipeline, from its key to the next top-level key. */
+function gitlabJob(pipeline: string, job: string): string {
+  return new RegExp(`\\n${job}:\\n[\\s\\S]*?(?=\\n[\\w.-]+:\\n|$)`).exec(pipeline)?.[0] ?? '';
+}

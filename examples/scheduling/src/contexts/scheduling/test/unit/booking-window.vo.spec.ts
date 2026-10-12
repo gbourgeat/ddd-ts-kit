@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { unwrap } from '@ddd-ts-kit/kernel';
-import { InvalidBookingWindowError } from '@/contexts/scheduling/domain/errors/invalid-booking-window.error';
 import { BookingWindow } from '@/contexts/scheduling/domain/value-objects/booking-window.vo';
 
 const now = new Date('2026-03-02T08:00:00.000Z');
@@ -18,7 +17,7 @@ describe('BookingWindow', () => {
   ])('refuses %s', (_case, notice, horizon) => {
     expect(BookingWindow.create(notice, horizon)).toMatchObject({
       ok: false,
-      error: expect.any(InvalidBookingWindowError),
+      error: expect.objectContaining({ code: 'INVALID_BOOKING_WINDOW' }),
     });
   });
 

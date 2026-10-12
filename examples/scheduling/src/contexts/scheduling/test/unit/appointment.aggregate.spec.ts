@@ -2,9 +2,6 @@ import { describe, expect, it } from 'vitest';
 import { unwrap } from '@ddd-ts-kit/kernel';
 import { given } from '@ddd-ts-kit/testing';
 import { Appointment } from '@/contexts/scheduling/domain/aggregates/appointment.aggregate';
-import { AppointmentAlreadyConfirmedError } from '@/contexts/scheduling/domain/errors/appointment-already-confirmed.error';
-import { AppointmentEndedError } from '@/contexts/scheduling/domain/errors/appointment-ended.error';
-import { AppointmentNotStartedError } from '@/contexts/scheduling/domain/errors/appointment-not-started.error';
 import { Cancellation } from '@/contexts/scheduling/domain/value-objects/cancellation.vo';
 import { Slot } from '@/contexts/scheduling/domain/value-objects/slot.vo';
 import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder';
@@ -109,7 +106,7 @@ describe('Appointment, from confirmation to its end', () => {
   it('refuses to confirm an appointment that is already booked', () => {
     given(anAppointment())
       .when((appointment) => appointment.confirm(at('08:00')))
-      .thenError(AppointmentAlreadyConfirmedError, 'APPOINTMENT_ALREADY_CONFIRMED');
+      .thenError('APPOINTMENT_ALREADY_CONFIRMED');
   });
 
   it('is cancelled by its patient without a reason', () => {
@@ -169,7 +166,7 @@ describe('Appointment, from confirmation to its end', () => {
   it('refuses to be completed before its start', () => {
     given(anAppointment().startingAt(at('09:00')))
       .when((appointment) => appointment.complete(at('08:59')))
-      .thenError(AppointmentNotStartedError, 'APPOINTMENT_NOT_STARTED');
+      .thenError('APPOINTMENT_NOT_STARTED');
   });
 
   it('is marked as a no-show once it has started', () => {
@@ -184,7 +181,7 @@ describe('Appointment, from confirmation to its end', () => {
   it('refuses to be marked as a no-show before its start', () => {
     given(anAppointment().startingAt(at('09:00')))
       .when((appointment) => appointment.markNoShow(at('08:59')))
-      .thenError(AppointmentNotStartedError, 'APPOINTMENT_NOT_STARTED');
+      .thenError('APPOINTMENT_NOT_STARTED');
   });
 });
 
@@ -229,23 +226,23 @@ describe('Appointment, expiry and what follows an end', () => {
 
     given(builder)
       .when((appointment) => appointment.confirm(now))
-      .thenError(AppointmentEndedError, 'APPOINTMENT_ENDED');
+      .thenError('APPOINTMENT_ENDED');
 
     given(builder)
       .when((appointment) => appointment.cancel(byPatient, now))
-      .thenError(AppointmentEndedError, 'APPOINTMENT_ENDED');
+      .thenError('APPOINTMENT_ENDED');
 
     given(builder)
       .when((appointment) => appointment.reschedule(elsewhere, '2026-03-02', now))
-      .thenError(AppointmentEndedError, 'APPOINTMENT_ENDED');
+      .thenError('APPOINTMENT_ENDED');
 
     given(builder)
       .when((appointment) => appointment.complete(now))
-      .thenError(AppointmentEndedError, 'APPOINTMENT_ENDED');
+      .thenError('APPOINTMENT_ENDED');
 
     given(builder)
       .when((appointment) => appointment.markNoShow(now))
-      .thenError(AppointmentEndedError, 'APPOINTMENT_ENDED');
+      .thenError('APPOINTMENT_ENDED');
   });
 });
 

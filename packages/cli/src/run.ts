@@ -7,6 +7,7 @@ import { checksCommand } from './commands/checks.js';
 import { depcruiseConfigCommand } from './commands/depcruise-config.js';
 import { describeCommand } from './commands/describe.js';
 import { docsCommand } from './commands/docs.js';
+import { errorFactoriesCommand } from './commands/error-factories.js';
 import { generateCommand } from './commands/generate.js';
 import { initCommand } from './commands/init.js';
 import { listCommand } from './commands/list.js';
@@ -31,6 +32,7 @@ const COMMANDS: Readonly<Record<string, Command>> = {
   docs: docsCommand,
   'depcruise-config': depcruiseConfigCommand,
   'build-aliases': buildAliasesCommand,
+  'error-factories': errorFactoriesCommand,
   check: checksCommand,
   'check-file': checkFileCommand,
   rules: rulesCommand,
@@ -45,7 +47,7 @@ const USAGE = `Usage
                   [--ci github|gitlab|both|none] [--authn jwt|keycloak|none] [--authz rbac|abac|rebac|custom]
                   [--broker none|rabbitmq|kafka|nats|redis|custom] [--cache none|redis] [--audit on|off]
                   [--errors none|sentry] [--logger stdout|pino|winston] [--style declared|explicit] [--assembly barrel|discovery]
-                  [--dependencies signature|listed]
+                  [--dependencies signature|listed] [--refusals factories|classes]
                   [--package-manager npm|pnpm] [--allow-no-outbox "<reason>"] [--import-alias '$<name>/']
                   [--import-extension none|js]
                   [--context <name>:<core|supporting|generic>]... [--dry-run] [--force]
@@ -59,6 +61,7 @@ const USAGE = `Usage
   ddd-ts-kit docs [--check]
   ddd-ts-kit depcruise-config [--check|--write]
   ddd-ts-kit build-aliases [--project <tsconfig>]
+  ddd-ts-kit error-factories --plan | --apply [--dry-run]
   ddd-ts-kit affected [--base <git-ref>] [--head <git-ref>] [--format text|json|github|env]
   ddd-ts-kit check [paths...] [--rule <id>]... [--format text|json|github|gitlab] [--changed-since <git-ref>] [--self]
   ddd-ts-kit check --clean-only <dir>... [--rule <id>]... [--format text|json|github]
@@ -74,6 +77,9 @@ const NOTES = `  affected         what a pull request has to run: the contexts a
                    runner and the linter; everything when a shared path changed or without --base
   build-aliases    after the compiler: rewrites the import aliases left in the emitted .js and .d.ts files
                    into relative paths, so that plain node runs the output (tsconfig.build.json by default)
+  error-factories  moves a project from one class per error to static factories on one error class per
+                   concept: --plan writes error-factories.plan.json, where each class is given its concept;
+                   --apply follows it (classes, specs, every usage, "stack.refusals" in the config)
   describe         one context as facts: use cases, routes, events, ports, policies, gateways, dependencies
   status           the next step of docs/architecture/plan.md, the slices of docs/architecture/slices.md by
                    status and by owner, and the TODO(domain), TODO(platform) and it.todo left in each context

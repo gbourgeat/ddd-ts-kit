@@ -9,27 +9,6 @@ const CONFIG = 'ddd-ts-kit.config.json';
 const COMPOSITION = 'src/platform/compose-application.ts';
 const config = (root: string, ...keys: string[]): unknown => jsonAt(readJson(root, CONFIG), ...keys);
 
-/** A project a team has worked on: contexts with a relationship, and choices of its own in the config. */
-function workedOn(...flags: string[]): string {
-  const root = tempDir('force');
-
-  scaffoldEverything(root, DEFAULT_STACK, flags);
-
-  changeConfig(root, {
-    rules: { 'clean/function-size': 'error' },
-    limits: { maxParameters: 4, maxFunctionLines: 30 },
-    guard: 'advise',
-    publishedLanguageAllowedPackages: ['@ddd-ts-kit/kernel', '@ddd-ts-kit/events', '@ddd-ts-kit/validation', 'zod'],
-    team: 'payments',
-    deviations: [
-      { what: 'rules.clean/function-size', adr: '0001', reason: 'Raised on purpose.', owner: 'lead' },
-      { what: 'guard', adr: '0001', reason: 'Advisory while the team learns.' },
-    ],
-  });
-
-  return root;
-}
-
 describe('init --force on a project that is already initialised', () => {
   it('rewrites the files and keeps what the team declared: the contexts and their upstreams, the rules, the limits, a key the kit does not know', () => {
     const root = workedOn();
@@ -171,3 +150,24 @@ describe('init --force and the spelling of the imports, the settings of the agen
     expect(config(root, 'importExtension')).toBe('none');
   });
 });
+
+/** A project a team has worked on: contexts with a relationship, and choices of its own in the config. */
+function workedOn(...flags: string[]): string {
+  const root = tempDir('force');
+
+  scaffoldEverything(root, DEFAULT_STACK, flags);
+
+  changeConfig(root, {
+    rules: { 'clean/function-size': 'error' },
+    limits: { maxParameters: 4, maxFunctionLines: 30 },
+    guard: 'advise',
+    publishedLanguageAllowedPackages: ['@ddd-ts-kit/kernel', '@ddd-ts-kit/events', '@ddd-ts-kit/validation', 'zod'],
+    team: 'payments',
+    deviations: [
+      { what: 'rules.clean/function-size', adr: '0001', reason: 'Raised on purpose.', owner: 'lead' },
+      { what: 'guard', adr: '0001', reason: 'Advisory while the team learns.' },
+    ],
+  });
+
+  return root;
+}

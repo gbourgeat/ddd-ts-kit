@@ -43,10 +43,19 @@ Run the `Start with` commands of the slice row, or for a typical command:
 
 ```bash
 npx ddd-ts-kit generate command <ctx> <UseCase> --aggregate <Aggregate> --permission <aggregate>.<action> --json
-npx ddd-ts-kit generate domain-error <ctx> <WhatWentWrong> --json     # one per failure
+npx ddd-ts-kit generate error <ctx> <Concept> <refusal> --json        # one per refusal: a factory on the error class of the concept
 npx ddd-ts-kit generate domain-event <ctx> <Aggregate> <Fact> --json  # the fact recorded
 npx ddd-ts-kit generate route <ctx> <UseCase> --method POST --path /<resource> --json
 ```
+
+A refusal is named in the words of the business, twice: `generate error scheduling Appointment
+slotTaken` adds `AppointmentError.slotTaken()` with the code `SLOT_TAKEN` to
+`domain/errors/appointment.error.ts`, and its case to the spec. Give the factory the facts of
+the refusal as typed parameters, and throw it where the rule is kept:
+`throw AppointmentError.slotTaken(calendar.id, slot.startsAt)`. Never `new` an error of
+`domain/errors/` (`errors/through-factory`). Facts are private: add `.exposing('<fact>')` in the
+factory only for what a client may read, never for what identifies a person. Declare the code
+in `errors` of the route (`errors/known-code`).
 
 A read is `generate query ... (--permission ... | --public)`; a search adds `--search` (paged,
 narrowed in the query by the caller's access scope). A reaction inside the context is

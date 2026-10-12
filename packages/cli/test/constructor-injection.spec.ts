@@ -15,18 +15,6 @@ beforeAll(() => {
   scaffoldEverything(root);
 });
 
-/** The cancel-invoice handler, which takes nothing as generated, given a constructor. */
-function taking(...parameters: string[]): string {
-  const imports = [
-    "import type { Clock, IdGenerator } from '@ddd-ts-kit/kernel';",
-    "import type { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository';",
-  ];
-
-  const signature = `{\n  constructor(\n${parameters.map((parameter) => `    ${parameter},\n`).join('')}  ) {}\n`;
-
-  return [...imports, read(root, HANDLER).replace(/\{\n/, signature)].join('\n');
-}
-
 describe('the generated list of a constructor follows the code, and a gate says when it does not', () => {
   const stale = () => checkJsonOf(cli(root, 'check', '--rule', 'declarations/barrel-current', '--json')).violations;
 
@@ -150,3 +138,15 @@ describe('what a constructor may say', () => {
     ).toEqual([]);
   });
 });
+
+/** The cancel-invoice handler, which takes nothing as generated, given a constructor. */
+function taking(...parameters: string[]): string {
+  const imports = [
+    "import type { Clock, IdGenerator } from '@ddd-ts-kit/kernel';",
+    "import type { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository';",
+  ];
+
+  const signature = `{\n  constructor(\n${parameters.map((parameter) => `    ${parameter},\n`).join('')}  ) {}\n`;
+
+  return [...imports, read(root, HANDLER).replace(/\{\n/, signature)].join('\n');
+}

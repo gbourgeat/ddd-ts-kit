@@ -192,7 +192,9 @@ table of its own with a technical key the domain never sees.
   confusion.
 - **`Result` or throw.** The generated value object returns a `Result` from `create`; an
   aggregate method typically throws a `DomainError`. Both are accepted by the reference
-  ("exceptions or `Result`"); choose one convention per context and keep to it.
+  ("exceptions or `Result`"); choose one convention per context and keep to it. Either way the
+  refusal is built by a factory of the error class of the concept the value describes:
+  `err(PersonError.invalidEmail(raw))` for the email of a person, not a class per value object.
 - **Immutability is checked syntactically.** `domain/value-object-immutability` sees readonly
   properties and writes to `this`; it does not see a mutable object held in a readonly field
   (a `Date` can still be mutated through its methods, an array can be pushed to). Hold values

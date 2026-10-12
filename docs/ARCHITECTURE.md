@@ -49,7 +49,7 @@ src/
       entities/                  *.entity.ts
       value-objects/             *.vo.ts
       events/                    *.event.ts
-      errors/                    *.error.ts
+      errors/                    *.error.ts        (one class per concept; each refusal is a static factory)
       repositories/              *.repository.ts   (ports: abstract classes)
       services/                  *.service.ts      (stateless domain logic over several aggregates)
     application/
@@ -111,7 +111,7 @@ presentation ──▶ application ──▶ domain ◀── infrastructure
 | `test/no-mocks` | No `vi.mock`, `jest.mock`, `vi.fn`, `jest.fn`, `vi.spyOn`, `jest.spyOn` or mocking library in a context's `test/`. Use the fake of the port. Default severity `warn`. |
 | `test/builder-required` | An aggregate has a builder in `test/builders/`. Default severity `warn`. |
 | `test/coverage-governed` | Coverage cannot be gamed by exclusion. The test runner config reads what it measures and its thresholds from the `coverage` key of `ddd-ts-kit.config.json` through `governedCoverage` (`governedJestCoverage` under jest) of `@ddd-ts-kit/testing/coverage`: the four layers of every context, the files no spec loads included, each context and layer held to its floor from its first source file. Refused: `include`, `exclude`, `thresholds` or `ignoreClassMethods` written by hand in a `coverage` block (`collectCoverageFrom`, `coveragePathIgnorePatterns`, `coverageThreshold` under jest), the same set by a flag in a script of `package.json`, and a `v8 ignore`, `c8 ignore` or `istanbul ignore` comment in a production source that does not end with `-- ADR-NNNN: <reason>` naming an existing decision record. |
-| `language/glossary-term` | Every aggregate, entity, value object, domain service, domain event, command and query is named with terms of the `## Ubiquitous language` table of its context's `CONTEXT.md`. The glossary is written before the code. |
+| `language/glossary-term` | Every aggregate, entity, value object, domain service, domain event, command and query is named with terms of the `## Ubiquitous language` table of its context's `CONTEXT.md`, and under `"stack.refusals": "factories"` every error class of `domain/errors/` too (`AppointmentError` is named after `Appointment`). The glossary is written before the code. |
 | `language/no-technical-name` | No `Manager`, `Helper`, `Util`, `Utils`, `Data`, `Info`, `Processor`, `Wrapper`, `Impl`, `Base`, `Abstract`, `Dto`, `Entity`, `Model` in a name under `domain/` or in a use case name. |
 | `purity/no-system-clock` | No `new Date()` without argument, `Date.now()` or `performance.now()` in `domain/` or `application/`: time comes from the `Clock` port. |
 | `purity/no-ambient-randomness` | No `Math.random`, `crypto.randomUUID` or id library in `domain/` or `application/`: identifiers come from the `IdGenerator` port. |
@@ -125,6 +125,11 @@ presentation ──▶ application ──▶ domain ◀── infrastructure
 | `domain/aggregate-encapsulation` | An aggregate or entity has a private or protected constructor, no public mutable property and no setter. |
 | `domain/value-object-immutability` | A value object has only readonly properties and never assigns to itself outside its constructor. |
 | `domain/no-generic-error` | `domain/` and `application/` never `throw new Error(...)`: a business failure is a `DomainError` subclass. |
+| `errors/through-factory` | Under `"stack.refusals": "factories"`, a domain error is built by a static factory of the error class of its concept: `throw AppointmentError.slotTaken(calendar.id, slot.startsAt)`. No `new` of a class imported from `domain/errors/`, in any file of a context, tests included. The errors of the kit, each one refusal under a fixed code (`NotFoundError`, `InvariantViolation`, `ValidationError`), are not concerned. |
+| `errors/constructor-not-public` | Under `"stack.refusals": "factories"`, the constructor of an error class of `domain/errors/` is not public: the class extends `ConceptError` of the kernel, whose constructor is protected, and declares none; a constructor it declares is private or protected. Refused: a public constructor, and a class that extends `DomainError` without a constructor, which inherits a public one. An abstract class is not judged. |
+| `errors/factory-name` | Under `"stack.refusals": "factories"`, a factory (a public static method of an error class that calls `refusal(..)`) is named after the refusal, in the words of the business: never `create`, `make`, `of`, `from`, `build`, `new`, `error`, `failure`, `fail`, `refusal`, `refuse`, nor a name holding a digit. Its code is a string literal in constant case, and is the name of the factory in constant case, alone or with the name of the concept before or after it: `AppointmentError.notFound` sets `NOT_FOUND`, `APPOINTMENT_NOT_FOUND` or `NOT_FOUND_APPOINTMENT`; `slotTaken` setting `BOOKING_FAILED` is reported. |
+| `errors/code-unique` | Under `"stack.refusals": "factories"`, a code names one refusal of a context: no two factories, and no two error classes, of the `domain/errors/` of one context set the same code, whichever form writes it (the first argument of `refusal(..)`, a `readonly code` field). The same code in two contexts is allowed: each context owns its language, and the error mapper gives a code one status. |
+| `errors/known-code` | Under `"stack.refusals": "factories"`, every code a route (`*.route.ts`) declares in `errors` exists: a factory or an error class of the context of the route sets it, a class outside the contexts (the platform, the shared kernel) does, or it is a code of the kit (`VALIDATION_FAILED`, `NOT_FOUND`, `CONFLICT`, `INVARIANT_VIOLATION`, `UNAUTHORIZED`, `FORBIDDEN`, `CONCURRENCY_CONFLICT`, `INVALID_CRITERIA`, `INVALID_PAGE_REQUEST`, `TIMEOUT`, `CIRCUIT_OPEN`, `BULKHEAD_FULL`, `ATTEMPTS_EXHAUSTED`). A code another context sets does not count. |
 | `application/handler-shape` | A `*.handler.ts` file exports one class with a single public method, `execute`. |
 | `application/command-query-separation` | A query handler never saves, deletes or publishes. Default severity `warn`. |
 | `events/outbox-required` | With a database, integration events are published through the transactional outbox, never straight to a broker or a bus from a handler. `stack.events` is `outbox` whenever `stack.orm` is set. |
@@ -193,8 +198,8 @@ Three analyzers and a formatter hold the rules, each where it is exact:
 
 | Analyzer | Holds | When |
 |---|---|---|
-| `ddd-ts-kit check` (zero dependency, text level) | alone, structure and project-wide facts: `tree/*`, `naming/*`, `language/*`, `config/*`, `context/no-cycle`, `test/spec-required`, `test/builder-required`, `test/coverage-governed`, `events/defined-in-published-language`, `composition/only-in-module`, `declarations/barrel-current`, `imports/alias-declared`, `imports/alias-only` and `imports/extension` in `test/` and `scripts/` as under the source root, the import that names a directory, the config side of `events/outbox-required` and of `governance/recorded-deviation` (decision records exist), and what must be unique in the project (consumer names, job names). It also holds a fast approximation of every code rule below except `domain/*` and `application/*`; of `clean/blank-lines` it holds the `return` and the padded block only, and it holds nothing of `clean/formatted` | at every file write (editor hook), in CI |
-| `@ddd-ts-kit/eslint-plugin` (syntax tree) | code: `layer/*`, the imports of `context/*` and `context/extractable`, `purity/*`, `clean/*` but `clean/formatted` (`clean/blank-lines` through two rules of `@stylistic/eslint-plugin` and `clean/braces` through `curly`, which its presets enable), `domain/*`, `application/*`, `authz/*`, `events/name-format`, `events/outbox-required`, `events/consumer-idempotent`, `aspects/*`, `tracing/*`, `domain-events/*`, `standard/*`, `ports/*`, `scheduling/*`, `declarations/role-declared`, `declarations/constructor-injection` (which it also fixes, removing a redundant list), `test/no-mocks`, `imports/alias-only` and `imports/extension` (which it also fixes), and the comment side of `governance/recorded-deviation`. `domain/*` and `application/*` are held by it alone. Of `declarations/constructor-injection` and of the constructor side of `ports/no-concrete-dependency` it holds what one file shows: an interface or a type alias declared in another file and a constructor inherited from another class are read by `ddd-ts-kit check`. Of `domain-events/transactional-before-commit` it holds what one declared class shows; where the adapters of an `application/ports/` port live and the phase an explicit-style module file registers a handler in are held by `ddd-ts-kit check` alone. Authoritative when the two disagree | on staged files, in CI |
+| `ddd-ts-kit check` (zero dependency, text level) | alone, structure and project-wide facts: `tree/*`, `naming/*`, `language/*`, `config/*`, `context/no-cycle`, `test/spec-required`, `test/builder-required`, `test/coverage-governed`, `events/defined-in-published-language`, `composition/only-in-module`, `declarations/barrel-current`, `imports/alias-declared`, `imports/alias-only` and `imports/extension` in `test/` and `scripts/` as under the source root, the import that names a directory, the config side of `events/outbox-required` and of `governance/recorded-deviation` (decision records exist), and what must be unique in the project (consumer names, job names) or in a context (error codes, `errors/code-unique`), and `errors/known-code`. It also holds a fast approximation of every code rule below except `domain/*`, `application/*` and the three code rules of `errors/*`; of `clean/blank-lines` it holds the `return` and the padded block only, and it holds nothing of `clean/formatted` | at every file write (editor hook), in CI |
+| `@ddd-ts-kit/eslint-plugin` (syntax tree) | code: `layer/*`, the imports of `context/*` and `context/extractable`, `purity/*`, `clean/*` but `clean/formatted` (`clean/blank-lines` through two rules of `@stylistic/eslint-plugin` and `clean/braces` through `curly`, which its presets enable), `domain/*`, `application/*`, `errors/through-factory`, `errors/constructor-not-public`, `errors/factory-name`, `authz/*`, `events/name-format`, `events/outbox-required`, `events/consumer-idempotent`, `aspects/*`, `tracing/*`, `domain-events/*`, `standard/*`, `ports/*`, `scheduling/*`, `declarations/role-declared`, `declarations/constructor-injection` (which it also fixes, removing a redundant list), `test/no-mocks`, `imports/alias-only` and `imports/extension` (which it also fixes), and the comment side of `governance/recorded-deviation`. `domain/*`, `application/*` and those three rules of `errors/*` are held by it alone. Of `declarations/constructor-injection` and of the constructor side of `ports/no-concrete-dependency` it holds what one file shows: an interface or a type alias declared in another file and a constructor inherited from another class are read by `ddd-ts-kit check`. Of `domain-events/transactional-before-commit` it holds what one declared class shows; where the adapters of an `application/ports/` port live and the phase an explicit-style module file registers a handler in are held by `ddd-ts-kit check` alone. Authoritative when the two disagree | on staged files, in CI |
 | Biome (formatter only: its linter and its import organiser are off) | `clean/formatted`: where every token goes, at a line width of 120, with the `biome.json` that `init` writes; it also removes the padding of a block and never leaves a body on the line of its braces, which completes `clean/blank-lines` and `clean/braces`. ESLint enables no rule that decides the same thing | on staged files, in CI |
 | dependency-cruiser (resolved import graph) | the same boundaries through barrels and re-exports, cycles between files, orphans, undeclared dependencies; its configuration is generated from the config by `ddd-ts-kit depcruise-config` | in CI |
 
@@ -205,7 +210,8 @@ knip (dead code and unused dependencies) and the TypeScript compiler in `strict`
 **Aggregates.** Private constructor, a `create` factory for birth and a `rehydrate` factory for
 loading. State changes through methods named after the business intention, never setters. One
 aggregate per transaction; another aggregate is referenced by id. Invariants are checked inside,
-and a violated one raises a `DomainError` with a stable `code`.
+and a violated one raises a `DomainError` with a stable `code`, built by a factory of the error
+class of its concept: `throw AppointmentError.slotTaken(calendar.id, slot.startsAt)`.
 
 **Value objects.** Immutable, validated in `create`, compared with `equals`. Primitive obsession
 is a defect: an email, an amount, a period are types.
@@ -341,6 +347,40 @@ worker, and a context extracted as a service takes its jobs with it.
 **Errors.** Expected business failures are `DomainError`s with codes; presentation maps codes to
 transport statuses in one place. Infrastructure faults are plain errors and become a 5xx.
 Messages of caught errors never go into logs or spans (they quote data).
+
+A context has one error class per concept of its language (`AppointmentError`, `CalendarError`),
+which extends `ConceptError` of the kernel, and each refusal is a static factory of that class,
+named in the words of the business: the code that refuses reads as a sentence, and the refusals
+of a concept are read in one file. The refusal is about the concept the caller asked for, not
+the class that detects it: a calendar that finds no free slot refuses with
+`AppointmentError.slotTaken`. The refusals of a value object are factories of the concept it
+describes (`PersonError.invalidEmail(raw)`), and travel in the `Result` its `create` returns. A
+factory takes the facts of the refusal as typed parameters, more than three as one typed object,
+writes the message, and sets one code.
+
+- **The code is the contract.** It is a closed vocabulary: `CodeOf<typeof AppointmentError>` is
+  the union of the codes its factories set, `AppointmentError.is(error)` narrows to a union a
+  `switch` on `error.code` exhausts, and `isRefusal(error, 'SLOT_TAKEN')` knows a refusal
+  whatever its class. The HTTP mapper, the OpenAPI document, the audit trail, the spans, the logs
+  and the tests key on the code alone; nothing downstream names the class or the factory of one
+  refusal.
+- **The facts travel with the error, and are private.** `error.facts` holds what the factory was
+  given, as plain data (text, numbers, booleans, dates, lists of them), for the code that catches
+  it and for the tests. A fact leaves the process only when its factory names it,
+  `.exposing('startsAt')`: the problem document then carries it under `facts`. Nothing is exposed
+  by default, and nothing that identifies a person is. The audit trail and the spans record the
+  code alone, and no logger writes the facts. The message is answered as `detail`: it says
+  nothing the caller did not send.
+- **A class that grows is a concept to split.** A file holds at most 350 lines, some twenty
+  factories. An error class that nears it serves two concepts: split it along a term of the
+  glossary (`BookingError` for the refusals of taking a slot, `AppointmentError` for the life of
+  the appointment), never along a technical line (`AppointmentValidationError`, `AppointmentError2`).
+- **Two forms.** `"stack.refusals": "factories"` is what `init` writes, and what the `errors/*`
+  rules judge. A config without the key was written when an error was a class built with `new`
+  (`class SlotTakenError extends DomainError { readonly code = 'SLOT_TAKEN' }`): it is read as
+  `classes`, nothing new is reported, and both forms run in either. `ddd-ts-kit error-factories`
+  moves a project: `--plan` proposes a concept for each class, `--apply` writes the factories,
+  merges the specs, rewrites every usage and sets the key.
 
 **Integration events.** The only way two contexts communicate. Each event is declared once in
 the producer's `published-language/` with `defineIntegrationEvent({ type, version, payload })`:
@@ -535,7 +575,7 @@ commented-out code, no banner, no history, no author. A comment that explains wh
 does is a function name waiting to be extracted.
 
 **Errors.** Exceptions or `Result`, never error codes mixed with return values, never `null`
-for "failed". Specific error classes with context.
+for "failed". One error class per concept, a named factory per refusal, the facts as data.
 
 **Types.** `strict` TypeScript. No `any`, no non-null assertion, no type assertion outside
 mappers, no suppressed diagnostics without a written reason.

@@ -2,12 +2,11 @@ import { Access } from '@ddd-ts-kit/auth';
 import { Criteria, offsetPage, scoped, type ReadScope } from '@ddd-ts-kit/kernel';
 import { QueryHandler } from '@ddd-ts-kit/kernel/declarations';
 import type { Calendar } from '@/contexts/scheduling/domain/aggregates/calendar.aggregate';
-import { InvalidDayError } from '@/contexts/scheduling/domain/errors/invalid-day.error';
-import { UnknownCalendarError } from '@/contexts/scheduling/domain/errors/unknown-calendar.error';
-import { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository';
+import { CalendarError } from '@/contexts/scheduling/domain/errors/calendar.error';
+import type { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository';
 import { TimeZone } from '@/contexts/scheduling/domain/value-objects/time-zone.vo';
 import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
-import { Agenda, type AgendaEntry } from '@/contexts/scheduling/application/ports/agenda.port';
+import type { Agenda, AgendaEntry } from '@/contexts/scheduling/application/ports/agenda.port';
 import { GetCalendarDayQuery } from '@/contexts/scheduling/application/queries/get-calendar-day/get-calendar-day.query';
 import type { GetCalendarDayResult } from '@/contexts/scheduling/application/queries/get-calendar-day/get-calendar-day.result';
 
@@ -30,13 +29,13 @@ export class GetCalendarDayHandler implements QueryHandler<GetCalendarDayQuery> 
    */
   async execute({ actor, calendarId, day }: GetCalendarDayQuery): Promise<GetCalendarDayResult> {
     if (!TimeZone.isDay(day)) {
-      throw new InvalidDayError(day);
+      throw CalendarError.invalidDay(day);
     }
 
     const calendar = await this.calendarRepository.findById(calendarId);
 
     if (calendar === undefined) {
-      throw new UnknownCalendarError(calendarId);
+      throw CalendarError.unknown(calendarId);
     }
 
     const scope = await this.access.scope(actor, schedulingPermissions['appointment.read'], 'appointment');

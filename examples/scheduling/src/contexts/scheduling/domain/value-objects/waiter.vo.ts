@@ -1,5 +1,5 @@
 import { ValueObject, err, ok, type Result } from '@ddd-ts-kit/kernel';
-import { InvalidWaiterError } from '@/contexts/scheduling/domain/errors/invalid-waiter.error';
+import { WaitlistError } from '@/contexts/scheduling/domain/errors/waitlist.error';
 
 export type WaiterProps = {
   readonly patientId: string;
@@ -13,17 +13,17 @@ export class Waiter extends ValueObject<WaiterProps> {
     super(props);
   }
 
-  static create(props: WaiterProps): Result<Waiter, InvalidWaiterError> {
+  static create(props: WaiterProps): Result<Waiter, WaitlistError> {
     if (props.patientId.trim().length === 0) {
-      return err(new InvalidWaiterError('names a patient'));
+      return err(WaitlistError.invalidWaiter('names a patient'));
     }
 
     if (props.appointmentTypeId.trim().length === 0) {
-      return err(new InvalidWaiterError('names an appointment type'));
+      return err(WaitlistError.invalidWaiter('names an appointment type'));
     }
 
     if (Number.isNaN(props.joinedAt.getTime())) {
-      return err(new InvalidWaiterError('joined at a real instant'));
+      return err(WaitlistError.invalidWaiter('joined at a real instant'));
     }
 
     return ok(

@@ -3,9 +3,7 @@ import { createErrorMapper, executeRoute } from '@ddd-ts-kit/http';
 import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';
 import { errorStatuses } from '@/platform/http/error-statuses';
 import { RescheduleAppointmentCommand } from '@/contexts/scheduling/application/commands/reschedule-appointment/reschedule-appointment.command';
-import { AppointmentEndedError } from '@/contexts/scheduling/domain/errors/appointment-ended.error';
-import { AppointmentNotFoundError } from '@/contexts/scheduling/domain/errors/appointment-not-found.error';
-import { SlotTakenError } from '@/contexts/scheduling/domain/errors/slot-taken.error';
+import { AppointmentError } from '@/contexts/scheduling/domain/errors/appointment.error';
 import { rescheduleAppointmentRoute } from '@/contexts/scheduling/presentation/http/reschedule-appointment.route';
 
 // The one table of the platform: a code it does not name answers 422.
@@ -52,9 +50,9 @@ describe('POST /appointments/:appointmentId/reschedule', () => {
   });
 
   it.each([
-    [new SlotTakenError('calendar-1', new Date('2026-03-02T13:00:00.000Z')), 409, 'SLOT_TAKEN'],
-    [new AppointmentEndedError('appointment-1', 'cancelled'), 409, 'APPOINTMENT_ENDED'],
-    [new AppointmentNotFoundError('appointment-1'), 404, 'APPOINTMENT_NOT_FOUND'],
+    [AppointmentError.slotTaken('calendar-1', new Date('2026-03-02T13:00:00.000Z')), 409, 'SLOT_TAKEN'],
+    [AppointmentError.ended('appointment-1', 'cancelled'), 409, 'APPOINTMENT_ENDED'],
+    [AppointmentError.notFound('appointment-1'), 404, 'APPOINTMENT_NOT_FOUND'],
   ])('answers the refusal %o with the status %i and the code %s', async (refusal, status, code) => {
     const commands = new InMemoryCommandBus().register(RescheduleAppointmentCommand, {
       execute: async () => {

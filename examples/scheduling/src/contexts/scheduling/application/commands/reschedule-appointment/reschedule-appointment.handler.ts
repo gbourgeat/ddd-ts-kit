@@ -1,10 +1,10 @@
 import { Access } from '@ddd-ts-kit/auth';
-import { Clock } from '@ddd-ts-kit/kernel';
+import type { Clock } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
-import { AppointmentNotFoundError } from '@/contexts/scheduling/domain/errors/appointment-not-found.error';
-import { UnknownCalendarError } from '@/contexts/scheduling/domain/errors/unknown-calendar.error';
-import { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository';
-import { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository';
+import { AppointmentError } from '@/contexts/scheduling/domain/errors/appointment.error';
+import { CalendarError } from '@/contexts/scheduling/domain/errors/calendar.error';
+import type { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository';
+import type { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository';
 import { SchedulerService } from '@/contexts/scheduling/domain/services/scheduler.service';
 import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
 import { RescheduleAppointmentCommand } from '@/contexts/scheduling/application/commands/reschedule-appointment/reschedule-appointment.command';
@@ -28,7 +28,7 @@ export class RescheduleAppointmentHandler implements CommandHandler<RescheduleAp
     const target = await this.appointmentRepository.findById(appointmentId);
 
     if (target === undefined) {
-      throw new AppointmentNotFoundError(appointmentId);
+      throw AppointmentError.notFound(appointmentId);
     }
 
     await this.access.authorize(actor, schedulingPermissions['appointment.reschedule'], target);
@@ -36,7 +36,7 @@ export class RescheduleAppointmentHandler implements CommandHandler<RescheduleAp
     const calendar = await this.calendarRepository.findById(target.calendarId);
 
     if (calendar === undefined) {
-      throw new UnknownCalendarError(target.calendarId);
+      throw CalendarError.unknown(target.calendarId);
     }
 
     const now = this.clock.now();

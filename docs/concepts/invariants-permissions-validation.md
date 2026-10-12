@@ -142,11 +142,55 @@ Rules that look ambiguous usually separate cleanly with the discriminator above:
   document with status 422 by the HTTP pipeline.
 - **Authentication and authorization** refusals are produced by the platform and the
   authorization middleware, answered 401 or 403.
-- **Invariants** raise specific `DomainError` subclasses with a stable `code`
-  (`SLOT_ALREADY_TAKEN`, `CANCELLATION_WINDOW_PASSED`). Presentation maps codes to transport
-  statuses in one place, and each route declares the codes it can answer, which flow into the
-  OpenAPI contract. A `DomainError` is an answer, not an incident: it is not sent to the error
-  tracker.
+- **Invariants** raise `DomainError`s with a stable `code` (`SLOT_TAKEN`,
+  `CANCELLATION_WINDOW_PASSED`). Presentation maps codes to transport statuses in one place,
+  and each route declares the codes it can answer, which flow into the OpenAPI contract
+  (`errors/known-code` holds that each declared code exists). A `DomainError` is an answer, not
+  an incident: it is not sent to the error tracker.
+
+### How a refusal is written
+
+One error class per concept of the language, one static factory per refusal:
+
+```ts
+// domain/errors/appointment.error.ts
+import { ConceptError } from '@ddd-ts-kit/kernel';
+
+export class AppointmentError extends ConceptError {
+  static slotTaken(calendarId: string, startsAt: Date) {
+    return AppointmentError.refusal(
+      'SLOT_TAKEN',
+      `The slot starting at ${startsAt.toISOString()} on calendar ${calendarId} is already held.`,
+      { calendarId, startsAt },
+    ).exposing('startsAt');
+  }
+}
+
+// where the rule is kept
+throw AppointmentError.slotTaken(calendar.id, slot.startsAt);
+```
+
+- **The name is the business's, twice.** The factory is what the developer who refuses reads,
+  the code what the client, the mapper, the audit trail and the tests read. They say the same
+  words: `slotTaken` and `SLOT_TAKEN` (`errors/factory-name`). A code names one refusal of a
+  context (`errors/code-unique`).
+- **The concept is what was asked for**, not the class that detects the problem: a calendar
+  that finds a slot held refuses with `AppointmentError.slotTaken`, because the caller asked
+  for an appointment. The refusals of a value object are factories of the concept it
+  describes: `PersonError.invalidEmail(raw)`, returned in the `Result` of `Email.create`.
+- **The facts are data, and private.** What the message was built from is kept on the error as
+  `facts`, so that a handler or a test reads a date and not a sentence. A fact reaches the
+  client, under `facts` in the problem document, only when the factory names it with
+  `.exposing(..)`; nothing that identifies a person ever is. The message is answered as
+  `detail`: write nothing in it that the caller did not send.
+- **Nothing downstream knows the class.** `isRefusal(error, 'SLOT_TAKEN')`,
+  `AppointmentError.is(error, 'SLOT_TAKEN')`, `thenError('SLOT_TAKEN', { calendarId })`,
+  `expectProblem(response, { status: 409, code: 'SLOT_TAKEN' })`: the code is the key.
+- **A class that grows names a second concept.** Past some twenty factories (a file holds 350
+  lines), split along a term of the glossary, never along a technical line.
+
+A project written with one class per error (`new SlotTakenError(..)`) keeps working, and
+`ddd-ts-kit error-factories` moves it: [CONFIG.md](../CONFIG.md), `stack.refusals`.
 
 ## Limits and when not to use it
 

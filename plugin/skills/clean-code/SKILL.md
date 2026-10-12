@@ -33,6 +33,11 @@ without fighting them. Reference: `docs/ARCHITECTURE.md` section 6.
 - One word per concept in a context: not `fetch` here and `retrieve` there.
 - A boolean reads as a predicate (`isOverdue`), a collection as a plural, a function that
   answers as a question, a function that acts as a verb.
+- A refusal reads as a sentence: `throw AppointmentError.slotTaken(calendar.id, slot.startsAt)`,
+  a static factory of the error class of the concept, whose code says the same words
+  (`SLOT_TAKEN`). Never `new SomethingError(...)`, never a factory named `create` or `of`
+  (`errors/through-factory`, `errors/factory-name`). Add one with
+  `npx ddd-ts-kit generate error <context> <Concept> <refusal>`.
 
 ## Functions
 

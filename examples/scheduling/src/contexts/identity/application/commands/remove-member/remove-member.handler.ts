@@ -1,7 +1,7 @@
-import { Clock } from '@ddd-ts-kit/kernel';
+import type { Clock } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
-import { PracticeNotFoundError } from '@/contexts/identity/domain/errors/practice-not-found.error';
-import { PracticeRepository } from '@/contexts/identity/domain/repositories/practice.repository';
+import { PracticeError } from '@/contexts/identity/domain/errors/practice.error';
+import type { PracticeRepository } from '@/contexts/identity/domain/repositories/practice.repository';
 import { RemoveMemberCommand } from '@/contexts/identity/application/commands/remove-member/remove-member.command';
 
 @CommandHandler(RemoveMemberCommand)
@@ -16,7 +16,7 @@ export class RemoveMemberHandler implements CommandHandler<RemoveMemberCommand> 
     const target = await this.practiceRepository.findById(command.practiceId);
 
     if (target === undefined) {
-      throw new PracticeNotFoundError(command.practiceId);
+      throw PracticeError.notFound(command.practiceId);
     }
 
     target.removeMember(command.personId, this.clock.now());

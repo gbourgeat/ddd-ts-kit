@@ -17,7 +17,7 @@ Scope
   package.json, lockfile, migrations, docs/) and other contexts are refused by the guard:
   report the need, do not work around it.
 - Generators you may run: aggregate, builder, entity, value-object, domain-event,
-  domain-error, domain-service, command (on an aggregate that has its repository), query,
+  error, domain-service, command (on an aggregate that has its repository), query,
   port, route, integration-handler, event-handler, acl, e2e, adapter.
   The others are run by the conductor.
 

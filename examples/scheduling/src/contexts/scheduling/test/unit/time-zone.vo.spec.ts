@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { unwrap } from '@ddd-ts-kit/kernel';
-import { UnknownTimeZoneError } from '@/contexts/scheduling/domain/errors/unknown-time-zone.error';
 import { TimeZone } from '@/contexts/scheduling/domain/value-objects/time-zone.vo';
 
 const paris = unwrap(TimeZone.create('Europe/Paris'));
@@ -14,7 +13,7 @@ describe('TimeZone', () => {
   it.each(['  ', 'Mars/Olympus', 'Paris'])('refuses %j, which is not a known zone', (name) => {
     const result = TimeZone.create(name);
 
-    expect(result).toMatchObject({ ok: false, error: expect.any(UnknownTimeZoneError) });
+    expect(result).toMatchObject({ ok: false, error: expect.objectContaining({ code: 'UNKNOWN_TIME_ZONE' }) });
   });
 
   it('writes a zone the way the zone database does, whatever the case it was given in', () => {

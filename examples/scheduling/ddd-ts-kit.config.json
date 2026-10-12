@@ -24,7 +24,8 @@
     "logger": "pino",
     "style": "declared",
     "assembly": "barrel",
-    "dependencies": "signature"
+    "dependencies": "signature",
+    "refusals": "factories"
   },
   "contexts": {
     "identity": {

@@ -26,6 +26,7 @@ const LOCAL_RUNS: readonly (readonly string[])[] = [
   ['entity', 'billing', 'PriceLine'],
   ['value-object', 'billing', 'LinePrice'],
   ['domain-event', 'billing', 'Invoice', 'Cancelled'],
+  ['error', 'billing', 'Invoice', 'alreadyCancelled'],
   ['domain-error', 'billing', 'InvoiceAlreadyCancelled', '--allow-name'],
   ['domain-service', 'billing', 'MonthlyPricing'],
   ['command', 'billing', 'MarkInvoiceAsPaid', '--aggregate', 'Invoice', '--permission', 'invoice.pay'],
@@ -85,6 +86,9 @@ describe('generate --help --json', () => {
 /** A projection declares itself, which only the declared style assembles: `projection.spec.ts` holds the refusal of the other. */
 const DECLARED_ONLY = ['projection'];
 
+/** One class per error is the form of a project that does not build through factories: `generate-error.spec.ts` holds it. */
+const CLASSES_ONLY = ['domain-error'];
+
 describe.each([
   ['declared', undefined],
   ['explicit', EXPLICIT_STACK],
@@ -97,7 +101,7 @@ describe.each([
     cli(root, 'generate', 'port', 'billing', 'PriceList');
   });
 
-  const runs = LOCAL_RUNS.filter(([kind = '']) => style === 'declared' || !DECLARED_ONLY.includes(kind));
+  const runs = runsOf(style);
 
   it.each(runs)('%s stays inside its context and the end-to-end specs', (...args) => {
     const planned = cli(root, 'generate', ...args, '--local-only', '--dry-run', '--json');
@@ -209,3 +213,9 @@ describe.each([
     expect(exists(root, 'src/contexts/billing/domain/value-objects/currency.vo.ts')).toBe(true);
   });
 });
+
+function runsOf(style: string): readonly (readonly string[])[] {
+  return LOCAL_RUNS.filter(
+    ([kind = '']) => !CLASSES_ONLY.includes(kind) && (style === 'declared' || !DECLARED_ONLY.includes(kind)),
+  );
+}

@@ -1,5 +1,5 @@
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
-import { ReminderRepository } from '@/contexts/notification/domain/repositories/reminder.repository';
+import type { ReminderRepository } from '@/contexts/notification/domain/repositories/reminder.repository';
 import { SendDueRemindersCommand } from '@/contexts/notification/application/commands/send-due-reminders/send-due-reminders.command';
 
 @CommandHandler(SendDueRemindersCommand)

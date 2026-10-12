@@ -25,6 +25,8 @@ import { declarationsConstructorInjection } from '../rules/declarations-construc
 import { declarationsRoleDeclared } from '../rules/declarations-role-declared.js';
 import { domainEventsDispatchedOnSave } from '../rules/domain-events-dispatched-on-save.js';
 import { domainEventsTransactionalBeforeCommit } from '../rules/domain-events-transactional-before-commit.js';
+import { errorsCodeUnique } from '../rules/errors-code-unique.js';
+import { errorsKnownCode } from '../rules/errors-known-code.js';
 import { eventsConsumerIdempotent } from '../rules/events-consumer-idempotent.js';
 import { eventsDefinedInPublishedLanguage } from '../rules/events-defined-in-published-language.js';
 import { eventsNameFormat } from '../rules/events-name-format.js';
@@ -124,4 +126,6 @@ export const ARCHITECTURE_RULES: readonly Rule[] = [
   importsAliasOnly,
   importsExtension,
   importsAliasDeclared,
+  errorsCodeUnique,
+  errorsKnownCode,
 ];

@@ -1,5 +1,5 @@
 import { ValueObject, err, ok, type Result } from '@ddd-ts-kit/kernel';
-import { InvalidNotificationKindError } from '@/contexts/notification/domain/errors/invalid-notification-kind.error';
+import { NotificationError } from '@/contexts/notification/domain/errors/notification.error';
 
 const KINDS = ['request', 'confirmation', 'rescheduling', 'cancellation', 'reminder'] as const;
 
@@ -14,12 +14,12 @@ export class NotificationKind extends ValueObject<NotificationKindProps> {
     super(props);
   }
 
-  static create(value: string): Result<NotificationKind, InvalidNotificationKindError> {
+  static create(value: string): Result<NotificationKind, NotificationError> {
     const normalized = value.trim().toLowerCase();
     const known = KINDS.find((kind) => kind === normalized);
 
     if (known === undefined) {
-      return err(new InvalidNotificationKindError(value));
+      return err(NotificationError.invalidNotificationKind(value));
     }
 
     return ok(new NotificationKind({ value: known }));

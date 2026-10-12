@@ -47,6 +47,7 @@ ddd-ts-kit init [--http express|fastify|nest|none]
                 [--broker none|rabbitmq|kafka|nats|redis|custom] [--cache none|redis] [--audit on|off]
                 [--errors none|sentry] [--logger stdout|pino|winston]
                 [--style declared|explicit] [--assembly barrel|discovery]
+                [--dependencies signature|listed] [--refusals factories|classes]
                 [--package-manager npm|pnpm]
                 [--allow-no-outbox "<reason>"] [--import-alias '$<name>/']
                 [--import-extension none|js]
@@ -136,6 +137,13 @@ is absent with standard decorators and under `tsx`. `init` writes
 `--dependencies listed` asks for it. The explicit style stays explicit: its module file lists
 what each class is given. Every generated file exports one class, interface or function and is named
 after it.
+
+**Domain errors are built by factories.** `init` writes `"stack.refusals": "factories"`: a
+context has one error class per concept, extending `ConceptError` of the kernel, and
+`generate error <context> <Concept> <refusal>` adds a static factory to it. The `errors/*`
+rules hold that form. `--refusals classes`, or a config without the key, keeps one class per
+error built with `new`, as 0.1 and 0.2 wrote them; `error-factories` moves a project from one
+to the other.
 
 **Domain events leave with the save.** A generated command handler builds or loads its aggregate,
 calls one intention method, `await repository.save(aggregate)` and returns: no `pullEvents()`, and
@@ -231,7 +239,8 @@ ddd-ts-kit generate --help --json
 | `entity` | `<context> <Name>` | entity, spec |
 | `value-object` (`vo`) | `<context> <Name>` | value object, spec |
 | `domain-event` | `<context> <Aggregate> <Fact>` | event named `<context>.<aggregate>.<fact>`, spec |
-| `domain-error` | `<context> <Name> [--code CODE]` | error with a stable code, spec |
+| `error` (`refusal`) | `<context> <Concept> <refusal> [--code CODE] [--term ...]...` | a static factory `<refusal>` on `domain/errors/<concept>.error.ts`, the class of the errors of that concept (created when absent, extending `ConceptError`), and its case in `test/unit/<concept>.error.spec.ts`. The factory is added after the last one; run again, the command changes nothing. `<Concept>` is a term of the glossary (`--term` adds it). The code is the name of the refusal in constant case, with the concept before it when the name is one word or a code of the kit (`Appointment notFound` sets `APPOINTMENT_NOT_FOUND`); `--code` takes one of the forms `errors/factory-name` accepts. Refused: a name such as `create` or `error1`, and a code already set in the context |
+| `domain-error` | `<context> <Name> [--code CODE]` | one class per error with a stable code, spec: the form of a project whose config says `"stack.refusals": "classes"` or nothing. Refused under `factories`, with the `generate error` command to run instead |
 | `domain-service` | `<context> <Name>` | service, spec |
 | `repository` | `<context> <Aggregate> [--tenant-scoped]` | the port `domain/repositories/<name>.repository.ts` (`abstract class <Name>Repository extends Repository<<Name>>`), the adapter of the project's ORM (`implements` the port) with its mapper and table (or model), a fake, one `repositoryContract` spec run on both, registration |
 | `command` | `<context> <UseCaseName> (--permission <aggregate>.<action> \| --public) [--aggregate <Name>]` | `<use-case>.command.ts` on `AuthorizedCommand` (plain `Command` when public), `<use-case>.handler.ts` (it builds the aggregate, saves it and answers: the events leave with the save), spec through the bus with the refusal of an actor who lacks the permission, registration with `.requires(...)` or `.public()` (and the repository when missing). A generated command answers `void` or the identifier of its aggregate, so no `<use-case>.result.ts` is written |
@@ -413,6 +422,48 @@ published languages, declared upstreams, allowed packages, cycles and orphans. `
 it as `.dependency-cruiser.cjs`; `--check` exits 1 when the file is missing or stale, which is
 what `npm run depcruise` runs first. Edit the config, not the file.
 
+## error-factories
+
+```
+ddd-ts-kit error-factories --plan
+ddd-ts-kit error-factories --apply [--dry-run]
+```
+
+Moves a project from one class per error (`new SlotTakenError(..)`) to static factories on one
+error class per concept (`AppointmentError.slotTaken(..)`), in two steps, because which concept
+a refusal is about is a decision of the model.
+
+`--plan` writes `error-factories.plan.json`: per context, one entry per class of
+`domain/errors/` that extends `DomainError`, with its code, the concept proposed for it (the
+aggregate its name starts or ends with, empty when none does) and the factory name that says
+its code (`APPOINTMENT_NOT_FOUND` on `Appointment` gives `notFound`). Edit it: every entry
+needs a `concept`, a term of the glossary.
+
+`--apply` follows the plan and refuses an entry without a concept, a vague factory name or one
+that does not say the code. It:
+
+- writes `domain/errors/<concept>.error.ts`, a class extending `ConceptError` with one factory
+  per class moved there: the parameters of the constructor, the message it gave to `super`, and
+  as facts the parameters that are plain data (text, numbers, booleans, dates);
+- removes each class and its spec, whose cases go under `describe('<factory>')` in
+  `test/unit/<concept>.error.spec.ts`;
+- rewrites every file under the source root and `test/`: `new X(..)` becomes
+  `<Concept>Error.<factory>(..)`, `thenError(X)` and `thenError(X, code)` become
+  `thenError('<CODE>')`, `toThrow(X)` and `expect.any(X)` become an assertion on the code,
+  `toBeInstanceOf(X)` becomes `toMatchObject({ code })`, `e instanceof X` becomes
+  `<Concept>Error.is(e, '<CODE>')`, an import of the class becomes the import of its concept
+  class, and a type names the concept class. A class of the same name in two contexts goes to
+  the concept of its own. Comments and strings are left alone;
+- sets `"stack.refusals": "factories"` in the config.
+
+It leaves, and says: a class that has members of its own, reads `this` in its constructor or
+gives options to `super` (written by hand); a place where a class stood as a value it cannot
+translate; a property of the error that became a fact (`error.personId` is now
+`error.facts.personId`); a factory with more than three parameters. And always: which facts a
+client may read (none is exposed), the factories that still take a sentence as only parameter,
+and the facts to assert in the specs. Run the formatter afterwards. Run again, it finds nothing
+left to move. `--json` answers `{ dryRun, moved, written, removed, manual }`.
+
 ## build-aliases
 
 ```
@@ -591,7 +642,7 @@ saying what to do instead. Exit code 1 when there is at least one error.
 | `test/builder-required` | an aggregate without `test/builders/<name>.builder.ts` |
 | `events/name-format` | an event name that is not `<context>.<aggregate>.<fact>` in kebab-case with the right context |
 | `events/defined-in-published-language` | `defineIntegrationEvent` outside a published language, without a payload, twice for one version; an event described by hand |
-| `language/glossary-term` | a class of the model named with a word the glossary of its context does not define; an empty glossary |
+| `language/glossary-term` | a class of the model named with a word the glossary of its context does not define; an empty glossary; under `"stack.refusals": "factories"`, an error class of `domain/errors/` too |
 | `language/no-technical-name` | `Manager`, `Helper`, `Util`, `Utils`, `Data`, `Info`, `Processor`, `Wrapper`, `Impl`, `Base`, `Abstract`, `Dto`, `Entity`, `Model` in a type declared under `domain/` or in a use case folder |
 | `purity/no-system-clock` | `new Date()` without argument, `Date.now()`, `performance.now()` in `domain/` or `application/` |
 | `purity/no-ambient-randomness` | `Math.random`, the random source of `crypto`, an id library |
@@ -635,6 +686,8 @@ saying what to do instead. Exit code 1 when there is at least one error.
 | `ports/value-import` | a class named in a dependency list, or given to `bind` or `rebind`, imported with `import type` or `import { type X }` |
 | `scheduling/job-triggers-use-case` | in `application/scheduling/*.job.ts`: an exported class that does not implement `ScheduledJob`; a `run` that sends no command (no `.execute(` call); a repository in the dependency list or the constructor; an import from `domain/aggregates/`, `domain/entities/`, `domain/services/` or `infrastructure/`. A `builder.job(..)` registration of a class that lives elsewhere |
 | `scheduling/job-name` | the first argument of `@Scheduled(..)` or `.job(..)` that is not a string literal `<context>.<job-name>` in lower-case kebab-case with the context of its file; a `systemActor(..)` of a job file passing another name; one job name used twice in the project |
+| `errors/code-unique` | under `"stack.refusals": "factories"`, in the `domain/errors/` of a context: a code set a second time, by a factory (`refusal('CODE', ..)`) or by a class (`readonly code = 'CODE'`), with the file and line of the first. The same code in two contexts is not reported |
+| `errors/known-code` | under `"stack.refusals": "factories"`, in a `*.route.ts`: a code of the `errors` list that no refusal of the context of the route sets, that no class outside the contexts sets, and that is not a code of the kit |
 
 Five more ids belong to `@ddd-ts-kit/eslint-plugin`, which reads the syntax tree where this
 checker reads text: `domain/aggregate-encapsulation`, `domain/value-object-immutability`,

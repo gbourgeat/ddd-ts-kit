@@ -37,20 +37,6 @@ const SOURCES: Readonly<Record<string, string>> = {
     "import { greeting } from '@/contexts/billing/domain/greeting.js';\n\nconsole.log(greeting('script'));\n",
 };
 
-/** A small project compiled by the native compiler, as `npm run build` does before the rewrite. */
-function compiled(extra: Readonly<Record<string, string>> = {}): string {
-  const root = tempDir('build-aliases');
-
-  write(root, 'ddd-ts-kit.config.json', CONFIG);
-  write(root, 'package.json', JSON.stringify({ name: 'compiled', type: 'module' }));
-  write(root, 'tsconfig.json', TSCONFIG);
-  write(root, 'tsconfig.build.json', JSON.stringify({ extends: './tsconfig.json', exclude: ['test'] }));
-  Object.entries({ ...SOURCES, ...extra }).forEach(([file, content]) => write(root, file, content));
-  execFileSync(process.execPath, [NATIVE_COMPILER, '-p', 'tsconfig.build.json'], { cwd: root, stdio: 'pipe' });
-
-  return root;
-}
-
 const node = (root: string, entry: string): { status: number | null; output: string } => {
   const run = spawnSync(process.execPath, [entry], { cwd: root, encoding: 'utf8', env: { PATH: process.env['PATH'] } });
 
@@ -326,3 +312,17 @@ describe('ddd-ts-kit build-aliases, in a project that writes its imports without
     );
   });
 });
+
+/** A small project compiled by the native compiler, as `npm run build` does before the rewrite. */
+function compiled(extra: Readonly<Record<string, string>> = {}): string {
+  const root = tempDir('build-aliases');
+
+  write(root, 'ddd-ts-kit.config.json', CONFIG);
+  write(root, 'package.json', JSON.stringify({ name: 'compiled', type: 'module' }));
+  write(root, 'tsconfig.json', TSCONFIG);
+  write(root, 'tsconfig.build.json', JSON.stringify({ extends: './tsconfig.json', exclude: ['test'] }));
+  Object.entries({ ...SOURCES, ...extra }).forEach(([file, content]) => write(root, file, content));
+  execFileSync(process.execPath, [NATIVE_COMPILER, '-p', 'tsconfig.build.json'], { cwd: root, stdio: 'pipe' });
+
+  return root;
+}

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { executeRoute } from '@ddd-ts-kit/http';
 import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';
 import { DefineAppointmentTypeCommand } from '@/contexts/scheduling/application/commands/define-appointment-type/define-appointment-type.command';
-import { InvalidAppointmentTypeError } from '@/contexts/scheduling/domain/errors/invalid-appointment-type.error';
+import { CalendarError } from '@/contexts/scheduling/domain/errors/calendar.error';
 import { defineAppointmentTypeRoute } from '@/contexts/scheduling/presentation/http/define-appointment-type.route';
 
 const valid = { name: 'Consultation', duration: 30, grid: 15, buffer: 10, needsConfirmation: true };
@@ -44,7 +44,7 @@ describe('POST /calendars/:calendarId/appointment-types', () => {
   it('answers the refusal of the use case with its code', async () => {
     const commands = new InMemoryCommandBus().register(DefineAppointmentTypeCommand, {
       execute: async () => {
-        throw new InvalidAppointmentTypeError('lasts a positive number of minutes');
+        throw CalendarError.invalidAppointmentType('lasts a positive number of minutes');
       },
     });
 

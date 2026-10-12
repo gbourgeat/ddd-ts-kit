@@ -135,7 +135,7 @@ function scaffoldBilling(step: Step, withHttp: boolean): void {
   step('generate', 'entity', 'billing', 'InvoiceLine', ...term('Line=One billed item of an invoice'));
   step('g', 'vo', 'billing', 'Money', ...term('Money=An amount in a currency'));
   step('generate', 'domain-event', 'billing', 'Invoice', 'Issued');
-  step('generate', 'domain-error', 'billing', 'InvoiceAlreadyIssued', '--code', 'INVOICE_ALREADY_ISSUED');
+  step('generate', 'error', 'billing', 'Invoice', 'alreadyIssued', '--code', 'INVOICE_ALREADY_ISSUED');
   step('generate', 'domain-service', 'billing', 'Pricing', ...term('Price=What a customer pays for one item'));
   step('generate', 'repository', 'billing', 'Invoice');
   step('generate', 'command', 'billing', 'IssueInvoice', '--aggregate', 'Invoice', '--permission', 'invoice.issue');

@@ -23,6 +23,8 @@ export interface Stack {
   readonly assembly: Assembly;
   /** Where a declared class states what it depends on: its constructor signature, or the list of its decorator. A config that does not say is `listed`. */
   readonly dependencies: 'signature' | 'listed';
+  /** How a domain error is written: static factories on one class per concept, or a class per error. A config that does not say is `classes`. */
+  readonly refusals: 'factories' | 'classes';
   /** Kept as written: with `prisma` the generated client under `generated/` has an import alias of its own. */
   readonly orm: string;
 }

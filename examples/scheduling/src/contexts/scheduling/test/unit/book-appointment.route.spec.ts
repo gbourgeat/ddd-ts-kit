@@ -3,9 +3,8 @@ import { createErrorMapper, executeRoute } from '@ddd-ts-kit/http';
 import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';
 import { errorStatuses } from '@/platform/http/error-statuses';
 import { BookAppointmentCommand } from '@/contexts/scheduling/application/commands/book-appointment/book-appointment.command';
-import { PatientLimitReachedError } from '@/contexts/scheduling/domain/errors/patient-limit-reached.error';
-import { SlotTakenError } from '@/contexts/scheduling/domain/errors/slot-taken.error';
-import { UnknownCalendarError } from '@/contexts/scheduling/domain/errors/unknown-calendar.error';
+import { AppointmentError } from '@/contexts/scheduling/domain/errors/appointment.error';
+import { CalendarError } from '@/contexts/scheduling/domain/errors/calendar.error';
 import { bookAppointmentRoute } from '@/contexts/scheduling/presentation/http/book-appointment.route';
 
 // The one table of the platform: a code it does not name answers 422.
@@ -70,9 +69,9 @@ describe('POST /appointments', () => {
   });
 
   it.each([
-    [new SlotTakenError('calendar-1', new Date('2026-03-02T08:00:00.000Z')), 409, 'SLOT_TAKEN'],
-    [new PatientLimitReachedError(3), 409, 'PATIENT_LIMIT_REACHED'],
-    [new UnknownCalendarError('calendar-1'), 404, 'UNKNOWN_CALENDAR'],
+    [AppointmentError.slotTaken('calendar-1', new Date('2026-03-02T08:00:00.000Z')), 409, 'SLOT_TAKEN'],
+    [AppointmentError.patientLimitReached(3), 409, 'PATIENT_LIMIT_REACHED'],
+    [CalendarError.unknown('calendar-1'), 404, 'UNKNOWN_CALENDAR'],
   ])('answers the refusal %o with the status %i and the code %s', async (refusal, status, code) => {
     const commands = new InMemoryCommandBus().register(BookAppointmentCommand, {
       execute: async () => {

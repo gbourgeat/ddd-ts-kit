@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { unwrap } from '@ddd-ts-kit/kernel';
-import { InvalidSlotError } from '@/contexts/scheduling/domain/errors/invalid-slot.error';
 import { Slot } from '@/contexts/scheduling/domain/value-objects/slot.vo';
 
 describe('Slot', () => {
@@ -26,7 +25,7 @@ describe('Slot', () => {
     const result = Slot.create(startsAt, endsAt, heldUntil);
 
     expect(result).toMatchObject({ ok: false, error: { code: 'INVALID_SLOT' } });
-    expect(() => Slot.between(startsAt, endsAt, heldUntil)).toThrow(InvalidSlotError);
+    expect(() => Slot.between(startsAt, endsAt, heldUntil)).toThrow(expect.objectContaining({ code: 'INVALID_SLOT' }));
   });
 
   it('overlaps a slot that starts inside its buffer', () => {
