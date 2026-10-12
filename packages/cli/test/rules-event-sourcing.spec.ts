@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { isPastParticiple } from '../src/check/event-sourcing/is-past-participle.js';
+import { isPastWord } from '../src/naming/index.js';
 import { parseConfig } from '../src/config/index.js';
 import { writeStoredEventsLock } from '../src/docs/write-stored-events-lock.js';
 import { Workspace } from '../src/workspace/index.js';
@@ -81,8 +81,8 @@ describe('event-sourcing/state-in-apply', () => {
 
 describe('event-sourcing/past-tense', () => {
   it('knows the regular and the common irregular past participles', () => {
-    expect(['issued', 'Taken', 'withdrawn', 'paid', 'held', 'set', 'sent', 'won'].every(isPastParticiple)).toBe(true);
-    expect(['issue', 'cancel', 'book', 'show', 'pay'].some(isPastParticiple)).toBe(false);
+    expect(['issued', 'Taken', 'withdrawn', 'paid', 'held', 'set', 'sent', 'won'].every(isPastWord)).toBe(true);
+    expect(['issue', 'cancel', 'book', 'show', 'pay'].some(isPastWord)).toBe(false);
   });
 
   it('judges the events of event-sourced aggregates only', () => {

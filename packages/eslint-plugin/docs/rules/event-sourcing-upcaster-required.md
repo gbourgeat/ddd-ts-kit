@@ -49,4 +49,4 @@ None.
 
 ## With the CLI checker
 
-`ddd-ts-kit check` holds the same three checks and, alone, the lock: the fingerprint of each version recorded by `ddd-ts-kit docs` in `stored-events.lock.json`, a recorded shape that changed, a version below the last recorded.
+`ddd-ts-kit check` holds the same three checks and, alone, the lock: the fingerprint of each version recorded by `ddd-ts-kit docs --stored-events` in `stored-events.lock.json`, a recorded shape that changed, a version below the last recorded.

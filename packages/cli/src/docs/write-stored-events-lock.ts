@@ -7,10 +7,12 @@ import { workspaceSources } from '../generate/workspace-sources.js';
 import type { Workspace } from '../workspace/index.js';
 
 /**
- * Records in `stored-events.lock.json` the shape of each version of a stored event declared in
- * the codecs of `infrastructure/persistence/`. A version already recorded is never rewritten,
- * so a changed shape stays visible to `event-sourcing/upcaster-required`; a project without
- * stored events gets no lock.
+ * `ddd-ts-kit docs --stored-events`: records in `stored-events.lock.json` the shape of each
+ * version of a stored event declared in the codecs of `infrastructure/persistence/`. Run when a
+ * version starts being stored where events are kept (before the release that ships it): from
+ * then on its shape is the one stored. A version already recorded is never rewritten, so a
+ * changed shape stays visible to `event-sourcing/upcaster-required`; a project without stored
+ * events gets no lock.
  */
 export function writeStoredEventsLock(ws: Workspace, config: Config, contexts: readonly string[]): void {
   const declared = contexts.flatMap((context) => declaredIn(ws, config, context));

@@ -40,8 +40,15 @@ work), never by the dispatcher, and rebuilt from position zero by
 cases never read the store), `event-sourcing/projection-never-appends` and
 `event-sourcing/upcaster-required`: the data of a stored event is a named type, a version above
 1 has an upcaster from each version below, and the shape of each version is recorded by
-`ddd-ts-kit docs` in `stored-events.lock.json`, so a shape changed in place is refused. They
+`ddd-ts-kit docs --stored-events` in `stored-events.lock.json` (run when a version starts being stored, before its release), so a shape changed in place is refused. They
 judge event-sourced code only: a project that has none sees no new finding.
+
+**`ddd-ts-kit generate aggregate <context> <Name> --event-sourced`** writes the aggregate with
+its birth event (`<Name>Created`) and its apply method, the codec of its stored events
+(`infrastructure/persistence/<name>-events.mapper.ts`), a builder that replays a history and a
+given-events spec; `generate domain-event` on such an aggregate adds the event to its union, to
+`appliers()` with an empty apply method, and to the codec. `CONTEXT.md`, `describe` and `list`
+mark the event-sourced aggregates. `ddd-ts-kit docs --stored-events` records the stored shapes.
 
 ## 0.5.0
 

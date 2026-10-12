@@ -48,6 +48,8 @@ export interface KindFlags {
   readonly mapper: boolean;
   /** A controller of a query gets a serializer of its own. */
   readonly serializer: boolean;
+  /** An aggregate keeps its state as the stream of its events. */
+  readonly eventSourced: boolean;
 }
 
 export interface KindRequest {

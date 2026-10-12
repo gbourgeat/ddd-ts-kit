@@ -1,8 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { readConfig } from '../config/index.js';
+import { readConfig, type Config } from '../config/index.js';
 import { generatedDrift } from '../declared/index.js';
+import { readContexts } from '../docs/read-contexts.js';
 import { writeDocs } from '../docs/write-docs.js';
+import { writeStoredEventsLock } from '../docs/write-stored-events-lock.js';
 import { stopIgnoringValidation } from '../generate/stop-ignoring-validation.js';
 import { Workspace } from '../workspace/index.js';
 import { Arguments } from './arguments.js';
@@ -13,15 +15,22 @@ export const docsCommand: Command = (argv, io) => {
   const args = Arguments.parse(argv, {
     check: { type: 'boolean', default: false },
     'dry-run': { type: 'boolean', default: false },
+    'stored-events': { type: 'boolean', default: false },
   });
 
   const root = args.projectRoot;
   const ws = new Workspace(root, false);
 
-  writeDocs(ws, readConfig(root).config);
+  const { config } = readConfig(root);
+
+  writeDocs(ws, config);
+
+  if (args.flag('stored-events')) {
+    recordStoredEvents(ws, config);
+  }
 
   if (!args.flag('check')) {
-    stopIgnoringValidation(ws, readConfig(root).config);
+    stopIgnoringValidation(ws, config);
     printReport(io, args, ws.commit(args.flag('dry-run')));
 
     return 0;
@@ -43,6 +52,17 @@ export const docsCommand: Command = (argv, io) => {
 
   return stale.length === 0 ? 0 : 1;
 };
+
+/** Recorded on purpose, when a version starts being stored where it is kept: a shape still in the making stays free. */
+function recordStoredEvents(ws: Workspace, config: Config): void {
+  const contexts = readContexts(ws, config).filter((context) => context.onDisk);
+
+  writeStoredEventsLock(
+    ws,
+    config,
+    contexts.map((context) => context.name),
+  );
+}
 
 const GENERATED_CONTEXT_FILE = /\.(?:declarations|dependencies)\.ts$/;
 

@@ -10,7 +10,7 @@ A stored event is a fact, kept and replayed for as long as the aggregate lives, 
 
 ## Reported
 
-- a name imported from `domain/events/` none of whose words is a past participle: a word ending in `-ed`, `-en` or `-wn`, or a common irregular one (`paid`, `held`, `sent`, `set`, `made`, `done`, `lost`, `won`, `built`...)
+- a name imported from `domain/events/` none of whose words is a past participle: a word ending in `-ed`, or a common irregular one (`paid`, `held`, `taken`, `withdrawn`, `set`, `made`, `done`, `lost`, `won`...)
 
 Incorrect:
 
@@ -32,7 +32,7 @@ None.
 
 ## Limits
 
-- A word that ends in `-ed` without being a participle (`Need`, `Feed`) passes.
+- A word that ends in `-ed` without being a participle (`Need`, `Seed`) passes.
 - An irregular participle missing from the list is reported: silence that line with a reason.
 
 ## With the CLI checker

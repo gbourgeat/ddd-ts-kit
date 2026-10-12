@@ -10,14 +10,12 @@ import { contextMapLines } from './context-map-lines.js';
 import { readContexts } from './read-contexts.js';
 import { refreshContextDoc } from './refresh-context-doc.js';
 import { writeOpenApiDocuments } from './write-open-api-documents.js';
-import { writeStoredEventsLock } from './write-stored-events-lock.js';
 
 const INTEGRATION_README = 'docs/integration/README.md';
 
 /**
  * Plans every generated part of the documentation: the lists of each CONTEXT.md, the block
- * of the context map, the barrel of each declared context, the lock of the stored event shapes,
- * and, once, the skeleton of what only people can write. The caller commits the workspace, or reads what it would change to detect drift.
+ * of the context map, the barrel of each declared context, and, once, the skeleton of what only people can write. The caller commits the workspace, or reads what it would change to detect drift.
  */
 export function writeDocs(ws: Workspace, config: Config): void {
   const contexts = readContexts(ws, config);
@@ -29,12 +27,6 @@ export function writeDocs(ws: Workspace, config: Config): void {
   }
 
   writeContextMap(ws, contextMapLines(contexts));
-
-  writeStoredEventsLock(
-    ws,
-    config,
-    contexts.filter((context) => context.onDisk).map((context) => context.name),
-  );
 
   refreshBarrels(ws, config);
   writeOpenApiDocuments(ws, config);

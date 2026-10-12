@@ -35,13 +35,14 @@ export function readContext(ws: Workspace, config: Config, name: string): Contex
 
 type TreeFacts = Pick<
   ContextFacts,
-  'aggregates' | 'domainEvents' | 'publishedEvents' | 'builders' | 'permissions' | 'jobs'
+  'aggregates' | 'eventSourced' | 'domainEvents' | 'publishedEvents' | 'builders' | 'permissions' | 'jobs'
 >;
 
 /** What the folders of the context hold, whatever the style of the project. */
 function treeFacts(ws: Workspace, directory: string, name: string): TreeFacts {
   return {
     aggregates: namesBySuffix(ws, `${directory}/domain/aggregates`, '.aggregate.ts'),
+    eventSourced: eventSourcedOf(ws, `${directory}/domain/aggregates`),
     domainEvents: namesBySuffix(ws, `${directory}/domain/events`, '.event.ts'),
     publishedEvents: publishedEventsOf(ws, `${directory}/published-language`),
     builders: namesBySuffix(ws, `${directory}/test/builders`, '.builder.ts'),
@@ -116,6 +117,17 @@ function downstreamsOf(config: Config, name: string): Upstream[] {
       .map((upstream) => ({ context: other, relationship: upstream.relationship })),
   );
 }
+
+/** The aggregates whose class extends `EventSourcedAggregate`, read from their files. */
+function eventSourcedOf(ws: Workspace, directory: string): string[] {
+  return ws
+    .list(directory)
+    .filter((file) => file.endsWith(AGGREGATE) && EVENT_SOURCED.test(ws.read(`${directory}/${file}`) ?? ''))
+    .map((file) => toName(file.slice(0, -AGGREGATE.length)).pascal);
+}
+
+const AGGREGATE = '.aggregate.ts';
+const EVENT_SOURCED = /\bextends\s+EventSourcedAggregate\b/;
 
 function namesBySuffix(ws: Workspace, directory: string, suffix: string): string[] {
   return ws

@@ -147,7 +147,7 @@ Usage
   ddd-ts-kit status
   ddd-ts-kit todo [<context>]
   ddd-ts-kit worker-scope <context> [--worktree <path>] [--branch <name>] [--dry-run]
-  ddd-ts-kit docs [--check]
+  ddd-ts-kit docs [--check] [--stored-events]
   ddd-ts-kit depcruise-config [--check|--write]
   ddd-ts-kit build-aliases [--project <tsconfig>]
   ddd-ts-kit error-factories --plan | --apply [--dry-run]
@@ -182,12 +182,14 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
   --commit-size    the files and lines about to be committed against "commit" in the config (20 files and
                    600 lines by default, generated files not counted); --staged reads the index only;
                    advisory, --strict exits 1 when over
+  --stored-events  docs records the shape of each version of the stored events in stored-events.lock.json,
+                   never rewriting a recorded one: run it when a version starts being stored, before its release
   --local-only     generate refuses, and writes nothing, when the kind would write outside its context;
                    "generate --help --json" says which kinds do
 
 Kinds
   context <name> --classification <core|supporting|generic> [--purpose "<two sentences>"] [--term "<Term>=<meaning>"]... [--upstream <ctx>[:relationship]]...
-  aggregate <context> <Name> [--term "<Term>=<meaning>"]...
+  aggregate <context> <Name> [--event-sourced] [--term "<Term>=<meaning>"]...
   builder <context> <Aggregate>
   entity <context> <Name> [--term "<Term>=<meaning>"]...
   value-object <context> <Name> [--term "<Term>=<meaning>"]...   (alias: vo)

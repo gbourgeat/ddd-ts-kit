@@ -1,4 +1,5 @@
 export { assertPastFact } from './assert-past-fact.js';
+export { isPastWord } from './is-past-word.js';
 export { eventName } from './event-name.js';
 export { looksLikePastFact } from './looks-like-past-fact.js';
 export type { Name } from './name.js';

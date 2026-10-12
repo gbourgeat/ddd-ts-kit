@@ -1,9 +1,9 @@
 import { eventSourcedClasses } from '../event-sourcing/event-sourced-classes.js';
-import { isPastParticiple } from '../event-sourcing/is-past-participle.js';
 import { wordsOf } from '../event-sourcing/words-of.js';
 import type { Finding } from '../model/finding.js';
 import type { Rule } from '../model/rule.js';
 import type { SourceFile } from '../model/source-file.js';
+import { isPastWord } from '../../naming/index.js';
 import { perFile } from '../support/per-file.js';
 
 const FIX =
@@ -32,7 +32,7 @@ function misnamed(file: SourceFile): Finding[] {
     }
 
     return names
-      .filter((name) => !wordsOf(name).some(isPastParticiple))
+      .filter((name) => !wordsOf(name).some(isPastWord))
       .map((name) => ({ line, message: `The event ${name} is not named in the past tense.`, fix: FIX }));
   });
 }

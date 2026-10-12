@@ -7,7 +7,7 @@ import type { Rule } from '../model/rule.js';
 import { perFile } from '../support/per-file.js';
 
 const NEW_VERSION_FIX =
-  'A stored event is never rewritten: keep the shape of the stored version as it is, declare the new shape under a new name, raise `version` by one and add the upcaster from the stored version, `upcasters: { <stored>: (data) => ({ ...data, <new field>: <value for the old events> }) }`, then `ddd-ts-kit docs` records the new version.';
+  'A stored event is never rewritten: keep the shape of the stored version as it is, declare the new shape under a new name, raise `version` by one and add the upcaster from the stored version, `upcasters: { <stored>: (data) => ({ ...data, <new field>: <value for the old events> }) }`, then `ddd-ts-kit docs --stored-events` records the new version once it is stored.';
 
 export const eventSourcingUpcasterRequired: Rule = {
   id: 'event-sourcing/upcaster-required',
