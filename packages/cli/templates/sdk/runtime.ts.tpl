@@ -87,12 +87,23 @@ export type DataOf<Result extends Outcome> = Extract<Result, { readonly ok: true
 /** The options of a client, made ready to send: the global `fetch` unless another is given. */
 export function openConnection(options: ClientOptions, schemes: Readonly<Record<string, SchemeCarrier>>): Connection {
   return {
-    baseUrl: options.baseUrl.replace(/\/+$/, ''),
+    baseUrl: withoutTrailingSlashes(options.baseUrl),
     credentials: options.credentials ?? {},
     headers: options.headers ?? {},
     fetch: options.fetch ?? ((request) => fetch(request)),
     schemes,
   };
+}
+
+/** A base URL ends where its path starts: `https://api.example.com/v1/` and `.../v1` are one. A loop, not a regular expression, whose time would grow with the square of the slashes. */
+function withoutTrailingSlashes(url: string): string {
+  let end = url.length;
+
+  while (end > 0 && url.charAt(end - 1) === '/') {
+    end -= 1;
+  }
+
+  return url.slice(0, end);
 }
 
 /** A status the contract does not declare for the operation: the server and its contract disagree. */
