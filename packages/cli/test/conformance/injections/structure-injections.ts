@@ -214,7 +214,20 @@ export const STRUCTURE_INJECTIONS: readonly Injection[] = [
     changes: [
       {
         file: 'migrations/add-appointment-note.js',
-        to: 'export const up = async () => {};\n\nexport const down = async () => {};\n',
+        to: [
+          'export const up = async (knex) => {',
+          "  await knex.schema.alterTable('appointments', (table) => {",
+          "    table.text('note');",
+          '  });',
+          '};',
+          '',
+          'export const down = async (knex) => {',
+          "  await knex.schema.alterTable('appointments', (table) => {",
+          "    table.dropColumn('note');",
+          '  });',
+          '};',
+          '',
+        ].join('\n'),
       },
     ],
     checker: true,
