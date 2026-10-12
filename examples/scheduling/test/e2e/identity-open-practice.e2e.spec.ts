@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, onTestFailed } from 'vitest';
 import { collectEvents, expectProblem, expectStatus } from '@ddd-ts-kit/testing/e2e';
 import { reportSeedOnFailure } from '@ddd-ts-kit/testing/faker';
@@ -8,8 +9,16 @@ import {
   practiceOpenedV1,
   type PracticeOpenedV1Payload,
 } from '@/contexts/identity/published-language/index';
+import type { Listed } from '$test/e2e/support/listed';
 import { startApplication, type RunningApplication } from '$test/e2e/support/start-application';
 import { storyOf } from '$test/e2e/support/story-of';
+
+/** What the trail says of a refusal at the edge. */
+interface RefusalLine {
+  readonly action: string;
+  readonly reason?: string;
+  readonly actorId: string;
+}
 
 describe('Open practice, end to end', () => {
   const tracing = installTestTracing();
@@ -36,13 +45,21 @@ describe('Open practice, end to end', () => {
     expectStatus(response, 401);
   });
 
-  it('answers 403 to a signed-in person who is not a platform admin', async () => {
+  it('answers 403 to a signed-in person who is not a platform admin, and records the refusal in the audit trail', async () => {
     await register(application, 'ada');
-    const ada = await application.as({ id: 'ada' });
 
-    const response = await ada.post('/practices', opening);
+    // The trail is append-only, a reset keeps it: the entry of this refusal is found by the correlation the caller gave.
+    const correlationId = randomUUID();
+    const ada = (await application.as({ id: 'ada' })).withHeaders({ 'x-correlation-id': correlationId });
 
-    expectStatus(response, 403);
+    expectStatus(await ada.post('/practices', opening), 403);
+
+    const root = await application.as({ id: 'root', roles: ['platform-admin'] });
+    const denied = await root.get<Listed<RefusalLine>>('/audit/entries?outcome=denied&correlationId=' + correlationId);
+
+    expect(
+      expectStatus(denied, 200).body.items.map(({ action, reason, actorId }) => ({ action, reason, actorId })),
+    ).toEqual([{ action: 'http:openPractice', reason: 'FORBIDDEN', actorId: 'ada' }]);
   });
 
   it('is one trace: the request, the use case, what it saves and what follows the facts', async () => {
