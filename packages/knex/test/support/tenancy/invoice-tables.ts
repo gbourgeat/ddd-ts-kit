@@ -24,6 +24,12 @@ export const SCHEMA_PER_TENANT: InvoiceTables = {
   write: (context, scope) => tenantSchemaTable<InvoiceRow>(context, scope, INVOICES),
 };
 
+/** The table as it is, no tenant condition: under row-level security, the policies alone confine it. */
+export const UNFILTERED: InvoiceTables = {
+  read: (context) => context.executor()<InvoiceRow, InvoiceRow[]>('invoices').withSchema(BILLING),
+  write: (context) => context.executor()<InvoiceRow, InvoiceRow[]>('invoices').withSchema(BILLING),
+};
+
 /** Database per tenant: the table as it is, the unit of work routing to the tenant's database. */
 export const DATABASE_PER_TENANT: InvoiceTables = {
   read: (context) => context.executor()<InvoiceRow, InvoiceRow[]>('invoices').withSchema(BILLING),

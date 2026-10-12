@@ -88,9 +88,11 @@ afterAll(async () => {
 
 const invoiceCases = {
   createAggregate: () => Invoice.draft(`inv-${(next += 1)}`, 100),
+  recreate: (invoice: Invoice) => Invoice.draft(invoice.id, 100),
   mutate: (invoice: Invoice) => invoice.addCharge(50),
   idOf: (invoice: Invoice) => invoice.id,
   stateOf: (invoice: Invoice) => invoice.state,
+  elevatedReads: true,
 };
 
 tenantIsolationContract<Invoice>(runner, {
@@ -112,6 +114,18 @@ tenantIsolationContract<Invoice>(runner, {
     const unitOfWork = createDrizzleUnitOfWork(secured.db, undefined, { begin: tenantSession(scope) });
 
     return inUnitOfWork(new TenantInvoiceRepository(unitOfWork, scope), unitOfWork);
+  },
+});
+
+tenantIsolationContract<Invoice>(runner, {
+  ...invoiceCases,
+  name: 'drizzle, row-level security alone, statements without a tenant condition',
+  createRepository: async (scope) => {
+    await secured.client.exec('truncate table billing_core.invoices');
+
+    const unitOfWork = createDrizzleUnitOfWork(secured.db, undefined, { begin: tenantSession(scope) });
+
+    return inUnitOfWork(new TenantInvoiceRepository(unitOfWork, scope, true), unitOfWork);
   },
 });
 

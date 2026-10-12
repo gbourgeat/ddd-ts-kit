@@ -10,7 +10,7 @@ import { createInvoicesTable } from './support/billing-core/infrastructure/persi
 import { createDatabase, type TestDatabase } from './support/database.js';
 import { asApplicationRole } from './support/tenancy/as-role.js';
 import { inUnitOfWork } from './support/tenancy/in-unit-of-work.js';
-import { SHARED_TABLES } from './support/tenancy/invoice-tables.js';
+import { SHARED_TABLES, UNFILTERED } from './support/tenancy/invoice-tables.js';
 import { StrategyInvoiceRepository } from './support/tenancy/strategy-invoice-repository.js';
 
 const runner = { describe, it, expect, beforeEach, afterEach };
@@ -44,11 +44,17 @@ afterAll(async () => {
 
 const truncate = () => application.withSchema(BILLING).table('invoices').truncate();
 
-tenantIsolationContract<Invoice>(runner, {
+const invoices = {
   createAggregate: () => Invoice.draft(`inv-${(next += 1)}`, 100),
-  mutate: (invoice) => invoice.addCharge(50),
-  idOf: (invoice) => invoice.id,
-  stateOf: (invoice) => invoice.state,
+  recreate: (invoice: Invoice) => Invoice.draft(invoice.id, 100),
+  mutate: (invoice: Invoice) => invoice.addCharge(50),
+  idOf: (invoice: Invoice) => invoice.id,
+  stateOf: (invoice: Invoice) => invoice.state,
+  elevatedReads: true,
+};
+
+tenantIsolationContract<Invoice>(runner, {
+  ...invoices,
   name: 'knex, shared tables under row-level security',
   createRepository: async (scope) => {
     await truncate();
@@ -56,6 +62,18 @@ tenantIsolationContract<Invoice>(runner, {
     const context = createKnexUnitOfWork(application, undefined, { begin: tenantSession(scope) });
 
     return inUnitOfWork(new StrategyInvoiceRepository({ context, scope, tables: SHARED_TABLES }), context);
+  },
+});
+
+tenantIsolationContract<Invoice>(runner, {
+  ...invoices,
+  name: 'knex, row-level security alone, statements without a tenant condition',
+  createRepository: async (scope) => {
+    await truncate();
+
+    const context = createKnexUnitOfWork(application, undefined, { begin: tenantSession(scope) });
+
+    return inUnitOfWork(new StrategyInvoiceRepository({ context, scope, tables: UNFILTERED }), context);
   },
 });
 

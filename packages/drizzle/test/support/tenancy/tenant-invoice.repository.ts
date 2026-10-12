@@ -10,11 +10,16 @@ type VersionedInvoice = InvoiceState & { readonly version: number };
 
 const clock = new FixedClock(new Date('2026-03-01T10:00:00.000Z'));
 
-/** The repository of a project on shared tables: reads through `tenantCondition`, writes through `ownTenantCondition`. */
+/**
+ * The repository of a project on shared tables: reads through `tenantCondition`, writes through
+ * `ownTenantCondition`. Built `unfiltered`, it writes no tenant condition, as a statement that
+ * forgot it: under row-level security the policies alone confine it.
+ */
 export class TenantInvoiceRepository implements InvoiceRepository {
   constructor(
     private readonly database: Database,
     private readonly scope: ExecutionScope,
+    private readonly unfiltered = false,
   ) {}
 
   async findById(id: string): Promise<Invoice | undefined> {
@@ -22,7 +27,7 @@ export class TenantInvoiceRepository implements InvoiceRepository {
       .executor()
       .select()
       .from(invoices)
-      .where(and(eq(invoices.id, id), tenantCondition(invoices.tenantId, this.scope)));
+      .where(and(eq(invoices.id, id), this.unfiltered ? undefined : tenantCondition(invoices.tenantId, this.scope)));
 
     if (row === undefined) {
       return undefined;
@@ -59,7 +64,7 @@ export class TenantInvoiceRepository implements InvoiceRepository {
         and(
           eq(invoices.id, state.id),
           eq(invoices.version, expected),
-          ownTenantCondition(invoices.tenantId, this.scope),
+          this.unfiltered ? undefined : ownTenantCondition(invoices.tenantId, this.scope),
         ),
       )
       .returning({ id: invoices.id });
