@@ -535,6 +535,12 @@ kernel, which `application/` may import, and receives the store bound to it. It 
 filter to the tenant of the actor (an access scope computed by the authorizer), so one tenant
 never lists another's entries.
 
+In a multi-tenant project, bind `new TenantAuditReader(store, executionScope)` to
+`AuditReader` instead of the store itself: every search is then confined to the tenant of the
+work whatever its filter says (a filter naming another tenant or another chain finds nothing),
+platform staff read across tenants only under an elevation (`acrossTenants` of the kernel, itself
+recorded), and work that names neither is refused (`NoCurrentTenantError`).
+
 ## Limits
 
 - **PostgreSQL only** for the SQL stores: row locks, row comparison for cursors, `jsonb`,

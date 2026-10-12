@@ -798,6 +798,7 @@ persistence packages, and the whole picture in
 | `acrossTenants({ scope, trail, clock, ids }, { reason, tenants }, work)` | platform staff reading over tenants: refused without a reason or a tenant, recorded in the `AuditTrail` (action `tenancy:elevate`) before the work runs; writes still name one tenant |
 | `tenantKey(scope, ...segments)`, `tenantCacheKey(scope, ...segments)` | keys of rate limits, locks and caches confined to the tenant |
 | `TenantDirectory`, `InMemoryTenantDirectory` | the tenants that exist, for per-tenant jobs, provisioning and migrations |
+| `TENANT_SETTINGS`, `tenantSettingValues(context)`, `TENANT_ISOLATION_POLICY`, `tenantPolicyExpressions(column)` | what the row-level security of the persistence packages shares: the two settings of a transaction (`ddd_ts_kit.tenant_id`, `ddd_ts_kit.reach`), their values for the work in progress, the name and the expressions of the policy |
 
 An elevation is never implied by a role: the platform decides the permission to elevate (a use
 case or a guard), then calls `acrossTenants`. A trail that fails to record it refuses it.

@@ -80,6 +80,11 @@ audit columns and `tenant_id`; cursor and offset pages. The units of work pass
 `unitOfWorkContract`, the stores `outboxStoreContract` and `processedEventStoreContract`; your repositories are held to `repositoryContract` next to
 their in-memory fake. Delivery through the outbox is at least once and unordered.
 
+Tenant isolation is uneven across the four: Knex ships the four strategies (shared tables, row-level
+security, schema per tenant, database per tenant), Drizzle the first two, Prisma and TypeORM none
+beyond the `tenant_id` column. The table, and the `tenantIsolationContract` each strategy passes,
+are in [Multitenancy](../concepts/multitenancy.md#isolation-four-strategies).
+
 For the read side, each of the four also ships a translator of the kernel criteria into its
 query (`criteriaToDrizzle`, `criteriaToKnex`, `criteriaToPrisma`, `criteriaToTypeOrm`) and a
 read model store for projections, held to `criteriaContract` and `readModelStoreContract` on

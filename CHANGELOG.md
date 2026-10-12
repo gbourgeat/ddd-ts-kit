@@ -24,6 +24,25 @@ list the pull requests behind it.
 - `@ddd-ts-kit/testing`: `eventBusContract` checks that the tenant of an envelope arrives intact;
   `outboxStoreContract` does with `carriesTenant: true`.
 
+**Tenant isolation, four strategies, proven by one contract.**
+
+- Shared tables: `tenantTable`, `ownTenantTable` and `whereTenant` (Knex), `tenantCondition` and
+  `ownTenantCondition` (Drizzle): reads reach the tenant of the work or the tenants of an
+  elevation, writes the one tenant of the work. The read model stores of both take `tenant`, and
+  `TenantAuditReader` (`@ddd-ts-kit/audit`) confines every search of the trail to the tenant.
+- Row-level security on PostgreSQL, the second line: `enableTenantIsolation` and
+  `tenantIsolationStatements` (Knex), `tenantPolicy` and `forceRowLevelSecurity` (Drizzle), and
+  `tenantSession(scope)`, the new `begin` option of `createKnexUnitOfWork` and
+  `createDrizzleUnitOfWork`, which sets the tenant of each transaction only.
+- Schema per tenant (Knex): `tenantSchemaOf`, `tenantSchemaTable`, `migrateTenantSchema` with
+  `tenantOfMigration`, `tenantSearchPath`. Database per tenant (Knex): `TenantDatabases` (one
+  bounded pool per tenant, least recently used closed), `createTenantRoutedUnitOfWork`,
+  `migrateEveryTenant`.
+- `@ddd-ts-kit/testing`: `tenantIsolationContract`, run against every strategy above on PGlite
+  and PostgreSQL; `asTenant(scope, tenantId, work)` and `anExecutionContext().elevatedOver(...)`.
+- Prisma and TypeORM get the `tenant_id` column and the kernel helpers, applied by hand; no
+  helper, no row-level security, no contract run yet.
+
 ## 0.5.0
 
 **Migrations are named by a timestamp and what they do.** The generated `drizzle.config.ts`

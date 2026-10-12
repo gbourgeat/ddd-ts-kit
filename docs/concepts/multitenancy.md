@@ -31,6 +31,45 @@ plans. It lives in tables without a tenant column, and the work that reads it na
 (`NoCurrentTenantError`): a statement cannot run unscoped by omission. `tenantReachOf(scope)` is
 the read side: the tenant of the work, or the tenants of an elevation.
 
+## Isolation: four strategies
+
+The tenant reaches the storage through the execution scope; the strategy decides what stops a
+statement from crossing to another tenant.
+
+| Strategy | What isolates | Choose it when | It costs |
+|---|---|---|---|
+| Shared tables | a `tenant_id` column, and a condition the kit adds to every statement | many small tenants, one schema to migrate, reports across tenants | one forgotten condition is a leak: the helpers and a rule of the checker are what prevent it |
+| Shared tables under row-level security | the same, and a PostgreSQL policy that refuses another tenant's row even to a statement without its condition | the shared-table case, with a second line of defence | a non-superuser role, every statement inside a transaction |
+| Schema per tenant | one copy of the tables of a context per tenant (`<schema>__<tenant>`) | tenants that want their data apart, export or delete a tenant at once, a few hundred tenants | migrations run once per tenant; thousands of schemas strain the catalogue |
+| Database per tenant | one database per tenant, one bounded pool each | strict separation (contracts, regions), large tenants, per-tenant backup and restore | connections (`maxTenants * pool.max` per instance), one migration run per tenant |
+
+What each adapter ships, proven by `tenantIsolationContract` (`@ddd-ts-kit/testing/contracts`)
+on PostgreSQL:
+
+| Strategy | Knex | Drizzle | Prisma | TypeORM |
+|---|---|---|---|---|
+| Shared tables | `tenantTable`, `ownTenantTable`, `whereTenant`; read models with `tenant` | `tenantCondition`, `ownTenantCondition`; read models with `tenant` | by hand: `tenantScopeOf` and `tenantReachOf` in every statement, no helper, no contract run | by hand, as Prisma |
+| Row-level security | `enableTenantIsolation`, `tenantSession` | `tenantPolicy`, `forceRowLevelSecurity`, `tenantSession` | not shipped | not shipped |
+| Schema per tenant | `tenantSchemaTable`, `migrateTenantSchema`, `tenantSearchPath` | not shipped: a drizzle table is bound to its schema where it is declared | not shipped | not shipped |
+| Database per tenant | `TenantDatabases`, `createTenantRoutedUnitOfWork`, `migrateEveryTenant` | not shipped | not shipped | not shipped |
+
+The outbox keeps the tenant of each event on Knex (`tenant: true`) and Drizzle
+(`tenantOutboxTable`); the Prisma and TypeORM outboxes do not store it yet, so their consumers
+run in no tenant.
+
+Three rules hold whatever the strategy:
+
+- **Reads may widen, writes never.** An elevation widens what a read reaches; an update or a
+  delete always names the one tenant of the work (`ownTenantTable`, `ownTenantCondition`), so a
+  staff session reading across tenants cannot write across them.
+- **No tenant, no data.** Work that names no tenant is refused before any SQL
+  (`NoCurrentTenantError`) on shared tables and schemas, and reaches no database at all on
+  database per tenant. Under row-level security, a statement without the tenant settings sees
+  nothing.
+- **Keys are unique across tenants.** Identifiers are generated (UUIDs), so that a key never
+  names two rows; the isolation contract checks that another tenant saving under an existing id
+  changes nothing.
+
 ## Propagation: every hop keeps the tenant
 
 - **Integration events.** `scopedPublisher` stamps the tenant of the work on every event published

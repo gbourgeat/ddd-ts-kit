@@ -425,6 +425,82 @@ The rules these examples hold, and that the tests of this package check on a rea
 - **An offset page answers `total`**, a cursor page `nextCursor`. Offer the offset form for
   small, browsable lists and the cursor form for anything that grows.
 
+## Tenant isolation
+
+Four strategies, chosen per project ([Multitenancy](../../docs/concepts/multitenancy.md) says
+when each fits). Every one of them is proven here by `tenantIsolationContract` of
+`@ddd-ts-kit/testing/contracts`, on PGlite and on PostgreSQL.
+
+**Shared tables.** One table per aggregate, a `tenant_id` column, and every statement confined
+by the kit instead of by a condition written by hand:
+
+```ts
+const INVOICES = { schema: BILLING, table: 'invoices' };
+
+// reads: the tenant of the work, or the tenants of an elevation
+const row = await tenantTable<InvoiceRow>(this.context, this.scope, INVOICES).where({ id }).first();
+// updates and deletes: the one tenant of the work, which an elevation never widens
+await ownTenantTable<InvoiceRow>(this.context, this.scope, INVOICES).where({ id, version: expected }).update(changes);
+// inserts name the tenant themselves
+const inserted = { ...state, ...tenantRow(tenantScopeOf(this.scope)), ...auditRow(stampCreation(this.scope, this.clock)) };
+```
+
+`whereTenant(builder, scope)` is the condition alone, for a builder of your own. Work that names
+no tenant raises `NoCurrentTenantError` before any SQL. A read model of tenant data passes
+`tenant: scope` to `KnexReadModelTable` and `KnexReadModelStore`: each row is written with the
+tenant of the work and every read and write is confined to it (keys stay unique across tenants;
+a rebuild, which runs in no tenant, is refused).
+
+**Row-level security**, a second line on shared tables: the database itself refuses a row of
+another tenant, even to a statement that forgot its condition.
+
+```ts
+// the migration that creates the table
+await enableTenantIsolation(knex, INVOICES); // enable, force on the owner, policy `tenant_isolation`
+
+// the composition root
+const unitOfWork = createKnexUnitOfWork(knex, undefined, { begin: tenantSession(executionScope) });
+```
+
+`tenantSession` sets `ddd_ts_kit.tenant_id` and `ddd_ts_kit.reach` for each transaction only
+(`set_config(..., true)`), so a pooled connection never carries a tenant into the next one; the
+policy shows a read the rows of the reach and lets a write name its tenant only.
+`tenantIsolationStatements(target)` gives the SQL for a migration written by hand. Three
+conditions hold it: the application connects with a role that is **not a superuser and has no
+`BYPASSRLS`** (both ignore every policy); every statement runs **inside the unit of work** (a
+statement outside of a transaction carries no setting and sees nothing, so queries go through the
+unit of work too); migrations run as the owner, outside of it.
+
+**Schema per tenant.** The tables of a context exist once per tenant, in `<schema>__<tenant>`
+(`tenantSchemaOf('billing', 'acme')`; a tenant id that a schema name could not hold as it is, is
+refused rather than altered). `tenantSchemaTable(context, scope, { schema: BILLING, table:
+'invoices' })` reaches the tenant's copy. The tenant migrations live in a directory of their own
+and name their schema from the tenant they run for:
+
+```ts
+export async function up(knex: Knex): Promise<void> {
+  const schema = tenantSchemaOf(BILLING, tenantOfMigration(knex));
+
+  await knex.schema.createSchemaIfNotExists(schema);
+  await knex.schema.withSchema(schema).createTable('invoices', (table) => { /* ... */ });
+}
+```
+
+`migrateTenantSchema(knex, tenantId, { directory: 'migrations/tenant' })` applies them for one
+tenant and records them in `migrations__<tenant>`, so each tenant moves on its own and a new
+tenant is provisioned by its first run. `tenantSearchPath(scope, [BILLING])` is a `begin` that
+sets the search path of each transaction to the tenant's schemas only, for SQL that names no
+schema. An elevation does not reach several schemas at once: staff read one tenant at a time.
+
+**Database per tenant.** `new TenantDatabases({ connectionOf: (tenantId) => configOf(tenantId),
+maxTenants: 20 })` opens one knex (one bounded pool) per tenant on first use and closes the least
+recently used beyond `maxTenants`; the server must accept about `maxTenants * pool.max`
+connections per instance. `createTenantRoutedUnitOfWork(databases, scope)` is the unit of work
+and `KnexContext`: each transaction opens on the database of the tenant of the work, and work
+that names no tenant reaches no database. `migrateEveryTenant(databases, directory, migrate)`
+applies the migrations to every tenant of a `TenantDirectory`, stopping at the first failure and
+naming its tenant.
+
 ## Criteria
 
 `criteriaToKnex(builder, plan, columns)` adds a criteria plan of the kernel to a query: the

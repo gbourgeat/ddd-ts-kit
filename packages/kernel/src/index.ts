@@ -297,3 +297,6 @@ export * from './infrastructure/read-model/write-if-newer.js';
 export * from './infrastructure/noop/noop-error-reporter.js';
 export * from './infrastructure/noop/noop-logger.js';
 export * from './infrastructure/noop/noop-metrics.js';
+export * from './infrastructure/tenancy/tenant-settings.js';
+export * from './infrastructure/tenancy/tenant-setting-values.js';
+export * from './infrastructure/tenancy/tenant-policy-expressions.js';
