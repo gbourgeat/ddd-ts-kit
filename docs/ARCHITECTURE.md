@@ -48,6 +48,7 @@ src/
       aggregates/                *.aggregate.ts
       entities/                  *.entity.ts
       value-objects/             *.vo.ts
+      vocabularies/              *.vocabulary.ts   (closed vocabularies: an object `as const` and its union type)
       events/                    *.event.ts
       errors/                    *.error.ts        (one class per concept; each refusal is a static factory)
       repositories/              *.repository.ts   (ports: abstract classes)

@@ -27,7 +27,7 @@ describe('generate job, the grant of its system actor', () => {
     const generated = report(cli(root, ...EVERY_QUARTER));
 
     const rule =
-      "  permit(\n    'system-billing.cancel-stale-invoices',\n    ['billing:invoice.cancel'],\n    ({ actor }) => actor.id === 'system:billing.cancel-stale-invoices',\n  ),";
+      "  permit(\n    'system-billing.cancel-stale-invoices',\n    [billingPermissions['invoice.cancel']],\n    ({ actor }) => actor.id === 'system:billing.cancel-stale-invoices',\n  ),";
 
     expect(read(root, `${AUTH}/attribute-policies.ts`)).toContain(
       `  // ddd-ts-kit:system-grants\n${rule}\n  // /ddd-ts-kit:system-grants`,
@@ -36,7 +36,7 @@ describe('generate job, the grant of its system actor', () => {
     expect(generated.todos.find((todo) => todo.text.startsWith('check this rule'))).toMatchObject({
       file: `${AUTH}/attribute-policies.ts`,
       // The rule takes several lines: the step points at the one that names it.
-      line: 16,
+      line: 18,
     });
 
     expect(read(root, JOB)).not.toContain('grant the system actor');
@@ -128,7 +128,7 @@ describe('generate job, the grant of its system actor', () => {
       ).code,
     ).toBe(0);
 
-    expect(read(root, `${AUTH}/roles.ts`).match(/'billing:invoice\.cancel',/g)).toHaveLength(1);
+    expect(read(root, `${AUTH}/roles.ts`).match(/billingPermissions\['invoice\.cancel'\],/g)).toHaveLength(1);
   });
 });
 

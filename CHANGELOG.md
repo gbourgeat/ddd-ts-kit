@@ -17,6 +17,17 @@ to the other: it rewrites the factories, removes every `unwrap(..)` of them, tur
 on a `Result` into assertions on the factory, tidies the imports, sets the key, and prints what
 is left to a person.
 
+**Closed vocabularies are declared once.** A status, a kind or a role is an object `as const`
+and the union type of the same name (`AppointmentStatus.NoShow`), not an `enum`: Node's type
+stripping and `erasableSyntaxOnly` refuse an `enum`, measured on Node 24. `generate vocabulary
+<context> <Name> --value <value>...` writes one under `domain/vocabularies/`, a new canonical
+role, and adds the values a file does not hold yet. `init` writes the roles a credential carries
+as the vocabulary `Role` of the platform (`<platformDir>/auth/role.ts`), read by the grants
+(`[Role.Admin]: ['*']`, `systemRole: Role.System`) and the attribute policies;
+`generate route-group --role <role>` writes `HasRole(Role.<Key>)` and adds the role to it; the
+grant `generate job` gives a system actor names the permission through its set
+(`billingPermissions['invoice.cancel']`) instead of its id.
+
 ## 0.5.0
 
 **Migrations are named by a timestamp and what they do.** The generated `drizzle.config.ts`

@@ -43,13 +43,17 @@ npx ddd-ts-kit generate query <ctx> <UseCase> --public --json
 - Nothing else for a plain permission: no check in the controller, none in the handler. The
   generated handler spec already proves that an actor without it is refused.
 - A guard is another thing: a control at the edge over a set of routes, named in `guards` of
-  a `@RouteGroup` or of a controller (`Authenticated`, `HasRole('auditor')`, `Public`, or a
+  a `@RouteGroup` or of a controller (`Authenticated`, `HasRole(Role.Auditor)`, `Public`, or a
   guard of the project in `presentation/http/guards/*.guard.ts`). It reads the caller and the
   request, answers 401 or 403 before the controller runs, and never loads an element
   (`presentation/guard-at-the-edge`). It never replaces the permission: a job or an event
   handler sends the same command without passing any guard. Use a guard for what is true of
   the whole set of routes (signed in, a role, the tenant of the path), a permission or a policy
   for everything that depends on the element.
+- A role is never a string in code: it is a key of the vocabulary `Role` of the platform
+  (`<platformDir>/auth/role.ts`), and `generate route-group <ctx> <Name> --role <role>` adds
+  the role there. A grant names the permission through its set,
+  `billingPermissions['invoice.issue']`, never by its id `'billing:invoice.issue'`.
 - `npx ddd-ts-kit describe <ctx>` shows what each use case and route requires; the
   permissions of a context are listed in its `CONTEXT.md`.
 
@@ -97,7 +101,7 @@ later replaces an adapter and the permission mapping, not the handlers.
 
 | Shortcut | Instead |
 |---|---|
-| `if (user.role === 'admin')` in a controller or a handler | a permission required by the use case; `HasRole('admin')` on the route group when the whole set of routes is for admins |
+| `if (user.role === 'admin')` in a controller or a handler | a permission required by the use case; `HasRole(Role.Admin)` on the route group when the whole set of routes is for admins |
 | a guard that loads the appointment to see who owns it | a policy on the permission of the use case |
 | reading the user from a global or the request in a handler | `command.actor` |
 | passing the request or the token inward | an `Actor`, mapped at the boundary |

@@ -100,6 +100,41 @@ The language reaches further than class names:
 - **Builders** speak it too: `anAppointment().cancelled()`, not `withStatus('CANCELLED')`
   ([Testing strategy](testing-strategy.md)).
 - **Permissions** are named in it: `appointment.cancel`, not `admin.write`.
+- **Closed vocabularies** are declared once (see below): `AppointmentStatus.NoShow`, never
+  `'no-show'` written in a handler.
+
+## Closed vocabularies
+
+A status, a kind, a role, a channel: a word of the language whose values are a closed list. Written
+as strings, each value is spelled again wherever it is compared, granted or stored, and a typo
+compiles. The kit declares each list once, as an object `as const` and the union type of the same
+name:
+
+```ts
+// contexts/scheduling/domain/vocabularies/appointment-status.vocabulary.ts
+export const AppointmentStatus = {
+  Requested: 'requested',
+  Booked: 'booked',
+  NoShow: 'no-show',
+} as const;
+
+export type AppointmentStatus = (typeof AppointmentStatus)[keyof typeof AppointmentStatus];
+```
+
+Code reads `AppointmentStatus.NoShow`, completed by the editor; a parameter typed
+`AppointmentStatus` accepts nothing else; the value stored and sent stays the string, so a
+database column, a payload and an OpenAPI enum do not change. `npx ddd-ts-kit generate vocabulary
+scheduling AppointmentStatus --value requested --value booked --value no-show` writes the file
+(`domain/vocabularies/`), and run again adds the values it does not hold yet. The roles a
+credential carries are the vocabulary `Role` of the platform (`<platformDir>/auth/role.ts`),
+written by `init` and completed by `generate route-group --role <role>`; a permission is read
+from the permission set of its context (`billingPermissions['invoice.issue']`), never by its id.
+
+Why not a TypeScript `enum`: it is not erasable syntax. Measured with the toolchain the kit
+supports, on Node 24.21: Node's own type stripping refuses it
+(`ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX`), `tsc` refuses it under `erasableSyntaxOnly` (TS1294), and
+only a transpiler (tsx, the build) runs it. The object `as const` runs everywhere, adds no
+runtime of its own, and gives the same completion and the same narrowing.
 
 ## The same word in two contexts
 
