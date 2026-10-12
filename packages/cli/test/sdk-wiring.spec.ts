@@ -47,6 +47,19 @@ describe('the wiring of the clients', () => {
     });
   });
 
+  it('lets the generators enter what knip reads in the root workspace, once the clients made one', () => {
+    const root = initProject('--sdk', '--package-manager', 'npm');
+
+    expect(cli(root, 'generate', 'context', 'billing', '--classification', 'core').code).toBe(0);
+    expect(cli(root, 'generate', 'worker').code).toBe(0);
+
+    const knip: unknown = JSON.parse(read(root, 'knip.json'));
+
+    expect(knip).not.toHaveProperty('entry');
+    expect(knip).toHaveProperty(['workspaces', '.', 'entry'], expect.arrayContaining(['src/apps/*/main.ts']));
+    expect(read(root, 'knip.json')).toContain('published-language/index');
+  });
+
   it('says what it cannot rewrite: a tsconfig with comments, a pnpm workspace that lists its own packages', () => {
     const root = initProject('--package-manager', 'pnpm');
 
