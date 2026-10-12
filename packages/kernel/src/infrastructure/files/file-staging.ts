@@ -97,6 +97,15 @@ export class FileStaging {
     }
   }
 
+  /** Deletes a stored file once the unit of work in progress has committed, the one its aggregate no longer references; a failure is reported. */
+  deleteAfterCommit(key: string): Promise<void> {
+    return afterCommit(async () => {
+      await this.storage.delete(key).catch((error: unknown) => {
+        reportOnce(this.reporter, error, errorReportOf(error, { origin: 'process', operation: 'delete stored file' }));
+      });
+    });
+  }
+
   discard(key: string): Promise<void> {
     return this.storage.delete(stagedKeyOf(key));
   }

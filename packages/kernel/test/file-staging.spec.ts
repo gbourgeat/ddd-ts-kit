@@ -128,7 +128,9 @@ describe('FileStaging', () => {
     expect(scanner.read).toEqual([PDF.length]);
     expect(storage.keys()).toEqual([]);
   });
+});
 
+describe('FileStaging, for a file sent straight to the storage', () => {
   it('confirms a file uploaded through its link: measured, checked on its bytes, still staged', async () => {
     const { staging, storage } = aDesk();
     const upload = await staging.uploadUrl(KEY, { expiresInSeconds: 300, mediaType: 'application/pdf' });
@@ -157,7 +159,9 @@ describe('FileStaging', () => {
     expect(await codeOf(staging.confirm(KEY, { ...PDF_ONLY, maxBytes: 4 }))).toBe('FILE_TOO_LARGE');
     expect(await codeOf(staging.confirm(KEY, PDF_ONLY))).toBe('FILE_NOT_FOUND');
   });
+});
 
+describe('FileStaging, after the commit', () => {
   it('is purged every hour by the job of the platform, of what was staged a day ago or more', async () => {
     const { staging, storage, clock } = aDesk();
     const job = new PurgeStagedFiles(staging, clock);
@@ -168,5 +172,35 @@ describe('FileStaging', () => {
     await job.run();
 
     expect(storage.keys()).toEqual([]);
+  });
+
+  it('deletes a file the aggregate no longer references once the command has committed, never on a rollback', async () => {
+    const { staging, storage, unitOfWork } = aDesk();
+
+    await storage.put(KEY, Readable.from([PDF]), { mediaType: 'application/pdf' });
+
+    await unitOfWork
+      .run(async () => {
+        await staging.deleteAfterCommit(KEY);
+        throw new Error('the appointment changed meanwhile');
+      })
+      .catch(() => undefined);
+
+    expect(storage.keys()).toEqual([KEY]);
+
+    await unitOfWork.run(() => staging.deleteAfterCommit(KEY));
+
+    expect(storage.keys()).toEqual([]);
+  });
+
+  it('reports a deletion that fails after the commit', async () => {
+    const reporter = new InMemoryErrorReporter();
+    const failing = new InMemoryFileStorage();
+    const staging = new FileStaging(failing, { scan: async () => ({ accepted: true }) }, reporter);
+
+    failing.delete = () => Promise.reject(new Error('storage away'));
+    await new InMemoryUnitOfWork().run(() => staging.deleteAfterCommit(KEY));
+
+    expect(reporter.reports.map(({ report }) => report.operation)).toEqual(['delete stored file']);
   });
 });
