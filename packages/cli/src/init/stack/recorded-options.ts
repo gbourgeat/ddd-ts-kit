@@ -12,13 +12,13 @@ type Recorded = Omit<StackOptions, 'force' | 'importAlias' | 'importExtension'>;
  * run without the outbox is given again with it.
  */
 export function recordedOptions({ stack, deviations }: Pick<Config, 'stack' | 'deviations'>): Recorded {
-  const { events, style, assembly, ...choices } = stack;
+  const { events, style, assembly, dependencies, ...choices } = stack;
   const noOutbox = deviations.find(({ what }) => what === 'stack.events')?.reason;
 
   return {
     ...choices,
     style,
-    ...(style === 'declared' ? { assembly } : {}),
+    ...(style === 'declared' ? { assembly, dependencies } : {}),
     ...(OFFERED_EVENTS.includes(events) ? { events } : {}),
     ...(noOutbox === undefined ? {} : { allowNoOutbox: noOutbox }),
   };

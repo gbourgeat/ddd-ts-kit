@@ -11,7 +11,9 @@ const JOB = `${BILLING}/application/scheduling/cancel-stale-invoices.job.ts`;
 const EVENT_HANDLER = `${BILLING}/application/event-handlers/invoice-issued.event-handler.ts`;
 const OTHER_JOB = `${BILLING}/application/scheduling/issue-invoices-monthly.job.ts`;
 const READER = `${BILLING}/application/ports/search-invoices-reader.port.ts`;
-const LIST = '[InvoiceRepository, IdGenerator, Clock]';
+const BARE = '@CommandHandler(IssueInvoiceCommand)';
+/** The list a 0.1 project writes in the decorator: still read, and held to the same rules. */
+const listing = (first: string): string => `@CommandHandler(IssueInvoiceCommand, [${first}, IdGenerator, Clock])`;
 const SAVED = '    await this.invoiceRepository.save(target);\n';
 const SENT = "    await this.commands.execute(new CancelInvoiceCommand(systemActor('billing.cancel-stale-invoices')));";
 
@@ -58,24 +60,40 @@ const INJECTIONS: readonly Injection[] = [
     eslint: 'ddd-ts-kit/ports-no-token-constant',
     what: 'an upper-case constant in a dependency list',
     file: HANDLER,
-    from: LIST,
-    to: LIST.replace('InvoiceRepository', 'INVOICE_REPOSITORY'),
+    from: BARE,
+    to: listing('INVOICE_REPOSITORY'),
   },
   {
     rule: 'ports/no-concrete-dependency',
     eslint: 'ddd-ts-kit/ports-no-concrete-dependency',
-    what: 'an adapter named in a dependency list',
+    what: 'a constructor parameter typed by the adapter instead of its port',
     file: HANDLER,
-    from: `\n@CommandHandler(IssueInvoiceCommand, ${LIST}`,
-    to: `${ADAPTER_IMPORT}\n@CommandHandler(IssueInvoiceCommand, ${LIST.replace('InvoiceRepository', 'DrizzleInvoiceRepository')}`,
+    from: `\n${BARE}\nexport class IssueInvoiceHandler implements CommandHandler<IssueInvoiceCommand> {\n  constructor(\n    private readonly invoiceRepository: InvoiceRepository,`,
+    to: `${ADAPTER_IMPORT}\n${BARE}\nexport class IssueInvoiceHandler implements CommandHandler<IssueInvoiceCommand> {\n  constructor(\n    private readonly invoiceRepository: DrizzleInvoiceRepository,`,
   },
   {
     rule: 'ports/value-import',
     eslint: 'ddd-ts-kit/ports-value-import',
     what: 'a port of a dependency list imported as a type',
     file: HANDLER,
-    from: 'import { InvoiceRepository } from',
-    to: 'import type { InvoiceRepository } from',
+    from: BARE,
+    to: listing('InvoiceRepository'),
+  },
+  {
+    rule: 'declarations/constructor-injection',
+    eslint: 'ddd-ts-kit/declarations-constructor-injection',
+    what: 'a constructor parameter that names no single class',
+    file: HANDLER,
+    from: '    private readonly clock: Clock,\n',
+    to: '    private readonly clock: Clock | undefined,\n',
+  },
+  {
+    rule: 'declarations/constructor-injection',
+    eslint: 'ddd-ts-kit/declarations-constructor-injection',
+    what: 'a dependency list left in the decorator of a project that states them in constructors',
+    file: HANDLER,
+    from: BARE,
+    to: '@CommandHandler(IssueInvoiceCommand, [InvoiceRepository, IdGenerator, Clock])',
   },
   {
     rule: 'clean/no-hash-private',

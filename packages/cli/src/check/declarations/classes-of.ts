@@ -1,4 +1,4 @@
-import { DECLARATION_DECORATORS } from '../../declared/index.js';
+import { DECLARATION_DECORATORS } from '../../declared/declared-role.js';
 import type { Scan } from '../scan/scan.js';
 import { braceDepthAt } from '../text/brace-depth-at.js';
 import { BRACKETS } from '../text/brackets.js';

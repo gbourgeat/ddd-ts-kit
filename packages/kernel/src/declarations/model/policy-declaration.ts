@@ -8,5 +8,6 @@ export interface PolicyDeclaration {
   readonly name: string;
   readonly permission: PermissionRef;
   readonly implementation: new (...args: never) => DeclaredPolicy;
-  readonly dependencies: readonly Token<unknown>[];
+  /** The list the decorator wrote; `undefined` when the constructor states the dependencies. */
+  readonly dependencies: readonly Token<unknown>[] | undefined;
 }

@@ -49,7 +49,7 @@ describe.runIf(SLOW)('a violation written into a generated project', () => {
   }, 120_000);
 
   it('both analyzers catch a handler that no longer declares itself', () => {
-    project.edit(HANDLER, '@CommandHandler(IssueInvoiceCommand, [InvoiceRepository, IdGenerator, Clock])\n', '');
+    project.edit(HANDLER, '@CommandHandler(IssueInvoiceCommand)\n', '');
 
     expect(project.checkedRules()).toContain('declarations/role-declared');
     expect(project.linted(HANDLER)).toContain('ddd-ts-kit/declarations-role-declared');

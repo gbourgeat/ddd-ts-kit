@@ -48,6 +48,10 @@ the tree, so a generated file conforms by construction and costs no tokens.
 - **Registration.** In the declared style (the default with tsyringe) the class carries its
   decorator and the barrel `<context>.declarations.ts` is rewritten; never edit the barrel.
   In the explicit style the binding is added between the markers of `<context>.module.ts`.
+- **Dependencies.** A generated class states what it depends on in its constructor, each
+  parameter typed by a port, and its decorator lists nothing: the generator reads the
+  signature into the generated file of the context. Add a dependency by adding a parameter,
+  then `npx ddd-ts-kit docs` (skill `ddd-ts-kit:wiring`).
 - **Access.** `command` and `query` are refused without `--permission <aggregate>.<action>`
   or `--public`; the permission joins `<context>.permissions.ts`.
 - **Ports.** A port is an abstract class, used as its own injection token: no constant, no

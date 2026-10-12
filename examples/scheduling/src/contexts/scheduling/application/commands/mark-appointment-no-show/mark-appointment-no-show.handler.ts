@@ -4,7 +4,7 @@ import { AppointmentNotFoundError } from '@/contexts/scheduling/domain/errors/ap
 import { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository';
 import { MarkAppointmentNoShowCommand } from '@/contexts/scheduling/application/commands/mark-appointment-no-show/mark-appointment-no-show.command';
 
-@CommandHandler(MarkAppointmentNoShowCommand, [AppointmentRepository, Clock])
+@CommandHandler(MarkAppointmentNoShowCommand)
 export class MarkAppointmentNoShowHandler implements CommandHandler<MarkAppointmentNoShowCommand> {
   constructor(
     private readonly appointmentRepository: AppointmentRepository,

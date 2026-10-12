@@ -1,6 +1,6 @@
 import path from 'node:path';
 import type { Config } from '../../config/index.js';
-import { barrelFile } from '../../declared/index.js';
+import { barrelFile, dependenciesFile } from '../../declared/index.js';
 import { isCanonicalDirectory } from '../canonical/is-canonical-directory.js';
 import { OPEN_DIRECTORIES } from '../canonical/open-directories.js';
 import { roleOf } from '../canonical/role-of.js';
@@ -105,13 +105,15 @@ function straySource(placed: Placed): Flaw | undefined {
 }
 
 function atContextRoot({ context, declared, inside: file }: Placed): Flaw | undefined {
-  const barrel = barrelFile(context);
+  const generated = [barrelFile(context), dependenciesFile(context)];
 
-  if (file === `${context}.module.ts` || (declared && file === barrel)) {
+  if (file === `${context}.module.ts` || (declared && generated.includes(file))) {
     return undefined;
   }
 
-  const allowed = declared ? `CONTEXT.md, ${barrel} and ${context}.module.ts` : `CONTEXT.md and ${context}.module.ts`;
+  const allowed = declared
+    ? `CONTEXT.md, the generated ${generated.join(' or ')} and ${context}.module.ts`
+    : `CONTEXT.md and ${context}.module.ts`;
 
   return {
     message: `"${file}" sits at the root of the context.`,

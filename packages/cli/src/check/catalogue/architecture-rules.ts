@@ -21,6 +21,7 @@ import { contextNoCycle } from '../rules/context-no-cycle.js';
 import { contextPublishedLanguageIsAContract } from '../rules/context-published-language-is-a-contract.js';
 import { contextPublishedLanguageOnly } from '../rules/context-published-language-only.js';
 import { declarationsBarrelCurrent } from '../rules/declarations-barrel-current.js';
+import { declarationsConstructorInjection } from '../rules/declarations-constructor-injection.js';
 import { declarationsRoleDeclared } from '../rules/declarations-role-declared.js';
 import { domainEventsDispatchedOnSave } from '../rules/domain-events-dispatched-on-save.js';
 import { domainEventsTransactionalBeforeCommit } from '../rules/domain-events-transactional-before-commit.js';
@@ -112,6 +113,7 @@ export const ARCHITECTURE_RULES: readonly Rule[] = [
   compositionOnlyInModule,
   declarationsRoleDeclared,
   declarationsBarrelCurrent,
+  declarationsConstructorInjection,
   portsAbstractClass,
   portsImplementsNeverExtends,
   portsNoTokenConstant,

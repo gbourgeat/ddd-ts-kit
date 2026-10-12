@@ -24,6 +24,8 @@ export interface ContextDescription {
   readonly publishedEvents: readonly PublishedEventFact[];
   readonly ports: readonly PortFact[];
   readonly policies: readonly PolicyFact[];
+  /** The projectors, `application/projections/*.projection.ts`: each keeps one read model up to date. */
+  readonly projections: readonly ProjectionFact[];
   readonly gateways: readonly GatewayFact[];
   readonly jobs: readonly JobFacts[];
   /** The generated contracts that hold what the source text does not say: the fields of each schema. */
@@ -91,6 +93,15 @@ export interface PortFact {
 export interface PolicyFact {
   readonly name: string;
   readonly permission: string;
+  readonly file: string;
+}
+
+export interface ProjectionFact {
+  /** `<context>.<name>`, the consumer the projection is subscribed as; empty when it is not written as a literal. */
+  readonly name: string;
+  readonly projector: string;
+  /** The event definitions and domain event classes its `@On` methods name, in order. */
+  readonly applies: readonly string[];
   readonly file: string;
 }
 

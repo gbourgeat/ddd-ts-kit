@@ -1,11 +1,8 @@
+import { stampCreation, stampUpdate, type Clock, type ExecutionScope } from '@ddd-ts-kit/kernel';
 {{#if style.declared}}
-import { Clock, ExecutionScope, stampCreation, stampUpdate } from '@ddd-ts-kit/kernel';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
 {{/if}}
-{{#unless style.declared}}
-import { stampCreation, stampUpdate, type Clock, type ExecutionScope } from '@ddd-ts-kit/kernel';
-{{/unless}}
-import { {{storage.typeormImport}}, insertIgnoringConflict, optimisticUpdate } from '@ddd-ts-kit/typeorm';
+import { type TypeOrmContext, insertIgnoringConflict, optimisticUpdate } from '@ddd-ts-kit/typeorm';
 import type { {{aggregate.pascal}} } from '{{alias.context}}/domain/aggregates/{{aggregate.kebab}}.aggregate{{alias.ext}}';
 {{#if style.declared}}
 import { {{aggregate.pascal}}Repository } from '{{alias.context}}/domain/repositories/{{aggregate.kebab}}.repository{{alias.ext}}';
@@ -20,7 +17,7 @@ import type { {{aggregate.pascal}}Columns } from '{{alias.context}}/infrastructu
 type Versioned{{aggregate.pascal}} = {{aggregate.pascal}}Columns & { version: number };
 
 {{#if style.declared}}
-@Repository({{aggregate.pascal}}Repository, [TypeOrmContext, ExecutionScope, Clock])
+@Repository({{aggregate.pascal}}Repository)
 {{/if}}
 export class TypeOrm{{aggregate.pascal}}Repository implements {{aggregate.pascal}}Repository {
   constructor(

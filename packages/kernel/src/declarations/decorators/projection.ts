@@ -1,6 +1,7 @@
 import { isJobName } from '../../application/scheduling/is-job-name.js';
 import type { ClassDeclarator } from '../dependencies/class-declarator.js';
-import type { Dependencies } from '../dependencies/dependencies.js';
+import type { DeclaredDependencies } from '../dependencies/declared-dependencies.js';
+import type { DependenciesFromSignature } from '../dependencies/dependencies-from-signature.js';
 import type { DeclaredClass } from '../model/declared-class.js';
 import type { ProjectionApplication } from '../model/projection-application.js';
 import { DeclarationError } from '../registry/declaration-error.js';
@@ -10,10 +11,10 @@ import { pendingApplications } from './pending-applications.js';
 /**
  * A projector: the class that keeps one read model up to date, each of its `@On` methods
  * applying one event through a port of its own read model:
- * `@Projection('scheduling.appointment-list', [AppointmentList])`. The name is the consumer
+ * `@Projection('scheduling.appointment-list')`. The name is the consumer
  * it is subscribed as: stable, `<context>.<name>`, unique in the application.
  */
-export function Projection<const D extends Dependencies = readonly []>(
+export function Projection<const D extends DeclaredDependencies = DependenciesFromSignature>(
   name: `${string}.${string}`,
   dependencies?: D,
 ): ClassDeclarator<object, D> {
@@ -30,7 +31,7 @@ export function Projection<const D extends Dependencies = readonly []>(
       throw new DeclarationError(`Projection ${target.name} applies no event: write @On(...) on the methods that do.`);
     }
 
-    record(target, { role: 'projection', name, implementation: target, dependencies: dependencies ?? [], applies });
+    record(target, { role: 'projection', name, implementation: target, dependencies, applies });
   };
 }
 

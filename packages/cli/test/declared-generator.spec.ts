@@ -26,8 +26,10 @@ describe('a context generated in the declared style', () => {
     );
   });
 
-  it('exports every role file from the barrel, sorted by path, and nothing else', () => {
-    expect(read(root, `${BILLING}/billing.declarations.ts`).trimEnd().split('\n')).toEqual([
+  it('exports every role file from the barrel, sorted by path', () => {
+    const barrel = read(root, `${BILLING}/billing.declarations.ts`).trimEnd().split('\n');
+
+    expect(barrel.filter((line) => line.startsWith('export '))).toEqual([
       "export * from '@/contexts/billing/application/authorization/only-issuer-cancels.policy';",
       "export * from '@/contexts/billing/application/commands/cancel-invoice/cancel-invoice.command';",
       "export * from '@/contexts/billing/application/commands/cancel-invoice/cancel-invoice.handler';",
@@ -48,7 +50,27 @@ describe('a context generated in the declared style', () => {
     ]);
   });
 
-  it('says who may send a message on the message, and what handles it on the handler, the list naming port classes', () => {
+  it('registers in the barrel what each constructor takes, read from its signature, and nothing for a class that takes nothing', () => {
+    const barrel = read(root, `${BILLING}/billing.declarations.ts`);
+
+    expect(barrel.split('\n')[0]).toBe("import { injected } from '@ddd-ts-kit/kernel/declarations';");
+
+    expect(barrel).toContain(
+      "import { Clock, CommandBus, ExecutionScope, IdGenerator, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';",
+    );
+
+    expect(barrel).toContain("import { Database } from '@/platform/database/database';");
+    expect(barrel).toContain('injected(IssueInvoiceHandler, [InvoiceRepository, IdGenerator, Clock]);');
+    expect(barrel).toContain('injected(SearchInvoicesHandler, [SearchInvoicesReader, Access]);');
+    expect(barrel).toContain('injected(InvoiceIssuedPublisher, [IntegrationEventPublisher, IdGenerator]);');
+    expect(barrel).toContain('injected(CancelStaleInvoicesJob, [CommandBus]);');
+    expect(barrel).toContain('injected(DrizzleInvoiceRepository, [Database, ExecutionScope, Clock]);');
+    expect(barrel).not.toContain('injected(CancelInvoiceHandler');
+    expect(barrel).not.toContain('injected(OnlyIssuerCancelsPolicy');
+    expect(barrel.trimEnd().split('\n').at(-1)).toMatch(/^injected\(/);
+  });
+
+  it('says who may send a message on the message, and what handles it on the handler, whose constructor states its ports', () => {
     const command = read(root, `${BILLING}/application/commands/issue-invoice/issue-invoice.command.ts`);
     const handler = read(root, `${BILLING}/application/commands/issue-invoice/issue-invoice.handler.ts`);
     const list = read(root, `${BILLING}/application/queries/search-invoices/search-invoices.handler.ts`);
@@ -58,13 +80,13 @@ describe('a context generated in the declared style', () => {
     );
 
     expect(handler).toContain(
-      '@CommandHandler(IssueInvoiceCommand, [InvoiceRepository, IdGenerator, Clock])\nexport class IssueInvoiceHandler implements CommandHandler<IssueInvoiceCommand> {',
+      '@CommandHandler(IssueInvoiceCommand)\nexport class IssueInvoiceHandler implements CommandHandler<IssueInvoiceCommand> {\n  constructor(\n    private readonly invoiceRepository: InvoiceRepository,\n    private readonly ids: IdGenerator,\n    private readonly clock: Clock,\n  ) {}',
     );
 
-    expect(handler).toContain("import { Clock, IdGenerator } from '@ddd-ts-kit/kernel';");
+    expect(handler).toContain("import type { Clock, IdGenerator } from '@ddd-ts-kit/kernel';");
 
     expect(handler).toContain(
-      "import { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository';",
+      "import type { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository';",
     );
 
     expect(read(root, `${BILLING}/application/commands/cancel-invoice/cancel-invoice.handler.ts`)).toContain(
@@ -78,8 +100,8 @@ describe('a context generated in the declared style', () => {
       ),
     ).toContain('@Public()\nexport class TrackPurchaseOrderQuery extends Query<TrackPurchaseOrderResult> {');
 
-    expect(list).toContain('@QueryHandler(SearchInvoicesQuery, [SearchInvoicesReader, Access])');
-    expect(list).toContain("import { Access } from '@ddd-ts-kit/auth';");
+    expect(list).toContain('@QueryHandler(SearchInvoicesQuery)\n');
+    expect(list).toContain("import type { Access } from '@ddd-ts-kit/auth';");
   });
 
   it('declares a port as an abstract class, which is also what a list and a binding name', () => {
@@ -111,10 +133,10 @@ describe('a context generated in the declared style, towards the outside', () =>
     const decorated = read(root, `${BILLING}/infrastructure/external/remote-tax-rates.adapter.ts`);
 
     expect(repository).toContain(
-      '@Repository(InvoiceRepository, [Database, ExecutionScope, Clock])\nexport class DrizzleInvoiceRepository implements InvoiceRepository {',
+      '@Repository(InvoiceRepository)\nexport class DrizzleInvoiceRepository implements InvoiceRepository {\n  constructor(\n    private readonly database: Database,',
     );
 
-    expect(repository).toContain("import { Database } from '@/platform/database/database';");
+    expect(repository).toContain("import type { Database } from '@/platform/database/database';");
     expect(repository).toContain('  private insert(state: VersionedInvoice) {');
 
     expect(
@@ -146,13 +168,13 @@ describe('a context generated in the declared style, towards the outside', () =>
     );
 
     expect(read(root, `${BILLING}/application/integration/publishers/invoice-issued.publisher.ts`)).toContain(
-      "@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued' }, [IntegrationEventPublisher, IdGenerator])\nexport class InvoiceIssuedPublisher implements DomainEventHandler<InvoiceIssued> {",
+      "@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued' })\nexport class InvoiceIssuedPublisher implements DomainEventHandler<InvoiceIssued> {\n  constructor(\n    private readonly publisher: IntegrationEventPublisher,",
     );
 
     expect(
       read(root, `${SHIPPING}/application/integration/handlers/billing-invoice-issued.integration-handler.ts`),
     ).toContain(
-      "@IntegrationEventHandler(invoiceIssuedV2, { consumer: 'shipping.billing-invoice-issued' }, [CommandBus])\nexport class BillingInvoiceIssuedIntegrationHandler {",
+      "@IntegrationEventHandler(invoiceIssuedV2, { consumer: 'shipping.billing-invoice-issued' })\nexport class BillingInvoiceIssuedIntegrationHandler {",
     );
 
     expect(read(root, `${BILLING}/application/authorization/only-issuer-cancels.policy.ts`)).toContain(
@@ -166,10 +188,16 @@ describe('a context generated in the declared style, towards the outside', () =>
     const gateway = read(root, `${SHIPPING}/infrastructure/external/in-process-invoice-status.gateway.ts`);
 
     expect(gateway).toContain(
-      '@Gateway(InvoiceStatusGateway, [InvoiceStatusContract])\nexport class InProcessInvoiceStatusGateway implements InvoiceStatusGateway {',
+      '@Gateway(InvoiceStatusGateway)\nexport class InProcessInvoiceStatusGateway implements InvoiceStatusGateway {\n  constructor(readonly upstream: InvoiceStatusContract) {}',
     );
 
-    expect(gateway).toContain("import { InvoiceStatusContract } from '@/contexts/billing/published-language/index';");
+    expect(gateway).toContain(
+      "import type { InvoiceStatusContract } from '@/contexts/billing/published-language/index';",
+    );
+
+    expect(read(root, `${SHIPPING}/shipping.declarations.ts`)).toContain(
+      'injected(InProcessInvoiceStatusGateway, [InvoiceStatusContract]);',
+    );
 
     expect(read(root, `${BILLING}/published-language/invoice-status.contract.ts`)).toContain(
       'export abstract class InvoiceStatusContract {',

@@ -12,5 +12,6 @@ export interface PortDeclaration {
   /** Outermost first. */
   readonly aspects: readonly BindingAspect[];
   readonly implementation: new (...args: never) => unknown;
-  readonly dependencies: readonly Token<unknown>[];
+  /** The list the decorator wrote; `undefined` when the constructor states the dependencies. */
+  readonly dependencies: readonly Token<unknown>[] | undefined;
 }

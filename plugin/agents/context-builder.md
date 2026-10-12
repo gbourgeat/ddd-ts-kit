@@ -25,7 +25,7 @@ worktree (`cd <worktree> && ...`).
 - You run the generators that stay inside your context, always with `--local-only`:
   `aggregate`, `builder`, `entity`, `value-object`, `domain-event`, `domain-error`,
   `domain-service`, `command` (on an aggregate whose repository exists), `query`, `port`,
-  `route`, `integration-handler`, `event-handler`, `acl`, `e2e`, `adapter` (once the project
+  `route`, `integration-handler`, `event-handler`, `projection`, `acl`, `e2e`, `adapter` (once the project
   has its first adapter: the first one brings a helper to the platform). The conductor
   runs `context`, `repository`, `integration-event`, `job`, `gateway`, `policy`, the first
   `adapter` of the project, and adds dependencies.

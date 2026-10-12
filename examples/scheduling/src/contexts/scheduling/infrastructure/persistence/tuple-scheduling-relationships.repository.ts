@@ -10,7 +10,7 @@ type RecordedAppointment = Parameters<SchedulingRelationships['recordAppointment
  * (ADR-0001), written in the unit of work of the command. A relationship commits or rolls back
  * with the fact it follows, which is why its domain event handlers run before the commit.
  */
-@Repository(SchedulingRelationships, [RelationTupleStore])
+@Repository(SchedulingRelationships)
 export class TupleSchedulingRelationships implements SchedulingRelationships {
   constructor(private readonly tuples: RelationTupleStore) {}
 

@@ -1,6 +1,6 @@
 # ADR-0002: Keep read models with projections in application/projections
 
-- Status: accepted
+- Status: superseded on 2026-10-12 by the kit: `application/projections/` is a role of the canonical tree
 - Date: 2026-10-10
 - Deviates from: `contexts.scheduling.extraDirectories.application/projections`, `contexts.notification.extraDirectories.application/projections`, `contexts.analytics.extraDirectories.application/projections`
 
@@ -27,3 +27,7 @@ The directory `application/projections/` of `scheduling`, `notification` and `an
 ## Removal condition
 
 The checker and the barrel know `application/projections/`: the three `extraDirectories` entries and the explicit registration in the composition root are then deleted. Checked at each upgrade of the kit by whoever upgrades it.
+
+## Superseded
+
+On 2026-10-12 the kit made the projection a role of its own: `application/projections/*.projection.ts` is a directory of the canonical tree, the generated barrel exports each projector and registers what its constructor takes, and `ddd-ts-kit generate projection` writes one. The removal condition above is met. The three `extraDirectories` entries and their deviations were deleted from `ddd-ts-kit.config.json`, the composition root no longer names the projections (`contextModule('scheduling', schedulingDeclarations)` brings them), and `ddd-ts-kit docs` lists them in the reference of each `CONTEXT.md`. One consequence in the tests: a handler spec of `scheduling` now assembles the agenda projection with the rest of the context, so it gives a fake to the read model the projection writes. This record is kept for the history of the decision; nothing in the configuration points to it any more.

@@ -21,7 +21,7 @@ const EXCLUSION_VIOLATION = '23P01';
 /** The SQLSTATE of PostgreSQL for the transaction it ends to break a deadlock. */
 const DEADLOCK_DETECTED = '40P01';
 
-@Repository(AppointmentRepository, [KnexContext, ExecutionScope, Clock])
+@Repository(AppointmentRepository)
 export class KnexAppointmentRepository implements AppointmentRepository {
   constructor(
     private readonly database: KnexContext,

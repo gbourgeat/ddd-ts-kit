@@ -47,16 +47,23 @@ describe('discovery in place of the barrel', () => {
     );
   });
 
-  it('names the context of knex in the dependency list of a repository', () => {
+  it('types the storage parameter of a repository by the context of knex, and registers the lists in the dependencies file', () => {
     const repository = read(discovered, `${BILLING}/infrastructure/persistence/knex-invoice.repository.ts`);
 
     expect(repository).toContain(
-      '@Repository(InvoiceRepository, [KnexContext, ExecutionScope, Clock])\nexport class KnexInvoiceRepository implements InvoiceRepository {',
+      '@Repository(InvoiceRepository)\nexport class KnexInvoiceRepository implements InvoiceRepository {\n  constructor(\n    private readonly database: KnexContext,',
     );
 
     expect(repository).toContain(
-      "import { KnexContext, auditRow, insertIgnoringConflict, optimisticUpdate } from '@ddd-ts-kit/knex';",
+      "import { type KnexContext, auditRow, insertIgnoringConflict, optimisticUpdate } from '@ddd-ts-kit/knex';",
     );
+
+    const dependencies = read(discovered, `${BILLING}/billing.dependencies.ts`);
+
+    expect(dependencies).toContain('injected(KnexInvoiceRepository, [KnexContext, ExecutionScope, Clock]);');
+    expect(dependencies).not.toContain('export *');
+    expect(cli(discovered, 'check', '--rule', 'declarations/barrel-current').code).toBe(0);
+    expect(cli(discovered, 'docs', '--check').code).toBe(0);
   });
 
   it('passes the checker', () => {

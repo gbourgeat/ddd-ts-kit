@@ -16,6 +16,8 @@ import { aCalendar } from '@/contexts/scheduling/test/builders/calendar.builder'
 import { FakeAppointmentRepository } from '@/contexts/scheduling/test/fakes/appointment.repository.fake';
 import { FakeCalendarRepository } from '@/contexts/scheduling/test/fakes/calendar.repository.fake';
 import { FakeSchedulingRelationships } from '@/contexts/scheduling/test/fakes/scheduling-relationships.fake';
+import { Agenda } from '@/contexts/scheduling/application/ports/agenda.port';
+import { FakeAgenda } from '@/contexts/scheduling/test/fakes/agenda.fake';
 
 const holders = authorizationModule({
   authorizer: new RoleBasedAuthorizer({ roles: { holder: [schedulingPermissions['appointment.book']] } }),
@@ -187,6 +189,7 @@ async function arrange(...stored: readonly Appointment[]) {
   const application = createTestApplication({
     modules: [platformTestModule, contextModule('scheduling', schedulingDeclarations), holders],
     fakes: [
+      fake(Agenda, new FakeAgenda()),
       fake(AppointmentRepository, appointmentRepository),
       fake(CalendarRepository, calendarRepository),
       fake(SchedulingRelationships, relationships),

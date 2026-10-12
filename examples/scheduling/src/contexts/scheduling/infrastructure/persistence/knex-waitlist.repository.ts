@@ -13,7 +13,7 @@ import type {
 
 type VersionedWaitlist = WaitlistColumns & { readonly version: number };
 
-@Repository(WaitlistRepository, [KnexContext, ExecutionScope, Clock])
+@Repository(WaitlistRepository)
 export class KnexWaitlistRepository implements WaitlistRepository {
   constructor(
     private readonly database: KnexContext,

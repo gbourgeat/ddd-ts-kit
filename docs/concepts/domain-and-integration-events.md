@@ -112,7 +112,7 @@ to the outbox. Then the transaction commits, and the handlers of the `after-comm
 
 ```ts
 // contexts/appointments/application/event-handlers/appointment-booked.event-handler.ts
-@DomainEventHandler(AppointmentBooked, { name: 'appointments.appointment.booked', phase: 'after-commit' }, [AvailabilityBoard])
+@DomainEventHandler(AppointmentBooked, { name: 'appointments.appointment.booked', phase: 'after-commit' })
 export class AppointmentBookedEventHandler implements DomainEventHandler<AppointmentBooked> {
   constructor(private readonly board: AvailabilityBoard) {}
 

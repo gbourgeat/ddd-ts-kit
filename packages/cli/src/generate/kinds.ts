@@ -18,6 +18,7 @@ import { integrationHandlerKind } from './kinds/integration-handler-kind.js';
 import { jobKind } from './kinds/job-kind.js';
 import { policyKind } from './kinds/policy-kind.js';
 import { portKind } from './kinds/port-kind.js';
+import { projectionKind } from './kinds/projection-kind.js';
 import { queryKind } from './kinds/query-kind.js';
 import { repositoryKind } from './kinds/repository-kind.js';
 import { routeKind } from './kinds/route-kind.js';
@@ -43,6 +44,7 @@ export const KINDS: readonly Kind[] = [
   integrationEventKind,
   integrationHandlerKind,
   eventHandlerKind,
+  projectionKind,
   jobKind,
   aclKind,
   e2eKind,

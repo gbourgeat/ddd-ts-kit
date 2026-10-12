@@ -22,7 +22,7 @@ On any class of `application/`, `infrastructure/`, `presentation/` or the contex
 
 Under `domain/`:
 
-- a class carrying any declaration decorator: `Requires`, `Public`, `CommandHandler`, `QueryHandler`, `IntegrationEventHandler`, `DomainEventHandler`, `Scheduled`, `Repository`, `Gateway`, `Adapter`, `Policy`
+- a class carrying any declaration decorator: `Requires`, `Public`, `CommandHandler`, `QueryHandler`, `IntegrationEventHandler`, `DomainEventHandler`, `Scheduled`, `Projection`, `Repository`, `Gateway`, `Adapter`, `Policy`
 
 | File, relative to the context | Exported class carries |
 |---|---|
@@ -33,6 +33,7 @@ Under `domain/`:
 | `application/integration/publishers/**/*.publisher.ts` | `@DomainEventHandler` |
 | `application/authorization/**/*.policy.ts` | `@Policy` |
 | `application/scheduling/**/*.job.ts` | `@Scheduled` |
+| `application/projections/**/*.projection.ts` | `@Projection` |
 | `infrastructure/persistence/**/*.repository.ts` | `@Repository` |
 | `infrastructure/**/*.gateway.ts` | `@Gateway` |
 | `infrastructure/**/*.adapter.ts` | `@Adapter` |
@@ -44,7 +45,7 @@ Incorrect:
 export class IssueInvoiceHandler {}
 
 // application/queries/search-invoices/search-invoices.handler.ts
-@CommandHandler(SearchInvoicesQuery, [InvoiceReader])
+@CommandHandler(SearchInvoicesQuery)
 export class SearchInvoicesHandler {}
 
 // application/authorization/only-issuer-voids.policy.ts
@@ -64,12 +65,17 @@ Correct:
 
 ```ts
 // application/commands/issue-invoice/issue-invoice.handler.ts
-import { Clock } from '@ddd-ts-kit/kernel';
+import type { Clock } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
-import { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository';
+import type { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository';
 
-@CommandHandler(IssueInvoiceCommand, [InvoiceRepository, Clock])
-export class IssueInvoiceHandler implements CommandHandler<IssueInvoiceCommand> {}
+@CommandHandler(IssueInvoiceCommand)
+export class IssueInvoiceHandler implements CommandHandler<IssueInvoiceCommand> {
+  constructor(
+    private readonly invoices: InvoiceRepository,
+    private readonly clock: Clock,
+  ) {}
+}
 
 // application/authorization/only-issuer-voids.policy.ts
 @Policy(billingPermissions['invoice.void'], { name: 'billing.only-issuer-voids' })
@@ -82,7 +88,7 @@ export class InvoiceIssuedEventHandler {}
 
 ## Details
 
-A decorator counts when its name is one of the ten declaration decorators and that name is imported from `@ddd-ts-kit/kernel/declarations` in the file: `{ Repository }`, an alias `{ Repository as Repo }`, or a namespace `declarations.Repository`. A home-made decorator of the same name, or one of another package (`@Retry` of `@ddd-ts-kit/aspects/decorators`), is ignored.
+A decorator counts when its name is one of the twelve declaration decorators and that name is imported from `@ddd-ts-kit/kernel/declarations` in the file: `{ Repository }`, an alias `{ Repository as Repo }`, or a namespace `declarations.Repository`. A home-made decorator of the same name, or one of another package (`@Retry` of `@ddd-ts-kit/aspects/decorators`), is ignored.
 
 The role of a file is read from its suffix and its folder, as the generator writes them. A class is exported inline, by `export { A }` or by `export default A`. When a class carries another declaration decorator, only that is reported: fixing it also answers the missing one.
 
@@ -98,7 +104,7 @@ None.
 
 - An event class reached through a barrel (`@/contexts/billing/domain/events/index`), a renaming export, a default import or a namespace is not followed: its name is not compared. `ddd-ts-kit check` resolves the same import in the project.
 - A decorator applied through a variable (`const declare = Repository(InvoiceRepository); @declare class ...`) is not recognised.
-- That the dependency list matches the constructor and that a handler handles its message is checked by the compiler, not here; that an adapter implements its port is `ports/implements-never-extends`, and where a job lives and what it is named are `scheduling/job-triggers-use-case` and `scheduling/job-name`.
+- What a class is given is `declarations/constructor-injection`; that a list matches the constructor and that a handler handles its message is checked by the compiler, not here; that an adapter implements its port is `ports/implements-never-extends`, and where a job lives and what it is named are `scheduling/job-triggers-use-case` and `scheduling/job-name`.
 - That each role file holds a single declared class is `naming/one-concept-per-file` of `ddd-ts-kit check`.
 - That the generated barrel `<context>.declarations.ts` lists every role file is `declarations/barrel-current` of `ddd-ts-kit check`: it is a fact of the project, not of one file.
 - A role file written outside the folders of the table is not known to be one: `naming/suffix` and `tree/closed` of `ddd-ts-kit check` hold the tree.

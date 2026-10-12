@@ -18,6 +18,9 @@ export function scriptsFor(config: Config): Record<string, string> {
   return Object.fromEntries(written.map(([name, script]) => [name, inDialect(script, config.stack.packageManager)]));
 }
 
+/** The module of this package that rewrites the generated declarations when it is loaded. */
+const REFRESH = 'ddd-ts-kit/dist/refresh-declarations.js';
+
 function scriptsOf(config: Config): Record<string, string> {
   const scripts = {
     ...pipelineManifest().scripts,
@@ -46,13 +49,16 @@ function scriptsOf(config: Config): Record<string, string> {
  * The whole application, and the worker once the project has one (`generate worker` adds its script
  * to an existing project). `start` is plain `node` on the compiled output, whose alias specifiers
  * the build rewrote; `dev` runs the sources under tsx, which reads the `paths` of tsconfig.json.
+ * In the declared style every start of `dev`, the first and each reload, begins by rewriting the
+ * generated declarations: a dependency added to a constructor is injected without a manual step.
  */
 function runScripts(config: Config): Record<string, string> {
   const compiled = `dist/${config.sourceRoot}`;
+  const preloads = [`./${config.platformDir}/tracing.ts`, ...(config.stack.style === 'declared' ? [REFRESH] : [])];
 
   return {
     start: `node ${compiled}/main.js`,
     ...(config.worker ? { 'start:worker': `node ${compiled}/apps/worker/main.js` } : {}),
-    dev: `tsx watch --env-file-if-exists=.env --import ./${config.platformDir}/tracing.ts ${config.sourceRoot}/main.ts`,
+    dev: `tsx watch --env-file-if-exists=.env ${preloads.map((preload) => `--import ${preload}`).join(' ')} ${config.sourceRoot}/main.ts`,
   };
 }

@@ -4,7 +4,7 @@ import { Reminder } from '@/contexts/notification/domain/aggregates/reminder.agg
 import { ReminderRepository } from '@/contexts/notification/domain/repositories/reminder.repository';
 import { PlanReminderCommand } from '@/contexts/notification/application/commands/plan-reminder/plan-reminder.command';
 
-@CommandHandler(PlanReminderCommand, [ReminderRepository, IdGenerator, Clock])
+@CommandHandler(PlanReminderCommand)
 export class PlanReminderHandler implements CommandHandler<PlanReminderCommand> {
   constructor(
     private readonly reminderRepository: ReminderRepository,

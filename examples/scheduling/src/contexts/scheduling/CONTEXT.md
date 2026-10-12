@@ -204,6 +204,13 @@ Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-ki
 | `scheduling.appointment.rescheduled` | 1 | `AppointmentRescheduledPublisher` |
 | `scheduling.calendar.created` | 1 | `CalendarCreatedPublisher` |
 
+### Projections
+
+| Projection | Class | Applies |
+|---|---|---|
+| `scheduling.agenda` | `AgendaProjection` | `AppointmentBooked`, `AppointmentConfirmed`, `AppointmentRescheduled`, `AppointmentCancelled`, `AppointmentExpired`, `AppointmentCompleted`, `AppointmentMarkedNoShow` |
+| `scheduling.practitioners` | `PractitionersProjection` | `practiceMemberAddedV1`, `practiceMemberRemovedV1` |
+
 ### Ports
 
 | Port | Kind | Adapters |

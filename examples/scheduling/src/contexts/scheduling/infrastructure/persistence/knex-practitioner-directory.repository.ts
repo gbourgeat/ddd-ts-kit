@@ -7,7 +7,7 @@ import {
 } from '@/contexts/scheduling/application/ports/practitioner-directory.port';
 import { SCHEDULING_SCHEMA } from '@/contexts/scheduling/infrastructure/persistence/scheduling.schema';
 
-@Repository(PractitionerDirectory, [KnexContext])
+@Repository(PractitionerDirectory)
 export class KnexPractitionerDirectory extends KnexReadModelStore<PractitionerEntry> implements PractitionerDirectory {
   constructor(context: KnexContext) {
     super(context, {

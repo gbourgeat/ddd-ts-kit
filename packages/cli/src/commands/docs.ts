@@ -1,4 +1,7 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { readConfig } from '../config/index.js';
+import { generatedDrift } from '../declared/index.js';
 import { writeDocs } from '../docs/write-docs.js';
 import { stopIgnoringValidation } from '../generate/stop-ignoring-validation.js';
 import { Workspace } from '../workspace/index.js';
@@ -26,14 +29,32 @@ export const docsCommand: Command = (argv, io) => {
 
   const report = ws.commit(true);
   const stale = [...report.created, ...report.updated];
+  const drift = Object.fromEntries(stale.flatMap((file) => driftOf(root, ws, file)));
 
   if (args.json) {
-    io.out(JSON.stringify({ ok: stale.length === 0, stale }, null, 2));
+    io.out(JSON.stringify({ ok: stale.length === 0, stale, drift }, null, 2));
   } else if (stale.length === 0) {
     io.out('The generated documentation is up to date.');
   } else {
-    io.out([...stale.map((file) => `stale  ${file}`), '', 'Run `ddd-ts-kit docs` and commit the result.'].join('\n'));
+    const lines = stale.map((file) => `stale  ${file}${drift[file] === undefined ? '' : `: ${drift[file]}`}`);
+
+    io.out([...lines, '', 'Run `ddd-ts-kit docs` and commit the result.'].join('\n'));
   }
 
   return stale.length === 0 ? 0 : 1;
 };
+
+const GENERATED_CONTEXT_FILE = /\.(?:declarations|dependencies)\.ts$/;
+
+/** What makes a generated file of a context stale, in words: the role file it misses, or the class whose constructor changed. */
+function driftOf(root: string, ws: Workspace, file: string): [string, string][] {
+  const expected = GENERATED_CONTEXT_FILE.test(file) ? ws.read(file) : undefined;
+
+  if (expected === undefined) {
+    return [];
+  }
+
+  const written = fs.existsSync(path.join(root, file)) ? fs.readFileSync(path.join(root, file), 'utf8') : '';
+
+  return [[file, written === '' ? 'it is missing' : generatedDrift(written, expected)]];
+}

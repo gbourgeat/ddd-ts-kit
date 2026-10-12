@@ -1,10 +1,7 @@
+import { stampCreation, stampUpdate, type Clock, type ExecutionScope } from '@ddd-ts-kit/kernel';
 {{#if style.declared}}
-import { Clock, ExecutionScope, stampCreation, stampUpdate } from '@ddd-ts-kit/kernel';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
 {{/if}}
-{{#unless style.declared}}
-import { stampCreation, stampUpdate, type Clock, type ExecutionScope } from '@ddd-ts-kit/kernel';
-{{/unless}}
 import { optimisticUpdate } from '@ddd-ts-kit/prisma';
 import type { {{aggregate.pascal}} } from '{{alias.context}}/domain/aggregates/{{aggregate.kebab}}.aggregate{{alias.ext}}';
 {{#if style.declared}}
@@ -17,7 +14,7 @@ import type { {{aggregate.pascal}}Repository } from '{{alias.context}}/domain/re
 import { {{aggregate.pascal}}Mapper } from '{{alias.context}}/infrastructure/persistence/{{aggregate.kebab}}.mapper{{alias.ext}}';
 
 {{#if style.declared}}
-@Repository({{aggregate.pascal}}Repository, [Database, ExecutionScope, Clock])
+@Repository({{aggregate.pascal}}Repository)
 {{/if}}
 export class Prisma{{aggregate.pascal}}Repository implements {{aggregate.pascal}}Repository {
   constructor(

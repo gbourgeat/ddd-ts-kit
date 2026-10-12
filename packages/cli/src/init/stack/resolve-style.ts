@@ -1,4 +1,4 @@
-import { ASSEMBLIES, STYLES } from '../../config/index.js';
+import { ASSEMBLIES, DEPENDENCY_STATEMENTS, STYLES } from '../../config/index.js';
 import { CliError } from '../../cli-error.js';
 import { choose } from './choose.js';
 import type { StackOptions } from './stack-options.js';
@@ -7,9 +7,10 @@ import type { StackOptions } from './stack-options.js';
  * A class declares what it is wherever something reads the declarations: `@ddd-ts-kit/di`, on
  * tsyringe. Hand wiring and a NestJS container read none of them, so their contexts keep a
  * module file. A declared context is assembled from its barrel or by discovery, with or
- * without a broker: its subscriber is the one of its name either way.
+ * without a broker: its subscriber is the one of its name either way. A new declared project
+ * states dependencies in constructor signatures; an explicit one lists them in its module file.
  */
-export function resolveStyle(options: StackOptions, di: string): { style: string; assembly: string } {
+export function resolveStyle(options: StackOptions, di: string): Record<'style' | 'assembly' | 'dependencies', string> {
   const style = choose(STYLES, options.style, 'style') ?? (di === 'tsyringe' ? 'declared' : 'explicit');
 
   if (style === 'declared' && di !== 'tsyringe') {
@@ -28,5 +29,18 @@ export function resolveStyle(options: StackOptions, di: string): { style: string
     );
   }
 
-  return { style, assembly: assembly ?? 'barrel' };
+  return { style, assembly: assembly ?? 'barrel', dependencies: dependenciesOf(options, style) };
+}
+
+function dependenciesOf(options: StackOptions, style: string): string {
+  const dependencies = choose(DEPENDENCY_STATEMENTS, options.dependencies, 'dependencies');
+
+  if (dependencies !== undefined && style !== 'declared') {
+    throw new CliError(
+      `--dependencies ${dependencies} cannot be combined with --style explicit.`,
+      'An explicit context lists what each class is given in its module file: drop --dependencies, or use --style declared.',
+    );
+  }
+
+  return dependencies ?? (style === 'declared' ? 'signature' : 'listed');
 }

@@ -6,7 +6,8 @@ export interface ProjectionDeclaration {
   /** `<context>.<name>`: the consumer the projection is subscribed as, its idempotency scope and its label. */
   readonly name: string;
   readonly implementation: new (...args: never) => object;
-  readonly dependencies: readonly Token<unknown>[];
+  /** The list the decorator wrote; `undefined` when the constructor states the dependencies. */
+  readonly dependencies: readonly Token<unknown>[] | undefined;
   /** In the order the methods are written. */
   readonly applies: readonly ProjectionApplication[];
 }

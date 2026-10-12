@@ -2,7 +2,7 @@ import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
 import { DelegationRepository } from '@/contexts/identity/domain/repositories/delegation.repository';
 import { ExpireDelegationsCommand } from '@/contexts/identity/application/commands/expire-delegations/expire-delegations.command';
 
-@CommandHandler(ExpireDelegationsCommand, [DelegationRepository])
+@CommandHandler(ExpireDelegationsCommand)
 export class ExpireDelegationsHandler implements CommandHandler<ExpireDelegationsCommand> {
   constructor(private readonly delegationRepository: DelegationRepository) {}
 

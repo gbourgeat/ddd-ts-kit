@@ -34,6 +34,7 @@ export type { PolicyBinding } from './wiring/policy-binding.js';
 export type { Resolve } from './wiring/resolve.js';
 export { contextModule } from './declared/context-module.js';
 export type { DeclaredSource } from './declared/declared-source.js';
+export { declaredTokens } from './declared/declared-tokens.js';
 export type { ConsumerOptions } from './consumer/consumer-options.js';
 export type { ConsumerRuntime } from './consumer/consumer-runtime.js';
 export { UnreadableEventError } from './consumer/unreadable-event-error.js';

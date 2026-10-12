@@ -5,6 +5,7 @@ import { contextModule } from '../declared/context-module.js';
 import { rememberFile } from '../declared/discovered-files.js';
 import { WiringError } from '../errors/wiring-error.js';
 import type { ContextModule } from '../module/context-module.js';
+import { loadDependencyLists } from './load-dependency-lists.js';
 import { roleFilesOf, type RoleFile } from './role-files-of.js';
 
 export interface DiscoveryOptions {
@@ -30,7 +31,9 @@ const DEFAULT_EXTENSIONS = ['.js', '.mjs', '.ts', '.mts'];
  * The module of a bounded context, found by loading every file of its `application/` and
  * `infrastructure/` folders that carries a role suffix (`*.handler`, `*.repository`, ...) and
  * keeping the classes that declare themselves:
- * `await discoverContext('billing', new URL('.', import.meta.url))`.
+ * `await discoverContext('billing', new URL('.', import.meta.url))`. What each constructor
+ * receives comes from the generated `<context>.dependencies` file of the same directory, loaded
+ * with them; nothing is read from compiler metadata.
  *
  * It reads the disk and imports at startup, and what it finds is reachable by no import: use
  * `contextModule` with a list or a barrel wherever a bundler or a dead-code analysis must
@@ -50,6 +53,8 @@ export async function discoverContext(
     assertInItsFolder(file, name);
     declared.push(...declaredIn(file, await loaded(file, load), name));
   }
+
+  await loadDependencyLists(root, name, { extensions, load });
 
   return contextModule(name, declared);
 }

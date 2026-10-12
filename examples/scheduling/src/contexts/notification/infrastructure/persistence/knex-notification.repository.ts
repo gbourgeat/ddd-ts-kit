@@ -13,7 +13,7 @@ import type {
 
 type VersionedNotification = NotificationColumns & { readonly version: number };
 
-@Repository(NotificationRepository, [KnexContext, ExecutionScope, Clock])
+@Repository(NotificationRepository)
 export class KnexNotificationRepository implements NotificationRepository {
   constructor(
     private readonly database: KnexContext,

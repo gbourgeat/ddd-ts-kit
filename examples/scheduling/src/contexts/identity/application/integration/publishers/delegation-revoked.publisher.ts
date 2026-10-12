@@ -3,10 +3,7 @@ import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
 import { DelegationRevoked } from '@/contexts/identity/domain/events/delegation-revoked.event';
 import { delegationRevokedV1 } from '@/contexts/identity/published-language/delegation-revoked.v1.integration-event';
 
-@DomainEventHandler(DelegationRevoked, { name: 'identity.delegation.revoked' }, [
-  IntegrationEventPublisher,
-  IdGenerator,
-])
+@DomainEventHandler(DelegationRevoked, { name: 'identity.delegation.revoked' })
 export class DelegationRevokedPublisher implements DomainEventHandler<DelegationRevoked> {
   constructor(
     private readonly publisher: IntegrationEventPublisher,

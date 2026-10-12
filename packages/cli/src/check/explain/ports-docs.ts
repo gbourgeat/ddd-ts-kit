@@ -45,15 +45,23 @@ export abstract class InvoiceRepository extends Repository<Invoice> {}
 builder.bind(PaymentGateway).toClass(StripePaymentGateway, [PaymentSettings]);`,
   },
   'ports/no-concrete-dependency': {
-    why: 'A dependency list says what a class needs, not who provides it. A list that names an adapter of infrastructure/ or a fake of test/fakes/ ties the use case to one implementation: the adapter can no longer be replaced at the composition root, and a test can no longer give its fake. The list names the port, the constructor parameter is typed by it, and the choice of the implementation stays in one place.',
+    why: 'What a class is given says what it needs, not who provides it. A constructor parameter typed by an adapter of infrastructure/ or by a fake of test/fakes/, or a dependency list that names one, ties the class to one implementation: the adapter can no longer be replaced at the composition root, and a test can no longer give its fake. The parameter is typed by the port, a list names the port, and the choice of the implementation stays in one place. In the declared style the constructor of a class that lists nothing is its statement of dependencies, so its parameter types are held like the entries of a list.',
     bad: `// application/commands/issue-invoice/issue-invoice.handler.ts
-import { KnexInvoiceRepository } from '@/contexts/billing/infrastructure/persistence/knex-invoice.repository';
+import type { KnexInvoiceRepository } from '@/contexts/billing/infrastructure/persistence/knex-invoice.repository';
 
-@CommandHandler(IssueInvoiceCommand, [KnexInvoiceRepository, Clock])`,
+@CommandHandler(IssueInvoiceCommand)
+export class IssueInvoiceHandler {
+  constructor(private readonly invoices: KnexInvoiceRepository) {}
+}
+// billing.module.ts, explicit style
+builder.command(IssueInvoiceCommand).handledBy(IssueInvoiceHandler, [KnexInvoiceRepository, Clock]);`,
     good: `// application/commands/issue-invoice/issue-invoice.handler.ts
-import { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository';
+import type { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository';
 
-@CommandHandler(IssueInvoiceCommand, [InvoiceRepository, Clock])`,
+@CommandHandler(IssueInvoiceCommand)
+export class IssueInvoiceHandler {
+  constructor(private readonly invoices: InvoiceRepository) {}
+}`,
   },
   'ports/value-import': {
     why: 'A port named in a dependency list or given to bind is used as a value: the class itself is looked up in the container. `import type` erases the import when the file is compiled, so the list would hold undefined at run time, or the file would not compile. The import of a token is a plain import; `import type` stays right for a class that only types a parameter.',

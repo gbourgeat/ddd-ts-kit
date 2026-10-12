@@ -31,6 +31,12 @@ export const ROLES: readonly Role[] = [
     specFor: ['.event-handler.ts'],
   },
   { directory: 'application/scheduling', suffixes: ['.job.ts'], oneConcept: true, specFor: ['.job.ts'] },
+  {
+    directory: 'application/projections',
+    suffixes: ['.projection.ts'],
+    oneConcept: true,
+    specFor: ['.projection.ts'],
+  },
   { directory: 'application/integration/publishers', suffixes: ['.publisher.ts'] },
   {
     directory: 'application/integration/handlers',

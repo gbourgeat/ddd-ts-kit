@@ -7,7 +7,7 @@ import { Cancellation } from '@/contexts/scheduling/domain/value-objects/cancell
 import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
 import { CancelAppointmentCommand } from '@/contexts/scheduling/application/commands/cancel-appointment/cancel-appointment.command';
 
-@CommandHandler(CancelAppointmentCommand, [AppointmentRepository, Access, Clock])
+@CommandHandler(CancelAppointmentCommand)
 export class CancelAppointmentHandler implements CommandHandler<CancelAppointmentCommand> {
   constructor(
     private readonly appointmentRepository: AppointmentRepository,

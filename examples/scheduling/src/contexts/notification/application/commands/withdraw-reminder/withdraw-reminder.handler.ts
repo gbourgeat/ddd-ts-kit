@@ -2,7 +2,7 @@ import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
 import { ReminderRepository } from '@/contexts/notification/domain/repositories/reminder.repository';
 import { WithdrawReminderCommand } from '@/contexts/notification/application/commands/withdraw-reminder/withdraw-reminder.command';
 
-@CommandHandler(WithdrawReminderCommand, [ReminderRepository])
+@CommandHandler(WithdrawReminderCommand)
 export class WithdrawReminderHandler implements CommandHandler<WithdrawReminderCommand> {
   constructor(private readonly reminderRepository: ReminderRepository) {}
 

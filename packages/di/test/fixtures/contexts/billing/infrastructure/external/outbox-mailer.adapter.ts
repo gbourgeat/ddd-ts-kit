@@ -1,4 +1,4 @@
-import { Clock } from '@ddd-ts-kit/kernel';
+import type { Clock } from '@ddd-ts-kit/kernel';
 import { Adapter, type BindingAspect } from '@ddd-ts-kit/kernel/declarations';
 import { Mailer } from '../../application/ports/mailer.port.js';
 import { wrappedMailers } from './wrapped-mailers.js';
@@ -9,7 +9,7 @@ const noting: BindingAspect = (instance, info) => {
   return instance;
 };
 
-@Adapter(Mailer, { kind: 'external', transient: true, aspects: [noting] }, [Clock])
+@Adapter(Mailer, { kind: 'external', transient: true, aspects: [noting] })
 export class OutboxMailer implements Mailer {
   static readonly sent: string[] = [];
 

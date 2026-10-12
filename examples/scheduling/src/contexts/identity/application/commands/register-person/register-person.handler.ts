@@ -6,7 +6,7 @@ import { DisplayName } from '@/contexts/identity/domain/value-objects/display-na
 import { Email } from '@/contexts/identity/domain/value-objects/email.vo';
 import { RegisterPersonCommand } from '@/contexts/identity/application/commands/register-person/register-person.command';
 
-@CommandHandler(RegisterPersonCommand, [PersonRepository, Clock])
+@CommandHandler(RegisterPersonCommand)
 export class RegisterPersonHandler implements CommandHandler<RegisterPersonCommand> {
   constructor(
     private readonly personRepository: PersonRepository,

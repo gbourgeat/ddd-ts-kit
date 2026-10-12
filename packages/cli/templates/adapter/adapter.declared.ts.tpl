@@ -37,7 +37,7 @@ export class Remote{{name.pascal}} implements {{name.pascal}} {
   // TODO(domain): implement each operation of {{name.pascal}} by sending one call through `this.transport` and translating the answer into the types of {{context.kebab}}; declare each one `async`, so that the policy stated in the declaration applies from its first call.
   {{/unless}}
 
-  // TODO(platform): replace the body by the real client of the outside system (fetch on a base URL of the validated config, an SDK): type what it needs by an abstract class of application/ports (its settings), bind that class in the platform module and name it in the dependency list of the declaration.
+  // TODO(platform): replace the body by the real client of the outside system (fetch on a base URL of the validated config, an SDK): type what it needs by an abstract class of application/ports (its settings), bind that class in the platform module and receive it in the constructor, typed by that class.
   protected async transport(call: OutboundCall, signal?: AbortSignal): Promise<unknown> {
     signal?.throwIfAborted();
 

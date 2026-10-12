@@ -4,7 +4,6 @@ import { AllowAll } from '@ddd-ts-kit/auth/testing';
 import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
 import { Criteria, scoped } from '@ddd-ts-kit/kernel';
 import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations';
-import { PractitionersProjection } from '@/contexts/scheduling/application/projections/practitioners.projection';
 import { platformTestModule } from '@/platform/platform-test.module';
 import { practiceMemberAddedV1, practiceMemberRemovedV1 } from '@/contexts/identity/published-language/index';
 import {
@@ -95,7 +94,7 @@ async function arrange() {
   const application = createTestApplication({
     modules: [
       platformTestModule,
-      contextModule('scheduling', { ...schedulingDeclarations, PractitionersProjection }),
+      contextModule('scheduling', schedulingDeclarations),
       authorizationModule({ authorizer: new AllowAll() }),
     ],
     fakes: [fake(PractitionerDirectory, practitioners)],

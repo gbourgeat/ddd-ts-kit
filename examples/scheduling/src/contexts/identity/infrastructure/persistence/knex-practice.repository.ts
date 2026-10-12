@@ -10,7 +10,7 @@ import type { PracticeColumns, PracticeRow } from '@/contexts/identity/infrastru
 
 type VersionedPractice = PracticeColumns & { readonly version: number };
 
-@Repository(PracticeRepository, [KnexContext, ExecutionScope, Clock])
+@Repository(PracticeRepository)
 export class KnexPracticeRepository implements PracticeRepository {
   constructor(
     private readonly database: KnexContext,

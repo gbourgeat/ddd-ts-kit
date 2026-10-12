@@ -18,6 +18,8 @@ import { aWaitlist } from '@/contexts/scheduling/test/builders/waitlist.builder'
 import { FakeAppointmentRepository } from '@/contexts/scheduling/test/fakes/appointment.repository.fake';
 import { FakeCalendarRepository } from '@/contexts/scheduling/test/fakes/calendar.repository.fake';
 import { FakeWaitlistRepository } from '@/contexts/scheduling/test/fakes/waitlist.repository.fake';
+import { Agenda } from '@/contexts/scheduling/application/ports/agenda.port';
+import { FakeAgenda } from '@/contexts/scheduling/test/fakes/agenda.fake';
 
 const holders = authorizationModule({
   authorizer: new RoleBasedAuthorizer({ roles: { holder: [schedulingPermissions['waitlist.offer']] } }),
@@ -200,6 +202,7 @@ async function arrange(authorization = holders) {
   const application = createTestApplication({
     modules: [platformTestModule, contextModule('scheduling', schedulingDeclarations), authorization],
     fakes: [
+      fake(Agenda, new FakeAgenda()),
       fake(WaitlistRepository, waitlistRepository),
       fake(CalendarRepository, calendarRepository),
       fake(AppointmentRepository, appointmentRepository),

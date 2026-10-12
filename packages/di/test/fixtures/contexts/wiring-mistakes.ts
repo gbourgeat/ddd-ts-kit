@@ -108,7 +108,10 @@ export class MisorderedMailer implements Mailer {
   }
 }
 
-// @ts-expect-error a constructor with parameters needs its dependency list
+/**
+ * Compiles: without a list the constructor states the dependency. Nothing registered what was
+ * read from it, so the composition root refuses the class by name instead of building it.
+ */
 @QueryHandler(GetInvoice)
 export class GetInvoiceWithoutList {
   constructor(private readonly invoices: InvoiceRepository) {}

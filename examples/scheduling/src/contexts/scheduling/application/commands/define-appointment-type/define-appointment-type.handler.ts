@@ -6,7 +6,7 @@ import { AppointmentType } from '@/contexts/scheduling/domain/value-objects/appo
 import { DefineAppointmentTypeCommand } from '@/contexts/scheduling/application/commands/define-appointment-type/define-appointment-type.command';
 
 /** Answers the identifier of the appointment type, which a booking names. */
-@CommandHandler(DefineAppointmentTypeCommand, [CalendarRepository, IdGenerator, Clock])
+@CommandHandler(DefineAppointmentTypeCommand)
 export class DefineAppointmentTypeHandler implements CommandHandler<DefineAppointmentTypeCommand> {
   constructor(
     private readonly calendarRepository: CalendarRepository,

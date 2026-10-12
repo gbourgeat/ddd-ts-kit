@@ -1,7 +1,14 @@
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { Clock, CommandBus, type Actor } from '../src/index.js';
-import { declarationOf, listDeclarations, tokenIdentity, type Declaration, type Token } from '../src/declarations.js';
+import {
+  declarationOf,
+  injectedDependencies,
+  listDeclarations,
+  tokenIdentity,
+  type Declaration,
+  type Token,
+} from '../src/declarations.js';
 import type { HandlerOfAnotherMessage } from './fixtures/declarations/declaration-mistakes.js';
 import { decoratorModes, removeCompiled } from './support/decorator-modes.js';
 
@@ -88,12 +95,20 @@ function messagesAndTheirHandlers(clinic: () => Clinic): void {
         implementation: ScheduleVisitHandler,
       });
 
-      expect(identities(declaration.dependencies)).toEqual(identities([VisitRepository, Clock]));
+      expect(identities(declaration.dependencies ?? [])).toEqual(identities([VisitRepository, Clock]));
 
       expect(declared(SearchOpeningHoursHandler, 'query-handler')).toMatchObject({
         message: SearchOpeningHours,
-        dependencies: [],
+        dependencies: undefined,
       });
+    });
+
+    it('a handler that lists nothing leaves its constructor to state it, and the generated file registers what it read', () => {
+      const { WelcomeOnPatientRegistered } = clinic();
+
+      expect(declared(WelcomeOnPatientRegistered, 'integration-event-handler').dependencies).toBeUndefined();
+      expect(identities(injectedDependencies(WelcomeOnPatientRegistered) ?? [])).toEqual(identities([CommandBus]));
+      expect(injectedDependencies(clinic().ScheduleVisitHandler)).toBeUndefined();
     });
 
     it('a handler of an integration event names its event and its stable consumer name', () => {
@@ -104,8 +119,6 @@ function messagesAndTheirHandlers(clinic: () => Clinic): void {
         event: { type: 'registry.patient.registered', version: 1 },
         consumer: 'clinic.welcome-on-patient-registered',
       });
-
-      expect(identities(declaration.dependencies)).toEqual(identities([CommandBus]));
 
       expect(declaration.pair((contract, implementation): unknown[] => [contract, implementation])).toEqual([
         PatientRegistered,
@@ -154,11 +167,11 @@ function adaptersJobsAndPolicies(clinic: () => Clinic): void {
         replaces: false,
         aspects: [],
         implementation: InMemoryVisitRepository,
-        dependencies: [],
+        dependencies: undefined,
       });
 
       expect(reminders).toMatchObject({ kind: 'external', token: Reminders, lifetime: 'transient' });
-      expect(identities(reminders.dependencies)).toEqual(identities([Clock, ReminderSettings]));
+      expect(identities(reminders.dependencies ?? [])).toEqual(identities([Clock, ReminderSettings]));
       expect(reminders.aspects).toHaveLength(1);
       expect(declared(AlwaysFreeRooms, 'gateway')).toMatchObject({ kind: 'gateway', token: Rooms, replaces: true });
     });
@@ -175,12 +188,12 @@ function adaptersJobsAndPolicies(clinic: () => Clinic): void {
         implementation: RemindTomorrowVisits,
       });
 
-      expect(identities(declaration.dependencies)).toEqual(identities([CommandBus]));
+      expect(identities(declaration.dependencies ?? [])).toEqual(identities([CommandBus]));
 
       expect(declared(PurgeExpiredCallbacks, 'job')).toMatchObject({
         schedule: { every: '6h' },
         options: {},
-        dependencies: [],
+        dependencies: undefined,
       });
 
       expect(RemindTomorrowVisits.built).toBe(0);
@@ -210,7 +223,7 @@ function adaptersJobsAndPolicies(clinic: () => Clinic): void {
       const declaration = declared(PatientListProjection, 'projection');
 
       expect(declaration).toMatchObject({ name: 'clinic.patient-list', implementation: PatientListProjection });
-      expect(identities(declaration.dependencies)).toEqual(identities([PatientList]));
+      expect(identities(declaration.dependencies ?? [])).toEqual(identities([PatientList]));
 
       expect(declaration.applies).toEqual([
         { kind: 'integration', method: 'registered', contract: PatientRegistered },

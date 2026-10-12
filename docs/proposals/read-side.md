@@ -17,7 +17,7 @@ generate` and `check` do not know it), **not built**.
 | 2. Representations | nothing beyond JSON and `application/problem+json` | | all of it: the `Representation` port, content negotiation, XML, CSV, field visibility by permission |
 | 3. Forms | | | all of it |
 | 4. Another context's data | hydration: `hydrate(...).with(...).orElse(...)` in the kernel, with the failure and timeout policy; the gateway port it calls (`generate gateway`) | no generated use of `hydrate` | the analyzer rule: the compiler refuses a criteria on a hydrated field instead |
-| 5. Projections and search | `@Projection` and `@On` (`@ddd-ts-kit/kernel/declarations`), their registration and metrics in `@ddd-ts-kit/di`; the `ReadModelStore` port, `TableReadModelStore` over `InMemoryReadModelStore`, `KnexReadModelStore`, `DrizzleReadModelStore`, `PrismaReadModelStore`, `TypeOrmReadModelStore`, held to `readModelStoreContract`; `ProjectionRebuild` on PostgreSQL | no `generate projection`; `application/projections/` is not in the canonical tree, so `tree/closed` refuses it until it is declared in `extraDirectories`, and the generated barrel refuses a `*.projection.ts` line (`declarations/barrel-current`): a projection is registered by discovery or with `builder.include(...)` | the search index store and the Elasticsearch and OpenSearch package; a generated rebuild job |
+| 5. Projections and search | `@Projection` and `@On` (`@ddd-ts-kit/kernel/declarations`), their registration and metrics in `@ddd-ts-kit/di`; the `ReadModelStore` port, `TableReadModelStore` over `InMemoryReadModelStore`, `KnexReadModelStore`, `DrizzleReadModelStore`, `PrismaReadModelStore`, `TypeOrmReadModelStore`, held to `readModelStoreContract`; `ProjectionRebuild` on PostgreSQL | generated since 2026-10-12: `generate projection <context> <Name> <event-type>` writes a projector and its spec, `application/projections/` is a role of the canonical tree, the generated barrel exports a projector and registers what its constructor takes, `describe` and `CONTEXT.md` list it. Still not generated: the port of the read model with its adapter, which `generate port` and the ORM package give | the search index store and the Elasticsearch and OpenSearch package; a generated rebuild job |
 
 The reference for what is built is the README of each package: `@ddd-ts-kit/kernel`
 ("Criteria", "Hydration", "Projections"), `@ddd-ts-kit/http` (the query grammar),
@@ -214,7 +214,7 @@ handlers, each with its own answer to idempotence, rebuild and lag; and some rea
 
 **What exists.**
 
-- **A projector role.** `@Projection('<context>.<name>', [ports])` on a class of
+- **A projector role.** `@Projection('<context>.<name>')` on a class of
   `application/projections/`, in a `*.projection.ts` file, with `@On(definition)` on one
   method per integration event it applies and `@On(EventClass, { name })` for a domain event
   of its own context. It is subscribed as a consumer under its name. It writes its read model

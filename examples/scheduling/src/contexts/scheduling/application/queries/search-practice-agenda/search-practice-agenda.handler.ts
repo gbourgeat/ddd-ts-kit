@@ -6,7 +6,7 @@ import { Agenda } from '@/contexts/scheduling/application/ports/agenda.port';
 import { SearchPracticeAgendaQuery } from '@/contexts/scheduling/application/queries/search-practice-agenda/search-practice-agenda.query';
 import type { SearchPracticeAgendaResult } from '@/contexts/scheduling/application/queries/search-practice-agenda/search-practice-agenda.result';
 
-@QueryHandler(SearchPracticeAgendaQuery, [Agenda, Access])
+@QueryHandler(SearchPracticeAgendaQuery)
 export class SearchPracticeAgendaHandler implements QueryHandler<SearchPracticeAgendaQuery> {
   constructor(
     private readonly agenda: Agenda,

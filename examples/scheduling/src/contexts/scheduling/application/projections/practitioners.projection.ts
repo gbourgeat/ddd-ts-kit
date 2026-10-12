@@ -10,7 +10,7 @@ import { storableStamp } from '@/shared-kernel/storable-stamp';
 import { PractitionerDirectory } from '@/contexts/scheduling/application/ports/practitioner-directory.port';
 
 /** Keeps the practitioners of each practice, with the time zone of the practice, from what identity announces of its members. */
-@Projection('scheduling.practitioners', [PractitionerDirectory])
+@Projection('scheduling.practitioners')
 export class PractitionersProjection {
   constructor(private readonly practitioners: PractitionerDirectory) {}
 

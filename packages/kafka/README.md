@@ -94,7 +94,7 @@ export const messagingModule = defineContextModule({
 import { CommandBus, systemActor, type IntegrationEvent } from '@ddd-ts-kit/kernel';
 import { IntegrationEventHandler } from '@ddd-ts-kit/kernel/declarations';
 
-@IntegrationEventHandler(orderPlaced, { consumer: 'billing.invoice-on-order-placed' }, [CommandBus])
+@IntegrationEventHandler(orderPlaced, { consumer: 'billing.invoice-on-order-placed' })
 export class InvoiceOnOrderPlacedIntegrationHandler {
   constructor(private readonly commands: CommandBus) {}
 

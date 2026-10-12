@@ -18,6 +18,7 @@ export interface StackOptions {
   readonly logger?: string;
   readonly style?: string;
   readonly assembly?: string;
+  readonly dependencies?: string;
   readonly packageManager?: string;
   /** The prefix of the source root in imports, when it is not the default. */
   readonly importAlias?: string;

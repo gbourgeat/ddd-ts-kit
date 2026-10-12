@@ -1,6 +1,6 @@
 {
   "name": "ddd-ts-kit",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Bootstrap, scaffold and verify DDD and Clean Architecture TypeScript projects.",
   "license": "MIT",
   "repository": {
@@ -16,7 +16,8 @@
   },
   "type": "module",
   "bin": {
-    "ddd-ts-kit": "./dist/bin.js"
+    "ddd-ts-kit": "./dist/bin.js",
+    "ddd-ts-kit-refresh-declarations": "./dist/refresh-declarations.js"
   },
   "files": [
     "dist",
@@ -28,6 +29,6 @@
     "clean:packages": "node dist/bin.js check --clean-only ../kernel/src ../validation/src ../http/src ../tracing/src ../di/src ../events/src ../testing/src ../drizzle/src ../knex/src ../prisma/src ../typeorm/src ../aspects/src ../rabbitmq/src ../auth/src ../audit/src ../redis/src ../scheduling/src ../pino/src ../winston/src ../sentry/src ../kafka/src ../nats/src ../eslint-plugin/src"
   },
   "devDependencies": {
-    "@ddd-ts-kit/kernel": "^0.1.1"
+    "@ddd-ts-kit/kernel": "^0.2.0"
   }
 }

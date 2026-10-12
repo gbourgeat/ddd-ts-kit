@@ -23,6 +23,7 @@ const STACK_FLAGS = [
   'logger',
   'style',
   'assembly',
+  'dependencies',
 ] as const;
 
 const OTHER_TEXT_FLAGS = ['docs-ui', 'allow-no-outbox', 'import-alias', 'import-extension', 'package-manager'];

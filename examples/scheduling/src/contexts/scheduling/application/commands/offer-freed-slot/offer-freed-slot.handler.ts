@@ -17,13 +17,7 @@ import { OfferFreedSlotCommand } from '@/contexts/scheduling/application/command
  * that holds the slot until the offer expires. Both are saved in the unit of work of the
  * command: a waiter never leaves the waitlist without the slot being held for them.
  */
-@CommandHandler(OfferFreedSlotCommand, [
-  WaitlistRepository,
-  CalendarRepository,
-  AppointmentRepository,
-  IdGenerator,
-  Clock,
-])
+@CommandHandler(OfferFreedSlotCommand)
 export class OfferFreedSlotHandler implements CommandHandler<OfferFreedSlotCommand> {
   constructor(
     private readonly waitlistRepository: WaitlistRepository,

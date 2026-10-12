@@ -6,9 +6,7 @@ import {
 } from '@/contexts/scheduling/published-language/index';
 import { SendNotificationCommand } from '@/contexts/notification/application/commands/send-notification/send-notification.command';
 
-@IntegrationEventHandler(appointmentRescheduledV1, { consumer: 'notification.scheduling-appointment-rescheduled' }, [
-  CommandBus,
-])
+@IntegrationEventHandler(appointmentRescheduledV1, { consumer: 'notification.scheduling-appointment-rescheduled' })
 export class SchedulingAppointmentRescheduledIntegrationHandler {
   static readonly eventType = 'scheduling.appointment.rescheduled';
 

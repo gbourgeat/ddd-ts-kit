@@ -190,7 +190,7 @@ interface InvoiceRow {
   version: number;
 }
 
-@Repository(InvoiceRepository, [KnexContext])
+@Repository(InvoiceRepository)
 export class KnexInvoiceRepository implements InvoiceRepository {
   constructor(private readonly context: KnexContext) {}
 
@@ -277,7 +277,7 @@ import { auditRow, tenantRow, type AuditRow, type TenantRow } from '@ddd-ts-kit/
 
 interface InvoiceRow extends VersionedInvoice, TenantRow, AuditRow {}
 
-@Repository(InvoiceRepository, [KnexContext, ExecutionScope, Clock])
+@Repository(InvoiceRepository)
 export class KnexInvoiceRepository implements InvoiceRepository {
   constructor(
     private readonly context: KnexContext,
@@ -332,7 +332,7 @@ export abstract class InvoiceQueries {
 import { ExecutionScope, encodeCursor, pageOf, tenantScopeOf } from '@ddd-ts-kit/kernel';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
 
-@Repository(InvoiceQueries, [KnexContext, ExecutionScope])
+@Repository(InvoiceQueries)
 export class KnexInvoiceQueries implements InvoiceQueries {
   constructor(
     private readonly context: KnexContext,
@@ -467,7 +467,7 @@ await knex.schema.withSchema('scheduling').createTable('appointment_list', (tabl
 });
 
 // infrastructure/persistence/knex-appointment-list.repository.ts
-@Repository(AppointmentList, [KnexContext])
+@Repository(AppointmentList)
 export class KnexAppointmentList extends KnexReadModelStore<AppointmentRow> implements AppointmentList {
   constructor(context: KnexContext) {
     super(context, {

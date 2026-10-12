@@ -250,7 +250,7 @@ describe('@Scheduled', () => {
       schedule: { every: '15m' },
       options: { missed: 'run-once', jitterMs: 2_000 },
       implementation: SendReminders,
-      dependencies: [],
+      dependencies: undefined,
     });
   });
 

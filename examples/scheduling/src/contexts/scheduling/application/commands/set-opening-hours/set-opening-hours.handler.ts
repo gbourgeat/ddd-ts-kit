@@ -6,7 +6,7 @@ import { OpeningHours, type Weekday } from '@/contexts/scheduling/domain/value-o
 import { Range } from '@/contexts/scheduling/domain/value-objects/range.vo';
 import { SetOpeningHoursCommand } from '@/contexts/scheduling/application/commands/set-opening-hours/set-opening-hours.command';
 
-@CommandHandler(SetOpeningHoursCommand, [CalendarRepository, Clock])
+@CommandHandler(SetOpeningHoursCommand)
 export class SetOpeningHoursHandler implements CommandHandler<SetOpeningHoursCommand> {
   constructor(
     private readonly calendarRepository: CalendarRepository,

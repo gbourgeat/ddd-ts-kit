@@ -1,3 +1,7 @@
+import { CommandBus } from '../../../src/index.js';
+import { injected } from '../../../src/declarations.js';
+import { WelcomeOnPatientRegistered } from './contexts/clinic/application/integration/handlers/welcome-on-patient-registered.integration-handler.js';
+
 export * from './contexts/clinic/domain/visit.js';
 export * from './contexts/clinic/domain/repositories/visit.repository.js';
 export * from './contexts/clinic/domain/events/visit-scheduled.event.js';
@@ -30,3 +34,6 @@ export * from './refused-when-declared/declare-an-adapter-of-a-port-with-a-body.
 export * from './refused-when-declared/declare-an-adapter-that-extends-its-port.js';
 export * from './refused-when-declared/declare-a-stranger.js';
 export * from './refused-when-declared/declare-a-projection.js';
+
+// As the generated file of a context does, for a class whose decorator lists nothing: read from its constructor.
+injected(WelcomeOnPatientRegistered, [CommandBus]);

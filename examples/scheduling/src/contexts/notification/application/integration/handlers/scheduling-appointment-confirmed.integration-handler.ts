@@ -3,9 +3,7 @@ import { IntegrationEventHandler } from '@ddd-ts-kit/kernel/declarations';
 import { appointmentConfirmedV1, type AppointmentConfirmedV1 } from '@/contexts/scheduling/published-language/index';
 import { SendNotificationCommand } from '@/contexts/notification/application/commands/send-notification/send-notification.command';
 
-@IntegrationEventHandler(appointmentConfirmedV1, { consumer: 'notification.scheduling-appointment-confirmed' }, [
-  CommandBus,
-])
+@IntegrationEventHandler(appointmentConfirmedV1, { consumer: 'notification.scheduling-appointment-confirmed' })
 export class SchedulingAppointmentConfirmedIntegrationHandler {
   static readonly eventType = 'scheduling.appointment.confirmed';
 

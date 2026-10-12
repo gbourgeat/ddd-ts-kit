@@ -740,3 +740,77 @@ Frictions:
 4. **The postgres run and the full start with the compose services were not replayed** for this
    change: `test:postgres` and `infra:up` need the services, and nothing they exercise reads
    an import specifier.
+
+## 2026-10-12: dependencies stated by the constructor, and projections as a role
+
+The owner's decision: a handler is written without repeating its dependencies in its
+decorator. Before, each of the 89 classes of this application that take something said it
+twice, `@CommandHandler(RegisterPersonCommand, [PersonRepository, Clock])` and then the
+constructor. Now the constructor says it once, and the kit reads it.
+
+Measured first, on the compilers and runners this application meets, with a decorated class
+whose constructor takes two ports: `design:paramtypes`, the metadata `emitDecoratorMetadata`
+writes, is there under `tsc` 6 and 7, under Vitest 5 and under swc only with legacy
+decorators; it is absent under `tsx` (the `dev` script) in both decorator modes and with
+standard decorators everywhere; and it is `Object` for a port imported with `import type`.
+This application is on legacy decorators (class-validator), so metadata would have worked in
+its build and its tests and failed under `npm run dev`. The kit reads the signatures from the
+sources instead and writes them in the generated barrel of each context.
+
+What was done here, in this order, each step by a tool of the kit:
+
+1. `"dependencies": "signature"` under `stack` in `ddd-ts-kit.config.json`.
+2. `npx eslint . --fix`: the new rule `declarations/constructor-injection` reported 89 lists,
+   all 89 equal to their constructor, none that differed, and removed them. 89 files changed,
+   one line each; nothing else in them: the fixer left the imports as they were, so the ports
+   stay imported as values here, which the generated code of a new project writes as
+   `import type`. Both spellings run: the barrel is what imports the value.
+3. `node scripts/kit.mjs docs`: the four barrels now hold 122 `export *` (118 before, plus the
+   four projections) and 89 `injected(Class, [Tokens])` statements with their imports, laid
+   out as Biome lays them out, so `format:check` has nothing to say of a generated file.
+4. The `dev` script, by hand, as `init` now writes it:
+   `--import ddd-ts-kit/dist/refresh-declarations.js`.
+5. The three `extraDirectories` entries and their three deviations, removed: the checker knows
+   `application/projections/`. ADR 0002 is marked superseded and kept.
+6. `src/platform/compose-application.ts` no longer names the four projections: the barrels
+   bring them.
+
+What it changed in the tests:
+
+- Nine handler specs of `scheduling` now give a fake to `Agenda`. The barrel brings the
+  agenda projection, which applies the domain events a handler announces with its save: with
+  the projection left out, as before, those specs ran a context that was not the one the
+  application runs.
+- Two specs that built a projection alone take it from the generated file of its context
+  (`contextModule('analytics', { OutcomesProjection: analyticsDeclarations.OutcomesProjection })`):
+  a class imported from its own file has no dependency list. Two others that added a
+  projection by name to the declarations no longer do.
+- New `test/architecture/every-class-resolves.spec.ts`: the composition root as `main.ts`
+  builds it, on PostgreSQL in process, then every declared class of the four contexts built
+  one by one. A list that is missing, of another length or naming something nobody binds
+  fails there, by name.
+
+Checked after it: `npm run verify` (types, lint, format, 1298 unit and adapter specs with the
+coverage thresholds, 57 end-to-end specs, the checker with 0 finding in 724 files,
+dependency-cruiser on 763 modules and 3481 dependencies, knip, `docs:check`), then every rule
+id of the kit broken once in a copy of this application (76 specs, the new
+`declarations/constructor-injection` among them: a constructor parameter typed `number`).
+
+Frictions:
+
+1. **A constructor edited by hand leaves the barrel stale until something regenerates it.**
+   `check` and `docs --check` say so and name the class, `dev` regenerates on every reload,
+   and the application refuses to start with a list of another length; but a list of the same
+   length and other tokens (two ports swapped for two others) is only caught by the gate and
+   by the type check of the barrel, not at startup.
+2. **Every injection of the conformance suite that changes a constructor now also reports
+   `declarations/barrel-current`.** Eight injections declare it as a companion. It is the
+   honest reading: the generated file is part of what a constructor change touches.
+3. **Bringing projections into the barrel changed what a handler spec assembles.** It is the
+   right context, and it cost a fake in nine specs. A team that migrates meets the same.
+4. **A reload that rewrote the barrel can be followed by a second one**, for the barrel
+   itself, which the watcher also watches. It finds nothing to rewrite. Not measured here:
+   the `dev` proof is on a generated project (`dev-reload.spec.ts` of the CLI), not on this
+   application, whose start needs its services.
+5. **The full start with the compose services and the postgres run were not replayed** for
+   this change: `infra:up` and `test:postgres` need the services.

@@ -1,22 +1,14 @@
 import { and, eq } from 'drizzle-orm';
 import { optimisticUpdate } from '@ddd-ts-kit/drizzle/postgres';
-{{#if style.declared}}
-{{#if tenant.scoped}}
-import { Clock, ExecutionScope, stampCreation, stampUpdate, tenantScopeOf } from '@ddd-ts-kit/kernel';
-{{/if}}
-{{#unless tenant.scoped}}
-import { Clock, ExecutionScope, stampCreation, stampUpdate } from '@ddd-ts-kit/kernel';
-{{/unless}}
-import { Repository } from '@ddd-ts-kit/kernel/declarations';
-{{/if}}
-{{#unless style.declared}}
 {{#if tenant.scoped}}
 import { stampCreation, stampUpdate, tenantScopeOf, type Clock, type ExecutionScope } from '@ddd-ts-kit/kernel';
 {{/if}}
 {{#unless tenant.scoped}}
 import { stampCreation, stampUpdate, type Clock, type ExecutionScope } from '@ddd-ts-kit/kernel';
 {{/unless}}
-{{/unless}}
+{{#if style.declared}}
+import { Repository } from '@ddd-ts-kit/kernel/declarations';
+{{/if}}
 import type { {{aggregate.pascal}} } from '{{alias.context}}/domain/aggregates/{{aggregate.kebab}}.aggregate{{alias.ext}}';
 {{#if style.declared}}
 import { {{aggregate.pascal}}Repository } from '{{alias.context}}/domain/repositories/{{aggregate.kebab}}.repository{{alias.ext}}';
@@ -31,7 +23,7 @@ import { {{aggregate.pascal}}Mapper, type {{aggregate.pascal}}Columns } from '{{
 type Versioned{{aggregate.pascal}} = {{aggregate.pascal}}Columns & { readonly version: number };
 
 {{#if style.declared}}
-@Repository({{aggregate.pascal}}Repository, [Database, ExecutionScope, Clock])
+@Repository({{aggregate.pascal}}Repository)
 {{/if}}
 export class Drizzle{{aggregate.pascal}}Repository implements {{aggregate.pascal}}Repository {
   constructor(

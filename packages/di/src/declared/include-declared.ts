@@ -28,6 +28,7 @@ import { classRecipe } from '../wiring/recipe.js';
 import type { WiringDraft } from '../wiring/wiring-draft.js';
 import { consumptionOf } from './consumption-of.js';
 import type { DeclaredSource } from './declared-source.js';
+import { dependenciesOf } from './dependencies-of.js';
 import { declarerOf } from './discovered-files.js';
 import { projectionOf } from './projection-of.js';
 
@@ -134,14 +135,15 @@ type ClassOf<Instance> = new (...args: never) => Instance;
 
 interface SelfBound {
   readonly implementation: ClassOf<unknown>;
-  readonly dependencies: Dependencies;
+  /** The list of the decorator, when it wrote one. */
+  readonly dependencies: Dependencies | undefined;
   readonly kind?: DependencyKind;
 }
 
 /** A declared class is bound under itself: the class is the token of what it builds. */
 function underItself({ module, declaredBy }: Registration, { implementation, dependencies, kind }: SelfBound): Binding {
   return {
-    ...classRecipe(implementation, dependencies),
+    ...classRecipe(implementation, dependenciesOf({ implementation, listed: dependencies, module, declaredBy })),
     token: implementation,
     module,
     declaredBy,
@@ -246,7 +248,7 @@ function registerPort(registration: Registration, declaration: PortDeclaration):
   const { implementation, dependencies, lifetime, kind, aspects } = declaration;
 
   const binding = {
-    ...classRecipe(implementation, dependencies),
+    ...classRecipe(implementation, dependenciesOf({ implementation, listed: dependencies, module, declaredBy })),
     token: declaration.token,
     module,
     declaredBy,

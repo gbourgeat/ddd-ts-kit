@@ -1,5 +1,6 @@
 import type { ClassDeclarator } from '../dependencies/class-declarator.js';
-import type { Dependencies } from '../dependencies/dependencies.js';
+import type { DeclaredDependencies } from '../dependencies/declared-dependencies.js';
+import type { DependenciesFromSignature } from '../dependencies/dependencies-from-signature.js';
 import type { DeclaredPolicy } from '../model/declared-policy.js';
 import type { PermissionRef } from '../model/permission-ref.js';
 import { DeclarationError } from '../registry/declaration-error.js';
@@ -15,7 +16,7 @@ export interface PolicyOptions<Name extends string = string> {
  * A rule about one permission that needs the loaded element:
  * `@Policy(permissions['invoice.void'], { name: 'only-the-issuer-voids' })`.
  */
-export function Policy<const Name extends string, const D extends Dependencies = readonly []>(
+export function Policy<const Name extends string, const D extends DeclaredDependencies = DependenciesFromSignature>(
   permission: PermissionRef,
   options: PolicyOptions<Name> & Named<Name, 'name'>,
   dependencies?: D,
@@ -27,6 +28,6 @@ export function Policy<const Name extends string, const D extends Dependencies =
   }
 
   return (target) => {
-    record(target, { role: 'policy', name, permission, implementation: target, dependencies: dependencies ?? [] });
+    record(target, { role: 'policy', name, permission, implementation: target, dependencies });
   };
 }

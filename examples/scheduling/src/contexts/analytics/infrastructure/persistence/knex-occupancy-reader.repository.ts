@@ -43,7 +43,7 @@ interface MeasuredLine {
  * the scope of the actor narrow the outcomes before they are grouped, the order and the page
  * apply to the lines.
  */
-@Repository(OccupancyReader, [KnexContext])
+@Repository(OccupancyReader)
 export class KnexOccupancyReader implements OccupancyReader {
   constructor(private readonly database: KnexContext) {}
 

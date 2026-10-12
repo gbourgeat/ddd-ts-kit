@@ -4,7 +4,82 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
-## Unreleased
+## 0.2.0
+
+**A class states its dependencies once, in its constructor.** In the declared style a
+decorator no longer repeats what the constructor takes:
+
+```ts
+@CommandHandler(RegisterPersonCommand)
+export class RegisterPersonHandler implements CommandHandler<RegisterPersonCommand> {
+  constructor(
+    private readonly personRepository: PersonRepository,
+    private readonly clock: Clock,
+  ) {}
+}
+```
+
+- The constructor signature is the single statement of what a declared class depends on, for
+  every declaring decorator: `@CommandHandler`, `@QueryHandler`, `@DomainEventHandler`,
+  `@IntegrationEventHandler`, `@Scheduled`, `@Projection`, `@Repository`, `@Gateway`,
+  `@Adapter`, `@Policy`. Each parameter is typed by one class, which is its injection token.
+- No compiler metadata. `emitDecoratorMetadata` exists only with legacy decorators compiled by
+  `tsc` or swc: it is absent with standard decorators and under `tsx` and esbuild, and it is
+  `Object` for a port imported with `import type`. `ddd-ts-kit docs`, every `generate` and
+  every start of `npm run dev` read the signatures from the sources and write
+  `injected(Class, [Tokens])` statements in the generated file of each context:
+  `<context>.declarations.ts`, after its exports, or `<context>.dependencies.ts` under
+  discovery, which `discoverContext` loads with the role files. `@ddd-ts-kit/di` injects from
+  there, in both decorator modes, whoever compiles. `injected` and `injectedDependencies` are
+  new exports of `@ddd-ts-kit/kernel/declarations`, `declaredTokens` of `@ddd-ts-kit/di`.
+- Three guards against a stale generated list. `declarations/barrel-current` and
+  `ddd-ts-kit docs --check` fail when a constructor changed without regeneration, and now name
+  the class. The `dev` script loads `ddd-ts-kit/dist/refresh-declarations.js` before the
+  application, on every start and reload: a port added to a constructor is injected on the
+  reload that follows the save. And `createApplication` refuses, by name, a class that takes
+  parameters and has no list, or a list of another length: new `WiringError` codes
+  `MISSING_DEPENDENCIES` and `DEPENDENCY_ARITY`. Nothing is injected as `undefined`.
+- New rule `declarations/constructor-injection`, in `ddd-ts-kit check` and in the ESLint
+  plugin: a constructor parameter of a declared class names exactly one class. An interface, a
+  type alias, a union, a primitive, an optional or defaulted parameter, a rest parameter and a
+  constructor inherited from a class of a package are refused, each with its fix; a value is
+  carried, as before, by an abstract class bound in the platform.
+  `ports/no-concrete-dependency` now also holds the types of constructor parameters.
+- **A 0.1 project keeps working untouched.** A list written in a decorator,
+  `@CommandHandler(Message, [Ports])`, is still read, still checked by the compiler and wins
+  over the signature. New config key `stack.dependencies`: `signature`, which `init` writes
+  (`init --dependencies listed` for the other), or `listed`, which is what a config without the
+  key means and under which lists are never reported. To migrate: set
+  `"dependencies": "signature"`, run `npx eslint . --fix` (the rule removes every list that
+  repeats its constructor and reports the ones that differ), run `npx ddd-ts-kit docs`, and add
+  `--import ddd-ts-kit/dist/refresh-declarations.js` to the `dev` script. Under discovery, add
+  `src/contexts/*/*.dependencies.ts` to the entries of knip (inside the pattern of the role
+  files, as `init` writes it) and to the orphan exceptions of dependency-cruiser (`ddd-ts-kit depcruise-config --write` does the second).
+- In the types, the dependency list of every decorator is optional, and a decorator without a
+  list accepts any constructor: the compiler no longer reports, at the decorator, a list that
+  was forgotten. The list is derived instead, and the generated `injected(...)` is checked
+  against the constructor as a written list was. A declaration read with `declarationOf`
+  carries `dependencies: undefined` when its decorator lists nothing, where it carried `[]`.
+- The explicit style stays explicit: `.toClass(Adapter, [Ports])` and
+  `.handledBy(Handler, [Ports])` list what a class is given. NestJS and manual wiring are not
+  concerned.
+- A test assembles a context from its generated file, as the composition root does; to build
+  one class alone, take it from that file
+  (`contextModule('billing', { IssueInvoiceHandler: billing.IssueInvoiceHandler })`).
+
+**Projections are a role of the CLI.** `application/projections/*.projection.ts` joins the
+canonical tree (`tree/closed`, `naming/suffix`, `naming/one-concept-per-file`,
+`test/spec-required`), the generated barrel exports a projector and registers what its
+constructor takes, discovery, knip and dependency-cruiser know the suffix, and
+`ddd-ts-kit describe` and the reference of `CONTEXT.md` list each projection with the events it
+applies. New generator `ddd-ts-kit generate projection <context> <Name> <event-type>`
+(declared style): a projector of an integration event of the context itself or of a declared
+upstream, and its spec. A project that declared `application/projections` in
+`extraDirectories` removes the entry and its deviation, runs `ddd-ts-kit docs` (its barrels
+gain one line per projection) and gives each projection a spec, which `test/spec-required`
+now asks for; a composition root or a test that
+added projections to a context by name removes them, the barrel now brings them, and a handler
+spec gives a fake to the read model a projection of its context writes.
 
 **Imports without the `.js` extension, by default.** A new project imports its own files by
 their alias and nothing else:

@@ -40,7 +40,8 @@ src/
   apps/worker/main.ts            optional: the scheduled jobs in a process of their own
   contexts/<context>/
     CONTEXT.md
-    <context>.declarations.ts    generated barrel of the context's declared classes
+    <context>.declarations.ts    generated: the barrel of the context's declared classes, and what each constructor is injected
+    <context>.dependencies.ts    generated, under discovery only: what each constructor is injected
     <context>.module.ts          explicit style only: binds ports to adapters by hand
     published-language/          contracts designed for other contexts
     domain/
@@ -58,6 +59,7 @@ src/
       authorization/             <context>.permissions.ts, *.policy.ts (who may do what, here)
       event-handlers/            *.event-handler.ts (reactions to this context's domain events)
       scheduling/                *.job.ts          (jobs run by time: schedule to command)
+      projections/               *.projection.ts   (projectors: events to one read model)
       integration/
         publishers/              *.publisher.ts    (domain event to integration event)
         handlers/                *.integration-handler.ts (integration event to command)
@@ -101,9 +103,9 @@ presentation ──▶ application ──▶ domain ◀── infrastructure
 | `tree/closed` | A context holds only the canonical directories, plus its declared `extraDirectories`, and no source file outside a role directory. |
 | `tree/context-doc` | Every context has a `CONTEXT.md` with the required sections (`Purpose`, `Classification`, `Ubiquitous language`, `Aggregates`, `Published events`, `Relationships`) and the classification declared in the config. |
 | `naming/suffix` | A file in a role directory carries the role's suffix, in kebab-case. |
-| `naming/one-concept-per-file` | One exported aggregate, entity, value object, event, handler or job per file, and one declared class per role file. |
+| `naming/one-concept-per-file` | One exported aggregate, entity, value object, event, handler, job or projection per file, and one declared class per role file. |
 | `naming/search-not-list` | A read that takes criteria, a scope or a page is a search. In a context, no method is named `list`, or `list` followed by an upper-case letter (`listByCustomer`), in a port (`domain/repositories/*.repository.ts`, `application/ports/*.port.ts`) nor in a class of `infrastructure/` or `test/fakes/`: it is named `search...`. Under `application/queries/`, no folder or file is named `list` or starts with `list-` or `list.`, and no class is named `List` or starts with `List` followed by an upper-case letter: the query is `Search<Things>Query` in `search-<things>/`. A property is not judged, nor `listAccessible`, which the `Authorizer` port of the kit requires; a read of one element or none stays `findById` or `findBy...`. |
-| `test/spec-required` | Every aggregate, value object, domain service, command handler, query handler, domain event handler, integration event handler and job has a `*.spec.ts` in the context's `test/`. |
+| `test/spec-required` | Every aggregate, value object, domain service, command handler, query handler, domain event handler, integration event handler, job and projection has a `*.spec.ts` in the context's `test/`. |
 | `events/name-format` | Domain and integration event names follow `<context>.<aggregate>.<fact-in-past-tense>`. |
 | `events/defined-in-published-language` | An integration event is declared once with `defineIntegrationEvent` in the producer's `published-language/`, with a payload schema. Catalog and AsyncAPI document are generated from these declarations. |
 | `test/no-mocks` | No `vi.mock`, `jest.mock`, `vi.fn`, `jest.fn`, `vi.spyOn`, `jest.spyOn` or mocking library in a context's `test/`. Use the fake of the port. Default severity `warn`. |
@@ -135,17 +137,18 @@ presentation ──▶ application ──▶ domain ◀── infrastructure
 | `aspects/outside-in` | Aspects are applied from outside. The decorators of `@ddd-ts-kit/aspects/decorators` are imported only by an adapter in `infrastructure/` or by the platform; everywhere else an aspect is a wrapper given to a binding or to a declaration (`.with(...)`, `aspects` of `@Adapter`), put around every binding of a kind by the platform (`builder.around(...)`), or a bus middleware. |
 | `standard/no-parallel-interface` | No home-made copy of a standard interface of the kernel: no declared `ILogger`, `AppLogger`, `UserContext`, `CurrentUser`, `UserSession`, `PaginatedResult`, `AuditLog` and the like. Use the kernel interface and extend it by declaration merging; the list is `standardInterfaces` in the config. Default severity `warn`. |
 | `declarations/role-declared` | In the declared style, a role file exports a class carrying the decorator of its role, and a declared class lives in a role file. Consumer, policy and domain event names are non-empty string literals, and no class under `domain/` carries a declaration. |
-| `declarations/barrel-current` | In the declared style with a barrel, `<context>.declarations.ts` holds exactly one `export *` per role file of its context: a role file cannot be silently left unregistered. |
+| `declarations/barrel-current` | In the declared style, the generated file of a context is what its tree says. With a barrel, `<context>.declarations.ts` holds exactly one `export *` per role file of its context, sorted by path, then one `injected(Class, [Tokens])` per declared class whose constructor takes something and whose decorator lists nothing, with the imports they need: a role file cannot be silently left unregistered, and a constructor cannot change without its list. Under discovery `<context>.dependencies.ts` holds the `injected` statements alone, may be absent while it would hold none, and a barrel left behind is reported. The message names the role file that is missing or the class whose list is stale; `ddd-ts-kit docs` rewrites the file. |
+| `declarations/constructor-injection` | In the declared style, the constructor of a declared class is the one statement of what it depends on. A class whose decorator lists no dependency (every decorator but `@Requires` and `@Public`, which declare messages) types each constructor parameter by exactly one class, type arguments aside (`Cache<Session>` names `Cache`): a port, a port of the kernel, another declared class, or an abstract class that types a value bound in the platform. Refused: a parameter that is optional, has a default value, is a rest parameter or is destructured; a parameter without a type, or typed by a union, an intersection, an array, a function, a literal, an object type, a qualified name or a type of the language; a parameter typed by an interface, a type alias, an enum or a class its file does not export, in the file or in the file of the project it is imported from (a name imported from a package is trusted: the compiler judges the generated file, which imports it as a value); a class that inherits its constructor from a class the project cannot read, a class of a package (a constructor inherited from a class of the project is followed and read there). Under `"stack.dependencies": "signature"`, what `init` writes, a decorator carries no dependency list when the constructor can be read: a list that repeats the constructor is reported and ESLint removes it; a list that differs is reported, since it wins at run time. Under `"stack.dependencies": "listed"`, what a config without the key means, lists are never reported, and a class that inherits a constructor nothing can read and lists nothing takes nothing, as it always did. |
 | `ports/abstract-class` | A port (`domain/repositories/*.repository.ts`, `application/ports/*.port.ts`) is an abstract class with abstract members only: no constructor, no private or protected member, no body, no initializer, `static readonly tokenKey` excepted. Never an interface. |
 | `ports/implements-never-extends` | An adapter implements its port and never extends it: the class declared with `@Repository`, `@Gateway` or `@Adapter`, the class given to `bind(Port).toClass(..)`, and any class of `infrastructure/`. |
 | `ports/no-token-constant` | A dependency is named by the class of its port: no `token(..)`, no symbol or string given to `bind`, `rebind`, `resolve`, `fake` or `override`, no UPPER_SNAKE constant in a dependency list, no `*.ports.ts` or `tokens.ts` file. |
-| `ports/no-concrete-dependency` | A dependency list names ports: nothing imported from `infrastructure/` or from `test/fakes/`. |
-| `ports/value-import` | A port named in a dependency list or given to `bind` is imported as a value, never with `import type`. |
+| `ports/no-concrete-dependency` | A dependency is named by its port: nothing imported from `infrastructure/` or from `test/fakes/` in a dependency list (of a decorator, of `.toClass(C, [..])`, of `.handledBy(H, [..])`), nor as the type of a constructor parameter of a declared class whose decorator lists nothing. |
+| `ports/value-import` | A port named in a dependency list or given to `bind` is imported as a value, never with `import type`. A port that only types a constructor parameter is not concerned: the generated file of the context imports the value. |
 | `clean/no-hash-private` | A class member is `private`, never `#name`. |
 | `clean/blank-lines` | A blank line before every `return` that is not alone in its block and between the logical blocks of a function (after a group of declarations, around `if`, `for`, `try`, around a multiline statement, around a method); no blank line at the edges of a block, never two in a row. Consecutive declarations and fields may stay together. |
 | `clean/braces` | Every `if`, `else`, `for`, `while` and `do` has braces, and its body is on its own lines; `else` follows the closing brace on the same line. A ternary, an arrow function returning an expression and a one-line object literal are not judged. |
 | `clean/formatted` | Every TypeScript, JavaScript and JSON file is laid out by the formatter of the project, Biome, at a line width of 120: `npm run format:check` reports nothing to change. Markdown and YAML are not formatted. |
-| `clean/one-export-per-file` | A source file exports one class, interface or function and is named after it in kebab-case. Its companions are the types of its own signature, a derived form it calls, or a closed family (a type with its constructors or combinators, the accessors of one private state); anything else is listed in `onePerFile.allow` with its reason. Entry files (`index.ts`, `<context>.declarations.ts`, subpath entries) only re-export. |
+| `clean/one-export-per-file` | A source file exports one class, interface or function and is named after it in kebab-case. Its companions are the types of its own signature, a derived form it calls, or a closed family (a type with its constructors or combinators, the accessors of one private state); anything else is listed in `onePerFile.allow` with its reason. Entry files (`index.ts`, subpath entries) only re-export. The generated files of a declared context (`<context>.declarations.ts`, `<context>.dependencies.ts`) are not judged here: `declarations/barrel-current` holds every line of them. |
 | `clean/file-size` | A file is at most 350 lines, tests included, and the limit is not configurable; files under a directory named `generated` and `.d.ts` files are exempt. |
 | `scheduling/job-triggers-use-case` | A job lives in `application/scheduling/*.job.ts`, implements `ScheduledJob` and only sends commands: no repository among its dependencies, no import of aggregates, entities, domain services or `infrastructure/`. |
 | `scheduling/job-name` | A job is named `<context>.<job-name>` by a string literal in lower-case kebab-case, the context being its own; its `systemActor` carries the same name; the name is unique in the project. |
@@ -191,7 +194,7 @@ Three analyzers and a formatter hold the rules, each where it is exact:
 | Analyzer | Holds | When |
 |---|---|---|
 | `ddd-ts-kit check` (zero dependency, text level) | alone, structure and project-wide facts: `tree/*`, `naming/*`, `language/*`, `config/*`, `context/no-cycle`, `test/spec-required`, `test/builder-required`, `test/coverage-governed`, `events/defined-in-published-language`, `composition/only-in-module`, `declarations/barrel-current`, `imports/alias-declared`, `imports/alias-only` and `imports/extension` in `test/` and `scripts/` as under the source root, the import that names a directory, the config side of `events/outbox-required` and of `governance/recorded-deviation` (decision records exist), and what must be unique in the project (consumer names, job names). It also holds a fast approximation of every code rule below except `domain/*` and `application/*`; of `clean/blank-lines` it holds the `return` and the padded block only, and it holds nothing of `clean/formatted` | at every file write (editor hook), in CI |
-| `@ddd-ts-kit/eslint-plugin` (syntax tree) | code: `layer/*`, the imports of `context/*` and `context/extractable`, `purity/*`, `clean/*` but `clean/formatted` (`clean/blank-lines` through two rules of `@stylistic/eslint-plugin` and `clean/braces` through `curly`, which its presets enable), `domain/*`, `application/*`, `authz/*`, `events/name-format`, `events/outbox-required`, `events/consumer-idempotent`, `aspects/*`, `tracing/*`, `domain-events/*`, `standard/*`, `ports/*`, `scheduling/*`, `declarations/role-declared`, `test/no-mocks`, `imports/alias-only` and `imports/extension` (which it also fixes), and the comment side of `governance/recorded-deviation`. `domain/*` and `application/*` are held by it alone. Of `domain-events/transactional-before-commit` it holds what one declared class shows; where the adapters of an `application/ports/` port live and the phase an explicit-style module file registers a handler in are held by `ddd-ts-kit check` alone. Authoritative when the two disagree | on staged files, in CI |
+| `@ddd-ts-kit/eslint-plugin` (syntax tree) | code: `layer/*`, the imports of `context/*` and `context/extractable`, `purity/*`, `clean/*` but `clean/formatted` (`clean/blank-lines` through two rules of `@stylistic/eslint-plugin` and `clean/braces` through `curly`, which its presets enable), `domain/*`, `application/*`, `authz/*`, `events/name-format`, `events/outbox-required`, `events/consumer-idempotent`, `aspects/*`, `tracing/*`, `domain-events/*`, `standard/*`, `ports/*`, `scheduling/*`, `declarations/role-declared`, `declarations/constructor-injection` (which it also fixes, removing a redundant list), `test/no-mocks`, `imports/alias-only` and `imports/extension` (which it also fixes), and the comment side of `governance/recorded-deviation`. `domain/*` and `application/*` are held by it alone. Of `declarations/constructor-injection` and of the constructor side of `ports/no-concrete-dependency` it holds what one file shows: an interface or a type alias declared in another file and a constructor inherited from another class are read by `ddd-ts-kit check`. Of `domain-events/transactional-before-commit` it holds what one declared class shows; where the adapters of an `application/ports/` port live and the phase an explicit-style module file registers a handler in are held by `ddd-ts-kit check` alone. Authoritative when the two disagree | on staged files, in CI |
 | Biome (formatter only: its linter and its import organiser are off) | `clean/formatted`: where every token goes, at a line width of 120, with the `biome.json` that `init` writes; it also removes the padding of a block and never leaves a body on the line of its braces, which completes `clean/blank-lines` and `clean/braces`. ESLint enables no rule that decides the same thing | on staged files, in CI |
 | dependency-cruiser (resolved import graph) | the same boundaries through barrels and re-exports, cycles between files, orphans, undeclared dependencies; its configuration is generated from the config by `ddd-ts-kit depcruise-config` | in CI |
 
@@ -280,14 +283,36 @@ the same way, by an abstract class with readonly members bound to a plain object
 
 **Declarations.** A class says what it is where it is written, and that is its
 registration: a command or a query carries `@Requires(permission)` or `@Public()`, its
-handler `@CommandHandler(Message, [ports])` or `@QueryHandler`, a reaction to an event
+handler `@CommandHandler(Message)` or `@QueryHandler(Message)`, a reaction to an event
 `@DomainEventHandler` or `@IntegrationEventHandler(definition, { consumer })`, a job
-`@Scheduled`, an adapter `@Repository`, `@Gateway` or `@Adapter` with the port it implements,
-a policy `@Policy`. The list names the ports the constructor receives, in order, and the
-compiler checks it: `@CommandHandler(PlaceOrder, [OrderRepository, Clock])`. Declarations are
-metadata of the kernel: they instantiate nothing and import no container. The composition
-root turns a context's declarations into its module, from the generated barrel or by
-discovery, so a context has no hand-maintained registration file. The domain declares
+`@Scheduled`, a projector `@Projection`, an adapter `@Repository`, `@Gateway` or `@Adapter`
+with the port it implements, a policy `@Policy`. Declarations are metadata of the kernel:
+they instantiate nothing and import no container. The composition root turns a context's
+declarations into its module, from the generated barrel or by discovery, so a context has no
+hand-maintained registration file.
+
+**Constructor injection.** The constructor signature of a declared class is the single
+statement of what it depends on: `constructor(private readonly orders: OrderRepository,
+private readonly clock: Clock) {}`, each parameter typed by one class, which is its
+injection token (`declarations/constructor-injection`). Nothing repeats it in the decorator.
+`ddd-ts-kit docs` (and every `generate`, and every start of `npm run dev`) reads the
+signatures from the sources and writes `injected(Class, [Tokens])` statements in the
+generated file of each context, `<context>.declarations.ts` or, under discovery,
+`<context>.dependencies.ts`; the composition root reads the lists from there, and the
+compiler checks each one against its constructor. The types are never asked of the compiler
+at run time: `emitDecoratorMetadata` exists only with legacy decorators compiled by `tsc` or
+swc, so it is absent with standard decorators and under `tsx` or esbuild, and it records
+`Object` for a port imported with `import type`. Three things keep the generated lists
+honest: `declarations/barrel-current` and `ddd-ts-kit docs --check` fail, naming the class,
+when a constructor changed without regeneration; `npm run dev` regenerates before every
+start and reload; and the composition root refuses, by name and before anything is built,
+a class that takes parameters and has no list, or a list of another length
+(`WiringError` `MISSING_DEPENDENCIES`, `DEPENDENCY_ARITY`). A list written as the last
+argument of a decorator, `@CommandHandler(PlaceOrder, [OrderRepository, Clock])`, is the
+form of a 0.1 project (`"stack.dependencies": "listed"`): it is still read, checked by the
+compiler against the constructor, and wins over the signature. The explicit style stays
+explicit: `.toClass(Adapter, [Ports])` and `.handledBy(Handler, [Ports])` list what a class
+is given, which is what a module file is for. The domain declares
 nothing: aggregates, entities, value objects and domain events carry no decorator. Decorators
 work in both decorator modes of TypeScript, so a project bound to the legacy mode by
 class-validator or NestJS uses the same ones. The explicit style (`<context>.module.ts`
@@ -301,7 +326,7 @@ report, by the first boundary that sees it, carrying the correlation id and the 
 nothing personal beyond the actor's identifier.
 
 **Scheduled jobs.** A job run by time is declared with
-`@Scheduled('<context>.<job>', { every } or { cron, timeZone }, [ports])` in
+`@Scheduled('<context>.<job>', { every } or { cron, timeZone })` in
 `application/scheduling/` and does one thing: it sends a command. It runs in its own
 execution scope (origin `schedule`, a system actor named after the job, a fresh correlation
 id), so it is logged, measured and audited like any other unit of work. Across several

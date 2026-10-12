@@ -83,7 +83,10 @@ to open.
    same contract suite (skills `ddd-ts-kit:persistence`, `ddd-ts-kit:cross-cutting`).
 
 Nothing to register: in the declared style the decorators written by the generator are the
-registration and the barrel is regenerated (skill `ddd-ts-kit:wiring` otherwise). Delete each
+registration and the barrel is regenerated (skill `ddd-ts-kit:wiring` otherwise). A handler
+that needs another port receives it in its constructor, typed by that port, and nothing is
+added to the decorator: `npx ddd-ts-kit docs` (or the next reload of `npm run dev`) reads the
+signature into the generated file of the context. Delete each
 marker as you resolve it.
 
 ## 4. Prove and close

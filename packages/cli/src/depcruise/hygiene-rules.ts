@@ -71,7 +71,7 @@ function orphanExceptions(config: Config): string[] {
   ];
 }
 
-/** Under discovery the role files of a declared context (handlers, publishers, jobs, adapters...) are loaded at startup, by no import. */
+/** Under discovery the role files of a declared context (handlers, publishers, jobs, adapters...) and its generated dependencies file are loaded at startup, by no import. */
 function discoveredFiles(config: Config): string[] {
   const { style, assembly } = config.stack;
 
@@ -81,5 +81,6 @@ function discoveredFiles(config: Config): string[] {
 
   return [
     `^${escapePattern(config.contextsDir)}/[^/]+/(application|infrastructure)/.*\\.(${DISCOVERED_SUFFIXES.join('|')})\\.ts$`,
+    `^${escapePattern(config.contextsDir)}/[^/]+/[^/]+\\.dependencies\\.ts$`,
   ];
 }

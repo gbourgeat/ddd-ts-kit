@@ -1,20 +1,32 @@
 import { specifierOf } from '../../alias/index.js';
-import { barrelFile, renderBarrel } from '../../declared/index.js';
+import {
+  barrelFile,
+  contextInjections,
+  dependenciesFile,
+  generatedDrift,
+  renderBarrel,
+  renderDependenciesFile,
+  renderInjections,
+} from '../../declared/index.js';
 import type { Flaw } from '../model/flaw.js';
 import type { Project } from '../model/project.js';
 import type { Rule } from '../model/rule.js';
+import { sourceAt } from '../project/source-at.js';
 import { isDeclaredStyle } from '../support/is-declared-style.js';
 import { reporter } from '../support/reporter.js';
 
 const REGENERATE =
-  'Run `ddd-ts-kit generate` again, or `ddd-ts-kit docs`, which rewrite it: the barrel is derived from the role files of the context and never edited by hand.';
+  'Run `ddd-ts-kit docs`, or `ddd-ts-kit generate` again, which rewrite it: the file is derived from the role files of the context and from their constructor signatures, and never edited by hand.';
 
-const EXPORT = /^export \* from '(.+)';$/;
+interface Judged {
+  readonly file: string;
+  readonly flaw: Flaw | undefined;
+}
 
 export const declarationsBarrelCurrent: Rule = {
   id: 'declarations/barrel-current',
   description:
-    'In the declared style assembled by barrel, <context>.declarations.ts exists and lists exactly the role files of its context.',
+    'In the declared style, the generated file of a context is what its tree says: <context>.declarations.ts lists exactly its role files and registers the dependency list read from each constructor; under discovery <context>.dependencies.ts registers the lists alone.',
   scope: 'project',
   run(project) {
     if (!isDeclaredStyle(project)) {
@@ -22,44 +34,66 @@ export const declarationsBarrelCurrent: Rule = {
     }
 
     const report = reporter(project, this.id);
-    const { contextsDir, contexts } = project.config;
 
     return project.contextsOnDisk
-      .filter((context) => contexts[context] !== undefined)
-      .flatMap((context) => {
-        const file = `${contextsDir}/${context}/${barrelFile(context)}`;
-        const flaw = judge(project, context, file);
-
-        return flaw === undefined ? [] : [report({ file, line: 1 }, flaw.message, flaw.fix)];
-      });
+      .filter((context) => project.config.contexts[context] !== undefined)
+      .flatMap((context) => judge(project, context))
+      .flatMap(({ file, flaw }) => (flaw === undefined ? [] : [report({ file, line: 1 }, flaw.message, flaw.fix)]));
   },
 };
 
-function judge(project: Project, context: string, file: string): Flaw | undefined {
-  const written = project.files.find((candidate) => candidate.path === file)?.text.replaceAll('\r\n', '\n');
+function judge(project: Project, context: string): Judged[] {
+  const directory = `${project.config.contextsDir}/${context}`;
+  const barrel = `${directory}/${barrelFile(context)}`;
+  const entries = entriesOf(project, context);
+  const injections = contextInjections((file) => sourceAt(project, file), directory, entries);
+  const injected = renderInjections(injections, (file) => specifierOf(project.config, file));
 
   if (project.config.stack.assembly === 'discovery') {
-    return written === undefined ? undefined : leftBehind(context);
+    const lists = { name: 'dependency lists', expected: renderDependenciesFile(injected), optional: true };
+
+    return [
+      { file: barrel, flaw: writtenIn(project, barrel) === undefined ? undefined : leftBehind(context) },
+      { file: `${directory}/${dependenciesFile(context)}`, flaw: stale(project, context, lists) },
+    ];
   }
 
-  const directory = `${project.config.contextsDir}/${context}`;
+  const expected = renderBarrel(entries, (entry) => specifierOf(project.config, `${directory}/${entry}`), injected);
 
-  const expected = renderBarrel(entriesOf(project, context), (entry) =>
-    specifierOf(project.config, `${directory}/${entry}`),
-  );
+  return [{ file: barrel, flaw: stale(project, context, { name: 'barrel', expected, optional: false }) }];
+}
 
-  if (written === expected) {
+interface Generated {
+  /** What the file is, in the message. */
+  readonly name: string;
+  readonly expected: string;
+  /** True when the file may be absent as long as it would register nothing. */
+  readonly optional: boolean;
+}
+
+function stale(project: Project, context: string, { name, expected, optional }: Generated): Flaw | undefined {
+  const file = name === 'barrel' ? barrelFile(context) : dependenciesFile(context);
+  const written = writtenIn(project, `${project.config.contextsDir}/${context}/${file}`);
+
+  if (written === expected || (written === undefined && optional && expected === 'export {};\n')) {
     return undefined;
   }
 
   if (written === undefined) {
     return {
-      message: `The barrel of "${context}" is missing: the composition root has nothing to assemble the context from.`,
+      message: `The ${name} of "${context}" ${name === 'barrel' ? 'is' : 'are'} missing: the composition root has nothing to ${name === 'barrel' ? 'assemble the context from' : 'inject its constructors from'}.`,
       fix: REGENERATE,
     };
   }
 
-  return { message: `The barrel of "${context}" is stale: ${difference(written, expected)}.`, fix: REGENERATE };
+  return {
+    message: `The ${name} of "${context}" ${name === 'barrel' ? 'is' : 'are'} stale: ${generatedDrift(written, expected)}.`,
+    fix: REGENERATE,
+  };
+}
+
+function writtenIn(project: Project, file: string): string | undefined {
+  return project.files.find((candidate) => candidate.path === file)?.text.replaceAll('\r\n', '\n');
 }
 
 function leftBehind(context: string): Flaw {
@@ -76,22 +110,4 @@ function entriesOf(project: Project, context: string): string[] {
   return project.contextEntries
     .filter((entry) => entry.startsWith(prefix) && !entry.endsWith('/'))
     .map((entry) => entry.slice(prefix.length));
-}
-
-/** The first thing that tells the written barrel from the expected one, in words. */
-function difference(written: string, expected: string): string {
-  const exportsOf = (barrel: string): string[] => barrel.split('\n').flatMap((line) => EXPORT.exec(line)?.[1] ?? []);
-  const missing = exportsOf(expected).find((specifier) => !exportsOf(written).includes(specifier));
-
-  if (missing !== undefined) {
-    return `it does not export ${missing}, so the class declared there is registered nowhere`;
-  }
-
-  const extra = exportsOf(written).find((specifier) => !exportsOf(expected).includes(specifier));
-
-  if (extra !== undefined) {
-    return `it exports ${extra}, which is not a role file of the context`;
-  }
-
-  return 'it holds something else than one `export * from` per role file, sorted by path';
 }

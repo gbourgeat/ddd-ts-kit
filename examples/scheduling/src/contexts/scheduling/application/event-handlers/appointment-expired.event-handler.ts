@@ -4,7 +4,7 @@ import { AppointmentExpired } from '@/contexts/scheduling/domain/events/appointm
 import { OfferFreedSlotCommand } from '@/contexts/scheduling/application/commands/offer-freed-slot/offer-freed-slot.command';
 
 /** When a requested appointment expires, the slot it held is offered to the waitlist of its calendar and day: after an offer nobody confirmed, to the next waiter. */
-@DomainEventHandler(AppointmentExpired, { name: 'scheduling.appointment.expired' }, [CommandBus])
+@DomainEventHandler(AppointmentExpired, { name: 'scheduling.appointment.expired' })
 export class AppointmentExpiredEventHandler implements DomainEventHandler<AppointmentExpired> {
   constructor(private readonly commands: CommandBus) {}
 

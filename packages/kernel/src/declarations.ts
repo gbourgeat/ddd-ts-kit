@@ -18,6 +18,8 @@ export { Repository } from './declarations/decorators/repository.js';
 export { type ProtectedOptions, Requires } from './declarations/decorators/requires.js';
 export { type ScheduledOptions, Scheduled } from './declarations/decorators/scheduled.js';
 export type { ClassDeclarator } from './declarations/dependencies/class-declarator.js';
+export type { DeclaredDependencies } from './declarations/dependencies/declared-dependencies.js';
+export type { DependenciesFromSignature } from './declarations/dependencies/dependencies-from-signature.js';
 export type { ConcreteDependency } from './declarations/dependencies/concrete-dependency.js';
 export type { Dependencies } from './declarations/dependencies/dependencies.js';
 export type { DependencyList } from './declarations/dependencies/dependency-list.js';
@@ -25,6 +27,8 @@ export type { DependencyMismatch } from './declarations/dependencies/dependency-
 export type { DependencyTokens } from './declarations/dependencies/dependency-tokens.js';
 export type { MatchingDependencies } from './declarations/dependencies/matching-dependencies.js';
 export type { StandIns } from './declarations/dependencies/stand-ins.js';
+export { injectedDependencies } from './declarations/injection/injected-dependencies.js';
+export { injected } from './declarations/injection/injected.js';
 export type { AccessDeclaration } from './declarations/model/access-declaration.js';
 export type { AuditedFieldHint } from './declarations/model/audited-field-hint.js';
 export type { BindingAspectInfo } from './declarations/model/binding-aspect-info.js';

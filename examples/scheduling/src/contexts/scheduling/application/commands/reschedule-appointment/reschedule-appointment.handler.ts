@@ -12,7 +12,7 @@ import { RescheduleAppointmentCommand } from '@/contexts/scheduling/application/
 /** An appointment and its buffer never last a day: what could overlap a slot is held within a day of its start. */
 const DAY = 24 * 60 * 60_000;
 
-@CommandHandler(RescheduleAppointmentCommand, [AppointmentRepository, CalendarRepository, Access, Clock])
+@CommandHandler(RescheduleAppointmentCommand)
 export class RescheduleAppointmentHandler implements CommandHandler<RescheduleAppointmentCommand> {
   private readonly scheduler = new SchedulerService();
 

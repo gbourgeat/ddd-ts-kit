@@ -1,18 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { createTestApplication, defineContextModule, fake } from '@ddd-ts-kit/di';
+import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
 import { platformTestModule } from '@/platform/platform-test.module';
 import { personRegisteredV1 } from '@/contexts/identity/published-language/index';
 import { Contacts } from '@/contexts/notification/application/ports/contacts.port';
-import { ContactsProjection } from '@/contexts/notification/application/projections/contacts.projection';
+import * as notificationDeclarations from '@/contexts/notification/notification.declarations';
 import { FakeContacts } from '@/contexts/notification/test/fakes/contacts.fake';
 
-/** The generated barrel does not take a projection yet: it joins the context here as it does in the platform. */
-const projections = defineContextModule({
-  name: 'notification',
-  register(builder) {
-    builder.include(ContactsProjection);
-  },
-});
+/** The projection alone, taken from the generated file of its context, which also says what its constructor is injected. */
+const projections = contextModule('notification', { ContactsProjection: notificationDeclarations.ContactsProjection });
 
 describe('Contacts, known from identity', () => {
   it('knows the contact of a person once identity announced their registration', async () => {

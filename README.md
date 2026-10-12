@@ -127,7 +127,9 @@ Rules have ids, a reason and a fix (`npx ddd-ts-kit explain <rule-id>`):
   declared handler), integration events declared once with a schema.
 - **Ports and wiring** (`ports/*`, `declarations/*`, `composition/*`): a port is an abstract
   class and its own injection token, an adapter implements it, a class declares its role with
-  a decorator and is assembled in one place.
+  a decorator, states what it depends on once, in its constructor signature (read from the
+  source, never from compiler metadata, so it holds in both decorator modes and under `tsx`),
+  and is assembled in one place.
 - **Clean code** (`clean/*`): stepdown order, small functions and files, one export per
   file, no flag argument, no commented-out code, no noise comment, no escape hatch.
 - **Cross-cutting concerns** (`aspects/*`, `tracing/*`, `standard/*`, `scheduling/*`):

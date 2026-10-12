@@ -199,11 +199,7 @@ function arrange() {
   const agenda = new FakeAgenda();
 
   const application = createTestApplication({
-    modules: [
-      platformTestModule,
-      contextModule('scheduling', { ...schedulingDeclarations, AgendaProjection }),
-      authorization,
-    ],
+    modules: [platformTestModule, contextModule('scheduling', schedulingDeclarations), authorization],
     fakes: [
       fake(Agenda, agenda),
       fake(AppointmentRepository, new FakeAppointmentRepository()),

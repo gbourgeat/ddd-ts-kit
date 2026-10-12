@@ -31,7 +31,7 @@ import { CommandBus, systemActor } from '@ddd-ts-kit/kernel';
 import { Scheduled, type JobExecution, type ScheduledJob } from '@ddd-ts-kit/kernel/declarations';
 import { SendPaymentReminders } from '@/contexts/billing/application/commands/send-payment-reminders/send-payment-reminders.command';
 
-@Scheduled('billing.send-payment-reminders', { cron: '0 7 * * 1-5', timeZone: 'Europe/Paris' }, [CommandBus])
+@Scheduled('billing.send-payment-reminders', { cron: '0 7 * * 1-5', timeZone: 'Europe/Paris' })
 export class SendPaymentRemindersJob implements ScheduledJob {
   constructor(private readonly commands: CommandBus) {}
 
@@ -47,10 +47,10 @@ export class SendPaymentRemindersJob implements ScheduledJob {
 - **The name** is `<context>.<job-name>`, in lower case, written as a string literal and unique
   in the application: it is the system actor the job runs as, the key of its lock, its label in
   the metrics and the key of its settings. It survives the renaming of the class.
-- **The dependency list** names the ports of the constructor parameters in order, and the
-  compiler checks it, as for every declaration of the kit. A port is an abstract class, and the
-  class is what is listed: `[CommandBus]`. A job receives buses and ports. It does not receive
-  a repository: what it would do with one is a use case.
+- **Its dependencies** are what its constructor takes, each parameter typed by a port, as for
+  every declaration of the kit: `constructor(private readonly commands: CommandBus) {}`, with
+  no list in the decorator. A job receives buses and ports. It does not receive a repository:
+  what it would do with one is a use case.
 - **`run(execution)`** receives:
 
   | Field | |

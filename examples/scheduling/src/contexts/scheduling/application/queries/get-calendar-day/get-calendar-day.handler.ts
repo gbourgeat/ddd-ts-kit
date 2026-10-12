@@ -15,7 +15,7 @@ const PAGE = 100;
 const END_OF_DAY = 24 * 60;
 const everyone: ReadScope = { kind: 'all' };
 
-@QueryHandler(GetCalendarDayQuery, [CalendarRepository, Agenda, Access])
+@QueryHandler(GetCalendarDayQuery)
 export class GetCalendarDayHandler implements QueryHandler<GetCalendarDayQuery> {
   constructor(
     private readonly calendarRepository: CalendarRepository,

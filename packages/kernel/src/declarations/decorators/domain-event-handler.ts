@@ -1,7 +1,8 @@
 import type { DomainEventPhase } from '../../application/events/domain-event-phase.js';
 import type { DomainEvent } from '../../domain/domain-event.js';
 import type { ClassDeclarator } from '../dependencies/class-declarator.js';
-import type { Dependencies } from '../dependencies/dependencies.js';
+import type { DeclaredDependencies } from '../dependencies/declared-dependencies.js';
+import type { DependenciesFromSignature } from '../dependencies/dependencies-from-signature.js';
 import type { DomainEventHandler as DomainEventHandlerShape } from '../model/domain-event-handler.js';
 import type { DomainEventType } from '../model/domain-event-type.js';
 import { record } from '../registry/record.js';
@@ -27,14 +28,14 @@ export type DomainEventHandler<E extends DomainEvent> = DomainEventHandlerShape<
 /**
  * A handler of a domain event of its own context, run at the end of the unit of work that
  * recorded the event, before the commit:
- * `@DomainEventHandler(OrderPaid, { name: 'ordering.order.paid' }, [CommandBus])`. One whose
+ * `@DomainEventHandler(OrderPaid, { name: 'ordering.order.paid' })`. One whose
  * effect is outside the transaction runs after it:
- * `@DomainEventHandler(OrderPaid, { name: 'ordering.order.paid', phase: 'after-commit' }, [Cache])`.
+ * `@DomainEventHandler(OrderPaid, { name: 'ordering.order.paid', phase: 'after-commit' })`.
  */
 export function DomainEventHandler<
   E extends DomainEvent,
   const Name extends string,
-  const D extends Dependencies = readonly [],
+  const D extends DeclaredDependencies = DependenciesFromSignature,
 >(
   event: DomainEventType<E>,
   options: DomainEventHandlerOptions<Name> & Named<Name, 'name'>,
@@ -50,7 +51,7 @@ export function DomainEventHandler<
       name,
       phase,
       event,
-      dependencies: dependencies ?? [],
+      dependencies,
       pair: (use) => use(event, target),
     });
   };

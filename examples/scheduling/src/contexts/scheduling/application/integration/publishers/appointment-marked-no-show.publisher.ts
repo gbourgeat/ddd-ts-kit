@@ -3,10 +3,7 @@ import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
 import { AppointmentMarkedNoShow } from '@/contexts/scheduling/domain/events/appointment-marked-no-show.event';
 import { appointmentMarkedNoShowV1 } from '@/contexts/scheduling/published-language/appointment-marked-no-show.v1.integration-event';
 
-@DomainEventHandler(AppointmentMarkedNoShow, { name: 'scheduling.appointment.marked-no-show' }, [
-  IntegrationEventPublisher,
-  IdGenerator,
-])
+@DomainEventHandler(AppointmentMarkedNoShow, { name: 'scheduling.appointment.marked-no-show' })
 export class AppointmentMarkedNoShowPublisher implements DomainEventHandler<AppointmentMarkedNoShow> {
   constructor(
     private readonly publisher: IntegrationEventPublisher,

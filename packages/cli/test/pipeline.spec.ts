@@ -191,7 +191,7 @@ describe('the knip config init writes', () => {
 
   it('enters by the role files under discovery, jobs and publishers included, with or without a broker', () => {
     const discovered =
-      'src/contexts/*/{published-language/index,{application,infrastructure}/**/*.{command,query,handler,integration-handler,event-handler,publisher,policy,job,repository,gateway,adapter}}.ts';
+      'src/contexts/*/{published-language/index,*.dependencies,{application,infrastructure}/**/*.{command,query,handler,integration-handler,event-handler,publisher,policy,job,projection,repository,gateway,adapter}}.ts';
 
     expect(entries(initProject('--assembly', 'discovery', ...BILLING))).toContain(discovered);
     expect(entries(initProject('--assembly', 'discovery', '--broker', 'kafka', ...BILLING))).toContain(discovered);

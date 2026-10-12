@@ -9,7 +9,7 @@ import { BookAppointmentCommand } from '@/contexts/scheduling/application/comman
 /** An appointment and its buffer never last a day: what could overlap a slot is held within a day of its start. */
 const DAY = 24 * 60 * 60_000;
 
-@CommandHandler(BookAppointmentCommand, [AppointmentRepository, CalendarRepository, IdGenerator, Clock])
+@CommandHandler(BookAppointmentCommand)
 export class BookAppointmentHandler implements CommandHandler<BookAppointmentCommand> {
   private readonly scheduler = new SchedulerService();
 

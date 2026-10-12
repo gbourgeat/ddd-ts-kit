@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { barrelFile } from '../../declared/index.js';
+import { barrelFile, dependenciesFile } from '../../declared/index.js';
 import type { ExportVerdict } from '../exports/export-verdict.js';
 import { judgeExports } from '../exports/judge-exports.js';
 import { kebabCaseOf } from '../exports/kebab-case-of.js';
@@ -34,6 +34,10 @@ export const cleanOneExportPerFile: Rule = {
         return [];
       }
 
+      if (isGenerated(file)) {
+        return [];
+      }
+
       return isEntry(file) ? declaredInEntry(file) : judged(file, project);
     });
   },
@@ -51,18 +55,21 @@ function isJudged(file: SourceFile, project: Project): boolean {
   return file.path.startsWith(`${root}/`) || segments.slice(0, -1).includes(path.posix.basename(root));
 }
 
-/** `index.ts` at any depth, and the generated barrel of a declared context. */
-function isEntry(file: SourceFile): boolean {
+/** The generated files of a declared context: `declarations/barrel-current` holds every line of them. */
+function isGenerated(file: SourceFile): boolean {
   const name = path.posix.basename(file.path);
   const { location } = file;
 
-  return (
-    /^index\.[cm]?ts$/.test(name) ||
-    (location.area === 'context' &&
-      location.layer === 'root' &&
-      location.inside.length === 0 &&
-      name === barrelFile(location.context))
-  );
+  if (location.area !== 'context' || location.layer !== 'root' || location.inside.length > 0) {
+    return false;
+  }
+
+  return name === barrelFile(location.context) || name === dependenciesFile(location.context);
+}
+
+/** `index.ts` at any depth. */
+function isEntry(file: SourceFile): boolean {
+  return /^index\.[cm]?ts$/.test(path.posix.basename(file.path));
 }
 
 /** Everything of an entry file that is not a re-export, an import without binding or the empty `export {};`. */

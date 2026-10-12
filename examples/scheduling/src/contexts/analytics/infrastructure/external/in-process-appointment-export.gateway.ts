@@ -5,7 +5,7 @@ import { AppointmentExportGateway } from '@/contexts/analytics/application/ports
 import type { Outcome } from '@/contexts/analytics/application/ports/outcome-register.port';
 
 // TODO(platform): when scheduling runs as its own service, turn this class into the remote adapter of AppointmentExportGateway (an HTTP or RPC client with a timeout, retries and a fallback): the declaration stays, nothing else changes.
-@Gateway(AppointmentExportGateway, [AppointmentExportContract])
+@Gateway(AppointmentExportGateway)
 export class InProcessAppointmentExportGateway implements AppointmentExportGateway {
   constructor(readonly upstream: AppointmentExportContract) {}
 

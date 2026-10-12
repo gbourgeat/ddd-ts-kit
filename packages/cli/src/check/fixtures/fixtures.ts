@@ -4,6 +4,7 @@ import { AUTHZ_FIXTURES } from './authz-fixtures.js';
 import { CLEAN_FIXTURES } from './clean-fixtures.js';
 import { COMPOSITION_FIXTURES } from './composition-fixtures.js';
 import { CONFIG_FIXTURES } from './config-fixtures.js';
+import { CONSTRUCTOR_INJECTION_FIXTURES } from './constructor-injection-fixtures.js';
 import { CONSUMER_FIXTURES } from './consumer-fixtures.js';
 import { CONTEXT_FIXTURES } from './context-fixtures.js';
 import { COVERAGE_FIXTURES } from './coverage-fixtures.js';
@@ -40,6 +41,7 @@ export const FIXTURES: readonly Fixture[] = [
   ...CLEAN_FIXTURES,
   ...COMPOSITION_FIXTURES,
   ...CONFIG_FIXTURES,
+  ...CONSTRUCTOR_INJECTION_FIXTURES,
   ...CONSUMER_FIXTURES,
   ...CONTEXT_FIXTURES,
   ...COVERAGE_FIXTURES,

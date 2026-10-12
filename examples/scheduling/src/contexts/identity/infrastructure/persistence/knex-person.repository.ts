@@ -10,7 +10,7 @@ import type { PersonColumns, PersonRow } from '@/contexts/identity/infrastructur
 
 type VersionedPerson = PersonColumns & { readonly version: number };
 
-@Repository(PersonRepository, [KnexContext, ExecutionScope, Clock])
+@Repository(PersonRepository)
 export class KnexPersonRepository implements PersonRepository {
   constructor(
     private readonly database: KnexContext,

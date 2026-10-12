@@ -109,6 +109,12 @@ Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-ki
 |---|---|---|---|---|---|---|---|
 | GET | `/practices/:practiceId/occupancy` | `searchOccupancy` | `SearchOccupancy` | `occupancy.read` | params: `SearchOccupancyParams`, query | 200: `page of SearchOccupancyLine` | `UNAUTHORIZED`, `FORBIDDEN` |
 
+### Projections
+
+| Projection | Class | Applies |
+|---|---|---|
+| `analytics.outcomes` | `OutcomesProjection` | `appointmentBookedV1`, `appointmentConfirmedV1`, `appointmentRescheduledV1`, `appointmentCancelledV1`, `appointmentExpiredV1`, `appointmentCompletedV1`, `appointmentMarkedNoShowV1` |
+
 ### Ports
 
 | Port | Kind | Adapters |

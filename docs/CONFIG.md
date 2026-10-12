@@ -35,7 +35,8 @@ deviation.
     "errors": "none",
     "logger": "stdout",
     "style": "declared",
-    "assembly": "barrel"
+    "assembly": "barrel",
+    "dependencies": "signature"
   },
   "contexts": {
     "billing": { "classification": "core", "upstreams": [] },
@@ -130,10 +131,17 @@ outside the list stops every command with the list of accepted values.
 | `stack.logger` | `stdout`, `pino`, `winston`: what implements the kernel `Logger` port | `stdout` |
 | `stack.style` | `declared`: each class declares what it is with a decorator and a context has no module file; `explicit`: every binding is written in `<context>.module.ts`. `init` accepts `declared` with `di: tsyringe` only | `declared` with `di: tsyringe`, `explicit` otherwise |
 | `stack.assembly` | `barrel`, `discovery`: how a declared context reaches the composition root, one generated `<context>.declarations.ts` or a scan at startup. `init` accepts the flag in the declared style only | `barrel` |
+| `stack.dependencies` | `signature`, `listed`: where a declared class states what it depends on. `signature`: in its constructor and nowhere else; `ddd-ts-kit docs` reads the signatures into the generated file of each context, and a list left in a decorator is reported (`declarations/constructor-injection`, which ESLint fixes). `listed`: in the last argument of its decorator, as 0.1 wrote it. Both forms run in either: a class that lists is given its list, a class that does not is given what its constructor takes. `init` accepts the flag in the declared style only | `signature` |
 
-A config file that omits a `stack` key is read with the same defaults, with one exception:
+A config file that omits a `stack` key is read with the same defaults, with two exceptions:
 without `stack.style` the project is read as `explicit`, whatever `stack.di` says, because
-such a file was written before the declared style existed.
+such a file was written before the declared style existed; and without `stack.dependencies`
+a declared project is read as `listed`, because such a file was written when every decorator
+listed its dependencies. A 0.1 project therefore keeps working untouched after it upgrades
+the packages. To move it to constructor signatures: set `"dependencies": "signature"`, run
+`npx eslint . --fix` (the rule removes every list that repeats its constructor and reports
+the ones that differ), then `npx ddd-ts-kit docs`, and add
+`--import ddd-ts-kit/dist/refresh-declarations.js` to the `dev` script as `init` writes it.
 
 ## Contexts
 

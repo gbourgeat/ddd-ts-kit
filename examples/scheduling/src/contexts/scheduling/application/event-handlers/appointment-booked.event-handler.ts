@@ -3,7 +3,7 @@ import { AppointmentBooked } from '@/contexts/scheduling/domain/events/appointme
 import { SchedulingRelationships } from '@/contexts/scheduling/application/ports/scheduling-relationships.port';
 
 /** When an appointment is booked or requested, the platform learns whose it is and which calendar holds it: rights on it follow. */
-@DomainEventHandler(AppointmentBooked, { name: 'scheduling.appointment.booked' }, [SchedulingRelationships])
+@DomainEventHandler(AppointmentBooked, { name: 'scheduling.appointment.booked' })
 export class AppointmentBookedEventHandler implements DomainEventHandler<AppointmentBooked> {
   constructor(private readonly relationships: SchedulingRelationships) {}
 

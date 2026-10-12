@@ -24,7 +24,10 @@ Loaded with the files they apply to, from `.claude/rules/`: `domain.md` (`domain
 
 Create every file of a role with `npx ddd-ts-kit generate <kind> ... --json`, then fill the `TODO(domain)` places it lists; never write one by hand, never restructure what a generator wrote.
 {{#if assembly.barrel}}
-Never edit `<context>.declarations.ts`: `generate` and `docs` rewrite it.
+Never edit `<context>.declarations.ts`: `generate`, `docs` and `npm run dev` rewrite it, from the role files and from the constructor signatures (it registers what each constructor is injected). After changing a constructor by hand, `npx ddd-ts-kit docs`.
+{{/if}}
+{{#if assembly.discovery}}
+Never edit `<context>.dependencies.ts`: `generate`, `docs` and `npm run dev` rewrite it from the constructor signatures (it registers what each constructor is injected). After changing a constructor by hand, `npx ddd-ts-kit docs`.
 {{/if}}
 Never edit `openapi/openapi.json`, `docs/integration/asyncapi.json`, `docs/integration/event-catalog.md`, `.dependency-cruiser.cjs` or the generated sections of a `CONTEXT.md`: change the code or the config, then `npm run docs:generate`, `npx ddd-ts-kit docs` and `npx ddd-ts-kit depcruise-config --write`.
 Imports: a file of the project is imported by its alias from the project root, never by a relative path, the same directory included: `{{alias.source}}/...` for `{{config.sourceRoot}}/`, `{{alias.test}}/...` for `test/`, `{{alias.scripts}}/...` for `scripts/`, {{#if alias.extensionless}}never ending in `.js` or `.ts`, and naming a file, never a directory{{/if}}{{#unless alias.extensionless}}always ending in `.js`{{/unless}} (`imports/alias-only`, `imports/extension`; `npm run lint:fix` rewrites a relative import and a wrong ending). The alias is declared once, under `paths` in `tsconfig.json`, from `importAlias` of `ddd-ts-kit.config.json`, and the ending follows `importExtension`: never add a second entry or mapping, never change `module` or `moduleResolution` in `tsconfig.json`, and never compile without `npm run build`, which rewrites the aliases of `dist/` into relative paths ending in `.js` for Node (`imports/alias-declared`).
