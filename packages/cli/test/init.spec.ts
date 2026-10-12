@@ -207,13 +207,22 @@ describe('init, the choices it records and the ones it refuses', () => {
     const report = cli(root, 'init', '--context', 'billing:core', '--json').json();
     const readme = read(root, 'README.md');
 
-    const steps = ['1. Define the vocabulary', '2. Model', '3. Scaffold', '4. Test', '5. Verify'].map((step) =>
-      readme.indexOf(step),
-    );
+    const steps = [
+      '1. **Discover the domain**',
+      '2. **Find the bounded contexts**',
+      '3. **Write the glossaries**',
+      '4. **Draw the context map**',
+      '5. **Bootstrap**',
+      '6. **Plan the slices**',
+      '7. **Build slice by slice**',
+      '8. **Pass the gate**',
+      '9. **Document**',
+    ].map((step) => readme.indexOf(step));
 
     expect(stringsAt(report, 'next')[0]).toMatch(/^src\/contexts\/billing\/CONTEXT\.md:\d+$/);
     expect(String(jsonAt(report, 'todos', '0', 'text'))).toContain('define the ubiquitous language first');
     expect(steps.every((position, index) => position > (steps[index - 1] ?? -1))).toBe(true);
+    expect(readme).toContain('Follow them in order: it is the path the kit supports');
   });
 });
 

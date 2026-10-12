@@ -165,6 +165,19 @@ describe('what init says to do next', () => {
 
     expect(stringsAt(result.json(), 'notes')).toContain(note);
   });
+
+  it('then the recommended steps, in order, with the command that says where the project stands', () => {
+    const notes = stringsAt(cli(tempDir('note'), 'init', '--json').json(), 'notes');
+    const next = notes.find((note) => note.startsWith('Next, follow the recommended steps in order')) ?? '';
+
+    expect(next).toMatch(
+      /discover the domain, find the bounded contexts, write their glossaries and draw the context map before any code/,
+    );
+
+    expect(next).toContain('`/ddd-ts-kit:start`');
+    expect(next).toContain('`pnpm exec ddd-ts-kit status` says which step is next');
+    expect(notes.indexOf(next)).toBe(notes.indexOf('Run `pnpm install`, then `pnpm run verify`.') + 1);
+  });
 });
 
 function context(root: string, name: string, ...more: string[]): void {

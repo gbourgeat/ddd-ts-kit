@@ -18,6 +18,7 @@ import { workerScopeCommand } from './commands/worker-scope.js';
 import { CliError } from './cli-error.js';
 import { KINDS } from './generate/kinds.js';
 import { kindsHelp } from './generate/kinds-help.js';
+import { referenceText } from './help/reference-text.js';
 import { VERSION } from './version.js';
 
 const COMMANDS: Readonly<Record<string, Command>> = {
@@ -40,64 +41,6 @@ const COMMANDS: Readonly<Record<string, Command>> = {
   rules: rulesCommand,
   explain: explainCommand,
 };
-
-const USAGE = `Usage
-  ddd-ts-kit init [--http express|fastify|nest|none] [--validation zod|class-validator|standard-schema|none]
-                  [--di tsyringe|nest|manual] [--tests vitest|jest]
-                  [--orm drizzle|knex|prisma|typeorm|custom|none] [--database postgres|mysql|sqlite|none]
-                  [--events in-memory|outbox] [--docs-ui swagger|scalar|redoc|none]
-                  [--ci github|gitlab|both|none] [--authn jwt|keycloak|none] [--authz rbac|abac|rebac|custom]
-                  [--broker none|rabbitmq|kafka|nats|redis|custom] [--cache none|redis] [--audit on|off]
-                  [--errors none|sentry] [--logger stdout|pino|winston] [--style declared|explicit] [--assembly barrel|discovery]
-                  [--dependencies signature|listed] [--refusals factories|classes]
-                  [--routes controllers|functions]
-                  [--package-manager npm|pnpm] [--allow-no-outbox "<reason>"] [--import-alias '$<name>/']
-                  [--import-extension none|js]
-                  [--context <name>:<core|supporting|generic>]... [--dry-run] [--force]
-  ddd-ts-kit generate <kind> ... [--term "<Term>=<meaning>"]... [--allow-name] [--local-only] [--dry-run] [--force]     (alias: g)
-  ddd-ts-kit generate --help --json
-  ddd-ts-kit list [--context <name>]
-  ddd-ts-kit describe <context>
-  ddd-ts-kit status
-  ddd-ts-kit todo [<context>]
-  ddd-ts-kit worker-scope <context> [--worktree <path>] [--branch <name>] [--dry-run]
-  ddd-ts-kit docs [--check]
-  ddd-ts-kit depcruise-config [--check|--write]
-  ddd-ts-kit build-aliases [--project <tsconfig>]
-  ddd-ts-kit error-factories --plan | --apply [--dry-run]
-  ddd-ts-kit controllers [<context>] [--dry-run]
-  ddd-ts-kit affected [--base <git-ref>] [--head <git-ref>] [--format text|json|github|env]
-  ddd-ts-kit check [paths...] [--rule <id>]... [--format text|json|github|gitlab] [--changed-since <git-ref>] [--self]
-  ddd-ts-kit check --clean-only <dir>... [--rule <id>]... [--format text|json|github]
-  ddd-ts-kit check --commit-size [--staged] [--strict]
-  ddd-ts-kit check-file <path>
-  ddd-ts-kit rules
-  ddd-ts-kit explain <rule-id>
-
-Every command accepts --json (machine-readable output) and --cwd <dir> (project root).`;
-
-const NOTES = `  affected         what a pull request has to run: the contexts a change set reaches through the context
-                   map (a changed context and the contexts downstream of it), as filters for the test
-                   runner and the linter; everything when a shared path changed or without --base
-  build-aliases    after the compiler: rewrites the import aliases left in the emitted .js and .d.ts files
-                   into relative paths, so that plain node runs the output (tsconfig.build.json by default)
-  error-factories  moves a project from one class per error to static factories on one error class per
-                   concept: --plan writes error-factories.plan.json, where each class is given its concept;
-                   --apply follows it (classes, specs, every usage, "stack.refusals" in the config)
-  controllers      moves the function routes of a project, or of one context, to controller classes: each
-                   <name>.route.ts becomes <resource>/<name>/<name>.controller.ts behind the route group of
-                   its resource, its schema files and its spec follow; a context is turned whole or not at all
-  describe         one context as facts: use cases, routes, events, ports, policies, gateways, dependencies
-  status           the next step of docs/architecture/plan.md, the slices of docs/architecture/slices.md by
-                   status and by owner, and the TODO(domain), TODO(platform) and it.todo left in each context
-  todo             those markers as file:line, in the project or in one context
-  worker-scope     a git worktree on the branch build/<context> (by default ../<project>-<context>), its
-                   .ddd-ts-kit/worker.json, and the briefing of the worker of that context
-  --commit-size    the files and lines about to be committed against "commit" in the config (20 files and
-                   600 lines by default, generated files not counted); --staged reads the index only;
-                   advisory, --strict exits 1 when over
-  --local-only     generate refuses, and writes nothing, when the kind would write outside its context;
-                   "generate --help --json" says which kinds do`;
 
 const processIo: Io = {
   out: (text) => void process.stdout.write(`${text}\n`),
@@ -158,16 +101,7 @@ function helpFor(argv: readonly string[]): string {
 }
 
 function help(): string {
-  const kinds = KINDS.map(
-    (kind) => `  ${kind.usage}${kind.aliases.length > 0 ? `   (alias: ${kind.aliases.join(', ')})` : ''}`,
-  );
-
   return `ddd-ts-kit ${VERSION}: bootstrap, scaffold and verify DDD and Clean Architecture TypeScript projects.
 
-${USAGE}
-
-${NOTES}
-
-Kinds
-${kinds.join('\n')}`;
+${referenceText()}`;
 }

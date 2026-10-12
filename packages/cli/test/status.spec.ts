@@ -31,6 +31,7 @@ describe('status', () => {
 
     expect(status.code).toBe(0);
     expect(status.stdout).toContain('Next: no docs/architecture/plan.md');
+    expect(status.stdout).toContain('The recommended path starts with step 1, discover the domain, before any code');
     expect(status.stdout).toContain('Slices: no docs/architecture/slices.md');
     expect(cli(root, 'status', '--json').json()).toMatchObject({ next: null, slices: null });
   });

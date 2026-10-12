@@ -36,6 +36,23 @@ flowchart LR
 | 8. Verify | the change | a green gate | `npm run verify`, skill `quality-gate` | every check passes without a new suppression |
 | 9. Document | the diff of the generated documents | context map, the `## Reference` of each `CONTEXT.md`, OpenAPI, AsyncAPI, catalog, ADRs | `ddd-ts-kit docs`, `npm run docs:generate`, skill `document` | `docs --check` reports nothing stale |
 
+**This is the supported path: follow it in order.** The README of the kit and the README that
+`init` writes repeat the steps; [Which command, when](commands.md) gives the command or skill of
+each moment. A step skipped is paid for later, and the price is known:
+
+| Skipped | What goes wrong |
+|---|---|
+| 1. Discover | the model copies the screens or the tables; the policies between contexts are found in production |
+| 2. Contexts | the boundaries follow the database schema, every rename crosses contexts, and one change needs several teams |
+| 3. Glossaries | written after the code, the glossary describes the code instead of the business; the generators refuse the names until it exists |
+| 4. Context map | the first integration is a direct import, which the checker refuses (`context/published-language-only`, `context/declared-relationship`), and it is rewritten as an event late |
+| 5. Bootstrap by hand | the files the generators register into are missing; the gate is not green before the first line, so nobody knows which change broke it |
+| 6. Plan | the work comes as layers (all entities, then all handlers): nothing is demonstrable, and parallel workers collide |
+| 7 to 9. Slice by slice, gate, document | a large unverified change, generated documents edited by hand, a red pipeline nobody can bisect |
+
+Skipping is sometimes right (a generic context needs no event storming); then it is a decision
+of the project owner, recorded as `skipped` with its reason in `docs/architecture/plan.md`.
+
 Steps 1 to 7 are the ones the `start` skill of the plugin conducts (`/ddd-ts-kit:start`, run
 by a person). It keeps the state of the project in `docs/architecture/plan.md` (steps done,
 decisions, open questions, and a `Next:` line), so a later session resumes from one file, and
@@ -263,6 +280,7 @@ documentation with the code that changed it ([Commit discipline](commit-discipli
 ## See also
 
 - [Context map: a worked example](../concepts/context-map-worked-example.md)
+- [Which command, when](commands.md)
 - [Team workflow](team-workflow.md)
 - [Parallel work](parallel-work.md)
 - [Commit discipline](commit-discipline.md)

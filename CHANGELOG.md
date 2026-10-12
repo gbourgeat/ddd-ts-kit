@@ -4,6 +4,53 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
+## Unreleased
+
+**Migrations are named by a timestamp and what they do.** The generated `drizzle.config.ts`
+sets `migrations: { prefix: 'timestamp' }`, and every `db:generate` requires a name:
+`npm run db:generate add-invoices` writes `migrations/20261012093000_add-invoices.sql` (Drizzle),
+`migrations/20261012093000_add-invoices.js` (Knex, from its ES module stub now set in
+`knexfile.js`; the former default stub wrote CommonJS, which an ES module project cannot load),
+`prisma/migrations/20261012093000_add_invoices/` (Prisma); TypeORM takes the path
+(`npm run db:generate migrations/add-invoices`) and fixes its own form,
+`<milliseconds>-add-invoices.ts`. The first Knex migration of a new project is
+`00000000000000_initial.js`. Timestamps keep two branches from writing the same file, but
+drizzle-kit's journal still conflicts, and its migrator applies only the entries newer than the
+last one a database recorded: a migration merged after a later one was deployed is skipped
+without an error (measured). The new rule `persistence/migration-history` reports a migration
+without its number, two sharing one, a journal that does not match the files, entries out of
+the order they were generated in, and two snapshots generated from the same parent; the merge
+procedure is in `docs/tools/persistence.md`. Projects initialised before keep their
+`0001_initial.js`: an applied migration is never renamed.
+
+**The generated pipelines use free tools only.** CodeQL and dependency review (free on public
+GitHub repositories, paid on private ones) and GitLab's SAST, Secret Detection (findings in a
+merge request on Ultimate only) and Dependency Scanning (Ultimate) are no longer written by
+default: `init --ci-extras codeql,dependency-review,gitlab-sast,gitlab-secret-detection,gitlab-dependency-scanning`
+adds the ones a team wants, recorded as `ci.extras` in the config. `npm audit` and gitleaks
+still block a vulnerable dependency or a committed secret on every plan. The table of every
+tool, its class and its source is in `pipeline/README.md`. To keep a removed job in a project
+initialised before: `init --force --ci-extras <names>`.
+
+**The contracts are YAML by default, and the OpenAPI contract can be split.**
+`npm run docs:generate` writes `openapi/openapi.yaml` and `docs/integration/asyncapi.yaml`
+(`"openapi": { "format": "json" }` keeps JSON), with a deterministic YAML writer of the CLI
+(`ddd-ts-kit/dist/contracts.js`) that the scripts of the project import. `openapi.documents`
+splits the contract by route groups, contexts and tags into self-contained documents,
+`openapi/<name>.yaml`; a route in no document stops the generation; `/docs` offers a selector
+between them. `@ddd-ts-kit/http` adds `routesByDocument`, `openApiDocumentsRoutes` and the
+`groups` of a controller route. A project initialised before: compare `scripts/openapi.ts`,
+`scripts/events.ts` and `src/platform/http/with-documentation.ts` with what `init --force`
+writes, run `npx ddd-ts-kit docs` (it writes `src/platform/http/openapi-documents.ts`), then
+`npm run docs:generate`, which replaces the JSON contracts.
+
+**Onboarding.** The root README starts with the recommended steps; `init` ends with the next
+step of the method, the README and `CLAUDE.md` it writes list the steps, `status` points at
+step 1 when there is no plan, and the `start` and `bootstrap` skills say plainly when a step is
+skipped. A new guide, `docs/guides/commands.md`, gives the command or skill for each moment of a
+project and the reference of every command and flag, generated from the help of the CLI and
+held to it by a test.
+
 ## 0.4.0
 
 **A route is a controller class with one method.** One class per route; its decorator is the

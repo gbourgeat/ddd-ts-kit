@@ -39,8 +39,14 @@ Stack hints given: `$ARGUMENTS`
 
 Read `docs/architecture/plan.md`, `contexts.md`, `glossary.md` and `context-map.md` there when
 they exist, and `package.json` when there is one. An existing project is adopted, never
-overwritten: the CLI skips existing files unless `--force`. Without strategic artefacts, say
-that `/ddd-ts-kit:start` produces them first and ask whether to go on without.
+overwritten: the CLI skips existing files unless `--force`.
+
+The bootstrap is step 5 of the supported path. Without the strategic artefacts, say it plainly:
+steps 1 to 4 (discovery, contexts, glossaries, context map) are being skipped, the contexts
+would be drawn without an argued boundary and named before their language exists, and
+`/ddd-ts-kit:start` produces them first. Recommend running it; go on without only on the
+owner's explicit yes, and then record steps 1 to 4 as `skipped` with the reason in
+`docs/architecture/plan.md`.
 
 ## 2. Choose the stack by criteria
 
@@ -98,7 +104,9 @@ repository: in a fresh directory `git init` comes first, by the owner. Then `pnp
 
 ## 6. Hand over
 
-Update the plan: step 5 `done`, `Next: 6 plan-slices - ...`. Say what exists now.
+Update the plan: step 5 `done`, `Next: 6 plan-slices - ...`. Say what exists now, and that the
+next step is to plan the slices (`/ddd-ts-kit:plan-slices`), then to build them one at a time:
+the order of `docs/guides/methodology.md` is the supported path.
 
 Never hand-write a file the CLI generates. A generated file that is wrong is a bug of the
 template: report it, do not patch it locally.

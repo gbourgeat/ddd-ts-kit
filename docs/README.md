@@ -78,7 +78,8 @@ limits, and a recommendation by situation.
 
 | Page | For |
 |---|---|
-| [Methodology](guides/methodology.md) | the end-to-end path from a statement of needs to running code, step by step |
+| [Methodology](guides/methodology.md) | the end-to-end path from a statement of needs to running code, step by step: the supported path |
+| [Which command, when](guides/commands.md) | the command or skill for each moment of a project, a first feature from zero, and the reference of every command and flag |
 | [Team workflow](guides/team-workflow.md) | ownership per context, the glossary, contracts first, review, decisions, onboarding |
 | [Parallel work](guides/parallel-work.md) | several people or agents at once: what is safe, what is sequenced, a concrete plan |
 | [Commit discipline](guides/commit-discipline.md) | commit and pull request size, generated files, what hooks and CI enforce |
