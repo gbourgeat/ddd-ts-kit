@@ -53,6 +53,11 @@ on PostgreSQL:
 | Schema per tenant | `tenantSchemaTable`, `migrateTenantSchema`, `tenantSearchPath` | not shipped: a drizzle table is bound to its schema where it is declared | not shipped | not shipped |
 | Database per tenant | `TenantDatabases`, `createTenantRoutedUnitOfWork`, `migrateEveryTenant` | not shipped | not shipped | not shipped |
 
+`init --tenancy shared-table` generates the first strategy on Knex and Drizzle: every repository
+through the helpers, the outbox keeping the tenant, and the rule `tenancy/scoped-statement` of the
+checker reporting a statement that reaches a table straight from the executor. The three others
+are wired by hand from the packages for now; `init` refuses them and says what to add.
+
 The outbox keeps the tenant of each event on Knex (`tenant: true`) and Drizzle
 (`tenantOutboxTable`); the Prisma and TypeORM outboxes do not store it yet, so their consumers
 run in no tenant.

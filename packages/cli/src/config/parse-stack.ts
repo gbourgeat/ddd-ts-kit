@@ -22,6 +22,7 @@ import {
   REFUSAL_FORMS,
   ROUTE_FORMS,
   STYLES,
+  TENANCY_STRATEGIES,
   TEST_STACKS,
   VALIDATION_STACKS,
   type Stack,
@@ -49,6 +50,7 @@ export function parseStack(stack: Record<string, unknown>): Stack {
     refusals: choose('refusals', REFUSAL_FORMS, 'classes'),
     routes: choose('routes', ROUTE_FORMS, 'functions'),
     packageManager: choose('packageManager', PACKAGE_MANAGERS, 'npm'),
+    tenancy: choose('tenancy', TENANCY_STRATEGIES, 'none'),
   };
 }
 

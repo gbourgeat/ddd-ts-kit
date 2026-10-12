@@ -112,8 +112,9 @@ From [`packages/cli/README.md`](../../packages/cli/README.md) and
 
 - The generated persistence of the four ORMs is written for PostgreSQL. `custom` starts on
   in-memory adapters held to the contract suites, for you to replace.
-- `generate repository --tenant-scoped` is implemented for Drizzle and Knex; with another ORM
-  the regular adapter is written and a note says what to add.
+- `generate repository --tenant-scoped`, and every repository of a project initialised with
+  `--tenancy shared-table`, is implemented for Drizzle and Knex; with another ORM the regular
+  adapter is written and a note says what to add, and `init` refuses the strategy.
 - The SQL audit trail exists for Knex and Drizzle, on PostgreSQL only. With Prisma, TypeORM,
   `custom` or no ORM the generated project starts on an in-memory trail behind a
   `TODO(platform)`.

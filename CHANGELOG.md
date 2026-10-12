@@ -49,6 +49,14 @@ the pipeline answers 403 to an authenticated caller that does not belong to the 
 before any guard or handler. The guard `TenantMember` keeps routes for the members of the tenant
 of the request. Without `resolveTenant` the tenant is the actor's, as before.
 
+**`init --tenancy shared-table`** (Knex or Drizzle) records `"stack.tenancy"` and generates every
+repository confined to the tenant through the helpers above, the outbox keeping the tenant of each
+event; the new rule `tenancy/scoped-statement` reports a statement of a context that reaches a table
+straight from the executor. `init` refuses the strategy with Prisma, TypeORM, `custom` or no ORM,
+and refuses row-level security, schema per tenant and database per tenant, which are wired by hand
+for now. `generate repository --tenant-scoped` writes the same helpers. A config without the key is
+`none`: nothing changes for an existing project.
+
 ## 0.5.0
 
 **Migrations are named by a timestamp and what they do.** The generated `drizzle.config.ts`
