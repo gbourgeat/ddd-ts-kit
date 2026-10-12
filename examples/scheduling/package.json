@@ -24,7 +24,7 @@
     "ci:test:e2e": "vitest run --config vitest.e2e.config.ts --passWithNoTests",
     "ci:docs": "npm run docs:check",
     "ci:audit": "npm audit --omit=dev --audit-level=high",
-    "ci:build": "npm run build",
+    "ci:build": "npm run build && npm run sdk:build",
     "start": "node dist/src/main.js",
     "dev": "tsx watch --env-file-if-exists=.env --import ./src/platform/tracing.ts --import ddd-ts-kit/dist/refresh-declarations.js src/main.ts",
     "lint:fix": "eslint . --fix",
@@ -41,14 +41,16 @@
     "openapi:check": "npm run build && node dist/scripts/openapi.js --check",
     "events:generate": "npm run build && node dist/scripts/events.js",
     "events:check": "npm run build && node dist/scripts/events.js --check",
-    "docs:generate": "node scripts/kit.mjs docs && npm run build && node dist/scripts/openapi.js && node dist/scripts/events.js",
-    "docs:check": "node scripts/kit.mjs docs --check && npm run build && node dist/scripts/openapi.js --check && node dist/scripts/events.js --check",
+    "docs:generate": "node scripts/kit.mjs docs && npm run build && node dist/scripts/openapi.js && node dist/scripts/events.js && node scripts/kit.mjs sdk",
+    "docs:check": "node scripts/kit.mjs docs --check && npm run build && node dist/scripts/openapi.js --check && node dist/scripts/events.js --check && node scripts/kit.mjs sdk --check",
     "db:generate": "knex migrate:make",
     "db:migrate": "npm run build && knex migrate:latest",
     "infra:up": "docker compose up -d --wait",
     "infra:down": "docker compose down",
     "verify": "npm run typecheck && npm run lint && npm run format:check && npm run test:coverage && npm run test:e2e && npm run check:arch && npm run depcruise && npm run deadcode && npm run docs:check",
-    "start:worker": "node dist/src/apps/worker/main.js"
+    "start:worker": "node dist/src/apps/worker/main.js",
+    "sdk:generate": "node scripts/kit.mjs sdk",
+    "sdk:build": "node scripts/tsc.mjs -b clients"
   },
   "dependencies": {
     "@ddd-ts-kit/aspects": "^0.5.0",
@@ -109,5 +111,8 @@
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.71.1",
     "vitest": "^5.0.3"
-  }
+  },
+  "workspaces": [
+    "clients/*"
+  ]
 }

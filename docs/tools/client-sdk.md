@@ -183,9 +183,12 @@ secret of the pipeline, and `npm publish --provenance` from GitHub Actions.
 
 ## In the example
 
-The scheduling example generates `clients/api` (`scheduling-api-client`), and its end-to-end
-specs of identity call the API through it (`application.sdk(actor)` in
-`test/e2e/support/start-application.ts`) where they used the raw HTTP client; the other specs
-keep the HTTP helpers, which remain the tool for requests the contract does not describe. The
+The scheduling example generates `clients/api` (`scheduling-api-client`). Its end-to-end specs
+of registering a person and opening a practice, and the helpers every journey sets its practice
+up with (`registerPeople`, `openStaffedPractice`), call the API through it
+(`application.apiAs(actor)` in `test/e2e/support/start-application.ts`, with `expectAnswer` and
+`expectRefusal`, which the compiler holds to the statuses and codes of each operation). The other
+specs keep the HTTP helpers, which remain the tool for a request the contract does not describe:
+a body the client would refuse to compile is sent with them to prove `VALIDATION_FAILED`. The
 end-to-end spec `packages/cli/test/e2e/client-sdk.spec.ts` proves the loop on a fresh project:
 `init --sdk`, a route added, the contract and the client regenerated, a consumer type-checked.
