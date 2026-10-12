@@ -28,8 +28,12 @@ describe('init --sdk', () => {
 
     expect(jsonAt(json(root, 'biome.json'), 'files', 'includes')).toContain('!**/clients/*/src');
     expect(jsonAt(json(root, 'knip.json'), 'ignoreWorkspaces')).toEqual(['clients/*']);
+    expect(jsonAt(json(root, 'knip.json'), 'workspaces', '.', 'project')).toContain('src/**/*.ts');
+    expect(jsonAt(json(root, 'knip.json'), 'project')).toBeUndefined();
+    expect(read(root, 'package.json')).toContain('"workspaces": [\n    "clients/*"\n  ]');
     expect(cli(root, 'sdk', '--check').code).toBe(0);
-    expect(configFindings(root)).toEqual([]);
+    expect(findings(root, 'config/valid')).toEqual([]);
+    expect(findings(root, 'imports/alias-declared')).toEqual([]);
   });
 
   it('lists the clients in pnpm-workspace.yaml under pnpm, the default, which reads no "workspaces"', () => {
@@ -128,18 +132,18 @@ describe('config/valid on "sdk"', () => {
     const root = initProject();
 
     changeConfig(root, { sdk: true });
-    expect(configFindings(root)).toEqual(['"sdk" is not an object: no client is generated.']);
+    expect(findings(root, 'config/valid')).toEqual(['"sdk" is not an object: no client is generated.']);
 
     changeConfig(root, { sdk: { name: 'Shop Client', access: 'secret' } });
 
-    expect(configFindings(root)).toEqual([
+    expect(findings(root, 'config/valid')).toEqual([
       '"sdk.name" is "Shop Client": npm takes no such package name, or two documents of the contract would share it.',
       '"sdk.access" is "secret": npm publishes with public or restricted access.',
     ]);
 
     changeConfig(root, { sdk: { access: 'restricted' } });
 
-    expect(configFindings(root)).toEqual([
+    expect(findings(root, 'config/valid')).toEqual([
       '"sdk.access" is "restricted" for a package without a scope: npm publishes such a package for everyone or not at all.',
     ]);
   });
@@ -153,8 +157,8 @@ function projectName(root: string): string {
   return String(jsonAt(json(root, 'package.json'), 'name'));
 }
 
-function configFindings(root: string): string[] {
-  const violations = jsonAt(cli(root, 'check', '--rule', 'config/valid', '--json').json(), 'violations');
+function findings(root: string, rule: string): string[] {
+  const violations = jsonAt(cli(root, 'check', '--rule', rule, '--json').json(), 'violations');
 
   return Array.isArray(violations) ? violations.map((violation) => String(jsonAt(violation, 'message'))) : [];
 }

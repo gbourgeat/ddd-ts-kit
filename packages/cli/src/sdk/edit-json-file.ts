@@ -1,8 +1,10 @@
 import { formatJson } from '../json/format-json.js';
+import { manifestJson } from './manifest-json.js';
 import type { Workspace } from '../workspace/index.js';
 
 /**
- * Rewrites a JSON file of the project through `edit`, laid out as the formatter would. A file
+ * Rewrites a JSON file of the project through `edit`, laid out as the formatter would (a
+ * package.json as npm writes it, which Biome keeps for that file). A file
  * that is absent is left so; one that is not plain JSON (comments, a trailing comma) is not
  * rewritten, and what it lacks is said.
  */
@@ -27,7 +29,9 @@ export function editJsonFile(
     return;
   }
 
-  ws.update(file, formatJson(edit(value)));
+  const edited = edit(value);
+
+  ws.update(file, file.endsWith('package.json') ? manifestJson(edited) : formatJson(edited));
 }
 
 function parsed(text: string): Record<string, unknown> | undefined {

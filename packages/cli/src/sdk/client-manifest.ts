@@ -1,5 +1,5 @@
-import { formatJson } from '../json/format-json.js';
 import { isRecord } from '../config/values/is-record.js';
+import { manifestJson } from './manifest-json.js';
 
 /** What the package.json of a client is made of. */
 export interface ManifestFacts {
@@ -25,7 +25,7 @@ export function clientManifest(facts: ManifestFacts, written: string | undefined
   const access = facts.access === undefined ? {} : { access: facts.access };
   const merged = { ...publishConfig, ...access };
 
-  return formatJson({
+  return manifestJson({
     name: owned.name,
     version: typeof existing['version'] === 'string' ? existing['version'] : facts.version,
     ...owned,

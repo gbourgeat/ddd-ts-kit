@@ -3,6 +3,9 @@ paths:
   - "{{config.contextsDir}}/*/presentation/**"
   - "openapi/**"
   - "scripts/openapi.ts"
+{{#if sdk.on}}
+  - "clients/**"
+{{/if}}
 ---
 
 # Presentation layer

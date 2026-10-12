@@ -6,6 +6,7 @@ import type { PlannedClient } from './planned-client.js';
 import { sdkScripts } from './sdk-scripts.js';
 import { withClientPaths } from './with-client-paths.js';
 import { withEntry } from './with-entry.js';
+import { withKnipWorkspaces } from './with-knip-workspaces.js';
 
 const PACKAGES = `${CLIENTS_DIRECTORY}/*`;
 const PNPM_WORKSPACE = 'pnpm-workspace.yaml';
@@ -13,7 +14,8 @@ const PNPM_WORKSPACE = 'pnpm-workspace.yaml';
 /**
  * What the project needs around its clients: each one a workspace package, resolved by its name
  * from the sources (`paths` of tsconfig.json, which the type check, the test runner and knip
- * read), left out of the formatter and of knip, which read generated code as written by hand,
+ * read), left out of the formatter and of knip (whose config then names the root as a
+ * workspace of its own), which read generated code as written by hand,
  * and the scripts that generate, compare and build them. Run again, it changes nothing.
  */
 export function wireSdk(ws: Workspace, config: Config, clients: readonly PlannedClient[]): void {
@@ -25,11 +27,7 @@ export function wireSdk(ws: Workspace, config: Config, clients: readonly Planned
 
   editJsonFile(ws, 'tsconfig.json', (tsconfig) => withClientPaths(tsconfig, clients));
   editJsonFile(ws, 'biome.json', (biome) => withFormatterExclusion(biome));
-
-  editJsonFile(ws, 'knip.json', (knip) => ({
-    ...knip,
-    ignoreWorkspaces: withEntry(knip['ignoreWorkspaces'], PACKAGES),
-  }));
+  editJsonFile(ws, 'knip.json', (knip) => withKnipWorkspaces(knip, PACKAGES));
 
   if (config.stack.packageManager === 'pnpm') {
     listInPnpmWorkspace(ws);
