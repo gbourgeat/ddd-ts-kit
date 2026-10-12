@@ -49,6 +49,7 @@
     "@commitlint/cli": "^21.2.3",
     "@commitlint/config-conventional": "^21.2.3",
     "@ddd-ts-kit/eslint-plugin": "0.4.1",
+    "@electric-sql/pglite": "0.5.9",
     "@eslint/js": "^10.0.1",
     "@stylistic/eslint-plugin": "^5.10.0",
     "@types/node": "^24.0.0",
