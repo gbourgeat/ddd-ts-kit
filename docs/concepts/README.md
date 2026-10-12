@@ -55,7 +55,8 @@ of tools.
     clean architecture, what they share and where they differ.
 12. [Ports and composition](ports-and-composition.md): ports as abstract classes, the
     composition root, declarations by decorators or explicit wiring.
-13. [CQRS](cqrs.md): command and query buses as used here, without event sourcing.
+13. [CQRS](cqrs.md): command and query buses as used here; event sourcing is a separate
+    choice, per aggregate.
     [The presentation layer](presentation-layer.md) comes with it: one controller class per
     route, route groups, guards at the edge and permissions on the use case.
 14. [Modular monolith](modular-monolith.md): one deployable, real modules.
@@ -72,40 +73,43 @@ of tools.
 19. [Sagas and process managers](sagas-and-process-managers.md): what the kit provides and
     what it does not.
 20. [Event versioning](event-versioning.md): changing a contract that others consume.
+21. [Event sourcing, per aggregate](event-sourcing.md): when an aggregate keeps its events
+    instead of its state, what it costs, and how to move one to it and back.
 
 ## 5. Cross-cutting concerns: what surrounds the use cases
 
-21. [Authentication and authorization](authentication-and-authorization.md): roles,
+22. [Authentication and authorization](authentication-and-authorization.md): roles,
     attributes, relationships, with a decision table.
-22. [Actor and execution scope](actor-and-execution-scope.md): who acts, explicitly, and what
+23. [Actor and execution scope](actor-and-execution-scope.md): who acts, explicitly, and what
     every unit of work carries.
-23. [Audit trail](audit-trail.md): who did what, recorded from outside the use cases.
-24. [Observability](observability.md): tracing, logs, metrics, error reporting, and the
+24. [Audit trail](audit-trail.md): who did what, recorded from outside the use cases.
+25. [Observability](observability.md): tracing, logs, metrics, error reporting, and the
     correlation id that ties them.
-25. [Resilience](resilience.md): retry, timeout, circuit breaker, bulkhead, cache, and how
+26. [Resilience](resilience.md): retry, timeout, circuit breaker, bulkhead, cache, and how
     each one fails.
-26. [Scheduled jobs](scheduled-jobs.md): work triggered by time, and why it must be
+27. [Scheduled jobs](scheduled-jobs.md): work triggered by time, and why it must be
     idempotent.
 
 ## 6. Code and tests
 
-27. [Clean code](clean-code.md): naming, small functions, stepdown, comments, testability by
+28. [Clean code](clean-code.md): naming, small functions, stepdown, comments, testability by
     construction.
-28. [Testing strategy](testing-strategy.md): fakes rather than mocks, builders, contract
+29. [Testing strategy](testing-strategy.md): fakes rather than mocks, builders, contract
     tests, the four levels.
 
 ## Shorter paths
 
 - **A product person or a newcomer to DDD:** 1, 2, 3, 5, then 18.
-- **Before writing a first use case:** 3, 7, 9, 11, 13, 28.
+- **Before writing a first use case:** 3, 7, 9, 11, 13, 29.
 - **Before making two contexts talk:** 4, 15, 16, 17, 20.
-- **Before putting the system in production:** 21, 24, 25, 26, then the
+- **Before keeping an aggregate as its events:** 7, 15, 16, 20, 21.
+- **Before putting the system in production:** 22, 25, 26, 27, then the
   [tools pages](../README.md#tools-one-page-per-decision).
 
 ## Limits and when not to use it
 
 These pages describe one opinionated way of applying the patterns, the one this kit enforces.
-Other valid applications exist (event sourcing, a separate read database, aggregates persisted
+Other valid applications exist (event sourcing for a whole project, a separate read database, aggregates persisted
 as documents), and several pages say where the kit stops. The patterns themselves have a cost:
 for a small tool with little business logic, most of sections 2 to 4 is more than the problem
 needs, and each page has a "Limits and when not to use it" section that says so in its own

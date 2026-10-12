@@ -50,6 +50,13 @@ given-events spec; `generate domain-event` on such an aggregate adds the event t
 `appliers()` with an empty apply method, and to the codec. `CONTEXT.md`, `describe` and `list`
 mark the event-sourced aggregates. `ddd-ts-kit docs --stored-events` records the stored shapes.
 
+**Documentation.** A concept page, [Event sourcing, per aggregate](docs/concepts/event-sourcing.md):
+when to choose it and when not, what it costs, crypto-shredding, projections fed by the store,
+and how to move an aggregate to it and back. The example keeps the attendance record of a
+patient as its events (scheduling), with a history rebuilt from the store; its only change of
+HTTP contract is the additive route `GET /practices/{practiceId}/patients/{patientId}/attendance`.
+Plugin 0.13.0: the persistence, testing and scaffold skills say how.
+
 ## 0.5.0
 
 **Migrations are named by a timestamp and what they do.** The generated `drizzle.config.ts`

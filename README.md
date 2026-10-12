@@ -198,7 +198,7 @@ compiler in strict mode complete the gate.
 | [`@ddd-ts-kit/sentry`](packages/sentry) | the kernel `ErrorReporter` port on Sentry or GlitchTip: unexpected failures only, scrubbed |
 | [`@ddd-ts-kit/tracing`](packages/tracing) | OpenTelemetry wired once by the platform: the domain never imports it, spans never carry data |
 | [`@ddd-ts-kit/testing`](packages/testing) | builders, given/when/then scenarios, in-memory repository, contract suites, seeded generated data, end-to-end harness |
-| [`@ddd-ts-kit/drizzle`](packages/drizzle), [`knex`](packages/knex), [`prisma`](packages/prisma), [`typeorm`](packages/typeorm) | unit of work with an ambient transaction, outbox store, processed-event store, read model stores (the SQL projections of the read side) |
+| [`@ddd-ts-kit/drizzle`](packages/drizzle), [`knex`](packages/knex), [`prisma`](packages/prisma), [`typeorm`](packages/typeorm) | unit of work with an ambient transaction, outbox store, processed-event store, read model stores (the SQL projections of the read side), the PostgreSQL event store of event-sourced aggregates |
 | [`@ddd-ts-kit/eslint-plugin`](packages/eslint-plugin) | the code rules on the syntax tree, with presets |
 
 Everything talks through ports of the kernel, so each piece is replaceable: another event
