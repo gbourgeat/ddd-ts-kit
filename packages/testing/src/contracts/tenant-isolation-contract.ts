@@ -179,8 +179,8 @@ class TenantIsolationSuite<A extends AggregateRoot<Id>, Id extends string | numb
       const job = executionContext({ correlationId: 'no-tenant', actor: systemActor('contract'), origin: 'test' });
       const scope = TenantIsolationSuite.scope;
 
-      const read = await scope
-        .run(job, () => this.subject.findById(options.idOf(saved)))
+      const read = await Promise.resolve()
+        .then(() => scope.run(job, () => this.subject.findById(options.idOf(saved))))
         .catch((error: unknown) => error);
 
       const write = await failureOf(() => scope.run(job, () => this.subject.save(options.createAggregate())));
