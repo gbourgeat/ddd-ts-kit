@@ -10,6 +10,7 @@ const CHANNEL = `${NOTIFICATION}/domain/value-objects/channel.vo.ts`;
 const CHANNEL_SPEC = `${NOTIFICATION}/test/unit/channel.vo.spec.ts`;
 const MANAGER = `${NOTIFICATION}/domain/services/reminder-manager.service.ts`;
 const SECOND = `${PATHS.SCHEDULING}/published-language/appointment-expired.v1.second.integration-event.ts`;
+const DOCUMENT_HANDLER = `${PATHS.SCHEDULING}/application/queries/get-appointment-document/get-appointment-document.handler.ts`;
 const TWO_EXPORTS = 'Two exported classes in one file break the rule of the role and the rule of every file at once.';
 
 const DECLARED_TWICE = `import { defineIntegrationEvent } from '@ddd-ts-kit/events';
@@ -231,5 +232,55 @@ export const STRUCTURE_INJECTIONS: readonly Injection[] = [
       },
     ],
     checker: true,
+  },
+  {
+    rule: 'persistence/no-file-content',
+    what: 'a migration that adds a column of bytes for the scan of an appointment',
+    file: 'migrations/20261013120000_add-appointment-scan.js',
+    changes: [
+      {
+        file: 'migrations/20261013120000_add-appointment-scan.js',
+        to: [
+          'export const up = async (knex) => {',
+          "  await knex.schema.withSchema('scheduling').alterTable('appointments', (table) => {",
+          "    table.binary('scan');",
+          '  });',
+          '};',
+          '',
+          'export const down = async (knex) => {',
+          "  await knex.schema.withSchema('scheduling').alterTable('appointments', (table) => {",
+          "    table.dropColumn('scan');",
+          '  });',
+          '};',
+          '',
+        ].join('\n'),
+      },
+    ],
+    checker: true,
+  },
+  {
+    rule: 'files/port-not-connector',
+    what: 'a query handler that names the local connector instead of the FileStorage port',
+    file: DOCUMENT_HANDLER,
+    changes: [
+      {
+        file: DOCUMENT_HANDLER,
+        from: "import type { FileStorage } from '@ddd-ts-kit/kernel';",
+        to: "import type { LocalFileStorage } from '@ddd-ts-kit/kernel';",
+      },
+      {
+        file: DOCUMENT_HANDLER,
+        from: 'private readonly files: FileStorage,',
+        to: 'private readonly files: LocalFileStorage,',
+      },
+    ],
+    checker: true,
+    alsoReports: [
+      {
+        tool: 'checker',
+        rule: 'declarations/barrel-current',
+        reason: 'the constructor names another class than the list the generated file of the context registers for it',
+      },
+    ],
   },
 ];
