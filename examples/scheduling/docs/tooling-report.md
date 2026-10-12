@@ -929,3 +929,47 @@ No route of the application is public, so `Public` is not shown here: the kit ho
 own specs. `PersonError.invalidEmail` quotes the address it refuses in its message: the client
 now reads `Invalid email.` as `detail`, and the spec of the controller holds that the address
 does not leave.
+
+## 2026-10-13: one aggregate kept as its events
+
+The kit gained event sourcing, chosen per aggregate. The example shows it on one aggregate
+whose history is the business, the attendance record of a patient in a practice: the no-shows
+and the cancellations of the patient, each noted once, in order. Every other aggregate keeps
+its state in tables, in the same context and the same transaction.
+
+| | |
+|---|---|
+| Event-sourced aggregate | `AttendanceRecord` (scheduling), three events: `created`, `no-show-noted`, `cancellation-noted` |
+| How it is fed | the before-commit handlers of `scheduling.appointment.marked-no-show` (new) and of `scheduling.appointment.cancelled` (a cancellation by the patient) send `NoteNoShow` and `NoteCancellation`, as the system actor `scheduling.note-attendance`: the stream is appended in the unit of work of the appointment |
+| Store | PostgreSQL through knex, in the `scheduling` schema (`createEventStoreTables` in `createSchedulingTables`), bound by the platform; in memory for the handler specs |
+| Snapshots | every 20 events, proven equal to a full replay (`expectSnapshotEquivalence`) |
+| Personal data | the words of a patient who cancels are sealed with the key of the patient; an erased patient reads `[erased]` after a rebuild |
+| Projection | `scheduling.attendance-history`, fed by the store (`{ feed: 'event-store' }`): a catch-up subscription in the API process, at the pace of the outbox relay; its rebuild from position zero is proven on PostgreSQL |
+| HTTP contract | additive only: `GET /practices/{practiceId}/patients/{patientId}/attendance` (`searchAttendanceHistory`), and the permissions `scheduling:attendance.note`, `scheduling:attendance.read` (the second asked of a practice, as `work`) |
+| Generator runs | 11, logged in `docs/tooling/generator-log.jsonl`; 2 refused |
+| Stored shapes recorded | `node scripts/kit.mjs docs --stored-events`: `stored-events.lock.json` |
+
+What the generators did: `generate aggregate --event-sourced` wrote the aggregate, its birth
+event, the codec of its stored events, a builder that replays a history and a given-events
+spec; `generate domain-event` added each later event to the union, to `appliers()` with an
+empty apply method, and to the codec; the commands, the event handler, the query and the
+controller came from their kinds as usual.
+
+Frictions, for the owner of the kit:
+
+1. `scripts/kit.mjs` failed on a fresh checkout: `main()` ran before the constant it reads when
+   the cache directory does not exist yet. Fixed by declaring the constant first.
+2. The birth event is `<Name>Created`: the glossary held "Create" for calendars only, and its
+   meaning was widened to the attendance record.
+3. `generate projection` takes an integration event only: the projection of the store, of
+   domain events, was written by hand.
+4. `generate repository` has no event-sourced form: the port, the adapter over
+   `EventSourcedRepository` and the fake were written by hand, about 70 lines.
+5. `generate query` without `--search` still wrote a reader port, its in-memory adapter and its
+   fake; the query reads the store of the projection, and the three files were removed.
+6. Three existing specs grant the `system` role the permissions of the commands the context
+   sends itself: each needed `attendance.note`, since cancelling or marking an appointment now
+   notes the attendance in the same unit of work.
+7. The integration specs, run in parallel on twenty cores beside other workloads, timed out
+   while starting PGlite (a hook limit of 10 s); they pass serially and with four workers.
+

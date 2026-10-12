@@ -10,6 +10,7 @@ export const resourcePermissions: PermissionMapping = {
     'identity:member.add': 'manage',
     'identity:member.remove': 'manage',
     'scheduling:agenda.read': 'work',
+    'scheduling:attendance.read': 'work',
     'analytics:occupancy.read': 'work',
   },
   desk: {

@@ -1,5 +1,16 @@
 import { InMemoryRelationTupleStore, RelationTupleStore, SchemaCheckedTupleStore } from '@ddd-ts-kit/auth/rebac';
 import { defineContextModule } from '@ddd-ts-kit/di';
+import {
+  CheckpointStore,
+  EventStore,
+  InMemoryCheckpointStore,
+  InMemoryEventStore,
+  InMemorySnapshotStore,
+  InMemorySubjectKeyStore,
+  PersonalDataCipher,
+  SnapshotStore,
+  SubjectKeyStore,
+} from '@ddd-ts-kit/kernel';
 import { KnexContext } from '@ddd-ts-kit/knex';
 import { relationshipSchema } from '@/platform/auth/relationship-schema';
 // ddd-ts-kit:imports
@@ -14,6 +25,13 @@ export const platformTestModule = defineContextModule({
     builder.bind(KnexContext).toFactory(() => {
       throw new Error('A handler spec has no database: give a fake for the repository it uses.');
     });
+
+    // The stores of the event-sourced aggregates, in memory: a spec reads what was appended through them.
+    builder.bind(EventStore).toFactory(() => new InMemoryEventStore());
+    builder.bind(SnapshotStore).toFactory(() => new InMemorySnapshotStore());
+    builder.bind(CheckpointStore).toFactory(() => new InMemoryCheckpointStore());
+    builder.bind(SubjectKeyStore).toFactory(() => new InMemorySubjectKeyStore());
+    builder.bind(PersonalDataCipher).toFactory((resolve) => new PersonalDataCipher(resolve(SubjectKeyStore)));
 
     // In memory, and still held to the schema: a spec that writes a tuple the model does not know fails as the application would.
     builder

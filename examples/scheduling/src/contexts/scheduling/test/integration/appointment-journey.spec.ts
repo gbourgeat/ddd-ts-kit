@@ -2,11 +2,14 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { FakeAuthenticator, anActor } from '@ddd-ts-kit/auth/testing';
 import { contextModule } from '@ddd-ts-kit/di';
 import { executeRoute, type RouteResponse } from '@ddd-ts-kit/http';
-import { FixedExecutionScope, SystemClock, executionContext, systemActor } from '@ddd-ts-kit/kernel';
+import { Criteria, FixedExecutionScope, SystemClock, executionContext, scoped, systemActor } from '@ddd-ts-kit/kernel';
 import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations';
 import { composeApplication, type Application } from '@/platform/compose-application';
 import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database';
 import { inProcessEvents } from '@/platform/events/in-process-events';
+import { storeFedProjections } from '@/platform/events/store-fed-projections';
+import type { AttendanceEntry } from '@/contexts/scheduling/application/ports/attendance-history.port';
+import { KnexAttendanceHistory } from '@/contexts/scheduling/infrastructure/persistence/knex-attendance-history.repository';
 import { AgendaProjection } from '@/contexts/scheduling/application/projections/agenda.projection';
 import { KnexCalendarRepository } from '@/contexts/scheduling/infrastructure/persistence/knex-calendar.repository';
 import { aCalendar } from '@/contexts/scheduling/test/builders/calendar.builder';
@@ -110,6 +113,25 @@ describe('An appointment, from its booking on, through the application', () => {
     expect(cancellation.status).toBe(201);
     expect(detail).toMatchObject({ status: 200, body: { status: 'cancelled', cancelledBy: 'patient' } });
     expect(again.status).toBe(201);
+  });
+
+  it('notes a cancellation of the patient in their attendance record, which its history shows once caught up', async () => {
+    const appointmentId = await booked('ada');
+
+    await call('ada', 'cancelAppointment', { params: { appointmentId }, body: { reason: 'A fever.' } });
+
+    for (const subscription of storeFedProjections(application.container, database.persistence)) {
+      await subscription.catchUp();
+    }
+
+    const history = await new KnexAttendanceHistory(database.persistence.database).search(
+      scoped(Criteria.of<AttendanceEntry>(), { kind: 'all' }),
+    );
+
+    expect(history.items).toMatchObject([
+      { fact: 'opened', version: 1 },
+      { fact: 'cancellation', version: 2, appointmentId, startsAt, reason: 'A fever.' },
+    ]);
   });
 
   it('refuses another patient who tries to cancel or to move the appointment', async () => {
