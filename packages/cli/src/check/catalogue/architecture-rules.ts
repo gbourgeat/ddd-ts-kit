@@ -44,6 +44,7 @@ import { layerPresentationNoInfrastructure } from '../rules/layer-presentation-n
 import { namingOneConceptPerFile } from '../rules/naming-one-concept-per-file.js';
 import { namingSearchNotList } from '../rules/naming-search-not-list.js';
 import { namingSuffix } from '../rules/naming-suffix.js';
+import { persistenceMigrationHistory } from '../rules/persistence-migration-history.js';
 import { portsAbstractClass } from '../rules/ports-abstract-class.js';
 import { portsImplementsNeverExtends } from '../rules/ports-implements-never-extends.js';
 import { portsNoConcreteDependency } from '../rules/ports-no-concrete-dependency.js';
@@ -128,4 +129,5 @@ export const ARCHITECTURE_RULES: readonly Rule[] = [
   importsAliasDeclared,
   errorsCodeUnique,
   errorsKnownCode,
+  persistenceMigrationHistory,
 ];

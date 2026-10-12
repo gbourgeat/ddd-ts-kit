@@ -30,7 +30,7 @@ describe('init and the import alias', () => {
     expect(read(root, 'knip.json')).not.toContain('"paths"');
     expect(scripts['start']).toBe('node dist/src/main.js');
     expect(scripts['dev']).toMatch(/^tsx watch --env-file-if-exists=\.env --import /);
-    expect(scripts['db:generate']).toBe('drizzle-kit generate');
+    expect(scripts['db:generate']).toBe('drizzle-kit generate --name');
     expect(scripts['build']).toMatch(/tsc -p tsconfig\.build\.json && ddd-ts-kit build-aliases$/);
   });
 

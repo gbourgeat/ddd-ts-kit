@@ -21,6 +21,7 @@ import { LAYER_FIXTURES } from './layer-fixtures.js';
 import { LAYOUT_FIXTURES } from './layout-fixtures.js';
 import { NAMING_FIXTURES } from './naming-fixtures.js';
 import { OUTBOX_FIXTURES } from './outbox-fixtures.js';
+import { PERSISTENCE_FIXTURES } from './persistence-fixtures.js';
 import { PORTS_FIXTURES } from './ports-fixtures.js';
 import { PURITY_FIXTURES } from './purity-fixtures.js';
 import { SCHEDULING_FIXTURES } from './scheduling-fixtures.js';
@@ -59,6 +60,7 @@ export const FIXTURES: readonly Fixture[] = [
   ...LAYOUT_FIXTURES,
   ...NAMING_FIXTURES,
   ...OUTBOX_FIXTURES,
+  ...PERSISTENCE_FIXTURES,
   ...PORTS_FIXTURES,
   ...PURITY_FIXTURES,
   ...SCHEDULING_FIXTURES,

@@ -13,9 +13,9 @@ export const AUDIT_SCHEMA = 'audit';
 {{/if}}
 
 /**
- * Every table of the application. The first migration (migrations/0001_initial.js) and the
+ * Every table of the application. The first migration (migrations/00000000000000_initial.js) and the
  * in-process database of the tests both call it; once a database is shared, a change of an
- * existing table goes into a migration of its own (`npm run db:generate <name>`).
+ * existing table goes into a migration of its own (`npm run db:generate <what-it-does>`).
  */
 export const createTables = async (knex: Knex): Promise<void> => {
   await createOutboxTables(knex, { schema: MESSAGING });

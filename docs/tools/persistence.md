@@ -150,6 +150,69 @@ package. `init --database mongodb` is accepted with `--orm custom` although the 
 When not to use an ORM adapter at all: a context with no state (a pure translator), or a read
 model better served by a search engine or a cache, behind a port of its own.
 
+## Migrations: names, merges and order
+
+Several people add migrations at the same time, on one context or on several. Every migration
+a generated project writes is named `<timestamp>_<what-it-does>`, and `npm run db:generate`
+refuses to run without the description: two branches never write the same file.
+
+| Tool | `db:generate` | Writes | A migration merged older than one already applied |
+|---|---|---|---|
+| drizzle-kit 0.31 | `drizzle-kit generate --name` (`migrations.prefix: 'timestamp'` in `drizzle.config.ts`) | `migrations/20261012093000_add-invoices.sql`, its snapshot `meta/20261012093000_snapshot.json`, one entry of `meta/_journal.json` | **skipped without a word**: the migrator applies the entries newer than the last one recorded |
+| knex 3 | `knex migrate:make` (the ES module stub of knex, set in `knexfile.js`) | `migrations/20261012093000_add-invoices.js` | applied: knex runs every file it has not recorded |
+| Prisma 7 | `prisma migrate dev --create-only --name` | `prisma/migrations/20261012093000_add_invoices/migration.sql` (Prisma turns `-` into `_`) | applied by `migrate deploy`, which runs every migration it has not recorded (its documentation; not measured here) |
+| TypeORM 1.1 | `typeorm migration:generate -d <data source>`, given the path: `npm run db:generate migrations/add-invoices` | `migrations/1791829645467-add-invoices.ts` (milliseconds, and a `-`: TypeORM fixes both) | applied: TypeORM runs every migration it has not recorded |
+
+The command takes the description after the script: `npm run db:generate add-invoices`
+(`npm run db:generate -- audit-guard --custom` for a hand-written drizzle-kit migration).
+The first knex migration that `init` writes is `00000000000000_initial.js`: it sorts before any
+timestamp; a project created before 0.5 keeps its `0001_initial.js`, since an applied
+migration is never renamed.
+
+**Measured with drizzle-kit 0.31.11 and drizzle-orm 0.45.4 (2026-10-12)**, two copies of one
+project each generating a migration, as two branches would:
+
+- with the former default (`prefix: 'index'`), both write `0001_<random words>.sql` and
+  `meta/0001_snapshot.json`: the snapshot conflicts as a file added twice;
+- with `prefix: 'timestamp'`, the files and the snapshots no longer collide, but
+  `meta/_journal.json` still conflicts (each branch appends an entry at the same place), and
+  once merged by hand two snapshots name the same parent: `drizzle-kit check` exits 1 and
+  `drizzle-kit generate` prints the collision and writes nothing (with exit code 0);
+- worse, a database that applied the later migration first (the other branch was merged and
+  deployed before) skips the earlier one for good: drizzle-orm's migrator applies only the
+  entries whose `when` is newer than the last one it recorded. Measured on PGlite: after
+  `add-payments`, then the merge of `add-invoices` generated three seconds before it, the
+  database had `accounts, payments` and no `invoices`, without an error.
+
+The kit's answer is the rule `persistence/migration-history` of `ddd-ts-kit check` (so
+`npm run check:arch`, the guard of the plugin and the pipeline): every migration starts with the
+number that orders it and no two share one; under drizzle-kit, the journal and the `.sql` files
+match, the entries keep the order they were generated in, and each snapshot follows the one
+before it. On the measured merge it reports the forked snapshot; on a journal merged in the
+order of the branches it also reports the entry out of order.
+
+**After a merge or a rebase that brought a migration from the main branch**, while yours is
+not merged yet:
+
+1. take the migrations of the main branch as they are (`.sql` files, snapshots, journal);
+2. delete yours: its `.sql` file, its snapshot under `meta/` and its entry of the journal
+   (drizzle-kit), or its file or directory (the other tools);
+3. run `npm run db:generate <what-it-does>` again: it is generated on top of the main branch,
+   with a later timestamp;
+4. `npm run check:arch` reports nothing, and the branch is merged before another migration
+   lands, or the steps are repeated.
+
+A migration already merged on the main branch is never edited or regenerated: a correction is a
+new migration.
+
+**Not chosen: one migrations folder per context.** drizzle-kit can run one config per context
+(its own `schema`, `out` and migrations table), so it would work, but it solves the wrong half:
+two people on one context still collide, the platform tables (outbox, audit trail) belong to no
+context, and `db:migrate` would become an ordered list of commands to keep in step with the
+config. The timestamp, the rule and the procedure above cover a single folder and a team
+working on one context alike. A context extracted as a service takes its tables with it then
+(`generate service`).
+
 ## Recommendation by situation
 
 | Situation | Choice |
@@ -163,9 +226,11 @@ model better served by a search engine or a cache, behind a port of its own.
 
 ## Sources
 
-- Drizzle ORM documentation: https://orm.drizzle.team/docs/overview
+- Drizzle ORM documentation: https://orm.drizzle.team/docs/overview ; drizzle-kit configuration, `migrations.prefix`: https://orm.drizzle.team/docs/drizzle-config-file
+- drizzle-kit 0.31.11 (`prepareMigrationMetadata`) and drizzle-orm 0.45.4 (`PgDialect.migrate`), knex 3.3.0 (`MigrationGenerator`, `getNewMigrations`), Prisma 7.10.0 (`migrate dev --name`), TypeORM 1.1.2 (`MigrationGenerateCommand`, `MigrationExecutor`): read in their published code on 2026-10-12.
 - Knex documentation: https://knexjs.org/guide/
 - Prisma documentation, transactions: https://www.prisma.io/docs/orm/prisma-client/queries/transactions
+- Prisma documentation, migrations in development and production: https://www.prisma.io/docs/orm/prisma-migrate/workflows/development-and-production
 - TypeORM documentation: https://typeorm.io
 - PostgreSQL documentation, `SELECT ... FOR UPDATE SKIP LOCKED` and exclusion constraints:
   https://www.postgresql.org/docs/current/sql-select.html ,

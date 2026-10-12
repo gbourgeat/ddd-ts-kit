@@ -22,7 +22,7 @@ const DEFAULT_SCRIPTS = {
   'docs:generate': 'ddd-ts-kit docs && npm run build && node dist/scripts/openapi.js && node dist/scripts/events.js',
   'docs:check':
     'ddd-ts-kit docs --check && npm run build && node dist/scripts/openapi.js --check && node dist/scripts/events.js --check',
-  'db:generate': 'drizzle-kit generate',
+  'db:generate': 'drizzle-kit generate --name',
   'db:migrate': 'drizzle-kit migrate',
   'infra:up': 'docker compose up -d --wait',
   'infra:down': 'docker compose down',
@@ -124,9 +124,24 @@ describe('the package.json init writes', () => {
 
     expect(scripts['db:migrate']).toBe('typeorm migration:run -d dist/src/platform/database/data-source.js');
 
-    expect(scripts['db:generate']).toBe(
-      'typeorm migration:generate -d dist/src/platform/database/data-source.js migrations/change',
-    );
+    expect(scripts['db:generate']).toBe('typeorm migration:generate -d dist/src/platform/database/data-source.js');
+  });
+
+  it('makes every migration tool refuse a migration without a name, and drizzle-kit prefix it with a timestamp', () => {
+    const generate = (orm: string): string | undefined =>
+      textsAt(manifest(initProject(...NPM, '--orm', orm)), 'scripts')['db:generate'];
+
+    expect(generate('drizzle')).toBe('drizzle-kit generate --name');
+    expect(generate('knex')).toBe('knex migrate:make');
+    expect(generate('prisma')).toBe('prisma migrate dev --create-only --name');
+    expect(read(initProject(...NPM), 'drizzle.config.ts')).toContain("migrations: { prefix: 'timestamp' },");
+  });
+
+  it('gives knex the stub of an ES module and a first migration that sorts before every timestamp', () => {
+    const root = initProject(...NPM, '--orm', 'knex');
+
+    expect(read(root, 'knexfile.js')).toContain("resolve('knex/lib/migrations/migrate/stub/mjs.stub')");
+    expect(read(root, 'migrations/00000000000000_initial.js')).toContain('createTables(knex)');
   });
 });
 

@@ -207,4 +207,16 @@ export const STRUCTURE_INJECTIONS: readonly Injection[] = [
       },
     ],
   },
+  {
+    rule: 'persistence/migration-history',
+    what: 'a migration written by hand, without the timestamp that orders it',
+    file: 'migrations/add-appointment-note.js',
+    changes: [
+      {
+        file: 'migrations/add-appointment-note.js',
+        to: 'export const up = async () => {};\n\nexport const down = async () => {};\n',
+      },
+    ],
+    checker: true,
+  },
 ];

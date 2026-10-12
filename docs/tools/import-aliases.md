@@ -135,7 +135,7 @@ forms: `@/`, or `$`, one name in lower case (letters, digits, hyphens) and `/`. 
 | jest | nothing of tsconfig | `moduleNameMapper`, the same entries, each pattern ending as the imports do: `'^@/(.*)$': '<rootDir>/src/$1.ts'` under `none`, `'^@/(.*)\\.js$': '<rootDir>/src/$1.ts'` under `js`. The target is always the TypeScript source |
 | dependency-cruiser | `paths`, once told to | `tsConfig: { fileName: 'tsconfig.json' }` in the generated `.dependency-cruiser.cjs` |
 | knip | `paths`, by itself | nothing |
-| drizzle-kit (`npm run db:generate`) | `paths`, by itself, when it loads the TypeScript schema | nothing: the script is plain `drizzle-kit generate` |
+| drizzle-kit (`npm run db:generate <what-it-does>`) | `paths`, by itself, when it loads the TypeScript schema | nothing: the script is plain `drizzle-kit generate --name` |
 | knex and TypeORM CLIs | the compiled output (`npm run build` first) | a knex migration is a JavaScript file at the project root: it names the compiled schema by its relative path under `dist/` |
 | Prisma CLI | `prisma.config.ts`, which imports no file of the project | nothing |
 | ESLint with `@ddd-ts-kit/eslint-plugin`, `ddd-ts-kit check` | `importAlias`, `importExtension` and `sourceRoot` of the config | they classify an import by its path and never load a file: with or without its extension, a specifier names the same source, and the boundary rules judge it the same |

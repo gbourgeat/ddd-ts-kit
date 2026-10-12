@@ -5,13 +5,14 @@ const DATABASE_SCRIPTS: Readonly<Record<string, Record<string, string>>> = {
   none: { 'db:migrate': 'echo "No database to migrate."' },
   custom: { 'db:migrate': 'echo "Custom persistence: run your own migrations here."' },
   // drizzle-kit loads the TypeScript schema, which re-exports the tables of each context by their alias: it reads the `paths` of tsconfig.json itself.
-  drizzle: { 'db:generate': 'drizzle-kit generate', 'db:migrate': 'drizzle-kit migrate' },
+  // Every `db:generate` takes what the migration does (`npm run db:generate add-invoices`) and refuses to run without it: the tool prefixes it with a timestamp.
+  drizzle: { 'db:generate': 'drizzle-kit generate --name', 'db:migrate': 'drizzle-kit migrate' },
   knex: { 'db:generate': 'knex migrate:make', 'db:migrate': 'npm run build && knex migrate:latest' },
   // The client and the schema of the tests are build products of prisma/schema.prisma: every entry point refreshes them.
   prisma: {
     'db:client':
       'prisma generate && prisma migrate diff --from-empty --to-schema prisma/schema.prisma --script -o generated/schema.sql',
-    'db:generate': 'prisma migrate dev --create-only',
+    'db:generate': 'prisma migrate dev --create-only --name',
     'db:migrate': 'prisma migrate deploy',
     pretypecheck: 'npm run db:client',
     prebuild: 'npm run db:client',
@@ -29,7 +30,7 @@ export function databaseScripts(config: Config): Record<string, string> {
   return { ...scriptsOf(config), ...(orm === 'drizzle' && audit === 'on' ? { 'db:audit-guard': AUDIT_GUARD } : {}) };
 }
 
-/** The TypeORM CLI reads the compiled data source of the platform, wherever the project keeps its platform. */
+/** The TypeORM CLI reads the compiled data source of the platform, wherever the project keeps its platform; it takes the path of the new migration (`npm run db:generate migrations/add-invoices`). */
 function scriptsOf(config: Config): Record<string, string> {
   const { orm } = config.stack;
   const dataSource = `dist/${config.platformDir}/database/data-source.js`;
@@ -39,7 +40,7 @@ function scriptsOf(config: Config): Record<string, string> {
   }
 
   return {
-    'db:generate': `typeorm migration:generate -d ${dataSource} migrations/change`,
+    'db:generate': `typeorm migration:generate -d ${dataSource}`,
     'db:migrate': `typeorm migration:run -d ${dataSource}`,
   };
 }

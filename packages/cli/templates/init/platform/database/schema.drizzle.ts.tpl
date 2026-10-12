@@ -10,7 +10,7 @@ export const processedEvents = processedEventsTable('messaging');
 /** The schema of the audit trail. */
 export const AUDIT_SCHEMA = 'audit';
 
-// TODO(platform): drizzle-kit writes no trigger. After `npm run db:generate`, add a custom migration (`npm run db:generate -- --custom --name audit-guard`) holding the statements `npm run db:audit-guard` prints: they make the entries refuse UPDATE, DELETE and TRUNCATE.
+// TODO(platform): drizzle-kit writes no trigger. After the first `npm run db:generate <name>`, add a custom migration (`npm run db:generate -- audit-guard --custom`) holding the statements `npm run db:audit-guard` prints: they make the entries refuse UPDATE, DELETE and TRUNCATE.
 export const auditEntries = auditEntriesTable(AUDIT_SCHEMA);
 export const auditChains = auditChainsTable(AUDIT_SCHEMA);
 {{/if}}
