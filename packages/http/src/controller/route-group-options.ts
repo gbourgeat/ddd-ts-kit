@@ -12,6 +12,9 @@ export interface RouteGroupOptions {
   readonly guards?: readonly GuardReference[];
   /** Error codes every route of the group may answer, such as `FORBIDDEN` behind protected use cases. */
   readonly errors?: readonly string[];
-  /** The cache policy of every read of the group, unless a controller declares its own; a child group may replace it. */
+  /**
+   * The cache policy of every read (GET, HEAD) of the group, unless a controller declares its
+   * own; a child group may replace it. A write of the group never inherits it.
+   */
   readonly cache?: CachePolicy;
 }

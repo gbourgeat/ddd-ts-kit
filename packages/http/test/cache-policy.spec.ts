@@ -237,6 +237,38 @@ describe('the cache policy of a controller', () => {
     expect(controllerRoute(new ReadOfferController()).cache).toEqual({ scope: 'no-store' });
   });
 
+  it('goes to the reads of its group only: a write of the group keeps the default of a write', async () => {
+    class OpeningRoutes {}
+
+    RouteGroup({ prefix: '/opening', guards: [Public], cache: { scope: CacheScope.public, maxAge: '10m' } })(
+      OpeningRoutes,
+    );
+
+    class SetOpeningController {
+      handle(): undefined {
+        return undefined;
+      }
+    }
+
+    class ReadOpeningController {
+      handle(): { opens: string } {
+        return { opens: '08:00' };
+      }
+    }
+
+    Controller({ method: 'PUT', summary: 'Set', group: OpeningRoutes, path: '/', response: { status: 204 } })(
+      SetOpeningController,
+    );
+
+    Controller({ ...read, group: OpeningRoutes, path: '/' })(ReadOpeningController);
+
+    const write = controllerRoute(new SetOpeningController());
+
+    expect(write.cache).toBeUndefined();
+    expect((await executeRoute(write, request())).headers['cache-control']).toBeUndefined();
+    expect(controllerRoute(new ReadOpeningController()).cache).toEqual({ scope: 'public', maxAge: '10m' });
+  });
+
   it('is held to the guards before it: a group behind Authenticated shares nothing it does not vary', () => {
     class AccountRoutes {}
 

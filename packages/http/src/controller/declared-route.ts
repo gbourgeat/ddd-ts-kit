@@ -16,7 +16,7 @@ export interface DeclaredRoute {
   readonly errors: readonly string[];
   /** The class names of its route group and of every group above it, nearest first. */
   readonly groups: readonly string[];
-  /** The policy of the controller, else of the nearest group that declares one. */
+  /** The policy of the controller, else, for a read, of the nearest group that declares one. */
   readonly cache?: CachePolicy;
 }
 
@@ -30,13 +30,15 @@ interface Inherited {
 }
 
 const NOTHING: Inherited = { groups: [], prefix: '', tags: [], guards: [], errors: [] };
+// The methods whose answer a cache keeps: a write of a cached group keeps the default of a write.
+const READS: readonly string[] = ['GET', 'HEAD'];
 
 /** Folds the groups of a controller into its declaration, and refuses one that cannot stand. */
 export function declaredRoute(className: string, spec: ControllerSpec): DeclaredRoute {
   const inherited = spec.group === undefined ? NOTHING : inheritedFrom(className, spec.group);
   const guards = [...inherited.guards, ...(spec.guards ?? [])];
   const path = `${inherited.prefix}${spec.path === '/' && inherited.prefix !== '' ? '' : spec.path}`;
-  const cache = spec.cache ?? inherited.cache;
+  const cache = spec.cache ?? (READS.includes(spec.method) ? inherited.cache : undefined);
 
   assertPath(className, spec.path, path);
   assertAccess(className, guards);
