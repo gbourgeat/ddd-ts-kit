@@ -34,8 +34,12 @@ A business refusal is a `DomainError`: an answer the code planned for, known eve
 `code`. A context has one error class per concept of its language, and each refusal is a static
 factory of that class, named in the words of the business:
 
+<!-- checked sample -->
 ```ts
 import { ConceptError } from '@ddd-ts-kit/kernel';
+
+declare const calendar: { readonly id: string };
+declare const slot: { readonly startsAt: Date };
 
 export class AppointmentError extends ConceptError {
   static slotTaken(calendarId: string, startsAt: Date) {
@@ -1081,6 +1085,7 @@ A read of a read model, described once for every search: filters, a sort, a page
 knows field names and nothing of a store. It is not a specification: a specification is a
 business predicate on an aggregate and lives in the domain; a criteria describes a read.
 
+<!-- checked sample -->
 ```ts
 // contexts/scheduling/application/ports/appointment-list.port.ts
 import { ReadModelStore, defineCriteria } from '@ddd-ts-kit/kernel';

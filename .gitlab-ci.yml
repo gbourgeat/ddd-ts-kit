@@ -149,7 +149,7 @@ docs:
   needs: []
   image: node:${NODE_VERSION}-bookworm-slim
   script:
-    # The script needs no dependency.
+    # No em dash or en dash, and the French documentation complete and current: the scripts need no dependency.
     - npm run ci:docs
 
 unit:

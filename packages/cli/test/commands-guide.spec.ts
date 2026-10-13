@@ -5,7 +5,11 @@ import { commandsGuideRegion } from '../src/help/commands-guide-region.js';
 import { referenceText } from '../src/help/reference-text.js';
 import { cli, REPO_ROOT } from './helpers.js';
 
-const GUIDE = path.join(REPO_ROOT, 'docs/guides/commands.md');
+/** The English page, and its French page once written: the reference is the help of the CLI, in English on both. */
+const GUIDES = ['docs/guides/commands.md', 'docs/guides/commands.fr.md']
+  .map((guide) => path.join(REPO_ROOT, guide))
+  .filter((guide, index) => index === 0 || fs.existsSync(guide));
+
 const SOURCES = ['packages/cli/src/commands', 'packages/cli/src/check/commands'];
 
 /** The options a command declares to its parser: `name: { type: ... }`, `name: TEXT`, and the flag lists of `init`. */
@@ -29,8 +33,8 @@ function declaredOptions(): string[] {
 }
 
 describe('docs/guides/commands.md', () => {
-  it('holds, between its markers, the reference the help of the CLI prints', () => {
-    const page = fs.readFileSync(GUIDE, 'utf8');
+  it.each(GUIDES)('%s holds, between its markers, the reference the help of the CLI prints', (guide) => {
+    const page = fs.readFileSync(guide, 'utf8');
 
     const written = page.slice(
       page.indexOf('<!-- ddd-ts-kit:commands -->'),

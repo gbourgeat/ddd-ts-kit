@@ -100,7 +100,7 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24
-      - name: No em dash or en dash (the script needs no dependency)
+      - name: No em dash or en dash, and the French documentation complete and current (the scripts need no dependency)
         run: npm run ci:docs
 
   unit:
