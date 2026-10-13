@@ -137,6 +137,9 @@ describe('the error mapper', () => {
       INVARIANT_VIOLATION: 422,
       UNAUTHORIZED: 401,
       FORBIDDEN: 403,
+      FILE_NOT_FOUND: 404,
+      FILE_TOO_LARGE: 413,
+      UNSUPPORTED_MEDIA_TYPE: 415,
     });
   });
 

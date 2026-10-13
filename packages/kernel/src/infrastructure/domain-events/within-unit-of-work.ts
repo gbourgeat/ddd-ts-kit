@@ -1,6 +1,6 @@
 import { dispatchAfterCommit } from './dispatch-after-commit.js';
 import { dispatchBeforeCommit } from './dispatch-before-commit.js';
-import { runStagedWrites } from './run-staged-writes.js';
+import type { CommitStep } from './commit-step.js';
 import { unitOfWorkScope, type UnitOfWorkScope } from './unit-of-work-scope.js';
 
 /**
@@ -12,8 +12,9 @@ import { unitOfWorkScope, type UnitOfWorkScope } from './unit-of-work-scope.js';
  * inside `transaction`: the handlers see every save, and what they save or append to the outbox
  * commits with the rest. A handler that fails, like `work` that fails, rejects the whole: the
  * transaction rolls back, the waiting events are dropped and never come back on the aggregates.
- * Once `transaction` has resolved, and only then, the writes staged by `whenCommitted` run, then
- * the `after-commit` handlers.
+ * The steps handed to `atCommit` are applied last, still inside `transaction`; when it rejects,
+ * those applied are undone. Once `transaction` has resolved, and only then, the `after-commit`
+ * handlers run, then the work handed to `afterCommit`.
  *
  * Called inside a unit of work already running on the same asynchronous call chain it joins it:
  * `transaction(work)` and nothing else, so one dispatch, at the end of the outermost. Two
@@ -27,17 +28,21 @@ export async function withinUnitOfWork<T>(
     return transaction(work);
   }
 
-  const scope: UnitOfWorkScope = { kind: 'unit-of-work', stage: 'open', queue: [], dispatched: [] };
+  const scope = openScope();
+  const applied: CommitStep[] = [];
 
   const result = await unitOfWorkScope
-    .run(scope, () => transaction(() => thenDispatched(work, scope)))
+    .run(scope, () => transaction(() => thenDispatched(work, scope, applied)))
+    .catch(async (error: unknown) => {
+      await undone(applied);
+      throw error;
+    })
     .finally(() => {
       scope.stage = 'closed';
       scope.queue.length = 0;
     });
 
-  await runStagedWrites(scope);
-  await dispatchAfterCommit(scope);
+  await afterTheCommit(scope);
 
   return result;
 }
@@ -46,10 +51,35 @@ function isRunning(scope: UnitOfWorkScope | undefined): boolean {
   return scope?.kind === 'unit-of-work' && (scope.stage === 'open' || scope.stage === 'before-commit');
 }
 
-async function thenDispatched<T>(work: () => Promise<T>, scope: UnitOfWorkScope): Promise<T> {
+function openScope(): UnitOfWorkScope {
+  return { kind: 'unit-of-work', stage: 'open', queue: [], dispatched: [], committed: [], atCommit: [] };
+}
+
+async function thenDispatched<T>(work: () => Promise<T>, scope: UnitOfWorkScope, applied: CommitStep[]): Promise<T> {
   const result = await work();
 
   await dispatchBeforeCommit(scope);
 
+  for (const step of scope.atCommit ?? []) {
+    await step.apply();
+    applied.push(step);
+  }
+
   return result;
+}
+
+/** Newest first; an undo that fails reported itself, and the others still run. */
+async function undone(applied: readonly CommitStep[]): Promise<void> {
+  for (const step of [...applied].reverse()) {
+    await step.undo().catch(() => undefined);
+  }
+}
+
+/** The `after-commit` handlers, then the work handed to `afterCommit`; a rejection is dropped, the work reported its own. */
+async function afterTheCommit(scope: UnitOfWorkScope): Promise<void> {
+  await dispatchAfterCommit(scope);
+
+  for (const work of scope.committed ?? []) {
+    await work().catch(() => undefined);
+  }
 }

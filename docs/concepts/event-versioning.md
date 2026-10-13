@@ -135,9 +135,11 @@ registry with compatibility modes, as exists in the Kafka ecosystem, is not part
   new version is also the occasion to clean up.
 - **Semantic changes are invisible to schemas.** No tool here detects that a field kept its name
   and changed its meaning. Treat a change of meaning as a new field or a new version.
-- **Upcasting is not provided.** Some systems transform old versions into the newest one at
-  read time, so consumers handle one shape; the kit has no such mechanism. A consumer that must
-  read retained history handles the versions that history contains.
+- **Upcasting is for stored events, not for integration events.** The events an event-sourced
+  aggregate keeps in its stream are upcast when read (`upcasters` of `defineStoredEvent`, held by
+  `event-sourcing/upcaster-required` against `stored-events.lock.json`): see
+  [Event sourcing, per aggregate](event-sourcing.md). Integration events are not: a consumer that
+  must read retained history handles the versions that history contains.
 - **Versioning the event does not version the process.** When the sequence of events changes
   (a new step between booking and confirmation), consumers that assumed the old sequence break
   without any schema change. That is a contract change to discuss with the downstream teams (see

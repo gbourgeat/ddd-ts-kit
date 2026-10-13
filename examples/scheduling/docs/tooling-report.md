@@ -930,6 +930,113 @@ own specs. `PersonError.invalidEmail` quotes the address it refuses in its messa
 now reads `Invalid email.` as `detail`, and the spec of the controller holds that the address
 does not leave.
 
+## 2026-10-13: one aggregate kept as its events
+
+The kit gained event sourcing, chosen per aggregate. The example shows it on one aggregate
+whose history is the business, the attendance record of a patient in a practice: the no-shows
+and the cancellations of the patient, each noted once, in order. Every other aggregate keeps
+its state in tables, in the same context and the same transaction.
+
+| | |
+|---|---|
+| Event-sourced aggregate | `AttendanceRecord` (scheduling), three events: `created`, `no-show-noted`, `cancellation-noted` |
+| How it is fed | the before-commit handlers of `scheduling.appointment.marked-no-show` (new) and of `scheduling.appointment.cancelled` (a cancellation by the patient) send `NoteNoShow` and `NoteCancellation`, as the system actor `scheduling.note-attendance`: the stream is appended in the unit of work of the appointment |
+| Store | PostgreSQL through knex, in the `scheduling` schema (`createEventStoreTables` in `createSchedulingTables`), bound by the platform; in memory for the handler specs |
+| Snapshots | every 20 events, proven equal to a full replay (`expectSnapshotEquivalence`) |
+| Personal data | the words of a patient who cancels are sealed with the key of the patient; an erased patient reads `[erased]` after a rebuild |
+| Projection | `scheduling.attendance-history`, fed by the store (`{ feed: 'event-store' }`): a catch-up subscription in the API process, at the pace of the outbox relay; its rebuild from position zero is proven on PostgreSQL |
+| HTTP contract | additive only: `GET /practices/{practiceId}/patients/{patientId}/attendance` (`searchAttendanceHistory`), and the permissions `scheduling:attendance.note`, `scheduling:attendance.read` (the second asked of a practice, as `work`) |
+| Generator runs | 11, logged in `docs/tooling/generator-log.jsonl`; 2 refused |
+| Stored shapes recorded | `node scripts/kit.mjs docs --stored-events`: `stored-events.lock.json` |
+
+What the generators did: `generate aggregate --event-sourced` wrote the aggregate, its birth
+event, the codec of its stored events, a builder that replays a history and a given-events
+spec; `generate domain-event` added each later event to the union, to `appliers()` with an
+empty apply method, and to the codec; the commands, the event handler, the query and the
+controller came from their kinds as usual.
+
+Frictions, for the owner of the kit:
+
+1. `scripts/kit.mjs` failed on a fresh checkout: `main()` ran before the constant it reads when
+   the cache directory does not exist yet. Fixed by declaring the constant first.
+2. The birth event is `<Name>Created`: the glossary held "Create" for calendars only, and its
+   meaning was widened to the attendance record.
+3. `generate projection` takes an integration event only: the projection of the store, of
+   domain events, was written by hand.
+4. `generate repository` has no event-sourced form: the port, the adapter over
+   `EventSourcedRepository` and the fake were written by hand, about 70 lines.
+5. `generate query` without `--search` still wrote a reader port, its in-memory adapter and its
+   fake; the query reads the store of the projection, and the three files were removed.
+6. Three existing specs grant the `system` role the permissions of the commands the context
+   sends itself: each needed `attendance.note`, since cancelling or marking an appointment now
+   notes the attendance in the same unit of work.
+7. The integration specs, run in parallel on twenty cores beside other workloads, timed out
+   while starting PGlite (a hook limit of 10 s); they pass serially and with four workers.
+
+### 2026-10-13, after review: the gates of the stored shapes, an erasure
+
+A review of the lot found the lock of the stored shapes held by memory alone, and no way to run
+the erasure the documentation prescribes. What changed in the example:
+
+| | |
+|---|---|
+| Stored shapes | `npm run docs:check` (`ddd-ts-kit docs --check`) now fails while a version declared in a codec is not recorded in `stored-events.lock.json`; the fingerprint of a shape includes the types of the codec it reaches |
+| Data subject | the cancellation event carries the patient it seals the reason for (`cancelled.patientId`), instead of reading it from the identifier of the record; the practice part of that identifier is escaped, so two pairs never share one |
+| Erasure | `npm run erase:patient -- <patientId>`: the key is destroyed, then every projection fed by the store is rebuilt |
+| Catch-up | a tick that comes while a round runs is skipped; a checkpoint moved first by another replica is a skipped round, not an error |
+
+Frictions, for the owner of the kit:
+
+1. The shape of `scheduling.attendance-record.cancellation-noted` changed in version 1, which
+   was recorded but never stored outside the tests and is not merged: its line was removed from
+   the lock and recorded again, the path `docs/concepts/event-sourcing.md` describes. Once
+   merged, the same change is a version 2 with its upcaster.
+2. `docs --check` reported the unrecorded version at once, with the command to run: the gate
+   did what the review asked of it.
+3. The catch-up and the rebuild of a projection fed by the store are still written by hand in
+   the platform (`store-fed-projections.ts`): `generate projection` has no event-store form.
+
+## 2026-10-13: documents of appointments, kept in the file storage
+
+A practice attaches a document to an appointment (a referral, a prescription, a report), a
+patient or the practice fetches it through a link of five minutes, and the practice removes
+it. The content never reaches the database: the appointment keeps the reference of the stored
+file (key, size, media type, checksum), its name and when it was attached.
+
+| | |
+|---|---|
+| Config | `"storage": "local"`: a directory in development (`.data/files`), and in the end-to-end journey and the integration spec of the slice, each in a temporary directory; the memory in the handler specs. MinIO in `docker-compose.yml` behind the `files` profile is a recipe for moving to an object store (the comment of the service says the steps), not a storage the example runs on |
+| Platform | what `init --storage local` writes for this stack (`platform/files/`, `platform/config/read-files.ts`, the file routes mounted before `express.json()`, the upload reader of the HTTP boundary, the purge of staged files every hour), applied as the diff between `init --storage none` and `init --storage local` of the same stack, since `init --force` would have rewritten the hand-tuned files of the platform |
+| Generators | `generate value-object` (`AttachedDocument`), two `generate error` (`noDocument`, `documentNameTooLong`), `generate file-upload`, `generate command`, `generate query`, two `generate route`, then `docs` |
+| Written or rewritten by hand | the value object, the two refusals, the state and two methods of `Appointment`, the six columns of the mapper, the migration `20261013090000_add-appointment-documents.js` and `upgradeTables` for the in-process database of the tests, the three handlers, the three controllers, the specs, the end-to-end journey |
+| Routes added | `POST`, `GET` and `DELETE` `/appointments/{appointmentId}/document`; the rest of `openapi/openapi.yaml` is unchanged (228 lines added, none removed) |
+| Audit | `scheduling:appointment.read-document` is a sensitive permission of `auditDecisions`: every allowed read of a document is recorded |
+| Tests | 23 unit specs of the slice, the round trip of the reference in the contract of both appointment repositories, `document-lands-with-its-file.spec.ts` on the in-process database and the local storage (the row and the file land together; a commit refused after the file moved returns it to `staging/` and leaves the row without a document), and `test/e2e/journey-documents.e2e.spec.ts` on the local storage: an upload streamed through the multipart reader, the file under its final key on disk, a download through the link, a 415 for a disguised file, a 403 for another patient, the link that stops answering and the file gone once the document is removed |
+
+After the review of the lot, the order of a write changed in the kit and here with it. The
+command carries a `FileUpload` (`new FileUpload(file, 'appointment-documents')`), which the
+command bus stages after the permission and before the audit entry opens the transaction
+(`platform/files/staging-uploads.ts`, as `init` now writes it): no transaction waits on a
+client that uploads slowly. The handler reads `command.document.file` and calls
+`promoteOnCommit`, which moves the file inside the transaction, as its last step, so a committed
+row never points into `staging/` and the hourly purge only meets orphans. One behaviour moved:
+an upload to an appointment that does not exist is now received, then left in `staging/` for
+the purge, since the handler that finds the appointment runs after the staging. In production
+`FILES_PUBLIC_URL` is now required, like `FILES_SIGNING_SECRET`.
+
+What the generators did not fit, to change in the kit:
+
+- `generate file-upload` writes a controller without the schema of its path parameters: a
+  document attached to an appointment needs `appointmentId`, written by hand with its class
+  schema. The command it writes carries the file only; the identifier of the aggregate was added.
+- `generate query` wrote a reader port, its in-memory adapter and its fake: this query reads the
+  aggregate and signs a link, so the three files were removed.
+- `scripts/kit.mjs` of this example failed on any generator that creates a file (`NOT_A_FILE`
+  was declared after the call that read it); fixed here.
+- The integration specs of this example time out when vitest runs their files in parallel on a
+  loaded machine (PGlite per file); `npm run test:postgres` runs them one file at a time, and
+  passes.
+
 ## 2026-10-13: refusals at the edge in the audit trail, and the tenancy of the application
 
 Two changes of the kit reached this application.

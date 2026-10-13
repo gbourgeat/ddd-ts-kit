@@ -80,6 +80,7 @@ type Identity = Pick<
   | 'upstreams'
   | 'downstreams'
   | 'aggregates'
+  | 'eventSourced'
   | 'domainEvents'
   | 'permissions'
 >;
@@ -95,6 +96,7 @@ function identityOf(facts: ContextFacts, directory: string): Identity {
     upstreams: facts.upstreams,
     downstreams: facts.downstreams,
     aggregates: facts.aggregates,
+    eventSourced: facts.eventSourced,
     domainEvents: facts.domainEvents,
     permissions: facts.permissions,
   };

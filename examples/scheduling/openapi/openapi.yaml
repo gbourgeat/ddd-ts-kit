@@ -1,7 +1,7 @@
 openapi: '3.1.0'
 info:
   title: scheduling
-  version: '0.8.0'
+  version: '0.10.0'
 tags:
   - name: analytics
   - name: audit
@@ -705,6 +705,234 @@ paths:
           x-error-codes:
             - APPOINTMENT_ALREADY_CONFIRMED
             - APPOINTMENT_ENDED
+        '422':
+          description: 'Unprocessable Content. Error codes: VALIDATION_FAILED.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - VALIDATION_FAILED
+  /appointments/{appointmentId}/document:
+    get:
+      operationId: getAppointmentDocument
+      summary: Get a link to the document of an appointment
+      description: The file itself is fetched from the link it answers, which expires after five minutes; every access is recorded in the audit trail.
+      tags:
+        - scheduling
+      security:
+        - bearer: []
+      parameters:
+        - name: appointmentId
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: The link to the document.
+          content:
+            application/json:
+              schema:
+                properties:
+                  url:
+                    type: string
+                  expiresAt:
+                    type: string
+                  name:
+                    type: string
+                  mediaType:
+                    type: string
+                  size:
+                    type: integer
+                type: object
+                required:
+                  - url
+                  - expiresAt
+                  - name
+                  - mediaType
+                  - size
+        '401':
+          description: 'Unauthorized. Error codes: UNAUTHORIZED.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - UNAUTHORIZED
+        '403':
+          description: 'Forbidden. Error codes: FORBIDDEN.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - FORBIDDEN
+        '404':
+          description: 'Not Found. Error codes: APPOINTMENT_NOT_FOUND, NO_DOCUMENT.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - APPOINTMENT_NOT_FOUND
+            - NO_DOCUMENT
+        '422':
+          description: 'Unprocessable Content. Error codes: VALIDATION_FAILED.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - VALIDATION_FAILED
+    post:
+      operationId: attachAppointmentDocument
+      summary: Attach a document to an appointment
+      description: 'A referral, a prescription or a report, as `multipart/form-data`: it replaces the document the appointment held.'
+      tags:
+        - scheduling
+      security:
+        - bearer: []
+      parameters:
+        - name: appointmentId
+          in: path
+          schema:
+            type: string
+          required: true
+      requestBody:
+        required: true
+        description: 'Text fields first, then the file: a field sent after the file is not read.'
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                document:
+                  type: string
+                  contentMediaType: application/octet-stream
+                  description: 'The file: application/pdf, image/png, image/jpeg, at most 10485760 bytes, its type checked on its content.'
+                  x-max-bytes: 10485760
+                  x-media-types:
+                    - application/pdf
+                    - image/png
+                    - image/jpeg
+              required:
+                - document
+            encoding:
+              document:
+                contentType: application/pdf, image/png, image/jpeg
+      responses:
+        '201':
+          description: Attached; the body carries the identifier of the appointment.
+          content:
+            application/json:
+              schema:
+                properties:
+                  id:
+                    type: string
+                type: object
+                required:
+                  - id
+        '401':
+          description: 'Unauthorized. Error codes: UNAUTHORIZED.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - UNAUTHORIZED
+        '403':
+          description: 'Forbidden. Error codes: FORBIDDEN.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - FORBIDDEN
+        '404':
+          description: 'Not Found. Error codes: APPOINTMENT_NOT_FOUND.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - APPOINTMENT_NOT_FOUND
+        '413':
+          description: 'Content Too Large. Error codes: FILE_TOO_LARGE.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - FILE_TOO_LARGE
+        '415':
+          description: 'Unsupported Media Type. Error codes: UNSUPPORTED_MEDIA_TYPE.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - UNSUPPORTED_MEDIA_TYPE
+        '422':
+          description: 'Unprocessable Content. Error codes: DOCUMENT_NAME_TOO_LONG, FILE_REJECTED, VALIDATION_FAILED.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - DOCUMENT_NAME_TOO_LONG
+            - FILE_REJECTED
+            - VALIDATION_FAILED
+    delete:
+      operationId: removeAppointmentDocument
+      summary: Remove the document of an appointment
+      tags:
+        - scheduling
+      security:
+        - bearer: []
+      parameters:
+        - name: appointmentId
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Done; the body carries the identifier.
+          content:
+            application/json:
+              schema:
+                properties:
+                  id:
+                    type: string
+                type: object
+                required:
+                  - id
+        '401':
+          description: 'Unauthorized. Error codes: UNAUTHORIZED.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - UNAUTHORIZED
+        '403':
+          description: 'Forbidden. Error codes: FORBIDDEN.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - FORBIDDEN
+        '404':
+          description: 'Not Found. Error codes: APPOINTMENT_NOT_FOUND, NO_DOCUMENT.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - APPOINTMENT_NOT_FOUND
+            - NO_DOCUMENT
         '422':
           description: 'Unprocessable Content. Error codes: VALIDATION_FAILED.'
           content:
@@ -2769,6 +2997,173 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
           x-error-codes:
+            - VALIDATION_FAILED
+  /practices/{practiceId}/patients/{patientId}/attendance:
+    get:
+      operationId: searchAttendanceHistory
+      summary: Search attendance history
+      tags:
+        - scheduling
+      security:
+        - bearer: []
+      parameters:
+        - name: practiceId
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: patientId
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: filter[recordId]
+          in: query
+          description: 'Filters on `recordId`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq. The value is text.'
+          required: false
+          schema:
+            type: string
+            description: 'Filters on `recordId`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq. The value is text.'
+            x-filter-operators:
+              - eq
+            x-filter-type: string
+        - name: filter[fact]
+          in: query
+          description: 'Filters on `fact`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq, in. The value is text.'
+          required: false
+          schema:
+            type: string
+            description: 'Filters on `fact`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq, in. The value is text.'
+            x-filter-operators:
+              - eq
+              - in
+            x-filter-type: string
+        - name: filter[appointmentId]
+          in: query
+          description: 'Filters on `appointmentId`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq. The value is text.'
+          required: false
+          schema:
+            type: string
+            description: 'Filters on `appointmentId`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq. The value is text.'
+            x-filter-operators:
+              - eq
+            x-filter-type: string
+        - name: sort
+          in: query
+          description: The fields to sort by, a leading "-" for descending, repeated or separated by commas.
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - version
+                - '-version'
+                - notedAt
+                - '-notedAt'
+                - id
+                - '-id'
+            description: The fields to sort by, a leading "-" for descending, repeated or separated by commas.
+        - name: limit
+          in: query
+          description: Size of the page.
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+            description: Size of the page.
+        - name: offset
+          in: query
+          description: Items to skip. Not with `cursor`.
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            description: Items to skip. Not with `cursor`.
+        - name: cursor
+          in: query
+          description: The `nextCursor` of the previous page. Not with `offset`.
+          required: false
+          schema:
+            type: string
+            minLength: 1
+            description: The `nextCursor` of the previous page. Not with `offset`.
+      responses:
+        '200':
+          description: One page of the history, oldest fact first.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      properties:
+                        version:
+                          type: integer
+                        fact:
+                          type: string
+                          enum:
+                            - opened
+                            - no-show
+                            - cancellation
+                        notedAt:
+                          oneOf:
+                            - format: date
+                              type: string
+                            - format: date-time
+                              type: string
+                        appointmentId:
+                          type: string
+                        startsAt:
+                          oneOf:
+                            - format: date
+                              type: string
+                            - format: date-time
+                              type: string
+                        reason:
+                          type: string
+                      type: object
+                      required:
+                        - version
+                        - fact
+                        - notedAt
+                  total:
+                    type: integer
+                    minimum: 0
+                    description: Present when it is cheap to count.
+                  nextCursor:
+                    type: string
+                    description: Present when more items follow.
+        '401':
+          description: 'Unauthorized. Error codes: UNAUTHORIZED.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - UNAUTHORIZED
+        '403':
+          description: 'Forbidden. Error codes: FORBIDDEN.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - FORBIDDEN
+        '422':
+          description: 'Unprocessable Content. Error codes: INVALID_CRITERIA, VALIDATION_FAILED.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - INVALID_CRITERIA
             - VALIDATION_FAILED
 components:
   schemas:

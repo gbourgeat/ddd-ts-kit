@@ -7,6 +7,8 @@ export {
 } from '@ddd-ts-kit/kernel';
 export * from './unit-of-work/knex-context.js';
 export * from './unit-of-work/create-knex-unit-of-work.js';
+export * from './event-sourcing/create-event-store-tables.js';
+export * from './event-sourcing/create-knex-event-sourcing.js';
 export * from './outbox/table-names.js';
 export * from './outbox/outbox-tables-options.js';
 export * from './outbox/create-outbox-tables.js';

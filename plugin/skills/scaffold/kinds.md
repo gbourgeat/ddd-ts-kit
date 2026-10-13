@@ -8,10 +8,10 @@ shared files each kind writes (`writesShared`, `shared`, `sharedWhen`).
 | Kind | Arguments | Lands in |
 |---|---|---|
 | `context` | `<name> --classification <core\|supporting\|generic> [--purpose "<two sentences>"] [--upstream <ctx>[:pattern]]...` | `contexts/<name>/`: `CONTEXT.md`, published language, barrel (or module file), route list; config, composition root, context map |
-| `aggregate` | `<ctx> <Name>` | `domain/aggregates/`, builder, spec |
+| `aggregate` | `<ctx> <Name> [--event-sourced]` | `domain/aggregates/`, builder, spec; event-sourced: its birth event `<Name>Created` and apply method, the codec `infrastructure/persistence/<name>-events.mapper.ts`, a builder that replays a history |
 | `entity` | `<ctx> <Name>` | `domain/entities/`, spec |
 | `value-object` (`vo`) | `<ctx> <Name>` | `domain/value-objects/`, spec |
-| `domain-event` | `<ctx> <Aggregate> <Fact>` | `domain/events/`, named `<ctx>.<aggregate>.<fact>`, spec |
+| `domain-event` | `<ctx> <Aggregate> <Fact>` | `domain/events/`, named `<ctx>.<aggregate>.<fact>`, spec; of an event-sourced aggregate, also the union, `appliers()` with an empty apply method, and the codec entry |
 | `error` (`refusal`) | `<ctx> <Concept> <refusal> [--code CODE]` | a static factory on `domain/errors/<concept>.error.ts`, the error class of the concept (created when absent), and its spec case; run again, nothing changes |
 | `domain-error` | `<ctx> <Name> [--code CODE]` | one class per error in `domain/errors/`, spec: only in a project whose config says `"stack.refusals": "classes"` or nothing |
 | `domain-service` | `<ctx> <Name>` | `domain/services/`, spec |

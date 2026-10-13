@@ -37,7 +37,7 @@ Ordered as a reading path in [concepts/README.md](concepts/README.md).
 | [Layers and the dependency rule](concepts/layers-and-dependency-rule.md) | hexagonal, onion, clean: what they share, where they differ |
 | [Ports and composition](concepts/ports-and-composition.md) | ports as abstract classes, the composition root, declared or explicit wiring |
 | [The presentation layer](concepts/presentation-layer.md) | one controller class per route, route groups, guards at the edge and permissions on the use case, mapper and serializer |
-| [CQRS](concepts/cqrs.md) | command and query buses, no event sourcing: what it buys and what it does not |
+| [CQRS](concepts/cqrs.md) | command and query buses, and event sourcing as a separate choice: what it buys and what it does not |
 | [Modular monolith](concepts/modular-monolith.md) | one deployable, contexts kept extractable |
 | [Domain and integration events](concepts/domain-and-integration-events.md) | the two kinds of events and the translation between them |
 | [Transactional outbox](concepts/transactional-outbox.md) | the dual write problem, the outbox, relay strategies |
@@ -45,12 +45,14 @@ Ordered as a reading path in [concepts/README.md](concepts/README.md).
 | [Eventual consistency](concepts/eventual-consistency.md) | explained to a product person |
 | [Sagas and process managers](concepts/sagas-and-process-managers.md) | long-running processes: what the kit provides and what it does not |
 | [Event versioning](concepts/event-versioning.md) | evolving a published event |
+| [Event sourcing, per aggregate](concepts/event-sourcing.md) | when to keep an aggregate as its events, what it costs, upcasters, crypto-shredding, projections fed by the store, migrating to it and back |
 | [Authentication and authorization](concepts/authentication-and-authorization.md) | RBAC, ABAC, ReBAC compared, with a decision table |
 | [Actor and execution scope](concepts/actor-and-execution-scope.md) | the explicit actor, and what every unit of work carries |
 | [Multitenancy](concepts/multitenancy.md) | the tenant from the edge to the storage: isolation strategies, propagation, elevation of platform staff, the proof |
 | [Audit trail](concepts/audit-trail.md) | tamper-evident history recorded around the use cases |
 | [Observability](concepts/observability.md) | tracing, logs, metrics, error reporting, the correlation id |
 | [Resilience](concepts/resilience.md) | retry, timeout, circuit breaker, bulkhead, cache and their failure modes |
+| [File storage](concepts/file-storage.md) | files in a storage, never in the database: staged before the transaction, moved to their key with the commit, served by short signed links |
 | [Scheduled jobs](concepts/scheduled-jobs.md) | jobs that trigger use cases, several instances, idempotence |
 | [Background jobs](concepts/background-jobs.md) | work enqueued in the transaction of a command, run by a worker at least once, leases, checkpoints |
 | [Clean code](concepts/clean-code.md) | naming, small functions, stepdown, comments, with before and after |
@@ -69,6 +71,7 @@ limits, and a recommendation by situation.
 | [Persistence](tools/persistence.md) | Drizzle, Knex, Prisma or TypeORM; PostgreSQL versus others |
 | [Message brokers](tools/message-brokers.md) | in-process, RabbitMQ, Kafka, NATS JetStream or Redis Streams |
 | [Cache and coordination](tools/cache-and-coordination.md) | Redis, Dragonfly or Valkey; what the lock does and does not guarantee |
+| [File storage connectors](tools/file-storage.md) | memory, local directory or S3 compatible (AWS, MinIO, OVHcloud, Scaleway, R2); how to write one for Google Cloud Storage or Azure |
 | [Identity](tools/identity.md) | Keycloak or plain OIDC and JWT |
 | [Authorization engines](tools/authorization-engines.md) | in-process models versus OpenFGA, SpiceDB, Cedar, OPA |
 | [Observability](tools/observability.md) | OpenTelemetry with Jaeger or Tempo; loggers; Sentry or GlitchTip |

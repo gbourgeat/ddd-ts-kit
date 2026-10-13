@@ -5,12 +5,17 @@ import { OutboxStore } from '@ddd-ts-kit/events';
 import { ErrorMapper, createErrorMapper } from '@ddd-ts-kit/http';
 import {
   Cache,
+  CheckpointStore,
+  EventStore,
   EventSubscribers,
   Lock,
   Metrics,
+  PersonalDataCipher,
   ProcessStore,
   ProcessedEventStore,
   RateLimiter,
+  SnapshotStore,
+  SubjectKeyStore,
   UnitOfWork,
   type ErrorReporter,
 } from '@ddd-ts-kit/kernel';
@@ -67,6 +72,7 @@ export function platformModule(persistence: Persistence, options: PlatformOption
       builder.bind(OutboxStore).toValue(persistence.outbox);
       builder.rebind(JobStore).toValue(persistence.jobs);
       builder.rebind(ProcessStore).toValue(persistence.processes);
+      bindEventSourcing(builder, persistence);
       // One store for the authorizer and for the adapters that keep relationships in sync: an adapter names `RelationTupleStore` in its dependencies and writes in the unit of work of its command.
       builder.bind(RelationTupleStore).toValue(createTupleStore(persistence.database));
       builder.rebind(EventSubscribers).toValue({ forContext: (name) => options.events.forConsumer(name) });
@@ -84,6 +90,17 @@ export function platformModule(persistence: Persistence, options: PlatformOption
       // /ddd-ts-kit:bindings
     },
   });
+}
+
+/** The stores of the event-sourced aggregates, in the transaction of the unit of work, and the cipher of their personal data. */
+function bindEventSourcing(builder: ModuleBuilder, persistence: Persistence): void {
+  const { events, snapshots, checkpoints, subjectKeys } = persistence.eventSourcing;
+
+  builder.bind(EventStore).toValue(events);
+  builder.bind(SnapshotStore).toValue(snapshots);
+  builder.bind(CheckpointStore).toValue(checkpoints);
+  builder.bind(SubjectKeyStore).toValue(subjectKeys);
+  builder.bind(PersonalDataCipher).toValue(new PersonalDataCipher(subjectKeys));
 }
 
 /** One server for the cache, the limiter in front of HTTP and the lock that keeps a scheduled job to one instance. */

@@ -1,6 +1,6 @@
 {
   "name": "@ddd-ts-kit/rabbitmq",
-  "version": "0.8.0",
+  "version": "0.10.0",
   "description": "RabbitMQ provider for integration events: confirmed publishing for the outbox relay, durable queue per consumer, manual acknowledgement, bounded retries and dead-lettering.",
   "license": "MIT",
   "repository": {
@@ -26,14 +26,14 @@
     "dist"
   ],
   "dependencies": {
-    "@ddd-ts-kit/kernel": "0.8.0",
-    "@ddd-ts-kit/events": "0.8.0"
+    "@ddd-ts-kit/kernel": "0.10.0",
+    "@ddd-ts-kit/events": "0.10.0"
   },
   "peerDependencies": {
     "amqplib": ">=0.10.0"
   },
   "devDependencies": {
     "amqplib": "latest",
-    "@ddd-ts-kit/testing": "0.8.0"
+    "@ddd-ts-kit/testing": "0.10.0"
   }
 }

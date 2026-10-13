@@ -26,7 +26,13 @@ import { declarationsRoleDeclared } from '../rules/declarations-role-declared.js
 import { domainEventsDispatchedOnSave } from '../rules/domain-events-dispatched-on-save.js';
 import { domainEventsTransactionalBeforeCommit } from '../rules/domain-events-transactional-before-commit.js';
 import { errorsCodeUnique } from '../rules/errors-code-unique.js';
+import { eventSourcingPastTense } from '../rules/event-sourcing-past-tense.js';
+import { eventSourcingProjectionNeverAppends } from '../rules/event-sourcing-projection-never-appends.js';
+import { eventSourcingStateInApply } from '../rules/event-sourcing-state-in-apply.js';
+import { eventSourcingStoreBehindRepository } from '../rules/event-sourcing-store-behind-repository.js';
+import { eventSourcingUpcasterRequired } from '../rules/event-sourcing-upcaster-required.js';
 import { errorsKnownCode } from '../rules/errors-known-code.js';
+import { filesPortNotConnector } from '../rules/files-port-not-connector.js';
 import { eventsConsumerIdempotent } from '../rules/events-consumer-idempotent.js';
 import { eventsDefinedInPublishedLanguage } from '../rules/events-defined-in-published-language.js';
 import { eventsNameFormat } from '../rules/events-name-format.js';
@@ -47,6 +53,7 @@ import { namingOneConceptPerFile } from '../rules/naming-one-concept-per-file.js
 import { namingSearchNotList } from '../rules/naming-search-not-list.js';
 import { namingSuffix } from '../rules/naming-suffix.js';
 import { persistenceMigrationHistory } from '../rules/persistence-migration-history.js';
+import { persistenceNoFileContent } from '../rules/persistence-no-file-content.js';
 import { portsAbstractClass } from '../rules/ports-abstract-class.js';
 import { portsImplementsNeverExtends } from '../rules/ports-implements-never-extends.js';
 import { portsNoConcreteDependency } from '../rules/ports-no-concrete-dependency.js';
@@ -110,6 +117,11 @@ export const ARCHITECTURE_RULES: readonly Rule[] = [
   eventsConsumerIdempotent,
   domainEventsDispatchedOnSave,
   domainEventsTransactionalBeforeCommit,
+  eventSourcingStateInApply,
+  eventSourcingPastTense,
+  eventSourcingStoreBehindRepository,
+  eventSourcingProjectionNeverAppends,
+  eventSourcingUpcasterRequired,
   contextExtractable,
   authzDeclared,
   authzInApplication,
@@ -138,4 +150,6 @@ export const ARCHITECTURE_RULES: readonly Rule[] = [
   errorsCodeUnique,
   errorsKnownCode,
   persistenceMigrationHistory,
+  persistenceNoFileContent,
+  filesPortNotConnector,
 ];

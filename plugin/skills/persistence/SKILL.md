@@ -49,6 +49,11 @@ lookups of the port, the columns, the mapper.
 - **Audit and tenant columns are standard**: `created_at`, `created_by`, `updated_at`,
   `updated_by`, and `tenant_id` with `--tenant-scoped`, stamped by the adapter from the
   `ExecutionScope` and the `Clock` through the kernel helpers. The domain does not know them.
+- **Files never in a table.** No binary or base64 column (`persistence/no-file-content`): the
+  content lives in the `FileStorage` port (`stack.storage`), a row keeps the key, size, media
+  type and checksum of its `StoredFile`, and `FileStaging` orders the write (staged before the
+  transaction, recorded, moved to its key with the commit, an orphan in `staging/` purged a day
+  later). `docs/concepts/file-storage.md`.
 - **Multi-tenant** (`"stack.tenancy": "shared-table"`): every statement on tenant data goes
   through the helpers of the ORM package, `tenantTable` and `ownTenantTable` (Knex),
   `tenantCondition` and `ownTenantCondition` (Drizzle), never a table straight from the
@@ -56,6 +61,12 @@ lookups of the port, the columns, the mapper.
   never. Row-level security, schema and database per tenant are in the packages, wired by
   hand; prove the adapter with `tenantIsolationContract`. See `docs/concepts/multitenancy.md`.
 - **Outbox in the same transaction** as the business write (`events/outbox-required`).
+- **An event-sourced aggregate** (chosen per aggregate, `generate aggregate ... --event-sourced`)
+  keeps the same port; its adapter delegates to `EventSourcedRepository` over the `EventStore`
+  of the ORM package (`create<Orm>EventSourcing`), its stored events are declared in
+  `<aggregate>-events.mapper.ts` with a named data type, and a change of that type is a new
+  version with its upcaster (`event-sourcing/*`; `ddd-ts-kit docs --stored-events` records a
+  version once its shape is final, and `docs --check` fails while one is unrecorded). When to choose it: `docs/concepts/event-sourcing.md` of the kit.
 - **Searches** use the kernel `Page` and `PageRequest`; a cursor ends on a unique tie-breaker.
 - **Queries may skip aggregates**: `generate query` writes a read port and an in-memory
   reader; replace the reader by an adapter that queries the tables and returns the shape of

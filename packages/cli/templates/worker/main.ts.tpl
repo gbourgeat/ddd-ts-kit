@@ -11,6 +11,9 @@ import { composeApplication } from '{{alias.platform}}/compose-application{{alia
 import { loadConfig } from '{{alias.platform}}/config/load-config{{alias.ext}}';
 import { openPersistence } from '{{alias.platform}}/database/open-persistence{{alias.ext}}';
 import { {{events.providerName}} } from '{{alias.platform}}/events/{{events.providerFile}}{{alias.ext}}';
+{{#if files.any}}
+import { openFiles } from '{{alias.platform}}/files/open-files{{alias.ext}}';
+{{/if}}
 import { jobSettings } from '{{alias.platform}}/job-settings{{alias.ext}}';
 {{#if cache.redis}}
 import { openRedis } from '{{alias.platform}}/redis/open-redis{{alias.ext}}';
@@ -43,6 +46,9 @@ const application = composeApplication(persistence, {
   jobs: { start: true, settings: jobSettings(process.env) },
 {{#if cache.redis}}
   redis,
+{{/if}}
+{{#if files.any}}
+  files: openFiles(config.files),
 {{/if}}
 });
 

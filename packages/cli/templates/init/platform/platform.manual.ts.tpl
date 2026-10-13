@@ -26,6 +26,9 @@ import type { Audit } from '{{alias.platform}}/audit/create-audit{{alias.ext}}';
 {{/if}}
 import type { UseCaseProtection } from '{{alias.platform}}/auth/use-case-protection{{alias.ext}}';
 import type { Persistence } from '{{alias.platform}}/database/persistence{{alias.ext}}';
+{{#if files.any}}
+import type { Files } from '{{alias.platform}}/files/create-files{{alias.ext}}';
+{{/if}}
 
 /** Wraps an adapter from outside: a span for its kind and, for what leaves the process, the default policy unless it states its own. */
 type Adapt = <T extends object>(instance: T, info: AspectInfo) => T;
@@ -77,5 +80,9 @@ export interface Platform {
   readonly protection: UseCaseProtection;
   {{#if audit.on}}
   readonly audit: Audit;
+  {{/if}}
+  {{#if files.any}}
+  /** Where files live, the keys they are stored under and the staging that keeps them consistent with the database: never their content in a table. */
+  readonly files: Files;
   {{/if}}
 }

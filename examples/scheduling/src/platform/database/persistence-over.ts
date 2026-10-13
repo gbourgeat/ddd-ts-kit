@@ -1,11 +1,13 @@
 import type { Knex } from 'knex';
 import {
+  createKnexEventSourcing,
   createKnexUnitOfWork,
   KnexJobStore,
   KnexOutboxStore,
   KnexProcessedEventStore,
   KnexProcessStore,
 } from '@ddd-ts-kit/knex';
+import { SCHEDULING_SCHEMA } from '@/contexts/scheduling/infrastructure/persistence/scheduling.schema';
 import type { Persistence } from '@/platform/database/persistence';
 import { MESSAGING } from '@/platform/database/schema';
 
@@ -20,6 +22,8 @@ export function persistenceOver(db: Knex, close: () => Promise<void>): Persisten
     processedEvents: new KnexProcessedEventStore(unitOfWork, { schema: MESSAGING }),
     jobs: new KnexJobStore(unitOfWork, { schema: MESSAGING }),
     processes: new KnexProcessStore(unitOfWork, { schema: MESSAGING }),
+    // One event store, in the schema of the one context with event-sourced aggregates.
+    eventSourcing: createKnexEventSourcing(unitOfWork, { schema: SCHEDULING_SCHEMA }),
     close,
   };
 }

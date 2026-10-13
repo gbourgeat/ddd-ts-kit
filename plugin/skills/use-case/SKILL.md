@@ -57,6 +57,14 @@ the refusal as typed parameters, and throw it where the rule is kept:
 factory only for what a client may read, never for what identifies a person. Declare the code
 in `errors` of the route (`errors/known-code`).
 
+A use case that receives a file is
+`generate file-upload <ctx> <UseCase> --path /<resource>/:id/<file> (--permission ... | --public)`:
+a controller that declares the file (size and media types, in the contract), a command that
+carries it as a `FileUpload` (the bus stages it under a key of `FileKeys` before the transaction
+opens), a handler that reads `upload.file` and promotes it with the commit
+(`promoteOnCommit`). Record the `StoredFile` on the aggregate in that handler; the content never
+goes in a table. A download is a query answering a short signed link (`signedDownloadUrl`).
+
 A read is `generate query ... (--permission ... | --public)`; a search adds `--search` (paged,
 narrowed in the query by the caller's access scope). A reaction inside the context is
 `generate event-handler` (phase below); work started by time is

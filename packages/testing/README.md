@@ -184,6 +184,22 @@ side, so they read well under any runner. An error raised by `when` is never swa
 assertion but `thenError` fails on it. When `when` (or the arrangement) is asynchronous, the
 chain is a promise: `await given(order).when(async (o) => ...).thenEventNames([...])`.
 
+### An event-sourced aggregate
+
+`givenEvents(rehydrate, events)` rebuilds the aggregate by replaying its history, without a
+database, and the scenario goes on as above: one command, then the events it recorded or the
+refusal.
+
+```ts
+givenEvents((id, history) => AttendanceRecord.rehydrate(id, history), [opened, noShowNoted, noShowNoted])
+  .when((record) => record.noteNoShow('appointment-9', now))
+  .thenEvents([NoShowNoted, AttendanceRecordBarred]);
+```
+
+`expectSnapshotEquivalence({ events, rehydrate, policy, state })` proves the snapshots of an
+aggregate: for every version of the history, the aggregate rebuilt from the snapshot its policy
+would store and the events after it has the state and the version of the full replay.
+
 ## Process steps
 
 ```ts
@@ -454,6 +470,8 @@ repositoryContract(runner, { ...options, name: 'DrizzleOrderRepository', createR
 | `unitOfWorkContract` | any `UnitOfWork`, called through `run` without a command bus: domain events wait for the end and are dispatched before the commit, so handlers see every save and what they write, the outbox included, commits with it; a failure in a save, in the work, in a handler or in the commit (a deferred constraint) leaves nothing behind; `after-commit` handlers run once the rows are committed, never otherwise. An adapter not built on `withinUnitOfWork` fails here |
 | `outboxStoreContract` | any outbox store: order, limit, lease, concurrent claims, published, failed, dead, `retryDead`, purge; with `carriesTenant: true`, the tenant of each event kept |
 | `processedEventStoreContract` | any `ProcessedEventStore`: once per consumer and event, also under concurrent deliveries |
+| `eventStoreContract` | any `EventStore`: a stream created at version 0 and read back in order, numbered from 1, with its type, shape version, data, metadata and instant; an append at a version the stream no longer has (behind or ahead) refused with `CONCURRENCY_CONFLICT` and nothing kept of it; one of two appends at the same version through; streams numbered apart; the whole store read in the order of the appends, positions rising from 1, after a position and within a limit; `head()` |
+| `eventStoreUnitOfWorkContract` | a transactional `EventStore` with the outbox of its database under one `UnitOfWork`: the stream and the outbox records published for its events commit together; nothing left in the outbox for an append rolled back, nor for one refused by a concurrency conflict. `createSubject()` answers `{ unitOfWork, store, outbox }` |
 | `processStoreContract` | any `ProcessStore` of process managers: an instance as saved (JSON state, armed timeouts, end), a version that is not the next one refused with `CONCURRENCY_CONFLICT`, one of two first saves winning, and with `unitOfWork` nothing left by a rolled back save |
 | `jobStoreContract` | any `JobStore` of background jobs: due jobs earliest first and each to one claim, delayed jobs, idempotency keys, the lease and its heartbeats, reports heard only from the attempt that holds the job (progress, checkpoint handed to the next attempt, success, retry, dead and revived, release), cancellation of a waiting and of a running job, purge. With `unitOfWork` (over the same context as the store just created), a job added in a unit of work that rolls back is not there and one that commits is claimed. The claims ask for a lease of 30 s |
 | `cacheContract` | any `Cache`: round trip of every shape of value, isolation of entries, deletion, time to live |
@@ -462,6 +480,7 @@ repositoryContract(runner, { ...options, name: 'DrizzleOrderRepository', createR
 | `loggerContract` | any `Logger`: every level with its message and fields of every shape, level and message that no field forges, children that add their fields and nest, fields read at each entry, an entry below the level dropped without reading a field, `isLevelEnabled` answering what is written (for a child too), no throw on a circular field or a getter that throws, at the top of the fields included; an `Error` passed as a field written as its description (`type`, `code` of a `DomainError`, `message`, own `stack`, `cause`, eight errors deep at most), its message replaced when the logger scrubs unless it is a `DomainError`; every entry in the sink once `flush()` resolves, then no throw from a log call or a second flush. `createLogger({ level, fields, scrubMessages })` answers the logger and `lines()`, what its sink received as `{ level, message, fields }`. No capability flag: `InMemoryLogger` takes the same three options and passes the whole suite |
 | `criteriaContract` | any translator of criteria, the in-memory evaluator included: a table of criteria and the ids each answers, in order, over eight fixed rows. Every operator on every type it applies to, decimals as numbers, instants to the millisecond and across zones, case and the characters a `LIKE` would trip on, nulls under each operator, `and`, `or`, `not` and what a negation does to a null, sorts with ties and nulls in both directions, offset pages with their total, every sort walked by cursor one and two rows at a time, the four kinds of access scope, and hostile values. `createReadModel(rows)` answers `{ search(scopedCriteria) }` over exactly those rows, read with `criteriaContractDefinition` |
 | `readModelStoreContract` | any `ReadModelTable` under `TableReadModelStore`: rows of every type round trip, the current row handed to a later event, an event applied once, never one older than the row, order by event id at the same instant and by version when given, concurrent writes ending on the latest, deletions that last, listing by criteria and scope, and `ProjectionRebuild`: rebuilt from the source alone, no event lost while it exports (on a row already copied and on one not yet), stale and new events after the swap, deletions during and before it, a failed export leaving the table as it was, the table still itself after two rebuilds. `createTable()` answers `{ table, unitOfWork }`; `SourceOfTruth` is the fake of the source |
+| `fileStorageContract` | any `FileStorage`: content round trip with size, media type and checksum, several mebibytes streamed, a write beyond `maxBytes` refused leaving the previous content, keys that could leave their place refused, deletion, copy, move, listing by prefix, signed download and upload links that expire, refuse a changed signature or another media type, and are never signed for more than an hour, a download served as an attachment even without a name. `follow` sends a request to a link: `fetch` by default, `followServed(storage)` for a storage the application serves |
 | `rateLimiterContract` | any `RateLimiter`: limit, `remaining` and `retryAfterMs`, refused calls not counted, sliding window, isolation of keys, concurrent calls |
 
 The cache, lock and rate limiter suites also take `elapse(ms)`, which makes time pass for the

@@ -787,6 +787,75 @@ the guard of an invariant: what must not happen twice is refused by a database c
 `Clock`: the fake, and enough for a single instance. The adapter between processes is in
 `@ddd-ts-kit/redis`. `acquiring(attempt, waitMs, waiting)` is the retry loop an adapter shares.
 
+### FileStorage, StoredFile, FileScanner
+
+```ts
+// The command wraps what the controller received: the bus stages it before the transaction opens.
+this.document = new FileUpload(received, 'appointment-documents');
+
+// The handler, inside the unit of work:
+const { file, fileName } = command.document;                     // a StoredFile, staged and scanned
+appointment.attachDocument(unwrap(AttachedDocument.create(file, fileName, now)), now);
+await appointments.save(appointment);
+await staging.promoteOnCommit(file.key);                         // moved to its key with the commit
+```
+
+`FileStorage` holds the content of files, never the database: `put` (a stream in, measured and
+hashed, refused with `FILE_TOO_LARGE` beyond `maxBytes`, leaving nothing), `get` (a stream out),
+`stat`, `delete`, `copy`, `move`, `list(prefix)`, and short signed links, `signedDownloadUrl` and
+`signedUploadUrl` (at most `MAX_SIGNED_URL_SECONDS`, one hour). No method takes or returns a
+whole file. A key is checked by `isFileKey` (segments of letters, digits, `.`, `-` and `_`, none
+starting with a dot) before anything is touched, and `FileKeys` generates it on the server:
+`TenantFileKeys(ids, clock, scope)` writes `tenants/<tenant>/<area>/<year>/<month>/<id>`, the
+tenant segment only when the work in progress names one (the tenant id as it is: the kernel
+refuses any other than letters, digits, `-` and `_`, so two tenants never share a prefix). The links of
+`signedUploadUrl` carry a `maxBytes`, which the storages the application serves enforce.
+
+`StoredFile` is what an aggregate keeps: `key`, `size`, `mediaType`, `checksum` (`sha256:<hex>`),
+never the provider. `FileScanner` is the hook of an antivirus or a content check, called on the
+staged file before it is accepted; `AcceptEveryFileScanner` is the one of a project that has
+none yet. `FileError` carries the refusals: `FILE_TOO_LARGE`, `UNSUPPORTED_MEDIA_TYPE`,
+`FILE_NOT_FOUND`, `INVALID_FILE_KEY`, `FILE_REJECTED`, `INVALID_FILE_URL_EXPIRY`.
+
+A write to the storage is not rolled back with a transaction. `FileStaging(storage, scanner,
+reporter)` gives the order that keeps both consistent, each step once:
+
+- `stage(key, content, options)` writes under `staging/<key>` and scans; a refused file is
+  removed (`FILE_REJECTED`). A file from a client travels in its command as a `FileUpload`
+  (the `ReceivedFile` and the area of its key), staged by `fileUploadsMiddleware(desk)`, a bus
+  middleware placed after the permission and before the unit of work, so no transaction waits
+  on an upload. `upload.file` is the staged `StoredFile`.
+- `promoteOnCommit(key)` moves the file to its key as the last step of the unit of work
+  (`atCommit`, a `CommitStep` of `apply` and `undo`): a promotion that fails rolls the command
+  back, and a transaction that rolls back after it returns the file to `staging/`. A committed
+  row never points into `staging/`.
+- `deleteAfterCommit(key)` deletes, once committed, a file the aggregate no longer references
+  (`afterCommit`, at most once: a failure or a crash leaves an unreferenced file, reported).
+- `purge(olderThan)` removes the staged files older than the instant, all orphans; the job
+  `PurgeStagedFiles` runs it (the platform registers it as `files.purge-staged`, every hour,
+  for files staged a day ago or more).
+
+For a large file the client uploads straight to the storage: `uploadUrl(key, { expiresInSeconds,
+mediaType, accepted, maxBytes })` answers the `link` for the client and the `pending` grant
+(`PendingUpload`: key, size cap, media types) that the command records on the aggregate;
+`confirm(pending)`, called by a command that reads the grant back from the aggregate, never
+from the client, checks what arrived against the cap and on its bytes (`contentMatches`), scans
+it, and answers the `StoredFile`. No final key may start with `staging/` (`assertFinalKey`).
+
+`FileInspection` is the pass-through every connector streams through: it counts, hashes, and
+with an expectation holds back the first bytes until they prove the declared media type
+(`acceptsMediaType`, `contentMatches`: a PDF starts with `%PDF-`, office documents are zip
+archives, text is UTF-8 without control characters, SVG and unknown binary formats never
+match).
+
+Connectors: `InMemoryFileStorage` for the tests (`keys()` lists what it holds) and
+`LocalFileStorage({ directory, baseUrl, secret })` for development, both `ServedFileStorage`:
+their signed links point at the application, which answers them with `signedFileRoutes` of
+`@ddd-ts-kit/http`. The object store connector is `@ddd-ts-kit/s3`. Each passes
+`fileStorageContract` of `@ddd-ts-kit/testing/contracts`. Background import and export (row by
+row validation, an error report, resumption) needs a job queue the kit does not have yet: the
+ports are ready for it, see `docs/concepts/file-storage.md`.
+
 ### JobScheduler
 
 ```ts
@@ -1230,8 +1299,10 @@ the fakes, `KnexReadModelStore`, `DrizzleReadModelStore`, `PrismaReadModelStore`
 
 ### Rebuild
 
-The kit has no event store: a read model is rebuilt from the source of truth, the read
-contract the owning context publishes, behind a gateway port that answers stamped rows.
+A read model fed by events that no event store keeps is rebuilt from the source of truth, the
+read contract the owning context publishes, behind a gateway port that answers stamped rows. A
+read model of event-sourced aggregates is rebuilt from the store instead:
+[Fed by the event store](#fed-by-the-event-store).
 
 ```ts
 await new ProjectionRebuild({ table: appointments.table, source, unitOfWork }).run();
@@ -1266,6 +1337,40 @@ privileges granted on the table by name, row security policies and triggers are 
 and are restored by the migration that follows, and the indexes of the copy keep the names
 PostgreSQL derived for them.
 
+### Fed by the event store
+
+A projection of event-sourced aggregates can be fed by the store rather than where the domain
+events are dispatched: `@Projection('scheduling.attendance-history', { feed: 'event-store' })`.
+The dispatcher then never calls it (`@ddd-ts-kit/di` registers no handler for it); a catch-up
+subscription does, under the name of the projection, and the same projection rebuilds its read
+model from position zero.
+
+```ts
+const apply = applyingProjection(projection, serializer); // the @On methods, by event name
+
+const subscription = new CatchUpSubscription({ name: 'scheduling.attendance-history', store, checkpoints, unitOfWork, apply });
+
+await subscription.catchUp(); // or poll() from a job: one batch, one unit of work
+
+await new EventStoreProjectionRebuild({
+  table: history.table,
+  store,
+  unitOfWork,
+  applierOn: (copy) => applyingProjection(new AttendanceHistoryProjection(copy), serializer),
+}).run();
+```
+
+| Piece | What it does |
+|---|---|
+| `CatchUpSubscription` | Reads the store after the checkpoint of its subscriber (`CheckpointStore`), applies a batch and moves the checkpoint in one unit of work. A failure applies none of the batch; two runs of one subscriber never both move it (`ConcurrencyError`). A new projection starts at zero, so it catches up on the whole history |
+| `applyingProjection(projection, serializer)` | (`@ddd-ts-kit/kernel/declarations`) hands each stored event an `@On` method applies, read back by the serializer of its aggregate, to that method; passes over the rest of the store |
+| `storedStampOf(event)` | The stamp of an event read from the store: its id, instant and version in its stream, so the rows of one stream are ordered by the stream, not by clocks. `undefined` for an event that did not come from a store |
+| `EventStoreProjectionRebuild` | Fills an empty copy of the table by replaying the store from position zero through the projection built over the copy (`ShadowReadModelStore`); then, in one transaction, holds the writers, replays what was appended meanwhile and puts the copy in place of the table. The subscription goes on from its checkpoint; what it applies again is stale against the copy. A failed rebuild leaves the table as it was |
+
+A projection fed by the store applies the domain events of its context only: an integration
+event reaches a projection where it is consumed, and `@On(definition)` on such a projection
+throws when the file loads.
+
 ### Seen from outside
 
 Through the ports that exist. `@ddd-ts-kit/di` counts `projection_events_total` by `context`,
@@ -1274,6 +1379,106 @@ sets `projection_last_event_age_ms`, the age of the last event applied when it w
 A projection is subscribed as a consumer under its name, so each delivery is one `process
 <projection>` span, with the calls to its read model below it, and an event buried after its
 retries reaches the error reporter as for any consumer.
+
+## Event sourcing
+
+Chosen per aggregate, never per project: the other aggregates of the context keep their state
+in tables. When to choose it and what it costs:
+[docs/concepts/event-sourcing.md](../../docs/concepts/event-sourcing.md).
+
+```ts
+// domain/aggregates/attendance-record.aggregate.ts
+type AttendanceEvent = AttendanceRecordOpened | NoShowNoted;
+
+export class AttendanceRecord extends EventSourcedAggregate<AttendanceEvent, AttendanceState> {
+  private state: AttendanceState = { noShows: 0 };
+
+  private constructor(id: string) {
+    super(id);
+  }
+
+  static open(id: string, now: Date): AttendanceRecord {
+    const record = new AttendanceRecord(id);
+
+    record.record(new AttendanceRecordOpened(id, now));
+
+    return record;
+  }
+
+  static rehydrate(id: string, history: AggregateHistory<AttendanceEvent, AttendanceState>): AttendanceRecord {
+    const record = new AttendanceRecord(id);
+
+    return record.replay(history, (state) => record.restore(state));
+  }
+
+  noteNoShow(appointmentId: string, now: Date): void {
+    if (this.state.noShows >= 3) {
+      throw AttendanceRecordError.alreadyBarred(this.id);
+    }
+
+    this.record(new NoShowNoted(this.id, now, appointmentId));
+  }
+
+  protected appliers(): Appliers<AttendanceEvent> {
+    return {
+      [AttendanceRecordOpened.eventName]: () => undefined,
+      [NoShowNoted.eventName]: (event) => this.applyNoShowNoted(event),
+    };
+  }
+
+  private restore(state: AttendanceState): void {
+    this.state = state;
+  }
+
+  private applyNoShowNoted(event: NoShowNoted): void {
+    this.state = { noShows: this.state.noShows + 1 };
+  }
+}
+```
+
+| Piece | What it does |
+|---|---|
+| `EventSourcedAggregate<E, S>` | A command checks its invariants on the state, then `record(event)`: the event is applied through the method `appliers()` names for it, and kept for the save. Only apply methods (and `restore`, for a snapshot) change the state (`event-sourcing/state-in-apply`). `appliers()` must name every event of the union, or it does not compile |
+| `replay(history, restore?)` | Rebuilds from `{ snapshot?, events }`, through the same apply methods, recording nothing. `version` is the number of events of the stream the aggregate reflects |
+| `appendChanges(aggregate, append)` | What a repository adapter calls: the events recorded since the load and the version the stream must still have; on success the aggregate is at the new version |
+| `EventStore` | The port: `append(stream, expectedVersion, events)` (a `ConcurrencyError` when somebody appended first, nothing kept of it), `readStream(stream, after?)`, `readAll(after, limit)` in the order the appends committed, `head()`. `InMemoryEventStore` here; PostgreSQL through every ORM adapter. Held to `eventStoreContract` |
+| `defineStoredEvent(Event, spec)` | How one event is stored: `version` of its shape, `encode(event): NamedData` (plain data, dates kept as ISO text), `decode(data, envelope)` reading each field by type (`data.text('x')`, `data.instant('at')`, `data.record('amount')`), and `upcasters` from each older version |
+| `EventSerializer<E>` | Every stored event of one aggregate (`StoredEventTypes<E>`: one entry per event, or it does not compile). A stored event is never rewritten: it is upcast when read. An event of a later shape than the release knows, or a version without upcaster, is an `UnreadableEventError` |
+| `EventSourcedRepository` | What the repository adapter delegates to: `findById` replays the stream `<category>-<id>` (from the last snapshot), `save` appends in the transaction of the unit of work; the events then leave with the save like any other |
+| `SnapshotPolicy` | Per aggregate: `every` so many events, a `version` of the shape (another one is ignored, the stream replayed), `encode` and `decode`. `expectSnapshotEquivalence` of `@ddd-ts-kit/testing` proves a snapshot rebuilds the state a full replay does |
+| `personalData(subject, value)` | Marks a personal value in `encode`. `PersonalDataCipher` over a `SubjectKeyStore` seals it with the key of its data subject (AES-256-GCM); `SubjectKeyStore.erase(subject)` destroys the key, and a replay then reads `ERASED_PERSONAL_DATA` |
+
+```ts
+// infrastructure/persistence/event-store-attendance-record.repository.ts
+@Repository(AttendanceRecordRepository)
+export class EventStoreAttendanceRecordRepository implements AttendanceRecordRepository {
+  private readonly streams: EventSourcedRepository<AttendanceRecord, AttendanceEvent, AttendanceState>;
+
+  constructor(store: EventStore, snapshots: SnapshotStore, cipher: PersonalDataCipher) {
+    this.streams = new EventSourcedRepository({
+      store,
+      category: 'scheduling.attendance-record',
+      serializer: new EventSerializer<AttendanceEvent>(attendanceRecordEvents, { cipher }),
+      rehydrate: (id, history) => AttendanceRecord.rehydrate(id, history),
+      snapshots: { store: snapshots, every: 50, version: 1, encode: (record) => record.toState(), decode: stateOf },
+    });
+  }
+
+  findById(id: string): Promise<AttendanceRecord | undefined> {
+    return this.streams.findById(id);
+  }
+
+  save(record: AttendanceRecord): Promise<void> {
+    return this.streams.save(record);
+  }
+}
+```
+
+**No double write.** The store joins the transaction of the unit of work, and the publisher of
+the integration events is a handler of the domain events that runs before the commit and
+writes the outbox: the stream and the outbox records commit together or not at all.
+`eventStoreUnitOfWorkContract` of `@ddd-ts-kit/testing` proves it for each transactional store:
+nothing is published for an append rolled back or refused by a concurrency conflict.
 
 ## How to extend
 

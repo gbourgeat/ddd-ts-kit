@@ -2,12 +2,16 @@
 import { tracing } from '@/platform/tracing';
 // Imported second on purpose: a failure while the rest of the application loads is already reported.
 import { errors } from '@/platform/errors';
+import { PersonalDataCipher } from '@ddd-ts-kit/kernel';
 import { createAuthenticator } from '@/platform/auth/create-authenticator';
 import { composeApplication } from '@/platform/compose-application';
 import { loadConfig } from '@/platform/config/load-config';
 import { openPersistence } from '@/platform/database/open-persistence';
 import { createEventProvider } from '@/platform/events/create-event-provider';
+import { startCatchUp } from '@/platform/events/start-catch-up';
 import { startOutboxRelay } from '@/platform/events/start-outbox-relay';
+import { openFiles } from '@/platform/files/open-files';
+import { storeFedProjections } from '@/platform/events/store-fed-projections';
 import { startHttpServer } from '@/platform/http/start-http-server';
 import { jobSettings } from '@/platform/job-settings';
 import { openRedis } from '@/platform/redis/open-redis';
@@ -25,6 +29,7 @@ const application = composeApplication(persistence, {
   resilience: config.resilience,
   jobs: { start: config.runJobs, settings: jobSettings(process.env) },
   redis,
+  files: openFiles(config.files),
 });
 
 await application.start();
@@ -38,6 +43,16 @@ const relay = startOutboxRelay({
   wakeOn: redis.relaySignal,
 });
 
+// The projections fed by the event store catch up in this process too, at the pace of the relay:
+// with several replicas, the checkpoint lets one of them apply each batch (README, Event sourcing).
+const catchUp = startCatchUp({
+  subscriptions: storeFedProjections(persistence, application.container.resolve(PersonalDataCipher)).map(
+    ({ subscription }) => subscription,
+  ),
+  intervalMs: config.outboxRelayIntervalMs,
+  logger: application.logger,
+});
+
 const server = await startHttpServer(application, config);
 
 application.logger.info('listening', { port: server.port });
@@ -48,6 +63,7 @@ process.once('SIGINT', () => void shutdown());
 async function shutdown(): Promise<void> {
   await server.close();
   await relay.stop();
+  await catchUp.stop();
   await application.stop();
   await redis.close();
   await persistence.close();

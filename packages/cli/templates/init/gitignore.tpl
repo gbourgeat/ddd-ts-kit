@@ -7,3 +7,6 @@ dist
 {{#if orm.prisma}}
 generated
 {{/if}}
+{{#if files.local}}
+.data/
+{{/if}}

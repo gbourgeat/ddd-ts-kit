@@ -19,6 +19,8 @@ export interface ContextDescription {
   readonly upstreams: readonly Upstream[];
   readonly downstreams: readonly Upstream[];
   readonly aggregates: readonly string[];
+  /** Those of `aggregates` that are event-sourced. */
+  readonly eventSourced: readonly string[];
   readonly domainEvents: readonly string[];
   readonly permissions: readonly string[];
   readonly useCases: readonly UseCaseFact[];

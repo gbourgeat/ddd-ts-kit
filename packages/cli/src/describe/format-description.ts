@@ -13,7 +13,10 @@ import type {
 /** One context as `describe` prints it for a reader: a heading, then one block per kind of element. */
 export function formatDescription(context: ContextDescription): string {
   const blocks: readonly (readonly [string, readonly string[]])[] = [
-    ['aggregates', context.aggregates],
+    [
+      'aggregates',
+      context.aggregates.map((name) => (context.eventSourced.includes(name) ? `${name} (event-sourced)` : name)),
+    ],
     ['domain events', context.domainEvents],
     ['permissions', context.permissions],
     ['use cases', context.useCases.map((useCase) => `${useCase.kind} ${useCase.name} (${known(useCase.permission)})`)],
@@ -30,10 +33,7 @@ export function formatDescription(context: ContextDescription): string {
       ),
     ],
     ['gateways', context.gateways.map(gatewayLine)],
-    ['scheduled jobs', context.jobs.map((job) => `${job.name} (${job.schedule}, sends ${job.command})`)],
-    ['background jobs', context.backgroundJobs.map((job) => `${job.name} (${job.className})`)],
-    ['state machines', context.stateMachines.map(stateMachineLine)],
-    ['process managers', context.processes.map(({ name, className }) => `${name} (${className})`)],
+    ...workBlocks(context),
   ];
 
   return [
@@ -41,6 +41,16 @@ export function formatDescription(context: ContextDescription): string {
     ...blocks.flatMap(([label, values]) => blockLines(label, values)),
     `  contracts: ${context.contracts.openapi}, ${context.contracts.eventCatalog}`,
   ].join('\n');
+}
+
+/** What runs on its own: scheduled and background jobs, lifecycles and process managers. */
+function workBlocks(context: ContextDescription): (readonly [string, readonly string[]])[] {
+  return [
+    ['scheduled jobs', context.jobs.map((job) => `${job.name} (${job.schedule}, sends ${job.command})`)],
+    ['background jobs', context.backgroundJobs.map((job) => `${job.name} (${job.className})`)],
+    ['state machines', context.stateMachines.map(stateMachineLine)],
+    ['process managers', context.processes.map(({ name, className }) => `${name} (${className})`)],
+  ];
 }
 
 function stateMachineLine({ aggregate, states, transitions }: StateMachineFacts): string {

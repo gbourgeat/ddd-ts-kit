@@ -91,6 +91,16 @@ read model store for projections, held to `criteriaContract` and `readModelStore
 PostgreSQL; neither was run on MySQL or SQLite. The CLI does not generate them yet: see the
 [read side proposal](../proposals/read-side.md) for the status per part.
 
+For event-sourced aggregates, each of the four runs the PostgreSQL event store of the kernel
+(`createKnexEventSourcing`, `createDrizzleEventSourcing`, `createPrismaEventSourcing`,
+`createTypeOrmEventSourcing`): the streams, the snapshots, the checkpoints of the subscriptions
+and the keys of the data subjects, with the tables declared the way each ORM migrates
+(`createEventStoreTables`, `eventStoreTables`, the models of
+`prisma/event-store.postgresql.prisma`, `eventStoreEntities`). Each is held to
+`eventStoreContract` and `eventStoreUnitOfWorkContract` on PGlite in the unit run; knex, Prisma
+and TypeORM also passed them on PostgreSQL 17 by hand. Not provided on MySQL or SQLite. When to
+choose it: [Event sourcing, per aggregate](../concepts/event-sourcing.md).
+
 ### Per database
 
 | | Drizzle | Knex | Prisma | TypeORM |

@@ -17,10 +17,12 @@ export class EditedProject {
 
   private constructor(readonly root: string) {}
 
-  static generate(): EditedProject {
+  /** `prepare` generates more into the scaffold before the kit is installed. */
+  static generate(prepare: (root: string) => void = () => undefined): EditedProject {
     const root = tempDir('violations');
 
     scaffoldEverything(root);
+    prepare(root);
     installAsPublished(root);
 
     return new EditedProject(root);

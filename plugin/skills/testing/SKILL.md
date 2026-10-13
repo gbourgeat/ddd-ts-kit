@@ -63,6 +63,17 @@ given(anOrder().paid().build())
   .thenError('ORDER_ALREADY_PAID', { orderId: 'order-1' });
 ```
 
+An event-sourced aggregate starts from its history, without a database, and its snapshots are
+proven once:
+
+```ts
+givenEvents((id, history) => Order.rehydrate(id, history), [placed, lineAdded])
+  .when((order) => order.pay(clock.now()))
+  .thenEvents([OrderPaid]);
+
+expectSnapshotEquivalence({ events, rehydrate, policy: orderSnapshots, state: (order) => order.toState() });
+```
+
 One intention per test. Assert events, errors, and state through the public API only. A
 refusal is asserted by its code and its facts, never by a message or the class of one error:
 `thenError(code, facts)` on an aggregate, `expectRefusal(subject, code, facts)` on an action

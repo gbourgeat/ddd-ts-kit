@@ -8,6 +8,8 @@ import { compare } from './compare.js';
 import type { Definitions } from './definitions.js';
 
 const VALIDATION_FAILED = 'VALIDATION_FAILED';
+/** What a route that declares an upload may answer besides its own codes: a file too large, of another type, or missing. */
+const UPLOAD_REFUSALS = ['FILE_TOO_LARGE', 'UNSUPPORTED_MEDIA_TYPE', VALIDATION_FAILED];
 const PROBLEM_REF = { $ref: '#/components/schemas/Problem' };
 
 /** The declared responses, plus one problem response per status of the declared error codes. */
@@ -42,7 +44,8 @@ function declaredResponses(route: Route, definitions: Definitions): Map<number, 
 
 function errorCodesByStatus(route: Route, mapper: ErrorMapper): Map<number, string[]> {
   const validatesInput = Object.values(route.request ?? {}).some((schema) => schema !== undefined);
-  const codes = new Set([...(route.errors ?? []), ...(validatesInput ? [VALIDATION_FAILED] : [])]);
+  const uploads = route.upload === undefined ? [] : UPLOAD_REFUSALS;
+  const codes = new Set([...(route.errors ?? []), ...(validatesInput ? [VALIDATION_FAILED] : []), ...uploads]);
   const codesByStatus = new Map<number, string[]>();
 
   for (const code of codes) {

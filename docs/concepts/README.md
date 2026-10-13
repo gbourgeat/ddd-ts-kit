@@ -57,7 +57,8 @@ of tools.
     clean architecture, what they share and where they differ.
 13. [Ports and composition](ports-and-composition.md): ports as abstract classes, the
     composition root, declarations by decorators or explicit wiring.
-14. [CQRS](cqrs.md): command and query buses as used here, without event sourcing.
+14. [CQRS](cqrs.md): command and query buses as used here; event sourcing is a separate
+    choice, per aggregate.
     [The presentation layer](presentation-layer.md) comes with it: one controller class per
     route, route groups, guards at the edge and permissions on the use case.
 15. [Modular monolith](modular-monolith.md): one deployable, real modules.
@@ -74,39 +75,44 @@ of tools.
 20. [Sagas and process managers](sagas-and-process-managers.md): what the kit provides and
     what it does not.
 21. [Event versioning](event-versioning.md): changing a contract that others consume.
+22. [Event sourcing, per aggregate](event-sourcing.md): when an aggregate keeps its events
+    instead of its state, what it costs, and how to move one to it and back.
 
 ## 5. Cross-cutting concerns: what surrounds the use cases
 
-22. [Authentication and authorization](authentication-and-authorization.md): roles,
+23. [Authentication and authorization](authentication-and-authorization.md): roles,
     attributes, relationships, with a decision table.
-23. [Actor and execution scope](actor-and-execution-scope.md): who acts, explicitly, and what
+24. [Actor and execution scope](actor-and-execution-scope.md): who acts, explicitly, and what
     every unit of work carries.
-24. [Multitenancy](multitenancy.md): one deployment, many customers, and no read or write
+25. [Multitenancy](multitenancy.md): one deployment, many customers, and no read or write
     that crosses from one to another.
-25. [Audit trail](audit-trail.md): who did what, recorded from outside the use cases.
-26. [Observability](observability.md): tracing, logs, metrics, error reporting, and the
+26. [Audit trail](audit-trail.md): who did what, recorded from outside the use cases.
+27. [Observability](observability.md): tracing, logs, metrics, error reporting, and the
     correlation id that ties them.
-27. [Resilience](resilience.md): retry, timeout, circuit breaker, bulkhead, cache, and how
+28. [Resilience](resilience.md): retry, timeout, circuit breaker, bulkhead, cache, and how
     each one fails.
-28. [Scheduled jobs](scheduled-jobs.md): work triggered by time, and why it must be
+29. [Scheduled jobs](scheduled-jobs.md): work triggered by time, and why it must be
     idempotent.
-29. [Background jobs](background-jobs.md): work a use case hands to a worker, enqueued in its
+30. [Background jobs](background-jobs.md): work a use case hands to a worker, enqueued in its
     transaction, run at least once.
+31. [File storage](file-storage.md): files in a storage and never in the database, the order
+    that keeps both consistent, signed links.
 
 ## 6. Code and tests
 
-30. [Clean code](clean-code.md): naming, small functions, stepdown, comments, testability by
+32. [Clean code](clean-code.md): naming, small functions, stepdown, comments, testability by
     construction.
-31. [Testing strategy](testing-strategy.md): fakes rather than mocks, builders, contract
+33. [Testing strategy](testing-strategy.md): fakes rather than mocks, builders, contract
     tests, the four levels.
 
 ## Shorter paths
 
 - **A product person or a newcomer to DDD:** 1, 2, 3, 5, then 19.
-- **Before writing a first use case:** 3, 7, 9, 12, 14, 31.
+- **Before writing a first use case:** 3, 7, 9, 12, 14, 33.
 - **Before making two contexts talk:** 4, 16, 17, 18, 21.
-- **Before serving several customers from one deployment:** 22, 23, 24.
-- **Before putting the system in production:** 22, 26, 27, 28, 29, then the
+- **Before keeping an aggregate as its events:** 7, 16, 17, 21, 22.
+- **Before serving several customers from one deployment:** 23, 24, 25.
+- **Before putting the system in production:** 23, 27, 28, 29, 30, 31, then the
   [tools pages](../README.md#tools-one-page-per-decision).
 
 ## Limits and when not to use it

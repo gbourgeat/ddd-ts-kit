@@ -19,6 +19,7 @@
     "authz": "rebac",
     "broker": "redis",
     "cache": "redis",
+    "storage": "local",
     "audit": "on",
     "errors": "sentry",
     "logger": "pino",

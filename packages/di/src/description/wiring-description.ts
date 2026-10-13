@@ -93,6 +93,8 @@ export interface ProjectionDescription extends OriginDescription {
   readonly name: string;
   readonly projection: string;
   readonly module: string;
+  /** `dispatch`, or `event-store` for a projection a catch-up subscription feeds. */
+  readonly feed: 'dispatch' | 'event-store';
   readonly applies: readonly AppliedEventDescription[];
 }
 

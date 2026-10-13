@@ -282,6 +282,117 @@ export function confirmAppointment(
   return send<ConfirmAppointmentResult>(connection, operation, { ...input, ...options });
 }
 
+export interface GetAppointmentDocumentInput {
+  readonly path: {
+    readonly appointmentId: string;
+  };
+}
+
+export type GetAppointmentDocumentResult =
+  | Success<200, {
+    url: string;
+    expiresAt: string;
+    name: string;
+    mediaType: string;
+    size: number;
+  }>
+  | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
+  | Failure<403, 'FORBIDDEN', Schemas.Problem>
+  | Failure<404, 'APPOINTMENT_NOT_FOUND' | 'NO_DOCUMENT', Schemas.Problem>
+  | Failure<422, 'VALIDATION_FAILED', Schemas.Problem>;
+
+/**
+ * Get a link to the document of an appointment: `GET /appointments/{appointmentId}/document`.
+ *
+ * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), APPOINTMENT_NOT_FOUND (404), NO_DOCUMENT (404), VALIDATION_FAILED (422).
+ */
+export function getAppointmentDocument(
+  connection: Connection,
+  input: GetAppointmentDocumentInput,
+  options: CallOptions = {},
+): Promise<GetAppointmentDocumentResult> {
+  const operation: Operation = {
+    method: 'GET',
+    path: '/appointments/{appointmentId}/document',
+    security: [['bearer']],
+    responses: { 200: 'json', 401: 'json', 403: 'json', 404: 'json', 422: 'json' },
+  };
+
+  return send<GetAppointmentDocumentResult>(connection, operation, { ...input, ...options });
+}
+
+export interface AttachAppointmentDocumentInput {
+  readonly path: {
+    readonly appointmentId: string;
+  };
+}
+
+export type AttachAppointmentDocumentResult =
+  | Success<201, {
+    id: string;
+  }>
+  | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
+  | Failure<403, 'FORBIDDEN', Schemas.Problem>
+  | Failure<404, 'APPOINTMENT_NOT_FOUND', Schemas.Problem>
+  | Failure<413, 'FILE_TOO_LARGE', Schemas.Problem>
+  | Failure<415, 'UNSUPPORTED_MEDIA_TYPE', Schemas.Problem>
+  | Failure<422, 'DOCUMENT_NAME_TOO_LONG' | 'FILE_REJECTED' | 'VALIDATION_FAILED', Schemas.Problem>;
+
+/**
+ * Attach a document to an appointment: `POST /appointments/{appointmentId}/document`.
+ *
+ * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), APPOINTMENT_NOT_FOUND (404), FILE_TOO_LARGE (413), UNSUPPORTED_MEDIA_TYPE (415), DOCUMENT_NAME_TOO_LONG (422), FILE_REJECTED (422), VALIDATION_FAILED (422).
+ */
+export function attachAppointmentDocument(
+  connection: Connection,
+  input: AttachAppointmentDocumentInput,
+  options: CallOptions = {},
+): Promise<AttachAppointmentDocumentResult> {
+  const operation: Operation = {
+    method: 'POST',
+    path: '/appointments/{appointmentId}/document',
+    security: [['bearer']],
+    responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 413: 'json', 415: 'json', 422: 'json' },
+  };
+
+  return send<AttachAppointmentDocumentResult>(connection, operation, { ...input, ...options });
+}
+
+export interface RemoveAppointmentDocumentInput {
+  readonly path: {
+    readonly appointmentId: string;
+  };
+}
+
+export type RemoveAppointmentDocumentResult =
+  | Success<200, {
+    id: string;
+  }>
+  | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
+  | Failure<403, 'FORBIDDEN', Schemas.Problem>
+  | Failure<404, 'APPOINTMENT_NOT_FOUND' | 'NO_DOCUMENT', Schemas.Problem>
+  | Failure<422, 'VALIDATION_FAILED', Schemas.Problem>;
+
+/**
+ * Remove the document of an appointment: `DELETE /appointments/{appointmentId}/document`.
+ *
+ * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), APPOINTMENT_NOT_FOUND (404), NO_DOCUMENT (404), VALIDATION_FAILED (422).
+ */
+export function removeAppointmentDocument(
+  connection: Connection,
+  input: RemoveAppointmentDocumentInput,
+  options: CallOptions = {},
+): Promise<RemoveAppointmentDocumentResult> {
+  const operation: Operation = {
+    method: 'DELETE',
+    path: '/appointments/{appointmentId}/document',
+    security: [['bearer']],
+    responses: { 200: 'json', 401: 'json', 403: 'json', 404: 'json', 422: 'json' },
+  };
+
+  return send<RemoveAppointmentDocumentResult>(connection, operation, { ...input, ...options });
+}
+
 export interface MarkAppointmentNoShowInput {
   readonly path: {
     readonly appointmentId: string;
@@ -1202,4 +1313,66 @@ export function searchOccupancy(
   };
 
   return send<SearchOccupancyResult>(connection, operation, { ...input, ...options });
+}
+
+export interface SearchAttendanceHistoryInput {
+  readonly path: {
+    readonly practiceId: string;
+    readonly patientId: string;
+  };
+  readonly query?: {
+    /** Filters on `recordId`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq. The value is text. */
+    readonly 'filter[recordId]'?: string;
+    /** Filters on `fact`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq, in. The value is text. */
+    readonly 'filter[fact]'?: string;
+    /** Filters on `appointmentId`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq. The value is text. */
+    readonly 'filter[appointmentId]'?: string;
+    /** The fields to sort by, a leading "-" for descending, repeated or separated by commas. */
+    readonly sort?: Array<'version' | '-version' | 'notedAt' | '-notedAt' | 'id' | '-id'>;
+    /** Size of the page. */
+    readonly limit?: number;
+    /** Items to skip. Not with `cursor`. */
+    readonly offset?: number;
+    /** The `nextCursor` of the previous page. Not with `offset`. */
+    readonly cursor?: string;
+  };
+}
+
+export type SearchAttendanceHistoryResult =
+  | Success<200, {
+    items: Array<{
+      version: number;
+      fact: 'opened' | 'no-show' | 'cancellation';
+      notedAt: string;
+      appointmentId?: string;
+      startsAt?: string;
+      reason?: string;
+    }>;
+    /** Present when it is cheap to count. */
+    total?: number;
+    /** Present when more items follow. */
+    nextCursor?: string;
+  }>
+  | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
+  | Failure<403, 'FORBIDDEN', Schemas.Problem>
+  | Failure<422, 'INVALID_CRITERIA' | 'VALIDATION_FAILED', Schemas.Problem>;
+
+/**
+ * Search attendance history: `GET /practices/{practiceId}/patients/{patientId}/attendance`.
+ *
+ * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), INVALID_CRITERIA (422), VALIDATION_FAILED (422).
+ */
+export function searchAttendanceHistory(
+  connection: Connection,
+  input: SearchAttendanceHistoryInput,
+  options: CallOptions = {},
+): Promise<SearchAttendanceHistoryResult> {
+  const operation: Operation = {
+    method: 'GET',
+    path: '/practices/{practiceId}/patients/{patientId}/attendance',
+    security: [['bearer']],
+    responses: { 200: 'json', 401: 'json', 403: 'json', 422: 'json' },
+  };
+
+  return send<SearchAttendanceHistoryResult>(connection, operation, { ...input, ...options });
 }

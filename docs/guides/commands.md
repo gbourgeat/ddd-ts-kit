@@ -134,7 +134,8 @@ Usage
                   [--events in-memory|outbox] [--docs-ui swagger|scalar|redoc|none]
                   [--ci github|gitlab|both|none] [--ci-extras <extra>,...|none]
                   [--authn jwt|keycloak|none] [--authz rbac|abac|rebac|custom]
-                  [--broker none|rabbitmq|kafka|nats|redis|custom] [--cache none|redis] [--audit on|off]
+                  [--broker none|rabbitmq|kafka|nats|redis|custom] [--cache none|redis] [--storage local|s3|none]
+                  [--audit on|off]
                   [--errors none|sentry] [--logger stdout|pino|winston] [--style declared|explicit] [--assembly barrel|discovery]
                   [--dependencies signature|listed] [--refusals factories|classes]
                   [--routes controllers|functions] [--value-objects throwing|result] [--literals named|free] [--tenancy none|shared-table] [--queue database|redis|memory]
@@ -148,7 +149,7 @@ Usage
   ddd-ts-kit status
   ddd-ts-kit todo [<context>]
   ddd-ts-kit worker-scope <context> [--worktree <path>] [--branch <name>] [--dry-run]
-  ddd-ts-kit docs [--check]
+  ddd-ts-kit docs [--check] [--stored-events]
   ddd-ts-kit sdk [--check] [--dry-run]
   ddd-ts-kit depcruise-config [--check|--write]
   ddd-ts-kit build-aliases [--project <tsconfig>]
@@ -193,13 +194,16 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
   --commit-size    the files and lines about to be committed against "commit" in the config (20 files and
                    600 lines by default, generated files not counted); --staged reads the index only;
                    advisory, --strict exits 1 when over
+  --stored-events  docs records the shape of each version of the stored events in stored-events.lock.json,
+                   never rewriting a recorded one: run it once the shape of a version is the one to store;
+                   docs --check fails while a declared version is not recorded
   --sdk            init records "sdk" in the config and generates the clients with the project
   --local-only     generate refuses, and writes nothing, when the kind would write outside its context;
                    "generate --help --json" says which kinds do
 
 Kinds
   context <name> --classification <core|supporting|generic> [--purpose "<two sentences>"] [--term "<Term>=<meaning>"]... [--upstream <ctx>[:relationship]]...
-  aggregate <context> <Name> [--term "<Term>=<meaning>"]...
+  aggregate <context> <Name> [--event-sourced] [--term "<Term>=<meaning>"]...
   builder <context> <Aggregate>
   entity <context> <Name> [--term "<Term>=<meaning>"]...
   value-object <context> <Name> [--term "<Term>=<meaning>"]...   (alias: vo)
@@ -215,6 +219,7 @@ Kinds
   port <context> <Name>
   route <context> <UseCaseName> --method <GET|POST|PUT|PATCH|DELETE> --path <path> [--command|--query] [--group <Name>] [--mapper] [--serializer]
   controller <context> <UseCaseName> --method <GET|POST|PUT|PATCH|DELETE> --path <path> [--command|--query] [--group <Name>] [--mapper] [--serializer]
+  file-upload <context> <UseCaseName> --path <path> (--permission <aggregate>.<action> | --public) [--method <POST|PUT>] [--group <Name>]
   route-group <context> <Name> [--prefix <path>] [--group <ParentName>] [--public | --role <role>]   (alias: group)
   guard <context> <Name>
   integration-event <context> <Aggregate> <Fact> [--version <n>] [--term "<Term>=<meaning>"]...

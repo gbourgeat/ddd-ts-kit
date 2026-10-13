@@ -18,6 +18,9 @@ export { createTestBuses, type TestBuses, type TestBusesOptions } from './harnes
 export type { CommandMatcher } from './processes/command-matcher.js';
 export { givenProcess, type ProcessScenario } from './processes/given-process.js';
 export { ProcessOutcome } from './processes/process-outcome.js';
+export { expectSnapshotEquivalence } from './event-sourcing/expect-snapshot-equivalence.js';
+export { givenEvents } from './event-sourcing/given-events.js';
+export type { SnapshotEquivalence } from './event-sourcing/snapshot-equivalence.js';
 export { expectRefusal } from './refusals/expect-refusal.js';
 export type { ExpectedFacts } from './refusals/expected-facts.js';
 export { InMemoryRepository, type InMemoryRepositoryOptions } from './repositories/in-memory-repository.js';

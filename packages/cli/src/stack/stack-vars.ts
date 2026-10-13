@@ -10,6 +10,7 @@ import { eventVars } from './event-vars.js';
 import { one } from './one.js';
 import { persistenceVars } from './persistence-vars.js';
 import { redisVars } from './redis-vars.js';
+import { filesVars } from './files-vars.js';
 import { usesLegacyDecorators } from './uses-legacy-decorators.js';
 
 /** The choices of the stack as template variables: what every template of `init` and of `generate` reads. */
@@ -30,10 +31,11 @@ export function stackVars(config: Config): RenderContext {
     authz: one(authz, ['rbac', 'abac', 'rebac', 'custom']),
     broker: brokerVars(config),
     cache: cacheVars(config),
+    files: filesVars(config),
     redis: redisVars(config),
     audit: auditVars(config),
     errors: errorVars(config),
-    ...modelVars(config),
+    ...modelWritingVars(config),
     routes: routeVars(config),
     logger: one(logger, ['stdout', 'pino', 'winston']),
     tests: { ...one(tests, ['vitest', 'jest']), module: tests === 'jest' ? '@jest/globals' : 'vitest' },
@@ -43,17 +45,6 @@ export function stackVars(config: Config): RenderContext {
     persistence: persistenceVars(config),
     tenancy: { ...one(tenancy, ['none', 'shared-table']), any: tenancy !== 'none' },
     queue: queueVars(config),
-  };
-}
-
-/** How the model is written: its refusals, its value objects and its closed values. */
-function modelVars(config: Config): RenderContext {
-  const { refusals, valueObjects, literals } = config.stack;
-
-  return {
-    refusals: one(refusals, ['factories', 'classes']),
-    valueObjects: one(valueObjects, ['throwing', 'result']),
-    literals: one(literals, ['named', 'free']),
   };
 }
 
@@ -68,6 +59,17 @@ function queueVars(config: Config): RenderContext {
     ...one(queue, ['memory', 'database', 'redis']),
     stored: queue !== 'memory',
     processTable: queue !== 'memory' && (orm === 'knex' || orm === 'drizzle'),
+  };
+}
+
+/** How the code of the model is written: its refusals, its value objects, its closed values. */
+function modelWritingVars(config: Config): RenderContext {
+  const { refusals, valueObjects, literals } = config.stack;
+
+  return {
+    refusals: one(refusals, ['factories', 'classes']),
+    valueObjects: one(valueObjects, ['throwing', 'result']),
+    literals: one(literals, ['named', 'free']),
   };
 }
 
