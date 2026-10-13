@@ -4,7 +4,7 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
-## Unreleased
+## 0.6.0
 
 **A typed client of the contract, for the callers of the API.** `npx ddd-ts-kit sdk` (or
 `init --sdk`) generates one client per document of the OpenAPI contract, a workspace package
