@@ -26,7 +26,8 @@ publishes images).
 `@Controller` puts the multipart form, the size and the media types in the OpenAPI contract
 (with the 413, 415 and 422 refusals) and streams the file to `handle` as `upload`, checked on
 its way: `multipartUploads()` of the new `@ddd-ts-kit/http/uploads` entry reads it (busboy, an
-optional peer). `FILE_TOO_LARGE` answers 413, `UNSUPPORTED_MEDIA_TYPE` 415 and `FILE_NOT_FOUND`
+optional peer); a client that drops the connection part-way fails the file stream, so nothing
+waits on it. `FILE_TOO_LARGE` answers 413, `UNSUPPORTED_MEDIA_TYPE` 415 and `FILE_NOT_FOUND`
 404 by default. `signedFileRoutes(storage)` answers the signed links of the local and in-memory
 storages, and a handler may answer a stream.
 

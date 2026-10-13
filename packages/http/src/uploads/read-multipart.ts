@@ -15,7 +15,8 @@ const ENVELOPE_BYTES = 1_048_576;
  * Parses a `multipart/form-data` request as it streams and resolves as soon as the declared file
  * begins: the text fields read so far, and the file wrapped in a `FileInspection` that refuses it
  * beyond `maxBytes` or when its first bytes are not one of the accepted media types. A request
- * that announces a larger body is refused before any byte is read.
+ * that announces a larger body is refused before any byte is read. A request that closes before
+ * its end fails the file stream, so whatever consumes it rejects instead of waiting forever.
  */
 export function readMultipart(spec: UploadSpec, request: RawRequest, limits: MultipartLimits): Promise<ReceivedUpload> {
   const contentType = headerOf(request.headers, 'content-type');
@@ -58,7 +59,8 @@ export function readMultipart(spec: UploadSpec, request: RawRequest, limits: Mul
       reject(missingFile(spec.field));
     });
 
-    stream.pipe(parser);
+    // A client that drops the connection part-way destroys the parser, which fails the file with it.
+    pipeline(stream, parser).catch(reject);
   });
 }
 
