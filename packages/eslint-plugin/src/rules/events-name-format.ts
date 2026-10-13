@@ -28,7 +28,9 @@ export const eventsNameFormat = defineRule<'format'>({
 
     const judge = (node: Keyed): void => {
       const value =
-        node.value === null || node.computed || keyName(node.key) !== key ? undefined : staticString(node.value);
+        node.value === null || node.computed || !isJudgedKey(keyName(node.key), key)
+          ? undefined
+          : staticString(node.value);
 
       if (value === undefined || isEventName(value, here.context)) {
         return;
@@ -45,6 +47,11 @@ export const eventsNameFormat = defineRule<'format'>({
     return { Property: judge, PropertyDefinition: judge };
   },
 });
+
+/** A domain event declares its name once in the static `eventName`, or in `name` as 0.5 wrote it. */
+function isJudgedKey(written: string | undefined, key: 'name' | 'type'): boolean {
+  return written === key || (key === 'name' && written === 'eventName');
+}
 
 /** A domain event carries its name in `name`, an integration event in the `type` of its declaration. */
 function judgedKey(here: ContextLocation): 'name' | 'type' | undefined {

@@ -148,10 +148,22 @@ appointment is `'patient' | 'practice'`, and both words are also the names of a 
 and of a relation of the access model, and a field of a read model: declared, the vocabulary would
 report each of those homonyms. It stays a union of literal types, which the compiler holds.
 
-Why not a TypeScript `enum`: it is not erasable syntax. Measured with the toolchain the kit
-supports, on Node 24.21: Node's own type stripping refuses it
+The names of the messages follow the same rule where the code can read them. A domain event
+declares its name once, `static readonly eventName = 'scheduling.appointment.booked'`, and every
+reaction reads it, `{ name: AppointmentBooked.eventName }`; an integration event handler reads the
+type it handles from the contract of its upstream, `appointmentBookedV1.type`. A job name and a
+consumer name are written in the decorator of their class, which cannot read a static of that
+class, and once more in its `systemActor(..)`: two literals of one file, held equal by
+`scheduling/job-name` for a job. The relations and resource types of the access model are
+declared by its relationship schema, in the platform, and written as strings where a context
+relates or guards something. The example lists every such category with its count
+([tooling report](../../examples/scheduling/docs/tooling-report.md)).
+
+Why not a TypeScript `enum`: it is not erasable syntax. Measured with each compiler a generated
+project runs, on Node 24.21: Node's own type stripping refuses it
 (`ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX`), `tsc` refuses it under `erasableSyntaxOnly` (TS1294), and
-only a transpiler (tsx, the build) runs it. The object `as const` runs everywhere, adds no
+only the transpilers run it: `tsc` without that option, tsx (esbuild) for `npm run dev`, Oxc for
+Vitest, SWC for Jest. The object `as const` runs everywhere, adds no
 runtime of its own, and gives the same completion and the same narrowing.
 
 ## The same word in two contexts

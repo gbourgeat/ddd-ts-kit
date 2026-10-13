@@ -19,8 +19,60 @@ const ISSUED =
 const ISSUED_EVENT = "import { InvoiceIssued } from '../../domain/events/invoice-issued.event.js';";
 
 ruleTester.run('declarations-role-declared, the names of a declaration and the domain', declarationsRoleDeclared, {
-  valid: [],
+  valid: [
+    at(
+      EVENT_HANDLER,
+      declaring(
+        'DomainEventHandler',
+        "class InvoiceIssued { static readonly eventName = 'billing.invoice.issued'; readonly name = InvoiceIssued.eventName; }\n@DomainEventHandler(InvoiceIssued, { name: InvoiceIssued.eventName })\nexport class InvoiceIssuedEventHandler {}",
+      ),
+      DECLARED,
+    ),
+  ],
   invalid: [
+    {
+      ...at(
+        EVENT_HANDLER,
+        declaring(
+          'DomainEventHandler',
+          '@DomainEventHandler(InvoiceIssued, { name: InvoiceSent.eventName })\nexport class InvoiceIssuedEventHandler {}',
+        ),
+        DECLARED,
+      ),
+      errors: [
+        {
+          messageId: 'name',
+          data: {
+            decorator: 'DomainEventHandler',
+            className: 'InvoiceIssuedEventHandler',
+            key: 'name',
+            problem: 'not a string literal',
+            context: 'billing',
+          },
+        },
+      ],
+    },
+    {
+      ...at(
+        EVENT_HANDLER,
+        declaring(
+          'DomainEventHandler',
+          `class InvoiceIssued { static readonly eventName = 'billing.invoice.paid'; readonly name = InvoiceIssued.eventName; }\n${ISSUED}`,
+        ),
+        DECLARED,
+      ),
+      errors: [
+        {
+          messageId: 'eventName',
+          data: {
+            className: 'InvoiceIssuedEventHandler',
+            declared: 'billing.invoice.issued',
+            event: 'InvoiceIssued',
+            actual: 'billing.invoice.paid',
+          },
+        },
+      ],
+    },
     {
       ...at(
         INTEGRATION_HANDLER,

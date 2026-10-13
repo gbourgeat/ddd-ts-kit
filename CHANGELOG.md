@@ -28,6 +28,18 @@ as the vocabulary `Role` of the platform (`<platformDir>/auth/role.ts`), read by
 grant `generate job` gives a system actor names the permission through its set
 (`billingPermissions['invoice.cancel']`) instead of its id.
 
+**A domain event names itself once.** `generate domain-event` writes `static readonly eventName =
+'billing.invoice.issued'` and `readonly name = InvoiceIssued.eventName`; the reactions
+`generate event-handler` and `generate integration-event` write read it,
+`@DomainEventHandler(InvoiceIssued, { name: InvoiceIssued.eventName })` and
+`domainEvents.on(InvoiceIssued.eventName, ..)` in a module file, so a renamed event cannot leave a
+handler on the old name. An integration event handler reads the type it handles from the
+declaration of its upstream, `static readonly eventType = invoiceIssuedV1.type`, which the event
+catalog script resolves. `events/name-format` judges `eventName`, and `declarations/role-declared`
+accepts `{ name: <Event>.eventName }` when `<Event>` is the class the decorator is given. An event
+written before, `readonly name = '..'`, and a handler that writes the name out are still read and
+compared; a reaction generated for such an event writes the name out, so it compiles.
+
 **Two rules against magic values.** `language/declared-vocabulary` (checker and ESLint) reports a
 string literal whose value a vocabulary of the project declares, an object `as const` with the
 union type of its name or a permission set of `definePermissions`, and names the key to write
