@@ -48,6 +48,9 @@ Practices stay what they were: relationships of the authorization model inside a
 boundary between practices is decided per element, as before; the boundary between networks is
 the storage.
 
+The tables of the event-sourced attendance records are the one exception, until the event store
+keeps a tenant: ADR-0004.
+
 ## Consequences
 
 - Easier: a patient and a practitioner still work across the practices of their network with

@@ -1181,6 +1181,14 @@ The documents of appointments arrived from main at the same time. With the netwo
 `journey-documents.e2e.spec.ts` now expects that key, and the integration spec of the documents
 runs in a network, as every other spec of a repository here.
 
+The event-sourced attendance record arrived from main last. The event store of the kit keeps no
+tenant: its events carry no network and a subscription replays them in none, so the projection
+of `attendance_history` cannot know the network of a row. ADR-0004 keeps the five tables of the
+store and that read model outside the networks until the store carries a tenant, under one
+suppression of `tenancy/scoped-statement`; the membership of the practice, asked before every
+read and note, still keeps one network out of another's records. This is the gap of the kit
+that the next change of the event store should close.
+
 ## 2026-10-12: value objects that throw their refusals
 
 The value objects of the four contexts moved from a `Result` to factories that return the value

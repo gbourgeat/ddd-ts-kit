@@ -7,6 +7,16 @@ import { IDENTITY_SCHEMA } from '@/contexts/identity/infrastructure/persistence/
 /** The schemas of the bounded contexts: every table in them holds the data of one network. */
 const CONTEXT_SCHEMAS = ['identity', 'scheduling', 'notification', 'analytics'];
 
+/** The event store of the attendance records and the history it feeds, which keep no network yet (ADR-0004). */
+const WITHOUT_NETWORK = [
+  'scheduling.attendance_history',
+  'scheduling.stored_events',
+  'scheduling.stored_events_head',
+  'scheduling.stream_snapshots',
+  'scheduling.subject_keys',
+  'scheduling.subscription_checkpoints',
+];
+
 interface Column {
   readonly table_schema: string;
   readonly table_name: string;
@@ -25,7 +35,7 @@ afterAll(async () => {
   await database.close();
 });
 
-describe('The network of every row (ADR-0003)', () => {
+describe('The network of every row (ADR-0003, ADR-0004)', () => {
   it('is a required column of every table of the contexts, so the migration has nothing to add to a new database', async () => {
     await keepTheNetworkOfEveryRow(knex);
 
@@ -39,8 +49,10 @@ describe('The network of every row (ADR-0003)', () => {
       .whereIn('table_schema', CONTEXT_SCHEMAS)
       .where('column_name', 'tenant_id');
 
+    const ofNetworks = tables.map(nameOf).filter((name) => !WITHOUT_NETWORK.includes(name));
+
     expect(tables.length).toBeGreaterThan(0);
-    expect(networks.map(nameOf).sort()).toEqual(tables.map(nameOf).sort());
+    expect(networks.map(nameOf).sort()).toEqual(ofNetworks.sort());
     expect(networks.every((column) => column.is_nullable === 'NO')).toBe(true);
   });
 
