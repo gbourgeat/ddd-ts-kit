@@ -22,6 +22,7 @@ import {
   criteriaContractDefinition,
   eventBusContract,
   eventStoreContract,
+  eventStoreUnitOfWorkContract,
   lockContract,
   outboxStoreContract,
   processedEventStoreContract,
@@ -32,6 +33,7 @@ import {
 } from '../src/contracts.js';
 import { anOrder } from './support/builders.js';
 import { Order, at } from './support/order.js';
+import { TransactionalJournal } from './support/transactional-journal.js';
 
 // The globals of the runner are passed as they are: the suites import no runner themselves.
 const runner = { describe, it, expect, beforeEach, afterEach };
@@ -92,6 +94,11 @@ eventStoreContract(runner, {
     checkpoints: new InMemoryCheckpointStore(),
     subjectKeys: new InMemorySubjectKeyStore(),
   }),
+});
+
+eventStoreUnitOfWorkContract(runner, {
+  name: 'an event store and an outbox in memory with transactions',
+  createSubject: () => new TransactionalJournal(),
 });
 
 processedEventStoreContract(runner, {
