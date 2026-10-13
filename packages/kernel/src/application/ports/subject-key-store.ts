@@ -2,8 +2,10 @@ import type { SubjectKey } from '../event-sourcing/subject-key.js';
 
 /**
  * The keys personal data is sealed with, one per data subject (crypto-shredding). Erasing a
- * subject destroys its key: every value sealed with it, in every stored event and snapshot and
- * in every backup of them, can no longer be read. Keep it where a deletion is a deletion.
+ * subject destroys its key: every value sealed with it can no longer be read from the live
+ * events and snapshots, nor from a backup of them that does not hold the key. A backup that
+ * holds the events and the keys together still opens them until it expires, so keep the keys
+ * apart from the events in production, with a shorter backup retention.
  */
 export abstract class SubjectKeyStore {
   static {

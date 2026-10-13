@@ -58,7 +58,9 @@ mark the event-sourced aggregates. `ddd-ts-kit docs --stored-events` records the
 **Documentation.** A concept page, [Event sourcing, per aggregate](docs/concepts/event-sourcing.md):
 when to choose it and when not, what it costs, crypto-shredding, projections fed by the store,
 and how to move an aggregate to it and back. The example keeps the attendance record of a
-patient as its events (scheduling), with a history rebuilt from the store; its only change of
+patient as its events (scheduling), with a history rebuilt from the store and the erasure of a
+patient (`npm run erase:patient`: the key destroyed, the projections fed by the store rebuilt);
+its only change of
 HTTP contract is the additive route `GET /practices/{practiceId}/patients/{patientId}/attendance`.
 Plugin 0.13.0: the persistence, testing and scaffold skills say how.
 

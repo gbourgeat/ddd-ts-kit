@@ -9,8 +9,10 @@ type Row = Readonly<Record<string, unknown>>;
 
 /**
  * The keys of the data subjects on PostgreSQL: one row per subject, deleted by an erasure. A
- * deleted row is gone from the table at once, and from the backups as they expire: keep their
- * retention within what the erasure promises.
+ * deleted row is gone from the table at once, and from the backups as they expire. In the
+ * database of the events, a backup older than an erasure holds both the sealed values and their
+ * key: in production give this store a `SqlRun` of another database, backed up with a shorter
+ * retention than the events.
  */
 export class PostgresSubjectKeyStore implements SubjectKeyStore {
   private readonly table: string;

@@ -114,16 +114,37 @@ personal values instead:
   the key of its data subject (AES-256-GCM, a fresh nonce per value, the key id written next to
   it) before it reaches the store, and opens it when the event is read.
 - `SubjectKeyStore` is the port of the keys, one per subject: in memory, or a table of the
-  PostgreSQL store. `erase(subject)` deletes the key: every value sealed with it, in every
-  stream, snapshot and backup, can no longer be read, and a replay reads `ERASED_PERSONAL_DATA`
-  (`[erased]`) in its place. A later key of the same subject never opens an older value.
+  PostgreSQL store. `erase(subject)` deletes the key, and a replay then reads
+  `ERASED_PERSONAL_DATA` (`[erased]`) in place of every value sealed with it. A later key of the
+  same subject never opens an older value.
 - A projection rebuilt after an erasure shows the erased value; a projection that already holds
   the clear value has to be rebuilt, or to apply an erasure event of its own.
 
+What an erasure reaches is exactly what loses the key:
+
+- the live streams and snapshots, at once;
+- every backup of the events taken after the erasure, which holds the sealed values without
+  their key;
+- a backup taken before the erasure holds both the sealed values and their key **when the key
+  table is backed up with the events**, which is the case of `PostgresSubjectKeyStore` in the
+  database of the events. Such a backup still opens the values until it expires: the erasure is
+  complete only once the last backup older than it is gone.
+
+So keep the keys apart in production: a `SubjectKeyStore` over another database whose backups
+have a shorter retention than those of the events (`new PostgresSubjectKeyStore(run)` takes any
+`SqlRun`, so a second connection is enough), or an adapter of your own over a key management
+service, behind the same port. Then the backups of the events never carry the keys, and the
+retention of the key backups is the delay the erasure promises.
+
 What it does not do: identifiers are not sealed. A stream named after a patient
 (`scheduling.attendance-record-<practice>.<patient>`) keeps that identifier in the store. Use
-identifiers that mean nothing outside the application, and keep the backups of the key table
-within the retention the erasure promises.
+identifiers that mean nothing outside the application.
+
+The example keeps the keys in the table `subject_keys` of the `scheduling` schema of its own
+database, next to the events, to stay runnable with one PostgreSQL; its README says so and names
+what a deployment changes. Its erasure (`npm run erase:patient`) destroys the key of a patient
+and rebuilds the projections fed by the store, so that the history read model loses the clear
+reason too.
 
 ## Projections fed by the store
 
