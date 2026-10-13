@@ -189,7 +189,7 @@ describe('init, the choices it records and the ones it refuses', () => {
 
   it('refuses inconsistent or unknown options with a fix, and writes nothing', () => {
     expect(initFailure('--http', 'nest', '--di', 'tsyringe').fix).toContain('--http nest together with --di nest');
-    expect(initFailure('--http', 'koa').fix).toContain('express, fastify, nest, none');
+    expect(initFailure('--http', 'koa').fix).toContain('express, fastify, hono, nest, none');
     expect(initFailure('--context', 'billing').fix).toContain('billing:core');
     expect(initFailure('--context', 'billing:central').fix).toContain('core, supporting, generic');
 

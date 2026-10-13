@@ -7,6 +7,9 @@ import { sharesSchemas } from './shares-schemas.js';
 import type { Endpoint } from './endpoint.js';
 import type { UseCase } from './use-case.js';
 
+/** The validation libraries whose templates declare a schema for the path parameters. */
+const TYPES_PARAMETERS: readonly string[] = ['zod', 'class-validator', 'typebox'];
+
 export interface RouteParts {
   readonly name: Name;
   readonly endpoint: Endpoint;
@@ -57,8 +60,7 @@ function acceptedVars(useCase: UseCase, shared: boolean): RenderContext {
 
 function requestVars(scope: Scope, { parameters }: Endpoint, hasBody: boolean): RenderContext {
   const { validation } = scope.config.stack;
-  // Only the zod and class-validator variants declare a schema for path parameters.
-  const typedParameters = parameters.length > 0 && (validation === 'zod' || validation === 'class-validator');
+  const typedParameters = parameters.length > 0 && TYPES_PARAMETERS.includes(validation);
 
   return {
     hasParams: parameters.length > 0,
@@ -109,6 +111,7 @@ function parameterVars(parameters: readonly string[]): RenderContext {
 
   return {
     zodParams: parameters.map((parameter) => `${parameter}: z.string().min(1)`).join(', '),
+    typeboxParams: parameters.map((parameter) => `${parameter}: Type.String({ minLength: 1 })`).join(', '),
     dtoParams: parameters.map((parameter) => `@IsString()\n  ${parameter} = '';`).join('\n\n  '),
     sampleParams: parameters.length > 0 ? `{ ${sample} }` : '{}',
   };

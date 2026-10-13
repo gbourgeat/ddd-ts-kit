@@ -127,7 +127,8 @@ command or a flag is added without this part being regenerated.
 
 ```text
 Usage
-  ddd-ts-kit init [--http express|fastify|nest|none] [--validation zod|class-validator|standard-schema|none]
+  ddd-ts-kit init [--http express|fastify|hono|nest|none]
+                  [--validation zod|class-validator|typebox|standard-schema|none]
                   [--di tsyringe|nest|manual] [--tests vitest|jest]
                   [--orm drizzle|knex|prisma|typeorm|custom|none] [--database postgres|mysql|sqlite|none]
                   [--events in-memory|outbox] [--docs-ui swagger|scalar|redoc|none]

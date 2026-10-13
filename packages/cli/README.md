@@ -38,8 +38,8 @@ its limits, `2` wrong usage (the message says what to do).
 ## init
 
 ```
-ddd-ts-kit init [--http express|fastify|nest|none]
-                [--validation zod|class-validator|standard-schema|none]
+ddd-ts-kit init [--http express|fastify|hono|nest|none]
+                [--validation zod|class-validator|typebox|standard-schema|none]
                 [--di tsyringe|nest|manual] [--tests vitest|jest]
                 [--orm drizzle|knex|prisma|typeorm|custom|none]
                 [--database postgres|mysql|sqlite|none]

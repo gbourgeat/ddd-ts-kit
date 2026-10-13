@@ -36,6 +36,15 @@ JSON is answered 400 as a problem. `@ddd-ts-kit/validation/typebox` validates wi
 keyword as the issue code, `{ coerce: true }` for query strings) and documents the schema as it
 is, a nested schema with an `$id` shared once in the contract. Both libraries are optional peers.
 
+**Four contract pairs a project starts from.** `init --http hono` serves the routes with Hono on
+Node (`@hono/node-server`, the limiter and the readiness probe in front when the cache is
+shared), and `init --validation typebox` writes every schema of a route, a function route and a
+shared schema with TypeBox. A new end-to-end spec, `contract-pairs.spec.ts`, generates one project
+per pair (Express and zod, Fastify and TypeBox, Hono and zod, NestJS and class-validator), shares
+one shape between two routes, and holds each to zero finding, its specs and end-to-end specs
+(401, 403, 201 and the trace of the request) and a current contract that documents the shape
+once. NestJS with class-validator, generated before but never run end to end, is now.
+
 **Every package carries the MIT notice.** Each published package now holds the `LICENSE` of the
 repository next to its `dist/`, and `npm run package:check` refuses a tarball without it, or with
 another text. Earlier versions were published without it.

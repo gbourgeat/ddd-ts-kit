@@ -4,6 +4,7 @@ import type { Config } from '../config/index.js';
 const LIBRARIES: Readonly<Record<string, readonly string[]>> = {
   zod: ['zod'],
   'class-validator': ['class-validator', 'class-transformer', 'class-validator-jsonschema'],
+  typebox: ['typebox'],
 };
 
 const VALIDATION_PACKAGE = '@ddd-ts-kit/validation';

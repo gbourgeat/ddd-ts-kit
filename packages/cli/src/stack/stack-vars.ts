@@ -22,7 +22,7 @@ export function stackVars(config: Config): RenderContext {
     assembly: assemblyVars(config),
     decorators: { legacy, standard: !legacy },
     http: httpVars(config),
-    validation: one(validation, ['zod', 'class-validator', 'standard-schema', 'none']),
+    validation: one(validation, ['zod', 'class-validator', 'typebox', 'standard-schema', 'none']),
     di: one(di, ['tsyringe', 'nest', 'manual']),
     orm: { ...one(orm, ['drizzle', 'knex', 'prisma', 'typeorm', 'custom', 'none']), any: orm !== 'none' },
     events: eventVars(config),
@@ -75,9 +75,9 @@ function httpVars(config: Config): RenderContext {
   const { http } = config.stack;
 
   return {
-    ...one(http, ['express', 'fastify', 'nest', 'none']),
+    ...one(http, ['express', 'fastify', 'hono', 'nest', 'none']),
     any: http !== 'none',
-    plain: http === 'express' || http === 'fastify',
+    plain: http === 'express' || http === 'fastify' || http === 'hono',
   };
 }
 

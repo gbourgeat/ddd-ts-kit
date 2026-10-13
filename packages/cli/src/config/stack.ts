@@ -1,5 +1,5 @@
-export const HTTP_STACKS = ['express', 'fastify', 'nest', 'none'] as const;
-export const VALIDATION_STACKS = ['zod', 'class-validator', 'standard-schema', 'none'] as const;
+export const HTTP_STACKS = ['express', 'fastify', 'hono', 'nest', 'none'] as const;
+export const VALIDATION_STACKS = ['zod', 'class-validator', 'typebox', 'standard-schema', 'none'] as const;
 export const DI_STACKS = ['tsyringe', 'nest', 'manual'] as const;
 export const EVENT_STACKS = ['in-memory', 'outbox', 'custom'] as const;
 export const ORM_STACKS = ['drizzle', 'knex', 'prisma', 'typeorm', 'custom', 'none'] as const;

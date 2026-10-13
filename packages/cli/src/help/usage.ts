@@ -1,6 +1,7 @@
 /** Every command of the CLI and its flags, as `--help` prints them and docs/guides/commands.md shows them. */
 export const USAGE = `Usage
-  ddd-ts-kit init [--http express|fastify|nest|none] [--validation zod|class-validator|standard-schema|none]
+  ddd-ts-kit init [--http express|fastify|hono|nest|none]
+                  [--validation zod|class-validator|typebox|standard-schema|none]
                   [--di tsyringe|nest|manual] [--tests vitest|jest]
                   [--orm drizzle|knex|prisma|typeorm|custom|none] [--database postgres|mysql|sqlite|none]
                   [--events in-memory|outbox] [--docs-ui swagger|scalar|redoc|none]

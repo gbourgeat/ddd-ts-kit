@@ -27,6 +27,18 @@ describe('generate schema', () => {
     );
   });
 
+  it('declares a TypeBox shape under an $id of the contract', () => {
+    const root = initProject('--validation', 'typebox', '--context', 'billing:core');
+
+    cli(root, 'generate', 'schema', 'billing', 'BillingAddress');
+
+    expect(read(root, `${SHARED}/billing-address.schema.ts`)).toContain(
+      'export const billingAddressSchema = Type.Object(\n  {\n    // TODO(domain): ',
+    );
+
+    expect(read(root, `${SHARED}/billing-address.schema.ts`)).toContain("{ $id: 'BillingAddress' },");
+  });
+
   it('writes in presentation/ of the shared kernel what several contexts answer with', () => {
     const root = initProject('--validation', 'standard-schema', '--context', 'billing:core');
     const result = cli(root, 'generate', 'schema', 'shared-kernel', 'Money', '--json');

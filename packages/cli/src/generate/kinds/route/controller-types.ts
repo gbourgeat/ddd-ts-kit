@@ -24,7 +24,9 @@ export function controllerTypes(scope: Scope, { name, endpoint }: ControllerPlan
   const shared = sharesSchemas(scope.config);
   const usesClasses = validation === 'class-validator';
   const hasBody = WITH_BODY.includes(endpoint.method);
-  const hasTypedParams = endpoint.parameters.length > 0 && (validation === 'zod' || usesClasses);
+
+  const hasTypedParams =
+    endpoint.parameters.length > 0 && (validation === 'zod' || validation === 'typebox' || usesClasses);
 
   const typeOf = (part: string, role: string): string =>
     usesClasses ? `${name.pascal}${role}` : `Infer<typeof ${part}>`;

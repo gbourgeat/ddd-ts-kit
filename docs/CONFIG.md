@@ -116,8 +116,8 @@ outside the list stops every command with the list of accepted values.
 
 | Key | Values | Default |
 |---|---|---|
-| `stack.http` | `express`, `fastify`, `nest`, `none` | `express` |
-| `stack.validation` | `zod`, `class-validator`, `standard-schema`, `none` | `zod` |
+| `stack.http` | `express`, `fastify`, `hono` (Hono 4 on Node through `@hono/node-server`), `nest`, `none` | `express` |
+| `stack.validation` | `zod`, `class-validator`, `typebox` (TypeBox 1, the `typebox` package), `standard-schema`, `none` | `zod` |
 | `stack.di` | `tsyringe`, `nest`, `manual`; `init` accepts `nest` with `http: nest` and only with it | `tsyringe` (`nest` when `http` is `nest`) |
 | `stack.events` | `in-memory`, `outbox`, `custom`; `init` offers `in-memory` and `outbox` | `outbox` when an ORM is set (anything else then needs a `stack.events` deviation), `in-memory` otherwise |
 | `stack.orm` | `drizzle`, `knex`, `prisma`, `typeorm`, `custom`, `none`. With a migration tool, `npm run db:generate <what-it-does>` names every migration `<timestamp>_<what-it-does>` and `persistence/migration-history` checks their order ([persistence](tools/persistence.md#migrations-names-merges-and-order)) | `drizzle` (`none` with `database: none`) |
@@ -230,7 +230,7 @@ The contexts of the config and the directories of `contextsDir` must be the same
 | `coverage` | `{ "<layer>": { "<rate>": <0 to 100> } }` for the layers `domain`, `application`, `presentation`, `infrastructure` and the rates `statements`, `branches`, `functions`, `lines`: the minimum test coverage of each layer, applied to every context. A rate left out is the reference; a rate that is not a percentage, an unknown layer or an unknown rate is reported (`config/valid`). `init` does not write the key: the reference applies until a project changes a rate | domain 90, 85, 90, 90; application 85, 80, 85, 85; presentation 80, 70, 80, 80; infrastructure 70, 60, 70, 70 |
 | `domainAllowedPackages` | packages `domain/` may import | `["@ddd-ts-kit/kernel"]` |
 | `applicationAllowedPackages` | packages `application/` may import | `["@ddd-ts-kit/kernel", "@ddd-ts-kit/auth"]` |
-| `publishedLanguageAllowedPackages` | packages `published-language/` may import | `@ddd-ts-kit/kernel`, `@ddd-ts-kit/events`, `@ddd-ts-kit/validation` and the schema library of `stack.validation` (`zod`; `class-validator` with `class-transformer`; none for `standard-schema` and `none`) |
+| `publishedLanguageAllowedPackages` | packages `published-language/` may import | `@ddd-ts-kit/kernel`, `@ddd-ts-kit/events`, `@ddd-ts-kit/validation` and the schema library of `stack.validation` (`zod`; `class-validator` with `class-transformer`; `typebox`; none for `standard-schema` and `none`) |
 
 `@ddd-ts-kit/aspects`, `@ddd-ts-kit/audit`, `@ddd-ts-kit/redis`, `@ddd-ts-kit/scheduling`,
 `@ddd-ts-kit/sentry` and `@ddd-ts-kit/tracing` stay refused in `domain/` and `application/`

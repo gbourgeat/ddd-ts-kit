@@ -195,6 +195,6 @@ function assertNestGoesWithNest(http: string, di: string): void {
 
   throw new CliError(
     `--http ${http} cannot be combined with --di ${di}.`,
-    'NestJS hosts the application as a whole: use --http nest together with --di nest, or pick express or fastify with tsyringe or manual.',
+    'NestJS hosts the application as a whole: use --http nest together with --di nest, or pick express, fastify or hono with tsyringe or manual.',
   );
 }

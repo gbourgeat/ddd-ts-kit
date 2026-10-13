@@ -11,7 +11,11 @@ import { vars } from '../vars.js';
 const SHARED_KERNEL = 'shared-kernel';
 
 /** The schema libraries that have a template of their own; any other writes a schema wrapped by the kit. */
-const WRITTEN_WITH: Readonly<Record<string, string>> = { zod: 'zod', 'class-validator': 'class-validator' };
+const WRITTEN_WITH: Readonly<Record<string, string>> = {
+  zod: 'zod',
+  'class-validator': 'class-validator',
+  typebox: 'typebox',
+};
 
 export const schemaKind: Kind = {
   name: 'schema',

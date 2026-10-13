@@ -23,6 +23,7 @@ const APPLICATION = [...KERNEL, '@ddd-ts-kit/auth'];
 const SCHEMA_LIBRARIES: Readonly<Record<string, readonly string[]>> = {
   zod: ['zod'],
   'class-validator': ['class-validator', 'class-transformer'],
+  typebox: ['typebox'],
   'standard-schema': [],
   none: [],
 };
