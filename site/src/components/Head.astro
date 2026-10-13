@@ -1,0 +1,30 @@
+---
+// Starlight's head, and the drawing of the mermaid diagrams of a page: scripts/assemble.mjs turns
+// each mermaid block into a <pre class="mermaid">, drawn here in the browser, again when the
+// reader switches between the light and the dark theme. Mermaid loads only on such a page.
+import Default from '@astrojs/starlight/components/Head.astro';
+---
+
+<Default><slot /></Default>
+
+<script>
+  const diagrams = [...document.querySelectorAll<HTMLElement>('pre.mermaid')];
+
+  if (diagrams.length > 0) {
+    const sources = diagrams.map((diagram) => diagram.textContent ?? '');
+    const { default: mermaid } = await import('mermaid');
+    const draw = async () => {
+      const theme = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'default';
+
+      mermaid.initialize({ startOnLoad: false, theme, securityLevel: 'strict' });
+      diagrams.forEach((diagram, index) => {
+        diagram.removeAttribute('data-processed');
+        diagram.textContent = sources[index] ?? '';
+      });
+      await mermaid.run({ nodes: diagrams });
+    };
+
+    await draw();
+    new MutationObserver(() => void draw()).observe(document.documentElement, { attributeFilter: ['data-theme'] });
+  }
+</script>

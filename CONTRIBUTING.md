@@ -37,6 +37,11 @@ node --test plugin/hooks/guard.test.mjs
   [docs/translation.md](docs/translation.md) for the conventions, the glossary, the style of
   the diagrams and the checked code samples (`npm run docs:translations` and
   `npm run docs:samples`, run by CI).
+- The documentation website (`site/`, published at <https://gbourgeat.github.io/ddd-ts-kit/>)
+  is built from these same pages, which stay its only source. `npm run site:dev` assembles the
+  pages and serves the site at `http://localhost:4321/ddd-ts-kit/` (run it again after changing
+  a page); `npm run site:build` builds it as CI does, and fails on a link or an anchor that
+  leads nowhere. A new page gets its route in `site/scripts/routes.mjs`.
 - No em dash or en dash, in any language (`npm run check:dashes`, run by CI).
 - Conventional commits: `<type>(<scope>): <summary>`.
 - A pull request that changes the plugin (skills, agents, hooks) bumps `version` in

@@ -9,7 +9,8 @@
  *   - every CHANGELOG.md, CLAUDE.md and CONTEXT.md (a CONTEXT.md is partly generated);
  *   - anything under a directory named node_modules, dist, coverage, reports, .git, .claude,
  *     .github, .gitlab or .ddd-ts-kit, wherever it is;
- *   - anything under plugin/, pipeline/ and packages/cli/templates/;
+ *   - anything under plugin/, pipeline/ and packages/cli/templates/, and under site/, where the
+ *     website copies these pages at each of its builds (site/scripts/assemble.mjs);
  *   - the generated examples/scheduling/clients/api/README.md and
  *     examples/scheduling/docs/integration/event-catalog.md.
  *
@@ -37,7 +38,7 @@ const SKIPPED_DIRECTORIES = new Set([
   '.gitlab',
   '.ddd-ts-kit',
 ]);
-const SKIPPED_PREFIXES = ['plugin/', 'pipeline/', 'packages/cli/templates/'];
+const SKIPPED_PREFIXES = ['plugin/', 'pipeline/', 'packages/cli/templates/', 'site/'];
 const SKIPPED_NAMES = new Set(['CHANGELOG.md', 'CLAUDE.md', 'CONTEXT.md']);
 const SKIPPED_FILES = new Set([
   'examples/scheduling/clients/api/README.md',
@@ -505,7 +506,7 @@ export function githubSlug(heading) {
  * The text without its HTML tags, read once from the left: what is left when
  * a tag is removed is never read again as a tag, so nothing is stripped twice.
  */
-function withoutTags(text) {
+export function withoutTags(text) {
   let kept = '';
   let index = 0;
 

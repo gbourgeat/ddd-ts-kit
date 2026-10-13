@@ -4,3 +4,7 @@ dist
 /coverage/
 .vitest/
 .ddd-ts-kit/
+# The documentation website: its content is assembled from the Markdown pages at each build.
+/site/src/content/docs/
+/site/public/diagrams/
+/site/.astro/

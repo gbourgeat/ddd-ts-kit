@@ -5,6 +5,9 @@
 Domain-Driven Design, Clean Architecture and Clean Code for TypeScript backends, held by tools
 rather than by good intentions.
 
+**The documentation is also a website**, with search, in English and in French:
+<https://gbourgeat.github.io/ddd-ts-kit/>.
+
 It is three things that share one definition of the architecture
 ([docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)):
 

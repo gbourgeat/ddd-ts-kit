@@ -53,7 +53,7 @@ function translated(english, french, extra = {}) {
 const ENGLISH = '**English** · [Français](guide.fr.md)\n\n# Guide\n\nRead [the other](other.md).\n';
 const OTHER = '**English** · [Français](other.fr.md)\n\n# Other\n';
 
-test('the scope leaves out French pages, changelogs, agent files, generated pages and tooling directories', () => {
+test('the scope leaves out French pages, changelogs, agent files, generated pages, tooling directories and the website', () => {
   for (const file of ['README.md', 'docs/concepts/aggregates.md', 'packages/kernel/README.md', 'examples/README.md']) {
     assert.equal(inScope(file), true, file);
   }
@@ -74,6 +74,7 @@ test('the scope leaves out French pages, changelogs, agent files, generated page
     'node_modules/x/README.md',
     'examples/scheduling/clients/api/README.md',
     'examples/scheduling/docs/integration/event-catalog.md',
+    'site/src/content/docs/concepts/aggregates.md',
     'docs/notes.txt',
   ]) {
     assert.equal(inScope(file), false, file);

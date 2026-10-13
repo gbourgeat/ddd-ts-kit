@@ -21,6 +21,9 @@ const READ_BY_THE_CLI_SPECS = ['docs/', 'pipeline/', 'examples/', 'plugin/', '.c
 /** Read by no spec: only the gates that always run (dashes, plugin validation) look at them. */
 const DOCUMENTS = /^[^/]+\.md$|^LICENSE$/;
 
+/** The documentation website, read by no spec of a package: the site job of the CI builds it. */
+const SITE = 'site/';
+
 /** The packages whose adapter specs need a server of the integration job: PostgreSQL, OpenFGA, MinIO for s3, Varnish for http, or Dragonfly for redis. */
 const ON_A_SERVER = ['drizzle', 'knex', 'prisma', 'typeorm', 'audit', 'openfga', 's3', 'http', 'redis'];
 
@@ -116,7 +119,7 @@ function reachOf(graph, file) {
     return ['cli'];
   }
 
-  return DOCUMENTS.test(file) ? [] : 'everything';
+  return DOCUMENTS.test(file) || file.startsWith(SITE) ? [] : 'everything';
 }
 
 /** Every package that depends on `name`, directly or through another. */
