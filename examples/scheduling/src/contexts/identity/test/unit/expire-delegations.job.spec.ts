@@ -31,6 +31,14 @@ describe('Expire delegations, when its time comes', () => {
     expect(sent[0]).toMatchObject({ actor: { id: 'system:identity.expire-delegations', type: 'system' } });
   });
 
+  it('runs once in each network, in that network', async () => {
+    const { application, sent } = arrange(['north', 'south']);
+
+    await application.jobs.runNow('identity.expire-delegations');
+
+    expect(sent).toHaveLength(2);
+  });
+
   it('names the instant the occurrence was planned for, never the instant it really runs', async () => {
     const { application, sent } = arrange();
 
@@ -65,6 +73,7 @@ function arrangeWithDelegations() {
 
   const application = createTestApplication({
     modules: [platformTestModule, contextModule('identity', identityDeclarations), authorization],
+    tenants: ['north'],
     fakes: [
       fake(DelegationRepository, delegationRepository),
       fake(IdentityRelationships, new FakeIdentityRelationships()),
@@ -74,9 +83,10 @@ function arrangeWithDelegations() {
   return { application, delegationRepository };
 }
 
-function arrange() {
+function arrange(networks: readonly string[] = ['north']) {
   const application = createTestApplication({
     modules: [platformTestModule, contextModule('identity', identityDeclarations), authorization],
+    tenants: networks,
   });
 
   const sent: Message[] = [];

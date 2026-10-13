@@ -1,10 +1,14 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { Criteria, scoped } from '@ddd-ts-kit/kernel';
+import { anExecutionContext } from '@ddd-ts-kit/testing';
+import { Criteria, scoped, FixedExecutionScope } from '@ddd-ts-kit/kernel';
 import type { Contact, Contacts } from '@/contexts/notification/application/ports/contacts.port';
 import { KnexContacts } from '@/contexts/notification/infrastructure/persistence/knex-contacts.repository';
 import { storableStamp } from '@/shared-kernel/storable-stamp';
 import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database';
 import { FakeContacts } from '@/contexts/notification/test/fakes/contacts.fake';
+
+/** The work of these specs runs in one network: every table here holds tenant data. */
+const north = new FixedExecutionScope(anExecutionContext().ofTenant('north').build());
 
 const first = { eventId: 'event-1', occurredAt: new Date('2026-01-02T08:00:00.000Z') };
 const second = { eventId: 'event-2', occurredAt: new Date('2026-01-03T08:00:00.000Z') };
@@ -26,7 +30,7 @@ beforeEach(async () => {
 
 describe.each([
   ['FakeContacts', (): Contacts => new FakeContacts()],
-  ['KnexContacts', (): Contacts => new KnexContacts(database.persistence.database)],
+  ['KnexContacts', (): Contacts => new KnexContacts(database.persistence.database, north)],
 ] as const)('%s', (_name, createContacts) => {
   it('answers the contact of a recipient as it was last announced', async () => {
     const contacts = createContacts();

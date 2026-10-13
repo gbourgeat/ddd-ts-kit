@@ -1,6 +1,7 @@
 import { LOG_LEVELS, type LogLevel } from '@ddd-ts-kit/kernel';
 import type { AppConfig } from '@/platform/config/app-config';
 import { ConfigError } from '@/platform/config/config-error';
+import { readNetworks } from '@/platform/config/read-networks';
 import { readTracing } from '@/platform/config/read-tracing';
 
 const environments = ['development', 'test', 'production'] as const;
@@ -29,6 +30,7 @@ export function loadConfig(env: Variables): AppConfig {
     tracing: readTracing(env, problems),
     resilience: readResilience(env, problems),
     runJobs: readFlag(env, { name: 'RUN_JOBS', fallback: runJobsByDefault }, problems),
+    networks: readNetworks(env, problems),
     databaseUrl: readUrl(env, 'DATABASE_URL', problems),
     outboxRelayIntervalMs: readInteger(
       env,

@@ -7,7 +7,7 @@ import {
   type Actor,
   type ExecutionContext,
 } from '@ddd-ts-kit/kernel';
-import { repositoryContract } from '@ddd-ts-kit/testing/contracts';
+import { repositoryContract, tenantIsolationContract } from '@ddd-ts-kit/testing/contracts';
 import type { Calendar } from '@/contexts/scheduling/domain/aggregates/calendar.aggregate';
 import { Exception } from '@/contexts/scheduling/domain/value-objects/exception.vo';
 import { Range } from '@/contexts/scheduling/domain/value-objects/range.vo';
@@ -61,6 +61,19 @@ repositoryContract<Calendar>(runner, {
 
     return new KnexCalendarRepository(database.persistence.database, new FixedExecutionScope(workOf('acme')), clock);
   },
+});
+
+/** No read and no write of one network reaches another, whatever the work in progress asks. */
+tenantIsolationContract<Calendar>(runner, {
+  ...expectations,
+  name: 'KnexCalendarRepository',
+  createRepository: async (scope) => {
+    await database.reset();
+
+    return new KnexCalendarRepository(database.persistence.database, scope, clock);
+  },
+  recreate: (calendar: Calendar) => aCalendar().identifiedBy(calendar.id).build(),
+  elevatedReads: true,
 });
 
 function workOf(tenantId: string): ExecutionContext {

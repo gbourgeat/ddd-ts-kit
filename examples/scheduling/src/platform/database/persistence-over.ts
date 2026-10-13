@@ -10,7 +10,8 @@ export function persistenceOver(db: Knex, close: () => Promise<void>): Persisten
   return {
     unitOfWork,
     database: unitOfWork,
-    outbox: new KnexOutboxStore(unitOfWork, { schema: MESSAGING }),
+    // The tenant of each event, so that its consumers run in the network it happened in.
+    outbox: new KnexOutboxStore(unitOfWork, { schema: MESSAGING, tenant: true }),
     processedEvents: new KnexProcessedEventStore(unitOfWork, { schema: MESSAGING }),
     close,
   };

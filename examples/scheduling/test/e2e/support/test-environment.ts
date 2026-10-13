@@ -14,6 +14,7 @@ export function testEnvironment(overrides: Variables = {}): Variables {
     PORT: '0',
     REDIS_URL: (process.env['REDIS_URL'] ?? '') || noRedis,
     RATE_LIMIT_MAX: process.env['RATE_LIMIT_MAX'] ?? '1000000',
+    NETWORKS: process.env['NETWORKS'] ?? 'north,south',
     ...overrides,
   };
 }

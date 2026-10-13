@@ -1,7 +1,14 @@
 import type { Knex } from 'knex';
-import { pageOfPlan, planCriteria, type CriteriaPlan, type Page, type ScopedCriteria } from '@ddd-ts-kit/kernel';
+import {
+  pageOfPlan,
+  planCriteria,
+  type CriteriaPlan,
+  type ExecutionScope,
+  type Page,
+  type ScopedCriteria,
+} from '@ddd-ts-kit/kernel';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
-import { KnexContext, criteriaToKnex, predicateToKnex } from '@ddd-ts-kit/knex';
+import { KnexContext, criteriaToKnex, derivedTable, predicateToKnex, tenantTable } from '@ddd-ts-kit/knex';
 import {
   OccupancyReader,
   occupancyCriteria,
@@ -9,6 +16,9 @@ import {
 } from '@/contexts/analytics/application/ports/occupancy-reader.port';
 import { OccupancyMeasureService } from '@/contexts/analytics/domain/services/occupancy-measure.service';
 import { ANALYTICS_SCHEMA } from '@/contexts/analytics/infrastructure/persistence/analytics.schema';
+
+/** The outcomes of the network of the work: the occupancy of another network is never measured here. */
+const OUTCOMES = { schema: ANALYTICS_SCHEMA, table: 'outcomes' };
 
 /** What a line is grouped by, and so what a filter or a scope may name: each is a column of the outcomes. */
 const GROUPED = { practiceId: 'practice_id', calendarId: 'calendar_id', day: 'day' };
@@ -45,7 +55,10 @@ interface MeasuredLine {
  */
 @Repository(OccupancyReader)
 export class KnexOccupancyReader implements OccupancyReader {
-  constructor(private readonly database: KnexContext) {}
+  constructor(
+    private readonly database: KnexContext,
+    private readonly scope: ExecutionScope,
+  ) {}
 
   async search(criteria: ScopedCriteria<Occupancy>): Promise<Page<Occupancy>> {
     const plan = planCriteria(occupancyCriteria, criteria);
@@ -54,8 +67,7 @@ export class KnexOccupancyReader implements OccupancyReader {
       return pageOfPlan(plan, [], 0);
     }
 
-    const knex = this.database.executor();
-    const page = knex.select<MeasuredLine[]>('*').from(measured(knex, plan).as('occupancy'));
+    const page = derivedTable<MeasuredLine>(this.database, measured(this.database, this.scope, plan), 'occupancy');
     const lines = await criteriaToKnex(page, { ...plan, filter: undefined }, MEASURED);
 
     return pageOfPlan(plan, lines.map(toOccupancy), plan.kind === 'offset' ? await this.total(plan, lines) : undefined);
@@ -73,47 +85,50 @@ export class KnexOccupancyReader implements OccupancyReader {
       return 0;
     }
 
-    const knex = this.database.executor();
+    const days = grouped(this.database, this.scope, plan).select('day');
 
-    const counted = await knex
-      .count<{ lines: string | number }[]>({ lines: '*' })
-      .from(grouped(knex, plan).select('day').as('occupancy'));
+    const counted = await derivedTable<Pick<MeasuredLine, 'day'>>(this.database, days, 'occupancy')
+      .clearSelect()
+      .count<{ lines: string | number }[]>({ lines: '*' });
 
     return Number(counted[0]?.lines ?? 0);
   }
 }
 
-function measured(knex: Knex, plan: CriteriaPlan): Knex.QueryBuilder {
+/** The measures of each group, as expressions over the grouped outcomes: the statement is the one `grouped` confines. */
+function measured(database: KnexContext, scope: ExecutionScope, plan: CriteriaPlan): Knex.QueryBuilder {
   const holding = [...OccupancyMeasureService.HOLDING];
   const among = holding.map(() => '?').join(', ');
 
-  return grouped(knex, plan).select(
+  return grouped(database, scope, plan).select(
     'practice_id',
     'calendar_id',
     'day',
-    knex.raw("calendar_id || '.' || day as id"),
-    knex.raw(
-      `coalesce(sum(round(extract(epoch from (ends_at - starts_at)) / 60)) filter (where state in (${among})), 0)::integer as held_minutes`,
-      holding,
-    ),
-    knex.raw(`(count(*) filter (where state in (${among})))::integer as appointments_held`, holding),
-    counted(knex, 'completed', 'completed'),
-    counted(knex, 'no-show', 'no_shows'),
-    counted(knex, 'cancelled-by-patient', 'cancelled_by_patient'),
-    counted(knex, 'cancelled-by-practice', 'cancelled_by_practice'),
-    knex.raw('(count(*) over ())::integer as lines'),
+    database.executor().raw("calendar_id || '.' || day as id"),
+    database
+      .executor()
+      .raw(
+        `coalesce(sum(round((date_part('epoch', ends_at - starts_at) / 60)::numeric)) filter (where state in (${among})), 0)::integer as held_minutes`,
+        holding,
+      ),
+    database.executor().raw(`(count(*) filter (where state in (${among})))::integer as appointments_held`, holding),
+    counted(database, 'completed', 'completed'),
+    counted(database, 'no-show', 'no_shows'),
+    counted(database, 'cancelled-by-patient', 'cancelled_by_patient'),
+    counted(database, 'cancelled-by-practice', 'cancelled_by_practice'),
+    database.executor().raw('(count(*) over ())::integer as lines'),
   );
 }
 
 /** The outcomes the filters and the scope keep, one group per calendar and day; an outcome a rebuild left as removed is not counted. */
-function grouped(knex: Knex, plan: CriteriaPlan): Knex.QueryBuilder {
-  const outcomes = knex('outcomes').withSchema(ANALYTICS_SCHEMA).where('deleted', false);
+function grouped(database: KnexContext, scope: ExecutionScope, plan: CriteriaPlan): Knex.QueryBuilder {
+  const outcomes = tenantTable(database, scope, OUTCOMES).where('deleted', false);
 
   return predicateToKnex(outcomes, plan.filter, GROUPED).groupBy('practice_id', 'calendar_id', 'day');
 }
 
-function counted(knex: Knex, state: string, column: string): Knex.Raw {
-  return knex.raw('(count(*) filter (where state = ?))::integer as ??', [state, column]);
+function counted(database: KnexContext, state: string, column: string): Knex.Raw {
+  return database.executor().raw('(count(*) filter (where state = ?))::integer as ??', [state, column]);
 }
 
 function toOccupancy(line: MeasuredLine): Occupancy {

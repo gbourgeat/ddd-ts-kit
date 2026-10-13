@@ -1,4 +1,4 @@
-import type { AuditRow } from '@ddd-ts-kit/knex';
+import type { AuditRow, TenantRow } from '@ddd-ts-kit/knex';
 
 export interface DelegationColumns {
   readonly id: string;
@@ -12,6 +12,6 @@ export interface DelegationColumns {
   readonly end_cause: 'revoked' | 'expired' | 'member-removed' | null;
 }
 
-export interface DelegationRow extends DelegationColumns, AuditRow {
+export interface DelegationRow extends DelegationColumns, TenantRow, AuditRow {
   readonly version: number;
 }

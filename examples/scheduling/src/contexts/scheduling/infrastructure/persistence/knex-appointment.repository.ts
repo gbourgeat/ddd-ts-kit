@@ -1,7 +1,14 @@
-import type { Knex } from 'knex';
-import { type Clock, type ExecutionScope, stampCreation, stampUpdate } from '@ddd-ts-kit/kernel';
+import { type Clock, type ExecutionScope, stampCreation, stampUpdate, tenantScopeOf } from '@ddd-ts-kit/kernel';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
-import { KnexContext, auditRow, insertIgnoringConflict, optimisticUpdate } from '@ddd-ts-kit/knex';
+import {
+  KnexContext,
+  auditRow,
+  insertIgnoringConflict,
+  optimisticUpdate,
+  ownTenantTable,
+  tenantRow,
+  tenantTable,
+} from '@ddd-ts-kit/knex';
 import type { Appointment } from '@/contexts/scheduling/domain/aggregates/appointment.aggregate';
 import { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository';
 import { SCHEDULING_SCHEMA } from '@/contexts/scheduling/infrastructure/persistence/scheduling.schema';
@@ -14,6 +21,9 @@ import {
 } from '@/contexts/scheduling/infrastructure/persistence/appointment-row.schema';
 
 type VersionedAppointment = AppointmentColumns & { readonly version: number };
+
+/** Tenant data: every statement reaches it through `tenantTable` or `ownTenantTable`, confined to the tenant of the work. */
+const TABLE = { schema: SCHEDULING_SCHEMA, table: 'appointments' };
 
 const ACTIVE = ['requested', 'booked'];
 /** The SQLSTATE of PostgreSQL for a violated exclusion constraint. */
@@ -30,13 +40,13 @@ export class KnexAppointmentRepository implements AppointmentRepository {
   ) {}
 
   async findById(id: string): Promise<Appointment | undefined> {
-    const row = await tableOf(this.database).where({ id }).first();
+    const row = await tenantTable<AppointmentRow>(this.database, this.scope, TABLE).where({ id }).first();
 
     return row === undefined ? undefined : AppointmentMapper.toDomain(row);
   }
 
   async heldOn(calendarId: string, from: Date, until: Date): Promise<readonly Appointment[]> {
-    const rows = await tableOf(this.database)
+    const rows = await tenantTable<AppointmentRow>(this.database, this.scope, TABLE)
       .where({ calendar_id: calendarId })
       .whereIn('status', ACTIVE)
       .where('starts_at', '<', until)
@@ -47,7 +57,7 @@ export class KnexAppointmentRepository implements AppointmentRepository {
   }
 
   async heldBy(patientId: string, practitionerId: string, instant: Date): Promise<readonly Appointment[]> {
-    const rows = await tableOf(this.database)
+    const rows = await tenantTable<AppointmentRow>(this.database, this.scope, TABLE)
       .where({ patient_id: patientId, practitioner_id: practitionerId })
       .whereIn('status', ACTIVE)
       .where('starts_at', '>', instant)
@@ -57,7 +67,7 @@ export class KnexAppointmentRepository implements AppointmentRepository {
   }
 
   async unconfirmedAt(instant: Date): Promise<readonly Appointment[]> {
-    const rows = await tableOf(this.database)
+    const rows = await tenantTable<AppointmentRow>(this.database, this.scope, TABLE)
       .where({ status: 'requested' })
       .where('confirm_before', '<=', instant)
       .orderBy('confirm_before');
@@ -83,23 +93,26 @@ export class KnexAppointmentRepository implements AppointmentRepository {
   }
 
   private async insert(state: VersionedAppointment): Promise<number> {
-    const row = { ...state, ...auditRow(stampCreation(this.scope, this.clock)) };
+    const row = {
+      ...state,
+      ...tenantRow(tenantScopeOf(this.scope)),
+      ...auditRow(stampCreation(this.scope, this.clock)),
+    };
 
-    return (await insertIgnoringConflict(this.database.executor(), tableOf(this.database), { row, conflict: 'id' }))
+    return (await insertIgnoringConflict(
+      this.database.executor(),
+      ownTenantTable<AppointmentRow>(this.database, this.scope, TABLE),
+      { row, conflict: 'id' },
+    ))
       ? 1
       : 0;
   }
 
   private async update(state: VersionedAppointment, expected: number): Promise<number> {
-    return tableOf(this.database)
+    return ownTenantTable<AppointmentRow>(this.database, this.scope, TABLE)
       .where({ id: state.id, version: expected })
       .update({ ...state, ...auditRow(stampUpdate(this.scope, this.clock)) });
   }
-}
-
-/** A function and not a method: a query builder is thenable, and a method that answers one is read as asynchronous by whatever wraps the adapter (tracing), which then answers a promise. */
-function tableOf(database: KnexContext): Knex.QueryBuilder<AppointmentRow, AppointmentRow[]> {
-  return database.executor()<AppointmentRow, AppointmentRow[]>('appointments').withSchema(SCHEDULING_SCHEMA);
 }
 
 function isSlotHeldTwice(error: unknown): boolean {

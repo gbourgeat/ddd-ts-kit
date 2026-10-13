@@ -15,7 +15,7 @@ const weekdays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'satur
 const consultation = { name: 'Consultation', duration: 30, grid: 30, buffer: 0, needsConfirmation: false };
 
 /**
- * A practice set up through the public API alone, by who may do each step: the platform admin
+ * A practice set up through the public API alone, by who may do each step: the administrator of the network
  * opens it, its manager adds a practitioner and an assistant, the practitioner creates a
  * calendar, opens it every day of the week around the clock and defines a consultation of
  * thirty minutes.
@@ -25,7 +25,7 @@ export async function openStaffedPractice(application: RunningApplication, staff
 
   await registerPeople(application, managerId, practitionerId, assistantId);
 
-  const root = await application.as({ id: 'root', roles: ['platform-admin'] });
+  const root = await application.as({ id: 'root', roles: ['network-admin'] });
 
   const practiceId = expectStatus(
     await root.post<{ id: string }>('/practices', { name, timeZone: 'Europe/Paris', managerId }),

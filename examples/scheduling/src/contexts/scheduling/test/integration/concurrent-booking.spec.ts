@@ -15,13 +15,18 @@ const DAY = 24 * 60 * 60_000;
 const clock = new SystemClock();
 
 const seeding = new FixedExecutionScope(
-  executionContext({ correlationId: 'concurrent-booking', actor: systemActor('scheduling.spec'), origin: 'test' }),
+  executionContext({
+    correlationId: 'concurrent-booking',
+    actor: systemActor('scheduling.spec'),
+    origin: 'test',
+    tenantId: 'north',
+  }),
 );
 
 // Two patients, each booking for themselves: what the role of a patient allows on any calendar.
 const authenticator = new FakeAuthenticator({
-  ada: anActor().named('ada').withRole('patient').build(),
-  bob: anActor().named('bob').withRole('patient').build(),
+  ada: anActor().named('ada').ofTenant('north').withRole('patient').build(),
+  bob: anActor().named('bob').ofTenant('north').withRole('patient').build(),
 });
 
 const calendar = aCalendar()

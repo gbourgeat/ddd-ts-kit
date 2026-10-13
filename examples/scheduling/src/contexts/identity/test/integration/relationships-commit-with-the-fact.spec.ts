@@ -18,7 +18,7 @@ import { aPerson } from '@/contexts/identity/test/builders/person.builder';
 
 class DirectoryDown extends Error {}
 
-const actor: Actor = { id: 'ada', type: 'user', roles: [], attributes: {} };
+const actor: Actor = { id: 'ada', type: 'user', tenantId: 'north', roles: [], attributes: {} };
 const scope = new FixedExecutionScope(executionContext({ correlationId: 'relationships-spec', actor, origin: 'test' }));
 const clock = new FixedClock(new Date('2026-01-01T00:00:00.000Z'));
 let database: TestDatabase;

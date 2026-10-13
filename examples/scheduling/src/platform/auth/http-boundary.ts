@@ -1,10 +1,14 @@
 import type { Authenticator } from '@ddd-ts-kit/auth';
 import {
+  firstTenantOf,
   reportHttpErrors,
+  tenantFromClaim,
+  tenantFromHeader,
   type ErrorContext,
   type ErrorMapper,
   type GuardRefusal,
   type RouteAround,
+  type TenantResolver,
 } from '@ddd-ts-kit/http';
 import type { Clock, ErrorReporter, ExecutionScope, Logger, Session } from '@ddd-ts-kit/kernel';
 import { tracedRoutes } from '@ddd-ts-kit/tracing';
@@ -23,6 +27,11 @@ export interface HttpBoundary {
   readonly around: RouteAround;
   /** A request a guard refused at the edge, written to the audit trail as a denied decision. */
   readonly onGuardRefusal: (refusal: GuardRefusal) => Promise<void>;
+  /**
+   * The network of a request: the one it names in `x-tenant-id`, else the one of the token. A
+   * caller that names a network it does not belong to is refused (403) before anything runs.
+   */
+  readonly resolveTenant: TenantResolver;
 }
 
 interface Edge {
@@ -55,6 +64,7 @@ export function httpBoundary({
     errorMapper,
     clock,
     around: tracedRoutes(),
+    resolveTenant: firstTenantOf(tenantFromHeader(), tenantFromClaim()),
     onGuardRefusal: refusals,
     // The message of the error may quote data: only the code and the route are logged.
     onError: (error, context) => {

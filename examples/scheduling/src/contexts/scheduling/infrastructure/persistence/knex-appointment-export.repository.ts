@@ -1,7 +1,6 @@
-import type { Knex } from 'knex';
-import { decodeCursor, encodeCursor } from '@ddd-ts-kit/kernel';
+import { decodeCursor, encodeCursor, type ExecutionScope } from '@ddd-ts-kit/kernel';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
-import { KnexContext } from '@ddd-ts-kit/knex';
+import { KnexContext, tenantTable } from '@ddd-ts-kit/knex';
 import {
   AppointmentExportContract,
   type ExportedAppointment,
@@ -13,6 +12,9 @@ import { SCHEDULING_SCHEMA } from '@/contexts/scheduling/infrastructure/persiste
 /** The appointments of one page of the export. */
 const PAGE_SIZE = 100;
 
+/** The appointments of the network of the work: a downstream rebuilds one network at a time. */
+const APPOINTMENTS = { schema: SCHEDULING_SCHEMA, table: 'appointments' };
+
 /**
  * Answers the export from the table of the appointments, the source of truth, and not from the
  * agenda, which is itself a read model: what a downstream rebuilds from must not depend on
@@ -21,12 +23,15 @@ const PAGE_SIZE = 100;
  */
 @Repository(AppointmentExportContract, { replaces: true })
 export class KnexAppointmentExport implements AppointmentExportContract {
-  constructor(private readonly database: KnexContext) {}
+  constructor(
+    private readonly database: KnexContext,
+    private readonly scope: ExecutionScope,
+  ) {}
 
   /** In the order of the identifiers: stable while appointments are booked, and resumed after the last one read. */
   async export(cursor?: string): Promise<ExportedAppointmentPage> {
     const after = cursor === undefined ? undefined : decodeCursor(cursor)['id'];
-    const every = tableOf(this.database);
+    const every = tenantTable<AppointmentRow>(this.database, this.scope, APPOINTMENTS);
 
     const rows = await (typeof after === 'string' ? every.where('id', '>', after) : every)
       .orderBy('id')
@@ -46,7 +51,7 @@ export class KnexAppointmentExport implements AppointmentExportContract {
       return [];
     }
 
-    const rows = await tableOf(this.database)
+    const rows = await tenantTable<AppointmentRow>(this.database, this.scope, APPOINTMENTS)
       .whereIn('id', [...appointmentIds])
       .orderBy('id');
 
@@ -80,9 +85,4 @@ function outcomeOf(row: AppointmentRow): ExportedAppointment['outcome'] {
     case 'no-show':
       return row.status;
   }
-}
-
-/** A function and not a method: a query builder is thenable, and a method that answers one is read as asynchronous by whatever wraps the adapter (tracing), which then answers a promise. */
-function tableOf(database: KnexContext): Knex.QueryBuilder<AppointmentRow, AppointmentRow[]> {
-  return database.executor()<AppointmentRow, AppointmentRow[]>('appointments').withSchema(SCHEDULING_SCHEMA);
 }

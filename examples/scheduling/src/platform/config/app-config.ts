@@ -15,6 +15,8 @@ export interface AppConfig {
   readonly resilience: ResilienceSettings;
   /** Whether this process runs the scheduled jobs (`RUN_JOBS`): off for the API of a project that has a worker. */
   readonly runJobs: boolean;
+  /** The networks of practices served (`NETWORKS`), each a tenant: a scheduled job runs once for each. */
+  readonly networks: readonly string[];
   readonly databaseUrl: string;
   readonly outboxRelayIntervalMs: number;
   readonly docsEnabled: boolean;

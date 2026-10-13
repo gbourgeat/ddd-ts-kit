@@ -7,7 +7,7 @@ import {
   type Actor,
   type ExecutionContext,
 } from '@ddd-ts-kit/kernel';
-import { repositoryContract } from '@ddd-ts-kit/testing/contracts';
+import { repositoryContract, tenantIsolationContract } from '@ddd-ts-kit/testing/contracts';
 import type { Appointment } from '@/contexts/scheduling/domain/aggregates/appointment.aggregate';
 import type { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository';
 import { Cancellation } from '@/contexts/scheduling/domain/value-objects/cancellation.vo';
@@ -224,6 +224,19 @@ async function knexRepository(): Promise<AppointmentRepository> {
 
   return new KnexAppointmentRepository(database.persistence.database, new FixedExecutionScope(workOf('acme')), clock);
 }
+
+/** No read and no write of one network reaches another, whatever the work in progress asks. */
+tenantIsolationContract<Appointment>(runner, {
+  ...expectations,
+  name: 'KnexAppointmentRepository',
+  createRepository: async (scope) => {
+    await database.reset();
+
+    return new KnexAppointmentRepository(database.persistence.database, scope, clock);
+  },
+  recreate: (appointment: Appointment) => anAppointment().identifiedBy(appointment.id).build(),
+  elevatedReads: true,
+});
 
 function workOf(tenantId: string): ExecutionContext {
   const actor: Actor = { id: 'member-of-' + tenantId, type: 'user', tenantId, roles: [], attributes: {} };

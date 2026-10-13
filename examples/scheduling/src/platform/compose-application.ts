@@ -20,6 +20,7 @@ import {
   EventBus,
   ExecutionScope,
   IdGenerator,
+  InMemoryTenantDirectory,
   Logger,
   Metrics,
   QueryBus,
@@ -154,6 +155,7 @@ function kernel(foundations: Foundations, persistence: Persistence, options: App
     ...(options.errors === undefined ? {} : { errorReporter: options.errors }),
     commandBus: (resolve) => createCommandBus(resolve, foundations, options),
     queryBus: (resolve) => createQueryBus(resolve, foundations),
+    tenants: new InMemoryTenantDirectory(options.networks ?? []),
   });
 }
 

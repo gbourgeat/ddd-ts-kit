@@ -6,8 +6,14 @@ import { KnexAppointmentRepository } from '@/contexts/scheduling/infrastructure/
 import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database';
 import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder';
 
+/** The work of these specs runs in one network: every table here holds tenant data. */
 const scope = new FixedExecutionScope(
-  executionContext({ correlationId: 'export-spec', actor: systemActor('scheduling.spec'), origin: 'test' }),
+  executionContext({
+    correlationId: 'export-spec',
+    actor: systemActor('scheduling.spec'),
+    origin: 'test',
+    tenantId: 'north',
+  }),
 );
 
 const clock = new FixedClock(new Date('2026-01-01T00:00:00.000Z'));
@@ -26,7 +32,7 @@ afterAll(async () => {
 
 beforeEach(async () => {
   await database.reset();
-  exported = new KnexAppointmentExport(database.persistence.database);
+  exported = new KnexAppointmentExport(database.persistence.database, scope);
 });
 
 describe('KnexAppointmentExport', () => {

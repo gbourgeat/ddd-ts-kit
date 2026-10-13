@@ -992,3 +992,52 @@ Frictions:
 1. **A tenant id has one grammar now** (letters, digits, `_`, `-`, at most 63). The `tenant_id`
    claim of the realm names a practice by its id, which fits; a realm whose ids held a `.` would
    be refused at the first request.
+
+## 2026-10-13 (evening): one network of practices is one tenant
+
+The owner chose the second alternative of ADR-0003, now accepted: one network of practices is
+one tenant, on shared tables, so that every tenancy rule of the kit is applied and tested here.
+`"stack.tenancy": "shared-table"`; every table of the four contexts carries `tenant_id` (twelve
+tables, each with a `(tenant_id, key)` index); every repository and read model reaches its table
+through `tenantTable`, `ownTenantTable` or the `tenant` option of its store; the outbox keeps the
+network of each event; the three jobs run once per network of `NETWORKS`; the read side of the
+audit trail is a `TenantAuditReader`; the edge reads the network from `x-tenant-id` or the
+token. `tenancy/scoped-statement` judges the adapters with no finding (`ddd-ts-kit check`: 0 in
+660 files), and its entry left `NOT_APPLICABLE` of the conformance suite for an injection.
+
+HTTP contract changes: `POST /practices` asks the role `network-admin` (it asked
+`platform-admin`); `GET /audit/entries` takes `network`, and is read by platform staff through an
+elevation over that network or every network, recorded first (`tenancy:elevate`, reason
+`AUDIT_TRAIL_SEARCH`); a request whose `x-tenant-id` names another network than the caller's is
+answered 403, one that names no possible network 404; every request of a user of the realm needs
+a `tenant_id` claim (the network) to reach data.
+
+Measured here: the integration project (26 files, 338 tests, among them `tenantIsolationContract`
+on the eight Knex repositories) and the unit project pass; `journey-tenancy.e2e.spec.ts` (5
+tests) passes; the other end-to-end specs and the conformance run were left to the pipeline.
+
+Frictions, each fixed in the kit rather than worked around here:
+
+1. **Raw expressions were reported as raw SQL.** The occupancy is measured by aggregates in the
+   select (`count(*) filter (where ...)`), and the schema adds an exclusion constraint: the rule
+   reported each `raw`. It now reads the literal text of a raw call and reports only SQL that
+   names a statement or a table (or is not a literal).
+2. **A select over a grouped query had no helper.** The occupancy pages its groups by their
+   output columns, so it selects from the grouped query: `derivedTable` of `@ddd-ts-kit/knex`
+   does it on the scoped query, without the executor in the adapter.
+3. **A per-tenant job could not be registered.** Neither `kernelModule` nor the test application
+   gave the scheduler a `TenantDirectory`: both take `tenants` now (the test application defaults
+   to the tenant of its execution context).
+4. **The migration of an existing database.** The first migration builds from the current
+   schema, so the second must add the column where it is missing and leave it where it is:
+   `addTenantColumn` of `@ddd-ts-kit/knex` does both, and gives the rows already there to the
+   network named (`NETWORK_OF_EXISTING_ROWS`), refusing rows without one.
+5. **A journey spec could not be written.** The guard of the plugin asked for `generate e2e`,
+   which needs one route; a journey crosses several. `test/e2e/journey-*.e2e.spec.ts` is now
+   written by hand.
+6. **`date_part` is not `extract`.** Rewriting the measure without the word `from` changed a
+   rounding: `date_part` answers a double, which PostgreSQL rounds half to even. The cast to
+   `numeric` keeps the rounding the contract spec holds.
+7. **A spec that publishes an event by hand names no tenant.** The publisher of the application
+   stamps it (`scopedPublisher`); a spec that writes the envelope itself spreads `tenantId` into
+   it, or its consumers run in no network and are refused.

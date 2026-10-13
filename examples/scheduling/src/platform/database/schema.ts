@@ -21,7 +21,8 @@ export const AUTHORIZATION_SCHEMA = 'authorization';
  * existing table goes into a migration of its own (`npm run db:generate <what-it-does>`).
  */
 export const createTables = async (knex: Knex): Promise<void> => {
-  await createOutboxTables(knex, { schema: MESSAGING });
+  // The tenant of each event, so that its consumers run in that tenant.
+  await createOutboxTables(knex, { schema: MESSAGING, tenant: true });
   await createAuditTables(knex, { schema: AUDIT_SCHEMA });
   await createRelationTupleTables(knex, { schema: AUTHORIZATION_SCHEMA });
   // ddd-ts-kit:schemas

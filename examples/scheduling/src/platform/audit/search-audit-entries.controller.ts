@@ -30,6 +30,11 @@ const query = customSchema<Parameters>(
       action: { type: 'string', description: 'A permission id, a command name or an event type.' },
       outcome: { type: 'string', enum: [...outcomes] },
       correlationId: { type: 'string', description: 'Everything one request or event caused.' },
+      network: {
+        type: 'string',
+        pattern: '^[A-Za-z0-9_-]{1,63}$',
+        description: 'The entries of one network of practices; left out, of every network.',
+      },
     },
   },
 );
@@ -134,8 +139,16 @@ function filterOf(parameters: Parameters): AuditEntriesFilter {
     ...textOf(parameters, 'actorId'),
     ...textOf(parameters, 'action'),
     ...textOf(parameters, 'correlationId'),
+    ...networkOf(parameters),
     ...(outcome === undefined ? {} : { outcome }),
   };
+}
+
+/** The network to read is a tenant: its id goes to the filter under that name. */
+function networkOf(parameters: Parameters): Pick<AuditEntriesFilter, 'tenantId'> {
+  const { network } = textOf(parameters, 'network');
+
+  return network === undefined ? {} : { tenantId: network };
 }
 
 function textOf<Key extends string>(parameters: Parameters, key: Key): Partial<Record<Key, string>> {

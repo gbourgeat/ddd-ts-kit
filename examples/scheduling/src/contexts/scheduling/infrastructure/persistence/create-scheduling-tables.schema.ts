@@ -2,7 +2,7 @@
 import type { Knex } from 'knex';
 import { SCHEDULING_SCHEMA } from '@/contexts/scheduling/infrastructure/persistence/scheduling.schema';
 import { APPOINTMENT_SLOT_HELD_ONCE } from '@/contexts/scheduling/infrastructure/persistence/appointment-row.schema';
-import { auditColumns, readModelColumns } from '@ddd-ts-kit/knex';
+import { auditColumns, readModelColumns, tenantColumn } from '@ddd-ts-kit/knex';
 // /ddd-ts-kit:imports
 
 export async function createSchedulingTables(knex: Knex): Promise<void> {
@@ -33,6 +33,8 @@ function createCalendarTable(knex: Knex): Promise<void> {
     table.integer('patient_limit').notNullable();
     table.index(['practice_id', 'practitioner_id']);
     table.integer('version').notNullable();
+    tenantColumn(table);
+    table.index(['tenant_id', 'id'], 'calendars_tenant_idx');
     auditColumns(table);
   });
 }
@@ -58,20 +60,27 @@ async function createAppointmentTable(knex: Knex): Promise<void> {
     table.text('cancelled_by');
     table.text('cancellation_reason');
 
-    table.check(
-      "status in ('requested', 'booked', 'cancelled', 'expired', 'completed', 'no-show')",
-      [],
-      'appointments_status_known',
-    );
-
-    table.check('starts_at < ends_at and ends_at <= held_until', [], 'appointments_slot_ordered');
+    checkAppointmentRows(table);
     table.index(['patient_id', 'practitioner_id', 'starts_at']);
     table.index(['status', 'confirm_before']);
     table.integer('version').notNullable();
+    tenantColumn(table);
+    table.index(['tenant_id', 'id'], 'appointments_tenant_idx');
     auditColumns(table);
   });
 
   await holdEachSlotOnce(knex);
+}
+
+/** A status the aggregate knows, and a slot that ends after it starts and is held at least as long. */
+function checkAppointmentRows(table: Knex.CreateTableBuilder): void {
+  table.check(
+    "status in ('requested', 'booked', 'cancelled', 'expired', 'completed', 'no-show')",
+    [],
+    'appointments_status_known',
+  );
+
+  table.check('starts_at < ends_at and ends_at <= held_until', [], 'appointments_slot_ordered');
 }
 
 /**
@@ -95,6 +104,8 @@ function createWaitlistTable(knex: Knex): Promise<void> {
     table.text('waiters').notNullable();
     table.unique(['calendar_id', 'day']);
     table.integer('version').notNullable();
+    tenantColumn(table);
+    table.index(['tenant_id', 'id'], 'waitlists_tenant_idx');
     auditColumns(table);
   });
 }
@@ -108,6 +119,8 @@ function createPractitionerTable(knex: Knex): Promise<void> {
     table.text('practitioner_id').notNullable();
     table.specificType('display_name', 'text COLLATE "C"').notNullable();
     table.text('time_zone').notNullable();
+    tenantColumn(table);
+    table.index(['tenant_id', 'id'], 'practitioners_tenant_idx');
     readModelColumns(table);
   });
 }
@@ -132,6 +145,8 @@ function createAgendaTable(knex: Knex): Promise<void> {
     table.index(['calendar_id', 'day']);
     table.index(['practice_id', 'day']);
     table.index(['patient_id', 'starts_at']);
+    tenantColumn(table);
+    table.index(['tenant_id', 'id'], 'agenda_tenant_idx');
     readModelColumns(table);
   });
 }

@@ -9,7 +9,7 @@ import { KnexOutcomeRegister } from '@/contexts/analytics/infrastructure/persist
 import { SearchOccupancyController } from '@/contexts/analytics/presentation/http/practices/search-occupancy/search-occupancy.controller';
 import { AppointmentExportContract } from '@/contexts/scheduling/published-language/index';
 import { Access } from '@ddd-ts-kit/auth';
-import { QueryBus } from '@ddd-ts-kit/kernel';
+import { ExecutionScope, QueryBus } from '@ddd-ts-kit/kernel';
 import { KnexContext } from '@ddd-ts-kit/knex';
 
 export * from '@/contexts/analytics/application/projections/outcomes.projection';
@@ -23,6 +23,6 @@ export * from '@/contexts/analytics/presentation/http/practices/search-occupancy
 injected(OutcomesProjection, [OutcomeRegister]);
 injected(SearchOccupancyHandler, [OccupancyReader, Access]);
 injected(InProcessAppointmentExportGateway, [AppointmentExportContract]);
-injected(KnexOccupancyReader, [KnexContext]);
-injected(KnexOutcomeRegister, [KnexContext]);
+injected(KnexOccupancyReader, [KnexContext, ExecutionScope]);
+injected(KnexOutcomeRegister, [KnexContext, ExecutionScope]);
 injected(SearchOccupancyController, [QueryBus]);

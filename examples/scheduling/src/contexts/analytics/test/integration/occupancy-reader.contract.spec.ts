@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { Criteria, cursorPage, offsetPage, scoped, type ReadScope } from '@ddd-ts-kit/kernel';
+import { anExecutionContext } from '@ddd-ts-kit/testing';
+import { Criteria, cursorPage, offsetPage, scoped, type ReadScope, FixedExecutionScope } from '@ddd-ts-kit/kernel';
 import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database';
 import type { Occupancy, OccupancyReader } from '@/contexts/analytics/application/ports/occupancy-reader.port';
 import type { Outcome, OutcomeRegister } from '@/contexts/analytics/application/ports/outcome-register.port';
@@ -11,6 +12,9 @@ import { anOccupancy } from '@/contexts/analytics/test/builders/occupancy.builde
 import { anOutcome } from '@/contexts/analytics/test/builders/outcome.builder';
 import { FakeOccupancyReader } from '@/contexts/analytics/test/fakes/occupancy-reader.fake';
 import { FakeOutcomeRegister } from '@/contexts/analytics/test/fakes/outcome-register.fake';
+
+/** The work of these specs runs in one network: every table here holds tenant data. */
+const north = new FixedExecutionScope(anExecutionContext().ofTenant('north').build());
 
 /** The outcomes a reader measures, and the reader: the fake and the adapter are given the same ones, the same way. */
 type Measured = {
@@ -42,8 +46,8 @@ const ADAPTERS: readonly (readonly [string, () => Promise<Measured>])[] = [
       await database.reset();
 
       return measuredBy(
-        new KnexOutcomeRegister(database.persistence.database),
-        () => new KnexOccupancyReader(database.persistence.database),
+        new KnexOutcomeRegister(database.persistence.database, north),
+        () => new KnexOccupancyReader(database.persistence.database, north),
       );
     },
   ],

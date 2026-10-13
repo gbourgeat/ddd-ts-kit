@@ -12,7 +12,7 @@ let directory: KnexPersonDirectory;
 
 beforeAll(async () => {
   database = await openTestDatabase();
-  directory = new KnexPersonDirectory(database.persistence.database);
+  directory = new KnexPersonDirectory(database.persistence.database, scope);
 });
 
 beforeEach(async () => {

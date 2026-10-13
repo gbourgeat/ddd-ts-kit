@@ -1,4 +1,4 @@
-import type { AuditRow } from '@ddd-ts-kit/knex';
+import type { AuditRow, TenantRow } from '@ddd-ts-kit/knex';
 
 /** The exclusion constraint that holds a time on a calendar once, as PostgreSQL names it in a violation. */
 export const APPOINTMENT_SLOT_HELD_ONCE = 'appointments_slot_held_once';
@@ -22,6 +22,6 @@ export interface AppointmentColumns {
   readonly cancellation_reason: string | null;
 }
 
-export interface AppointmentRow extends AppointmentColumns, AuditRow {
+export interface AppointmentRow extends AppointmentColumns, TenantRow, AuditRow {
   readonly version: number;
 }

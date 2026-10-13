@@ -1,9 +1,13 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { Criteria, scoped } from '@ddd-ts-kit/kernel';
+import { anExecutionContext } from '@ddd-ts-kit/testing';
+import { Criteria, scoped, FixedExecutionScope } from '@ddd-ts-kit/kernel';
 import type { PractitionerEntry } from '@/contexts/scheduling/application/ports/practitioner-directory.port';
 import { KnexPractitionerDirectory } from '@/contexts/scheduling/infrastructure/persistence/knex-practitioner-directory.repository';
 import { storableStamp } from '@/shared-kernel/storable-stamp';
 import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database';
+
+/** The work of these specs runs in one network: every table here holds tenant data. */
+const north = new FixedExecutionScope(anExecutionContext().ofTenant('north').build());
 
 let database: TestDatabase;
 let practitioners: KnexPractitionerDirectory;
@@ -18,7 +22,7 @@ afterAll(async () => {
 
 beforeEach(async () => {
   await database.reset();
-  practitioners = new KnexPractitionerDirectory(database.persistence.database);
+  practitioners = new KnexPractitionerDirectory(database.persistence.database, north);
 });
 
 describe('KnexPractitionerDirectory', () => {

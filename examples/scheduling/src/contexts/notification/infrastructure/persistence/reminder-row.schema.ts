@@ -1,4 +1,4 @@
-import type { AuditRow } from '@ddd-ts-kit/knex';
+import type { AuditRow, TenantRow } from '@ddd-ts-kit/knex';
 
 export interface ReminderColumns {
   readonly id: string;
@@ -10,6 +10,6 @@ export interface ReminderColumns {
   readonly status: 'planned' | 'sent' | 'withdrawn';
 }
 
-export interface ReminderRow extends ReminderColumns, AuditRow {
+export interface ReminderRow extends ReminderColumns, TenantRow, AuditRow {
   readonly version: number;
 }

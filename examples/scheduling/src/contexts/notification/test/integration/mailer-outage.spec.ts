@@ -5,6 +5,7 @@ import { contextModule, createTestApplication, defineContextModule, fake } from 
 import { OutboxPublisher, OutboxRelay } from '@ddd-ts-kit/events';
 import { DeadLetterReports, ProcessedEventStore, UnitOfWork, systemActor } from '@ddd-ts-kit/kernel';
 import { KnexContext } from '@ddd-ts-kit/knex';
+import { anExecutionContext } from '@ddd-ts-kit/testing';
 import * as notificationDeclarations from '@/contexts/notification/notification.declarations';
 import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database';
 import { personRegisteredV1 } from '@/contexts/identity/published-language/index';
@@ -28,20 +29,26 @@ const operator = systemActor('notification.spec');
 const NOW = new Date('2026-01-09T09:00:00.000Z');
 const startsAt = '2026-01-10T09:00:00.000Z';
 
-const booked = appointmentBookedV1.create(
-  {
-    appointmentId: 'appointment-1',
-    calendarId: 'calendar-1',
-    practiceId: 'practice-1',
-    practitionerId: 'practitioner-1',
-    patientId: 'patient-1',
-    startsAt,
-    endsAt: '2026-01-10T09:30:00.000Z',
-    day: '2026-01-10',
-    status: 'booked',
-  },
-  { id: 'event-booked', occurredAt: new Date('2026-01-02T08:00:00.000Z') },
-);
+/** The network every fact of this spec happened in: what the publisher of the application stamps on its events. */
+const NETWORK = 'north';
+
+const booked = {
+  ...appointmentBookedV1.create(
+    {
+      appointmentId: 'appointment-1',
+      calendarId: 'calendar-1',
+      practiceId: 'practice-1',
+      practitionerId: 'practitioner-1',
+      patientId: 'patient-1',
+      startsAt,
+      endsAt: '2026-01-10T09:30:00.000Z',
+      day: '2026-01-10',
+      status: 'booked',
+    },
+    { id: 'event-booked', occurredAt: new Date('2026-01-02T08:00:00.000Z') },
+  ),
+  tenantId: NETWORK,
+};
 
 let database: TestDatabase;
 
@@ -141,6 +148,7 @@ async function arrange() {
       fake(ProcessedEventStore, database.persistence.processedEvents),
     ],
     now: NOW,
+    executionContext: anExecutionContext().ofTenant(NETWORK).build(),
   });
 
   const deadLetters = new DeadLetterReports(application.errors);
@@ -156,15 +164,20 @@ async function arrange() {
   });
 
   await application.start();
+  await application.eventBus.publish([adaRegistered()]);
 
-  await application.eventBus.publish([
-    personRegisteredV1.create(
+  return { application, mailer, relay };
+}
+
+/** The contact of the patient, as identity announced it in the network. */
+function adaRegistered() {
+  return {
+    ...personRegisteredV1.create(
       { personId: 'patient-1', displayName: 'Ada Lovelace', email: 'ada@example.test' },
       { id: 'event-registered', occurredAt: new Date('2026-01-01T08:00:00.000Z') },
     ),
-  ]);
-
-  return { application, mailer, relay };
+    tenantId: NETWORK,
+  };
 }
 
 function storage() {

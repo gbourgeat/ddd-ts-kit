@@ -942,6 +942,14 @@ paths:
           schema:
             type: string
             description: Everything one request or event caused.
+        - name: network
+          in: query
+          description: The entries of one network of practices; left out, of every network.
+          required: false
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9_-]{1,63}$
+            description: The entries of one network of practices; left out, of every network.
       responses:
         '200':
           description: A page of entries.

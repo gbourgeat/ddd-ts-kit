@@ -23,6 +23,7 @@ const application = composeApplication(persistence, {
   log: { ...config.log, service: config.serviceName, environment: config.environment },
   traceConsumers: config.tracing.consumers,
   resilience: config.resilience,
+  networks: config.networks,
   jobs: { start: config.runJobs, settings: jobSettings(process.env) },
   redis,
 });

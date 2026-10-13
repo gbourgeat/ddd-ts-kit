@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { Criteria, ProjectionRebuild, scoped } from '@ddd-ts-kit/kernel';
+import { anExecutionContext } from '@ddd-ts-kit/testing';
+import { Criteria, ProjectionRebuild, scoped, FixedExecutionScope } from '@ddd-ts-kit/kernel';
 import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database';
 import type { Outcome } from '@/contexts/analytics/application/ports/outcome-register.port';
 import { ANALYTICS_SCHEMA } from '@/contexts/analytics/infrastructure/persistence/analytics.schema';
@@ -7,6 +8,9 @@ import { createAnalyticsTables } from '@/contexts/analytics/infrastructure/persi
 import { KnexOutcomeRegister } from '@/contexts/analytics/infrastructure/persistence/knex-outcome-register.repository';
 import { anOutcome } from '@/contexts/analytics/test/builders/outcome.builder';
 import { FakeAppointmentExportGateway } from '@/contexts/analytics/test/fakes/appointment-export-gateway.fake';
+
+/** The work of these specs runs in one network: every table here holds tenant data. */
+const north = new FixedExecutionScope(anExecutionContext().ofTenant('north').build());
 
 /** What scheduling states: three appointments, exported two a page. */
 const TRUTH: readonly Outcome[] = [
@@ -44,7 +48,7 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   await database.reset();
-  outcomes = new KnexOutcomeRegister(database.persistence.database);
+  outcomes = new KnexOutcomeRegister(database.persistence.database, north);
 
   for (const outcome of WRONG) {
     await outcomes.upsertIfNewer(outcome.id, seen, () => outcome);

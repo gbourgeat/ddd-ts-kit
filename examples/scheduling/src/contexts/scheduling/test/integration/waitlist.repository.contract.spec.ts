@@ -7,7 +7,7 @@ import {
   type Actor,
   type ExecutionContext,
 } from '@ddd-ts-kit/kernel';
-import { repositoryContract } from '@ddd-ts-kit/testing/contracts';
+import { repositoryContract, tenantIsolationContract } from '@ddd-ts-kit/testing/contracts';
 import type { Waitlist } from '@/contexts/scheduling/domain/aggregates/waitlist.aggregate';
 import { Waiter } from '@/contexts/scheduling/domain/value-objects/waiter.vo';
 import { KnexWaitlistRepository } from '@/contexts/scheduling/infrastructure/persistence/knex-waitlist.repository';
@@ -60,6 +60,18 @@ repositoryContract<Waitlist>(runner, {
 
     return new KnexWaitlistRepository(database.persistence.database, new FixedExecutionScope(workOf('acme')), clock);
   },
+});
+
+/** No read and no write of one network reaches another, whatever the work in progress asks. */
+tenantIsolationContract<Waitlist>(runner, {
+  ...expectations,
+  name: 'KnexWaitlistRepository',
+  createRepository: async (scope) => {
+    await database.reset();
+
+    return new KnexWaitlistRepository(database.persistence.database, scope, clock);
+  },
+  elevatedReads: true,
 });
 
 function workOf(tenantId: string): ExecutionContext {

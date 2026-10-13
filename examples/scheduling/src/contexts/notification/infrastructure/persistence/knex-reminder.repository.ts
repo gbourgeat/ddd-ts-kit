@@ -1,7 +1,14 @@
-import type { Knex } from 'knex';
-import { type Clock, type ExecutionScope, stampCreation, stampUpdate } from '@ddd-ts-kit/kernel';
+import { type Clock, type ExecutionScope, stampCreation, stampUpdate, tenantScopeOf } from '@ddd-ts-kit/kernel';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
-import { KnexContext, auditRow, insertIgnoringConflict, optimisticUpdate } from '@ddd-ts-kit/knex';
+import {
+  KnexContext,
+  auditRow,
+  insertIgnoringConflict,
+  optimisticUpdate,
+  ownTenantTable,
+  tenantRow,
+  tenantTable,
+} from '@ddd-ts-kit/knex';
 import type { Reminder } from '@/contexts/notification/domain/aggregates/reminder.aggregate';
 import { ReminderRepository } from '@/contexts/notification/domain/repositories/reminder.repository';
 import { NOTIFICATION_SCHEMA } from '@/contexts/notification/infrastructure/persistence/notification.schema';
@@ -13,6 +20,9 @@ import type {
 
 type VersionedReminder = ReminderColumns & { readonly version: number };
 
+/** Tenant data: every statement reaches it through `tenantTable` or `ownTenantTable`, confined to the tenant of the work. */
+const TABLE = { schema: NOTIFICATION_SCHEMA, table: 'reminders' };
+
 @Repository(ReminderRepository)
 export class KnexReminderRepository implements ReminderRepository {
   constructor(
@@ -22,19 +32,21 @@ export class KnexReminderRepository implements ReminderRepository {
   ) {}
 
   async findById(id: string): Promise<Reminder | undefined> {
-    const row = await tableOf(this.database).where({ id }).first();
+    const row = await tenantTable<ReminderRow>(this.database, this.scope, TABLE).where({ id }).first();
 
     return row === undefined ? undefined : ReminderMapper.toDomain(row);
   }
 
   async findByAppointment(appointmentId: string): Promise<Reminder | undefined> {
-    const row = await tableOf(this.database).where({ appointment_id: appointmentId }).first();
+    const row = await tenantTable<ReminderRow>(this.database, this.scope, TABLE)
+      .where({ appointment_id: appointmentId })
+      .first();
 
     return row === undefined ? undefined : ReminderMapper.toDomain(row);
   }
 
   async findDue(asOf: Date): Promise<readonly Reminder[]> {
-    const rows = await tableOf(this.database)
+    const rows = await tenantTable<ReminderRow>(this.database, this.scope, TABLE)
       .where({ status: 'planned' })
       .where('due_at', '<=', asOf)
       .where('starts_at', '>', asOf)
@@ -53,21 +65,24 @@ export class KnexReminderRepository implements ReminderRepository {
   }
 
   private async insert(state: VersionedReminder): Promise<number> {
-    const row = { ...state, ...auditRow(stampCreation(this.scope, this.clock)) };
+    const row = {
+      ...state,
+      ...tenantRow(tenantScopeOf(this.scope)),
+      ...auditRow(stampCreation(this.scope, this.clock)),
+    };
 
-    return (await insertIgnoringConflict(this.database.executor(), tableOf(this.database), { row, conflict: 'id' }))
+    return (await insertIgnoringConflict(
+      this.database.executor(),
+      ownTenantTable<ReminderRow>(this.database, this.scope, TABLE),
+      { row, conflict: 'id' },
+    ))
       ? 1
       : 0;
   }
 
   private async update(state: VersionedReminder, expected: number): Promise<number> {
-    return tableOf(this.database)
+    return ownTenantTable<ReminderRow>(this.database, this.scope, TABLE)
       .where({ id: state.id, version: expected })
       .update({ ...state, ...auditRow(stampUpdate(this.scope, this.clock)) });
   }
-}
-
-/** A function and not a method: a query builder is thenable, and a method that answers one is read as asynchronous by whatever wraps the adapter (tracing), which then answers a promise. */
-function tableOf(database: KnexContext): Knex.QueryBuilder<ReminderRow, ReminderRow[]> {
-  return database.executor()<ReminderRow, ReminderRow[]>('reminders').withSchema(NOTIFICATION_SCHEMA);
 }

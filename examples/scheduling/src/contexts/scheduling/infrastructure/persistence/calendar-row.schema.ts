@@ -1,4 +1,4 @@
-import type { AuditRow } from '@ddd-ts-kit/knex';
+import type { AuditRow, TenantRow } from '@ddd-ts-kit/knex';
 
 export interface CalendarColumns {
   readonly id: string;
@@ -19,6 +19,6 @@ export interface CalendarColumns {
   readonly patient_limit: number;
 }
 
-export interface CalendarRow extends CalendarColumns, AuditRow {
+export interface CalendarRow extends CalendarColumns, TenantRow, AuditRow {
   readonly version: number;
 }
