@@ -1,4 +1,14 @@
-import type { Upstream, ContextConfig, Style, Assembly, Stack, Limits, OnePerFile, Config } from './config.js';
+import type {
+  Upstream,
+  ContextConfig,
+  Style,
+  Assembly,
+  Stack,
+  Limits,
+  OnePerFile,
+  Config,
+  SdkConfig,
+} from './config.js';
 import { parseAllowedFile } from './parse-allowed-file.js';
 import { posix } from './posix.js';
 import { isRecord } from './is-record.js';
@@ -15,6 +25,9 @@ const DEPENDENCY_STATEMENTS: readonly Stack['dependencies'][] = ['signature', 'l
 const REFUSAL_FORMS: readonly Stack['refusals'][] = ['factories', 'classes'];
 
 const KERNEL = ['@ddd-ts-kit/kernel'];
+
+/** The package name of a client when "sdk" does not give one, as the CLI writes it. */
+const DEFAULT_SDK_NAME = '{project}-{document}-client';
 
 /** The application layer declares its permissions and policies with `@ddd-ts-kit/auth`, which imports the kernel only. */
 const APPLICATION = [...KERNEL, '@ddd-ts-kit/auth'];
@@ -55,7 +68,13 @@ export function parseConfig(raw: unknown): Config {
     onePerFile: parseOnePerFile(source['onePerFile']),
     stack: parseStack(source['stack']),
     standardInterfaces: parseStandardInterfaces(source['standardInterfaces']),
+    sdk: parseSdk(source['sdk']),
   };
+}
+
+/** A key that is not an object asks for no client, as in the CLI. */
+function parseSdk(value: unknown): SdkConfig | undefined {
+  return isRecord(value) ? { name: text(value['name'], DEFAULT_SDK_NAME) } : undefined;
 }
 
 function parseStack(value: unknown): Stack {
