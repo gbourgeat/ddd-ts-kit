@@ -24,7 +24,7 @@ const holders = authorizationModule({
   authorizer: new RoleBasedAuthorizer({
     roles: {
       holder: [schedulingPermissions['calendar.clear'], schedulingPermissions['appointment.cancel']],
-      system: [schedulingPermissions['waitlist.offer']],
+      system: [schedulingPermissions['waitlist.offer'], schedulingPermissions['attendance.note']],
     },
     systemRole: 'system',
   }),
